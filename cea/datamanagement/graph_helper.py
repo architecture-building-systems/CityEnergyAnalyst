@@ -263,6 +263,9 @@ class GraphCorrector:
         """
         Find all intersections between edges from different components in a single pass.
 
+        Uses KDTree spatial indexing for efficient O(log N) nearest-node lookups instead of
+        O(N) linear scans, significantly improving performance for large graphs.
+
         :param edges_by_component: List of tuples (edge, component_index)
         :type edges_by_component: List[Tuple]
         :param tolerance: Snap tolerance for finding nearby nodes
@@ -271,6 +274,14 @@ class GraphCorrector:
         :rtype: List[Dict]
         """
         intersections = []
+
+        # Build KDTree once for all nodes for efficient spatial queries
+        nodes_list = list(self.graph.nodes())
+        if nodes_list:
+            node_coords = [(node[0], node[1]) for node in nodes_list]
+            nodes_tree = KDTree(node_coords)
+        else:
+            nodes_tree = None
 
         for i, (edge1, comp1) in enumerate(edges_by_component):
             for edge2, comp2 in edges_by_component[i+1:]:
@@ -290,7 +301,10 @@ class GraphCorrector:
                         t2 = self._calculate_parametric_position(intersection_point, edge2)
 
                         # Check if there's already a node very close to this intersection
-                        existing_node = self._find_nearby_node(intersection_point, tolerance)
+                        # Use KDTree for efficient spatial lookup
+                        existing_node = self._find_nearby_node_kdtree(
+                            intersection_point, tolerance, nodes_list, nodes_tree
+                        )
 
                         if existing_node:
                             junction_node = existing_node
@@ -535,6 +549,9 @@ class GraphCorrector:
         """
         Find if there's an existing node within tolerance distance of point.
 
+        Uses linear search O(N). For better performance when called multiple times,
+        use _find_nearby_node_kdtree with a pre-built KDTree.
+
         :param point: Point to check (x, y)
         :param tolerance: Maximum distance to consider (inclusive)
         :return: Existing node if found, None otherwise
@@ -543,6 +560,35 @@ class GraphCorrector:
         for node in self.graph.nodes():
             if self._calculate_distance(point, node) <= tolerance:
                 return node
+        return None
+
+    def _find_nearby_node_kdtree(self, point: tuple, tolerance: float,
+                                  nodes_list: List[tuple], kdtree: Optional[KDTree]) -> Optional[tuple]:
+        """
+        Find if there's an existing node within tolerance distance of point using KDTree.
+
+        This is O(log N) compared to O(N) for linear search, making it much faster
+        for large graphs when called multiple times with a pre-built KDTree.
+
+        :param point: Point to check (x, y)
+        :param tolerance: Maximum distance to consider (inclusive)
+        :param nodes_list: List of all nodes in the same order as KDTree was built
+        :param kdtree: Pre-built KDTree for spatial queries, or None if no nodes
+        :return: Existing node if found, None otherwise
+        :rtype: Optional[tuple]
+        """
+        if not kdtree or not nodes_list:
+            return None
+
+        # Query KDTree for nearest neighbors within tolerance
+        indices = kdtree.query_ball_point([point[0], point[1]], tolerance, p=2.0)
+
+        # Return the first node within tolerance (if any)
+        for idx in indices:
+            node = nodes_list[idx]
+            if self._calculate_distance(point, node) <= tolerance:
+                return node
+
         return None
 
     def connect_disconnected_components(self) -> nx.Graph:
@@ -655,8 +701,7 @@ class GraphCorrector:
 
         print(f"Checking {num_nodes_before} nodes for merging (threshold: {distance_threshold}m)...")
 
-        # Build KDTree for efficient spatial queries
-        # Convert nodes to array of coordinates for KDTree
+        # Build KDTree once for efficient spatial queries (reuse helper method pattern)
         node_coords = [(node[0], node[1]) for node in nodes]
         tree = KDTree(node_coords)
 
@@ -666,7 +711,7 @@ class GraphCorrector:
                 continue
 
             # Query KDTree for all neighbors within distance_threshold
-            # query_ball_point returns indices of neighbors within the radius
+            # Using query_ball_point for efficient radial search
             neighbor_indices = tree.query_ball_point(node_coords[i], distance_threshold, p=2.0)
 
             for j in neighbor_indices:
