@@ -567,7 +567,7 @@ class GraphCorrector:
 
         print(f"Connecting {num_components} disconnected components...")
 
-        self._connect_via_nearest_neighbor(components)
+        edges_added = self._connect_via_nearest_neighbor(components)
 
         # Verify the graph is now connected
         if nx.is_connected(self.graph):
@@ -575,19 +575,21 @@ class GraphCorrector:
             self._log_correction('connect_components', {
                 'original_components': num_components,
                 'final_components': 1,
-                'edges_added': len(self.graph.edges()) - len(self.original_graph.edges())
+                'edges_added': edges_added
             })
         else:
             print(f"Warning: Graph still has {nx.number_connected_components(self.graph)} components after correction")
 
         return self.graph
 
-    def _connect_via_nearest_neighbor(self, components: List[Set]):
+    def _connect_via_nearest_neighbor(self, components: List[Set]) -> int:
         """
         Connect all components to the largest component by finding nearest node pairs.
 
         :param components: List of component node sets, sorted by size (largest first)
         :type components: List[Set]
+        :return: Number of edges added
+        :rtype: int
         """
         # Largest component is the anchor
         largest_component = components[0]
@@ -613,6 +615,7 @@ class GraphCorrector:
                 print(f"  Component {i}/{len(components)-1}: Connected via edge of length {min_distance:.2f}m")
 
         print(f"Added {edges_added} edges to connect components")
+        return edges_added
 
     def _calculate_distance(self, node1, node2) -> float:
         """
