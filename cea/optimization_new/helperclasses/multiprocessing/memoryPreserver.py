@@ -40,6 +40,7 @@ class MemoryPreserver(object):
         for cls in classes_for_storage:
             self.recorded_memory[cls.__name__] = {i: j for i, j in vars(cls).items()
                                                   if (not callable(j) and not isinstance(j, staticmethod)
+                                                      and not isinstance(j, classmethod)
                                                       and not isinstance(j, property) and not i[:2] == '__')}
 
     def recall_class_variables(self):
