@@ -684,15 +684,22 @@ class GraphCorrector:
                 # Get edge data if it exists
                 edge_data = self.graph.get_edge_data(node_to_remove, neighbor)
 
+                # Calculate new weight based on actual distance if edge_data lacks weight or is invalid
+                new_weight = edge_data.get('weight', None) if edge_data else None
+                if new_weight is None or not isinstance(new_weight, (int, float)) or new_weight == float('inf'):
+                    new_weight = self._calculate_distance(node_to_keep, neighbor)
+
                 # Add edge from kept node to neighbor (if it doesn't exist, or update if new one is shorter)
                 if self.graph.has_edge(node_to_keep, neighbor):
                     # Keep edge with minimum weight
                     existing_weight = self.graph[node_to_keep][neighbor].get('weight', float('inf'))
-                    new_weight = edge_data.get('weight', float('inf'))
                     if new_weight < existing_weight:
                         self.graph[node_to_keep][neighbor]['weight'] = new_weight
                 else:
-                    self.graph.add_edge(node_to_keep, neighbor, **edge_data)
+                    # Create new edge attributes with updated weight
+                    attrs = dict(edge_data) if edge_data else {}
+                    attrs['weight'] = new_weight
+                    self.graph.add_edge(node_to_keep, neighbor, **attrs)
 
             # Remove the merged node
             self.graph.remove_node(node_to_remove)
