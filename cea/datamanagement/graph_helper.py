@@ -265,7 +265,10 @@ class GraphCorrector:
                             junction_node = existing_node
                         else:
                             # Create new junction node
-                            junction_node = intersection_point
+                            junction_node = (
+                                round(intersection_point[0], SHAPEFILE_TOLERANCE),
+                                round(intersection_point[1], SHAPEFILE_TOLERANCE),
+                            )
                             self.graph.add_node(junction_node)
                             nodes_added += 1
 
