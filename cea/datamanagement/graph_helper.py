@@ -535,7 +535,7 @@ class GraphCorrector:
         :rtype: Optional[tuple]
         """
         for node in self.graph.nodes():
-            if self._calculate_distance(point, node) < tolerance:
+            if self._calculate_distance(point, node) <= tolerance:
                 return node
         return None
 
