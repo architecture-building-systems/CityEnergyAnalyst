@@ -663,6 +663,10 @@ def create_supply_system_graph(energy_system_id, supply_system_id, locator):
     for code, component in supply_system.components.items():
         # Use the unknown component icon as fallback for missing component images
         icon_path = ComponentGraphInfo.image_paths.get(code, ComponentGraphInfo.image_paths.get("unknown"))
+        if icon_path is None:
+            raise ValueError(f"No icon path found for component '{code}' and 'unknown' fallback is not defined")
+        if not os.path.exists(icon_path):
+            raise FileNotFoundError(f"Icon file not found: {icon_path}")
         icon = Image.open(icon_path)
         fig.add_layout_image(
             source=icon,
