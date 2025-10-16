@@ -212,8 +212,11 @@ class GraphCorrector:
         which is a common data quality issue. When edges from different components intersect,
         a new node is created at the intersection point and both edges are split there.
 
+        Uses a batch processing approach: finds all intersections in a single O(n²) pass,
+        then processes all splits together. This is much more efficient than iterative rebuilding.
+
         Note: This will connect some edges that shouldn't be connected (bridges/tunnels),
-        but fixes the majority (~90%) of legitimate missing junctions.
+        but fixes the majority (likely ~90%) of legitimate missing junctions.
 
         :param tolerance: Snap new nodes to existing nodes within this distance (default: SNAP_TOLERANCE)
         :type tolerance: float
@@ -228,6 +231,239 @@ class GraphCorrector:
         print(f"Checking for intersecting edges across {len(components)} components...")
 
         # Build edge list with component membership
+        edges_by_component = self._build_edge_list_by_component(components)
+
+        # Find ALL intersections in a single pass
+        all_intersections = self._find_all_intersections(edges_by_component, tolerance)
+
+        if not all_intersections:
+            print("No intersections found")
+            return self.graph
+
+        # Group intersections by edge and sort by parametric position
+        edge_intersections = self._group_intersections_by_edge(all_intersections)
+
+        # Process all splits
+        total_nodes_added = self._process_all_intersections(edge_intersections)
+
+        print(f"Found {len(all_intersections)} intersecting edge pairs")
+        print(f"Added {total_nodes_added} junction nodes")
+
+        self._log_correction('connect_intersecting_edges', {
+            'intersections_found': len(all_intersections),
+            'nodes_added': total_nodes_added,
+            'tolerance': tolerance
+        })
+
+        return self.graph
+
+    def _find_all_intersections(self, edges_by_component: List[Tuple],
+                                 tolerance: float) -> List[Dict]:
+        """
+        Find all intersections between edges from different components in a single pass.
+
+        :param edges_by_component: List of tuples (edge, component_index)
+        :type edges_by_component: List[Tuple]
+        :param tolerance: Snap tolerance for finding nearby nodes
+        :type tolerance: float
+        :return: List of intersection dictionaries
+        :rtype: List[Dict]
+        """
+        intersections = []
+
+        for i, (edge1, comp1) in enumerate(edges_by_component):
+            for edge2, comp2 in edges_by_component[i+1:]:
+                if comp1 == comp2:
+                    continue  # Same component, skip
+
+                # Calculate intersection
+                intersection_point = self._calculate_edge_intersection(edge1, edge2)
+
+                if intersection_point is not None:
+                    # Check if intersection is actually on both line segments
+                    if self._point_on_segment(intersection_point, edge1) and \
+                       self._point_on_segment(intersection_point, edge2):
+
+                        # Calculate parametric positions along each edge
+                        t1 = self._calculate_parametric_position(intersection_point, edge1)
+                        t2 = self._calculate_parametric_position(intersection_point, edge2)
+
+                        # Check if there's already a node very close to this intersection
+                        existing_node = self._find_nearby_node(intersection_point, tolerance)
+
+                        if existing_node:
+                            junction_node = existing_node
+                            is_new_node = False
+                        else:
+                            # Create new junction node coordinates
+                            junction_node = (
+                                round(intersection_point[0], SHAPEFILE_TOLERANCE),
+                                round(intersection_point[1], SHAPEFILE_TOLERANCE),
+                            )
+                            is_new_node = True
+
+                        intersections.append({
+                            'edge1': edge1,
+                            'edge2': edge2,
+                            't1': t1,
+                            't2': t2,
+                            'junction_node': junction_node,
+                            'is_new_node': is_new_node
+                        })
+
+        return intersections
+
+    def _calculate_parametric_position(self, point: tuple, edge: tuple) -> float:
+        """
+        Calculate the parametric position t of a point along an edge.
+
+        :param point: Point coordinates (x, y)
+        :type point: tuple
+        :param edge: Edge as tuple of two nodes
+        :type edge: tuple
+        :return: Parametric position t in [0, 1]
+        :rtype: float
+        """
+        (x1, y1), (x2, y2) = edge
+        px, py = point
+
+        # Use the dimension with larger variation for better numerical stability
+        if abs(x2 - x1) > abs(y2 - y1):
+            if abs(x2 - x1) > 1e-10:
+                t = (px - x1) / (x2 - x1)
+            else:
+                t = 0.0
+        else:
+            if abs(y2 - y1) > 1e-10:
+                t = (py - y1) / (y2 - y1)
+            else:
+                t = 0.0
+
+        # Clamp to [0, 1] to handle floating point errors
+        return max(0.0, min(1.0, t))
+
+    def _group_intersections_by_edge(self, intersections: List[Dict]) -> Dict[tuple, List]:
+        """
+        Group intersections by edge and sort by parametric position.
+
+        :param intersections: List of intersection dictionaries
+        :type intersections: List[Dict]
+        :return: Dictionary mapping edges to sorted lists of intersection data
+        :rtype: Dict[tuple, List]
+        """
+        edge_intersections = {}
+
+        for intersection in intersections:
+            edge1 = intersection['edge1']
+            edge2 = intersection['edge2']
+
+            # Add to edge1's intersection list
+            if edge1 not in edge_intersections:
+                edge_intersections[edge1] = []
+            edge_intersections[edge1].append({
+                't': intersection['t1'],
+                'junction_node': intersection['junction_node'],
+                'is_new_node': intersection['is_new_node']
+            })
+
+            # Add to edge2's intersection list
+            if edge2 not in edge_intersections:
+                edge_intersections[edge2] = []
+            edge_intersections[edge2].append({
+                't': intersection['t2'],
+                'junction_node': intersection['junction_node'],
+                'is_new_node': intersection['is_new_node']
+            })
+
+        # Sort intersections along each edge by parametric position
+        for edge in edge_intersections:
+            edge_intersections[edge].sort(key=lambda x: x['t'])
+
+        return edge_intersections
+
+    def _process_all_intersections(self, edge_intersections: Dict[tuple, List]) -> int:
+        """
+        Process all intersections by splitting edges at their junction nodes.
+
+        :param edge_intersections: Dictionary mapping edges to sorted intersection lists
+        :type edge_intersections: Dict[tuple, List]
+        :return: Number of new nodes added
+        :rtype: int
+        """
+        nodes_added = 0
+        added_nodes = set()  # Track which junction nodes we've already added
+
+        # Process each edge that has intersections
+        for edge, intersections in edge_intersections.items():
+            # Add all new junction nodes first
+            for intersection in intersections:
+                junction_node = intersection['junction_node']
+                if intersection['is_new_node'] and junction_node not in added_nodes:
+                    self.graph.add_node(junction_node)
+                    added_nodes.add(junction_node)
+                    nodes_added += 1
+
+            # Split the edge at all its intersection points
+            self._split_edge_at_nodes(edge, [i['junction_node'] for i in intersections])
+
+        return nodes_added
+
+    def _split_edge_at_nodes(self, edge: tuple, junction_nodes: List[tuple]):
+        """
+        Split an edge at one or multiple junction nodes (assumed to be sorted along the edge).
+
+        :param edge: Edge to split (tuple of two nodes)
+        :type edge: tuple
+        :param junction_nodes: List of junction nodes sorted along the edge
+        :type junction_nodes: List[tuple]
+        """
+        if not self.graph.has_edge(*edge):
+            # Edge may have already been processed as part of another split
+            return
+
+        node1, node2 = edge
+        edge_data = self.graph.get_edge_data(node1, node2)
+        original_weight = edge_data.get('weight', 0)
+
+        # Remove the original edge
+        self.graph.remove_edge(node1, node2)
+
+        # Build the chain of nodes: start -> junction1 -> junction2 -> ... -> end
+        node_chain = [node1] + junction_nodes + [node2]
+
+        # Create edges between consecutive nodes in the chain
+        for i in range(len(node_chain) - 1):
+            from_node = node_chain[i]
+            to_node = node_chain[i + 1]
+
+            # Skip if nodes are the same (shouldn't happen but be safe)
+            if from_node == to_node:
+                continue
+
+            # Skip if edge already exists
+            if self.graph.has_edge(from_node, to_node):
+                continue
+
+            # Calculate weight proportional to distance
+            dist = self._calculate_distance(from_node, to_node)
+            total_dist = self._calculate_distance(node1, node2)
+
+            if total_dist > 0:
+                weight = original_weight * (dist / total_dist)
+            else:
+                weight = original_weight / len(node_chain)
+
+            self.graph.add_edge(from_node, to_node, weight=weight)
+
+    def _build_edge_list_by_component(self, components: List[Set]) -> List[Tuple]:
+        """
+        Build a list of edges with their component membership.
+
+        :param components: List of component node sets
+        :type components: List[Set]
+        :return: List of tuples (edge, component_index)
+        :rtype: List[Tuple]
+        """
         edges_by_component = []
         for comp_idx, component in enumerate(components):
             comp_edges = []
@@ -238,54 +474,7 @@ class GraphCorrector:
                         if edge not in [e[0] for e in comp_edges]:  # Avoid duplicates
                             comp_edges.append((edge, comp_idx))
             edges_by_component.extend(comp_edges)
-
-        intersections_found = 0
-        nodes_added = 0
-
-        # Check pairs of edges from different components
-        for i, (edge1, comp1) in enumerate(edges_by_component):
-            for edge2, comp2 in edges_by_component[i+1:]:
-                if comp1 == comp2:
-                    continue  # Same component, skip
-
-                # Calculate intersection
-                intersection_point = self._calculate_edge_intersection(edge1, edge2)
-
-                if intersection_point is not None:
-                    # Check if intersection is actually on both line segments (not just their extensions)
-                    if self._point_on_segment(intersection_point, edge1) and \
-                       self._point_on_segment(intersection_point, edge2):
-
-                        intersections_found += 1
-
-                        # Check if there's already a node very close to this intersection
-                        existing_node = self._find_nearby_node(intersection_point, tolerance)
-
-                        if existing_node:
-                            junction_node = existing_node
-                        else:
-                            # Create new junction node
-                            junction_node = (
-                                round(intersection_point[0], SHAPEFILE_TOLERANCE),
-                                round(intersection_point[1], SHAPEFILE_TOLERANCE),
-                            )
-                            self.graph.add_node(junction_node)
-                            nodes_added += 1
-
-                        # Split both edges at the junction
-                        self._split_edge_at_node(edge1, junction_node)
-                        self._split_edge_at_node(edge2, junction_node)
-
-        print(f"Found {intersections_found} intersecting edges")
-        print(f"Added {nodes_added} junction nodes")
-
-        self._log_correction('connect_intersecting_edges', {
-            'intersections_found': intersections_found,
-            'nodes_added': nodes_added,
-            'tolerance': tolerance
-        })
-
-        return self.graph
+        return edges_by_component
 
     def _calculate_edge_intersection(self, edge1: tuple, edge2: tuple) -> Optional[tuple]:
         """

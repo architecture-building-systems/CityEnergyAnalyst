@@ -325,6 +325,49 @@ class TestGraphCorrector(unittest.TestCase):
         self.assertEqual(corrector.corrections_log[0]['type'], 'connect_intersecting_edges')
         self.assertGreater(corrector.corrections_log[0]['details']['intersections_found'], 0)
 
+    def test_connect_intersecting_edges_multiple_intersections_same_edge(self):
+        """Test edge that intersects with multiple other edges from different components."""
+        # Create a scenario where one edge intersects with two separate edges from different components
+        g = nx.Graph()
+
+        # Component 1: Long horizontal line from (0,2) to (6,2)
+        g.add_edge((0, 2), (6, 2), weight=6.0)
+
+        # Component 2: Vertical line from (2,0) to (2,4) - intersects at (2,2)
+        g.add_edge((2, 0), (2, 4), weight=4.0)
+
+        # Component 3: Vertical line from (4,0) to (4,4) - also intersects horizontal at (4,2)
+        g.add_edge((4, 0), (4, 4), weight=4.0)
+
+        corrector = GraphCorrector(g)
+
+        # Verify graph is initially disconnected with 3 components
+        self.assertFalse(nx.is_connected(corrector.graph))
+        self.assertEqual(nx.number_connected_components(corrector.graph), 3)
+
+        result_graph = corrector.connect_intersecting_edges()
+
+        # Should be connected after finding all intersections
+        self.assertTrue(nx.is_connected(result_graph))
+
+        # The horizontal edge should have been split twice:
+        # Original: (0,2)---(6,2)
+        # After split 1: (0,2)---(2,2)---(6,2)
+        # After split 2: (0,2)---(2,2)---(4,2)---(6,2)
+        # So we should have at least 2 junction nodes added
+
+        initial_nodes = {(0, 2), (6, 2), (2, 0), (2, 4), (4, 0), (4, 4)}
+        final_nodes = set(result_graph.nodes())
+
+        # Should have at least 2 more nodes (junctions at intersections)
+        self.assertGreaterEqual(len(final_nodes), len(initial_nodes) + 2)
+
+        # Check corrections log
+        self.assertEqual(len(corrector.corrections_log), 1)
+        self.assertEqual(corrector.corrections_log[0]['type'], 'connect_intersecting_edges')
+        # Should have found 2 intersections
+        self.assertGreaterEqual(corrector.corrections_log[0]['details']['intersections_found'], 2)
+
     # ==================================================================================
     # COMPONENT CONNECTION TESTS
     # ==================================================================================
