@@ -535,7 +535,7 @@ class GraphCorrector:
         Find if there's an existing node within tolerance distance of point.
 
         :param point: Point to check (x, y)
-        :param tolerance: Maximum distance to consider
+        :param tolerance: Maximum distance to consider (inclusive)
         :return: Existing node if found, None otherwise
         :rtype: Optional[tuple]
         """
