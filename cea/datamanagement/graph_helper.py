@@ -807,7 +807,8 @@ class GraphCorrector:
             return False, f"Need at least 2 terminal nodes for Steiner tree, got {len(terminal_nodes) if terminal_nodes else 0}"
 
         # Check if all terminal nodes exist in graph
-        missing_terminals = [node for node in terminal_nodes if node not in graph.nodes()]
+        graph_nodes = set(graph.nodes())
+        missing_terminals = [node for node in terminal_nodes if node not in graph_nodes]
         if missing_terminals:
             return False, f"{len(missing_terminals)} terminal nodes not found in graph"
 
