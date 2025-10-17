@@ -41,6 +41,7 @@ from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_P
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization_new.building import Building
+from cea.datamanagement.graph_helper import GraphCorrector
 
 class Network(object):
     _coordinate_reference_system = None
@@ -226,6 +227,14 @@ class Network(object):
         connected_terminals = self._domain_potential_network_terminals_df[is_connected]
         connected_terminal_coord = connected_terminals['coordinates'].tolist()
 
+        # Validate graph is ready for Steiner tree with terminal nodes
+        is_ready, message = GraphCorrector.validate_steiner_tree_ready(self._domain_potential_network_graph,
+                                                                       connected_terminal_coord)
+        if not is_ready:
+            raise ValueError(f'Graph validation failed before Steiner tree: {message}. '
+                           f'This should not happen after corrections in _load_pot_network(). '
+                           f'Please report this issue.')
+
         # calculate steiner spanning tree of undirected potential_network_graph
         try:
             self.network_graph = nx.Graph(steiner_tree(self._domain_potential_network_graph, connected_terminal_coord))
@@ -234,12 +243,9 @@ class Network(object):
                                      columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
             self.network_nodes = Gdf([Point(node) for node in self.network_graph.nodes()],
                                      columns=['geometry'], crs=Network._coordinate_reference_system)
-        except Exception:
-            raise ValueError('There was an error while creating the Steiner tree. '
-                             'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
-                             'the Steiner tree does not support disconnected graphs. '
-                             'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
-                             'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
+        except Exception as e:
+            raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
+                           'This is an unexpected error. Please report this issue.') from e
 
         # complete edge and node dataframes with connected terminals and domain buildings
         if generate_graph_dataframes:
@@ -424,6 +430,11 @@ class Network(object):
             edge_start = (round(line_start[0], SHAPEFILE_TOLERANCE), round(line_start[1], SHAPEFILE_TOLERANCE))
             edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
             Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
+
+        # Apply graph corrections to fix connectivity issues
+        print("\nApplying graph corrections to domain potential network...")
+        corrector = GraphCorrector(Network._domain_potential_network_graph)
+        Network._domain_potential_network_graph = corrector.apply_corrections()
 
         return Network._domain_potential_network_graph
 

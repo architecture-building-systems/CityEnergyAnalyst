@@ -779,3 +779,13 @@ Visualisation:
     parameters: ['general:scenario']
     input-files:
       - [get_new_optimization_optimal_supply_systems_summary_file]
+
+  - name: plot-supply-system
+    label: Plot - Supply System
+    short_description: Plot components of energy supply systems
+    description: This Feature plots components of energy supply systems
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.supply_system
+    parameters: ['general:scenario']
+    input-files:
+      - [get_new_optimization_optimal_supply_systems_summary_file]
