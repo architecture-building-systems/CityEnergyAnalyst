@@ -157,7 +157,7 @@ class OperationalHourlyTimeline:
             - `E_PV_gen_kWh`: Total PV generation in kWh (same as `E_PV_gen_kWh` in the original PV results).
             - `E_PV_gen_used_kWh`: Total PV generation used in kWh.
             - `E_PV_gen_kWh_leftover`: Total PV generation leftover in kWh.
-            - `pv_offset_total_kgCO2e`: Total PV offset in kgCO2e (negative values; represents reduction).
+            - `PV_offset_total_kgCO2e`: Total PV offset in kgCO2e (negative values; represents reduction).
             plus one column per allowed tech: `PV_to_{tech}_kWh_input` representing PV electricity
             input allocated to that tech in each hour.
         Returns a dict mapping each PV type name to its allocation DataFrame, with
@@ -261,7 +261,7 @@ class OperationalHourlyTimeline:
                 - pv_hourly_results["E_PV_gen_kWh_leftover"].astype(float)
             )
             # Negative total PV offset based on GRID intensity (kgCO2e). Negative denotes reduction.
-            pv_hourly_results["pv_offset_total_kgCO2e"] = -(
+            pv_hourly_results["PV_offset_total_kgCO2e"] = -(
                 pv_hourly_results["E_PV_gen_used_kWh"].to_numpy(dtype=float)
                 * self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
             ).astype(float)
@@ -271,7 +271,7 @@ class OperationalHourlyTimeline:
                 "E_PV_gen_kWh",
                 "E_PV_gen_used_kWh",
                 "E_PV_gen_kWh_leftover",
-                "pv_offset_total_kgCO2e",
+                "PV_offset_total_kgCO2e",
             ]
             tech_cols = [f"PV_to_{t}_kWh_input" for t in ordered_techs if f"PV_to_{t}_kWh_input" in per_tech_allocation]
             alloc_df = pd.DataFrame(per_tech_allocation)
@@ -279,8 +279,8 @@ class OperationalHourlyTimeline:
             out_df = pd.concat([pv_hourly_results[base_cols], alloc_df[tech_cols]], axis=1)
             out_df.index.name = "hour"
 
-            # Suffix columns with PV name for multi-scenario clarity
-            suffixed = out_df.rename(columns={col: f"{col}__{pv_code}" for col in out_df.columns})
+            # rename PV into PV_{pv_code} to avoid confusion with other PV columns
+            suffixed = out_df.rename(columns={c: c.replace("PV_", f"PV_{pv_code}_") for c in out_df.columns})
 
             # Store in scenarios dict
             self.pv_allocations[pv_code] = suffixed.copy()
@@ -297,7 +297,7 @@ class OperationalHourlyTimeline:
         - Base emission columns (per-tech and per-supply) are computed from demand and feedstock intensities and
             are NOT altered by PV.
         - For each logged PV scenario (via `log_pv_contribution`), per-tech PV offset columns
-            `PV_offset_{tech}_kgCO2e__{pv}` and a total `pv_offset_total_kgCO2e__{pv}` are added to the timeline.
+            `PV_offset_{tech}_kgCO2e__{pv}` and a total `PV_offset_total_kgCO2e__{pv}` are added to the timeline.
         - No unsuffixed PV columns are written; all PV offsets carry the scenario suffix to avoid ambiguity.
         """
         for demand_type, tech_tuple in _tech_name_mapping.items():
@@ -315,23 +315,23 @@ class OperationalHourlyTimeline:
         # Apply PV offsets for all logged scenarios (only offsets GRID-based electricity inputs)
         if len(self.pv_allocations) > 0:
             grid_intensity = self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
-            for pv_name, allocation_df in self.pv_allocations.items():
+            for pv_code, allocation_df in self.pv_allocations.items():
                 total_avoided_co2kge = np.zeros(len(self.operational_emission_timeline), dtype=float)
                 for demand_type, (_demand_col_name, supply_type_name) in _tech_name_mapping.items():
                     supply_feedstock: str = self.bpr.supply[f"source_{supply_type_name}"]
                     if supply_feedstock != "GRID":
                         continue
-                    pv_col = f"PV_to_{demand_type}_kWh_input__{pv_name}"
+                    pv_col = f"PV_{pv_code}_to_{demand_type}_input_kWh"
                     if pv_col not in allocation_df.columns:
                         continue
                     pv_input = allocation_df[pv_col].to_numpy(dtype=float)
                     avoided_co2kge = (pv_input * grid_intensity).astype(float)
                     total_avoided_co2kge += avoided_co2kge
                     # Negative PV offset per-tech (suffixed)
-                    offset_col_suffixed = f"PV_offset_{demand_type}_kgCO2e__{pv_name}"
+                    offset_col_suffixed = f"PV_{pv_code}_offset_{demand_type}_kgCO2e"
                     self.operational_emission_timeline[offset_col_suffixed] = -avoided_co2kge
                 # Total PV offset per scenario
-                total_col_suffixed = f"pv_offset_total_kgCO2e__{pv_name}"
+                total_col_suffixed = f"PV_{pv_code}_offset_total_kgCO2e"
                 self.operational_emission_timeline[total_col_suffixed] = -total_avoided_co2kge.astype(float)
 
     def save_results(self) -> None:

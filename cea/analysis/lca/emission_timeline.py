@@ -212,8 +212,8 @@ class BuildingEmissionTimeline:
             district_pv_area = pd.read_csv(self.locator.PV_total_buildings(pv_code), index_col='name') # indexed with building name
             pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
             lifetime = cast(int, pv_db.loc[pv_code, 'LT_yr'])
-            pv_type_str = f"pv_{pv_code}"
-            self.surface_area[f"Apv_{pv_code}"] = pv_area
+            pv_type_str = f"PV_{pv_code}"
+            self.surface_area[f"APV_{pv_code}"] = pv_area
             for emission_type in self._EMISSION_TYPES:
                 col_name = f"{emission_type}_{pv_type_str}_kgCO2e"
                 if col_name not in self.timeline.columns:
