@@ -9,8 +9,6 @@ import json
 import os
 import time
 
-import pandas as pd
-
 
 class PlotCache(object):
     """A cache for plot data. Use the ``lookup`` method to retrieve data from the cache."""
@@ -122,6 +120,8 @@ class PlotCache(object):
 
     def load_cached_value(self, data_path, parameters):
         """Load a Dataframe from disk"""
+        import pandas as pd
+
         return pd.read_pickle(self._cached_data_file(data_path, parameters))
 
 
