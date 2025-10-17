@@ -14,7 +14,7 @@ from cea.datamanagement.database.components import Feedstocks
 from cea.utilities import epwreader
 
 
-def _load_grid_intensity_override(config: Configuration):
+def _load_grid_emission_intensity_override(config: Configuration):
     """Load and validate an optional external CSV for grid carbon intensity.
 
     Returns a tuple (override, values) where:
@@ -93,14 +93,20 @@ def operational_hourly(config: Configuration) -> None:
     feedstock_db = Feedstocks.from_locator(locator)
     results: list[tuple[str, pd.DataFrame]] = []
     # Load optional GRID carbon intensity override once for all buildings
-    override_grid_emission, grid_emission_final_g = _load_grid_intensity_override(config)
+    override_grid_emission, grid_emission_final_g = _load_grid_emission_intensity_override(config)
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
     for building in buildings:
         bpr = building_properties[building]
-
         timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
+
         if override_grid_emission and grid_emission_final is not None:
             timeline.emission_intensity_timeline["GRID"] = grid_emission_final
+
+        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+        pv_type: str = getattr(emissions_cfg, "pv_type", "")
+        if consider_pv and pv_type:
+            timeline.log_pv_contribution(type_pv=pv_type)
+
         timeline.calculate_operational_emission()
         timeline.save_results()
         print(
