@@ -8,7 +8,7 @@ from cea.constants import (
     CONVERSION_AREA_TO_FLOOR_AREA_RATIO,
     EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS,
 )
-from typing import TYPE_CHECKING
+from typing import cast, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -133,33 +133,41 @@ class BuildingEmissionTimeline:
 
         self.timeline.to_csv(self.locator.get_lca_timeline_building(self.name), float_format='%.2f')
 
+    def log_emissions(
+        self,
+        area: float,
+        production_per_area: float,
+        biogenic_per_area: float,
+        demolition_per_area: float,
+        lifetime: int,
+        key: str,
+    ):
+        self.log_emission_with_lifetime(
+            emission=production_per_area * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
+        )
+        self.log_emission_with_lifetime(
+            emission=-biogenic_per_area * area,
+            lifetime=lifetime,
+            col=f"biogenic_{key}_kgCO2e",
+        )
+        self.log_emission_with_lifetime(
+            emission=demolition_per_area * area,
+            lifetime=lifetime,
+            col=f"demolition_{key}_kgCO2e",
+        )
+        self.log_emission_in_timeline(
+            emission=0.0,  # when building is first built, no demolition emission
+            year=self.typology["year"],
+            col=f"demolition_{key}_kgCO2e",
+            additive=False,
+        )
+
     def fill_embodied_emissions(self) -> None:
         """
         Log the embodied emissions for the building components for
         the beginning construction year into the timeline,
         and whenever any component needs to be renovated.
         """
-
-        def log_emissions(area, ghg, biogenic, demolition, lifetime, key):
-            self.log_emission_with_lifetime(
-                emission=ghg * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
-            )
-            self.log_emission_with_lifetime(
-                emission=-biogenic * area,
-                lifetime=lifetime,
-                col=f"biogenic_{key}_kgCO2e",
-            )
-            self.log_emission_with_lifetime(
-                emission=demolition * area,
-                lifetime=lifetime,
-                col=f"demolition_{key}_kgCO2e",
-            )
-            self.log_emission_in_timeline(
-                emission=0.0,  # when building is first built, no demolition emission
-                year=self.typology["year"],
-                col=f"demolition_{key}_kgCO2e",
-                additive=False,
-            )
 
         for key, value in self._MAPPING_DICT.items():
             area: float = self.surface_area[f"A{key}"]
@@ -189,7 +197,32 @@ class BuildingEmissionTimeline:
                 biogenic = float(biogenic_any)
                 demolition: float = 0.0  # dummy value, not implemented yet
 
-            log_emissions(area, ghg, biogenic, demolition, lifetime, key)
+            self.log_emissions(area, ghg, biogenic, demolition, lifetime, key)
+
+    def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
+        """Initialize the PV system in the building emission timeline.
+        It reads the area of each PV type from the building properties, 
+        and adds the corresponding columns to the timeline DataFrame.
+        """
+        pv_db = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS"), index_col='code')
+        for pv_code in pv_codes:
+            if pv_code not in pv_db.index:
+                raise ValueError(f"PV type {pv_code} not found in the PV database.")
+            
+            district_pv_area = pd.read_csv(self.locator.PV_total_buildings(pv_code), index_col='name') # indexed with building name
+            pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
+            lifetime = cast(int, pv_db.loc[pv_code, 'LT_yr'])
+            pv_type_str = f"pv_{pv_code}"
+            self.surface_area[f"Apv_{pv_code}"] = pv_area
+            for emission_type in self._EMISSION_TYPES:
+                col_name = f"{emission_type}_{pv_type_str}_kgCO2e"
+                if col_name not in self.timeline.columns:
+                    self.timeline[col_name] = 0.0
+                else:
+                    raise ValueError(f"Column {col_name} already exists in the timeline, check for duplicate PV codes.")
+            # Log embodied emissions for PV system
+            embodied_intensity = cast(float, pv_db.loc[pv_code, 'module_embodied_kgco2m2'])
+            self.log_emissions(pv_area, embodied_intensity, 0.0, 0.0, lifetime, pv_type_str)
 
     def fill_operational_emissions(
         self,

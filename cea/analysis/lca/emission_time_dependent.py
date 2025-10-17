@@ -97,22 +97,22 @@ def operational_hourly(config: Configuration) -> None:
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
     for building in buildings:
         bpr = building_properties[building]
-        timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
+        hourly_timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
 
         if override_grid_emission and grid_emission_final is not None:
-            timeline.emission_intensity_timeline["GRID"] = grid_emission_final
+            hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
 
         consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
-        pv_type: str = getattr(emissions_cfg, "pv_type", "")
-        if consider_pv and pv_type:
-            timeline.log_pv_contribution(type_pv=pv_type)
+        pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
+        if consider_pv and pv_codes:
+            hourly_timeline.log_pv_contribution(pv_codes=pv_codes)
 
-        timeline.calculate_operational_emission()
-        timeline.save_results()
+        hourly_timeline.calculate_operational_emission()
+        hourly_timeline.save_results()
         print(
             f"Hourly operational emissions for {building} calculated and saved in: {locator.get_lca_operational_hourly_building(building)}."
         )
-        results.append((building, timeline.operational_emission_timeline))
+        results.append((building, hourly_timeline.operational_emission_timeline))
 
     # df_by_building = to_ton(sum_by_building(results))
     df_by_building = sum_by_building(results)
@@ -152,6 +152,10 @@ def total_yearly(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_embodied_emissions()
+        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+        pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
+        if consider_pv and pv_codes:
+            timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
         ref_yr_val = getattr(emissions_cfg, 'grid_decarbonise_reference_year', None)
         tar_yr_val = getattr(emissions_cfg, 'grid_decarbonise_target_year', None)
