@@ -398,7 +398,7 @@ Or for heating:
 
 #### **The Data Flow**:
 
-```
+```text
 Building Properties
      ↓
 1. HVAC assemblies → Determine temperatures & capacities
@@ -459,7 +459,7 @@ How is end use demand and final use demand differentiated in the demand output f
 These represent **useful energy** needed at the point of use, **including all losses**:
 
 **Heating Example**:
-```
+```text
 Qhs_sys_kWh = End-use space heating demand
             = Qhs_sen_sys (sensible heat)
             + Qhs_em_ls (emission losses)
@@ -467,7 +467,7 @@ Qhs_sys_kWh = End-use space heating demand
 ```
 
 **Cooling Example**:
-```
+```text
 Qcs_sys_kWh = End-use space cooling demand
             = Qcs_sen_sys (sensible cooling)
             + Qcs_lat_sys (latent cooling)
@@ -501,7 +501,7 @@ elif energy_source == "NATURALGAS":
 #### **Complete Column Categories in Demand Output**:
 
 **End Use Columns (Q*_sys)**:
-```
+```python
 Qhs_sys_kWh          # End-use space heating
 Qcs_sys_kWh          # End-use space cooling
 Qww_sys_kWh          # End-use hot water
@@ -517,7 +517,7 @@ E_sys_kWh  # Total electricity end-use
 ```
 
 **Final Energy Columns (by fuel/source)**:
-```
+```python
 # Electricity from grid
 GRID_hs_kWh          # Grid electricity for space heating
 GRID_cs_kWh          # Grid electricity for space cooling
@@ -593,7 +593,7 @@ B001,15000,5000,0,8000,2900
 - ✅ **`GRID_*`, `NG_*`, `OIL_*`, etc.** = Final energy (what you pay for)
 
 #### **Relationship**:
-```
+```text
 Final Energy = End Use Demand / System Efficiency
 ```
 
