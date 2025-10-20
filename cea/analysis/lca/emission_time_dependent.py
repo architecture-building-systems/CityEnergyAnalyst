@@ -318,6 +318,8 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
             if date_series is None:
                 date_series = df_copy['date'].copy()
             df_copy = df_copy.drop(columns=['date'])
+        if "name" in df_copy.columns:
+            df_copy = df_copy.drop(columns=['name'])
         # Extract year values from index if it's a year index
         if has_year_index and year_series is None:
             year_series = pd.Series(df_copy.index.values, index=df_copy.index)

@@ -307,7 +307,7 @@ class BuildingEmissionTimeline:
 
     def _apply_feedstock_policies(
         self,
-        discounted: pd.DataFrame,
+        operational_multi_years: pd.DataFrame,
         feedstock_policies: Mapping[str, tuple[int, int, float]],
         feedstocks: list[str],
         demand_types: list[str],
@@ -333,8 +333,33 @@ class BuildingEmissionTimeline:
             for fs in matching_fs:
                 for d in demand_types:
                     col = f"{d}_{fs}_kgCO2e"
-                    if col in discounted.columns:
-                        discounted[col] = self.discount_over_year(discounted[col], ref, tgt, frac)
+                    if col in operational_multi_years.columns:
+                        operational_multi_years[col] = self.discount_over_year(operational_multi_years[col], ref, tgt, frac)
+
+    def _apply_pv_offset_decarbonization(
+        self,
+        operational_multi_years: pd.DataFrame,
+        feedstock_policies: Mapping[str, tuple[int, int, float]],
+    ) -> list[str]:
+        """Apply GRID policy in-place to discounted per-feedstock columns for PV systems."""
+        list_discounted_pv_cols: list[str] = []
+        for raw_key, raw_policy in (feedstock_policies or {}).items():
+            ref = int(raw_policy[0])
+            tgt = int(raw_policy[1])
+            frac = float(raw_policy[2])
+            fs_key_upper = str(raw_key).strip().upper()
+            if not fs_key_upper == "GRID":
+                continue
+
+            for col in operational_multi_years.columns:
+                if col.startswith("PV_") and col.endswith("_offset_total_kgCO2e"):
+                    # column name looks like PV_{pv_code}_offset_total_kgCO2e
+                    operational_multi_years[col] = self.discount_over_year(
+                        operational_multi_years[col], ref, tgt, frac
+                    )
+                    list_discounted_pv_cols.append(col)
+
+        return list_discounted_pv_cols
 
     @staticmethod
     def _aggregate_by_demand(
@@ -381,9 +406,12 @@ class BuildingEmissionTimeline:
         operational_multiyrs = self._tile_yearly(yearly_sum)
 
         self._apply_feedstock_policies(operational_multiyrs, feedstock_policies, feedstocks, demand_types)
+        discounted_pv_cols = self._apply_pv_offset_decarbonization(operational_multiyrs, feedstock_policies)
         out = self._aggregate_by_demand(operational_multiyrs, demand_types)
 
         self.timeline.loc[:, self._OPERATIONAL_COLS] = out[self._OPERATIONAL_COLS].to_numpy(dtype=float)
+        if discounted_pv_cols:
+            self.timeline.loc[:, discounted_pv_cols] = operational_multiyrs[discounted_pv_cols].to_numpy(dtype=float)
 
     def demolish(self, demolition_year: int) -> None:
         """
