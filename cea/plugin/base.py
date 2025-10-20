@@ -45,9 +45,9 @@ class CeaPlugin:
 
         plots_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plots.yml")
         if not os.path.exists(plots_yml):
-            return {}
+            return []
         with open(plots_yml, "r") as plots_yml_fp:
-            categories = yaml.load(plots_yml_fp, Loader=yaml.CLoader)
+            categories = yaml.safe_load(plots_yml_fp) or {}
         return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in
                 categories.keys()]
 
@@ -62,7 +62,7 @@ class CeaPlugin:
         if not os.path.exists(schemas_yml):
             return {}
         with open(schemas_yml, "r") as schemas_yml_fp:
-            schemas = yaml.load(schemas_yml_fp, Loader=yaml.CLoader)
+            schemas = yaml.safe_load(schemas_yml_fp) or {}
         return schemas
 
     @property

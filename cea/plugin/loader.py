@@ -13,7 +13,7 @@ def instantiate_plugin(plugin_fqname):
         module = importlib.import_module(plugin_module)
         instance = getattr(module, plugin_class)()
         return instance
-    except BaseException as ex:
+    except Exception as ex:
         warnings.warn(f"Could not instantiate plugin {plugin_fqname} ({ex})")
         return None
 
