@@ -76,7 +76,7 @@ class Configuration:
     multiprocessing: bool
     number_of_cpus_to_keep_free: int
     debug: bool
-    plugins: List[Any]
+    plugins: List[str]
 
     # Nested classes
     class RestrictionContextManager:
@@ -230,7 +230,7 @@ class Configuration:
     @overload
     def __getattr__(self, item: Literal["debug"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["plugins"]) -> List[Any]: ...
+    def __getattr__(self, item: Literal["plugins"]) -> List[str]: ...
 
 class Section:
     name: str
@@ -251,7 +251,7 @@ class GeneralSection(Section):
     multiprocessing: bool
     number_of_cpus_to_keep_free: int
     debug: bool
-    plugins: List[Any]
+    plugins: List[str]
 
     @overload
     def __getattr__(self, item: Literal["project"]) -> str: ...
@@ -266,29 +266,29 @@ class GeneralSection(Section):
     @overload
     def __getattr__(self, item: Literal["debug"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["plugins"]) -> List[Any]: ...
+    def __getattr__(self, item: Literal["plugins"]) -> List[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DatabaseHelperSection(Section):
     """Typed section for database-helper configuration"""
     databases_path: str
-    databases: List[str]
+    databases: list[str]
 
     @overload
     def __getattr__(self, item: Literal["databases_path"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["databases"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["databases"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ArchetypesMapperSection(Section):
     """Typed section for archetypes-mapper configuration"""
-    input_databases: List[str]
-    buildings: List[str]
+    input_databases: list[str]
+    buildings: list[str]
 
     @overload
-    def __getattr__(self, item: Literal["input_databases"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["input_databases"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class StreetsHelperSection(Section):
@@ -320,9 +320,9 @@ class SurroundingsHelperSection(Section):
 
 class ZoneHelperSection(Section):
     """Typed section for zone-helper configuration"""
-    height_ag: float
-    floors_ag: int
-    year_construction: int
+    height_ag: float | None
+    floors_ag: int | None
+    year_construction: int | None
     height_bg: float
     floors_bg: int
     occupancy_type: str
@@ -330,11 +330,11 @@ class ZoneHelperSection(Section):
     fix_overlapping_geometries: bool
 
     @overload
-    def __getattr__(self, item: Literal["height_ag"]) -> float: ...
+    def __getattr__(self, item: Literal["height_ag"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["floors_ag"]) -> int: ...
+    def __getattr__(self, item: Literal["floors_ag"]) -> int | None: ...
     @overload
-    def __getattr__(self, item: Literal["year_construction"]) -> int: ...
+    def __getattr__(self, item: Literal["year_construction"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["height_bg"]) -> float: ...
     @overload
@@ -349,10 +349,10 @@ class ZoneHelperSection(Section):
 
 class TreesHelperSection(Section):
     """Typed section for trees-helper configuration"""
-    trees: str
+    trees: str | None
 
     @overload
-    def __getattr__(self, item: Literal["trees"]) -> str: ...
+    def __getattr__(self, item: Literal["trees"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class WeatherHelperSection(Section):
@@ -365,7 +365,7 @@ class WeatherHelperSection(Section):
 
 class RadiationCraxSection(Section):
     """Typed section for radiation-crax configuration"""
-    buildings: List[str]
+    buildings: list[str]
     albedo: float
     calculate_sensor_data: bool
     using_cea_sensor: bool
@@ -380,7 +380,7 @@ class RadiationCraxSection(Section):
     update_shadow_day: float
 
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["albedo"]) -> float: ...
     @overload
@@ -409,7 +409,7 @@ class RadiationCraxSection(Section):
 
 class RadiationSection(Section):
     """Typed section for radiation configuration"""
-    buildings: List[str]
+    buildings: list[str]
     roof_grid: float
     walls_grid: float
     zone_geometry: float
@@ -435,7 +435,7 @@ class RadiationSection(Section):
     write_sensor_data: bool
 
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["roof_grid"]) -> float: ...
     @overload
@@ -486,11 +486,11 @@ class RadiationSection(Section):
 
 class RadiationSimplifiedSection(Section):
     """Typed section for radiation-simplified configuration"""
-    sample_buildings: List[str]
+    sample_buildings: list[str]
     buffer: float
 
     @overload
-    def __getattr__(self, item: Literal["sample_buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["sample_buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["buffer"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -498,23 +498,23 @@ class RadiationSimplifiedSection(Section):
 class OccupancyHelperSection(Section):
     """Typed section for occupancy-helper configuration"""
     occupancy_model: str
-    buildings: List[str]
+    buildings: list[str]
 
     @overload
     def __getattr__(self, item: Literal["occupancy_model"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DemandSection(Section):
     """Typed section for demand configuration"""
-    buildings: List[str]
+    buildings: list[str]
     resolution_output: str
     use_dynamic_infiltration_calculation: bool
     overheating_warning: bool
 
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["resolution_output"]) -> str: ...
     @overload
@@ -561,23 +561,23 @@ class ExtractReferenceCaseSection(Section):
 
 class SolarSection(Section):
     """Typed section for solar configuration"""
-    type_pvpanel: str
-    type_scpanel: List[str]
+    type_pvpanel: list[str]
+    type_scpanel: list[str]
     panel_on_roof: bool
     panel_on_wall: bool
     annual_radiation_threshold: float
-    t_in_sc: float
-    t_in_pvt: float
+    t_in_sc: float | None
+    t_in_pvt: float | None
     solar_window_solstice: int
     max_roof_coverage: float
     custom_tilt_angle: bool
     panel_tilt_angle: float
-    buildings: List[str]
+    buildings: list[str]
 
     @overload
-    def __getattr__(self, item: Literal["type_pvpanel"]) -> str: ...
+    def __getattr__(self, item: Literal["type_pvpanel"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["type_scpanel"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["type_scpanel"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["panel_on_roof"]) -> bool: ...
     @overload
@@ -585,9 +585,9 @@ class SolarSection(Section):
     @overload
     def __getattr__(self, item: Literal["annual_radiation_threshold"]) -> float: ...
     @overload
-    def __getattr__(self, item: Literal["t_in_sc"]) -> float: ...
+    def __getattr__(self, item: Literal["t_in_sc"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["t_in_pvt"]) -> float: ...
+    def __getattr__(self, item: Literal["t_in_pvt"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["solar_window_solstice"]) -> int: ...
     @overload
@@ -597,17 +597,17 @@ class SolarSection(Section):
     @overload
     def __getattr__(self, item: Literal["panel_tilt_angle"]) -> float: ...
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DbfToolsSection(Section):
     """Typed section for dbf-tools configuration"""
-    input_file: str
+    input_file: str | None
     output_file_name: str
     output_path: str
 
     @overload
-    def __getattr__(self, item: Literal["input_file"]) -> str: ...
+    def __getattr__(self, item: Literal["input_file"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["output_file_name"]) -> str: ...
     @overload
@@ -659,20 +659,20 @@ class FromRhinoGhSection(Section):
 
 class ShapefileToolsSection(Section):
     """Typed section for shapefile-tools configuration"""
-    input_file: str
+    input_file: str | None
     output_file_name: str
     output_path: str
-    reference_crs_file: str
+    reference_crs_file: str | None
     polygon: bool
 
     @overload
-    def __getattr__(self, item: Literal["input_file"]) -> str: ...
+    def __getattr__(self, item: Literal["input_file"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["output_file_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["output_path"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["reference_crs_file"]) -> str: ...
+    def __getattr__(self, item: Literal["reference_crs_file"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["polygon"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -682,20 +682,20 @@ class SensitivityAnalysisToolsSection(Section):
     create_scenario_directory: bool
     n: int
     having_variable_1: bool
-    variable_1_lower_bound: float
-    variable_1_upper_bound: float
+    variable_1_lower_bound: float | None
+    variable_1_upper_bound: float | None
     having_variable_2: bool
-    variable_2_lower_bound: float
-    variable_2_upper_bound: float
+    variable_2_lower_bound: float | None
+    variable_2_upper_bound: float | None
     having_variable_3: bool
-    variable_3_lower_bound: float
-    variable_3_upper_bound: float
+    variable_3_lower_bound: float | None
+    variable_3_upper_bound: float | None
     having_variable_4: bool
-    variable_4_lower_bound: float
-    variable_4_upper_bound: float
+    variable_4_lower_bound: float | None
+    variable_4_upper_bound: float | None
     having_variable_5: bool
-    variable_5_lower_bound: float
-    variable_5_upper_bound: float
+    variable_5_lower_bound: float | None
+    variable_5_upper_bound: float | None
 
     @overload
     def __getattr__(self, item: Literal["create_scenario_directory"]) -> bool: ...
@@ -704,49 +704,49 @@ class SensitivityAnalysisToolsSection(Section):
     @overload
     def __getattr__(self, item: Literal["having_variable_1"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["variable_1_lower_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_1_lower_bound"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["variable_1_upper_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_1_upper_bound"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["having_variable_2"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["variable_2_lower_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_2_lower_bound"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["variable_2_upper_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_2_upper_bound"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["having_variable_3"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["variable_3_lower_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_3_lower_bound"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["variable_3_upper_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_3_upper_bound"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["having_variable_4"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["variable_4_lower_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_4_lower_bound"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["variable_4_upper_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_4_upper_bound"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["having_variable_5"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["variable_5_lower_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_5_lower_bound"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["variable_5_upper_bound"]) -> float: ...
+    def __getattr__(self, item: Literal["variable_5_upper_bound"]) -> float | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class FormatHelperSection(Section):
     """Typed section for format-helper configuration"""
-    scenarios_to_verify_and_migrate: str
+    scenarios_to_verify_and_migrate: list[str]
     migrate_from_cea_3: bool
 
     @overload
-    def __getattr__(self, item: Literal["scenarios_to_verify_and_migrate"]) -> str: ...
+    def __getattr__(self, item: Literal["scenarios_to_verify_and_migrate"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["migrate_from_cea_3"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class BatchProcessWorkflowSection(Section):
     """Typed section for batch-process-workflow configuration"""
-    scenarios_to_simulate: str
+    scenarios_to_simulate: list[str]
     export_to_rhino_gh: bool
     import_from_rhino_gh: bool
     database_helper: bool
@@ -771,7 +771,7 @@ class BatchProcessWorkflowSection(Section):
     results_summary_and_analytics: bool
 
     @overload
-    def __getattr__(self, item: Literal["scenarios_to_simulate"]) -> str: ...
+    def __getattr__(self, item: Literal["scenarios_to_simulate"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["export_to_rhino_gh"]) -> bool: ...
     @overload
@@ -820,17 +820,17 @@ class BatchProcessWorkflowSection(Section):
 
 class ResultSummarySection(Section):
     """Typed section for result-summary configuration"""
-    folder_name_to_save_exported_results: str
-    buildings: List[str]
-    filter_buildings_by_year_start: int
-    filter_buildings_by_year_end: int
-    filter_buildings_by_construction_type: str
-    filter_buildings_by_use_type: str
+    folder_name_to_save_exported_results: str | None
+    buildings: list[str]
+    filter_buildings_by_year_start: int | None
+    filter_buildings_by_year_end: int | None
+    filter_buildings_by_construction_type: list[str]
+    filter_buildings_by_use_type: list[str]
     min_ratio_as_main_use: float
     aggregate_by_building: bool
-    aggregate_by_time_period: List[str]
-    period_start_date: List[str]
-    period_end_date: List[str]
+    aggregate_by_time_period: list[str]
+    period_start_date: list[str]
+    period_end_date: list[str]
     metrics_building_energy_demand: bool
     metrics_emissions: bool
     metrics_solar_irradiation: bool
@@ -845,27 +845,27 @@ class ResultSummarySection(Section):
     use_conditioned_floor_area_for_normalisation: bool
 
     @overload
-    def __getattr__(self, item: Literal["folder_name_to_save_exported_results"]) -> str: ...
+    def __getattr__(self, item: Literal["folder_name_to_save_exported_results"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_year_start"]) -> int: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_year_start"]) -> int | None: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_year_end"]) -> int: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_year_end"]) -> int | None: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_construction_type"]) -> str: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_construction_type"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_use_type"]) -> str: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_use_type"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["min_ratio_as_main_use"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["aggregate_by_building"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["aggregate_by_time_period"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["aggregate_by_time_period"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["period_start_date"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["period_start_date"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["period_end_date"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["period_end_date"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["metrics_building_energy_demand"]) -> bool: ...
     @overload
@@ -910,11 +910,11 @@ class TestSection(Section):
 
 class TraceInputlocatorSection(Section):
     """Typed section for trace-inputlocator configuration"""
-    scripts: List[str]
+    scripts: list[str]
     meta_output_file: str
 
     @overload
-    def __getattr__(self, item: Literal["scripts"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["scripts"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["meta_output_file"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -936,8 +936,8 @@ class ThermalNetworkSection(Section):
     minimum_mass_flow_iteration_limit: int
     minimum_edge_mass_flow: float
     diameter_iteration_limit: int
-    substation_cooling_systems: List[str]
-    substation_heating_systems: List[str]
+    substation_cooling_systems: list[str]
+    substation_heating_systems: list[str]
     temperature_control: str
     plant_supply_temperature: float
 
@@ -972,9 +972,9 @@ class ThermalNetworkSection(Section):
     @overload
     def __getattr__(self, item: Literal["diameter_iteration_limit"]) -> int: ...
     @overload
-    def __getattr__(self, item: Literal["substation_cooling_systems"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["substation_cooling_systems"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["substation_heating_systems"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["substation_heating_systems"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["temperature_control"]) -> str: ...
     @overload
@@ -1070,11 +1070,11 @@ class ThermalNetworkOptimizationSection(Section):
 class OptimizationSection(Section):
     """Typed section for optimization configuration"""
     network_type: str
-    technologies_dh: List[str]
-    technologies_dc: List[str]
-    objective_functions_dc: List[str]
+    technologies_dh: list[str]
+    technologies_dc: list[str]
+    objective_functions_dc: list[str]
     cold_storage_type: str
-    population_size: int
+    population_size: int | None
     number_of_generations: int
     random_seed: int
     mutation_prob: float
@@ -1087,15 +1087,15 @@ class OptimizationSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["technologies_dh"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["technologies_dh"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["technologies_dc"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["technologies_dc"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["objective_functions_dc"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["objective_functions_dc"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["cold_storage_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["population_size"]) -> int: ...
+    def __getattr__(self, item: Literal["population_size"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["number_of_generations"]) -> int: ...
     @overload
@@ -1117,15 +1117,15 @@ class OptimizationSection(Section):
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
     network_type: str
-    cooling_components: List[str]
-    heating_components: List[str]
-    heat_rejection_components: List[str]
+    cooling_components: list[str]
+    heating_components: list[str]
+    heat_rejection_components: list[str]
     maximum_number_of_networks: int
-    objective_functions: List[str]
+    objective_functions: list[str]
     generate_detailed_outputs: bool
     retain_run_results: bool
-    available_energy_sources: List[str]
-    available_energy_potentials: List[str]
+    available_energy_sources: list[str]
+    available_energy_potentials: list[str]
     component_efficiency_model_complexity: str
     network_temperature: int
     systems_algorithm: str
@@ -1136,7 +1136,7 @@ class OptimizationNewSection(Section):
     networks_crossover_method: str
     building_clustering_method: str
     networks_overlap_correction_method: str
-    ga_population_size: int
+    ga_population_size: int | None
     ga_number_of_generations: int
     ga_mutation_prob: float
     ga_crossover_prob: float
@@ -1151,23 +1151,23 @@ class OptimizationNewSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["cooling_components"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["cooling_components"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["heating_components"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["heating_components"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["heat_rejection_components"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["heat_rejection_components"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["maximum_number_of_networks"]) -> int: ...
     @overload
-    def __getattr__(self, item: Literal["objective_functions"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["objective_functions"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["generate_detailed_outputs"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["retain_run_results"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["available_energy_sources"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["available_energy_sources"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["available_energy_potentials"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["available_energy_potentials"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["component_efficiency_model_complexity"]) -> str: ...
     @overload
@@ -1189,7 +1189,7 @@ class OptimizationNewSection(Section):
     @overload
     def __getattr__(self, item: Literal["networks_overlap_correction_method"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["ga_population_size"]) -> int: ...
+    def __getattr__(self, item: Literal["ga_population_size"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["ga_number_of_generations"]) -> int: ...
     @overload
@@ -1214,9 +1214,9 @@ class OptimizationNewSection(Section):
 
 class PlotsSection(Section):
     """Typed section for plots configuration"""
-    buildings: List[str]
+    buildings: list[str]
     building: str
-    categories: List[str]
+    categories: list[str]
     network_type: str
     network_name: str
     plant_node: str
@@ -1224,11 +1224,11 @@ class PlotsSection(Section):
     normalization: str
 
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["building"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["categories"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["categories"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
@@ -1254,11 +1254,11 @@ class PlotsOptimizationSection(Section):
 
 class PlotsSupplySystemSection(Section):
     """Typed section for plots-supply-system configuration"""
-    system: str
+    system: str | None
     timeframe: str
 
     @overload
-    def __getattr__(self, item: Literal["system"]) -> str: ...
+    def __getattr__(self, item: Literal["system"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["timeframe"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -1277,13 +1277,13 @@ class PlotsComparisonsSection(Section):
 class SewageSection(Section):
     """Typed section for sewage configuration"""
     heat_exchanger_length: int
-    sewage_water_ratio: float
+    sewage_water_ratio: float | None
     sewage_water_district: float
 
     @overload
     def __getattr__(self, item: Literal["heat_exchanger_length"]) -> int: ...
     @overload
-    def __getattr__(self, item: Literal["sewage_water_ratio"]) -> float: ...
+    def __getattr__(self, item: Literal["sewage_water_ratio"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["sewage_water_district"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -1307,12 +1307,12 @@ class WaterBodySection(Section):
 
 class ShallowGeothermalSection(Section):
     """Typed section for shallow-geothermal configuration"""
-    buildings_available: List[str]
+    buildings_available: list[str]
     extra_area_available: float
     average_probe_depth: float
 
     @overload
-    def __getattr__(self, item: Literal["buildings_available"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings_available"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["extra_area_available"]) -> float: ...
     @overload
@@ -1325,10 +1325,10 @@ class CreateNewScenarioSection(Section):
     scenario: str
     output_path: str
     zone: str
-    terrain: str
-    streets: str
-    surroundings: str
-    typology: str
+    terrain: str | None
+    streets: str | None
+    surroundings: str | None
+    typology: str | None
 
     @overload
     def __getattr__(self, item: Literal["project"]) -> str: ...
@@ -1339,13 +1339,13 @@ class CreateNewScenarioSection(Section):
     @overload
     def __getattr__(self, item: Literal["zone"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["terrain"]) -> str: ...
+    def __getattr__(self, item: Literal["terrain"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["streets"]) -> str: ...
+    def __getattr__(self, item: Literal["streets"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["surroundings"]) -> str: ...
+    def __getattr__(self, item: Literal["surroundings"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["typology"]) -> str: ...
+    def __getattr__(self, item: Literal["typology"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DecentralizedSection(Section):
@@ -1356,7 +1356,7 @@ class DecentralizedSection(Section):
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
     network_type: str
-    connected_buildings: List[str]
+    connected_buildings: list[str]
     plant_buildings: List[str]
     pipe_diameter: int
     consider_only_buildings_with_demand: bool
@@ -1365,7 +1365,7 @@ class NetworkLayoutSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["connected_buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["plant_buildings"]) -> List[str]: ...
     @overload
@@ -1428,14 +1428,14 @@ class CreateMixedUseTypeSection(Section):
     """Typed section for create-mixed-use-type configuration"""
     use_type: str
     metadata: str
-    ratios: str
+    ratios: List[str]
 
     @overload
     def __getattr__(self, item: Literal["use_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["metadata"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["ratios"]) -> str: ...
+    def __getattr__(self, item: Literal["ratios"]) -> List[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class CreatePolygonSection(Section):
@@ -1502,39 +1502,39 @@ class DevelopmentSection(Section):
 
 class PlotsGeneralSection(Section):
     """Typed section for plots-general configuration"""
-    plot_title: str
+    plot_title: str | None
     plot_type: str
-    buildings: List[str]
-    y_min: float
-    y_max: float
-    y_step: float
-    y_label: str
+    buildings: list[str]
+    y_min: float | None
+    y_max: float | None
+    y_step: float | None
+    y_label: str | None
     x_to_plot: str
-    facet_by_numbers_wrapped: int
+    facet_by_numbers_wrapped: int | None
     facet_by_rows: bool
     x_sorted_by: str
     x_sorted_reversed: bool
-    x_label: str
-    context: Any
+    x_label: str | None
+    context: dict[str, Any] | None
 
     @overload
-    def __getattr__(self, item: Literal["plot_title"]) -> str: ...
+    def __getattr__(self, item: Literal["plot_title"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["y_min"]) -> float: ...
+    def __getattr__(self, item: Literal["y_min"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["y_max"]) -> float: ...
+    def __getattr__(self, item: Literal["y_max"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["y_step"]) -> float: ...
+    def __getattr__(self, item: Literal["y_step"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["y_label"]) -> str: ...
+    def __getattr__(self, item: Literal["y_label"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["x_to_plot"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["facet_by_numbers_wrapped"]) -> int: ...
+    def __getattr__(self, item: Literal["facet_by_numbers_wrapped"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["facet_by_rows"]) -> bool: ...
     @overload
@@ -1542,39 +1542,39 @@ class PlotsGeneralSection(Section):
     @overload
     def __getattr__(self, item: Literal["x_sorted_reversed"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["x_label"]) -> str: ...
+    def __getattr__(self, item: Literal["x_label"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["context"]) -> Any: ...
+    def __getattr__(self, item: Literal["context"]) -> dict[str, Any] | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsBuildingFilterSection(Section):
     """Typed section for plots-building-filter configuration"""
-    filter_buildings_by_year_start: int
-    filter_buildings_by_year_end: int
-    filter_buildings_by_construction_type: str
-    filter_buildings_by_use_type: str
+    filter_buildings_by_year_start: int | None
+    filter_buildings_by_year_end: int | None
+    filter_buildings_by_construction_type: list[str]
+    filter_buildings_by_use_type: list[str]
     min_ratio_as_main_use: float
 
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_year_start"]) -> int: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_year_start"]) -> int | None: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_year_end"]) -> int: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_year_end"]) -> int | None: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_construction_type"]) -> str: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_construction_type"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["filter_buildings_by_use_type"]) -> str: ...
+    def __getattr__(self, item: Literal["filter_buildings_by_use_type"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["min_ratio_as_main_use"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsDemandSection(Section):
     """Typed section for plots-demand configuration"""
-    y_metric_to_plot: List[str]
+    y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1583,12 +1583,12 @@ class PlotsDemandSection(Section):
 
 class PlotsSolarSection(Section):
     """Typed section for plots-solar configuration"""
-    y_metric_to_plot: List[str]
+    y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1597,10 +1597,10 @@ class PlotsSolarSection(Section):
 
 class PlotsComfortChartSection(Section):
     """Typed section for plots-comfort-chart configuration"""
-    buildings: List[str]
+    buildings: list[str]
 
     @overload
-    def __getattr__(self, item: Literal["buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class Parameter:
