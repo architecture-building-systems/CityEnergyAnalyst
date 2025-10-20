@@ -8,6 +8,7 @@ import configparser
 import os
 import sys
 import inspect
+from typing import List
 
 
 def infer_type_from_decode_method(param_class_name: str) -> str:
@@ -63,7 +64,8 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
             else:
                 return "Optional[str]"
         elif "json.loads" in source:
-            return "Any"  # JSON can be anything
+            # JSON can be anything and can return None
+            return "Optional[Any]" if "return None" in source else "Any"
         elif "datetime" in source:
             return "datetime.datetime"
         else:
@@ -71,6 +73,37 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
 
     except Exception:
         return "str"  # Fallback if source analysis fails
+
+
+def infer_type_from_param_class_name(param_class_name: str) -> str:
+    """Special handling for known parameter types that need different inference"""
+    # PluginListParameter returns instantiated plugin objects, not strings
+    if param_class_name == "PluginListParameter":
+        return "List[Any]"
+
+    # Otherwise use the regular inference
+    return infer_type_from_decode_method(param_class_name)
+
+
+def _ann_to_stub_str(ann: object) -> str:
+    """Convert an annotation object to a stub-friendly string"""
+    try:
+        from typing import ForwardRef, get_origin
+    except Exception:
+        ForwardRef = None
+        get_origin = None
+
+    s = getattr(ann, "__name__", None) or str(ann)
+
+    # Strip typing.ForwardRef('X') -> X
+    if "ForwardRef(" in s:
+        import re
+        m = re.search(r"ForwardRef\(['\"']([^'\"]+)['\"]\)", s)
+        if m:
+            return m.group(1)
+
+    # typing module strings -> prefer bare names when imported (e.g., List[str])
+    return s.replace("typing.", "")
 
 
 def _indent(text: str, level: int = 1, spaces: int = 4) -> str:
@@ -102,11 +135,11 @@ def _generate_parameter_type_stubs() -> str:
     return "\n".join(stubs)
 
 
-def _generate_configuration_class_stub(section_attrs: list[str], general_params: list[str], section_overloads: list[str], general_overloads: list[str]) -> str:
+def _generate_configuration_class_stub(section_attrs: List[str], general_params: List[str], section_overloads: List[str], general_overloads: List[str]) -> str:
     """Automatically generate Configuration class stub by inspecting the actual class"""
     sys.path.insert(0, os.path.dirname(__file__))
     from config import Configuration
-    
+
     # Get public methods from Configuration class
     methods = []
     for name in dir(Configuration):
@@ -126,11 +159,12 @@ def _generate_configuration_class_stub(section_attrs: list[str], general_params:
                         if param.default != param.empty:
                             param_str += " = ..."
                         params.append(param_str)
-                    
-                    return_annotation = " -> None"
+
+                    return_annotation = " -> Any"
                     if sig.return_annotation != sig.empty:
-                        return_annotation = f" -> {sig.return_annotation.__name__ if hasattr(sig.return_annotation, '__name__') else str(sig.return_annotation)}"
-                    
+                        ann_str = _ann_to_stub_str(sig.return_annotation)
+                        return_annotation = f" -> {ann_str}"
+
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
@@ -171,7 +205,7 @@ def _generate_section_class_stub() -> str:
     """Automatically generate Section class stub by inspecting the actual class"""
     sys.path.insert(0, os.path.dirname(__file__))
     from config import Section
-    
+
     # Get public methods from Section class
     methods = []
     for name in dir(Section):
@@ -191,11 +225,14 @@ def _generate_section_class_stub() -> str:
                         if param.default != param.empty:
                             param_str += " = ..."
                         params.append(param_str)
-                    
-                    return_annotation = " -> None"
-                    if sig.return_annotation != sig.empty:
-                        return_annotation = f" -> {sig.return_annotation.__name__ if hasattr(sig.return_annotation, '__name__') else str(sig.return_annotation)}"
-                    
+
+                    return_annotation = " -> Any"
+                    if name == "__repr__":
+                        return_annotation = " -> str"
+                    elif sig.return_annotation != sig.empty:
+                        ann_str = _ann_to_stub_str(sig.return_annotation)
+                        return_annotation = f" -> {ann_str}"
+
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
@@ -216,7 +253,7 @@ def _generate_parameter_class_stub() -> str:
     """Automatically generate Parameter class stub by inspecting the actual class"""
     sys.path.insert(0, os.path.dirname(__file__))
     from config import Parameter
-    
+
     # Get public methods from Parameter class
     methods = []
     for name in dir(Parameter):
@@ -236,11 +273,14 @@ def _generate_parameter_class_stub() -> str:
                         if param.default != param.empty:
                             param_str += " = ..."
                         params.append(param_str)
-                    
-                    return_annotation = " -> None"
-                    if sig.return_annotation != sig.empty:
-                        return_annotation = f" -> {sig.return_annotation.__name__ if hasattr(sig.return_annotation, '__name__') else str(sig.return_annotation)}"
-                    
+
+                    return_annotation = " -> Any"
+                    if name == "__repr__":
+                        return_annotation = " -> str"
+                    elif sig.return_annotation != sig.empty:
+                        ann_str = _ann_to_stub_str(sig.return_annotation)
+                        return_annotation = f" -> {ann_str}"
+
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
@@ -260,11 +300,11 @@ def _generate_parameter_class_stub() -> str:
     ])
 
 
-def _build_section_class(section_name: str, param_attrs: list[str], param_overloads: list[str]) -> str:
+def _build_section_class(section_name: str, param_attrs: List[str], param_overloads: List[str]) -> str:
     attr_name = section_name.replace("-", "_")
     class_name = f"{attr_name.title().replace('_', '')}Section"
 
-    body_lines: list[str] = [f'"""Typed section for {section_name} configuration"""']
+    body_lines: List[str] = [f'"""Typed section for {section_name} configuration"""']
     if param_attrs:
         body_lines.extend(param_attrs)
     else:
@@ -292,14 +332,14 @@ def generate_config_stub():
     config_parser = configparser.ConfigParser()
     config_parser.read(default_config_path)
 
-    section_classes: list[str] = []
-    section_attrs: list[str] = []
+    section_classes: List[str] = []
+    section_attrs: List[str] = []
 
     for section_name in config_parser.sections():
         attr_name = section_name.replace("-", "_")
         class_name = f"{attr_name.title().replace('_', '')}Section"
 
-        param_attrs: list[str] = []
+        param_attrs: List[str] = []
         for param_name in config_parser.options(section_name):
             if "." in param_name:
                 continue
@@ -307,10 +347,10 @@ def generate_config_stub():
                 section_name, f"{param_name}.type", fallback="StringParameter"
             )
             param_attr = param_name.replace("-", "_")
-            annotation = infer_type_from_decode_method(param_type)
+            annotation = infer_type_from_param_class_name(param_type)
             param_attrs.append(f"{param_attr}: {annotation}")
 
-        param_overloads: list[str] = []
+        param_overloads: List[str] = []
         for param_name in config_parser.options(section_name):
             if "." in param_name:
                 continue
@@ -318,7 +358,7 @@ def generate_config_stub():
                 section_name, f"{param_name}.type", fallback="StringParameter"
             )
             param_attr = param_name.replace("-", "_")
-            annotation = infer_type_from_decode_method(param_type)
+            annotation = infer_type_from_param_class_name(param_type)
             param_overloads.append(
                 f'@overload\ndef __getattr__(self, item: Literal["{param_attr}"]) -> {annotation}: ...'
             )
@@ -329,7 +369,7 @@ def generate_config_stub():
         section_attrs.append(f"{attr_name}: {class_name}")
 
     # general params
-    general_params: list[str] = []
+    general_params: List[str] = []
     if "general" in config_parser.sections():
         for param_name in config_parser.options("general"):
             if "." in param_name:
@@ -338,10 +378,10 @@ def generate_config_stub():
                 "general", f"{param_name}.type", fallback="StringParameter"
             )
             attr_name = param_name.replace("-", "_")
-            annotation = infer_type_from_decode_method(param_type)
+            annotation = infer_type_from_param_class_name(param_type)
             general_params.append(f"{attr_name}: {annotation}")
 
-    section_overloads: list[str] = []
+    section_overloads: List[str] = []
     for section_name in config_parser.sections():
         attr_name = section_name.replace("-", "_")
         class_name = f"{attr_name.title().replace('_', '')}Section"
@@ -349,7 +389,7 @@ def generate_config_stub():
             f'@overload\ndef __getattr__(self, item: Literal["{attr_name}"]) -> {class_name}: ...'
         )
 
-    general_overloads: list[str] = []
+    general_overloads: List[str] = []
     if "general" in config_parser.sections():
         for param_name in config_parser.options("general"):
             if "." in param_name:
@@ -358,13 +398,13 @@ def generate_config_stub():
                 "general", f"{param_name}.type", fallback="StringParameter"
             )
             attr_name = param_name.replace("-", "_")
-            annotation = infer_type_from_decode_method(param_type)
+            annotation = infer_type_from_param_class_name(param_type)
             general_overloads.append(
                 f'@overload\ndef __getattr__(self, item: Literal["{attr_name}"]) -> {annotation}: ...'
             )
 
     # Assemble stub content
-    parts: list[str] = [
+    parts: List[str] = [
         "# Type stub file for cea.config",
         "# Auto-generated from default.config - do not edit manually",
         "",
