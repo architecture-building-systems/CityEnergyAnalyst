@@ -104,10 +104,12 @@ def operational_hourly(config: Configuration) -> None:
 
         consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
         pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
+
+        hourly_timeline.calculate_operational_emission()
+        
         if consider_pv and pv_codes:
             hourly_timeline.log_pv_contribution(pv_codes=pv_codes)
 
-        hourly_timeline.calculate_operational_emission()
         hourly_timeline.save_results()
         print(
             f"Hourly operational emissions for {building} calculated and saved in: {locator.get_lca_operational_hourly_building(building)}."
