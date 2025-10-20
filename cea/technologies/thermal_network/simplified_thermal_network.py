@@ -244,8 +244,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                               node_df.building.values]
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
-            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district heating network created as there is no heating demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -265,8 +264,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                               node_df.building.values]
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
-            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
