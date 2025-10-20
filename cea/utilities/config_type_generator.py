@@ -11,6 +11,21 @@ import inspect
 from typing import List
 
 
+def _ann_to_stub_str(ann: object) -> str:
+    """Convert an annotation object to a stub-friendly string"""
+    s = getattr(ann, "__name__", None) or str(ann)
+
+    # Strip typing.ForwardRef('X') -> X
+    if "ForwardRef(" in s:
+        import re
+        m = re.search(r"ForwardRef\(['\"']([^'\"]+)['\"]\)", s)
+        if m:
+            return m.group(1)
+
+    # typing module strings -> prefer bare names when imported (e.g., List[str])
+    return s.replace("typing.", "")
+
+
 def infer_type_from_decode_method(param_class_name: str) -> str:
     """Analyze the decode method of a parameter class to infer its return type"""
 
@@ -30,13 +45,28 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
 
     cls = param_classes[param_class_name]
 
-    # Check if class has a custom decode method
-    if "decode" not in cls.__dict__:
+    # Get the decode method (may be inherited)
+    decode_method = getattr(cls, 'decode', None)
+    if decode_method is None:
+        return "str"  # No decode method found
+
+    # First, try to get the return type annotation from the decode method
+    try:
+        sig = inspect.signature(decode_method)
+        if sig.return_annotation != inspect.Parameter.empty:
+            return _ann_to_stub_str(sig.return_annotation)
+    except Exception:
+        pass
+
+    # Check if class has a custom decode method (not inherited from base Parameter)
+    # If it only has the base Parameter.decode, return str
+    from config import Parameter
+    if decode_method == Parameter.decode:
         return "str"  # Default Parameter.decode returns string
 
-    # Analyze the decode method source
+    # Fall back to analyzing the decode method source with heuristics
     try:
-        source = inspect.getsource(cls.decode)
+        source = inspect.getsource(decode_method)
 
         # Simple heuristics based on common patterns
         if "return int(" in source or "return int(value)" in source:
@@ -75,33 +105,48 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
         return "str"  # Fallback if source analysis fails
 
 
-def infer_type_from_param_class_name(param_class_name: str) -> str:
-    """Special handling for known parameter types that need different inference"""
-    # PluginListParameter returns instantiated plugin objects, not strings
-    if param_class_name == "PluginListParameter":
-        return "List[Any]"
+def infer_type_from_param_class_name(
+    param_class_name: str,
+    section_name: str | None = None,
+    param_name: str | None = None,
+    config_parser: configparser.ConfigParser | None = None
+) -> str:
+    """Special handling for known parameter types that need different inference
 
-    # Multi-choice parameters return lists of strings
-    if param_class_name in ("MultiChoiceParameter", "BuildingsParameter", "ListParameter"):
-        return "List[str]"
+    Args:
+        param_class_name: The Parameter class name (e.g., "IntegerParameter")
+        section_name: The config section name (optional, for checking nullable)
+        param_name: The parameter name (optional, for checking nullable)
+        config_parser: The config parser (optional, for checking nullable)
+    """
+    # Get base type from decode method inference
+    base_type = infer_type_from_decode_method(param_class_name)
 
-    # Otherwise use the regular inference
-    return infer_type_from_decode_method(param_class_name)
+    # Strip existing | None from the base type if present
+    # We'll add it back conditionally based on the config
+    has_none_union = " | None" in base_type
+    if has_none_union:
+        base_type = base_type.replace(" | None", "")
 
+    # Check if this parameter is nullable from the config
+    # Default is False (matching IntegerParameter and RealParameter default behavior)
+    is_nullable = False
+    if config_parser and section_name and param_name:
+        try:
+            is_nullable = config_parser.getboolean(section_name, f"{param_name}.nullable")
+        except (configparser.NoSectionError, configparser.NoOptionError, ValueError):
+            # If not specified in config, default to False (not nullable)
+            is_nullable = False
+    else:
+        # No config provided, fall back to the type annotation's nullable info
+        is_nullable = has_none_union
 
-def _ann_to_stub_str(ann: object) -> str:
-    """Convert an annotation object to a stub-friendly string"""
-    s = getattr(ann, "__name__", None) or str(ann)
+    # Add | None if parameter is nullable
+    if is_nullable and base_type not in ("Any", "Optional[Any]"):
+        if not base_type.startswith("Optional["):
+            return f"{base_type} | None"
 
-    # Strip typing.ForwardRef('X') -> X
-    if "ForwardRef(" in s:
-        import re
-        m = re.search(r"ForwardRef\(['\"']([^'\"]+)['\"]\)", s)
-        if m:
-            return m.group(1)
-
-    # typing module strings -> prefer bare names when imported (e.g., List[str])
-    return s.replace("typing.", "")
+    return base_type
 
 
 def _indent(text: str, level: int = 1, spaces: int = 4) -> str:
@@ -430,7 +475,7 @@ def generate_config_stub():
                 section_name, f"{param_name}.type", fallback="StringParameter"
             )
             param_attr = param_name.replace("-", "_")
-            annotation = infer_type_from_param_class_name(param_type)
+            annotation = infer_type_from_param_class_name(param_type, section_name, param_name, config_parser)
             param_attrs.append(f"{param_attr}: {annotation}")
 
         param_overloads: List[str] = []
@@ -441,7 +486,7 @@ def generate_config_stub():
                 section_name, f"{param_name}.type", fallback="StringParameter"
             )
             param_attr = param_name.replace("-", "_")
-            annotation = infer_type_from_param_class_name(param_type)
+            annotation = infer_type_from_param_class_name(param_type, section_name, param_name, config_parser)
             param_overloads.append(
                 f'@overload\ndef __getattr__(self, item: Literal["{param_attr}"]) -> {annotation}: ...'
             )
@@ -461,7 +506,7 @@ def generate_config_stub():
                 "general", f"{param_name}.type", fallback="StringParameter"
             )
             attr_name = param_name.replace("-", "_")
-            annotation = infer_type_from_param_class_name(param_type)
+            annotation = infer_type_from_param_class_name(param_type, "general", param_name, config_parser)
             general_params.append(f"{attr_name}: {annotation}")
 
     section_overloads: List[str] = []
@@ -481,7 +526,7 @@ def generate_config_stub():
                 "general", f"{param_name}.type", fallback="StringParameter"
             )
             attr_name = param_name.replace("-", "_")
-            annotation = infer_type_from_param_class_name(param_type)
+            annotation = infer_type_from_param_class_name(param_type, "general", param_name, config_parser)
             general_overloads.append(
                 f'@overload\ndef __getattr__(self, item: Literal["{attr_name}"]) -> {annotation}: ...'
             )
