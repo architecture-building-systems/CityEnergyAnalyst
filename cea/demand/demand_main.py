@@ -98,7 +98,7 @@ def print_progress(i, n, args, _):
     print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with dynamic infiltration=%s' %

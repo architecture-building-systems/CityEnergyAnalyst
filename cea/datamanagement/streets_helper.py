@@ -177,7 +177,7 @@ def geometry_extractor_osm(locator, config):
         return
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Create the streets.shp file.
 

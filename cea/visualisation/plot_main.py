@@ -117,7 +117,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     return fig
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     scenario = config.scenario
     context: dict[str, Any] = config.plots_general.context
 

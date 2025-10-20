@@ -53,7 +53,7 @@ def excel_to_shapefile(excel_file, shapefile, index, crs, polygon=True):
     gdf.to_file(shapefile, driver='ESRI Shapefile', encoding='ISO-8859-1')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`excel_to_shapefile` with the values from the configuration file, section ``[shapefile-tools]``.
 

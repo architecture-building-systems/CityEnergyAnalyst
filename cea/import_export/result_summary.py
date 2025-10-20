@@ -2455,7 +2455,7 @@ def process_building_summary(config, locator,
 # Activate: Export results to .csv (summary & analytics)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Read through and summarise CEA results for all scenarios under a project.
 

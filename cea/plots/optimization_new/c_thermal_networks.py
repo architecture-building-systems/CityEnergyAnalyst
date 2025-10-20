@@ -107,7 +107,7 @@ def identify_overlapping_edges(all_edges):
 
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = InputLocator(config.scenario)
 
     zone_gdf, network_gdfs = load_geo_data(locator, des_id="DCS_101")

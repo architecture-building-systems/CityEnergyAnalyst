@@ -11,7 +11,7 @@ import cea.inputlocator
 import cea.utilities.dbf
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Convert a DBF file (*.dbf) to an Excel file (*.xls). The configuration uses the section ``dbf-tools`` with
     the parameters ``dbf-file`` (path to the output) and ``excel-file`` (path to the input)

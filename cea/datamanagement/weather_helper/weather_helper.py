@@ -76,7 +76,7 @@ def copy_weather_file(source_weather_file, locator):
           f"{os.path.basename(source_weather_file)}")
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Assign the weather file to the input folder.
 

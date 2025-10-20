@@ -150,7 +150,7 @@ def exec_cea_commands(config, cea_scenario):
                        capture_output=True)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Batch processing all selectedscenarios under a project.
 

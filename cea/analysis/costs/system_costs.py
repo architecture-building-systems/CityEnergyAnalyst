@@ -214,7 +214,7 @@ def get_databases(demand, locator):
     return cooling, dhw, electricity, heating
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running system-costs with scenario = %s' % config.scenario)

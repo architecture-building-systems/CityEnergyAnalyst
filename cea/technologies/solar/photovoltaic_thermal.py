@@ -745,7 +745,7 @@ def aggregate_pvt_results(building_names, locator, type_pvpanel, type_scpanel):
 
     return aggregated_hourly_results_df, aggregated_annual_results_df
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 

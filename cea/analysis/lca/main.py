@@ -41,7 +41,7 @@ def emissions_main(locator, config):
         lca_operation(locator)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 

@@ -132,7 +132,7 @@ def calc_wetbulb(Tdrybulb, RH):
     return Tw  # wetbulb temperature in C
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # for the interface, the user should pick a file out of those in ...DB/Weather/...
     epw_data = epw_reader(weather_path=(locator.get_weather_file()))

@@ -474,7 +474,7 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
         return array_sun[hour_day] * month_year * norm_sun_max  # normalized dhw demand flow rates
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     print('Running occupancy model for scenario %s' % config.scenario)
     print('Running occupancy model  with schedule model=%s' % config.occupancy_helper.occupancy_model)

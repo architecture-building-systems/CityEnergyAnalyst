@@ -3458,7 +3458,7 @@ def check_heating_cooling_demand(locator, config):
 # ============================
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """

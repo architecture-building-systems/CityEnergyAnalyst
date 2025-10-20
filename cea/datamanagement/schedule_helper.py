@@ -283,7 +283,7 @@ class ScheduleData(object):
         return schedule_data, complementary_data
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # get typology data

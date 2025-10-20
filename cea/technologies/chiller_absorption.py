@@ -394,7 +394,7 @@ class AbsorptionChiller(object):
             self.e_g = chiller_prop['e_g'].values[0]
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole preprocessing routine
     test case 1) q_hw_W = 24213, q_chw_W = 20088, EER = 0.829, T_hw_out_C = 67.22 _[Kuhn, 2011]

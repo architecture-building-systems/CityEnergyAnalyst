@@ -376,7 +376,7 @@ def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 

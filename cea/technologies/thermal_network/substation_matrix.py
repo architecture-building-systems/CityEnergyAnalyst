@@ -840,7 +840,7 @@ def calc_total_network_flow(Q_all, flowrate):
 # ============================
 # Test
 # ============================
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """

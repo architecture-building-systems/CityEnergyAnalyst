@@ -180,7 +180,7 @@ def load_plot(project, plot_definition, cache, plugins):
     return plot_class(project, parameters, cache)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """Test the dashboard functionality. Run it twice, because the dashboard.yml might have been created as a result"""
     import cea.plots.cache
     print(read_dashboards(config, cea.plots.cache.NullPlotCache()))

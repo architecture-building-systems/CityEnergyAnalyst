@@ -814,7 +814,7 @@ def write_aggregate_results(locator, type_PVpanel, building_names):
                                         float_format='%.2f', na_rep='nan')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     list_types_PVpanel = config.solar.type_PVpanel
