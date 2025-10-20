@@ -85,7 +85,8 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
     print("PRE-PROCESSING 4/4: network features")  # at first estimate a distribution with all the buildings connected
     if district_heating_network:
         num_tot_buildings = len(buildings_heating_demand)
-        DHN_barcode = ''.join(str(1) for e in range(num_tot_buildings))
+        # Barcode of all 1's indicates all buildings connected to the district heating network
+        DHN_barcode = '1' * num_tot_buildings
         substation.substation_main_heating(locator, total_demand, buildings_heating_demand,
                                            DHN_barcode=DHN_barcode)
 
@@ -95,7 +96,8 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         # "_all" key for all buildings
     if district_cooling_network:
         num_tot_buildings = len(buildings_cooling_demand)
-        DCN_barcode = ''.join([str(1) * num_tot_buildings])
+        # Barcode of all 1's indicates all buildings connected to the district cooling network
+        DCN_barcode = '1' * num_tot_buildings
         substation.substation_main_cooling(locator, total_demand, buildings_cooling_demand, DCN_barcode=DCN_barcode)
 
         summarize_network.network_main(locator, buildings_cooling_demand,
