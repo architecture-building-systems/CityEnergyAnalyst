@@ -251,7 +251,7 @@ class Configuration:
         """
         if self.multiprocessing:
             import multiprocessing
-            number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
+            number_of_processes = multiprocessing.cpu_count() - self.number_of_cpus_to_keep_free
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
             return 1
