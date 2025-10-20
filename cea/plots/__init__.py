@@ -13,10 +13,15 @@ Each module contained such a sub-package is considered a plot.
 The module ``cea.plots.categories`` contains helper-methods for dealing with the categories.
 """
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import os
 import yaml
 import cea.plots.categories
+
+if TYPE_CHECKING:
+    import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
