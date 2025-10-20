@@ -489,7 +489,6 @@ def generate_config_stub():
         "",
         "from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal",
         "import configparser",
-        "import datetime",
         "",
         _generate_configuration_class_stub(section_attrs, general_params, section_overloads, general_overloads),
         "",
