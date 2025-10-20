@@ -579,7 +579,7 @@ def main(config):
     for building in disconnected_buildings_list:
         disconnected_buildings_index.append(int(np.where(network_info.building_names == building)[0]))
     network_info.disconnected_buildings_index = disconnected_buildings_index
-    if disconnected_buildings_index != []:
+    if disconnected_buildings_index:
         raise ValueError('Disconnected buildings are specified in cea.config, please remove it! (see NOTE above)')
 
     # calculate total network costs
