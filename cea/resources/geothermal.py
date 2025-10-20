@@ -2,6 +2,7 @@
 
 
 import math
+import os
 
 import numpy as np
 import pandas as pd
@@ -56,6 +57,8 @@ def calc_geothermal_potential(locator, config):
 
     # export
     output_file = locator.get_geothermal_potential()
+    # Ensure the output directory exists
+    locator.ensure_parent_folder_exists(output_file)
     pd.DataFrame({"date": pd.to_datetime(date_range), "Ts_C": t_source_final, "QGHP_kW": Q_max_kwh, "Area_avail_m2": area_geothermal}).to_csv(output_file,
                                                                                                           index=False,
                                                                                                           float_format='%.3f')
