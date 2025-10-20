@@ -14165,6 +14165,44 @@ get_lca_operation:
         values: '{0.0...n}'
         min: 0.0
   used_by: []
+get_lca_operational_hourly_building:
+  created_by:
+  - emission_time_dependent
+  file_path: outputs/data/emissions/timeline/{building}_operational_hourly.csv
+  file_type: csv
+  schema:
+    columns:
+      hour:
+        description: hour of the year.
+        type: int
+        unit: '[h]'
+        values: '{0...n}'
+        min: 0
+      heating_kgCO2:
+        description: hourly operational emission caused by satisfying space heating demand.
+        type: float
+        unit: '[kg CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      hot_water_kgCO2:
+        description: hourly operational emission caused by satisfying hot water demand.
+        type: float
+        unit: '[kg CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      cooling_kgCO2:
+        description: hourly operational emission caused by satisfying cooling demand.
+        type: float
+        unit: '[kg CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      electricity_kgCO2:
+        description: hourly operational emission caused by satisfying electrical appliances demand.
+        type: float
+        unit: '[kg CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: []
 get_multi_criteria_analysis:
   created_by:
   - multi_criteria_analysis
@@ -19617,6 +19655,57 @@ get_thermal_network_velocity_edges_file:
         description: Flow velocity of heating/cooling medium in pipe PIPE0
         type: float
         unit: '[m/s]'
+        values: '{0.0...n}'
+        min: 0.0
+  used_by: []
+get_total_yearly_operational_building:
+  created_by:
+  - emissions
+  file_path: outputs/data/emissions/timeline/Total_yearly_operational_building.csv
+  file_type: csv
+  schema:
+    columns:
+      hour:
+        description: Hour of the year.
+        type: int
+        unit: '[h]'
+        values: '{0...8759}'
+        min: 0
+        max: 8759
+      heating_tonCO2:
+        description: Total operational emissions from heating systems.
+        type: float
+        unit: '[ton CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      hot_water_tonCO2:
+        description: Total operational emissions from hot water systems.
+        type: float
+        unit: '[ton CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      cooling_tonCO2:
+        description: Total operational emissions from cooling systems.
+        type: float
+        unit: '[ton CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      electricity_tonCO2:
+        description: Total operational emissions from electricity consumption.
+        type: float
+        unit: '[ton CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      Qcs_sys_NONE_tonCO2:
+        description: Total operational emissions from cooling systems (NONE category).
+        type: float
+        unit: '[ton CO2-eq]'
+        values: '{0.0...n}'
+        min: 0.0
+      E_sys_GRID_tonCO2:
+        description: Total operational emissions from grid electricity systems.
+        type: float
+        unit: '[ton CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
   used_by: []

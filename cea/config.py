@@ -550,6 +550,9 @@ class ResumeFileParameter(FileParameter):
     def decode(self, value):
         return self._check_path(str(value))
 
+class InputFileParameter(FileParameter):
+    """A parameter that describes a user provided input file."""
+
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
@@ -565,6 +568,7 @@ class JsonParameter(Parameter):
 
 class WeatherPathParameter(Parameter):
     THIRD_PARTY_WEATHER_SOURCES = ['climate.onebuilding.org']
+    MORPHING = ['pyepwmorph']
 
     def initialize(self, parser):
         self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
@@ -587,7 +591,7 @@ class WeatherPathParameter(Parameter):
             # allow using shortcuts
             weather_path = self.locator.get_weather(
                 [w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
-        elif value in self.THIRD_PARTY_WEATHER_SOURCES:
+        elif value in self.THIRD_PARTY_WEATHER_SOURCES or value in self.MORPHING:
             weather_path = value
         else:
             raise cea.ConfigError(f"Invalid weather path: {value}")
@@ -1166,8 +1170,11 @@ def get_scenarios_list(project_path: str) -> List[str]:
 
         # TODO: Use .gitignore to ignore scenarios
         return (
-            os.path.isdir(folder_path) 
-            and os.path.exists(os.path.join(folder_path, 'inputs'))
+            os.path.isdir(folder_path)
+            and (
+                os.path.exists(os.path.join(folder_path, 'inputs')) or 
+                os.path.exists(os.path.join(folder_path, 'export', 'rhino'))
+                )
             and not folder_name.startswith(".")
             and folder_name != "__pycache__"
             and folder_name != "__MACOSX"
@@ -1279,7 +1286,7 @@ class ColumnChoiceParameter(ChoiceParameter):
             return list(codes)
         except FileNotFoundError as e:
             # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
-            raise FileNotFoundError(f'Could not find source file at {location}') from e
+            raise FileNotFoundError(f'Could not find source file at {location} to generate choices for {self.name}') from e
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 

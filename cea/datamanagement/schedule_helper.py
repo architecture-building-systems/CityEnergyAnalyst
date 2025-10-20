@@ -51,7 +51,7 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
     """
 
     buildings = building_typology_df['name']
-    locator.ensure_parent_folder_exists(locator.get_building_weekly_schedules(buildings[0]))
+
     metadata = 'mixed-schedule'
     schedule_data_all_uses = ScheduleData(locator)
     building_typology_df = building_typology_df.loc[building_typology_df['name'].isin(buildings)]
@@ -77,12 +77,14 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
         schedule_new_data, schedule_complementary_data = calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_df, internal_loads, building, schedule_data_all_uses, list_var_names, list_var_values, metadata)
         # save cea schedule format
         path_to_building_schedule = locator.get_building_weekly_schedules(building)
+        locator.ensure_parent_folder_exists(path_to_building_schedule)
         save_cea_schedules(schedule_new_data, path_to_building_schedule)
 
         list_monthly_multiplier = list(schedule_complementary_data['MONTHLY_MULTIPLIER'])
         list_monthly_multiplier.insert(0, building)
         lists_monthly_multiplier.append(list_monthly_multiplier)
     path_to_monthly_multiplier = locator.get_building_weekly_schedules_monthly_multiplier_csv()
+    locator.ensure_parent_folder_exists(path_to_monthly_multiplier)
     save_cea_monthly_multipliers(lists_monthly_multiplier, path_to_monthly_multiplier)
 
 

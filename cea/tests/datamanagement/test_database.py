@@ -64,5 +64,3 @@ class TestDatabase(unittest.TestCase):
         self.assertIn('archetypes', schema)
         self.assertIn('assemblies', schema)
         self.assertIn('components', schema)
-
-        print(schema)

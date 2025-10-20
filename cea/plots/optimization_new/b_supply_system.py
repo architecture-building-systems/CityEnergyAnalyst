@@ -5,31 +5,25 @@ import yaml
 import pandas as pd
 import plotly.graph_objs as go
 from PIL import Image
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
 
 import cea.config
 import cea.inputlocator
 from cea.plots.colors import COLORS_TO_RGB as cea_colors
 
-# Create a Dash app
-app = Dash(__name__)
-
 class SupplySystemGraphInfo(object):
     full_category_names = {'primary': 'Heating/Cooling Components',
                            'secondary': 'Supply Components',
                            'tertiary': 'Heat Rejection Components'}
-    energy_system_ids = ['0']
-    supply_system_ids = {}
 
-    _config = cea.config.Configuration()
-    _locator = cea.inputlocator.InputLocator(_config.scenario)
     _category_positions = {'primary': (0.75, 0.5),
                            'secondary': (0.25, 0.75),
                            'tertiary': (0.25, 0.25)}
     _max_category_size = 0.3
 
-    def __init__(self, energy_system_id, supply_system_id):
+    def __init__(self, energy_system_id, supply_system_id, locator):
+        # Store the locator as an instance variable
+        self._locator = locator
+
         # Import the energy systems structure
         self._get_data(energy_system_id, supply_system_id)
 
@@ -58,8 +52,8 @@ class SupplySystemGraphInfo(object):
     def _get_data(self, energy_system_id, supply_system_id):
         """ Import the supply system data """
         supply_system_file = \
-            SupplySystemGraphInfo._locator.get_new_optimization_optimal_supply_system_file(energy_system_id,
-                                                                                           supply_system_id)
+            self._locator.get_new_optimization_optimal_supply_system_file(energy_system_id,
+                                                                          supply_system_id)
         raw_supply_system_data = pd.read_csv(supply_system_file)
         for column in ["Main_energy_carrier_code", "Other_inputs", "Other_outputs"]:
             raw_supply_system_data[column] = pd.Series([ecs.split(', ')
@@ -259,7 +253,7 @@ class ComponentGraphInfo(object):
         self.capacity = str(round(supply_system_data[supply_system_data["Component_code"]==code]["Capacity_kW"].values[0],2)) + " kW"
         self.size = (0.2, 0.2)
         self.position = (0.5, 0.5)
-        self.color = self.icon_colors[self.code]
+        self.color = self.icon_colors.get(self.code, self.icon_colors.get("unknown", cea_colors["grey"]))  # Use unknown component color as fallback
         self.ef_anchorpoints = {}
 
         pass
@@ -367,7 +361,7 @@ class ConsumerGraphInfo(object):
 
     def _determine_category(self):
         """ Determine if the supply system id corresponds to a building or a district """
-        if re.match("N\d{4}", self.supply_system_id):
+        if re.match(r"N\d{4}", self.supply_system_id):
             return "district"
         else:
             return "building"
@@ -559,9 +553,17 @@ class EnergyFlowGraphInfo(object):
         path["y"] = [start_position[1], start_position[1], end_position[1], end_position[1]]
         return path
 
-def main():
-    config = cea.config.Configuration()
+def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
+    
+    # Find and use the latest optimization run
+    optimization_path = locator.get_optimization_results_folder()
+    if os.path.exists(optimization_path):
+        run_folders = [f for f in os.listdir(optimization_path) if f.startswith('centralized_run_')]
+        if run_folders:
+            latest_run_num = max([int(f.split('_')[-1]) for f in run_folders])
+            locator.optimization_run = latest_run_num
+            print(f"Using latest optimization run: centralized_run_{latest_run_num}")
 
     # Load the image library
     image_lib_yml = os.path.join(ComponentGraphInfo.image_folder_path, 'image_lib.yml')
@@ -599,56 +601,39 @@ def main():
         supply_systems = locator.get_new_optimization_optimal_supply_system_ids(district_energy_system)
         des_supply_systems_dict[district_energy_system] = supply_systems
 
-    # Assign relevant information to the SupplySystemGraphInfo class variables
-    SupplySystemGraphInfo.energy_system_ids = des_solution_folders
-    SupplySystemGraphInfo.supply_system_ids = des_supply_systems_dict
+    # Generate plots for all energy systems and supply systems
+    print("\nGenerating supply system graphics...")
+    print(f"Found {len(des_solution_folders)} energy system(s)")
 
-    update_graph(des_solution_folders[0], des_supply_systems_dict[des_solution_folders[0]][-2])
+    figures = {}
+    for energy_system_id in des_solution_folders:
+        supply_systems = des_supply_systems_dict[energy_system_id]
+        print(f"\nEnergy System: {energy_system_id}")
+        print(f"  Supply systems: {len(supply_systems)}")
+
+        for supply_system_id in supply_systems:
+            print(f"    Generating graphic for {supply_system_id}...")
+            fig = create_supply_system_graph(energy_system_id, supply_system_id, locator)
+
+            # Store the figure
+            key = f"{energy_system_id}_{supply_system_id}"
+            figures[key] = fig
+
+    # Create combined figure with dropdowns
+    if figures:
+        print("\nCreating combined figure with dropdown menus...")
+        combined_fig = create_combined_figure_with_dropdowns(figures, des_supply_systems_dict)
+
+        return combined_fig
 
     return None
 
-def set_up_graph(dash_application=app):
-    # Define the layout of the app
-    dash_application.layout = html.Div([
-        html.H1("Supply System Graphic"),
-
-        dcc.Dropdown(options=SupplySystemGraphInfo.energy_system_ids, id='energy-system-id',
-                     placeholder="Select an optimal energy system"),
-
-        dcc.Dropdown(options=SupplySystemGraphInfo.supply_system_ids, id='supply-system-id',
-                     placeholder="Select a supply system"),
-
-        dcc.Graph(
-            id='supply-system-graph',
-            config={'staticPlot': False}
-        )
-    ])
-
-    return dash_application
-
-#Update the supply-system-id dropdown menu
-@app.callback(
-    Output('supply-system-id', 'options'),
-    [Input('energy-system-id', 'value')]
-)
-def update_supply_system_dropdown(energy_system_id):
-    if energy_system_id is None:
-        return []
-    else:
-        return [i for i in SupplySystemGraphInfo.supply_system_ids[energy_system_id]]
-
-
-# Callback to update the graph
-@app.callback(
-    Output('supply-system-graph', 'figure'),
-    [Input('energy-system-id', 'value'), Input('supply-system-id', 'value')]
-)
-def update_graph(energy_system_id, supply_system_id):
+def create_supply_system_graph(energy_system_id, supply_system_id, locator):
     # Define a corresponding supply system graph info object
     if energy_system_id is None or supply_system_id is None:
         return go.Figure()
     else:
-        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id)
+        supply_system = SupplySystemGraphInfo(energy_system_id, supply_system_id, locator)
 
     # Create figure
     fig = go.Figure()
@@ -676,7 +661,13 @@ def update_graph(energy_system_id, supply_system_id):
 
     # Add component images and tooltips
     for code, component in supply_system.components.items():
-        icon = Image.open(ComponentGraphInfo.image_paths[code])
+        # Use the unknown component icon as fallback for missing component images
+        icon_path = ComponentGraphInfo.image_paths.get(code, ComponentGraphInfo.image_paths.get("unknown"))
+        if icon_path is None:
+            raise ValueError(f"No icon path found for component '{code}' and 'unknown' fallback is not defined")
+        if not os.path.exists(icon_path):
+            raise FileNotFoundError(f"Icon file not found: {icon_path}")
+        icon = Image.open(icon_path)
         fig.add_layout_image(
             source=icon,
             xref= "x",
@@ -793,7 +784,122 @@ def update_graph(energy_system_id, supply_system_id):
     return fig
 
 
+def create_combined_figure_with_dropdowns(figures_dict, des_supply_systems_dict):
+    """
+    Creates a single Plotly figure with dropdown menus to select different energy systems and supply systems.
+
+    Args:
+        figures_dict: Dictionary with keys as 'energy_system_id_supply_system_id' and values as Plotly figures
+        des_supply_systems_dict: Dictionary mapping energy system IDs to lists of supply system IDs
+
+    Returns:
+        A combined Plotly figure with dropdown menus
+    """
+    if not figures_dict:
+        return go.Figure()
+
+    # Get the first figure as the base
+    first_key = list(figures_dict.keys())[0]
+    combined_fig = figures_dict[first_key]
+
+    # Get all energy system IDs
+    energy_system_ids = list(des_supply_systems_dict.keys())
+
+    # Create dropdown buttons for each energy system and supply system combination
+    dropdown_buttons = []
+
+    for energy_system_id in energy_system_ids:
+        supply_system_ids = des_supply_systems_dict[energy_system_id]
+
+        for supply_system_id in supply_system_ids:
+            key = f"{energy_system_id}_{supply_system_id}"
+
+            if key not in figures_dict:
+                continue
+
+            fig = figures_dict[key]
+
+            # Create a button that will show this specific figure
+            # We need to hide all traces and show only the ones for this figure
+            button = dict(
+                label=f"{energy_system_id} - {supply_system_id}",
+                method="update",
+                args=[
+                    {"visible": [False] * len(combined_fig.data)},  # Will be updated below
+                    {"title": f"Supply System: {energy_system_id} - {supply_system_id}"}
+                ]
+            )
+            dropdown_buttons.append((key, button))
+
+    # Now we need to collect all traces from all figures
+    all_traces = []
+    trace_to_figure = []  # Maps trace index to figure key
+
+    for key in figures_dict.keys():
+        fig = figures_dict[key]
+        for trace in fig.data:
+            all_traces.append(trace)
+            trace_to_figure.append(key)
+
+    # Create a new figure with all traces
+    combined_fig = go.Figure(data=all_traces)
+
+    # Copy layout from the first figure
+    first_fig = figures_dict[first_key]
+    combined_fig.update_layout(first_fig.layout)
+
+    # Copy shapes and images from first figure
+    if hasattr(first_fig.layout, 'shapes'):
+        combined_fig.update_layout(shapes=first_fig.layout.shapes)
+    if hasattr(first_fig.layout, 'images'):
+        combined_fig.update_layout(images=first_fig.layout.images)
+
+    # Update dropdown buttons with correct visibility
+    for key, button in dropdown_buttons:
+        # Determine which traces should be visible for this button
+        visibility = [trace_to_figure[i] == key for i in range(len(all_traces))]
+        button["args"][0]["visible"] = visibility
+
+        # Also need to update shapes and images
+        fig = figures_dict[key]
+        if hasattr(fig.layout, 'shapes'):
+            button["args"][1]["shapes"] = fig.layout.shapes
+        if hasattr(fig.layout, 'images'):
+            button["args"][1]["images"] = fig.layout.images
+
+    # Set initial visibility (show first figure)
+    first_key = list(figures_dict.keys())[0]
+    for i, trace_key in enumerate(trace_to_figure):
+        combined_fig.data[i].visible = (trace_key == first_key)
+
+    # Add dropdown menu to the layout
+    combined_fig.update_layout(
+        updatemenus=[
+            dict(
+                active=0,
+                buttons=[button for _, button in dropdown_buttons],
+                direction="down",
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.01,
+                xanchor="left",
+                y=1.15,
+                yanchor="top"
+            )
+        ],
+        title=f"Supply System: {first_key.replace('_', ' - ', 1)}"
+    )
+
+    return combined_fig
+
+
 if __name__ == '__main__':
-    main()
-    app = set_up_graph(app)
-    app.run_server(debug=True)
+    config = cea.config.Configuration()
+    combined_fig = main(config)
+
+    # Show the combined figure with dropdowns if available
+    if combined_fig:
+        print("\nDisplaying combined figure with dropdown menus...")
+        combined_fig.show(renderer="browser")
+    else:
+        print("\nNo figures were generated.")

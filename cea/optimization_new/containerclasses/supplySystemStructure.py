@@ -45,7 +45,7 @@ class SupplySystemStructure(object):
     _system_type = ''
     _climatic_reference_temperature = None
     _network_temperature = None
-    _default_final_energy_carrier = EnergyCarrier()
+    _default_final_energy_carrier = EnergyCarrier.default()
     _infinite_energy_carriers = []
     _releasable_environmental_energy_carriers = []
     _releasable_grid_based_energy_carriers = []
@@ -533,8 +533,19 @@ class SupplySystemStructure(object):
         components_fitting_after_passive_conversion = []
 
         for component_code in component_codes:
-            component = ActiveComponent.code_to_class_mapping[component_code](component_code, component_placement,
-                                                                              component_capacity)
+            # Get component class from mapping (may be None if not found)
+            if ActiveComponent.code_to_class_mapping is None:
+                raise RuntimeError("Component.initialize_class_variables() must be called before using components")
+
+            component_class = ActiveComponent.code_to_class_mapping.get(component_code)
+
+            # Skip if component class not found or if it's a passive component
+            # Passive components need different instantiation parameters
+            # and are handled separately by _fetch_viable_passive_components
+            if component_class is None or issubclass(component_class, PassiveComponent):
+                continue
+
+            component = component_class(component_code, component_placement, component_capacity)
             if component.main_energy_carrier.code == demand_energy_carrier:
                 fitting_components.append(component)
             else:
@@ -654,7 +665,7 @@ class SupplySystemStructure(object):
         Find out which alternative energy carriers could potentially be converted into the required energy carrier
         using passive components.
         """
-        required_ec_type = EnergyCarrier(required_energy_carrier_code).type
+        required_ec_type = EnergyCarrier.from_code(required_energy_carrier_code).type
         if required_ec_type == 'thermal':
             if component_placement == 'tertiary' \
                     or (SupplySystemStructure._system_type == 'cooling' and component_placement == 'primary'):
@@ -694,7 +705,7 @@ class SupplySystemStructure(object):
         if active_component_placement == 'tertiary':  # i.e. active components are used for absorption/rejection
             placed_before = active_component_placement
             placed_after = demand_origin
-            mean_qual_before = EnergyCarrier(required_energy_carrier_code).mean_qual
+            mean_qual_before = EnergyCarrier.from_code(required_energy_carrier_code).mean_qual
 
             for active_component in active_components_to_feed:
                 passive_component_list = []
@@ -713,7 +724,7 @@ class SupplySystemStructure(object):
         else:  # i.e. active components are used for generation
             placed_before = demand_origin
             placed_after = active_component_placement
-            mean_qual_after = EnergyCarrier(required_energy_carrier_code).mean_qual
+            mean_qual_after = EnergyCarrier.from_code(required_energy_carrier_code).mean_qual
 
             for active_component in active_components_to_feed:
                 passive_component_list = []
@@ -996,7 +1007,7 @@ class SupplySystemStructure(object):
             = SupplySystemStructure.get_network_temperature(config.optimization_new.network_temperature)
         SupplySystemStructure._default_final_energy_carrier \
             = SupplySystemStructure.get_default_final_energy_carrier(
-            EnergyCarrier(EnergyCarrier.temp_to_thermal_ec(
+            EnergyCarrier.from_code(EnergyCarrier.temp_to_thermal_ec(
                 SupplySystemStructure._NETWORK_FLUID, SupplySystemStructure._network_temperature)))
         SupplySystemStructure._infinite_energy_carriers \
             = SupplySystemStructure._get_infinite_ecs(config.optimization_new.available_energy_sources)

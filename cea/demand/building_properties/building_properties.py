@@ -108,10 +108,7 @@ class BuildingProperties:
         """
 
         # FIXME: This is not a very good indicator of potential issue which causes overheating problems in some cases.
-        footprint = self.geometry._prop_geometry.footprint
-        floors = self.geometry._prop_geometry.floors_ag
-
-        GFA_m2 = footprint * floors
+        GFA_m2 = self.rc_model._prop_rc_model['GFA_m2']
         small_buildings = GFA_m2[GFA_m2 < min_gfa]
 
         if len(small_buildings) > 0:

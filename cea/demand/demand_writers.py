@@ -83,7 +83,7 @@ class DemandWriter(ABC):
         """
 
     def results_to_hdf5(self, tsd: TimeSeriesData, bpr: BuildingPropertiesRow, locator, date, building_name):
-        columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
+        columns, hourly_data = self.calc_hourly_dataframe(date, tsd)
         self.write_to_hdf5(building_name, columns, hourly_data, locator)
 
         # save total for the year
@@ -97,7 +97,7 @@ class DemandWriter(ABC):
 
     def results_to_csv(self, tsd: TimeSeriesData, bpr: BuildingPropertiesRow, locator, date, building_name):
         # save hourly data
-        columns, hourly_data = self.calc_hourly_dataframe(building_name, date, tsd)
+        columns, hourly_data = self.calc_hourly_dataframe(date, tsd)
         self.write_to_csv(building_name, columns, hourly_data, locator)
 
         # save annual values to a temp file for YearlyDemandWriter
@@ -115,13 +115,14 @@ class DemandWriter(ABC):
         keys = data.keys()
         columns = self.OTHER_VARS
         columns.extend(keys)
-        # add other default elements
-        data.update({'name': building_name, 'Af_m2': bpr.rc_model.Af, 'Aroof_m2': bpr.rc_model.Aroof,
+
+        # add other default elements]
+        data.update({'name': building_name, 'Af_m2': bpr.rc_model.Af, 'Aroof_m2': bpr.envelope.Aroof,
                      'GFA_m2': bpr.rc_model.GFA_m2, 'Aocc_m2': bpr.rc_model.Aocc,
                      'people0': tsd.occupancy.people.max()})
         return columns, data
 
-    def calc_hourly_dataframe(self, building_name, date, tsd: TimeSeriesData):
+    def calc_hourly_dataframe(self, date, tsd: TimeSeriesData):
         # treating time series data of loads from W to kW
         data = dict((x + '_kWh', np.nan_to_num(tsd.get_load_value(x)) / 1000) for x in
                     self.load_vars)  # TODO: convert nan to num at the very end.
@@ -136,13 +137,13 @@ class DemandWriter(ABC):
                          self.temperature_vars))  # TODO: convert nan to num at the very end.
 
         # get order of columns
-        columns = ['name', 'people', 'x_int']
+        columns = ['people', 'x_int']
         columns.extend([x + '_kWh' for x in self.load_vars])
         columns.extend([x + '_kWh' for x in self.load_plotting_vars])
         columns.extend([x + '_kWperC' for x in self.mass_flow_vars])
         columns.extend([x + '_C' for x in self.temperature_vars])
         # add other default elements
-        data.update({'date': date, 'name': building_name, 'people': tsd.occupancy.people, 'x_int': tsd.moisture.x_int * 1000})
+        data.update({'date': date, 'people': tsd.occupancy.people, 'x_int': tsd.moisture.x_int * 1000})
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('date')
         return columns, hourly_data
@@ -248,7 +249,7 @@ class YearlyDemandWriter:
             else:
                 aggregated_hourly_results_df += hourly_results_per_building
 
-        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['name', 'x_int'])
+        aggregated_hourly_results_df = aggregated_hourly_results_df.drop(columns=['x_int'])
 
         # save hourly results
         locator.ensure_parent_folder_exists(locator.get_total_demand_hourly('csv'))

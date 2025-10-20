@@ -36,7 +36,7 @@ class SolarPotentialPlotBase(PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(SolarPotentialPlotBase, self).__init__(project, parameters, cache)
-        self.category_path = os.path.join('new_basic', 'solar-potential')
+        self.category_path = os.path.join('special', 'solar-potential')
         self.normalization = self.parameters['normalization']
         self.input_files = [(self.locator.get_radiation_metadata, [building]) for building in self.buildings] + \
                            [(self.locator.get_radiation_building_sensors, [building]) for building in self.buildings]

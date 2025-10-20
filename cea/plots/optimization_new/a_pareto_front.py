@@ -477,9 +477,9 @@ def main(config=cea.config.Configuration()):
     if run_ids:
         print(f"Found optimization run_ids: {run_ids}")
     else:
-        print("No optimization results found! Please run the centralised optimisation script before plotting.")
-        return
+        raise ValueError("No optimization results found! Please run the centralised optimisation script before plotting.")
 
+    objectives = []
     for run_id in run_ids:
         locator.optimization_run = run_id
         optimisation_results = locator.get_centralized_optimization_results_folder()
@@ -510,4 +510,5 @@ if __name__ == '__main__':
     plot2d, plot_3d = main(cea.config.Configuration())
 
     plot2d.show(renderer="browser")
-    plot_3d.show(renderer="browser")
+    if plot_3d is not None:
+        plot_3d.show(renderer="browser")

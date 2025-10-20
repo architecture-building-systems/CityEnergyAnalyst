@@ -100,6 +100,7 @@ def archetypes_mapper(locator,
         supply_mapper(locator, building_typology_df)
 
 
+
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
     comfort_DB = pd.read_csv(locator.get_database_archetypes_use_type())
     # define comfort
@@ -399,7 +400,6 @@ def verify_building_standards(building_typology_df, db_standards):
     if not typology_standards.issubset(db_standards):
         diff = typology_standards.difference(db_standards)
         raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
-
 
 def main(config: cea.config.Configuration):
     """

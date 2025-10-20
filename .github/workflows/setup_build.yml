@@ -106,6 +106,10 @@ jobs:
           yarn electron:release
           mv "out/CEA-4 Desktop Setup ${CEA_VERSION}.exe" $GITHUB_WORKSPACE/setup/gui_setup.exe
 
+      - name: Install NSIS
+        shell: pwsh
+        run: winget install -e --id NSIS.NSIS --accept-package-agreements --accept-source-agreements
+
       - name: Install setup plugin
         shell: bash
         run: |
@@ -114,10 +118,11 @@ jobs:
           7z e Nsis7z.7z Plugins/x86-unicode/nsis7z.dll
 
       - name: Make setup
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p $GITHUB_WORKSPACE/setup/Output
-          makensis -DWHEEL_FILE="${WHEEL_FILE}" $GITHUB_WORKSPACE/setup/cityenergyanalyst.nsi
+          $env:PATH += ";C:\Program Files (x86)\NSIS\Bin"
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\setup\Output"
+          makensis -DWHEEL_FILE="$env:WHEEL_FILE" "$env:GITHUB_WORKSPACE\setup\cityenergyanalyst.nsi"
 
       - name: Upload setup
         uses: actions/upload-artifact@v4

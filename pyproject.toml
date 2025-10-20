@@ -62,9 +62,10 @@ dependencies = [
     "xlwt",
     "wntr>=1.3.2,<2", # Needs to be installed via pip since conda-forge does not provide osx-arm64 builds
     "py4design-cea",
+    "pyepwmorph>=1.0.5",
 
     # CEA external tools
-    "cea-external-tools>=0.2.0"
+    "cea-external-tools>=0.2.1"
 ]
 
 [dependency-groups]
@@ -174,3 +175,4 @@ gdal = "*"
 notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
 uv = "*"
+timezonefinder = ">=8.1.0,<9" # to fix Windows installation due to pyepwmorpher

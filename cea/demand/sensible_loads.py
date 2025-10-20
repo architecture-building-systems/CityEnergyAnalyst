@@ -100,10 +100,10 @@ def calc_I_rad(t, tsd: TimeSeriesData, bpr: BuildingPropertiesRow):
     delta_theta_er = tsd.weather.T_ext[t] - tsd.weather.T_sky[t]  # [see 11.3.5 in ISO 13790]
 
     Fform_wall, Fform_win, Fform_roof, Fform_underside = 0.5, 0.5, 1, 1  # 50% re-irradiated by vertical surfaces and 100% by horizontal
-    I_rad_win = tsd.thermal_resistance.RSE_win[t] * bpr.rc_model.U_win * calc_hr(bpr.envelope.e_win, theta_ss) * bpr.rc_model.Awin_ag * delta_theta_er
-    I_rad_roof = tsd.thermal_resistance.RSE_roof[t] * bpr.rc_model.U_roof * calc_hr(bpr.envelope.e_roof, theta_ss) * bpr.rc_model.Aroof * delta_theta_er
-    I_rad_wall = tsd.thermal_resistance.RSE_wall[t] * bpr.rc_model.U_wall * calc_hr(bpr.envelope.e_wall, theta_ss) * bpr.rc_model.Awall_ag * delta_theta_er
-    I_rad_underside = tsd.thermal_resistance.RSE_underside[t] * bpr.rc_model.U_base * calc_hr(bpr.envelope.e_underside, theta_ss) * bpr.rc_model.Aunderside * delta_theta_er
+    I_rad_win = tsd.thermal_resistance.RSE_win[t] * bpr.envelope.U_win * calc_hr(bpr.envelope.e_win, theta_ss) * bpr.envelope.Awin_ag * delta_theta_er
+    I_rad_roof = tsd.thermal_resistance.RSE_roof[t] * bpr.envelope.U_roof * calc_hr(bpr.envelope.e_roof, theta_ss) * bpr.envelope.Aroof * delta_theta_er
+    I_rad_wall = tsd.thermal_resistance.RSE_wall[t] * bpr.envelope.U_wall * calc_hr(bpr.envelope.e_wall, theta_ss) * bpr.envelope.Awall_ag * delta_theta_er
+    I_rad_underside = tsd.thermal_resistance.RSE_underside[t] * bpr.envelope.U_base * calc_hr(bpr.envelope.e_underside, theta_ss) * bpr.envelope.Aunderside * delta_theta_er
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof + Fform_underside * I_rad_underside
 
     return I_rad

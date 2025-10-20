@@ -3,7 +3,7 @@ PlotManager – Generates the Plotly graph
 
 """
 
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, COLUMNS_TO_COLOURS
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, get_column_color
 from cea.visualisation.b_data_processor import x_to_plot_building
 from cea.import_export.result_summary import month_names, season_names
 from math import ceil
@@ -91,7 +91,7 @@ class bar_plot:
         self.y_max = plot_config_general.y_max
         self.y_step = plot_config_general.y_step
         self.y_label = plot_config_general.y_label
-        self.x_to_plot = plot_config_general.x_to_plot
+        self.x_to_plot = plot_config.x_to_plot
         self.facet_by_numbers_wrapped = plot_config_general.facet_by_numbers_wrapped
         self.facet_by_rows = plot_config_general.facet_by_rows
         self.x_sorted_by = plot_config_general.x_sorted_by
@@ -148,6 +148,12 @@ class bar_plot:
                 title = "CEA-4 Photovoltaic-Thermal (PVT) Panels: {panel_type}".format(panel_type=self.appendix)
             elif plot_cea_feature == 'sc':
                 title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
+            elif plot_cea_feature == 'lifecycle-emissions':
+                title = "CEA-4 Lifecycle Emissions"
+            elif plot_cea_feature == 'operational-emissions':
+                title = "CEA-4 Operational Emissions"
+            else:
+                raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the title mapping.")
 
         # Set the y-axis label
         if self.y_label:
@@ -236,6 +242,53 @@ class bar_plot:
                     y_label = "SC Heat Yield per Installed Area (Wh/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+            
+            elif plot_cea_feature == 'lifecycle-emissions':
+                if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Lifecycle Emissions (tonnes CO2e/yr)"
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Lifecycle Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Lifecycle Emissions (kg CO2e/yr)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Lifecycle Emissions per Gross Floor Area (kg CO2e/yr/m2)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Lifecycle Emissions (g CO2e/yr)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Lifecycle Emissions per Gross Floor Area (g CO2e/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+            
+            elif plot_cea_feature == 'operational-emissions':
+                if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Operational Emissions (tonnes CO2e/yr)"
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Operational Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
+                elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Operational Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Operational Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Operational Emissions (kg CO2e/yr)"
+                elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Operational Emissions per Gross Floor Area (kg CO2e/yr/m2)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Operational Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Operational Emissions (g CO2e/yr)"
+                elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Operational Emissions per Gross Floor Area (g CO2e/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+            
+            else:
+                raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the y_label mapping.")
 
         # Set the x-axis label
         if self.x_label:
@@ -271,6 +324,8 @@ class bar_plot:
                 x_label = "Seasons"
             elif self.x_to_plot == 'district_and_annually_or_selected_period':
                 x_label = "Selected period"
+            elif self.x_to_plot == 'district_and_annually':
+                x_label = "Timeline"
             else:
                 raise ValueError(f"Invalid x-to-plot: {self.x_to_plot}")
 
@@ -302,10 +357,12 @@ class bar_plot:
             # Hide title but keep barmode
             fig.update_layout(barmode=barmode)
 
-        # About background color
+        # About background color and dimensions
         fig.update_layout(
             plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),       # Inside the plotting area
             paper_bgcolor="white",      # Entire figure background (including margins)
+            width=1000,  # Set plot width in pixels
+            height=600,  # Set plot height in pixels
         )
 
         # About the grid color and bar gaps
@@ -349,19 +406,19 @@ class bar_plot:
 
 def position_legend_between_title_and_graph(fig, plot_cea_feature=None):
     """
-    Position legend between the title and plot, and push the graph downward.
+    Position legend below the graph.
 
     Parameters:
     - fig: plotly.graph_objects.Figure
     - plot_cea_feature: str, the CEA feature being plotted (unused, kept for compatibility)
     """
 
-    # Standard horizontal legend for all plot types
+    # Standard horizontal legend below the graph
     fig.update_layout(
         legend=dict(
             orientation='h',
             yanchor="top",
-            y=0.98,  # Position legend closer to the plot with small gap
+            y=-0.15,  # Position legend below the graph
             xanchor="left",
             x=0
         )
@@ -439,7 +496,7 @@ def plot_faceted_bars(
             subplot_titles=[""] * num_facets,
             shared_yaxes=True,
             horizontal_spacing=0.01,
-            vertical_spacing=0.125
+            vertical_spacing=0.18  # Increased from 0.125 to prevent overlap between rows
         )
 
         for i, facet in enumerate(facets):
@@ -473,8 +530,8 @@ def plot_faceted_bars(
             for j, val_col in enumerate(value_columns):
                 # Create mapping from column name to user-friendly surface name
                 heading = get_display_name_for_column(val_col, y_metric_to_plot)
-                    
-                color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
+
+                color_key = get_column_color(val_col)
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
                 # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
@@ -497,8 +554,8 @@ def plot_faceted_bars(
                 fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
         # Set subplot vertical domains
-        available_height = 0.80
-        row_spacing = 0.125
+        available_height = 0.88  # Use more vertical space since legend is below
+        row_spacing = 0.18  # Increased from 0.125 to prevent overlap between rows
         total_spacing = row_spacing * (rows - 1)
         row_height = (available_height - total_spacing) / rows
 
@@ -546,8 +603,8 @@ def plot_faceted_bars(
         for j, val_col in enumerate(value_columns):
             # Create mapping from column name to user-friendly surface name
             heading = get_display_name_for_column(val_col, y_metric_to_plot)
-                
-            color_key = COLUMNS_TO_COLOURS.get(val_col, "grey")
+
+            color_key = get_column_color(val_col)
             bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
             # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
@@ -568,7 +625,7 @@ def plot_faceted_bars(
             
             fig.add_trace(go.Bar(**bar_params))
 
-        fig.update_layout(yaxis=dict(domain=[0.02, 0.82]))
+        fig.update_layout(yaxis=dict(domain=[0.05, 0.95]))  # Use more vertical space with legend below
 
     # Y-Axis limits and tick steps
     if y_max is None:
