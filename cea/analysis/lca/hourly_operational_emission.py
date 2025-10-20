@@ -147,10 +147,10 @@ class OperationalHourlyTimeline:
         :type pv_codes: list[str]
         :param allocation_priority: Explicit priority order for technologies (keys of _tech_name_mapping) that are eligible for
             PV allocation. The first item gets PV first in each hour. If None, defaults to
-            `["appliance", "heating", "hot_water", "cooling"]`.
+            `["appliances", "heating", "hot_water", "cooling"]`.
             If the list contains less than 4 items, the remaining eligible technologies will still be appended.
         :type allocation_priority: list[str] | None, optional
-        :param allow_techs: Optional whitelist of technologies (`heating`, `hot_water`, `cooling`, `appliance`)
+        :param allow_techs: Optional whitelist of technologies (`heating`, `hot_water`, `cooling`, `appliances`)
             to which PV can be allocated.
             If None, all technologies are allowed.
         :type allow_techs: list[str] | None, optional
@@ -158,10 +158,8 @@ class OperationalHourlyTimeline:
 
         Notes
         -----
-        - Must be called before `calculate_operational_emission()`; calculation will materialize PV offset columns
-        for all logged PV scenarios (suffixed with `__{pv_name}`), leaving base emission columns unchanged.
-            - Surplus PV is assumed exported (not credited toward operational emission reduction here).
-            - PV offsets are calculated using the hourly GRID emission intensity timeline and are negative by convention.
+        - Surplus PV is assumed exported (not credited toward operational emission reduction here).
+        - PV offsets are calculated using the hourly GRID emission intensity timeline and are negative by convention.
 
         - For each PV type, four types of columns are added to the timeline:
             - `PV_{pv_code}_E_PV_gen` columns: how much of PV is sold, how much is used
@@ -220,7 +218,7 @@ class OperationalHourlyTimeline:
 
     def _order_demands(self, allocation_priority: list[str] | None, allow_demands: list[str] | None) -> list[str]:
         all_demands = list(_tech_name_mapping.keys())
-        default_priority = ["appliance", "heating", "hot_water", "cooling"]
+        default_priority = ["appliances", "heating", "hot_water", "cooling"]
         prioritized_demands = list(allocation_priority) if allocation_priority else default_priority
         prioritized_demands = [demand for demand in prioritized_demands if demand in all_demands]
         if not prioritized_demands:

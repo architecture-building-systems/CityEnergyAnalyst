@@ -84,10 +84,8 @@ class BuildingEmissionTimeline:
         "base": "base",
         "technical_systems": "technical_systems", # not implemented in CEA, dummy value
     }
-    # Per-technology operational columns stored in the yearly timeline
-    _OPERATIONAL_COLS = [f"operation_{demand_type}_kgCO2e" for demand_type in _tech_name_mapping.keys()]
-    # Mapping from hourly demand aggregation names to timeline names
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
+    _OPERATIONAL_COLS = list(_COLUMN_MAPPING.values())
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
 
     def __init__(
@@ -385,7 +383,7 @@ class BuildingEmissionTimeline:
         4) Aggregate per-feedstock columns back to per-technology yearly totals and write into self.timeline.
 
         Column convention assumed: `{demand_type}_{feedstock}_kgCO2e` where demand_type is one of
-        {heating, hot_water, cooling, appliance} and feedstock is in the feedstock database (plus 'NONE').
+        {heating, hot_water, cooling, appliances} and feedstock is in the feedstock database (plus 'NONE').
         """
         self.check_demolished()
         # 1) Read hourly operational emissions and drop non-emission columns
@@ -395,12 +393,12 @@ class BuildingEmissionTimeline:
         if not feedstock_policies:
             # Use the helper from OperationalHourlyTimeline for robust demand aggregation
             op_by_demand = operational.emission_by_demand.copy().rename(columns=self._COLUMN_MAPPING)
-            baseline_agg = op_by_demand.sum(axis=0)
+            baseline_agg = op_by_demand.sum(axis=0).reindex(self._OPERATIONAL_COLS).fillna(0.0)
             self.timeline.loc[:, self._OPERATIONAL_COLS] = baseline_agg.to_numpy(dtype=float)
             return
 
         feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
-        demand_types = list(_tech_name_mapping.keys())  # ['heating', 'hot_water', 'cooling', 'appliance']
+        demand_types = list(_tech_name_mapping.keys())  # ['heating', 'hot_water', 'cooling', 'appliances']
 
         yearly_sum = operational_timeseries.sum(axis=0)
         operational_multiyrs = self._tile_yearly(yearly_sum)
