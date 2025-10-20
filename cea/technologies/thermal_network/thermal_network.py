@@ -3450,7 +3450,7 @@ def check_heating_cooling_demand(locator, config):
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         if not buildings_name_with_cooling:
-            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
+            print('!!! CEA did not design a district cooling network as there is no cooling demand from any building.')
             sys.exit(1)
 
 # ============================
