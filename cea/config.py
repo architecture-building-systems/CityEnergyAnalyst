@@ -714,9 +714,9 @@ class PluginListParameter(ListParameter):
         super().set(value)
         self.config.refresh_plugins()
 
-    def encode(self, list_of_plugins):
+    def encode(self, value):
         """Make sure we don't duplicate any of the plugins"""
-        unique_plugins = unique(list_of_plugins)
+        unique_plugins = unique(value)
         return super().encode(unique_plugins)
 
     def decode(self, value):
