@@ -15,7 +15,7 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
     """Analyze the decode method of a parameter class to infer its return type"""
 
     # Import the config module to analyze the actual classes
-    sys.path.insert(0, os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from config import Parameter
 
     # Get all Parameter subclasses
@@ -87,12 +87,6 @@ def infer_type_from_param_class_name(param_class_name: str) -> str:
 
 def _ann_to_stub_str(ann: object) -> str:
     """Convert an annotation object to a stub-friendly string"""
-    try:
-        from typing import ForwardRef, get_origin
-    except Exception:
-        ForwardRef = None
-        get_origin = None
-
     s = getattr(ann, "__name__", None) or str(ann)
 
     # Strip typing.ForwardRef('X') -> X
@@ -114,7 +108,7 @@ def _indent(text: str, level: int = 1, spaces: int = 4) -> str:
 def _generate_parameter_type_stubs() -> str:
     """Automatically generate type stubs for all Parameter subclasses"""
     # Import the config module to analyze the actual classes
-    sys.path.insert(0, os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from config import Parameter
     
     # Get all Parameter subclasses
@@ -135,10 +129,85 @@ def _generate_parameter_type_stubs() -> str:
     return "\n".join(stubs)
 
 
+def _generate_nested_class_stub(nested_class: type) -> List[str]:
+    """Generate stub for a nested class by inspecting it"""
+    class_name = nested_class.__name__
+
+    # Get attributes with type hints if available
+    attributes = []
+    if hasattr(nested_class, '__annotations__'):
+        for attr_name, attr_type in nested_class.__annotations__.items():
+            type_str = _ann_to_stub_str(attr_type)
+            attributes.append(f"{attr_name}: {type_str}")
+
+    # Infer attributes from __init__ if no annotations
+    if not attributes and hasattr(nested_class, '__init__'):
+        try:
+            sig = inspect.signature(nested_class.__init__)
+            for param_name, param in sig.parameters.items():
+                if param_name == 'self':
+                    continue
+                if param.annotation != param.empty:
+                    type_str = _ann_to_stub_str(param.annotation)
+                    attributes.append(f"{param_name}: {type_str}")
+                else:
+                    attributes.append(f"{param_name}: Any")
+        except Exception:
+            pass
+
+    # Get methods
+    methods = []
+    for name in dir(nested_class):
+        if name.startswith('_') and name not in ['__init__', '__enter__', '__exit__', '__repr__', '__str__']:
+            continue
+        attr = getattr(nested_class, name)
+        if inspect.ismethod(attr) or inspect.isfunction(attr):
+            try:
+                sig = inspect.signature(attr)
+                params = []
+                for param_name, param in sig.parameters.items():
+                    if param_name == 'self':
+                        continue
+                    param_str = param_name
+                    if param.annotation != param.empty:
+                        type_str = _ann_to_stub_str(param.annotation)
+                        param_str += f": {type_str}"
+                    if param.default != param.empty:
+                        param_str += " = ..."
+                    params.append(param_str)
+
+                return_annotation = " -> Any"
+                if sig.return_annotation != sig.empty:
+                    return_annotation = f" -> {_ann_to_stub_str(sig.return_annotation)}"
+
+                methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
+            except Exception:
+                methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
+
+    # Build class definition
+    result = [f"class {class_name}:"]
+    if attributes:
+        result.extend([f"    {attr}" for attr in attributes])
+    if methods:
+        result.extend([f"    {method}" for method in methods])
+    if not attributes and not methods:
+        result.append("    pass")
+
+    return result
+
+
 def _generate_configuration_class_stub(section_attrs: List[str], general_params: List[str], section_overloads: List[str], general_overloads: List[str]) -> str:
     """Automatically generate Configuration class stub by inspecting the actual class"""
-    sys.path.insert(0, os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from config import Configuration
+
+    # Detect nested classes
+    nested_classes = []
+    for name in dir(Configuration):
+        attr = getattr(Configuration, name)
+        if inspect.isclass(attr) and attr.__module__ == Configuration.__module__:
+            # This is a nested class defined within Configuration
+            nested_classes.append(attr)
 
     # Get public methods from Configuration class
     methods = []
@@ -168,33 +237,41 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
                     methods.append(f"def {name}(self, *args, **kwargs) -> Any: ...")
-    
+
     # Core attributes
     attributes = [
         "# Core configuration attributes",
         "default_config: configparser.ConfigParser",
-        "user_config: configparser.ConfigParser", 
+        "user_config: configparser.ConfigParser",
         "sections: Dict[str, Section]",
         "restricted_to: Optional[List[str]]",
         "",
         "# Known sections from default.config with typed section classes"
     ]
-    
+
     if section_attrs:
         attributes.extend(section_attrs)
-    
+
     if general_params:
         attributes.extend(["", "# Common general section parameters (frequently accessed)"] + general_params)
-    
+
+    # Generate nested class stubs dynamically
+    nested_class_stubs = []
+    if nested_classes:
+        nested_class_stubs.append("")
+        nested_class_stubs.append("# Nested classes")
+        for nested_class in nested_classes:
+            nested_class_stubs.extend(_generate_nested_class_stub(nested_class))
+
     # Add method stubs and overloads
-    all_content = attributes + [""] + methods
-    
+    all_content = attributes + nested_class_stubs + [""] + methods
+
     if section_overloads:
         all_content.extend(["", "# Overloads for specific section access"] + section_overloads)
-    
+
     if general_overloads:
         all_content.extend(["", "# Overloads for general section parameter access"] + general_overloads)
-    
+
     return "\n".join([
         "class Configuration:",
         _indent("\n".join(all_content))
@@ -203,7 +280,7 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
 
 def _generate_section_class_stub() -> str:
     """Automatically generate Section class stub by inspecting the actual class"""
-    sys.path.insert(0, os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from config import Section
 
     # Get public methods from Section class
@@ -251,7 +328,7 @@ def _generate_section_class_stub() -> str:
 
 def _generate_parameter_class_stub() -> str:
     """Automatically generate Parameter class stub by inspecting the actual class"""
-    sys.path.insert(0, os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from config import Parameter
 
     # Get public methods from Parameter class
@@ -322,8 +399,10 @@ def _build_section_class(section_name: str, param_attrs: List[str], param_overlo
 def generate_config_stub():
     """Generate comprehensive type stub file for cea.config"""
 
-    default_config_path = os.path.join(os.path.dirname(__file__), "default.config")
-    stub_path = os.path.join(os.path.dirname(__file__), "config.pyi")
+    # Path to default.config (in cea/ directory, one level up from utilities/)
+    default_config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "default.config")
+    # Path to config.pyi (also in cea/ directory)
+    stub_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.pyi")
 
     if not os.path.exists(default_config_path):
         print(f"Error: {default_config_path} not found")
