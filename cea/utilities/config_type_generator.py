@@ -81,6 +81,10 @@ def infer_type_from_param_class_name(param_class_name: str) -> str:
     if param_class_name == "PluginListParameter":
         return "List[Any]"
 
+    # Multi-choice parameters return lists of strings
+    if param_class_name in ("MultiChoiceParameter", "BuildingsParameter", "ListParameter"):
+        return "List[str]"
+
     # Otherwise use the regular inference
     return infer_type_from_decode_method(param_class_name)
 
