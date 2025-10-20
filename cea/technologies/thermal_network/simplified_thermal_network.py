@@ -179,10 +179,18 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
     return edge_df, node_df
 
 
-def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
+def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
+    if pipe_catalog.empty:
+        raise ValueError("Pipe catalog is empty. Please check the thermal grid database.")
+
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+
+    # Calculate differences and find the index of the minimum difference
+    differences = (pipe_catalog['D_int_m'] - diameter_m).abs()
+    closest_idx = differences.argsort().iloc[0]
+
+    selection_of_catalog = pipe_catalog.iloc[[closest_idx]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
     pipe_DN = selection_of_catalog['pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
