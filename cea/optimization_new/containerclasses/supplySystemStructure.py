@@ -533,8 +533,19 @@ class SupplySystemStructure(object):
         components_fitting_after_passive_conversion = []
 
         for component_code in component_codes:
-            component = ActiveComponent.code_to_class_mapping[component_code](component_code, component_placement,
-                                                                              component_capacity)
+            # Get component class from mapping (may be None if not found)
+            if ActiveComponent.code_to_class_mapping is None:
+                raise RuntimeError("Component.initialize_class_variables() must be called before using components")
+
+            component_class = ActiveComponent.code_to_class_mapping.get(component_code)
+
+            # Skip if component class not found or if it's a passive component
+            # Passive components need different instantiation parameters
+            # and are handled separately by _fetch_viable_passive_components
+            if component_class is None or issubclass(component_class, PassiveComponent):
+                continue
+
+            component = component_class(component_code, component_placement, component_capacity)
             if component.main_energy_carrier.code == demand_energy_carrier:
                 fitting_components.append(component)
             else:
