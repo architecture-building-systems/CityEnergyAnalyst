@@ -3444,14 +3444,12 @@ def check_heating_cooling_demand(locator, config):
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
         if not (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
-            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district heating network created as there is no heating demand from any building.')
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         if not buildings_name_with_cooling:
-            print('!!! CEA did not design a district cooling network as there is no cooling demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
 # ============================
 # test
