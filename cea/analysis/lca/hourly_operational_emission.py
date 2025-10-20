@@ -23,7 +23,7 @@ _tech_name_mapping = {
     "heating": ("Qhs_sys", "hs"),
     "hot_water": ("Qww_sys", "dhw"),
     "cooling": ("Qcs_sys", "cs"),
-    "appliance": ("E_sys", "el"),
+    "appliances": ("E_sys", "el"),
 }
 class OperationalHourlyTimeline:
     def __init__(

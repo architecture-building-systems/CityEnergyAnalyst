@@ -31,7 +31,7 @@ lifecycle_emission_metrics = [
     'operation_heating',
     'operation_hot_water',
     'operation_cooling',
-    'operation_electricity',
+    'operation_appliances',
     'production_wall_ag',
     'production_wall_bg',
     'production_wall_part',
@@ -61,20 +61,20 @@ lifecycle_emission_metrics = [
     'demolition_underside',
     'demolition_floor',
     'demolition_base',
-    'demolition_technical_systems'
+    'demolition_technical_systems',
 ]
 
 
 operational_emission_metrics = [
-     'heating', 'hot_water', 'cooling', 'electricity', 'heating_NATURALGAS', 'heating_BIOGAS', 'heating_SOLAR',
+     'heating', 'hot_water', 'cooling', 'appliances', 'heating_NATURALGAS', 'heating_BIOGAS', 'heating_SOLAR',
      'heating_DRYBIOMASS', 'heating_WETBIOMASS', 'heating_GRID', 'heating_COAL', 'heating_WOOD', 'heating_OIL',
      'heating_HYDROGEN', 'heating_NONE', 'hot_water_NATURALGAS', 'hot_water_BIOGAS', 'hot_water_SOLAR',
      'hot_water_DRYBIOMASS', 'hot_water_WETBIOMASS', 'hot_water_GRID', 'hot_water_COAL', 'hot_water_WOOD',
      'hot_water_OIL', 'hot_water_HYDROGEN', 'hot_water_NONE', 'cooling_NATURALGAS', 'cooling_BIOGAS', 'cooling_SOLAR',
      'cooling_DRYBIOMASS', 'cooling_WETBIOMASS', 'cooling_GRID', 'cooling_COAL', 'cooling_WOOD', 'cooling_OIL',
-     'cooling_HYDROGEN', 'cooling_NONE', 'electricity_NATURALGAS', 'electricity_BIOGAS', 'electricity_SOLAR',
-     'electricity_DRYBIOMASS', 'electricity_WETBIOMASS', 'electricity_GRID', 'electricity_COAL', 'electricity_WOOD',
-     'electricity_OIL', 'electricity_HYDROGEN', 'electricity_NONE'
+     'cooling_HYDROGEN', 'cooling_NONE', 'appliances_NATURALGAS', 'appliances_BIOGAS', 'appliances_SOLAR',
+     'appliances_DRYBIOMASS', 'appliances_WETBIOMASS', 'appliances_GRID', 'appliances_COAL', 'appliances_WOOD',
+     'appliances_OIL', 'appliances_HYDROGEN', 'appliances_NONE'
 ]
 
 
