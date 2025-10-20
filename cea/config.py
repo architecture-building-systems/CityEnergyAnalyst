@@ -435,7 +435,7 @@ class Parameter:
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
-    def get(self):
+    def get(self) -> Any:
         """Return the value from the config file"""
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
