@@ -646,7 +646,7 @@ class IntegerParameter(Parameter):
             return ""
         return str(int(value))
 
-    def decode(self, value):
+    def decode(self, value) -> int | None:
         try:
             return int(value)
         except ValueError:
@@ -678,7 +678,7 @@ class RealParameter(Parameter):
             return ''
         return format(float(value), ".%i" % self._decimal_places)
 
-    def decode(self, value):
+    def decode(self, value) -> float | None:
         try:
             return float(value)
         except ValueError:
@@ -943,7 +943,7 @@ class MultiChoiceParameter(ChoiceParameter):
             return []
         return self.decode(_default)
 
-    def get(self):
+    def get(self) -> list[str]:
         """Return the value from the config file"""
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
@@ -967,7 +967,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
         return ', '.join(map(str, value))
 
-    def decode(self, value):
+    def decode(self, value) -> list[str]:
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
