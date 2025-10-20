@@ -93,15 +93,15 @@ class EmissionTimelinePlot:
         # Categorize columns
         for col in self.y_columns:
             col_lower = col.lower()
-            if 'biogenic' in col_lower:
+            if col_lower.startswith('biogenic'):
                 categories['biogenic']['columns'].append(col)
-            elif 'pv' in col_lower:
+            elif col_lower.startswith('pv'):
                 categories['pv']['columns'].append(col)
-            elif 'operation' in col_lower:
+            elif col_lower.startswith('operation'):
                 categories['operation']['columns'].append(col)
-            elif 'production' in col_lower:
+            elif col_lower.startswith('production'):
                 categories['production']['columns'].append(col)
-            elif 'demolition' in col_lower:
+            elif col_lower.startswith('demolition'):
                 categories['demolition']['columns'].append(col)
 
         # Aggregate columns within each category
@@ -576,8 +576,8 @@ def plot_emission_timeline(config, context: dict):
     # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
     #     df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
     #     list_y_columns.append('biogenic_underside_kgCO2e/m2')
-    # if 'operation_electricity_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_electricity_kgCO2e/m2']
+    # if 'operation_appliances_kgCO2e/m2' in df_to_plotly.columns:
+    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_appliances_kgCO2e/m2']
     #     list_y_columns.append('pv_kgCO2e/m2')
 
     # Create EmissionTimelinePlot instance
