@@ -15,7 +15,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import re
-import sys
 
 import cea.config
 import cea.inputlocator
