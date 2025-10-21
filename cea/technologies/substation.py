@@ -751,6 +751,8 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         - ``cc``, capacity mass flow rate secondary side
 
     """
+    # Check if primary side has meaningful temperature drop (thi != tho)
+    # If temperatures are essentially equal, no heat transfer occurs, skip iteration
     if ch_kWperK > 0 and not isclose(thi_K, tho_K):
         previous_efficiency = 0.1
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
@@ -779,8 +781,18 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
             # previous_efficiency = current_efficiency
             # current_efficiency = calculate_next_efficiency
 
-        cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
-        tco_C = tco_K - 273.0
+        # Check if secondary side has meaningful temperature rise (tci != tco)
+        # Even if primary side had temperature drop, heat exchanger may produce negligible secondary-side change
+        # This validates the RESULT of the iteration, while the check above validates the INPUT
+        temp_diff = abs(tci_K - tco_K)
+        if temp_diff < 0.001:
+            # When temperature difference is negligible, no meaningful heat transfer
+            # This can occur with very small cooling loads
+            tco_C = 0.0
+            cc_kWperK = 0.0
+        else:
+            cc_kWperK = Q_cooling_W / temp_diff
+            tco_C = tco_K - 273.0
     else:
         tco_C = 0.0
         cc_kWperK = 0.0
