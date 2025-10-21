@@ -1,6 +1,8 @@
 # Type stub file for cea.config
 # Auto-generated from default.config - do not edit manually
 
+from __future__ import annotations
+
 from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal
 import configparser
 
@@ -78,13 +80,13 @@ class Configuration:
     multiprocessing: bool
     number_of_cpus_to_keep_free: int
     debug: bool
-    plugins: List[str]
+    plugins: List[Any]
 
     # Nested classes
     class RestrictionContextManager:
         config: Any
         parameters: Optional[List[str]]
-        def __enter__(self) -> 'RestrictionContextManager': ...
+        def __enter__(self) -> 'RestrictionContextManager': ...  # noqa: F821
         def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...
         def __init__(self, config, parameters: Optional[List[str]]) -> None: ...
         def apply(self) -> None: ...
@@ -222,7 +224,7 @@ class Configuration:
     @overload
     def __getattr__(self, item: Literal["debug"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["plugins"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["plugins"]) -> List[Any]: ...
 
     def __getattr__(self, item: str) -> Union['Section', Any]: ...
 
@@ -258,7 +260,7 @@ class GeneralSection(Section):
     multiprocessing: bool
     number_of_cpus_to_keep_free: int
     debug: bool
-    plugins: List[str]
+    plugins: List[Any]
 
     @overload
     def __getattr__(self, item: Literal["project"]) -> str: ...
@@ -273,7 +275,7 @@ class GeneralSection(Section):
     @overload
     def __getattr__(self, item: Literal["debug"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["plugins"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["plugins"]) -> List[Any]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DatabaseHelperSection(Section):
