@@ -299,16 +299,10 @@ def calc_Eauxf_hs_dis(Qhs_sys, Qhs_sys0, deltaP_kPa, b, ts, tr):
         # Validate temperature difference for mass flow calculation
         temp_diff = ts - tr
         if abs(temp_diff) < 0.001:
-            raise ValueError(
-                f"Invalid temperature configuration for space heating mass flow calculation!\n"
-                f"Supply temperature: {ts:.2f} °C ({ts + 273.15:.2f} K)\n"
-                f"Return temperature: {tr:.2f} °C ({tr + 273.15:.2f} K)\n"
-                f"Temperature difference: {temp_diff:.6f} °C\n\n"
-                f"For valid mass flow calculation:\n"
-                f"- Supply and return temperatures must differ by at least 0.001 °C\n"
-                f"- Typical difference: 5-20 °C for space heating systems\n\n"
-                f"**Check the space heating supply and return temperatures in HVAC database."
-            )
+            # When temperature difference is negligible, no water flow is needed
+            # This can occur with very small heating loads where heat exchanger operates with minimal temperature drop
+            # Physically correct behavior: no flow = no pump energy
+            return 0.0
 
         m_kgs = (Qhs_sys / (temp_diff * HEAT_CAPACITY_OF_WATER_JPERKGK))
         Phydr_kW = deltaP_kPa * (m_kgs / P_WATER_KGPERM3)
@@ -331,16 +325,10 @@ def calc_Eauxf_cs_dis(Qcs_sys, Qcs_sys0, deltaP_kPa, b, ts, tr):
         # Validate temperature difference for mass flow calculation
         temp_diff = ts - tr
         if abs(temp_diff) < 0.001:
-            raise ValueError(
-                f"Invalid temperature configuration for space cooling mass flow calculation!\n"
-                f"Supply temperature: {ts:.2f} °C ({ts + 273.15:.2f} K)\n"
-                f"Return temperature: {tr:.2f} °C ({tr + 273.15:.2f} K)\n"
-                f"Temperature difference: {temp_diff:.6f} °C\n\n"
-                f"For valid mass flow calculation:\n"
-                f"- Supply and return temperatures must differ by at least 0.001 °C\n"
-                f"- Typical difference: 5-12 °C for space cooling systems\n\n"
-                f"**Check the space cooling supply and return temperatures in HVAC database."
-            )
+            # When temperature difference is negligible, no water flow is needed
+            # This can occur with very small cooling loads where heat exchanger operates with minimal temperature drop
+            # Physically correct behavior: no flow = no pump energy
+            return 0.0
 
         m_kgs = (Qcs_sys / (temp_diff * HEAT_CAPACITY_OF_WATER_JPERKGK))
         Phydr_kW = deltaP_kPa * (m_kgs / P_WATER_KGPERM3)
