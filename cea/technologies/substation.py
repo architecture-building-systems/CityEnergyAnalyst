@@ -499,18 +499,45 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
             # Check temperature difference before division
             temp_diff = tco - tci
-            if np.any(np.abs(temp_diff) < 0.001):
+
+            # Handle hours with zero or very small temperature difference
+            # This is physically correct: when temp_diff ≈ 0, there's no heat transfer, so cc should be 0
+            # Initialize cc array with zeros
+            cc = np.zeros_like(Qhs_sys_W)
+
+            # Only calculate cc for hours with sufficient temperature difference
+            valid_mask = np.abs(temp_diff) >= 0.001
+            if np.any(valid_mask):
+                cc[valid_mask] = Qhs_sys_W[valid_mask] / temp_diff[valid_mask]
+
+            # If no valid hours exist (all temp differences too small but demand exists), this is a configuration error
+            if not np.any(valid_mask) and np.any(Qhs_sys_W > 0):
                 raise ValueError(
                     f"Invalid temperature configuration for space heating heat capacity calculation!\n"
-                    f"Supply and return temperatures are too close.\n"
+                    f"Supply and return temperatures are too close for ALL hours with heating demand.\n"
                     f"Supply temperature (tco): {np.mean(tco):.2f} K (mean)\n"
                     f"Return temperature (tci): {np.mean(tci):.2f} K (mean)\n"
-                    f"Minimum difference: {np.min(np.abs(temp_diff)):.6f} K\n\n"
+                    f"Maximum difference: {np.max(np.abs(temp_diff)):.6f} K\n\n"
                     f"For valid calculation, temperature difference must be > 0.001 K.\n"
                     f"**Check the building space heating supply and return temperatures in HVAC database."
                 )
 
-            cc = Qhs_sys_W / temp_diff
+            # Find the nominal condition index among valid hours only
+            # We need to ensure the peak hour has valid temperature difference
+            if not valid_mask[index]:
+                # If the original peak hour is invalid, find the peak among valid hours
+                valid_demand = Qhs_sys_W.copy()
+                valid_demand[~valid_mask] = 0  # Zero out invalid hours
+                if np.max(valid_demand) > 0:
+                    index = np.argmax(valid_demand)  # Find peak among valid hours
+                else:
+                    # This shouldn't happen due to earlier check, but safety fallback
+                    raise ValueError(
+                        "Cannot find valid nominal condition for space heating substation!\n"
+                        "All hours with heating demand have invalid temperature configurations.\n"
+                        "**Check the building space heating supply and return temperatures in HVAC database."
+                    )
+
             thi_0 = thi[index]
             tci_0 = tci[index]
             tco_0 = tco[index]
@@ -834,7 +861,12 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
         - ``ch``, capacity mass flow rate secondary side
 
     """
-    ch_kWperK = 0
+    ch_kWperK = 0.0
+    # Handle case where cc_kWperK is zero (no heat capacity flow)
+    # This can occur when temperature difference between supply and return is negligible
+    if cc_kWperK == 0.0 or Q_heating_W == 0.0:
+        return 0.0, 0.0
+
     if Q_heating_W > 0.0:
         dT_primary = tco_K - tci_K if not isclose(tco_K,
                                                   tci_K) else 0.0001  # to avoid errors with temperature changes < 0.001
@@ -859,8 +891,8 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
             tho_K = thi_K - current_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
         tho_C = tho_K - 273
     else:
-        tho_C = 0
-        ch_kWperK = 0
+        tho_C = 0.0
+        ch_kWperK = 0.0
     return float(tho_C), float(ch_kWperK)
 
 
