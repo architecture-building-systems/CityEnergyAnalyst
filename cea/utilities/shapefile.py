@@ -140,7 +140,7 @@ def shapefile_to_csv_xlsx(shapefile, output_path, new_crs=None):
 
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`shp-to-csv-to-shp` with the values from the configuration file, section ``[shapefile-tools]``.
 

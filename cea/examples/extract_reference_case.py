@@ -16,7 +16,7 @@ import cea.inputlocator
 CEA_CONFIG_SECTIONS = ['extract-reference-case']
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Extract the reference case in ``reference-case-open.zip`` to the destination folder.
 

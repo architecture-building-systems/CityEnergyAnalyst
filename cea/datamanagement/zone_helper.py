@@ -578,7 +578,7 @@ def flatten_geometries(gdf):
 
     return gdf
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
     """

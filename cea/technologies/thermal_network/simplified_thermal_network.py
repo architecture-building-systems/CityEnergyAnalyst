@@ -599,7 +599,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """

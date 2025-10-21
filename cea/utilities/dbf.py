@@ -97,7 +97,7 @@ def dbf_to_csv_xlsx(input_file, output_path, output_file_name):
         df.to_excel(os.path.join(output_path, output_file_name), index=False)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     input_file = config.dbf_tools.input_file
     output_file_name = config.dbf_tools.output_file_name

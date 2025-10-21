@@ -1036,7 +1036,7 @@ def aggregate_solar_collector_results(building_names, panel_type, locator):
     return aggregated_hourly_results_df, aggregated_annual_results_df
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 

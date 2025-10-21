@@ -950,7 +950,7 @@ def calc_DH_return(t_0, t_1):
 # Test
 # ============================
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     do some testing... (view this as a scratch-pad...
     """

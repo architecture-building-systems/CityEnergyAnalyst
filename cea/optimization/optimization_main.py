@@ -111,7 +111,7 @@ def moo_optimization(locator, weather_file, config):
 # ============================
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole optimization routine
     """

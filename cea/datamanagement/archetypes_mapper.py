@@ -401,7 +401,7 @@ def verify_building_standards(building_typology_df, db_standards):
         diff = typology_standards.difference(db_standards)
         raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.

@@ -168,7 +168,7 @@ def lca_operation(locator: cea.inputlocator.InputLocator):
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f', na_rep='nan')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 

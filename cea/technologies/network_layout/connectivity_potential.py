@@ -412,7 +412,7 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
         return crs
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
