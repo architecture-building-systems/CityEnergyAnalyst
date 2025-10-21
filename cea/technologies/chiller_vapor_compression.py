@@ -96,7 +96,38 @@ def calc_COP_g(T_evap_K, T_cond_K, VC_chiller):
 
     [Bejan, 2016] Adrian Bejan, 2016, Andvanced engineering thermodynamics (p. 106)
     """
-    cop_chiller = VC_chiller.g_value * T_evap_K / (T_cond_K - T_evap_K)
+    # Validate temperature difference for chiller operation
+    temp_diff = T_cond_K - T_evap_K
+    if temp_diff < 1.0:
+        raise ValueError(
+            f"Invalid temperature configuration for chiller COP calculation!\n"
+            f"Condenser temperature: {T_cond_K:.2f} K\n"
+            f"Evaporator temperature: {T_evap_K:.2f} K\n"
+            f"Temperature difference: {temp_diff:.2f} K\n\n"
+            f"For valid chiller operation:\n"
+            f"- T_cond must be > T_evap by at least 1 K\n"
+            f"- Typical difference: 20-40 K for water-cooled chillers\n\n"
+            f"**Check the chilled water supply temperature and cooling tower/condenser temperatures."
+        )
+
+    cop_chiller = VC_chiller.g_value * T_evap_K / temp_diff
+
+    # Validate against Carnot limit (physical upper bound)
+    COP_carnot = T_evap_K / temp_diff
+    if cop_chiller > 0.95 * COP_carnot:
+        raise ValueError(
+            f"Physically impossible chiller COP detected!\n"
+            f"Calculated COP: {cop_chiller:.2f}\n"
+            f"Carnot COP limit (100%): {COP_carnot:.2f}\n"
+            f"Realistic limit (95%): {0.95 * COP_carnot:.2f}\n"
+            f"g-value: {VC_chiller.g_value:.3f}\n\n"
+            f"COP exceeds thermodynamic limits.\n"
+            f"**Check:\n"
+            f"  - g-value in chiller database (typical: 0.3-0.6)\n"
+            f"  - Evaporator temperature: {T_evap_K:.2f} K\n"
+            f"  - Condenser temperature: {T_cond_K:.2f} K"
+        )
+
     return cop_chiller
 
 
@@ -112,7 +143,18 @@ def eta_th_vcc_g(T_evap_K, T_cond_K, VC_chiller):
            = 1 / (1 + P_el/Qc_evap)
            = 1 / (1 + 1/COP)
     """
-    thermal_efficiency = 1 / (1 + 1 / calc_COP_g(T_evap_K, T_cond_K, VC_chiller))
+    COP = calc_COP_g(T_evap_K, T_cond_K, VC_chiller)
+
+    # Validate COP before using in thermal efficiency calculation
+    if COP <= 0:
+        raise ValueError(
+            f"Invalid COP for thermal efficiency calculation!\n"
+            f"COP: {COP:.3f}\n\n"
+            f"COP must be > 0.\n"
+            f"**This should have been caught by calc_COP_g validation."
+        )
+
+    thermal_efficiency = 1 / (1 + 1 / COP)
 
     return thermal_efficiency
 
@@ -210,8 +252,36 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
         T_evap_K = T_evap_K - DT_NETWORK_CENTRALIZED
     # calculate condenser temperature with static approach temperature assumptions # FIXME: only work for tropical climates
     T_cond_K = np.mean(weather_data['wetbulb_C']) + CHILLER_DELTA_T_APPROACH + CHILLER_DELTA_T_HEX_CT + 273.15
+
+    # Validate temperature difference for COP calculation
+    temp_diff = T_cond_K - T_evap_K
+    if temp_diff < 1.0:
+        raise ValueError(
+            f"Invalid temperature configuration for VCC system COP calculation!\n"
+            f"Condenser temperature: {T_cond_K:.2f} K ({T_cond_K - 273.15:.2f} °C)\n"
+            f"Evaporator temperature: {T_evap_K:.2f} K ({T_evap_K - 273.15:.2f} °C)\n"
+            f"Temperature difference: {temp_diff:.2f} K\n\n"
+            f"For valid chiller operation:\n"
+            f"- T_cond must be > T_evap by at least 1 K\n"
+            f"- Typical difference: 20-40 K\n\n"
+            f"**Check:\n"
+            f"  - Weather data (wetbulb temperature)\n"
+            f"  - Load types: {load_types}\n"
+            f"  - Centralized: {centralized}"
+        )
+
     # calculate chiller COP
-    cop_chiller = g_value * T_evap_K / (T_cond_K - T_evap_K)
+    cop_chiller = g_value * T_evap_K / temp_diff
+
+    # Validate COP before using in system COP calculation
+    if cop_chiller <= 0:
+        raise ValueError(
+            f"Invalid chiller COP!\n"
+            f"Calculated COP: {cop_chiller:.3f}\n"
+            f"g-value: {g_value:.3f}\n\n"
+            f"COP must be > 0."
+        )
+
     # calculate system COP with pumping power of auxiliaries
     if centralized is True:
         cop_system = 1 / (1 / cop_chiller * (1 + CENTRALIZED_AUX_PERCENTAGE / 100))
