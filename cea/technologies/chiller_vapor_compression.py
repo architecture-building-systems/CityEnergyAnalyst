@@ -9,6 +9,7 @@ import numpy as np
 from cea.technologies.constants import G_VALUE_CENTRALIZED, G_VALUE_DECENTRALIZED, CHILLER_DELTA_T_HEX_CT, \
     CHILLER_DELTA_T_APPROACH, T_EVAP_AHU, T_EVAP_ARU, T_EVAP_SCU, DT_NETWORK_CENTRALIZED, CENTRALIZED_AUX_PERCENTAGE, \
     DECENTRALIZED_AUX_PERCENTAGE
+from cea.constants import MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K
 
 from cea.optimization.constants import VCC_CODE_CENTRALIZED, VCC_CODE_DECENTRALIZED
 from cea.analysis.costs.equations import calc_capex_annualized
@@ -98,14 +99,14 @@ def calc_COP_g(T_evap_K, T_cond_K, VC_chiller):
     """
     # Validate temperature difference for chiller operation
     temp_diff = T_cond_K - T_evap_K
-    if temp_diff < 1.0:
+    if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
         raise ValueError(
             f"Invalid temperature configuration for chiller COP calculation!\n"
             f"Condenser temperature: {T_cond_K:.2f} K\n"
             f"Evaporator temperature: {T_evap_K:.2f} K\n"
             f"Temperature difference: {temp_diff:.2f} K\n\n"
             f"For valid chiller operation:\n"
-            f"- T_cond must be > T_evap by at least 1 K\n"
+            f"- T_cond must be > T_evap by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
             f"- Typical difference: 20-40 K for water-cooled chillers\n\n"
             f"**Check the chilled water supply temperature and cooling tower/condenser temperatures."
         )
@@ -255,14 +256,14 @@ def calc_VCC_COP(weather_data, load_types, centralized=True):
 
     # Validate temperature difference for COP calculation
     temp_diff = T_cond_K - T_evap_K
-    if temp_diff < 1.0:
+    if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
         raise ValueError(
             f"Invalid temperature configuration for VCC system COP calculation!\n"
             f"Condenser temperature: {T_cond_K:.2f} K ({T_cond_K - 273.15:.2f} °C)\n"
             f"Evaporator temperature: {T_evap_K:.2f} K ({T_evap_K - 273.15:.2f} °C)\n"
             f"Temperature difference: {temp_diff:.2f} K\n\n"
             f"For valid chiller operation:\n"
-            f"- T_cond must be > T_evap by at least 1 K\n"
+            f"- T_cond must be > T_evap by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
             f"- Typical difference: 20-40 K\n\n"
             f"**Check:\n"
             f"  - Weather data (wetbulb temperature)\n"

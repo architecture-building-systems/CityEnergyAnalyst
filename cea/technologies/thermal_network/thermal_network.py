@@ -23,7 +23,8 @@ from cea.optimization.preprocessing.preprocessing_main import get_building_names
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
 import cea.utilities.workerstream
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
+from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
+                           THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
@@ -2401,12 +2402,12 @@ def solve_network_temperatures(thermal_network, t):
                 max_node_dt = max(abs(node_dt).dropna(axis=1).values[0])
                 # max supply node temperature difference
 
-            if max_node_dt > 1 and iteration < 10:
+            if max_node_dt > THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K and iteration < 10:
                 # update the substation supply temperature and re-enter the iteration
                 t_substation_supply__k = t_substation_supply_2
                 # print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
-            elif max_node_dt > 10 and 20 > iteration >= 10:
+            elif max_node_dt > 10 * THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K and 20 > iteration >= 10:
                 # FIXME: This is to avoid endless iteration, other design strategies should be implemented.
                 # update the substation supply temperature and re-enter the iteration
                 t_substation_supply__k = t_substation_supply_2
@@ -2429,7 +2430,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 # exit iteration
                 flag = 1
-                if not max_node_dt < 1:
+                if not max_node_dt < THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K:
                     # print('supply temperature converged after', iteration, 'iterations.', 'dT:', max_node_dT)
                     # else:
                     print('Warning: supply temperature did not converge after', iteration, 'iterations at timestep', t,

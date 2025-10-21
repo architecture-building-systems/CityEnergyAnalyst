@@ -10,7 +10,7 @@ from math import log, ceil
 import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
     GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K, MIN_TEMP_DIFF_FOR_MASS_FLOW_K
 import numpy as np
 from cea.analysis.costs.equations import calc_capex_annualized
 
@@ -83,14 +83,14 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
             print('condenser temperature is equal to evaporator temperature, COP set to the maximum')
             COP = HP_COP_MAX
         else:
-            if temp_diff < 1.0:
+            if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
                 raise ValueError(
                     f"Invalid temperature configuration for cooling heat pump!\n"
                     f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - 273.15:.2f} °C)\n"
                     f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - 273.15:.2f} °C)\n"
                     f"Temperature difference: {temp_diff:.2f} K\n\n"
                     f"For valid heat pump operation:\n"
-                    f"- T_cond must be > T_evap by at least 1 K\n"
+                    f"- T_cond must be > T_evap by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
                     f"- Typical difference: 5-15 K for heat pumps\n\n"
                     f"**Check the supply temperature and source temperature settings."
                 )
@@ -233,14 +233,14 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
         # If temperatures very close, set COP to 1
         COP = 1
     else:
-        if temp_diff < 1.0:
+        if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
             raise ValueError(
                 f"Invalid temperature configuration for geothermal heat pump (GHP_op_cost)!\n"
                 f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - 273.15:.2f} °C)\n"
                 f"GHP supply temperature: {t_sup_GHP_K:.2f} K ({t_sup_GHP_K - 273.15:.2f} °C)\n"
                 f"Temperature difference: {temp_diff:.2f} K\n\n"
                 f"For valid heat pump operation:\n"
-                f"- T_cond must be > T_source by at least 1 K\n"
+                f"- T_cond must be > T_source by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
                 f"- Typical difference: 5-20 K\n\n"
                 f"**Check:\n"
                 f"  - DHN supply temperature (t_sup): {t_sup_K:.2f} K\n"
@@ -285,14 +285,14 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
 
     # Validate temperature difference for heat pump COP calculation
     temp_diff = tcond_K - tground_K
-    if temp_diff < 1.0:
+    if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
         raise ValueError(
             f"Invalid temperature configuration for geothermal heat pump (GHP_Op_max)!\n"
             f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - 273.15:.2f} °C)\n"
             f"Ground temperature: {tground_K:.2f} K ({tground_K - 273.15:.2f} °C)\n"
             f"Temperature difference: {temp_diff:.2f} K\n\n"
             f"For valid heat pump operation:\n"
-            f"- T_cond must be > T_ground by at least 1 K\n"
+            f"- T_cond must be > T_ground by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
             f"- Typical difference: 15-30 K\n\n"
             f"**Check:\n"
             f"  - DHN supply temperature (tsup): {tsup_K:.2f} K\n"
@@ -342,14 +342,14 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     """
     # Validate temperature difference for mass flow calculation
     temp_diff = tsup_K - tret_K
-    if abs(temp_diff) < 0.001:
+    if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
         raise ValueError(
             f"Invalid temperature configuration for lake heat pump mass flow calculation!\n"
             f"Supply temperature: {tsup_K:.2f} K ({tsup_K - 273.15:.2f} °C)\n"
             f"Return temperature: {tret_K:.2f} K ({tret_K - 273.15:.2f} °C)\n"
             f"Temperature difference: {temp_diff:.6f} K\n\n"
             f"For valid mass flow calculation:\n"
-            f"- Supply and return temperatures must differ by at least 0.001 K\n"
+            f"- Supply and return temperatures must differ by at least {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K\n"
             f"- Typical difference: 5-20 K for DHN\n\n"
             f"**Check the DHN supply and return temperatures."
         )
@@ -476,14 +476,14 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
         # If temperatures very close, set COP to 1
         COP = 1
     else:
-        if temp_diff < 1.0:
+        if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
             raise ValueError(
                 f"Invalid temperature configuration for sewage heat pump (HPSew_op_cost)!\n"
                 f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - 273.15:.2f} °C)\n"
                 f"Sewage supply temperature: {t_sup_sew_K:.2f} K ({t_sup_sew_K - 273.15:.2f} °C)\n"
                 f"Temperature difference: {temp_diff:.2f} K\n\n"
                 f"For valid heat pump operation:\n"
-                f"- T_cond must be > T_source by at least 1 K\n"
+                f"- T_cond must be > T_source by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
                 f"- Typical difference: 5-20 K\n\n"
                 f"**Check:\n"
                 f"  - DHN supply temperature (t_sup): {t_sup_K:.2f} K\n"

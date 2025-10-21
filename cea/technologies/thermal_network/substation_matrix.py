@@ -8,7 +8,8 @@ import pandas as pd
 import time
 import numpy as np
 import cea.config
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3,
+                           MIN_TEMP_DIFF_FOR_MASS_FLOW_K, MIN_TEMP_DIFF_FOR_HEX_LMTD_K)
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
@@ -523,14 +524,14 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
 
         # Check temperature difference before division
         temp_diff = thi_0 - tci_0
-        if abs(temp_diff) < 0.001:
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
             raise ValueError(
                 f"Invalid temperature configuration for cooling heat exchanger!\n"
                 f"Hot inlet temperature equals cold inlet temperature.\n"
                 f"Hot inlet (thi_0): {thi_0:.2f} K\n"
                 f"Cold inlet (tci_0): {tci_0:.2f} K\n"
                 f"Difference: {temp_diff:.6f} K\n\n"
-                f"For valid heat transfer, temperature difference must be > 0.001 K.\n"
+                f"For valid heat transfer, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
                 f"**Check the building and network supply temperatures."
             )
 
@@ -582,14 +583,14 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
 
         # Check temperature difference before division
         temp_diff = thi_0 - tci_0
-        if abs(temp_diff) < 0.001:
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
             raise ValueError(
                 f"Invalid temperature configuration for heating heat exchanger!\n"
                 f"Hot inlet temperature equals cold inlet temperature.\n"
                 f"Hot inlet (thi_0): {thi_0:.2f} K\n"
                 f"Cold inlet (tci_0): {tci_0:.2f} K\n"
                 f"Difference: {temp_diff:.6f} K\n\n"
-                f"For valid heat transfer, temperature difference must be > 0.001 K.\n"
+                f"For valid heat transfer, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
                 f"**Check the network and building supply temperatures."
             )
 
@@ -841,7 +842,7 @@ def calc_dTm_HEX(thi, tho, tci, tco):
         )
 
     # Check if temperature differences are equal (to avoid division by zero)
-    if abs(dT1 - dT2) < 0.001:  # Using small threshold to avoid floating point issues
+    if abs(dT1 - dT2) < MIN_TEMP_DIFF_FOR_HEX_LMTD_K:  # Using small threshold to avoid floating point issues
         return abs(dT1)  # If differences are equal, LMTD equals either difference
 
     dTm = (dT1 - dT2) / np.log(dT1 / dT2)

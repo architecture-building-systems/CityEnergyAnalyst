@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_MASS_FLOW_K
 from cea.constants import HOURS_IN_YEAR, P_WATER_KGPERM3
 from cea.demand import control_heating_cooling_systems, constants
 from cea.utilities import physics
@@ -298,7 +298,7 @@ def calc_Eauxf_hs_dis(Qhs_sys, Qhs_sys0, deltaP_kPa, b, ts, tr):
     if Qhs_sys > 0:
         # Validate temperature difference for mass flow calculation
         temp_diff = ts - tr
-        if abs(temp_diff) < 0.001:
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
             # When temperature difference is negligible, no water flow is needed
             # This can occur with very small heating loads where heat exchanger operates with minimal temperature drop
             # Physically correct behavior: no flow = no pump energy
@@ -324,7 +324,7 @@ def calc_Eauxf_cs_dis(Qcs_sys, Qcs_sys0, deltaP_kPa, b, ts, tr):
     if Qcs_sys < 0:
         # Validate temperature difference for mass flow calculation
         temp_diff = ts - tr
-        if abs(temp_diff) < 0.001:
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
             # When temperature difference is negligible, no water flow is needed
             # This can occur with very small cooling loads where heat exchanger operates with minimal temperature drop
             # Physically correct behavior: no flow = no pump energy
