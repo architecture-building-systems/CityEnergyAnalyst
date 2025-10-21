@@ -8,22 +8,32 @@ import configparser
 import os
 import sys
 import inspect
-from typing import List
+from typing import List, Optional
 
 
 def _ann_to_stub_str(ann: object) -> str:
     """Convert an annotation object to a stub-friendly string"""
     s = getattr(ann, "__name__", None) or str(ann)
 
-    # Strip typing.ForwardRef('X') -> X
+    # Strip typing.ForwardRef('X') -> X, but keep it quoted
     if "ForwardRef(" in s:
         import re
-        m = re.search(r"ForwardRef\(['\"']([^'\"]+)['\"]\)", s)
-        if m:
-            return m.group(1)
+        match = re.search(r"ForwardRef\(['\"]([^'\"]+)['\"]\)", s)
+        if match:
+            # Return the name quoted for forward references
+            return f"'{match.group(1)}'"
 
     # typing module strings -> prefer bare names when imported (e.g., List[str])
-    return s.replace("typing.", "")
+    s = s.replace("typing.", "")
+
+    # Check if this looks like a nested class reference (contains a dot in the class name)
+    # or if it's a class from the same module that hasn't been defined yet
+    if hasattr(ann, "__module__") and hasattr(ann, "__qualname__"):
+        # If it's a nested class, quote it
+        if "." in ann.__qualname__:
+            return f"'{ann.__name__}'"
+
+    return s
 
 
 def infer_type_from_decode_method(param_class_name: str) -> str:
@@ -107,9 +117,9 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
 
 def infer_type_from_param_class_name(
     param_class_name: str,
-    section_name: str | None = None,
-    param_name: str | None = None,
-    config_parser: configparser.ConfigParser | None = None
+    section_name: Optional[str] = None,
+    param_name: Optional[str] = None,
+    config_parser: Optional[configparser.ConfigParser] = None
 ) -> str:
     """Special handling for known parameter types that need different inference
 
@@ -225,8 +235,19 @@ def _generate_nested_class_stub(nested_class: type) -> List[str]:
                         param_str += " = ..."
                     params.append(param_str)
 
+                # Special case return types for known methods
                 return_annotation = " -> Any"
-                if sig.return_annotation != sig.empty:
+                if name == "__init__":
+                    return_annotation = " -> None"
+                elif name == "__enter__":
+                    # Return self for context manager __enter__
+                    return_annotation = f" -> '{class_name}'"
+                elif name == "__exit__":
+                    return_annotation = " -> None"
+                elif name in ("apply", "clear", "unapply"):
+                    # Common context manager methods
+                    return_annotation = " -> None"
+                elif sig.return_annotation != sig.empty:
                     return_annotation = f" -> {_ann_to_stub_str(sig.return_annotation)}"
 
                 methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
@@ -259,9 +280,13 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
             nested_classes.append(attr)
 
     # Get public methods from Configuration class
+    # Skip __getattr__ since we'll add overloads for it
     methods = []
     for name in dir(Configuration):
-        if not name.startswith('_') or name in ['__init__', '__getattr__', '__setattr__']:
+        # Skip __getattr__ - we'll handle it separately with overloads
+        if name == '__getattr__':
+            continue
+        if not name.startswith('_') or name in ['__init__', '__setattr__']:
             attr = getattr(Configuration, name)
             if inspect.ismethod(attr) or inspect.isfunction(attr):
                 try:
@@ -278,8 +303,13 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
                             param_str += " = ..."
                         params.append(param_str)
 
+                    # Special case return types for known methods
                     return_annotation = " -> Any"
-                    if sig.return_annotation != sig.empty:
+                    if name == "__init__":
+                        return_annotation = " -> None"
+                    elif name == "__setattr__":
+                        return_annotation = " -> None"
+                    elif sig.return_annotation != sig.empty:
                         ann_str = _ann_to_stub_str(sig.return_annotation)
                         return_annotation = f" -> {ann_str}"
 
@@ -312,14 +342,22 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
         for nested_class in nested_classes:
             nested_class_stubs.extend(_generate_nested_class_stub(nested_class))
 
-    # Add method stubs and overloads
-    all_content = attributes + nested_class_stubs + [""] + methods
+    # Build content with proper ordering: attributes, nested classes, overloads, then methods
+    all_content = attributes + nested_class_stubs + [""]
 
+    # Add overloads BEFORE methods (proper stub file ordering)
+    overload_content = []
     if section_overloads:
-        all_content.extend(["", "# Overloads for specific section access"] + section_overloads)
+        overload_content.extend(["# Overloads for specific section access"] + section_overloads + [""])
 
     if general_overloads:
-        all_content.extend(["", "# Overloads for general section parameter access"] + general_overloads)
+        overload_content.extend(["# Overloads for general section parameter access"] + general_overloads + [""])
+
+    # Add the catch-all __getattr__ implementation after all overloads
+    if section_overloads or general_overloads:
+        overload_content.append("def __getattr__(self, item: str) -> Union['Section', Any]: ...")
+
+    all_content.extend(overload_content + [""] + methods)
 
     return "\n".join([
         "class Configuration:",
@@ -352,9 +390,14 @@ def _generate_section_class_stub() -> str:
                             param_str += " = ..."
                         params.append(param_str)
 
+                    # Special case return types for known methods
                     return_annotation = " -> Any"
-                    if name == "__repr__":
+                    if name == "__init__":
+                        return_annotation = " -> None"
+                    elif name == "__repr__":
                         return_annotation = " -> str"
+                    elif name == "__setattr__":
+                        return_annotation = " -> None"
                     elif sig.return_annotation != sig.empty:
                         ann_str = _ann_to_stub_str(sig.return_annotation)
                         return_annotation = f" -> {ann_str}"
@@ -400,9 +443,20 @@ def _generate_parameter_class_stub() -> str:
                             param_str += " = ..."
                         params.append(param_str)
 
+                    # Special case return types for known methods
                     return_annotation = " -> Any"
-                    if name == "__repr__":
+                    if name == "__init__":
+                        return_annotation = " -> None"
+                    elif name == "__repr__":
                         return_annotation = " -> str"
+                    elif name == "encode":
+                        return_annotation = " -> str"
+                    elif name == "get_raw":
+                        return_annotation = " -> str"
+                    elif name == "replace_references":
+                        return_annotation = " -> str"
+                    elif name in ("set", "initialize"):
+                        return_annotation = " -> None"
                     elif sig.return_annotation != sig.empty:
                         ann_str = _ann_to_stub_str(sig.return_annotation)
                         return_annotation = f" -> {ann_str}"
@@ -433,14 +487,22 @@ def _build_section_class(section_name: str, param_attrs: List[str], param_overlo
     body_lines: List[str] = [f'"""Typed section for {section_name} configuration"""']
     if param_attrs:
         body_lines.extend(param_attrs)
-    else:
-        body_lines.append("pass")
 
+    # Add overloads if any, followed by catch-all __getattr__
     if param_overloads:
         body_lines.append("")  # blank line before overloads
-        body_lines.extend(param_overloads)
-
-    body_lines.append("def __getattr__(self, item: str) -> Any: ...")
+        # Only use @overload decorator if there are 2 or more overloads
+        # Single overload is invalid per PEP 484
+        if len(param_overloads) == 1:
+            # Don't add overload decorator, just add the catch-all
+            body_lines.append("def __getattr__(self, item: str) -> Any: ...")
+        else:
+            # Multiple overloads - use @overload decorator
+            body_lines.extend(param_overloads)
+            body_lines.append("def __getattr__(self, item: str) -> Any: ...")
+    elif not param_attrs:
+        # Only add pass if there are no attributes and no overloads
+        body_lines.append("pass")
 
     return "\n".join([f"class {class_name}(Section):", _indent("\n".join(body_lines))])
 
