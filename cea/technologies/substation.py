@@ -689,6 +689,10 @@ def calc_plate_HEX(NTU, cr):
 @jit('boolean(float64, float64)', nopython=True)
 def efficiencies_not_converged(previous_efficiency, current_efficiency):
     tolerance = 0.00000001
+    # Validate previous_efficiency to avoid division by zero
+    if abs(previous_efficiency) < tolerance:
+        # If previous efficiency is essentially zero, check absolute difference instead
+        return abs(previous_efficiency - current_efficiency) > tolerance
     return abs((previous_efficiency - current_efficiency) / previous_efficiency) > tolerance
 
 
@@ -881,11 +885,12 @@ def calc_dTm_HEX(thi, tho, tci, tco):
         raise ValueError(
             f"Invalid temperature configuration detected!\n"
             f"Temperature differences:\n"
-            f"Hot end (thi - tco): {dT1:.2f}\n"
-            f"Cold end (tho - tci): {dT2:.2f}\n\n"
+            f"Hot end (thi - tco): {dT1:.2f} K\n"
+            f"Cold end (tho - tci): {dT2:.2f} K\n\n"
             f"For valid heat transfer, differences must be > 0:\n"
             f"- Hot inlet (thi) must be > Cold outlet (tco)\n"
-            f"- Hot outlet (tho) must be > Cold inlet (tci)"
+            f"- Hot outlet (tho) must be > Cold inlet (tci)\n\n"
+            f"**Check the emission_system database, there might be a problem with the selection of nominal temperatures."
         )
 
     # Check if temperature differences are equal (to avoid division by zero)
