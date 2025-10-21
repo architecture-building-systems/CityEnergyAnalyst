@@ -11,7 +11,6 @@ import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
     GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K, MIN_TEMP_DIFF_FOR_MASS_FLOW_K
-import numpy as np
 from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
