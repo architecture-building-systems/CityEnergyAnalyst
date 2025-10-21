@@ -295,8 +295,22 @@ def calc_Eauxf_hs_dis(Qhs_sys, Qhs_sys0, deltaP_kPa, b, ts, tr):
 
     # the power of the pump in Watts
     Cpump = 0.97
-    if Qhs_sys > 0 and (ts - tr) != 0.0:
-        m_kgs = (Qhs_sys / ((ts - tr) * HEAT_CAPACITY_OF_WATER_JPERKGK))
+    if Qhs_sys > 0:
+        # Validate temperature difference for mass flow calculation
+        temp_diff = ts - tr
+        if abs(temp_diff) < 0.001:
+            raise ValueError(
+                f"Invalid temperature configuration for space heating mass flow calculation!\n"
+                f"Supply temperature: {ts:.2f} °C ({ts + 273.15:.2f} K)\n"
+                f"Return temperature: {tr:.2f} °C ({tr + 273.15:.2f} K)\n"
+                f"Temperature difference: {temp_diff:.6f} °C\n\n"
+                f"For valid mass flow calculation:\n"
+                f"- Supply and return temperatures must differ by at least 0.001 °C\n"
+                f"- Typical difference: 5-20 °C for space heating systems\n\n"
+                f"**Check the space heating supply and return temperatures in HVAC database."
+            )
+
+        m_kgs = (Qhs_sys / (temp_diff * HEAT_CAPACITY_OF_WATER_JPERKGK))
         Phydr_kW = deltaP_kPa * (m_kgs / P_WATER_KGPERM3)
         feff = (1.5 * b) / (0.015 * (Phydr_kW) ** 0.74 + 0.4)
         epmp_eff = feff * Cpump * 1 ** -0.94
@@ -313,8 +327,22 @@ def calc_Eauxf_cs_dis(Qcs_sys, Qcs_sys0, deltaP_kPa, b, ts, tr):
     # for Cooling system
     # the power of the pump in Watts
     Cpump = 0.97
-    if Qcs_sys < 0 and (ts - tr) != 0:
-        m_kgs = (Qcs_sys / ((ts - tr) * HEAT_CAPACITY_OF_WATER_JPERKGK))
+    if Qcs_sys < 0:
+        # Validate temperature difference for mass flow calculation
+        temp_diff = ts - tr
+        if abs(temp_diff) < 0.001:
+            raise ValueError(
+                f"Invalid temperature configuration for space cooling mass flow calculation!\n"
+                f"Supply temperature: {ts:.2f} °C ({ts + 273.15:.2f} K)\n"
+                f"Return temperature: {tr:.2f} °C ({tr + 273.15:.2f} K)\n"
+                f"Temperature difference: {temp_diff:.6f} °C\n\n"
+                f"For valid mass flow calculation:\n"
+                f"- Supply and return temperatures must differ by at least 0.001 °C\n"
+                f"- Typical difference: 5-12 °C for space cooling systems\n\n"
+                f"**Check the space cooling supply and return temperatures in HVAC database."
+            )
+
+        m_kgs = (Qcs_sys / (temp_diff * HEAT_CAPACITY_OF_WATER_JPERKGK))
         Phydr_kW = deltaP_kPa * (m_kgs / P_WATER_KGPERM3)
         feff = (1.5 * b) / (0.015 * (Phydr_kW) ** 0.74 + 0.4)
         epmp_eff = feff * Cpump * 1 ** -0.94
