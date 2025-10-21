@@ -6,8 +6,8 @@ Run this script to regenerate config.pyi when default.config changes
 
 import configparser
 import os
-import sys
 import inspect
+import importlib
 from typing import List, Optional
 
 
@@ -15,23 +15,16 @@ def _ann_to_stub_str(ann: object) -> str:
     """Convert an annotation object to a stub-friendly string"""
     s = getattr(ann, "__name__", None) or str(ann)
 
-    # Strip typing.ForwardRef('X') -> X, but keep it quoted
+    # Strip typing.ForwardRef('X') -> X
     if "ForwardRef(" in s:
         import re
         match = re.search(r"ForwardRef\(['\"]([^'\"]+)['\"]\)", s)
         if match:
-            # Return the name quoted for forward references
-            return f"'{match.group(1)}'"
+            # Return the name without quotes (from __future__ import annotations handles it)
+            return match.group(1)
 
     # typing module strings -> prefer bare names when imported (e.g., List[str])
     s = s.replace("typing.", "")
-
-    # Check if this looks like a nested class reference (contains a dot in the class name)
-    # or if it's a class from the same module that hasn't been defined yet
-    if hasattr(ann, "__module__") and hasattr(ann, "__qualname__"):
-        # If it's a nested class, quote it
-        if "." in ann.__qualname__:
-            return f"'{ann.__name__}'"
 
     return s
 
@@ -40,13 +33,13 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
     """Analyze the decode method of a parameter class to infer its return type"""
 
     # Import the config module to analyze the actual classes
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from config import Parameter
+    config_mod = importlib.import_module("cea.config")
+    Parameter = config_mod.Parameter
 
     # Get all Parameter subclasses
     param_classes = {}
-    for name in dir(sys.modules["config"]):
-        obj = getattr(sys.modules["config"], name)
+    for name in dir(config_mod):
+        obj = getattr(config_mod, name)
         if inspect.isclass(obj) and issubclass(obj, Parameter) and obj != Parameter:
             param_classes[name] = obj
 
@@ -70,7 +63,6 @@ def infer_type_from_decode_method(param_class_name: str) -> str:
 
     # Check if class has a custom decode method (not inherited from base Parameter)
     # If it only has the base Parameter.decode, return str
-    from config import Parameter
     if decode_method == Parameter.decode:
         return "str"  # Default Parameter.decode returns string
 
@@ -129,6 +121,10 @@ def infer_type_from_param_class_name(
         param_name: The parameter name (optional, for checking nullable)
         config_parser: The config parser (optional, for checking nullable)
     """
+    # Special case for PluginListParameter - returns plugin instances, not strings
+    if param_class_name == "PluginListParameter":
+        return "List[Any]"
+
     # Get base type from decode method inference
     base_type = infer_type_from_decode_method(param_class_name)
 
@@ -167,13 +163,13 @@ def _indent(text: str, level: int = 1, spaces: int = 4) -> str:
 def _generate_parameter_type_stubs() -> str:
     """Automatically generate type stubs for all Parameter subclasses"""
     # Import the config module to analyze the actual classes
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from config import Parameter
-    
+    config_mod = importlib.import_module("cea.config")
+    Parameter = config_mod.Parameter
+
     # Get all Parameter subclasses
     param_classes = []
-    for name in dir(sys.modules["config"]):
-        obj = getattr(sys.modules["config"], name)
+    for name in dir(config_mod):
+        obj = getattr(config_mod, name)
         if inspect.isclass(obj) and issubclass(obj, Parameter) and obj != Parameter:
             param_classes.append(name)
     
@@ -236,19 +232,26 @@ def _generate_nested_class_stub(nested_class: type) -> List[str]:
                     params.append(param_str)
 
                 # Special case return types for known methods
-                return_annotation = " -> Any"
                 if name == "__init__":
                     return_annotation = " -> None"
                 elif name == "__enter__":
                     # Return self for context manager __enter__
+                    # Use quotes for forward reference with noqa comment for nested classes
                     return_annotation = f" -> '{class_name}'"
+                    method_str = f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...  # noqa: F821"
+                    methods.append(method_str)
+                    continue
                 elif name == "__exit__":
                     return_annotation = " -> None"
+                elif name == "__repr__":
+                    return_annotation = " -> str"
                 elif name in ("apply", "clear", "unapply"):
                     # Common context manager methods
                     return_annotation = " -> None"
                 elif sig.return_annotation != sig.empty:
                     return_annotation = f" -> {_ann_to_stub_str(sig.return_annotation)}"
+                else:
+                    return_annotation = " -> Any"
 
                 methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
             except Exception:
@@ -268,8 +271,8 @@ def _generate_nested_class_stub(nested_class: type) -> List[str]:
 
 def _generate_configuration_class_stub(section_attrs: List[str], general_params: List[str], section_overloads: List[str], general_overloads: List[str]) -> str:
     """Automatically generate Configuration class stub by inspecting the actual class"""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from config import Configuration
+    config_mod = importlib.import_module("cea.config")
+    Configuration = config_mod.Configuration
 
     # Detect nested classes
     nested_classes = []
@@ -298,13 +301,13 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
                             continue
                         param_str = param_name
                         if param.annotation != param.empty:
-                            param_str += f": {param.annotation.__name__ if hasattr(param.annotation, '__name__') else str(param.annotation)}"
+                            ann_str = _ann_to_stub_str(param.annotation)
+                            param_str += f": {ann_str}"
                         if param.default != param.empty:
                             param_str += " = ..."
                         params.append(param_str)
 
                     # Special case return types for known methods
-                    return_annotation = " -> Any"
                     if name == "__init__":
                         return_annotation = " -> None"
                     elif name == "__setattr__":
@@ -312,6 +315,8 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
                     elif sig.return_annotation != sig.empty:
                         ann_str = _ann_to_stub_str(sig.return_annotation)
                         return_annotation = f" -> {ann_str}"
+                    else:
+                        return_annotation = " -> Any"
 
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
@@ -367,8 +372,8 @@ def _generate_configuration_class_stub(section_attrs: List[str], general_params:
 
 def _generate_section_class_stub() -> str:
     """Automatically generate Section class stub by inspecting the actual class"""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from config import Section
+    config_mod = importlib.import_module("cea.config")
+    Section = config_mod.Section
 
     # Get public methods from Section class
     methods = []
@@ -385,13 +390,13 @@ def _generate_section_class_stub() -> str:
                             continue
                         param_str = param_name
                         if param.annotation != param.empty:
-                            param_str += f": {param.annotation.__name__ if hasattr(param.annotation, '__name__') else str(param.annotation)}"
+                            ann_str = _ann_to_stub_str(param.annotation)
+                            param_str += f": {ann_str}"
                         if param.default != param.empty:
                             param_str += " = ..."
                         params.append(param_str)
 
                     # Special case return types for known methods
-                    return_annotation = " -> Any"
                     if name == "__init__":
                         return_annotation = " -> None"
                     elif name == "__repr__":
@@ -401,6 +406,8 @@ def _generate_section_class_stub() -> str:
                     elif sig.return_annotation != sig.empty:
                         ann_str = _ann_to_stub_str(sig.return_annotation)
                         return_annotation = f" -> {ann_str}"
+                    else:
+                        return_annotation = " -> Any"
 
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
@@ -420,8 +427,8 @@ def _generate_section_class_stub() -> str:
 
 def _generate_parameter_class_stub() -> str:
     """Automatically generate Parameter class stub by inspecting the actual class"""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-    from config import Parameter
+    config_mod = importlib.import_module("cea.config")
+    Parameter = config_mod.Parameter
 
     # Get public methods from Parameter class
     methods = []
@@ -438,13 +445,13 @@ def _generate_parameter_class_stub() -> str:
                             continue
                         param_str = param_name
                         if param.annotation != param.empty:
-                            param_str += f": {param.annotation.__name__ if hasattr(param.annotation, '__name__') else str(param.annotation)}"
+                            ann_str = _ann_to_stub_str(param.annotation)
+                            param_str += f": {ann_str}"
                         if param.default != param.empty:
                             param_str += " = ..."
                         params.append(param_str)
 
                     # Special case return types for known methods
-                    return_annotation = " -> Any"
                     if name == "__init__":
                         return_annotation = " -> None"
                     elif name == "__repr__":
@@ -460,6 +467,8 @@ def _generate_parameter_class_stub() -> str:
                     elif sig.return_annotation != sig.empty:
                         ann_str = _ann_to_stub_str(sig.return_annotation)
                         return_annotation = f" -> {ann_str}"
+                    else:
+                        return_annotation = " -> Any"
 
                     methods.append(f"def {name}({', '.join(['self'] + params)}){return_annotation}: ...")
                 except Exception:
@@ -597,6 +606,8 @@ def generate_config_stub():
     parts: List[str] = [
         "# Type stub file for cea.config",
         "# Auto-generated from default.config - do not edit manually",
+        "",
+        "from __future__ import annotations",
         "",
         "from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal",
         "import configparser",
