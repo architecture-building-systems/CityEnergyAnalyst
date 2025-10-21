@@ -496,7 +496,21 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         if Qnom_W > 0:
             tco = Ths_supply_C + 273  # in K
             tci = Ths_return_C + 273  # in K
-            cc = Qhs_sys_W / (tco - tci)
+
+            # Check temperature difference before division
+            temp_diff = tco - tci
+            if np.any(np.abs(temp_diff) < 0.001):
+                raise ValueError(
+                    f"Invalid temperature configuration for space heating heat capacity calculation!\n"
+                    f"Supply and return temperatures are too close.\n"
+                    f"Supply temperature (tco): {np.mean(tco):.2f} K (mean)\n"
+                    f"Return temperature (tci): {np.mean(tci):.2f} K (mean)\n"
+                    f"Minimum difference: {np.min(np.abs(temp_diff)):.6f} K\n\n"
+                    f"For valid calculation, temperature difference must be > 0.001 K.\n"
+                    f"**Check the building space heating supply and return temperatures in HVAC database."
+                )
+
+            cc = Qhs_sys_W / temp_diff
             thi_0 = thi[index]
             tci_0 = tci[index]
             tco_0 = tco[index]
@@ -581,8 +595,21 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
         - Area_HEX_cooling = area of heat exchanger.
     '''
 
+    # Check temperature difference before division
+    temp_diff = thi_0 - tci_0
+    if abs(temp_diff) < 0.001:
+        raise ValueError(
+            f"Invalid temperature configuration for cooling substation heat exchanger!\n"
+            f"Hot inlet temperature equals cold inlet temperature.\n"
+            f"Hot inlet (thi_0): {thi_0:.2f} K\n"
+            f"Cold inlet (tci_0): {tci_0:.2f} K\n"
+            f"Difference: {temp_diff:.6f} K\n\n"
+            f"For valid heat transfer, temperature difference must be > 0.001 K.\n"
+            f"**Check the building and network supply temperatures for cooling."
+        )
+
     # nominal conditions network side
-    cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)
+    cc_0 = ch_0 * (thi_0 - tho_0) / (temp_diff * 0.9)
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
@@ -619,8 +646,21 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     if thi_0 <= tco_0:
         raise Exception("The temperature of the hot stream is lower than the cold stream, Please check inputs!")
 
+    # Check temperature difference before division
+    temp_diff = thi_0 - tci_0
+    if abs(temp_diff) < 0.001:
+        raise ValueError(
+            f"Invalid temperature configuration for heating substation heat exchanger!\n"
+            f"Hot inlet temperature equals cold inlet temperature.\n"
+            f"Hot inlet (thi_0): {thi_0:.2f} K\n"
+            f"Cold inlet (tci_0): {tci_0:.2f} K\n"
+            f"Difference: {temp_diff:.6f} K\n\n"
+            f"For valid heat transfer, temperature difference must be > 0.001 K.\n"
+            f"**Check the network and building supply temperatures for heating."
+        )
+
     # nominal condition of the secondary side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # estimate ch_0 assuming effectiveness = 0.9
+    ch_0 = cc_0 * (tco_0 - tci_0) / (temp_diff * 0.9)  # estimate ch_0 assuming effectiveness = 0.9
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
