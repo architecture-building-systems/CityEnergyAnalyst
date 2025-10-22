@@ -101,6 +101,26 @@ def calc_Ctot_pump(master_to_slave_vars, network_features, locator, network_type
 # investment and maintenance costs
 
 def calc_pump_power(mass_flow_rate_kgs, pressure_loss_Pa):
+    # Validate pump efficiency
+    if PUMP_ETA <= 0 or PUMP_ETA > 1.0:
+        raise ValueError(
+            f"Invalid pump efficiency constant!\n"
+            f"PUMP_ETA: {PUMP_ETA:.6f}\n\n"
+            f"Pump efficiency must be in range (0, 1.0].\n"
+            f"Typical values: 0.7-0.9\n\n"
+            f"**Check the PUMP_ETA constant in optimization/constants.py"
+        )
+
+    # Validate water density
+    if P_WATER_KGPERM3 <= 0:
+        raise ValueError(
+            f"Invalid water density constant!\n"
+            f"P_WATER_KGPERM3: {P_WATER_KGPERM3:.6f} kg/m³\n\n"
+            f"Water density must be > 0.\n"
+            f"Typical value: 1000 kg/m³\n\n"
+            f"**Check the P_WATER_KGPERM3 constant in constants.py"
+        )
+
     E_pump_W = mass_flow_rate_kgs * pressure_loss_Pa / P_WATER_KGPERM3 / PUMP_ETA
     return E_pump_W
 

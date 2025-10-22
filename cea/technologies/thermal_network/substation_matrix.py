@@ -8,7 +8,8 @@ import pandas as pd
 import time
 import numpy as np
 import cea.config
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
+from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3,
+                           MIN_TEMP_DIFF_FOR_MASS_FLOW_K, MIN_TEMP_DIFF_FOR_HEX_LMTD_K)
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 
@@ -507,8 +508,35 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0):
     # nominal conditions network side
     while (tco_0 + DT_INTERNAL_HEX) > thi_0:
         eff = eff - 0.05
+        # Check for minimum efficiency threshold
+        if eff <= 0.01:
+            raise ValueError(
+                f"Heat exchanger effectiveness iteration failed for cooling substation!\n"
+                f"Effectiveness reduced below minimum threshold (0.01).\n"
+                f"Current effectiveness: {eff:.3f}\n\n"
+                f"Initial conditions:\n"
+                f"- Hot inlet (thi_0): {thi_0:.2f} K\n"
+                f"- Hot outlet (tho_0): {tho_0:.2f} K\n"
+                f"- Cold inlet (tci_0): {tci_0:.2f} K\n"
+                f"- Nominal load (Qnom): {Qnom:.2f} W\n\n"
+                f"**Check the temperature levels and heat exchanger sizing constraints."
+            )
+
+        # Check temperature difference before division
+        temp_diff = thi_0 - tci_0
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+            raise ValueError(
+                f"Invalid temperature configuration for cooling heat exchanger!\n"
+                f"Hot inlet temperature equals cold inlet temperature.\n"
+                f"Hot inlet (thi_0): {thi_0:.2f} K\n"
+                f"Cold inlet (tci_0): {tci_0:.2f} K\n"
+                f"Difference: {temp_diff:.6f} K\n\n"
+                f"For valid heat transfer, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
+                f"**Check the building and network supply temperatures."
+            )
+
         # nominal conditions network side
-        cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * eff)  # FIXME
+        cc_0 = ch_0 * (thi_0 - tho_0) / (temp_diff * eff)
         tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
@@ -539,8 +567,35 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0):
     tho_0 = tci_0  # some initial value
     while (tho_0 - DT_INTERNAL_HEX) < tci_0:
         eff = eff - 0.05
+        # Check for minimum efficiency threshold
+        if eff <= 0.01:
+            raise ValueError(
+                f"Heat exchanger effectiveness iteration failed for heating substation!\n"
+                f"Effectiveness reduced below minimum threshold (0.01).\n"
+                f"Current effectiveness: {eff:.3f}\n\n"
+                f"Initial conditions:\n"
+                f"- Hot inlet (thi_0): {thi_0:.2f} K\n"
+                f"- Cold inlet (tci_0): {tci_0:.2f} K\n"
+                f"- Cold outlet (tco_0): {tco_0:.2f} K\n"
+                f"- Nominal load (Qnom): {Qnom:.2f} W\n\n"
+                f"**Check the temperature levels and heat exchanger sizing constraints."
+            )
+
+        # Check temperature difference before division
+        temp_diff = thi_0 - tci_0
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+            raise ValueError(
+                f"Invalid temperature configuration for heating heat exchanger!\n"
+                f"Hot inlet temperature equals cold inlet temperature.\n"
+                f"Hot inlet (thi_0): {thi_0:.2f} K\n"
+                f"Cold inlet (tci_0): {tci_0:.2f} K\n"
+                f"Difference: {temp_diff:.6f} K\n\n"
+                f"For valid heat transfer, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
+                f"**Check the network and building supply temperatures."
+            )
+
         # nominal conditions network side
-        ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * eff)  # FIXME
+        ch_0 = cc_0 * (tco_0 - tci_0) / (temp_diff * eff)
         tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
@@ -771,10 +826,26 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     '''
     dT1 = thi - tco
     dT2 = tho - tci
-    if dT1 == dT2:
-        dTm = dT1
-    else:
-        dTm = (dT1 - dT2) / np.log(dT1 / dT2)
+
+    # Check for physically impossible situations
+    if dT1 <= 0 or dT2 <= 0:
+        # **Check the emission_system database, there might be a problem with the selection of nominal temperatures
+        raise ValueError(
+            f"Invalid temperature configuration detected in heat exchanger!\n"
+            f"Temperature differences:\n"
+            f"Hot end (thi - tco): {dT1:.2f}\n"
+            f"Cold end (tho - tci): {dT2:.2f}\n\n"
+            f"For valid heat transfer, differences must be > 0:\n"
+            f"- Hot inlet (thi={thi:.2f}) must be > Cold outlet (tco={tco:.2f})\n"
+            f"- Hot outlet (tho={tho:.2f}) must be > Cold inlet (tci={tci:.2f})\n\n"
+            f"**Check the substation/heat exchanger configuration and nominal temperatures."
+        )
+
+    # Check if temperature differences are equal (to avoid division by zero)
+    if abs(dT1 - dT2) < MIN_TEMP_DIFF_FOR_HEX_LMTD_K:  # Using small threshold to avoid floating point issues
+        return abs(dT1)  # If differences are equal, LMTD equals either difference
+
+    dTm = (dT1 - dT2) / np.log(dT1 / dT2)
     return abs(dTm.real)
 
 
