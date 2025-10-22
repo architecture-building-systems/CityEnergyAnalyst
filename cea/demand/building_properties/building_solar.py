@@ -152,8 +152,6 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         actual_window_area_m2 = window_area_m2 * (1 - frame_factor)
         
         if actual_window_area_m2 == 0:
-            I_sol_win_w_direction = 0
-            I_sol_win += I_sol_win_w_direction
             continue  # skip to next direction if no window area
         
         # convert radiation data to irradiance intensity on window [W/m2]
