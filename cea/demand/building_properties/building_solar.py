@@ -8,6 +8,7 @@ import pandas as pd
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.technologies import blinds
+from cea.technologies.blinds import ShadingLocation
 
 from typing import TYPE_CHECKING
 
@@ -121,11 +122,15 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     # LEGACY NOTE: shading_location did not exist and shading_setpoint_Wm2 was previously hardcoded
     # shading_location: robust parsing with default
     raw_location = prop_envelope.loc[building_name].get('shading_location', None)
-    if isinstance(raw_location, str) and raw_location.strip().lower() in ('interior', 'exterior'):
-        shading_location = raw_location.strip().lower()
-    else:
-        print(f"No or invalid shading location for {building_name}. Assuming 'interior'.")
-        shading_location = 'interior'
+    try:
+        # Convert string input to ShadingLocation enum
+        if isinstance(raw_location, str):
+            shading_location = ShadingLocation(raw_location.strip().lower())
+        else:
+            raise ValueError("No shading location provided")
+    except ValueError:
+        print(f"No or invalid shading location for {building_name}. Assuming '{ShadingLocation.INTERIOR.value}'.")
+        shading_location = ShadingLocation.INTERIOR
 
     # shading_setpoint_Wm2: robust parsing with default
     raw_setpoint = prop_envelope.loc[building_name].get('shading_setpoint_Wm2', np.nan)
@@ -159,7 +164,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         
         
         # reduce solar radiation by shading and shading location (interior or exterior)
-        if shading_location == 'exterior':
+        if shading_location == ShadingLocation.EXTERIOR:
             # reduce exterior shading before radiation enters the window by rf_sh if shading is activated
             I_sol_win_wm2_direction = np.where(
                 I_sol_win_wm2_direction > shading_setpoint_Wm2,
