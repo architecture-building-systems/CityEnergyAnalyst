@@ -24,16 +24,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-COLUMN_NAMES_CEA_SCHEDULE = ['hour',
-                             'occupancy',
-                             'appliances',
-                             'lighting',
-                             'water',
-                             'heating',
-                             'cooling',
-                             'processes',
-                             'servers']
-
 
 def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list_var_values=None):
     """
