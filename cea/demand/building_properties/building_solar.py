@@ -161,7 +161,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         
         
         # reduce solar radiation by shading and shading location (interior or exterior)
-        if shading_location=='exterior':
+        if shading_location == 'exterior':
             # reduce exterior shading before radiation enters the window by rf_sh if shading is activated
             I_sol_win_wm2_direction = np.where(
                 I_sol_win_wm2_direction > shading_setpoint_Wm2,
