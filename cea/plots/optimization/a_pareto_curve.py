@@ -24,7 +24,7 @@ class ParetoCurveForOneGenerationPlot(cea.plots.optimization.GenerationPlotBase)
     name = "Pareto curve"
     expected_parameters = {
         'generation': 'plots-optimization:generation',
-        'normalization': 'plots-optimization:normalization',
+        'normalization': 'plots:normalization',
         'scenario-name': 'general:scenario-name',
         'annualized-capital-costs': 'multi-criteria:annualized-capital-costs',
         'total-capital-costs': 'multi-criteria:total-capital-costs',
@@ -158,7 +158,7 @@ def main():
     ParetoCurveForOneGenerationPlot(config.project,
                                     {'scenario-name': config.scenario_name,
                                      'generation': config.plots_optimization.generation,
-                                     'normalization': config.plots_optimization.normalization,
+                                     'normalization': config.plots.normalization,
                                      'annualized-capital-costs': config.multi_criteria.annualized_capital_costs,
                                      'total-capital-costs': config.multi_criteria.total_capital_costs,
                                      'annual-operation-costs': config.multi_criteria.annual_operation_costs,

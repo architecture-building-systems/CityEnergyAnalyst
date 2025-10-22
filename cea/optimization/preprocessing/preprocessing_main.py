@@ -85,7 +85,8 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
     print("PRE-PROCESSING 4/4: network features")  # at first estimate a distribution with all the buildings connected
     if district_heating_network:
         num_tot_buildings = len(buildings_heating_demand)
-        DHN_barcode = ''.join(str(1) for e in range(num_tot_buildings))
+        # Barcode of all 1's indicates all buildings connected to the district heating network
+        DHN_barcode = '1' * num_tot_buildings
         substation.substation_main_heating(locator, total_demand, buildings_heating_demand,
                                            DHN_barcode=DHN_barcode)
 
@@ -95,7 +96,8 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
         # "_all" key for all buildings
     if district_cooling_network:
         num_tot_buildings = len(buildings_cooling_demand)
-        DCN_barcode = ''.join([str(1) * num_tot_buildings])
+        # Barcode of all 1's indicates all buildings connected to the district cooling network
+        DCN_barcode = '1' * num_tot_buildings
         substation.substation_main_cooling(locator, total_demand, buildings_cooling_demand, DCN_barcode=DCN_barcode)
 
         summarize_network.network_main(locator, buildings_cooling_demand,
@@ -107,12 +109,8 @@ def preproccessing(locator, total_demand, buildings_heating_demand, buildings_co
     return weather_features, network_features, prices, lca
 
 
-def get_building_names_with_load(total_demand, load_name):
-    total_demand.name = total_demand.name.astype(str)
-    building_names = total_demand.name.values
-    buildings_names_connected = []
-    for building in building_names:
-        demand = total_demand[total_demand['name'] == building].loc[:, load_name].values[0]
-        if demand > 0.0:
-            buildings_names_connected.append(building)
-    return buildings_names_connected
+def get_building_names_with_load(total_demand, load_name) -> list[str]:
+    """Return buildings with load"""
+    buildings_with_load = total_demand[total_demand[load_name] > 0.0]
+    buildings_names = buildings_with_load['name'].astype(str).tolist()
+    return buildings_names

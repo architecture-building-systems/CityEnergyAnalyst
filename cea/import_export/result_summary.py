@@ -1755,7 +1755,8 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
 
         if appendix == 'lifecycle_emissions':
             df_timeline = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
-            df_timeline.to_csv(path_csv, index=False, float_format="%.4f")
+            if df_timeline is not None:
+                df_timeline.to_csv(path_csv, index=False, float_format="%.4f")
 
         else:
             # Write to .csv files
@@ -2744,6 +2745,9 @@ def process_building_summary(config, locator,
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
         if plot:
+            if list_cea_feature_to_plot is None:
+                raise ValueError("Specify the list of CEA features to plot.")
+
             if any(item in list_cea_feature_to_plot for item in ['demand']):
                 calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
                                                list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
@@ -2775,7 +2779,7 @@ def process_building_summary(config, locator,
 # Activate: Export results to .csv (summary & analytics)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Read through and summarise CEA results for all scenarios under a project.
 
@@ -2787,10 +2791,9 @@ def main(config):
     # Start the timer
     t0 = time.perf_counter()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # Gather info from config file
-    list_buildings = config.result_summary.buildings
+    list_buildings = config.plots_building_filter.buildings
     integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
     integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
     list_standard = config.plots_building_filter.filter_buildings_by_construction_type

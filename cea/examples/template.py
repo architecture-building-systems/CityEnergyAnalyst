@@ -28,7 +28,7 @@ def template(locator, archetypes):
     pass
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     This is the main entry point to your script. Any parameters used by your script must be present in the ``config``
     parameter. The CLI will call this ``main`` function passing in a ``config`` object after adjusting the configuration

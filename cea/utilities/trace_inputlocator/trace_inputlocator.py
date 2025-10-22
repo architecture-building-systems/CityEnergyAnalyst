@@ -44,7 +44,7 @@ def create_trace_function(results_set):
     return trace_function
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     # force single-threaded execution, see settrace docs for why
     config.multiprocessing = False
     locator = cea.inputlocator.InputLocator(config.scenario)

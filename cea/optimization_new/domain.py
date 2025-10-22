@@ -637,7 +637,7 @@ class Domain(object):
         ConnectivityVector.initialize_class_variables(self)
         Clustering.initialize_class_variables(self)
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole optimization routine
     """

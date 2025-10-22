@@ -394,13 +394,18 @@ async def upload_scenario(form: Annotated[UploadScenario, Form()], project_root:
 
     return upload_result
 
+class OutputFileType(StrEnum):
+    SUMMARY = "summary"
+    DETAILED = "detailed"
+    EXPORT = "export"
 
 class DownloadScenario(BaseModel):
     project: str
     scenarios: List[str]
     input_files: bool
-    output_files: Literal["summary", "detailed"]
+    output_files: List[OutputFileType]
 
+EXPORT_FOLDERS =["rhino"]
 
 def run_summary(project: str, scenario_name: str):
     """Run the summary function to ensure all summary files are generated"""
@@ -421,13 +426,13 @@ def run_summary(project: str, scenario_name: str):
 @router.post("/scenario/download")
 async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot):
     if not form.project or not form.scenarios:
-        raise HTTPException(status_code=400, detail="Missing project or scenarios")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing project or scenarios")
 
     # Ensure project root
     if project_root is None or project_root == "":
         logger.error("Unable to determine project path")
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project root not defined",
         )
 
@@ -435,6 +440,9 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
     scenarios = form.scenarios
     input_files = form.input_files
     output_files_level = form.output_files
+
+    if not input_files and len(output_files_level) == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No files selected for download")
 
     filename = f"{project}_scenarios.zip" if len(scenarios) > 1 else f"{project}_{scenarios[0]}.zip"
 
@@ -457,7 +465,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                     if not scenario_path.exists():
                         continue
 
-                    input_paths = (scenario_path / "inputs")
+                    input_paths = Path(secure_path((scenario_path / "inputs").resolve()))
                     if input_files and input_paths.exists():
                         for root, dirs, files in os.walk(input_paths):
                             root_path = Path(root)
@@ -467,8 +475,8 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(Path(scenario_name) / "inputs" / item_path.relative_to(input_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    output_paths = (scenario_path / "outputs")
-                    if output_files_level == "detailed" and output_paths.exists():
+                    output_paths = Path(secure_path((scenario_path / "outputs").resolve()))
+                    if OutputFileType.DETAILED in output_files_level and output_paths.exists():
                         for root, dirs, files in os.walk(output_paths):
                             root_path = Path(root)
                             for file in files:
@@ -477,23 +485,39 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                                     relative_path = str(Path(scenario_name) / "outputs" / item_path.relative_to(output_paths))
                                     files_to_zip.append((item_path, relative_path))
 
-                    elif output_files_level == "summary":
+                    if OutputFileType.SUMMARY in output_files_level:
                         # create summary files first
                         await run_in_threadpool(run_summary, str(base_path), scenario_name)
 
-                        export_paths = (scenario_path / "export" / "results")
-                        if not export_paths.exists():
-                            raise ValueError(f"Export results path does not exist for scenario {scenario_name}")
-
-                        for root, dirs, files in os.walk(export_paths):
+                        results_paths = Path(secure_path((scenario_path / "export" / "results").resolve()))
+                        if not results_paths.exists():
+                            continue
+                        for root, dirs, files in os.walk(results_paths):
                             root_path = Path(root)
                             for file in files:
                                 if Path(file).suffix in VALID_EXTENSIONS:
                                     item_path = root_path / file
                                     relative_path = str(
-                                        Path(scenario_name) / "export" / "results" / item_path.relative_to(export_paths))
+                                        Path(scenario_name) / "export" / "results" / item_path.relative_to(results_paths))
                                     files_to_zip.append((item_path, relative_path))
+
+                    if OutputFileType.EXPORT in output_files_level:
+                        for export_folder in EXPORT_FOLDERS:
+                            export_paths = Path(secure_path((scenario_path / "export" / export_folder).resolve()))
+                            if not export_paths.exists():
+                                continue
+                            for root, dirs, files in os.walk(export_paths):
+                                root_path = Path(root)
+                                for file in files:
+                                    if Path(file).suffix in VALID_EXTENSIONS:
+                                        item_path = root_path / file
+                                        relative_path = str(
+                                            Path(scenario_name) / "export" / export_folder / item_path.relative_to(export_paths))
+                                        files_to_zip.append((item_path, relative_path))
                 
+                if len(files_to_zip) == 0:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No valid files found for download")
+
                 # Batch write all files to zip
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
                 for item_path, archive_name in files_to_zip:
@@ -531,4 +555,4 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
         if temp_file_path and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
         logger.error(f"Error creating zip: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

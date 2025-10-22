@@ -262,12 +262,19 @@ Life Cycle Analysis:
 
   - name: emissions
     label: Emissions
-    short_description: Calculate embodied and operational emissions of buildings
+    short_description: Calculate embodied and operational GHG emissions
     description: |
-      This Feature calculates the aggregated embodied and operational emissions for each building, with an option for hourly (8,760 hours) operational emissions and projected annual embodied emissions until a given year.
+      This Feature calculates lifecycle GHG emissions for each building.
 
-      Embodied emissions: building's initial construction, including construction, renovation, deconstruction, biogenic carbon storage.
-      Operational emissions: supply systems operation.
+      **Embodied emissions** include construction materials and processes, building envelope, renovations, demolition, biogenic carbon storage (e.g. timber), and PV panel manufacturing.
+
+      **Operational emissions** include energy supply system operation for heating, cooling, electricity, and domestic hot water.
+
+      Outputs include total annual emissions (kgCO₂e/year), emissions intensity (kgCO₂e/m²/year), optional hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
+
+      **[Optional]**: For location-specific grid emission data, download hourly carbon intensity datasets from [Electricity Maps](https://portal.electricitymaps.com/datasets), 
+      and set column name to "Carbon intensity gCO₂eq/kWh (direct)" in the parameters.
+      _Ensure proper citation and compliance with their terms of use._
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -757,7 +764,7 @@ Visualisation:
     description: This Feature plots comfort and discomfort hours for buildings
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.comfort_chart
-    parameters: ['general:scenario', plots-comfort-chart, plots-building-filter]
+    parameters: ['general:scenario', plots-building-filter]
     input-files:
       - [get_total_demand]
       - [get_building_architecture]
@@ -769,6 +776,16 @@ Visualisation:
     description: This Feature plots the Pareto front for optimisation results
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.pareto_front
+    parameters: ['general:scenario']
+    input-files:
+      - [get_new_optimization_optimal_supply_systems_summary_file]
+
+  - name: plot-supply-system
+    label: Plot - Supply System
+    short_description: Plot components of energy supply systems
+    description: This Feature plots components of energy supply systems
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.supply_system
     parameters: ['general:scenario']
     input-files:
       - [get_new_optimization_optimal_supply_systems_summary_file]

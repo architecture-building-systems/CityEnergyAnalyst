@@ -279,7 +279,7 @@ def network_cost_calculation(population, network_info, network_layout):
             individual_outputs_df['has_loops'] = individual[LOOPS_INDEX]
             individual_outputs_df['plant_buildings'] = str(building_plants)
             individual_outputs_df['disconnected_buildings'] = str(
-                disconnected_buildings) if disconnected_buildings != [] else 0
+                disconnected_buildings) if disconnected_buildings else 0
             individual_outputs_df['supplied_loads'] = ', '.join(list_of_supplied_loads)
             individual_outputs_df['network_length_m'] = network_length_m
             individual_outputs_df['avg_diam_m'] = average_pipe_diameter_m
@@ -888,7 +888,7 @@ def mutate_generation(new_generation, network_info):
 # test
 # ============================
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     runs an optimization calculation for the plant location in the thermal network.
     """

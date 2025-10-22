@@ -15,6 +15,7 @@ import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.utility import read_shp, write_shp
+from cea.datamanagement.graph_helper import GraphCorrector
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -112,6 +113,11 @@ def calc_steiner_spanning_tree(crs_projected,
         y = (round(y[0], SHAPEFILE_TOLERANCE), round(y[1], SHAPEFILE_TOLERANCE))
         G.add_edge(x, y, weight=data[weight_field])
 
+    # Apply graph corrections to fix connectivity issues
+    print("\nApplying graph corrections to street network...")
+    corrector = GraphCorrector(G)
+    G = corrector.apply_corrections()
+
     # get the building nodes and coordinates
     iterator_nodes = building_nodes_graph.nodes
     terminal_nodes_coordinates = []
@@ -125,16 +131,19 @@ def calc_steiner_spanning_tree(crs_projected,
                 (round(coordinates[0], SHAPEFILE_TOLERANCE), round(coordinates[1], SHAPEFILE_TOLERANCE)))
             terminal_nodes_names.append(data['name'])
 
+    # Validate graph is ready for Steiner tree with terminal nodes
+    is_ready, message = GraphCorrector.validate_steiner_tree_ready(G, terminal_nodes_coordinates)
+    if not is_ready:
+        raise ValueError(f'Graph validation failed before Steiner tree: {message}. '
+                        f'This should not happen after corrections. Please report this issue.')
+
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
         steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
         mst_non_directed = nx.minimum_spanning_tree(steiner_result)
     except Exception as e:
-        raise ValueError('There was an error while creating the Steiner tree. '
-                         'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
-                         'the Steiner tree does not support disconnected graphs. '
-                         'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
-                         'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.') from e
+        raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
+                        'This is an unexpected error. Please report this issue with your streets.shp file.') from e
 
     # Ensure output folder exists before writing
     os.makedirs(output_network_folder, exist_ok=True)
@@ -356,7 +365,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
     return new_mst_nodes, mst_edges
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weight_field = 'Shape_Leng'

@@ -25,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     old_building_name = config.rename_building.old
     new_building_name = config.rename_building.new
 

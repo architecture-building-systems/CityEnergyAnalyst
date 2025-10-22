@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import warnings
 import numpy as np
 import pandas as pd
 from cea.constants import HOURS_IN_YEAR
@@ -14,17 +15,14 @@ if TYPE_CHECKING:
         BuildingPropertiesRow,
     )
 
-
+_tech_name_mapping = {
+    # tech_name: (<demand_col_name>, <supply_type_name>)
+    "heating": ("Qhs_sys", "hs"),
+    "hot_water": ("Qww_sys", "dhw"),
+    "cooling": ("Qcs_sys", "cs"),
+    "electricity": ("E_sys", "el"),
+}
 class OperationalHourlyTimeline:
-
-    _tech_name_mapping = {
-        # tech_name: (<demand_col_name>, <supply_type_name>)
-        "heating": ("Qhs_sys", "hs"),
-        "hot_water": ("Qww_sys", "dhw"),
-        "cooling": ("Qcs_sys", "cs"),
-        "electricity": ("E_sys", "el"),
-    }
-
     def __init__(
         self,
         locator: InputLocator,
@@ -54,10 +52,10 @@ class OperationalHourlyTimeline:
         """
         timeline = pd.DataFrame(
             index=range(n_hours),
-            columns=["date"] + [f"{key}_kgCO2e" for key in self._tech_name_mapping.keys()]
+            columns=["date"] + [f"{key}_kgCO2e" for key in _tech_name_mapping.keys()]
             + [
-                f"{tuple[0]}_{feedstock}_kgCO2e"
-                for tuple in OperationalHourlyTimeline._tech_name_mapping.values()
+                f"{tech_tuple[0]}_{feedstock}_kgCO2e"
+                for tech_tuple in _tech_name_mapping.values()
                 for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
             ],
         )
@@ -65,12 +63,11 @@ class OperationalHourlyTimeline:
         timeline.index.name = "hour"
 
         # Add the date column from demand_timeseries
-        if 'date' in self.demand_timeseries.columns:
-            timeline['date'] = self.demand_timeseries['date'].values
-        elif 'DATE' in self.demand_timeseries.columns:
-            timeline['date'] = self.demand_timeseries['DATE'].values
-        elif 'Date' in self.demand_timeseries.columns:
-            timeline['date'] = self.demand_timeseries['Date'].values
+        date_col = next((col for col in self.demand_timeseries.columns if col.lower() == 'date'), None)
+        if date_col:
+            timeline['date'] = self.demand_timeseries[date_col].values
+        else:
+            raise ValueError("Date column not found in demand timeseries.")
 
         return timeline
 
@@ -95,12 +92,15 @@ class OperationalHourlyTimeline:
         # The emission in feedstock databases are recorded for example in hours of a day.
         # To match the yearly operational timeline, expanded emission intensity timeline
         expanded_timeline = pd.DataFrame(
-            index=range(HOURS_IN_YEAR), columns=self.feedstock_db._library.keys()
+            index=range(HOURS_IN_YEAR), columns=list(self.feedstock_db._library.keys())
         )
         for feedstock, df in self.feedstock_db._library.items():
             # if original timeline is not n * 24 hours, throw warning that definition might be problematic
             if len(df) % 24 != 0:
-                print(f"Warning: {feedstock} timeline is not n * 24 hours. The definition will not repeat in a daily basis.")
+                warnings.warn(
+                    f"{feedstock} timeline is not n * 24 hours. The definition will not repeat on a daily basis.",
+                    RuntimeWarning,
+                )
             expanded_timeline[feedstock] = np.resize(
                 df["GHG_kgCO2MJ"].to_numpy(), len(expanded_timeline)
             )
@@ -116,11 +116,10 @@ class OperationalHourlyTimeline:
         This function calculates the emission timeline for heating,
         domestic hot water, cooling and electrical supply.
         """
-        for demand_type, tech_tuple in self._tech_name_mapping.items():
+        for demand_type, tech_tuple in _tech_name_mapping.items():
             eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
             eff = eff if eff > 0 else 1.0  # avoid division by zero
             feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
-
             self.operational_emission_timeline[f"{tech_tuple[0]}_{feedstock}_kgCO2e"] = (
                 self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
                 / eff
@@ -148,7 +147,7 @@ class OperationalHourlyTimeline:
 
         df_to_save.to_csv(
             self.locator.get_lca_operational_hourly_building(self.bpr.name),
-            index=False, float_format='%.2f')
+            index=False, float_format='%.3f')
 
 
 if __name__ == "__main__":
@@ -164,11 +163,15 @@ if __name__ == "__main__":
     weather_data = epwreader.epw_reader(weather_path)[
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
     ]
+    demand_cfg = getattr(config, 'demand')
+    buildings = list(getattr(demand_cfg, 'buildings', []))
+    if not buildings:
+        raise SystemExit("No buildings configured for demand; cannot run standalone example.")
     building_properties = BuildingProperties(
-        locator, weather_data, config.demand.buildings
+        locator, weather_data, buildings
     )
-    bpr = building_properties[config.demand.buildings[0]]
-    feedstock_db = Feedstocks.init_database(locator)
+    bpr = building_properties[buildings[0]]
+    feedstock_db = Feedstocks.from_locator(locator)
     test_timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
     test_timeline.calculate_operational_emission()
     test_timeline.save_results()

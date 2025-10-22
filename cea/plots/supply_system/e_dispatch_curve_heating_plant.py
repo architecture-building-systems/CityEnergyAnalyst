@@ -25,7 +25,7 @@ class DispatchCurveDistrictHeatingPlot(cea.plots.supply_system.SupplySystemPlotB
     name = "Dispatch curve heating plant"
     expected_parameters = {
         'system': 'plots-supply-system:system',
-        'timeframe': 'plots-supply-system:timeframe',
+        'timeframe': 'plots:timeframe',
         'scenario-name': 'general:scenario-name',
     }
 
@@ -96,7 +96,7 @@ def main():
     DispatchCurveDistrictHeatingPlot(config.project,
                                      {'scenario-name': config.scenario_name,
                                       'system': config.plots_supply_system.system,
-                                      'timeframe': config.plots_supply_system.timeframe},
+                                      'timeframe': config.plots.timeframe},
                                      cache).plot(auto_open=True)
 
 

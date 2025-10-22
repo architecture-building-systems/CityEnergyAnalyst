@@ -1,6 +1,8 @@
 from __future__ import annotations
 import os
+import numpy as np
 import pandas as pd
+from collections.abc import Mapping
 from cea.constants import (
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
     CONVERSION_AREA_TO_FLOOR_AREA_RATIO,
@@ -74,12 +76,13 @@ class BuildingEmissionTimeline:
         "base": "base",
         "technical_systems": "technical_systems", # not implemented in CEA, dummy value
     }
-    _OPERATIONAL_COLS = [
-        "operation_heating_kgCO2e",
-        "operation_cooling_kgCO2e",
-        "operation_hot_water_kgCO2e",
-        "operation_electricity_kgCO2e",
-    ]
+    COLUMN_MAPPING = {
+        "heating_kgCO2e": "operation_heating_kgCO2e",
+        "cooling_kgCO2e": "operation_cooling_kgCO2e",
+        "hot_water_kgCO2e": "operation_hot_water_kgCO2e",
+        "electricity_kgCO2e": "operation_electricity_kgCO2e"
+    }
+    _OPERATIONAL_COLS = list(COLUMN_MAPPING.values())
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
 
     def __init__(
@@ -168,42 +171,211 @@ class BuildingEmissionTimeline:
                 demolition = 0.0  # dummy value, not implemented yet
             else:
                 type_str = f"type_{value}"
-                lifetime: int = self.envelope_lookup.get_item_value(
+                lifetime_any = self.envelope_lookup.get_item_value(
                     code=self.envelope[type_str], field="Service_Life"
                 )
-                ghg: float = self.envelope_lookup.get_item_value(
+                ghg_any = self.envelope_lookup.get_item_value(
                     code=self.envelope[type_str], field="GHG_kgCO2m2"
                 )
-                biogenic: float = self.envelope_lookup.get_item_value(
+                biogenic_any = self.envelope_lookup.get_item_value(
                     code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
                 )
+                if lifetime_any is None or ghg_any is None or biogenic_any is None:
+                    raise ValueError(
+                        f"Envelope database returned None for one of the required fields for item {self.envelope[type_str]}."
+                    )
+                lifetime = int(float(lifetime_any))
+                ghg = float(ghg_any)
+                biogenic = float(biogenic_any)
                 demolition: float = 0.0  # dummy value, not implemented yet
 
             log_emissions(area, ghg, biogenic, demolition, lifetime, key)
 
-    def fill_operational_emissions(self) -> None:
-        operational_emissions = pd.read_csv(
+    def fill_operational_emissions(
+        self,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+    ) -> None:
+        """Fill operational emissions into the timeline and optionally apply per-feedstock discount policies.
+
+        Simplified API: either provide no input (no discounting), or a dict mapping feedstock names to a
+        tuple of (reference_year, target_year, discount_rate). Keys are matched case-insensitively against
+        feedstocks discovered in the hourly operational file. No defaults are assumed (no default GRID).
+
+        Example policy:
+            {"GRID": (2020, 2030, 0.7), "NATURALGAS": (2022, 2025, 0.0)}
+
+        :param feedstock_policies: Mapping of feedstock name -> (reference_year, target_year, discount_rate).
+                                     When None or empty, no discounting is applied.
+        :raises ValueError: if operational emission file does not have 8760 rows
+        :raises ValueError: if target_year <= reference_year or discount_rate < 0
+        :return: None
+        """
+
+        def _validate_discount_inputs(
+            reference_year: int, target_year: int, discount_rate: float
+        ) -> None:
+            if target_year <= reference_year:
+                raise ValueError(
+                    "Target year must be greater than reference year."
+                )
+            if discount_rate < 0:
+                raise ValueError("Discount rate must be non-negative.")
+
+        def _build_piecewise_factors_over_timeline(
+            timeline_index: pd.Index, reference_year: int, target_year: int, discount_rate: float
+        ) -> pd.Series:
+            """Return a factor Series over timeline_index: 1.0 before ref, linear to target, flat after target."""
+            _validate_discount_inputs(reference_year, target_year, discount_rate)
+            # Convert timeline index (e.g., 'Y_2020') to integer years for comparison
+            def _index_to_years(idx: pd.Index) -> pd.Index:
+                result: list[int] = []
+                for v in idx.tolist():
+                    s = str(v)
+                    if s.startswith("Y_"):
+                        s = s[2:]
+                    try:
+                        result.append(int(s))
+                    except (TypeError, ValueError):
+                        # If conversion fails, assume non-year label; map conservatively to a large negative
+                        result.append(-10**9)
+                return pd.Index(result, dtype=int)
+
+            years = _index_to_years(timeline_index)
+            factors = pd.Series(1.0, index=timeline_index, dtype=float)
+            # Linear segment between ref..target (inclusive)
+            mask_linear = (years >= reference_year) & (years <= target_year)
+            if mask_linear.any():
+                n = mask_linear.sum()
+                factors.loc[mask_linear] = np.linspace(1.0, float(discount_rate), n)
+            # After target: flat at discount_rate
+            factors.loc[years > target_year] = float(discount_rate)
+            return factors
+
+        # 1) Read hourly operational emissions. Keep per-feedstock columns as-is; only rename tech summary columns.
+        operational = pd.read_csv(
             self.locator.get_lca_operational_hourly_building(self.name),
             index_col="hour",
-        )
-        if len(operational_emissions) != 8760:
+        ).rename(columns=self.COLUMN_MAPPING)
+        if len(operational) != 8760:
             raise ValueError(
-                f"Operational emission timeline expected 8760 rows, get {len(operational_emissions)} rows. Please check file integrity!"
+                f"Operational emission timeline expected 8760 rows, got {len(operational)} rows. Please check file integrity!"
             )
 
-        # Rename columns to add operation_ prefix
-        column_mapping = {
-            "heating_kgCO2e": "operation_heating_kgCO2e",
-            "cooling_kgCO2e": "operation_cooling_kgCO2e",
-            "hot_water_kgCO2e": "operation_hot_water_kgCO2e",
-            "electricity_kgCO2e": "operation_electricity_kgCO2e"
-        }
-        operational_emissions = operational_emissions.rename(columns=column_mapping)
+        # 2) If no policies: minimal branch — just add aggregated yearly totals and return
+        if not feedstock_policies:
+            baseline_agg = operational[self._OPERATIONAL_COLS].sum(axis=0)
+            self.timeline.loc[:, self._OPERATIONAL_COLS] = self.timeline.loc[:, self._OPERATIONAL_COLS].add(
+                baseline_agg, axis=1
+            )
+            return
 
-        # self.timeline.loc[:, operational_emissions.columns] += operational_emissions.sum(axis=0)
-        self.timeline.loc[:, self._OPERATIONAL_COLS] += operational_emissions[
-            self._OPERATIONAL_COLS
-        ].sum(axis=0)
+        # 3) Policies provided: build detailed per-feedstock yearly series and apply discounts across timeline
+        from cea.analysis.lca.hourly_operational_emission import _tech_name_mapping
+
+        tech_to_prefix: dict[str, str] = {tech: demand_col for tech, (demand_col, _sup) in _tech_name_mapping.items()}
+        # Map tech -> list of per-feedstock column names present in the operational file
+        tech_cols: dict[str, list[str]] = {tech: [] for tech in tech_to_prefix}
+        discovered_feedstocks: set[str] = set()
+
+        for col in operational.columns:
+            # Skip already-aggregated summary columns
+            if col in self._OPERATIONAL_COLS:
+                continue
+            if not col.endswith("_kgCO2e"):
+                continue
+            # Try to match a known tech by prefix
+            for tech, prefix in tech_to_prefix.items():
+                pref = f"{prefix}_"
+                if col.startswith(pref) and col.endswith("_kgCO2e"):
+                    # Extract feedstock part between prefix and suffix
+                    fs = col[len(pref):-len("_kgCO2e")]
+                    if fs:
+                        tech_cols[tech].append(col)
+                        discovered_feedstocks.add(fs)
+                    break
+
+        # Yearly totals per per-feedstock column (detailed)
+        per_col_yearly = (
+            operational[[c for cols in tech_cols.values() for c in cols]].sum(axis=0)
+            if any(tech_cols.values())
+            else pd.Series(dtype=float)
+        )
+        # Aggregated baseline by tech for fallback when a tech has no detailed columns
+        baseline_agg = operational[self._OPERATIONAL_COLS].sum(axis=0)
+
+        # If there are no per-feedstock columns in the hourly file, we cannot apply any
+        # feedstock-specific discounting.
+        if per_col_yearly.empty:
+            self.timeline.loc[:, self._OPERATIONAL_COLS] = self.timeline.loc[:, self._OPERATIONAL_COLS].add(
+                baseline_agg, axis=1
+            )
+            return
+
+        # Build a lookup for feedstock normalization from discovered set
+        feedstock_lookup: dict[str, str] = {fs.upper(): fs for fs in sorted(discovered_feedstocks)}
+
+        # Normalize keys to canonical feedstock names present in data (only tuple policies accepted)
+        policies_normalized: dict[str, tuple[int, int, float]] = {}
+        for raw_key, raw_policy in feedstock_policies.items():
+            key_upper = str(raw_key).strip().upper()
+            if not key_upper or key_upper not in feedstock_lookup:
+                available = ", ".join(sorted(feedstock_lookup.values()))
+                raise ValueError(
+                    f"Unknown feedstock '{raw_key}'. Available feedstocks: {available}."
+                )
+            canonical = feedstock_lookup[key_upper]
+            # Enforce uniqueness of policy per feedstock (case-insensitive)
+            if canonical in policies_normalized:
+                raise ValueError(
+                    f"Duplicate policy provided for feedstock '{canonical}'. Each feedstock must appear only once."
+                )
+            if not (isinstance(raw_policy, tuple) and len(raw_policy) == 3):
+                raise ValueError(
+                    f"Policy for '{raw_key}' must be a tuple (reference_year, target_year, discount_rate)."
+                )
+            ref, tgt, rate = int(raw_policy[0]), int(raw_policy[1]), float(raw_policy[2])
+            _validate_discount_inputs(ref, tgt, rate)
+            policies_normalized[canonical] = (ref, tgt, rate)
+
+        # 4) Duplicate yearly per-column totals across the whole timeline and apply per-feedstock policies
+        timeline_index = self.timeline.index
+        discounted = pd.DataFrame(
+            np.tile(per_col_yearly.to_numpy(dtype=float), (len(timeline_index), 1)),
+            index=timeline_index,
+            columns=per_col_yearly.index,
+        )
+        for fs, (ref, tgt, rate) in policies_normalized.items():
+            factors = _build_piecewise_factors_over_timeline(timeline_index, ref, tgt, rate)
+            aligned = factors.reindex(timeline_index).fillna(1.0)
+            # Match columns that have feedstock as a complete token (not substring)
+            target_cols = [c for c in discounted.columns if f"_{fs}_kgCO2e" in c]
+            if target_cols:
+                discounted[target_cols] = discounted[target_cols].mul(aligned, axis=0)
+
+        # 5) Aggregate discounted per-feedstock columns back to tech totals per year
+        if not discounted.empty:
+            from collections import defaultdict
+            cols_by_tech: dict[str, list[str]] = defaultdict(list)
+            for tech_name, prefix in tech_to_prefix.items():
+                pref = f"{prefix}_"
+                cols_by_tech[tech_name] = [c for c in discounted.columns if c.startswith(pref) and c.endswith("_kgCO2e")]
+            for tech_name, cols in cols_by_tech.items():
+                col_name = f"operation_{tech_name}_kgCO2e"
+                if cols:
+                    discounted[col_name] = discounted[cols].sum(axis=1)
+                else:
+                    # No feedstock columns for this tech; reuse undiscounted baseline for this tech
+                    baseline_val = float(baseline_agg.get(col_name, 0.0))
+                    discounted[col_name] = baseline_val
+
+        # 6) Write discounted values back to the timeline (we're already in the policy branch)
+        if not discounted.empty:
+            years_to_override = discounted.index.intersection(self.timeline.index)
+            if len(years_to_override) > 0:
+                discounted_subset = discounted.loc[years_to_override]
+                self.timeline.loc[years_to_override, self._OPERATIONAL_COLS] = discounted_subset[
+                    self._OPERATIONAL_COLS
+                ].to_numpy()
 
     def demolish(self, demolition_year: int) -> None:
         """
@@ -227,7 +399,7 @@ class BuildingEmissionTimeline:
             area: float = self.surface_area[f"A{key}"]
             # Convert max year to int for comparison
             max_year_str = self.timeline.index.max()
-            max_year = int(max_year_str.replace("Y_", ""))
+            max_year = int(str(max_year_str).replace("Y_", ""))
             # if demolition_year > max_year, do nothing
             if demolition_year <= max_year:
                 self.log_emission_in_timeline(
@@ -284,7 +456,7 @@ class BuildingEmissionTimeline:
         # Extract numeric year from string format Y_XXXX
         start_year = self.typology["year"]
         max_year_str = self.timeline.index.max()
-        max_year = int(max_year_str.replace("Y_", ""))
+        max_year = int(str(max_year_str).replace("Y_", ""))
 
         numeric_years = list(range(start_year, max_year + 1, lifetime))
         # Convert back to string format
@@ -294,17 +466,27 @@ class BuildingEmissionTimeline:
     def log_emission_in_timeline(
         self, emission: float, year: int | list[int] | str | list[str], col: str, additive: bool = True
     ) -> None:
-        # Convert single year to Y_ format if it's an integer
+        # Normalize to list[str] in Y_XXXX format for consistent indexing behavior
         if isinstance(year, int):
-            year = f"Y_{year}"
-        # Convert list of years to Y_ format if they're integers
+            years_list: list[str] = [f"Y_{year}"]
+        elif isinstance(year, str):
+            years_list = [year]
         elif isinstance(year, list) and len(year) > 0 and isinstance(year[0], int):
-            year = [f"Y_{y}" for y in year]
+            years_list = [f"Y_{y}" for y in year]
+        else:
+            # If it's a list[str], keep; if empty or unknown, set empty list
+            if isinstance(year, list) and (len(year) == 0 or isinstance(year[0], str)):
+                years_list = list(year)  # type: ignore[arg-type]
+            else:
+                years_list = []
 
         if additive:
-            self.timeline.loc[year, col] += emission
+            # Add emission to all selected years (vectorized)
+            current = self.timeline.loc[years_list, col]
+            self.timeline.loc[years_list, col] = current.astype(float).add(float(emission))
         else:
-            self.timeline.loc[year, col] = emission
+            # Set emission for all selected years
+            self.timeline.loc[years_list, col] = float(emission)
 
     def get_component_quantity(self, building_properties: BuildingProperties) -> dict[str, float]:
         """

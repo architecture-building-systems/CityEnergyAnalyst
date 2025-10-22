@@ -179,10 +179,18 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
     return edge_df, node_df
 
 
-def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
+def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
+    if pipe_catalog.empty:
+        raise ValueError("Pipe catalog is empty. Please check the thermal grid database.")
+
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+
+    # Calculate differences and find the index of the minimum difference
+    differences = (pipe_catalog['D_int_m'] - diameter_m).abs()
+    closest_idx = differences.argsort().iloc[0]
+
+    selection_of_catalog = pipe_catalog.iloc[[closest_idx]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
     pipe_DN = selection_of_catalog['pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
@@ -239,13 +247,14 @@ def thermal_network_simplified(locator, config, network_name=''):
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
         DHN_barcode = "0"
-        if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
-            building_names = [building for building in buildings_name_with_heating if building in
-                              node_df.building.values]
+        if buildings_name_with_heating and buildings_name_with_space_heating:
+            # Use set intersection to find buildings that exist in both collections
+            node_buildings_set = set(node_df.building.values)
+            buildings_with_heating_set = set(buildings_name_with_heating)
+            building_names = list(buildings_with_heating_set & node_buildings_set)
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
-            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district heating network created as there is no heating demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -260,13 +269,14 @@ def thermal_network_simplified(locator, config, network_name=''):
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         DCN_barcode = "0"
-        if buildings_name_with_cooling != []:
-            building_names = [building for building in buildings_name_with_cooling if building in
-                              node_df.building.values]
+        if buildings_name_with_cooling:
+            # Use set intersection to find buildings that exist in both collections
+            node_buildings_set = set(node_df.building.values)
+            buildings_with_cooling_set = set(buildings_name_with_cooling)
+            building_names = list(buildings_with_cooling_set & node_buildings_set)
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
-            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -589,7 +599,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """

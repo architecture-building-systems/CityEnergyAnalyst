@@ -105,7 +105,7 @@ class NetworkLayout(object):
                 setattr(self, attr, getattr(network_layout, attr))
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)
