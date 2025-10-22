@@ -139,7 +139,10 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
 
     # initialize total window solar gain
     I_sol_win = 0
-    
+
+    # dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
+    I_sol_underside = np.zeros(len(radiation_data)) * thermal_resistance_surface['RSE_underside']
+
     for direction in ['east', 'west', 'north', 'south']:
         # access area of windows
         # area stored in the first row of the radiation data because it's constant over time
@@ -178,9 +181,6 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         # then reduce value as usual after radiation has entered the window
         # and multiply by window area
         I_sol_win_w_direction = (I_sol_win_wm2_direction * Fsh_win_direction) * actual_window_area_m2
-    
-        #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
-        I_sol_underside = np.zeros_like(I_sol_win_w_direction) * thermal_resistance_surface['RSE_underside'] 
 
         # add direction solar heat gain to total window solar gain
         I_sol_win += I_sol_win_w_direction
