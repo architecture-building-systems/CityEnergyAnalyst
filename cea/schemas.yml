@@ -2566,7 +2566,7 @@ get_database_assemblies_envelope_shading:
         values: '{0.0...1}'
         min: 0.0
         max: 1.0
-      shading_setpoint_wm2:
+      shading_setpoint_Wm2:
         description: Activation setpoint for shading in [W/m2]. When the direct
           solar radiation on a surface exceeds this value, the shading device
           is activated. Defaults to 300 W/m2.

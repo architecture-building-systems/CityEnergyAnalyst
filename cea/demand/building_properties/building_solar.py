@@ -118,7 +118,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     # frame factor of the window
     frame_factor = prop_envelope.loc[building_name, 'F_F']
     
-    # LEGACY NOTE: shading_location did not exist and shading_setpoint_wm2 was previously hardcoded
+    # LEGACY NOTE: shading_location did not exist and shading_setpoint_Wm2 was previously hardcoded
     # shading_location: robust parsing with default
     raw_location = prop_envelope.loc[building_name].get('shading_location', None)
     if isinstance(raw_location, str) and raw_location.strip().lower() in ('interior', 'exterior'):
@@ -127,15 +127,15 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         print(f"No or invalid shading location for {building_name}. Assuming 'interior'.")
         shading_location = 'interior'
 
-    # shading_setpoint_wm2: robust parsing with default
-    raw_setpoint = prop_envelope.loc[building_name].get('shading_setpoint_wm2', np.nan)
+    # shading_setpoint_Wm2: robust parsing with default
+    raw_setpoint = prop_envelope.loc[building_name].get('shading_setpoint_Wm2', np.nan)
     try:
-        shading_setpoint_wm2 = float(raw_setpoint)
-        if not np.isfinite(shading_setpoint_wm2) or shading_setpoint_wm2 < 0:
+        shading_setpoint_Wm2 = float(raw_setpoint)
+        if not np.isfinite(shading_setpoint_Wm2) or shading_setpoint_Wm2 < 0:
             raise ValueError
     except Exception:
         print(f"No or invalid shading setpoint for {building_name}. Assuming 300 W/m2.")
-        shading_setpoint_wm2 = 300.0
+        shading_setpoint_Wm2 = 300.0
 
     # initialize total window solar gain
     I_sol_win = 0
@@ -161,7 +161,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         if shading_location=='exterior':
             # reduce exterior shading before radiation enters the window by rf_sh if shading is activated
             I_sol_win_wm2_direction = np.where(
-                I_sol_win_wm2_direction > shading_setpoint_wm2, 
+                I_sol_win_wm2_direction > shading_setpoint_Wm2,
                 I_sol_win_wm2_direction * rf_sh,
                 I_sol_win_wm2_direction
             )
@@ -172,7 +172,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
             g_gl,
             rf_sh,
             shading_location=shading_location,
-            shading_setpoint_wm2=shading_setpoint_wm2
+            shading_setpoint_Wm2=shading_setpoint_Wm2
         )
             
         # then reduce value as usual after radiation has entered the window

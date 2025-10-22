@@ -20,7 +20,7 @@ class DatabaseMapping:
         fields: List of field names to extract from the database
         column_renames: Optional mapping to rename columns from database (e.g., {"feedstock": "source_hs"})
         field_defaults: Optional mapping of field names to default values for missing/legacy fields
-                       (e.g., {"shading_location": "interior", "shading_setpoint_wm2": 300})
+                       (e.g., {"shading_location": "interior", "shading_setpoint_Wm2": 300})
 
                        NOTE: This is a temporary solution. Long-term, defaults should be defined
                        in schemas.yml as the single source of truth. See migration plan in docs.
