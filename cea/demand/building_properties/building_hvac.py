@@ -231,7 +231,7 @@ def verify_hvac_system_combination(result, locator):
     # Build error messages for each invalid building
     error_messages = [
         f'\nBuilding {building_name} has cooling system {row.class_cs} '
-        f'with ventilation system {row.type_vent}.'
+        f'with ventilation system {row.hvac_type_vent}.'
         f'\nPlease re-assign a mechanical ventilation system from: {mech_vent_systems}'
         for building_name, row in invalid_buildings.iterrows()
     ]
