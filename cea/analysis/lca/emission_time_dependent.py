@@ -103,12 +103,14 @@ def operational_hourly(config: Configuration) -> None:
             hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
 
         consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+        allowed_demands: list[str] | None = getattr(emissions_cfg, "pv_offset_allowance", None)
+        allocation_priority: list[str] | None = getattr(emissions_cfg, "pv_offset_priority", None)
         pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
 
         hourly_timeline.calculate_operational_emission()
         
         if consider_pv and pv_codes:
-            hourly_timeline.log_pv_contribution(pv_codes=pv_codes)
+            hourly_timeline.log_pv_contribution(pv_codes, allocation_priority, allowed_demands)
 
         hourly_timeline.save_results()
         print(
