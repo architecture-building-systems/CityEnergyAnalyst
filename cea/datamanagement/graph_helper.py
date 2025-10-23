@@ -94,7 +94,8 @@ class GraphCorrector:
         self.graph = graph.copy()  # Work on a copy to preserve original
         self.original_graph = graph
         self.coord_precision = coord_precision
-        # Normalize protected node coordinates to ensure consistent precision
+
+        # Normalize protected node coordinates for comparison-time lookups
         self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
@@ -664,7 +665,7 @@ class GraphCorrector:
                 for node_large in largest_component:
                     # Skip if both nodes are protected (e.g., both are building terminals)
                     # This prevents direct building-to-building connections
-                    if node_comp in self.protected_nodes and node_large in self.protected_nodes:
+                    if self._is_protected_node(node_comp) and self._is_protected_node(node_large):
                         continue
 
                     distance = self._calculate_distance(node_comp, node_large)
@@ -676,13 +677,25 @@ class GraphCorrector:
                 # Add edge between nearest nodes
                 self.graph.add_edge(best_pair[0], best_pair[1], weight=min_distance)
                 edges_added += 1
-                node1_type = "protected" if best_pair[0] in self.protected_nodes else "street"
-                node2_type = "protected" if best_pair[1] in self.protected_nodes else "street"
+                node1_type = "protected" if self._is_protected_node(best_pair[0]) else "street"
+                node2_type = "protected" if self._is_protected_node(best_pair[1]) else "street"
                 print(f"  Component {i}/{len(components)-1}: Connected {node1_type} to {node2_type} "
                       f"via edge of length {min_distance:.2f}m")
 
         print(f"Added {edges_added} edges to connect components")
         return edges_added
+
+    def _is_protected_node(self, node: tuple) -> bool:
+        """
+        Check if a node is protected, using normalized coordinate comparison.
+
+        :param node: Node to check
+        :type node: tuple
+        :return: True if node is in protected set (after normalization)
+        :rtype: bool
+        """
+        normalized = self._normalize_node_coords(node)
+        return normalized in self.protected_nodes
 
     def _normalize_node_coords(self, nodes) -> tuple | set:
         """
@@ -764,7 +777,7 @@ class GraphCorrector:
                 continue
 
             # Skip if this is a protected node (e.g., building terminal)
-            if node1 in self.protected_nodes:
+            if self._is_protected_node(node1):
                 continue
 
             # Query KDTree for all neighbors within distance_threshold
@@ -780,7 +793,7 @@ class GraphCorrector:
                     continue
 
                 # Skip if node2 is a protected node
-                if node2 in self.protected_nodes:
+                if self._is_protected_node(node2):
                     continue
 
                 distance = self._calculate_distance(node1, node2)
