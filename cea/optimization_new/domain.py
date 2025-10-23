@@ -83,6 +83,9 @@ class Domain(object):
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
             buildings_in_domain = shp_file.name
+        elif isinstance(buildings_in_domain, list):
+            # Convert list to pandas Series for consistent handling
+            buildings_in_domain = pd.Series(buildings_in_domain)
 
         building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
         network_type = self.config.optimization_new.network_type
@@ -113,6 +116,9 @@ class Domain(object):
                 raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
             else:
                 buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
+        elif isinstance(buildings_in_domain, list):
+            # Convert list to pandas Series for consistent handling
+            buildings_in_domain = pd.Series(buildings_in_domain)
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
@@ -646,13 +652,16 @@ def main(config: cea.config.Configuration):
     current_domain = Domain(config, locator)
     seed(100)
 
+    # Get buildings to optimize from config (if specified)
+    buildings_to_optimize = config.optimization_new.buildings if config.optimization_new.buildings else None
+
     start_time = time.time()
-    current_domain.load_buildings()
+    current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
     start_time = time.time()
-    current_domain.load_potentials()
+    current_domain.load_potentials(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
 
