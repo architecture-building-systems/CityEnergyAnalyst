@@ -69,8 +69,8 @@ class GraphCorrector:
 
     :param graph: NetworkX graph to be corrected
     :type graph: nx.Graph
-    :param tolerance: Tolerance for coordinate rounding (default: SHAPEFILE_TOLERANCE)
-    :type tolerance: float
+    :param coord_precision: Number of decimal places for coordinate rounding (default: SHAPEFILE_TOLERANCE)
+    :type coord_precision: int
 
     Example usage:
         from cea.datamanagement.graph_helper import GraphCorrector
@@ -80,20 +80,20 @@ class GraphCorrector:
         is_ready, msg = GraphCorrector.validate_steiner_tree_ready(corrected_graph, terminal_nodes)
     """
 
-    def __init__(self, graph: nx.Graph, tolerance: float = SHAPEFILE_TOLERANCE, protected_nodes: Optional[List] = None):
+    def __init__(self, graph: nx.Graph, coord_precision: int = SHAPEFILE_TOLERANCE, protected_nodes: Optional[List] = None):
         """
         Initialize the GraphCorrector with a graph to be corrected.
 
         :param graph: NetworkX graph to be corrected
         :type graph: nx.Graph
-        :param tolerance: Tolerance for coordinate rounding
-        :type tolerance: float
+        :param coord_precision: Number of decimal places for coordinate rounding
+        :type coord_precision: int
         :param protected_nodes: List of nodes that should not be merged (e.g., building terminals)
         :type protected_nodes: Optional[List]
         """
         self.graph = graph.copy()  # Work on a copy to preserve original
         self.original_graph = graph
-        self.tolerance = tolerance
+        self.coord_precision = coord_precision
         self.protected_nodes = set(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
@@ -315,8 +315,8 @@ class GraphCorrector:
                         else:
                             # Create new junction node coordinates
                             junction_node = (
-                                round(intersection_point[0], SHAPEFILE_TOLERANCE),
-                                round(intersection_point[1], SHAPEFILE_TOLERANCE),
+                                round(intersection_point[0], self.coord_precision),
+                                round(intersection_point[1], self.coord_precision),
                             )
                             is_new_node = True
 
