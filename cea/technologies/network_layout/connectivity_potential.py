@@ -235,7 +235,11 @@ def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, tolerance_grid_
     # snap_points = snap(coords, line, tolerance)
     # snap_points._crs = crs
     split_line = split(line, snap(snap_points, line, tolerance_grid_snap))
-    segments = [feature for feature in split_line.geoms if feature.length > 0.01]
+
+    # Filter out very short segments to avoid numerical precision artifacts
+    # Use minimum length based on coordinate precision (10^-SHAPEFILE_TOLERANCE meters)
+    min_length = 10 ** (-SHAPEFILE_TOLERANCE)
+    segments = [feature for feature in split_line.geoms if feature.length > min_length]
 
     gdf_segments = gdf(geometry=segments, crs=crs)
     # gdf_segments.columns = ['index', 'geometry']
@@ -364,6 +368,9 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     This should be done BEFORE connecting building terminals to ensure terminal
     nodes are not affected by corrections.
 
+    Note: Edge weights are not preserved during correction as they will be
+    recalculated from geometry later in the pipeline (Shape_Leng field).
+
     :param street_network_gdf: GeoDataFrame with street network LineStrings
     :type street_network_gdf: gdf
     :param crs: Coordinate reference system
@@ -375,19 +382,35 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     G = nx.Graph()
     for idx, row in street_network_gdf.iterrows():
         line = row.geometry
+        # Handle both LineString and MultiLineString geometries
         if line.geom_type == 'LineString':
             coords = list(line.coords)
             start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
             end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
             weight = line.length
             G.add_edge(start, end, weight=weight)
+        elif line.geom_type == 'MultiLineString':
+            # Handle MultiLineString by adding each component line
+            for sub_line in line.geoms:
+                coords = list(sub_line.coords)
+                start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
+                end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+                weight = sub_line.length
+                G.add_edge(start, end, weight=weight)
 
     # Apply graph corrections
     print("\nApplying graph corrections to street network (before connecting buildings)...")
-    corrector = GraphCorrector(G)
+    corrector = GraphCorrector(G, coord_precision=SHAPEFILE_TOLERANCE)
     G_corrected = corrector.apply_corrections()
 
+    # Validate that the corrected graph is connected
+    if not nx.is_connected(G_corrected):
+        num_components = nx.number_connected_components(G_corrected)
+        warnings.warn(f"Street network still has {num_components} disconnected components after corrections. "
+                     f"This may cause issues with Steiner tree optimization.")
+
     # Convert corrected graph back to GeoDataFrame
+    # Weights will be recalculated from geometry later in the pipeline
     corrected_lines = []
     for u, v, data in G_corrected.edges(data=True):
         line = LineString([u, v])
