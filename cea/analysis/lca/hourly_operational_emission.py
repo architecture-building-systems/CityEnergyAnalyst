@@ -380,7 +380,7 @@ class OperationalHourlyTimeline:
                 col for col in self.operational_emission_timeline.columns
                 if col.startswith(f"{demand_type}_")
             ]
-            data[demand_type] = self.operational_emission_timeline[demand_cols].sum(axis=1)
+            data[f"{demand_type}_kgCO2e"] = self.operational_emission_timeline[demand_cols].sum(axis=1)
         return pd.DataFrame(data)
 
     @property
@@ -400,9 +400,8 @@ class OperationalHourlyTimeline:
                 col for col in self.operational_emission_timeline.columns
                 if col.endswith(f"_{feedstock}_kgCO2e")
             ]
-            data[feedstock] = self.operational_emission_timeline[feedstock_cols].sum(axis=1)
+            data[f"{feedstock}_kgCO2e"] = self.operational_emission_timeline[feedstock_cols].sum(axis=1)
         return pd.DataFrame(data)
-        
 
     def save_results(self) -> None:
         """

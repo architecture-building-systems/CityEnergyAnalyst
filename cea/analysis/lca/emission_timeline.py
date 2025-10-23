@@ -306,11 +306,11 @@ class BuildingEmissionTimeline:
     def _apply_feedstock_policies(
         self,
         operational_multi_years: pd.DataFrame,
-        feedstock_policies: Mapping[str, tuple[int, int, float]],
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
         feedstocks: list[str],
         demand_types: list[str],
     ) -> None:
-        """Apply per-feedstock policies in-place to discounted per-feedstock columns."""
+        """Apply per-feedstock policies in-place (if any) to discounted per-feedstock columns."""
         for raw_key, raw_policy in (feedstock_policies or {}).items():
             if not (isinstance(raw_policy, tuple) and len(raw_policy) == 3):
                 raise ValueError(
@@ -323,6 +323,14 @@ class BuildingEmissionTimeline:
             except (TypeError, ValueError):
                 raise ValueError(
                     f"Policy for '{raw_key}' must contain (int, int, float): got {raw_policy}."
+                )
+            if not tgt > ref:
+                raise ValueError(
+                    f"Policy for '{raw_key}' target year must be greater than reference year."
+                )
+            if frac < 0:
+                raise ValueError(
+                    f"Policy for '{raw_key}' target fraction must be non-negative."
                 )
             fs_key_upper = str(raw_key).strip().upper()
             matching_fs = [fs for fs in feedstocks if str(fs).strip().upper() == fs_key_upper]
@@ -337,27 +345,20 @@ class BuildingEmissionTimeline:
     def _apply_pv_offset_decarbonization(
         self,
         operational_multi_years: pd.DataFrame,
-        feedstock_policies: Mapping[str, tuple[int, int, float]],
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
     ) -> list[str]:
-        """Apply GRID policy in-place to discounted per-feedstock columns for PV systems."""
-        list_discounted_pv_cols: list[str] = []
-        for raw_key, raw_policy in (feedstock_policies or {}).items():
-            ref = int(raw_policy[0])
-            tgt = int(raw_policy[1])
-            frac = float(raw_policy[2])
-            fs_key_upper = str(raw_key).strip().upper()
-            if not fs_key_upper == "GRID":
-                continue
-
-            for col in operational_multi_years.columns:
-                if col.startswith("PV_") and col.endswith("_offset_total_kgCO2e"):
-                    # column name looks like PV_{pv_code}_offset_total_kgCO2e
+        """Apply GRID policy in-place (if any) to discounted total columns for PV systems, and return the name of total columns."""
+        list_final_pv_cols: list[str] = []
+        for col in operational_multi_years.columns:
+            if col.startswith("PV_") and col.endswith("_offset_total_kgCO2e"):
+                # column name looks like PV_{pv_code}_offset_total_kgCO2e
+                if feedstock_policies and "GRID" in feedstock_policies:
+                    ref, tgt, frac = feedstock_policies["GRID"]
                     operational_multi_years[col] = self.discount_over_year(
                         operational_multi_years[col], ref, tgt, frac
                     )
-                    list_discounted_pv_cols.append(col)
-
-        return list_discounted_pv_cols
+                list_final_pv_cols.append(col)
+        return list_final_pv_cols
 
     @staticmethod
     def _aggregate_by_demand(
@@ -386,30 +387,19 @@ class BuildingEmissionTimeline:
         {heating, hot_water, cooling, appliances} and feedstock is in the feedstock database (plus 'NONE').
         """
         self.check_demolished()
-        # 1) Read hourly operational emissions and drop non-emission columns
-        operational, operational_timeseries = self._read_operational_timeseries()
-
-        # Fast path: no policies provided -> aggregate by demand type and assign
-        if not feedstock_policies:
-            # Use the helper from OperationalHourlyTimeline for robust demand aggregation
-            op_by_demand = operational.emission_by_demand.copy().rename(columns=self._COLUMN_MAPPING)
-            baseline_agg = op_by_demand.sum(axis=0).reindex(self._OPERATIONAL_COLS).fillna(0.0)
-            self.timeline.loc[:, self._OPERATIONAL_COLS] = baseline_agg.to_numpy(dtype=float)
-            return
-
-        feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
         demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
+        feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
 
+        _, operational_timeseries = self._read_operational_timeseries()
         yearly_sum = operational_timeseries.sum(axis=0)
         operational_multiyrs = self._tile_yearly(yearly_sum)
-
         self._apply_feedstock_policies(operational_multiyrs, feedstock_policies, feedstocks, demand_types)
-        discounted_pv_cols = self._apply_pv_offset_decarbonization(operational_multiyrs, feedstock_policies)
         out = self._aggregate_by_demand(operational_multiyrs, demand_types)
-
         self.timeline.loc[:, self._OPERATIONAL_COLS] = out[self._OPERATIONAL_COLS].to_numpy(dtype=float)
-        if discounted_pv_cols:
-            self.timeline.loc[:, discounted_pv_cols] = operational_multiyrs[discounted_pv_cols].to_numpy(dtype=float)
+
+        pv_total_cols = self._apply_pv_offset_decarbonization(operational_multiyrs, feedstock_policies)
+        if pv_total_cols:
+            self.timeline.loc[:, pv_total_cols] = operational_multiyrs[pv_total_cols].to_numpy(dtype=float)
 
     def demolish(self, demolition_year: int) -> None:
         """

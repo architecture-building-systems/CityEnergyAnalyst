@@ -159,12 +159,9 @@ def total_yearly(config: Configuration) -> None:
         if consider_pv and pv_codes:
             timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
-        ref_yr_val = getattr(emissions_cfg, 'grid_decarbonise_reference_year', None)
-        tar_yr_val = getattr(emissions_cfg, 'grid_decarbonise_target_year', None)
-        tar_ef_val = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', None)
-        ref_yr: int | None = int(ref_yr_val) if ref_yr_val is not None and ref_yr_val != '' else None
-        tar_yr: int | None = int(tar_yr_val) if tar_yr_val is not None and tar_yr_val != '' else None
-        tar_ef: float | None = float(tar_ef_val) if tar_ef_val is not None and tar_ef_val != '' else None
+        ref_yr: int = getattr(emissions_cfg, 'grid_decarbonise_reference_year', -1)
+        tar_yr: int = getattr(emissions_cfg, 'grid_decarbonise_target_year', -1)
+        tar_ef: float = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', -1.0)
 
         all_none = ref_yr is None and tar_yr is None and tar_ef is None
         all_exist = ref_yr is not None and tar_yr is not None and tar_ef is not None
@@ -177,19 +174,6 @@ def total_yearly(config: Configuration) -> None:
         if all_none:
             feedstock_policies_arg = None
         else:
-            if ref_yr is None or tar_yr is None or tar_ef is None:
-                raise ValueError(f"Grid decarbonisation parameters should all be present: Reference year, target year, target emission factor. "
-                                 f"Got: {ref_yr}, {tar_yr}, {tar_ef}")
-            
-            # Validate grid decarbonisation parameters
-            if ref_yr >= tar_yr:
-                raise ValueError(
-                    f"Invalid grid decarbonisation configuration: reference year ({ref_yr}) must be before target year ({tar_yr})."
-                )
-            if tar_ef < 0:
-                raise ValueError(
-                    f"Invalid grid decarbonisation configuration: target emission factor ({tar_ef}) must be non-negative."
-                )
             feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
         timeline.fill_operational_emissions(
             feedstock_policies=feedstock_policies_arg
