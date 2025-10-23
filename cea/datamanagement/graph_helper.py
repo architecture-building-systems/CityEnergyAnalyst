@@ -80,7 +80,7 @@ class GraphCorrector:
         is_ready, msg = GraphCorrector.validate_steiner_tree_ready(corrected_graph, terminal_nodes)
     """
 
-    def __init__(self, graph: nx.Graph, coord_precision: int = SHAPEFILE_TOLERANCE, protected_nodes: Optional[List] = None):
+    def __init__(self, graph: nx.Graph, coord_precision: int = SHAPEFILE_TOLERANCE):
         """
         Initialize the GraphCorrector with a graph to be corrected.
 
@@ -88,15 +88,10 @@ class GraphCorrector:
         :type graph: nx.Graph
         :param coord_precision: Number of decimal places for coordinate rounding
         :type coord_precision: int
-        :param protected_nodes: List of nodes that should not be merged (e.g., building terminals)
-        :type protected_nodes: Optional[List]
         """
         self.graph = graph.copy()  # Work on a copy to preserve original
         self.original_graph = graph
         self.coord_precision = coord_precision
-
-        # Normalize protected node coordinates for comparison-time lookups
-        self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
     # ==================================================================================
@@ -635,16 +630,6 @@ class GraphCorrector:
         """
         Connect all components to the largest component by finding nearest node pairs.
 
-        Avoids creating direct edges between two protected nodes (e.g., building terminals)
-        to maintain physical network constraints.
-
-        TODO: Consider adding allow_protected_connections parameter for campus/institutional networks
-              where building-to-building connections are physically realistic and cost-effective
-              (universities, hospitals, industrial parks, 5GDHC prosumer networks).
-              Alternative approach: use distance threshold (e.g., allow B-B if < 20-50m) to permit
-              adjacent buildings in complexes while preventing unrealistic long-distance shortcuts.
-              See: ASHRAE District Heating Guide, CIBSE CP1 Heat Networks Code of Practice.
-
         :param components: List of component node sets, sorted by size (largest first)
         :type components: List[Set]
         :return: Number of edges added
@@ -660,14 +645,8 @@ class GraphCorrector:
             best_pair = None
 
             # Find nearest pair of nodes between this component and the largest
-            # Avoid connecting two protected nodes directly (e.g., building-to-building)
             for node_comp in component:
                 for node_large in largest_component:
-                    # Skip if both nodes are protected (e.g., both are building terminals)
-                    # This prevents direct building-to-building connections
-                    if self._is_protected_node(node_comp) and self._is_protected_node(node_large):
-                        continue
-
                     distance = self._calculate_distance(node_comp, node_large)
                     if distance < min_distance:
                         min_distance = distance
@@ -677,25 +656,10 @@ class GraphCorrector:
                 # Add edge between nearest nodes
                 self.graph.add_edge(best_pair[0], best_pair[1], weight=min_distance)
                 edges_added += 1
-                node1_type = "protected" if self._is_protected_node(best_pair[0]) else "street"
-                node2_type = "protected" if self._is_protected_node(best_pair[1]) else "street"
-                print(f"  Component {i}/{len(components)-1}: Connected {node1_type} to {node2_type} "
-                      f"via edge of length {min_distance:.2f}m")
+                print(f"  Component {i}/{len(components)-1}: Connected via edge of length {min_distance:.2f}m")
 
         print(f"Added {edges_added} edges to connect components")
         return edges_added
-
-    def _is_protected_node(self, node: tuple) -> bool:
-        """
-        Check if a node is protected, using normalized coordinate comparison.
-
-        :param node: Node to check
-        :type node: tuple
-        :return: True if node is in protected set (after normalization)
-        :rtype: bool
-        """
-        normalized = self._normalize_node_coords(node)
-        return normalized in self.protected_nodes
 
     def _normalize_node_coords(self, nodes) -> tuple | set:
         """
@@ -764,8 +728,6 @@ class GraphCorrector:
         merged_count = 0
 
         print(f"Checking {num_nodes_before} nodes for merging (threshold: {distance_threshold}m)...")
-        if self.protected_nodes:
-            print(f"  Protecting {len(self.protected_nodes)} terminal nodes from merging")
 
         # Build KDTree once for efficient spatial queries (reuse helper method pattern)
         node_coords = [(node[0], node[1]) for node in nodes]
@@ -774,10 +736,6 @@ class GraphCorrector:
         # Find pairs of nodes that are too close using KDTree
         for i, node1 in enumerate(nodes):
             if node1 in nodes_to_merge:  # Already marked for removal
-                continue
-
-            # Skip if this is a protected node (e.g., building terminal)
-            if self._is_protected_node(node1):
                 continue
 
             # Query KDTree for all neighbors within distance_threshold
@@ -790,10 +748,6 @@ class GraphCorrector:
 
                 node2 = nodes[j]
                 if node2 in nodes_to_merge:  # Already marked for removal
-                    continue
-
-                # Skip if node2 is a protected node
-                if self._is_protected_node(node2):
                     continue
 
                 distance = self._calculate_distance(node1, node2)
