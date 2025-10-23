@@ -398,7 +398,7 @@ class BuildingEmissionTimeline:
             return
 
         feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
-        demand_types = list(_tech_name_mapping.keys())  # ['heating', 'hot_water', 'cooling', 'appliances']
+        demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
 
         yearly_sum = operational_timeseries.sum(axis=0)
         operational_multiyrs = self._tile_yearly(yearly_sum)

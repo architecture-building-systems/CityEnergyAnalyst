@@ -20,10 +20,10 @@ if TYPE_CHECKING:
 
 _tech_name_mapping = {
     # tech_name: (<demand_col_name>, <supply_type_name>)
-    "heating": ("Qhs_sys", "hs"),
-    "hot_water": ("Qww_sys", "dhw"),
-    "cooling": ("Qcs_sys", "cs"),
-    "appliances": ("E_sys", "el"),
+    "Qhs_sys": "hs",
+    "Qww_sys": "dhw",
+    "Qcs_sys": "cs",
+    "E_sys": "el",
 }
 class OperationalHourlyTimeline:
     def __init__(
@@ -218,7 +218,7 @@ class OperationalHourlyTimeline:
 
     def _order_demands(self, allocation_priority: list[str] | None, allow_demands: list[str] | None) -> list[str]:
         all_demands = list(_tech_name_mapping.keys())
-        default_priority = ["appliances", "heating", "hot_water", "cooling"]
+        default_priority = ["E_sys", "Qcs_sys", "Qhs_sys", "Qww_sys"]
         prioritized_demands = list(allocation_priority) if allocation_priority else default_priority
         prioritized_demands = [demand for demand in prioritized_demands if demand in all_demands]
         if not prioritized_demands:
@@ -261,8 +261,8 @@ class OperationalHourlyTimeline:
         pv_df = pv_hourly_results.copy()
         added_cols: list[str] = []
         for demand_type in ordered_demands:
-            demand_col_name, supply_type_name = _tech_name_mapping[demand_type]
-            demand_col = f"{demand_col_name}_kWh"
+            supply_type_name = _tech_name_mapping[demand_type]
+            demand_col = f"{demand_type}_kWh"
 
             feedstock: str = self.bpr.supply[f"source_{supply_type_name}"]
             if feedstock != 'GRID':
@@ -336,12 +336,12 @@ class OperationalHourlyTimeline:
             `PV_offset_{tech}_kgCO2e__{pv}` and a total `PV_offset_total_kgCO2e__{pv}` are added to the timeline.
         - No unsuffixed PV columns are written; all PV offsets carry the scenario suffix to avoid ambiguity.
         """
-        for demand_type, tech_tuple in _tech_name_mapping.items():
-            eff: float = self.bpr.supply[f"eff_{tech_tuple[1]}"]
+        for demand_type, supply_type in _tech_name_mapping.items():
+            eff: float = self.bpr.supply[f"eff_{supply_type}"]
             eff = eff if eff > 0 else 1.0  # avoid division by zero
-            feedstock: str = self.bpr.supply[f"source_{tech_tuple[1]}"]
+            feedstock: str = self.bpr.supply[f"source_{supply_type}"]
             self.operational_emission_timeline[f"{demand_type}_{feedstock}_kgCO2e"] = (
-                self.demand_timeseries[f"{tech_tuple[0]}_kWh"]  # kWh
+                self.demand_timeseries[f"{demand_type}_kWh"]  # kWh
                 / eff
                 * self.emission_intensity_timeline[feedstock]  # kgCO2/kWh
             )
@@ -375,7 +375,7 @@ class OperationalHourlyTimeline:
         if not self._is_emission_calculated:
             raise RuntimeError("Operational emissions have not been calculated yet. Please call calculate_operational_emission() first.")
         data = {}
-        for demand_type, _ in _tech_name_mapping.items():
+        for demand_type in _tech_name_mapping.keys():
             demand_cols = [
                 col for col in self.operational_emission_timeline.columns
                 if col.startswith(f"{demand_type}_")
