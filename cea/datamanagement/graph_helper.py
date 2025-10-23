@@ -636,6 +636,16 @@ class GraphCorrector:
         """
         Connect all components to the largest component by finding nearest node pairs.
 
+        Avoids creating direct edges between two protected nodes (e.g., building terminals)
+        to maintain physical network constraints.
+
+        TODO: Consider adding allow_protected_connections parameter for campus/institutional networks
+              where building-to-building connections are physically realistic and cost-effective
+              (universities, hospitals, industrial parks, 5GDHC prosumer networks).
+              Alternative approach: use distance threshold (e.g., allow B-B if < 20-50m) to permit
+              adjacent buildings in complexes while preventing unrealistic long-distance shortcuts.
+              See: ASHRAE District Heating Guide, CIBSE CP1 Heat Networks Code of Practice.
+
         :param components: List of component node sets, sorted by size (largest first)
         :type components: List[Set]
         :return: Number of edges added
@@ -651,8 +661,14 @@ class GraphCorrector:
             best_pair = None
 
             # Find nearest pair of nodes between this component and the largest
+            # Avoid connecting two protected nodes directly (e.g., building-to-building)
             for node_comp in component:
                 for node_large in largest_component:
+                    # Skip if both nodes are protected (e.g., both are building terminals)
+                    # This prevents direct building-to-building connections
+                    if node_comp in self.protected_nodes and node_large in self.protected_nodes:
+                        continue
+
                     distance = self._calculate_distance(node_comp, node_large)
                     if distance < min_distance:
                         min_distance = distance
@@ -662,7 +678,10 @@ class GraphCorrector:
                 # Add edge between nearest nodes
                 self.graph.add_edge(best_pair[0], best_pair[1], weight=min_distance)
                 edges_added += 1
-                print(f"  Component {i}/{len(components)-1}: Connected via edge of length {min_distance:.2f}m")
+                node1_type = "protected" if best_pair[0] in self.protected_nodes else "street"
+                node2_type = "protected" if best_pair[1] in self.protected_nodes else "street"
+                print(f"  Component {i}/{len(components)-1}: Connected {node1_type} to {node2_type} "
+                      f"via edge of length {min_distance:.2f}m")
 
         print(f"Added {edges_added} edges to connect components")
         return edges_added
