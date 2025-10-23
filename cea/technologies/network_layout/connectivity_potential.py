@@ -9,6 +9,7 @@ a series of points (buildings) to the closest street
 import os
 import warnings
 
+import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString, MultiPoint, box
@@ -17,6 +18,7 @@ from shapely.ops import split, linemerge, snap
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
+from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
@@ -353,6 +355,48 @@ def simplify_liness_accurracy(lines, decimals, crs):
     return df
 
 
+def apply_graph_corrections_to_street_network(street_network_gdf, crs):
+    """
+    Apply graph corrections to the street network to fix connectivity issues.
+
+    This function converts the street network GeoDataFrame to a NetworkX graph,
+    applies corrections using GraphCorrector, then converts back to GeoDataFrame.
+    This should be done BEFORE connecting building terminals to ensure terminal
+    nodes are not affected by corrections.
+
+    :param street_network_gdf: GeoDataFrame with street network LineStrings
+    :type street_network_gdf: gdf
+    :param crs: Coordinate reference system
+    :type crs: str
+    :return: Corrected street network as GeoDataFrame
+    :rtype: gdf
+    """
+    # Convert GeoDataFrame to NetworkX graph
+    G = nx.Graph()
+    for idx, row in street_network_gdf.iterrows():
+        line = row.geometry
+        if line.geom_type == 'LineString':
+            coords = list(line.coords)
+            start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
+            end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+            weight = line.length
+            G.add_edge(start, end, weight=weight)
+
+    # Apply graph corrections
+    print("\nApplying graph corrections to street network (before connecting buildings)...")
+    corrector = GraphCorrector(G)
+    G_corrected = corrector.apply_corrections()
+
+    # Convert corrected graph back to GeoDataFrame
+    corrected_lines = []
+    for u, v, data in G_corrected.edges(data=True):
+        line = LineString([u, v])
+        corrected_lines.append(line)
+
+    corrected_gdf = gdf(geometry=corrected_lines, crs=crs)
+    return corrected_gdf
+
+
 def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisation_flag=False, path_potential_network=None):
     """
     This script outputs a potential network connecting a series of building points to the closest street network
@@ -380,6 +424,10 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
         warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
 
     street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
+
+    # Apply graph corrections to street network BEFORE connecting buildings
+    # This ensures terminal nodes are not affected by corrections
+    street_network = apply_graph_corrections_to_street_network(street_network, crs)
 
     # create terminals/branches form street to buildings
     prototype_network = create_terminals(building_centroids_df, crs, street_network)

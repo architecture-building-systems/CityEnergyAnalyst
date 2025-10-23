@@ -106,6 +106,8 @@ def calc_steiner_spanning_tree(crs_projected,
     building_nodes_graph = read_shp(temp_path_building_centroids_shp)
 
     # transform to an undirected potential_network_graph
+    # Note: Graph corrections are now applied in calc_connectivity_network BEFORE
+    # building terminals are connected, to ensure terminal nodes are not affected
     iterator_edges = potential_network_graph.edges(data=True)
     G = nx.Graph()
     for (x, y, data) in iterator_edges:
@@ -113,8 +115,7 @@ def calc_steiner_spanning_tree(crs_projected,
         y = (round(y[0], SHAPEFILE_TOLERANCE), round(y[1], SHAPEFILE_TOLERANCE))
         G.add_edge(x, y, weight=data[weight_field])
 
-    # Get building terminal coordinates BEFORE graph corrections
-    # These will be protected from merging during corrections
+    # get the building nodes and coordinates
     iterator_nodes = building_nodes_graph.nodes
     terminal_nodes_coordinates = []
     terminal_nodes_names = []
@@ -126,12 +127,6 @@ def calc_steiner_spanning_tree(crs_projected,
             terminal_nodes_coordinates.append(
                 (round(coordinates[0], SHAPEFILE_TOLERANCE), round(coordinates[1], SHAPEFILE_TOLERANCE)))
             terminal_nodes_names.append(data['name'])
-
-    # Apply graph corrections to fix connectivity issues
-    # Pass building terminals as protected nodes so they are not merged
-    print("\nApplying graph corrections to street network...")
-    corrector = GraphCorrector(G, protected_nodes=terminal_nodes_coordinates)
-    G = corrector.apply_corrections()
 
     # Validate graph is ready for Steiner tree with terminal nodes
     is_ready, message = GraphCorrector.validate_steiner_tree_ready(G, terminal_nodes_coordinates)
