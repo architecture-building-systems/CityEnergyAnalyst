@@ -417,11 +417,17 @@ class Network(object):
         buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
 
+        # Store the buildings CRS as the reference for the network
+        Network._coordinate_reference_system = domain.buildings[0].crs
+
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
                                                      buildings_df,
                                                      optimisation_flag=True)
-        Network._coordinate_reference_system = network_grid_shp.crs
+        
+        # Ensure network grid matches the buildings CRS
+        if network_grid_shp.crs != Network._coordinate_reference_system:
+            network_grid_shp = network_grid_shp.to_crs(Network._coordinate_reference_system)
 
         # convert the GeoDataFrame network grid to a Graph
         for (line_string, length) in network_grid_shp.itertuples(index=False):
