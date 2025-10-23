@@ -94,7 +94,8 @@ class GraphCorrector:
         self.graph = graph.copy()  # Work on a copy to preserve original
         self.original_graph = graph
         self.coord_precision = coord_precision
-        self.protected_nodes = set(protected_nodes) if protected_nodes else set()
+        # Normalize protected node coordinates to ensure consistent precision
+        self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
     # ==================================================================================
@@ -313,11 +314,8 @@ class GraphCorrector:
                             junction_node = existing_node
                             is_new_node = False
                         else:
-                            # Create new junction node coordinates
-                            junction_node = (
-                                round(intersection_point[0], self.coord_precision),
-                                round(intersection_point[1], self.coord_precision),
-                            )
+                            # Create new junction node coordinates using helper
+                            junction_node = self._normalize_node_coords(intersection_point)
                             is_new_node = True
 
                         intersections.append({
@@ -685,6 +683,37 @@ class GraphCorrector:
 
         print(f"Added {edges_added} edges to connect components")
         return edges_added
+
+    def _normalize_node_coords(self, nodes) -> tuple | set:
+        """
+        Normalize node coordinates to the instance's coordinate precision.
+
+        This ensures consistent coordinate precision across all operations,
+        preventing lookup failures due to floating point precision differences.
+
+        Supports both single node and collections of nodes (vectorized operation).
+
+        :param nodes: Single node tuple (x, y) or iterable of node tuples
+        :type nodes: tuple | List[tuple] | Set[tuple] | any iterable
+        :return: Normalized node coordinates (single tuple) or set of normalized nodes
+        :rtype: tuple | set
+
+        Examples:
+            >>> corrector._normalize_node_coords((123.456789, 456.789012))
+            (123.456789, 456.789012)  # rounded to coord_precision
+
+            >>> corrector._normalize_node_coords([(1.11111, 2.22222), (3.33333, 4.44444)])
+            {(1.11111, 2.22222), (3.33333, 4.44444)}  # set of rounded coords
+        """
+        # Check if it's a single node (tuple with numeric elements)
+        if isinstance(nodes, tuple) and len(nodes) == 2 and isinstance(nodes[0], (int, float)):
+            return (round(nodes[0], self.coord_precision), round(nodes[1], self.coord_precision))
+
+        # Otherwise treat as iterable of nodes
+        return set(
+            (round(node[0], self.coord_precision), round(node[1], self.coord_precision))
+            for node in nodes
+        )
 
     def _calculate_distance(self, node1, node2) -> float:
         """
