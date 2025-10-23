@@ -1,14 +1,39 @@
 """
-This script uses libraries in shapely to create connections from
-a series of points (buildings) to the closest street
+Network connectivity module for connecting buildings to street networks.
+
+This module creates a graph of potential thermal network paths by connecting building centroids to the nearest
+points on a street network, preparing the data for Steiner tree optimization.
+
+WORKFLOW:
+=========
+1. Load and validate street network
+2. Apply GraphCorrector to street network (fixes connectivity, intersections, merges close nodes)
+3. Create building terminal connection lines (geometries from building → nearest street point)
+4. Topologically merge and connect geometries:
+   - one_linestring_per_intersection: Merge touching lines, split at intersections
+   - snappy_endings: Snap isolated endpoints to nearby vertices
+   - snap_points: Split lines at significant points
+5. Discretize network for graph representation
+6. Output for Steiner tree optimization
+
+ARCHITECTURE:
+=============
+- GraphCorrector (graph_helper.py): Topology fixes on street network only
+- create_terminals: Spatial operation to find nearest street points for buildings
+- Geometric merging/snapping: Ensures building connections are topologically integrated
+- Discretization: Converts continuous geometries into graph-ready segments
+
+This separation ensures:
+- Street network is corrected BEFORE building terminals are added
+- Terminal nodes are protected from graph correction operations
+- Building connections are properly merged with street network geometries
+- Final network is suitable for NetworkX graph conversion
 """
-
-
-
 
 import os
 import warnings
 
+import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString, MultiPoint, box
@@ -17,6 +42,7 @@ from shapely.ops import split, linemerge, snap
 import cea.config
 import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
+from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 
 __author__ = "Jimeno A. Fonseca"
@@ -211,33 +237,39 @@ def snappy_endings(lines, max_distance, crs):
     return df
 
 
-def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, tolerance_grid_snap: float, crs: str):
+def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
     """
-    Split the union of lines with the union of points resulting
+    Discretize network by splitting lines at all significant points (junctions, endpoints, intersections).
+    This converts continuous LineStrings into graph-ready segments where each topologically
+    significant point becomes an explicit node in the network structure.
 
-    :param GeoDataFrame gdf_line:  GeoDataFrame with multiple rows of connecting line segments
-    :param GeoDataFrame gdf_points: geodataframe with multiple rows of single points
+    :param gdf_line: GeoDataFrame with network line segments (streets + building connections)
+    :type gdf_line: gdf
+    :param gdf_points: GeoDataFrame with all significant points (endpoints, intersections)
+    :type gdf_points: gdf
+    :param snap_tolerance: Distance tolerance for snapping points to lines (meters)
+    :type snap_tolerance: float
+    :param crs: Coordinate reference system
+    :type crs: str
+    :return: Discretized network as individual segments
+    :rtype: gdf
 
-    :returns: ``gdf_segments`` (GeoDataFrame of segments)
-    :rtype: GeoDataFrame
-
-    https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
+    Reference: https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
     """
-
-    # union all geometries
+    # Union all geometries into single objects for splitting operation
     line = gdf_line.geometry.union_all()
     snap_points = gdf_points.geometry.union_all()
 
-    # snap and split coords on line
-    # returns GeometryCollection
-    # snap_points = snap(coords, line, tolerance)
-    # snap_points._crs = crs
-    split_line = split(line, snap(snap_points, line, tolerance_grid_snap))
-    segments = [feature for feature in split_line.geoms if feature.length > 0.01]
+    # Snap points to lines within tolerance, then split lines at those points
+    # This ensures all significant points become explicit vertices in the network
+    split_line = split(line, snap(snap_points, line, snap_tolerance))
+
+    # Filter out numerical artifacts (extremely short segments from floating-point precision)
+    # Use threshold based on coordinate precision: 10^-6 meters (1 micrometer) with SHAPEFILE_TOLERANCE=6
+    min_length = 10 ** (-SHAPEFILE_TOLERANCE)
+    segments = [feature for feature in split_line.geoms if feature.length > min_length]
 
     gdf_segments = gdf(geometry=segments, crs=crs)
-    # gdf_segments.columns = ['index', 'geometry']
-
     return gdf_segments
 
 
@@ -353,16 +385,95 @@ def simplify_liness_accurracy(lines, decimals, crs):
     return df
 
 
+def apply_graph_corrections_to_street_network(street_network_gdf, crs):
+    """
+    Apply graph corrections to the street network to fix connectivity issues.
+
+    This function converts the street network GeoDataFrame to a NetworkX graph,
+    applies corrections using GraphCorrector, then converts back to GeoDataFrame.
+    This should be done BEFORE connecting building terminals to ensure terminal
+    nodes are not affected by corrections.
+
+    Note: Edge weights are not preserved during correction as they will be
+    recalculated from geometry later in the pipeline (Shape_Leng field).
+
+    :param street_network_gdf: GeoDataFrame with street network LineStrings
+    :type street_network_gdf: gdf
+    :param crs: Coordinate reference system
+    :type crs: str
+    :return: Corrected street network as GeoDataFrame
+    :rtype: gdf
+    """
+    # Convert GeoDataFrame to NetworkX graph
+    G = nx.Graph()
+    for idx, row in street_network_gdf.iterrows():
+        line = row.geometry
+        # Handle both LineString and MultiLineString geometries
+        if line.geom_type == 'LineString':
+            coords = list(line.coords)
+            start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
+            end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+            weight = line.length
+            G.add_edge(start, end, weight=weight)
+        elif line.geom_type == 'MultiLineString':
+            # Handle MultiLineString by adding each component line
+            for sub_line in line.geoms:
+                coords = list(sub_line.coords)
+                start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
+                end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+                weight = sub_line.length
+                G.add_edge(start, end, weight=weight)
+
+    # Apply graph corrections
+    print("\nApplying graph corrections to street network (before connecting buildings)...")
+    corrector = GraphCorrector(G, coord_precision=SHAPEFILE_TOLERANCE)
+    G_corrected = corrector.apply_corrections()
+
+    # Validate that the corrected graph is connected
+    if not nx.is_connected(G_corrected):
+        num_components = nx.number_connected_components(G_corrected)
+        warnings.warn(f"Street network still has {num_components} disconnected components after corrections. "
+                     f"This may cause issues with Steiner tree optimization.")
+
+    # Convert corrected graph back to GeoDataFrame
+    # Weights will be recalculated from geometry later in the pipeline
+    corrected_lines = []
+    for u, v, data in G_corrected.edges(data=True):
+        line = LineString([u, v])
+        corrected_lines.append(line)
+
+    corrected_gdf = gdf(geometry=corrected_lines, crs=crs)
+    return corrected_gdf
+
+
 def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisation_flag=False, path_potential_network=None):
     """
-    This script outputs a potential network connecting a series of building points to the closest street network
-    the street network is assumed to be a good path to the district heating or cooling network
+    Create a graph of potential thermal network connections by connecting building centroids to the nearest street
+    network.
 
-    :param path_streets_shp: path to street shapefile
-    :param building_centroids_df: path to substations in buildings (or close by)
-    :param optimisation_flag: boolean indicator of whether the function is called from within the optimisation
-    :param path_potential_network: output path shapefile
-    :return:
+    This function prepares a network suitable for Steiner tree optimization by:
+    1. Loading and validating the street network
+    2. Applying graph corrections to streets only (connect components, fix intersections, merge close nodes)
+    3. Creating building terminal connection lines (building → nearest street point)
+    4. Topologically merging and connecting all geometries (merge lines, snap endpoints, split at junctions)
+    5. Discretizing the network into graph-ready segments
+
+    The street network is assumed to be a good path for district heating or cooling networks.
+
+    Pipeline:
+    ---------
+    Streets → Graph Corrections → Add Building Lines → Merge/Snap Geometries → Discretize → Output
+
+    :param path_streets_shp: Path to street network shapefile
+    :type path_streets_shp: str
+    :param building_centroids_df: GeoDataFrame with building centroids (must have 'name' column)
+    :type building_centroids_df: gdf
+    :param optimisation_flag: If True, return GeoDataFrame; if False, write to file
+    :type optimisation_flag: bool
+    :param path_potential_network: Output path for potential network shapefile (required if optimisation_flag=False)
+    :type path_potential_network: str
+    :return: CRS if optimisation_flag=False, else potential network GeoDataFrame
+    :rtype: str or gdf
     """
     # first get the street network
     street_network = gdf.from_file(path_streets_shp)
@@ -381,26 +492,38 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
 
     street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
 
+    # Apply graph corrections to street network BEFORE connecting buildings
+    # This ensures terminal nodes are not affected by corrections
+    # GraphCorrector already handles: intersections, close nodes, disconnected components
+    street_network = apply_graph_corrections_to_street_network(street_network, crs)
+
     # create terminals/branches form street to buildings
+    # This creates individual line segments from each building centroid to nearest street point
     prototype_network = create_terminals(building_centroids_df, crs, street_network)
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    # first split in intersections
+    # Merge touching lines and split at intersections
+    # This ensures building connections are topologically merged with the street network
     prototype_network = one_linestring_per_intersection(prototype_network.geometry.tolist(), crs)
-    # snap endings of all vectors to ending of all other vectors
+
+    # Snap isolated endpoints to nearby vertices
+    # This ensures all connections are properly joined within tolerance
     prototype_network = snappy_endings(prototype_network.geometry.values, SNAP_TOLERANCE, crs)
 
-    # calculate intersections
+    # Calculate all significant points (endpoints and intersections) for final discretization
     gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
 
-    # snap these points to the lines and transform lines
+    # Snap points to lines and split lines at those points
+    # This ensures all junction points become explicit vertices
     gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE)
 
     # save for verification purposes
     prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')
-    # get segments
-    potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points_snapped, 1.0, crs)
+
+    # Final discretization: split the combined network at all significant points
+    # This creates proper graph structure where each junction/endpoint is explicit
+    potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points_snapped, SNAP_TOLERANCE, crs)
 
     # calculate Shape_len field
     potential_network_df["Shape_Leng"] = potential_network_df["geometry"].apply(lambda x: x.length)

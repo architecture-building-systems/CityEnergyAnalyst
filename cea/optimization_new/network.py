@@ -417,11 +417,17 @@ class Network(object):
         buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
 
+        # Store the buildings CRS as the reference for the network
+        Network._coordinate_reference_system = domain.buildings[0].crs
+
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
                                                      buildings_df,
                                                      optimisation_flag=True)
-        Network._coordinate_reference_system = network_grid_shp.crs
+        
+        # Ensure network grid matches the buildings CRS
+        if network_grid_shp.crs != Network._coordinate_reference_system:
+            network_grid_shp = network_grid_shp.to_crs(Network._coordinate_reference_system)
 
         # convert the GeoDataFrame network grid to a Graph
         for (line_string, length) in network_grid_shp.itertuples(index=False):
@@ -431,9 +437,15 @@ class Network(object):
             edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
             Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
 
+        # Prepare building terminal nodes to be protected from merging during graph corrections
+        building_terminal_nodes = [building.location.coords[0] for building in domain.buildings]
+        building_terminal_nodes = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
+                                   for x, y in building_terminal_nodes]
+
         # Apply graph corrections to fix connectivity issues
+        # Pass building terminals as protected nodes so they are not merged
         print("\nApplying graph corrections to domain potential network...")
-        corrector = GraphCorrector(Network._domain_potential_network_graph)
+        corrector = GraphCorrector(Network._domain_potential_network_graph, protected_nodes=building_terminal_nodes)
         Network._domain_potential_network_graph = corrector.apply_corrections()
 
         return Network._domain_potential_network_graph
