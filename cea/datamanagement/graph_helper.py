@@ -93,6 +93,7 @@ class GraphCorrector:
         self.original_graph = graph
         self.tolerance = tolerance
         self.corrections_log = []
+        self.protected_nodes = set()  # Nodes that should not be merged
 
     # ==================================================================================
     # MAIN CORRECTION PIPELINE
@@ -710,6 +711,10 @@ class GraphCorrector:
             if node1 in nodes_to_merge:  # Already marked for removal
                 continue
 
+            # Skip protected nodes (e.g., building terminals)
+            if node1 in self.protected_nodes:
+                continue
+
             # Query KDTree for all neighbors within distance_threshold
             # Using query_ball_point for efficient radial search
             neighbor_indices = tree.query_ball_point(node_coords[i], distance_threshold, p=2.0)
@@ -720,6 +725,10 @@ class GraphCorrector:
 
                 node2 = nodes[j]
                 if node2 in nodes_to_merge:  # Already marked for removal
+                    continue
+
+                # Skip protected nodes (e.g., building terminals)
+                if node2 in self.protected_nodes:
                     continue
 
                 distance = self._calculate_distance(node1, node2)

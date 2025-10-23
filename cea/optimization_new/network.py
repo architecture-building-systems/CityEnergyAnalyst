@@ -393,6 +393,13 @@ class Network(object):
 
     @staticmethod
     def initialize_class_variables(domain):
+        # Clear class variables before reinitializing to prevent state persistence across runs
+        Network._domain_potential_network_graph = nx.Graph()
+        Network._domain_potential_network_terminals_df = pd.DataFrame()
+        Network._domain_buildings_flow_rate_m3pers = pd.DataFrame()
+        Network._domain_buildings_supply_temp_K = pd.DataFrame()
+        Network._domain_buildings_return_temp_K = pd.DataFrame()
+
         Network._configure_network_defaults(domain)
         Network._load_pot_network(domain)
         Network._set_potential_network_terminals(domain)
@@ -431,10 +438,49 @@ class Network(object):
             edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
             Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
 
+        # Transform building locations to match the network's projected CRS
+        # This ensures building coordinates are in meters (projected), not degrees (geographic)
+        buildings_gdf = Gdf([building.location for building in domain.buildings],
+                           columns=['geometry'],
+                           crs=domain.buildings[0].crs)
+
+        # Transform to network's CRS if different
+        if buildings_gdf.crs != Network._coordinate_reference_system:
+            buildings_gdf = buildings_gdf.to_crs(Network._coordinate_reference_system)
+
+        # Extract transformed building terminal coordinates with proper rounding
+        building_coords = [(round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
+                           round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
+                          for geom in buildings_gdf.geometry]
+
         # Apply graph corrections to fix connectivity issues
+        # But exclude building terminal nodes from being merged
         print("\nApplying graph corrections to domain potential network...")
+        print(f"Protecting {len(building_coords)} building terminal nodes from merging...")
         corrector = GraphCorrector(Network._domain_potential_network_graph)
+
+        # Mark building nodes as protected before applying corrections
+        # This prevents them from being merged with nearby nodes
+        protected_nodes = set(building_coords)
+        corrector.protected_nodes = protected_nodes
+
         Network._domain_potential_network_graph = corrector.apply_corrections()
+
+        # Ensure building terminal nodes exist in the graph
+        # This is necessary when optimizing a subset of buildings
+        for coord in building_coords:
+            if coord not in Network._domain_potential_network_graph.nodes():
+                # Find the nearest node in the graph and connect to it
+                graph_nodes = list(Network._domain_potential_network_graph.nodes())
+                if graph_nodes:
+                    # Calculate distances to all nodes
+                    distances = [((coord[0] - node[0])**2 + (coord[1] - node[1])**2)**0.5
+                                for node in graph_nodes]
+                    nearest_node = graph_nodes[distances.index(min(distances))]
+                    nearest_distance = min(distances)
+                    # Add edge from building to nearest node
+                    Network._domain_potential_network_graph.add_edge(coord, nearest_node, weight=nearest_distance)
+                    print(f"  Added missing building terminal at {coord}, connected to nearest node {nearest_distance:.2f}m away")
 
         return Network._domain_potential_network_graph
 
@@ -577,9 +623,20 @@ class Network(object):
         if (domain is None) & (nx.is_empty(Network._domain_potential_network_graph)):
             raise ValueError("The network object requires a potential network graph for the domain to be set.")
         elif domain is not None:
-            network_terminal_coordinates = [building.location.coords[0] for building in domain.buildings]
-            network_terminal_coordinates = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
-                                            for x, y in network_terminal_coordinates]
+            # Transform building locations to match the network's projected CRS
+            # This ensures coordinates match the network graph (same as in _load_pot_network)
+            buildings_gdf = Gdf([building.location for building in domain.buildings],
+                               columns=['geometry'],
+                               crs=domain.buildings[0].crs)
+
+            # Transform to network's CRS if different
+            if buildings_gdf.crs != Network._coordinate_reference_system:
+                buildings_gdf = buildings_gdf.to_crs(Network._coordinate_reference_system)
+
+            # Extract transformed and rounded coordinates
+            network_terminal_coordinates = [(round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
+                                            round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
+                                           for geom in buildings_gdf.geometry]
             network_terminal_identifier = [building.identifier for building in domain.buildings]
             network_terminal_demand = [building.demand_flow.profile.sum() for building in domain.buildings]
             Network._domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
@@ -659,7 +716,6 @@ class Network(object):
                                     ['geometry', 'coordinates', 'building', 'type']
                                     index: NODEi
         """
-
         def populate_fields(coordinate):
             if coordinate in connected_buildings_coords_list:
                 return buildings_list[building_coordinates_list.index(coordinate)]
