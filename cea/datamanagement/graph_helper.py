@@ -80,7 +80,7 @@ class GraphCorrector:
         is_ready, msg = GraphCorrector.validate_steiner_tree_ready(corrected_graph, terminal_nodes)
     """
 
-    def __init__(self, graph: nx.Graph, tolerance: float = SHAPEFILE_TOLERANCE):
+    def __init__(self, graph: nx.Graph, tolerance: float = SHAPEFILE_TOLERANCE, protected_nodes: Optional[List] = None):
         """
         Initialize the GraphCorrector with a graph to be corrected.
 
@@ -88,10 +88,13 @@ class GraphCorrector:
         :type graph: nx.Graph
         :param tolerance: Tolerance for coordinate rounding
         :type tolerance: float
+        :param protected_nodes: List of nodes that should not be merged (e.g., building terminals)
+        :type protected_nodes: Optional[List]
         """
         self.graph = graph.copy()  # Work on a copy to preserve original
         self.original_graph = graph
         self.tolerance = tolerance
+        self.protected_nodes = set(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
     # ==================================================================================
@@ -700,6 +703,8 @@ class GraphCorrector:
         merged_count = 0
 
         print(f"Checking {num_nodes_before} nodes for merging (threshold: {distance_threshold}m)...")
+        if self.protected_nodes:
+            print(f"  Protecting {len(self.protected_nodes)} terminal nodes from merging")
 
         # Build KDTree once for efficient spatial queries (reuse helper method pattern)
         node_coords = [(node[0], node[1]) for node in nodes]
@@ -708,6 +713,10 @@ class GraphCorrector:
         # Find pairs of nodes that are too close using KDTree
         for i, node1 in enumerate(nodes):
             if node1 in nodes_to_merge:  # Already marked for removal
+                continue
+
+            # Skip if this is a protected node (e.g., building terminal)
+            if node1 in self.protected_nodes:
                 continue
 
             # Query KDTree for all neighbors within distance_threshold
@@ -720,6 +729,10 @@ class GraphCorrector:
 
                 node2 = nodes[j]
                 if node2 in nodes_to_merge:  # Already marked for removal
+                    continue
+
+                # Skip if node2 is a protected node
+                if node2 in self.protected_nodes:
                     continue
 
                 distance = self._calculate_distance(node1, node2)

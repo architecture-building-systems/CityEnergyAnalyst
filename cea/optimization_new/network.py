@@ -431,9 +431,15 @@ class Network(object):
             edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
             Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
 
+        # Prepare building terminal nodes to be protected from merging during graph corrections
+        building_terminal_nodes = [building.location.coords[0] for building in domain.buildings]
+        building_terminal_nodes = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
+                                   for x, y in building_terminal_nodes]
+
         # Apply graph corrections to fix connectivity issues
+        # Pass building terminals as protected nodes so they are not merged
         print("\nApplying graph corrections to domain potential network...")
-        corrector = GraphCorrector(Network._domain_potential_network_graph)
+        corrector = GraphCorrector(Network._domain_potential_network_graph, protected_nodes=building_terminal_nodes)
         Network._domain_potential_network_graph = corrector.apply_corrections()
 
         return Network._domain_potential_network_graph
