@@ -17,7 +17,6 @@ __status__ = "Production"
 
 from os.path import exists
 import time
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 import multiprocessing
