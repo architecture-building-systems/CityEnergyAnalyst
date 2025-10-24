@@ -106,17 +106,14 @@ def calc_steiner_spanning_tree(crs_projected,
     building_nodes_graph = read_shp(temp_path_building_centroids_shp)
 
     # transform to an undirected potential_network_graph
+    # Note: Graph corrections are now applied in calc_connectivity_network BEFORE
+    # building terminals are connected, to ensure terminal nodes are not affected
     iterator_edges = potential_network_graph.edges(data=True)
     G = nx.Graph()
     for (x, y, data) in iterator_edges:
         x = (round(x[0], SHAPEFILE_TOLERANCE), round(x[1], SHAPEFILE_TOLERANCE))
         y = (round(y[0], SHAPEFILE_TOLERANCE), round(y[1], SHAPEFILE_TOLERANCE))
         G.add_edge(x, y, weight=data[weight_field])
-
-    # Apply graph corrections to fix connectivity issues
-    print("\nApplying graph corrections to street network...")
-    corrector = GraphCorrector(G)
-    G = corrector.apply_corrections()
 
     # get the building nodes and coordinates
     iterator_nodes = building_nodes_graph.nodes
