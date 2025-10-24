@@ -444,20 +444,15 @@ class Network(object):
             edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
             Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
 
-        # Transform building locations to match the network's projected CRS
-        # This ensures building coordinates are in meters (projected), not degrees (geographic)
-        buildings_gdf = Gdf([building.location for building in domain.buildings],
-                           columns=['geometry'],
-                           crs=domain.buildings[0].crs)
-
-        # Transform to network's CRS if different
-        if buildings_gdf.crs != Network._coordinate_reference_system:
-            buildings_gdf = buildings_gdf.to_crs(Network._coordinate_reference_system)
-
+        # FIXME: Use node property instead of building terminal coordinates to identify "protected" nodes. This would prevent rounding issues.
         # Extract transformed building terminal coordinates with proper rounding
-        building_terminal_nodes = [(round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
-                                   round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
-                                  for geom in buildings_gdf.geometry]
+        building_terminal_nodes = [
+            (
+                round(building.location.coords[0][0], SHAPEFILE_TOLERANCE),
+                round(building.location.coords[0][1], SHAPEFILE_TOLERANCE),
+            )
+            for building in domain.buildings
+        ]
 
         # Apply graph corrections to fix connectivity issues
         # Pass building terminals as protected nodes so they are not merged
@@ -465,22 +460,6 @@ class Network(object):
         corrector = GraphCorrector(Network._domain_potential_network_graph, protected_nodes=building_terminal_nodes)
 
         Network._domain_potential_network_graph = corrector.apply_corrections()
-
-        # Ensure building terminal nodes exist in the graph
-        # This is necessary when optimizing a subset of buildings
-        for coord in building_terminal_nodes:
-            if coord not in Network._domain_potential_network_graph.nodes():
-                # Find the nearest node in the graph and connect to it
-                graph_nodes = list(Network._domain_potential_network_graph.nodes())
-                if graph_nodes:
-                    # Calculate distances to all nodes
-                    distances = [((coord[0] - node[0])**2 + (coord[1] - node[1])**2)**0.5
-                                for node in graph_nodes]
-                    nearest_node = graph_nodes[distances.index(min(distances))]
-                    nearest_distance = min(distances)
-                    # Add edge from building to nearest node
-                    Network._domain_potential_network_graph.add_edge(coord, nearest_node, weight=nearest_distance)
-                    print(f"  Added missing building terminal at {coord}, connected to nearest node {nearest_distance:.2f}m away")
 
         return Network._domain_potential_network_graph
 
