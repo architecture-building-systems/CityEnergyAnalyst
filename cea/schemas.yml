@@ -14196,7 +14196,7 @@ get_lca_operational_hourly_building:
         unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      electricity_kgCO2:
+      appliances_kgCO2:
         description: hourly operational emission caused by satisfying electrical appliances demand.
         type: float
         unit: '[kg CO2-eq]'
@@ -19690,7 +19690,7 @@ get_total_yearly_operational_building:
         unit: '[ton CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      electricity_tonCO2:
+      appliances_tonCO2:
         description: Total operational emissions from electricity consumption.
         type: float
         unit: '[ton CO2-eq]'
