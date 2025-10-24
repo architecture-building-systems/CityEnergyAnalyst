@@ -424,11 +424,17 @@ class Network(object):
         buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
 
+        # Store the buildings CRS as the reference for the network
+        Network._coordinate_reference_system = domain.buildings[0].crs
+
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
                                                      buildings_df,
                                                      optimisation_flag=True)
-        Network._coordinate_reference_system = network_grid_shp.crs
+        
+        # Ensure network grid matches the buildings CRS
+        if network_grid_shp.crs != Network._coordinate_reference_system:
+            network_grid_shp = network_grid_shp.to_crs(Network._coordinate_reference_system)
 
         # convert the GeoDataFrame network grid to a Graph
         for (line_string, length) in network_grid_shp.itertuples(index=False):
@@ -449,26 +455,20 @@ class Network(object):
             buildings_gdf = buildings_gdf.to_crs(Network._coordinate_reference_system)
 
         # Extract transformed building terminal coordinates with proper rounding
-        building_coords = [(round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
-                           round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
-                          for geom in buildings_gdf.geometry]
+        building_terminal_nodes = [(round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
+                                   round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
+                                  for geom in buildings_gdf.geometry]
 
         # Apply graph corrections to fix connectivity issues
-        # But exclude building terminal nodes from being merged
+        # Pass building terminals as protected nodes so they are not merged
         print("\nApplying graph corrections to domain potential network...")
-        print(f"Protecting {len(building_coords)} building terminal nodes from merging...")
-        corrector = GraphCorrector(Network._domain_potential_network_graph)
-
-        # Mark building nodes as protected before applying corrections
-        # This prevents them from being merged with nearby nodes
-        protected_nodes = set(building_coords)
-        corrector.protected_nodes = protected_nodes
+        corrector = GraphCorrector(Network._domain_potential_network_graph, protected_nodes=building_terminal_nodes)
 
         Network._domain_potential_network_graph = corrector.apply_corrections()
 
         # Ensure building terminal nodes exist in the graph
         # This is necessary when optimizing a subset of buildings
-        for coord in building_coords:
+        for coord in building_terminal_nodes:
             if coord not in Network._domain_potential_network_graph.nodes():
                 # Find the nearest node in the graph and connect to it
                 graph_nodes = list(Network._domain_potential_network_graph.nodes())
