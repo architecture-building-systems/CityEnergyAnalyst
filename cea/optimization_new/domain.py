@@ -53,13 +53,13 @@ from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import M
 
 class Domain(object):
     def __init__(self, config: cea.config.Configuration, locator: InputLocator):
-        self.config = config
-        self.locator = locator
-        self.weather = self._load_weather(locator)
-        self.buildings = []
-        self.energy_potentials = []
-        self.initial_energy_system = None
-        self.optimal_energy_systems = []
+        self.config: cea.config.Configuration = config
+        self.locator: InputLocator = locator
+        self.weather: pd.DataFrame = self._load_weather(locator)
+        self.buildings: list[Building] = []
+        self.energy_potentials: list[EnergyPotential] = []
+        self.initial_energy_system: DistrictEnergySystem | None = None
+        self.optimal_energy_systems: list[DistrictEnergySystem] = []
 
         self._setup_save_directory()
         self._initialize_domain_descriptor_classes()
@@ -71,7 +71,7 @@ class Domain(object):
         EnergyFlow.time_series = self.weather['date']
         return self.weather
 
-    def load_buildings(self, buildings_in_domain=None):
+    def load_buildings(self, buildings_in_domain: list[str] | None = None) -> list[Building]:
         """
         Import demand, geometric properties and base supply systems of buildings from the current scenario.
 
@@ -102,7 +102,7 @@ class Domain(object):
 
         return self.buildings
 
-    def load_potentials(self, buildings_in_domain=None, pv_panel_type='PV1'):
+    def load_potentials(self, buildings_in_domain: list[str] | None = None, pv_panel_type='PV1') -> list[EnergyPotential]:
         """
         Import energy potentials from the current scenario.
 
