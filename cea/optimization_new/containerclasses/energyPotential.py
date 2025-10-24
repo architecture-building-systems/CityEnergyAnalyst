@@ -156,7 +156,7 @@ class EnergyPotential(object):
         else:
             return None
 
-    def _get_building_potentials(self, energy_potential_files, building_codes, main_potential_column_name,
+    def _get_building_potentials(self, energy_potential_files, building_codes: list[str], main_potential_column_name,
                                  temperature_column_name=None, auxiliary_potential_column_name=None):
         """
         Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
@@ -173,13 +173,12 @@ class EnergyPotential(object):
         # initialise necessary variables
         nbr_of_files = len(energy_potential_files)
         average_temps = [np.nan] * nbr_of_files
-        main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
-                                      columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+        cols = ['domain_potential'] + building_codes
+        main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series, columns=cols)
         if auxiliary_potential_column_name is not None:
-            auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
-                                               columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+            auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series, columns=cols)
         else:
-            auxiliary_potential = pd.DataFrame(columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+            auxiliary_potential = pd.DataFrame(columns=cols)
 
         # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
         for (file, i) in zip(energy_potential_files, np.arange(nbr_of_files)):
