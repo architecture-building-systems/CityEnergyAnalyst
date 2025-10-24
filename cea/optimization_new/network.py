@@ -602,20 +602,14 @@ class Network(object):
         if (domain is None) & (nx.is_empty(Network._domain_potential_network_graph)):
             raise ValueError("The network object requires a potential network graph for the domain to be set.")
         elif domain is not None:
-            # Transform building locations to match the network's projected CRS
-            # This ensures coordinates match the network graph (same as in _load_pot_network)
-            buildings_gdf = Gdf([building.location for building in domain.buildings],
-                               columns=['geometry'],
-                               crs=domain.buildings[0].crs)
-
-            # Transform to network's CRS if different
-            if buildings_gdf.crs != Network._coordinate_reference_system:
-                buildings_gdf = buildings_gdf.to_crs(Network._coordinate_reference_system)
-
             # Extract transformed and rounded coordinates
-            network_terminal_coordinates = [(round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
-                                            round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
-                                           for geom in buildings_gdf.geometry]
+            network_terminal_coordinates = [
+                (
+                    round(building.location.coords[0][0], SHAPEFILE_TOLERANCE),
+                    round(building.location.coords[0][1], SHAPEFILE_TOLERANCE),
+                )
+                for building in domain.buildings
+            ]
             network_terminal_identifier = [building.identifier for building in domain.buildings]
             network_terminal_demand = [building.demand_flow.profile.sum() for building in domain.buildings]
             Network._domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
