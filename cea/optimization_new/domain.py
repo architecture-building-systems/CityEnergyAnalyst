@@ -82,14 +82,11 @@ class Domain(object):
         """
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.name
-        elif isinstance(buildings_in_domain, list):
-            # Convert list to pandas Series for consistent handling
-            buildings_in_domain = pd.Series(buildings_in_domain)
+            buildings_in_domain = shp_file.name.tolist()
 
         building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
         network_type = self.config.optimization_new.network_type
-        for (building_code, demand_file) in zip(buildings_in_domain.values, building_demand_files):
+        for (building_code, demand_file) in zip(buildings_in_domain, building_demand_files):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
                 building.load_demand_profile(network_type)
@@ -112,13 +109,10 @@ class Domain(object):
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
         if buildings_in_domain is None:
-            if self.buildings == []:
+            if not self.buildings:
                 raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
             else:
-                buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
-        elif isinstance(buildings_in_domain, list):
-            # Convert list to pandas Series for consistent handling
-            buildings_in_domain = pd.Series(buildings_in_domain)
+                buildings_in_domain = [building.identifier for building in self.buildings]
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)

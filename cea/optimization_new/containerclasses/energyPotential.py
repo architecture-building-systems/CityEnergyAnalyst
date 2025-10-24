@@ -59,7 +59,7 @@ class EnergyPotential(object):
                              "Please assign one a valid scale: "
                              "Building, Network, Domain")
 
-    def load_PV_potential(self, locator, building_codes, panel_type):
+    def load_PV_potential(self, locator, building_codes: list[str], panel_type: str):
         self.type = 'SolarPV'
         self.scale = 'Building'
         pv_potential_files = np.vectorize(locator.PV_results)(building_codes, panel_type)
@@ -72,7 +72,7 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_PVT_potential(self, locator, building_codes, pv_panel_type, sc_panel_type):
+    def load_PVT_potential(self, locator, building_codes: list[str], pv_panel_type: str, sc_panel_type: str):
         self.type = 'SolarPVT'
         self.scale = 'Building'
         pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes, pv_panel_type, sc_panel_type)
@@ -89,7 +89,7 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_SCET_potential(self, locator, building_codes):
+    def load_SCET_potential(self, locator, building_codes: list[str]):
         self.type = 'SolarCollectorET'
         self.scale = 'Building'
         scet_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
@@ -103,7 +103,7 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_SCFP_potential(self, locator, building_codes):
+    def load_SCFP_potential(self, locator, building_codes: list[str]):
         self.type = 'SolarCollectorFP'
         self.scale = 'Building'
         scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "FP")
