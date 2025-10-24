@@ -84,7 +84,7 @@ class Domain(object):
         if buildings_in_domain is None:
             buildings_in_domain = shp_file.name.tolist()
 
-        building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
+        building_demand_files = [self.locator.get_demand_results_file(building_code) for building_code in buildings_in_domain]
         network_type = self.config.optimization_new.network_type
         for (building_code, demand_file) in zip(buildings_in_domain, building_demand_files):
             if exists(demand_file):

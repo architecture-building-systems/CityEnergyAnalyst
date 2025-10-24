@@ -62,7 +62,7 @@ class EnergyPotential(object):
     def load_PV_potential(self, locator, building_codes: list[str], panel_type: str):
         self.type = 'SolarPV'
         self.scale = 'Building'
-        pv_potential_files = np.vectorize(locator.PV_results)(building_codes, panel_type)
+        pv_potential_files = [locator.PV_results(code, panel_type) for code in building_codes]
         potentials = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
         if potentials:
             main_energy_carrier = 'E230AC'
@@ -75,7 +75,7 @@ class EnergyPotential(object):
     def load_PVT_potential(self, locator, building_codes: list[str], pv_panel_type: str, sc_panel_type: str):
         self.type = 'SolarPVT'
         self.scale = 'Building'
-        pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes, pv_panel_type, sc_panel_type)
+        pvt_potential_files = [locator.PVT_results(code, pv_panel_type, sc_panel_type) for code in building_codes]
         potentials = self._get_building_potentials(pvt_potential_files, building_codes,
                                                    'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
         if potentials:
@@ -92,7 +92,7 @@ class EnergyPotential(object):
     def load_SCET_potential(self, locator, building_codes: list[str]):
         self.type = 'SolarCollectorET'
         self.scale = 'Building'
-        scet_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
+        scet_potential_files = [locator.SC_results(code, "ET") for code in building_codes]
         potentials = self._get_building_potentials(scet_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
@@ -106,7 +106,7 @@ class EnergyPotential(object):
     def load_SCFP_potential(self, locator, building_codes: list[str]):
         self.type = 'SolarCollectorFP'
         self.scale = 'Building'
-        scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "FP")
+        scfp_potential_files = [locator.SC_results(code, "FP") for code in building_codes]
         potentials = self._get_building_potentials(scfp_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
