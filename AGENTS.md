@@ -604,6 +604,173 @@ This distinction is crucial for:
 
 ---
 
+## 7. CEA Workflows: Assessment vs Design
+
+### Question
+How should I use CEA to assess existing district energy systems vs design new ones? What are the two workflows?
+
+### Answer
+
+CEA has **two distinct workflows** for working with district heating/cooling systems. Understanding these is critical to avoid confusion.
+
+---
+
+### **Workflow A: ASSESSMENT (Existing Systems)**
+
+**Purpose**: Evaluate buildings with district systems already defined in `supply.csv`
+
+**Tools**: `demand` → `system-costs` → `emissions`
+
+**What it does**:
+1. Reads `supply.csv` to see which buildings have district systems (`scale=DISTRICT`)
+2. Calculates building energy demands with district system efficiencies
+3. Estimates simplified costs using assembly CAPEX values (e.g., 200 USD/kW)
+4. Calculates emissions based on supply technologies
+
+**Strengths**:
+- ✅ Uses specific technologies from supply.csv (e.g., seawater HEX, lake cooling)
+- ✅ Respects user-defined system configurations
+- ✅ Fast and simple
+
+**Limitations**:
+- ❌ No actual network layout design
+- ❌ No detailed pipe/trenching costs
+- ❌ No hydraulic/thermal network calculations
+- ❌ Simplified CAPEX estimates (aggregate USD/kW, not pipe-specific)
+
+**Example use case**:
+*"I have an existing district cooling system with seawater heat exchangers serving 3 buildings. What are the approximate energy costs and emissions?"*
+
+---
+
+### **Workflow B: DESIGN (New Systems)**
+
+**Purpose**: Design new district energy systems from scratch
+
+**Tools**: `thermal-network (Part 1: layout)` → `thermal-network (Part 2: flow & sizing)` → `thermal-network-optimisation` OR `optimisation-new`
+
+**What it does**:
+1. **Part 1 (NEW)**: Auto-detects buildings with `scale=DISTRICT` from supply.csv (if no buildings specified)
+2. Creates network layout following streets
+3. Sizes pipes based on flow rates and velocities
+4. Calculates pressure losses and pumping requirements
+5. Optimises plant locations and technologies
+
+**Strengths**:
+- ✅ Detailed network design (pipe routes, diameters, materials)
+- ✅ Real pipe and trenching costs
+- ✅ Hydraulic and thermal performance calculations
+- ✅ Optimisation of plant locations and capacities
+
+**Limitations**:
+- ❌ Does NOT use specific technologies from supply.csv
+- ❌ Hardcoded to use cooling towers (no seawater HEX models)
+- ❌ Designs from scratch, ignoring existing system specifications
+- ❌ More complex and time-consuming
+
+**Example use case**:
+*"I want to design a new district cooling network for 5 buildings. Where should pipes be routed? What diameter pipes? Where should the plant be located?"*
+
+---
+
+### **Key Differences Summary**
+
+| Aspect | Assessment Workflow | Design Workflow |
+|--------|-------------------|-----------------|
+| **Reads supply.csv?** | ✅ Yes (uses technologies) | ⚠️ Part 1 only (for building selection) |
+| **Uses specified tech?** | ✅ Yes (seawater HEX, etc.) | ❌ No (generic cooling tower) |
+| **Network layout** | ❌ No | ✅ Yes (Part 1) |
+| **Pipe sizing** | ❌ No | ✅ Yes (Part 2) |
+| **Network costs** | ❌ Simplified estimate | ✅ Detailed (pipes + trenching) |
+| **Optimisation** | ❌ No | ✅ Yes |
+| **Speed** | Fast (minutes) | Slow (hours) |
+| **Best for** | Evaluating existing systems | Designing new systems |
+
+---
+
+### **Recent Improvements (2025-01)**
+
+**Auto-detection in Part 1**:
+- Previously, `thermal-network (Part 1)` would connect **all buildings** regardless of supply.csv
+- Now, if `connected-buildings` parameter is left blank, Part 1 **auto-detects** buildings with `scale=DISTRICT` from supply.csv
+- This bridges the gap between supply.csv and network design tools
+- Users can still override by manually specifying buildings
+
+**Example**:
+```csv
+# supply.csv
+Building A → SUPPLY_COOLING_AS3 (district, seawater HEX)
+Building B → SUPPLY_COOLING_AS1 (building-scale chiller)
+Building C → SUPPLY_COOLING_AS3 (district, seawater HEX)
+```
+
+```bash
+# Run Part 1 with no buildings specified
+cea thermal-network-layout --network-type DC
+
+# Output:
+# "INFO: Auto-detected 2 buildings with district DC from supply.csv:"
+# "  Buildings: Building A, Building C"
+```
+
+---
+
+### **Important Warnings Added**
+
+All network tools now print clear warnings about their limitations:
+
+**Thermal Network Part 2**:
+```
+IMPORTANT: This tool sizes network pipes and calculates thermal/hydraulic performance.
+It does NOT model specific plant generation technologies from supply.csv.
+```
+
+**Optimisation-new**:
+```
+INFORMATIVE: This tool designs NEW centralised energy supply systems from scratch.
+It does NOT use existing district connections or technologies from supply.csv.
+```
+
+---
+
+### **When to Use Which Workflow**
+
+**Use ASSESSMENT workflow when**:
+- You have existing district systems defined in supply.csv
+- You want quick cost/emission estimates
+- You don't need detailed network design
+- You have non-standard technologies (seawater HEX, lake cooling)
+
+**Use DESIGN workflow when**:
+- You're designing a new district energy system
+- You need actual pipe routes and sizes
+- You want to optimise plant locations
+- You need detailed network costs (trenching, materials)
+- You're okay with cooling tower assumptions (no seawater HEX)
+
+---
+
+### **Known Limitations**
+
+**Technologies not currently modelled in design workflow**:
+- ❌ Seawater heat exchangers
+- ❌ Lake water cooling
+- ❌ Alternative heat rejection systems
+
+These can only be assessed using the **ASSESSMENT workflow** with simplified costs.
+
+---
+
+### **Future Work**
+
+To fully integrate the workflows:
+1. Implement seawater/lake HEX models in network optimisation
+2. Make plant technology configurable (user choice of heat rejection)
+3. Create tool to export optimised designs back to supply.csv format
+4. Unified workflow that designs AND updates supply.csv automatically
+
+---
+
 ## Document Metadata
 
 - **Created**: 2025-01-08

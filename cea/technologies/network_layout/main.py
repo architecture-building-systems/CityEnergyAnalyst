@@ -2,6 +2,7 @@
 
 
 import os
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -20,6 +21,50 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def get_buildings_with_district_system(locator, network_type):
+    """
+    Auto-detect buildings that have district heating or cooling systems defined in supply.csv
+
+    :param locator: InputLocator instance
+    :param network_type: 'DH' or 'DC'
+    :return: List of building names with scale=DISTRICT for the specified network type
+    """
+    try:
+        # Read supply.csv
+        supply_systems = pd.read_csv(locator.get_building_supply())
+
+        # Determine which supply type to check based on network type
+        if network_type == 'DH':
+            supply_type_col = 'supply_type_hs'
+            assembly_file = locator.get_database_assemblies_supply_heating()
+        elif network_type == 'DC':
+            supply_type_col = 'supply_type_cs'
+            assembly_file = locator.get_database_assemblies_supply_cooling()
+        else:
+            raise ValueError(f"Invalid network_type: {network_type}. Must be 'DH' or 'DC'.")
+
+        # Read supply assemblies to get scale information
+        supply_assemblies = pd.read_csv(assembly_file)
+
+        # Merge to get scale for each building
+        buildings_with_scale = supply_systems.merge(
+            supply_assemblies[['code', 'scale']],
+            left_on=supply_type_col,
+            right_on='code',
+            how='left'
+        )
+
+        # Filter buildings with DISTRICT scale
+        district_buildings = buildings_with_scale[buildings_with_scale['scale'] == 'DISTRICT']['name'].tolist()
+
+        return district_buildings
+
+    except Exception as e:
+        print(f"WARNING: Could not auto-detect district buildings from supply.csv: {e}")
+        print("Proceeding with empty building list.")
+        return []
+
+
 def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
     if plant_building_names is None:
         plant_building_names = []
@@ -34,6 +79,23 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
+
+    # Auto-detect buildings with district systems from supply.csv if no buildings specified
+    if not list_district_scale_buildings:
+        list_district_scale_buildings = get_buildings_with_district_system(locator, type_network)
+        if list_district_scale_buildings:
+            print(f"\nINFO: Auto-detected {len(list_district_scale_buildings)} buildings with district {type_network} from supply.csv:")
+            print(f"  Buildings: {', '.join(list_district_scale_buildings)}")
+            print(f"  To override this, specify buildings in the 'connected-buildings' parameter.\n")
+        else:
+            # Fallback to all buildings if none found with district scale
+            print(f"\nWARNING: No buildings specified and none found with district {type_network} in supply.csv.")
+            print(f"  Falling back to default behaviour: connecting ALL buildings in the scenario.")
+            print(f"  To connect specific buildings, either:")
+            print(f"    1. Set scale=DISTRICT in supply.csv for the desired buildings, OR")
+            print(f"    2. Specify buildings using the 'connected-buildings' parameter.\n")
+            # Leave list_district_scale_buildings as empty to trigger default behaviour downstream
+            # The calc_building_centroids function will use all buildings when list is empty
     # allow_looped_networks = network_layout.allow_looped_networks
     allow_looped_networks = False
     steiner_algorithm = network_layout.algorithm

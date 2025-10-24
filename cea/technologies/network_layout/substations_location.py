@@ -31,7 +31,12 @@ def calc_building_centroids(input_buildings_shp,
                             total_demand=False):
     # # get coordinate system and project to WSG 84
     zone_df = gdf.from_file(input_buildings_shp)
-    zone_df = zone_df.loc[zone_df['name'].isin(list_district_scale_buildings + plant_buildings)]
+
+    # Filter to specified buildings, unless list is empty (then use all buildings)
+    if list_district_scale_buildings or plant_buildings:
+        zone_df = zone_df.loc[zone_df['name'].isin(list_district_scale_buildings + plant_buildings)]
+    # If both lists are empty, keep all buildings (default behaviour)
+
     zone_df = zone_df.reset_index(drop=True)
 
     # get only buildings with a demand, send out a message if there are less than 2 buildings.

@@ -647,6 +647,22 @@ def main(config: cea.config.Configuration):
     """
     run the whole optimization routine
     """
+    # Print information about workflow and limitations
+    print("\n" + "="*80)
+    print("DISTRICT-SCALE SUPPLY SYSTEM OPTIMISATION")
+    print("="*80)
+    print("\nINFORMATIVE: This tool designs NEW centralised energy supply systems from scratch.")
+    print("It does NOT use existing district connections or technologies from supply.csv.")
+    print("\nThis tool is part of the DESIGN workflow:")
+    print("  • Optimises district energy system configurations")
+    print("  • Designs thermal network layouts and supply systems")
+    print("  • Available technologies: Chillers + Cooling Towers (heat rejection)")
+    print("  • Note: Seawater/lake heat exchangers are not currently modelled")
+    print("\nFor ASSESSMENT of existing systems defined in supply.csv:")
+    print("  • Use: demand → system-costs (provides simplified costs)")
+    print("  • Note: This workflow does not optimise or include detailed network costs")
+    print("="*80 + "\n")
+
     # initialise variables and define cooling demand
     locator = InputLocator(scenario=config.scenario)
     current_domain = Domain(config, locator)

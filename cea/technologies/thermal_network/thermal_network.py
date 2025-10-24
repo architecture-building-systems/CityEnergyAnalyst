@@ -3462,6 +3462,21 @@ def main(config: cea.config.Configuration):
     start = time.time()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
+    # Print information about workflow and limitations
+    print("\n" + "="*80)
+    print("THERMAL NETWORK PART 2: Flow & Sizing")
+    print("="*80)
+    print("\nIMPORTANT: This tool sizes network pipes and calculates thermal/hydraulic performance.")
+    print("It does NOT model specific plant generation technologies from supply.csv.")
+    print("\nThis tool is part of the DESIGN workflow:")
+    print("  • Designs NEW thermal networks from scratch")
+    print("  • Uses generic assumptions for plant equipment")
+    print("  • For cost calculations, use thermal-network-optimisation tool")
+    print("\nFor ASSESSMENT of existing systems defined in supply.csv:")
+    print("  • Use: demand → system-costs (provides simplified network costs)")
+    print("  • Note: This workflow does not include detailed pipe/trenching costs")
+    print("="*80 + "\n")
+
     network_model = config.thermal_network.network_model
 
     # FIXME: Hardcoded to consider one network for now. Best scenario is to allow multiple network layouts and run Part 2 for each layout.
