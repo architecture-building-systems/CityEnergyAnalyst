@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.demand.building_properties.base import BuildingPropertiesDatabase
+from cea.demand.building_properties.base import BuildingPropertiesDatabase, DatabaseMapping
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -92,41 +92,35 @@ class BuildingHVAC(BuildingPropertiesDatabase):
 
         """
 
-        # HVAC database mappings: (locator_method, join_column, column_renames, fields_to_extract)
         hvac_mappings = {
-            'hvac heating': (
-                locator.get_database_assemblies_hvac_heating(),
-                'hvac_type_hs',
-                None,
+            'hvac heating': DatabaseMapping(
+                file_path=locator.get_database_assemblies_hvac_heating(),
+                join_column='hvac_type_hs',
                 # TODO: Remove columns from building hvac properties from database filter
-                ['class_hs', 'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C',
-                 'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
+                fields=['class_hs', 'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C',
+                        'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
             ),
-            'hvac cooling': (
-                locator.get_database_assemblies_hvac_cooling(),
-                'hvac_type_cs',
-                None,
-                ['Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
-                 'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
-                 'class_cs', 'convection_cs']
+            'hvac cooling': DatabaseMapping(
+                file_path=locator.get_database_assemblies_hvac_cooling(),
+                join_column='hvac_type_cs',
+                fields=['Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
+                        'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
+                        'class_cs', 'convection_cs']
             ),
-            'hvac control': (
-                locator.get_database_assemblies_hvac_controller(),
-                'hvac_type_ctrl',
-                None,
-                ['dT_Qhs', 'dT_Qcs']
+            'hvac control': DatabaseMapping(
+                file_path=locator.get_database_assemblies_hvac_controller(),
+                join_column='hvac_type_ctrl',
+                fields=['dT_Qhs', 'dT_Qcs']
             ),
-            'hvac dhw': (
-                locator.get_database_assemblies_hvac_hot_water(),
-                'hvac_type_dhw',
-                None,
-                ['class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
+            'hvac dhw': DatabaseMapping(
+                file_path=locator.get_database_assemblies_hvac_hot_water(),
+                join_column='hvac_type_dhw',
+                fields=['class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
             ),
-            'hvac ventilation': (
-                locator.get_database_assemblies_hvac_ventilation(),
-                'hvac_type_vent',
-                None,
-                ['MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
+            'hvac ventilation': DatabaseMapping(
+                file_path=locator.get_database_assemblies_hvac_ventilation(),
+                join_column='hvac_type_vent',
+                fields=['MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
             )
         }
 
