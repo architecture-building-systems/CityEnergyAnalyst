@@ -244,25 +244,76 @@ class ComponentCluster(object):
     def operate(self, main_energy_flow):
         """
         Operate the component cluster to meet the required energy flow by distributing load across units.
-        Uses a cascading approach: activate units sequentially until demand is met.
+        Uses a cascading approach: activate units sequentially until demand is met, analogous to the
+        water-filling principle used in SupplySystem._perform_water_filling_principle().
 
         :param main_energy_flow: Target energy flow to be produced/absorbed
         :type main_energy_flow: EnergyFlow
         :return: Aggregated input and output energy flows from all active units
         :rtype: tuple of (dict, dict)
         """
-        # This will be implemented in the next commit
-        raise NotImplementedError("ComponentCluster.operate() will be implemented in the next commit")
+        # Initialize aggregated energy flow dictionaries
+        aggregated_input_flows = {}
+        aggregated_output_flows = {}
+
+        # Track remaining demand to distribute across units
+        remaining_demand = main_energy_flow
+
+        # Cascade through units: each unit operates at full capacity until demand is met
+        for unit in self.units:
+            # Determine how much this unit should produce (capped at its capacity)
+            unit_demand = remaining_demand.cap_at(unit.capacity)
+
+            # Skip unit if there's no remaining demand
+            if (unit_demand.profile == 0).all():
+                break
+
+            # Operate the unit
+            unit_input_flows, unit_output_flows = unit.operate(unit_demand)
+
+            # Aggregate input flows
+            for ec_code, energy_flow in unit_input_flows.items():
+                if ec_code in aggregated_input_flows:
+                    aggregated_input_flows[ec_code] += energy_flow
+                else:
+                    aggregated_input_flows[ec_code] = energy_flow
+
+            # Aggregate output flows
+            for ec_code, energy_flow in unit_output_flows.items():
+                if ec_code in aggregated_output_flows:
+                    aggregated_output_flows[ec_code] += energy_flow
+                else:
+                    aggregated_output_flows[ec_code] = energy_flow
+
+            # Update remaining demand
+            remaining_demand = remaining_demand - unit_demand
+
+        return aggregated_input_flows, aggregated_output_flows
 
     def calculate_cost(self):
         """
         Calculate aggregated costs across all units in the cluster.
+        The total cost is simply the sum of costs for all individual units.
 
         :return: Total investment cost, annualized investment cost, and annual O&M cost
         :rtype: tuple of (float, float, float)
         """
-        # This will be implemented in the next commit
-        raise NotImplementedError("ComponentCluster.calculate_cost() will be implemented in the next commit")
+        total_inv_cost = 0
+        total_inv_cost_annual = 0
+        total_om_fix_cost_annual = 0
+
+        # Sum costs across all units
+        for unit in self.units:
+            total_inv_cost += unit.inv_cost
+            total_inv_cost_annual += unit.inv_cost_annual
+            total_om_fix_cost_annual += unit.om_fix_cost_annual
+
+        # Store the aggregated costs
+        self.inv_cost = total_inv_cost
+        self.inv_cost_annual = total_inv_cost_annual
+        self.om_fix_cost_annual = total_om_fix_cost_annual
+
+        return total_inv_cost, total_inv_cost_annual, total_om_fix_cost_annual
 
 
 class ActiveComponent(Component):
