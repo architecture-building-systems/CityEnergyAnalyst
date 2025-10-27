@@ -178,9 +178,23 @@ class Domain(object):
                                   + component_classes
             main_process_memory = MemoryPreserver(algorithm.parallelize_computation, initialised_classes)
 
-            pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
-            toolbox.register("map", pool.map)
+            # Use context manager to ensure pool is properly closed even on exceptions
+            with multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores) as pool:
+                toolbox.register("map", pool.map)
+                return self._run_optimization_algorithm(
+                    toolbox, algorithm, tracker, main_process_memory
+                )
+        else:
+            # No multiprocessing - run directly
+            return self._run_optimization_algorithm(
+                toolbox, algorithm, tracker, main_process_memory
+            )
 
+    def _run_optimization_algorithm(self, toolbox, algorithm, tracker, main_process_memory):
+        """
+        Core optimization algorithm logic extracted to allow proper multiprocessing pool management.
+        This function is called from within the pool context manager when multiprocessing is enabled.
+        """
         # Generate fully connected network as basis for the clustering algorithm
         full_network = Network(self.buildings, 'Nfull')
         full_network_graph = full_network.generate_condensed_graph()
