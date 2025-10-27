@@ -253,6 +253,131 @@ class Component(object):
         output_energy_flows = [EnergyFlow()]
         return input_energy_flows, output_energy_flows
 
+    def _cascade_operation_active(self, main_energy_flow, unit_operate_method):
+        """
+        Cascade operation through multiple units using water-filling principle for ActiveComponents.
+        Each unit operates at full capacity until the last one handles the remainder.
+
+        :param main_energy_flow: Total energy flow demand to be met by all units
+        :type main_energy_flow: <cea.optimization_new.energyFlow>-EnergyFlow object
+        :param unit_operate_method: The operate method to call on each unit (unbound method)
+        :type unit_operate_method: callable
+        :return: Aggregated input and output energy flows from all active units
+        :rtype: (dict, dict) of EnergyFlow objects
+        """
+        # Initialize aggregated dictionaries to collect flows from all units
+        aggregated_input_flows = {}
+        aggregated_output_flows = {}
+
+        # Get the profile from the main energy flow
+        total_demand_profile = main_energy_flow.profile
+        remaining_demand = total_demand_profile.copy()
+
+        # Cascade through units sequentially (water-filling principle)
+        for unit in self.units:
+            # This unit handles min(remaining_demand, unit.capacity) at each timestep
+            unit_demand_profile = remaining_demand.clip(upper=unit.capacity)
+
+            # Skip if this unit doesn't need to operate (demand already met)
+            if (unit_demand_profile == 0).all():
+                break
+
+            # Create energy flow for this unit
+            unit_energy_flow = EnergyFlow(
+                main_energy_flow.input_category,
+                main_energy_flow.output_category,
+                main_energy_flow.energy_carrier.code,
+                unit_demand_profile
+            )
+
+            # Operate this unit
+            unit_inputs, unit_outputs = unit_operate_method(unit, unit_energy_flow)
+
+            # Aggregate input flows
+            for ec_code, energy_flow in unit_inputs.items():
+                if ec_code not in aggregated_input_flows:
+                    aggregated_input_flows[ec_code] = energy_flow
+                else:
+                    aggregated_input_flows[ec_code] = aggregated_input_flows[ec_code] + energy_flow
+
+            # Aggregate output flows
+            for ec_code, energy_flow in unit_outputs.items():
+                if ec_code not in aggregated_output_flows:
+                    aggregated_output_flows[ec_code] = energy_flow
+                else:
+                    aggregated_output_flows[ec_code] = aggregated_output_flows[ec_code] + energy_flow
+
+            # Reduce remaining demand by what this unit handled
+            remaining_demand = (remaining_demand - unit_demand_profile).clip(lower=0)
+
+        return aggregated_input_flows, aggregated_output_flows
+
+    def _cascade_operation_passive(self, energy_flow, unit_operate_method, *args):
+        """
+        Cascade operation through multiple units using water-filling principle for PassiveComponents.
+        Each unit operates at full capacity until the last one handles the remainder.
+
+        :param energy_flow: Total energy flow to be handled by all units
+        :type energy_flow: <cea.optimization_new.energyFlow>-EnergyFlow object
+        :param unit_operate_method: The operate method to call on each unit (unbound method)
+        :type unit_operate_method: callable
+        :param args: Additional arguments to pass to unit_operate_method
+        :return: Aggregated converted energy flow from all active units
+        :rtype: EnergyFlow object
+        """
+        # Get the profile from the energy flow
+        total_demand_profile = energy_flow.profile
+        remaining_demand = total_demand_profile.copy()
+
+        # Initialize aggregated profile
+        aggregated_profile = pd.Series(0.0, index=total_demand_profile.index)
+
+        # Cascade through units sequentially (water-filling principle)
+        for unit in self.units:
+            # This unit handles min(remaining_demand, unit.capacity) at each timestep
+            unit_demand_profile = remaining_demand.clip(upper=unit.capacity)
+
+            # Skip if this unit doesn't need to operate (demand already met)
+            if (unit_demand_profile == 0).all():
+                break
+
+            # Create energy flow for this unit
+            unit_energy_flow = EnergyFlow(
+                energy_flow.input_category,
+                energy_flow.output_category,
+                energy_flow.energy_carrier.code,
+                unit_demand_profile
+            )
+
+            # Operate this unit
+            converted_flow = unit_operate_method(unit, unit_energy_flow, *args)
+
+            # Aggregate the converted flow profile
+            aggregated_profile = aggregated_profile + converted_flow.profile
+
+            # Reduce remaining demand by what this unit handled
+            remaining_demand = (remaining_demand - unit_demand_profile).clip(lower=0)
+
+        # Create the aggregated energy flow with the same characteristics as the first unit's output
+        # Get a sample unit output to extract characteristics
+        sample_unit = self.units[0]
+        sample_flow = unit_operate_method(sample_unit, EnergyFlow(
+            energy_flow.input_category,
+            energy_flow.output_category,
+            energy_flow.energy_carrier.code,
+            pd.Series(0.0, index=total_demand_profile.index)
+        ), *args)
+
+        # Create final aggregated flow
+        aggregated_flow = EnergyFlow(
+            sample_flow.input_category,
+            sample_flow.output_category,
+            sample_flow.energy_carrier.code,
+            aggregated_profile
+        )
+
+        return aggregated_flow
+
     def calculate_cost(self):
         """
         Calculate investment and operating costs for the component.
@@ -365,6 +490,11 @@ class AbsorptionChiller(ActiveComponent):
         :return output_energy_flows: Waste heat rejected to the cold water loop to output the targeted amount of cooling
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(cooling_out, AbsorptionChiller.operate)
+
+        # Single unit operation
         self._check_operational_requirements(cooling_out)
 
         # initialize energy flows
@@ -454,6 +584,11 @@ class VapourCompressionChiller(ActiveComponent):
         :return output_energy_flows: Waste heat rejected to the cold water loop to output the targeted amount of cooling
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(cooling_out, VapourCompressionChiller.operate)
+
+        # Single unit operation
         self._check_operational_requirements(cooling_out)
 
         # initialize energy flows
@@ -539,6 +674,11 @@ class AirConditioner(ActiveComponent):
         :return output_energy_flows: Waste heat rejected to the cold water loop to output the targeted amount of cooling
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(cooling_out, AirConditioner.operate)
+
+        # Single unit operation
         self._check_operational_requirements(cooling_out)
 
         # initialize energy flows
@@ -624,6 +764,11 @@ class Boiler(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heating_out, Boiler.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heating_out)
 
         # initialize energy flows
@@ -712,6 +857,11 @@ class CogenPlant(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heating_out, CogenPlant.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heating_out)
 
         # initialize energy flows
@@ -805,6 +955,11 @@ class HeatPump(ActiveComponent):
                                     to operate the heat pump (i.e. accomplish heat transfer)
         :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heating_load, HeatPump.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heating_load)
 
         # initialize energy flows
@@ -903,6 +1058,11 @@ class CoolingTower(ActiveComponent):
         :return output_energy_flows: Total amount of anthropogenic heat rejected to the environment
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heat_rejection, CoolingTower.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heat_rejection)
 
         # initialize energy flows
@@ -994,6 +1154,11 @@ class PowerTransformer(PassiveComponent):
         :return output_energy_flows: Thermal energy flow out of the power transformer
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_passive(power_transfer, PowerTransformer.operate, new_voltage)
+
+        # Single unit operation
         self._check_operational_requirements(power_transfer)
 
         # initialize energy flows
@@ -1148,6 +1313,11 @@ class HeatExchanger(PassiveComponent):
                                      heat exchanger is operated as a tertiary component)
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_passive(heat_transfer, HeatExchanger.operate, heat_source_temp, heat_sink_temp)
+
+        # Single unit operation
         if not self.main_energy_carrier.code:
             self._reset_energy_carriers(heat_transfer, heat_source_temp, heat_sink_temp)
         self._check_operational_requirements(heat_transfer)
