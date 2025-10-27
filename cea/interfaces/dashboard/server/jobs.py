@@ -15,9 +15,9 @@ from urllib.parse import urlparse
 
 import psutil
 import sqlalchemy.exc
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Query
 from pydantic import BaseModel
-from sqlmodel import select
+from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
@@ -179,10 +179,42 @@ def cleanup_job_temp_files(job_id: str):
 
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
 @router.get("/list")
-async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInfo]:
-    """Get a list of jobs for the current project"""
-    result = await session.execute(select(JobInfo).where(JobInfo.project_id == project_id))
-    return result.scalars().all()
+async def get_jobs(
+    session: SessionDep,
+    project_id: CEAProjectID,
+    limit: int | None = Query(None, description="Maximum number of jobs to return (most recent first)"),
+    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=DELETED)"),
+    exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
+) -> List[JobInfo]:
+    """
+    Get a list of jobs for the current project with optional filtering.
+
+    By default, returns all non-deleted jobs ordered by creation time (most recent first).
+    """
+    query = select(JobInfo).where(JobInfo.project_id == project_id)
+
+    # Filter by state if specified
+    if state is not None:
+        # Validate state is a valid JobState value
+        try:
+            job_state = JobState(state)
+            query = query.where(JobInfo.state == job_state)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid state value. Must be between 0 and 5.")
+
+    # Exclude deleted jobs by default (unless state=5 is explicitly requested)
+    if exclude_deleted and state != JobState.DELETED:
+        query = query.where(JobInfo.state != JobState.DELETED)
+
+    # Order by created_time descending (most recent first)
+    query = query.order_by(desc(JobInfo.created_time))
+
+    # Apply limit if specified
+    if limit is not None and limit > 0:
+        query = query.limit(limit)
+
+    result = await session.execute(query)
+    return list(result.scalars().all())
 
 
 @router.get("/{job_id}")
