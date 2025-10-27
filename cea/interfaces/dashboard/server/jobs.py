@@ -32,7 +32,7 @@ router = APIRouter()
 logger = getCEAServerLogger("cea-server-jobs")
 
 
-async def emit_with_retry(event: str, data: Any, room: str = None, max_retries: int = 3,
+async def emit_with_retry(event: str, data: Any, room: str | None = None, max_retries: int = 3,
                           initial_delay: float = 0.1, backoff_factor: float = 2.0):
     """
     Emit a socketio event with retry logic and exponential backoff.
