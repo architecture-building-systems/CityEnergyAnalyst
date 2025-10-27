@@ -447,7 +447,8 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     """
-    Delete a job from the database. This is only possible if the job is not running.
+    Mark a job as deleted (soft delete). The job row is not removed from the database,
+    but its state is set to DELETED. This is only possible if the job is not running.
     """
     try:
         job = await session.get(JobInfo, job_id)
@@ -462,9 +463,11 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
 
     try:
+        # Soft delete: only update the state, don't remove the row
         job.state = JobState.DELETED
-        await session.delete(job)
+        job.end_time = get_current_time()
         await session.commit()
+        await session.refresh(job)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
