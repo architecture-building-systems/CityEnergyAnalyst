@@ -155,7 +155,7 @@ def stream_poster(jobid, server, queue):
 
     while msg is not EOFError:
         msg = consume_nowait(queue, msg)
-        requests.put(f"{server}/streams/write/{jobid}", data=msg)
+        put_with_retry(f"{server}/streams/write/{jobid}", data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
