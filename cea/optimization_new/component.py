@@ -20,7 +20,7 @@ __status__ = "Production"
 # imports
 # standard libraries
 import pandas as pd
-from math import log
+import math
 # third party libraries
 # other files (modules) of this project
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
@@ -178,12 +178,91 @@ class Component(object):
         else:
             capex_USD = self._cost_params['a'] + \
                         self._cost_params['b'] * capacity_W ** self._cost_params['c'] + \
-                        (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * log(capacity_W)
+                        (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * math.log(capacity_W)
 
         capex_a_USD = calc_capex_annualized(capex_USD, self._cost_params['int_rate'], self._cost_params['lifetime'])
         opex_a_fix_USD = capex_USD * self._cost_params['om_share']
 
         return capex_USD, capex_a_USD, opex_a_fix_USD
+
+
+class ComponentCluster(object):
+    """
+    A wrapper class that represents multiple identical units of the same component technology installed to meet
+    capacity requirements that exceed the maximum capacity available for a single unit in the component's database.
+
+    :param component_class: The class of the component to be clustered (e.g., VapourCompressionChiller)
+    :type component_class: type
+    :param model_code: Code of the selected component model
+    :type model_code: str
+    :param placement_in_supply_system: Placement category ('primary', 'secondary', 'tertiary')
+    :type placement_in_supply_system: str
+    :param total_capacity: Total thermal capacity required across all units
+    :type total_capacity: float
+    :param unit_capacity: Capacity of each individual unit
+    :type unit_capacity: float
+    """
+
+    def __init__(self, component_class, model_code, placement_in_supply_system, total_capacity, unit_capacity):
+        """
+        Initialize a cluster of identical component units.
+        """
+        self.component_class = component_class
+        self.code = model_code
+        self.placement = placement_in_supply_system
+        self.total_capacity = total_capacity
+        self.unit_capacity = unit_capacity
+
+        # Calculate number of units needed (round up to ensure capacity is met)
+        self.n_units = math.ceil(total_capacity / unit_capacity)
+
+        # Create individual component instances
+        self.units = []
+        for i in range(self.n_units):
+            unit = component_class(model_code, placement_in_supply_system, unit_capacity)
+            self.units.append(unit)
+
+        # Expose common attributes from the first unit (all units are identical)
+        self.technology = self.units[0].technology
+        self.type = self.units[0].type
+        self.capacity = total_capacity  # Report total capacity
+        self.main_energy_carrier = self.units[0].main_energy_carrier
+        self.input_energy_carriers = self.units[0].input_energy_carriers
+        self.output_energy_carriers = self.units[0].output_energy_carriers
+
+        # Initialize cost attributes (will be calculated properly in calculate_cost)
+        self.inv_cost = 0
+        self.inv_cost_annual = 0
+        self.om_fix_cost_annual = 0
+        self.calculate_cost()
+
+    def __repr__(self):
+        """String representation of the component cluster."""
+        return (f"ComponentCluster({self.technology}, {self.n_units} units, "
+                f"{self.unit_capacity:.1f} kW each, total: {self.total_capacity:.1f} kW)")
+
+    def operate(self, main_energy_flow):
+        """
+        Operate the component cluster to meet the required energy flow by distributing load across units.
+        Uses a cascading approach: activate units sequentially until demand is met.
+
+        :param main_energy_flow: Target energy flow to be produced/absorbed
+        :type main_energy_flow: EnergyFlow
+        :return: Aggregated input and output energy flows from all active units
+        :rtype: tuple of (dict, dict)
+        """
+        # This will be implemented in the next commit
+        raise NotImplementedError("ComponentCluster.operate() will be implemented in the next commit")
+
+    def calculate_cost(self):
+        """
+        Calculate aggregated costs across all units in the cluster.
+
+        :return: Total investment cost, annualized investment cost, and annual O&M cost
+        :rtype: tuple of (float, float, float)
+        """
+        # This will be implemented in the next commit
+        raise NotImplementedError("ComponentCluster.calculate_cost() will be implemented in the next commit")
 
 
 class ActiveComponent(Component):
