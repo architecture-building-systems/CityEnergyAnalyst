@@ -126,6 +126,28 @@ class Component(object):
         return smallest_model_capacity_kW
 
     @staticmethod
+    def get_max_capacity_for_model(component_class, model_code):
+        """
+        Get the maximum available single-unit capacity for a component model from the database.
+
+        :param component_class: The component class (e.g., VapourCompressionChiller)
+        :type component_class: type
+        :param model_code: Code of the component model
+        :type model_code: str
+        :return: Maximum capacity available for this model in kW
+        :rtype: float
+        """
+        component_database = Component._components_database[component_class._csv_name]
+        model_data = component_database[component_database['code'] == model_code]
+
+        if model_data.empty:
+            raise ValueError(f'Component model {model_code} not found in database {component_class._csv_name}')
+
+        max_model_capacity_W = max(model_data['cap_max'])
+        max_model_capacity_kW = max_model_capacity_W / 1000
+        return max_model_capacity_kW
+
+    @staticmethod
     def _extract_model_cost_parameters(model_data):
         """ Extract investment cost code parameters from the code data and store them in a dict."""
         cost_parameters = {'a': model_data['a'].values[0],
@@ -184,136 +206,6 @@ class Component(object):
         opex_a_fix_USD = capex_USD * self._cost_params['om_share']
 
         return capex_USD, capex_a_USD, opex_a_fix_USD
-
-
-class ComponentCluster(object):
-    """
-    A wrapper class that represents multiple identical units of the same component technology installed to meet
-    capacity requirements that exceed the maximum capacity available for a single unit in the component's database.
-
-    :param component_class: The class of the component to be clustered (e.g., VapourCompressionChiller)
-    :type component_class: type
-    :param model_code: Code of the selected component model
-    :type model_code: str
-    :param placement_in_supply_system: Placement category ('primary', 'secondary', 'tertiary')
-    :type placement_in_supply_system: str
-    :param total_capacity: Total thermal capacity required across all units
-    :type total_capacity: float
-    :param unit_capacity: Capacity of each individual unit
-    :type unit_capacity: float
-    """
-
-    def __init__(self, component_class, model_code, placement_in_supply_system, total_capacity, unit_capacity):
-        """
-        Initialize a cluster of identical component units.
-        """
-        self.component_class = component_class
-        self.code = model_code
-        self.placement = placement_in_supply_system
-        self.total_capacity = total_capacity
-        self.unit_capacity = unit_capacity
-
-        # Calculate number of units needed (round up to ensure capacity is met)
-        self.n_units = math.ceil(total_capacity / unit_capacity)
-
-        # Create individual component instances
-        self.units = []
-        for i in range(self.n_units):
-            unit = component_class(model_code, placement_in_supply_system, unit_capacity)
-            self.units.append(unit)
-
-        # Expose common attributes from the first unit (all units are identical)
-        self.technology = self.units[0].technology
-        self.type = self.units[0].type
-        self.capacity = total_capacity  # Report total capacity
-        self.main_energy_carrier = self.units[0].main_energy_carrier
-        self.input_energy_carriers = self.units[0].input_energy_carriers
-        self.output_energy_carriers = self.units[0].output_energy_carriers
-
-        # Initialize cost attributes (will be calculated properly in calculate_cost)
-        self.inv_cost = 0
-        self.inv_cost_annual = 0
-        self.om_fix_cost_annual = 0
-        self.calculate_cost()
-
-    def __repr__(self):
-        """String representation of the component cluster."""
-        return (f"ComponentCluster({self.technology}, {self.n_units} units, "
-                f"{self.unit_capacity:.1f} kW each, total: {self.total_capacity:.1f} kW)")
-
-    def operate(self, main_energy_flow):
-        """
-        Operate the component cluster to meet the required energy flow by distributing load across units.
-        Uses a cascading approach: activate units sequentially until demand is met, analogous to the
-        water-filling principle used in SupplySystem._perform_water_filling_principle().
-
-        :param main_energy_flow: Target energy flow to be produced/absorbed
-        :type main_energy_flow: EnergyFlow
-        :return: Aggregated input and output energy flows from all active units
-        :rtype: tuple of (dict, dict)
-        """
-        # Initialize aggregated energy flow dictionaries
-        aggregated_input_flows = {}
-        aggregated_output_flows = {}
-
-        # Track remaining demand to distribute across units
-        remaining_demand = main_energy_flow
-
-        # Cascade through units: each unit operates at full capacity until demand is met
-        for unit in self.units:
-            # Determine how much this unit should produce (capped at its capacity)
-            unit_demand = remaining_demand.cap_at(unit.capacity)
-
-            # Skip unit if there's no remaining demand
-            if (unit_demand.profile == 0).all():
-                break
-
-            # Operate the unit
-            unit_input_flows, unit_output_flows = unit.operate(unit_demand)
-
-            # Aggregate input flows
-            for ec_code, energy_flow in unit_input_flows.items():
-                if ec_code in aggregated_input_flows:
-                    aggregated_input_flows[ec_code] += energy_flow
-                else:
-                    aggregated_input_flows[ec_code] = energy_flow
-
-            # Aggregate output flows
-            for ec_code, energy_flow in unit_output_flows.items():
-                if ec_code in aggregated_output_flows:
-                    aggregated_output_flows[ec_code] += energy_flow
-                else:
-                    aggregated_output_flows[ec_code] = energy_flow
-
-            # Update remaining demand
-            remaining_demand = remaining_demand - unit_demand
-
-        return aggregated_input_flows, aggregated_output_flows
-
-    def calculate_cost(self):
-        """
-        Calculate aggregated costs across all units in the cluster.
-        The total cost is simply the sum of costs for all individual units.
-
-        :return: Total investment cost, annualized investment cost, and annual O&M cost
-        :rtype: tuple of (float, float, float)
-        """
-        total_inv_cost = 0
-        total_inv_cost_annual = 0
-        total_om_fix_cost_annual = 0
-
-        # Sum costs across all units
-        for unit in self.units:
-            total_inv_cost += unit.inv_cost
-            total_inv_cost_annual += unit.inv_cost_annual
-            total_om_fix_cost_annual += unit.om_fix_cost_annual
-
-        # Store the aggregated costs
-        self.inv_cost = total_inv_cost
-        self.inv_cost_annual = total_inv_cost_annual
-        self.om_fix_cost_annual = total_om_fix_cost_annual
-
-        return total_inv_cost, total_inv_cost_annual, total_om_fix_cost_annual
 
 
 class ActiveComponent(Component):
