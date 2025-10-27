@@ -175,6 +175,9 @@ def run_job(job: JobInfo, suppress_warnings: bool = False):
             warnings.simplefilter("ignore", FutureWarning)
             warnings.simplefilter("ignore", DeprecationWarning)
 
+            # Hide user warnings for now
+            warnings.simplefilter("ignore", UserWarning)
+
             output = script(**parameters)
     else:
         output = script(**parameters)
