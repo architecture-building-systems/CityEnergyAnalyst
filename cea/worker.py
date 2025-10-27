@@ -198,19 +198,19 @@ def read_parameters(job: JobInfo):
 
 
 def post_started(jobid, server):
-    requests.post(f"{server}/jobs/started/{jobid}")
+    post_with_retry(f"{server}/jobs/started/{jobid}")
 
 
 def post_success(jobid: str, server: str, output: Any = None):
     # Close streams before sending success
     close_streams()
-    requests.post(f"{server}/jobs/success/{jobid}", json={"output": output})
+    post_with_retry(f"{server}/jobs/success/{jobid}", json={"output": output})
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
     # Close streams before sending error
     close_streams()
-    requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
+    post_with_retry(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
 def worker(jobid: str, server: str, suppress_warnings: bool = False):
