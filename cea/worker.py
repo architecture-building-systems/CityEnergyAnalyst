@@ -11,6 +11,8 @@ as an URL for locating the /server/jobs api.
 """
 
 import sys
+import time
+import logging
 from typing import Any
 
 import requests
@@ -28,6 +30,55 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.interfaces.dashboard.server.jobs import JobInfo
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
+
+def post_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
+                   backoff_factor: float = 2.0, timeout: float = 3.0, **kwargs) -> bool:
+    """
+    Make a POST request with retry logic and exponential backoff.
+
+    Args:
+        url: The URL to POST to
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 0.5)
+        backoff_factor: Multiplier for delay between retries (default: 2.0)
+        timeout: Request timeout in seconds (default: 3.0)
+        **kwargs: Additional arguments to pass to requests.post()
+
+    Returns:
+        True if successful, False if all retries failed
+    """
+    delay = initial_delay
+    last_exception = None
+
+    for attempt in range(max_retries + 1):  # +1 to include the initial attempt
+        try:
+            response = requests.post(url, timeout=timeout, **kwargs)
+            response.raise_for_status()  # Raise exception for bad status codes
+
+            if attempt > 0:
+                logger.debug(f"Successfully posted to '{url}' after {attempt} retry attempt(s)")
+            return True
+
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                logger.warning(
+                    f"Failed to POST to '{url}' (attempt {attempt + 1}/{max_retries + 1}): {e}. "
+                    f"Retrying in {delay:.2f}s..."
+                )
+                time.sleep(delay)
+                delay *= backoff_factor
+            else:
+                logger.error(
+                    f"Failed to POST to '{url}' after {max_retries + 1} attempts. "
+                    f"Last error: {last_exception}"
+                )
+
+    return False
 
 
 def consume_nowait(q, msg):
