@@ -257,7 +257,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     await session.commit()
     await session.refresh(job)
 
-    await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    await emit_with_retry("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
     return job
 
 
@@ -272,13 +272,14 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         job.start_time = get_current_time()
         await session.commit()
         await session.refresh(job)
-
-        await sio.emit("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 @router.post("/success/{job_id}")
@@ -301,15 +302,16 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        job_info = job.model_dump(mode='json')
-        job_info["output"] = output.output
-        await sio.emit("cea-worker-success", job_info, room=f"user-{job.created_by}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    job_info = job.model_dump(mode='json')
+    job_info["output"] = output.output
+    await emit_with_retry("cea-worker-success", job_info, room=f"user-{job.created_by}")
+    return job
 
 
 @router.post("/error/{job_id}")
@@ -336,16 +338,17 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        await sio.emit("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-
-        logger.warning(f"Error found in job {job_id}: {job.error}")
-        logger.error(f"stacktrace:\n{job.stderr}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+
+    logger.warning(f"Error found in job {job_id}: {job.error}")
+    logger.error(f"stacktrace:\n{job.stderr}")
+    return job
 
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
@@ -399,13 +402,14 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        await sio.emit("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
