@@ -254,7 +254,21 @@ class Component(object):
         return input_energy_flows, output_energy_flows
 
     def calculate_cost(self):
-        """ placeholder for subclass investment cost functions """
+        """
+        Calculate investment and operating costs for the component.
+        For multi-unit installations, aggregates costs from all individual units.
+
+        :return: (capex_USD, capex_a_USD, opex_a_fix_USD) tuple
+        :rtype: (float, float, float)
+        """
+        # Multi-unit: aggregate costs from all units
+        if self.n_units > 1:
+            total_capex_USD = sum(unit.inv_cost for unit in self.units)
+            total_capex_a_USD = sum(unit.inv_cost_annual for unit in self.units)
+            total_opex_a_fix_USD = sum(unit.om_fix_cost_annual for unit in self.units)
+            return total_capex_USD, total_capex_a_USD, total_opex_a_fix_USD
+
+        # Single unit: calculate costs from cost parameters
         capacity_W = self.capacity * 1000
         if capacity_W <= 0:
             capex_USD = 0
