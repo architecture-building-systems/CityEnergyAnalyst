@@ -52,10 +52,54 @@ class Component(object):
     code_to_class_mapping = None
     possible_main_ecs = {}
 
-    def __init__(self, data_base_tab,  model_code, capacity):
-        self._model_data = self._extract_model_data(data_base_tab, model_code, capacity)
-        self._cost_params = self._extract_model_cost_parameters(self._model_data)
+    def __init__(self, data_base_tab,  model_code, capacity, *args, **kwargs):
+        # Try to extract model data for the requested capacity
+        try:
+            self._model_data = self._extract_model_data(data_base_tab, model_code, capacity)
+            # Single unit installation
+            self.n_units = 1
+            self.units = [self]
+        except ValueError as e:
+            # Check if we need multi-unit installation
+            component_class = self.__class__
+            try:
+                max_capacity = self.get_max_capacity_for_model(component_class, model_code)
+            except ValueError:
+                # Model doesn't exist in database, re-raise original error
+                raise e
 
+            if capacity > max_capacity:
+                # Multi-unit installation needed
+                self.n_units = math.ceil(capacity / max_capacity)
+                unit_capacity = capacity / self.n_units
+
+                # Create individual units recursively
+                self.units = []
+                for _ in range(self.n_units):
+                    unit = component_class(data_base_tab, model_code, unit_capacity, *args, **kwargs)
+                    self.units.append(unit)
+
+                # Set aggregate properties from first unit
+                first_unit = self.units[0]
+                self._model_data = first_unit._model_data
+                self._cost_params = first_unit._cost_params
+                self.code = first_unit.code
+                self.technology = first_unit.technology
+                self.type = first_unit.type
+                self.main_energy_carrier = first_unit.main_energy_carrier
+                self.input_energy_carriers = first_unit.input_energy_carriers
+                self.output_energy_carriers = first_unit.output_energy_carriers
+                self.capacity = capacity  # Total capacity
+
+                # Calculate aggregate costs
+                self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
+                return
+            else:
+                # Capacity doesn't exceed max, re-raise original error
+                raise e
+
+        # Single unit initialization continues
+        self._cost_params = self._extract_model_cost_parameters(self._model_data)
         self.code = model_code
         self.technology = ' '.join([part.capitalize() for part in data_base_tab.split('_')])
         self.type = self._model_data['type'].values[0]  # given by working principle (only 1 code is installed for each type per component)
@@ -212,9 +256,13 @@ class ActiveComponent(Component):
 
     main_side = 'output'
 
-    def __init__(self, data_base_tab, model_code, capacity, placement_in_supply_system):
-        super().__init__(data_base_tab, model_code, capacity)
-        self.placement = placement_in_supply_system
+    def __init__(self, data_base_tab, model_code, capacity, placement_in_supply_system, *args, **kwargs):
+        super().__init__(data_base_tab, model_code, capacity, placement_in_supply_system, *args, **kwargs)
+        # Only set placement for single units; multi-unit aggregates copy from first unit
+        if self.n_units == 1:
+            self.placement = placement_in_supply_system
+        else:
+            self.placement = self.units[0].placement
 
     @staticmethod
     def get_types(component_tab):
@@ -233,19 +281,23 @@ class PassiveComponent(Component):
 
     conversion_matrix = pd.DataFrame()
 
-    def __init__(self, data_base_tab, model_code, capacity, placed_after, placed_before):
-        super().__init__(data_base_tab, model_code, capacity)
-        self.placement = {'after': placed_after,
-                          'before': placed_before}
+    def __init__(self, data_base_tab, model_code, capacity, placed_after, placed_before, *args, **kwargs):
+        super().__init__(data_base_tab, model_code, capacity, placed_after, placed_before, *args, **kwargs)
+        # Only set placement for single units; multi-unit aggregates copy from first unit
+        if self.n_units == 1:
+            self.placement = {'after': placed_after,
+                              'before': placed_before}
+        else:
+            self.placement = self.units[0].placement
 
 
 class AbsorptionChiller(ActiveComponent):
 
     _csv_name = 'ABSORPTION_CHILLERS'
 
-    def __init__(self, ach_model_code, placement, capacity):
+    def __init__(self, ach_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(AbsorptionChiller._csv_name, ach_model_code, capacity, placement)
+        super().__init__(AbsorptionChiller._csv_name, ach_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         self.aux_power_share = self._model_data['aux_power'].values[0]
@@ -315,9 +367,9 @@ class VapourCompressionChiller(ActiveComponent):
 
     _csv_name = 'VAPOR_COMPRESSION_CHILLERS'
 
-    def __init__(self, vcc_model_code, placement, capacity):
+    def __init__(self, vcc_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(VapourCompressionChiller._csv_name, vcc_model_code, capacity, placement)
+        super().__init__(VapourCompressionChiller._csv_name, vcc_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -381,9 +433,9 @@ class AirConditioner(ActiveComponent):
 
     _csv_name = 'UNITARY_AIR_CONDITIONERS'
 
-    def __init__(self, ac_model_code, placement, capacity):
+    def __init__(self, ac_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(AirConditioner._csv_name, ac_model_code, capacity, placement)
+        super().__init__(AirConditioner._csv_name, ac_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['rated_COP_seasonal'].values[0]
         # assign technology-specific energy carriers
@@ -447,9 +499,9 @@ class Boiler(ActiveComponent):
 
     _csv_name = 'BOILERS'
 
-    def __init__(self, boiler_model_code, placement, capacity):
+    def __init__(self, boiler_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(Boiler._csv_name, boiler_model_code, capacity, placement)
+        super().__init__(Boiler._csv_name, boiler_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.min_thermal_eff = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -513,9 +565,9 @@ class CogenPlant(ActiveComponent):
 
     _csv_name = 'COGENERATION_PLANTS'
 
-    def __init__(self, cogen_model_code, placement, capacity):
+    def __init__(self, cogen_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(CogenPlant._csv_name, cogen_model_code, capacity, placement)
+        super().__init__(CogenPlant._csv_name, cogen_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.thermal_eff = self._model_data['therm_eff_design'].values[0]
         self.electrical_eff = self._model_data['elec_eff_design'].values[0]
@@ -588,9 +640,9 @@ class HeatPump(ActiveComponent):
 
     _csv_name = 'HEAT_PUMPS'
 
-    def __init__(self, hp_model_code, placement, capacity):
+    def __init__(self, hp_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(HeatPump._csv_name, hp_model_code, capacity, placement)
+        super().__init__(HeatPump._csv_name, hp_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating_seasonal'].values[0]
         self.thermal_ec_subtype_condenser_side = self._model_data['medium_cond_side'].values[0]
@@ -669,9 +721,9 @@ class CoolingTower(ActiveComponent):
     main_side = 'input'
     _csv_name = 'COOLING_TOWERS'
 
-    def __init__(self, ct_model_code, placement, capacity):
+    def __init__(self, ct_model_code, placement, capacity, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(CoolingTower._csv_name, ct_model_code, capacity, placement)
+        super().__init__(CoolingTower._csv_name, ct_model_code, capacity, placement, *args, **kwargs)
         # initialise subclass attributes
         self.aux_power_share = self._model_data['aux_power'].values[0]
         # assign technology-specific energy carriers
@@ -739,9 +791,10 @@ class PowerTransformer(PassiveComponent):
 
     _csv_name = 'POWER_TRANSFORMERS'
 
-    def __init__(self, pt_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
+    def __init__(self, pt_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(PowerTransformer._csv_name, pt_model_code, capacity, placed_after, placed_before)
+        super().__init__(PowerTransformer._csv_name, pt_model_code, capacity, placed_after, placed_before,
+                         voltage_before=voltage_before, voltage_after=voltage_after, *args, **kwargs)
         # initialise subclass attributes
         self.min_low_voltage = self._model_data['V_min_lowV_side'].values[0]
         self.max_low_voltage = self._model_data['V_max_lowV_side'].values[0]
@@ -872,9 +925,10 @@ class HeatExchanger(PassiveComponent):
 
     _csv_name = 'HEAT_EXCHANGERS'
 
-    def __init__(self, he_model_code, placed_before, placed_after, capacity, temperature_before, temperature_after):
+    def __init__(self, he_model_code, placed_before, placed_after, capacity, temperature_before, temperature_after, *args, **kwargs):
         # initialise parent-class attributes
-        super().__init__(HeatExchanger._csv_name, he_model_code, capacity, placed_after, placed_before)
+        super().__init__(HeatExchanger._csv_name, he_model_code, capacity, placed_after, placed_before,
+                         temperature_before=temperature_before, temperature_after=temperature_after, *args, **kwargs)
         # initialise subclass attributes
         self.max_operating_temp = self._model_data['T_max_operating'].values[0]
         self.min_operating_temp = self._model_data['T_min_operating'].values[0]
