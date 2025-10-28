@@ -329,8 +329,9 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         await session.commit()
         await session.refresh(job)
 
-        if job.id in await worker_processes.values():
-            await worker_processes.delete(job.id)
+        # Ensure worker process is terminated and removed from tracking
+        if job.id in await worker_processes.keys():
+            await cleanup_worker_process(job.id, worker_processes)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -365,8 +366,9 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
         await session.commit()
         await session.refresh(job)
 
-        if job.id in await worker_processes.values():
-            await worker_processes.delete(job.id)
+        # Ensure worker process is terminated and removed from tracking
+        if job.id in await worker_processes.keys():
+            await cleanup_worker_process(job.id, worker_processes)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -430,7 +432,8 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         await session.commit()
         await session.refresh(job)
 
-        await kill_job(job_id, worker_processes)
+        # Force kill the worker process immediately for canceled jobs
+        await cleanup_worker_process(job_id, worker_processes, force=True)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -479,28 +482,74 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-async def kill_job(jobid, worker_processes):
-    """Kill the processes associated with a jobid"""
-    if jobid not in await worker_processes.keys():
-        logger.warning(f"Unable to kill job. Could no find job: {jobid}.")
+async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False):
+    """
+    Clean up worker process for a job. Checks if process still exists and terminates it if needed.
+    Always removes the job from worker_processes tracking.
+
+    Args:
+        job_id: The job ID to clean up
+        worker_processes: The worker processes tracking store
+        force: If True, immediately force kill without graceful termination attempt.
+               Use when user cancels a job. Default False (graceful shutdown for completed jobs).
+
+    Usage:
+        - cleanup_worker_process(job_id, wp, force=False) -> Jobs that complete naturally (SUCCESS/ERROR)
+        - cleanup_worker_process(job_id, wp, force=True)  -> User-canceled jobs (immediate kill)
+    """
+    if job_id not in await worker_processes.keys():
+        log_level = logger.warning if force else logger.debug
+        log_level(f"Job {job_id} not in worker_processes tracking, skipping cleanup")
         return
 
-    pid = await worker_processes.get(jobid)
-    # using code from here: https://stackoverflow.com/a/4229404/2260
-    # to terminate child processes too
-    logger.warning(f"killing child processes of {jobid} ({pid})")
+    pid = await worker_processes.get(job_id)
+
     try:
         process = psutil.Process(pid)
 
-        children = process.children(recursive=True)
-        for child in children:
-            logger.warning(f"-- killing child {pid}")
-            try:
-                child.kill()
-            except psutil.NoSuchProcess:
-                pass
-        process.kill()
+        # Check if process is still running
+        if process.is_running():
+            if force:
+                # Immediate force kill for canceled jobs
+                logger.warning(f"Force killing worker process {pid} and children for job {job_id}")
+                children = process.children(recursive=True)
+                for child in children:
+                    logger.warning(f"-- killing child process {child.pid}")
+                    try:
+                        child.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+                process.kill()
+                logger.info(f"Worker process {pid} force killed")
+            else:
+                # Graceful termination for completed jobs
+                logger.info(f"Worker process {pid} for job {job_id} still running, terminating gracefully...")
+                process.terminate()
+
+                # Wait up to 3 seconds for graceful termination
+                try:
+                    process.wait(timeout=3)
+                    logger.info(f"Worker process {pid} terminated gracefully")
+                except psutil.TimeoutExpired:
+                    # Force kill if graceful termination fails
+                    logger.warning(f"Worker process {pid} did not terminate gracefully, force killing...")
+                    children = process.children(recursive=True)
+                    for child in children:
+                        logger.warning(f"-- killing child process {child.pid}")
+                        try:
+                            child.kill()
+                        except psutil.NoSuchProcess:
+                            pass
+                    process.kill()
+                    logger.info(f"Worker process {pid} force killed after timeout")
+        else:
+            logger.debug(f"Worker process {pid} for job {job_id} already terminated")
+
     except psutil.NoSuchProcess:
-        return
+        logger.debug(f"Worker process {pid} for job {job_id} no longer exists")
+    except Exception as e:
+        logger.error(f"Error cleaning up worker process {pid} for job {job_id}: {e}")
     finally:
-        await worker_processes.delete(jobid)
+        # Always remove from tracking
+        await worker_processes.delete(job_id)
+        logger.debug(f"Removed job {job_id} from worker_processes tracking")
