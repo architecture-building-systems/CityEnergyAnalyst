@@ -4,7 +4,7 @@ from aiocache import SimpleMemoryCache, RedisCache
 from aiocache.serializers import PickleSerializer
 
 from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
-from cea.interfaces.dashboard.lib.cache.settings import CACHE_NAME, cache_settings
+from cea.interfaces.dashboard.lib.cache.settings import CACHE_NAME, cache_settings, DEFAULT_CACHE_TTL
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 
 logger = getCEAServerLogger("cea-cache")
@@ -58,17 +58,29 @@ def get_cache():
     return _cache_instance
 
 
-async def get_dict_cache(key: str) -> AsyncDictCache:
-    """Get or create a dictionary cache for a specific key."""
+async def get_dict_cache(key: str, default_ttl: Optional[int] = DEFAULT_CACHE_TTL) -> AsyncDictCache:
+    """
+    Get or create a dictionary cache for a specific key.
+
+    Args:
+        key: The cache key
+        default_ttl: Default TTL in seconds for items in this cache. None means no expiration.
+
+    Returns:
+        AsyncDictCache instance with the specified TTL
+    """
     _cache = get_cache()
     cache_data = await _cache.get(key)
 
     if cache_data is None:
         cache_data = dict()
-        await _cache.set(key, cache_data)
-        logger.debug(f"Created new cache for key: {key}")
+        if default_ttl is not None:
+            await _cache.set(key, cache_data, ttl=default_ttl)
+        else:
+            await _cache.set(key, cache_data)
+        logger.debug(f"Created new cache for key: {key} (TTL: {default_ttl}s)")
 
-    return AsyncDictCache(_cache, key)
+    return AsyncDictCache(_cache, key, default_ttl=default_ttl)
 
 
 async def cleanup_cache_connections():

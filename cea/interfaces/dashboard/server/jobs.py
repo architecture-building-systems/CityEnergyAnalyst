@@ -15,9 +15,9 @@ from urllib.parse import urlparse
 
 import psutil
 import sqlalchemy.exc
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Query
 from pydantic import BaseModel
-from sqlmodel import select
+from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
 from cea.interfaces.dashboard.dependencies import CEAServerUrl, CEAWorkerProcesses, CEAProjectID, CEAServerSettings, \
@@ -179,10 +179,42 @@ def cleanup_job_temp_files(job_id: str):
 
 @router.get("/", dependencies=[CEASeverDemoAuthCheck])
 @router.get("/list")
-async def get_jobs(session: SessionDep, project_id: CEAProjectID) -> List[JobInfo]:
-    """Get a list of jobs for the current project"""
-    result = await session.execute(select(JobInfo).where(JobInfo.project_id == project_id))
-    return result.scalars().all()
+async def get_jobs(
+    session: SessionDep,
+    project_id: CEAProjectID,
+    limit: int | None = Query(None, description="Maximum number of jobs to return (most recent first)"),
+    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=DELETED, 6=KILLED)"),
+    exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
+) -> List[JobInfo]:
+    """
+    Get a list of jobs for the current project with optional filtering.
+
+    By default, returns all non-deleted jobs ordered by creation time (most recent first).
+    """
+    query = select(JobInfo).where(JobInfo.project_id == project_id)
+
+    # Filter by state if specified
+    if state is not None:
+        # Validate state is a valid JobState value
+        try:
+            job_state = JobState(state)
+            query = query.where(JobInfo.state == job_state)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 6.")
+
+    # Exclude deleted jobs by default (unless state=5 is explicitly requested)
+    if exclude_deleted and state != JobState.DELETED:
+        query = query.where(JobInfo.state != JobState.DELETED)
+
+    # Order by created_time descending (most recent first)
+    query = query.order_by(desc(JobInfo.created_time))
+
+    # Apply limit if specified
+    if limit is not None and limit > 0:
+        query = query.limit(limit)
+
+    result = await session.execute(query)
+    return list(result.scalars().all())
 
 
 @router.get("/{job_id}")
@@ -293,12 +325,15 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         job.state = JobState.SUCCESS
         job.error = None
         job.end_time = get_current_time()
-        job.stdout = "".join(await streams.pop(job_id, []))
+        
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
         await session.commit()
         await session.refresh(job)
 
-        if job.id in await worker_processes.values():
-            await worker_processes.delete(job.id)
+        # Ensure worker process is terminated and removed from tracking
+        await cleanup_worker_process(job.id, worker_processes)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -328,13 +363,16 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
         job.state = JobState.ERROR
         job.error = message
         job.end_time = get_current_time()
-        job.stdout = "".join(await streams.pop(job_id, []))
+
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
         job.stderr = stacktrace
         await session.commit()
         await session.refresh(job)
 
-        if job.id in await worker_processes.values():
-            await worker_processes.delete(job.id)
+        # Ensure worker process is terminated and removed from tracking
+        await cleanup_worker_process(job.id, worker_processes)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -386,7 +424,8 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
 
 
 @router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses,
+                     streams: CEAStreams) -> JobInfo:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -395,10 +434,17 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         job.state = JobState.CANCELED
         job.error = "Canceled by user"
         job.end_time = get_current_time()
+
+        # Save any remaining stream output before clearing
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
+
         await session.commit()
         await session.refresh(job)
 
-        await kill_job(job_id, worker_processes)
+        # Force kill the worker process immediately for canceled jobs
+        await cleanup_worker_process(job_id, worker_processes, force=True)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -412,10 +458,57 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
     return job
 
 
+async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
+    """
+    Kill a job (server-initiated termination, e.g., during shutdown).
+    This is different from cancel_job which is user-initiated.
+
+    Args:
+        session: Database session
+        job_id: The job ID to kill
+        worker_processes: Worker processes tracking store
+        streams: Streams cache
+
+    Returns:
+        Updated JobInfo object with KILLED state
+    """
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    try:
+        job.state = JobState.KILLED
+        job.error = "Killed by server shutdown"
+        job.end_time = get_current_time()
+
+        # Save any remaining stream output before clearing
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
+
+        await session.commit()
+        await session.refresh(job)
+
+        # Force kill the worker process immediately
+        await cleanup_worker_process(job_id, worker_processes, force=True)
+
+        # Clean up temporary files for this job
+        cleanup_job_temp_files(job.id)
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-killed", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
+
+
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     """
-    Delete a job from the database. This is only possible if the job is not running.
+    Mark a job as deleted (soft delete). The job row is not removed from the database,
+    but its state is set to DELETED. This is only possible if the job is not running.
     """
     try:
         job = await session.get(JobInfo, job_id)
@@ -430,9 +523,11 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
 
     try:
+        # Soft delete: only update the state, don't remove the row
         job.state = JobState.DELETED
-        await session.delete(job)
+        job.end_time = get_current_time()
         await session.commit()
+        await session.refresh(job)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -444,28 +539,101 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-async def kill_job(jobid, worker_processes):
-    """Kill the processes associated with a jobid"""
-    if jobid not in await worker_processes.keys():
-        logger.warning(f"Unable to kill job. Could no find job: {jobid}.")
+def _force_kill_process(process: psutil.Process, pid: int, job_id: str):
+    """
+    Force kill a process and its children, waiting to reap them to prevent zombies.
+
+    Args:
+        process: The psutil.Process object
+        pid: Process ID (for logging)
+        job_id: Job ID (for logging)
+    """
+    logger.warning(f"Force killing worker process {pid} and children for job {job_id}")
+
+    # Kill all children first
+    children = process.children(recursive=True)
+    for child in children:
+        logger.warning(f"-- killing child process {child.pid}")
+        try:
+            child.kill()
+            child.wait(timeout=1)  # Wait to reap and prevent zombies
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.AccessDenied as e:
+            logger.warning(f"Access denied killing child process {child.pid}: {e}")
+        except psutil.TimeoutExpired:
+            logger.debug(f"Child process {child.pid} did not terminate within timeout")
+
+    # Kill main process
+    try:
+        process.kill()
+        process.wait(timeout=3)  # Wait to reap and prevent zombies
+        logger.info(f"Worker process {pid} force killed")
+    except psutil.NoSuchProcess:
+        pass
+    except psutil.AccessDenied as e:
+        logger.warning(f"Access denied killing worker process {pid}: {e}")
+    except psutil.TimeoutExpired:
+        logger.warning(f"Worker process {pid} did not terminate within timeout after kill()")
+
+
+async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False, timeout: int = 3):
+    """
+    Clean up worker process for a job. Checks if process still exists and terminates it if needed.
+    Always removes the job from worker_processes tracking.
+
+    Args:
+        job_id: The job ID to clean up
+        worker_processes: The worker processes tracking store
+        force: If True, immediately force kill without graceful termination attempt.
+               Use when user cancels a job. Default False (graceful shutdown for completed jobs).
+        timeout: Time in seconds to wait for graceful termination before force killing.
+                 Only used if force is False. Default is 3 seconds.
+
+    Usage:
+        - cleanup_worker_process(job_id, wp, force=False) -> Jobs that complete naturally (SUCCESS/ERROR)
+        - cleanup_worker_process(job_id, wp, force=True)  -> User-canceled jobs (immediate kill)
+    """
+    # Atomically fetch-and-remove to avoid TOCTOU race conditions
+    pid = await worker_processes.pop(job_id, None)
+    if pid is None:
+        log_level = logger.warning if force else logger.debug
+        log_level(f"Job {job_id} not in worker_processes tracking, skipping cleanup")
         return
 
-    pid = await worker_processes.get(jobid)
-    # using code from here: https://stackoverflow.com/a/4229404/2260
-    # to terminate child processes too
-    logger.warning(f"killing child processes of {jobid} ({pid})")
     try:
         process = psutil.Process(pid)
 
-        children = process.children(recursive=True)
-        for child in children:
-            logger.warning(f"-- killing child {pid}")
-            try:
-                child.kill()
-            except psutil.NoSuchProcess:
-                pass
-        process.kill()
+        # Check if process is still running
+        if process.is_running():
+            if force:
+                # Immediate force kill for canceled jobs
+                _force_kill_process(process, pid, job_id)
+            else:
+                # Graceful termination for completed jobs
+                logger.info(f"Worker process {pid} for job {job_id} still running, terminating gracefully...")
+                process.terminate()
+
+                # Wait up to timeout seconds for graceful termination
+                try:
+                    process.wait(timeout=timeout)
+                    logger.info(f"Worker process {pid} terminated gracefully")
+                except psutil.TimeoutExpired:
+                    # Force kill if graceful termination fails
+                    logger.warning(f"Worker process {pid} did not terminate gracefully, force killing...")
+                    _force_kill_process(process, pid, job_id)
+        else:
+            logger.debug(f"Worker process {pid} for job {job_id} already terminated")
+
     except psutil.NoSuchProcess:
-        return
+        logger.debug(f"Worker process {pid} for job {job_id} no longer exists")
+    except Exception as e:
+        logger.error(f"Error cleaning up worker process {pid} for job {job_id}: {e}")
     finally:
-        await worker_processes.delete(jobid)
+        # Best-effort: ensure tracking is clear, ignore if already removed
+        try:
+            await worker_processes.delete(job_id)
+            logger.debug(f"Removed job {job_id} from worker_processes tracking")
+        except KeyError:
+            # Already removed (e.g., by concurrent cleanup call)
+            pass
