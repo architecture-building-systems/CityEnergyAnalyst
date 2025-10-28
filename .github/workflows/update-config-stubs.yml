@@ -55,11 +55,14 @@ jobs:
           # Push with retry logic in case of conflicts
           # This should rarely fail on master, but adding explicit handling for clarity
           max_retries=3
-          retry_count=0
-          until git push || [ $retry_count -eq $max_retries ]; do
-            retry_count=$((retry_count + 1))
-            echo "Push failed, attempt $retry_count of $max_retries"
-            if [ $retry_count -lt $max_retries ]; then
+          for ((attempt=1; attempt<=max_retries; attempt++)); do
+            if git push; then
+              echo "Successfully pushed config.pyi changes"
+              break
+            fi
+
+            echo "Push failed, attempt $attempt of $max_retries"
+            if [ $attempt -lt $max_retries ]; then
               echo "Pulling latest changes and retrying..."
               git pull --rebase
             else
@@ -67,7 +70,6 @@ jobs:
               exit 1
             fi
           done
-          echo "Successfully pushed config.pyi changes"
 
       - name: Comment on PR if changes needed
         if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
