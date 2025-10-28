@@ -330,8 +330,7 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         await session.refresh(job)
 
         # Ensure worker process is terminated and removed from tracking
-        if job.id in await worker_processes.keys():
-            await cleanup_worker_process(job.id, worker_processes)
+        await cleanup_worker_process(job.id, worker_processes)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -367,8 +366,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
         await session.refresh(job)
 
         # Ensure worker process is terminated and removed from tracking
-        if job.id in await worker_processes.keys():
-            await cleanup_worker_process(job.id, worker_processes)
+        await cleanup_worker_process(job.id, worker_processes)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
