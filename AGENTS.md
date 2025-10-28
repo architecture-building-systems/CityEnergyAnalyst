@@ -31,3 +31,10 @@ Detailed documentation is organized by topic. When working in a specific area, r
 - Cost calculations: `cea/analysis/costs/system_costs.py`
 - Demand calculations: `cea/demand/`
 - Database schemas: `cea/schemas.yml`
+
+## Documentation Guidelines for LLMs
+
+When creating new documentation files in this codebase:
+- **Always** create context-specific documentation as `AGENTS.md` (not `CLAUDE.md`)
+- **Always** symlink the new `AGENTS.md` file as `CLAUDE.md` in the same directory
+- This maintains consistency with the existing documentation structure where topic-specific instructions live in `AGENTS.md` files and are symlinked for compatibility
