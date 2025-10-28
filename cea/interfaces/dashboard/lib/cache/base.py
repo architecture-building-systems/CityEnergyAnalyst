@@ -63,7 +63,12 @@ class AsyncDictCache:
         if item_id not in _dict:
             raise KeyError(f"Item '{item_id}' not found in cache")
         del _dict[item_id]
-        await self._cache.set(self._cache_key, _dict)
+
+        # Preserve TTL to prevent memory leak
+        if self._default_ttl is not None:
+            await self._cache.set(self._cache_key, _dict, ttl=self._default_ttl)
+        else:
+            await self._cache.set(self._cache_key, _dict)
 
     async def values(self):
         _dict = await self._cache.get(self._cache_key)

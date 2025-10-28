@@ -502,12 +502,12 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         - cleanup_worker_process(job_id, wp, force=False) -> Jobs that complete naturally (SUCCESS/ERROR)
         - cleanup_worker_process(job_id, wp, force=True)  -> User-canceled jobs (immediate kill)
     """
-    if job_id not in await worker_processes.keys():
+    # Atomically fetch-and-remove to avoid TOCTOU race conditions
+    pid = await worker_processes.pop(job_id, None)
+    if pid is None:
         log_level = logger.warning if force else logger.debug
         log_level(f"Job {job_id} not in worker_processes tracking, skipping cleanup")
         return
-
-    pid = await worker_processes.get(job_id)
 
     try:
         process = psutil.Process(pid)
@@ -555,6 +555,10 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
     except Exception as e:
         logger.error(f"Error cleaning up worker process {pid} for job {job_id}: {e}")
     finally:
-        # Always remove from tracking
-        await worker_processes.delete(job_id)
-        logger.debug(f"Removed job {job_id} from worker_processes tracking")
+        # Best-effort: ensure tracking is clear, ignore if already removed
+        try:
+            await worker_processes.delete(job_id)
+            logger.debug(f"Removed job {job_id} from worker_processes tracking")
+        except KeyError:
+            # Already removed (e.g., by concurrent cleanup call)
+            pass
