@@ -325,7 +325,10 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         job.state = JobState.SUCCESS
         job.error = None
         job.end_time = get_current_time()
-        job.stdout = "".join(await streams.pop(job_id, []))
+        
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
         await session.commit()
         await session.refresh(job)
 
@@ -360,7 +363,10 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
         job.state = JobState.ERROR
         job.error = message
         job.end_time = get_current_time()
-        job.stdout = "".join(await streams.pop(job_id, []))
+
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
         job.stderr = stacktrace
         await session.commit()
         await session.refresh(job)
@@ -430,7 +436,9 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         job.end_time = get_current_time()
 
         # Save any remaining stream output before clearing
-        job.stdout = "".join(await streams.pop(job_id, []))
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
 
         await session.commit()
         await session.refresh(job)
