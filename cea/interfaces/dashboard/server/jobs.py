@@ -183,7 +183,7 @@ async def get_jobs(
     session: SessionDep,
     project_id: CEAProjectID,
     limit: int | None = Query(None, description="Maximum number of jobs to return (most recent first)"),
-    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=DELETED)"),
+    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=DELETED, 6=KILLED)"),
     exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
 ) -> List[JobInfo]:
     """
@@ -200,7 +200,7 @@ async def get_jobs(
             job_state = JobState(state)
             query = query.where(JobInfo.state == job_state)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 5.")
+            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 6.")
 
     # Exclude deleted jobs by default (unless state=5 is explicitly requested)
     if exclude_deleted and state != JobState.DELETED:
@@ -455,6 +455,52 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
 
     # Emit event outside try-except so emit failures don't cause rollback
     await emit_with_retry("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
+
+
+async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
+    """
+    Kill a job (server-initiated termination, e.g., during shutdown).
+    This is different from cancel_job which is user-initiated.
+
+    Args:
+        session: Database session
+        job_id: The job ID to kill
+        worker_processes: Worker processes tracking store
+        streams: Streams cache
+
+    Returns:
+        Updated JobInfo object with KILLED state
+    """
+    job = await session.get(JobInfo, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    try:
+        job.state = JobState.KILLED
+        job.error = "Killed by server shutdown"
+        job.end_time = get_current_time()
+
+        # Save any remaining stream output before clearing
+        stdout_capture = await streams.pop(job_id, [])
+        if stdout_capture:
+            job.stdout = "".join(stdout_capture)
+
+        await session.commit()
+        await session.refresh(job)
+
+        # Force kill the worker process immediately
+        await cleanup_worker_process(job_id, worker_processes, force=True)
+
+        # Clean up temporary files for this job
+        cleanup_job_temp_files(job.id)
+    except Exception as e:
+        logger.error(e)
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-killed", job.model_dump(mode='json'), room=f"user-{job.created_by}")
     return job
 
 

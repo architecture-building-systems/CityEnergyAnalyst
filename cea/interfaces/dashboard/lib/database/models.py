@@ -45,8 +45,9 @@ class JobState(IntEnum):
     STARTED = 1
     SUCCESS = 2
     ERROR = 3
-    CANCELED = 4
-    DELETED = 5
+    CANCELED = 4  # User-initiated cancellation
+    DELETED = 5   # Soft delete (job marked as deleted but kept in DB)
+    KILLED = 6    # Server-initiated termination (e.g., server shutdown)
 
 
 class User(SQLModel, table=True):

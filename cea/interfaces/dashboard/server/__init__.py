@@ -32,17 +32,17 @@ async def shutdown_worker_processes():
         logger.info("No running worker processes to clean up")
         return
 
-    logger.info(f"Canceling {len(job_ids)} running job(s) due to server shutdown")
+    logger.info(f"Killing {len(job_ids)} running job(s) due to server shutdown")
     logger.info("Note: Socket.IO notifications are best-effort and may not be delivered during shutdown")
 
     async with get_session_context() as session:
         for job_id in job_ids:
             try:
-                logger.info(f"Canceling job {job_id} (DB update + best-effort notification)")
-                await jobs.cancel_job(session, job_id, worker_processes, streams)
-                logger.info(f"Job {job_id} canceled successfully")
+                logger.info(f"Killing job {job_id} (DB update + best-effort notification)")
+                await jobs.kill_job(session, job_id, worker_processes, streams)
+                logger.info(f"Job {job_id} killed successfully")
             except Exception as e:
-                logger.error(f"Error canceling job {job_id} during shutdown: {e}")
+                logger.error(f"Error killing job {job_id} during shutdown: {e}")
                 # Continue with other jobs even if one fails
 
 
