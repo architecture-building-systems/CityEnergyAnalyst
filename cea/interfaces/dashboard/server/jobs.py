@@ -420,7 +420,8 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
 
 
 @router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses) -> JobInfo:
+async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses,
+                     streams: CEAStreams) -> JobInfo:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -429,6 +430,10 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         job.state = JobState.CANCELED
         job.error = "Canceled by user"
         job.end_time = get_current_time()
+
+        # Save any remaining stream output before clearing
+        job.stdout = "".join(await streams.pop(job_id, []))
+
         await session.commit()
         await session.refresh(job)
 
