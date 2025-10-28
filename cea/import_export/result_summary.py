@@ -978,6 +978,10 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
             # Concatenate all dataframes and aggregate by period
             combined_df = pd.concat(list_dataframes, ignore_index=True)
 
+            # Validate 'name' column exists
+            if 'name' not in combined_df.columns:
+                raise ValueError("Timeline aggregation requires 'name' column in all dataframes")
+
             # Get numeric columns to sum
             numeric_cols = [col for col in combined_df.columns if col not in ['name', 'date', 'period']
                            and pd.api.types.is_numeric_dtype(combined_df[col])]
@@ -986,7 +990,7 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
             aggregated_df = combined_df.groupby('period', as_index=False)[numeric_cols].sum()
 
             # Add concatenated building names
-            all_building_names = ''.join(sorted(combined_df['name'].unique()))
+            all_building_names = ','.join(sorted(combined_df['name'].unique()))
             aggregated_df['name'] = all_building_names
 
         else:
