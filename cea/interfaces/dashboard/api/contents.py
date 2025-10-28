@@ -452,7 +452,7 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
             temp_file_path = temp_file.name
 
             # Use compresslevel=1 for faster zipping, at the cost of compression ratio
-            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_DEFLATED, compresslevel=1) as zip_file:
+            with zipfile.ZipFile(temp_file, 'w', zipfile.ZIP_STORED) as zip_file:
                 base_path = Path(secure_path(Path(project_root, project).resolve()))
                 
                 # Collect all files first for batch processing
