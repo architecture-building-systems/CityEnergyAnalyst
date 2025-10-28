@@ -210,11 +210,13 @@ async def get_plot_cache(config: CEAConfig):
 
 
 async def get_worker_processes() -> AsyncDictCache:
-    return await get_dict_cache("worker_processes")
+    from cea.interfaces.dashboard.lib.cache.settings import WORKER_PROCESS_TTL
+    return await get_dict_cache("worker_processes", default_ttl=WORKER_PROCESS_TTL)
 
 
 async def get_streams() -> AsyncDictCache:
-    return await get_dict_cache("streams")
+    from cea.interfaces.dashboard.lib.cache.settings import STREAM_CACHE_TTL
+    return await get_dict_cache("streams", default_ttl=STREAM_CACHE_TTL)
 
 
 def get_server_url():

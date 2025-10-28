@@ -1,10 +1,18 @@
 from aiocache import BaseCache
+from typing import Optional
 
 
 class AsyncDictCache:
-    def __init__(self, cache: BaseCache, cache_key: str):
+    def __init__(self, cache: BaseCache, cache_key: str, default_ttl: Optional[int] = None):
+        """
+        Args:
+            cache: The underlying cache instance
+            cache_key: The key used to store the dictionary in the cache
+            default_ttl: Default TTL in seconds for cache entries. None means no expiration.
+        """
         self._cache = cache
         self._cache_key = cache_key
+        self._default_ttl = default_ttl
 
     async def get(self, item_id, default=None):
         # Try to get the entire dictionary from cache
@@ -23,13 +31,29 @@ class AsyncDictCache:
             pass
         return value
 
-    async def set(self, item_id, value):
+    async def set(self, item_id, value, ttl: Optional[int] = None):
+        """
+        Set an item in the cache dictionary.
+
+        Args:
+            item_id: The key for the item
+            value: The value to store
+            ttl: Optional TTL in seconds. If None, uses default_ttl. If both None, no expiration.
+        """
         # Atomic update pattern to prevent race conditions
         _dict = await self._cache.get(self._cache_key)
         if _dict is None:
             _dict = {}
         _dict[item_id] = value
-        await self._cache.set(self._cache_key, _dict)
+
+        # Use provided TTL, fall back to default, or no expiration
+        effective_ttl = ttl if ttl is not None else self._default_ttl
+
+        if effective_ttl is not None:
+            await self._cache.set(self._cache_key, _dict, ttl=effective_ttl)
+        else:
+            await self._cache.set(self._cache_key, _dict)
+
         return value
 
     async def delete(self, item_id):
