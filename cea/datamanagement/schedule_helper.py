@@ -49,23 +49,12 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
                                                                             list_var_values,
                                                                             building_typology_df)
 
-    # get list of uses only with a valid value in building_occupancy_df
-    list_uses = get_list_of_uses_in_case_study(building_typology_df)
+    # Get list of uses, validate, and calculate occupant densities
+    list_uses, occupant_densities, internal_loads = get_occupant_densities_from_archetypes(locator, building_typology_df)
 
-    internal_loads = pd.read_csv(locator.get_database_archetypes_use_type())
+    # Set index for building_typology_df (needed for downstream operations)
     building_typology_df.set_index('name', inplace=True)
-    internal_loads = internal_loads.set_index('use_type')
 
-    # Validate that all use types exist in the database
-    from cea.datamanagement.archetypes_mapper import verify_use_types
-    verify_use_types(list_uses, internal_loads, locator)
-
-    occupant_densities = {}
-    for use in list_uses:
-        if internal_loads.loc[use, 'Occ_m2p'] > 0.0:
-            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2p']
-        else:
-            occupant_densities[use] = 0.0
     lists_monthly_multiplier = []
     for building in buildings:
         schedule_new_data, schedule_complementary_data = calc_single_mixed_schedule(list_uses, occupant_densities, building_typology_df, internal_loads, building, schedule_data_all_uses, list_var_names, list_var_values, metadata)
@@ -236,6 +225,74 @@ def get_list_of_uses_in_case_study(building_typology_df):
 
     unique_uses = list(list_uses)
     return unique_uses
+
+
+def verify_use_types(list_uses, occ_densities_df):
+    """
+    Verify that all use types found in the case study exist in the USE_TYPES database.
+
+    :param list_uses: list of use types found in the case study
+    :type list_uses: list[str]
+    :param occ_densities_df: DataFrame containing the use types database (indexed by 'use_type')
+    :type occ_densities_df: pandas.DataFrame
+    :param locator: InputLocator instance to get the database path
+    :type locator: cea.inputlocator.InputLocator
+    :raises ValueError: if any use types are missing from the database
+    """
+    available_use_types = set(occ_densities_df.index)
+    case_study_use_types = set(list_uses)
+
+    if not case_study_use_types.issubset(available_use_types):
+        missing_use_types = case_study_use_types.difference(available_use_types)
+
+        # Create a helpful error message
+        error_message = (
+            f"The following use type(s) are not found in the database: {', '.join(sorted(missing_use_types))}\n\n"
+            f"Available use types in the database are:\n  {', '.join(sorted(available_use_types))}\n\n"
+            f"Please check your building typology file (zone.shp or zone.geojson) and ensure that:\n"
+            f"  1. The use types in columns 'use_type1', 'use_type2', 'use_type3' match the available use types\n"
+            f"  2. The use types are correctly spelled and use the same case\n"
+            f"  3. If you need a custom use type, add it to the database"
+        )
+        raise ValueError(error_message)
+
+
+def get_occupant_densities_from_archetypes(locator, building_typology_df):
+    """
+    Load archetypes database, validate use types, and calculate occupant densities.
+
+    This function consolidates common logic used across multiple modules to:
+    1. Get the list of uses from the building typology
+    2. Load the archetypes use type database
+    3. Validate that all use types exist in the database
+    4. Calculate occupant densities from Occ_m2p values
+
+    :param locator: InputLocator instance to get the database path
+    :type locator: cea.inputlocator.InputLocator
+    :param building_typology_df: dataframe of typology input
+    :type building_typology_df: pandas.DataFrame
+    :return: tuple of (list_uses, occupant_densities dict, internal_loads DataFrame)
+    :rtype: tuple[list, dict, pandas.DataFrame]
+    """
+    # Get list of uses only with a valid value in building_typology_df
+    list_uses = get_list_of_uses_in_case_study(building_typology_df)
+
+    # Load archetypes database
+    internal_loads = pd.read_csv(locator.get_database_archetypes_use_type())
+    internal_loads = internal_loads.set_index('use_type')
+
+    # Validate that all use types exist in the database
+    verify_use_types(list_uses, internal_loads)
+
+    # Calculate occupant densities
+    occupant_densities = {}
+    for use in list_uses:
+        if internal_loads.loc[use, 'Occ_m2p'] > 0.0:
+            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2p']
+        else:
+            occupant_densities[use] = 0.0
+
+    return list_uses, occupant_densities, internal_loads
 
 
 def get_lists_of_var_names_and_var_values(list_var_names, list_var_values, building_typology_df):

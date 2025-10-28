@@ -11,8 +11,7 @@ import pandas as pd
 import geopandas as gpd
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, \
-    get_lists_of_var_names_and_var_values
+from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_lists_of_var_names_and_var_values
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -67,21 +66,9 @@ def archetypes_mapper(locator,
     # Filter by selected buildings
     building_typology_df = building_typology_df[building_typology_df['name'].isin(list_buildings)]
 
-    # Validate list of uses in case study
-    list_uses = get_list_of_uses_in_case_study(building_typology_df)
-
-    # Get occupant densities from archetypes schedules
-    occupant_densities = {}
-    occ_densities = pd.read_csv(locator.get_database_archetypes_use_type()).set_index('use_type')
-
-    # Validate that all use types exist in the database
-    verify_use_types(list_uses, occ_densities, locator)
-
-    for use in list_uses:
-        if occ_densities.loc[use, 'Occ_m2p'] > 0.0:
-            occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2p']
-        else:
-            occupant_densities[use] = 0.0
+    # Get list of uses, validate, and calculate occupant densities
+    from cea.datamanagement.schedule_helper import get_occupant_densities_from_archetypes
+    list_uses, occupant_densities, _ = get_occupant_densities_from_archetypes(locator, building_typology_df)
 
     # Get properties about the construction and architecture
     if update_architecture_dbf:
@@ -404,37 +391,6 @@ def verify_building_standards(building_typology_df, db_standards):
     if not typology_standards.issubset(db_standards):
         diff = typology_standards.difference(db_standards)
         raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
-
-
-def verify_use_types(list_uses, occ_densities_df, locator):
-    """
-    Verify that all use types found in the case study exist in the USE_TYPES database.
-
-    :param list_uses: list of use types found in the case study
-    :type list_uses: list[str]
-    :param occ_densities_df: DataFrame containing the use types database (indexed by 'use_type')
-    :type occ_densities_df: pandas.DataFrame
-    :param locator: InputLocator instance to get the database path
-    :type locator: cea.inputlocator.InputLocator
-    :raises ValueError: if any use types are missing from the database
-    """
-    available_use_types = set(occ_densities_df.index)
-    case_study_use_types = set(list_uses)
-
-    if not case_study_use_types.issubset(available_use_types):
-        missing_use_types = case_study_use_types.difference(available_use_types)
-
-        # Create a helpful error message
-        error_message = (
-            f"The following use type(s) are not found in the database: {', '.join(sorted(missing_use_types))}\n\n"
-            f"Available use types in the database are:\n  {', '.join(sorted(available_use_types))}\n\n"
-            f"Please check your building typology file (zone.shp or zone.geojson) and ensure that:\n"
-            f"  1. The use types in columns 'use_type1', 'use_type2', 'use_type3' match the available use types\n"
-            f"  2. The use types are correctly spelled and use the same case\n"
-            f"  3. If you need a custom use type, add it to the database at:\n"
-            f"     {locator.get_database_archetypes_use_type()}"
-        )
-        raise ValueError(error_message)
 
 
 def main(config: cea.config.Configuration):
