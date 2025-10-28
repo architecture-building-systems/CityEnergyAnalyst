@@ -58,28 +58,6 @@ jobs:
           git commit -m "Auto-update config.pyi from config.py changes"
           git push
 
-      - name: Create Pull Request (on PR)
-        if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Auto-update config.pyi from config.py changes"
-          title: "Update config.pyi type stubs"
-          body: |
-            This PR was automatically generated because changes were detected in:
-            - `cea/config.py`
-            - `cea/default.config`
-            - `cea/utilities/config_type_generator.py`
-
-            The `config.pyi` type stub file has been regenerated to reflect these changes.
-
-            **Please review the changes and merge if they look correct.**
-          branch: auto-update-config-stubs-${{ github.event.pull_request.number }}
-          delete-branch: true
-          labels: |
-            automated
-            type-stubs
-
       - name: Comment on PR if changes needed
         if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
