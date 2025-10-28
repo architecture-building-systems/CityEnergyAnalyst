@@ -17,12 +17,12 @@ logger = getCEAServerLogger("cea-server-shutdown")
 
 async def shutdown_worker_processes():
     """
-    When shutting down the server, cancel all running jobs and attempt to notify users.
+    When shutting down the server, kill all running jobs and attempt to notify users.
 
     During SIGTERM shutdown, Socket.IO connections are typically already closed by the time
-    this handler runs. Jobs are always marked as CANCELED in the database, and Socket.IO
+    this handler runs. Jobs are always marked as KILLED in the database, and Socket.IO
     notifications are attempted on a best-effort basis (will likely fail since connections
-    are closed). Users will see the CANCELED status when they reconnect. See issue #2408.
+    are closed). Users will see the KILLED status when they reconnect. See issue #2408.
     """
     worker_processes = await get_worker_processes()
     streams = await get_streams()
