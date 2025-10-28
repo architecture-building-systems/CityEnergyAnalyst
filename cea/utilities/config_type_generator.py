@@ -1,7 +1,22 @@
 #!/usr/bin/env python
 """
 Utility to generate type stubs for cea.config based on default.config
-Run this script to regenerate config.pyi when default.config changes
+
+This script automatically generates the config.pyi type stub file by:
+1. Parsing default.config to extract all sections and parameters
+2. Inspecting the cea.config module for classes, methods, and constants
+3. Inferring types from Parameter class decode methods
+4. Generating typed section classes with proper type hints
+
+Run this script manually when default.config changes:
+    python -m cea.utilities.config_type_generator
+
+Or it will run automatically via GitHub Actions when:
+- cea/config.py changes
+- cea/default.config changes
+- cea/utilities/config_type_generator.py changes
+
+See .github/workflows/update-config-stubs.yml for the automation workflow.
 """
 
 import configparser
