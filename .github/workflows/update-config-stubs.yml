@@ -51,7 +51,23 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add cea/config.pyi
           git commit -m "Auto-update config.pyi from config.py changes"
-          git push
+
+          # Push with retry logic in case of conflicts
+          # This should rarely fail on master, but adding explicit handling for clarity
+          max_retries=3
+          retry_count=0
+          until git push || [ $retry_count -eq $max_retries ]; do
+            retry_count=$((retry_count + 1))
+            echo "Push failed, attempt $retry_count of $max_retries"
+            if [ $retry_count -lt $max_retries ]; then
+              echo "Pulling latest changes and retrying..."
+              git pull --rebase
+            else
+              echo "::error::Failed to push config.pyi changes after $max_retries attempts"
+              exit 1
+            fi
+          done
+          echo "Successfully pushed config.pyi changes"
 
       - name: Comment on PR if changes needed
         if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
