@@ -11,7 +11,8 @@ import pandas as pd
 import geopandas as gpd
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_lists_of_var_names_and_var_values
+from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_lists_of_var_names_and_var_values, \
+    get_occupant_densities_from_archetypes
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -67,7 +68,6 @@ def archetypes_mapper(locator,
     building_typology_df = building_typology_df[building_typology_df['name'].isin(list_buildings)]
 
     # Get list of uses, validate, and calculate occupant densities
-    from cea.datamanagement.schedule_helper import get_occupant_densities_from_archetypes
     list_uses, occupant_densities, _ = get_occupant_densities_from_archetypes(locator, building_typology_df)
 
     # Get properties about the construction and architecture

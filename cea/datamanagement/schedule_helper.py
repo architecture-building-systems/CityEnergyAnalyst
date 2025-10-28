@@ -235,8 +235,6 @@ def verify_use_types(list_uses, occ_densities_df):
     :type list_uses: list[str]
     :param occ_densities_df: DataFrame containing the use types database (indexed by 'use_type')
     :type occ_densities_df: pandas.DataFrame
-    :param locator: InputLocator instance to get the database path
-    :type locator: cea.inputlocator.InputLocator
     :raises ValueError: if any use types are missing from the database
     """
     available_use_types = set(occ_densities_df.index)
