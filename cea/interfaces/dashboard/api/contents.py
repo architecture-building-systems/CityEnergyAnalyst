@@ -15,7 +15,6 @@ from starlette.responses import StreamingResponse
 from typing_extensions import Annotated, Literal
 
 import cea.config
-import cea.inputlocator
 from cea.datamanagement.format_helper.cea4_migrate import migrate_cea3_to_cea4
 from cea.datamanagement.format_helper.cea4_migrate_db import migrate_cea3_to_cea4_db
 from cea.datamanagement.format_helper.cea4_verify import cea4_verify
