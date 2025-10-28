@@ -531,7 +531,7 @@ def _force_kill_process(process: psutil.Process, pid: int, job_id: str):
         logger.warning(f"Worker process {pid} did not terminate within timeout after kill()")
 
 
-async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False):
+async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False, timeout: int = 3):
     """
     Clean up worker process for a job. Checks if process still exists and terminates it if needed.
     Always removes the job from worker_processes tracking.
@@ -541,6 +541,8 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         worker_processes: The worker processes tracking store
         force: If True, immediately force kill without graceful termination attempt.
                Use when user cancels a job. Default False (graceful shutdown for completed jobs).
+        timeout: Time in seconds to wait for graceful termination before force killing.
+                 Only used if force is False. Default is 3 seconds.
 
     Usage:
         - cleanup_worker_process(job_id, wp, force=False) -> Jobs that complete naturally (SUCCESS/ERROR)
@@ -566,9 +568,9 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
                 logger.info(f"Worker process {pid} for job {job_id} still running, terminating gracefully...")
                 process.terminate()
 
-                # Wait up to 3 seconds for graceful termination
+                # Wait up to timeout seconds for graceful termination
                 try:
-                    process.wait(timeout=3)
+                    process.wait(timeout=timeout)
                     logger.info(f"Worker process {pid} terminated gracefully")
                 except psutil.TimeoutExpired:
                     # Force kill if graceful termination fails
