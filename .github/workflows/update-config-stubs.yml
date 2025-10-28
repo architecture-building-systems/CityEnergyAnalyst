@@ -23,8 +23,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup pixi
         uses: prefix-dev/setup-pixi@v0.8.14
