@@ -56,6 +56,10 @@ def calc_mixed_schedule(locator, building_typology_df, list_var_names=None, list
     building_typology_df.set_index('name', inplace=True)
     internal_loads = internal_loads.set_index('use_type')
 
+    # Validate that all use types exist in the database
+    from cea.datamanagement.archetypes_mapper import verify_use_types
+    verify_use_types(list_uses, internal_loads, locator)
+
     occupant_densities = {}
     for use in list_uses:
         if internal_loads.loc[use, 'Occ_m2p'] > 0.0:
