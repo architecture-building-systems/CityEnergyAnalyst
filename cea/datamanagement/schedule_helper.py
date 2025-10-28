@@ -285,12 +285,10 @@ def get_occupant_densities_from_archetypes(locator, building_typology_df):
     verify_use_types(list_uses, internal_loads)
 
     # Calculate occupant densities
-    occupant_densities = {}
-    for use in list_uses:
-        if internal_loads.loc[use, 'Occ_m2p'] > 0.0:
-            occupant_densities[use] = 1.0 / internal_loads.loc[use, 'Occ_m2p']
-        else:
-            occupant_densities[use] = 0.0
+    # Filter to only the use types present in the case study
+    use_types_data = internal_loads.loc[list_uses, 'Occ_m2p']
+    occupant_densities_values = np.where(use_types_data > 0.0, 1.0 / use_types_data, 0.0)
+    occupant_densities = dict(zip(list_uses, occupant_densities_values))
 
     return list_uses, occupant_densities, internal_loads
 
