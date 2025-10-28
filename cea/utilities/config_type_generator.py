@@ -516,6 +516,41 @@ def _build_section_class(section_name: str, param_attrs: List[str], param_overlo
     return "\n".join([f"class {class_name}(Section):", _indent("\n".join(body_lines))])
 
 
+def _get_module_level_constants() -> List[str]:
+    """Extract module-level constants from cea.config"""
+    config_mod = importlib.import_module("cea.config")
+
+    constants = []
+    for name in dir(config_mod):
+        # Skip private/dunder attributes and imported modules
+        if name.startswith('_'):
+            continue
+
+        obj = getattr(config_mod, name)
+
+        # Skip classes, functions, and imported modules
+        if inspect.isclass(obj) or inspect.isfunction(obj) or inspect.ismodule(obj):
+            continue
+
+        # Only include uppercase constants (Python convention)
+        if name.isupper():
+            # Infer type from the value
+            if isinstance(obj, str):
+                type_hint = "str"
+            elif isinstance(obj, int):
+                type_hint = "int"
+            elif isinstance(obj, float):
+                type_hint = "float"
+            elif isinstance(obj, bool):
+                type_hint = "bool"
+            else:
+                type_hint = "Any"
+
+            constants.append(f"{name}: {type_hint}")
+
+    return constants
+
+
 def generate_config_stub():
     """Generate comprehensive type stub file for cea.config"""
 
@@ -530,6 +565,9 @@ def generate_config_stub():
 
     config_parser = configparser.ConfigParser()
     config_parser.read(default_config_path)
+
+    # Extract module-level constants
+    module_constants = _get_module_level_constants()
 
     section_classes: List[str] = []
     section_attrs: List[str] = []
@@ -612,6 +650,17 @@ def generate_config_stub():
         "from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal",
         "import configparser",
         "",
+    ]
+
+    # Add module-level constants if any
+    if module_constants:
+        parts.extend([
+            "# Module-level constants",
+            *module_constants,
+            "",
+        ])
+
+    parts.extend([
         _generate_configuration_class_stub(section_attrs, general_params, section_overloads, general_overloads),
         "",
         _generate_section_class_stub(),
@@ -626,7 +675,7 @@ def generate_config_stub():
         "",
         "def config_identifier(python_identifier: str) -> str: ...",
         "",
-    ]
+    ])
 
     stub_content = "\n".join(parts)
 
