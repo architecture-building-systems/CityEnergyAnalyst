@@ -11,6 +11,8 @@ as an URL for locating the /server/jobs api.
 """
 
 import sys
+import time
+import logging
 from typing import Any
 
 import requests
@@ -28,6 +30,55 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.interfaces.dashboard.server.jobs import JobInfo
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
+
+def post_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
+                   backoff_factor: float = 2.0, timeout: float = 3.0, **kwargs) -> bool:
+    """
+    Make a POST request with retry logic and exponential backoff.
+
+    Args:
+        url: The URL to POST to
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 0.5)
+        backoff_factor: Multiplier for delay between retries (default: 2.0)
+        timeout: Request timeout in seconds (default: 3.0)
+        **kwargs: Additional arguments to pass to requests.post()
+
+    Returns:
+        True if successful, False if all retries failed
+    """
+    delay = initial_delay
+    last_exception = None
+
+    for attempt in range(max_retries + 1):  # +1 to include the initial attempt
+        try:
+            response = requests.post(url, timeout=timeout, **kwargs)
+            response.raise_for_status()  # Raise exception for bad status codes
+
+            if attempt > 0:
+                logger.debug(f"Successfully posted to '{url}' after {attempt} retry attempt(s)")
+            return True
+
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                logger.warning(
+                    f"Failed to POST to '{url}' (attempt {attempt + 1}/{max_retries + 1}): {e}. "
+                    f"Retrying in {delay:.2f}s..."
+                )
+                time.sleep(delay)
+                delay *= backoff_factor
+            else:
+                logger.error(
+                    f"Failed to POST to '{url}' after {max_retries + 1} attempts. "
+                    f"Last error: {last_exception}"
+                )
+
+    return False
 
 
 def consume_nowait(q, msg):
@@ -52,13 +103,59 @@ def consume_nowait(q, msg):
     return msg
 
 
+def put_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
+                   backoff_factor: float = 2.0, timeout: float = 3.0, **kwargs) -> bool:
+    """
+    Make a PUT request with retry logic and exponential backoff.
+
+    Args:
+        url: The URL to PUT to
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 0.5)
+        backoff_factor: Multiplier for delay between retries (default: 2.0)
+        timeout: Request timeout in seconds (default: 3.0)
+        **kwargs: Additional arguments to pass to requests.put()
+
+    Returns:
+        True if successful, False if all retries failed
+    """
+    delay = initial_delay
+    last_exception = None
+
+    for attempt in range(max_retries + 1):  # +1 to include the initial attempt
+        try:
+            response = requests.put(url, timeout=timeout, **kwargs)
+            response.raise_for_status()  # Raise exception for bad status codes
+
+            if attempt > 0:
+                logger.debug(f"Successfully put to '{url}' after {attempt} retry attempt(s)")
+            return True
+
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                logger.warning(
+                    f"Failed to PUT to '{url}' (attempt {attempt + 1}/{max_retries + 1}): {e}. "
+                    f"Retrying in {delay:.2f}s..."
+                )
+                time.sleep(delay)
+                delay *= backoff_factor
+            else:
+                logger.error(
+                    f"Failed to PUT to '{url}' after {max_retries + 1} attempts. "
+                    f"Last error: {last_exception}"
+                )
+
+    return False
+
+
 def stream_poster(jobid, server, queue):
     """Post items from queue until a sentinel (the EOFError class object) is read."""
     msg = queue.get(block=True, timeout=None)  # block until first message
 
     while msg is not EOFError:
         msg = consume_nowait(queue, msg)
-        requests.put(f"{server}/streams/write/{jobid}", data=msg)
+        put_with_retry(f"{server}/streams/write/{jobid}", data=msg)
         msg = queue.get(block=True, timeout=None)  # block until next message
 
 
@@ -124,6 +221,9 @@ def run_job(job: JobInfo, suppress_warnings: bool = False):
             warnings.simplefilter("ignore", FutureWarning)
             warnings.simplefilter("ignore", DeprecationWarning)
 
+            # Hide user warnings for now
+            warnings.simplefilter("ignore", UserWarning)
+
             output = script(**parameters)
     else:
         output = script(**parameters)
@@ -147,19 +247,19 @@ def read_parameters(job: JobInfo):
 
 
 def post_started(jobid, server):
-    requests.post(f"{server}/jobs/started/{jobid}")
+    post_with_retry(f"{server}/jobs/started/{jobid}")
 
 
 def post_success(jobid: str, server: str, output: Any = None):
     # Close streams before sending success
     close_streams()
-    requests.post(f"{server}/jobs/success/{jobid}", json={"output": output})
+    post_with_retry(f"{server}/jobs/success/{jobid}", json={"output": output})
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
     # Close streams before sending error
     close_streams()
-    requests.post(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
+    post_with_retry(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
 def worker(jobid: str, server: str, suppress_warnings: bool = False):

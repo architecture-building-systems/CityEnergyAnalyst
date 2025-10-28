@@ -1,6 +1,7 @@
 """
 jobs: maintain a list of jobs to be simulated.
 """
+import asyncio
 import json
 import os
 import re
@@ -29,6 +30,54 @@ from cea.interfaces.dashboard.lib.socketio import sio
 # FIXME: Add auth checks after giving workers access token
 router = APIRouter()
 logger = getCEAServerLogger("cea-server-jobs")
+
+
+async def emit_with_retry(event: str, data: Any, room: str | None = None, max_retries: int = 3,
+                          initial_delay: float = 0.1, backoff_factor: float = 2.0):
+    """
+    Emit a socketio event with retry logic and exponential backoff.
+
+    Args:
+        event: The event name to emit
+        data: The data to send with the event
+        room: The room to emit to (optional)
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 0.1)
+        backoff_factor: Multiplier for delay between retries (default: 2.0)
+
+    Returns:
+        True if successful, False if all retries failed
+    """
+    delay = initial_delay
+    last_exception = None
+
+    for attempt in range(max_retries + 1):  # +1 to include the initial attempt
+        try:
+            if room:
+                await sio.emit(event, data, room=room)
+            else:
+                await sio.emit(event, data)
+
+            if attempt > 0:
+                logger.debug(f"Successfully emitted '{event}' after {attempt} retry attempt(s)")
+            return True
+
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                logger.warning(
+                    f"Failed to emit '{event}' (attempt {attempt + 1}/{max_retries + 1}): {e}. "
+                    f"Retrying in {delay:.2f}s..."
+                )
+                await asyncio.sleep(delay)
+                delay *= backoff_factor
+            else:
+                logger.error(
+                    f"Failed to emit '{event}' after {max_retries + 1} attempts. "
+                    f"Last error: {last_exception}"
+                )
+
+    return False
 
 
 class JobError(BaseModel):
@@ -208,7 +257,7 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     await session.commit()
     await session.refresh(job)
 
-    await sio.emit("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    await emit_with_retry("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
     return job
 
 
@@ -223,13 +272,14 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         job.start_time = get_current_time()
         await session.commit()
         await session.refresh(job)
-
-        await sio.emit("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 @router.post("/success/{job_id}")
@@ -252,15 +302,16 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        job_info = job.model_dump(mode='json')
-        job_info["output"] = output.output
-        await sio.emit("cea-worker-success", job_info, room=f"user-{job.created_by}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    job_info = job.model_dump(mode='json')
+    job_info["output"] = output.output
+    await emit_with_retry("cea-worker-success", job_info, room=f"user-{job.created_by}")
+    return job
 
 
 @router.post("/error/{job_id}")
@@ -287,16 +338,17 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        await sio.emit("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-
-        logger.warning(f"Error found in job {job_id}: {job.error}")
-        logger.error(f"stacktrace:\n{job.stderr}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+
+    logger.warning(f"Error found in job {job_id}: {job.error}")
+    logger.error(f"stacktrace:\n{job.stderr}")
+    return job
 
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
@@ -350,13 +402,14 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        await sio.emit("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Emit event outside try-except so emit failures don't cause rollback
+    await emit_with_retry("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])

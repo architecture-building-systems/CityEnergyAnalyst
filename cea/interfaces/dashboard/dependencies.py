@@ -20,7 +20,7 @@ from cea.interfaces.dashboard.lib.database.models import LOCAL_USER_ID, Project,
 from cea.interfaces.dashboard.lib.database.session import SessionDep, get_session_context
 from cea.interfaces.dashboard.lib.database.settings import database_settings
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
-from cea.interfaces.dashboard.settings import get_settings, LimitSettings
+from cea.interfaces.dashboard.settings import Settings, get_settings, LimitSettings
 from cea.plots.cache import PlotCache
 
 IGNORE_CONFIG_SECTIONS = {"server", "development", "schemas"}
@@ -331,7 +331,7 @@ CEAWorkerProcesses = Annotated[AsyncDictCache, Depends(get_worker_processes)]
 CEAStreams = Annotated[AsyncDictCache, Depends(get_streams)]
 CEAServerUrl = Annotated[str, Depends(get_server_url)]
 CEAProjectRoot = Annotated[Optional[str], Depends(get_project_root)]
-CEAServerSettings = Annotated[dict, Depends(get_settings)]
+CEAServerSettings = Annotated[Settings, Depends(get_settings)]
 CEAAuthClient = Annotated[AuthClient, Depends(get_auth_client)]
 CEAServerLimits = Annotated[LimitSettings, Depends(get_limits)]
 
