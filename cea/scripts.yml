@@ -270,10 +270,10 @@ Life Cycle Analysis:
 
       **Operational emissions** include energy supply system operation for heating, cooling, electricity, and domestic hot water.
 
-      Outputs include total annual emissions (kgCO₂e/year), emissions intensity (kgCO₂e/m²/year), optional hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
+      Outputs include total annual emissions (kgCO2e/year), emissions intensity (kgCO2e/m2/year), optional hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
 
       **[Optional]**: For location-specific grid emission data, download hourly carbon intensity datasets from [Electricity Maps](https://portal.electricitymaps.com/datasets), 
-      and set column name to "Carbon intensity gCO₂eq/kWh (direct)" in the parameters.
+      and set column name to "Carbon intensity gCO2eq/kWh (direct)" in the parameters.
       _Ensure proper citation and compliance with their terms of use._
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main

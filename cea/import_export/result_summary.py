@@ -969,24 +969,49 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
         # Aggregate DataFrames with the same columns
         if not list_dataframes:
             return None
-            
-        # Additional validation for consistent structure
-        if len(set(len(df) for df in list_dataframes)) > 1:
-            print("Warning: DataFrames have different numbers of rows, which may affect aggregation accuracy")
-            
-        aggregated_df = list_dataframes[0].copy()
-        
-        # Initialize aggregated_df with zeros (except date and name columns)
-        for col in aggregated_df.columns:
-            if col not in ['date', 'name', 'period']:
-                aggregated_df[col] = 0
 
-        # Sum all values first
-        for df in list_dataframes:
+        # Check if 'period' column exists for timeline aggregation
+        has_period_column = all('period' in df.columns for df in list_dataframes)
+
+        if has_period_column:
+            # Timeline aggregation: buildings may have different start years
+            # Concatenate all dataframes and aggregate by period
+            combined_df = pd.concat(list_dataframes, ignore_index=True)
+
+            # Validate 'name' column exists
+            if 'name' not in combined_df.columns:
+                raise ValueError("Timeline aggregation requires 'name' column in all dataframes")
+
+            # Get numeric columns to sum
+            numeric_cols = [col for col in combined_df.columns if col not in ['name', 'date', 'period']
+                           and pd.api.types.is_numeric_dtype(combined_df[col])]
+
+            # Aggregate by period, summing numeric columns
+            aggregated_df = combined_df.groupby('period', as_index=False)[numeric_cols].sum()
+
+            # Add concatenated building names
+            all_building_names = ','.join(sorted(combined_df['name'].unique()))
+            aggregated_df['name'] = all_building_names
+
+        else:
+            # Legacy behavior for non-timeline data with same row counts
+            # Additional validation for consistent structure
+            if len(set(len(df) for df in list_dataframes)) > 1:
+                print("Warning: DataFrames have different numbers of rows, which may affect aggregation accuracy")
+
+            aggregated_df = list_dataframes[0].copy()
+
+            # Initialize aggregated_df with zeros (except date and name columns)
             for col in aggregated_df.columns:
-                # Only sum numeric columns, skip string columns like 'name' or 'date'
-                if pd.api.types.is_numeric_dtype(aggregated_df[col]) and pd.api.types.is_numeric_dtype(df[col]):
-                    aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
+                if col not in ['date', 'name', 'period']:
+                    aggregated_df[col] = 0
+
+            # Sum all values first
+            for df in list_dataframes:
+                for col in aggregated_df.columns:
+                    # Only sum numeric columns, skip string columns like 'name' or 'date'
+                    if pd.api.types.is_numeric_dtype(aggregated_df[col]) and pd.api.types.is_numeric_dtype(df[col]):
+                        aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
         
         # Then apply appropriate operations
         for col in aggregated_df.columns:
