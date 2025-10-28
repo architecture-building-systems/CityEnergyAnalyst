@@ -39,8 +39,14 @@ class AsyncDictCache:
             item_id: The key for the item
             value: The value to store
             ttl: Optional TTL in seconds. If None, uses default_ttl. If both None, no expiration.
+
+        Note:
+            This operation is NOT atomic. Concurrent writes to different items in the same
+            cache key can cause lost updates (read-modify-write race condition). In practice,
+            this is rarely an issue since each item_id is typically written by a single source.
+            For truly concurrent scenarios, consider using per-item cache keys or distributed locking.
         """
-        # Atomic update pattern to prevent race conditions
+        # Read-modify-write pattern (not atomic across concurrent operations)
         _dict = await self._cache.get(self._cache_key)
         if _dict is None:
             _dict = {}
