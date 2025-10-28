@@ -493,6 +493,44 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+def _force_kill_process(process: psutil.Process, pid: int, job_id: str):
+    """
+    Force kill a process and its children, waiting to reap them to prevent zombies.
+
+    Args:
+        process: The psutil.Process object
+        pid: Process ID (for logging)
+        job_id: Job ID (for logging)
+    """
+    logger.warning(f"Force killing worker process {pid} and children for job {job_id}")
+
+    # Kill all children first
+    children = process.children(recursive=True)
+    for child in children:
+        logger.warning(f"-- killing child process {child.pid}")
+        try:
+            child.kill()
+            child.wait(timeout=1)  # Wait to reap and prevent zombies
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.AccessDenied as e:
+            logger.warning(f"Access denied killing child process {child.pid}: {e}")
+        except psutil.TimeoutExpired:
+            logger.debug(f"Child process {child.pid} did not terminate within timeout")
+
+    # Kill main process
+    try:
+        process.kill()
+        process.wait(timeout=3)  # Wait to reap and prevent zombies
+        logger.info(f"Worker process {pid} force killed")
+    except psutil.NoSuchProcess:
+        pass
+    except psutil.AccessDenied as e:
+        logger.warning(f"Access denied killing worker process {pid}: {e}")
+    except psutil.TimeoutExpired:
+        logger.warning(f"Worker process {pid} did not terminate within timeout after kill()")
+
+
 async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False):
     """
     Clean up worker process for a job. Checks if process still exists and terminates it if needed.
@@ -522,16 +560,7 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         if process.is_running():
             if force:
                 # Immediate force kill for canceled jobs
-                logger.warning(f"Force killing worker process {pid} and children for job {job_id}")
-                children = process.children(recursive=True)
-                for child in children:
-                    logger.warning(f"-- killing child process {child.pid}")
-                    try:
-                        child.kill()
-                    except psutil.NoSuchProcess:
-                        pass
-                process.kill()
-                logger.info(f"Worker process {pid} force killed")
+                _force_kill_process(process, pid, job_id)
             else:
                 # Graceful termination for completed jobs
                 logger.info(f"Worker process {pid} for job {job_id} still running, terminating gracefully...")
@@ -544,15 +573,7 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
                 except psutil.TimeoutExpired:
                     # Force kill if graceful termination fails
                     logger.warning(f"Worker process {pid} did not terminate gracefully, force killing...")
-                    children = process.children(recursive=True)
-                    for child in children:
-                        logger.warning(f"-- killing child process {child.pid}")
-                        try:
-                            child.kill()
-                        except psutil.NoSuchProcess:
-                            pass
-                    process.kill()
-                    logger.info(f"Worker process {pid} force killed after timeout")
+                    _force_kill_process(process, pid, job_id)
         else:
             logger.debug(f"Worker process {pid} for job {job_id} already terminated")
 
