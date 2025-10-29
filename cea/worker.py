@@ -39,31 +39,34 @@ logger = logging.getLogger(__name__)
 shutdown_requested = False
 
 
-def signal_handler(signum, frame):
+def signal_handler(signum, _):
     """
     Handle termination signals (SIGTERM, SIGINT) gracefully.
 
-    This allows the worker process to clean up resources (close streams,
-    flush buffers) before exiting, which is especially important in Docker
-    environments where proper signal handling prevents zombie processes.
+    IMPORTANT: Signal handlers must be minimal and avoid unsafe operations like:
+    - Thread operations (join, queue operations)
+    - I/O operations (file writes, network calls)
+    - Complex object operations
+
+    This handler only sets a flag and converts the signal to SystemExit.
+    The actual cleanup happens in the worker() finally block.
 
     Args:
         signum: Signal number received
-        frame: Current stack frame
+        frame: Current stack frame (unused but required by signal.signal signature)
     """
     global shutdown_requested
     signal_name = signal.Signals(signum).name if hasattr(signal, 'Signals') else str(signum)
-    logger.info(f"Worker received signal {signal_name} ({signum}), initiating graceful shutdown...")
+
+    # Minimal logging - print is safer in signal handlers than logger
+    print(f"\nWorker received signal {signal_name} ({signum}), shutting down...", file=sys.__stderr__)
+
+    # Set flag for any code that checks it
     shutdown_requested = True
 
-    # Close streams to flush any remaining output
-    try:
-        close_streams()
-    except Exception as e:
-        logger.error(f"Error closing streams during signal handler: {e}")
-
-    # Exit gracefully
-    sys.exit(0)
+    # Raise SystemExit to trigger finally block cleanup
+    # This is safer than calling sys.exit() or doing cleanup here
+    raise SystemExit(0)
 
 
 def post_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
@@ -299,6 +302,11 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
 
     Registers signal handlers for SIGTERM and SIGINT to ensure proper cleanup
     when the worker process is terminated (e.g., job cancellation or server shutdown).
+
+    Signal handling flow:
+    1. Signal received -> signal_handler() raises SystemExit(0)
+    2. SystemExit caught here, treated as cancellation (not error)
+    3. finally block ensures streams are always closed
     """
     # Register signal handlers for graceful shutdown
     signal.signal(signal.SIGTERM, signal_handler)
@@ -312,13 +320,27 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
         post_started(jobid, server)
         output = run_job(job, suppress_warnings)
         post_success(jobid, server, output)
-    except (SystemExit, Exception) as e:
-        message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
+    except SystemExit as e:
+        # SystemExit from signal handler (graceful shutdown) or sys.exit() calls
+        # Exit code 0 means graceful shutdown (signal), non-zero means error
+        if e.code == 0:
+            # Graceful shutdown via signal - don't report as error
+            # The server already knows the job was cancelled
+            print(f"Job [{jobid}]: Graceful shutdown (signal received)")
+        else:
+            # Explicit sys.exit() with error code from job script
+            message = f"Job [{jobid}]: exited with code {e.code}"
+            print(f"\nERROR: {message}")
+            exc = traceback.format_exc()
+            post_error(message, exc, jobid, server)
+    except Exception as e:
+        # Actual errors during job execution
+        message = str(e)
         print(f"\nERROR: {message}")
         exc = traceback.format_exc()
         post_error(message, exc, jobid, server)
     finally:
-        # Ensure streams are closed
+        # Ensure streams are always closed, even after signal
         close_streams()
 
 
