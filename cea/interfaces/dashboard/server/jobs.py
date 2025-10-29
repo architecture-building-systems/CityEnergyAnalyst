@@ -423,6 +423,19 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
             detail="You are not authorized to start this job"
         )
 
+    # Validate job state: must be PENDING and not deleted
+    if job.state != JobState.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot start job: job is not pending (current state: {job.state.name})"
+        )
+
+    if job.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot start job: job has been deleted"
+        )
+
     # Use validated parameters in command
     command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
     logger.debug(f"command: {command}")
@@ -435,7 +448,12 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
 @router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
                      worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfo:
-    job = await session.get(JobInfo, job_id)
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
+
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -445,6 +463,20 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to cancel this job"
+        )
+
+    # Validate state: can only cancel PENDING or STARTED jobs (protected by row lock)
+    if job.state not in (JobState.PENDING, JobState.STARTED):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot cancel job: job is {job.state.name}"
+        )
+
+    # Check if job is deleted
+    if job.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot cancel job: job has been deleted"
         )
 
     try:
@@ -527,9 +559,15 @@ async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> Jo
     Mark a job as deleted (soft delete). The job row is not removed from the database,
     and the original completion state (SUCCESS/ERROR/CANCELED/KILLED) is preserved.
     Only the deleted_at and deleted_by fields are set. This is only possible if the job is not running.
+
+    Uses row-level locking to prevent TOCTOU race conditions.
     """
     try:
-        job = await session.get(JobInfo, job_id)
+        # Lock the row to prevent concurrent modifications (TOCTOU protection)
+        result = await session.execute(
+            select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+        )
+        job = result.scalar_one_or_none()
     except sqlalchemy.exc.OperationalError as e:
         logger.error(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
