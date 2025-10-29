@@ -11,6 +11,7 @@ import cea.scripts
 from cea.interfaces.dashboard.lib.database.session import (get_engine, get_session_context, get_connection_props,
                                                            database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.settings import get_settings
 
 
 def determine_db_type():
@@ -126,15 +127,38 @@ async def initialize_db():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
+async def ensure_local_user():
+    """
+    Create default local user for development mode.
+    Only runs in local mode - production uses external auth (e.g., Neon DB).
+    """
+    settings = get_settings()
+    if not settings.local:
+        logger.debug("Skipping local user creation (not in local mode)")
+        return
+
+    logger.info("Checking for local user...")
+    async with get_session_context() as session:
+        result = await session.execute(select(User).where(User.id == LOCAL_USER_ID))
+        user = result.scalar()
+        if user is None:
+            logger.info(f"Creating default local user: {LOCAL_USER_ID}")
+            user = User(id=LOCAL_USER_ID)
+            session.add(user)
+            await session.commit()
+        else:
+            logger.debug(f"Local user already exists: {LOCAL_USER_ID}")
+
 async def create_db_and_tables():
-    """Initialize database tables and run migrations if needed"""    
+    """Initialize database tables and run migrations if needed"""
     if not database_settings.init_tables:
         logger.debug("Skipping database initialization")
         return
-    
+
     logger.info("Preparing database...")
     await initialize_db()
     await migrate_db()
+    await ensure_local_user()
 
 async def migrate_db():
     # TODO: Remove once in release new version
@@ -192,14 +216,3 @@ async def migrate_db():
                     await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_by VARCHAR"))
                 await conn.commit()
                 logger.info("Successfully added 'deleted_by' column")
-
-
-    logger.info("Using local user...")
-    async with get_session_context() as session:
-        result = await session.execute(select(User).where(User.id == LOCAL_USER_ID))
-        user = result.scalar()
-        if user is None:
-            logger.warning("Default local user not found. Creating...")
-            user = User(id=LOCAL_USER_ID)
-            session.add(user)
-            await session.commit()
