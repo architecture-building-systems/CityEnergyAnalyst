@@ -200,21 +200,32 @@ class JobServerStream:
         self.stream = stream  # keep the original STDOUT around for debugging purposes
         self.queue = queue.Queue()
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
+        # Make thread daemon so it doesn't block process exit on signal
+        # This is critical for Docker/Linux where non-daemon threads prevent graceful shutdown
+        self.stream_poster.daemon = True
         self.stream_poster.start()
 
     def close(self, timeout: float = 5.0):
         """
         Send sentinel that we're done writing and wait for thread to finish.
 
+        Since the thread is a daemon, process exit won't be blocked even if the thread
+        is still running. However, we still try to wait for it to finish cleanly.
+
         Args:
             timeout: Maximum time in seconds to wait for thread to finish (default: 5.0)
         """
-        self.queue.put(EOFError)
+        try:
+            self.queue.put(EOFError, block=False)
+        except queue.Full:
+            # Queue is full, thread likely blocked - that's okay since it's daemon
+            pass
+
         self.stream_poster.join(timeout=timeout)
 
-        # If thread didn't finish in time, it's likely blocked on I/O or shutdown
+        # If thread didn't finish in time, that's okay - it's daemon so won't block exit
         if self.stream_poster.is_alive():
-            logger.warning(f"Stream poster thread did not finish within {timeout}s timeout")
+            logger.debug(f"Stream poster thread still alive after {timeout}s, but won't block process exit (daemon thread)")
 
     def write(self, value):
         self.queue.put_nowait(value)

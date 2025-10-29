@@ -57,11 +57,13 @@
 - **Exit code handling**: Code 0 = signal shutdown (no error report), non-zero = job error
 
 **Stream Capture** (`JobServerStream`):
-- Redirects `print()` output to queue → background thread POSTs to `PUT /streams/write/{jobid}`
+- Redirects `print()` output to queue → background **daemon thread** POSTs to `PUT /streams/write/{jobid}`
 - Server emits `'cea-worker-message'` via SocketIO
+- **Daemon thread**: Thread marked as daemon so it doesn't block process exit on signal (critical for Docker/Linux)
 - `close_streams()` flushes on job completion with timeout
 - **Timeout handling**: Normal completion (5s), signal cleanup (1s) to prevent hanging on thread.join()
-- If thread doesn't finish within timeout, logs warning and continues (prevents worker hang)
+- Non-blocking `queue.put()` in close() to avoid deadlock if queue is full
+- If thread doesn't finish within timeout, process can still exit cleanly (daemon thread)
 
 **Script Execution** (`run_job`):
 - Converts parameter keys: `"general-settings"` → `"general_settings"`
