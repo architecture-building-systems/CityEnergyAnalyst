@@ -183,13 +183,14 @@ async def get_jobs(
     session: SessionDep,
     project_id: CEAProjectID,
     limit: int | None = Query(None, description="Maximum number of jobs to return (most recent first)"),
-    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=DELETED, 6=KILLED)"),
+    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=KILLED)"),
     exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
 ) -> List[JobInfo]:
     """
     Get a list of jobs for the current project with optional filtering.
 
     By default, returns all non-deleted jobs ordered by creation time (most recent first).
+    Jobs are filtered by deleted_at field rather than state to preserve completion states.
     """
     query = select(JobInfo).where(JobInfo.project_id == project_id)
 
@@ -202,9 +203,9 @@ async def get_jobs(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 6.")
 
-    # Exclude deleted jobs by default (unless state=5 is explicitly requested)
-    if exclude_deleted and state != JobState.DELETED:
-        query = query.where(JobInfo.state != JobState.DELETED)
+    # Exclude deleted jobs by default based on deleted_at field
+    if exclude_deleted:
+        query = query.where(JobInfo.deleted_at == None)
 
     # Order by created_time descending (most recent first)
     query = query.order_by(desc(JobInfo.created_time))
@@ -505,10 +506,11 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
 
 
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
+async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfo:
     """
     Mark a job as deleted (soft delete). The job row is not removed from the database,
-    but its state is set to DELETED. This is only possible if the job is not running.
+    and the original completion state (SUCCESS/ERROR/CANCELED/KILLED) is preserved.
+    Only the deleted_at and deleted_by fields are set. This is only possible if the job is not running.
     """
     try:
         job = await session.get(JobInfo, job_id)
@@ -522,10 +524,15 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     if job.state == JobState.STARTED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
 
+    # Prevent double deletion
+    if job.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job already deleted")
+
     try:
-        # Soft delete: only update the state, don't remove the row
-        job.state = JobState.DELETED
-        job.end_time = get_current_time()
+        # Soft delete: preserve original state, add deletion metadata
+        job.deleted_at = get_current_time()
+        job.deleted_by = user_id
+
         await session.commit()
         await session.refresh(job)
 

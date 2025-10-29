@@ -40,14 +40,15 @@ def get_current_time() -> AwareDatetime:
 
 
 class JobState(IntEnum):
-    # Job states
+    """
+    Job execution states.
+    """
     PENDING = 0
     STARTED = 1
     SUCCESS = 2
     ERROR = 3
     CANCELED = 4  # User-initiated cancellation
-    DELETED = 5   # Soft delete (job marked as deleted but kept in DB)
-    KILLED = 6    # Server-initiated termination (e.g., server shutdown)
+    KILLED = 5    # Server-initiated termination (e.g., server shutdown)
 
 
 class User(SQLModel, table=True):
@@ -86,6 +87,8 @@ class JobInfo(SQLModel, table=True):
     stderr: Optional[str] = None
     project_id: str = Field(foreign_key="project.id", index=True)
     created_by: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
+    deleted_at: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None, index=True)
+    deleted_by: Optional[str] = Field(foreign_key=f"{user_table_ref}.id", nullable=True, default=None)
 
     @computed_field
     def script_label(self) -> Optional[str]:
