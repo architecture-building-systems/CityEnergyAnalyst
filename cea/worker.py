@@ -13,6 +13,7 @@ as an URL for locating the /server/jobs api.
 import sys
 import time
 import logging
+import signal
 from typing import Any
 
 import requests
@@ -33,6 +34,37 @@ from cea.interfaces.dashboard.server.jobs import JobInfo
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+
+def signal_handler(signum, _):
+    """
+    Handle termination signals (SIGTERM, SIGINT) for immediate graceful shutdown.
+
+    IMPORTANT: Signal handlers must be minimal and avoid unsafe operations like:
+    - Thread operations (join, queue operations)
+    - I/O operations (file writes, network calls)
+    - Complex object operations
+
+    This handler immediately raises SystemExit(0) to trigger cleanup in worker() finally block.
+    The job is interrupted mid-execution, but streams are properly flushed and closed.
+
+    Design choice: Immediate termination vs graceful checkpoints
+    - Immediate: Simple, matches server cancel flow (state already CANCELED)
+    - Checkpoints: Would require modifying 50+ CEA scripts to check cancellation
+    - Current: Immediate termination with proper cleanup via finally block
+
+    Args:
+        signum: Signal number received
+        _: Current stack frame (unused but required by signal.signal signature)
+    """
+    signal_name = signal.Signals(signum).name if hasattr(signal, 'Signals') else str(signum)
+
+    # Minimal logging - print is safer in signal handlers than logger
+    print(f"\nWorker received signal {signal_name} ({signum}), shutting down...", file=sys.__stderr__)
+
+    # Raise SystemExit to trigger finally block cleanup
+    # This is safer than calling sys.exit() or doing cleanup here
+    raise SystemExit(0)
 
 
 def post_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
@@ -263,7 +295,21 @@ def post_error(message: str, stacktrace: str, jobid: str, server: str):
 
 
 def worker(jobid: str, server: str, suppress_warnings: bool = False):
-    """This is the main logic of the cea-worker."""
+    """
+    Main logic of the cea-worker with signal handling for graceful shutdown.
+
+    Registers signal handlers for SIGTERM and SIGINT to ensure proper cleanup
+    when the worker process is terminated (e.g., job cancellation or server shutdown).
+
+    Signal handling flow:
+    1. Signal received -> signal_handler() raises SystemExit(0)
+    2. SystemExit caught here, treated as cancellation (not error)
+    3. finally block ensures streams are always closed
+    """
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
     print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
         job = fetch_job(jobid, server)
@@ -272,13 +318,27 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
         post_started(jobid, server)
         output = run_job(job, suppress_warnings)
         post_success(jobid, server, output)
-    except (SystemExit, Exception) as e:
-        message = f"Job [{jobid}]: exited with code {e.code}" if isinstance(e, SystemExit) else str(e)
+    except SystemExit as e:
+        # SystemExit from signal handler (graceful shutdown) or sys.exit() calls
+        # Exit code 0 means graceful shutdown (signal), non-zero means error
+        if e.code == 0:
+            # Graceful shutdown via signal - don't report as error
+            # The server already knows the job was cancelled
+            print(f"Job [{jobid}]: Graceful shutdown (signal received)")
+        else:
+            # Explicit sys.exit() with error code from job script
+            message = f"Job [{jobid}]: exited with code {e.code}"
+            print(f"\nERROR: {message}")
+            exc = traceback.format_exc()
+            post_error(message, exc, jobid, server)
+    except Exception as e:
+        # Actual errors during job execution
+        message = str(e)
         print(f"\nERROR: {message}")
         exc = traceback.format_exc()
         post_error(message, exc, jobid, server)
     finally:
-        # Ensure streams are closed
+        # Ensure streams are always closed, even after signal
         close_streams()
 
 
