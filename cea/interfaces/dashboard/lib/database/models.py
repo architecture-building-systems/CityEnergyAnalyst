@@ -17,10 +17,15 @@ def determine_db_type():
     """
     Determine the database type from the database URL.
     Currently local will be sqlite and remote will be postgres.
+    Handles driver suffixes like postgresql+asyncpg or postgresql+psycopg2.
     """
     db_url, _ = get_connection_props()
 
-    return db_url.split(":")[0]
+    # Extract scheme (e.g., "postgresql+asyncpg" or "sqlite")
+    scheme = db_url.split("://")[0] if "://" in db_url else db_url.split(":")[0]
+
+    # Strip driver suffix (e.g., "postgresql+asyncpg" -> "postgresql")
+    return scheme.split("+")[0]
 
 
 LOCAL_USER_ID = "localuser"
