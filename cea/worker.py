@@ -202,10 +202,19 @@ class JobServerStream:
         self.stream_poster = threading.Thread(target=stream_poster, args=[jobid, server, self.queue])
         self.stream_poster.start()
 
-    def close(self):
-        """Send sentinel that we're done writing"""
+    def close(self, timeout: float = 5.0):
+        """
+        Send sentinel that we're done writing and wait for thread to finish.
+
+        Args:
+            timeout: Maximum time in seconds to wait for thread to finish (default: 5.0)
+        """
         self.queue.put(EOFError)
-        self.stream_poster.join()
+        self.stream_poster.join(timeout=timeout)
+
+        # If thread didn't finish in time, it's likely blocked on I/O or shutdown
+        if self.stream_poster.is_alive():
+            logger.warning(f"Stream poster thread did not finish within {timeout}s timeout")
 
     def write(self, value):
         self.queue.put_nowait(value)
@@ -227,12 +236,17 @@ def configure_streams(jobid, server):
     sys.stderr = JobServerStream(jobid, server, sys.stderr)
 
 
-def close_streams():
-    """Close and flush all streams properly"""
+def close_streams(timeout: float = 5.0):
+    """
+    Close and flush all streams properly with timeout.
+
+    Args:
+        timeout: Maximum time in seconds to wait for each stream to close (default: 5.0)
+    """
     if hasattr(sys.stdout, 'close'):
-        sys.stdout.close()
+        sys.stdout.close(timeout=timeout)
     if hasattr(sys.stderr, 'close'):
-        sys.stderr.close()
+        sys.stderr.close(timeout=timeout)
 
 
 def fetch_job(jobid: str, server) -> JobInfo:
@@ -283,14 +297,14 @@ def post_started(jobid, server):
 
 
 def post_success(jobid: str, server: str, output: Any = None):
-    # Close streams before sending success
-    close_streams()
+    # Close streams before sending success (longer timeout for normal completion)
+    close_streams(timeout=5.0)
     post_with_retry(f"{server}/jobs/success/{jobid}", json={"output": output})
 
 
 def post_error(message: str, stacktrace: str, jobid: str, server: str):
-    # Close streams before sending error
-    close_streams()
+    # Close streams before sending error (longer timeout for normal error handling)
+    close_streams(timeout=5.0)
     post_with_retry(f"{server}/jobs/error/{jobid}", json={"message": message, "stacktrace": stacktrace})
 
 
@@ -339,7 +353,8 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
         post_error(message, exc, jobid, server)
     finally:
         # Ensure streams are always closed, even after signal
-        close_streams()
+        # Use shorter timeout (1s) for signal-triggered cleanup to prevent hanging
+        close_streams(timeout=1.0)
 
 
 def main():
