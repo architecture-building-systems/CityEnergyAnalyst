@@ -59,7 +59,9 @@
 **Stream Capture** (`JobServerStream`):
 - Redirects `print()` output to queue → background thread POSTs to `PUT /streams/write/{jobid}`
 - Server emits `'cea-worker-message'` via SocketIO
-- `close_streams()` flushes on job completion
+- `close_streams()` flushes on job completion with timeout
+- **Timeout handling**: Normal completion (5s), signal cleanup (1s) to prevent hanging on thread.join()
+- If thread doesn't finish within timeout, logs warning and continues (prevents worker hang)
 
 **Script Execution** (`run_job`):
 - Converts parameter keys: `"general-settings"` → `"general_settings"`
