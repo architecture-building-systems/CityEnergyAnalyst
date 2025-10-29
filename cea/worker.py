@@ -254,10 +254,17 @@ def close_streams(timeout: float = 5.0):
     Args:
         timeout: Maximum time in seconds to wait for each stream to close (default: 5.0)
     """
-    if hasattr(sys.stdout, 'close'):
+    # Check if stdout is a JobServerStream and close with timeout
+    if isinstance(sys.stdout, JobServerStream):
         sys.stdout.close(timeout=timeout)
-    if hasattr(sys.stderr, 'close'):
+    elif hasattr(sys.stdout, 'close'):
+        sys.stdout.close()
+
+    # Check if stderr is a JobServerStream and close with timeout
+    if isinstance(sys.stderr, JobServerStream):
         sys.stderr.close(timeout=timeout)
+    elif hasattr(sys.stderr, 'close'):
+        sys.stderr.close()
 
 
 def fetch_job(jobid: str, server) -> JobInfo:
@@ -356,6 +363,8 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
             print(f"\nERROR: {message}")
             exc = traceback.format_exc()
             post_error(message, exc, jobid, server)
+        # Re-raise SystemExit to actually exit the process after cleanup
+        raise
     except Exception as e:
         # Actual errors during job execution
         message = str(e)
