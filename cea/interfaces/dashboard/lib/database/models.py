@@ -172,7 +172,12 @@ async def migrate_db():
             # Add deleted_by column to track who deleted the job
             if 'deleted_by' not in columns:
                 logger.info("Adding 'deleted_by' column to job table...")
-                await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_by VARCHAR"))
+                if db_type == "postgresql":
+                    await conn.execute(text(f"ALTER TABLE job ADD COLUMN deleted_by VARCHAR REFERENCES {user_table_ref}(id)"))
+                else:  # SQLite
+                    # SQLite doesn't support adding foreign keys via ALTER TABLE
+                    # Foreign key will be enforced on fresh installs via SQLModel
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_by VARCHAR"))
                 await conn.commit()
                 logger.info("Successfully added 'deleted_by' column")
 
