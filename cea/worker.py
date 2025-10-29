@@ -13,6 +13,7 @@ as an URL for locating the /server/jobs api.
 import sys
 import time
 import logging
+import signal
 from typing import Any
 
 import requests
@@ -33,6 +34,36 @@ from cea.interfaces.dashboard.server.jobs import JobInfo
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+# Global flag for graceful shutdown
+shutdown_requested = False
+
+
+def signal_handler(signum, frame):
+    """
+    Handle termination signals (SIGTERM, SIGINT) gracefully.
+
+    This allows the worker process to clean up resources (close streams,
+    flush buffers) before exiting, which is especially important in Docker
+    environments where proper signal handling prevents zombie processes.
+
+    Args:
+        signum: Signal number received
+        frame: Current stack frame
+    """
+    global shutdown_requested
+    signal_name = signal.Signals(signum).name if hasattr(signal, 'Signals') else str(signum)
+    logger.info(f"Worker received signal {signal_name} ({signum}), initiating graceful shutdown...")
+    shutdown_requested = True
+
+    # Close streams to flush any remaining output
+    try:
+        close_streams()
+    except Exception as e:
+        logger.error(f"Error closing streams during signal handler: {e}")
+
+    # Exit gracefully
+    sys.exit(0)
 
 
 def post_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
@@ -263,7 +294,16 @@ def post_error(message: str, stacktrace: str, jobid: str, server: str):
 
 
 def worker(jobid: str, server: str, suppress_warnings: bool = False):
-    """This is the main logic of the cea-worker."""
+    """
+    Main logic of the cea-worker with signal handling for graceful shutdown.
+
+    Registers signal handlers for SIGTERM and SIGINT to ensure proper cleanup
+    when the worker process is terminated (e.g., job cancellation or server shutdown).
+    """
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
     print(f"Running cea-worker with jobid: {jobid}, url: {server}")
     try:
         job = fetch_job(jobid, server)
