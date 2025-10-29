@@ -183,13 +183,14 @@ async def get_jobs(
     session: SessionDep,
     project_id: CEAProjectID,
     limit: int | None = Query(None, description="Maximum number of jobs to return (most recent first)"),
-    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=DELETED, 6=KILLED)"),
+    state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=KILLED)"),
     exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
 ) -> List[JobInfo]:
     """
     Get a list of jobs for the current project with optional filtering.
 
     By default, returns all non-deleted jobs ordered by creation time (most recent first).
+    Jobs are filtered by deleted_at field rather than state to preserve completion states.
     """
     query = select(JobInfo).where(JobInfo.project_id == project_id)
 
@@ -200,11 +201,11 @@ async def get_jobs(
             job_state = JobState(state)
             query = query.where(JobInfo.state == job_state)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 6.")
+            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 5.")
 
-    # Exclude deleted jobs by default (unless state=5 is explicitly requested)
-    if exclude_deleted and state != JobState.DELETED:
-        query = query.where(JobInfo.state != JobState.DELETED)
+    # Exclude deleted jobs by default based on deleted_at field
+    if exclude_deleted:
+        query = query.where(JobInfo.deleted_at.is_(None))
 
     # Order by created_time descending (most recent first)
     query = query.order_by(desc(JobInfo.created_time))
@@ -391,7 +392,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
 async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
-                    settings: CEAServerSettings):
+                    user_id: CEAUserID, settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
 
     # Validate job_id is a valid UUID
@@ -410,10 +411,36 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid server_url format.")
 
-    job = await session.get(JobInfo, job_id)
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
+
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
+    # Authorization check: only job creator can start
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to start job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to start this job"
+        )
+
+    # Validate job state: must be PENDING and not deleted
+    if job.state != JobState.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot start job: job is not pending (current state: {job.state.name})"
+        )
+
+    if job.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot start job: job has been deleted"
+        )
+
     # Use validated parameters in command
     command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
     logger.debug(f"command: {command}")
@@ -424,11 +451,38 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
 
 
 @router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses,
-                     streams: CEAStreams) -> JobInfo:
-    job = await session.get(JobInfo, job_id)
+async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
+                     worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfo:
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
+
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    # Authorization check: only job creator can cancel
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to cancel job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to cancel this job"
+        )
+
+    # Validate state: can only cancel PENDING or STARTED jobs (protected by row lock)
+    if job.state not in (JobState.PENDING, JobState.STARTED):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot cancel job: job is {job.state.name}"
+        )
+
+    # Check if job is deleted
+    if job.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot cancel job: job has been deleted"
+        )
 
     try:
         job.state = JobState.CANCELED
@@ -443,8 +497,8 @@ async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWork
         await session.commit()
         await session.refresh(job)
 
-        # Force kill the worker process immediately for canceled jobs
-        await cleanup_worker_process(job_id, worker_processes, force=True)
+        # Terminate worker process gracefully to allow cleanup functions to run
+        await cleanup_worker_process(job_id, worker_processes, force=False)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -505,13 +559,20 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
 
 
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
+async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfo:
     """
     Mark a job as deleted (soft delete). The job row is not removed from the database,
-    but its state is set to DELETED. This is only possible if the job is not running.
+    and the original completion state (SUCCESS/ERROR/CANCELED/KILLED) is preserved.
+    Only the deleted_at and deleted_by fields are set. This is only possible if the job is not running.
+
+    Uses row-level locking to prevent TOCTOU race conditions.
     """
     try:
-        job = await session.get(JobInfo, job_id)
+        # Lock the row to prevent concurrent modifications (TOCTOU protection)
+        result = await session.execute(
+            select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+        )
+        job = result.scalar_one_or_none()
     except sqlalchemy.exc.OperationalError as e:
         logger.error(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database error")
@@ -519,24 +580,38 @@ async def delete_job(session: SessionDep, job_id: str) -> JobInfo:
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
+    # Authorization check: only job creator can delete
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to delete job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this job"
+        )
+
     if job.state == JobState.STARTED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
 
+    # Prevent double deletion
+    if job.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job already deleted")
+
     try:
-        # Soft delete: only update the state, don't remove the row
-        job.state = JobState.DELETED
-        job.end_time = get_current_time()
+        # Soft delete: preserve original state, add deletion metadata
+        job.deleted_at = get_current_time()
+        job.deleted_by = user_id
+
         await session.commit()
         await session.refresh(job)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    await emit_with_retry("cea-job-deleted", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 def _force_kill_process(process: psutil.Process, pid: int, job_id: str):
@@ -586,13 +661,16 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         job_id: The job ID to clean up
         worker_processes: The worker processes tracking store
         force: If True, immediately force kill without graceful termination attempt.
-               Use when user cancels a job. Default False (graceful shutdown for completed jobs).
+               Use sparingly (e.g., server shutdown). Default False (graceful shutdown).
         timeout: Time in seconds to wait for graceful termination before force killing.
                  Only used if force is False. Default is 3 seconds.
 
     Usage:
-        - cleanup_worker_process(job_id, wp, force=False) -> Jobs that complete naturally (SUCCESS/ERROR)
-        - cleanup_worker_process(job_id, wp, force=True)  -> User-canceled jobs (immediate kill)
+        - cleanup_worker_process(job_id, wp, force=False) -> Standard cleanup (SUCCESS/ERROR/CANCEL)
+        - cleanup_worker_process(job_id, wp, force=True)  -> Emergency cleanup (server shutdown)
+
+    Graceful termination (force=False) sends SIGTERM, waits for timeout, then force kills if needed.
+    This allows cleanup handlers (finally blocks, signal handlers) to execute.
     """
     # Atomically fetch-and-remove to avoid TOCTOU race conditions
     pid = await worker_processes.pop(job_id, None)
@@ -607,10 +685,10 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         # Check if process is still running
         if process.is_running():
             if force:
-                # Immediate force kill for canceled jobs
+                # Emergency force kill (e.g., server shutdown)
                 _force_kill_process(process, pid, job_id)
             else:
-                # Graceful termination for completed jobs
+                # Graceful termination (allows cleanup handlers to run)
                 logger.info(f"Worker process {pid} for job {job_id} still running, terminating gracefully...")
                 process.terminate()
 

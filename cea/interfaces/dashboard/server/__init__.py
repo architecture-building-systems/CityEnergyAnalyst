@@ -38,6 +38,7 @@ async def shutdown_worker_processes():
     async with get_session_context() as session:
         for job_id in job_ids:
             try:
+                # FIXME: Should it kill or try to gracefully stop?
                 logger.info(f"Killing job {job_id} (DB update + best-effort notification)")
                 await jobs.kill_job(session, job_id, worker_processes, streams)
                 logger.info(f"Job {job_id} killed successfully")

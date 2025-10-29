@@ -11,16 +11,22 @@ import cea.scripts
 from cea.interfaces.dashboard.lib.database.session import (get_engine, get_session_context, get_connection_props,
                                                            database_settings)
 from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.settings import get_settings
 
 
 def determine_db_type():
     """
     Determine the database type from the database URL.
     Currently local will be sqlite and remote will be postgres.
+    Handles driver suffixes like postgresql+asyncpg or postgresql+psycopg2.
     """
     db_url, _ = get_connection_props()
 
-    return db_url.split(":")[0]
+    # Extract scheme (e.g., "postgresql+asyncpg" or "sqlite")
+    scheme = db_url.split("://")[0] if "://" in db_url else db_url.split(":")[0]
+
+    # Strip driver suffix (e.g., "postgresql+asyncpg" -> "postgresql")
+    return scheme.split("+")[0]
 
 
 LOCAL_USER_ID = "localuser"
@@ -40,14 +46,15 @@ def get_current_time() -> AwareDatetime:
 
 
 class JobState(IntEnum):
-    # Job states
+    """
+    Job execution states.
+    """
     PENDING = 0
     STARTED = 1
     SUCCESS = 2
     ERROR = 3
     CANCELED = 4  # User-initiated cancellation
-    DELETED = 5   # Soft delete (job marked as deleted but kept in DB)
-    KILLED = 6    # Server-initiated termination (e.g., server shutdown)
+    KILLED = 5    # Server-initiated termination (e.g., server shutdown)
 
 
 class User(SQLModel, table=True):
@@ -86,6 +93,8 @@ class JobInfo(SQLModel, table=True):
     stderr: Optional[str] = None
     project_id: str = Field(foreign_key="project.id", index=True)
     created_by: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
+    deleted_at: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None, index=True)
+    deleted_by: Optional[str] = Field(foreign_key=f"{user_table_ref}.id", nullable=True, default=None)
 
     @computed_field
     def script_label(self) -> Optional[str]:
@@ -118,15 +127,38 @@ async def initialize_db():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
+async def ensure_local_user():
+    """
+    Create default local user for development mode.
+    Only runs in local mode - production uses external auth (e.g., Neon DB).
+    """
+    settings = get_settings()
+    if not settings.local:
+        logger.debug("Skipping local user creation (not in local mode)")
+        return
+
+    logger.info("Checking for local user...")
+    async with get_session_context() as session:
+        result = await session.execute(select(User).where(User.id == LOCAL_USER_ID))
+        user = result.scalar()
+        if user is None:
+            logger.info(f"Creating default local user: {LOCAL_USER_ID}")
+            user = User(id=LOCAL_USER_ID)
+            session.add(user)
+            await session.commit()
+        else:
+            logger.debug(f"Local user already exists: {LOCAL_USER_ID}")
+
 async def create_db_and_tables():
-    """Initialize database tables and run migrations if needed"""    
+    """Initialize database tables and run migrations if needed"""
     if not database_settings.init_tables:
         logger.debug("Skipping database initialization")
         return
-    
+
     logger.info("Preparing database...")
     await initialize_db()
     await migrate_db()
+    await ensure_local_user()
 
 async def migrate_db():
     # TODO: Remove once in release new version
@@ -141,23 +173,46 @@ async def migrate_db():
             columns = await conn.run_sync(lambda sync_conn: [col['name'] for col in inspect(sync_conn).get_columns('project')])
             if 'owner' not in columns:
                 logger.info("Adding 'owner' column to project table...")
-                await conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
+                if db_type == "postgresql":
+                    await conn.execute(text(f"ALTER TABLE project ADD COLUMN owner VARCHAR REFERENCES {user_table_ref}(id)"))
+                else:  # SQLite
+                    # SQLite doesn't support adding foreign keys via ALTER TABLE
+                    # Foreign key will be enforced on fresh installs via SQLModel
+                    await conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
                 await conn.commit()
+                logger.info("Successfully added 'owner' column")
 
         if 'job' in table_names:
             columns = await conn.run_sync(lambda sync_conn: [col['name'] for col in inspect(sync_conn).get_columns('job')])
             if 'created_by' not in columns:
                 logger.info("Adding 'created_by' column to job table...")
-                await conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
+                if db_type == "postgresql":
+                    await conn.execute(text(f"ALTER TABLE job ADD COLUMN created_by VARCHAR REFERENCES {user_table_ref}(id)"))
+                else:  # SQLite
+                    # SQLite doesn't support adding foreign keys via ALTER TABLE
+                    # Foreign key will be enforced on fresh installs via SQLModel
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
                 await conn.commit()
+                logger.info("Successfully added 'created_by' column")
 
+            # Add deleted_at column for soft delete functionality
+            if 'deleted_at' not in columns:
+                logger.info("Adding 'deleted_at' column to job table...")
+                if db_type == "postgresql":
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE"))
+                else:  # SQLite
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_at DATETIME"))
+                await conn.commit()
+                logger.info("Successfully added 'deleted_at' column")
 
-    logger.info("Using local user...")
-    async with get_session_context() as session:
-        result = await session.execute(select(User).where(User.id == LOCAL_USER_ID))
-        user = result.scalar()
-        if user is None:
-            logger.warning("Default local user not found. Creating...")
-            user = User(id=LOCAL_USER_ID)
-            session.add(user)
-            await session.commit()
+            # Add deleted_by column to track who deleted the job
+            if 'deleted_by' not in columns:
+                logger.info("Adding 'deleted_by' column to job table...")
+                if db_type == "postgresql":
+                    await conn.execute(text(f"ALTER TABLE job ADD COLUMN deleted_by VARCHAR REFERENCES {user_table_ref}(id)"))
+                else:  # SQLite
+                    # SQLite doesn't support adding foreign keys via ALTER TABLE
+                    # Foreign key will be enforced on fresh installs via SQLModel
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_by VARCHAR"))
+                await conn.commit()
+                logger.info("Successfully added 'deleted_by' column")
