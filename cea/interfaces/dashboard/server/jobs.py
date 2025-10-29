@@ -411,7 +411,12 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid server_url format.")
 
-    job = await session.get(JobInfo, job_id)
+    # Lock the row to prevent concurrent modifications (TOCTOU protection)
+    result = await session.execute(
+        select(JobInfo).where(JobInfo.id == job_id).with_for_update()
+    )
+    job = result.scalar_one_or_none()
+
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -600,12 +605,13 @@ async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> Jo
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
-
-        return job
     except Exception as e:
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    await emit_with_retry("cea-job-deleted", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    return job
 
 
 def _force_kill_process(process: psutil.Process, pid: int, job_id: str):
