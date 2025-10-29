@@ -392,7 +392,7 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
 async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, server_url: CEAServerUrl, job_id: str,
-                    settings: CEAServerSettings):
+                    user_id: CEAUserID, settings: CEAServerSettings):
     """Start a ``cea-worker`` subprocess for the script. (FUTURE: add support for cloud-based workers"""
 
     # Validate job_id is a valid UUID
@@ -414,7 +414,15 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
+    # Authorization check: only job creator can start
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to start job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to start this job"
+        )
+
     # Use validated parameters in command
     command = [sys.executable, "-m", "cea.worker", "--suppress-warnings", job_id, str(server_url)]
     logger.debug(f"command: {command}")
@@ -425,11 +433,19 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
 
 
 @router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def cancel_job(session: SessionDep, job_id: str, worker_processes: CEAWorkerProcesses,
-                     streams: CEAStreams) -> JobInfo:
+async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
+                     worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfo:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    # Authorization check: only job creator can cancel
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to cancel job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to cancel this job"
+        )
 
     try:
         job.state = JobState.CANCELED
@@ -520,6 +536,14 @@ async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> Jo
 
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    # Authorization check: only job creator can delete
+    if job.created_by != user_id:
+        logger.warning(f"User {user_id} attempted to delete job {job_id} owned by {job.created_by}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this job"
+        )
 
     if job.state == JobState.STARTED:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job is still running")
