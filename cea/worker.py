@@ -10,6 +10,7 @@ integer argument, the jobid, that is used to fetch all other information from th
 as an URL for locating the /server/jobs api.
 """
 
+import os
 import sys
 import time
 import logging
@@ -38,33 +39,31 @@ logger = logging.getLogger(__name__)
 
 def signal_handler(signum, _):
     """
-    Handle termination signals (SIGTERM, SIGINT) for immediate graceful shutdown.
+    Handle termination signals (SIGTERM, SIGINT) for immediate shutdown.
 
-    IMPORTANT: Signal handlers must be minimal and avoid unsafe operations like:
-    - Thread operations (join, queue operations)
-    - I/O operations (file writes, network calls)
-    - Complex object operations
+    Design: Uses os._exit(0) for fastest possible termination without cleanup.
 
-    This handler immediately raises SystemExit(0) to trigger cleanup in worker() finally block.
-    The job is interrupted mid-execution, but streams are properly flushed and closed.
+    Why no cleanup is needed:
+    - Server already set job state to CANCELED before sending signal
+    - Stream threads are daemon threads (killed automatically on exit)
+    - SIGCHLD handler on server automatically reaps zombie process
+    - No resources need explicit cleanup (temp files cleaned by server)
 
-    Design choice: Immediate termination vs graceful checkpoints
-    - Immediate: Simple, matches server cancel flow (state already CANCELED)
-    - Checkpoints: Would require modifying 50+ CEA scripts to check cancellation
-    - Current: Immediate termination with proper cleanup via finally block
+    Why os._exit() instead of sys.exit() or raise SystemExit:
+    - os._exit(0): Immediate termination, bypasses all Python cleanup
+    - No finally blocks run (no 1s delay from close_streams)
+    - No exception handling overhead
+    - Process exits in <10ms instead of >1s
+    - SIGCHLD handler still reaps zombie immediately
+
+    This is the recommended pattern for signal handlers requiring immediate termination.
 
     Args:
         signum: Signal number received
         _: Current stack frame (unused but required by signal.signal signature)
     """
-    signal_name = signal.Signals(signum).name if hasattr(signal, 'Signals') else str(signum)
-
-    # Minimal logging - print is safer in signal handlers than logger
-    print(f"\nWorker received signal {signal_name} ({signum}), shutting down...", file=sys.__stderr__)
-
-    # Raise SystemExit to trigger finally block cleanup
-    # This is safer than calling sys.exit() or doing cleanup here
-    raise SystemExit(0)
+    # Immediate exit without cleanup - fastest shutdown possible
+    os._exit(0)
 
 
 def post_with_retry(url: str, max_retries: int = 3, initial_delay: float = 0.5,
@@ -351,18 +350,12 @@ def worker(jobid: str, server: str, suppress_warnings: bool = False):
         output = run_job(job, suppress_warnings)
         post_success(jobid, server, output)
     except SystemExit as e:
-        # SystemExit from signal handler (graceful shutdown) or sys.exit() calls
-        # Exit code 0 means graceful shutdown (signal), non-zero means error
-        if e.code == 0:
-            # Graceful shutdown via signal - don't report as error
-            # The server already knows the job was cancelled
-            print(f"Job [{jobid}]: Graceful shutdown (signal received)")
-        else:
-            # Explicit sys.exit() with error code from job script
-            message = f"Job [{jobid}]: exited with code {e.code}"
-            print(f"\nERROR: {message}")
-            exc = traceback.format_exc()
-            post_error(message, exc, jobid, server)
+        # SystemExit from explicit sys.exit() calls in CEA scripts (not from signal handler)
+        # Signal handler uses os._exit(0) which bypasses exception handling
+        message = f"Job [{jobid}]: exited with code {e.code}"
+        print(f"\nERROR: {message}", file=sys.__stderr__)
+        exc = traceback.format_exc()
+        post_error(message, exc, jobid, server)
         # Re-raise SystemExit to actually exit the process after cleanup
         raise
     except Exception as e:

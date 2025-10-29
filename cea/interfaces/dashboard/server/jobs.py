@@ -652,7 +652,7 @@ def _force_kill_process(process: psutil.Process, pid: int, job_id: str):
         logger.warning(f"Worker process {pid} did not terminate within timeout after kill()")
 
 
-async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False, timeout: int = 3):
+async def cleanup_worker_process(job_id: str, worker_processes, force: bool = False, timeout: float = 0.5):
     """
     Clean up worker process for a job. Checks if process still exists and terminates it if needed.
     Always removes the job from worker_processes tracking.
@@ -663,14 +663,14 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         force: If True, immediately force kill without graceful termination attempt.
                Use sparingly (e.g., server shutdown). Default False (graceful shutdown).
         timeout: Time in seconds to wait for graceful termination before force killing.
-                 Only used if force is False. Default is 3 seconds.
+                 Only used if force is False. Default is 0.5 seconds (worker exits immediately via os._exit).
 
     Usage:
         - cleanup_worker_process(job_id, wp, force=False) -> Standard cleanup (SUCCESS/ERROR/CANCEL)
         - cleanup_worker_process(job_id, wp, force=True)  -> Emergency cleanup (server shutdown)
 
     Graceful termination (force=False) sends SIGTERM, waits for timeout, then force kills if needed.
-    This allows cleanup handlers (finally blocks, signal handlers) to execute.
+    Worker signal handler uses os._exit(0) for immediate termination (<10ms), so timeout rarely expires.
     """
     # Atomically fetch-and-remove to avoid TOCTOU race conditions
     pid = await worker_processes.pop(job_id, None)

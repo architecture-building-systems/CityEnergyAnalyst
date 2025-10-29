@@ -47,14 +47,15 @@
 
 **Signal Handling** (`signal_handler`):
 - Handles `SIGTERM` (from `process.terminate()`) and `SIGINT` (Ctrl+C) for immediate shutdown
-- **Minimal handler**: Only raises `SystemExit(0)` to trigger finally block cleanup
-- **Avoids unsafe operations**: No I/O, threading, or complex operations in signal context
-- **Cleanup in finally block**: Stream flushing happens in `worker()` finally, not in signal handler
-- **Prevents double cleanup**: SystemExit(0) caught separately from errors, no duplicate `close_streams()`
-- **Immediate termination**: Job interrupted mid-execution (by design, matches server cancel flow)
-- **Design rationale**: Server sets state=CANCELED before sending signal; implementing checkpoints would require modifying 50+ CEA scripts
-- Critical for Docker: Combined with tini, ensures graceful termination within timeout window
-- **Exit code handling**: Code 0 = signal shutdown (no error report), non-zero = job error
+- **Ultra-minimal handler**: Single line - `os._exit(0)` for fastest possible termination (<10ms)
+- **No cleanup needed**: Server already set state=CANCELED; daemon threads killed automatically
+- **Bypasses Python cleanup**: No exception handling, no finally blocks, no delays
+- **SIGCHLD reaps zombie**: Server's SIGCHLD handler automatically reaps the exited worker process
+- **Why os._exit() over sys.exit()**:
+  - `os._exit(0)`: Immediate OS-level exit, bypasses all Python cleanup (used here)
+  - `sys.exit()` / `raise SystemExit`: Triggers exception handling, finally blocks, slower
+- **Design rationale**: Server sets state=CANCELED before signal; no worker-side cleanup needed
+- **Immediate termination**: Worker exits in <10ms instead of >1s with previous approach
 
 **Stream Capture** (`JobServerStream`):
 - Redirects `print()` output to queue → background **daemon thread** POSTs to `PUT /streams/write/{jobid}`
@@ -108,7 +109,10 @@
 
 ## Cleanup (`jobs.py:cleanup_worker_process`)
 
-**Graceful** (`force=False`, SUCCESS/ERROR/CANCEL): `terminate()` → wait 3s → force kill if timeout (allows cleanup handlers)
+**Graceful** (`force=False`, SUCCESS/ERROR/CANCEL): `terminate()` → wait 0.5s → force kill if timeout
+- Worker exits immediately via `os._exit(0)` (<10ms), so timeout rarely expires
+- SIGCHLD handler automatically reaps zombie process
+
 **Force** (`force=True`, server shutdown/KILLED): Immediately `kill()` children + main process
 
 **Temp Files** (`cleanup_job_temp_files`):
@@ -154,6 +158,12 @@ Retry logic: `emit_with_retry()` (3 retries, 0.1s initial delay, exponential bac
 - PID 1 doesn't receive default signal handlers (signals ignored unless explicitly handled)
 - Zombie processes aren't automatically reaped, causing resource leaks
 - Combined with worker signal handlers, provides robust process lifecycle management
+
+**Zombie Process Prevention** (`app.py:setup_sigchld_handler`):
+- `SIGCHLD` handler registered at server startup to automatically reap zombie children
+- Uses `os.waitpid(-1, os.WNOHANG)` in non-blocking mode to reap exited workers
+- Prevents zombie accumulation when workers exit unexpectedly or before explicit cleanup
+- Complements explicit cleanup in `cleanup_worker_process()` for defense-in-depth
 
 ## Key Files
 
