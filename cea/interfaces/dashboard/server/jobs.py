@@ -205,7 +205,7 @@ async def get_jobs(
 
     # Exclude deleted jobs by default based on deleted_at field
     if exclude_deleted:
-        query = query.where(JobInfo.deleted_at is None)
+        query = query.where(JobInfo.deleted_at.is_(None))
 
     # Order by created_time descending (most recent first)
     query = query.order_by(desc(JobInfo.created_time))
