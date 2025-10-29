@@ -147,23 +147,29 @@ Retry logic: `emit_with_retry()` (3 retries, 0.1s initial delay, exponential bac
 ## Docker Deployment
 
 **Process Management** (`Dockerfile`):
-- Uses `tini` as PID 1 init system for proper signal forwarding and zombie reaping
-- Without `tini`, Docker containers may fail to properly handle `SIGTERM` signals
-- `tini` ensures child processes are reaped to prevent zombie accumulation
-- Critical for job cancellation: allows graceful termination within timeout window
+- **Tini is now optional** - removed by default (but easy to re-enable if needed)
+- Server acts as PID 1 with built-in SIGCHLD handler for zombie reaping
+- FastAPI/Uvicorn handles SIGTERM/SIGINT signals correctly as PID 1
 
-**Why tini is needed**:
-- Docker doesn't provide init system by default
-- Without init, main process becomes PID 1 with special kernel behavior
-- PID 1 doesn't receive default signal handlers (signals ignored unless explicitly handled)
-- Zombie processes aren't automatically reaped, causing resource leaks
-- Combined with worker signal handlers, provides robust process lifecycle management
+**Why tini is no longer required** (as of this version):
+- ✅ Server has SIGCHLD handler (`setup_sigchld_handler`) that reaps all zombies
+- ✅ Worker uses `os._exit(0)` for immediate termination (<10ms)
+- ✅ `os.waitpid(-1, WNOHANG)` reaps direct children AND orphaned grandchildren
+- ✅ FastAPI/Uvicorn has native signal handlers for graceful shutdown
+- ✅ Daemon threads killed automatically, no cleanup needed
+
+**When you might still want tini**:
+- Running in environments with complex process trees
+- Extra defense-in-depth for production deployments
+- Compatibility with orchestration systems that expect init
+- Easy to re-enable: uncomment 2 lines in Dockerfile
 
 **Zombie Process Prevention** (`app.py:setup_sigchld_handler`):
 - `SIGCHLD` handler registered at server startup to automatically reap zombie children
-- Uses `os.waitpid(-1, os.WNOHANG)` in non-blocking mode to reap exited workers
-- Prevents zombie accumulation when workers exit unexpectedly or before explicit cleanup
-- Complements explicit cleanup in `cleanup_worker_process()` for defense-in-depth
+- Uses `os.waitpid(-1, os.WNOHANG)` in non-blocking mode to reap ALL children (including orphans)
+- When server is PID 1, it becomes responsible for reaping all orphaned processes
+- Prevents zombie accumulation when workers exit or spawn children that become orphaned
+- This replicates tini's core functionality directly in the server
 
 ## Key Files
 

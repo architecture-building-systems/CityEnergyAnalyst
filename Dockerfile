@@ -10,8 +10,9 @@ FROM mambaorg/micromamba:bookworm-slim AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
 
 USER root
-# Install tini for proper signal handling and zombie process reaping in Docker
-RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
+# Tini is optional now - we have SIGCHLD handler in server for zombie reaping
+# Uncomment the next line if you encounter issues with orphaned processes or signals
+# RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
 
 # create directory for projects and set MAMBA_USER as owner
 RUN mkdir -p /project && chown $MAMBA_USER /project
@@ -48,6 +49,8 @@ RUN cea-config write --general:project /project/reference-case-open \
 # Expose dashboard port
 EXPOSE 5050
 
-# Use tini as init system to properly handle signals and reap zombie processes
-ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/_entrypoint.sh"]
+# Direct entrypoint - no tini needed (server has SIGCHLD handler for zombie reaping)
+# If you need tini, uncomment the line below and comment out the next ENTRYPOINT line
+# ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/_entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh"]
 CMD cea dashboard
