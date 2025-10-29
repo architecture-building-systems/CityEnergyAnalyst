@@ -154,6 +154,23 @@ async def migrate_db():
                 await conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
                 await conn.commit()
 
+            # Add deleted_at column for soft delete functionality
+            if 'deleted_at' not in columns:
+                logger.info("Adding 'deleted_at' column to job table...")
+                if db_type == "postgresql":
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE"))
+                else:  # SQLite
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_at DATETIME"))
+                await conn.commit()
+                logger.info("Successfully added 'deleted_at' column")
+
+            # Add deleted_by column to track who deleted the job
+            if 'deleted_by' not in columns:
+                logger.info("Adding 'deleted_by' column to job table...")
+                await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_by VARCHAR"))
+                await conn.commit()
+                logger.info("Successfully added 'deleted_by' column")
+
 
     logger.info("Using local user...")
     async with get_session_context() as session:
