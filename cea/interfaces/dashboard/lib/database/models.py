@@ -149,15 +149,27 @@ async def migrate_db():
             columns = await conn.run_sync(lambda sync_conn: [col['name'] for col in inspect(sync_conn).get_columns('project')])
             if 'owner' not in columns:
                 logger.info("Adding 'owner' column to project table...")
-                await conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
+                if db_type == "postgresql":
+                    await conn.execute(text(f"ALTER TABLE project ADD COLUMN owner VARCHAR REFERENCES {user_table_ref}(id)"))
+                else:  # SQLite
+                    # SQLite doesn't support adding foreign keys via ALTER TABLE
+                    # Foreign key will be enforced on fresh installs via SQLModel
+                    await conn.execute(text("ALTER TABLE project ADD COLUMN owner VARCHAR"))
                 await conn.commit()
+                logger.info("Successfully added 'owner' column")
 
         if 'job' in table_names:
             columns = await conn.run_sync(lambda sync_conn: [col['name'] for col in inspect(sync_conn).get_columns('job')])
             if 'created_by' not in columns:
                 logger.info("Adding 'created_by' column to job table...")
-                await conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
+                if db_type == "postgresql":
+                    await conn.execute(text(f"ALTER TABLE job ADD COLUMN created_by VARCHAR REFERENCES {user_table_ref}(id)"))
+                else:  # SQLite
+                    # SQLite doesn't support adding foreign keys via ALTER TABLE
+                    # Foreign key will be enforced on fresh installs via SQLModel
+                    await conn.execute(text("ALTER TABLE job ADD COLUMN created_by VARCHAR"))
                 await conn.commit()
+                logger.info("Successfully added 'created_by' column")
 
             # Add deleted_at column for soft delete functionality
             if 'deleted_at' not in columns:
