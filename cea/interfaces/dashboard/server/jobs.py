@@ -460,8 +460,8 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
         await session.commit()
         await session.refresh(job)
 
-        # Force kill the worker process immediately for canceled jobs
-        await cleanup_worker_process(job_id, worker_processes, force=True)
+        # Terminate worker process gracefully to allow cleanup functions to run
+        await cleanup_worker_process(job_id, worker_processes, force=False)
 
         # Clean up temporary files for this job
         cleanup_job_temp_files(job.id)
@@ -617,13 +617,16 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         job_id: The job ID to clean up
         worker_processes: The worker processes tracking store
         force: If True, immediately force kill without graceful termination attempt.
-               Use when user cancels a job. Default False (graceful shutdown for completed jobs).
+               Use sparingly (e.g., server shutdown). Default False (graceful shutdown).
         timeout: Time in seconds to wait for graceful termination before force killing.
                  Only used if force is False. Default is 3 seconds.
 
     Usage:
-        - cleanup_worker_process(job_id, wp, force=False) -> Jobs that complete naturally (SUCCESS/ERROR)
-        - cleanup_worker_process(job_id, wp, force=True)  -> User-canceled jobs (immediate kill)
+        - cleanup_worker_process(job_id, wp, force=False) -> Standard cleanup (SUCCESS/ERROR/CANCEL)
+        - cleanup_worker_process(job_id, wp, force=True)  -> Emergency cleanup (server shutdown)
+
+    Graceful termination (force=False) sends SIGTERM, waits for timeout, then force kills if needed.
+    This allows cleanup handlers (finally blocks, signal handlers) to execute.
     """
     # Atomically fetch-and-remove to avoid TOCTOU race conditions
     pid = await worker_processes.pop(job_id, None)
@@ -638,10 +641,10 @@ async def cleanup_worker_process(job_id: str, worker_processes, force: bool = Fa
         # Check if process is still running
         if process.is_running():
             if force:
-                # Immediate force kill for canceled jobs
+                # Emergency force kill (e.g., server shutdown)
                 _force_kill_process(process, pid, job_id)
             else:
-                # Graceful termination for completed jobs
+                # Graceful termination (allows cleanup handlers to run)
                 logger.info(f"Worker process {pid} for job {job_id} still running, terminating gracefully...")
                 process.terminate()
 
