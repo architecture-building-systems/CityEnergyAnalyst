@@ -35,34 +35,32 @@ from cea.interfaces.dashboard.server.jobs import JobInfo
 # Set up logger
 logger = logging.getLogger(__name__)
 
-# Global flag for graceful shutdown
-shutdown_requested = False
-
 
 def signal_handler(signum, _):
     """
-    Handle termination signals (SIGTERM, SIGINT) gracefully.
+    Handle termination signals (SIGTERM, SIGINT) for immediate graceful shutdown.
 
     IMPORTANT: Signal handlers must be minimal and avoid unsafe operations like:
     - Thread operations (join, queue operations)
     - I/O operations (file writes, network calls)
     - Complex object operations
 
-    This handler only sets a flag and converts the signal to SystemExit.
-    The actual cleanup happens in the worker() finally block.
+    This handler immediately raises SystemExit(0) to trigger cleanup in worker() finally block.
+    The job is interrupted mid-execution, but streams are properly flushed and closed.
+
+    Design choice: Immediate termination vs graceful checkpoints
+    - Immediate: Simple, matches server cancel flow (state already CANCELED)
+    - Checkpoints: Would require modifying 50+ CEA scripts to check cancellation
+    - Current: Immediate termination with proper cleanup via finally block
 
     Args:
         signum: Signal number received
-        frame: Current stack frame (unused but required by signal.signal signature)
+        _: Current stack frame (unused but required by signal.signal signature)
     """
-    global shutdown_requested
     signal_name = signal.Signals(signum).name if hasattr(signal, 'Signals') else str(signum)
 
     # Minimal logging - print is safer in signal handlers than logger
     print(f"\nWorker received signal {signal_name} ({signum}), shutting down...", file=sys.__stderr__)
-
-    # Set flag for any code that checks it
-    shutdown_requested = True
 
     # Raise SystemExit to trigger finally block cleanup
     # This is safer than calling sys.exit() or doing cleanup here
