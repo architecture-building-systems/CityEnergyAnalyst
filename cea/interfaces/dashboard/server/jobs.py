@@ -201,11 +201,11 @@ async def get_jobs(
             job_state = JobState(state)
             query = query.where(JobInfo.state == job_state)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 6.")
+            raise HTTPException(status_code=400, detail="Invalid state value. Must be between 0 and 5.")
 
     # Exclude deleted jobs by default based on deleted_at field
     if exclude_deleted:
-        query = query.where(JobInfo.deleted_at == None)
+        query = query.where(JobInfo.deleted_at is None)
 
     # Order by created_time descending (most recent first)
     query = query.order_by(desc(JobInfo.created_time))
