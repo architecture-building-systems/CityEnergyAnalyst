@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import HTTPException
+from pydantic import BaseModel
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.concurrency import run_in_threadpool
@@ -23,6 +23,43 @@ from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 
 # Import file collection utilities from contents API
 from cea.interfaces.dashboard.api.contents import VALID_EXTENSIONS
+
+# SocketIO Event Models
+class DownloadProgressEvent(BaseModel):
+    """Event emitted during download preparation."""
+    download_id: str
+    state: str
+    progress_message: str
+
+
+class DownloadReadyEvent(BaseModel):
+    """Event emitted when download is ready."""
+    download_id: str
+    state: str
+    file_size_mb: float
+    progress_message: str
+
+
+class DownloadStartedEvent(BaseModel):
+    """Event emitted when user starts downloading."""
+    download_id: str
+    state: str
+
+
+class DownloadErrorEvent(BaseModel):
+    """Event emitted when download preparation fails."""
+    download_id: str
+    state: str
+    error_message: str
+    progress_message: str
+
+
+class DownloadDownloadedEvent(BaseModel):
+    """Event emitted when download completes."""
+    download_id: str
+    state: str
+    downloaded_at: Optional[str] = None
+
 
 # Constants
 MAX_DOWNLOADS_PER_USER = 5
@@ -223,12 +260,12 @@ async def mark_download_ready(
     # Emit SocketIO event
     await emit_with_retry(
         'download-ready',
-        {
-            'download_id': download_id,
-            'state': DownloadState.READY.name,
-            'file_size_mb': round(file_size / (1024 * 1024), 2),
-            'progress_message': download.progress_message
-        },
+        DownloadReadyEvent(
+            download_id=download_id,
+            state=DownloadState.READY.name,
+            file_size_mb=round(file_size / (1024 * 1024), 2),
+            progress_message=download.progress_message
+        ).model_dump(),
         room=f'user-{download.created_by}'
     )
 
@@ -268,12 +305,12 @@ async def mark_download_error(
     # Emit SocketIO event
     await emit_with_retry(
         'download-error',
-        {
-            'download_id': download_id,
-            'state': DownloadState.ERROR.name,
-            'error_message': error_message,
-            'progress_message': 'Download preparation failed'
-        },
+        DownloadErrorEvent(
+            download_id=download_id,
+            state=DownloadState.ERROR.name,
+            error_message=error_message,
+            progress_message='Download preparation failed'
+        ).model_dump(),
         room=f'user-{download.created_by}'
     )
 
@@ -316,11 +353,11 @@ async def mark_download_downloaded(
     # Emit SocketIO event
     await emit_with_retry(
         'download-downloaded',
-        {
-            'download_id': download_id,
-            'state': DownloadState.DOWNLOADED.name,
-            'downloaded_at': download.downloaded_at.isoformat() if download.downloaded_at else None
-        },
+        DownloadDownloadedEvent(
+            download_id=download_id,
+            state=DownloadState.DOWNLOADED.name,
+            downloaded_at=download.downloaded_at.isoformat() if download.downloaded_at else None
+        ).model_dump(),
         room=f'user-{download.created_by}'
     )
 
@@ -360,11 +397,11 @@ async def update_download_progress(
     # Emit SocketIO event for real-time updates
     await emit_with_retry(
         'download-progress',
-        {
-            'download_id': download_id,
-            'state': download.state.name,
-            'progress_message': progress_message
-        },
+        DownloadProgressEvent(
+            download_id=download_id,
+            state=download.state.name,
+            progress_message=progress_message
+        ).model_dump(),
         room=f'user-{download.created_by}'
     )
 
