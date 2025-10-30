@@ -8,6 +8,7 @@ import pandas as pd
 from cea.constants import HOURS_IN_YEAR
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.technologies import blinds
+from cea.technologies.blinds import ShadingLocation
 
 from typing import TYPE_CHECKING
 
@@ -77,7 +78,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     :param prop_rc_model: RC model properties of a building by name.
     :param thermal_resistance_surface: Thermal resistance of building element.
 
-    :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows.
+    :return: I_sol: numpy array containing the sensible solar heat loads for roof, walls and windows. Unit: W
     :rtype: np.array
 
     """
@@ -85,7 +86,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     # read daysim radiation
     radiation_data = pd.read_csv(locator.get_radiation_building(building_name))
 
-    # sum wall
+    # sum wall ------------------------------
     # solar incident on all walls [W]
     I_sol_wall = (radiation_data['walls_east_kW'] +
                   radiation_data['walls_west_kW'] +
@@ -98,7 +99,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
                  thermal_resistance_surface['RSE_wall'] * \
                  prop_envelope.loc[building_name, 'U_wall']
 
-    # sum roof
+    # sum roof ------------------------------
     # solar incident on all roofs [W]
     I_sol_roof = radiation_data['roofs_top_kW'] * 1000  # in W
 
@@ -108,24 +109,86 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
                  thermal_resistance_surface['RSE_roof'] * \
                  prop_envelope.loc[building_name, 'U_roof']
 
-    # sum window, considering shading
-    I_sol_win = (radiation_data['windows_east_kW'] +
-                 radiation_data['windows_west_kW'] +
-                 radiation_data['windows_north_kW'] +
-                 radiation_data['windows_south_kW']) * 1000  # in W
-
-    Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_win,
-                                                          prop_envelope.loc[building_name, 'G_win'],
-                                                          prop_envelope.loc[building_name, 'rf_sh'])
-
-    I_sol_win = I_sol_win * \
-                Fsh_win * \
-                (1 - prop_envelope.loc[building_name, 'F_F'])
+    # sum window ------------------------------  
+    # shading factor
+    rf_sh = prop_envelope.loc[building_name, 'rf_sh']
     
-    #dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
-    I_sol_underside = np.zeros_like(I_sol_win) * thermal_resistance_surface['RSE_underside'] 
+    # g_value of the window
+    g_gl = prop_envelope.loc[building_name, 'G_win']
+    
+    # frame factor of the window
+    frame_factor = prop_envelope.loc[building_name, 'F_F']
+    
+    # LEGACY NOTE: shading_location did not exist and shading_setpoint_Wm2 was previously hardcoded
+    # shading_location: robust parsing with default
+    raw_location = prop_envelope.loc[building_name].get('shading_location', None)
+    try:
+        # Convert string input to ShadingLocation enum
+        if isinstance(raw_location, str):
+            shading_location = ShadingLocation(raw_location.strip().lower())
+        else:
+            raise ValueError("No shading location provided")
+    except ValueError:
+        print(f"No or invalid shading location for {building_name}. Assuming '{ShadingLocation.INTERIOR.value}'.")
+        shading_location = ShadingLocation.INTERIOR
 
-    # sum
+    # shading_setpoint_Wm2: robust parsing with default
+    raw_setpoint = prop_envelope.loc[building_name].get('shading_setpoint_Wm2', np.nan)
+    try:
+        shading_setpoint_Wm2 = float(raw_setpoint)
+        if not np.isfinite(shading_setpoint_Wm2) or shading_setpoint_Wm2 < 0:
+            raise ValueError
+    except Exception:
+        print(f"No or invalid shading setpoint for {building_name}. Assuming 300 W/m2.")
+        shading_setpoint_Wm2 = 300.0
+
+    # initialize total window solar gain
+    I_sol_win = 0
+
+    # dummy values for base because there's no radiation calculated for bottom-oriented surfaces yet.
+    I_sol_underside = np.zeros(len(radiation_data)) * thermal_resistance_surface['RSE_underside']
+
+    for direction in ['east', 'west', 'north', 'south']:
+        # access area of windows
+        # area stored in the first row of the radiation data because it's constant over time
+        window_area_m2 = radiation_data[f'windows_{direction}_m2'][0]
+        
+        # subtract frame area
+        actual_window_area_m2 = window_area_m2 * (1 - frame_factor)
+        
+        if actual_window_area_m2 == 0:
+            continue  # skip to next direction if no window area
+        
+        # convert radiation data to irradiance intensity on window [W/m2]
+        I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / actual_window_area_m2
+        
+        
+        # reduce solar radiation by shading and shading location (interior or exterior)
+        if shading_location == ShadingLocation.EXTERIOR:
+            # reduce exterior shading before radiation enters the window by rf_sh if shading is activated
+            I_sol_win_wm2_direction = np.where(
+                I_sol_win_wm2_direction > shading_setpoint_Wm2,
+                I_sol_win_wm2_direction * rf_sh,
+                I_sol_win_wm2_direction
+            )
+
+        # calculate shading factor Fsh according to ISO 13790
+        Fsh_win_direction = np.vectorize(blinds.calc_blinds_activation)(
+            I_sol_win_wm2_direction,
+            g_gl,
+            rf_sh,
+            shading_location=shading_location,
+            shading_setpoint_Wm2=shading_setpoint_Wm2
+        )
+            
+        # then reduce value as usual after radiation has entered the window
+        # and multiply by window area
+        I_sol_win_w_direction = (I_sol_win_wm2_direction * Fsh_win_direction) * actual_window_area_m2
+
+        # add direction solar heat gain to total window solar gain
+        I_sol_win += I_sol_win_w_direction
+        
+    # sum all solar gains ------------------------------
     I_sol = I_sol_wall + I_sol_roof + I_sol_win + I_sol_underside
 
     return I_sol
