@@ -20,6 +20,7 @@ from cea.interfaces.dashboard.dependencies import (
 )
 from cea.interfaces.dashboard.lib.database.models import Download, DownloadState, Project
 from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 from cea.interfaces.dashboard.server.downloads import (
     create_download,
     cleanup_download,
@@ -149,6 +150,13 @@ async def prepare_download(
             input_files=download.input_files,
             output_files=download.output_files
         )
+    )
+
+    # Emit creation event
+    await emit_with_retry(
+        'download-created',
+        DownloadResponse.from_download(download).model_dump(),
+        room=f'user-{user_id}'
     )
 
     logger.info(f"Download {download.id} created and preparation started for user {user_id}")
@@ -316,6 +324,16 @@ async def download_file(
     # Mark as DOWNLOADING to prevent concurrent access
     download.state = DownloadState.DOWNLOADING
     await session.commit()
+
+    # Emit download started event
+    await emit_with_retry(
+        'download-started',
+        {
+            'download_id': download_id,
+            'state': DownloadState.DOWNLOADING.name
+        },
+        room=f'user-{user_id}'
+    )
 
     # Determine filename
     if len(download.scenarios) == 1:

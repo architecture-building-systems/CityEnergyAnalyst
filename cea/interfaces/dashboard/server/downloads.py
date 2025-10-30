@@ -19,6 +19,7 @@ import cea.config
 from cea.interfaces.dashboard.lib.database.models import Download, DownloadState
 from cea.interfaces.dashboard.lib.database.session import get_session_context
 from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 
 # Import file collection utilities from contents API
 from cea.interfaces.dashboard.api.contents import VALID_EXTENSIONS
@@ -219,6 +220,18 @@ async def mark_download_ready(
     await session.refresh(download)
     logger.info(f"Download {download_id} marked as ready: {file_path} ({file_size} bytes)")
 
+    # Emit SocketIO event
+    await emit_with_retry(
+        'download-ready',
+        {
+            'download_id': download_id,
+            'state': DownloadState.READY.name,
+            'file_size_mb': round(file_size / (1024 * 1024), 2),
+            'progress_message': download.progress_message
+        },
+        room=f'user-{download.created_by}'
+    )
+
     return download
 
 
@@ -251,6 +264,18 @@ async def mark_download_error(
     await session.commit()
     await session.refresh(download)
     logger.error(f"Download {download_id} failed: {error_message}")
+
+    # Emit SocketIO event
+    await emit_with_retry(
+        'download-error',
+        {
+            'download_id': download_id,
+            'state': DownloadState.ERROR.name,
+            'error_message': error_message,
+            'progress_message': 'Download preparation failed'
+        },
+        room=f'user-{download.created_by}'
+    )
 
     return download
 
@@ -288,6 +313,17 @@ async def mark_download_downloaded(
     await session.refresh(download)
     logger.info(f"Download {download_id} marked as downloaded and cleaned up")
 
+    # Emit SocketIO event
+    await emit_with_retry(
+        'download-downloaded',
+        {
+            'download_id': download_id,
+            'state': DownloadState.DOWNLOADED.name,
+            'downloaded_at': download.downloaded_at.isoformat() if download.downloaded_at else None
+        },
+        room=f'user-{download.created_by}'
+    )
+
     return download
 
 
@@ -320,6 +356,17 @@ async def update_download_progress(
 
     await session.commit()
     logger.debug(f"Download {download_id} progress: {progress_message}")
+
+    # Emit SocketIO event for real-time updates
+    await emit_with_retry(
+        'download-progress',
+        {
+            'download_id': download_id,
+            'state': download.state.name,
+            'progress_message': progress_message
+        },
+        room=f'user-{download.created_by}'
+    )
 
 
 def get_download_directory(download_id: str) -> Path:
