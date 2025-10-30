@@ -73,7 +73,7 @@ class DownloadResponse(BaseModel):
             input_files=download.input_files,
             output_files=download.output_files,
             state=download.state.name,
-            file_size_mb=download.file_size_mb,
+            file_size_mb=download.file_size_mb(),
             progress_message=download.progress_message,
             error_message=download.error_message,
             created_at=download.created_at.isoformat(),
@@ -314,6 +314,13 @@ async def download_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Download is not ready (state: {download.state.name})"
         )
+    
+    # Download should have file size when READY
+    if download.file_size is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to determine download file size"
+        )
 
     # Check file exists
     if not download.file_path or not os.path.exists(download.file_path):
@@ -343,9 +350,9 @@ async def download_file(
         filename = f"scenarios_{len(download.scenarios)}.zip"
 
     # Simple file streamer (no cleanup inside)
-    async def file_streamer():
+    async def file_streamer(file_path: str):
         """Stream file in chunks."""
-        async with aiofiles.open(download.file_path, 'rb') as f:
+        async with aiofiles.open(file_path, 'rb') as f:
             while True:
                 chunk = await f.read(DOWNLOAD_CHUNK_SIZE)
                 if not chunk:
@@ -361,11 +368,11 @@ async def download_file(
     logger.info(f"Streaming download {download_id} to user {user_id}")
 
     return StreamingResponse(
-        file_streamer(),
+        file_streamer(download.file_path),
         media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Length": str(download.file_size) if download.file_size else None,
+            "Content-Length": str(download.file_size),
             "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
         }
     )
