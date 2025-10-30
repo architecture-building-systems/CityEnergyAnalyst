@@ -57,6 +57,18 @@ class JobState(IntEnum):
     KILLED = 5    # Server-initiated termination (e.g., server shutdown)
 
 
+class DownloadState(IntEnum):
+    """
+    Download preparation states.
+    """
+    PENDING = 0      # Download request created, not yet started
+    PREPARING = 1    # Currently preparing zip file
+    READY = 2        # Zip file ready for download
+    DOWNLOADING = 3  # Currently being downloaded (prevents concurrent access)
+    ERROR = 4        # Error during preparation
+    DOWNLOADED = 5   # File has been downloaded and cleaned up
+
+
 class User(SQLModel, table=True):
     __tablename__ = user_table_name
     __table_args__ = table_args
@@ -119,6 +131,41 @@ class JobInfo(SQLModel, table=True):
         """Calculate job execution time in seconds if available"""
         if self.start_time is not None and self.end_time is not None:
             return (self.end_time - self.start_time).total_seconds()
+        return None
+
+
+class Download(SQLModel, table=True):
+    """Store information for scenario download requests"""
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
+    project_id: str = Field(foreign_key="project.id", index=True)
+    scenarios: list[str] = Field(sa_type=JSON)  # List of scenario names
+    input_files: bool = Field(default=False)  # Include input files?
+    output_files: list[str] = Field(sa_type=JSON)  # List of output types: SUMMARY, DETAILED, EXPORT
+    state: DownloadState = Field(default=DownloadState.PENDING, index=True)
+    file_path: Optional[str] = None  # Path to prepared zip file
+    file_size: Optional[int] = None  # Size in bytes
+    error_message: Optional[str] = None  # Error details if state=ERROR
+    progress_message: Optional[str] = None  # Current progress for UI display
+    created_at: AwareDatetime = Field(sa_type=DateTime(timezone=True), nullable=False,
+                                      default_factory=get_current_time, index=True)
+    downloaded_at: Optional[AwareDatetime] = Field(sa_type=DateTime(timezone=True), nullable=True, default=None)
+    created_by: str = Field(foreign_key=f"{user_table_ref}.id", index=True)
+
+    @computed_field
+    def file_size_mb(self) -> Optional[float]:
+        """Return file size in megabytes for UI display"""
+        if self.file_size:
+            return round(self.file_size / (1024 * 1024), 2)
+        return None
+
+    @computed_field
+    def preparation_duration(self) -> Optional[float]:
+        """Calculate download preparation time in seconds if available"""
+        if self.state in [DownloadState.READY, DownloadState.DOWNLOADED]:
+            # Find the time when it became READY (we'll track this separately in implementation)
+            # For now, estimate from created_at to when file_path was set
+            # This will be refined when we track state transitions
+            return None
         return None
 
 
