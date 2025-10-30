@@ -7,7 +7,7 @@ from typing import List
 from enum import StrEnum
 
 import aiofiles
-from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 from pydantic import BaseModel
 from sqlmodel import select
 from starlette.responses import StreamingResponse
@@ -15,9 +15,9 @@ from starlette.responses import StreamingResponse
 from cea.interfaces.dashboard.dependencies import (
     CEAProjectID,
     CEAProjectRoot,
-    CEASession,
     CEAUserID
 )
+from cea.interfaces.dashboard.lib.database.session import SessionDep as CEASession
 from cea.interfaces.dashboard.lib.database.models import Download, DownloadState, Project
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.lib.socketio import emit_with_retry
@@ -25,7 +25,8 @@ from cea.interfaces.dashboard.server.downloads import (
     create_download,
     cleanup_download,
     mark_download_downloaded,
-    prepare_download_background
+    prepare_download_background,
+    DownloadStartedEvent
 )
 
 router = APIRouter()
@@ -328,10 +329,10 @@ async def download_file(
     # Emit download started event
     await emit_with_retry(
         'download-started',
-        {
-            'download_id': download_id,
-            'state': DownloadState.DOWNLOADING.name
-        },
+        DownloadStartedEvent(
+            download_id=download_id,
+            state=DownloadState.DOWNLOADING.name
+        ).model_dump(),
         room=f'user-{user_id}'
     )
 
