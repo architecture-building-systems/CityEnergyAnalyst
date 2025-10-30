@@ -30,7 +30,14 @@ def setup_sigchld_handler():
 
     This is especially important in Docker/Linux where zombies can accumulate if
     workers exit unexpectedly or before the cleanup_worker_process() is called.
+
+    Note: This is Unix-specific and will be skipped on Windows.
     """
+    # SIGCHLD only exists on Unix systems
+    if not hasattr(signal, 'SIGCHLD'):
+        zombie_logger.info("SIGCHLD not available on this platform (Windows), skipping zombie reaping handler")
+        return
+
     def sigchld_handler(signum, frame):
         """Reap all zombie children without blocking"""
         while True:
