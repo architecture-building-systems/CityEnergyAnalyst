@@ -334,6 +334,11 @@ async def download_file(
             detail="Download file not found"
         )
 
+    # Capture values before commit (avoid lazy loading after commit)
+    file_path = download.file_path
+    file_size = download.file_size
+    scenarios = download.scenarios
+
     # Mark as DOWNLOADING to prevent concurrent access
     download.state = DownloadState.DOWNLOADING
     await session.commit()
@@ -349,15 +354,15 @@ async def download_file(
     )
 
     # Determine filename
-    if len(download.scenarios) == 1:
-        filename = f"{download.scenarios[0]}.zip"
+    if len(scenarios) == 1:
+        filename = f"{scenarios[0]}.zip"
     else:
-        filename = f"scenarios_{len(download.scenarios)}.zip"
+        filename = f"scenarios_{len(scenarios)}.zip"
 
     # Simple file streamer (no cleanup inside)
-    async def file_streamer(file_path: str):
+    async def file_streamer(fp: str):
         """Stream file in chunks."""
-        async with aiofiles.open(file_path, 'rb') as f:
+        async with aiofiles.open(fp, 'rb') as f:
             while True:
                 chunk = await f.read(DOWNLOAD_CHUNK_SIZE)
                 if not chunk:
@@ -373,11 +378,11 @@ async def download_file(
     logger.info(f"Streaming download {download_id} to user {user_id}")
 
     return StreamingResponse(
-        file_streamer(download.file_path),
+        file_streamer(file_path),
         media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Length": str(download.file_size),
+            "Content-Length": str(file_size),
             "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
         }
     )
