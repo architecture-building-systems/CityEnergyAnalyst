@@ -260,10 +260,13 @@ async def mark_download_ready(
     download.state = DownloadState.READY
     download.file_path = file_path
     download.file_size = file_size
-    download.progress_message = f"Download ready: {round(file_size / (1024 * 1024), 2)} MB"
+    progress_msg = f"Download ready: {round(file_size / (1024 * 1024), 2)} MB"
+    download.progress_message = progress_msg
+
+    # Capture values before commit (avoid lazy loading issues)
+    user_id = download.created_by
 
     await session.commit()
-    await session.refresh(download)
     logger.info(f"Download {download_id} marked as ready: {file_path} ({file_size} bytes)")
 
     # Emit SocketIO event
@@ -273,9 +276,9 @@ async def mark_download_ready(
             download_id=download_id,
             state=DownloadState.READY.name,
             file_size_mb=round(file_size / (1024 * 1024), 2),
-            progress_message=download.progress_message
+            progress_message=progress_msg
         ).model_dump(),
-        room=f'user-{download.created_by}'
+        room=f'user-{user_id}'
     )
 
     return download
@@ -307,8 +310,10 @@ async def mark_download_error(
     download.error_message = error_message
     download.progress_message = "Download preparation failed"
 
+    # Capture values before commit (avoid lazy loading issues)
+    user_id = download.created_by
+
     await session.commit()
-    await session.refresh(download)
     logger.error(f"Download {download_id} failed: {error_message}")
 
     # Emit SocketIO event
@@ -320,7 +325,7 @@ async def mark_download_error(
             error_message=error_message,
             progress_message='Download preparation failed'
         ).model_dump(),
-        room=f'user-{download.created_by}'
+        room=f'user-{user_id}'
     )
 
     return download
@@ -348,15 +353,18 @@ async def mark_download_downloaded(
         return
 
     download.state = DownloadState.DOWNLOADED
-    download.downloaded_at = datetime.now(timezone.utc)
+    downloaded_at = datetime.now(timezone.utc)
+    download.downloaded_at = downloaded_at
     download.progress_message = "Downloaded"
 
     # Clean up file immediately (single-use policy)
     await cleanup_download(session, download)
     download.file_path = None  # File no longer exists
 
+    # Capture values before commit (avoid lazy loading issues)
+    user_id = download.created_by
+
     await session.commit()
-    await session.refresh(download)
     logger.info(f"Download {download_id} marked as downloaded and cleaned up")
 
     # Emit SocketIO event
@@ -365,9 +373,9 @@ async def mark_download_downloaded(
         DownloadDownloadedEvent(
             download_id=download_id,
             state=DownloadState.DOWNLOADED.name,
-            downloaded_at=download.downloaded_at.isoformat() if download.downloaded_at else None
+            downloaded_at=downloaded_at.isoformat() if downloaded_at else None
         ).model_dump(),
-        room=f'user-{download.created_by}'
+        room=f'user-{user_id}'
     )
 
     return download
@@ -400,6 +408,10 @@ async def update_download_progress(
     if state is not None:
         download.state = state
 
+    # Capture values before commit (avoid lazy loading after commit)
+    current_state = download.state
+    user_id = download.created_by
+
     await session.commit()
     logger.debug(f"Download {download_id} progress: {progress_message}")
 
@@ -408,10 +420,10 @@ async def update_download_progress(
         'download-progress',
         DownloadProgressEvent(
             download_id=download_id,
-            state=download.state.name,
+            state=current_state.name,
             progress_message=progress_message
         ).model_dump(),
-        room=f'user-{download.created_by}'
+        room=f'user-{user_id}'
     )
 
 
@@ -430,7 +442,7 @@ def get_download_zip_path(download_id: str) -> Path:
 # ============================================================================
 
 def collect_files_for_download(
-    project_root: str,
+    project_path: str,
     scenarios: list[str],
     input_files: bool,
     output_files: list[OutputFileType]
@@ -439,7 +451,7 @@ def collect_files_for_download(
     Collect all files to be included in the download.
 
     Args:
-        project_root: Root directory of the project
+        project_path: Path to the project
         scenarios: List of scenario names
         input_files: Include input files?
         output_files: List of output types (OutputFileType enum values)
@@ -448,7 +460,9 @@ def collect_files_for_download(
         List of (file_path, archive_name) tuples
     """
     files_to_zip = []
-    base_path = Path(project_root)
+    base_path = Path(project_path)
+
+    print(project_path, scenarios, input_files, output_files)
 
     # Map output types to their folder paths relative to scenario root
     # Format: (type_key, folder_path_relative_to_scenario)
@@ -494,19 +508,19 @@ def collect_files_for_download(
     return files_to_zip
 
 
-def generate_summary_for_scenario(project_root: str, scenario_name: str):
+def generate_summary_for_scenario(project_path: str, scenario_name: str):
     """
     Generate summary files for a scenario.
 
     Args:
-        project_root: Root directory of the project
+        project_path: Path to the project
         scenario_name: Name of the scenario
     """
     try:
         logger.info(f"Generating summary for scenario: {scenario_name}")
 
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
-        config.project = project_root
+        config.project = project_path
         config.scenario_name = scenario_name
         config.result_summary.aggregate_by_building = True
 
@@ -521,50 +535,58 @@ def generate_summary_for_scenario(project_root: str, scenario_name: str):
 
 def prepare_download_sync(
     download_id: str,
-    project_root: str,
+    project_path: str,
     scenarios: list[str],
     input_files: bool,
-    output_files: list[str]
+    output_files: list[OutputFileType],
+    loop: asyncio.AbstractEventLoop,
+    progress_queue: asyncio.Queue
 ):
     """
     Synchronous function to prepare download (runs in threadpool).
 
     Args:
         download_id: Download ID
-        project_root: Root directory of the project
+        project_path: Path to the project
         scenarios: List of scenario names
         input_files: Include input files?
-        output_files: List of output types
+        output_files: List of output types (OutputFileType enum values)
+        loop: Event loop for thread-safe queue operations
+        progress_queue: Async queue for sending progress updates to async monitor
     """
+    def put_progress(msg):
+        """Helper to safely put message from thread to async queue."""
+        loop.call_soon_threadsafe(progress_queue.put_nowait, msg)
+
     try:
         # Update progress: Starting
-        asyncio.run(_update_progress_helper(
-            download_id,
-            f"Preparing download for {len(scenarios)} scenario(s)...",
-            DownloadState.PREPARING
-        ))
+        put_progress({
+            'type': 'progress',
+            'message': f"Preparing download for {len(scenarios)} scenario(s)...",
+            'state': DownloadState.PREPARING
+        })
 
         # Generate summaries if requested
-        if "SUMMARY" in output_files or "summary" in output_files:
+        if OutputFileType.SUMMARY in output_files:
             for i, scenario in enumerate(scenarios):
                 scenario_name = Path(scenario).name
 
-                asyncio.run(_update_progress_helper(
-                    download_id,
-                    f"Generating summary for scenario {i+1}/{len(scenarios)}: {scenario_name}..."
-                ))
+                put_progress({
+                    'type': 'progress',
+                    'message': f"Generating summary for scenario {i+1}/{len(scenarios)}: {scenario_name}..."
+                })
 
-                generate_summary_for_scenario(project_root, scenario_name)
+                generate_summary_for_scenario(project_path, scenario_name)
 
         # Collect files
-        asyncio.run(_update_progress_helper(
-            download_id,
-            "Collecting files..."
-        ))
+        put_progress({
+            'type': 'progress',
+            'message': "Collecting files..."
+        })
 
         logger.info(f"Collecting files for download {download_id}")
         files_to_zip = collect_files_for_download(
-            project_root,
+            project_path,
             scenarios,
             input_files,
             output_files
@@ -576,10 +598,10 @@ def prepare_download_sync(
         logger.info(f"Found {len(files_to_zip)} files to zip for download {download_id}")
 
         # Create ZIP file
-        asyncio.run(_update_progress_helper(
-            download_id,
-            f"Creating ZIP archive ({len(files_to_zip)} files)..."
-        ))
+        put_progress({
+            'type': 'progress',
+            'message': f"Creating ZIP archive ({len(files_to_zip)} files)..."
+        })
 
         zip_path = get_download_zip_path(download_id)
         zip_path.parent.mkdir(parents=True, exist_ok=True)
@@ -590,10 +612,10 @@ def prepare_download_sync(
 
                 # Update progress every 50 files
                 if (i + 1) % 50 == 0:
-                    asyncio.run(_update_progress_helper(
-                        download_id,
-                        f"Adding files to archive... ({i+1}/{len(files_to_zip)})"
-                    ))
+                    put_progress({
+                        'type': 'progress',
+                        'message': f"Adding files to archive... ({i+1}/{len(files_to_zip)})"
+                    })
 
         # Get file size
         file_size = os.path.getsize(zip_path)
@@ -601,65 +623,121 @@ def prepare_download_sync(
         logger.info(f"Download {download_id} prepared successfully: {zip_path} ({file_size} bytes)")
 
         # Mark download as ready
-        asyncio.run(_mark_download_ready_helper(download_id, str(zip_path), file_size))
+        put_progress({
+            'type': 'ready',
+            'file_path': str(zip_path),
+            'file_size': file_size
+        })
 
     except Exception as e:
         logger.error(f"Error preparing download {download_id}: {e}")
 
         # Mark download as error
-        asyncio.run(_mark_download_error_helper(download_id, str(e)))
+        put_progress({
+            'type': 'error',
+            'error_message': str(e)
+        })
 
         raise
 
 
 async def prepare_download_background(
     download_id: str,
-    project_root: str,
+    project_path: str,
     scenarios: list[str],
     input_files: bool,
-    output_files: list[str]
+    output_files: list[OutputFileType]
 ):
     """
     Async wrapper that runs sync preparation function in threadpool.
+    Monitors progress queue and updates database.
 
     Args:
         download_id: Download ID
-        project_root: Root directory of the project
+        project_path: Path to project
         scenarios: List of scenario names
         input_files: Include input files?
-        output_files: List of output types
+        output_files: List of output types (OutputFileType enum values)
     """
+    # Create async queue for progress updates
+    progress_queue = asyncio.Queue()
+
+    # Get current event loop
+    loop = asyncio.get_running_loop()
+
+    # Start monitoring the queue
+    monitor_task = asyncio.create_task(
+        _monitor_download_progress(download_id, progress_queue)
+    )
+
     try:
+        # Run sync preparation in threadpool
         await run_in_threadpool(
             prepare_download_sync,
             download_id,
-            project_root,
+            project_path,
             scenarios,
             input_files,
-            output_files
+            output_files,
+            loop,
+            progress_queue
         )
     except Exception as e:
         logger.error(f"Download preparation failed for {download_id}: {e}")
-        # Error already marked in prepare_download_sync
+        # Error already sent to queue in prepare_download_sync
+    finally:
+        # Signal monitor to stop
+        await progress_queue.put({'type': 'done'})
+        # Wait for monitor to finish processing
+        await monitor_task
 
 
-# ============================================================================
-# Helper Functions (for use from sync context in threadpool)
-# ============================================================================
+async def _monitor_download_progress(download_id: str, progress_queue: asyncio.Queue):
+    """
+    Monitor progress queue and update database.
+    Runs concurrently with download preparation.
 
-async def _update_progress_helper(download_id: str, message: str, state: Optional[DownloadState] = None):
-    """Helper to update progress from sync context."""
-    async with get_session_context() as session:
-        await update_download_progress(session, download_id, message, state)
+    Args:
+        download_id: Download ID
+        progress_queue: Async queue containing progress updates from sync function
+    """
+    while True:
+        try:
+            # Block until message arrives (efficient, no polling)
+            msg = await progress_queue.get()
+            msg_type = msg.get('type')
+
+            if msg_type == 'done':
+                # Cleanup signal - exit monitor
+                return
+
+            # Create new session for each database operation
+            async with get_session_context() as session:
+                if msg_type == 'progress':
+                    await update_download_progress(
+                        session,
+                        download_id,
+                        msg['message'],
+                        msg.get('state')
+                    )
+
+                elif msg_type == 'ready':
+                    await mark_download_ready(
+                        session,
+                        download_id,
+                        msg['file_path'],
+                        msg['file_size']
+                    )
+
+                elif msg_type == 'error':
+                    await mark_download_error(
+                        session,
+                        download_id,
+                        msg['error_message']
+                    )
+
+        except Exception as e:
+            logger.error(f"Error monitoring download progress for {download_id}: {e}")
+            # Continue monitoring despite errors
 
 
-async def _mark_download_ready_helper(download_id: str, file_path: str, file_size: int):
-    """Helper to mark download ready from sync context."""
-    async with get_session_context() as session:
-        await mark_download_ready(session, download_id, file_path, file_size)
-
-
-async def _mark_download_error_helper(download_id: str, error_message: str):
-    """Helper to mark download error from sync context."""
-    async with get_session_context() as session:
-        await mark_download_error(session, download_id, error_message)
