@@ -73,7 +73,7 @@ class DownloadResponse(BaseModel):
             input_files=download.input_files,
             output_files=download.output_files,
             state=download.state.name,
-            file_size_mb=download.file_size_mb(),
+            file_size_mb=download.file_size_mb,
             progress_message=download.progress_message,
             error_message=download.error_message,
             created_at=download.created_at.isoformat(),
