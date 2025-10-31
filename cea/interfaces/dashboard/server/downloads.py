@@ -7,6 +7,7 @@ import asyncio
 import zipfile
 import shutil
 from datetime import datetime, timedelta, timezone
+from enum import StrEnum
 from pathlib import Path
 from typing import Optional
 
@@ -23,6 +24,14 @@ from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 
 # Import file collection utilities from contents API
 from cea.interfaces.dashboard.api.contents import VALID_EXTENSIONS
+
+
+# Output file type enum
+class OutputFileType(StrEnum):
+    """Output file types for downloads."""
+    SUMMARY = "SUMMARY"
+    DETAILED = "DETAILED"
+    EXPORT = "EXPORT"
 
 # SocketIO Event Models
 class DownloadProgressEvent(BaseModel):
@@ -72,7 +81,7 @@ async def create_download(
     project_id: str,
     scenarios: list[str],
     input_files: bool,
-    output_files: list[str],
+    output_files: list[OutputFileType],
     user_id: str
 ) -> Download:
     """
@@ -83,7 +92,7 @@ async def create_download(
         project_id: Project ID
         scenarios: List of scenario names
         input_files: Include input files?
-        output_files: List of output types (SUMMARY, DETAILED, EXPORT)
+        output_files: List of output types (OutputFileType enum values)
         user_id: User creating the download
 
     Returns:
@@ -92,12 +101,12 @@ async def create_download(
     # Enforce user download limit
     await enforce_user_download_limit(session, user_id)
 
-    # Create download record
+    # Create download record (convert enum to strings for database storage)
     download = Download(
         project_id=project_id,
         scenarios=scenarios,
         input_files=input_files,
-        output_files=output_files,
+        output_files=[str(f) for f in output_files],
         created_by=user_id,
         state=DownloadState.PENDING,
         progress_message="Download request created"
@@ -424,7 +433,7 @@ def collect_files_for_download(
     project_root: str,
     scenarios: list[str],
     input_files: bool,
-    output_files: list[str]
+    output_files: list[OutputFileType]
 ) -> list[tuple[Path, str]]:
     """
     Collect all files to be included in the download.
@@ -433,13 +442,38 @@ def collect_files_for_download(
         project_root: Root directory of the project
         scenarios: List of scenario names
         input_files: Include input files?
-        output_files: List of output types (SUMMARY, DETAILED, EXPORT)
+        output_files: List of output types (OutputFileType enum values)
 
     Returns:
         List of (file_path, archive_name) tuples
     """
     files_to_zip = []
     base_path = Path(project_root)
+
+    # Map output types to their folder paths relative to scenario root
+    # Format: (type_key, folder_path_relative_to_scenario)
+    output_folders = []
+    if OutputFileType.DETAILED in output_files:
+        output_folders.append(('outputs', Path('outputs')))
+    if OutputFileType.SUMMARY in output_files:
+        output_folders.append(('export/results', Path('export') / 'results'))
+    if OutputFileType.EXPORT in output_files:
+        # Export can include multiple subfolders
+        output_folders.append(('export/rhino', Path('export') / 'rhino'))
+
+    def collect_from_folder(scenario_name: str, scenario_path: Path, folder_key: str, folder_path: Path):
+        """Helper to collect files from a folder."""
+        full_path = scenario_path / folder_path
+        if not full_path.exists():
+            return
+
+        for root, _, files in os.walk(full_path):
+            root_path = Path(root)
+            for file in files:
+                if Path(file).suffix in VALID_EXTENSIONS:
+                    item_path = root_path / file
+                    relative_path = str(Path(scenario_name) / folder_path / item_path.relative_to(full_path))
+                    files_to_zip.append((item_path, relative_path))
 
     for scenario in scenarios:
         scenario_name = Path(scenario).name
@@ -451,53 +485,11 @@ def collect_files_for_download(
 
         # Collect input files
         if input_files:
-            input_paths = scenario_path / "inputs"
-            if input_paths.exists():
-                for root, _, files in os.walk(input_paths):
-                    root_path = Path(root)
-                    for file in files:
-                        if Path(file).suffix in VALID_EXTENSIONS:
-                            item_path = root_path / file
-                            relative_path = str(Path(scenario_name) / "inputs" / item_path.relative_to(input_paths))
-                            files_to_zip.append((item_path, relative_path))
+            collect_from_folder(scenario_name, scenario_path, 'inputs', Path('inputs'))
 
-        # Collect detailed output files
-        if "DETAILED" in output_files or "detailed" in output_files:
-            output_paths = scenario_path / "outputs"
-            if output_paths.exists():
-                for root, _, files in os.walk(output_paths):
-                    root_path = Path(root)
-                    for file in files:
-                        if Path(file).suffix in VALID_EXTENSIONS:
-                            item_path = root_path / file
-                            relative_path = str(Path(scenario_name) / "outputs" / item_path.relative_to(output_paths))
-                            files_to_zip.append((item_path, relative_path))
-
-        # Collect summary files
-        if "SUMMARY" in output_files or "summary" in output_files:
-            results_paths = scenario_path / "export" / "results"
-            if results_paths.exists():
-                for root, _, files in os.walk(results_paths):
-                    root_path = Path(root)
-                    for file in files:
-                        if Path(file).suffix in VALID_EXTENSIONS:
-                            item_path = root_path / file
-                            relative_path = str(Path(scenario_name) / "export" / "results" / item_path.relative_to(results_paths))
-                            files_to_zip.append((item_path, relative_path))
-
-        # Collect export files (rhino, etc.)
-        if "EXPORT" in output_files or "export" in output_files:
-            export_folders = ["rhino"]
-            for export_folder in export_folders:
-                export_paths = scenario_path / "export" / export_folder
-                if export_paths.exists():
-                    for root, _, files in os.walk(export_paths):
-                        root_path = Path(root)
-                        for file in files:
-                            if Path(file).suffix in VALID_EXTENSIONS:
-                                item_path = root_path / file
-                                relative_path = str(Path(scenario_name) / "export" / export_folder / item_path.relative_to(export_paths))
-                                files_to_zip.append((item_path, relative_path))
+        # Collect output files based on requested types
+        for folder_key, folder_path in output_folders:
+            collect_from_folder(scenario_name, scenario_path, folder_key, folder_path)
 
     return files_to_zip
 

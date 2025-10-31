@@ -4,7 +4,6 @@ API endpoints for scenario download management.
 import os
 import asyncio
 from typing import List
-from enum import StrEnum
 
 import aiofiles
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks
@@ -26,20 +25,14 @@ from cea.interfaces.dashboard.server.downloads import (
     cleanup_download,
     mark_download_downloaded,
     prepare_download_background,
-    DownloadStartedEvent
+    DownloadStartedEvent,
+    OutputFileType
 )
 
 router = APIRouter()
 
 # Chunk size for streaming downloads (1MB)
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
-
-
-class OutputFileType(StrEnum):
-    """Output file types for downloads."""
-    SUMMARY = "SUMMARY"
-    DETAILED = "DETAILED"
-    EXPORT = "EXPORT"
 
 
 class PrepareDownloadRequest(BaseModel):
@@ -138,18 +131,19 @@ async def prepare_download(
         project_id=project_id,
         scenarios=request.scenarios,
         input_files=request.input_files,
-        output_files=[str(f) for f in request.output_files],
+        output_files=request.output_files,
         user_id=user_id
     )
 
     # Start background preparation (fire-and-forget)
+    # Convert stored strings back to enum for type safety
     asyncio.create_task(
         prepare_download_background(
             download_id=download.id,
             project_root=project_root,
             scenarios=download.scenarios,
             input_files=download.input_files,
-            output_files=download.output_files
+            output_files=[OutputFileType(f) for f in download.output_files]
         )
     )
 
