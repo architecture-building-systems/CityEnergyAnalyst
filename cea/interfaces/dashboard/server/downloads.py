@@ -462,8 +462,6 @@ def collect_files_for_download(
     files_to_zip = []
     base_path = Path(project_path)
 
-    print(project_path, scenarios, input_files, output_files)
-
     # Map output types to their folder paths relative to scenario root
     # Format: (type_key, folder_path_relative_to_scenario)
     output_folders = []
