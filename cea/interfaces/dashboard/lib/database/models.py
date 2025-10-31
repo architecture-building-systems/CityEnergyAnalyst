@@ -5,7 +5,7 @@ from enum import IntEnum
 from typing import Optional
 
 from pydantic import AwareDatetime, computed_field
-from sqlmodel import Field, SQLModel, JSON, DateTime, select, inspect, text
+from sqlmodel import Field, SQLModel, JSON, DateTime, BigInteger, select, inspect, text
 
 import cea.scripts
 from cea.interfaces.dashboard.lib.database.session import (get_engine, get_session_context, get_connection_props,
@@ -143,7 +143,7 @@ class Download(SQLModel, table=True):
     output_files: list[str] = Field(sa_type=JSON)  # List of output types: SUMMARY, DETAILED, EXPORT
     state: DownloadState = Field(default=DownloadState.PENDING, index=True)
     file_path: Optional[str] = None  # Path to prepared zip file
-    file_size: Optional[int] = None  # Size in bytes
+    file_size: Optional[int] = Field(sa_type=BigInteger, nullable=True, default=None)  # Size in bytes
     error_message: Optional[str] = None  # Error details if state=ERROR
     progress_message: Optional[str] = None  # Current progress for UI display
     created_at: AwareDatetime = Field(sa_type=DateTime(timezone=True), nullable=False,
