@@ -441,6 +441,13 @@ async def delete_download(
             detail="Not authorized to delete this download"
         )
 
+    # Prevent deletion while download is in progress
+    if download.state == DownloadState.DOWNLOADING:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete download while it is in progress. Please wait for download to complete or fail."
+        )
+
     # Cleanup files
     await cleanup_download(session, download)
 
