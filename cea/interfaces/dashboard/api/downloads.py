@@ -81,7 +81,7 @@ class DownloadResponse(BaseModel):
         )
 
 
-@router.post("/downloads/prepare", response_model=DownloadResponse)
+@router.post("/prepare", response_model=DownloadResponse)
 async def prepare_download(
     request: PrepareDownloadRequest,
     project_id: CEAProjectID,
@@ -165,7 +165,7 @@ async def prepare_download(
     return DownloadResponse.from_download(download)
 
 
-@router.get("/downloads", response_model=List[DownloadResponse])
+@router.get("/", response_model=List[DownloadResponse])
 async def list_downloads(
     user_id: CEAUserID,
     project_id: CEAProjectID,
@@ -198,7 +198,7 @@ async def list_downloads(
     return [DownloadResponse.from_download(d) for d in downloads]
 
 
-@router.get("/downloads/{download_id}/status", response_model=DownloadResponse)
+@router.get("/{download_id}/status", response_model=DownloadResponse)
 async def get_download_status(
     download_id: str,
     user_id: CEAUserID,
@@ -236,7 +236,7 @@ async def get_download_status(
     return DownloadResponse.from_download(download)
 
 
-@router.get("/downloads/{download_id}")
+@router.get("/{download_id}")
 async def download_file(
     download_id: str,
     user_id: CEAUserID,
@@ -396,7 +396,7 @@ async def cleanup_after_download(download_id: str):
         logger.error(f"Error in cleanup_after_download for {download_id}: {e}")
 
 
-@router.delete("/downloads/{download_id}")
+@router.delete("/{download_id}")
 async def delete_download(
     download_id: str,
     user_id: CEAUserID,
