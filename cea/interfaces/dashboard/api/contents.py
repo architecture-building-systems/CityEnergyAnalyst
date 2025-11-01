@@ -424,6 +424,22 @@ def run_summary(project: str, scenario_name: str):
 
 @router.post("/scenario/download")
 async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot):
+    """
+    Synchronous scenario download endpoint (Legacy).
+
+    NOTE: This endpoint is maintained for backward compatibility but may timeout
+    for large scenarios. For better user experience with progress tracking,
+    use the new async download system:
+    - POST /api/downloads/prepare (initiate download)
+    - GET /api/downloads/{download_id}/status (check progress)
+    - GET /api/downloads/{download_id} (download prepared file)
+
+    The new system provides:
+    - Real-time progress updates
+    - No HTTP timeouts
+    - Background processing
+    - Prepared files available for later download
+    """
     if not form.project or not form.scenarios:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing project or scenarios")
 
