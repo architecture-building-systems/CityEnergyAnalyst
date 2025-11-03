@@ -223,7 +223,19 @@ def _get_missing_neighbours(node_coords, potential_graph: nx.Graph, steiner_grap
     return list(potential_neighbours - steiner_neighbours)
 
 
-def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type_mat) -> gdf:
+def _make_edge_key(coord1, coord2):
+    """
+    Create a unique edge key from two coordinates.
+    Uses frozenset to make edges undirected (A->B == B->A).
+
+    :param coord1: First coordinate tuple
+    :param coord2: Second coordinate tuple
+    :return: frozenset edge key
+    """
+    return frozenset([tuple(coord1), tuple(coord2)])
+
+
+def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type_mat, existing_edges: set) -> gdf:
     """
     Add an edge to the network if it doesn't already exist.
 
@@ -232,10 +244,13 @@ def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type
     :param end_coords: End point coordinates
     :param pipe_dn: Pipe diameter
     :param type_mat: Pipe material type
+    :param existing_edges: Set of existing edge keys (frozensets of coordinate tuples)
     :return: Updated edges GeoDataFrame
     """
-    line = LineString((start_coords, end_coords))
-    if line not in mst_edges.geometry:
+    edge_key = _make_edge_key(start_coords, end_coords)
+
+    if edge_key not in existing_edges:
+        line = LineString((start_coords, end_coords))
         # Calculate weight from line length
         edge_weight = line.length
         new_edge = pd.DataFrame([{
@@ -249,11 +264,22 @@ def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type
             pd.concat([mst_edges, new_edge], ignore_index=True),
             crs=mst_edges.crs
         )
+        # Add to existing edges set
+        existing_edges.add(edge_key)
+
     return mst_edges
 
 
 def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn) -> tuple[gdf, gdf]:
     added_a_loop = False
+
+    # Initialize set of existing edges from current mst_edges
+    existing_edges = set()
+    for geom in mst_edges.geometry:
+        coords = list(geom.coords)
+        if len(coords) >= 2:
+            edge_key = _make_edge_key(coords[0], coords[-1])
+            existing_edges.add(edge_key)
 
     # Filter to only NONE type nodes
     none_nodes = new_mst_nodes[new_mst_nodes['type'] == 'NONE']
@@ -270,7 +296,7 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
         for new_neighbour in missing_neighbours:
             if tuple(new_neighbour) in none_coords:
                 # Add edge between the two NONE nodes
-                mst_edges = _add_edge_to_network(mst_edges, node_coords, new_neighbour, pipe_dn, type_mat)
+                mst_edges = _add_edge_to_network(mst_edges, node_coords, new_neighbour, pipe_dn, type_mat, existing_edges)
                 added_a_loop = True
     
     if not added_a_loop:
@@ -299,7 +325,7 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
                         if potential_second_deg_neighbour != node_coords:
                             if tuple(potential_second_deg_neighbour) in none_coords:
                                 # Add first edge (to intermediate node)
-                                mst_edges = _add_edge_to_network(mst_edges, node_coords, new_neighbour, pipe_dn, type_mat)
+                                mst_edges = _add_edge_to_network(mst_edges, node_coords, new_neighbour, pipe_dn, type_mat, existing_edges)
 
                                 # Add new intermediate node from potential network to steiner tree
                                 copy_of_new_mst_nodes = new_mst_nodes.copy()
@@ -324,7 +350,7 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
                                     all_coords.add(normalized_coords)
 
                                 # Add second edge (from intermediate to second degree neighbour)
-                                mst_edges = _add_edge_to_network(mst_edges, new_neighbour, potential_second_deg_neighbour, pipe_dn, type_mat)
+                                mst_edges = _add_edge_to_network(mst_edges, new_neighbour, potential_second_deg_neighbour, pipe_dn, type_mat, existing_edges)
                                 added_a_loop = True
     if not added_a_loop:
         print('No loops added.')
