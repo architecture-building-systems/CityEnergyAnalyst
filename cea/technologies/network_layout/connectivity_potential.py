@@ -467,7 +467,7 @@ def calc_connectivity_network(streets_network_df, building_centroids_df):
     :type streets_network_df: gdf
     :param building_centroids_df: GeoDataFrame with building centroids (must have 'name' column)
     :type building_centroids_df: gdf
-    :return: Potential connectivity network as GeoDataFrame
+    :return: Potential connectivity network as GeoDataFrame in projected CRS
     :rtype: gdf
     """
 

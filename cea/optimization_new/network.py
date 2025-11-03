@@ -428,15 +428,11 @@ class Network(object):
         
         streets_network_df = Gdf.from_file(domain.locator.get_street_network())
 
-        # Store the buildings CRS as the reference for the network
-        cls._coordinate_reference_system = domain.buildings[0].crs
-
         # create a potential network grid with orthogonal connections between buildings and their closest street
         network_grid_shp = calc_connectivity_network(streets_network_df, buildings_df)
 
-        # Ensure network grid matches the buildings CRS
-        if network_grid_shp.crs != cls._coordinate_reference_system:
-            network_grid_shp = network_grid_shp.to_crs(cls._coordinate_reference_system)
+        # store projected coordinate reference system of network
+        cls._coordinate_reference_system = network_grid_shp.crs
 
         # convert the GeoDataFrame network grid to a Graph
         for (line_string, length) in network_grid_shp.itertuples(index=False):
@@ -450,10 +446,10 @@ class Network(object):
         # Extract transformed building terminal coordinates with proper rounding
         building_terminal_nodes = [
             (
-                round(building.location.coords[0][0], SHAPEFILE_TOLERANCE),
-                round(building.location.coords[0][1], SHAPEFILE_TOLERANCE),
+                round(node.coords[0][0], SHAPEFILE_TOLERANCE),
+                round(node.coords[0][1], SHAPEFILE_TOLERANCE),
             )
-            for building in domain.buildings
+            for node in buildings_df.geometry
         ]
 
         # Apply graph corrections to fix connectivity issues
