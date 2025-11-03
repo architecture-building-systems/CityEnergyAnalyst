@@ -232,13 +232,17 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes: gdf, mst_edges: gdf
                         if new_mst_nodes['type'][node_index] == 'NONE':
                             # create new edge
                             line = LineString((node_coords, new_neighbour))
-                            if line not in mst_edges['geometry']:
-                                mst_edges = mst_edges.append(
-                                    {"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                                     "name": "PIPE" + str(mst_edges.name.count())},
-                                    ignore_index=True)
+                            if line not in mst_edges.geometry:
+                                mst_edges = gdf(
+                                    pd.concat(
+                                        [mst_edges,
+                                        pd.DataFrame({"geometry": [line], "pipe_DN": [pipe_dn], "type_mat": [type_mat],
+                                                      "name": ["PIPE" + str(mst_edges.name.count())]})],
+                                        ignore_index=True
+                                    ),
+                                    crs=mst_edges.crs
+                                )
                                 added_a_loop = True
-                            mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
         print('No first degree loop added. Trying two nodes apart.')
         # Identify all NONE type nodes in the steiner tree
@@ -268,11 +272,16 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes: gdf, mst_edges: gdf
                                     if new_mst_nodes['type'][node_index] == 'NONE':
                                         # create new edge
                                         line = LineString((node_coords, new_neighbour))
-                                        if line not in mst_edges['geometry']:
-                                            mst_edges = mst_edges.append(
-                                                {"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                                                 "name": "PIPE" + str(mst_edges.name.count())},
-                                                ignore_index=True)
+                                        if line not in mst_edges.geometry:
+                                            mst_edges = gdf(
+                                                pd.concat(
+                                                    [mst_edges,
+                                                    pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                                                                  "name": "PIPE" + str(mst_edges.name.count())}])],
+                                                    ignore_index=True
+                                                ),
+                                                crs=mst_edges.crs
+                                            )
                                         # Add new node from potential network to steiner tree
                                         # create copy of selected node and add to list of all nodes
                                         copy_of_new_mst_nodes = new_mst_nodes.copy()
@@ -287,17 +296,23 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes: gdf, mst_edges: gdf
                                         selected_node["coordinates"] = selected_node.geometry.values[0].coords
                                         if selected_node["coordinates"].values not in new_mst_nodes[
                                             "coordinates"].values:
-                                            new_mst_nodes = new_mst_nodes.append(selected_node)
-                                        new_mst_nodes.reset_index(inplace=True, drop=True)
+                                            new_mst_nodes = gdf(
+                                                pd.concat([new_mst_nodes, selected_node], ignore_index=True),
+                                                crs=new_mst_nodes.crs
+                                            )
 
                                         line2 = LineString((new_neighbour, potential_second_deg_neighbour))
-                                        if line2 not in mst_edges['geometry']:
-                                            mst_edges = mst_edges.append(
-                                                {"geometry": line2, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                                                 "name": "PIPE" + str(mst_edges.name.count())},
-                                                ignore_index=True)
+                                        if line2 not in mst_edges.geometry:
+                                            mst_edges = gdf(
+                                                pd.concat(
+                                                    [mst_edges,
+                                                    pd.DataFrame([{"geometry": line2, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                                                                  "name": "PIPE" + str(mst_edges.name.count())}])],
+                                                    ignore_index=True
+                                                ),
+                                                crs=mst_edges.crs
+                                            )
                                             added_a_loop = True
-                                        mst_edges.reset_index(inplace=True, drop=True)
     if not added_a_loop:
         print('No loops added.')
     return mst_edges, new_mst_nodes
@@ -350,16 +365,23 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["name"] == node_id].iloc[[0]]
     selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
     selected_node["type"] = "PLANT"
-    new_mst_nodes = pd.concat([new_mst_nodes, selected_node])
-    new_mst_nodes.reset_index(inplace=True, drop=True)
+    new_mst_nodes = gdf(
+        pd.concat([new_mst_nodes, selected_node], ignore_index=True),
+        crs=new_mst_nodes.crs
+    )
 
     # create new edge
     point1 = (selected_node.iloc[0].geometry.x, selected_node.iloc[0].geometry.y)
     point2 = (new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.x,
               new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
-    mst_edges = pd.concat([mst_edges,
-                           pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                                         "name": "PIPE" + str(mst_edges.name.count())}])], ignore_index=True)
-    mst_edges.reset_index(inplace=True, drop=True)
+    mst_edges = gdf(
+        pd.concat(
+            [mst_edges,
+            pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                          "name": "PIPE" + str(mst_edges.name.count())}])],
+            ignore_index=True
+        ),
+        crs=mst_edges.crs
+    )
     return new_mst_nodes, mst_edges
