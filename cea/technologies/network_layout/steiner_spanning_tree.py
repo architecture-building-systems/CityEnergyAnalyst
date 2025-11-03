@@ -360,26 +360,3 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_ma
                                          "name": "PIPE" + str(mst_edges.name.count())}])], ignore_index=True)
     mst_edges.reset_index(inplace=True, drop=True)
     return new_mst_nodes, mst_edges
-
-
-def main(config: cea.config.Configuration):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weight_field = 'Shape_Leng'
-    type_mat_default = config.network_layout.type_mat
-    pipe_diameter_default = config.network_layout.pipe_diameter
-    type_network = config.network_layout.network_type
-    create_plant = config.network_layout.create_plant
-    output_substations_shp = locator.get_temporary_file("nodes_buildings.shp")
-    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
-    output_edges = locator.get_network_layout_edges_shapefile(type_network, '')
-    output_nodes = locator.get_network_layout_nodes_shapefile(type_network, '')
-    output_network_folder = locator.get_output_thermal_network_type_folder(type_network, '')
-    total_demand_location = locator.get_total_demand()
-    calc_steiner_spanning_tree(path_potential_network, output_network_folder, output_substations_shp, output_edges,
-                               output_nodes, weight_field, type_mat_default, pipe_diameter_default, type_network,
-                               total_demand_location, create_plant)
-
-
-if __name__ == '__main__':
-    main(cea.config.Configuration())
