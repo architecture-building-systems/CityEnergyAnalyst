@@ -48,6 +48,12 @@ from cea.optimization_new.helperclasses.optimization.tracker import Optimization
 from cea.optimization_new.helperclasses.optimization.fitness import Fitness
 from cea.optimization_new.helperclasses.optimization.clustering import Clustering
 from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.user_network_loader import (
+    load_user_defined_network,
+    validate_network_covers_district_buildings,
+    map_buildings_to_networks,
+    UserNetworkLoaderError
+)
 
 
 class Domain(object):
@@ -59,6 +65,11 @@ class Domain(object):
         self.energy_potentials: list[EnergyPotential] = []
         self.initial_energy_system: DistrictEnergySystem | None = None
         self.optimal_energy_systems: list[DistrictEnergySystem] = []
+
+        # User-defined network layout (for base case only)
+        self.user_network_nodes: gpd.GeoDataFrame | None = None
+        self.user_network_edges: gpd.GeoDataFrame | None = None
+        self.user_building_to_network: dict[str, str] | None = None  # building_name -> network_id
 
         self._setup_save_directory()
         self._initialize_domain_descriptor_classes()
@@ -97,6 +108,83 @@ class Domain(object):
                 self.buildings.append(building)
 
         return self.buildings
+
+    def load_user_defined_network(self):
+        """
+        Load and validate user-defined thermal network layout from config parameters.
+        If provided, this will override the automatic network generation for the base case.
+
+        The user can provide either:
+        1. Separate shapefiles (edges-shp-path + nodes-shp-path)
+        2. Combined GeoJSON (network-geojson-path)
+
+        Validation ensures:
+        - All district buildings (from Supply.csv) have nodes in the network
+        - Building nodes are within building footprints
+        - Network components are detected and mapped to network IDs
+
+        :raises UserNetworkLoaderError: If validation fails with detailed error message
+        """
+        try:
+            # Attempt to load user-defined network
+            user_network = load_user_defined_network(self.config, self.locator)
+
+            # If no user network provided, return early
+            if user_network is None:
+                print("No user-defined network layout provided. CEA will generate network automatically.")
+                return
+
+            nodes_gdf, edges_gdf = user_network
+            print(f"\nUser-defined network loaded:")
+            print(f"  - Nodes: {len(nodes_gdf)} ({len(nodes_gdf[nodes_gdf['building'].notna() & (nodes_gdf['building'].str.upper() != 'NONE') & (nodes_gdf['building'].str.upper() != 'PLANT')])} building nodes)")
+            print(f"  - Edges: {len(edges_gdf)}")
+
+            # Identify district buildings from Supply.csv (via building.initial_connectivity_state)
+            district_buildings = [building.identifier for building in self.buildings
+                                  if building.initial_connectivity_state != 'stand_alone']
+
+            if not district_buildings:
+                print("  Warning: No buildings designated for district networks in Supply.csv.")
+                print("           User-defined network will not be used.")
+                return
+
+            print(f"  - District buildings (from Supply.csv): {len(district_buildings)}")
+
+            # Load building geometries
+            buildings_gdf = gpd.read_file(self.locator.get_zone_geometry())
+            network_type = self.config.optimization_new.network_type
+
+            # Validate network covers all district buildings
+            validate_network_covers_district_buildings(
+                nodes_gdf, buildings_gdf, district_buildings, network_type
+            )
+            print("  ✓ All district buildings have valid nodes in network")
+
+            # Map buildings to network components
+            building_to_network = map_buildings_to_networks(
+                nodes_gdf, edges_gdf, district_buildings
+            )
+
+            # Count networks
+            networks = set(building_to_network.values())
+            print(f"  ✓ Detected {len(networks)} network component(s): {sorted(networks)}")
+
+            # Store for use in base case generation
+            self.user_network_nodes = nodes_gdf
+            self.user_network_edges = edges_gdf
+            self.user_building_to_network = building_to_network
+
+            print("  ✓ User-defined network validated successfully\n")
+
+        except UserNetworkLoaderError as e:
+            # Re-raise with clear context
+            raise UserNetworkLoaderError(
+                f"\n{'=' * 80}\n"
+                f"ERROR: User-defined network validation failed\n"
+                f"{'=' * 80}\n\n"
+                f"{str(e)}\n"
+                f"{'=' * 80}\n"
+            ) from None
 
     def load_potentials(self, buildings_in_domain: list[str] | None = None, pv_panel_type='PV1') -> list[EnergyPotential]:
         """
@@ -266,7 +354,18 @@ class Domain(object):
         Model the energy system currently installed in the domain, i.e.:
         - reconstruct a network linking all buildings that are currently connected to a district energy system
         - determine the supply system for each network and each of the stand-alone buildings
+
+        If a user-defined network layout is provided, it overrides the automatic connectivity determination.
         """
+        # Override building connectivity if user-defined network is provided
+        if self.user_building_to_network is not None:
+            print("Using user-defined network layout for base case connectivity")
+            for building in self.buildings:
+                if building.identifier in self.user_building_to_network:
+                    # Override connectivity with user-defined network assignment
+                    building.initial_connectivity_state = self.user_building_to_network[building.identifier]
+                # else: keep existing connectivity (stand_alone or other)
+
         # Determine buildings connected to a district energy system
         connection_list = [Connection(0, building.identifier) if building.initial_connectivity_state == 'stand_alone'
                            else Connection(int(building.initial_connectivity_state[1:]) - 1000, building.identifier)
@@ -666,6 +765,11 @@ def main(config: cea.config.Configuration):
     current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
+
+    start_time = time.time()
+    current_domain.load_user_defined_network()
+    end_time = time.time()
+    print(f"Time elapsed for loading/validating user-defined network: {end_time - start_time} s")
 
     start_time = time.time()
     current_domain.load_potentials(buildings_to_optimize)
