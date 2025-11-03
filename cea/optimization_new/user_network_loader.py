@@ -31,7 +31,7 @@ from typing import Tuple, Dict, List, Set
 # Tolerance for network topology validation (meters)
 # This is much tighter than CEA's general SHAPEFILE_TOLERANCE (6m)
 # to ensure precise network connectivity and node placement
-NETWORK_TOPOLOGY_TOLERANCE = 0.01  # 1 centimeter - standard GIS precision
+NETWORK_TOPOLOGY_TOLERANCE = 0.1  # 10 centimeters - standard GIS precision
 
 
 class UserNetworkLoaderError(Exception):
@@ -191,7 +191,7 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
     """Validate that required attributes exist in the geodataframes"""
 
     # Check node attributes
-    required_node_attrs = ['building']
+    required_node_attrs = ['building', 'type']
     missing_node_attrs = [attr for attr in required_node_attrs if attr not in nodes_gdf.columns]
 
     if missing_node_attrs:
@@ -200,8 +200,9 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
             f"  Required: {required_node_attrs}\n"
             f"  Missing: {missing_node_attrs}\n"
             f"  Found: {nodes_gdf.columns.tolist()}\n\n"
-            "Nodes must have a 'building' attribute (string) matching building names.\n"
-            "Non-building nodes should have 'building' = 'NONE' or similar."
+            "Nodes must have:\n"
+            "  - 'building' attribute (string) matching building names (or 'NONE' for non-building nodes)\n"
+            "  - 'type' attribute (string) indicating node type (e.g., 'CONSUMER', 'PLANT', 'NONE')"
         )
 
     # Check edge attributes
@@ -239,7 +240,7 @@ def validate_network_covers_district_buildings(
     # Get building nodes (exclude NONE, PLANT, etc.)
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
                                 (nodes_gdf['building'].str.upper() != 'NONE') &
-                                (nodes_gdf['building'].str.upper() != 'PLANT')].copy()
+                                (nodes_gdf['type'].str.upper() != 'PLANT')].copy()
 
     network_building_names = set(building_nodes['building'].unique())
     district_building_set = set(district_building_names)
@@ -470,9 +471,10 @@ def detect_network_components(
         for node_idx in component_nodes:
             node_data = G.nodes[node_idx]
             building_name = node_data.get('building', 'NONE')
+            node_type = node_data.get('type', 'NONE')
 
-            # Track PLANT nodes
-            if building_name and building_name.upper() == 'PLANT':
+            # Track PLANT nodes (identified by 'type' attribute)
+            if node_type and node_type.upper() == 'PLANT':
                 plants_in_component.append(node_idx)
             # Track actual building nodes (not NONE, PLANT, etc.)
             elif building_name and building_name.upper() not in ['NONE', '']:
@@ -503,9 +505,9 @@ def detect_network_components(
             f"PLANT node validation failed for {len(plant_errors)} network component(s):\n\n"
             + "\n".join(plant_errors) +
             "\n\n"
-            "Each thermal network requires EXACTLY ONE node with 'building' = 'PLANT'.\n\n"
+            "Each thermal network requires EXACTLY ONE node with 'type' = 'PLANT'.\n\n"
             "Resolution:\n"
-            "  1. Add a PLANT node to networks that are missing one\n"
+            "  1. Add a PLANT node to networks that are missing one (set 'type' = 'PLANT')\n"
             "  2. Remove duplicate PLANT nodes (keep only one per network)\n"
             "  3. Ensure PLANT nodes are connected to the network via edges"
         )
