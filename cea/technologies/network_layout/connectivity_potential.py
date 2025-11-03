@@ -533,19 +533,3 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     else:
         potential_network_df.to_file(path_potential_network, driver='ESRI Shapefile')
         return crs
-
-
-def main(config: cea.config.Configuration):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
-    path_streets_shp = locator.get_street_network()  # shapefile with the stations
-    path_connection_point_buildings_shp = locator.get_temporary_file(
-        "nodes_buildings.shp")  # substation, it can be the centroid of the building
-    path_potential_network = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
-    calc_connectivity_network(path_streets_shp, path_connection_point_buildings_shp,
-                              path_potential_network=path_potential_network)
-
-
-if __name__ == '__main__':
-    main(cea.config.Configuration())
