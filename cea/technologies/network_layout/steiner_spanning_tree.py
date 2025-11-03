@@ -312,13 +312,16 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
                                 selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
                                 selected_node["type"] = "NONE"
                                 geom = selected_node.geometry.values[0]
-                                selected_node["coordinates"] = (round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
-                                                                round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
-                                if selected_node["coordinates"].values not in new_mst_nodes["coordinates"].values:
+                                normalized_coords = (round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
+                                                     round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
+                                selected_node["coordinates"] = normalized_coords
+                                if normalized_coords not in all_coords:
                                     new_mst_nodes = gdf(
                                         pd.concat([new_mst_nodes, selected_node], ignore_index=True),
                                         crs=new_mst_nodes.crs
                                     )
+                                    # Update all_coords set
+                                    all_coords.add(normalized_coords)
 
                                 # Add second edge (from intermediate to second degree neighbour)
                                 mst_edges = _add_edge_to_network(mst_edges, new_neighbour, potential_second_deg_neighbour, pipe_dn, type_mat)
