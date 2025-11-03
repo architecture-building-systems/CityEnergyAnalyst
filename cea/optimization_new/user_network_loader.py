@@ -349,8 +349,8 @@ def validate_network_covers_district_buildings(
             errors.append(
                 f"Ambiguous node placement for {len(ambiguous_buildings)} building(s):\n"
                 f"{amb_details}\n\n"
-                f"Cannot auto-create nodes when multiple edges reach the same building.\n"
-                f"Please manually add a node for these buildings in your network layout."
+                "Cannot auto-create nodes when multiple edges reach the same building.\n"
+                "Please manually add a node for these buildings in your network layout."
             )
 
         if unreachable_buildings:
@@ -361,13 +361,13 @@ def validate_network_covers_district_buildings(
 
             errors.append(
                 f"No edges reach {len(unreachable_buildings)} building(s):\n  {unreach_details}\n\n"
-                f"These buildings require district connection but have no edges in the network.\n"
-                f"Please add edges connecting these buildings to the network."
+                "These buildings require district connection but have no edges in the network.\n"
+                "Please add edges connecting these buildings to the network."
             )
 
         if errors:
             raise UserNetworkLoaderError(
-                f"Cannot auto-create nodes for all missing buildings:\n\n"
+                "Cannot auto-create nodes for all missing buildings:\n\n"
                 + "\n\n".join(errors)
             )
 
