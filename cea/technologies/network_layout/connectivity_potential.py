@@ -371,7 +371,7 @@ def create_terminals(building_centroids, crs, street_network):
     return lines_to_buildings
 
 
-def apply_graph_corrections_to_street_network(street_network_gdf, crs):
+def apply_graph_corrections_to_street_network(street_network_gdf: gdf, crs: str) -> gdf:
     """
     Apply graph corrections to the street network to fix connectivity issues.
 
@@ -390,6 +390,9 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     :return: Corrected street network as GeoDataFrame
     :rtype: gdf
     """
+    coord_precision = SHAPEFILE_TOLERANCE
+
+    # FIXME: Consolidate gdf -> nx logic into graph_helper module to avoid duplication 
     # Convert GeoDataFrame to NetworkX graph
     G = nx.Graph()
     for idx, row in street_network_gdf.iterrows():
@@ -397,22 +400,22 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
         # Handle both LineString and MultiLineString geometries
         if line.geom_type == 'LineString':
             coords = list(line.coords)
-            start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
-            end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+            start = (round(coords[0][0], coord_precision), round(coords[0][1], coord_precision))
+            end = (round(coords[-1][0], coord_precision), round(coords[-1][1], coord_precision))
             weight = line.length
             G.add_edge(start, end, weight=weight)
         elif line.geom_type == 'MultiLineString':
             # Handle MultiLineString by adding each component line
             for sub_line in line.geoms:
                 coords = list(sub_line.coords)
-                start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
-                end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+                start = (round(coords[0][0], coord_precision), round(coords[0][1], coord_precision))
+                end = (round(coords[-1][0], coord_precision), round(coords[-1][1], coord_precision))
                 weight = sub_line.length
                 G.add_edge(start, end, weight=weight)
 
     # Apply graph corrections
     print("\nApplying graph corrections to street network (before connecting buildings)...")
-    corrector = GraphCorrector(G, coord_precision=SHAPEFILE_TOLERANCE)
+    corrector = GraphCorrector(G, coord_precision=coord_precision)
     G_corrected = corrector.apply_corrections()
 
     # Validate that the corrected graph is connected
