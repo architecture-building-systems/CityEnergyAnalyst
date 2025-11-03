@@ -104,7 +104,7 @@ class GraphCorrector:
             found_protected_nodes = {node for node in self.protected_nodes if node in self.graph.nodes}
             if not found_protected_nodes:
                 print("WARNING: No protected nodes found in the graph.")
-            elif len(self.protected_nodes) < len(found_protected_nodes):
+            elif len(found_protected_nodes) < len(self.protected_nodes):
                 print("WARNING: Some protected nodes were not found in the graph and will be ignored.")
 
     # ==================================================================================
