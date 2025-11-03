@@ -1,7 +1,6 @@
-
-
-
 import os
+
+import geopandas as gpd
 
 import cea.config
 import cea.inputlocator
@@ -49,9 +48,11 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
                                                     consider_only_buildings_with_demand,
                                                     type_network,
                                                     total_demand_location)
+    
+    street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
 
     # Calculate potential network
-    potential_network_df = calc_connectivity_network(path_streets_shp, building_centroids_df)
+    potential_network_df = calc_connectivity_network(street_network_df, building_centroids_df)
     potential_network_df.to_file(temp_path_potential_network_shp, driver='ESRI Shapefile')
     crs_projected = potential_network_df.crs
 

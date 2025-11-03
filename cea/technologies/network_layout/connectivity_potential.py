@@ -30,7 +30,6 @@ This separation ensures:
 - Final network is suitable for NetworkX graph conversion
 """
 
-import os
 import warnings
 
 import networkx as nx
@@ -446,7 +445,7 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     return corrected_gdf
 
 
-def calc_connectivity_network(path_streets_shp, building_centroids_df):
+def calc_connectivity_network(streets_network_df, building_centroids_df):
     """
     Create a graph of potential thermal network connections by connecting building centroids to the nearest street
     network.
@@ -464,26 +463,25 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df):
     ---------
     Streets → Graph Corrections → Add Building Lines → Merge/Snap Geometries → Discretize → Output
 
-    :param path_streets_shp: Path to street network shapefile
-    :type path_streets_shp: str
+    :param streets_network_df: GeoDataFrame with street network geometries
+    :type streets_network_df: gdf
     :param building_centroids_df: GeoDataFrame with building centroids (must have 'name' column)
     :type building_centroids_df: gdf
     :return: Potential connectivity network as GeoDataFrame
     :rtype: gdf
     """
-    # first get the street network
-    street_network = gdf.from_file(path_streets_shp)
 
-    # check coordinate system
-    lat, lon = get_lat_lon_projected_shapefile(street_network)
-    street_network = street_network.to_crs(get_projected_coordinate_system(lat, lon))
-    crs = street_network.crs
+    # convert both streets and buildings to projected CRS for accurate distance calculations
+    lat, lon = get_lat_lon_projected_shapefile(building_centroids_df)
+    crs = get_projected_coordinate_system(lat, lon)
+    streets_network_df = streets_network_df.to_crs(crs)
+    building_centroids_df = building_centroids_df.to_crs(crs)
 
-    valid_geometries = street_network[street_network.geometry.is_valid].geometry
+    valid_geometries = streets_network_df[streets_network_df.geometry.is_valid].geometry
 
     if valid_geometries.empty:
         raise ValueError("No valid geometries found in the shapefile.")
-    elif len(street_network) != len(valid_geometries):
+    elif len(streets_network_df) != len(valid_geometries):
         warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
 
     street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)

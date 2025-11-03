@@ -425,12 +425,14 @@ class Network(object):
         building_locations = [building.location for building in domain.buildings]
         buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
+        
+        streets_network_df = Gdf.from_file(domain.locator.get_street_network())
 
         # Store the buildings CRS as the reference for the network
         cls._coordinate_reference_system = domain.buildings[0].crs
 
         # create a potential network grid with orthogonal connections between buildings and their closest street
-        network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(), buildings_df)
+        network_grid_shp = calc_connectivity_network(streets_network_df, buildings_df)
 
         # Ensure network grid matches the buildings CRS
         if network_grid_shp.crs != cls._coordinate_reference_system:
