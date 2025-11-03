@@ -11,8 +11,6 @@ from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely import LineString
 
-import cea.config
-import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.utility import read_shp, write_shp
 from cea.datamanagement.graph_helper import GraphCorrector
@@ -101,9 +99,14 @@ def calc_steiner_spanning_tree(crs_projected,
     """
     steiner_algorithm = SteinerAlgorithm(method)
 
+    # TODO: Ensure CRS is used properly throughout the function (currently not applied)
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
     potential_network_graph = read_shp(temp_path_potential_network_shp)
     building_nodes_graph = read_shp(temp_path_building_centroids_shp)
+
+    if potential_network_graph is None or building_nodes_graph is None:
+        raise ValueError('Could not read potential network or building centroids shapefiles. '
+                         'Please check the files exist and are valid shapefiles.')
 
     # transform to an undirected potential_network_graph
     # Note: Graph corrections are now applied in calc_connectivity_network BEFORE
@@ -206,11 +209,11 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_nodes[['geometry', 'building', 'name', 'type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
-def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat, pipe_dn):
+def add_loops_to_network(G, mst_non_directed, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn) -> tuple[gdf, gdf]:
     added_a_loop = False
     # Identify all NONE type nodes in the steiner tree
     for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
-        if new_mst_nodes['type'][node_number] == 'NONE':
+        if new_mst_nodes.iloc[node_number]['type'] == 'NONE':
             # find neighbours of nodes in the potential network and steiner network
             potential_neighbours = G[node_coords]
             steiner_neighbours = mst_non_directed[node_coords]
@@ -240,7 +243,7 @@ def add_loops_to_network(G, mst_non_directed, new_mst_nodes, mst_edges, type_mat
         print('No first degree loop added. Trying two nodes apart.')
         # Identify all NONE type nodes in the steiner tree
         for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
-            if new_mst_nodes['type'][node_number] == 'NONE':
+            if new_mst_nodes.iloc[node_number]['type'] == 'NONE':
                 # find neighbours of nodes in the potential network and steiner network
                 potential_neighbours = G[node_coords]
                 steiner_neighbours = mst_non_directed[node_coords]
@@ -321,7 +324,7 @@ def building_node_from_name(building_name, nodes_df):
     return building_series
 
 
-def add_plant_close_to_anchor(building_anchor, new_mst_nodes, mst_edges, type_mat, pipe_dn):
+def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn):
     # find closest node
     copy_of_new_mst_nodes = new_mst_nodes.copy()
     building_coordinates = building_anchor.geometry.values[0].coords
