@@ -236,11 +236,14 @@ def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type
     """
     line = LineString((start_coords, end_coords))
     if line not in mst_edges.geometry:
+        # Calculate weight from line length
+        edge_weight = line.length
         new_edge = pd.DataFrame([{
             "geometry": line,
             "pipe_DN": pipe_dn,
             "type_mat": type_mat,
-            "name": "PIPE" + str(mst_edges.name.count())
+            "name": f"PIPE{mst_edges.name.count()}",
+            "weight": edge_weight
         }])
         mst_edges = gdf(
             pd.concat([mst_edges, new_edge], ignore_index=True),
@@ -381,11 +384,12 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     point2 = (new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.x,
               new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
+    edge_weight = line.length
     mst_edges = gdf(
         pd.concat(
             [mst_edges,
             pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                          "name": "PIPE" + str(mst_edges.name.count())}])],
+                          "name": "PIPE" + str(mst_edges.name.count()), "weight": edge_weight}])],
             ignore_index=True
         ),
         crs=mst_edges.crs
