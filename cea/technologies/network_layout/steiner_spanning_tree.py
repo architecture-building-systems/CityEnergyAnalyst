@@ -309,11 +309,12 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
                                     xoff=x_distance, yoff=y_distance)
                                 selected_node = copy_of_new_mst_nodes[
                                     copy_of_new_mst_nodes["coordinates"] == node_coords]
-                                selected_node.loc[:, "name"] = "NODE" + str(new_mst_nodes.name.count())
-                                selected_node.loc[:, "type"] = "NONE"
-                                selected_node["coordinates"] = selected_node.geometry.values[0].coords
-                                if selected_node["coordinates"].values not in new_mst_nodes[
-                                    "coordinates"].values:
+                                selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
+                                selected_node["type"] = "NONE"
+                                geom = selected_node.geometry.values[0]
+                                selected_node["coordinates"] = (round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
+                                                                round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
+                                if selected_node["coordinates"].values not in new_mst_nodes["coordinates"].values:
                                     new_mst_nodes = gdf(
                                         pd.concat([new_mst_nodes, selected_node], ignore_index=True),
                                         crs=new_mst_nodes.crs
