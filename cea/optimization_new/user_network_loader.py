@@ -24,9 +24,8 @@ __status__ = "Production"
 
 import os
 import geopandas as gpd
-import pandas as pd
 import networkx as nx
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point
 from typing import Tuple, Dict, List, Set
 
 # Tolerance for network topology validation (meters)

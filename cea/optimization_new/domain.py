@@ -135,7 +135,7 @@ class Domain(object):
                 return
 
             nodes_gdf, edges_gdf = user_network
-            print(f"\nUser-defined network loaded:")
+            print("\nUser-defined network loaded:")
             print(f"  - Nodes: {len(nodes_gdf)} ({len(nodes_gdf[nodes_gdf['building'].notna() & (nodes_gdf['building'].str.upper() != 'NONE') & (nodes_gdf['building'].str.upper() != 'PLANT')])} building nodes)")
             print(f"  - Edges: {len(edges_gdf)}")
 
@@ -180,7 +180,7 @@ class Domain(object):
             # Re-raise with clear context
             raise UserNetworkLoaderError(
                 f"\n{'=' * 80}\n"
-                f"ERROR: User-defined network validation failed\n"
+                "ERROR: User-defined network validation failed\n"
                 f"{'=' * 80}\n\n"
                 f"{str(e)}\n"
                 f"{'=' * 80}\n"
