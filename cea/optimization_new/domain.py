@@ -155,10 +155,20 @@ class Domain(object):
             network_type = self.config.optimization_new.network_type
 
             # Validate network covers all district buildings
-            validate_network_covers_district_buildings(
-                nodes_gdf, buildings_gdf, district_buildings, network_type
+            # This may auto-create missing nodes if edges reach the building
+            nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
+                nodes_gdf, buildings_gdf, district_buildings, network_type, edges_gdf
             )
-            print("  ✓ All district buildings have valid nodes in network")
+
+            if auto_created_buildings:
+                print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
+                for building_name in auto_created_buildings[:10]:
+                    print(f"      - {building_name}")
+                if len(auto_created_buildings) > 10:
+                    print(f"      ... and {len(auto_created_buildings) - 10} more")
+                print("  Note: Nodes created at edge endpoints closest to building centroids (in-memory only)")
+            else:
+                print("  ✓ All district buildings have valid nodes in network")
 
             # Map buildings to network components
             building_to_network = map_buildings_to_networks(
