@@ -10,7 +10,6 @@ WORKFLOW:
 2. Apply GraphCorrector to street network (fixes connectivity, intersections, merges close nodes)
 3. Create building terminal connection lines (geometries from building → nearest street point)
 4. Topologically merge and connect geometries:
-   - snappy_endings: Snap isolated endpoints to nearby vertices
    - snap_points: Split lines at significant points
 5. Discretize network for graph representation
 6. Output for Steiner tree optimization
@@ -187,52 +186,6 @@ def vertices_from_lines(lines):
     for line in lines:
         vertices.extend(list(line.coords))
     return [Point(p) for p in set(vertices)]
-
-
-def snappy_endings(lines, max_distance, crs):
-    """Snap endpoints of lines together if they are at most max_length apart.
-
-    Args:
-        lines: a list of LineStrings or a MultiLineString
-        max_distance: maximum distance two endpoints may be joined together
-    """
-
-    # initialize snapped lines with list of original lines
-    # snapping points is a MultiPoint object of all vertices
-    snapped_lines = [line for line in lines]
-    snapping_points = vertices_from_lines(snapped_lines)
-
-    # isolated endpoints are going to snap to the closest vertex
-    isolated_endpoints = find_isolated_endpoints(snapped_lines)
-
-    # only move isolated endpoints, one by one
-    for endpoint in isolated_endpoints:
-        # find all vertices within a radius of max_distance as possible
-        target = nearest_neighbor_within(snapping_points, endpoint,
-                                         max_distance)
-
-        # do nothing if no target point to snap to is found
-        if not target:
-            continue
-
-            # find the LineString to modify within snapped_lines and update it
-        for i, snapped_line in enumerate(snapped_lines):
-            if endpoint.touches(snapped_line):
-                snapped_lines[i] = bend_towards(snapped_line, where=endpoint,
-                                                to=target)
-                break
-
-        # also update the corresponding snapping_points
-        for i, snapping_point in enumerate(snapping_points):
-            if endpoint.equals(snapping_point):
-                snapping_points[i] = target
-                break
-
-    # post-processing: remove any resulting lines of length 0
-    snapped_lines = [s for s in snapped_lines if s.length > 0]
-
-    df = gdf(geometry=snapped_lines, crs=crs)
-    return df
 
 
 def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
@@ -471,10 +424,6 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # create terminals/branches form street to buildings
     # This creates individual line segments from each building centroid to nearest street point
     prototype_network = create_terminals(building_centroids_df, street_network, crs)
-
-    # Snap isolated endpoints to nearby vertices
-    # This ensures all connections are properly joined within tolerance
-    prototype_network = snappy_endings(prototype_network.geometry.values, SNAP_TOLERANCE, crs)
 
     # Calculate all significant points (endpoints and intersections) for final discretization
     gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
