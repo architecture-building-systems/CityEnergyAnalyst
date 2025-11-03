@@ -954,10 +954,7 @@ class GraphCorrector:
         graph_nodes = set(graph.nodes())
         missing_terminals = [node for node in terminal_nodes if node not in graph_nodes]
         if missing_terminals:
-            # FIXME: Temporarily disable this check to allow Steiner tree on partial graphs
-            # return False, f"{len(missing_terminals)} terminal nodes not found in graph"
-            print(f"Warning: {len(missing_terminals)} terminal nodes not found in graph, proceeding anyway")
-            return True, "Some terminal nodes are missing, but proceeding with optimization."
+            return False, f"{len(missing_terminals)} terminal nodes not found in graph"
 
         return True, f"Graph is ready for Steiner tree with {len(terminal_nodes)} terminals"
 
