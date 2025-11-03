@@ -41,6 +41,7 @@ import math
 import networkx as nx
 from typing import Optional, Tuple, List, Set, Dict
 from scipy.spatial import KDTree
+import warnings
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 
@@ -101,11 +102,14 @@ class GraphCorrector:
 
         # Double check if protected nodes exist in the graph
         if self.protected_nodes:
-            found_protected_nodes = {node for node in self.protected_nodes if node in self.graph.nodes}
-            if not found_protected_nodes:
-                print("WARNING: No protected nodes found in the graph.")
-            elif len(found_protected_nodes) < len(self.protected_nodes):
-                print("WARNING: Some protected nodes were not found in the graph and will be ignored.")
+            # Normalize graph nodes to same precision as protected nodes for comparison
+            protected_set = set(self.protected_nodes)
+            normalized_result = set(self._normalize_node_coords(graph.nodes()))
+
+            found_protected_nodes = protected_set & normalized_result
+            if len(found_protected_nodes) < len(protected_set):
+                missing = protected_set - found_protected_nodes
+                warnings.warn(f"Some protected nodes were not found in the graph: {missing}", UserWarning)
 
     # ==================================================================================
     # MAIN CORRECTION PIPELINE

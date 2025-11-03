@@ -209,110 +209,149 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_nodes[['geometry', 'building', 'name', 'type']].to_file(path_output_nodes_shp, driver='ESRI Shapefile')
 
 
-def add_loops_to_network(G, mst_non_directed, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn) -> tuple[gdf, gdf]:
+def _get_missing_neighbours(node_coords, potential_graph: nx.Graph, steiner_graph: nx.Graph):
+    """
+    Find neighbours that exist in potential network but not in steiner network.
+
+    :param node_coords: Coordinates of the node to check
+    :param potential_graph: Full potential network graph
+    :param steiner_graph: Current steiner tree graph
+    :return: List of missing neighbour coordinates
+    """
+    potential_neighbours = set(potential_graph[node_coords].keys())
+    steiner_neighbours = set(steiner_graph[node_coords].keys())
+    return list(potential_neighbours - steiner_neighbours)
+
+
+def _make_edge_key(coord1, coord2):
+    """
+    Create a unique edge key from two coordinates.
+    Uses frozenset to make edges undirected (A->B == B->A).
+
+    :param coord1: First coordinate tuple
+    :param coord2: Second coordinate tuple
+    :return: frozenset edge key
+    """
+    return frozenset([tuple(coord1), tuple(coord2)])
+
+
+def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type_mat, existing_edges: set) -> gdf:
+    """
+    Add an edge to the network if it doesn't already exist.
+
+    :param mst_edges: Current edges GeoDataFrame
+    :param start_coords: Start point coordinates
+    :param end_coords: End point coordinates
+    :param pipe_dn: Pipe diameter
+    :param type_mat: Pipe material type
+    :param existing_edges: Set of existing edge keys (frozensets of coordinate tuples)
+    :return: Updated edges GeoDataFrame
+    """
+    edge_key = _make_edge_key(start_coords, end_coords)
+
+    if edge_key not in existing_edges:
+        line = LineString((start_coords, end_coords))
+        # Calculate weight from line length
+        edge_weight = line.length
+        new_edge = pd.DataFrame([{
+            "geometry": line,
+            "pipe_DN": pipe_dn,
+            "type_mat": type_mat,
+            "name": f"PIPE{mst_edges.name.count()}",
+            "weight": edge_weight
+        }])
+        mst_edges = gdf(
+            pd.concat([mst_edges, new_edge], ignore_index=True),
+            crs=mst_edges.crs
+        )
+        # Add to existing edges set
+        existing_edges.add(edge_key)
+
+    return mst_edges
+
+
+def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn) -> tuple[gdf, gdf]:
     added_a_loop = False
+
+    # Initialize set of existing edges from current mst_edges
+    existing_edges = set()
+    for geom in mst_edges.geometry:
+        coords = list(geom.coords)
+        if len(coords) >= 2:
+            edge_key = _make_edge_key(coords[0], coords[-1])
+            existing_edges.add(edge_key)
+
+    # Filter to only NONE type nodes
+    none_nodes = new_mst_nodes[new_mst_nodes['type'] == 'NONE']
+    none_coords = set(tuple(row.coordinates) for row in none_nodes.itertuples())
+
     # Identify all NONE type nodes in the steiner tree
-    for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
-        if new_mst_nodes.iloc[node_number]['type'] == 'NONE':
-            # find neighbours of nodes in the potential network and steiner network
-            potential_neighbours = G[node_coords]
-            steiner_neighbours = mst_non_directed[node_coords]
-            # check if there are differences, if yes, an edge was deleted here
-            if not set(potential_neighbours.keys()) == set(steiner_neighbours.keys()):
-                new_neighbour_list = []
-                for a in potential_neighbours.keys():
-                    if a not in steiner_neighbours.keys():
-                        new_neighbour_list.append(a)
-                # check if the node that is additional in the potential network also exists in the steiner network
-                for new_neighbour in new_neighbour_list:
-                    if new_neighbour in list(new_mst_nodes['coordinates'].values):
-                        # check if it is a none type
-                        # write out index of this node
-                        node_index = list(new_mst_nodes['coordinates'].values).index(new_neighbour)
-                        if new_mst_nodes['type'][node_index] == 'NONE':
-                            # create new edge
-                            line = LineString((node_coords, new_neighbour))
-                            if line not in mst_edges.geometry:
-                                mst_edges = gdf(
-                                    pd.concat(
-                                        [mst_edges,
-                                        pd.DataFrame({"geometry": [line], "pipe_DN": [pipe_dn], "type_mat": [type_mat],
-                                                      "name": ["PIPE" + str(mst_edges.name.count())]})],
-                                        ignore_index=True
-                                    ),
-                                    crs=mst_edges.crs
-                                )
-                                added_a_loop = True
+    for row in none_nodes.itertuples():
+        node_coords = row.coordinates
+
+        # Find neighbours missing from steiner network
+        missing_neighbours = _get_missing_neighbours(node_coords, G, mst_non_directed)
+
+        # Check if the missing neighbour is also a NONE type node
+        for new_neighbour in missing_neighbours:
+            if tuple(new_neighbour) in none_coords:
+                # Add edge between the two NONE nodes
+                mst_edges = _add_edge_to_network(mst_edges, node_coords, new_neighbour, pipe_dn, type_mat, existing_edges)
+                added_a_loop = True
+    
     if not added_a_loop:
         print('No first degree loop added. Trying two nodes apart.')
-        # Identify all NONE type nodes in the steiner tree
-        for node_number, node_coords in zip(new_mst_nodes.index, new_mst_nodes['coordinates']):
-            if new_mst_nodes.iloc[node_number]['type'] == 'NONE':
-                # find neighbours of nodes in the potential network and steiner network
-                potential_neighbours = G[node_coords]
-                steiner_neighbours = mst_non_directed[node_coords]
-                # check if there are differences, if yes, an edge was deleted here
-                if not set(potential_neighbours.keys()) == set(steiner_neighbours.keys()):
-                    new_neighbour_list = []
-                    for a in potential_neighbours.keys():
-                        if a not in steiner_neighbours.keys():
-                            new_neighbour_list.append(a)
-                    # check if the node that is additional in the potential network does not exist in the steiner network
-                    for new_neighbour in new_neighbour_list:
-                        if new_neighbour not in list(new_mst_nodes['coordinates'].values):
-                            # find neighbours of that node
-                            second_degree_pot_neigh = list(G[new_neighbour].keys())
-                            for potential_second_deg_neighbour in second_degree_pot_neigh:
-                                if potential_second_deg_neighbour in list(new_mst_nodes[
-                                                                              'coordinates'].values) and potential_second_deg_neighbour != node_coords:
-                                    # check if it is a none type
-                                    # write out index of this node
-                                    node_index = list(new_mst_nodes['coordinates'].values).index(
-                                        potential_second_deg_neighbour)
-                                    if new_mst_nodes['type'][node_index] == 'NONE':
-                                        # create new edge
-                                        line = LineString((node_coords, new_neighbour))
-                                        if line not in mst_edges.geometry:
-                                            mst_edges = gdf(
-                                                pd.concat(
-                                                    [mst_edges,
-                                                    pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                                                                  "name": "PIPE" + str(mst_edges.name.count())}])],
-                                                    ignore_index=True
-                                                ),
-                                                crs=mst_edges.crs
-                                            )
-                                        # Add new node from potential network to steiner tree
-                                        # create copy of selected node and add to list of all nodes
-                                        copy_of_new_mst_nodes = new_mst_nodes.copy()
-                                        x_distance = new_neighbour[0] - node_coords[0]
-                                        y_distance = new_neighbour[1] - node_coords[1]
-                                        copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(
-                                            xoff=x_distance, yoff=y_distance)
-                                        selected_node = copy_of_new_mst_nodes[
-                                            copy_of_new_mst_nodes["coordinates"] == node_coords]
-                                        selected_node.loc[:, "name"] = "NODE" + str(new_mst_nodes.name.count())
-                                        selected_node.loc[:, "type"] = "NONE"
-                                        selected_node["coordinates"] = selected_node.geometry.values[0].coords
-                                        if selected_node["coordinates"].values not in new_mst_nodes[
-                                            "coordinates"].values:
-                                            new_mst_nodes = gdf(
-                                                pd.concat([new_mst_nodes, selected_node], ignore_index=True),
-                                                crs=new_mst_nodes.crs
-                                            )
 
-                                        line2 = LineString((new_neighbour, potential_second_deg_neighbour))
-                                        if line2 not in mst_edges.geometry:
-                                            mst_edges = gdf(
-                                                pd.concat(
-                                                    [mst_edges,
-                                                    pd.DataFrame([{"geometry": line2, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                                                                  "name": "PIPE" + str(mst_edges.name.count())}])],
-                                                    ignore_index=True
-                                                ),
-                                                crs=mst_edges.crs
-                                            )
-                                            added_a_loop = True
+        # Rebuild sets in case new_mst_nodes was modified in first loop
+        none_nodes = new_mst_nodes[new_mst_nodes['type'] == 'NONE']
+        none_coords = set(tuple(row.coordinates) for row in none_nodes.itertuples())
+
+        # Create set of all node coordinates (for checking if intermediate node exists)
+        all_coords = set(tuple(row.coordinates) for row in new_mst_nodes.itertuples())
+
+        # Identify all NONE type nodes in the steiner tree
+        for row in none_nodes.itertuples():
+            node_coords = row.coordinates
+
+            # Find neighbours missing from steiner network
+            missing_neighbours = _get_missing_neighbours(node_coords, G, mst_non_directed)
+
+            # Check if missing neighbour does NOT exist in steiner (need to go two hops)
+            for new_neighbour in missing_neighbours:
+                if tuple(new_neighbour) not in all_coords:
+                    # Find neighbours of that intermediate node (two hops away)
+                    second_degree_pot_neigh = list(G[new_neighbour].keys())
+                    for potential_second_deg_neighbour in second_degree_pot_neigh:
+                        if potential_second_deg_neighbour != node_coords:
+                            if tuple(potential_second_deg_neighbour) in none_coords:
+                                # Add first edge (to intermediate node)
+                                mst_edges = _add_edge_to_network(mst_edges, node_coords, new_neighbour, pipe_dn, type_mat, existing_edges)
+
+                                # Add new intermediate node from potential network to steiner tree
+                                copy_of_new_mst_nodes = new_mst_nodes.copy()
+                                x_distance = new_neighbour[0] - node_coords[0]
+                                y_distance = new_neighbour[1] - node_coords[1]
+                                copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(
+                                    xoff=x_distance, yoff=y_distance)
+                                selected_node = copy_of_new_mst_nodes[
+                                    copy_of_new_mst_nodes["coordinates"] == node_coords]
+                                selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
+                                selected_node["type"] = "NONE"
+                                geom = selected_node.geometry.values[0]
+                                normalized_coords = (round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
+                                                     round(geom.coords[0][1], SHAPEFILE_TOLERANCE))
+                                selected_node["coordinates"] = normalized_coords
+                                if normalized_coords not in all_coords:
+                                    new_mst_nodes = gdf(
+                                        pd.concat([new_mst_nodes, selected_node], ignore_index=True),
+                                        crs=new_mst_nodes.crs
+                                    )
+                                    # Update all_coords set
+                                    all_coords.add(normalized_coords)
+
+                                # Add second edge (from intermediate to second degree neighbour)
+                                mst_edges = _add_edge_to_network(mst_edges, new_neighbour, potential_second_deg_neighbour, pipe_dn, type_mat, existing_edges)
+                                added_a_loop = True
     if not added_a_loop:
         print('No loops added.')
     return mst_edges, new_mst_nodes
@@ -375,11 +414,12 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     point2 = (new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.x,
               new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
+    edge_weight = line.length
     mst_edges = gdf(
         pd.concat(
             [mst_edges,
             pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                          "name": "PIPE" + str(mst_edges.name.count())}])],
+                          "name": "PIPE" + str(mst_edges.name.count()), "weight": edge_weight}])],
             ignore_index=True
         ),
         crs=mst_edges.crs
