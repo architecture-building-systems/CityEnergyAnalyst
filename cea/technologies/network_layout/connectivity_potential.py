@@ -356,19 +356,41 @@ def calculate_end_points_intersections(prototype_network, crs):
     return gdf_points_snapped
 
 
-def create_terminals(building_centroids, crs, street_network):
-    # get list of nearest points
+def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> gdf:
+    """
+    Create terminal connection lines from building centroids to nearest points on street network.
+    
+    This function:
+    1. Finds nearest point on street network for each building
+    2. Creates LineString geometries connecting building → street
+    3. Combines terminal lines with street network
+    
+    :param building_centroids: GeoDataFrame with building centroids and 'name' column
+    :type building_centroids: gdf
+    :param street_network: GeoDataFrame with street network LineStrings (already corrected)
+    :type street_network: gdf
+    :param crs: Coordinate reference system
+    :type crs: str
+    :return: Combined network (street + building terminals)
+    :rtype: gdf
+    """
+    # Find nearest point on street network for each building centroid
     near_points = near_analysis(building_centroids, street_network, crs)
-    # extend to the building centroids
-    all_points = pd.concat([near_points.to_crs(crs), building_centroids.to_crs(crs)])
-    all_points.crs = crs
-    # Aggregate these points with the GroupBy
-    lines_to_buildings = all_points.groupby(['name'])['geometry'].apply(lambda x: LineString(x.tolist()))
-    lines_to_buildings = gdf(lines_to_buildings, geometry='geometry', crs=crs)
-
-    lines_to_buildings = pd.concat([lines_to_buildings, street_network]).reset_index(drop=True)
-    lines_to_buildings.crs = crs
-    return lines_to_buildings
+    
+    # Create terminal lines using vectorized LineString construction
+    # Each line connects: nearest_street_point → building_centroid
+    lines_to_buildings = gdf(
+        geometry=[
+            LineString([street_pt.coords[0], bldg_pt.coords[0]])
+            for street_pt, bldg_pt in zip(near_points.geometry, building_centroids.geometry)
+        ],
+        crs=crs
+    )
+    
+    # Combine building terminals with street network
+    combined_network = gdf(pd.concat([lines_to_buildings, street_network], ignore_index=True), crs=crs)
+    
+    return combined_network
 
 
 def apply_graph_corrections_to_street_network(street_network_gdf: gdf) -> gdf:
@@ -479,7 +501,7 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
 
     # create terminals/branches form street to buildings
     # This creates individual line segments from each building centroid to nearest street point
-    prototype_network = create_terminals(building_centroids_df, crs, street_network)
+    prototype_network = create_terminals(building_centroids_df, street_network, crs)
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
