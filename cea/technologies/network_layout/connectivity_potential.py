@@ -371,7 +371,7 @@ def create_terminals(building_centroids, crs, street_network):
     return lines_to_buildings
 
 
-def apply_graph_corrections_to_street_network(street_network_gdf: gdf, crs: str) -> gdf:
+def apply_graph_corrections_to_street_network(street_network_gdf: gdf) -> gdf:
     """
     Apply graph corrections to the street network to fix connectivity issues.
 
@@ -385,8 +385,6 @@ def apply_graph_corrections_to_street_network(street_network_gdf: gdf, crs: str)
 
     :param street_network_gdf: GeoDataFrame with street network LineStrings
     :type street_network_gdf: gdf
-    :param crs: Coordinate reference system
-    :type crs: str
     :return: Corrected street network as GeoDataFrame
     :rtype: gdf
     """
@@ -431,7 +429,7 @@ def apply_graph_corrections_to_street_network(street_network_gdf: gdf, crs: str)
         line = LineString([u, v])
         corrected_lines.append(line)
 
-    corrected_gdf = gdf(geometry=corrected_lines, crs=crs)
+    corrected_gdf = gdf(geometry=corrected_lines, crs=street_network_gdf.crs)
     return corrected_gdf
 
 
@@ -477,7 +475,7 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # Apply graph corrections to street network BEFORE connecting buildings
     # This ensures terminal nodes are not affected by corrections
     # GraphCorrector already handles: intersections, close nodes, disconnected components
-    street_network = apply_graph_corrections_to_street_network(streets_network_df, crs)
+    street_network = apply_graph_corrections_to_street_network(streets_network_df)
 
     # create terminals/branches form street to buildings
     # This creates individual line segments from each building centroid to nearest street point
