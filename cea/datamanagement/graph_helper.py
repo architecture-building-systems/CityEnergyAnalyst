@@ -99,6 +99,14 @@ class GraphCorrector:
         self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
+        # Double check if protected nodes exist in the graph
+        if self.protected_nodes:
+            found_protected_nodes = {node for node in self.protected_nodes if node in self.graph.nodes}
+            if not found_protected_nodes:
+                print("WARNING: No protected nodes found in the graph.")
+            elif len(self.protected_nodes) < len(found_protected_nodes):
+                print("WARNING: Some protected nodes were not found in the graph and will be ignored.")
+
     # ==================================================================================
     # MAIN CORRECTION PIPELINE
     # ==================================================================================
