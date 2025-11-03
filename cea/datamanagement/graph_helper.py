@@ -102,10 +102,13 @@ class GraphCorrector:
 
         # Double check if protected nodes exist in the graph
         if self.protected_nodes:
-            # Check if all protected nodes exist in graph
-            found_protected_nodes = set(self.protected_nodes) & set(graph.nodes())
-            if len(found_protected_nodes) < len(self.protected_nodes):
-                missing = set(self.protected_nodes) - found_protected_nodes
+            # Normalize graph nodes to same precision as protected nodes for comparison
+            protected_set = set(self.protected_nodes)
+            normalized_result = set(self._normalize_node_coords(graph.nodes()))
+
+            found_protected_nodes = protected_set & normalized_result
+            if len(found_protected_nodes) < len(protected_set):
+                missing = protected_set - found_protected_nodes
                 warnings.warn(f"Some protected nodes were not found in the graph: {missing}", UserWarning)
 
     # ==================================================================================
