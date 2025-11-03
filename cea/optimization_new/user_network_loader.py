@@ -460,23 +460,56 @@ def detect_network_components(
     # Find connected components
     components = list(nx.connected_components(G))
 
-    # Map each component to its building names
+    # Map each component to its building names and validate PLANT nodes
     component_buildings = {}
+    component_plants = {}
 
     for component_id, component_nodes in enumerate(components):
         buildings_in_component = set()
+        plants_in_component = []
 
         for node_idx in component_nodes:
             node_data = G.nodes[node_idx]
             building_name = node_data.get('building', 'NONE')
 
-            # Only include actual building nodes (not NONE, PLANT, etc.)
-            if building_name and building_name.upper() not in ['NONE', 'PLANT', '']:
+            # Track PLANT nodes
+            if building_name and building_name.upper() == 'PLANT':
+                plants_in_component.append(node_idx)
+            # Track actual building nodes (not NONE, PLANT, etc.)
+            elif building_name and building_name.upper() not in ['NONE', '']:
                 buildings_in_component.add(building_name)
 
         # Only include components that have at least one building
         if buildings_in_component:
             component_buildings[component_id] = buildings_in_component
+            component_plants[component_id] = plants_in_component
+
+    # Validate PLANT nodes per network component
+    plant_errors = []
+    for component_id, buildings in component_buildings.items():
+        plant_count = len(component_plants.get(component_id, []))
+        network_id = f"N{1001 + component_id}"
+
+        if plant_count == 0:
+            plant_errors.append(
+                f"  - {network_id} ({len(buildings)} buildings): NO PLANT NODE FOUND"
+            )
+        elif plant_count > 1:
+            plant_errors.append(
+                f"  - {network_id} ({len(buildings)} buildings): {plant_count} PLANT nodes (expected 1)"
+            )
+
+    if plant_errors:
+        raise UserNetworkLoaderError(
+            f"PLANT node validation failed for {len(plant_errors)} network component(s):\n\n"
+            + "\n".join(plant_errors) +
+            f"\n\n"
+            f"Each thermal network requires EXACTLY ONE node with 'building' = 'PLANT'.\n\n"
+            f"Resolution:\n"
+            f"  1. Add a PLANT node to networks that are missing one\n"
+            f"  2. Remove duplicate PLANT nodes (keep only one per network)\n"
+            f"  3. Ensure PLANT nodes are connected to the network via edges"
+        )
 
     return component_buildings
 
