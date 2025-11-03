@@ -388,6 +388,8 @@ def detect_network_components(
         end_node = None
         min_dist_to_start = float('inf')
         min_dist_to_end = float('inf')
+        nearest_start_building = None
+        nearest_end_building = None
 
         for node_idx, node_row in nodes_gdf.iterrows():
             node_geom = node_row.geometry
@@ -399,11 +401,13 @@ def detect_network_components(
                 start_node = node_idx
             if dist_to_start < min_dist_to_start:
                 min_dist_to_start = dist_to_start
+                nearest_start_building = node_row.get('building', 'NONE')
 
             if end_node is None and dist_to_end < NETWORK_TOPOLOGY_TOLERANCE:
                 end_node = node_idx
             if dist_to_end < min_dist_to_end:
                 min_dist_to_end = dist_to_end
+                nearest_end_building = node_row.get('building', 'NONE')
 
             if start_node is not None and end_node is not None:
                 break
@@ -419,7 +423,9 @@ def detect_network_components(
                 'missing_start': start_node is None,
                 'missing_end': end_node is None,
                 'min_dist_start': min_dist_to_start,
-                'min_dist_end': min_dist_to_end
+                'min_dist_end': min_dist_to_end,
+                'nearest_start_building': nearest_start_building,
+                'nearest_end_building': nearest_end_building
             })
 
     # Report unconnected edges
@@ -428,9 +434,13 @@ def detect_network_components(
         for edge in unconnected_edges[:10]:  # Show first 10
             issues = []
             if edge['missing_start']:
-                issues.append(f"start node missing (nearest node: {edge['min_dist_start']:.3f}m away)")
+                nearest_bldg = edge['nearest_start_building']
+                bldg_info = f", building: {nearest_bldg}" if nearest_bldg and nearest_bldg.upper() not in ['NONE', 'PLANT', ''] else ""
+                issues.append(f"start node missing (nearest node: {edge['min_dist_start']:.3f}m away{bldg_info})")
             if edge['missing_end']:
-                issues.append(f"end node missing (nearest node: {edge['min_dist_end']:.3f}m away)")
+                nearest_bldg = edge['nearest_end_building']
+                bldg_info = f", building: {nearest_bldg}" if nearest_bldg and nearest_bldg.upper() not in ['NONE', 'PLANT', ''] else ""
+                issues.append(f"end node missing (nearest node: {edge['min_dist_end']:.3f}m away{bldg_info})")
 
             error_details.append(f"  - {edge['name']}: {', '.join(issues)}")
 
