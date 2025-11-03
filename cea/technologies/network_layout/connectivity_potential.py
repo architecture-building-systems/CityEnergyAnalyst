@@ -10,7 +10,6 @@ WORKFLOW:
 2. Apply GraphCorrector to street network (fixes connectivity, intersections, merges close nodes)
 3. Create building terminal connection lines (geometries from building → nearest street point)
 4. Topologically merge and connect geometries:
-   - one_linestring_per_intersection: Merge touching lines, split at intersections
    - snappy_endings: Snap isolated endpoints to nearby vertices
    - snap_points: Split lines at significant points
 5. Discretize network for graph representation
@@ -314,37 +313,6 @@ def snap_points(points, lines, tolerance):
     return points, lines
 
 
-def one_linestring_per_intersection(lines, crs):
-    """ Move line endpoints to intersections of line segments.
-
-    Given a list of touching or possibly intersecting LineStrings, return a
-    list LineStrings that have their endpoints at all crossings and
-    intersecting points and ONLY there.
-
-    Args:
-        a list of LineStrings or a MultiLineString
-
-    Returns:
-        a list of LineStrings
-    """
-    lines_merged = linemerge(lines)
-
-    # intersecting multiline with its bounding box somehow triggers a first intersection
-    try:
-        bounding_box = box(*lines_merged.bounds)
-        lines_merged = lines_merged.intersection(bounding_box)
-    except Exception:
-        # if the bounding_box fails, then revert to lines merge.
-        print('bounding box method did not work, falling to a more simple method, no need to worry')
-
-    # merge the result
-    lines_merged = linemerge(lines_merged)
-
-    lines = [line for line in lines_merged.geoms]
-    df = gdf(geometry=lines, crs=crs)
-    return df
-
-
 def calculate_end_points_intersections(prototype_network, crs):
     # compute endpoints of the new prototype network
     gdf_points = computer_end_points(prototype_network.geometry, crs)
@@ -504,10 +472,6 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     prototype_network = create_terminals(building_centroids_df, street_network, crs)
     config = cea.config.Configuration()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
-    # Merge touching lines and split at intersections
-    # This ensures building connections are topologically merged with the street network
-    prototype_network = one_linestring_per_intersection(prototype_network.geometry.tolist(), crs)
 
     # Snap isolated endpoints to nearby vertices
     # This ensures all connections are properly joined within tolerance
