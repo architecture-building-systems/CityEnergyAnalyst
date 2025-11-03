@@ -51,9 +51,9 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
                                                     total_demand_location)
 
     # Calculate potential network
-    crs_projected = calc_connectivity_network(path_streets_shp,
-                                              building_centroids_df,
-                                              path_potential_network=temp_path_potential_network_shp)
+    potential_network_df = calc_connectivity_network(path_streets_shp, building_centroids_df)
+    potential_network_df.to_file(temp_path_potential_network_shp, driver='ESRI Shapefile')
+    crs_projected = potential_network_df.crs
 
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)

@@ -446,7 +446,7 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     return corrected_gdf
 
 
-def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisation_flag=False, path_potential_network=None):
+def calc_connectivity_network(path_streets_shp, building_centroids_df):
     """
     Create a graph of potential thermal network connections by connecting building centroids to the nearest street
     network.
@@ -468,12 +468,8 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     :type path_streets_shp: str
     :param building_centroids_df: GeoDataFrame with building centroids (must have 'name' column)
     :type building_centroids_df: gdf
-    :param optimisation_flag: If True, return GeoDataFrame; if False, write to file
-    :type optimisation_flag: bool
-    :param path_potential_network: Output path for potential network shapefile (required if optimisation_flag=False)
-    :type path_potential_network: str
-    :return: CRS if optimisation_flag=False, else potential network GeoDataFrame
-    :rtype: str or gdf
+    :return: Potential connectivity network as GeoDataFrame
+    :rtype: gdf
     """
     # first get the street network
     street_network = gdf.from_file(path_streets_shp)
@@ -528,8 +524,4 @@ def calc_connectivity_network(path_streets_shp, building_centroids_df, optimisat
     # calculate Shape_len field
     potential_network_df["Shape_Leng"] = potential_network_df["geometry"].apply(lambda x: x.length)
 
-    if optimisation_flag is True:
-        return potential_network_df
-    else:
-        potential_network_df.to_file(path_potential_network, driver='ESRI Shapefile')
-        return crs
+    return potential_network_df

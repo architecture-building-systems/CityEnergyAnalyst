@@ -430,9 +430,7 @@ class Network(object):
         cls._coordinate_reference_system = domain.buildings[0].crs
 
         # create a potential network grid with orthogonal connections between buildings and their closest street
-        network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
-                                                     buildings_df,
-                                                     optimisation_flag=True)
+        network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(), buildings_df)
 
         # Ensure network grid matches the buildings CRS
         if network_grid_shp.crs != cls._coordinate_reference_system:
