@@ -86,7 +86,7 @@ def compute_intersections(lines, crs):
     return df
 
 
-def computer_end_points(lines, crs):
+def compute_end_points(lines, crs):
     all_points = []
     for line in lines:
         for i in [0, -1]:  # start and end point
@@ -268,7 +268,7 @@ def snap_points(points, lines, tolerance):
 
 def calculate_end_points_intersections(prototype_network, crs):
     # compute endpoints of the new prototype network
-    gdf_points = computer_end_points(prototype_network.geometry, crs)
+    gdf_points = compute_end_points(prototype_network.geometry, crs)
     # compute intersections
     gdf_intersections = compute_intersections(prototype_network.geometry, crs)
     gdf_points_snapped = pd.concat([gdf_points, gdf_intersections], ignore_index=True)
