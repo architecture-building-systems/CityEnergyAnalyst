@@ -371,6 +371,30 @@ class SupplySystemStructure(object):
         #   (if so, subtract them from demand)
         remaining_max_primary_energy_flows_in = self._draw_from_potentials(max_primary_energy_flows_in)
         max_secondary_components_demand = self._draw_from_infinite_sources(remaining_max_primary_energy_flows_in)
+
+        # NEW: Try to satisfy remaining primary input demands via passive conversion from sources
+        # Only attempt if no secondary components are specified by user
+        if max_secondary_components_demand and not (self.user_component_selection and
+                                                    self.user_component_selection.get('secondary')):
+            satisfied_flows, source_passive_components = self._try_passive_conversion_from_sources(
+                max_secondary_components_demand,
+                viable_primary_and_passive_components,
+                'primary',
+                split_by_primary_component
+            )
+
+            if satisfied_flows:
+                # Add passive components to primary component structure
+                for comp_code, passive_comps in source_passive_components.items():
+                    main_ec = self.maximum_supply.energy_carrier.code
+                    if comp_code not in viable_primary_and_passive_components[main_ec]['passive']:
+                        viable_primary_and_passive_components[main_ec]['passive'][comp_code] = []
+                    viable_primary_and_passive_components[main_ec]['passive'][comp_code].extend(passive_comps)
+
+                # Remove satisfied flows from secondary component demand
+                for ec_code in satisfied_flows.keys():
+                    del max_secondary_components_demand[ec_code]
+
         max_secondary_components_demand_flow = {ec_code:
                                                     EnergyFlow('secondary', 'primary', ec_code, pd.Series(max_demand))
                                                 for ec_code, max_demand in max_secondary_components_demand.items()}
@@ -405,6 +429,101 @@ class SupplySystemStructure(object):
         # check if any of the outgoing energy-flows can be absorbed by the environment directly
         max_tertiary_demand_from_primary = self._release_to_grids_or_env(max_primary_energy_flows_out)
         max_tertiary_demand_from_secondary = self._release_to_grids_or_env(max_secondary_energy_flows_out)
+
+        # Try to dispose of primary/secondary waste outputs via passive conversion to sinks
+        # Only attempt if no tertiary components are specified by user
+        combined_waste_flows = {}
+        if max_tertiary_demand_from_primary:
+            combined_waste_flows.update(max_tertiary_demand_from_primary)
+        if max_tertiary_demand_from_secondary:
+            for ec_code, flow in max_tertiary_demand_from_secondary.items():
+                if ec_code in combined_waste_flows:
+                    combined_waste_flows[ec_code] += flow
+                else:
+                    combined_waste_flows[ec_code] = flow
+
+        if combined_waste_flows and not (self.user_component_selection and
+                                         self.user_component_selection.get('tertiary')):
+            # Need to combine component dicts for both primary and secondary
+            combined_components_by_ec = {}
+
+            # Add primary components
+            for ec_code, comp_dict in viable_primary_and_passive_components.items():
+                combined_components_by_ec[ec_code] = comp_dict
+
+            # Add secondary components
+            for ec_code, comp_dict in viable_secondary_and_passive_components.items():
+                if ec_code in combined_components_by_ec:
+                    # Merge active components lists
+                    combined_components_by_ec[ec_code]['active'].extend(comp_dict['active'])
+                    # Merge passive components dicts
+                    for comp_code, passive_list in comp_dict['passive'].items():
+                        if comp_code in combined_components_by_ec[ec_code]['passive']:
+                            combined_components_by_ec[ec_code]['passive'][comp_code].extend(passive_list)
+                        else:
+                            combined_components_by_ec[ec_code]['passive'][comp_code] = passive_list
+                else:
+                    combined_components_by_ec[ec_code] = comp_dict
+
+            # Combine split information
+            combined_split = {'input': {}, 'output': {}}
+            for direction in ['input', 'output']:
+                for ec_code in set(list(split_by_primary_component.get(direction, {}).keys()) +
+                                   list(split_by_secondary_component.get(direction, {}).keys())):
+                    combined_split[direction][ec_code] = {}
+                    if ec_code in split_by_primary_component.get(direction, {}):
+                        combined_split[direction][ec_code].update(split_by_primary_component[direction][ec_code])
+                    if ec_code in split_by_secondary_component.get(direction, {}):
+                        combined_split[direction][ec_code].update(split_by_secondary_component[direction][ec_code])
+
+            disposed_flows_primary = {}
+            disposed_flows_secondary = {}
+            sink_passive_primary = {}
+            sink_passive_secondary = {}
+
+            # Try passive conversion for primary waste flows
+            if max_tertiary_demand_from_primary:
+                disposed_flows_primary, sink_passive_primary = self._try_passive_conversion_to_sinks(
+                    max_tertiary_demand_from_primary,
+                    viable_primary_and_passive_components,
+                    'primary',
+                    split_by_primary_component
+                )
+
+            # Try passive conversion for secondary waste flows
+            if max_tertiary_demand_from_secondary:
+                disposed_flows_secondary, sink_passive_secondary = self._try_passive_conversion_to_sinks(
+                    max_tertiary_demand_from_secondary,
+                    viable_secondary_and_passive_components,
+                    'secondary',
+                    split_by_secondary_component
+                )
+
+            # Add passive components and remove disposed flows
+            if disposed_flows_primary:
+                for comp_code, passive_comps in sink_passive_primary.items():
+                    main_ec = self.maximum_supply.energy_carrier.code
+                    if comp_code not in viable_primary_and_passive_components[main_ec]['passive']:
+                        viable_primary_and_passive_components[main_ec]['passive'][comp_code] = []
+                    viable_primary_and_passive_components[main_ec]['passive'][comp_code].extend(passive_comps)
+
+                for ec_code in disposed_flows_primary.keys():
+                    del max_tertiary_demand_from_primary[ec_code]
+
+            if disposed_flows_secondary:
+                for comp_code, passive_comps in sink_passive_secondary.items():
+                    # Find which EC this component belongs to
+                    for ec_code in viable_secondary_and_passive_components.keys():
+                        if any(comp.code == comp_code for comp in
+                               viable_secondary_and_passive_components[ec_code]['active']):
+                            if comp_code not in viable_secondary_and_passive_components[ec_code]['passive']:
+                                viable_secondary_and_passive_components[ec_code]['passive'][comp_code] = []
+                            viable_secondary_and_passive_components[ec_code]['passive'][comp_code].extend(passive_comps)
+                            break
+
+                for ec_code in disposed_flows_secondary.keys():
+                    del max_tertiary_demand_from_secondary[ec_code]
+
         all_main_tertiary_ecs = list(set(list(max_tertiary_demand_from_primary.keys()) +
                                          list(max_tertiary_demand_from_secondary.keys())))
         max_tertiary_components_demand = {}
@@ -460,8 +579,61 @@ class SupplySystemStructure(object):
         # check if the necessary *infinite* energy sources and sinks are available (e.g. gas & electricity grids, air, water bodies)
         required_external_secondary_inputs = self._draw_from_potentials(max_secondary_energy_flows_in)
         required_external_tertiary_inputs = self._draw_from_potentials(max_tertiary_energy_flows_in)
-        unmet_inputs = {**self._draw_from_infinite_sources(required_external_secondary_inputs),
-                        **self._draw_from_infinite_sources(required_external_tertiary_inputs)}
+
+        # Try to satisfy secondary/tertiary external inputs via passive conversion from sources
+        remaining_secondary_inputs = self._draw_from_infinite_sources(required_external_secondary_inputs)
+        remaining_tertiary_inputs = self._draw_from_infinite_sources(required_external_tertiary_inputs)
+
+        # NEW: Try passive conversion for remaining secondary component inputs from sources
+        if remaining_secondary_inputs and viable_secondary_and_passive_components:
+            satisfied_secondary_flows, secondary_source_passive = self._try_passive_conversion_from_sources(
+                remaining_secondary_inputs,
+                viable_secondary_and_passive_components,
+                'secondary',
+                split_by_secondary_component
+            )
+
+            if satisfied_secondary_flows:
+                # Add passive components to secondary component structure
+                for comp_code, passive_comps in secondary_source_passive.items():
+                    # Find which EC this component belongs to
+                    for ec_code in viable_secondary_and_passive_components.keys():
+                        if any(comp.code == comp_code for comp in
+                               viable_secondary_and_passive_components[ec_code]['active']):
+                            if comp_code not in viable_secondary_and_passive_components[ec_code]['passive']:
+                                viable_secondary_and_passive_components[ec_code]['passive'][comp_code] = []
+                            viable_secondary_and_passive_components[ec_code]['passive'][comp_code].extend(passive_comps)
+                            break
+
+                # Remove satisfied flows from remaining inputs
+                for ec_code in satisfied_secondary_flows.keys():
+                    del remaining_secondary_inputs[ec_code]
+
+        # NEW: Try passive conversion for remaining tertiary component inputs from sources
+        if remaining_tertiary_inputs and viable_tertiary_and_passive_cmpts:
+            satisfied_tertiary_flows, tertiary_source_passive = self._try_passive_conversion_from_sources(
+                remaining_tertiary_inputs,
+                viable_tertiary_and_passive_cmpts,
+                'tertiary',
+                split_by_tertiary_component
+            )
+
+            if satisfied_tertiary_flows:
+                # Add passive components to tertiary component structure
+                for comp_code, passive_comps in tertiary_source_passive.items():
+                    # Find which EC this component belongs to
+                    for ec_code in viable_tertiary_and_passive_cmpts.keys():
+                        if any(comp.code == comp_code for comp in viable_tertiary_and_passive_cmpts[ec_code]['active']):
+                            if comp_code not in viable_tertiary_and_passive_cmpts[ec_code]['passive']:
+                                viable_tertiary_and_passive_cmpts[ec_code]['passive'][comp_code] = []
+                            viable_tertiary_and_passive_cmpts[ec_code]['passive'][comp_code].extend(passive_comps)
+                            break
+
+                # Remove satisfied flows from remaining inputs
+                for ec_code in satisfied_tertiary_flows.keys():
+                    del remaining_tertiary_inputs[ec_code]
+
+        unmet_inputs = {**remaining_secondary_inputs, **remaining_tertiary_inputs}
 
         unreleasable_outputs = {**self._release_to_grids_or_env(max_secondary_energy_flows_out),
                                 **self._release_to_grids_or_env(max_tertiary_energy_flows_out)}
@@ -513,7 +685,7 @@ class SupplySystemStructure(object):
         elif components_fitting_after_passive_conversion:
             passive_components_dict = SupplySystemStructure._fetch_viable_passive_components(
                 components_fitting_after_passive_conversion, component_placement, component_capacity,
-                demand_energy_carrier, demand_origin)
+                target_energy_carrier_code=demand_energy_carrier, demand_origin=demand_origin)
             return {'active': components_fitting_after_passive_conversion, 'passive': passive_components_dict}
         else:
             raise ValueError(f"None of the components chosen for the {component_placement} category of the supply "
@@ -679,68 +851,387 @@ class SupplySystemStructure(object):
                              f'components.')
         return convertible_ecs
 
+    def _try_passive_conversion_from_sources(self, required_energy_flows, components_by_ec,
+                                             component_placement, split_by_component):
+        """
+        Try to satisfy required energy flows using passive conversion from available sources.
+
+        Args:
+            required_energy_flows: Dict of {ec_code: flow_magnitude} that need to be supplied
+            components_by_ec: Dict of {ec_code: {'active': [components], 'passive': {...}}}
+            component_placement: Category where components are placed
+            split_by_component: Dict showing which components need which energy carriers
+
+        Returns:
+            tuple: (satisfied_flows, passive_components_added)
+                - satisfied_flows: Dict of {ec_code: flow_magnitude} that were satisfied via passive conversion
+                - passive_components_added: Dict of {component_code: [PassiveComponent]} that were added
+        """
+        satisfied_flows = {}
+        passive_components_added = {}
+
+        # Get available source energy carriers
+        available_source_ecs = list(self.available_potentials.keys()) + list(self._infinite_energy_carriers)
+
+        for ec_code, flow_magnitude in required_energy_flows.items():
+            # Get the components that need this energy carrier as input
+            if ec_code not in split_by_component.get('input', {}):
+                continue  # No components need this EC
+
+            components_needing_ec = [
+                component
+                for main_ec_code, component_dict in components_by_ec.items()
+                for component in component_dict['active']
+                if component.code in split_by_component['input'][ec_code].keys()
+            ]
+
+            if not components_needing_ec:
+                continue
+
+            # Try to find passive components that can convert from available sources
+            source_passive_components = SupplySystemStructure._fetch_viable_passive_components(
+                components_needing_ec,
+                component_placement,
+                flow_magnitude,
+                target_energy_carrier_code=ec_code,
+                source_energy_carriers=available_source_ecs
+            )
+
+            if source_passive_components:
+                # Successfully found passive conversion path
+                satisfied_flows[ec_code] = flow_magnitude
+                passive_components_added.update(source_passive_components)
+
+        return satisfied_flows, passive_components_added
+
+    def _try_passive_conversion_to_sinks(self, waste_energy_flows, components_by_ec,
+                                         component_placement, split_by_component):
+        """
+        Try to dispose of waste energy flows using passive conversion to available sinks.
+
+        Args:
+            waste_energy_flows: Dict of {ec_code: flow_magnitude} that need to be disposed
+            components_by_ec: Dict of {ec_code: {'active': [components], 'passive': {...}}}
+            component_placement: Category where components are placed
+            split_by_component: Dict showing which components produce which energy carriers
+
+        Returns:
+            tuple: (disposed_flows, passive_components_added)
+                - disposed_flows: Dict of {ec_code: flow_magnitude} that were disposed via passive conversion
+                - passive_components_added: Dict of {component_code: [PassiveComponent]} that were added
+        """
+        disposed_flows = {}
+        passive_components_added = {}
+
+        # Get available sink energy carriers (environment and grids)
+        available_sink_ecs = self.releasable_energy_carriers
+
+        for ec_code, flow_magnitude in waste_energy_flows.items():
+            # Get the components that produce this energy carrier as output
+            if ec_code not in split_by_component.get('output', {}):
+                continue  # No components produce this EC
+
+            components_producing_ec = [
+                component
+                for main_ec_code, component_dict in components_by_ec.items()
+                for component in component_dict['active']
+                if component.code in split_by_component['output'][ec_code].keys()
+            ]
+
+            if not components_producing_ec:
+                continue
+
+            # Try to find passive components that can convert to available sinks
+            sink_passive_components = SupplySystemStructure._fetch_viable_passive_components(
+                components_producing_ec,
+                component_placement,
+                flow_magnitude,
+                sink_energy_carriers=available_sink_ecs
+            )
+
+            if sink_passive_components:
+                # Successfully found passive conversion path to sink
+                disposed_flows[ec_code] = flow_magnitude
+                passive_components_added.update(sink_passive_components)
+
+        return disposed_flows, passive_components_added
+
     @staticmethod
-    def _fetch_viable_passive_components(active_components_to_feed, active_component_placement, maximum_demand,
-                                         required_energy_carrier_code, demand_origin):
+    def _fetch_viable_passive_components(components, component_placement, flow_magnitude,
+                                         target_energy_carrier_code=None,
+                                         demand_origin=None,
+                                         source_energy_carriers=None,
+                                         sink_energy_carriers=None):
         """
-        Get the passive components for a list of active components. The premise of this function is that the
-        main energy carriers generated/absorbed by the active components can only satisfy the original demand if
-        passive components are used for conversion into the desired energy carrier.
+        Fetch passive components for energy carrier conversion.
+
+        Handles three scenarios:
+        1. Component output → demand (traditional):
+           - Requires: target_energy_carrier_code, demand_origin
+           - Flow: Component → Passive → Demand
+
+        2. Source → component input (new):
+           - Requires: target_energy_carrier_code, source_energy_carriers
+           - Flow: Source → Passive → Component
+
+        3. Component output → sink (new):
+           - Requires: sink_energy_carriers
+           - Flow: Component → Passive → Sink
+
+        Args:
+            components: Active components involved in conversion
+            component_placement: Category of the components ('primary', 'secondary', 'tertiary')
+            flow_magnitude: Maximum energy flow magnitude
+            target_energy_carrier_code: Target EC for modes 1 and 2
+            demand_origin: Origin for placement logic (mode 1)
+            source_energy_carriers: List of available source ECs (mode 2)
+            sink_energy_carriers: List of acceptable sink ECs (mode 3)
+
+        Returns:
+            dict: Mapping of component codes to lists of viable passive components
         """
-        active_component_ecs = list(set([component.main_energy_carrier.code
-                                         for component in active_components_to_feed]))
+        # Validate exactly one mode is specified
+        mode_1 = target_energy_carrier_code is not None and demand_origin is not None
+        mode_2 = source_energy_carriers is not None and target_energy_carrier_code is not None
+        mode_3 = sink_energy_carriers is not None
 
-        # find passive components that can provide the energy carriers generated/absorbed by the active components
-        passive_components_for_ec = {alternative_ec:
-                                         {component_class:
-                                              component_class.conversion_matrix[alternative_ec][
-                                                  required_energy_carrier_code]}
-                                     for component_class in PassiveComponent.__subclasses__()
-                                     for alternative_ec in active_component_ecs
-                                     if alternative_ec in component_class.conversion_matrix.columns}
+        if sum([mode_1, mode_2, mode_3]) != 1:
+            raise ValueError(
+                "Specify exactly one conversion mode: "
+                "(target_energy_carrier_code + demand_origin) OR "
+                "(source_energy_carriers + target_energy_carrier_code) OR "
+                "(sink_energy_carriers)"
+            )
 
-        # try to instantiate appropriate passive components for each the active components
+        # Route to appropriate handler
+        if mode_2:  # Source → Component
+            return SupplySystemStructure._fetch_passive_for_source_to_component(
+                source_energy_carriers=source_energy_carriers,
+                target_energy_carrier_code=target_energy_carrier_code,
+                components=components,
+                component_placement=component_placement,
+                flow_magnitude=flow_magnitude
+            )
+
+        elif mode_3:  # Component → Sink
+            return SupplySystemStructure._fetch_passive_for_component_to_sink(
+                sink_energy_carriers=sink_energy_carriers,
+                components=components,
+                component_placement=component_placement,
+                flow_magnitude=flow_magnitude
+            )
+
+        else:  # mode_1: Component → Demand (traditional)
+            return SupplySystemStructure._fetch_passive_for_component_output(
+                components=components,
+                component_placement=component_placement,
+                flow_magnitude=flow_magnitude,
+                target_energy_carrier_code=target_energy_carrier_code,
+                demand_origin=demand_origin
+            )
+
+    @staticmethod
+    def _fetch_passive_for_component_output(components, component_placement, flow_magnitude,
+                                            target_energy_carrier_code, demand_origin):
+        """
+        Traditional mode: Fetch passive components to convert component output to match demand requirements.
+
+        Flow: Component (produces alternative EC) → Passive → Demand (needs target EC)
+        """
+        # Extract energy carriers from active components
+        active_component_ecs = list(set([component.main_energy_carrier.code for component in components]))
+
+        # Find passive components that can convert from component ECs to target EC
+        passive_components_for_ec = {
+            alternative_ec: {
+                component_class: component_class.conversion_matrix[alternative_ec][target_energy_carrier_code]
+            }
+            for component_class in PassiveComponent.__subclasses__()
+            for alternative_ec in active_component_ecs
+            if alternative_ec in component_class.conversion_matrix.columns
+               and target_energy_carrier_code in component_class.conversion_matrix.index
+        }
+
+        # Instantiate passive components based on placement
         required_passive_components = {}
 
-        if active_component_placement == 'tertiary':  # i.e. active components are used for absorption/rejection
-            placed_before = active_component_placement
+        if component_placement == 'tertiary':  # Absorption/rejection components
+            placed_before = component_placement
             placed_after = demand_origin
-            mean_qual_before = EnergyCarrier.from_code(required_energy_carrier_code).mean_qual
+            mean_qual_before = EnergyCarrier.from_code(target_energy_carrier_code).mean_qual
 
-            for active_component in active_components_to_feed:
+            for active_component in components:
                 passive_component_list = []
-                for passive_component_class, component_models \
-                        in passive_components_for_ec[active_component.main_energy_carrier.code].items():
-                    for component_model in component_models:
-                        try:
-                            passive_component_list.append(
-                                passive_component_class(component_model, placed_before, placed_after, maximum_demand,
-                                                        mean_qual_before,
-                                                        active_component.main_energy_carrier.mean_qual))
-                        except ValueError:
-                            pass
+                if active_component.main_energy_carrier.code in passive_components_for_ec:
+                    for passive_component_class, component_models in \
+                            passive_components_for_ec[active_component.main_energy_carrier.code].items():
+                        for component_model in component_models:
+                            try:
+                                passive_component_list.append(
+                                    passive_component_class(component_model, placed_before, placed_after,
+                                                            flow_magnitude, mean_qual_before,
+                                                            active_component.main_energy_carrier.mean_qual))
+                            except ValueError:
+                                pass
                 required_passive_components[active_component.code] = passive_component_list
 
-        else:  # i.e. active components are used for generation
+        else:  # Generation components (primary/secondary)
             placed_before = demand_origin
-            placed_after = active_component_placement
-            mean_qual_after = EnergyCarrier.from_code(required_energy_carrier_code).mean_qual
+            placed_after = component_placement
+            mean_qual_after = EnergyCarrier.from_code(target_energy_carrier_code).mean_qual
 
-            for active_component in active_components_to_feed:
+            for active_component in components:
                 passive_component_list = []
-                for passive_component_class, component_models \
-                        in passive_components_for_ec[active_component.main_energy_carrier.code].items():
-                    for component_model in component_models:
-                        try:
-                            passive_component_list.append(
-                                passive_component_class(component_model, placed_before, placed_after, maximum_demand,
-                                                        active_component.main_energy_carrier.mean_qual,
-                                                        mean_qual_after))
-                        except ValueError:
-                            continue
+                if active_component.main_energy_carrier.code in passive_components_for_ec:
+                    for passive_component_class, component_models in \
+                            passive_components_for_ec[active_component.main_energy_carrier.code].items():
+                        for component_model in component_models:
+                            try:
+                                passive_component_list.append(
+                                    passive_component_class(component_model, placed_before, placed_after,
+                                                            flow_magnitude,
+                                                            active_component.main_energy_carrier.mean_qual,
+                                                            mean_qual_after))
+                            except ValueError:
+                                continue
                 required_passive_components[active_component.code] = passive_component_list
 
         return required_passive_components
+
+    @staticmethod
+    def _fetch_passive_for_source_to_component(source_energy_carriers, target_energy_carrier_code,
+                                               components, component_placement, flow_magnitude):
+        """
+        Fetch passive components to convert source energy carriers to component input requirements.
+
+        Flow: Source (has source EC) → Passive → Component (needs target EC as input)
+
+        Args:
+            source_energy_carriers: List of energy carrier codes available from sources
+            target_energy_carrier_code: Energy carrier code that components need as input
+            components: Components that need the target EC as input
+            component_placement: Placement category of components
+            flow_magnitude: Maximum energy flow magnitude
+
+        Returns:
+            dict: Mapping of component codes to lists of viable passive components
+                  (same structure as traditional mode for consistency)
+        """
+        # Find which source ECs can be converted to the target EC
+        convertible_source_ecs = []
+        source_to_passive_mapping = {}
+
+        for source_ec in source_energy_carriers:
+            # Find passive components that can convert from source EC to target EC
+            passive_components_for_conversion = {}
+
+            for component_class in PassiveComponent.__subclasses__():
+                if (source_ec in component_class.conversion_matrix.columns and
+                        target_energy_carrier_code in component_class.conversion_matrix.index):
+
+                    viable_models = component_class.conversion_matrix[source_ec][target_energy_carrier_code]
+                    if viable_models:
+                        passive_components_for_conversion[component_class] = viable_models
+
+            if passive_components_for_conversion:
+                convertible_source_ecs.append(source_ec)
+                source_to_passive_mapping[source_ec] = passive_components_for_conversion
+
+        if not convertible_source_ecs:
+            return {}  # No conversion possible
+
+        # Use the first viable source EC (could be enhanced to choose optimal source)
+        chosen_source_ec = convertible_source_ecs[0]
+        passive_components_for_conversion = source_to_passive_mapping[chosen_source_ec]
+
+        # Instantiate passive components for each component that needs this EC
+        # Placement: source → passive → component
+        placed_before = 'source'
+        placed_after = component_placement
+        mean_qual_before = EnergyCarrier.from_code(chosen_source_ec).mean_qual
+        mean_qual_after = EnergyCarrier.from_code(target_energy_carrier_code).mean_qual
+
+        viable_passive_components = {}
+
+        # Create passive components for each active component that needs this input
+        for component in components:
+            passive_component_list = []
+            for passive_component_class, component_models in passive_components_for_conversion.items():
+                for component_model in component_models:
+                    try:
+                        passive_component_list.append(
+                            passive_component_class(component_model, placed_before, placed_after,
+                                                    flow_magnitude, mean_qual_before, mean_qual_after))
+                    except ValueError:
+                        continue
+
+            if passive_component_list:
+                # Key by component code for consistency with traditional mode
+                viable_passive_components[component.code] = passive_component_list
+
+        return viable_passive_components
+
+    @staticmethod
+    def _fetch_passive_for_component_to_sink(sink_energy_carriers, components, component_placement, flow_magnitude):
+        """
+        Fetch passive components to convert component output to acceptable sink energy carriers.
+
+        Flow: Component (produces component EC) → Passive → Sink (accepts sink EC)
+
+        Args:
+            sink_energy_carriers: List of energy carrier codes that sinks can accept
+            components: Components producing energy that needs to be evacuated
+            component_placement: Placement category of components
+            flow_magnitude: Maximum energy flow magnitude
+
+        Returns:
+            dict: Mapping of component codes to lists of viable passive components
+        """
+        # Extract the output energy carriers from components
+        component_output_ecs = list(set([component.main_energy_carrier.code for component in components]))
+
+        viable_passive_components = {}
+
+        for component in components:
+            component_ec = component.main_energy_carrier.code
+            passive_component_list = []
+
+            # Try each sink EC to see if we can convert component output to it
+            for sink_ec in sink_energy_carriers:
+                # Find passive components that can convert from component EC to sink EC
+                passive_components_for_conversion = {}
+
+                for component_class in PassiveComponent.__subclasses__():
+                    if (component_ec in component_class.conversion_matrix.columns and
+                            sink_ec in component_class.conversion_matrix.index):
+
+                        viable_models = component_class.conversion_matrix[component_ec][sink_ec]
+                        if viable_models:
+                            passive_components_for_conversion[component_class] = viable_models
+
+                if not passive_components_for_conversion:
+                    continue  # No conversion possible to this sink EC
+
+                # Instantiate passive components for this conversion
+                # Placement: component → passive → sink
+                placed_before = component_placement
+                placed_after = 'sink'
+                mean_qual_before = component.main_energy_carrier.mean_qual
+                mean_qual_after = EnergyCarrier.from_code(sink_ec).mean_qual
+
+                for passive_component_class, component_models in passive_components_for_conversion.items():
+                    for component_model in component_models:
+                        try:
+                            passive_component_list.append(
+                                passive_component_class(component_model, placed_before, placed_after,
+                                                        flow_magnitude, mean_qual_before, mean_qual_after))
+                        except ValueError:
+                            continue
+
+            if passive_component_list:
+                viable_passive_components[component.code] = passive_component_list
+
+        return viable_passive_components
 
     @staticmethod
     def _extract_max_required_energy_flows(maximum_energy_flows, viable_active_and_passive_components):
@@ -892,7 +1383,6 @@ class SupplySystemStructure(object):
             raise ValueError('Invalid side argument. Must be either "input" or "output".')
 
         return combined_energy_flow_shares
-
 
     def _draw_from_potentials(self, required_energy_flows, reset=False):
         """
