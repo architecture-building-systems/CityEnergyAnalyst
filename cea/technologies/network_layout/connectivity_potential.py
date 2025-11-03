@@ -371,19 +371,6 @@ def create_terminals(building_centroids, crs, street_network):
     return lines_to_buildings
 
 
-def simplify_liness_accurracy(lines, decimals, crs):
-    new_lines = []
-    for line in lines:
-        points_of_line = []
-        for point in line.coords:
-            x = round(point[0], decimals)
-            y = round(point[1], decimals)
-            points_of_line.append((x, y))
-        new_lines.append(LineString(points_of_line))
-    df = gdf(geometry=new_lines, crs=crs)
-    return df
-
-
 def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     """
     Apply graph corrections to the street network to fix connectivity issues.
@@ -445,7 +432,7 @@ def apply_graph_corrections_to_street_network(street_network_gdf, crs):
     return corrected_gdf
 
 
-def calc_connectivity_network(streets_network_df, building_centroids_df):
+def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gdf) -> gdf:
     """
     Create a graph of potential thermal network connections by connecting building centroids to the nearest street
     network.
@@ -484,12 +471,10 @@ def calc_connectivity_network(streets_network_df, building_centroids_df):
     elif len(streets_network_df) != len(valid_geometries):
         warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
 
-    street_network = simplify_liness_accurracy(valid_geometries, SHAPEFILE_TOLERANCE, crs)
-
     # Apply graph corrections to street network BEFORE connecting buildings
     # This ensures terminal nodes are not affected by corrections
     # GraphCorrector already handles: intersections, close nodes, disconnected components
-    street_network = apply_graph_corrections_to_street_network(street_network, crs)
+    street_network = apply_graph_corrections_to_street_network(streets_network_df, crs)
 
     # create terminals/branches form street to buildings
     # This creates individual line segments from each building centroid to nearest street point
