@@ -99,6 +99,14 @@ class GraphCorrector:
         self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
 
+        # Double check if protected nodes exist in the graph
+        if self.protected_nodes:
+            found_protected_nodes = {node for node in self.protected_nodes if node in self.graph.nodes}
+            if not found_protected_nodes:
+                print("WARNING: No protected nodes found in the graph.")
+            elif len(self.protected_nodes) < len(found_protected_nodes):
+                print("WARNING: Some protected nodes were not found in the graph and will be ignored.")
+
     # ==================================================================================
     # MAIN CORRECTION PIPELINE
     # ==================================================================================
@@ -946,10 +954,7 @@ class GraphCorrector:
         graph_nodes = set(graph.nodes())
         missing_terminals = [node for node in terminal_nodes if node not in graph_nodes]
         if missing_terminals:
-            # FIXME: Temporarily disable this check to allow Steiner tree on partial graphs
-            # return False, f"{len(missing_terminals)} terminal nodes not found in graph"
-            print(f"Warning: {len(missing_terminals)} terminal nodes not found in graph, proceeding anyway")
-            return True, "Some terminal nodes are missing, but proceeding with optimization."
+            return False, f"{len(missing_terminals)} terminal nodes not found in graph"
 
         return True, f"Graph is ready for Steiner tree with {len(terminal_nodes)} terminals"
 
