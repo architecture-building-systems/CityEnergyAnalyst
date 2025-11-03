@@ -470,8 +470,6 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # create terminals/branches form street to buildings
     # This creates individual line segments from each building centroid to nearest street point
     prototype_network = create_terminals(building_centroids_df, street_network, crs)
-    config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     # Snap isolated endpoints to nearby vertices
     # This ensures all connections are properly joined within tolerance
@@ -483,9 +481,6 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # Snap points to lines and split lines at those points
     # This ensures all junction points become explicit vertices
     gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE)
-
-    # save for verification purposes
-    prototype_network.to_file(locator.get_temporary_file("prototype_network.shp"), driver='ESRI Shapefile')
 
     # Final discretization: split the combined network at all significant points
     # This creates proper graph structure where each junction/endpoint is explicit
