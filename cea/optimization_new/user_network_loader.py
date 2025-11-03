@@ -29,7 +29,10 @@ import networkx as nx
 from shapely.geometry import Point, LineString
 from typing import Tuple, Dict, List, Set
 
-from cea.constants import SHAPEFILE_TOLERANCE
+# Tolerance for network topology validation (meters)
+# This is much tighter than CEA's general SHAPEFILE_TOLERANCE (6m)
+# to ensure precise network connectivity and node placement
+NETWORK_TOPOLOGY_TOLERANCE = 0.01  # 1 centimeter - standard GIS precision
 
 
 class UserNetworkLoaderError(Exception):
@@ -249,7 +252,7 @@ def validate_network_covers_district_buildings(
         missing_list = sorted(list(missing_buildings))
         raise UserNetworkLoaderError(
             f"User-defined network does not cover all district {network_type} buildings:\n\n"
-            f"Buildings requiring district connection (from Supply.csv): {len(district_building_set)}\n"
+            f"Buildings requiring district connection (from Building Properties/l): {len(district_building_set)}\n"
             f"Buildings found in network nodes: {len(network_building_names)}\n"
             f"Missing buildings: {len(missing_buildings)}\n\n"
             f"Missing building(s):\n  " + "\n  ".join(missing_list[:20]) +
@@ -257,7 +260,7 @@ def validate_network_covers_district_buildings(
             f"\n\n"
             f"Resolution options:\n"
             f"  1. Add nodes with 'building' attribute for missing buildings to your network layout\n"
-            f"  2. Update Supply.csv to set these buildings to building-scale systems\n"
+            f"  2. Update Building Properties/Supply to set these buildings to building-scale systems\n"
             f"  3. Leave network layout parameters blank to let CEA generate the network automatically"
         )
 
@@ -268,7 +271,7 @@ def validate_network_covers_district_buildings(
         extra_list = sorted(list(extra_buildings))
         raise UserNetworkLoaderError(
             f"User-defined network includes buildings NOT designated for district {network_type}:\n\n"
-            f"Buildings designated for district (from Supply.csv): {len(district_building_set)}\n"
+            f"Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
             f"Buildings found in network nodes: {len(network_building_names)}\n"
             f"Extra buildings: {len(extra_buildings)}\n\n"
             f"Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
@@ -276,7 +279,7 @@ def validate_network_covers_district_buildings(
             f"\n\n"
             f"Resolution options:\n"
             f"  1. Remove these building nodes from your network layout\n"
-            f"  2. Update Supply.csv to set these buildings to district-scale systems\n"
+            f"  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
             f"  3. Leave network layout parameters blank to let CEA generate the network automatically"
         )
 
@@ -295,9 +298,9 @@ def validate_network_covers_district_buildings(
             # This shouldn't happen if Supply.csv is consistent with zone geometry
             # But let's be defensive
             raise UserNetworkLoaderError(
-                f"Building '{building_name}' listed in Supply.csv as district-connected "
+                f"Building '{building_name}' listed in Building Properties/Supply as district-connected "
                 f"but not found in zone geometry (zone.shp).\n"
-                f"Please ensure Supply.csv and zone geometry are consistent."
+                f"Please ensure Building Properties/Supply and zone geometry are consistent."
             )
 
         building_geom = building_row.iloc[0].geometry
@@ -320,7 +323,7 @@ def validate_network_covers_district_buildings(
         node_geom = node_rows.iloc[0].geometry
 
         # Check if node is within building footprint (with tolerance)
-        buffered_building = building_geom.buffer(SHAPEFILE_TOLERANCE)
+        buffered_building = building_geom.buffer(NETWORK_TOPOLOGY_TOLERANCE)
 
         if not buffered_building.contains(node_geom):
             distance = node_geom.distance(building_geom)
@@ -331,7 +334,7 @@ def validate_network_covers_district_buildings(
         misplaced_nodes.sort(key=lambda x: x[1], reverse=True)
 
         error_details = "\n".join([
-            f"  - {name}: {dist:.2f} m from building footprint"
+            f"  - {name}: {dist:.3f} m from building footprint"
             for name, dist in misplaced_nodes[:20]
         ])
 
@@ -340,7 +343,7 @@ def validate_network_covers_district_buildings(
 
         raise UserNetworkLoaderError(
             f"Building nodes are outside their respective building footprints:\n\n"
-            f"Found {len(misplaced_nodes)} node(s) outside building footprints (tolerance: {SHAPEFILE_TOLERANCE} m):\n"
+            f"Found {len(misplaced_nodes)} node(s) outside building footprints (tolerance: {NETWORK_TOPOLOGY_TOLERANCE} m):\n"
             f"{error_details}\n\n"
             f"Resolution:\n"
             f"  - Move each building's node to be within its building footprint\n"
@@ -373,6 +376,8 @@ def detect_network_components(
         G.add_node(node_id, **row.to_dict())
 
     # Add edges by finding nodes at edge endpoints
+    unconnected_edges = []
+
     for idx, edge_row in edges_gdf.iterrows():
         edge_geom = edge_row.geometry
         start_point = Point(edge_geom.coords[0])
@@ -381,21 +386,66 @@ def detect_network_components(
         # Find nodes that match the start and end points
         start_node = None
         end_node = None
+        min_dist_to_start = float('inf')
+        min_dist_to_end = float('inf')
 
         for node_idx, node_row in nodes_gdf.iterrows():
             node_geom = node_row.geometry
 
-            if start_node is None and node_geom.distance(start_point) < SHAPEFILE_TOLERANCE:
-                start_node = node_idx
+            dist_to_start = node_geom.distance(start_point)
+            dist_to_end = node_geom.distance(end_point)
 
-            if end_node is None and node_geom.distance(end_point) < SHAPEFILE_TOLERANCE:
+            if start_node is None and dist_to_start < NETWORK_TOPOLOGY_TOLERANCE:
+                start_node = node_idx
+            if dist_to_start < min_dist_to_start:
+                min_dist_to_start = dist_to_start
+
+            if end_node is None and dist_to_end < NETWORK_TOPOLOGY_TOLERANCE:
                 end_node = node_idx
+            if dist_to_end < min_dist_to_end:
+                min_dist_to_end = dist_to_end
 
             if start_node is not None and end_node is not None:
                 break
 
         if start_node is not None and end_node is not None:
             G.add_edge(start_node, end_node)
+        else:
+            # Track unconnected edges for error reporting
+            edge_name = edge_row.get('name', f'Edge_{idx}')
+            unconnected_edges.append({
+                'name': edge_name,
+                'index': idx,
+                'missing_start': start_node is None,
+                'missing_end': end_node is None,
+                'min_dist_start': min_dist_to_start,
+                'min_dist_end': min_dist_to_end
+            })
+
+    # Report unconnected edges
+    if unconnected_edges:
+        error_details = []
+        for edge in unconnected_edges[:10]:  # Show first 10
+            issues = []
+            if edge['missing_start']:
+                issues.append(f"start node missing (nearest node: {edge['min_dist_start']:.3f}m away)")
+            if edge['missing_end']:
+                issues.append(f"end node missing (nearest node: {edge['min_dist_end']:.3f}m away)")
+
+            error_details.append(f"  - {edge['name']}: {', '.join(issues)}")
+
+        raise UserNetworkLoaderError(
+            f"Network topology error: {len(unconnected_edges)} edge(s) cannot connect to nodes:\n\n"
+            + "\n".join(error_details) +
+            (f"\n  ... and {len(unconnected_edges) - 10} more" if len(unconnected_edges) > 10 else "") +
+            f"\n\n"
+            f"Edges must have nodes at both endpoints within {NETWORK_TOPOLOGY_TOLERANCE}m (tolerance).\n\n"
+            f"Resolution:\n"
+            f"  1. Ensure edge endpoints EXACTLY match node coordinates\n"
+            f"  2. Use GIS 'Snap' tools to connect edges to nodes (tolerance: {NETWORK_TOPOLOGY_TOLERANCE}m)\n"
+            f"  3. Check for missing nodes at edge endpoints\n"
+            f"  4. Verify coordinate precision matches between edges and nodes"
+        )
 
     # Find connected components
     components = list(nx.connected_components(G))

@@ -144,11 +144,11 @@ class Domain(object):
                                   if building.initial_connectivity_state != 'stand_alone']
 
             if not district_buildings:
-                print("  Warning: No buildings designated for district networks in Supply.csv.")
+                print("  Warning: No buildings designated for district networks in Building Properties/Supply")
                 print("           User-defined network will not be used.")
                 return
 
-            print(f"  - District buildings (from Supply.csv): {len(district_buildings)}")
+            print(f"  - District buildings (from Building Properties/Supply): {len(district_buildings)}")
 
             # Load building geometries
             buildings_gdf = gpd.read_file(self.locator.get_zone_geometry())
