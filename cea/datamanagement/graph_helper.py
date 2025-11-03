@@ -41,6 +41,7 @@ import math
 import networkx as nx
 from typing import Optional, Tuple, List, Set, Dict
 from scipy.spatial import KDTree
+import warnings
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 
@@ -98,6 +99,17 @@ class GraphCorrector:
         # Normalize protected node coordinates for comparison-time lookups
         self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
+
+        # Double check if protected nodes exist in the graph
+        if self.protected_nodes:
+            # Normalize graph nodes to same precision as protected nodes for comparison
+            protected_set = set(self.protected_nodes)
+            normalized_result = set(self._normalize_node_coords(graph.nodes()))
+
+            found_protected_nodes = protected_set & normalized_result
+            if len(found_protected_nodes) < len(protected_set):
+                missing = protected_set - found_protected_nodes
+                warnings.warn(f"Some protected nodes were not found in the graph: {missing}", UserWarning)
 
     # ==================================================================================
     # MAIN CORRECTION PIPELINE
@@ -946,10 +958,7 @@ class GraphCorrector:
         graph_nodes = set(graph.nodes())
         missing_terminals = [node for node in terminal_nodes if node not in graph_nodes]
         if missing_terminals:
-            # FIXME: Temporarily disable this check to allow Steiner tree on partial graphs
-            # return False, f"{len(missing_terminals)} terminal nodes not found in graph"
-            print(f"Warning: {len(missing_terminals)} terminal nodes not found in graph, proceeding anyway")
-            return True, "Some terminal nodes are missing, but proceeding with optimization."
+            return False, f"{len(missing_terminals)} terminal nodes not found in graph"
 
         return True, f"Graph is ready for Steiner tree with {len(terminal_nodes)} terminals"
 
