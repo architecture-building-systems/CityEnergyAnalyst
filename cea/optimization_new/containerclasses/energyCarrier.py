@@ -168,7 +168,7 @@ class EnergyCarrier:
                                                converters={'mean_qual': to_numeric})
 
         # Correct potential basic format errors if there are any
-        energy_carriers_overview['feedstock_file'].fillna('-', inplace=True)
+        energy_carriers_overview['feedstock_file'] = energy_carriers_overview['feedstock_file'].fillna('-')
         energy_carriers_overview['feedstock_file'] = \
             energy_carriers_overview['feedstock_file'].astype(str).str.strip().str.upper()
         EnergyCarrier._available_energy_carriers = energy_carriers_overview.fillna(0.0)
