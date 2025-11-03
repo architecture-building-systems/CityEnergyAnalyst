@@ -9,23 +9,25 @@ WORKFLOW:
 1. Load and validate street network
 2. Apply GraphCorrector to street network (fixes connectivity, intersections, merges close nodes)
 3. Create building terminal connection lines (geometries from building → nearest street point)
-4. Topologically merge and connect geometries:
-   - snap_points: Split lines at significant points
-5. Discretize network for graph representation
+4. Extract all significant points (line endpoints, including terminal connection points)
+5. Discretize network: split lines at all significant points in one efficient operation
 6. Output for Steiner tree optimization
 
 ARCHITECTURE:
 =============
 - GraphCorrector (graph_helper.py): Topology fixes on street network only
-- create_terminals: Spatial operation to find nearest street points for buildings
-- Geometric merging/snapping: Ensures building connections are topologically integrated
-- Discretization: Converts continuous geometries into graph-ready segments
+  * Merges close nodes within SNAP_TOLERANCE
+  * Connects intersecting edges from different components
+  * Connects disconnected components (avoids direct building-to-building connections)
+- create_terminals: Creates LineStrings from buildings to nearest street points
+- calculate_significant_points: Extracts unique line endpoints (includes terminal connection points)
+- split_line_by_nearest_points: Discretizes network by snapping and splitting in one operation
 
 This separation ensures:
 - Street network is corrected BEFORE building terminals are added
-- Terminal nodes are protected from graph correction operations
-- Building connections are properly merged with street network geometries
-- Final network is suitable for NetworkX graph conversion
+- Terminal nodes (building centroids) are NOT moved from their exact locations
+- Building connections are properly integrated via split_line_by_nearest_points
+- Final network is suitable for NetworkX graph conversion and Steiner tree optimization
 """
 
 import warnings
@@ -33,11 +35,9 @@ import warnings
 import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely import Point, LineString, MultiPoint, box
+from shapely import Point, LineString, MultiPoint
 from shapely.ops import split, linemerge, snap
 
-import cea.config
-import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
@@ -266,15 +266,29 @@ def snap_points(points, lines, tolerance):
     return points, lines
 
 
-def calculate_end_points_intersections(prototype_network, crs):
-    # compute endpoints of the new prototype network
+def calculate_significant_points(prototype_network, crs):
+    """
+    Extract all significant points (line endpoints) from the network for discretization.
+
+    After GraphCorrector has processed street intersections and terminals have been added,
+    only line endpoints are needed. Terminal connection points are automatically included
+    as endpoints of terminal lines. The split_line_by_nearest_points function will handle
+    snapping and splitting lines at these points.
+
+    :param prototype_network: Combined network GeoDataFrame (streets + terminals)
+    :type prototype_network: gdf
+    :param crs: Coordinate reference system
+    :type crs: str
+    :return: GeoDataFrame of unique significant points
+    :rtype: gdf
+    """
+    # Extract all line endpoints (includes both street vertices and terminal connection points)
     gdf_points = compute_end_points(prototype_network.geometry, crs)
-    # compute intersections
-    gdf_intersections = compute_intersections(prototype_network.geometry, crs)
-    gdf_points_snapped = pd.concat([gdf_points, gdf_intersections], ignore_index=True)
-    G = gdf_points_snapped["geometry"].apply(lambda geom: geom.wkb)
-    gdf_points_snapped = gdf_points_snapped.loc[G.drop_duplicates().index]
-    return gdf_points_snapped
+
+    # Remove duplicate points efficiently using drop_duplicates on geometry
+    gdf_points = gdf_points.drop_duplicates(subset=['geometry']).reset_index(drop=True)
+
+    return gdf_points
 
 
 def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> gdf:
@@ -421,20 +435,18 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # GraphCorrector already handles: intersections, close nodes, disconnected components
     street_network = apply_graph_corrections_to_street_network(streets_network_df)
 
-    # create terminals/branches form street to buildings
+    # create terminals/branches from street to buildings
     # This creates individual line segments from each building centroid to nearest street point
     prototype_network = create_terminals(building_centroids_df, street_network, crs)
 
-    # Calculate all significant points (endpoints and intersections) for final discretization
-    gdf_points_snapped = calculate_end_points_intersections(prototype_network, crs)
-
-    # Snap points to lines and split lines at those points
-    # This ensures all junction points become explicit vertices
-    gdf_points_snapped, prototype_network = snap_points(gdf_points_snapped, prototype_network, SNAP_TOLERANCE)
+    # Calculate all significant points (line endpoints) for discretization
+    # Terminal connection points are included as endpoints of terminal lines
+    gdf_points = calculate_significant_points(prototype_network, crs)
 
     # Final discretization: split the combined network at all significant points
-    # This creates proper graph structure where each junction/endpoint is explicit
-    potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points_snapped, SNAP_TOLERANCE, crs)
+    # This snaps points to lines and splits lines at those points in one operation
+    # Creates proper graph structure where each junction/endpoint is explicit
+    potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points, SNAP_TOLERANCE, crs)
 
     # calculate Shape_len field
     potential_network_df["Shape_Leng"] = potential_network_df.geometry.length
