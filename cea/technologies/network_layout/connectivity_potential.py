@@ -455,12 +455,13 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     streets_network_df = streets_network_df.to_crs(crs)
     building_centroids_df = building_centroids_df.to_crs(crs)
 
-    valid_geometries = streets_network_df[streets_network_df.geometry.is_valid].geometry
+    valid_geometries = streets_network_df.geometry.is_valid
 
-    if valid_geometries.empty:
+    if not valid_geometries.any():
         raise ValueError("No valid geometries found in the shapefile.")
-    elif len(streets_network_df) != len(valid_geometries):
+    elif len(streets_network_df) != valid_geometries.sum():
         warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
+        streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
 
     # Apply graph corrections to street network BEFORE connecting buildings
     # This ensures terminal nodes are not affected by corrections
