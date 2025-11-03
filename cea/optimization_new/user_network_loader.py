@@ -105,16 +105,16 @@ def _load_from_shapefiles(edges_path: str, nodes_path: str) -> Tuple[gpd.GeoData
     # Check files exist
     if not os.path.exists(edges_path):
         raise UserNetworkLoaderError(
-            f"Edge shapefile not found:\n"
+            "Edge shapefile not found:\n"
             f"  Path: {edges_path}\n\n"
-            f"Please check the 'edges-shp-path' parameter in your config."
+            "Please check the 'edges-shp-path' parameter in your config."
         )
 
     if not os.path.exists(nodes_path):
         raise UserNetworkLoaderError(
-            f"Node shapefile not found:\n"
+            "Node shapefile not found:\n"
             f"  Path: {nodes_path}\n\n"
-            f"Please check the 'nodes-shp-path' parameter in your config."
+            "Please check the 'nodes-shp-path' parameter in your config."
         )
 
     # Load shapefiles
@@ -123,23 +123,23 @@ def _load_from_shapefiles(edges_path: str, nodes_path: str) -> Tuple[gpd.GeoData
         nodes_gdf = gpd.read_file(nodes_path)
     except Exception as e:
         raise UserNetworkLoaderError(
-            f"Error reading shapefiles:\n"
+            "Error reading shapefiles:\n"
             f"  {str(e)}\n\n"
-            f"Please ensure files are valid ESRI Shapefiles."
+            "Please ensure files are valid ESRI Shapefiles."
         )
 
     # Validate geometries
     if not all(edges_gdf.geometry.geom_type == 'LineString'):
         raise UserNetworkLoaderError(
             f"Invalid edge geometry in {edges_path}:\n"
-            f"  All features must be LineStrings.\n"
+            "  All features must be LineStrings.\n"
             f"  Found: {edges_gdf.geometry.geom_type.unique().tolist()}"
         )
 
     if not all(nodes_gdf.geometry.geom_type == 'Point'):
         raise UserNetworkLoaderError(
             f"Invalid node geometry in {nodes_path}:\n"
-            f"  All features must be Points.\n"
+            "  All features must be Points.\n"
             f"  Found: {nodes_gdf.geometry.geom_type.unique().tolist()}"
         )
 
@@ -152,9 +152,9 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
     # Check file exists
     if not os.path.exists(geojson_path):
         raise UserNetworkLoaderError(
-            f"GeoJSON file not found:\n"
+            "GeoJSON file not found:\n"
             f"  Path: {geojson_path}\n\n"
-            f"Please check the 'network-geojson-path' parameter in your config."
+            "Please check the 'network-geojson-path' parameter in your config."
         )
 
     # Load GeoJSON
@@ -162,9 +162,9 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
         gdf = gpd.read_file(geojson_path)
     except Exception as e:
         raise UserNetworkLoaderError(
-            f"Error reading GeoJSON file:\n"
+            "Error reading GeoJSON file:\n"
             f"  {str(e)}\n\n"
-            f"Please ensure file is valid GeoJSON."
+            "Please ensure file is valid GeoJSON."
         )
 
     # Separate nodes and edges by geometry type
@@ -173,16 +173,16 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
 
     if len(nodes_gdf) == 0:
         raise UserNetworkLoaderError(
-            f"No Point features found in GeoJSON:\n"
+            "No Point features found in GeoJSON:\n"
             f"  Path: {geojson_path}\n\n"
-            f"Network layout must include Point features representing nodes."
+            "Network layout must include Point features representing nodes."
         )
 
     if len(edges_gdf) == 0:
         raise UserNetworkLoaderError(
-            f"No LineString features found in GeoJSON:\n"
+            "No LineString features found in GeoJSON:\n"
             f"  Path: {geojson_path}\n\n"
-            f"Network layout must include LineString features representing edges."
+            "Network layout must include LineString features representing edges."
         )
 
     return nodes_gdf, edges_gdf
@@ -197,12 +197,12 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
 
     if missing_node_attrs:
         raise UserNetworkLoaderError(
-            f"Missing required attribute(s) in node features:\n"
+            "Missing required attribute(s) in node features:\n"
             f"  Required: {required_node_attrs}\n"
             f"  Missing: {missing_node_attrs}\n"
             f"  Found: {nodes_gdf.columns.tolist()}\n\n"
-            f"Nodes must have a 'building' attribute (string) matching building names.\n"
-            f"Non-building nodes should have 'building' = 'NONE' or similar."
+            "Nodes must have a 'building' attribute (string) matching building names.\n"
+            "Non-building nodes should have 'building' = 'NONE' or similar."
         )
 
     # Check edge attributes
@@ -211,11 +211,11 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
 
     if missing_edge_attrs:
         raise UserNetworkLoaderError(
-            f"Missing required attribute(s) in edge features:\n"
+            "Missing required attribute(s) in edge features:\n"
             f"  Required: {required_edge_attrs}\n"
             f"  Missing: {missing_edge_attrs}\n"
             f"  Found: {edges_gdf.columns.tolist()}\n\n"
-            f"Edges must have a 'type_mat' attribute (string) specifying pipe material type."
+            "Edges must have a 'type_mat' attribute (string) specifying pipe material type."
         )
 
 
@@ -255,13 +255,13 @@ def validate_network_covers_district_buildings(
             f"Buildings requiring district connection (from Building Properties/l): {len(district_building_set)}\n"
             f"Buildings found in network nodes: {len(network_building_names)}\n"
             f"Missing buildings: {len(missing_buildings)}\n\n"
-            f"Missing building(s):\n  " + "\n  ".join(missing_list[:20]) +
+            "Missing building(s):\n  " + "\n  ".join(missing_list[:20]) +
             (f"\n  ... and {len(missing_list) - 20} more" if len(missing_list) > 20 else "") +
-            f"\n\n"
-            f"Resolution options:\n"
-            f"  1. Add nodes with 'building' attribute for missing buildings to your network layout\n"
-            f"  2. Update Building Properties/Supply to set these buildings to building-scale systems\n"
-            f"  3. Leave network layout parameters blank to let CEA generate the network automatically"
+            "\n\n"
+            "Resolution options:\n"
+            "  1. Add nodes with 'building' attribute for missing buildings to your network layout\n"
+            "  2. Update Building Properties/Supply to set these buildings to building-scale systems\n"
+            "  3. Leave network layout parameters blank to let CEA generate the network automatically"
         )
 
     # Check 2: Are there extra buildings in the network that shouldn't be there?
@@ -274,13 +274,13 @@ def validate_network_covers_district_buildings(
             f"Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
             f"Buildings found in network nodes: {len(network_building_names)}\n"
             f"Extra buildings: {len(extra_buildings)}\n\n"
-            f"Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
+            "Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
             (f"\n  ... and {len(extra_list) - 20} more" if len(extra_list) > 20 else "") +
-            f"\n\n"
-            f"Resolution options:\n"
-            f"  1. Remove these building nodes from your network layout\n"
-            f"  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
-            f"  3. Leave network layout parameters blank to let CEA generate the network automatically"
+            "\n\n"
+            "Resolution options:\n"
+            "  1. Remove these building nodes from your network layout\n"
+            "  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
+            "  3. Leave network layout parameters blank to let CEA generate the network automatically"
         )
 
     # Check 3: Are building nodes within their respective building footprints?
@@ -299,8 +299,8 @@ def validate_network_covers_district_buildings(
             # But let's be defensive
             raise UserNetworkLoaderError(
                 f"Building '{building_name}' listed in Building Properties/Supply as district-connected "
-                f"but not found in zone geometry (zone.shp).\n"
-                f"Please ensure Building Properties/Supply and zone geometry are consistent."
+                "but not found in zone geometry (zone.shp).\n"
+                "Please ensure Building Properties/Supply and zone geometry are consistent."
             )
 
         building_geom = building_row.iloc[0].geometry
@@ -316,8 +316,8 @@ def validate_network_covers_district_buildings(
             raise UserNetworkLoaderError(
                 f"Multiple nodes found for building '{building_name}':\n"
                 f"  {len(node_rows)} nodes with 'building' = '{building_name}'\n\n"
-                f"Each building should have exactly ONE node in the network.\n"
-                f"Please ensure each building has a unique node."
+                "Each building should have exactly ONE node in the network.\n"
+                "Please ensure each building has a unique node."
             )
 
         node_geom = node_rows.iloc[0].geometry
@@ -342,13 +342,13 @@ def validate_network_covers_district_buildings(
             error_details += f"\n  ... and {len(misplaced_nodes) - 20} more"
 
         raise UserNetworkLoaderError(
-            f"Building nodes are outside their respective building footprints:\n\n"
+            "Building nodes are outside their respective building footprints:\n\n"
             f"Found {len(misplaced_nodes)} node(s) outside building footprints (tolerance: {NETWORK_TOPOLOGY_TOLERANCE} m):\n"
             f"{error_details}\n\n"
-            f"Resolution:\n"
-            f"  - Move each building's node to be within its building footprint\n"
-            f"  - Nodes should typically be placed at building centroids or connection points\n"
-            f"  - Use GIS software to verify node positions against building geometries"
+            "Resolution:\n"
+            "  - Move each building's node to be within its building footprint\n"
+            "  - Nodes should typically be placed at building centroids or connection points\n"
+            "  - Use GIS software to verify node positions against building geometries"
         )
 
 
@@ -448,13 +448,13 @@ def detect_network_components(
             f"Network topology error: {len(unconnected_edges)} edge(s) cannot connect to nodes:\n\n"
             + "\n".join(error_details) +
             (f"\n  ... and {len(unconnected_edges) - 10} more" if len(unconnected_edges) > 10 else "") +
-            f"\n\n"
+            "\n\n"
             f"Edges must have nodes at both endpoints within {NETWORK_TOPOLOGY_TOLERANCE}m (tolerance).\n\n"
-            f"Resolution:\n"
-            f"  1. Ensure edge endpoints EXACTLY match node coordinates\n"
+            "Resolution:\n"
+            "  1. Ensure edge endpoints EXACTLY match node coordinates\n"
             f"  2. Use GIS 'Snap' tools to connect edges to nodes (tolerance: {NETWORK_TOPOLOGY_TOLERANCE}m)\n"
-            f"  3. Check for missing nodes at edge endpoints\n"
-            f"  4. Verify coordinate precision matches between edges and nodes"
+            "  3. Check for missing nodes at edge endpoints\n"
+            "  4. Verify coordinate precision matches between edges and nodes"
         )
 
     # Find connected components
@@ -503,12 +503,12 @@ def detect_network_components(
         raise UserNetworkLoaderError(
             f"PLANT node validation failed for {len(plant_errors)} network component(s):\n\n"
             + "\n".join(plant_errors) +
-            f"\n\n"
-            f"Each thermal network requires EXACTLY ONE node with 'building' = 'PLANT'.\n\n"
-            f"Resolution:\n"
-            f"  1. Add a PLANT node to networks that are missing one\n"
-            f"  2. Remove duplicate PLANT nodes (keep only one per network)\n"
-            f"  3. Ensure PLANT nodes are connected to the network via edges"
+            "\n\n"
+            "Each thermal network requires EXACTLY ONE node with 'building' = 'PLANT'.\n\n"
+            "Resolution:\n"
+            "  1. Add a PLANT node to networks that are missing one\n"
+            "  2. Remove duplicate PLANT nodes (keep only one per network)\n"
+            "  3. Ensure PLANT nodes are connected to the network via edges"
         )
 
     return component_buildings
@@ -551,9 +551,9 @@ def map_buildings_to_networks(
 
     if unmapped_buildings:
         raise UserNetworkLoaderError(
-            f"Internal error: Some district buildings are not mapped to networks:\n"
+            "Internal error: Some district buildings are not mapped to networks:\n"
             f"  {unmapped_buildings}\n"
-            f"This should not happen after validation. Please report this issue."
+            "This should not happen after validation. Please report this issue."
         )
 
     return building_to_network
