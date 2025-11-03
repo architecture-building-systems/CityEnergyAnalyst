@@ -437,6 +437,6 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points_snapped, SNAP_TOLERANCE, crs)
 
     # calculate Shape_len field
-    potential_network_df["Shape_Leng"] = potential_network_df["geometry"].apply(lambda x: x.length)
+    potential_network_df["Shape_Leng"] = potential_network_df.geometry.length
 
     return potential_network_df
