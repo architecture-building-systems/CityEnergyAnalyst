@@ -125,9 +125,9 @@ async def prepare_download(
             detail="Project path does not exist"
         )
 
-    # Get project id
+    # Get project id (verify ownership)
     result = await session.execute(
-        select(Project).where(Project.uri == project_path)
+        select(Project).where(Project.uri == project_path, Project.owner == user_id)
     )
     project = result.scalar_one_or_none()
     if not project:
