@@ -54,6 +54,7 @@ class DownloadResponse(BaseModel):
     state: str
     file_size_mb: float | None
     progress_message: str | None
+    progress_percent: int | None = None  # 0-100 for progress bar (ephemeral, only via SocketIO)
     error_message: str | None
     created_at: str
     downloaded_at: str | None
@@ -70,6 +71,7 @@ class DownloadResponse(BaseModel):
             state=download.state.name,
             file_size_mb=download.file_size_mb,
             progress_message=download.progress_message,
+            progress_percent=None,
             error_message=download.error_message,
             created_at=download.created_at.isoformat(),
             downloaded_at=download.downloaded_at.isoformat() if download.downloaded_at else None

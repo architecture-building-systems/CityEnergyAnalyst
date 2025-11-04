@@ -30,6 +30,7 @@ class DownloadProgressEvent(BaseModel):
     download_id: str
     state: str
     progress_message: str
+    progress_percent: int  # 0-100 for progress bar
 
 
 class DownloadReadyEvent(BaseModel):
@@ -377,7 +378,8 @@ async def update_download_progress(
     session: AsyncSession,
     download_id: str,
     progress_message: str,
-    state: Optional[DownloadState] = None
+    state: Optional[DownloadState] = None,
+    progress_percent: int = 0
 ):
     """
     Update download progress message (called from background task).
@@ -387,6 +389,7 @@ async def update_download_progress(
         download_id: Download ID
         progress_message: Progress message to display
         state: Optional state update
+        progress_percent: Progress percentage (0-100) for progress bar
     """
     result = await session.execute(
         select(Download).where(Download.id == download_id)
@@ -405,7 +408,7 @@ async def update_download_progress(
     user_id = download.created_by
 
     await session.commit()
-    logger.debug(f"Download {download_id} progress: {progress_message}")
+    logger.debug(f"Download {download_id} progress: {progress_message} ({progress_percent}%)")
 
     # Emit SocketIO event for real-time updates
     await emit_with_retry(
@@ -413,7 +416,8 @@ async def update_download_progress(
         DownloadProgressEvent(
             download_id=download_id,
             state=current_state.name,
-            progress_message=progress_message
+            progress_message=progress_message,
+            progress_percent=progress_percent
         ).model_dump(),
         room=f'user-{user_id}'
     )
@@ -549,29 +553,36 @@ def prepare_download_sync(
         loop.call_soon_threadsafe(progress_queue.put_nowait, msg)
 
     try:
+        # Progress breakdown: Summary (0-40%), Collect (40-45%), ZIP (45-100%)
+
         # Update progress: Starting
         put_progress({
             'type': 'progress',
             'message': f"Preparing download for {len(scenarios)} scenario(s)...",
-            'state': DownloadState.PREPARING
+            'state': DownloadState.PREPARING,
+            'percent': 0
         })
 
-        # Generate summaries if requested
+        # Generate summaries if requested (0-40% of total)
         if OutputFileType.SUMMARY in output_files:
             for i, scenario in enumerate(scenarios):
                 scenario_name = Path(scenario).name
+                # Calculate progress: 0-40% based on scenario completion
+                percent = int(40 * (i / len(scenarios)))
 
                 put_progress({
                     'type': 'progress',
-                    'message': f"Generating summary for scenario {i+1}/{len(scenarios)}: {scenario_name}..."
+                    'message': f"Generating summary for scenario {i+1}/{len(scenarios)}: {scenario_name}...",
+                    'percent': percent
                 })
 
                 generate_summary_for_scenario(project_path, scenario_name)
 
-        # Collect files
+        # Collect files (40-45%)
         put_progress({
             'type': 'progress',
-            'message': "Collecting files..."
+            'message': "Collecting files...",
+            'percent': 40
         })
 
         logger.info(f"Collecting files for download {download_id}")
@@ -587,10 +598,11 @@ def prepare_download_sync(
 
         logger.info(f"Found {len(files_to_zip)} files to zip for download {download_id}")
 
-        # Create ZIP file
+        # Create ZIP file (45-100%)
         put_progress({
             'type': 'progress',
-            'message': f"Creating ZIP archive ({len(files_to_zip)} files)..."
+            'message': f"Creating ZIP archive ({len(files_to_zip)} files)...",
+            'percent': 45
         })
 
         zip_path = get_download_zip_path(download_id)
@@ -600,11 +612,16 @@ def prepare_download_sync(
             for i, (item_path, archive_name) in enumerate(files_to_zip):
                 zip_file.write(item_path, arcname=archive_name)
 
-                # Update progress every 50 files
-                if (i + 1) % 50 == 0:
+                # Update progress every 50 files (45-100%)
+                if (i + 1) % 50 == 0 or (i + 1) == len(files_to_zip):
+                    # Calculate progress: 45% + (55% * file_completion)
+                    file_progress = (i + 1) / len(files_to_zip)
+                    percent = int(45 + (55 * file_progress))
+
                     put_progress({
                         'type': 'progress',
-                        'message': f"Adding files to archive... ({i+1}/{len(files_to_zip)})"
+                        'message': f"Adding files to archive... ({i+1}/{len(files_to_zip)})",
+                        'percent': percent
                     })
 
         # Get file size
@@ -708,7 +725,8 @@ async def _monitor_download_progress(download_id: str, progress_queue: asyncio.Q
                         session,
                         download_id,
                         msg['message'],
-                        msg.get('state')
+                        msg.get('state'),
+                        msg.get('percent', 0)
                     )
 
                 elif msg_type == 'ready':
