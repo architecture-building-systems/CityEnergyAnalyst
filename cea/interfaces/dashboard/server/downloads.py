@@ -379,7 +379,8 @@ async def update_download_progress(
     download_id: str,
     progress_message: str,
     state: Optional[DownloadState] = None,
-    progress_percent: int = 0
+    progress_percent: int = 0,
+    persist_message: bool = True
 ):
     """
     Update download progress message (called from background task).
@@ -390,7 +391,34 @@ async def update_download_progress(
         progress_message: Progress message to display
         state: Optional state update
         progress_percent: Progress percentage (0-100) for progress bar
+        persist_message: If True, write message to DB; if False, only emit SocketIO
     """
+    # If nothing to persist, only query what we need for SocketIO
+    if not persist_message and state is None:
+        # Lightweight query to get user_id and state for SocketIO
+        result = await session.execute(
+            select(Download.created_by, Download.state).where(Download.id == download_id)
+        )
+        row = result.one_or_none()
+        if not row:
+            return  # Download deleted
+
+        user_id, current_state = row
+
+        # Emit SocketIO without database write
+        await emit_with_retry(
+            'download-progress',
+            DownloadProgressEvent(
+                download_id=download_id,
+                state=current_state.name,
+                progress_message=progress_message,
+                progress_percent=progress_percent
+            ).model_dump(),
+            room=f'user-{user_id}'
+        )
+        return
+
+    # Full update path for persistent messages
     result = await session.execute(
         select(Download).where(Download.id == download_id)
     )
@@ -399,7 +427,9 @@ async def update_download_progress(
     if not download:
         return  # Download may have been deleted, skip update
 
-    download.progress_message = progress_message
+    # Update database for persistent milestones
+    if persist_message:
+        download.progress_message = progress_message
     if state is not None:
         download.state = state
 
@@ -573,7 +603,8 @@ def prepare_download_sync(
                 put_progress({
                     'type': 'progress',
                     'message': f"Generating summary for scenario {i+1}/{len(scenarios)}: {scenario_name}...",
-                    'percent': percent
+                    'percent': percent,
+                    'persist': False  # Don't write per-scenario counts to database
                 })
 
                 generate_summary_for_scenario(project_path, scenario_name)
@@ -621,7 +652,8 @@ def prepare_download_sync(
                     put_progress({
                         'type': 'progress',
                         'message': f"Adding files to archive... ({i+1}/{len(files_to_zip)})",
-                        'percent': percent
+                        'percent': percent,
+                        'persist': False  # Don't write file counts to database
                     })
 
         # Get file size
@@ -726,7 +758,8 @@ async def _monitor_download_progress(download_id: str, progress_queue: asyncio.Q
                         download_id,
                         msg['message'],
                         msg.get('state'),
-                        msg.get('percent', 0)
+                        msg.get('percent', 0),
+                        msg.get('persist', True)  # Default to persist for milestones
                     )
 
                 elif msg_type == 'ready':
