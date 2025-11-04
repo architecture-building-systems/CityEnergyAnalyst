@@ -56,7 +56,7 @@ import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString, MultiPoint
-from shapely.ops import split, linemerge, snap
+from shapely.ops import split, snap
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
@@ -72,40 +72,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def compute_intersections(lines, crs):
-    import itertools
-    inters = []
-    for line1, line2 in itertools.combinations(lines, 2):
-        if line1.intersects(line2):
-            inter = line1.intersection(line2)
-            if "Point" == inter.geom_type:
-                inters.append(inter)
-            elif "MultiPoint" == inter.geom_type:
-                inters.extend([pt for pt in inter.geoms])
-            elif "MultiLineString" == inter.geom_type:
-                multiLine = [line for line in inter]
-                first_coords = multiLine[0].coords[0]
-                last_coords = multiLine[len(multiLine) - 1].coords[1]
-                inters.append(Point(first_coords[0], first_coords[1]))
-                inters.append(Point(last_coords[0], last_coords[1]))
-            elif "GeometryCollection" == inter.geom_type:
-                for geom in inter:
-                    if "Point" == geom.geom_type:
-                        inters.append(geom)
-                    elif "MultiPoint" == geom.geom_type:
-                        inters.extend([pt for pt in geom.geoms])
-                    elif "MultiLineString" == geom.geom_type:
-                        multiLine = [line for line in geom.geoms]
-                        first_coords = multiLine[0].coords[0]
-                        last_coords = multiLine[len(multiLine) - 1].coords[1]
-                        inters.append(Point(first_coords[0], first_coords[1]))
-                        inters.append(Point(last_coords[0], last_coords[1]))
-
-    geometry = inters
-    df = gdf(geometry=geometry, crs=crs)
-    return df
-
-
 def compute_end_points(lines, crs):
     all_points = []
     for line in lines:
@@ -117,95 +83,6 @@ def compute_end_points(lines, crs):
     df = gdf(geometry=endpts, crs=crs)
 
     return df
-
-
-def nearest_neighbor_within(others, point, max_distance):
-    """Find nearest point among others up to a maximum distance.
-
-    Args:
-        others: a list of Points or a MultiPoint
-        point: a Point
-        max_distance: maximum distance to search for the nearest neighbor
-
-    Returns:
-        A shapely Point if one is within max_distance, None otherwise
-    """
-    search_region = point.buffer(max_distance)
-    interesting_points = search_region.intersection(MultiPoint(others))
-
-    if not interesting_points:
-        closest_point = None
-    elif isinstance(interesting_points, Point):
-        closest_point = interesting_points
-    else:
-        distances = [point.distance(ip) for ip in interesting_points.geoms
-                     if point.distance(ip) > 0]
-        closest_point = interesting_points.geoms[distances.index(min(distances))]
-
-    return closest_point
-
-
-def find_isolated_endpoints(lines):
-    """Find endpoints of lines that don't touch another line.
-
-    Args:
-        lines: a list of LineStrings or a MultiLineString
-
-    Returns:
-        A list of line end Points that don't touch any other line of lines
-    """
-
-    isolated_endpoints = []
-    for i, line in enumerate(lines):
-        other_lines = lines[:i] + lines[i + 1:]
-        for q in [0, -1]:
-            endpoint = Point(line.coords[q])
-            if any(endpoint.touches(another_line)
-                   for another_line in other_lines):
-                continue
-            else:
-                isolated_endpoints.append(endpoint)
-    return isolated_endpoints
-
-
-def bend_towards(line, where, to):
-    """Move the point where along a line to the point at location to.
-
-    Args:
-        line: a LineString
-        where: a point ON the line (not necessarily a vertex)
-        to: a point NOT on the line where the nearest vertex will be moved to
-
-    Returns:
-        the modified (bent) line
-    """
-
-    if not line.contains(where) and not line.touches(where):
-        raise ValueError('line does not contain the point where.')
-
-    coords = line.coords[:]
-    # easy case: where is (within numeric precision) a vertex of line
-    for k, vertex in enumerate(coords):
-        if where.equals_exact(Point(vertex), tolerance=1e-6):
-            # move coordinates of the vertex to destination
-            coords[k] = to.coords[0]
-            return LineString(coords)
-
-    # hard case: where lies between vertices of line, so
-    # find nearest vertex and move that one to point to
-    _, min_k = min((where.distance(Point(vertex)), k)
-                   for k, vertex in enumerate(coords))
-    coords[min_k] = to.coords[0]
-    return LineString(coords)
-
-
-def vertices_from_lines(lines):
-    """Return list of unique vertices from list of LineStrings."""
-
-    vertices = []
-    for line in lines:
-        vertices.extend(list(line.coords))
-    return [Point(p) for p in set(vertices)]
 
 
 def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
@@ -254,36 +131,6 @@ def near_analysis(building_centroids, street_network, crs):
 
     df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=crs)
     return df
-
-
-def snap_points(points, lines, tolerance):
-    length = lines.shape[0]
-    for i in range(length):
-        for point in points.geometry:
-            line = lines.loc[i, "geometry"]
-            point_inline_projection = line.interpolate(line.project(point))
-            distance_to_line = point.distance(point_inline_projection)
-            if (point.x, point.y) not in line.coords:
-                if distance_to_line < tolerance:
-                    buff = point.buffer(0.1)
-                    ### Split the line on the buffer
-                    geometry = split(line, buff)
-                    line_1_points = [tuple(xy) for xy in geometry.geoms[0].coords[:-1]]
-                    line_1_points.append((point.x, point.y))
-                    line_2_points = []
-                    line_2_points.append((point.x, point.y))
-                    line_2_points.extend([x for x in geometry.geoms[-1].coords[1:]])
-                    ### Stitch together the first segment, the interpolated point, and the last segment
-                    new_line = linemerge((LineString(line_1_points), LineString(line_2_points)))
-                    lines.loc[i, "geometry"] = new_line
-
-    G = points["geometry"].apply(lambda geom: geom.wkb)
-    points = points.loc[G.drop_duplicates().index]
-
-    G = lines["geometry"].apply(lambda geom: geom.wkb)
-    lines = lines.loc[G.drop_duplicates().index]
-
-    return points, lines
 
 
 def calculate_significant_points(prototype_network, crs):
