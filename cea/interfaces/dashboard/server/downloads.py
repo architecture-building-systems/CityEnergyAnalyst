@@ -7,7 +7,6 @@ import asyncio
 import zipfile
 import shutil
 from datetime import datetime, timedelta, timezone
-from enum import StrEnum
 from pathlib import Path
 from typing import Optional
 
@@ -22,16 +21,7 @@ from cea.interfaces.dashboard.lib.database.session import get_session_context
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 
-# Import file collection utilities from contents API
-from cea.interfaces.dashboard.api.contents import VALID_EXTENSIONS
-
-
-# Output file type enum
-class OutputFileType(StrEnum):
-    """Output file types for downloads."""
-    SUMMARY = "SUMMARY"
-    DETAILED = "DETAILED"
-    EXPORT = "EXPORT"
+from cea.interfaces.dashboard.api.contents import VALID_EXTENSIONS, OutputFileType
 
 # SocketIO Event Models
 class DownloadProgressEvent(BaseModel):
