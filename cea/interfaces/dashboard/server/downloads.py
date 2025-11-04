@@ -393,32 +393,7 @@ async def update_download_progress(
         progress_percent: Progress percentage (0-100) for progress bar
         persist_message: If True, write message to DB; if False, only emit SocketIO
     """
-    # If nothing to persist, only query what we need for SocketIO
-    if not persist_message and state is None:
-        # Lightweight query to get user_id and state for SocketIO
-        result = await session.execute(
-            select(Download.created_by, Download.state).where(Download.id == download_id)
-        )
-        row = result.one_or_none()
-        if not row:
-            return  # Download deleted
-
-        user_id, current_state = row
-
-        # Emit SocketIO without database write
-        await emit_with_retry(
-            'download-progress',
-            DownloadProgressEvent(
-                download_id=download_id,
-                state=current_state.name,
-                progress_message=progress_message,
-                progress_percent=progress_percent
-            ).model_dump(),
-            room=f'user-{user_id}'
-        )
-        return
-
-    # Full update path for persistent messages
+    # Load download object (session cache makes this efficient for repeated calls)
     result = await session.execute(
         select(Download).where(Download.id == download_id)
     )
@@ -437,10 +412,13 @@ async def update_download_progress(
     current_state = download.state
     user_id = download.created_by
 
-    await session.commit()
+    # Only commit if we actually changed something in the database
+    if persist_message or state is not None:
+        await session.commit()
+
     logger.debug(f"Download {download_id} progress: {progress_message} ({progress_percent}%)")
 
-    # Emit SocketIO event for real-time updates
+    # Always emit SocketIO event for real-time updates
     await emit_with_retry(
         'download-progress',
         DownloadProgressEvent(
