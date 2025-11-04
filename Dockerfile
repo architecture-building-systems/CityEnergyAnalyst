@@ -20,6 +20,7 @@ USER $MAMBA_USER
 COPY --chown=$MAMBA_USER:$MAMBA_USER conda-lock.yml /tmp/conda-lock.yml
 RUN micromamba config set extract_threads 1 \
     && micromamba install --name base --yes --file /tmp/conda-lock.yml \
+    && micromamba install --name base --yes -c conda-forge uv \
     && micromamba clean --all --yes \
     && mkdir -p ~/.config/matplotlib \
     && echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc \
@@ -28,9 +29,7 @@ RUN micromamba config set extract_threads 1 \
 # active environment to install CEA
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-# install uv for faster dependency resolution
-RUN pip install uv
-
+# Using --system for uv to install packages into the base environment
 # install cea-external-tools
 COPY --from=build --chown=$MAMBA_USER:$MAMBA_USER /tmp/external/dist /tmp/external_dist
 RUN uv pip install --system /tmp/external_dist/cea_external_tools-*.whl && rm -rf /tmp/external_dist
