@@ -546,7 +546,8 @@ async def download_file(
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
             "Content-Length": str(file_size),
-            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            "Content-Type": "application/zip",
+            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, Content-Type",
         }
     )
 
