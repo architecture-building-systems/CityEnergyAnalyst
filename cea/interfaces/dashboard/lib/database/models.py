@@ -154,7 +154,7 @@ class Download(SQLModel, table=True):
     @computed_field
     def file_size_mb(self) -> Optional[float]:
         """Return file size in megabytes for UI display"""
-        if self.file_size:
+        if self.file_size is not None:
             return round(self.file_size / (1024 * 1024), 2)
         return None
 
