@@ -154,19 +154,19 @@ async def cleanup_download(session: AsyncSession, download: Download):
         session: Database session
         download: Download object to clean up
     """
-    # Remove download directory
+    # Remove download directory (run blocking I/O in threadpool)
     download_dir = DOWNLOAD_DIR_BASE / download.id
     if download_dir.exists():
         try:
-            shutil.rmtree(download_dir)
+            await asyncio.to_thread(shutil.rmtree, download_dir)
             logger.info(f"Removed download directory: {download_dir}")
         except Exception as e:
             logger.error(f"Error removing download directory {download_dir}: {e}")
 
-    # Also try to remove individual file if path is set
+    # Also try to remove individual file if path is set (run blocking I/O in threadpool)
     if download.file_path and os.path.exists(download.file_path):
         try:
-            os.remove(download.file_path)
+            await asyncio.to_thread(os.remove, download.file_path)
             logger.info(f"Removed download file: {download.file_path}")
         except Exception as e:
             logger.error(f"Error removing download file {download.file_path}: {e}")
