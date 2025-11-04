@@ -10,9 +10,6 @@ FROM mambaorg/micromamba:bookworm-slim AS cea
 LABEL org.opencontainers.image.source=https://github.com/architecture-building-systems/CityEnergyAnalyst
 
 USER root
-# Tini is optional now - we have SIGCHLD handler in server for zombie reaping
-# Uncomment the next line if you encounter issues with orphaned processes or signals
-# RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
 
 # create directory for projects and set MAMBA_USER as owner
 RUN mkdir -p /project && chown $MAMBA_USER /project
@@ -31,13 +28,23 @@ RUN micromamba config set extract_threads 1 \
 # active environment to install CEA
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
+# install uv for faster dependency resolution
+RUN pip install uv
+
 # install cea-external-tools
 COPY --from=build --chown=$MAMBA_USER:$MAMBA_USER /tmp/external/dist /tmp/external_dist
-RUN pip install /tmp/external_dist/cea_external_tools-*.whl && rm -rf /tmp/external_dist
+RUN uv pip install --system /tmp/external_dist/cea_external_tools-*.whl && rm -rf /tmp/external_dist
 
-# install cea and clean up
+# Copy only pyproject.toml first for better layer caching
+COPY --chown=$MAMBA_USER:$MAMBA_USER pyproject.toml /tmp/cea/pyproject.toml
+WORKDIR /tmp/cea
+
+# Install dependencies only (cached layer - only rebuilds if pyproject.toml changes)
+RUN uv pip install --system -r <(python3 -c "import tomllib; deps=tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; print('\n'.join([d for d in deps if d != 'cea-external-tools>=0.2.1']))")
+
+# Copy full source code and install CEA without dependencies
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
-RUN pip install /tmp/cea && rm -rf /tmp/cea
+RUN uv pip install --system --no-deps /tmp/cea && rm -rf /tmp/cea
 
 # write config files
 RUN cea-config write --general:project /project/reference-case-open \
