@@ -5,11 +5,11 @@ import os
 import asyncio
 from typing import List, Optional
 
-import aiofiles
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlmodel import select
-from starlette.responses import StreamingResponse
+from starlette.responses import FileResponse
+from starlette.background import BackgroundTask
 
 from cea.interfaces.dashboard.dependencies import (
     CEAProjectID,
@@ -32,9 +32,6 @@ from cea.interfaces.dashboard.server.downloads import (
 from cea.interfaces.dashboard.utils import secure_path
 
 router = APIRouter()
-
-# Chunk size for streaming downloads (1MB)
-DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 
 
 class PrepareDownloadRequest(BaseModel):
@@ -373,7 +370,6 @@ async def get_download_url(
 async def download_file(
     download_id: str,
     session: CEASession,
-    background_tasks: BackgroundTasks,
     user_id: Optional[str] = None,  # From CEAUserID dependency (cookies/session)
     token: Optional[str] = None  # From query parameter (pre-signed URL)
 ):
@@ -388,12 +384,11 @@ async def download_file(
     Args:
         download_id: Download ID
         session: Database session
-        background_tasks: FastAPI background tasks for cleanup
         user_id: Current user ID from session (optional if using token)
         token: JWT token from pre-signed URL (optional if using session)
 
     Returns:
-        Streaming response with zip file
+        File response with zip file
 
     Raises:
         HTTPException 401: If no authentication provided
@@ -499,7 +494,6 @@ async def download_file(
 
     # Capture values before commit (avoid lazy loading after commit)
     file_path = download.file_path
-    file_size = download.file_size
     scenarios = download.scenarios
 
     # Mark as DOWNLOADING to prevent concurrent access
@@ -522,33 +516,13 @@ async def download_file(
     else:
         filename = f"scenarios_{len(scenarios)}.zip"
 
-    # Simple file streamer (no cleanup inside)
-    async def file_streamer(fp: str):
-        """Stream file in chunks."""
-        async with aiofiles.open(fp, 'rb') as f:
-            while True:
-                chunk = await f.read(DOWNLOAD_CHUNK_SIZE)
-                if not chunk:
-                    break
-                yield chunk
+    logger.info(f"Sending download {download_id} to user {authenticated_user_id}")
 
-    # Schedule cleanup to run after streaming completes
-    background_tasks.add_task(
-        cleanup_after_download,
-        download_id
-    )
-
-    logger.info(f"Streaming download {download_id} to user {authenticated_user_id}")
-
-    return StreamingResponse(
-        file_streamer(file_path),
+    return FileResponse(
+        path=file_path,
         media_type="application/zip",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Length": str(file_size),
-            "Content-Type": "application/zip",
-            "Access-Control-Expose-Headers": "Content-Disposition, Content-Length, Content-Type",
-        }
+        filename=filename,
+        background=BackgroundTask(cleanup_after_download, download_id)
     )
 
 
