@@ -117,7 +117,7 @@ async def prepare_download(
             detail="Project root not defined",
         )
 
-    project_path = secure_path(os.path.join(project_root, request.project))
+    project_path = secure_path(os.path.join(project_root, request.project), root=project_root)
 
     if not os.path.exists(project_path):
         raise HTTPException(
