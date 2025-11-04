@@ -6,6 +6,7 @@ import os
 import asyncio
 import zipfile
 import shutil
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -63,7 +64,8 @@ class DownloadDownloadedEvent(BaseModel):
 # Constants
 MAX_DOWNLOADS_PER_USER = 5
 DOWNLOAD_RETENTION_HOURS = 24
-DOWNLOAD_DIR_BASE = Path("/tmp/cea_downloads")
+# Use system temp directory for cross-platform compatibility
+DOWNLOAD_DIR_BASE = Path(tempfile.gettempdir()) / "cea_downloads"
 
 
 async def create_download(
@@ -594,7 +596,7 @@ def prepare_download_sync(
         zip_path = get_download_zip_path(download_id)
         zip_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_STORED) as zip_file:
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for i, (item_path, archive_name) in enumerate(files_to_zip):
                 zip_file.write(item_path, arcname=archive_name)
 
