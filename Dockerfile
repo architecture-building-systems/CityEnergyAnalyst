@@ -39,7 +39,9 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER pyproject.toml /tmp/cea/pyproject.toml
 WORKDIR /tmp/cea
 
 # Install dependencies only (cached layer - only rebuilds if pyproject.toml changes)
-RUN uv pip install --system -r <(python3 -c "import tomllib; deps=tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; print('\n'.join([d for d in deps if d != 'cea-external-tools>=0.2.1']))")
+# Filter out cea-external-tools since it's already installed from the pre-built wheel above
+# This ensures we use the exact wheel from the build stage and avoid version resolution conflicts
+RUN uv pip install --system -r <(python3 -c "import tomllib; deps=tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; print('\n'.join([d for d in deps if not d.startswith('cea-external-tools')]))")
 
 # Copy full source code and install CEA without dependencies
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /tmp/cea
