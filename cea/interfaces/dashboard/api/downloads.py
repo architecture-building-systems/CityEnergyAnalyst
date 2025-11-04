@@ -3,7 +3,7 @@ API endpoints for scenario download management.
 """
 import os
 import asyncio
-from typing import List
+from typing import List, Optional
 
 import aiofiles
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks
@@ -19,6 +19,7 @@ from cea.interfaces.dashboard.dependencies import (
 from cea.interfaces.dashboard.lib.database.session import SessionDep as CEASession
 from cea.interfaces.dashboard.lib.database.models import Download, DownloadState, Project, JobInfo, JobState
 from cea.interfaces.dashboard.lib.logs import logger
+from cea.interfaces.dashboard.lib.auth.tokens import create_download_token, verify_download_token
 from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 from cea.interfaces.dashboard.server.downloads import (
     create_download,
@@ -76,6 +77,13 @@ class DownloadResponse(BaseModel):
             created_at=download.created_at.isoformat(),
             downloaded_at=download.downloaded_at.isoformat() if download.downloaded_at else None
         )
+
+
+class DownloadUrlResponse(BaseModel):
+    """Response model for pre-signed download URL."""
+    url: str
+    expires_at: str
+    expires_in_seconds: int
 
 
 @router.post("/prepare", response_model=DownloadResponse)
@@ -276,26 +284,146 @@ async def get_download_status(
     return DownloadResponse.from_download(download)
 
 
-@router.get("/{download_id}")
-async def download_file(
+@router.get("/{download_id}/url", response_model=DownloadUrlResponse)
+async def get_download_url(
     download_id: str,
     user_id: CEAUserID,
     session: CEASession,
-    background_tasks: BackgroundTasks
+    expires_in: int = 300
 ):
     """
-    Download the prepared zip file.
-    File is deleted immediately after download (single-use policy).
+    Generate a pre-signed URL for downloading a file.
+
+    This endpoint generates a short-lived JWT token that allows downloading
+    the file without requiring authentication cookies. The URL can be used
+    directly in an anchor tag for native browser downloads.
 
     Args:
         download_id: Download ID
         user_id: Current user ID
         session: Database session
+        expires_in: Token expiration in seconds (default: 300 = 5 minutes)
+
+    Returns:
+        Pre-signed download URL with expiration info
+
+    Raises:
+        HTTPException 404: If download not found
+        HTTPException 403: If user is not authorized
+        HTTPException 400: If download is not ready
+    """
+    from datetime import datetime, timedelta, timezone
+
+    # Validate expiration time (max 1 hour for security)
+    if expires_in > 3600:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token expiration cannot exceed 1 hour (3600 seconds)"
+        )
+
+    if expires_in < 60:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token expiration must be at least 60 seconds"
+        )
+
+    # Get download
+    result = await session.execute(
+        select(Download).where(Download.id == download_id)
+    )
+    download = result.scalar_one_or_none()
+
+    if not download:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Download not found"
+        )
+
+    # Check authorization
+    if download.created_by != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this download"
+        )
+
+    # Only generate URL for READY downloads
+    if download.state != DownloadState.READY:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Download is not ready (state: {download.state.name})"
+        )
+
+    # Generate token
+    token = create_download_token(download_id, user_id, expires_in)
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+
+    # Build URL
+    download_url = f"/api/downloads/{download_id}?token={token}"
+
+    logger.info(f"Generated download URL for {download_id}, expires in {expires_in}s")
+
+    return DownloadUrlResponse(
+        url=download_url,
+        expires_at=expires_at.isoformat(),
+        expires_in_seconds=expires_in
+    )
+
+
+@router.get("/{download_id}")
+async def download_file(
+    download_id: str,
+    session: CEASession,
+    background_tasks: BackgroundTasks,
+    user_id: Optional[str] = None,  # From CEAUserID dependency (cookies/session)
+    token: Optional[str] = None  # From query parameter (pre-signed URL)
+):
+    """
+    Download the prepared zip file.
+    Supports two authentication methods:
+    1. Session-based (cookies) via user_id dependency
+    2. Token-based (pre-signed URL) via token query parameter
+
+    File is deleted immediately after download (single-use policy).
+
+    Args:
+        download_id: Download ID
+        session: Database session
         background_tasks: FastAPI background tasks for cleanup
+        user_id: Current user ID from session (optional if using token)
+        token: JWT token from pre-signed URL (optional if using session)
 
     Returns:
         Streaming response with zip file
+
+    Raises:
+        HTTPException 401: If no authentication provided
+        HTTPException 403: If token invalid or user not authorized
+        HTTPException 404: If download not found
+        HTTPException 409: If download already in progress
+        HTTPException 410: If download already completed
     """
+    # Determine authentication method
+    authenticated_user_id = None
+
+    if token:
+        # Token-based authentication
+        authenticated_user_id = verify_download_token(token, download_id)
+        if not authenticated_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid or expired download token"
+            )
+        logger.debug(f"Token authentication successful for download {download_id}")
+    elif user_id:
+        # Session-based authentication
+        authenticated_user_id = user_id
+        logger.debug(f"Session authentication successful for download {download_id}")
+    else:
+        # No authentication provided
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please provide either a valid session or token."
+        )
     # Lock row for update to prevent concurrent downloads
     result = await session.execute(
         select(Download)
@@ -311,7 +439,7 @@ async def download_file(
         )
 
     # Check authorization
-    if download.created_by != user_id:
+    if download.created_by != authenticated_user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this download"
@@ -385,7 +513,7 @@ async def download_file(
             download_id=download_id,
             state=DownloadState.DOWNLOADING.name
         ).model_dump(),
-        room=f'user-{user_id}'
+        room=f'user-{authenticated_user_id}'
     )
 
     # Determine filename
@@ -410,7 +538,7 @@ async def download_file(
         download_id
     )
 
-    logger.info(f"Streaming download {download_id} to user {user_id}")
+    logger.info(f"Streaming download {download_id} to user {authenticated_user_id}")
 
     return StreamingResponse(
         file_streamer(file_path),
