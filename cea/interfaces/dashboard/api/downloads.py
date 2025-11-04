@@ -17,7 +17,7 @@ from cea.interfaces.dashboard.dependencies import (
     CEAUserID
 )
 from cea.interfaces.dashboard.lib.database.session import SessionDep as CEASession
-from cea.interfaces.dashboard.lib.database.models import Download, DownloadState, Project
+from cea.interfaces.dashboard.lib.database.models import Download, DownloadState, Project, JobInfo, JobState
 from cea.interfaces.dashboard.lib.logs import logger
 from cea.interfaces.dashboard.lib.socketio import emit_with_retry
 from cea.interfaces.dashboard.server.downloads import (
@@ -88,15 +88,23 @@ async def prepare_download(
     """
     Create and start a download preparation job.
 
+    Validates that no active jobs are running on the project to ensure
+    download consistency. Returns HTTP 409 if jobs are active, preventing
+    race conditions where files could be modified during download preparation.
+
     Args:
         request: Download request parameters
-        project_id: Current project ID
         project_root: Project root directory
         user_id: Current user ID
         session: Database session
 
     Returns:
         Download information
+
+    Raises:
+        HTTPException 409: If active jobs are running on the project
+        HTTPException 404: If project not found or user is not owner
+        HTTPException 400: If invalid parameters provided
     """
     # Validate inputs
     if not request.scenarios:
@@ -136,6 +144,31 @@ async def prepare_download(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found"
+        )
+
+    # Check for active jobs to ensure download consistency
+    # Running jobs could modify output files during download preparation
+    active_jobs_result = await session.execute(
+        select(JobInfo).where(
+            JobInfo.project_id == project.id,
+            JobInfo.state == JobState.STARTED
+        )
+    )
+    active_jobs = active_jobs_result.scalars().all()
+
+    if active_jobs:
+        job_details = [
+            {"id": job.id, "script": job.script}
+            for job in active_jobs
+        ]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "message": "Cannot prepare download while jobs are running",
+                "reason": "Active jobs may modify output files during download preparation, causing inconsistent data",
+                "active_jobs": job_details,
+                "suggestion": "Please wait for jobs to complete or cancel them before downloading"
+            }
         )
 
     # Create download record
