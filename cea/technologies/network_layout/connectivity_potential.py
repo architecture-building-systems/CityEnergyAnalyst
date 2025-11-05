@@ -4,30 +4,50 @@ Network connectivity module for connecting buildings to street networks.
 This module creates a graph of potential thermal network paths by connecting building centroids to the nearest
 points on a street network, preparing the data for Steiner tree optimization.
 
-WORKFLOW:
-=========
+WORKFLOW (Two-Pass Correction):
+================================
 1. Load and validate street network
-2. Apply GraphCorrector to street network (fixes connectivity, intersections, merges close nodes)
-3. Create building terminal connection lines (geometries from building → nearest street point)
-4. Extract all significant points (line endpoints, including terminal connection points)
-5. Discretize network: split lines at all significant points in one efficient operation
-6. Output for Steiner tree optimization
+2. **PASS 1**: Apply graph corrections to street network
+   - Fixes base network topology: self-loops, close nodes, intersecting edges, disconnected components
+   - Ensures clean street network before adding building connections
+3. Create building terminal connection lines (geometries from building → nearest corrected street point)
+4. **PASS 2**: Apply graph corrections to combined network (streets + terminals)
+   - Fixes any disconnections introduced when connecting building terminals
+   - Building centroids marked as protected nodes (stay at exact locations)
+   - Connects remaining isolated components (e.g., buildings connecting to isolated street segments)
+5. Extract all significant points (line endpoints, including terminal connection points)
+6. Discretize network: split lines at all significant points in one efficient operation
+7. Output fully connected network for Steiner tree optimization
+
+RATIONALE FOR TWO-PASS APPROACH:
+=================================
+**Why not single pass?** Adding terminals to an uncorrected street network can create many disconnected
+components (one per isolated street segment that buildings connect to). The GraphCorrector then has to
+connect all these components, often creating suboptimal shortcuts that don't follow the street topology.
+
+**Why two passes?** Correcting the street network first:
+- Reduces number of disconnected components after terminal connection (fewer problems to fix)
+- Ensures component connections follow street topology (better network quality)
+- Less work in second pass (only fix terminal-induced disconnections)
+- More robust to street network data quality issues
 
 ARCHITECTURE:
 =============
-- GraphCorrector (graph_helper.py): Topology fixes on street network only
-  * Merges close nodes within SNAP_TOLERANCE
+- apply_graph_corrections: Unified function for all graph corrections (with optional protected nodes)
+  * Converts GeoDataFrame → NetworkX graph → applies GraphCorrector → converts back to GeoDataFrame
+  * GraphCorrector (graph_helper.py): Topology fixes with optional protected nodes
+  * Merges close nodes within SNAP_TOLERANCE (except protected nodes)
   * Connects intersecting edges from different components
-  * Connects disconnected components (avoids direct building-to-building connections)
+  * Connects disconnected components (avoids direct building-to-building connections when protected nodes given)
 - create_terminals: Creates LineStrings from buildings to nearest street points
 - calculate_significant_points: Extracts unique line endpoints (includes terminal connection points)
 - split_line_by_nearest_points: Discretizes network by snapping and splitting in one operation
 
-This separation ensures:
-- Street network is corrected BEFORE building terminals are added
-- Terminal nodes (building centroids) are NOT moved from their exact locations
-- Building connections are properly integrated via split_line_by_nearest_points
-- Final network is suitable for NetworkX graph conversion and Steiner tree optimization
+This approach ensures:
+- Street network topology is clean before adding buildings
+- Building centroids (protected nodes) are NOT moved from their exact locations
+- Final network is fully connected and suitable for Steiner tree optimization
+- Better network quality by following street topology for component connections
 """
 
 import warnings
@@ -35,8 +55,8 @@ import warnings
 import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely import Point, LineString, MultiPoint
-from shapely.ops import split, linemerge, snap
+from shapely import Point, LineString
+from shapely.ops import split, snap
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
@@ -52,40 +72,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def compute_intersections(lines, crs):
-    import itertools
-    inters = []
-    for line1, line2 in itertools.combinations(lines, 2):
-        if line1.intersects(line2):
-            inter = line1.intersection(line2)
-            if "Point" == inter.geom_type:
-                inters.append(inter)
-            elif "MultiPoint" == inter.geom_type:
-                inters.extend([pt for pt in inter.geoms])
-            elif "MultiLineString" == inter.geom_type:
-                multiLine = [line for line in inter]
-                first_coords = multiLine[0].coords[0]
-                last_coords = multiLine[len(multiLine) - 1].coords[1]
-                inters.append(Point(first_coords[0], first_coords[1]))
-                inters.append(Point(last_coords[0], last_coords[1]))
-            elif "GeometryCollection" == inter.geom_type:
-                for geom in inter:
-                    if "Point" == geom.geom_type:
-                        inters.append(geom)
-                    elif "MultiPoint" == geom.geom_type:
-                        inters.extend([pt for pt in geom.geoms])
-                    elif "MultiLineString" == geom.geom_type:
-                        multiLine = [line for line in geom.geoms]
-                        first_coords = multiLine[0].coords[0]
-                        last_coords = multiLine[len(multiLine) - 1].coords[1]
-                        inters.append(Point(first_coords[0], first_coords[1]))
-                        inters.append(Point(last_coords[0], last_coords[1]))
-
-    geometry = inters
-    df = gdf(geometry=geometry, crs=crs)
-    return df
-
-
 def compute_end_points(lines, crs):
     all_points = []
     for line in lines:
@@ -97,95 +83,6 @@ def compute_end_points(lines, crs):
     df = gdf(geometry=endpts, crs=crs)
 
     return df
-
-
-def nearest_neighbor_within(others, point, max_distance):
-    """Find nearest point among others up to a maximum distance.
-
-    Args:
-        others: a list of Points or a MultiPoint
-        point: a Point
-        max_distance: maximum distance to search for the nearest neighbor
-
-    Returns:
-        A shapely Point if one is within max_distance, None otherwise
-    """
-    search_region = point.buffer(max_distance)
-    interesting_points = search_region.intersection(MultiPoint(others))
-
-    if not interesting_points:
-        closest_point = None
-    elif isinstance(interesting_points, Point):
-        closest_point = interesting_points
-    else:
-        distances = [point.distance(ip) for ip in interesting_points.geoms
-                     if point.distance(ip) > 0]
-        closest_point = interesting_points.geoms[distances.index(min(distances))]
-
-    return closest_point
-
-
-def find_isolated_endpoints(lines):
-    """Find endpoints of lines that don't touch another line.
-
-    Args:
-        lines: a list of LineStrings or a MultiLineString
-
-    Returns:
-        A list of line end Points that don't touch any other line of lines
-    """
-
-    isolated_endpoints = []
-    for i, line in enumerate(lines):
-        other_lines = lines[:i] + lines[i + 1:]
-        for q in [0, -1]:
-            endpoint = Point(line.coords[q])
-            if any(endpoint.touches(another_line)
-                   for another_line in other_lines):
-                continue
-            else:
-                isolated_endpoints.append(endpoint)
-    return isolated_endpoints
-
-
-def bend_towards(line, where, to):
-    """Move the point where along a line to the point at location to.
-
-    Args:
-        line: a LineString
-        where: a point ON the line (not necessarily a vertex)
-        to: a point NOT on the line where the nearest vertex will be moved to
-
-    Returns:
-        the modified (bent) line
-    """
-
-    if not line.contains(where) and not line.touches(where):
-        raise ValueError('line does not contain the point where.')
-
-    coords = line.coords[:]
-    # easy case: where is (within numeric precision) a vertex of line
-    for k, vertex in enumerate(coords):
-        if where.equals_exact(Point(vertex), tolerance=1e-6):
-            # move coordinates of the vertex to destination
-            coords[k] = to.coords[0]
-            return LineString(coords)
-
-    # hard case: where lies between vertices of line, so
-    # find nearest vertex and move that one to point to
-    _, min_k = min((where.distance(Point(vertex)), k)
-                   for k, vertex in enumerate(coords))
-    coords[min_k] = to.coords[0]
-    return LineString(coords)
-
-
-def vertices_from_lines(lines):
-    """Return list of unique vertices from list of LineStrings."""
-
-    vertices = []
-    for line in lines:
-        vertices.extend(list(line.coords))
-    return [Point(p) for p in set(vertices)]
 
 
 def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
@@ -234,36 +131,6 @@ def near_analysis(building_centroids, street_network, crs):
 
     df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=crs)
     return df
-
-
-def snap_points(points, lines, tolerance):
-    length = lines.shape[0]
-    for i in range(length):
-        for point in points.geometry:
-            line = lines.loc[i, "geometry"]
-            point_inline_projection = line.interpolate(line.project(point))
-            distance_to_line = point.distance(point_inline_projection)
-            if (point.x, point.y) not in line.coords:
-                if distance_to_line < tolerance:
-                    buff = point.buffer(0.1)
-                    ### Split the line on the buffer
-                    geometry = split(line, buff)
-                    line_1_points = [tuple(xy) for xy in geometry.geoms[0].coords[:-1]]
-                    line_1_points.append((point.x, point.y))
-                    line_2_points = []
-                    line_2_points.append((point.x, point.y))
-                    line_2_points.extend([x for x in geometry.geoms[-1].coords[1:]])
-                    ### Stitch together the first segment, the interpolated point, and the last segment
-                    new_line = linemerge((LineString(line_1_points), LineString(line_2_points)))
-                    lines.loc[i, "geometry"] = new_line
-
-    G = points["geometry"].apply(lambda geom: geom.wkb)
-    points = points.loc[G.drop_duplicates().index]
-
-    G = lines["geometry"].apply(lambda geom: geom.wkb)
-    lines = lines.loc[G.drop_duplicates().index]
-
-    return points, lines
 
 
 def calculate_significant_points(prototype_network, crs):
@@ -328,29 +195,32 @@ def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> 
     return combined_network
 
 
-def apply_graph_corrections_to_street_network(street_network_gdf: gdf) -> gdf:
+def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = None) -> gdf:
     """
-    Apply graph corrections to the street network to fix connectivity issues.
+    Apply graph corrections to a network to fix connectivity issues.
 
-    This function converts the street network GeoDataFrame to a NetworkX graph,
-    applies corrections using GraphCorrector, then converts back to GeoDataFrame.
-    This should be done BEFORE connecting building terminals to ensure terminal
-    nodes are not affected by corrections.
+    This function converts a GeoDataFrame to a NetworkX graph, applies corrections
+    using GraphCorrector (merging close nodes, connecting intersecting edges,
+    connecting disconnected components), then converts back to GeoDataFrame.
+
+    Protected nodes (e.g., building centroids) will not be merged or moved during
+    corrections, ensuring their exact coordinates are preserved.
 
     Note: Edge weights are not preserved during correction as they will be
     recalculated from geometry later in the pipeline (Shape_Leng field).
 
-    :param street_network_gdf: GeoDataFrame with street network LineStrings
-    :type street_network_gdf: gdf
-    :return: Corrected street network as GeoDataFrame
+    :param network_gdf: GeoDataFrame with network LineStrings (streets or streets + terminals)
+    :type network_gdf: gdf
+    :param protected_nodes: Optional list of node coordinates to protect from merging
+    :type protected_nodes: list, optional
+    :return: Corrected network as GeoDataFrame
     :rtype: gdf
     """
     coord_precision = SHAPEFILE_TOLERANCE
 
-    # FIXME: Consolidate gdf -> nx logic into graph_helper module to avoid duplication 
     # Convert GeoDataFrame to NetworkX graph
     G = nx.Graph()
-    for idx, row in street_network_gdf.iterrows():
+    for _, row in network_gdf.iterrows():
         line = row.geometry
         # Handle both LineString and MultiLineString geometries
         if line.geom_type == 'LineString':
@@ -368,25 +238,27 @@ def apply_graph_corrections_to_street_network(street_network_gdf: gdf) -> gdf:
                 weight = sub_line.length
                 G.add_edge(start, end, weight=weight)
 
-    # Apply graph corrections
-    print("\nApplying graph corrections to street network (before connecting buildings)...")
-    corrector = GraphCorrector(G, coord_precision=coord_precision)
+    # Apply graph corrections with optional protected nodes
+    corrector = GraphCorrector(G, coord_precision=coord_precision, protected_nodes=protected_nodes)
     G_corrected = corrector.apply_corrections()
 
-    # Validate that the corrected graph is connected
+    # Validate connectivity
     if not nx.is_connected(G_corrected):
         num_components = nx.number_connected_components(G_corrected)
-        warnings.warn(f"Street network still has {num_components} disconnected components after corrections. "
-                     f"This may cause issues with Steiner tree optimization.")
+        if protected_nodes:
+            raise ValueError(f"Network still has {num_components} disconnected components after corrections. "
+                           f"This indicates a serious connectivity issue that could not be automatically resolved.")
+        else:
+            warnings.warn(f"Network still has {num_components} disconnected components after corrections. "
+                        f"This may cause issues with Steiner tree optimization.")
 
     # Convert corrected graph back to GeoDataFrame
-    # Weights will be recalculated from geometry later in the pipeline
     corrected_lines = []
-    for u, v, data in G_corrected.edges(data=True):
+    for u, v in G_corrected.edges():
         line = LineString([u, v])
         corrected_lines.append(line)
 
-    corrected_gdf = gdf(geometry=corrected_lines, crs=street_network_gdf.crs)
+    corrected_gdf = gdf(geometry=corrected_lines, crs=network_gdf.crs)
     return corrected_gdf
 
 
@@ -430,14 +302,27 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
         warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
         streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
 
-    # Apply graph corrections to street network BEFORE connecting buildings
-    # This ensures terminal nodes are not affected by corrections
-    # GraphCorrector already handles: intersections, close nodes, disconnected components
-    street_network = apply_graph_corrections_to_street_network(streets_network_df)
+    # PASS 1: Apply graph corrections to street network first (without terminals)
+    # This fixes the base network topology before adding building connections
+    # Benefits: fewer components to connect, better edge placement following streets
+    print("\nApplying graph corrections to street network (before connecting buildings)...")
+    street_network = apply_graph_corrections(streets_network_df)
 
-    # create terminals/branches from street to buildings
+    # Create terminals/branches from corrected street network to buildings
     # This creates individual line segments from each building centroid to nearest street point
     prototype_network = create_terminals(building_centroids_df, street_network, crs)
+
+    # PASS 2: Apply graph corrections to the combined network (streets + terminals)
+    # This fixes any disconnections introduced when connecting building terminals
+    # Building centroids are marked as protected nodes to preserve their exact locations
+    building_centroid_coords = [
+        (round(pt.coords[0][0], SHAPEFILE_TOLERANCE), round(pt.coords[0][1], SHAPEFILE_TOLERANCE))
+        for pt in building_centroids_df.geometry
+    ]
+    print("\nApplying graph corrections to combined network (streets + building terminals)...")
+    prototype_network = apply_graph_corrections(
+        prototype_network, protected_nodes=building_centroid_coords
+    )
 
     # Calculate all significant points (line endpoints) for discretization
     # Terminal connection points are included as endpoints of terminal lines

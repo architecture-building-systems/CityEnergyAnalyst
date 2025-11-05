@@ -1,4 +1,3 @@
-import aiofiles
 import os.path
 import shutil
 import tempfile
@@ -11,7 +10,8 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, status, Form, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
-from starlette.responses import StreamingResponse
+from starlette.responses import FileResponse
+from starlette.background import BackgroundTask
 from typing_extensions import Annotated, Literal
 
 import cea.config
@@ -422,8 +422,40 @@ def run_summary(project: str, scenario_name: str):
         raise e
 
 
+def cleanup_temp_file(file_path: str):
+    """
+    Cleanup temporary file after download completes.
+    Called as background task by FileResponse.
+
+    Args:
+        file_path: Path to temporary file to delete
+    """
+    try:
+        if os.path.exists(file_path):
+            os.unlink(file_path)
+            logger.debug(f"Cleaned up temporary file: {file_path}")
+    except Exception as e:
+        logger.error(f"Error cleaning up temporary file {file_path}: {e}")
+
+
 @router.post("/scenario/download")
 async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot):
+    """
+    Synchronous scenario download endpoint (Legacy).
+
+    NOTE: This endpoint is maintained for backward compatibility but may timeout
+    for large scenarios. For better user experience with progress tracking,
+    use the new async download system:
+    - POST /api/downloads/prepare (initiate download)
+    - GET /api/downloads/{download_id}/status (check progress)
+    - GET /api/downloads/{download_id} (download prepared file)
+
+    The new system provides:
+    - Real-time progress updates
+    - No HTTP timeouts
+    - Background processing
+    - Prepared files available for later download
+    """
     if not form.project or not form.scenarios:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing project or scenarios")
 
@@ -521,32 +553,16 @@ async def download_scenario(form: DownloadScenario, project_root: CEAProjectRoot
                 logger.info(f"Writing {len(files_to_zip)} files to zip...")
                 for item_path, archive_name in files_to_zip:
                     zip_file.write(item_path, arcname=archive_name)
-        
-        # Get the file size for Content-Length header
-        file_size = os.path.getsize(temp_file_path)
 
-        # Define the streaming function
-        async def file_streamer():
-            try:
-                async with aiofiles.open(temp_file_path, 'rb') as f:
-                    while True:
-                        chunk = await f.read(DOWNLOAD_CHUNK_SIZE)
-                        if not chunk:
-                            break
-                        yield chunk
-            finally:
-                # Clean up the temporary file
-                if os.path.exists(temp_file_path):
-                    os.unlink(temp_file_path)
-        
-        return StreamingResponse(
-            file_streamer(),
+        logger.info(f"Sending download for project {project}: {filename}")
+
+        # Use FileResponse with background cleanup
+        # FileResponse handles Content-Length and efficient streaming automatically
+        return FileResponse(
+            path=temp_file_path,
             media_type="application/zip",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"',
-                "Content-Length": str(file_size),  # Add Content-Length header
-                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
-            }
+            filename=filename,
+            background=BackgroundTask(cleanup_temp_file, temp_file_path)
         )
     
     except Exception as e:

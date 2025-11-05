@@ -71,6 +71,16 @@ async def lifespan(_: FastAPI):
     except Exception as e:
         logger.error(f"Failed to create database tables: {e}")
 
+    # Cleanup old and stale downloads on startup
+    try:
+        from cea.interfaces.dashboard.server.downloads import cleanup_old_downloads, cleanup_stale_downloads
+        from cea.interfaces.dashboard.lib.database.session import get_session_context
+        async with get_session_context() as session:
+            await cleanup_old_downloads(session)
+            await cleanup_stale_downloads(session)
+    except Exception as e:
+        logger.error(f"Failed to cleanup downloads: {e}")
+
     yield
 
     logger.info("Shutting down server...")
