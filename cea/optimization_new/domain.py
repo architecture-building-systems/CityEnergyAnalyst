@@ -171,9 +171,17 @@ class Domain(object):
                 print("  ✓ All district buildings have valid nodes in network")
 
             # Map buildings to network components
-            building_to_network = map_buildings_to_networks(
+            building_to_network, snapped_nodes = map_buildings_to_networks(
                 nodes_gdf, edges_gdf, district_buildings
             )
+
+            if snapped_nodes:
+                print(f"  ⚠ Auto-snapped {len(snapped_nodes)} gap(s) in network topology:")
+                for node1_name, node2_name, gap_dist in snapped_nodes[:10]:
+                    print(f"      - {node1_name} <-> {node2_name} (gap: {gap_dist:.3f}m)")
+                if len(snapped_nodes) > 10:
+                    print(f"      ... and {len(snapped_nodes) - 10} more")
+                print("  Note: Small gaps detected and merged (in-memory only)")
 
             # Count networks
             networks = set(building_to_network.values())

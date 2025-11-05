@@ -479,17 +479,36 @@ def validate_network_covers_district_buildings(
 def detect_network_components(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame
-) -> Dict[int, Set[str]]:
+) -> Tuple[Dict[int, Set[str]], List[Tuple[str, str, float]]]:
     """
     Detect disconnected network components using graph analysis.
+
+    Uses PLANT nodes as ground truth for expected number of networks:
+    - components == PLANTs: Correct topology
+    - components > PLANTs: Auto-snap nearby nodes (gaps detected)
+    - components < PLANTs: Error (one network has multiple PLANTs - not supported)
 
     Returns a dictionary mapping component_id (0, 1, 2, ...) to set of building names in that component.
     Component IDs will be used to create network identifiers (N1001, N1002, etc.)
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param edges_gdf: GeoDataFrame of network edges
-    :return: Dict mapping component_id -> set of building names
+    :return: Tuple of (component_buildings dict, list of snapped node pairs)
+             where snapped pairs are (node1_name, node2_name, gap_distance)
     """
+
+    # Track snapped nodes for logging
+    snapped_nodes = []
+
+    # Count expected number of networks based on PLANT nodes
+    plant_nodes = nodes_gdf[nodes_gdf['type'].str.upper() == 'PLANT']
+    expected_networks = len(plant_nodes)
+
+    if expected_networks == 0:
+        raise UserNetworkLoaderError(
+            "No PLANT nodes found in network.\n"
+            "Each thermal network must have exactly one node with 'type' = 'PLANT'."
+        )
 
     # Build a graph from the edges
     G = nx.Graph()
@@ -609,6 +628,107 @@ def detect_network_components(
             component_buildings[component_id] = buildings_in_component
             component_plants[component_id] = plants_in_component
 
+    # Compare component count with expected networks (PLANT count)
+    actual_components = len(component_buildings)
+
+    if actual_components < expected_networks:
+        # One or more networks have multiple PLANTs - not supported
+        raise UserNetworkLoaderError(
+            f"Multiple PLANT nodes in same network component detected:\n\n"
+            f"Expected networks (PLANT nodes): {expected_networks}\n"
+            f"Detected components: {actual_components}\n\n"
+            f"This means at least one network has {expected_networks - actual_components + 1} PLANT nodes.\n"
+            f"CEA does not support multiple PLANT nodes in a single network.\n\n"
+            f"Resolution:\n"
+            f"  1. Keep only ONE PLANT node per network component\n"
+            f"  2. Remove extra PLANT nodes\n"
+            f"  3. Ensure each disconnected network has exactly one PLANT"
+        )
+
+    elif actual_components > expected_networks:
+        # More components than PLANTs - likely gaps in network
+        gap_count = actual_components - expected_networks
+        print(f"\n⚠ Network topology issue detected:")
+        print(f"  Expected networks (PLANT nodes): {expected_networks}")
+        print(f"  Detected components: {actual_components}")
+        print(f"  Extra components: {gap_count}")
+        print(f"\n  Attempting to auto-snap nearby nodes to merge components...")
+
+        # Try to snap nearby nodes
+        snap_threshold = 0.1  # 10cm - larger than topology tolerance for finding gaps
+
+        for node1_idx, node2_idx in [(i, j) for i in G.nodes for j in G.nodes if i < j]:
+            # Check if nodes are in different components
+            comp1 = None
+            comp2 = None
+            for comp_id, comp_nodes in enumerate(components):
+                if node1_idx in comp_nodes:
+                    comp1 = comp_id
+                if node2_idx in comp_nodes:
+                    comp2 = comp_id
+
+            if comp1 == comp2:
+                continue  # Already connected
+
+            # Check if nodes are close
+            node1_geom = nodes_gdf.loc[node1_idx].geometry
+            node2_geom = nodes_gdf.loc[node2_idx].geometry
+            dist = node1_geom.distance(node2_geom)
+
+            if dist < snap_threshold:
+                # Snap by adding edge
+                G.add_edge(node1_idx, node2_idx)
+                node1_name = nodes_gdf.loc[node1_idx].get('building', f'Node_{node1_idx}')
+                node2_name = nodes_gdf.loc[node2_idx].get('building', f'Node_{node2_idx}')
+                print(f"  ✓ Snapped {node1_name} to {node2_name} (gap: {dist:.3f}m)")
+
+                # Record the snap for logging
+                snapped_nodes.append((node1_name, node2_name, dist))
+
+                # Recompute components
+                components = list(nx.connected_components(G))
+                if len(components) == expected_networks:
+                    break  # Success!
+
+        # Recompute component_buildings after snapping
+        component_buildings = {}
+        component_plants = {}
+
+        for component_id, component_nodes in enumerate(components):
+            buildings_in_component = set()
+            plants_in_component = []
+
+            for node_idx in component_nodes:
+                node_data = G.nodes[node_idx]
+                building_name = node_data.get('building', 'NONE')
+                node_type = node_data.get('type', 'NONE')
+
+                if node_type and node_type.upper() == 'PLANT':
+                    plants_in_component.append(node_idx)
+                elif building_name and building_name.upper() not in ['NONE', '']:
+                    buildings_in_component.add(building_name)
+
+            if buildings_in_component:
+                component_buildings[component_id] = buildings_in_component
+                component_plants[component_id] = plants_in_component
+
+        actual_components = len(component_buildings)
+
+        if actual_components > expected_networks:
+            # Still have extra components after snapping
+            raise UserNetworkLoaderError(
+                f"Could not merge all network components:\n\n"
+                f"Expected networks (PLANT nodes): {expected_networks}\n"
+                f"Detected components after auto-snap: {actual_components}\n\n"
+                f"Remaining gaps are larger than {snap_threshold}m threshold.\n\n"
+                f"Resolution:\n"
+                f"  1. Use GIS 'Snap' tools to connect disconnected edges\n"
+                f"  2. Check for gaps larger than {snap_threshold}m in your network\n"
+                f"  3. Ensure edges form a continuous path between all buildings"
+            )
+        else:
+            print(f"  ✓ Successfully merged components to {actual_components} network(s)\n")
+
     # Validate PLANT nodes per network component
     plant_errors = []
     for component_id, buildings in component_buildings.items():
@@ -636,25 +756,27 @@ def detect_network_components(
             "  3. Ensure PLANT nodes are connected to the network via edges"
         )
 
-    return component_buildings
+    return component_buildings, snapped_nodes
 
 
 def map_buildings_to_networks(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame,
     district_building_names: List[str]
-) -> Dict[str, str]:
+) -> Tuple[Dict[str, str], List[Tuple[str, str, float]]]:
     """
     Map each district building to its network identifier (N1001, N1002, etc.).
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param edges_gdf: GeoDataFrame of network edges
     :param district_building_names: List of building names on district networks
-    :return: Dict mapping building_name -> network_id (e.g., 'B1001' -> 'N1001')
+    :return: Tuple of (building_to_network dict, snapped_nodes list)
+             where building_to_network maps building_name -> network_id (e.g., 'B1001' -> 'N1001')
+             and snapped_nodes is list of (node1_name, node2_name, gap_distance)
     """
 
     # Detect network components
-    component_buildings = detect_network_components(nodes_gdf, edges_gdf)
+    component_buildings, snapped_nodes = detect_network_components(nodes_gdf, edges_gdf)
 
     if len(component_buildings) == 0:
         raise UserNetworkLoaderError(
@@ -681,4 +803,4 @@ def map_buildings_to_networks(
             "This should not happen after validation. Please report this issue."
         )
 
-    return building_to_network
+    return building_to_network, snapped_nodes
