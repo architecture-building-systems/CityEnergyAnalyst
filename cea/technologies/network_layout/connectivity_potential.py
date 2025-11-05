@@ -55,7 +55,7 @@ import warnings
 import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
-from shapely import Point, LineString, MultiPoint
+from shapely import Point, LineString
 from shapely.ops import split, snap
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
