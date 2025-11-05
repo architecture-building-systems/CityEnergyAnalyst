@@ -4,7 +4,7 @@ import geopandas as gpd
 
 import cea.config
 import cea.inputlocator
-from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network, calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
@@ -22,9 +22,7 @@ __status__ = "Production"
 def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
     if plant_building_names is None:
         plant_building_names = []
-    weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
-    temp_path_potential_network_shp = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
     temp_path_building_centroids_shp = locator.get_temporary_file("nodes_buildings.shp")
 
     # type_mat_default = network_layout.type_mat
@@ -71,12 +69,11 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
 
     calc_steiner_spanning_tree(crs_projected,
-                               temp_path_potential_network_shp,
+                               geometry_graph.graph,
                                output_network_folder,
                                temp_path_building_centroids_shp,
                                path_output_edges_shp,
                                path_output_nodes_shp,
-                               weight_field,
                                type_mat_default,
                                pipe_diameter_default,
                                type_network,
