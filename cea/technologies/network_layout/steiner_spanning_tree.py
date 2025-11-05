@@ -9,10 +9,10 @@ import networkx as nx
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from networkx.algorithms.approximation.steinertree import steiner_tree
-from shapely import LineString
+from shapely import LineString, Point
 
 from cea.constants import SHAPEFILE_TOLERANCE
-from cea.technologies.network_layout.utility import read_shp, write_shp
+from cea.technologies.network_layout.utility import read_shp
 from cea.datamanagement.graph_helper import GraphCorrector
 
 __author__ = "Jimeno A. Fonseca"
@@ -59,12 +59,11 @@ class SteinerAlgorithm(StrEnum):
 
 
 def calc_steiner_spanning_tree(crs_projected,
-                               temp_path_potential_network_shp,
+                               potential_network_graph: nx.Graph,
                                output_network_folder,
                                temp_path_building_centroids_shp,
                                path_output_edges_shp,
                                path_output_nodes_shp,
-                               weight_field,
                                type_mat_default,
                                pipe_diameter_default,
                                type_network,
@@ -79,12 +78,11 @@ def calc_steiner_spanning_tree(crs_projected,
     present form.
 
     :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    :param str temp_path_potential_network_shp: e.g. "TEMP/potential_network.shp"
+    :param nx.Graph potential_network_graph: e.g. "TEMP/potential_network.shp"
     :param str output_network_folder: "{general:scenario}/inputs/networks/DC"
     :param str temp_path_building_centroids_shp: e.g. "%TEMP%/nodes_buildings.shp"
     :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
     :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
-    :param str weight_field: e.g. "Shape_Leng"
     :param str type_mat_default: e.g. "T1"
     :param float pipe_diameter_default: e.g. 150
     :param str type_network: "DC" or "DH"
@@ -101,7 +99,6 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # TODO: Ensure CRS is used properly throughout the function (currently not applied)
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
-    potential_network_graph = read_shp(temp_path_potential_network_shp)
     building_nodes_graph = read_shp(temp_path_building_centroids_shp)
 
     if potential_network_graph is None or building_nodes_graph is None:
@@ -111,12 +108,7 @@ def calc_steiner_spanning_tree(crs_projected,
     # transform to an undirected potential_network_graph
     # Note: Graph corrections are now applied in calc_connectivity_network BEFORE
     # building terminals are connected, to ensure terminal nodes are not affected
-    iterator_edges = potential_network_graph.edges(data=True)
-    G = nx.Graph()
-    for (x, y, data) in iterator_edges:
-        x = (round(x[0], SHAPEFILE_TOLERANCE), round(x[1], SHAPEFILE_TOLERANCE))
-        y = (round(y[0], SHAPEFILE_TOLERANCE), round(y[1], SHAPEFILE_TOLERANCE))
-        G.add_edge(x, y, weight=data[weight_field])
+    G = potential_network_graph.to_undirected()
 
     # get the building nodes and coordinates
     iterator_nodes = building_nodes_graph.nodes
@@ -140,16 +132,35 @@ def calc_steiner_spanning_tree(crs_projected,
     # calculate steiner spanning tree of undirected potential_network_graph
     try:
         steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
-        mst_non_directed = nx.minimum_spanning_tree(steiner_result)
+        mst_non_directed= nx.minimum_spanning_tree(steiner_result)
     except Exception as e:
         raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
                         'This is an unexpected error. Please report this issue with your streets.shp file.') from e
 
-    # Ensure output folder exists before writing
-    os.makedirs(output_network_folder, exist_ok=True)
-    write_shp(mst_non_directed, output_network_folder)  # need to write to disk and then import again
-    mst_nodes = gdf.from_file(path_output_nodes_shp)
-    mst_edges = gdf.from_file(path_output_edges_shp)
+    mst_nodes = gdf([{
+        "geometry": Point(coords),
+    } for coords in mst_non_directed.nodes()], crs=crs_projected)
+    
+    # since edges of graph is guranteed to be connected to nodes, we alter the edge geometries to snap to the nodes
+    def replace_start_endpoints(line: LineString, start_coords, end_coords):
+        coords = list(line.coords)
+        print(coords)
+        print(start_coords, end_coords)
+        # Replace start point
+        if coords[0] != start_coords:
+            coords[0] = start_coords
+        # Replace end point
+        if coords[-1] != end_coords:
+            coords[-1] = end_coords
+        return LineString(coords)
+
+    mst_edges = gdf([{
+        "geometry": data['geometry'],
+        "weight": data['weight']
+    } for u, v, data in mst_non_directed.edges(data=True)], crs=crs_projected)
+
+    # Recalculate weights after snapping
+    mst_edges['weight'] = mst_edges.geometry.length
 
     # POPULATE FIELDS IN NODES
     pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))
@@ -163,9 +174,9 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_nodes['coordinates'] = mst_nodes['geometry'].apply(
         lambda x: (round(x.coords[0][0], SHAPEFILE_TOLERANCE), round(x.coords[0][1], SHAPEFILE_TOLERANCE)))
     mst_nodes['building'] = mst_nodes['coordinates'].apply(lambda x: populate_fields(x))
-    mst_nodes['name'] = mst_nodes['FID'].apply(lambda x: "NODE" + str(x))
+    mst_nodes['name'] = mst_nodes.index.map(lambda x: "NODE" + str(x))
     mst_nodes['type'] = mst_nodes['building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
-
+    
     # do some checks to see that the building names was not compromised
     if len(terminal_nodes_names) != (len(mst_nodes['building'].unique()) - 1):
         raise ValueError('There was an error while populating the nodes fields. '
@@ -200,7 +211,8 @@ def calc_steiner_spanning_tree(crs_projected,
         mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                          type_mat_default, pipe_diameter_default)
 
-    # GET COORDINATE AND SAVE FINAL VERSION TO DISK
+    # Ensure output folder exists before writing
+    os.makedirs(output_network_folder, exist_ok=True)
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
     mst_edges['length_m'] = mst_edges['weight']
@@ -415,13 +427,13 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
               new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.y)
     line = LineString((point1, point2))
     edge_weight = line.length
+    new_edge = gdf(
+        pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
+                       "name": "PIPE" + str(mst_edges.name.count()), "weight": edge_weight}]),
+        crs=mst_edges.crs
+    )
     mst_edges = gdf(
-        pd.concat(
-            [mst_edges,
-            pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                          "name": "PIPE" + str(mst_edges.name.count()), "weight": edge_weight}])],
-            ignore_index=True
-        ),
+        pd.concat( [mst_edges, new_edge], ignore_index=True),
         crs=mst_edges.crs
     )
     return new_mst_nodes, mst_edges
