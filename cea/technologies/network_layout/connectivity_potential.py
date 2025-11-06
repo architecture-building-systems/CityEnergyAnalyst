@@ -127,7 +127,10 @@ def split_streets_at_intersections(network_gdf: gdf) -> gdf:
     # Vectorized filtering: remove extremely short segments (numerical artifacts)
     # This uses vectorized length calculation instead of list comprehension
     min_length = 10 ** (-SHAPEFILE_TOLERANCE)
-    result_gdf = result_gdf[result_gdf.geometry.length > min_length].reset_index(drop=True)
+    valid_segments = result_gdf.geometry.length > min_length
+    if sum(~valid_segments) > 0:
+        print(f"Removed {sum(~valid_segments)} extremely short segments (< {min_length}m) after splitting at intersections")
+    result_gdf = result_gdf[valid_segments].reset_index(drop=True)
 
     return result_gdf
 
