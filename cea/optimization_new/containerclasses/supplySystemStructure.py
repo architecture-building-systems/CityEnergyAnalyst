@@ -133,14 +133,14 @@ class SupplySystemStructure(object):
                 raise ValueError("For district heating networks, the network temperature needs to fall between the"
                                  f"average outdoor temperature {SupplySystemStructure._climatic_reference_temperature}°C"
                                  f" and {SupplySystemStructure._MAX_NETWORK_TEMPERATURE}°C. Please adjust your "
-                                 f"configurations accordingly.")
+                                 "configurations accordingly.")
         elif SupplySystemStructure._system_type == "cooling":
             if not (SupplySystemStructure._MIN_NETWORK_TEMPERATURE <= new_network_temperature
                     <= SupplySystemStructure._climatic_reference_temperature):
                 raise ValueError("For district cooling networks, the network temperature needs to fall between the"
                                  f"{SupplySystemStructure._MIN_NETWORK_TEMPERATURE}°C and the average outdoor temperature "
                                  f"{SupplySystemStructure._climatic_reference_temperature}°C. Please adjust your configurations "
-                                 f"accordingly.")
+                                 "accordingly.")
 
         return new_network_temperature
 
@@ -372,7 +372,7 @@ class SupplySystemStructure(object):
         remaining_max_primary_energy_flows_in = self._draw_from_potentials(max_primary_energy_flows_in)
         max_secondary_components_demand = self._draw_from_infinite_sources(remaining_max_primary_energy_flows_in)
 
-        # NEW: Try to satisfy remaining primary input demands via passive conversion from sources
+        # Try to satisfy remaining primary input demands via passive conversion from sources
         # Only attempt if no secondary components are specified by user
         if max_secondary_components_demand and not (self.user_component_selection and
                                                     self.user_component_selection.get('secondary')):
@@ -584,7 +584,7 @@ class SupplySystemStructure(object):
         remaining_secondary_inputs = self._draw_from_infinite_sources(required_external_secondary_inputs)
         remaining_tertiary_inputs = self._draw_from_infinite_sources(required_external_tertiary_inputs)
 
-        # NEW: Try passive conversion for remaining secondary component inputs from sources
+        # Try passive conversion for remaining secondary component inputs from sources
         if remaining_secondary_inputs and viable_secondary_and_passive_components:
             satisfied_secondary_flows, secondary_source_passive = self._try_passive_conversion_from_sources(
                 remaining_secondary_inputs,
@@ -609,7 +609,7 @@ class SupplySystemStructure(object):
                 for ec_code in satisfied_secondary_flows.keys():
                     del remaining_secondary_inputs[ec_code]
 
-        # NEW: Try passive conversion for remaining tertiary component inputs from sources
+        # Try passive conversion for remaining tertiary component inputs from sources
         if remaining_tertiary_inputs and viable_tertiary_and_passive_cmpts:
             satisfied_tertiary_flows, tertiary_source_passive = self._try_passive_conversion_from_sources(
                 remaining_tertiary_inputs,
@@ -639,12 +639,12 @@ class SupplySystemStructure(object):
                                 **self._release_to_grids_or_env(max_tertiary_energy_flows_out)}
 
         if unmet_inputs:
-            raise ValueError(f'The following energy carriers could potentially not be supplied to the supply system, '
-                             f'the selected system structure is therefore infeasible: '
+            raise ValueError('The following energy carriers could potentially not be supplied to the supply system, '
+                             'the selected system structure is therefore infeasible: '
                              f'{list(unmet_inputs.keys())}')
         elif unreleasable_outputs:
-            raise ValueError(f'The following energy carriers could potentially not be released to a grid or the '
-                             f'environment, the selected system structure is therefore infeasible: '
+            raise ValueError('The following energy carriers could potentially not be released to a grid or the '
+                             'environment, the selected system structure is therefore infeasible: '
                              f'{list(unreleasable_outputs.keys())}')
 
         # save supply system structure in object variables
@@ -754,7 +754,7 @@ class SupplySystemStructure(object):
                 raise Exception(f'The available {component_placement} components cannot provide the energy carrier '
                                 f'{main_energy_carrier}, nor any of the viable alternative energy carriers in '
                                 f'{self.target}. No adequate supply system can therefore be built. \n'
-                                f'Please change your component selection!')
+                                'Please change your component selection!')
 
         return {'active': viable_active_components_list, 'passive': necessary_passive_components}
 
@@ -771,7 +771,7 @@ class SupplySystemStructure(object):
         elif component_placement == 'tertiary':
             main_side = 'input'  # i.e. component is used for absorbing a given energy carrier
         else:
-            raise ValueError(f'Active components can not viably be placed in the following location: '
+            raise ValueError('Active components can not viably be placed in the following location: '
                              f'{component_placement}')
         # find component models (codes) that can generate/absorb the requested energy carrier
         all_active_component_classes = [component_class for component_class in
@@ -848,7 +848,7 @@ class SupplySystemStructure(object):
             convertible_ecs = EnergyCarrier.get_all_other_electrical_ecs(required_energy_carrier_code)
         else:
             raise ValueError(f'There are no ways to convert {required_ec_type} energy carriers using passive '
-                             f'components.')
+                             'components.')
         return convertible_ecs
 
     def _try_passive_conversion_from_sources(self, required_energy_flows, components_by_ec,
@@ -970,11 +970,11 @@ class SupplySystemStructure(object):
            - Requires: target_energy_carrier_code, demand_origin
            - Flow: Component → Passive → Demand
 
-        2. Source → component input (new):
+        2. Source → component input:
            - Requires: target_energy_carrier_code, source_energy_carriers
            - Flow: Source → Passive → Component
 
-        3. Component output → sink (new):
+        3. Component output → sink:
            - Requires: sink_energy_carriers
            - Flow: Component → Passive → Sink
 
