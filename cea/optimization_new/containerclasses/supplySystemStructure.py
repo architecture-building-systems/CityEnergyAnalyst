@@ -900,7 +900,16 @@ class SupplySystemStructure(object):
             if source_passive_components:
                 # Successfully found passive conversion path
                 satisfied_flows[ec_code] = flow_magnitude
-                passive_components_added.update(source_passive_components)
+                # Merge passive components, preserving existing entries and avoiding duplicates
+                for comp_code, comp_list in source_passive_components.items():
+                    if comp_code in passive_components_added:
+                        # Merge lists and remove duplicates while preserving order
+                        existing = passive_components_added[comp_code]
+                        for comp in comp_list:
+                            if comp not in existing:
+                                existing.append(comp)
+                    else:
+                        passive_components_added[comp_code] = comp_list
 
         return satisfied_flows, passive_components_added
 
@@ -952,7 +961,16 @@ class SupplySystemStructure(object):
             if sink_passive_components:
                 # Successfully found passive conversion path to sink
                 disposed_flows[ec_code] = flow_magnitude
-                passive_components_added.update(sink_passive_components)
+                # Merge passive components, preserving existing entries and avoiding duplicates
+                for comp_code, comp_list in sink_passive_components.items():
+                    if comp_code in passive_components_added:
+                        # Merge lists and remove duplicates while preserving order
+                        existing = passive_components_added[comp_code]
+                        for comp in comp_list:
+                            if comp not in existing:
+                                existing.append(comp)
+                    else:
+                        passive_components_added[comp_code] = comp_list
 
         return disposed_flows, passive_components_added
 
@@ -1187,9 +1205,6 @@ class SupplySystemStructure(object):
         Returns:
             dict: Mapping of component codes to lists of viable passive components
         """
-        # Extract the output energy carriers from components
-        component_output_ecs = list(set([component.main_energy_carrier.code for component in components]))
-
         viable_passive_components = {}
 
         for component in components:
