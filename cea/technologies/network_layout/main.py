@@ -148,7 +148,7 @@ def main(config: cea.config.Configuration):
             output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type)
 
             # Ensure output directory exists
-            output_folder = locator.get_network_layout_folder(network_type)
+            output_folder = os.path.dirname(output_edges_path)
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
 
