@@ -4,32 +4,38 @@ Network connectivity module for connecting buildings to street networks.
 This module creates a graph of potential thermal network paths by connecting building centroids to the nearest
 points on a street network, preparing the data for Steiner tree optimization.
 
-WORKFLOW (Two-Pass Correction):
-================================
+WORKFLOW (Single-Pass with Preprocessing):
+==========================================
 1. Load and validate street network
-2. **PASS 1**: Apply graph corrections to street network
-   - Fixes base network topology: self-loops, close nodes, intersecting edges, disconnected components
-   - Ensures clean street network before adding building connections
-3. Create building terminal connection lines (geometries from building → nearest corrected street point)
-4. **PASS 2**: Apply graph corrections to combined network (streets + terminals)
-   - Fixes any disconnections introduced when connecting building terminals
-   - Building centroids marked as protected nodes (stay at exact locations)
-   - Connects remaining isolated components (e.g., buildings connecting to isolated street segments)
-5. Extract all significant points (line endpoints, including terminal connection points)
-6. Discretize network: split lines at all significant points in one efficient operation
-7. Output fully connected network for Steiner tree optimization
+2. **CLEAN**: Preprocess raw street network
+   - Split streets at intersection points (automatic detection via unary_union)
+   - Snap near-miss endpoints to nearby lines (fix manual digitization errors)
+   - Re-split to create junctions at newly connected points
+3. **CORRECT**: Apply graph corrections to cleaned network
+   - Fixes remaining topology issues: self-loops, close nodes, disconnected components
+   - Uses GraphCorrector with coordinate precision matching
+4. Create building terminal connection lines (geometries from building → nearest street point)
+5. **PASS 2 ELIMINATED**: No second correction pass needed!
+   - Junction additions maintain connectivity (split edges but don't disconnect)
+   - Terminal additions maintain connectivity (add connected edges)
+   - Geometry restoration snaps endpoints to rounded coordinates (preserves connectivity)
+6. Extract all significant points (line endpoints, including terminal connection points)
+7. Discretize network: split lines at all significant points in one efficient operation
+8. Output fully connected network for Steiner tree optimization
 
-RATIONALE FOR TWO-PASS APPROACH:
-=================================
-**Why not single pass?** Adding terminals to an uncorrected street network can create many disconnected
-components (one per isolated street segment that buildings connect to). The GraphCorrector then has to
-connect all these components, often creating suboptimal shortcuts that don't follow the street topology.
+RATIONALE FOR PREPROCESSING + SINGLE PASS:
+===========================================
+**Why preprocessing?** Cleaning the raw street network first:
+- Automatically detects and fixes intersection topology issues
+- Handles common data quality problems (near-miss connections, gaps)
+- Reduces burden on GraphCorrector (fewer edge cases to handle)
+- Results in higher quality network topology
 
-**Why two passes?** Correcting the street network first:
-- Reduces number of disconnected components after terminal connection (fewer problems to fix)
-- Ensures component connections follow street topology (better network quality)
-- Less work in second pass (only fix terminal-induced disconnections)
-- More robust to street network data quality issues
+**Why single correction pass is sufficient?**
+- Preprocessing creates proper junctions at natural intersections
+- Endpoint snapping in geometry restoration prevents round-trip disconnections
+- Building terminal additions explicitly maintain connectivity
+- Second pass was defensive programming for issues now prevented upstream
 
 ARCHITECTURE:
 =============
@@ -41,7 +47,9 @@ ARCHITECTURE:
   * Connects disconnected components (avoids direct building-to-building connections when protected nodes given)
 - create_terminals: Creates LineStrings from buildings to nearest street points
 - calculate_significant_points: Extracts unique line endpoints (includes terminal connection points)
-- split_line_by_nearest_points: Discretizes network by snapping and splitting in one operation
+- split_streets_at_intersections: Automatically splits streets at intersection points using unary_union
+- snap_endpoints_to_nearby_lines: Fixes near-miss connections by snapping close endpoints
+- split_network_at_points: Discretizes network by snapping to specified points and splitting
 
 This approach ensures:
 - Street network topology is clean before adding buildings
@@ -87,15 +95,230 @@ def compute_end_points(lines, crs):
     return df
 
 
-def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
+def split_streets_at_intersections(network_gdf: gdf) -> gdf:
     """
-    Discretize network by splitting lines at all significant points (junctions, endpoints, intersections).
-    This converts continuous LineStrings into graph-ready segments where each topologically
-    significant point becomes an explicit node in the network structure.
+    Split street LineStrings at intersection points using unary_union.
+
+    This function uses Shapely's unary_union to automatically detect where lines
+    intersect and split them at those points, creating proper junctions. This is
+    cleaner than manually finding intersection points.
+
+    The unary_union operation:
+    1. Merges all overlapping/touching lines
+    2. Splits lines at intersection points
+    3. Returns a MultiLineString with properly segmented lines
+
+    :param network_gdf: GeoDataFrame with street LineStrings
+    :type network_gdf: gdf
+    :return: GeoDataFrame with streets split at all intersections
+    :rtype: gdf
+
+    Example:
+        Before: Two crossing streets as continuous lines
+        After: Four line segments meeting at intersection point
+    """
+    # Union all geometries - this automatically splits at intersections
+    merged = network_gdf.geometry.union_all()
+
+    # Extract individual line segments into a GeoDataFrame using explode()
+    # explode() is vectorized and handles MultiLineString -> individual LineStrings efficiently
+    result_gdf = gdf(geometry=[merged], crs=network_gdf.crs).explode(index_parts=False).reset_index(drop=True)
+
+    # Vectorized filtering: remove extremely short segments (numerical artifacts)
+    # This uses vectorized length calculation instead of list comprehension
+    min_length = 10 ** (-SHAPEFILE_TOLERANCE)
+    result_gdf = result_gdf[result_gdf.geometry.length > min_length].reset_index(drop=True)
+
+    return result_gdf
+
+
+def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> gdf:
+    """
+    Snap line endpoints to nearby lines within tolerance to fix near-miss connections.
+
+    This function addresses a common issue in manually digitized street networks where
+    lines should connect but have small gaps due to drawing inaccuracies. It finds
+    dangling endpoints (not already connected to other lines) that are close to other
+    lines and snaps them to create proper connections.
+
+    Optimization: Only considers endpoints that are "dangling" (terminal points not
+    already connected), dramatically reducing the search space.
+
+    Use Cases:
+    ----------
+    - Fixing manually digitized street networks with near-miss connections
+    - Cleaning data where GPS inaccuracies created small gaps
+    - Connecting street segments that should meet but have tiny offsets
+
+    Process:
+    --------
+    1. Identify all dangling endpoints (appears exactly once in network)
+    2. For each dangling endpoint, find nearby lines within tolerance
+    3. Snap endpoint to nearest point on closest line
+    4. Rebuild geometries with snapped endpoints
+
+    :param network_gdf: GeoDataFrame with street LineStrings
+    :type network_gdf: gdf
+    :param snap_tolerance: Maximum distance to snap endpoints (meters)
+    :type snap_tolerance: float
+    :return: GeoDataFrame with snapped connections
+    :rtype: gdf
+
+    Example:
+        >>> # Fix near-miss connections within 0.5 meters
+        >>> cleaned_streets = snap_endpoints_to_nearby_lines(streets_gdf, 0.5)
+    """
+    from shapely.strtree import STRtree
+    from collections import Counter
+
+    # Step 1: Find dangling endpoints (terminal points not connected)
+    # Count how many times each endpoint appears across all lines
+    endpoint_counts = Counter()
+    for geom in network_gdf.geometry:
+        coords = list(geom.coords)
+        # Round to avoid floating-point precision issues
+        start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
+        end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+        endpoint_counts[start] += 1
+        endpoint_counts[end] += 1
+
+    # Dangling endpoints appear exactly once (not shared with other lines)
+    dangling_endpoints = {pt for pt, count in endpoint_counts.items() if count == 1}
+
+    if not dangling_endpoints:
+        # No dangling endpoints, nothing to snap
+        return network_gdf
+
+    # Step 2: Create spatial index for fast nearest-neighbor queries
+    line_index = STRtree(network_gdf.geometry)
+
+    # Step 3: Process only lines that have dangling endpoints
+    modified_geometries = []
+
+    for idx, row in network_gdf.iterrows():
+        line = row.geometry
+        coords = list(line.coords)
+
+        # Round endpoints for lookup
+        start_rounded = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
+        end_rounded = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+
+        # Check if endpoints are dangling
+        start_is_dangling = start_rounded in dangling_endpoints
+        end_is_dangling = end_rounded in dangling_endpoints
+
+        # Skip if no dangling endpoints
+        if not start_is_dangling and not end_is_dangling:
+            modified_geometries.append(line)
+            continue
+
+        new_start = coords[0]
+        new_end = coords[-1]
+
+        # Snap start point if it's dangling
+        if start_is_dangling:
+            start_point = Point(coords[0])
+            nearby_indices = line_index.query(start_point.buffer(snap_tolerance))
+
+            for nearby_idx in nearby_indices:
+                nearby_line = network_gdf.iloc[nearby_idx].geometry
+                # Don't snap to itself
+                if nearby_line == line:
+                    continue
+
+                # Check if point is close enough
+                distance = nearby_line.distance(start_point)
+                if 0 < distance < snap_tolerance:
+                    # Snap to nearest point on line
+                    snapped = nearby_line.interpolate(nearby_line.project(start_point))
+                    new_start = (snapped.x, snapped.y)
+                    break
+
+        # Snap end point if it's dangling
+        if end_is_dangling:
+            end_point = Point(coords[-1])
+            nearby_indices = line_index.query(end_point.buffer(snap_tolerance))
+
+            for nearby_idx in nearby_indices:
+                nearby_line = network_gdf.iloc[nearby_idx].geometry
+                # Don't snap to itself
+                if nearby_line == line:
+                    continue
+
+                # Check if point is close enough
+                distance = nearby_line.distance(end_point)
+                if 0 < distance < snap_tolerance:
+                    # Snap to nearest point on line
+                    snapped = nearby_line.interpolate(nearby_line.project(end_point))
+                    new_end = (snapped.x, snapped.y)
+                    break
+
+        # Rebuild geometry with potentially snapped endpoints
+        new_coords = [new_start] + coords[1:-1] + [new_end]
+        modified_geometries.append(LineString(new_coords))
+
+    return gdf(geometry=modified_geometries, crs=network_gdf.crs)
+
+
+def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
+    """
+    Comprehensive street network cleaning workflow.
+
+    This function applies a sequence of cleaning operations to fix common issues
+    in street network data:
+    1. Split streets at intersection points (automatic detection)
+    2. Snap near-miss endpoints to nearby lines (fix small gaps)
+    3. Split again at new intersections created by snapping
+
+    This is the recommended preprocessing step before applying graph corrections.
+
+    :param network_gdf: GeoDataFrame with raw street LineStrings
+    :type network_gdf: gdf
+    :param snap_tolerance: Maximum distance to snap endpoints (meters)
+    :type snap_tolerance: float
+    :return: Cleaned GeoDataFrame with proper topology
+    :rtype: gdf
+
+    Example:
+        >>> # Clean raw street network before processing
+        >>> cleaned = clean_street_network(raw_streets_gdf, SNAP_TOLERANCE)
+        >>> # Now apply graph corrections
+        >>> corrected = apply_graph_corrections(cleaned)
+    """
+    print("  1. Splitting streets at intersections...")
+    network_gdf = split_streets_at_intersections(network_gdf)
+
+    print("  2. Snapping near-miss endpoints...")
+    network_gdf = snap_endpoints_to_nearby_lines(network_gdf, snap_tolerance)
+
+    print("  3. Re-splitting after snapping (creates new intersections)...")
+    network_gdf = split_streets_at_intersections(network_gdf)
+
+    return network_gdf
+
+def split_network_at_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
+    """
+    Split network lines at specified point locations with snapping tolerance.
+
+    Unlike split_streets_at_intersections() which automatically finds intersections,
+    this function splits lines at explicitly provided points (e.g., building connection
+    points, manually specified junction locations). Points are snapped to the nearest
+    position on lines within the tolerance before splitting.
+
+    Use Cases:
+    ----------
+    - Adding building terminal connection points to a street network
+    - Splitting at manually specified junction locations
+    - Adding custom split points that aren't natural line intersections
+
+    Comparison:
+    -----------
+    - split_streets_at_intersections(): Automatic intersection detection via unary_union
+    - split_network_at_points(): Manual point specification with snapping tolerance
 
     :param gdf_line: GeoDataFrame with network line segments (streets + building connections)
     :type gdf_line: gdf
-    :param gdf_points: GeoDataFrame with all significant points (endpoints, intersections)
+    :param gdf_points: GeoDataFrame with point geometries where splits should occur
     :type gdf_points: gdf
     :param snap_tolerance: Distance tolerance for snapping points to lines (meters)
     :type snap_tolerance: float
@@ -103,6 +326,12 @@ def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance:
     :type crs: str
     :return: Discretized network as individual segments
     :rtype: gdf
+
+    Example:
+        >>> # Split streets at building connection points
+        >>> building_points = gdf(geometry=[Point(100, 200), Point(150, 250)])
+        >>> split_network = split_network_at_points(streets_gdf, building_points,
+        ...                                          SNAP_TOLERANCE, crs)
 
     Reference: https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
     """
@@ -114,13 +343,15 @@ def split_line_by_nearest_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance:
     # This ensures all significant points become explicit vertices in the network
     split_line = split(line, snap(snap_points, line, snap_tolerance))
 
-    # Filter out numerical artifacts (extremely short segments from floating-point precision)
+    # Vectorized extraction: use explode() to handle MultiLineString -> individual LineStrings
+    result_gdf = gdf(geometry=[split_line], crs=crs).explode(index_parts=False).reset_index(drop=True)
+
+    # Vectorized filtering: remove numerical artifacts (extremely short segments)
     # Use threshold based on coordinate precision: 10^-6 meters (1 micrometer) with SHAPEFILE_TOLERANCE=6
     min_length = 10 ** (-SHAPEFILE_TOLERANCE)
-    segments = [feature for feature in split_line.geoms if feature.length > min_length]
+    result_gdf = result_gdf[result_gdf.geometry.length > min_length].reset_index(drop=True)
 
-    gdf_segments = gdf(geometry=segments, crs=crs)
-    return gdf_segments
+    return result_gdf
 
 
 def near_analysis(building_centroids, street_network, crs):
@@ -141,7 +372,7 @@ def calculate_significant_points(prototype_network, crs):
 
     After GraphCorrector has processed street intersections and terminals have been added,
     only line endpoints are needed. Terminal connection points are automatically included
-    as endpoints of terminal lines. The split_line_by_nearest_points function will handle
+    as endpoints of terminal lines. The split_network_at_points function will handle
     snapping and splitting lines at these points.
 
     :param prototype_network: Combined network GeoDataFrame (streets + terminals)
@@ -250,7 +481,11 @@ def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = Non
 def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf) -> tuple[gdf, gdf, str]:
     """
     Preprocessing for connectivity network functions.
-    Converts to projected CRS and validates geometries.
+
+    This function:
+    1. Converts to projected CRS for accurate distance calculations
+    2. Validates geometries
+    3. Cleans street network (splits at intersections, snaps near-miss endpoints)
 
     :return: Tuple of (streets_gdf, buildings_gdf, crs)
     """
@@ -267,6 +502,10 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     elif len(streets_network_df) != valid_geometries.sum():
         warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
         streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
+
+    # Clean street network: split at intersections and snap near-miss endpoints
+    print("Cleaning street network...")
+    streets_network_df = clean_street_network(streets_network_df, SNAP_TOLERANCE)
 
     return streets_network_df, building_centroids_df, crs
 
@@ -330,7 +569,7 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # Final discretization: split the combined network at all significant points
     # This snaps points to lines and splits lines at those points in one operation
     # Creates proper graph structure where each junction/endpoint is explicit
-    potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points, SNAP_TOLERANCE, crs)
+    potential_network_df = split_network_at_points(prototype_network, gdf_points, SNAP_TOLERANCE, crs)
 
     return potential_network_df
 
@@ -424,6 +663,6 @@ def calc_connectivity_network_with_geometry(
     # - Geometry restoration now snaps endpoints to rounded coordinates, preserving connectivity
     combined_gdf = gp_graph.to_geodataframe(crs)
     # gdf_points = calculate_significant_points(combined_gdf, crs)
-    # potential_network_df = split_line_by_nearest_points(combined_gdf, gdf_points, SNAP_TOLERANCE, crs)
+    # potential_network_df = split_network_at_points(combined_gdf, gdf_points, SNAP_TOLERANCE, crs)
 
     return combined_gdf, gp_graph
