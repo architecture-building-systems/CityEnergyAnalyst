@@ -654,7 +654,17 @@ def detect_network_components(
         print(f"  Extra components: {gap_count}")
         print(f"\n  Attempting to auto-snap nearby nodes to merge components...")
 
-        # Try to snap nearby nodes
+        # Identify which components have PLANTs and which don't
+        components_with_plants = set()
+        components_without_plants = set()
+
+        for comp_id, plants in component_plants.items():
+            if len(plants) > 0:
+                components_with_plants.add(comp_id)
+            else:
+                components_without_plants.add(comp_id)
+
+        # Try to snap nearby nodes, but only merge components smartly
         snap_threshold = 0.1  # 10cm - larger than topology tolerance for finding gaps
 
         for node1_idx, node2_idx in [(i, j) for i in G.nodes for j in G.nodes if i < j]:
@@ -669,6 +679,14 @@ def detect_network_components(
 
             if comp1 == comp2:
                 continue  # Already connected
+
+            # Check PLANT distribution before snapping
+            comp1_has_plant = comp1 in components_with_plants
+            comp2_has_plant = comp2 in components_with_plants
+
+            # Skip if both components have PLANTs (would create invalid topology)
+            if comp1_has_plant and comp2_has_plant:
+                continue
 
             # Check if nodes are close
             node1_geom = nodes_gdf.loc[node1_idx].geometry
@@ -685,8 +703,27 @@ def detect_network_components(
                 # Record the snap for logging
                 snapped_nodes.append((node1_name, node2_name, dist))
 
-                # Recompute components
+                # Recompute components and PLANT tracking
                 components = list(nx.connected_components(G))
+
+                # Rebuild PLANT tracking with new component IDs
+                components_with_plants = set()
+                components_without_plants = set()
+                temp_component_plants = {}
+
+                for comp_id, comp_nodes in enumerate(components):
+                    plants = []
+                    for node_idx in comp_nodes:
+                        node_type = G.nodes[node_idx].get('type', 'NONE')
+                        if node_type and node_type.upper() == 'PLANT':
+                            plants.append(node_idx)
+
+                    temp_component_plants[comp_id] = plants
+                    if len(plants) > 0:
+                        components_with_plants.add(comp_id)
+                    else:
+                        components_without_plants.add(comp_id)
+
                 if len(components) == expected_networks:
                     break  # Success!
 
