@@ -807,7 +807,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
 
     def test_build_with_passive_conversion_from_grid(self):
         """
-        Test NEW functionality: Primary needs input not directly available but convertible.
+        Test functionality: Primary needs input not directly available but convertible.
 
         Scenario: Primary component needs high temp heat, only grid electricity available.
         This tests if system would add passive conversion (though electrical→thermal
@@ -816,7 +816,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         Better scenario: Primary needs 400V, grid provides 11kV.
         Should add transformer (passive) to step down.
         """
-        # This test focuses on the NEW passive conversion from sources functionality
+        # This test focuses on the passive conversion from sources functionality
 
         # Create demand for cooling
         demand_ec_code = EnergyCarrier.temp_to_thermal_ec('water', 10)
@@ -850,7 +850,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
             print(f"Passive components: {len(system.passive_component_selection)}")
 
-            # NEW: Check if passive components were added for input conversion
+            # Check if passive components were added for input conversion
             if system.passive_component_selection:
                 print("Passive components found (checking for source conversions):")
                 for active_comp, passives in system.passive_component_selection.items():
@@ -858,14 +858,14 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
                         print(f"  {passive.code}: {passive.placement}")
                         # Check if placed_before = 'source'
                         if passive.placement.get('before') == 'source':
-                            print(f"    -> This is a source-to-component conversion! (NEW)")
+                            print("    -> This is a source-to-component conversion!")
 
             self.assertIsNotNone(capacity_indicators)
 
         except Exception as e:
             print(f"Build result: {e}")
             # May fail with "unmet inputs" in old implementation
-            # Should succeed with new passive conversion implementation
+            # Should succeed with passive conversion implementation
 
     def test_build_auto_system_selection(self):
         """
