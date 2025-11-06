@@ -88,3 +88,30 @@ def get_lat_lon_projected_shapefile(data):
     lat = representative_point.y
 
     return lat, lon
+
+
+def validate_crs_uses_meters(gdf: geopandas.GeoDataFrame, operation: str = "distance calculations") -> None:
+    """
+    Validate that a GeoDataFrame uses a projected CRS with meter units.
+    
+    :param gdf: GeoDataFrame to validate
+    :param operation: Description of operation requiring meters (for error message)
+    :raises ValueError: If CRS is geographic or doesn't use meters
+    """
+    if gdf.crs is None:
+        raise ValueError(f'The GeoDataFrame has no CRS defined. A projected CRS with meter units is required for {operation}.')
+
+    if gdf.crs.is_geographic:
+        raise ValueError(
+            f'The CRS ({gdf.crs.name}) is geographic (lat/lon). '
+            f'A projected CRS with meter units is required for {operation}.'
+        )
+    
+    # Check that units are meters (GeoPandas exposes pyproj's axis_info)
+    axis_unit = gdf.crs.axis_info[0].unit_name.lower()
+    if axis_unit not in {'metre', 'meter', 'm'}:
+        raise ValueError(
+            f'The CRS must use meters as its unit for distance calculations. '
+            f'Current CRS: {gdf.crs.name}, Unit: {axis_unit}. '
+            f'Please reproject to a meter-based CRS (e.g., UTM zone for your region).'
+        )
