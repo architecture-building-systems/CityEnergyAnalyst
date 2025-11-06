@@ -10,16 +10,16 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from scipy.spatial import cKDTree
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, SHAPEFILE_TOLERANCE
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.thermal_network.thermal_network import extract_network_from_shapefile
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
-from cea.utilities.standardize_coordinates import validate_crs_uses_meters
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -94,78 +94,6 @@ def calculate_ground_temperature(locator):
     network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
     return T_ground_K
-
-
-def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_shapefile_df: gpd.GeoDataFrame,
-                                   coord_precision: float = SHAPEFILE_TOLERANCE) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Extracts network data into DataFrames for pipes and nodes in the network
-
-    :param edge_shapefile_df: GeoDataFrame containing all data imported from the edge shapefile
-    :param node_shapefile_df: GeoDataFrame containing all data imported from the node shapefile
-    :param coord_precision: precision for coordinate matching between edges and nodes (in number of decimal places)
-    :type edge_shapefile_df: GeoDataFrame
-    :type node_shapefile_df: GeoDataFrame
-    :type coord_precision: float
-    :return node_df: DataFrame containing all nodes and their corresponding coordinates
-    :return edge_df: list of edges and their corresponding lengths and start and end nodes
-    :rtype node_df: DataFrame
-    :rtype edge_df: DataFrame
-
-    """
-    if edge_shapefile_df.crs != node_shapefile_df.crs:
-        raise ValueError('The coordinate reference systems (CRS) of the edge and node shapefiles do not match. '
-                         'Please reproject them to the same CRS before proceeding.')
-
-    validate_crs_uses_meters(edge_shapefile_df)
-
-    # sort node_df by index number
-    node_shapefile_df = node_shapefile_df.set_index("name").sort_index(
-        key=lambda x: x.str.extract(r"NODE(\d+)", expand=False).astype(int)
-    )
-    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-
-    # sort edge_df by index number
-    edge_shapefile_df = edge_shapefile_df.set_index("name").sort_index(
-        key=lambda x: x.str.extract(r"PIPE(\d+)", expand=False).astype(int)
-    )
-    edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-
-    # Build KDTree from node coordinates for efficient nearest-neighbor queries
-    node_coords = node_shapefile_df['coordinates'].to_numpy()
-    node_names = node_shapefile_df.index.tolist()
-    kdtree = cKDTree(node_coords)
-
-    tolerance_m = 10 ** -coord_precision  # convert precision to tolerance in meters
-
-    # assign edge properties
-    edge_shapefile_df['start node'] = ''
-    edge_shapefile_df['end node'] = ''
-    # Calculate pipe length
-    edge_shapefile_df['length_m'] = edge_shapefile_df['geometry'].length
-
-    for pipe_name, row in edge_shapefile_df.iterrows():
-        # Get edge endpoints (handles curved LineStrings with multiple vertices)
-        edge_coords = list(row['geometry'].coords)
-        start_coord = np.array(edge_coords[0])
-        end_coord = np.array(edge_coords[-1])  # Use last coord for curved edges
-
-        # Find nearest nodes using KDTree (more robust than coordinate rounding)
-        start_dist, start_idx = kdtree.query(start_coord)
-        end_dist, end_idx = kdtree.query(end_coord)
-
-        # Check if matches are within tolerance
-        if start_dist <= tolerance_m:
-            edge_shapefile_df.loc[pipe_name, 'start node'] = node_names[start_idx]
-        else:
-            print(f"Warning: Start node of {pipe_name} has no match within {tolerance_m}m (nearest: {start_dist:.6f}m)")
-
-        if end_dist <= tolerance_m:
-            edge_shapefile_df.loc[pipe_name, 'end node'] = node_names[end_idx]
-        else:
-            print(f"Warning: End node of {pipe_name} has no match within {tolerance_m}m (nearest: {end_dist:.6f}m)")
-
-    return node_shapefile_df, edge_shapefile_df
 
 
 def get_thermal_network_from_shapefile(locator, network_type, network_name):
