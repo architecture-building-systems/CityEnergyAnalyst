@@ -241,11 +241,13 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
             continue
 
         # Snap dangling endpoints
-        new_start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else coords[0]
-        new_end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else coords[-1]
+        if start_is_dangling:
+            start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else coords[0]
+        if end_is_dangling:
+            end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else coords[-1]
 
         # Rebuild geometry with potentially snapped endpoints
-        new_coords = [new_start] + coords[1:-1] + [new_end]
+        new_coords = [start] + coords[1:-1] + [end]
         modified_geometries.append(LineString(new_coords))
 
     return gdf(geometry=modified_geometries, crs=network_gdf.crs)
