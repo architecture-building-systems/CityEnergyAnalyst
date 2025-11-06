@@ -171,7 +171,6 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         >>> # Fix near-miss connections within 0.5 meters
         >>> cleaned_streets = snap_endpoints_to_nearby_lines(streets_gdf, 0.5)
     """
-    from shapely.strtree import STRtree
     from collections import Counter
 
     # Step 1: Find dangling endpoints (terminal points not connected)
@@ -191,25 +190,26 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         # No dangling endpoints, nothing to snap
         return network_gdf
 
-    # Step 2: Create spatial index for fast nearest-neighbor queries
-    line_index = STRtree(network_gdf.geometry)
+    # Step 2: Use GeoDataFrame's built-in spatial index for fast nearest-neighbor queries
+    sindex = network_gdf.sindex
 
-    def _snap_point_to_nearby_lines(point_coords: tuple, line_to_exclude) -> tuple:
+    def _snap_point_to_nearby_lines(point_coords: tuple, idx_to_exclude) -> tuple:
         """
         Inner helper: Snap a single point to the nearest nearby line within tolerance.
 
         :param point_coords: Tuple of (x, y) coordinates to snap
-        :param line_to_exclude: The line geometry to exclude (don't snap to itself)
+        :param idx_to_exclude: The index of the line geometry to exclude (don't snap to itself)
         :return: Snapped coordinates (x, y) or original if no nearby line found
         """
         point = Point(point_coords)
-        nearby_indices = line_index.query(point.buffer(snap_tolerance))
+        # Query spatial index with buffered point to find candidates
+        nearby_indices = list(sindex.query(point.buffer(snap_tolerance), predicate='intersects'))
 
         for nearby_idx in nearby_indices:
-            nearby_line = network_gdf.iloc[nearby_idx].geometry
-            # Don't snap to itself
-            if nearby_line == line_to_exclude:
+            if nearby_idx == idx_to_exclude:
                 continue
+
+            nearby_line = network_gdf.iloc[nearby_idx].geometry
 
             # Check if point is close enough
             distance = nearby_line.distance(point)
@@ -241,8 +241,8 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
             continue
 
         # Snap dangling endpoints
-        new_start = _snap_point_to_nearby_lines(coords[0], line) if start_is_dangling else coords[0]
-        new_end = _snap_point_to_nearby_lines(coords[-1], line) if end_is_dangling else coords[-1]
+        new_start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else coords[0]
+        new_end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else coords[-1]
 
         # Rebuild geometry with potentially snapped endpoints
         new_coords = [new_start] + coords[1:-1] + [new_end]
