@@ -171,17 +171,25 @@ class Domain(object):
                 print("  ✓ All district buildings have valid nodes in network")
 
             # Map buildings to network components
-            building_to_network, snapped_nodes = map_buildings_to_networks(
+            building_to_network, snapped_nodes, edge_snaps = map_buildings_to_networks(
                 nodes_gdf, edges_gdf, district_buildings
             )
 
+            if edge_snaps:
+                print(f"  ⚠ Auto-snapped {len(edge_snaps)} edge endpoint(s) to nearby nodes:")
+                for edge_name, endpoint, node_name, gap_dist in edge_snaps[:10]:
+                    print(f"      - {edge_name} ({endpoint}) → {node_name} (gap: {gap_dist:.4f}m)")
+                if len(edge_snaps) > 10:
+                    print(f"      ... and {len(edge_snaps) - 10} more")
+                print("  Note: Edge endpoints within 10cm tolerance snapped to nodes (in-memory only)")
+
             if snapped_nodes:
-                print(f"  ⚠ Auto-snapped {len(snapped_nodes)} gap(s) in network topology:")
+                print(f"  ⚠ Auto-merged {len(snapped_nodes)} disconnected component(s):")
                 for node1_name, node2_name, gap_dist in snapped_nodes[:10]:
                     print(f"      - {node1_name} <-> {node2_name} (gap: {gap_dist:.3f}m)")
                 if len(snapped_nodes) > 10:
                     print(f"      ... and {len(snapped_nodes) - 10} more")
-                print("  Note: Small gaps detected and merged (in-memory only)")
+                print("  Note: Small gaps between components detected and merged (in-memory only)")
 
             # Count networks
             networks = set(building_to_network.values())

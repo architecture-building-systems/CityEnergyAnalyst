@@ -401,7 +401,7 @@ def validate_network_covers_district_buildings(
             "Resolution options:\n"
             "  1. Remove these building nodes from your network layout\n"
             "  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
-            "  3. Leave network layout parameters blank to let CEA generate the network automatically"
+            "  3. Leave network layout parameters (i.e. edges-shp-path, nodes-shp-path, network-geojson-path) blank to let CEA generate the network automatically"
         )
 
     # Check 3: Are building nodes within their respective building footprints?
@@ -479,7 +479,7 @@ def validate_network_covers_district_buildings(
 def detect_network_components(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame
-) -> Tuple[Dict[int, Set[str]], List[Tuple[str, str, float]]]:
+) -> Tuple[Dict[int, Set[str]], List[Tuple[str, str, float]], List[Tuple[str, str, str, float]]]:
     """
     Detect disconnected network components using graph analysis.
 
@@ -493,12 +493,14 @@ def detect_network_components(
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param edges_gdf: GeoDataFrame of network edges
-    :return: Tuple of (component_buildings dict, list of snapped node pairs)
-             where snapped pairs are (node1_name, node2_name, gap_distance)
+    :return: Tuple of (component_buildings dict, node-to-node snaps list, edge-to-node snaps list)
+             where node-to-node snaps are (node1_name, node2_name, gap_distance)
+             and edge-to-node snaps are (edge_name, endpoint, node_name, gap_distance)
     """
 
     # Track snapped nodes for logging
-    snapped_nodes = []
+    snapped_nodes = []  # Component-level snaps (node-to-node)
+    edge_snaps = []  # Edge-to-node snaps
 
     # Count expected number of networks based on PLANT nodes
     plant_nodes = nodes_gdf[nodes_gdf['type'].str.upper() == 'PLANT']
@@ -542,12 +544,22 @@ def detect_network_components(
 
             if start_node is None and dist_to_start < NETWORK_TOPOLOGY_TOLERANCE:
                 start_node = node_idx
+                # Track edge-to-node snap if gap > 0
+                if dist_to_start > 0:
+                    edge_name = edge_row.get('name', f'Edge_{idx}')
+                    node_name = node_row.get('building', node_row.get('name', f'Node_{node_idx}'))
+                    edge_snaps.append((edge_name, 'start', node_name, dist_to_start))
             if dist_to_start < min_dist_to_start:
                 min_dist_to_start = dist_to_start
                 nearest_start_building = node_row.get('building', 'NONE')
 
             if end_node is None and dist_to_end < NETWORK_TOPOLOGY_TOLERANCE:
                 end_node = node_idx
+                # Track edge-to-node snap if gap > 0
+                if dist_to_end > 0:
+                    edge_name = edge_row.get('name', f'Edge_{idx}')
+                    node_name = node_row.get('building', node_row.get('name', f'Node_{node_idx}'))
+                    edge_snaps.append((edge_name, 'end', node_name, dist_to_end))
             if dist_to_end < min_dist_to_end:
                 min_dist_to_end = dist_to_end
                 nearest_end_building = node_row.get('building', 'NONE')
@@ -793,27 +805,28 @@ def detect_network_components(
             "  3. Ensure PLANT nodes are connected to the network via edges"
         )
 
-    return component_buildings, snapped_nodes
+    return component_buildings, snapped_nodes, edge_snaps
 
 
 def map_buildings_to_networks(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame,
     district_building_names: List[str]
-) -> Tuple[Dict[str, str], List[Tuple[str, str, float]]]:
+) -> Tuple[Dict[str, str], List[Tuple[str, str, float]], List[Tuple[str, str, str, float]]]:
     """
     Map each district building to its network identifier (N1001, N1002, etc.).
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param edges_gdf: GeoDataFrame of network edges
     :param district_building_names: List of building names on district networks
-    :return: Tuple of (building_to_network dict, snapped_nodes list)
+    :return: Tuple of (building_to_network dict, node-to-node snaps, edge-to-node snaps)
              where building_to_network maps building_name -> network_id (e.g., 'B1001' -> 'N1001')
-             and snapped_nodes is list of (node1_name, node2_name, gap_distance)
+             node-to-node snaps are (node1_name, node2_name, gap_distance)
+             and edge-to-node snaps are (edge_name, endpoint, node_name, gap_distance)
     """
 
     # Detect network components
-    component_buildings, snapped_nodes = detect_network_components(nodes_gdf, edges_gdf)
+    component_buildings, snapped_nodes, edge_snaps = detect_network_components(nodes_gdf, edges_gdf)
 
     if len(component_buildings) == 0:
         raise UserNetworkLoaderError(
@@ -840,4 +853,4 @@ def map_buildings_to_networks(
             "This should not happen after validation. Please report this issue."
         )
 
-    return building_to_network, snapped_nodes
+    return building_to_network, snapped_nodes, edge_snaps
