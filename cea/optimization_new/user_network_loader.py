@@ -706,9 +706,9 @@ def detect_network_components(
         # More components than PLANTs - likely gaps in network
         gap_count = actual_components - expected_networks
         print(f"\n⚠ Network topology issue detected:")
-        print(f"  Expected networks (PLANT nodes): {expected_networks}")
-        print(f"  Detected components: {actual_components}")
-        print(f"  Extra components: {gap_count}")
+        print(f"  - Expected networks (based on PLANT nodes): {expected_networks}")
+        print(f"  - Detected disconnected components: {actual_components}")
+        print(f"  - Extra components that need merging: {gap_count}")
         print(f"\n  Attempting to auto-snap nearby nodes to merge components...")
 
         # Identify which components have PLANTs and which don't
@@ -810,11 +810,13 @@ def detect_network_components(
 
         if actual_components > expected_networks:
             # Still have extra components after snapping
+            gap_count = actual_components - expected_networks
             raise UserNetworkLoaderError(
-                f"Could not merge all network components:\n\n"
-                f"Expected networks (PLANT nodes): {expected_networks}\n"
-                f"Detected components after auto-snap: {actual_components}\n\n"
-                f"Remaining gaps are larger than {snap_threshold}m threshold.\n\n"
+                f"Could not merge all network components.\n\n"
+                f"  - Expected networks (based on PLANT nodes): {expected_networks}\n"
+                f"  - Detected components after auto-snap: {actual_components}\n"
+                f"  - Extra components that could not be merged: {gap_count}\n\n"
+                f"  - Remaining gaps are larger than {snap_threshold}m threshold.\n\n"
                 f"Resolution:\n"
                 f"  1. Use GIS 'Snap' tools to connect disconnected edges\n"
                 f"  2. Check for gaps larger than {snap_threshold}m in your network\n"
