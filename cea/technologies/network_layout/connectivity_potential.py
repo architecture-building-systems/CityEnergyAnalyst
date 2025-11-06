@@ -61,6 +61,7 @@ from shapely.ops import split, snap
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
+from cea.technologies.network_layout.geometry_graph import GeometryPreservingGraph
 from cea.technologies.network_layout.graph_utils import gdf_to_nx
 
 __author__ = "Jimeno A. Fonseca"
@@ -334,3 +335,90 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     return potential_network_df
 
 
+def calc_connectivity_network_with_geometry(
+    streets_network_df: gdf,
+    building_centroids_df: gdf,
+) -> tuple[gdf, GeometryPreservingGraph]:
+    """
+    Create connectivity network preserving curved street geometries.
+
+    This function creates a graph-based network while preserving the original
+    curved geometries of streets. It only adds junctions where buildings connect
+    or where streets intersect, maintaining aesthetic quality of the network.
+
+    Pipeline:
+    ---------
+    Streets → Graph Corrections → Build Geometry Graph → Add Building Junctions →
+    Discretize → Output
+
+    :param streets_network_df: GeoDataFrame with street network geometries
+    :type streets_network_df: gdf
+    :param building_centroids_df: GeoDataFrame with building centroids (must have 'name' column)
+    :type building_centroids_df: gdf
+    :return: Tuple of (potential_network_gdf, geometry_graph)
+    :rtype: tuple[gdf, GeometryPreservingGraph]
+    """
+    # Prepare inputs (CRS conversion and validation)
+    streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
+        streets_network_df, building_centroids_df
+    )
+
+    # PASS 1: Apply graph corrections to street network first (without terminals)
+    # Build geometry map before corrections to preserve curved streets
+    print("\nApplying graph corrections to street network (before connecting buildings)...")
+    geometry_map = GeometryPreservingGraph.build_geometry_map(streets_network_df, SHAPEFILE_TOLERANCE)
+    street_network = apply_graph_corrections(streets_network_df)
+    street_network = GeometryPreservingGraph.restore_geometries(street_network, geometry_map, SHAPEFILE_TOLERANCE)
+
+    # Build geometry-preserving graph from corrected streets
+    print("\nBuilding geometry-preserving graph...")
+    gp_graph = GeometryPreservingGraph(street_network, coord_precision=SHAPEFILE_TOLERANCE)
+
+    # Add building terminals by creating junctions on nearest edges
+    print("\nAdding building terminal junctions...")
+    building_nodes = []
+    for idx, building in building_centroids_df.iterrows():
+        building_point = building.geometry
+
+        # Find nearest edge in the geometry graph
+        nearest_edge, nearest_point_on_edge, _ = gp_graph.find_nearest_edge(building_point)
+
+        if nearest_edge is None or nearest_point_on_edge is None:
+            warnings.warn(f"Could not find nearest edge for building {building.get('name', idx)}")
+            continue
+
+        # Add junction on the nearest edge
+        junction_node = gp_graph.add_junction(nearest_edge, nearest_point_on_edge.coords[0])
+
+        # Add edge from junction to building
+        building_node = gp_graph._round_coords(building_point.coords[0])
+        terminal_line = LineString([junction_node, building_node])
+        gp_graph.G.add_edge(
+            junction_node,
+            building_node,
+            weight=terminal_line.length,
+            geometry=terminal_line,
+            original_id=None,
+            edge_id=gp_graph._edge_id_counter
+        )
+        gp_graph._edge_id_counter += 1
+        building_nodes.append(building_node)
+
+    # PASS 2: Apply graph corrections to combined network (with protected building nodes)
+    # Build geometry map before corrections to preserve curved streets
+    print("\nApplying graph corrections to combined network (streets + building terminals)...")
+    combined_gdf = gp_graph.to_geodataframe(crs)
+    geometry_map = GeometryPreservingGraph.build_geometry_map(combined_gdf, SHAPEFILE_TOLERANCE)
+    building_centroid_coords = _get_protected_building_coords(building_centroids_df)
+    corrected_combined = apply_graph_corrections(
+        combined_gdf,
+        protected_nodes=building_centroid_coords
+    )
+    corrected_combined = GeometryPreservingGraph.restore_geometries(corrected_combined, geometry_map, SHAPEFILE_TOLERANCE)
+
+    # Rebuild geometry graph with corrected combined network
+    gp_graph = GeometryPreservingGraph(corrected_combined, coord_precision=SHAPEFILE_TOLERANCE)
+    gdf_points = calculate_significant_points(corrected_combined, crs)
+    potential_network_df = split_line_by_nearest_points(corrected_combined, gdf_points, SNAP_TOLERANCE, crs)
+
+    return potential_network_df, gp_graph
