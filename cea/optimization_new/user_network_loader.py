@@ -128,7 +128,36 @@ def _load_from_shapefiles(edges_path: str, nodes_path: str) -> Tuple[gpd.GeoData
             "Please ensure files are valid ESRI Shapefiles."
         )
 
+    # Clean empty/null geometries
+    edges_before = len(edges_gdf)
+    edges_gdf = edges_gdf[edges_gdf.geometry.notna()].copy()
+    edges_removed = edges_before - len(edges_gdf)
+
+    nodes_before = len(nodes_gdf)
+    nodes_gdf = nodes_gdf[nodes_gdf.geometry.notna()].copy()
+    nodes_removed = nodes_before - len(nodes_gdf)
+
+    if edges_removed > 0 or nodes_removed > 0:
+        print(f"  ⚠ Removed empty/null geometries from shapefiles:")
+        if edges_removed > 0:
+            print(f"      - {edges_removed} edge feature(s) with no geometry")
+        if nodes_removed > 0:
+            print(f"      - {nodes_removed} node feature(s) with no geometry")
+        print("  Note: Empty features in attribute table are automatically cleaned (in-memory only)")
+
     # Validate geometries
+    if len(edges_gdf) == 0:
+        raise UserNetworkLoaderError(
+            f"No valid edge features in {edges_path}:\n"
+            "  All features have null/empty geometries."
+        )
+
+    if len(nodes_gdf) == 0:
+        raise UserNetworkLoaderError(
+            f"No valid node features in {nodes_path}:\n"
+            "  All features have null/empty geometries."
+        )
+
     if not all(edges_gdf.geometry.geom_type == 'LineString'):
         raise UserNetworkLoaderError(
             f"Invalid edge geometry in {edges_path}:\n"
@@ -165,6 +194,22 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
             "Error reading GeoJSON file:\n"
             f"  {str(e)}\n\n"
             "Please ensure file is valid GeoJSON."
+        )
+
+    # Clean empty/null geometries
+    features_before = len(gdf)
+    gdf = gdf[gdf.geometry.notna()].copy()
+    features_removed = features_before - len(gdf)
+
+    if features_removed > 0:
+        print(f"  ⚠ Removed {features_removed} feature(s) with empty/null geometries from GeoJSON")
+        print("  Note: Empty features are automatically cleaned (in-memory only)")
+
+    if len(gdf) == 0:
+        raise UserNetworkLoaderError(
+            f"No valid features in GeoJSON:\n"
+            f"  Path: {geojson_path}\n\n"
+            "  All features have null/empty geometries."
         )
 
     # Separate nodes and edges by geometry type
