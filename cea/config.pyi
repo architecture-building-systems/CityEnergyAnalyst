@@ -1,7 +1,6 @@
-# Type stub file for cea.config
-# Auto-generated from default.config - do not edit manually
-
-from __future__ import annotations
+Generated type stub at /Users/zshi/Documents/GitHub/CityEnergyAnalyst/cea/config.pyi
+Found 58 sections
+ure__ import annotations
 
 from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal
 import configparser
@@ -1362,6 +1361,7 @@ class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
     network_type: str
     connected_buildings: list[str]
+    overwrite_supply_settings: bool
     plant_buildings: List[str]
     pipe_diameter: int
     consider_only_buildings_with_demand: bool
@@ -1374,6 +1374,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["plant_buildings"]) -> List[str]: ...
     @overload

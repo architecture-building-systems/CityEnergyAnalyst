@@ -1,6 +1,7 @@
 import os
 
 import geopandas as gpd
+import pandas as pd
 
 import cea.config
 import cea.inputlocator
@@ -17,6 +18,53 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def get_buildings_from_supply_csv(locator, network_type):
+    """
+    Read supply.csv and return list of buildings configured for district heating/cooling.
+
+    :param locator: InputLocator instance
+    :param network_type: "DH" or "DC"
+    :return: List of building names
+    """
+    supply_df = pd.read_csv(locator.get_building_supply())
+
+    # Read assemblies database to map codes to scale (DISTRICT vs BUILDING)
+    if network_type == "DH":
+        assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_heating())
+        system_type_col = 'supply_type_hs'
+    else:  # DC
+        assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+        system_type_col = 'supply_type_cs'
+
+    # Create mapping: code -> scale (DISTRICT/BUILDING)
+    scale_mapping = assemblies_df.set_index('code')['scale'].to_dict()
+
+    # Filter buildings with DISTRICT scale
+    supply_df['scale'] = supply_df[system_type_col].map(scale_mapping)
+    district_buildings = supply_df[supply_df['scale'] == 'DISTRICT']['name'].tolist()
+
+    return district_buildings
+
+
+def get_buildings_with_demand(locator, network_type):
+    """
+    Read total_demand.csv and return list of buildings with heating/cooling demand.
+
+    :param locator: InputLocator instance
+    :param network_type: "DH" or "DC"
+    :return: List of building names
+    """
+    total_demand = pd.read_csv(locator.get_total_demand())
+
+    if network_type == "DH":
+        field = "QH_sys_MWhyr"
+    else:  # DC
+        field = "QC_sys_MWhyr"
+
+    buildings_with_demand = total_demand[total_demand[field] > 0.0]['name'].tolist()
+    return buildings_with_demand
 
 
 def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
@@ -129,8 +177,11 @@ def main(config: cea.config.Configuration):
         print("USER-DEFINED NETWORK LAYOUT")
         print("=" * 80 + "\n")
 
-        # Import and use validation from user_network_loader
-        from cea.optimization_new.user_network_loader import load_user_defined_network
+        # Import validation functions from user_network_loader
+        from cea.optimization_new.user_network_loader import (
+            load_user_defined_network,
+            validate_network_covers_district_buildings
+        )
 
         # Load and validate user-defined network
         try:
@@ -142,8 +193,64 @@ def main(config: cea.config.Configuration):
             print(f"  - Nodes: {len(nodes_gdf)}")
             print(f"  - Edges: {len(edges_gdf)}")
 
-            # Save to standard location
             network_type = config.network_layout.network_type
+            overwrite_supply = config.network_layout.overwrite_supply_settings
+            connected_buildings_config = config.network_layout.connected_buildings
+
+            # Determine which buildings should be in the network
+            if overwrite_supply:
+                # Use connected-buildings parameter (what-if scenarios)
+                if connected_buildings_config:
+                    buildings_to_validate = connected_buildings_config
+                    print(f"  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
+                    print(f"  - Connected buildings: {len(buildings_to_validate)}")
+                else:
+                    # Blank connected-buildings: use buildings with demand
+                    buildings_to_validate = get_buildings_with_demand(locator, network_type)
+                    print(f"  - Mode: Overwrite supply.csv (connected-buildings blank)")
+                    print(f"  - Buildings with demand: {len(buildings_to_validate)}")
+            else:
+                # Use supply.csv to determine district buildings
+                buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
+                print(f"  - Mode: Use supply.csv settings")
+                print(f"  - District buildings from supply.csv: {len(buildings_to_validate)}")
+
+            # Check for buildings without demand and warn (Option 2: warn but include)
+            buildings_with_demand = get_buildings_with_demand(locator, network_type)
+            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+
+            if buildings_without_demand:
+                print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
+                for building_name in buildings_without_demand[:10]:
+                    print(f"      - {building_name}")
+                if len(buildings_without_demand) > 10:
+                    print(f"      ... and {len(buildings_without_demand) - 10} more")
+                print(f"  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+
+            # Validate network covers all specified buildings
+            if buildings_to_validate:
+                nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
+                    nodes_gdf,
+                    gpd.read_file(locator.get_zone_geometry()),
+                    buildings_to_validate,
+                    network_type,
+                    edges_gdf
+                )
+
+                if auto_created_buildings:
+                    print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
+                    for building_name in auto_created_buildings[:10]:
+                        print(f"      - {building_name}")
+                    if len(auto_created_buildings) > 10:
+                        print(f"      ... and {len(auto_created_buildings) - 10} more")
+                    print("  Note: Nodes created at edge endpoints closest to building centroids (in-memory only)")
+                else:
+                    print("  ✓ All specified buildings have valid nodes in network")
+            else:
+                print("  ⚠ Warning: No buildings to validate (empty building list)")
+                print("  Note: Network will be saved but may not work in thermal-network or optimization")
+
+            # Save to standard location
             output_edges_path = locator.get_network_layout_edges_shapefile(network_type)
             output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type)
 
