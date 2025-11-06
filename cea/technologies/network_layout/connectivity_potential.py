@@ -61,6 +61,7 @@ from shapely.ops import split, snap
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
+from cea.technologies.network_layout.graph_utils import gdf_to_nx
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -218,25 +219,8 @@ def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = Non
     """
     coord_precision = SHAPEFILE_TOLERANCE
 
-    # Convert GeoDataFrame to NetworkX graph
-    G = nx.Graph()
-    for _, row in network_gdf.iterrows():
-        line = row.geometry
-        # Handle both LineString and MultiLineString geometries
-        if line.geom_type == 'LineString':
-            coords = list(line.coords)
-            start = (round(coords[0][0], coord_precision), round(coords[0][1], coord_precision))
-            end = (round(coords[-1][0], coord_precision), round(coords[-1][1], coord_precision))
-            weight = line.length
-            G.add_edge(start, end, weight=weight)
-        elif line.geom_type == 'MultiLineString':
-            # Handle MultiLineString by adding each component line
-            for sub_line in line.geoms:
-                coords = list(sub_line.coords)
-                start = (round(coords[0][0], coord_precision), round(coords[0][1], coord_precision))
-                end = (round(coords[-1][0], coord_precision), round(coords[-1][1], coord_precision))
-                weight = sub_line.length
-                G.add_edge(start, end, weight=weight)
+    # Convert GeoDataFrame to NetworkX graph using consolidated helper
+    G = gdf_to_nx(network_gdf, coord_precision=coord_precision)
 
     # Apply graph corrections with optional protected nodes
     corrector = GraphCorrector(G, coord_precision=coord_precision, protected_nodes=protected_nodes)
@@ -252,7 +236,7 @@ def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = Non
             warnings.warn(f"Network still has {num_components} disconnected components after corrections. "
                         f"This may cause issues with Steiner tree optimization.")
 
-    # Convert corrected graph back to GeoDataFrame
+    # Convert corrected graph back to GeoDataFrame (straight lines)
     corrected_lines = []
     for u, v in G_corrected.edges():
         line = LineString([u, v])
