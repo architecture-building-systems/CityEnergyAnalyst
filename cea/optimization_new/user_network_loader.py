@@ -138,7 +138,7 @@ def _load_from_shapefiles(edges_path: str, nodes_path: str) -> Tuple[gpd.GeoData
     nodes_removed = nodes_before - len(nodes_gdf)
 
     if edges_removed > 0 or nodes_removed > 0:
-        print(f"  ⚠ Removed empty/null geometries from shapefiles:")
+        print("  ⚠ Removed empty/null geometries from shapefiles:")
         if edges_removed > 0:
             print(f"      - {edges_removed} edge feature(s) with no geometry")
         if nodes_removed > 0:
@@ -705,11 +705,11 @@ def detect_network_components(
     elif actual_components > expected_networks:
         # More components than PLANTs - likely gaps in network
         gap_count = actual_components - expected_networks
-        print(f"\n⚠ Network topology issue detected:")
+        print("\n⚠ Network topology issue detected:")
         print(f"  - Expected networks (based on PLANT nodes): {expected_networks}")
         print(f"  - Detected disconnected components: {actual_components}")
         print(f"  - Extra components that need merging: {gap_count}")
-        print(f"\n  Attempting to auto-snap nearby nodes to merge components...")
+        print("\n  Attempting to auto-snap nearby nodes to merge components...")
 
         # Identify which components have PLANTs and which don't
         components_with_plants = set()
