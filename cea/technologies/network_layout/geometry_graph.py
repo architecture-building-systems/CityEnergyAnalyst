@@ -589,6 +589,9 @@ class GeometryPreservingGraph:
         After graph corrections, edges may have been added/removed. This function
         replaces straight-line edges with original curved geometries where available.
 
+        IMPORTANT: Endpoints of restored curved geometries are snapped to the rounded
+        coordinates from the corrected graph to ensure connectivity is preserved.
+
         :param corrected_gdf: GeoDataFrame after corrections (with straight lines)
         :type corrected_gdf: gdf
         :param geometry_map: Dict mapping edge keys to original LineString geometries
@@ -607,13 +610,20 @@ class GeometryPreservingGraph:
         for _, row in corrected_gdf.iterrows():
             line = row.geometry
             coords = list(line.coords)
-            start = (round(coords[0][0], coord_precision), round(coords[0][1], coord_precision))
-            end = (round(coords[-1][0], coord_precision), round(coords[-1][1], coord_precision))
-            edge_key = tuple(sorted([start, end]))
+            # These are the exact rounded endpoints from the corrected graph
+            start_rounded = (round(coords[0][0], coord_precision), round(coords[0][1], coord_precision))
+            end_rounded = (round(coords[-1][0], coord_precision), round(coords[-1][1], coord_precision))
+            edge_key = tuple(sorted([start_rounded, end_rounded]))
 
             if edge_key in geometry_map:
-                # Use original curved geometry
-                restored_lines.append(geometry_map[edge_key])
+                # Restore curved geometry but snap endpoints to rounded coordinates
+                curved_geom = geometry_map[edge_key]
+                curved_coords = list(curved_geom.coords)
+
+                # Replace first and last coordinates with rounded values to ensure connectivity
+                # Keep all intermediate coordinates (the curve) intact
+                new_coords = [start_rounded] + curved_coords[1:-1] + [end_rounded]
+                restored_lines.append(LineString(new_coords))
             else:
                 # Keep straight line (new edge from corrections)
                 restored_lines.append(line)
