@@ -246,6 +246,38 @@ def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = Non
     return corrected_gdf
 
 
+def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf) -> tuple[gdf, gdf, str]:
+    """
+    Preprocessing for connectivity network functions.
+    Converts to projected CRS and validates geometries.
+
+    :return: Tuple of (streets_gdf, buildings_gdf, crs)
+    """
+    # Convert both streets and buildings to projected CRS for accurate distance calculations
+    lat, lon = get_lat_lon_projected_shapefile(building_centroids_df)
+    crs = get_projected_coordinate_system(lat, lon)
+    streets_network_df = streets_network_df.to_crs(crs)
+    building_centroids_df = building_centroids_df.to_crs(crs)
+
+    # Validate geometries
+    valid_geometries = streets_network_df.geometry.is_valid
+    if not valid_geometries.any():
+        raise ValueError("No valid geometries found in the shapefile.")
+    elif len(streets_network_df) != valid_geometries.sum():
+        warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
+        streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
+
+    return streets_network_df, building_centroids_df, crs
+
+
+def _get_protected_building_coords(building_centroids_df: gdf) -> list:
+    """Get rounded building centroid coordinates for use as protected nodes."""
+    return [
+        (round(pt.coords[0][0], SHAPEFILE_TOLERANCE), round(pt.coords[0][1], SHAPEFILE_TOLERANCE))
+        for pt in building_centroids_df.geometry
+    ]
+
+
 def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gdf) -> gdf:
     """
     Create a graph of potential thermal network connections by connecting building centroids to the nearest street
@@ -271,39 +303,21 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     :return: Potential connectivity network as GeoDataFrame in projected CRS
     :rtype: gdf
     """
-
-    # convert both streets and buildings to projected CRS for accurate distance calculations
-    lat, lon = get_lat_lon_projected_shapefile(building_centroids_df)
-    crs = get_projected_coordinate_system(lat, lon)
-    streets_network_df = streets_network_df.to_crs(crs)
-    building_centroids_df = building_centroids_df.to_crs(crs)
-
-    valid_geometries = streets_network_df.geometry.is_valid
-
-    if not valid_geometries.any():
-        raise ValueError("No valid geometries found in the shapefile.")
-    elif len(streets_network_df) != valid_geometries.sum():
-        warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
-        streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
+    # Prepare inputs (CRS conversion and validation)
+    streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
+        streets_network_df, building_centroids_df
+    )
 
     # PASS 1: Apply graph corrections to street network first (without terminals)
-    # This fixes the base network topology before adding building connections
-    # Benefits: fewer components to connect, better edge placement following streets
     print("\nApplying graph corrections to street network (before connecting buildings)...")
     street_network = apply_graph_corrections(streets_network_df)
 
-    # Create terminals/branches from corrected street network to buildings
-    # This creates individual line segments from each building centroid to nearest street point
+    # Create terminals from corrected street network to buildings
     prototype_network = create_terminals(building_centroids_df, street_network, crs)
 
     # PASS 2: Apply graph corrections to the combined network (streets + terminals)
-    # This fixes any disconnections introduced when connecting building terminals
-    # Building centroids are marked as protected nodes to preserve their exact locations
-    building_centroid_coords = [
-        (round(pt.coords[0][0], SHAPEFILE_TOLERANCE), round(pt.coords[0][1], SHAPEFILE_TOLERANCE))
-        for pt in building_centroids_df.geometry
-    ]
     print("\nApplying graph corrections to combined network (streets + building terminals)...")
+    building_centroid_coords = _get_protected_building_coords(building_centroids_df)
     prototype_network = apply_graph_corrections(
         prototype_network, protected_nodes=building_centroid_coords
     )
@@ -317,7 +331,6 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # Creates proper graph structure where each junction/endpoint is explicit
     potential_network_df = split_line_by_nearest_points(prototype_network, gdf_points, SNAP_TOLERANCE, crs)
 
-    # calculate Shape_len field
-    potential_network_df["Shape_Leng"] = potential_network_df.geometry.length
-
     return potential_network_df
+
+
