@@ -637,7 +637,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         try:
             capacity_indicators = system.build()
 
-            print(f"\n=== Test: Primary Only Direct Match ===")
+            print("\n=== Test: Primary Only Direct Match ===")
             print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
             print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
             print(f"Tertiary components: {list(system.max_cap_active_components['tertiary'].keys())}")
@@ -733,7 +733,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         try:
             capacity_indicators = system.build()
 
-            print(f"\n=== Test: Primary + Secondary User Specified ===")
+            print("\n=== Test: Primary + Secondary User Specified ===")
             print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
             print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
             print(f"Tertiary components: {list(system.max_cap_active_components['tertiary'].keys())}")
@@ -790,7 +790,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         try:
             capacity_indicators = system.build()
 
-            print(f"\n=== Test: With Renewable Potential ===")
+            print("\n=== Test: With Renewable Potential ===")
             print(f"Available potentials: {list(available_potentials.keys())}")
             print(f"Used potentials: {list(system.used_potentials.keys())}")
             print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
@@ -844,7 +844,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         try:
             capacity_indicators = system.build()
 
-            print(f"\n=== Test: Passive Conversion from Grid (NEW) ===")
+            print("\n=== Test: Passive Conversion from Grid ===")
             print(f"User specified secondary: {user_selection['secondary']}")
             print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
             print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
