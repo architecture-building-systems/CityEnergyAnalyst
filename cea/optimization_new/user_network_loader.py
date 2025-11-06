@@ -323,8 +323,8 @@ def validate_network_covers_district_buildings(
 
     # Get building nodes (exclude NONE, PLANT, etc.)
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                                (nodes_gdf['building'].str.upper() != 'NONE') &
-                                (nodes_gdf['type'].str.upper() != 'PLANT')].copy()
+                                (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                                (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
 
     network_building_names = set(building_nodes['building'].unique())
     district_building_set = set(district_building_names)
@@ -426,8 +426,8 @@ def validate_network_covers_district_buildings(
 
             # Update building_nodes for subsequent checks
             building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                                      (nodes_gdf['building'].str.upper() != 'NONE') &
-                                      (nodes_gdf['building'].str.upper() != 'PLANT')].copy()
+                                      (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                                      (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
             network_building_names = set(building_nodes['building'].unique())
 
     # Check 2: Are there extra buildings in the network that shouldn't be there?
@@ -548,7 +548,7 @@ def detect_network_components(
     edge_snaps = []  # Edge-to-node snaps
 
     # Count expected number of networks based on PLANT nodes
-    plant_nodes = nodes_gdf[nodes_gdf['type'].str.upper() == 'PLANT']
+    plant_nodes = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
     expected_networks = len(plant_nodes)
 
     if expected_networks == 0:
@@ -722,7 +722,7 @@ def detect_network_components(
                 components_without_plants.add(comp_id)
 
         # Try to snap nearby nodes, but only merge components smartly
-        snap_threshold = 0.1  # 10cm - larger than topology tolerance for finding gaps
+        snap_threshold = NETWORK_TOPOLOGY_TOLERANCE  # Same as edge-to-node tolerance (10cm)
 
         for node1_idx, node2_idx in [(i, j) for i in G.nodes for j in G.nodes if i < j]:
             # Check if nodes are in different components
