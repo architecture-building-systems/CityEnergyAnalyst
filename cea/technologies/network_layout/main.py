@@ -119,7 +119,54 @@ def main(config: cea.config.Configuration):
     network_layout = NetworkLayout(network_layout=config.network_layout)
     plant_building_names = config.network_layout.plant_buildings
 
-    layout_network(network_layout, locator, plant_building_names=plant_building_names)
+    # Check if user provided custom network layout
+    edges_shp = config.network_layout.user_edges_shp_path
+    nodes_shp = config.network_layout.user_nodes_shp_path
+    geojson_path = config.network_layout.user_network_geojson_path
+
+    if edges_shp or nodes_shp or geojson_path:
+        print("\n" + "=" * 80)
+        print("USER-DEFINED NETWORK LAYOUT")
+        print("=" * 80 + "\n")
+
+        # Import and use validation from user_network_loader
+        from cea.optimization_new.user_network_loader import load_user_defined_network
+
+        # Load and validate user-defined network
+        try:
+            result = load_user_defined_network(config, locator)
+            if result is None:
+                raise ValueError("User network loading returned None")
+            nodes_gdf, edges_gdf = result
+
+            print(f"  - Nodes: {len(nodes_gdf)}")
+            print(f"  - Edges: {len(edges_gdf)}")
+
+            # Save to standard location
+            network_type = config.network_layout.network_type
+            output_edges_path = locator.get_network_layout_edges_shapefile(network_type)
+            output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type)
+
+            # Ensure output directory exists
+            output_folder = locator.get_network_layout_folder(network_type)
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+
+            # Save to shapefiles
+            edges_gdf.to_file(output_edges_path, driver='ESRI Shapefile')
+            nodes_gdf.to_file(output_nodes_path, driver='ESRI Shapefile')
+
+            print(f"\n  ✓ User-defined network saved to:")
+            print(f"    {output_folder}")
+            print("\n" + "=" * 80 + "\n")
+
+        except Exception as e:
+            print(f"\n✗ Error loading user-defined network: {e}\n")
+            print("=" * 80 + "\n")
+            raise
+    else:
+        # Generate network layout using Steiner tree (current behavior)
+        layout_network(network_layout, locator, plant_building_names=plant_building_names)
 
 
 if __name__ == '__main__':
