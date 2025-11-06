@@ -176,9 +176,8 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
     endpoint_counts = Counter()
     for geom in network_gdf.geometry:
         coords = list(geom.coords)
-        # Round to avoid floating-point precision issues
-        start = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
-        end = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+        start = tuple(coords[0])
+        end = tuple(coords[-1])
         endpoint_counts[start] += 1
         endpoint_counts[end] += 1
 
@@ -199,13 +198,12 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         line = row.geometry
         coords = list(line.coords)
 
-        # Round endpoints for lookup
-        start_rounded = (round(coords[0][0], SHAPEFILE_TOLERANCE), round(coords[0][1], SHAPEFILE_TOLERANCE))
-        end_rounded = (round(coords[-1][0], SHAPEFILE_TOLERANCE), round(coords[-1][1], SHAPEFILE_TOLERANCE))
+        start = tuple(coords[0])
+        end = tuple(coords[-1])
 
         # Check if endpoints are dangling
-        start_is_dangling = start_rounded in dangling_endpoints
-        end_is_dangling = end_rounded in dangling_endpoints
+        start_is_dangling = start in dangling_endpoints
+        end_is_dangling = end in dangling_endpoints
 
         # Skip if no dangling endpoints
         if not start_is_dangling and not end_is_dangling:
