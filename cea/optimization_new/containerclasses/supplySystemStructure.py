@@ -1416,11 +1416,12 @@ class SupplySystemStructure(object):
         min_potentials = {ec_code: remaining_potentials[ec_code].profile.min()
                           if ec_code in remaining_potentials.keys() else 0.0
                           for ec_code in required_energy_flows.keys()}
-        insufficient_potential = {ec_code: min_potentials[ec_code] < required_energy_flows[ec_code]
-                                  for ec_code in min_potentials.keys()}
-        new_required_energy_flow = {ec_code: required_energy_flows[ec_code] - min_potentials[ec_code]
-                                    for ec_code in required_energy_flows.keys()
-                                    if insufficient_potential}
+
+        # Calculate remaining demand after drawing from potentials
+        new_required_energy_flow = {ec_code: max(0.0, required_energy_flows[ec_code] - min_potentials[ec_code])
+                                    for ec_code in required_energy_flows.keys()}
+        # Remove energy carriers with zero remaining demand
+        new_required_energy_flow = {ec_code: flow for ec_code, flow in new_required_energy_flow.items() if flow > 0}
         for ec_code in min_potentials.keys():
             if ec_code in self._used_potentials.keys():
                 self._used_potentials[ec_code] += min_potentials[ec_code]
