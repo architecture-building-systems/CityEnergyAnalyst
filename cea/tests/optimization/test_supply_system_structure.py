@@ -731,7 +731,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         )
 
         try:
-            capacity_indicators = system.build()
+            system.build()
 
             print("\n=== Test: Primary + Secondary User Specified ===")
             print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
