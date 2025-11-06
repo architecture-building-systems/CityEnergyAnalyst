@@ -20,7 +20,7 @@ __status__ = "Production"
 # imports
 # standard libraries
 import pandas as pd
-from math import log
+import math
 # third party libraries
 # other files (modules) of this project
 from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
@@ -64,6 +64,67 @@ class Component(object):
         self.input_energy_carriers = {}
         self.output_energy_carriers = {}
         self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
+
+        # Single unit by default
+        self.n_units = 1
+        self.units = [self]
+
+    def _setup_multi_unit_aggregate(self, total_capacity):
+        """
+        Setup this component instance as a multi-unit aggregate by copying properties from first unit.
+        This should be called by concrete classes after creating units.
+
+        :param total_capacity: Total capacity of the multi-unit installation
+        """
+        first_unit = self.units[0]
+        self._model_data = first_unit._model_data
+        self._cost_params = first_unit._cost_params
+        self.code = first_unit.code
+        self.technology = first_unit.technology
+        self.type = first_unit.type
+        self.main_energy_carrier = first_unit.main_energy_carrier
+        self.input_energy_carriers = first_unit.input_energy_carriers
+        self.output_energy_carriers = first_unit.output_energy_carriers
+        self.capacity = total_capacity  # Total capacity
+
+        # Calculate aggregate costs
+        self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
+
+    @staticmethod
+    def _check_multi_unit_needed(component_class, model_code, capacity):
+        """
+        Check if multi-unit installation is needed for the given capacity.
+
+        :param component_class: The component class (e.g., VapourCompressionChiller)
+        :param model_code: Code of the component model
+        :param capacity: Requested capacity in kW
+        :return: (needs_multi_unit, n_units, unit_capacity) tuple
+        :rtype: (bool, int, float)
+        """
+        try:
+            # Try to extract model data for single unit
+            Component._extract_model_data(component_class._csv_name, model_code, capacity)
+            # Success - single unit is sufficient
+            return False, 1, capacity
+        except ValueError:
+            # Single unit not sufficient, check if multi-unit is possible
+            try:
+                max_capacity = Component.get_max_capacity_for_model(component_class, model_code)
+            except ValueError:
+                # Model doesn't exist in database
+                raise ValueError(f'Component model {model_code} not found in database {component_class._csv_name}')
+
+            if capacity > max_capacity:
+                # Multi-unit installation needed
+                n_units = math.ceil(capacity / max_capacity)
+                unit_capacity = capacity / n_units
+                return True, n_units, unit_capacity
+            else:
+                # Capacity doesn't exceed max but still failed - invalid capacity range
+                raise ValueError(f'The selected component specs: \n'
+                                f' - code: {model_code} \n'
+                                f' - capacity: {capacity * 1000}W \n'
+                                f'could not be found in the {component_class._csv_name} tab of the conversion systems database.')
 
     @staticmethod
     def initialize_class_variables(domain):
@@ -126,6 +187,28 @@ class Component(object):
         return smallest_model_capacity_kW
 
     @staticmethod
+    def get_max_capacity_for_model(component_class, model_code):
+        """
+        Get the maximum available single-unit capacity for a component model from the database.
+
+        :param component_class: The component class (e.g., VapourCompressionChiller)
+        :type component_class: type
+        :param model_code: Code of the component model
+        :type model_code: str
+        :return: Maximum capacity available for this model in kW
+        :rtype: float
+        """
+        component_database = Component._components_database[component_class._csv_name]
+        model_data = component_database[component_database['code'] == model_code]
+
+        if model_data.empty:
+            raise ValueError(f'Component model {model_code} not found in database {component_class._csv_name}')
+
+        max_model_capacity_W = max(model_data['cap_max'])
+        max_model_capacity_kW = max_model_capacity_W / 1000
+        return max_model_capacity_kW
+
+    @staticmethod
     def _extract_model_cost_parameters(model_data):
         """ Extract investment cost code parameters from the code data and store them in a dict."""
         cost_parameters = {'a': model_data['a'].values[0],
@@ -170,15 +253,154 @@ class Component(object):
         output_energy_flows = [EnergyFlow()]
         return input_energy_flows, output_energy_flows
 
+    def _cascade_operation_active(self, main_energy_flow, unit_operate_method):
+        """
+        Cascade operation through multiple units using water-filling principle for ActiveComponents.
+        Each unit operates at full capacity until the last one handles the remainder.
+
+        :param main_energy_flow: Total energy flow demand to be met by all units
+        :type main_energy_flow: <cea.optimization_new.energyFlow>-EnergyFlow object
+        :param unit_operate_method: The operate method to call on each unit (unbound method)
+        :type unit_operate_method: callable
+        :return: Aggregated input and output energy flows from all active units
+        :rtype: (dict, dict) of EnergyFlow objects
+        """
+        # Initialize aggregated dictionaries to collect flows from all units
+        aggregated_input_flows = {}
+        aggregated_output_flows = {}
+
+        # Get the profile from the main energy flow
+        total_demand_profile = main_energy_flow.profile
+        remaining_demand = total_demand_profile.copy()
+
+        # Cascade through units sequentially (water-filling principle)
+        for unit in self.units:
+            # This unit handles min(remaining_demand, unit.capacity) at each timestep
+            unit_demand_profile = remaining_demand.clip(upper=unit.capacity)
+
+            # Skip if this unit doesn't need to operate (demand already met)
+            if (unit_demand_profile == 0).all():
+                break
+
+            # Create energy flow for this unit
+            unit_energy_flow = EnergyFlow(
+                main_energy_flow.input_category,
+                main_energy_flow.output_category,
+                main_energy_flow.energy_carrier.code,
+                unit_demand_profile
+            )
+
+            # Operate this unit
+            unit_inputs, unit_outputs = unit_operate_method(unit, unit_energy_flow)
+
+            # Aggregate input flows
+            for ec_code, energy_flow in unit_inputs.items():
+                if ec_code not in aggregated_input_flows:
+                    aggregated_input_flows[ec_code] = energy_flow
+                else:
+                    aggregated_input_flows[ec_code] = aggregated_input_flows[ec_code] + energy_flow
+
+            # Aggregate output flows
+            for ec_code, energy_flow in unit_outputs.items():
+                if ec_code not in aggregated_output_flows:
+                    aggregated_output_flows[ec_code] = energy_flow
+                else:
+                    aggregated_output_flows[ec_code] = aggregated_output_flows[ec_code] + energy_flow
+
+            # Reduce remaining demand by what this unit handled
+            remaining_demand = (remaining_demand - unit_demand_profile).clip(lower=0)
+
+        return aggregated_input_flows, aggregated_output_flows
+
+    def _cascade_operation_passive(self, energy_flow, unit_operate_method, *args):
+        """
+        Cascade operation through multiple units using water-filling principle for PassiveComponents.
+        Each unit operates at full capacity until the last one handles the remainder.
+
+        :param energy_flow: Total energy flow to be handled by all units
+        :type energy_flow: <cea.optimization_new.energyFlow>-EnergyFlow object
+        :param unit_operate_method: The operate method to call on each unit (unbound method)
+        :type unit_operate_method: callable
+        :param args: Additional arguments to pass to unit_operate_method
+        :return: Aggregated converted energy flow from all active units
+        :rtype: EnergyFlow object
+        """
+        # Get the profile from the energy flow
+        total_demand_profile = energy_flow.profile
+        remaining_demand = total_demand_profile.copy()
+
+        # Initialize aggregated profile
+        aggregated_profile = pd.Series(0.0, index=total_demand_profile.index)
+
+        # Cascade through units sequentially (water-filling principle)
+        for unit in self.units:
+            # This unit handles min(remaining_demand, unit.capacity) at each timestep
+            unit_demand_profile = remaining_demand.clip(upper=unit.capacity)
+
+            # Skip if this unit doesn't need to operate (demand already met)
+            if (unit_demand_profile == 0).all():
+                break
+
+            # Create energy flow for this unit
+            unit_energy_flow = EnergyFlow(
+                energy_flow.input_category,
+                energy_flow.output_category,
+                energy_flow.energy_carrier.code,
+                unit_demand_profile
+            )
+
+            # Operate this unit
+            converted_flow = unit_operate_method(unit, unit_energy_flow, *args)
+
+            # Aggregate the converted flow profile
+            aggregated_profile = aggregated_profile + converted_flow.profile
+
+            # Reduce remaining demand by what this unit handled
+            remaining_demand = (remaining_demand - unit_demand_profile).clip(lower=0)
+
+        # Create the aggregated energy flow with the same characteristics as the first unit's output
+        # Get a sample unit output to extract characteristics
+        sample_unit = self.units[0]
+        sample_flow = unit_operate_method(sample_unit, EnergyFlow(
+            energy_flow.input_category,
+            energy_flow.output_category,
+            energy_flow.energy_carrier.code,
+            pd.Series(0.0, index=total_demand_profile.index)
+        ), *args)
+
+        # Create final aggregated flow
+        aggregated_flow = EnergyFlow(
+            sample_flow.input_category,
+            sample_flow.output_category,
+            sample_flow.energy_carrier.code,
+            aggregated_profile
+        )
+
+        return aggregated_flow
+
     def calculate_cost(self):
-        """ placeholder for subclass investment cost functions """
+        """
+        Calculate investment and operating costs for the component.
+        For multi-unit installations, aggregates costs from all individual units.
+
+        :return: (capex_USD, capex_a_USD, opex_a_fix_USD) tuple
+        :rtype: (float, float, float)
+        """
+        # Multi-unit: aggregate costs from all units
+        if self.n_units > 1:
+            total_capex_USD = sum(unit.inv_cost for unit in self.units)
+            total_capex_a_USD = sum(unit.inv_cost_annual for unit in self.units)
+            total_opex_a_fix_USD = sum(unit.om_fix_cost_annual for unit in self.units)
+            return total_capex_USD, total_capex_a_USD, total_opex_a_fix_USD
+
+        # Single unit: calculate costs from cost parameters
         capacity_W = self.capacity * 1000
         if capacity_W <= 0:
             capex_USD = 0
         else:
             capex_USD = self._cost_params['a'] + \
                         self._cost_params['b'] * capacity_W ** self._cost_params['c'] + \
-                        (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * log(capacity_W)
+                        (self._cost_params['d'] + self._cost_params['e'] * capacity_W) * math.log(capacity_W)
 
         capex_a_USD = calc_capex_annualized(capex_USD, self._cost_params['int_rate'], self._cost_params['lifetime'])
         opex_a_fix_USD = capex_USD * self._cost_params['om_share']
@@ -222,8 +444,27 @@ class AbsorptionChiller(ActiveComponent):
     _csv_name = 'ABSORPTION_CHILLERS'
 
     def __init__(self, ach_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            AbsorptionChiller, ach_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = AbsorptionChiller(ach_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(AbsorptionChiller._csv_name, ach_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         self.aux_power_share = self._model_data['aux_power'].values[0]
@@ -249,6 +490,11 @@ class AbsorptionChiller(ActiveComponent):
         :return output_energy_flows: Waste heat rejected to the cold water loop to output the targeted amount of cooling
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(cooling_out, AbsorptionChiller.operate)
+
+        # Single unit operation
         self._check_operational_requirements(cooling_out)
 
         # initialize energy flows
@@ -294,8 +540,27 @@ class VapourCompressionChiller(ActiveComponent):
     _csv_name = 'VAPOR_COMPRESSION_CHILLERS'
 
     def __init__(self, vcc_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            VapourCompressionChiller, vcc_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = VapourCompressionChiller(vcc_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(VapourCompressionChiller._csv_name, vcc_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -319,6 +584,11 @@ class VapourCompressionChiller(ActiveComponent):
         :return output_energy_flows: Waste heat rejected to the cold water loop to output the targeted amount of cooling
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(cooling_out, VapourCompressionChiller.operate)
+
+        # Single unit operation
         self._check_operational_requirements(cooling_out)
 
         # initialize energy flows
@@ -360,8 +630,27 @@ class AirConditioner(ActiveComponent):
     _csv_name = 'UNITARY_AIR_CONDITIONERS'
 
     def __init__(self, ac_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            AirConditioner, ac_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = AirConditioner(ac_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(AirConditioner._csv_name, ac_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.minimum_COP = self._model_data['rated_COP_seasonal'].values[0]
         # assign technology-specific energy carriers
@@ -385,6 +674,11 @@ class AirConditioner(ActiveComponent):
         :return output_energy_flows: Waste heat rejected to the cold water loop to output the targeted amount of cooling
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(cooling_out, AirConditioner.operate)
+
+        # Single unit operation
         self._check_operational_requirements(cooling_out)
 
         # initialize energy flows
@@ -426,8 +720,27 @@ class Boiler(ActiveComponent):
     _csv_name = 'BOILERS'
 
     def __init__(self, boiler_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            Boiler, boiler_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = Boiler(boiler_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(Boiler._csv_name, boiler_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.min_thermal_eff = self._model_data['min_eff_rating'].values[0]
         # assign technology-specific energy carriers
@@ -451,6 +764,11 @@ class Boiler(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heating_out, Boiler.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heating_out)
 
         # initialize energy flows
@@ -492,8 +810,27 @@ class CogenPlant(ActiveComponent):
     _csv_name = 'COGENERATION_PLANTS'
 
     def __init__(self, cogen_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            CogenPlant, cogen_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = CogenPlant(cogen_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(CogenPlant._csv_name, cogen_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.thermal_eff = self._model_data['therm_eff_design'].values[0]
         self.electrical_eff = self._model_data['elec_eff_design'].values[0]
@@ -520,6 +857,11 @@ class CogenPlant(ActiveComponent):
         :return output_energy_flows: Total amount of heat contained in the rejected flue gas
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heating_out, CogenPlant.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heating_out)
 
         # initialize energy flows
@@ -567,8 +909,27 @@ class HeatPump(ActiveComponent):
     _csv_name = 'HEAT_PUMPS'
 
     def __init__(self, hp_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            HeatPump, hp_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = HeatPump(hp_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(HeatPump._csv_name, hp_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.minimum_COP = self._model_data['min_eff_rating_seasonal'].values[0]
         self.thermal_ec_subtype_condenser_side = self._model_data['medium_cond_side'].values[0]
@@ -594,6 +955,11 @@ class HeatPump(ActiveComponent):
                                     to operate the heat pump (i.e. accomplish heat transfer)
         :rtype input_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heating_load, HeatPump.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heating_load)
 
         # initialize energy flows
@@ -648,8 +1014,27 @@ class CoolingTower(ActiveComponent):
     _csv_name = 'COOLING_TOWERS'
 
     def __init__(self, ct_model_code, placement, capacity):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            CoolingTower, ct_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = CoolingTower(ct_model_code, placement, unit_capacity)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(CoolingTower._csv_name, ct_model_code, capacity, placement)
+
         # initialise subclass attributes
         self.aux_power_share = self._model_data['aux_power'].values[0]
         # assign technology-specific energy carriers
@@ -673,6 +1058,11 @@ class CoolingTower(ActiveComponent):
         :return output_energy_flows: Total amount of anthropogenic heat rejected to the environment
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_active(heat_rejection, CoolingTower.operate)
+
+        # Single unit operation
         self._check_operational_requirements(heat_rejection)
 
         # initialize energy flows
@@ -718,8 +1108,27 @@ class PowerTransformer(PassiveComponent):
     _csv_name = 'POWER_TRANSFORMERS'
 
     def __init__(self, pt_model_code, placed_before, placed_after, capacity, voltage_before, voltage_after):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            PowerTransformer, pt_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = PowerTransformer(pt_model_code, placed_before, placed_after, unit_capacity, voltage_before, voltage_after)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(PowerTransformer._csv_name, pt_model_code, capacity, placed_after, placed_before)
+
         # initialise subclass attributes
         self.min_low_voltage = self._model_data['V_min_lowV_side'].values[0]
         self.max_low_voltage = self._model_data['V_max_lowV_side'].values[0]
@@ -745,6 +1154,11 @@ class PowerTransformer(PassiveComponent):
         :return output_energy_flows: Thermal energy flow out of the power transformer
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_passive(power_transfer, PowerTransformer.operate, new_voltage)
+
+        # Single unit operation
         self._check_operational_requirements(power_transfer)
 
         # initialize energy flows
@@ -851,8 +1265,27 @@ class HeatExchanger(PassiveComponent):
     _csv_name = 'HEAT_EXCHANGERS'
 
     def __init__(self, he_model_code, placed_before, placed_after, capacity, temperature_before, temperature_after):
-        # initialise parent-class attributes
+        # Check if multi-unit installation is needed
+        needs_multi_unit, n_units, unit_capacity = Component._check_multi_unit_needed(
+            HeatExchanger, he_model_code, capacity
+        )
+
+        if needs_multi_unit:
+            # Create multiple units with unit capacity
+            self.n_units = n_units
+            self.units = []
+            for _ in range(n_units):
+                unit = HeatExchanger(he_model_code, placed_before, placed_after, unit_capacity, temperature_before, temperature_after)
+                self.units.append(unit)
+
+            # Setup this instance as an aggregate
+            self._setup_multi_unit_aggregate(capacity)
+            self.placement = self.units[0].placement
+            return
+
+        # Single unit initialization
         super().__init__(HeatExchanger._csv_name, he_model_code, capacity, placed_after, placed_before)
+
         # initialise subclass attributes
         self.max_operating_temp = self._model_data['T_max_operating'].values[0]
         self.min_operating_temp = self._model_data['T_min_operating'].values[0]
@@ -880,6 +1313,11 @@ class HeatExchanger(PassiveComponent):
                                      heat exchanger is operated as a tertiary component)
         :rtype output_energy_flows: dict of <cea.optimization_new.energyFlow>-EnergyFlow objects, keys are EC codes
         """
+        # Multi-unit: cascade operation through all units
+        if self.n_units > 1:
+            return self._cascade_operation_passive(heat_transfer, HeatExchanger.operate, heat_source_temp, heat_sink_temp)
+
+        # Single unit operation
         if not self.main_energy_carrier.code:
             self._reset_energy_carriers(heat_transfer, heat_source_temp, heat_sink_temp)
         self._check_operational_requirements(heat_transfer)
