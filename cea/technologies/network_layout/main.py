@@ -104,7 +104,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
     TOPOLOGY_TOLERANCE = 0.1  # 10cm in meters
 
     # First pass: identify missing nodes at edge endpoints and auto-create them
-    missing_nodes = {}  # key: (x, y), value: list of edge names
+    missing_nodes = {}  # key: (x, y), value: (exact Point, list of edge names)
 
     for edge_idx, edge in edges_gdf.iterrows():
         edge_geom = edge.geometry
@@ -122,33 +122,35 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
             for _, node in nodes_gdf.iterrows()
         )
 
-        # Track missing endpoints
+        # Track missing endpoints with exact coordinates (not rounded)
         if not start_has_node:
+            # Use rounded key for deduplication, but store exact point
             key = (round(start_point.x, 3), round(start_point.y, 3))
             if key not in missing_nodes:
-                missing_nodes[key] = []
-            missing_nodes[key].append(edge_name)
+                missing_nodes[key] = (start_point, [])
+            missing_nodes[key][1].append(edge_name)
 
         if not end_has_node:
+            # Use rounded key for deduplication, but store exact point
             key = (round(end_point.x, 3), round(end_point.y, 3))
             if key not in missing_nodes:
-                missing_nodes[key] = []
-            missing_nodes[key].append(edge_name)
+                missing_nodes[key] = (end_point, [])
+            missing_nodes[key][1].append(edge_name)
 
     # Auto-create missing junction nodes
     if missing_nodes:
         print(f"  ⚠ Found {len(missing_nodes)} missing junction node(s) at edge endpoints")
         print(f"    Auto-creating junction nodes to ensure network connectivity...")
 
-        for (x, y), edge_names in missing_nodes.items():
+        for key, (exact_point, edge_names) in missing_nodes.items():
             new_node = gpd.GeoDataFrame([{
-                'name': f'NODE_{len(nodes_gdf)}',
+                'name': f'NODE{len(nodes_gdf)}',
                 'building': 'NONE',
                 'type': 'NONE',
-                'geometry': Point(x, y)
+                'geometry': exact_point  # Use exact coordinates from edge endpoint
             }], crs=nodes_gdf.crs)
             nodes_gdf = pd.concat([nodes_gdf, new_node], ignore_index=True)
-            print(f"      - Created NODE_{len(nodes_gdf)-1} at ({x:.2f}, {y:.2f}) for edges: {', '.join(edge_names[:3])}")
+            print(f"      - Created NODE{len(nodes_gdf)-1} at ({exact_point.x:.2f}, {exact_point.y:.2f}) for edges: {', '.join(edge_names[:3])}")
 
     # Now build graph with complete node set
     G = nx.Graph()
@@ -231,105 +233,23 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
         if anchor_node.empty:
             continue
 
-        anchor_geom = anchor_node.geometry.iloc[0]
-        anchor_x = anchor_geom.x
-        anchor_y = anchor_geom.y
+        # Simply update the anchor building node's type to PLANT
+        # This is simpler and avoids creating duplicate nodes for the same building
+        anchor_node_idx = anchor_node.index[0]
+        anchor_node_name = nodes_gdf.loc[anchor_node_idx, 'name']
 
-        # Find closest junction node (type='NONE') in this component
-        # Mimic steiner_spanning_tree.py:add_plant_close_to_anchor logic
-        min_distance = float('inf')
-        closest_junction_idx = None
+        # Update the type to PLANT
+        nodes_gdf.loc[anchor_node_idx, 'type'] = 'PLANT'
 
-        for node_idx in component_nodes:
-            node = nodes_gdf.loc[node_idx]
-            # Only consider junction nodes (type='NONE' or unspecified non-building nodes)
-            node_type = str(node.get('type', 'NONE')).upper()
-            node_building = str(node.get('building', 'NONE')).upper()
-
-            if node_type == 'NONE' or (node_type in ['', 'NONE'] and node_building in ['NONE', '', 'NAN']):
-                node_x = node.geometry.x
-                node_y = node.geometry.y
-                distance = math.sqrt((node_x - anchor_x) ** 2 + (node_y - anchor_y) ** 2)
-
-                if 0 < distance < min_distance:
-                    min_distance = distance
-                    closest_junction_idx = node_idx
-
-        if closest_junction_idx is None:
-            # No junction nodes found - this is an isolated building
-            # Create plant at the building node itself (offset 1m)
-            junction_node = anchor_node.iloc[0]
-            min_distance = 0.0  # Plant at building location
-            print(f"  ℹ Component {component_id}: Isolated building '{anchor_building}' - creating plant at building location")
-        else:
-            junction_node = nodes_gdf.loc[closest_junction_idx]
-
-        # Create new PLANT node offset 1m from junction/building (mimic auto-generation)
-        plant_x = junction_node.geometry.x + 1.0
-        plant_y = junction_node.geometry.y + 1.0
-        plant_geom = Point(plant_x, plant_y)
-
-        # Generate unique plant node name
+        # Generate network identifier for reporting
         network_id = f"N{1001 + component_id}"
-        plant_node_name = f"PLANT_{network_id}"
-
-        # Create new plant node
-        new_plant = gpd.GeoDataFrame([{
-            'name': plant_node_name,
-            'building': anchor_building,
-            'type': 'PLANT',
-            'geometry': plant_geom
-        }], crs=nodes_gdf.crs)
-
-        nodes_gdf = pd.concat([nodes_gdf, new_plant], ignore_index=True)
-
-        # Create new edge connecting plant to junction
-        edge_line = LineString([
-            (plant_x, plant_y),
-            (junction_node.geometry.x, junction_node.geometry.y)
-        ])
-
-        # Generate unique edge name
-        edge_name = f"PIPE_{len(edges_gdf)}"
-
-        # Get pipe properties from edges_gdf if available, otherwise use defaults
-        if not edges_gdf.empty and 'pipe_DN' in edges_gdf.columns:
-            pipe_dn = edges_gdf['pipe_DN'].iloc[0] if 'pipe_DN' in edges_gdf.columns else 150
-            type_mat = edges_gdf['type_mat'].iloc[0] if 'type_mat' in edges_gdf.columns else 'T1'
-        else:
-            from cea.technologies.constants import PIPE_DIAMETER_DEFAULT, TYPE_MAT_DEFAULT
-            pipe_dn = PIPE_DIAMETER_DEFAULT
-            type_mat = TYPE_MAT_DEFAULT
-
-        # Create new edge with same schema as existing edges
-        # Only include start_node/end_node if they exist in the original edges
-        new_edge_data = {
-            'name': edge_name,
-            'pipe_DN': pipe_dn,
-            'type_mat': type_mat,
-            'geometry': edge_line
-        }
-
-        # Add length_m if it exists in original edges
-        if not edges_gdf.empty and 'length_m' in edges_gdf.columns:
-            new_edge_data['length_m'] = edge_line.length
-
-        # Add start_node/end_node only if they exist in original edges
-        if not edges_gdf.empty and 'start_node' in edges_gdf.columns:
-            new_edge_data['start_node'] = plant_node_name
-        if not edges_gdf.empty and 'end_node' in edges_gdf.columns:
-            new_edge_data['end_node'] = junction_node['name']
-
-        new_edge = gpd.GeoDataFrame([new_edge_data], crs=edges_gdf.crs)
-
-        edges_gdf = pd.concat([edges_gdf, new_edge], ignore_index=True)
 
         created_plants.append({
             'network_id': network_id,
             'building': anchor_building,
-            'node_name': plant_node_name,
-            'junction_node': junction_node['name'],
-            'distance_to_junction': min_distance,
+            'node_name': anchor_node_name,
+            'junction_node': None,
+            'distance_to_junction': 0.0,
             'reason': 'user-specified' if plant_building_name and plant_building_name == anchor_building else 'anchor-load'
         })
 
@@ -606,12 +526,11 @@ def main(config: cea.config.Configuration):
             )
 
             if created_plants:
-                print(f"\n  ⚠ Auto-created {len(created_plants)} missing PLANT node(s):")
+                print(f"\n  ⚠ Auto-assigned {len(created_plants)} building node(s) as PLANT:")
                 for plant_info in created_plants:
                     reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                    print(f"      - {plant_info['node_name']} at building '{plant_info['building']}' ({reason_text})")
-                    print(f"        Connected to junction '{plant_info['junction_node']}' ({plant_info['distance_to_junction']:.2f}m away)")
-                print(f"  Note: PLANT nodes placed near closest junction, with new connecting edge (in-memory only)")
+                    print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
+                print(f"  Note: Existing building nodes converted to PLANT type (in-memory only)")
 
             # Save to standard location
             output_edges_path = locator.get_network_layout_edges_shapefile(network_type)
