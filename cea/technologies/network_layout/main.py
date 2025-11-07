@@ -4,7 +4,7 @@ import geopandas as gpd
 
 import cea.config
 import cea.inputlocator
-from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network, calc_connectivity_network_with_geometry
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
@@ -50,11 +50,13 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     
     street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
 
-    # Calculate potential network
-    potential_network_df = calc_connectivity_network(street_network_df, building_centroids_df)
-    potential_network_df.to_file(temp_path_potential_network_shp, driver='ESRI Shapefile')
+    # Calculate potential network with geometry preservation
+    potential_network_df = calc_connectivity_network_with_geometry(
+        street_network_df,
+        building_centroids_df,
+    )
     crs_projected = potential_network_df.crs
-
+    
     if crs_projected is None:
         raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
 
@@ -69,7 +71,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
 
     calc_steiner_spanning_tree(crs_projected,
-                               geometry_graph.graph,
+                               potential_network_df,
                                output_network_folder,
                                temp_path_building_centroids_shp,
                                path_output_edges_shp,

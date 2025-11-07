@@ -842,8 +842,9 @@ def calc_connectivity_network_with_geometry(
     # Reconstruct filtered graph
     G_filtered = graph.subgraph(set().union(*components)).copy()
 
-    
-    from cea.technologies.network_layout.debug import check_network_connectivity
-    check_network_connectivity(streets_network_df)
+    edges = gdf([{
+        "geometry": data['geometry'],
+    } for u, v, data in G_filtered.edges(data=True)], crs=streets_network_df.crs)
+    edges['length'] = edges.geometry.length
 
-    return streets_network_df, G_filtered
+    return edges
