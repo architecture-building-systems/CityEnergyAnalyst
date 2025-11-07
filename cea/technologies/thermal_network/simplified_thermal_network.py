@@ -294,6 +294,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         wn.options.hydraulic.trials = 100
 
         # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+        print("Starting 1st iteration to calculate pipe diameters...")
         sim = wntr.sim.EpanetSimulator(wn)
         results = sim.run_sim()
         max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
@@ -308,6 +309,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
         # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+        print("Starting 2nd iteration to calculate pressure drops...")
         # modify diameter and run simulations
         edge_df['pipe_DN'] = pipe_dn
         edge_df['D_int_m'] = D_int_m
@@ -319,6 +321,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
 
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
+        print("Starting 3rd iteration to calculate final utilization of the grid...")
         # get accumulated head loss per hour
         unitary_head_ftperkft = results.link['headloss'].abs()
         unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
@@ -339,6 +342,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
 
     # POSTPROCESSING
+    print("Postprocessing thermal network results...")
 
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
