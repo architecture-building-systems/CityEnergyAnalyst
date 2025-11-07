@@ -448,11 +448,34 @@ def main(config: cea.config.Configuration):
                                        (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
             network_building_names = sorted(building_nodes['building'].unique())
 
+            # ALWAYS validate that network building names exist in zone geometry
+            # This prevents accidentally loading a network from a different scenario (e.g., Jakarta network for Singapore scenario)
+            all_zone_buildings = locator.get_zone_building_names()
+            zone_gdf = gpd.read_file(locator.get_zone_geometry())
+
+            # Check if ALL network buildings exist in the scenario's zone geometry
+            invalid_buildings = [b for b in network_building_names if b not in all_zone_buildings]
+            if invalid_buildings:
+                raise ValueError(
+                    f"User-defined network contains building names that don't exist in scenario:\n\n"
+                    f"  Scenario: {config.scenario}\n"
+                    f"  Buildings in zone geometry: {len(all_zone_buildings)}\n"
+                    f"  Buildings in network: {len(network_building_names)}\n"
+                    f"  Invalid building names (not in zone.shp): {len(invalid_buildings)}\n\n"
+                    f"  Invalid buildings:\n    " + "\n    ".join(invalid_buildings[:20]) +
+                    (f"\n    ... and {len(invalid_buildings) - 20} more" if len(invalid_buildings) > 20 else "") +
+                    "\n\n"
+                    "This usually means you're using a network layout from a different scenario.\n"
+                    "Resolution:\n"
+                    "  1. Verify you're using the correct network layout for this scenario\n"
+                    "  2. Check that building names in the network match the zone geometry\n"
+                    "  3. Update the network layout to use correct building names"
+                )
+
             # Determine which buildings should be in the network
             if overwrite_supply:
                 # Use connected-buildings parameter (what-if scenarios)
                 # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
-                all_zone_buildings = locator.get_zone_building_names()
                 is_explicitly_set = (connected_buildings_config and
                                    set(connected_buildings_config) != set(all_zone_buildings))
 
@@ -464,13 +487,14 @@ def main(config: cea.config.Configuration):
                     print(f"  - Buildings in user layout: {len(network_building_names)}")
                 else:
                     # Blank connected-buildings (auto-populated): accept whatever is in user layout
+                    # BUT we already validated building names exist in zone geometry above
                     print(f"  - Mode: Overwrite supply.csv (connected-buildings blank)")
                     print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
                     for building_name in network_building_names[:10]:
                         print(f"      - {building_name}")
                     if len(network_building_names) > 10:
                         print(f"      ... and {len(network_building_names) - 10} more")
-                    buildings_to_validate = None  # Skip validation
+                    buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
             else:
                 # Use supply.csv to determine district buildings
                 buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
@@ -478,48 +502,42 @@ def main(config: cea.config.Configuration):
                 print(f"  - District buildings (from supply.csv): {len(buildings_to_validate)}")
                 print(f"  - Buildings in user layout: {len(network_building_names)}")
 
-            # Validate network if we have a reference list
-            if buildings_to_validate:
-                # Check for buildings without demand and warn (Option 2: warn but include)
-                buildings_with_demand = get_buildings_with_demand(locator, network_type)
-                buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+            # Validate network coverage (buildings_to_validate is always set now)
+            # Check for buildings without demand and warn (Option 2: warn but include)
+            buildings_with_demand = get_buildings_with_demand(locator, network_type)
+            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
 
-                if buildings_without_demand:
-                    print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
-                    for building_name in buildings_without_demand[:10]:
-                        print(f"      - {building_name}")
-                    if len(buildings_without_demand) > 10:
-                        print(f"      ... and {len(buildings_without_demand) - 10} more")
-                    print(f"  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+            if buildings_without_demand:
+                print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
+                for building_name in buildings_without_demand[:10]:
+                    print(f"      - {building_name}")
+                if len(buildings_without_demand) > 10:
+                    print(f"      ... and {len(buildings_without_demand) - 10} more")
+                print(f"  Note: These buildings will be included in layout but may not be simulated in thermal-network")
 
-                # Validate network covers all specified buildings
-                nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
-                    nodes_gdf,
-                    gpd.read_file(locator.get_zone_geometry()),
-                    buildings_to_validate,
-                    network_type,
-                    edges_gdf
-                )
+            # Validate network covers all specified buildings
+            nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
+                nodes_gdf,
+                zone_gdf,  # Already loaded above for validation
+                buildings_to_validate,
+                network_type,
+                edges_gdf
+            )
 
-                if auto_created_buildings:
-                    print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
-                    for building_name, edge_name in auto_created_buildings[:10]:
-                        print(f"      - {building_name} (at endpoint of {edge_name})")
-                    if len(auto_created_buildings) > 10:
-                        print(f"      ... and {len(auto_created_buildings) - 10} more")
-                    print(f"  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
-                else:
-                    print("  ✓ All specified buildings have valid nodes in network")
+            if auto_created_buildings:
+                print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
+                for building_name, edge_name in auto_created_buildings[:10]:
+                    print(f"      - {building_name} (at endpoint of {edge_name})")
+                if len(auto_created_buildings) > 10:
+                    print(f"      ... and {len(auto_created_buildings) - 10} more")
+                print(f"  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
             else:
-                print("  - Skipping building coverage validation (accepting user layout as-is)")
+                print("  ✓ All specified buildings have valid nodes in network")
 
             # Resolve plant building name (case-insensitive, handles comma-separated input)
-            # Use buildings from validation list if available, otherwise use all network buildings
-            available_buildings = buildings_to_validate if buildings_to_validate else network_building_names
-            plant_building_name = resolve_plant_building(plant_building_name, available_buildings)
+            plant_building_name = resolve_plant_building(plant_building_name, buildings_to_validate)
 
-            # Auto-create plant nodes if missing
-            zone_gdf = gpd.read_file(locator.get_zone_geometry())
+            # Auto-create plant nodes if missing (zone_gdf already loaded above)
             nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
                 nodes_gdf, edges_gdf, zone_gdf,
                 plant_building_name, network_type, locator
