@@ -254,6 +254,7 @@ cea.api.demand(scenario='/path/to/scenario')
 
 ### Testing
 
+- **All test files must be placed in `cea/tests/`** - Never create test files in other directories
 - Integration tests use reference scenarios from `cea/examples/`
 - Test configuration: `cea/tests/cea.config`
 - Mock/fixture pattern for expensive operations (radiation, optimization)

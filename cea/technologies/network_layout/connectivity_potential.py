@@ -68,8 +68,7 @@ from shapely.ops import snap, split
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
-from cea.technologies.network_layout.geometry_graph import GeometryPreservingGraph
-from cea.technologies.network_layout.graph_utils import gdf_to_nx
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -654,14 +653,11 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
             # No interior split points - keep original line
             new_lines.append(line.geometry)
     
-    # Round all coordinates of geometries to SHAPEFILE_TOLERANCE to preserve connectivity
-    rounded_lines = []
-    for line in new_lines:
-        rounded_coords = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE)) for x, y in line.coords]
-        rounded_line = LineString(rounded_coords)
-        rounded_lines.append(rounded_line)
-    
-    combined_network = gdf(geometry=rounded_lines, crs=street_network.crs)
+    # Create GeoDataFrame with all network lines (streets + building terminals)
+    combined_network = gdf(geometry=new_lines, crs=street_network.crs)
+
+    # Normalize all coordinates to SHAPEFILE_TOLERANCE to preserve connectivity
+    normalize_gdf_geometries(combined_network, precision=SHAPEFILE_TOLERANCE, inplace=True)
 
     return combined_network
 
@@ -745,6 +741,11 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     print("Cleaning street network...")
     streets_network_df = clean_street_network(streets_network_df, SNAP_TOLERANCE)
 
+    # Normalize all coordinates to consistent precision (prevents floating-point issues)
+    print("Normalizing coordinates to consistent precision...")
+    normalize_gdf_geometries(streets_network_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
+    normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
+
     return streets_network_df, building_centroids_df, crs
 
 
@@ -814,6 +815,120 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     return potential_network_df
 
 
+def _validate_network_creation(graph: nx.Graph, building_centroids_df: gdf, output_edges: gdf) -> None:
+    """
+    Validate that network creation succeeded correctly.
+
+    Checks for common issues:
+    - Graph connectivity (single connected component)
+    - Building terminals exist in graph
+    - Edge geometries are valid
+    - Coordinate precision is consistent
+
+    :param graph: NetworkX graph to validate
+    :param building_centroids_df: GeoDataFrame of building centroids
+    :param output_edges: GeoDataFrame of output edges
+    :raises ValueError: If validation fails
+    """
+    # Check 1: Graph is connected
+    if not nx.is_connected(graph):
+        num_components = nx.number_connected_components(graph)
+        raise ValueError(
+            f"Network graph is not connected ({num_components} components found). "
+            f"This should have been caught earlier in processing."
+        )
+
+    # Check 2: All building terminals have corresponding nodes in graph
+    graph_nodes = set(graph.nodes())
+    missing_terminals = []
+
+    for idx, row in building_centroids_df.iterrows():
+        building_id = row.get('Name', idx)
+        bldg_x, bldg_y = round(row.geometry.x, SHAPEFILE_TOLERANCE), round(row.geometry.y, SHAPEFILE_TOLERANCE)
+
+        # Check if a node exists very close to this building (within tolerance)
+        found = False
+        for node in graph_nodes:
+            if abs(node[0] - bldg_x) < 1.0 and abs(node[1] - bldg_y) < 1.0:
+                found = True
+                break
+
+        if not found:
+            missing_terminals.append(building_id)
+
+    if missing_terminals:
+        raise ValueError(
+            f"{len(missing_terminals)} building terminals not found in graph: {missing_terminals[:5]}..."
+        )
+
+    # Check 3: Output edges have valid geometries
+    if output_edges.empty:
+        raise ValueError("No edges in output GeoDataFrame")
+
+    invalid_geoms = ~output_edges.geometry.is_valid
+    if invalid_geoms.any():
+        raise ValueError(
+            f"{invalid_geoms.sum()} invalid geometries found in output edges"
+        )
+
+    # Check 4: Edges have required attributes
+    if 'length' not in output_edges.columns:
+        raise ValueError("Output edges missing 'length' column")
+
+    if (output_edges['length'] <= 0).any():
+        raise ValueError("Output edges contain zero or negative lengths")
+
+    print(f"  ✓ Validation passed: {len(graph.nodes())} nodes, {len(graph.edges())} edges, "
+          f"{len(building_centroids_df)} building terminals")
+
+
+def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf) -> dict:
+    """
+    Extract mapping of building IDs to their terminal node coordinates in the graph.
+
+    Uses spatial search (KDTree) to find the graph node closest to each building centroid.
+    This accounts for CRS transformation and coordinate rounding that occurred during
+    network creation.
+
+    :param graph: NetworkX graph with building terminals as nodes
+    :param building_centroids_df: GeoDataFrame of building centroids with 'Name' column
+    :return: Dictionary mapping building_id → (x, y) node coordinates
+    :rtype: dict
+
+    Note: Building coordinates are already in the same CRS and precision as the graph
+    due to processing in _prepare_network_inputs and create_terminals.
+    """
+    from scipy.spatial import KDTree
+
+    # Build KDTree from graph nodes for efficient nearest-neighbor search
+    graph_nodes = list(graph.nodes())
+    if not graph_nodes:
+        return {}
+
+    node_coords = [(node[0], node[1]) for node in graph_nodes]
+    tree = KDTree(node_coords)
+
+    terminal_mapping = {}
+
+    for idx, row in building_centroids_df.iterrows():
+        building_id = row.get('Name', idx)  # Use 'Name' if available, otherwise use index
+        bldg_geom = row.geometry
+
+        # Get building coordinates (already normalized in _prepare_network_inputs)
+        bldg_x, bldg_y = bldg_geom.x, bldg_geom.y
+
+        # Find nearest graph node
+        dist, node_idx = tree.query([bldg_x, bldg_y], k=1)
+
+        if dist > 1.0:  # Tolerance: 1 meter (should be much closer in practice)
+            print(f"  Warning: Building '{building_id}' terminal is {dist:.3f}m from nearest graph node")
+
+        # Store the actual graph node coordinates
+        terminal_mapping[building_id] = graph_nodes[node_idx]
+
+    return terminal_mapping
+
+
 def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
@@ -830,8 +945,14 @@ def calc_connectivity_network_with_geometry(
     print("\nCreating building terminal connections...")
     streets_network_df = create_terminals(building_centroids_df, streets_network_df)
 
-    gp_graph = GeometryPreservingGraph(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE)
-    graph = gp_graph.graph
+    # Convert to graph with geometry preservation
+    graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
+
+    # Store building terminal metadata in graph for downstream use
+    terminal_mapping = _extract_building_terminal_nodes(graph, building_centroids_df)
+    graph.graph['building_terminals'] = terminal_mapping
+    graph.graph['crs'] = crs
+    graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
     # Clean up graph components
     components = list(nx.connected_components(graph))
@@ -855,5 +976,9 @@ def calc_connectivity_network_with_geometry(
         "geometry": data['geometry'],
     } for u, v, data in G_filtered.edges(data=True)], crs=streets_network_df.crs)
     edges['length'] = edges.geometry.length
+
+    # Validate network creation before returning
+    print("\nValidating network creation...")
+    _validate_network_creation(G_filtered, building_centroids_df, edges)
 
     return edges
