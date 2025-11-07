@@ -156,7 +156,7 @@ def main(config: cea.config.Configuration):
             edges_gdf.to_file(output_edges_path, driver='ESRI Shapefile')
             nodes_gdf.to_file(output_nodes_path, driver='ESRI Shapefile')
 
-            print(f"\n  ✓ User-defined network saved to:")
+            print("\n  ✓ User-defined network saved to:")
             print(f"    {output_folder}")
             print("\n" + "=" * 80 + "\n")
 
