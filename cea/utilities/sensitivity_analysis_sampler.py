@@ -63,7 +63,7 @@ def create_inputs_directory(config, sample_n, n_variable):
         os.makedirs(locator.get_building_properties_folder(), exist_ok=True)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
 
     output_path = config.project
 

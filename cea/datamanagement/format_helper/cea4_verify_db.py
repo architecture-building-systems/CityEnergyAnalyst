@@ -806,7 +806,7 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
 ## --------------------------------------------------------------------------------------------------------------------
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     # Start the timer
     t0 = time.perf_counter()
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project

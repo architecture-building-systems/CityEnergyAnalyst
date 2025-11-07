@@ -2,7 +2,6 @@
 
 
 import math
-import os
 
 import numpy as np
 import pandas as pd
@@ -120,7 +119,7 @@ def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, densit
     return T_ground_K
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
     calc_geothermal_potential(locator=locator, config=config)
 

@@ -745,7 +745,7 @@ def calc_new_load(mdot_kgpers, T_sup_K, T_re_K):
 # ============================
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole preprocessing routine
     """

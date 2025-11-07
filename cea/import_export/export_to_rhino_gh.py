@@ -84,7 +84,7 @@ def exec_export_csv_for_rhino(config, locator):
         shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DC'), locator.get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(), new_crs)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
 
     # Start the timer
     t0 = time.perf_counter()

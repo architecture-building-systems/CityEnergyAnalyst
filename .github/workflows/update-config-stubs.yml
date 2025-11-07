@@ -1,0 +1,90 @@
+name: Update Config Type Stubs
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'cea/config.py'
+      - 'cea/default.config'
+      - 'cea/utilities/config_type_generator.py'
+  pull_request:
+    paths:
+      - 'cea/config.py'
+      - 'cea/default.config'
+      - 'cea/utilities/config_type_generator.py'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-stubs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.14
+        with:
+          cache: true
+
+      - name: Install CEA
+        run: pixi run pip install .
+
+      - name: Generate config.pyi
+        run: pixi run python -m cea.utilities.config_type_generator
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet cea/config.pyi; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes (on push to master)
+        if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'push'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add cea/config.pyi
+          git commit -m "Auto-update config.pyi from config.py changes"
+
+          # Push with retry logic in case of conflicts
+          # This should rarely fail on master, but adding explicit handling for clarity
+          max_retries=3
+          for ((attempt=1; attempt<=max_retries; attempt++)); do
+            if git push; then
+              echo "Successfully pushed config.pyi changes"
+              break
+            fi
+
+            echo "Push failed, attempt $attempt of $max_retries"
+            if [ $attempt -lt $max_retries ]; then
+              echo "Pulling latest changes and retrying..."
+              git pull --rebase
+            else
+              echo "::error::Failed to push config.pyi changes after $max_retries attempts"
+              exit 1
+            fi
+          done
+
+      - name: Comment on PR if changes needed
+        if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **Type stub update required**\n\nYour changes to `config.py`, `default.config`, or `config_type_generator.py` require regenerating the type stubs.\n\nPlease run:\n```bash\npython -m cea.utilities.config_type_generator\n```\n\nAnd commit the updated `config.pyi` file.'
+            })
+
+      - name: Fail if changes not committed (on PR)
+        if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
+        run: |
+          echo "::error::config.pyi is out of date. Please regenerate it by running: python -m cea.utilities.config_type_generator"
+          exit 1

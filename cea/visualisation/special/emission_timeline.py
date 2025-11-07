@@ -533,7 +533,7 @@ class EmissionTimelinePlot:
 
         # Check for normalization
         if '/m2' in sample_col:
-            return f'Emissions ({unit}/m²)'
+            return f'Emissions ({unit}/m2)'
         else:
             return f'Emissions ({unit})'
 

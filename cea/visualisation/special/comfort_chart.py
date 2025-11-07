@@ -882,7 +882,7 @@ def create_multi_building_plot(building_plots):
     return full_html
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     import cea.inputlocator
 
     locator = cea.inputlocator.InputLocator(config.scenario)

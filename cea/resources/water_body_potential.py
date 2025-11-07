@@ -63,7 +63,7 @@ def calc_lake_potential(locator, config):
     pd.DataFrame({"date": pd.to_datetime(date_range), "Ts_C": t_source_final, "QLake_kW": Q_max_kwh}).to_csv(lake_gen, index=False, float_format='%.3f')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     calc_lake_potential(locator=locator, config=config)
