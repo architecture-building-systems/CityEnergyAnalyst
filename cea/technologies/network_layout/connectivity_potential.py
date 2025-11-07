@@ -543,7 +543,7 @@ def split_network_at_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: floa
     return result_gdf
 
 
-def near_analysis(building_centroids, street_network, crs):
+def near_analysis(building_centroids, street_network):
     # Get the nearest edge for each building centroid
     nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
     nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)  # reset index so vectorization works
@@ -551,7 +551,7 @@ def near_analysis(building_centroids, street_network, crs):
     # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
     nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
 
-    df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=crs)
+    df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=street_network.crs)
     return df
 
 
