@@ -56,12 +56,13 @@ This requires:
    ├─ Extract building terminal metadata → store in graph attributes
    ├─ Component analysis (drop single-node components)
    ├─ Validate network integrity
-   └─ Return edges GeoDataFrame (or graph if requested)
+   └─ Return edges GeoDataFrame (default) OR graph with metadata (if return_graph=True)
 
 4. Optimization (optimization_new/network.py)
+   ├─ _load_pot_network() calls calc_connectivity_network_with_geometry(return_graph=True)
+   │  └─ Gets graph directly with building terminal metadata preserved
    └─ _find_building_terminal_nodes_in_graph()
-      ├─ Fast path: Use graph.graph['building_terminals'] metadata
-      └─ Fallback: KDTree spatial search (for legacy data)
+      └─ Use graph.graph['building_terminals'] metadata (fast dictionary lookup)
 ```
 
 ### Key Functions
@@ -167,24 +168,42 @@ restored_gdf = nx_to_gdf(graph, crs=original_gdf.crs, preserve_geometry=True)
 # original_gdf geometries == restored_gdf geometries
 ```
 
-#### `calc_connectivity_network_with_geometry(streets_network_df, building_centroids_df)`
+#### `calc_connectivity_network_with_geometry(streets_network_df, building_centroids_df, return_graph=False)`
 Create connectivity network preserving street geometries.
 
-**Returns**: GeoDataFrame of network edges with:
-- `geometry`: Preserved curved LineString geometries
-- `length`: Edge lengths
-- CRS: Same as input streets
+**Parameters**:
+- `streets_network_df`: GeoDataFrame with street network geometries
+- `building_centroids_df`: GeoDataFrame with building centroids (must have 'Name' or 'name' column for building IDs)
+- `return_graph`: If True, return NetworkX graph with metadata; if False (default), return edges GeoDataFrame
 
-**Graph Metadata Stored** (in internal graph representation):
-- `graph.graph['building_terminals']`: Dict mapping building_id → (x, y) node coordinates
-- `graph.graph['crs']`: Coordinate reference system
-- `graph.graph['coord_precision']`: Precision used (SHAPEFILE_TOLERANCE)
+**Note**: Building identifiers are extracted from the 'Name' or 'name' column (case-insensitive). If neither exists, the DataFrame index is used as the building ID.
+
+**Returns**:
+- **Default (`return_graph=False`)**: GeoDataFrame of network edges with:
+  - `geometry`: Preserved curved LineString geometries
+  - `length`: Edge lengths
+  - CRS: Same as input streets
+
+- **With `return_graph=True`**: NetworkX graph with metadata:
+  - `graph.graph['building_terminals']`: Dict mapping building_id → (x, y) node coordinates
+  - `graph.graph['crs']`: Coordinate reference system
+  - `graph.graph['coord_precision']`: Precision used (SHAPEFILE_TOLERANCE)
 
 **Validation Performed**:
 1. Graph connectivity (single component)
 2. All building terminals exist in graph
 3. Valid geometries
 4. Positive edge lengths
+
+**Usage**:
+```python
+# Standard usage - returns GeoDataFrame
+edges = calc_connectivity_network_with_geometry(streets, buildings)
+
+# For optimization - returns graph with metadata
+graph = calc_connectivity_network_with_geometry(streets, buildings, return_graph=True)
+terminal_mapping = graph.graph['building_terminals']
+```
 
 ## Best Practices
 
@@ -210,13 +229,19 @@ for idx, row in streets_gdf.iterrows():
 
 ✅ **Good**:
 ```python
-# Fast path - uses stored metadata
-if 'building_terminals' in graph.graph:
-    terminal_coord = graph.graph['building_terminals'][building_id]
+# Request graph with metadata preserved
+graph = calc_connectivity_network_with_geometry(streets, buildings, return_graph=True)
+
+# Fast dictionary lookup - guaranteed to work
+terminal_coord = graph.graph['building_terminals'][building_id]
 ```
 
 ❌ **Bad**:
 ```python
+# Get GeoDataFrame, convert to graph, then try to find terminals manually
+edges = calc_connectivity_network_with_geometry(streets, buildings)
+graph = gdf_to_nx(edges)
+
 # Slow and error-prone - requires CRS transformation and spatial search
 building_coord = (building.x, building.y)  # Wrong CRS!
 if building_coord in graph.nodes():  # Will fail due to precision
@@ -410,25 +435,35 @@ graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, prese
 
 **Reason**: `GeometryPreservingGraph` was only used to extract the `.graph` property. The class had many advanced features (junction splitting, edge collapsing) that were never used in production code. Direct conversion is simpler and more maintainable.
 
-### Added: Building Terminal Metadata
+### Added: Building Terminal Metadata with `return_graph` Parameter
 
-**Previously**: Required expensive KDTree spatial search for every optimization run
+**Previously**: Had to get GeoDataFrame, convert to graph, then search for terminals
 ```python
-# Slow - CRS transformation + spatial search every time
+# Get GeoDataFrame
+edges = calc_connectivity_network_with_geometry(streets, buildings)
+
+# Convert to graph (loses metadata)
+graph = gdf_to_nx(edges)
+
+# Slow - CRS transformation + KDTree spatial search
 terminal_coords = _find_building_terminal_nodes_in_graph(buildings)
 ```
 
-**Now**: Metadata stored in graph during network creation
+**Now**: Request graph directly to preserve metadata
 ```python
+# Get graph directly with metadata preserved
+graph = calc_connectivity_network_with_geometry(streets, buildings, return_graph=True)
+
 # Fast - direct dictionary lookup
-if 'building_terminals' in graph.graph:
-    terminal_coords = [graph.graph['building_terminals'][b.id] for b in buildings]
+terminal_coords = [graph.graph['building_terminals'][b.id] for b in buildings]
 ```
 
 **Benefits**:
+- No redundant graph ↔ GeoDataFrame conversions
 - 100x faster terminal lookup
 - Eliminates floating-point search errors
 - Guarantees exact coordinate matches for Steiner tree validation
+- Backward compatible (default still returns GeoDataFrame)
 
 ## Future Improvements
 

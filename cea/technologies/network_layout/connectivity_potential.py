@@ -59,6 +59,7 @@ This approach ensures:
 """
 
 import warnings
+from typing import Union
 
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
@@ -843,7 +844,8 @@ def _validate_network_creation(graph: nx.Graph, building_centroids_df: gdf, outp
     missing_terminals = []
 
     for idx, row in building_centroids_df.iterrows():
-        building_id = row.get('Name', idx)
+        # Try both 'Name' and 'name' (case-insensitive), fallback to index
+        building_id = row.get('Name', row.get('name', idx))
         bldg_x, bldg_y = round(row.geometry.x, SHAPEFILE_TOLERANCE), round(row.geometry.y, SHAPEFILE_TOLERANCE)
 
         # Check if a node exists very close to this building (within tolerance)
@@ -911,7 +913,8 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
     terminal_mapping = {}
 
     for idx, row in building_centroids_df.iterrows():
-        building_id = row.get('Name', idx)  # Use 'Name' if available, otherwise use index
+        # Try both 'Name' and 'name' (case-insensitive), fallback to index
+        building_id = row.get('Name', row.get('name', idx))
         bldg_geom = row.geometry
 
         # Get building coordinates (already normalized in _prepare_network_inputs)
@@ -932,9 +935,15 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
 def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
-) -> gdf:
+    return_graph: bool = False,
+) -> Union[gdf, nx.Graph]:
     """
     Create connectivity network preserving street geometries.
+
+    :param streets_network_df: GeoDataFrame with street network geometries
+    :param building_centroids_df: GeoDataFrame with building centroids
+    :param return_graph: If True, return NetworkX graph with metadata; if False, return edges GeoDataFrame
+    :return: Either GeoDataFrame of edges (default) or NetworkX graph with metadata
     """
     # Prepare inputs (CRS conversion, validation, cleaning)
     streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
@@ -972,7 +981,19 @@ def calc_connectivity_network_with_geometry(
     # Reconstruct filtered graph
     G_filtered = graph.subgraph(set().union(*components)).copy()
 
-    # Convert filtered graph back to GeoDataFrame with preserved geometries
+    # If caller wants the graph directly (for optimization), return it with metadata preserved
+    if return_graph:
+        # Validate and return graph
+        edges_for_validation = nx_to_gdf(G_filtered, crs=crs, preserve_geometry=True)
+        if 'weight' in edges_for_validation.columns:
+            edges_for_validation.rename(columns={'weight': 'length'}, inplace=True)
+
+        print("\nValidating network creation...")
+        _validate_network_creation(G_filtered, building_centroids_df, edges_for_validation)
+
+        return G_filtered
+
+    # Otherwise, convert to GeoDataFrame for standard usage
     edges = nx_to_gdf(G_filtered, crs=crs, preserve_geometry=True)
 
     # Rename 'weight' to 'length' for CEA convention (edge lengths in meters)

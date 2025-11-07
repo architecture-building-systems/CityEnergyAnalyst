@@ -121,18 +121,26 @@ class TestNetworkLayoutIntegration:
 
     def test_building_terminal_metadata(self, simple_street_network, simple_buildings):
         """Test that building terminal metadata is properly stored in graph."""
-        # Note: calc_connectivity_network_with_geometry returns GeoDataFrame,
-        # but internally it creates a graph with metadata. We need to test
-        # this by inspecting the internal workflow or by using the graph directly.
-
-        # For now, verify the network was created successfully
-        network = calc_connectivity_network_with_geometry(
+        # Request graph directly to test metadata preservation
+        graph = calc_connectivity_network_with_geometry(
             simple_street_network,
-            simple_buildings
+            simple_buildings,
+            return_graph=True
         )
 
-        # Convert to graph to verify it works
-        graph = gdf_to_nx(network, preserve_geometry=True)
+        # Verify graph has building terminal metadata
+        assert 'building_terminals' in graph.graph, "Building terminal metadata not found"
+        assert 'crs' in graph.graph, "CRS metadata not found"
+        assert 'coord_precision' in graph.graph, "Coordinate precision metadata not found"
+
+        # Verify building terminal mapping
+        terminal_mapping = graph.graph['building_terminals']
+        assert len(terminal_mapping) == len(simple_buildings), "Not all buildings have terminal nodes"
+
+        # Verify each terminal node exists in graph
+        graph_nodes = set(graph.nodes())
+        for building_id, terminal_coord in terminal_mapping.items():
+            assert terminal_coord in graph_nodes, f"Terminal for building {building_id} not in graph nodes"
 
         # Should be a connected graph
         assert nx.is_connected(graph)
