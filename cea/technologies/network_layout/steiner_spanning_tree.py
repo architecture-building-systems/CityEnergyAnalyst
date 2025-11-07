@@ -169,7 +169,6 @@ def calc_steiner_spanning_tree(crs_projected,
 
     mst_edges = gdf([{
         "geometry": replace_start_endpoints(data['geometry'], u, v),
-        "weight": data['weight']
     } for u, v, data in mst_non_directed.edges(data=True)], crs=crs_projected)
 
     # Recalculate weights after snapping
