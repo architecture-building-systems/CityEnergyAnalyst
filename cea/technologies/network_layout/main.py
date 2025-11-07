@@ -186,8 +186,13 @@ def main(config: cea.config.Configuration):
         # Load and validate user-defined network
         try:
             result = load_user_defined_network(config, locator)
-            if result is None:
-                raise ValueError("User network loading returned None")
+        except Exception as e:
+            print(f"\n✗ Error loading user-defined network: {e}\n")
+            print("=" * 80 + "\n")
+            raise
+
+        # Check if network was actually provided (None = no network provided)
+        if result is not None:
             nodes_gdf, edges_gdf = result
 
             print(f"  - Nodes: {len(nodes_gdf)}")
@@ -263,17 +268,17 @@ def main(config: cea.config.Configuration):
             edges_gdf.to_file(output_edges_path, driver='ESRI Shapefile')
             nodes_gdf.to_file(output_nodes_path, driver='ESRI Shapefile')
 
-            print(f"\n  ✓ User-defined network saved to:")
+            print("\n  ✓ User-defined network saved to:")
             print(f"    {output_folder}")
             print("\n" + "=" * 80 + "\n")
+            return  # Exit early - network saved successfully
 
-        except Exception as e:
-            print(f"\n✗ Error loading user-defined network: {e}\n")
-            print("=" * 80 + "\n")
-            raise
-    else:
-        # Generate network layout using Steiner tree (current behavior)
-        layout_network(network_layout, locator, plant_building_names=plant_building_names)
+        # If result is None, fall through to automatic generation
+        print("  No user-defined network provided. Falling back to automatic generation.\n")
+        print("=" * 80 + "\n")
+
+    # Generate network layout using Steiner tree (current behavior or fallback)
+    layout_network(network_layout, locator, plant_building_names=plant_building_names)
 
 
 if __name__ == '__main__':

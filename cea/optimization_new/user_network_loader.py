@@ -23,6 +23,7 @@ __status__ = "Production"
 
 
 import os
+import itertools
 import pandas as pd
 import geopandas as gpd
 import networkx as nx
@@ -138,7 +139,7 @@ def _load_from_shapefiles(edges_path: str, nodes_path: str) -> Tuple[gpd.GeoData
     nodes_removed = nodes_before - len(nodes_gdf)
 
     if edges_removed > 0 or nodes_removed > 0:
-        print("  ⚠ Removed empty/null geometries from shapefiles:")
+        print("  Removed empty/null geometries from shapefiles:")
         if edges_removed > 0:
             print(f"      - {edges_removed} edge feature(s) with no geometry")
         if nodes_removed > 0:
@@ -202,7 +203,7 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
     features_removed = features_before - len(gdf)
 
     if features_removed > 0:
-        print(f"  ⚠ Removed {features_removed} feature(s) with empty/null geometries from GeoJSON")
+        print(f" Removed {features_removed} feature(s) with empty/null geometries from GeoJSON")
         print("  Note: Empty features are automatically cleaned (in-memory only)")
 
     if len(gdf) == 0:
@@ -220,7 +221,7 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
         raise UserNetworkLoaderError(
             "No Point features found in GeoJSON:\n"
             f"  Path: {geojson_path}\n\n"
-            "Network layout must include Point features representing nodes."
+            "  - Network layout must include Point features representing nodes."
         )
 
     if len(edges_gdf) == 0:
@@ -437,10 +438,10 @@ def validate_network_covers_district_buildings(
         extra_list = sorted(list(extra_buildings))
         raise UserNetworkLoaderError(
             f"User-defined network includes buildings NOT designated for district {network_type}:\n\n"
-            f"Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
-            f"Buildings found in network nodes: {len(network_building_names)}\n"
-            f"Extra buildings: {len(extra_buildings)}\n\n"
-            "Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
+            f"  - Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
+            f"  - Buildings found in network nodes: {len(network_building_names)}\n"
+            f"  - Extra buildings: {len(extra_buildings)}\n\n"
+            "  - Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
             (f"\n  ... and {len(extra_list) - 20} more" if len(extra_list) > 20 else "") +
             "\n\n"
             "Resolution options:\n"
@@ -649,7 +650,7 @@ def detect_network_components(
             + "\n".join(error_details) +
             (f"\n  ... and {len(unconnected_edges) - 10} more" if len(unconnected_edges) > 10 else "") +
             "\n\n"
-            f"Edges must have nodes at both endpoints within {NETWORK_TOPOLOGY_TOLERANCE}m (tolerance).\n\n"
+            f"  - Edges must have nodes at both endpoints within {NETWORK_TOPOLOGY_TOLERANCE}m (tolerance).\n\n"
             "Resolution:\n"
             "  1. Ensure edge endpoints EXACTLY match node coordinates\n"
             f"  2. Use GIS 'Snap' tools to connect edges to nodes (tolerance: {NETWORK_TOPOLOGY_TOLERANCE}m)\n"
@@ -692,10 +693,10 @@ def detect_network_components(
         # One or more networks have multiple PLANTs - not supported
         raise UserNetworkLoaderError(
             f"Multiple PLANT nodes in same network component detected:\n\n"
-            f"Expected networks (PLANT nodes): {expected_networks}\n"
-            f"Detected components: {actual_components}\n\n"
-            f"This means at least one network has {expected_networks - actual_components + 1} PLANT nodes.\n"
-            f"CEA does not support multiple PLANT nodes in a single network.\n\n"
+            f"  - Expected networks (PLANT nodes): {expected_networks}\n"
+            f"  - Detected components: {actual_components}\n\n"
+            f"  - This means at least one network has {expected_networks - actual_components + 1} PLANT nodes.\n"
+            f"  - CEA does not support multiple PLANT nodes in a single network.\n\n"
             f"Resolution:\n"
             f"  1. Keep only ONE PLANT node per network component\n"
             f"  2. Remove extra PLANT nodes\n"
@@ -705,7 +706,7 @@ def detect_network_components(
     elif actual_components > expected_networks:
         # More components than PLANTs - likely gaps in network
         gap_count = actual_components - expected_networks
-        print("\n⚠ Network topology issue detected:")
+        print("Network topology issue detected:")
         print(f"  - Expected networks (based on PLANT nodes): {expected_networks}")
         print(f"  - Detected disconnected components: {actual_components}")
         print(f"  - Extra components that need merging: {gap_count}")
@@ -724,7 +725,7 @@ def detect_network_components(
         # Try to snap nearby nodes, but only merge components smartly
         snap_threshold = NETWORK_TOPOLOGY_TOLERANCE  # Same as edge-to-node tolerance (10cm)
 
-        for node1_idx, node2_idx in [(i, j) for i in G.nodes for j in G.nodes if i < j]:
+        for node1_idx, node2_idx in itertools.combinations(G.nodes, 2):
             # Check if nodes are in different components
             comp1 = None
             comp2 = None
