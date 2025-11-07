@@ -68,7 +68,7 @@ from shapely.ops import snap, split
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, nx_to_gdf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -972,10 +972,12 @@ def calc_connectivity_network_with_geometry(
     # Reconstruct filtered graph
     G_filtered = graph.subgraph(set().union(*components)).copy()
 
-    edges = gdf([{
-        "geometry": data['geometry'],
-    } for u, v, data in G_filtered.edges(data=True)], crs=streets_network_df.crs)
-    edges['length'] = edges.geometry.length
+    # Convert filtered graph back to GeoDataFrame with preserved geometries
+    edges = nx_to_gdf(G_filtered, crs=crs, preserve_geometry=True)
+
+    # Rename 'weight' to 'length' for CEA convention (edge lengths in meters)
+    if 'weight' in edges.columns:
+        edges.rename(columns={'weight': 'length'}, inplace=True)
 
     # Validate network creation before returning
     print("\nValidating network creation...")
