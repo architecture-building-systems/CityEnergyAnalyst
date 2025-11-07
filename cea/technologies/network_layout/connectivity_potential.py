@@ -654,7 +654,14 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
             # No interior split points - keep original line
             new_lines.append(line.geometry)
     
-    combined_network = gdf(geometry=new_lines, crs=street_network.crs)
+    # Round all coordinates of geometries to SHAPEFILE_TOLERANCE to preserve connectivity
+    rounded_lines = []
+    for line in new_lines:
+        rounded_coords = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE)) for x, y in line.coords]
+        rounded_line = LineString(rounded_coords)
+        rounded_lines.append(rounded_line)
+    
+    combined_network = gdf(geometry=rounded_lines, crs=street_network.crs)
 
     return combined_network
 
