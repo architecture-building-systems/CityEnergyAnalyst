@@ -148,6 +148,7 @@ def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
     - Identifies chains of segments connected only through degree-2 nodes
     - Merges each chain using shapely.ops.linemerge()
     - Preserves all segments at degree-3+ nodes (real intersections)
+    - **Removes self-loops** (closed chains where start == end)
 
     Benefits:
     - Reduces segment count before graph construction → faster Steiner tree
@@ -266,24 +267,48 @@ def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
 
     # Step 4: Merge each chain using linemerge
     merged_geometries = []
+    self_loops_removed = 0
+    
     for chain in chains:
         if len(chain) == 1:
-            # Single segment, no merging needed
-            merged_geometries.append(segment_list[chain[0]]['geometry'])
+            # Single segment - check if it's a self-loop
+            seg = segment_list[chain[0]]
+            if seg['start'] == seg['end']:
+                # Self-loop detected - skip it
+                self_loops_removed += 1
+                continue
+            merged_geometries.append(seg['geometry'])
         else:
             # Merge multiple segments
             chain_geoms = [segment_list[idx]['geometry'] for idx in chain]
             merged = linemerge(chain_geoms)
 
             if merged.geom_type == 'LineString':
+                # Check if merged line is a self-loop (closed ring)
+                coords = list(merged.coords)
+                start = tuple(round(c, TOLERANCE) for c in coords[0])
+                end = tuple(round(c, TOLERANCE) for c in coords[-1])
+                
+                if start == end:
+                    # Closed loop - skip it
+                    self_loops_removed += 1
+                    continue
+                
                 merged_geometries.append(merged)
             else:
-                # Fallback: keep original segments if merge fails
-                merged_geometries.extend(chain_geoms)
+                # Fallback: keep original segments if merge fails (but filter self-loops)
+                for geom in chain_geoms:
+                    coords = list(geom.coords)
+                    start = tuple(round(c, TOLERANCE) for c in coords[0])
+                    end = tuple(round(c, TOLERANCE) for c in coords[-1])
+                    if start != end:  # Only keep non-self-loops
+                        merged_geometries.append(geom)
+                    else:
+                        self_loops_removed += 1
 
     segments_removed = len(segment_list) - len(merged_geometries)
-    if segments_removed > 0:
-        print(f"  Simplified: {len(segment_list)} → {len(merged_geometries)} segments ({segments_removed} degree-2 nodes removed)")
+    print(f"  Simplified: {len(segment_list)} → {len(merged_geometries)} segments "
+          f"({segments_removed} degree-2 nodes removed, {self_loops_removed} self-loops removed)")
 
     return gdf(geometry=merged_geometries, crs=network_gdf.crs)
 
