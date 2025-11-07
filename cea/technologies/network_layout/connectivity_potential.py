@@ -63,7 +63,7 @@ import warnings
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString
-from shapely.ops import snap
+from shapely.ops import snap, split
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
@@ -784,7 +784,7 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     street_network = apply_graph_corrections(streets_network_df)
 
     # Create terminals from corrected street network to buildings
-    prototype_network = create_terminals(building_centroids_df, street_network, crs)
+    prototype_network = create_terminals(building_centroids_df, street_network)
 
     # PASS 2: Apply graph corrections to the combined network (streets + terminals)
     print("\nApplying graph corrections to combined network (streets + building terminals)...")
@@ -801,6 +801,8 @@ def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gd
     # This snaps points to lines and splits lines at those points in one operation
     # Creates proper graph structure where each junction/endpoint is explicit
     potential_network_df = split_network_at_points(prototype_network, gdf_points, SNAP_TOLERANCE, crs)
+
+    potential_network_df['length'] = potential_network_df.geometry.length
 
     return potential_network_df
 
