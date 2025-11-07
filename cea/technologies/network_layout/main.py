@@ -201,38 +201,51 @@ def main(config: cea.config.Configuration):
             overwrite_supply = config.network_layout.overwrite_supply_settings
             connected_buildings_config = config.network_layout.connected_buildings
 
+            # Get building nodes from user-provided network
+            building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
+                                       (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                                       (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+            network_building_names = sorted(building_nodes['building'].unique())
+
             # Determine which buildings should be in the network
             if overwrite_supply:
                 # Use connected-buildings parameter (what-if scenarios)
                 if connected_buildings_config:
                     buildings_to_validate = connected_buildings_config
                     print(f"  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
-                    print(f"  - Connected buildings: {len(buildings_to_validate)}")
+                    print(f"  - Connected buildings (from config): {len(buildings_to_validate)}")
+                    print(f"  - Buildings in user layout: {len(network_building_names)}")
                 else:
-                    # Blank connected-buildings: use buildings with demand
-                    buildings_to_validate = get_buildings_with_demand(locator, network_type)
+                    # Blank connected-buildings: accept whatever is in user layout
                     print(f"  - Mode: Overwrite supply.csv (connected-buildings blank)")
-                    print(f"  - Buildings with demand: {len(buildings_to_validate)}")
+                    print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
+                    for building_name in network_building_names[:10]:
+                        print(f"      - {building_name}")
+                    if len(network_building_names) > 10:
+                        print(f"      ... and {len(network_building_names) - 10} more")
+                    buildings_to_validate = None  # Skip validation
             else:
                 # Use supply.csv to determine district buildings
                 buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
                 print(f"  - Mode: Use supply.csv settings")
-                print(f"  - District buildings from supply.csv: {len(buildings_to_validate)}")
+                print(f"  - District buildings (from supply.csv): {len(buildings_to_validate)}")
+                print(f"  - Buildings in user layout: {len(network_building_names)}")
 
-            # Check for buildings without demand and warn (Option 2: warn but include)
-            buildings_with_demand = get_buildings_with_demand(locator, network_type)
-            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
-
-            if buildings_without_demand:
-                print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
-                for building_name in buildings_without_demand[:10]:
-                    print(f"      - {building_name}")
-                if len(buildings_without_demand) > 10:
-                    print(f"      ... and {len(buildings_without_demand) - 10} more")
-                print(f"  Note: These buildings will be included in layout but may not be simulated in thermal-network")
-
-            # Validate network covers all specified buildings
+            # Validate network if we have a reference list
             if buildings_to_validate:
+                # Check for buildings without demand and warn (Option 2: warn but include)
+                buildings_with_demand = get_buildings_with_demand(locator, network_type)
+                buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+
+                if buildings_without_demand:
+                    print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
+                    for building_name in buildings_without_demand[:10]:
+                        print(f"      - {building_name}")
+                    if len(buildings_without_demand) > 10:
+                        print(f"      ... and {len(buildings_without_demand) - 10} more")
+                    print(f"  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+
+                # Validate network covers all specified buildings
                 nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
                     nodes_gdf,
                     gpd.read_file(locator.get_zone_geometry()),
@@ -243,16 +256,15 @@ def main(config: cea.config.Configuration):
 
                 if auto_created_buildings:
                     print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
-                    for building_name in auto_created_buildings[:10]:
-                        print(f"      - {building_name}")
+                    for building_name, edge_name in auto_created_buildings[:10]:
+                        print(f"      - {building_name} (at endpoint of {edge_name})")
                     if len(auto_created_buildings) > 10:
                         print(f"      ... and {len(auto_created_buildings) - 10} more")
-                    print("  Note: Nodes created at edge endpoints closest to building centroids (in-memory only)")
+                    print(f"  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
                 else:
                     print("  ✓ All specified buildings have valid nodes in network")
             else:
-                print("  ⚠ Warning: No buildings to validate (empty building list)")
-                print("  Note: Network will be saved but may not work in thermal-network or optimization")
+                print("  - Skipping building coverage validation (accepting user layout as-is)")
 
             # Save to standard location
             output_edges_path = locator.get_network_layout_edges_shapefile(network_type)
