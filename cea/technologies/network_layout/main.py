@@ -67,9 +67,57 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
-def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
-    if plant_building_names is None:
-        plant_building_names = []
+def resolve_plant_building(plant_building_input, available_buildings):
+    """
+    Resolve plant building name with flexible matching.
+
+    - Parses comma-separated input (takes first value)
+    - Case-insensitive matching against available buildings
+    - Returns matched building name or empty string if no match
+    - Logs the resolution process
+
+    :param plant_building_input: User input (can be comma-separated, any case)
+    :param available_buildings: List of actual building names in the scenario
+    :return: Matched building name or empty string
+    """
+    if not plant_building_input or not plant_building_input.strip():
+        return ""
+
+    # Parse comma-separated input and take first value
+    input_parts = [s.strip() for s in plant_building_input.split(',') if s.strip()]
+
+    if not input_parts:
+        return ""
+
+    first_input = input_parts[0]
+
+    # Log if multiple buildings were provided
+    if len(input_parts) > 1:
+        print(f"  ℹ Plant building: Multiple buildings provided '{plant_building_input}'")
+        print(f"    Using first value: '{first_input}'")
+
+    # Case-insensitive matching
+    input_lower = first_input.lower()
+    building_map = {b.lower(): b for b in available_buildings}
+
+    if input_lower in building_map:
+        matched_building = building_map[input_lower]
+        if matched_building != first_input:
+            print(f"  ℹ Plant building: Matched '{first_input}' to '{matched_building}' (case-insensitive)")
+        else:
+            print(f"  ℹ Plant building: Using '{matched_building}' as anchor for plant placement")
+        return matched_building
+    else:
+        print(f"  ⚠ Warning: Plant building '{first_input}' not found in connected buildings")
+        print(f"    Available buildings: {', '.join(sorted(available_buildings)[:5])}" +
+              (f" ... and {len(available_buildings) - 5} more" if len(available_buildings) > 5 else ""))
+        print(f"    Plant will be placed at building with highest demand (default)")
+        return ""
+
+
+def layout_network(network_layout, locator, plant_building_name=None, output_name_network="", optimization_flag=False):
+    if plant_building_name is None:
+        plant_building_name = ""
     weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
     temp_path_potential_network_shp = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
@@ -80,6 +128,9 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     pipe_diameter_default = PIPE_DIAMETER_DEFAULT
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
+
+    # Resolve plant building name (case-insensitive, handles comma-separated input)
+    plant_building_name = resolve_plant_building(plant_building_name, list_district_scale_buildings)
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
     # allow_looped_networks = network_layout.allow_looped_networks
     allow_looped_networks = False
@@ -92,7 +143,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     building_centroids_df = calc_building_centroids(
         path_zone_shp,
         list_district_scale_buildings,
-        plant_building_names,
+        [plant_building_name] if plant_building_name else [],
         consider_only_buildings_with_demand,
         type_network,
         total_demand_location,
@@ -131,7 +182,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
                                total_demand_location,
                                allow_looped_networks,
                                optimization_flag,
-                               plant_building_names,
+                               [plant_building_name] if plant_building_name else [],
                                disconnected_building_names,
                                steiner_algorithm)
 
@@ -164,7 +215,7 @@ def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)
-    plant_building_names = config.network_layout.plant_buildings
+    plant_building_name = config.network_layout.plant_building
 
     # Check if user provided custom network layout
     edges_shp = config.network_layout.user_edges_shp_path
@@ -289,7 +340,7 @@ def main(config: cea.config.Configuration):
         print("=" * 80 + "\n")
 
     # Generate network layout using Steiner tree (current behavior or fallback)
-    layout_network(network_layout, locator, plant_building_names=plant_building_names)
+    layout_network(network_layout, locator, plant_building_name=plant_building_name)
 
 
 if __name__ == '__main__':

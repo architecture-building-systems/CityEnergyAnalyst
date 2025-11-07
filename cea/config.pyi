@@ -1360,10 +1360,10 @@ class DecentralizedSection(Section):
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
     network_type: str
-    connected_buildings: list[str]
     overwrite_supply_settings: bool
-    plant_buildings: List[str]
+    connected_buildings: list[str]
     consider_only_buildings_with_demand: bool
+    plant_building: str | None
     user_edges_shp_path: str | None
     user_nodes_shp_path: str | None
     user_network_geojson_path: str | None
@@ -1372,13 +1372,13 @@ class NetworkLayoutSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
-    @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["plant_buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["plant_building"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["user_edges_shp_path"]) -> str | None: ...
     @overload
