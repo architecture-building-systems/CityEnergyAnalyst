@@ -12,7 +12,7 @@ from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely import LineString, Point
 
 from cea.constants import SHAPEFILE_TOLERANCE
-from cea.technologies.network_layout.graph_utils import gdf_to_nx
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords, nx_to_gdf
 from cea.technologies.network_layout.utility import read_shp
 from cea.datamanagement.graph_helper import GraphCorrector
 
@@ -113,6 +113,7 @@ def calc_steiner_spanning_tree(crs_projected,
     G = potential_network_graph.to_undirected()
 
     # get the building nodes and coordinates
+    # Normalize coordinates to ensure consistent precision (prevents floating-point matching issues)
     iterator_nodes = building_nodes_graph.nodes
     terminal_nodes_coordinates = []
     terminal_nodes_names = []
@@ -121,8 +122,7 @@ def calc_steiner_spanning_tree(crs_projected,
         if building_name in disconnected_building_names:
             print("Building {} is considered to be disconnected and it is not included".format(building_name))
         else:
-            terminal_nodes_coordinates.append(
-                (round(coordinates[0], SHAPEFILE_TOLERANCE), round(coordinates[1], SHAPEFILE_TOLERANCE)))
+            terminal_nodes_coordinates.append(normalize_coords([coordinates])[0])
             terminal_nodes_names.append(data['name'])
 
     # Validate graph is ready for Steiner tree with terminal nodes
@@ -185,8 +185,10 @@ def calc_steiner_spanning_tree(crs_projected,
         else:
             return "NONE"
 
+    # Extract normalized coordinates to ensure consistent precision
     mst_nodes['coordinates'] = mst_nodes['geometry'].apply(
-        lambda x: (round(x.coords[0][0], SHAPEFILE_TOLERANCE), round(x.coords[0][1], SHAPEFILE_TOLERANCE)))
+        lambda x: normalize_coords([x.coords[0]])[0]
+    )
     mst_nodes['building'] = mst_nodes['coordinates'].apply(lambda x: populate_fields(x))
     mst_nodes['name'] = mst_nodes.index.map(lambda x: "NODE" + str(x))
     mst_nodes['type'] = mst_nodes['building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
