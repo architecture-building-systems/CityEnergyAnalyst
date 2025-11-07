@@ -401,7 +401,7 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         best_snap = (snapped.x, snapped.y)
         if lines_to_split.get(nearest_index) is None:
             lines_to_split[nearest_index] = []
-        lines_to_split[nearest_index] = [Point(best_snap)]
+        lines_to_split[nearest_index].append(Point(best_snap))
 
         return best_snap if best_snap else point_coords
 
@@ -668,14 +668,15 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
         coords = list(line.geometry.coords)
         start_coord_normalized = normalize_coords([coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
         end_coord_normalized = normalize_coords([coords[-1]], precision=SHAPEFILE_TOLERANCE)[0]
-        start_pt = Point(start_coord_normalized)
-        end_pt = Point(end_coord_normalized)
 
         valid_split_points = []
         for pt in split_points:
-            # Skip if point is at start or end of line (using normalized coordinates)
-            # Use SHAPEFILE_TOLERANCE as distance threshold (10^-6 m = 1 micrometer)
-            if pt.distance(start_pt) < 10**(-SHAPEFILE_TOLERANCE) or pt.distance(end_pt) < 10**(-SHAPEFILE_TOLERANCE):
+            # Skip if point is at start or end of line (using exact normalized coordinate comparison)
+            # Normalize point coordinates for exact comparison
+            pt_coord = (round(pt.x, SHAPEFILE_TOLERANCE), round(pt.y, SHAPEFILE_TOLERANCE))
+
+            # Use exact coordinate tuple comparison (more reliable than distance threshold)
+            if pt_coord == start_coord_normalized or pt_coord == end_coord_normalized:
                 continue
             valid_split_points.append(pt)
 
@@ -710,6 +711,22 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     # - Street split points: normalized Points used for splitting (line 630)
     # - Original streets: normalized in _prepare_network_inputs() before this function
     # This ensures consistent precision throughout and prevents disconnected components
+
+    # Validate coordinate normalization
+    from cea.technologies.network_layout.graph_utils import validate_normalized_coordinates
+    validate_normalized_coordinates(combined_network, precision=SHAPEFILE_TOLERANCE)
+
+    # Check for micro-disconnections by converting to graph and analyzing connectivity
+    from cea.technologies.network_layout.graph_utils import gdf_to_nx
+    import networkx as nx
+
+    test_graph = gdf_to_nx(combined_network, coord_precision=SHAPEFILE_TOLERANCE)
+    if not nx.is_connected(test_graph):
+        components = list(nx.connected_components(test_graph))
+        print(f"⚠️  WARNING: create_terminals produced {len(components)} disconnected components")
+        print(f"   Largest component: {len(max(components, key=len))} nodes")
+        print(f"   Component sizes: {sorted([len(c) for c in components], reverse=True)}")
+        print("   This may indicate coordinate precision issues that need investigation")
 
     return combined_network
 
@@ -1009,6 +1026,12 @@ def calc_connectivity_network_with_geometry(
     validate_normalized_coordinates(streets_network_df, precision=SHAPEFILE_TOLERANCE)
     print("  ✓ All coordinates normalized to consistent precision")
 
+    # Apply graph corrections to fix micro-precision disconnections
+    # This merges nodes that are within floating-point epsilon (handles coordinate rounding artifacts)
+    print("\n  Applying graph corrections to fix micro-precision issues...")
+    building_centroid_coords = _get_protected_building_coords(building_centroids_df)
+    streets_network_df = apply_graph_corrections(streets_network_df, protected_nodes=building_centroid_coords)
+
     # Convert to graph with geometry preservation
     graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
 
@@ -1023,9 +1046,6 @@ def calc_connectivity_network_with_geometry(
 
     # Drop single-node components (as they don't contribute to connectivity)
     if len(components) > 1:
-        from cea.technologies.network_layout.debug import check_network_connectivity
-        check_network_connectivity(streets_network_df, plot=True)
-
         raise ValueError(
             f"Network graph has {len(components)} disconnected components after terminal creation. "
             f"This indicates a serious connectivity issue that must be resolved."

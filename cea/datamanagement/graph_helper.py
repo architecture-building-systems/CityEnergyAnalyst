@@ -759,10 +759,14 @@ class GraphCorrector:
         due to coordinate precision issues or data quality problems. When nodes are merged,
         all edges from the merged nodes are transferred to the kept node.
 
+        Uses a two-pass approach:
+        1. Micro-precision pass: Merges nodes within floating-point epsilon (handles coordinate rounding artifacts)
+        2. Snap-tolerance pass: Merges nodes within SNAP_TOLERANCE (handles data quality issues)
+
         Uses KDTree spatial indexing for efficient O(N log N) nearest neighbor search instead
         of O(N²) brute force, making it suitable for city-scale graphs with thousands of nodes.
 
-        :param distance_threshold: Maximum distance for merging nodes (default: SNAP_TOLERANCE)
+        :param distance_threshold: Maximum distance for merging nodes in second pass (default: SNAP_TOLERANCE)
         :type distance_threshold: Optional[float]
         :return: Graph with close nodes merged
         :rtype: nx.Graph
@@ -770,14 +774,38 @@ class GraphCorrector:
         if distance_threshold is None:
             distance_threshold = SNAP_TOLERANCE
 
+        # Pass 1: Merge nodes within floating-point epsilon (handles coordinate rounding artifacts)
+        epsilon_threshold = 10 ** (-self.coord_precision)  # 1 micrometer for precision=6
+        print(f"  Pass 1: Micro-precision merge (threshold: {epsilon_threshold:.9f}m)")
+        micro_merged = self._merge_nodes_within_threshold(epsilon_threshold, label="micro-precision")
+
+        # Pass 2: Merge nodes within snap tolerance (handles data quality issues)
+        print(f"  Pass 2: Snap-tolerance merge (threshold: {distance_threshold}m)")
+        snap_merged = self._merge_nodes_within_threshold(distance_threshold, label="snap-tolerance")
+
+        total_merged = micro_merged + snap_merged
+        print(f"Total nodes merged: {total_merged} ({micro_merged} micro-precision + {snap_merged} snap-tolerance)")
+
+        return self.graph
+
+    def _merge_nodes_within_threshold(self, distance_threshold: float, label: str = "") -> int:
+        """
+        Helper method to merge nodes within a specific distance threshold.
+
+        :param distance_threshold: Maximum distance for merging nodes
+        :type distance_threshold: float
+        :param label: Label for logging purposes
+        :type label: str
+        :return: Number of nodes merged
+        :rtype: int
+        """
         nodes = list(self.graph.nodes())
         num_nodes_before = len(nodes)
         nodes_to_merge = {}  # Maps nodes to be removed -> node to keep
         merged_count = 0
 
-        print(f"Checking {num_nodes_before} nodes for merging (threshold: {distance_threshold}m)...")
         if self.protected_nodes:
-            print(f"  Protecting {len(self.protected_nodes)} terminal nodes from merging")
+            print(f"    Protecting {len(self.protected_nodes)} terminal nodes from merging")
 
         # Build KDTree once for efficient spatial queries (reuse helper method pattern)
         node_coords = [(node[0], node[1]) for node in nodes]
@@ -809,15 +837,19 @@ class GraphCorrector:
                     continue
 
                 distance = self._calculate_distance(node1, node2)
-                if distance < distance_threshold:
+                # Use <= for micro-precision to catch exactly-epsilon distances (e.g., 0.000001m)
+                # Use < for larger tolerances to avoid over-merging
+                comparison = distance <= distance_threshold if distance_threshold < 0.001 else distance < distance_threshold
+                if comparison:
                     # Mark node2 for merging into node1
                     nodes_to_merge[node2] = node1
                     merged_count += 1
-                    print(f"  Merging nodes {distance:.3f}m apart")
+                    if distance_threshold < 0.001:  # Only log micro-precision merges
+                        print(f"    Merging nodes {distance:.9f}m apart")
 
         if merged_count == 0:
-            print("No nodes close enough to merge")
-            return self.graph
+            print(f"    No nodes close enough to merge (checked {num_nodes_before} nodes)")
+            return 0
 
         # Perform the merge: transfer all edges from nodes_to_merge to their target nodes
         for node_to_remove, node_to_keep in nodes_to_merge.items():
@@ -853,16 +885,16 @@ class GraphCorrector:
             self.graph.remove_node(node_to_remove)
 
         num_nodes_after = self.graph.number_of_nodes()
-        print(f"Merged {merged_count} nodes. Graph now has {num_nodes_after} nodes (was {num_nodes_before})")
+        print(f"    Merged {merged_count} nodes. Graph now has {num_nodes_after} nodes (was {num_nodes_before})")
 
-        self._log_correction('merge_close_nodes', {
+        self._log_correction(f'merge_close_nodes_{label}', {
             'distance_threshold': distance_threshold,
             'nodes_merged': merged_count,
             'nodes_before': num_nodes_before,
             'nodes_after': num_nodes_after
         })
 
-        return self.graph
+        return merged_count
 
     def remove_self_loops(self) -> nx.Graph:
         """
