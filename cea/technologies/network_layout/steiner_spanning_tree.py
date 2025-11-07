@@ -12,7 +12,7 @@ from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely import LineString, Point
 
 from cea.constants import SHAPEFILE_TOLERANCE
-from cea.technologies.network_layout.geometry_graph import GeometryPreservingGraph
+from cea.technologies.network_layout.graph_utils import gdf_to_nx
 from cea.technologies.network_layout.utility import read_shp
 from cea.datamanagement.graph_helper import GraphCorrector
 
@@ -101,8 +101,7 @@ def calc_steiner_spanning_tree(crs_projected,
     # TODO: Ensure CRS is used properly throughout the function (currently not applied)
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
     building_nodes_graph = read_shp(temp_path_building_centroids_shp)
-
-    potential_network_graph = GeometryPreservingGraph(potential_network_gdf, coord_precision=SHAPEFILE_TOLERANCE).graph
+    potential_network_graph = gdf_to_nx(potential_network_gdf) 
 
     if potential_network_graph is None or building_nodes_graph is None:
         raise ValueError('Could not read potential network or building centroids shapefiles. '

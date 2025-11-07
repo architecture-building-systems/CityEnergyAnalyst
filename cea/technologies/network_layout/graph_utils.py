@@ -7,8 +7,10 @@ and other graph-related utilities for thermal network layout.
 
 import networkx as nx
 
+from cea.constants import SHAPEFILE_TOLERANCE
 
-def gdf_to_nx(network_gdf, coord_precision=3, preserve_geometry=False, **edge_attrs):
+
+def gdf_to_nx(network_gdf, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True, **edge_attrs):
     """
     Convert GeoDataFrame to NetworkX Graph.
 
