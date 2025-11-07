@@ -141,21 +141,34 @@ def calc_steiner_spanning_tree(crs_projected,
         "geometry": Point(coords),
     } for coords in mst_non_directed.nodes()], crs=crs_projected)
     
-    # since edges of graph is guranteed to be connected to nodes, we alter the edge geometries to snap to the nodes
-    def replace_start_endpoints(line: LineString, start_coords, end_coords):
+    # since edges of graph is guranteed to be connected to nodes, we alter the edge geometries to snap to the nodes before writing to shapefile
+    # This is to avoid small discrepancies due to rounding errors or slight misalignments when creating the graph from shapefiles (defensive programming)
+    def replace_start_endpoints(line: LineString, u, v):
+        from shapely.geometry import Point
+
         coords = list(line.coords)
-        print(coords)
-        print(start_coords, end_coords)
-        # Replace start point
-        if coords[0] != start_coords:
-            coords[0] = start_coords
-        # Replace end point
-        if coords[-1] != end_coords:
-            coords[-1] = end_coords
+        start_point = Point(coords[0])
+
+        u_point = Point(u)
+        v_point = Point(v)
+
+        # Determine which node is closer to which endpoint
+        dist_u_to_start = start_point.distance(u_point)
+        dist_v_to_start = start_point.distance(v_point)
+
+        if dist_u_to_start < dist_v_to_start:
+            # u is closer to start, v is closer to end
+            coords[0] = u
+            coords[-1] = v
+        else:
+            # v is closer to start, u is closer to end
+            coords[0] = v
+            coords[-1] = u
+
         return LineString(coords)
 
     mst_edges = gdf([{
-        "geometry": data['geometry'],
+        "geometry": replace_start_endpoints(data['geometry'], u, v),
         "weight": data['weight']
     } for u, v, data in mst_non_directed.edges(data=True)], crs=crs_projected)
 
