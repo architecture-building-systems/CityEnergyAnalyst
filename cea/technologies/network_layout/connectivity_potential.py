@@ -61,10 +61,9 @@ This approach ensures:
 import warnings
 
 import networkx as nx
-import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString
-from shapely.ops import split, snap
+from shapely.ops import snap
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
@@ -488,6 +487,7 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
 
     return network_gdf
 
+
 def split_network_at_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
     """
     Split network lines at specified point locations with snapping tolerance.
@@ -546,7 +546,7 @@ def split_network_at_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: floa
     return result_gdf
 
 
-def near_analysis(building_centroids, street_network):
+def near_analysis(building_centroids, street_network: gdf):
     # Get the nearest edge for each building centroid
     nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
     nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)  # reset index so vectorization works
@@ -554,7 +554,7 @@ def near_analysis(building_centroids, street_network):
     # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
     nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
 
-    df = gdf({"name": building_centroids["name"]}, geometry=nearest_points, crs=street_network.crs)
+    df = gdf({"idx": nearest_indexes}, geometry=nearest_points, crs=street_network.crs)
     return df
 
 
@@ -583,7 +583,7 @@ def calculate_significant_points(prototype_network, crs):
     return gdf_points
 
 
-def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> gdf:
+def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     """
     Create terminal connection lines from building centroids to nearest points on street network.
     
@@ -596,8 +596,6 @@ def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> 
     :type building_centroids: gdf
     :param street_network: GeoDataFrame with street network LineStrings (already corrected)
     :type street_network: gdf
-    :param crs: Coordinate reference system
-    :type crs: str
     :return: Combined network (street + building terminals)
     :rtype: gdf
     """
@@ -605,18 +603,59 @@ def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> 
     near_points = near_analysis(building_centroids, street_network)
     
     # Create terminal lines using vectorized LineString construction
-    # Each line connects: nearest_street_point → building_centroid
-    lines_to_buildings = gdf(
-        geometry=[
-            LineString([street_pt.coords[0], bldg_pt.coords[0]])
-            for street_pt, bldg_pt in zip(near_points.geometry, building_centroids.geometry)
-        ],
-        crs=crs
-    )
+    # Each line connects: building_centroid → nearest_street_point
+    new_lines = []
+    lines_to_split = {}
+    for bldg_pt, street_pt, street_idx in zip(building_centroids.geometry, near_points.geometry, near_points.idx):
+        line = LineString([bldg_pt.coords[0], street_pt.coords[0]])
+        new_lines.append(line)
+        if lines_to_split.get(street_idx) is None:
+            lines_to_split[street_idx] = []
+        lines_to_split[street_idx].append(street_pt)
     
-    # Combine building terminals with street network
-    combined_network = gdf(pd.concat([lines_to_buildings, street_network], ignore_index=True), crs=crs)
+    # Split street lines at terminal connection points using substring method
+    from shapely.ops import substring
+
+    for idx, line in street_network.iterrows():
+        if idx not in lines_to_split:
+            new_lines.append(line.geometry)
+            continue
+
+        split_points = lines_to_split[idx]
+
+        # Filter out points at line endpoints (they don't cause splits)
+        coords = list(line.geometry.coords)
+        start_pt = Point(coords[0])
+        end_pt = Point(coords[-1])
+
+        valid_split_points = []
+        for pt in split_points:
+            # Skip if point is at start or end of line
+            if pt.distance(start_pt) < 1e-6 or pt.distance(end_pt) < 1e-6:
+                continue
+            valid_split_points.append(pt)
+
+        if valid_split_points:
+            # Get distances along line for each split point and sort
+            distances = sorted([line.geometry.project(pt) for pt in valid_split_points])
+
+            # Create segments between start, split points, and end
+            all_distances = [0] + distances + [line.geometry.length]
+
+            # Generate segments using substring
+            for i in range(len(all_distances) - 1):
+                start_dist = all_distances[i]
+                end_dist = all_distances[i + 1]
+
+                if end_dist - start_dist > 1e-10:  # Skip zero-length segments
+                    segment = substring(line.geometry, start_dist, end_dist, normalized=False)
+                    new_lines.append(segment)
+        else:
+            # No interior split points - keep original line
+            new_lines.append(line.geometry)
     
+    combined_network = gdf(geometry=new_lines, crs=street_network.crs)
+
     return combined_network
 
 
