@@ -77,7 +77,7 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
 
     # type_mat_default = network_layout.type_mat
     type_mat_default = TYPE_MAT_DEFAULT
-    pipe_diameter_default = network_layout.pipe_diameter
+    pipe_diameter_default = PIPE_DIAMETER_DEFAULT
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
     consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
@@ -144,7 +144,6 @@ class NetworkLayout(object):
         self.connected_buildings = []
         self.connected_buildings = network_layout.connected_buildings
         self.disconnected_buildings = []
-        self.pipe_diameter = PIPE_DIAMETER_DEFAULT
         self.type_mat = TYPE_MAT_DEFAULT
         self.create_plant = True
         self.allow_looped_networks = False
@@ -152,7 +151,7 @@ class NetworkLayout(object):
 
         self.algorithm = None
 
-        attributes = ["network_type", "pipe_diameter", "type_mat", "create_plant", "allow_looped_networks",
+        attributes = ["network_type", "type_mat", "create_plant", "allow_looped_networks",
                       "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings",
                       "algorithm"]
         for attr in attributes:

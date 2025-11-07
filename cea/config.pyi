@@ -1363,12 +1363,11 @@ class NetworkLayoutSection(Section):
     connected_buildings: list[str]
     overwrite_supply_settings: bool
     plant_buildings: List[str]
-    pipe_diameter: int
     consider_only_buildings_with_demand: bool
-    algorithm: str
     user_edges_shp_path: str | None
     user_nodes_shp_path: str | None
     user_network_geojson_path: str | None
+    algorithm: str
 
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
@@ -1379,17 +1378,15 @@ class NetworkLayoutSection(Section):
     @overload
     def __getattr__(self, item: Literal["plant_buildings"]) -> List[str]: ...
     @overload
-    def __getattr__(self, item: Literal["pipe_diameter"]) -> int: ...
-    @overload
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["algorithm"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["user_edges_shp_path"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["user_nodes_shp_path"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["user_network_geojson_path"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["algorithm"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class MultiCriteriaSection(Section):
