@@ -79,7 +79,19 @@ def _add_linestring_to_graph(G, line, row, idx, coord_precision, preserve_geomet
     end = tuple(round(c, coord_precision) for c in coords[-1])
 
     # Build edge data dictionary
-    edge_data = {'weight': line.length}
+    # Prefer existing length column if available (more accurate for processed networks)
+    # Check for common length column names: 'length', 'length_m', 'weight'
+    weight = None
+    for length_col in ['length', 'length_m', 'weight']:
+        if length_col in row.index and row[length_col] is not None:
+            weight = row[length_col]
+            break
+
+    # Fall back to calculating from geometry if no length column found
+    if weight is None:
+        weight = line.length
+
+    edge_data = {'weight': weight}
 
     if preserve_geometry:
         edge_data['geometry'] = line
