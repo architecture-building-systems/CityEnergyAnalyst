@@ -448,7 +448,6 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
     return gdf(geometry=final_geometries, crs=network_gdf.crs)
 
 
-
 def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
     """
     Comprehensive street network cleaning workflow.
@@ -458,6 +457,7 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
     1. Split streets at intersection points (automatic detection)
     2. Snap near-miss endpoints to nearby lines (fix small gaps)
     3. Split again at new intersections created by snapping
+    4. Simplify by merging degree-2 nodes (remove insignificant pass-through points)
 
     This is the recommended preprocessing step before applying graph corrections.
 
@@ -482,6 +482,9 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
 
     print("  3. Re-splitting after snapping (creates new intersections)...")
     network_gdf = split_streets_at_intersections(network_gdf)
+
+    print("  4. Simplifying network (merging degree-2 nodes)...")
+    network_gdf = simplify_street_network_geometric(network_gdf)
 
     return network_gdf
 
