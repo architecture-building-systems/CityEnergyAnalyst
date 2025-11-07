@@ -10,15 +10,21 @@ This module handles the creation of thermal network layouts by connecting buildi
 
 **The Problem**: Thermal network creation involves multiple stages where floating-point precision can drift:
 1. CRS transformation (WGS84 → Projected UTM)
-2. Geometric operations (nearest point, line splitting, snapping)
+2. Geometric operations (`interpolate()`, `project()`, `distance()`, `substring()`) produce raw floats
 3. Graph conversion (GeoDataFrame ↔ NetworkX)
 4. Steiner tree optimization (requires exact node coordinate matches)
 
-**The Solution**: Centralized coordinate normalization at strategic points:
-- After CRS transformation
-- After geometric operations
-- Before graph creation
+**The Solution**: **"Normalize Early, Normalize Often"** strategy:
+- Normalize **immediately after** ANY geometric operation that produces coordinates
+- Use normalized coordinates for ALL LineString/Point creation
+- Validate normalization before graph conversion
 - Building terminal metadata storage in graph
+
+**Key Operations That Produce Raw Floats:**
+- `interpolate()` - Finding nearest point on line → **normalized in `near_analysis()`**
+- `substring()` - Splitting lines → **normalized after segment creation**
+- `project()` - Distance along line → Used with normalized Points
+- Terminal connections → **normalized before LineString creation**
 
 ### Building Terminal Alignment
 
@@ -46,10 +52,13 @@ This requires:
    └─ Coordinate normalization (SHAPEFILE_TOLERANCE precision)
 
 2. create_terminals()
-   ├─ Find nearest point on street for each building
-   ├─ Create LineString connections (building → street)
-   ├─ Split streets at junction points
-   └─ Normalize all geometries to consistent precision
+   ├─ Find nearest point on street for each building via near_analysis()
+   │  └─ Normalizes interpolated points immediately
+   ├─ Normalize building & street coordinates before LineString creation
+   ├─ Create LineString connections with normalized coords (building → street)
+   ├─ Split streets at junction points using normalized split Points
+   │  └─ Normalize substring() results immediately
+   └─ Validate all coordinates are normalized (catches bugs early)
 
 3. calc_connectivity_network_with_geometry()
    ├─ Convert GeoDataFrame → NetworkX graph
@@ -61,6 +70,8 @@ This requires:
 4. Optimization (optimization_new/network.py)
    ├─ _load_pot_network() calls calc_connectivity_network_with_geometry(return_graph=True)
    │  └─ Gets graph directly with building terminal metadata preserved
+   ├─ _set_potential_network_terminals()
+   │  └─ Uses all domain.buildings (all are in network due to component connection)
    └─ _find_building_terminal_nodes_in_graph()
       └─ Use graph.graph['building_terminals'] metadata (fast dictionary lookup)
 ```
@@ -189,8 +200,17 @@ Create connectivity network preserving street geometries.
   - `graph.graph['crs']`: Coordinate reference system
   - `graph.graph['coord_precision']`: Precision used (SHAPEFILE_TOLERANCE)
 
+**Disconnected Components Handling**:
+If the street network has multiple disconnected components, the function:
+1. Drops single-node components (isolated nodes)
+2. **Connects** remaining components by adding edges between closest points
+3. Issues warnings about connecting components
+4. Preserves **all buildings** in the network
+
+This is common in real-world scenarios where terminal connection edges are lost during coordinate rounding/simplification, or street networks have genuinely disconnected areas.
+
 **Validation Performed**:
-1. Graph connectivity (single component)
+1. Graph connectivity (single component after connecting)
 2. All building terminals exist in graph
 3. Valid geometries
 4. Positive edge lengths
@@ -203,6 +223,9 @@ edges = calc_connectivity_network_with_geometry(streets, buildings)
 # For optimization - returns graph with metadata
 graph = calc_connectivity_network_with_geometry(streets, buildings, return_graph=True)
 terminal_mapping = graph.graph['building_terminals']
+
+# Note: If network has disconnected components, they are automatically
+# connected with edges between closest points. All buildings are preserved.
 ```
 
 ## Best Practices
@@ -248,21 +271,34 @@ if building_coord in graph.nodes():  # Will fail due to precision
     ...
 ```
 
-### DO: Normalize After Geometric Operations
+### DO: Normalize Immediately After Geometric Operations
 
-✅ **Good**:
+✅ **Good** (normalize immediately):
 ```python
-from cea.technologies.network_layout.graph_utils import normalize_geometry
+from cea.technologies.network_layout.graph_utils import normalize_geometry, normalize_coords
 
-nearest_point = line.interpolate(line.project(building_point))
-normalized_point = normalize_geometry(nearest_point, precision=6)
+# After interpolate()
+nearest_point_raw = line.interpolate(line.project(building_point))
+nearest_point = normalize_geometry(nearest_point_raw, precision=SHAPEFILE_TOLERANCE)
+
+# After substring()
+segment_raw = substring(line, start_dist, end_dist)
+segment = normalize_geometry(segment_raw, precision=SHAPEFILE_TOLERANCE)
+
+# Before creating LineString
+bldg_coord = normalize_coords([bldg_pt.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
+street_coord = normalize_coords([street_pt.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
+terminal_line = LineString([bldg_coord, street_coord])
 ```
 
-❌ **Bad**:
+❌ **Bad** (using raw coordinates):
 ```python
 # Geometric operations introduce floating-point drift
-nearest_point = line.interpolate(line.project(building_point))
-# Using raw coordinates - will cause misalignment
+nearest_point = line.interpolate(line.project(building_point))  # RAW FLOATS
+segment = substring(line, start_dist, end_dist)  # RAW FLOATS
+terminal_line = LineString([bldg_pt.coords[0], street_pt.coords[0]])  # RAW COORDS
+
+# This WILL cause 1-micrometer precision differences → disconnected components!
 ```
 
 ### DO: Use Round-Trip Conversion Safely
@@ -306,21 +342,34 @@ normalize_gdf_geometries(streets_network_df, precision=SHAPEFILE_TOLERANCE, inpl
 normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
 ```
 
-### Issue 2: Graph Disconnected After Adding Terminals
+### Issue 2: Disconnected Street Networks
 
-**Symptom**:
+**Symptom** (Now handled automatically):
 ```
-ValueError: Network has 2 disconnected components after adding building terminals
+WARNING: Network has 2 disconnected components.
+Connecting components to preserve all buildings...
+Main component has X nodes.
+Component 2 (Y nodes): connecting to main component with Z.ZZm edge
+Added N connecting edges.
 ```
 
 **Causes**:
-1. Coordinate rounding broke edge connectivity
-2. Terminal creation split edges incorrectly
+1. Terminal connection edges lost during coordinate rounding/simplification
+2. Street network genuinely has disconnected areas (common in real-world data)
+3. Buildings spread across disconnected street segments
 
-**Solution**:
-- Use `normalize_gdf_geometries()` BEFORE calling `create_terminals()`
-- This ensures all LineString endpoints are at consistent precision
-- Graph conversion will preserve connectivity
+**Behavior**:
+- The function automatically **connects** disconnected components
+- Finds closest pair of nodes between each component
+- Adds straight-line edges to connect components
+- **All buildings are preserved** in the network
+- Clear informational messages about connections added
+
+**Action Required**:
+- Review the warnings to understand network topology
+- Note the distance of connecting edges (may indicate data quality issues)
+- If connecting edges are very long (>100m), consider improving street network data
+- Otherwise, no action needed - all buildings are included automatically
 
 ### Issue 3: Floating-Point Coordinate Drift
 

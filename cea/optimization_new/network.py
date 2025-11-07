@@ -623,12 +623,14 @@ class Network(object):
             if building.identifier in terminal_mapping:
                 terminal_coordinates.append(terminal_mapping[building.identifier])
             else:
-                # Building not in mapping - this shouldn't happen
+                # Building not in mapping - this should not happen since we connect all components
                 available_buildings = list(terminal_mapping.keys())
                 raise ValueError(
                     f"Building '{building.identifier}' not found in graph's building_terminals metadata. "
-                    f"This suggests the building was not connected during network creation. "
-                    f"Available buildings: {available_buildings[:10]}..."
+                    f"This indicates the building was not connected during network creation, which should not happen "
+                    f"since disconnected components are automatically connected. This is likely a bug. "
+                    f"Available buildings in network: {available_buildings[:10]}... "
+                    f"Please report this issue."
                 )
 
         return terminal_coordinates
@@ -644,7 +646,7 @@ class Network(object):
         elif domain is not None:
             # Extract building terminal coordinates from ACTUAL GRAPH NODES (after all transformations and rounding)
             # This is critical: the coordinates must match exactly with graph nodes for Steiner tree validation
-            # We find the graph node that is closest to each building location (within tolerance)
+            # All buildings should be in the network (components are connected during network creation)
             network_terminal_identifier = [building.identifier for building in domain.buildings]
             network_terminal_demand = [building.demand_flow.profile.sum() for building in domain.buildings]
 

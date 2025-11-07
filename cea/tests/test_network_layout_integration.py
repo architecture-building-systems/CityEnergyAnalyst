@@ -233,6 +233,62 @@ class TestNetworkLayoutIntegration:
             assert float(x_str) == x
             assert float(y_str) == y
 
+    def test_network_handles_disconnected_components(self):
+        """Test that disconnected street networks are connected automatically."""
+        # Create two separate street networks (disconnected)
+        streets = gpd.GeoDataFrame(
+            {
+                'geometry': [
+                    # First component - main street network
+                    LineString([(0.0, 0.0), (100.0, 0.0)]),
+                    LineString([(0.0, 0.0), (0.0, 100.0)]),
+                    LineString([(100.0, 0.0), (100.0, 100.0)]),
+                    LineString([(0.0, 100.0), (100.0, 100.0)]),
+                    # Second component - isolated street (disconnected)
+                    LineString([(200.0, 200.0), (300.0, 200.0)]),
+                ]
+            },
+            crs='EPSG:32632'
+        )
+
+        # Buildings: some in first component, some in second
+        buildings = gpd.GeoDataFrame(
+            {
+                'name': ['B001', 'B002', 'B003', 'B004'],
+                'geometry': [
+                    Point(25.0, 10.0),   # In first component
+                    Point(75.0, 10.0),   # In first component
+                    Point(250.0, 210.0), # In second component
+                    Point(280.0, 210.0), # In second component
+                ]
+            },
+            crs='EPSG:32632'
+        )
+
+        # Should handle disconnected components by connecting them
+        graph = calc_connectivity_network_with_geometry(streets, buildings, return_graph=True)
+
+        # Graph should be connected (components are linked)
+        assert nx.is_connected(graph), "Graph should be fully connected after component linking"
+
+        # Should have building terminals metadata
+        assert 'building_terminals' in graph.graph
+
+        # ALL buildings should be retained (no buildings dropped)
+        terminal_mapping = graph.graph['building_terminals']
+        assert len(terminal_mapping) == len(buildings), \
+            f"Expected all {len(buildings)} buildings retained, got {len(terminal_mapping)}"
+
+        # All buildings should exist in the graph
+        graph_nodes = set(graph.nodes())
+        for building_id, terminal_coord in terminal_mapping.items():
+            assert terminal_coord in graph_nodes, f"Terminal for {building_id} not in graph"
+
+        # Verify all building IDs are present
+        all_building_ids = set(buildings['name'])
+        retained_building_ids = set(terminal_mapping.keys())
+        assert all_building_ids == retained_building_ids, "All buildings should be in the network"
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

@@ -252,3 +252,33 @@ def nx_to_gdf(graph, crs, preserve_geometry=True):
     edges_gdf = gdf(edges_data, crs=crs)
 
     return edges_gdf
+
+
+def validate_normalized_coordinates(network_gdf: gdf, precision: int = SHAPEFILE_TOLERANCE) -> None:
+    """
+    Validate that all coordinates in a GeoDataFrame are normalized to the specified precision.
+
+    This is critical for preventing floating-point precision mismatches that can cause
+    disconnected components in the graph.
+
+    :param network_gdf: GeoDataFrame to validate
+    :param precision: Number of decimal places expected (default: SHAPEFILE_TOLERANCE)
+    :raises ValueError: If any coordinate is not properly normalized
+    """
+    for idx, geom in enumerate(network_gdf.geometry):
+        if geom.is_empty:
+            continue
+
+        coords = list(geom.coords)
+        for coord_idx, coord in enumerate(coords):
+            x_rounded = round(coord[0], precision)
+            y_rounded = round(coord[1], precision)
+
+            # Check if coordinate matches rounded value
+            if coord[0] != x_rounded or coord[1] != y_rounded:
+                raise ValueError(
+                    f"Geometry {idx} coordinate {coord_idx} has unnormalized values: "
+                    f"({coord[0]}, {coord[1]}) != ({x_rounded}, {y_rounded}). "
+                    f"This indicates a precision handling bug that will cause disconnected components. "
+                    f"All coordinates must be normalized to {precision} decimal places."
+                )

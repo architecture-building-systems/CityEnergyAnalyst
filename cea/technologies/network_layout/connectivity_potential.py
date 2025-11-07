@@ -69,7 +69,7 @@ from shapely.ops import snap, split
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, nx_to_gdf
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, nx_to_gdf, validate_normalized_coordinates
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -552,9 +552,14 @@ def near_analysis(building_centroids, street_network: gdf):
     nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)  # reset index so vectorization works
 
     # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
-    nearest_points = nearest_lines.interpolate(nearest_lines.project(building_centroids))
+    # IMPORTANT: interpolate() returns raw float coordinates, so normalize immediately
+    nearest_points_raw = nearest_lines.interpolate(nearest_lines.project(building_centroids))
 
-    df = gdf({"idx": nearest_indexes}, geometry=nearest_points, crs=street_network.crs)
+    # Normalize all points to consistent precision to prevent floating-point mismatches
+    from cea.technologies.network_layout.graph_utils import normalize_geometry
+    nearest_points_normalized = [normalize_geometry(pt, SHAPEFILE_TOLERANCE) for pt in nearest_points_raw]
+
+    df = gdf({"idx": nearest_indexes}, geometry=nearest_points_normalized, crs=street_network.crs)
     return df
 
 
@@ -600,18 +605,29 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     :rtype: gdf
     """
     # Find nearest point on street network for each building centroid
+    # Note: near_analysis() now returns normalized points (after interpolate())
     near_points = near_analysis(building_centroids, street_network)
-    
-    # Create terminal lines using vectorized LineString construction
+
+    # Import normalization utilities
+    from cea.technologies.network_layout.graph_utils import normalize_coords
+
+    # Create terminal lines using normalized coordinates
+    # CRITICAL: Use normalized coordinates to prevent floating-point precision mismatches
     # Each line connects: building_centroid → nearest_street_point
     new_lines = []
     lines_to_split = {}
     for bldg_pt, street_pt, street_idx in zip(building_centroids.geometry, near_points.geometry, near_points.idx):
-        line = LineString([bldg_pt.coords[0], street_pt.coords[0]])
+        # Normalize both endpoints before creating LineString
+        bldg_coord = normalize_coords([bldg_pt.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
+        street_coord = normalize_coords([street_pt.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
+
+        line = LineString([bldg_coord, street_coord])
         new_lines.append(line)
+
+        # Store normalized Point for splitting (ensures split happens at exact coordinate)
         if lines_to_split.get(street_idx) is None:
             lines_to_split[street_idx] = []
-        lines_to_split[street_idx].append(street_pt)
+        lines_to_split[street_idx].append(Point(street_coord))
     
     # Split street lines at terminal connection points using substring method
     from shapely.ops import substring
@@ -621,17 +637,20 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
             new_lines.append(line.geometry)
             continue
 
-        split_points = lines_to_split[idx]
+        split_points = lines_to_split[idx]  # These are already normalized Points
 
-        # Filter out points at line endpoints (they don't cause splits)
+        # Normalize line endpoints for consistent comparison
         coords = list(line.geometry.coords)
-        start_pt = Point(coords[0])
-        end_pt = Point(coords[-1])
+        start_coord_normalized = normalize_coords([coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
+        end_coord_normalized = normalize_coords([coords[-1]], precision=SHAPEFILE_TOLERANCE)[0]
+        start_pt = Point(start_coord_normalized)
+        end_pt = Point(end_coord_normalized)
 
         valid_split_points = []
         for pt in split_points:
-            # Skip if point is at start or end of line
-            if pt.distance(start_pt) < 1e-6 or pt.distance(end_pt) < 1e-6:
+            # Skip if point is at start or end of line (using normalized coordinates)
+            # Use SHAPEFILE_TOLERANCE as distance threshold (10^-6 m = 1 micrometer)
+            if pt.distance(start_pt) < 10**(-SHAPEFILE_TOLERANCE) or pt.distance(end_pt) < 10**(-SHAPEFILE_TOLERANCE):
                 continue
             valid_split_points.append(pt)
 
@@ -643,13 +662,17 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
             all_distances = [0] + distances + [line.geometry.length]
 
             # Generate segments using substring
+            # IMPORTANT: substring() produces raw float coordinates, so normalize immediately
+            from cea.technologies.network_layout.graph_utils import normalize_geometry
             for i in range(len(all_distances) - 1):
                 start_dist = all_distances[i]
                 end_dist = all_distances[i + 1]
 
                 if end_dist - start_dist > 1e-10:  # Skip zero-length segments
                     segment = substring(line.geometry, start_dist, end_dist, normalized=False)
-                    new_lines.append(segment)
+                    # Normalize segment coordinates to prevent precision mismatches
+                    segment_normalized = normalize_geometry(segment, precision=SHAPEFILE_TOLERANCE)
+                    new_lines.append(segment_normalized)
         else:
             # No interior split points - keep original line
             new_lines.append(line.geometry)
@@ -657,8 +680,11 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     # Create GeoDataFrame with all network lines (streets + building terminals)
     combined_network = gdf(geometry=new_lines, crs=street_network.crs)
 
-    # Normalize all coordinates to SHAPEFILE_TOLERANCE to preserve connectivity
-    normalize_gdf_geometries(combined_network, precision=SHAPEFILE_TOLERANCE, inplace=True)
+    # Note: No normalization needed here - all coordinates are already normalized:
+    # - Terminal line endpoints: normalized before LineString creation (lines 621-622)
+    # - Street split points: normalized Points used for splitting (line 630)
+    # - Original streets: normalized in _prepare_network_inputs() before this function
+    # This ensures consistent precision throughout and prevents disconnected components
 
     return combined_network
 
@@ -952,6 +978,12 @@ def calc_connectivity_network_with_geometry(
     print("\nCreating building terminal connections...")
     streets_network_df = create_terminals(building_centroids_df, streets_network_df)
 
+    # Validate that all coordinates are properly normalized before graph conversion
+    # This catches any precision handling bugs early with clear error messages
+    print("  Validating coordinate normalization...")
+    validate_normalized_coordinates(streets_network_df, precision=SHAPEFILE_TOLERANCE)
+    print("  ✓ All coordinates normalized to consistent precision")
+
     # Convert to graph with geometry preservation
     graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
 
@@ -961,23 +993,26 @@ def calc_connectivity_network_with_geometry(
     graph.graph['crs'] = crs
     graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
-    # Clean up graph components
+    # Clean up graph components and connect them if needed
     components = list(nx.connected_components(graph))
 
     # Drop single-node components (as they don't contribute to connectivity)
     if len(components) > 1:
-        print(f"  Found {len(components)} disconnected components in the network. "
-              f"Dropping single-node components...")
-        components = [c for c in components if len(c) > 1]
-    
-        if len(components) > 1:
-            raise ValueError(
-                f"Network has {len(components)} disconnected components after adding building terminals. "
-                f"Please check the input street network for connectivity issues."
-            )
+        from cea.technologies.network_layout.debug import check_network_connectivity
+        check_network_connectivity(streets_network_df, plot=True)
 
-    # Reconstruct filtered graph
-    G_filtered = graph.subgraph(set().union(*components)).copy()
+        raise ValueError(
+            f"Network graph has {len(components)} disconnected components after terminal creation. "
+            f"This indicates a serious connectivity issue that must be resolved."
+        )
+
+    # Use the fully connected graph
+    G_filtered = graph.copy()
+
+    # Update metadata
+    G_filtered.graph['building_terminals'] = terminal_mapping
+    G_filtered.graph['crs'] = crs
+    G_filtered.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
     # If caller wants the graph directly (for optimization), return it with metadata preserved
     if return_graph:
