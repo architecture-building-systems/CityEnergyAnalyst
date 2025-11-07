@@ -37,7 +37,7 @@ class TestNetworkLayoutIntegration:
         """Create simple test building centroids."""
         buildings = gpd.GeoDataFrame(
             {
-                'Name': ['B001', 'B002', 'B003', 'B004'],
+                'name': ['B001', 'B002', 'B003', 'B004'],
                 'geometry': [
                     Point(25.0, 10.0),   # Near first street
                     Point(75.0, 10.0),   # Near first street
@@ -81,7 +81,7 @@ class TestNetworkLayoutIntegration:
         )
 
         buildings = gpd.GeoDataFrame(
-            {'Name': ['B001'], 'geometry': [Point(50.0, 10.0)]},
+            {'name': ['B001'], 'geometry': [Point(50.0, 10.0)]},
             crs='EPSG:32632'
         )
 
@@ -181,7 +181,7 @@ class TestNetworkLayoutIntegration:
             # Create buildings along a line
             buildings = gpd.GeoDataFrame(
                 {
-                    'Name': [f'B{i:03d}' for i in range(n_buildings)],
+                    'name': [f'B{i:03d}' for i in range(n_buildings)],
                     'geometry': [
                         Point(i * 100.0 / (n_buildings + 1), 10.0)
                         for i in range(1, n_buildings + 1)
@@ -213,7 +213,7 @@ class TestNetworkLayoutIntegration:
         )
 
         buildings = gpd.GeoDataFrame(
-            {'Name': ['B001'], 'geometry': [Point(50.555555555555, 50.777777777777)]},
+            {'name': ['B001'], 'geometry': [Point(50.555555555555, 50.777777777777)]},
             crs='EPSG:32632'
         )
 

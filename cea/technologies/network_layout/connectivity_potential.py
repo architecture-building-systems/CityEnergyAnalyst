@@ -844,8 +844,7 @@ def _validate_network_creation(graph: nx.Graph, building_centroids_df: gdf, outp
     missing_terminals = []
 
     for idx, row in building_centroids_df.iterrows():
-        # Try both 'Name' and 'name' (case-insensitive), fallback to index
-        building_id = row.get('Name', row.get('name', idx))
+        building_id = row.get('name', idx)
         bldg_x, bldg_y = round(row.geometry.x, SHAPEFILE_TOLERANCE), round(row.geometry.y, SHAPEFILE_TOLERANCE)
 
         # Check if a node exists very close to this building (within tolerance)
@@ -893,7 +892,7 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
     network creation.
 
     :param graph: NetworkX graph with building terminals as nodes
-    :param building_centroids_df: GeoDataFrame of building centroids with 'Name' column
+    :param building_centroids_df: GeoDataFrame of building centroids with 'name' column
     :return: Dictionary mapping building_id → (x, y) node coordinates
     :rtype: dict
 
@@ -913,8 +912,7 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
     terminal_mapping = {}
 
     for idx, row in building_centroids_df.iterrows():
-        # Try both 'Name' and 'name' (case-insensitive), fallback to index
-        building_id = row.get('Name', row.get('name', idx))
+        building_id = row.get('name', idx)
         bldg_geom = row.geometry
 
         # Get building coordinates (already normalized in _prepare_network_inputs)

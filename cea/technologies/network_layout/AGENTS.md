@@ -173,10 +173,10 @@ Create connectivity network preserving street geometries.
 
 **Parameters**:
 - `streets_network_df`: GeoDataFrame with street network geometries
-- `building_centroids_df`: GeoDataFrame with building centroids (must have 'Name' or 'name' column for building IDs)
+- `building_centroids_df`: GeoDataFrame with building centroids (must have 'name' column for building IDs)
 - `return_graph`: If True, return NetworkX graph with metadata; if False (default), return edges GeoDataFrame
 
-**Note**: Building identifiers are extracted from the 'Name' or 'name' column (case-insensitive). If neither exists, the DataFrame index is used as the building ID.
+**Note**: Building identifiers are extracted from the 'name' column. If neither exists, the DataFrame index is used as the building ID.
 
 **Returns**:
 - **Default (`return_graph=False`)**: GeoDataFrame of network edges with:
