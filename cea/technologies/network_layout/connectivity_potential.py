@@ -135,6 +135,139 @@ def split_streets_at_intersections(network_gdf: gdf) -> gdf:
     return result_gdf
 
 
+def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
+    """
+    Simplify street network by merging chains of segments at degree-2 nodes.
+
+    After split_streets_at_intersections(), we have many segments split at every
+    intersection. This function identifies "chains" of segments between real
+    intersections (degree >= 3) and merges them back into single segments while
+    preserving the full geometry.
+
+    This is a pure geometric operation using Shapely/GeoPandas that:
+    - Builds endpoint connectivity map to calculate node degrees
+    - Identifies chains of segments connected only through degree-2 nodes
+    - Merges each chain using shapely.ops.linemerge()
+    - Preserves all segments at degree-3+ nodes (real intersections)
+
+    Benefits:
+    - Reduces segment count before graph construction → faster Steiner tree
+    - Removes insignificant pass-through nodes
+    - Preserves all real intersection topology
+
+    :param network_gdf: GeoDataFrame with street LineStrings (after splitting)
+    :type network_gdf: gdf
+    :return: Simplified GeoDataFrame with merged chains
+    :rtype: gdf
+
+    Example:
+        >>> # After splitting creates: A-B-C-D-E (4 segments with degree-2 at B,C,D)
+        >>> simplified = simplify_street_network_geometric(split_network)
+        >>> # Result: A-----------E (1 segment, preserving all vertices)
+    """
+    from collections import defaultdict
+    from shapely.ops import linemerge
+
+    if len(network_gdf) == 0:
+        return network_gdf
+
+    TOLERANCE = SHAPEFILE_TOLERANCE  # Use CEA's standard precision
+
+    # Step 1: Build endpoint connectivity map
+    endpoint_to_segments = defaultdict(list)
+    segment_list = []
+
+    for idx, row in network_gdf.iterrows():
+        geom = row.geometry
+        coords = list(geom.coords)
+        start = tuple(round(c, TOLERANCE) for c in coords[0])
+        end = tuple(round(c, TOLERANCE) for c in coords[-1])
+
+        segment_info = {
+            'idx': idx,
+            'geometry': geom,
+            'start': start,
+            'end': end
+        }
+        segment_list.append(segment_info)
+
+        # Track which segments share each endpoint
+        endpoint_to_segments[start].append(len(segment_list) - 1)
+        endpoint_to_segments[end].append(len(segment_list) - 1)
+
+    # Step 2: Calculate degree of each endpoint
+    endpoint_degree = {pt: len(segs) for pt, segs in endpoint_to_segments.items()}
+
+    # Step 3: Find chains of segments through degree-2 nodes
+    visited = set()
+    chains = []
+
+    for seg_idx, seg in enumerate(segment_list):
+        if seg_idx in visited:
+            continue
+
+        # Start a new chain
+        chain = [seg_idx]
+        visited.add(seg_idx)
+
+        # Extend chain forward from end point (only through degree-2 nodes)
+        current_end = seg['end']
+        while endpoint_degree[current_end] == 2:
+            # Find the other segment at this degree-2 node
+            connected_segs = [s for s in endpoint_to_segments[current_end] if s not in visited]
+            if not connected_segs:
+                break
+
+            next_seg_idx = connected_segs[0]
+            next_seg = segment_list[next_seg_idx]
+            chain.append(next_seg_idx)
+            visited.add(next_seg_idx)
+
+            # Move to next endpoint
+            current_end = next_seg['end'] if next_seg['start'] == current_end else next_seg['start']
+
+        # Extend chain backward from start point (only through degree-2 nodes)
+        current_start = seg['start']
+        while endpoint_degree[current_start] == 2:
+            # Find the other segment at this degree-2 node
+            connected_segs = [s for s in endpoint_to_segments[current_start] if s not in visited]
+            if not connected_segs:
+                break
+
+            prev_seg_idx = connected_segs[0]
+            prev_seg = segment_list[prev_seg_idx]
+            chain.insert(0, prev_seg_idx)  # Prepend
+            visited.add(prev_seg_idx)
+
+            # Move to next endpoint
+            current_start = prev_seg['start'] if prev_seg['end'] == current_start else prev_seg['end']
+
+        chains.append(chain)
+
+    # Step 4: Merge each chain using linemerge
+    merged_geometries = []
+    for chain in chains:
+        if len(chain) == 1:
+            # Single segment, no merging needed
+            merged_geometries.append(segment_list[chain[0]]['geometry'])
+        else:
+            # Merge multiple segments
+            chain_geoms = [segment_list[idx]['geometry'] for idx in chain]
+            merged = linemerge(chain_geoms)
+
+            if merged.geom_type == 'LineString':
+                merged_geometries.append(merged)
+            else:
+                # Fallback: keep original segments if merge fails
+                merged_geometries.extend(chain_geoms)
+
+    segments_removed = len(segment_list) - len(merged_geometries)
+    if segments_removed > 0:
+        print(f"  Simplified: {len(segment_list)} → {len(merged_geometries)} segments ({segments_removed} degree-2 nodes removed)")
+
+    return gdf(geometry=merged_geometries, crs=network_gdf.crs)
+
+
 def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> gdf:
     """
     Snap line endpoints to nearby lines within tolerance to fix near-miss connections.
