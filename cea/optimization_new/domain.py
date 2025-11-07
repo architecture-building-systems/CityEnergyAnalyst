@@ -100,11 +100,22 @@ class Domain(object):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
                 building.load_demand_profile(network_type)
-                if not max(building.demand_flow.profile) > 0:
-                    continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
-                building.check_demand_energy_carrier()
+
+                # Skip buildings with zero demand UNLESS they are configured for district systems
+                # (district buildings with zero demand should still be included for network validation)
+                has_demand = max(building.demand_flow.profile) > 0
+                is_district = building.initial_connectivity_state != 'stand_alone'
+
+                if not has_demand and not is_district:
+                    continue
+
+                # Only check demand energy carrier for buildings with actual demand
+                # (zero-demand buildings can't instantiate components)
+                if has_demand:
+                    building.check_demand_energy_carrier()
+
                 self.buildings.append(building)
 
         return self.buildings
