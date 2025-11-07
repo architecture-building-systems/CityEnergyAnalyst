@@ -602,7 +602,7 @@ def create_terminals(building_centroids: gdf, street_network: gdf, crs: str) -> 
     :rtype: gdf
     """
     # Find nearest point on street network for each building centroid
-    near_points = near_analysis(building_centroids, street_network, crs)
+    near_points = near_analysis(building_centroids, street_network)
     
     # Create terminal lines using vectorized LineString construction
     # Each line connects: nearest_street_point → building_centroid
