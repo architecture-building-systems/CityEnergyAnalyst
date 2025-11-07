@@ -41,7 +41,7 @@ class UserNetworkLoaderError(Exception):
     pass
 
 
-def load_user_defined_network(config, locator) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame] | None:
+def load_user_defined_network(config, locator, edges_shp=None, nodes_shp=None, geojson_path=None) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame] | None:
     """
     Load user-defined thermal network layout from config parameters.
 
@@ -51,12 +51,19 @@ def load_user_defined_network(config, locator) -> Tuple[gpd.GeoDataFrame, gpd.Ge
 
     :param config: CEA configuration object
     :param locator: InputLocator object
+    :param edges_shp: Optional path to edges shapefile (overrides config)
+    :param nodes_shp: Optional path to nodes shapefile (overrides config)
+    :param geojson_path: Optional path to GeoJSON file (overrides config)
     :return: Tuple of (nodes_gdf, edges_gdf) or None if no user network provided
     :raises UserNetworkLoaderError: If validation fails or conflicting formats provided
     """
-    edges_shp = config.optimization_new.edges_shp_path
-    nodes_shp = config.optimization_new.nodes_shp_path
-    geojson_path = config.optimization_new.network_geojson_path
+    # Use provided parameters or fall back to config.optimization_new
+    if edges_shp is None:
+        edges_shp = config.optimization_new.edges_shp_path if hasattr(config, 'optimization_new') else None
+    if nodes_shp is None:
+        nodes_shp = config.optimization_new.nodes_shp_path if hasattr(config, 'optimization_new') else None
+    if geojson_path is None:
+        geojson_path = config.optimization_new.network_geojson_path if hasattr(config, 'optimization_new') else None
 
     # Check for conflicting inputs
     shp_provided = bool(edges_shp or nodes_shp)

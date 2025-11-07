@@ -488,9 +488,9 @@ def main(config: cea.config.Configuration):
     plant_building_name = config.network_layout.plant_building
 
     # Check if user provided custom network layout
-    edges_shp = config.network_layout.user_edges_shp_path
-    nodes_shp = config.network_layout.user_nodes_shp_path
-    geojson_path = config.network_layout.user_network_geojson_path
+    edges_shp = config.network_layout.edges_shp_path
+    nodes_shp = config.network_layout.nodes_shp_path
+    geojson_path = config.network_layout.network_geojson_path
 
     if edges_shp or nodes_shp or geojson_path:
         print("\n" + "=" * 80)
@@ -505,7 +505,7 @@ def main(config: cea.config.Configuration):
 
         # Load and validate user-defined network
         try:
-            result = load_user_defined_network(config, locator)
+            result = load_user_defined_network(config, locator, edges_shp, nodes_shp, geojson_path)
         except Exception as e:
             print(f"\n✗ Error loading user-defined network: {e}\n")
             print("=" * 80 + "\n")
