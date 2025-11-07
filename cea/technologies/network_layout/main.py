@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import geopandas as gpd
 import pandas as pd
@@ -406,6 +407,31 @@ def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)
     plant_building_name = config.network_layout.plant_building
+    network_type = config.network_layout.network_type
+
+    # Determine network name (auto-generate timestamp if blank)
+    network_name = config.network_layout.network_name
+    if not network_name or not network_name.strip():
+        network_name = datetime.now().strftime('%Y%m%d_%H%M%S')
+        print(f"Network name: {network_name} (auto-generated timestamp)")
+    else:
+        network_name = network_name.strip()
+        print(f"Network name: {network_name} (user-defined)")
+
+        # Safety check: Verify network doesn't already exist (backend validation fallback)
+        output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        if os.path.exists(output_folder):
+            edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+            if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                raise ValueError(
+                    f"Network layout '{network_name}' already exists for {network_type}:\n"
+                    f"  {output_folder}\n\n"
+                    f"Resolution:\n"
+                    f"  1. Use a different network name (e.g., '{network_name}_v2')\n"
+                    f"  2. Delete the existing network folder manually\n"
+                    f"  3. Leave network-name blank to auto-generate timestamp"
+                )
 
     # Check if user provided custom network layout
     edges_shp = config.network_layout.edges_shp_path
@@ -550,9 +576,9 @@ def main(config: cea.config.Configuration):
                     print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
                 print(f"  Note: Existing building nodes converted to PLANT type (in-memory only)")
 
-            # Save to standard location
-            output_edges_path = locator.get_network_layout_edges_shapefile(network_type)
-            output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type)
+            # Save to network-name location
+            output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+            output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
             # Ensure output directory exists
             output_folder = os.path.dirname(output_edges_path)
@@ -573,7 +599,7 @@ def main(config: cea.config.Configuration):
         print("=" * 80 + "\n")
 
     # Generate network layout using Steiner tree (current behavior or fallback)
-    layout_network(network_layout, locator, plant_building_name=plant_building_name)
+    layout_network(network_layout, locator, plant_building_name=plant_building_name, output_name_network=network_name)
 
 
 if __name__ == '__main__':

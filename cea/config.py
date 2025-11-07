@@ -754,6 +754,73 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+class NetworkLayoutNameParameter(StringParameter):
+    """
+    Parameter for network layout names with collision detection.
+    Validates in real-time to prevent overwriting existing network layouts.
+    """
+
+    def decode(self, value):
+        """Validate network name doesn't collide with existing networks"""
+        # Blank/empty is OK - will auto-generate timestamp
+        if not value or not value.strip():
+            return value
+
+        value = value.strip()
+
+        # Check for invalid filesystem characters (always check, doesn't depend on scenario)
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Network name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing networks
+        # This validation is "best effort" - skip gracefully if anything goes wrong
+        # The main() function has a safety check as fallback
+        try:
+            # Get network type from config
+            network_type = self.config.network_layout.network_type
+
+            # Get scenario - skip validation if not set or invalid
+            scenario = self.config.scenario
+
+            # Skip validation if scenario doesn't exist yet (e.g., during dashboard initialization)
+            if not scenario or not os.path.exists(scenario):
+                return value
+
+            # Get locator to check paths
+            locator = cea.inputlocator.InputLocator(scenario)
+
+            # Check if network already exists
+            output_folder = locator.get_output_thermal_network_type_folder(network_type, value)
+
+            if os.path.exists(output_folder):
+                # Check if it has network files (build paths manually to avoid validation in locator methods)
+                edges_path = os.path.join(output_folder, 'edges.shp')
+                nodes_path = os.path.join(output_folder, 'nodes.shp')
+
+                if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                    raise ValueError(
+                        f"Network '{value}' already exists for {network_type}. "
+                        f"Choose a different name or delete the existing folder."
+                    )
+        except ValueError as e:
+            # Re-raise validation errors (our error messages)
+            if "already exists" in str(e) or "invalid characters" in str(e):
+                raise
+            # Other ValueErrors - skip validation gracefully
+            pass
+        except Exception:
+            # Catch ALL other exceptions during validation
+            # Config not fully initialized, circular dependencies, missing attributes, etc.
+            # Skip validation gracefully - main() will catch issues later
+            pass
+
+        return value
+
+
 class OptimizationIndividualListParameter(ListParameter):
     def initialize(self, parser):
         # allow the parent option to be set
