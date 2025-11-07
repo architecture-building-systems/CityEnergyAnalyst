@@ -195,8 +195,29 @@ def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
         endpoint_to_segments[start].append(len(segment_list) - 1)
         endpoint_to_segments[end].append(len(segment_list) - 1)
 
-    # Step 2: Calculate degree of each endpoint
-    endpoint_degree = {pt: len(segs) for pt, segs in endpoint_to_segments.items()}
+    # Step 1b: Detect multi-edges (parallel edges between same nodes)
+    # This protects circular structures like roundabouts, cul-de-sacs, dual carriageways
+    edge_pairs = defaultdict(list)
+    for seg_idx, seg in enumerate(segment_list):
+        # Normalize edge direction (always store smaller node first to catch N1→N2 and N2→N1)
+        edge_key = tuple(sorted([seg['start'], seg['end']]))
+        edge_pairs[edge_key].append(seg_idx)
+
+    # Mark nodes that are part of multi-edge structures as protected
+    protected_nodes = set()
+    for edge_key, segs in edge_pairs.items():
+        if len(segs) > 1:  # Multi-edge detected (e.g., roundabout, parallel roads)
+            protected_nodes.update(edge_key)
+            print(f"    Multi-edge detected: {len(segs)} edges between nodes (protects circular structures)")
+
+    # Step 2: Calculate degree of each endpoint (with protection for multi-edges)
+    endpoint_degree = {}
+    for pt, segs in endpoint_to_segments.items():
+        if pt in protected_nodes:
+            # Never treat multi-edge nodes as degree-2 pass-through nodes
+            endpoint_degree[pt] = float('inf')
+        else:
+            endpoint_degree[pt] = len(segs)
 
     # Step 3: Find chains of segments through degree-2 nodes
     visited = set()
