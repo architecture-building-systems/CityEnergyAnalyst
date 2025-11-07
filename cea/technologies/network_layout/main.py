@@ -67,6 +67,187 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
+def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name, network_type, locator):
+    """
+    Auto-create missing PLANT nodes in user-defined networks.
+
+    Mimics auto-generation behavior:
+    1. Find anchor building (user-specified or highest demand)
+    2. Find closest junction node (type='NONE') to anchor building
+    3. Create new PLANT node offset 1m from junction
+    4. Create new edge connecting plant to junction
+
+    :param nodes_gdf: GeoDataFrame of network nodes
+    :param edges_gdf: GeoDataFrame of network edges
+    :param zone_gdf: GeoDataFrame of building geometries
+    :param plant_building_name: User-specified plant building (or empty string)
+    :param network_type: "DH" or "DC"
+    :param locator: InputLocator instance
+    :return: Tuple of (updated nodes_gdf, updated edges_gdf, list of created plants)
+    """
+    import networkx as nx
+    from shapely.geometry import Point, LineString
+    import math
+
+    # Check if any plants already exist
+    existing_plants = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
+
+    if len(existing_plants) > 0:
+        # Plants already exist, no need to auto-create
+        return nodes_gdf, edges_gdf, []
+
+    # Build graph to detect components
+    G = nx.Graph()
+    for idx, node in nodes_gdf.iterrows():
+        G.add_node(idx, **node.to_dict())
+
+    for idx, edge in edges_gdf.iterrows():
+        start_nodes = nodes_gdf[nodes_gdf['name'] == edge['start_node']]
+        end_nodes = nodes_gdf[nodes_gdf['name'] == edge['end_node']]
+        if not start_nodes.empty and not end_nodes.empty:
+            G.add_edge(start_nodes.index[0], end_nodes.index[0])
+
+    components = list(nx.connected_components(G))
+
+    if len(components) == 0:
+        return nodes_gdf, edges_gdf, []
+
+    # Get building nodes for analysis
+    building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
+                                (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                                (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+
+    # Load demand data to find anchor building
+    total_demand = pd.read_csv(locator.get_total_demand())
+    demand_field = "QH_sys_MWhyr" if network_type == "DH" else "QC_sys_MWhyr"
+
+    created_plants = []
+
+    # For each component, create plant if needed
+    for component_id, component_nodes in enumerate(components):
+        # Get buildings in this component
+        buildings_in_component = []
+        for node_idx in component_nodes:
+            if node_idx in building_nodes.index:
+                building_name = building_nodes.loc[node_idx, 'building']
+                buildings_in_component.append(building_name)
+
+        if not buildings_in_component:
+            continue  # Skip components with no buildings
+
+        # Determine anchor building
+        anchor_building = None
+
+        if plant_building_name:
+            # Use user-specified building if it's in this component
+            if plant_building_name in buildings_in_component:
+                anchor_building = plant_building_name
+
+        if not anchor_building:
+            # Find building with highest demand (anchor load)
+            component_demand = total_demand[total_demand['name'].isin(buildings_in_component)]
+            if not component_demand.empty and demand_field in component_demand.columns:
+                anchor_idx = component_demand[demand_field].idxmax()
+                anchor_building = component_demand.loc[anchor_idx, 'name']
+            else:
+                # Fallback: use first building alphabetically
+                anchor_building = sorted(buildings_in_component)[0]
+
+        # Get anchor building node
+        anchor_node = building_nodes[building_nodes['building'] == anchor_building]
+        if anchor_node.empty:
+            continue
+
+        anchor_geom = anchor_node.geometry.iloc[0]
+        anchor_x = anchor_geom.x
+        anchor_y = anchor_geom.y
+
+        # Find closest junction node (type='NONE') in this component
+        # Mimic steiner_spanning_tree.py:add_plant_close_to_anchor logic
+        min_distance = float('inf')
+        closest_junction_idx = None
+
+        for node_idx in component_nodes:
+            node = nodes_gdf.loc[node_idx]
+            # Only consider junction nodes (type='NONE' or unspecified non-building nodes)
+            node_type = str(node.get('type', 'NONE')).upper()
+            node_building = str(node.get('building', 'NONE')).upper()
+
+            if node_type == 'NONE' or (node_type in ['', 'NONE'] and node_building in ['NONE', '', 'NAN']):
+                node_x = node.geometry.x
+                node_y = node.geometry.y
+                distance = math.sqrt((node_x - anchor_x) ** 2 + (node_y - anchor_y) ** 2)
+
+                if 0 < distance < min_distance:
+                    min_distance = distance
+                    closest_junction_idx = node_idx
+
+        if closest_junction_idx is None:
+            # No junction nodes found, skip this component
+            continue
+
+        junction_node = nodes_gdf.loc[closest_junction_idx]
+
+        # Create new PLANT node offset 1m from junction (mimic auto-generation)
+        plant_x = junction_node.geometry.x + 1.0
+        plant_y = junction_node.geometry.y + 1.0
+        plant_geom = Point(plant_x, plant_y)
+
+        # Generate unique plant node name
+        network_id = f"N{1001 + component_id}"
+        plant_node_name = f"PLANT_{network_id}"
+
+        # Create new plant node
+        new_plant = gpd.GeoDataFrame([{
+            'name': plant_node_name,
+            'building': anchor_building,
+            'type': 'PLANT',
+            'geometry': plant_geom
+        }], crs=nodes_gdf.crs)
+
+        nodes_gdf = pd.concat([nodes_gdf, new_plant], ignore_index=True)
+
+        # Create new edge connecting plant to junction
+        edge_line = LineString([
+            (plant_x, plant_y),
+            (junction_node.geometry.x, junction_node.geometry.y)
+        ])
+
+        # Generate unique edge name
+        edge_name = f"PIPE_{len(edges_gdf)}"
+
+        # Get pipe properties from edges_gdf if available, otherwise use defaults
+        if not edges_gdf.empty and 'pipe_DN' in edges_gdf.columns:
+            pipe_dn = edges_gdf['pipe_DN'].iloc[0] if 'pipe_DN' in edges_gdf.columns else 150
+            type_mat = edges_gdf['type_mat'].iloc[0] if 'type_mat' in edges_gdf.columns else 'T1'
+        else:
+            from cea.technologies.constants import PIPE_DIAMETER_DEFAULT, TYPE_MAT_DEFAULT
+            pipe_dn = PIPE_DIAMETER_DEFAULT
+            type_mat = TYPE_MAT_DEFAULT
+
+        new_edge = gpd.GeoDataFrame([{
+            'name': edge_name,
+            'start_node': plant_node_name,
+            'end_node': junction_node['name'],
+            'pipe_DN': pipe_dn,
+            'type_mat': type_mat,
+            'geometry': edge_line
+        }], crs=edges_gdf.crs)
+
+        edges_gdf = pd.concat([edges_gdf, new_edge], ignore_index=True)
+
+        created_plants.append({
+            'network_id': network_id,
+            'building': anchor_building,
+            'node_name': plant_node_name,
+            'junction_node': junction_node['name'],
+            'distance_to_junction': min_distance,
+            'reason': 'user-specified' if plant_building_name and plant_building_name == anchor_building else 'anchor-load'
+        })
+
+    return nodes_gdf, edges_gdf, created_plants
+
+
 def resolve_plant_building(plant_building_input, available_buildings):
     """
     Resolve plant building name with flexible matching.
@@ -316,6 +497,21 @@ def main(config: cea.config.Configuration):
                     print("  ✓ All specified buildings have valid nodes in network")
             else:
                 print("  - Skipping building coverage validation (accepting user layout as-is)")
+
+            # Auto-create plant nodes if missing
+            zone_gdf = gpd.read_file(locator.get_zone_geometry())
+            nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
+                nodes_gdf, edges_gdf, zone_gdf,
+                plant_building_name, network_type, locator
+            )
+
+            if created_plants:
+                print(f"\n  ⚠ Auto-created {len(created_plants)} missing PLANT node(s):")
+                for plant_info in created_plants:
+                    reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
+                    print(f"      - {plant_info['node_name']} at building '{plant_info['building']}' ({reason_text})")
+                    print(f"        Connected to junction '{plant_info['junction_node']}' ({plant_info['distance_to_junction']:.2f}m away)")
+                print(f"  Note: PLANT nodes placed near closest junction, with new connecting edge (in-memory only)")
 
             # Save to standard location
             output_edges_path = locator.get_network_layout_edges_shapefile(network_type)
