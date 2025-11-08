@@ -891,12 +891,14 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             elif hasattr(self.config, 'optimization_new'):
                 network_type = self.config.optimization_new.network_type
             else:
+                print(f"[NetworkLayoutChoiceParameter] No thermal_network or optimization_new section found")
                 return []
 
             scenario = self.config.scenario
 
             # Skip if scenario doesn't exist
             if not scenario or not os.path.exists(scenario):
+                print(f"[NetworkLayoutChoiceParameter] Scenario doesn't exist: {scenario}")
                 return []
 
             # Get network type folder
@@ -906,8 +908,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             # Remove trailing slash/separator if present
             network_type_folder = network_type_folder.rstrip(os.sep)
 
+            print(f"[NetworkLayoutChoiceParameter] Checking folder: {network_type_folder}")
+
             # List subdirectories that contain valid network files
             if not os.path.exists(network_type_folder):
+                print(f"[NetworkLayoutChoiceParameter] Network type folder doesn't exist: {network_type_folder}")
                 return []
 
             available_networks = []
@@ -920,10 +925,14 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
                     if os.path.exists(edges_path) or os.path.exists(nodes_path):
                         available_networks.append(item)
 
+            print(f"[NetworkLayoutChoiceParameter] Found {len(available_networks)} networks: {available_networks}")
             return sorted(available_networks)
 
-        except Exception:
+        except Exception as e:
             # Config not ready, paths don't exist, etc.
+            print(f"[NetworkLayoutChoiceParameter] Error getting available networks: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def encode(self, value):
