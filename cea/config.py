@@ -870,6 +870,91 @@ class ChoiceParameter(Parameter):
             return self._choices[0]
 
 
+class NetworkLayoutChoiceParameter(ChoiceParameter):
+    """
+    Parameter for selecting existing network layouts.
+    Dynamically lists available network folders for the selected network type.
+    """
+
+    def initialize(self, parser):
+        # Don't call parent initialize - we'll build choices dynamically
+        self._choices = []
+
+    def _get_available_networks(self):
+        """Get list of available network layouts for the current network type"""
+        try:
+            # Get network type and scenario from config
+            # For thermal-network section
+            if hasattr(self.config, 'thermal_network'):
+                network_type = self.config.thermal_network.network_type
+            # For optimization-new section
+            elif hasattr(self.config, 'optimization_new'):
+                network_type = self.config.optimization_new.network_type
+            else:
+                return []
+
+            scenario = self.config.scenario
+
+            # Skip if scenario doesn't exist
+            if not scenario or not os.path.exists(scenario):
+                return []
+
+            # Get network type folder
+            locator = cea.inputlocator.InputLocator(scenario)
+            network_type_folder = locator.get_output_thermal_network_type_folder(network_type, '')
+
+            # Remove trailing slash/separator if present
+            network_type_folder = network_type_folder.rstrip(os.sep)
+
+            # List subdirectories that contain valid network files
+            if not os.path.exists(network_type_folder):
+                return []
+
+            available_networks = []
+            for item in os.listdir(network_type_folder):
+                item_path = os.path.join(network_type_folder, item)
+                if os.path.isdir(item_path):
+                    # Check if this folder has network files
+                    edges_path = os.path.join(item_path, 'edges.shp')
+                    nodes_path = os.path.join(item_path, 'nodes.shp')
+                    if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                        available_networks.append(item)
+
+            return sorted(available_networks)
+
+        except Exception:
+            # Config not ready, paths don't exist, etc.
+            return []
+
+    def encode(self, value):
+        """Encode value - just return as string"""
+        return str(value) if value else ''
+
+    def decode(self, value):
+        """Decode and validate value exists in available networks"""
+        # Update choices dynamically
+        self._choices = self._get_available_networks()
+
+        # If value is empty/blank, return it as-is (might be acceptable)
+        if not value or not value.strip():
+            # If there are available networks, return the first one as default
+            if self._choices:
+                return self._choices[0]
+            return ''
+
+        value = value.strip()
+
+        # Validate value exists in choices
+        if value in self._choices:
+            return value
+        else:
+            # Value doesn't exist - it might have been deleted
+            # Return first available network or empty string
+            if self._choices:
+                return self._choices[0]
+            return ''
+
+
 class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
