@@ -878,7 +878,19 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # Don't call parent initialize - we'll build choices dynamically
-        self._choices = []
+        self._choices_cache = None
+
+    @property
+    def _choices(self):
+        """Dynamically get available networks (cached)"""
+        if self._choices_cache is None:
+            self._choices_cache = self._get_available_networks()
+        return self._choices_cache
+
+    @_choices.setter
+    def _choices(self, value):
+        """Allow setting choices (for decode method)"""
+        self._choices_cache = value
 
     def _get_available_networks(self):
         """Get list of available network layouts for the current network type"""
@@ -923,10 +935,35 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
                     edges_path = os.path.join(item_path, 'edges.shp')
                     nodes_path = os.path.join(item_path, 'nodes.shp')
                     if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                        available_networks.append(item)
+                        # Try to parse timestamp from folder name (format: YYYYMMDD_HHMMSS)
+                        import re
+                        from datetime import datetime
+                        timestamp_match = re.match(r'^(\d{8})_(\d{6})$', item)
 
-            print(f"[NetworkLayoutChoiceParameter] Found {len(available_networks)} networks: {available_networks}")
-            return sorted(available_networks)
+                        if timestamp_match:
+                            # Parse timestamp from folder name
+                            try:
+                                date_str = timestamp_match.group(1)  # YYYYMMDD
+                                time_str = timestamp_match.group(2)  # HHMMSS
+                                dt = datetime.strptime(f"{date_str}_{time_str}", "%Y%m%d_%H%M%S")
+                                sort_time = dt.timestamp()
+                            except ValueError:
+                                # If parsing fails, fall back to filesystem time
+                                sort_time = os.path.getctime(item_path)
+                        else:
+                            # Custom name - use filesystem creation time
+                            sort_time = os.path.getctime(item_path)
+
+                        available_networks.append((item, sort_time))
+
+            # Sort by creation time (most recent first)
+            available_networks.sort(key=lambda x: x[1], reverse=True)
+
+            # Extract just the folder names
+            network_names = [name for name, _ in available_networks]
+
+            print(f"[NetworkLayoutChoiceParameter] Found {len(network_names)} networks (sorted by most recent): {network_names}")
+            return network_names
 
         except Exception as e:
             # Config not ready, paths don't exist, etc.
@@ -940,28 +977,20 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         return str(value) if value else ''
 
     def decode(self, value):
-        """Decode and validate value exists in available networks"""
+        """
+        Decode and validate value exists in available networks.
+        Always returns the most recent network (first in sorted list) to ensure
+        users see the latest generated network when opening the tool.
+        """
         # Update choices dynamically
         self._choices = self._get_available_networks()
 
-        # If value is empty/blank, return it as-is (might be acceptable)
-        if not value or not value.strip():
-            # If there are available networks, return the first one as default
-            if self._choices:
-                return self._choices[0]
-            return ''
+        # Always return the most recent network (first choice) if available
+        # This ensures users always see the latest network by default
+        if self._choices:
+            return self._choices[0]
 
-        value = value.strip()
-
-        # Validate value exists in choices
-        if value in self._choices:
-            return value
-        else:
-            # Value doesn't exist - it might have been deleted
-            # Return first available network or empty string
-            if self._choices:
-                return self._choices[0]
-            return ''
+        return ''
 
 
 class DatabasePathParameter(Parameter):
