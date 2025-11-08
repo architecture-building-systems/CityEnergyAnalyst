@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.database.components import Feedstocks
+from cea.datamanagement.database.components import Feedstocks, Conversion
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 
@@ -35,6 +35,7 @@ class OperationalHourlyTimeline:
         self.locator = locator
         self.bpr = bpr
         self.feedstock_db = Feedstocks.from_locator(locator)
+        self.conversion_db = Conversion.from_locator(locator)
         # Track which per-tech PV allocation columns were added per PV code for traceability
         self._pv_allocation: dict[str, pd.DataFrame] = {}
         self.emission_intensity_timeline = self.expand_feedstock_emissions()
@@ -54,6 +55,10 @@ class OperationalHourlyTimeline:
         obj = cls(locator, bpr)
         obj.operational_emission_timeline = pd.read_csv(hourly_results_csv, index_col='hour')
         obj._is_emission_calculated = True
+        # delete the secondary columns (per-demand columns and per-feedstock columns)
+        per_demand_cols = obj.emission_by_demand.columns.tolist()
+        per_feedstock_cols = obj.emission_by_feedstock.columns.tolist()
+        obj.operational_emission_timeline.drop(columns=per_demand_cols + per_feedstock_cols, inplace=True, errors='ignore')
         return obj
     
     def create_operational_timeline(self, n_hours: int) -> pd.DataFrame:
@@ -74,7 +79,12 @@ class OperationalHourlyTimeline:
             for key in _tech_name_mapping.keys()
             for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
         ]
-        # No PV columns are pre-created; PV offsets are added per scenario during calculation with suffixed names
+        if self.conversion_db.photovoltaic_panels is not None:  # add PV total offset columns as well
+            base_cols += [
+                f"PV_{pv_code}_offset_{demand}_kgCO2e"
+                for pv_code in self.conversion_db.photovoltaic_panels.keys()
+                for demand in list(_tech_name_mapping.keys()) + ["total"]
+            ]
         timeline = pd.DataFrame(index=range(n_hours), columns=base_cols)
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
         timeline.index.name = "hour"
@@ -375,7 +385,7 @@ class OperationalHourlyTimeline:
         for demand_type in _tech_name_mapping.keys():
             demand_cols = [
                 col for col in self.operational_emission_timeline.columns
-                if col.startswith(f"{demand_type}_")
+                if col.startswith(f"{demand_type}_") and col.endswith("_kgCO2e") and col != f"{demand_type}_kgCO2e"
             ]
             data[f"{demand_type}_kgCO2e"] = self.operational_emission_timeline[demand_cols].sum(axis=1)
         return pd.DataFrame(data)
