@@ -30,12 +30,11 @@ class OperationalHourlyTimeline:
         self,
         locator: InputLocator,
         bpr: BuildingPropertiesRow,
-        feedstock_db: Feedstocks,
     ):
         self._is_emission_calculated = False
         self.locator = locator
         self.bpr = bpr
-        self.feedstock_db = feedstock_db
+        self.feedstock_db = Feedstocks.from_locator(locator)
         # Track which per-tech PV allocation columns were added per PV code for traceability
         self._pv_allocation: dict[str, pd.DataFrame] = {}
         self.emission_intensity_timeline = self.expand_feedstock_emissions()
@@ -47,13 +46,12 @@ class OperationalHourlyTimeline:
         hourly_results_csv = locator.get_lca_operational_hourly_building(building_name)
         if not os.path.exists(hourly_results_csv):
             raise FileNotFoundError(f"Operational emission results file not found for building {building_name} at {hourly_results_csv}. Please run the calculation first.")
-        feedstock_db = Feedstocks.from_locator(locator)
         weather_path = locator.get_weather_file()
         weather_data = epwreader.epw_reader(weather_path)[
             ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
         ]
         bpr = BuildingProperties(locator, weather_data, [building_name])[building_name]
-        obj = cls(locator, bpr, feedstock_db)
+        obj = cls(locator, bpr)
         obj.operational_emission_timeline = pd.read_csv(hourly_results_csv, index_col='hour')
         obj._is_emission_calculated = True
         return obj
@@ -449,7 +447,6 @@ if __name__ == "__main__":
         locator, weather_data, buildings
     )
     bpr = building_properties[buildings[0]]
-    feedstock_db = Feedstocks.from_locator(locator)
-    test_timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
+    test_timeline = OperationalHourlyTimeline(locator, bpr)
     test_timeline.calculate_operational_emission()
     test_timeline.save_results()

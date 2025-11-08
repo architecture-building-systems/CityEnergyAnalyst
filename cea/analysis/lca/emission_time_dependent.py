@@ -10,7 +10,6 @@ from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
 from cea.demand.building_properties import BuildingProperties
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
-from cea.datamanagement.database.components import Feedstocks
 from cea.utilities import epwreader
 
 
@@ -90,14 +89,13 @@ def operational_hourly(config: Configuration) -> None:
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
     ]
     building_properties = BuildingProperties(locator, weather_data, buildings)
-    feedstock_db = Feedstocks.from_locator(locator)
     results: list[tuple[str, pd.DataFrame]] = []
     # Load optional GRID carbon intensity override once for all buildings
     override_grid_emission, grid_emission_final_g = _load_grid_emission_intensity_override(config)
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
     for building in buildings:
         bpr = building_properties[building]
-        hourly_timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
+        hourly_timeline = OperationalHourlyTimeline(locator, bpr)
 
         if override_grid_emission and grid_emission_final is not None:
             hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
