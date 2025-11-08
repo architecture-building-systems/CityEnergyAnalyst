@@ -66,8 +66,9 @@ dict_plot_metrics_cea_feature = {
     'dh': 'dh',
     'dc': 'dc',
 }
-operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
-operational_feedstocks = [
+emission_timeline_pv_types = ["PV1", "PV2", "PV3", "PV4"]
+emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
+emission_timeline_operational_feedstocks = [
     "NATURALGAS",
     "BIOGAS",
     "SOLAR",
@@ -80,24 +81,36 @@ operational_feedstocks = [
     "HYDROGEN",
     "NONE",
 ]
+emission_timeline_pv_offset_columns_nounit = [
+    f"PV_{pv_type}_offset_{type_energy}"
+    for pv_type in emission_timeline_pv_types
+    for type_energy in emission_timeline_operational_types + ["total"]
+]
 emission_timeline_hourly_operational_colnames_nounit = [
     f"{type_energy}_{feedstock}"
-    for type_energy in operational_types
-    for feedstock in operational_feedstocks
-] + operational_types
+    for type_energy in emission_timeline_operational_types
+    for feedstock in emission_timeline_operational_feedstocks
+] + emission_timeline_operational_types
 
 normalisation_name_mapping_emission_timeline_hourly_operational = {
     f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
     for colname in emission_timeline_hourly_operational_colnames_nounit
 }
 
-embodied_types = ["production", "biogenic", "demolition"]
-embodied_parts = ["wall_ag", "wall_bg", "wall_part", "win_ag", "roof", "upperside", "underside", "floor", "base", "technical_systems"]
-emission_timeline_yearly_colnames_nounit = [
-    f"{type_emission}_{part}"
-    for type_emission in embodied_types
-    for part in embodied_parts
-] + [f"operation_{type_energy}" for type_energy in operational_types]
+emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
+emission_timeline_embodied_parts = ["wall_ag", "wall_bg", "wall_part", "win_ag", "roof", "upperside", "underside", "floor", "base", "technical_systems"]
+emission_timeline_yearly_colnames_nounit = (
+    [
+        f"{type_emission}_{part}"
+        for type_emission in emission_timeline_embodied_types
+        for part in emission_timeline_embodied_parts
+    ]
+    + [
+        f"operation_{type_energy}"
+        for type_energy in emission_timeline_operational_types
+    ]
+    + [f"PV_{pv_type}_offset_total" for pv_type in emission_timeline_pv_types]
+)
 
 normalisation_name_mapping_emission_timeline_yearly = {
     f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"

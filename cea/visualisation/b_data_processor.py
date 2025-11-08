@@ -27,6 +27,9 @@ class data_processor:
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
+        if plot_config.pv_code is not None:
+            pv_code = plot_config.pv_code
+            self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by
         self.x_to_plot = plot_instance.x

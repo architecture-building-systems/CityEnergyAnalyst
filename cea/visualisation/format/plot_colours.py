@@ -202,6 +202,10 @@ _BASE_COLUMN_COLORS = {
     "E_sys_OIL": "green_lighter",
     "E_sys_HYDROGEN": "green_lighter",
     "E_sys_NONE": "green_lighter",
+    "PV_PV1_offset_total": "yellow",
+    "PV_PV2_offset_total": "yellow",
+    "PV_PV3_offset_total": "yellow",
+    "PV_PV4_offset_total": "yellow",
 
     # ===== Lifecycle Emissions =====
     "operation_Qhs_sys": "red",
@@ -238,6 +242,10 @@ _BASE_COLUMN_COLORS = {
     "demolition_floor": "green_lighter",
     "demolition_base": "green_lighter",
     "demolition_technical_systems": "green_lighter",
+    # "PV_PV1_offset_total": "yellow",
+    # "PV_PV2_offset_total": "yellow",
+    # "PV_PV3_offset_total": "yellow",
+    # "PV_PV4_offset_total": "yellow",
 }
 
 
