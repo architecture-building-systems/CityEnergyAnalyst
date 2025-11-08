@@ -80,60 +80,39 @@ operational_feedstocks = [
     "HYDROGEN",
     "NONE",
 ]
-emission_timeline_operational_colnames_nounit = [
+emission_timeline_hourly_operational_colnames_nounit = [
     f"{type_energy}_{feedstock}"
     for type_energy in operational_types
     for feedstock in operational_feedstocks
 ] + operational_types
 
-normalisation_name_mapping_emission_timeline_operational = {
+normalisation_name_mapping_emission_timeline_hourly_operational = {
     f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
-    for colname in emission_timeline_operational_colnames_nounit
+    for colname in emission_timeline_hourly_operational_colnames_nounit
+}
+
+embodied_types = ["production", "biogenic", "demolition"]
+embodied_parts = ["wall_ag", "wall_bg", "wall_part", "win_ag", "roof", "upperside", "underside", "floor", "base", "technical_systems"]
+emission_timeline_yearly_colnames_nounit = [
+    f"{type_emission}_{part}"
+    for type_emission in embodied_types
+    for part in embodied_parts
+] + [f"operation_{type_energy}" for type_energy in operational_types]
+
+normalisation_name_mapping_emission_timeline_yearly = {
+    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+    for colname in emission_timeline_yearly_colnames_nounit
 }
 
 normalisation_name_mapping = {
-    'grid_electricity_consumption[kWh]': 'EUI_grid_electricity[kWh/m2]',
-    'enduse_electricity_demand[kWh]': 'EUI_enduse_electricity[kWh/m2]',
-    'enduse_cooling_demand[kWh]': 'EUI_enduse_cooling[kWh/m2]',
-    'enduse_space_cooling_demand[kWh]': 'EUI_enduse_space_cooling[kWh/m2]',
-    'enduse_heating_demand[kWh]': 'EUI_enduse_heating[kWh/m2]',
-    'enduse_space_heating_demand[kWh]': 'EUI_enduse_space_heating[kWh/m2]',
-    'enduse_dhw_demand[kWh]': 'EUI_enduse_dhw[kWh/m2]',
-    'operation_heating[kgCO2e]': 'operation_heating[kgCO2e/m2]',
-    'operation_hot_water[kgCO2e]': 'operation_hot_water[kgCO2e/m2]',
-    'operation_cooling[kgCO2e]': 'operation_cooling[kgCO2e/m2]',
-    'operation_appliances[kgCO2e]': 'operation_appliances[kgCO2e/m2]',
-    'production_wall_ag[kgCO2e]': 'production_wall_ag[kgCO2e/m2]',
-    'production_wall_bg[kgCO2e]': 'production_wall_bg[kgCO2e/m2]',
-    'production_wall_part[kgCO2e]': 'production_wall_part[kgCO2e/m2]',
-    'production_win_ag[kgCO2e]': 'production_win_ag[kgCO2e/m2]',
-    'production_roof[kgCO2e]': 'production_roof[kgCO2e/m2]',
-    'production_upperside[kgCO2e]': 'production_upperside[kgCO2e/m2]',
-    'production_underside[kgCO2e]': 'production_underside[kgCO2e/m2]',
-    'production_floor[kgCO2e]': 'production_floor[kgCO2e/m2]',
-    'production_base[kgCO2e]': 'production_base[kgCO2e/m2]',
-    'production_technical_systems[kgCO2e]': 'production_technical_systems[kgCO2e/m2]',
-    'biogenic_wall_ag[kgCO2e]': 'biogenic_wall_ag[kgCO2e/m2]',
-    'biogenic_wall_bg[kgCO2e]': 'biogenic_wall_bg[kgCO2e/m2]',
-    'biogenic_wall_part[kgCO2e]': 'biogenic_wall_part[kgCO2e/m2]',
-    'biogenic_win_ag[kgCO2e]': 'biogenic_win_ag[kgCO2e/m2]',
-    'biogenic_roof[kgCO2e]': 'biogenic_roof[kgCO2e/m2]',
-    'biogenic_upperside[kgCO2e]': 'biogenic_upperside[kgCO2e/m2]',
-    'biogenic_underside[kgCO2e]': 'biogenic_underside[kgCO2e/m2]',
-    'biogenic_floor[kgCO2e]': 'biogenic_floor[kgCO2e/m2]',
-    'biogenic_base[kgCO2e]': 'biogenic_base[kgCO2e/m2]',
-    'biogenic_technical_systems[kgCO2e]': 'biogenic_technical_systems[kgCO2e/m2]',
-    'demolition_wall_ag[kgCO2e]': 'demolition_wall_ag[kgCO2e/m2]',
-    'demolition_wall_bg[kgCO2e]': 'demolition_wall_bg[kgCO2e/m2]',
-    'demolition_wall_part[kgCO2e]': 'demolition_wall_part[kgCO2e/m2]',
-    'demolition_win_ag[kgCO2e]': 'demolition_win_ag[kgCO2e/m2]',
-    'demolition_roof[kgCO2e]': 'demolition_roof[kgCO2e/m2]',
-    'demolition_upperside[kgCO2e]': 'demolition_upperside[kgCO2e/m2]',
-    'demolition_underside[kgCO2e]': 'demolition_underside[kgCO2e/m2]',
-    'demolition_floor[kgCO2e]': 'demolition_floor[kgCO2e/m2]',
-    'demolition_base[kgCO2e]': 'demolition_base[kgCO2e/m2]',
-    'demolition_technical_systems[kgCO2e]': 'demolition_technical_systems[kgCO2e/m2]'
-} | normalisation_name_mapping_emission_timeline_operational
+        "grid_electricity_consumption[kWh]": "EUI_grid_electricity[kWh/m2]",
+        "enduse_electricity_demand[kWh]": "EUI_enduse_electricity[kWh/m2]",
+        "enduse_cooling_demand[kWh]": "EUI_enduse_cooling[kWh/m2]",
+        "enduse_space_cooling_demand[kWh]": "EUI_enduse_space_cooling[kWh/m2]",
+        "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
+        "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
+        "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
+    } | normalisation_name_mapping_emission_timeline_yearly | normalisation_name_mapping_emission_timeline_hourly_operational
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Data preparation
@@ -379,43 +358,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
             "enduse_space_heating_demand[kWh]",
             "enduse_dhw_demand[kWh]",
         ],
-        "lifecycle_emissions": [
-            "operation_heating[kgCO2e]",
-            "operation_hot_water[kgCO2e]",
-            "operation_cooling[kgCO2e]",
-            "operation_appliances[kgCO2e]",
-            "production_wall_ag[kgCO2e]",
-            "production_wall_bg[kgCO2e]",
-            "production_wall_part[kgCO2e]",
-            "production_win_ag[kgCO2e]",
-            "production_roof[kgCO2e]",
-            "production_upperside[kgCO2e]",
-            "production_underside[kgCO2e]",
-            "production_floor[kgCO2e]",
-            "production_base[kgCO2e]",
-            "production_technical_systems[kgCO2e]",
-            "biogenic_wall_ag[kgCO2e]",
-            "biogenic_wall_bg[kgCO2e]",
-            "biogenic_wall_part[kgCO2e]",
-            "biogenic_win_ag[kgCO2e]",
-            "biogenic_roof[kgCO2e]",
-            "biogenic_upperside[kgCO2e]",
-            "biogenic_underside[kgCO2e]",
-            "biogenic_floor[kgCO2e]",
-            "biogenic_base[kgCO2e]",
-            "biogenic_technical_systems[kgCO2e]",
-            "demolition_wall_ag[kgCO2e]",
-            "demolition_wall_bg[kgCO2e]",
-            "demolition_wall_part[kgCO2e]",
-            "demolition_win_ag[kgCO2e]",
-            "demolition_roof[kgCO2e]",
-            "demolition_upperside[kgCO2e]",
-            "demolition_underside[kgCO2e]",
-            "demolition_floor[kgCO2e]",
-            "demolition_base[kgCO2e]",
-            "demolition_technical_systems[kgCO2e]",
-        ],
-        "operational_emissions": list(normalisation_name_mapping_emission_timeline_operational.keys()),
+        "lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
+        "operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
         "solar_irradiation": [
             "irradiation_roof[kWh]",
             "irradiation_window_north[kWh]",
@@ -668,39 +612,12 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         "DH_electricity_consumption_for_pressure_loss[kWh]": ["pressure_loss_total_kW"],
         "DC_plant_thermal_load[kWh]": ["thermal_load_kW"],
         "DC_electricity_consumption_for_pressure_loss[kWh]": ["pressure_loss_total_kW"],
-        "production_wall_ag[kgCO2e]": ["production_wall_ag_kgCO2e"],
-        "production_wall_bg[kgCO2e]": ["production_wall_bg_kgCO2e"],
-        "production_wall_part[kgCO2e]": ["production_wall_part_kgCO2e"],
-        "production_win_ag[kgCO2e]": ["production_win_ag_kgCO2e"],
-        "production_roof[kgCO2e]": ["production_roof_kgCO2e"],
-        "production_upperside[kgCO2e]": ["production_upperside_kgCO2e"],
-        "production_underside[kgCO2e]": ["production_underside_kgCO2e"],
-        "production_floor[kgCO2e]": ["production_floor_kgCO2e"],
-        "production_base[kgCO2e]": ["production_base_kgCO2e"],
-        "production_technical_systems[kgCO2e]": ["production_technical_systems_kgCO2e"],
-        "biogenic_wall_ag[kgCO2e]": ["biogenic_wall_ag_kgCO2e"],
-        "biogenic_wall_bg[kgCO2e]": ["biogenic_wall_bg_kgCO2e"],
-        "biogenic_wall_part[kgCO2e]": ["biogenic_wall_part_kgCO2e"],
-        "biogenic_win_ag[kgCO2e]": ["biogenic_win_ag_kgCO2e"],
-        "biogenic_roof[kgCO2e]": ["biogenic_roof_kgCO2e"],
-        "biogenic_upperside[kgCO2e]": ["biogenic_upperside_kgCO2e"],
-        "biogenic_underside[kgCO2e]": ["biogenic_underside_kgCO2e"],
-        "biogenic_floor[kgCO2e]": ["biogenic_floor_kgCO2e"],
-        "biogenic_base[kgCO2e]": ["biogenic_base_kgCO2e"],
-        "biogenic_technical_systems[kgCO2e]": ["biogenic_technical_systems_kgCO2e"],
-        "demolition_wall_ag[kgCO2e]": ["demolition_wall_ag_kgCO2e"],
-        "demolition_wall_bg[kgCO2e]": ["demolition_wall_bg_kgCO2e"],
-        "demolition_wall_part[kgCO2e]": ["demolition_wall_part_kgCO2e"],
-        "demolition_win_ag[kgCO2e]": ["demolition_win_ag_kgCO2e"],
-        "demolition_roof[kgCO2e]": ["demolition_roof_kgCO2e"],
-        "demolition_upperside[kgCO2e]": ["demolition_upperside_kgCO2e"],
-        "demolition_underside[kgCO2e]": ["demolition_underside_kgCO2e"],
-        "demolition_floor[kgCO2e]": ["demolition_floor_kgCO2e"],
-        "demolition_base[kgCO2e]": ["demolition_base_kgCO2e"],
-        "demolition_technical_systems[kgCO2e]": ["demolition_technical_systems_kgCO2e"],
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
-        for name in emission_timeline_operational_colnames_nounit
+        for name in emission_timeline_hourly_operational_colnames_nounit
+    } | {
+        name+"[kgCO2e]": [name+"_kgCO2e"]
+        for name in emission_timeline_yearly_colnames_nounit
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -2512,20 +2429,8 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
-list_metrics_lifecycle_emissions = [
-    'operation_heating[kgCO2e]', 'operation_hot_water[kgCO2e]', 'operation_cooling[kgCO2e]', 'operation_appliances[kgCO2e]',
-    'production_wall_ag[kgCO2e]', 'production_wall_bg[kgCO2e]', 'production_wall_part[kgCO2e]',
-    'production_win_ag[kgCO2e]', 'production_roof[kgCO2e]', 'production_upperside[kgCO2e]',
-    'production_underside[kgCO2e]', 'production_floor[kgCO2e]', 'production_base[kgCO2e]',
-    'production_technical_systems[kgCO2e]', 'biogenic_wall_ag[kgCO2e]', 'biogenic_wall_bg[kgCO2e]',
-    'biogenic_wall_part[kgCO2e]', 'biogenic_win_ag[kgCO2e]', 'biogenic_roof[kgCO2e]',
-    'biogenic_upperside[kgCO2e]', 'biogenic_underside[kgCO2e]', 'biogenic_floor[kgCO2e]',
-    'biogenic_base[kgCO2e]', 'biogenic_technical_systems[kgCO2e]', 'demolition_wall_ag[kgCO2e]',
-    'demolition_wall_bg[kgCO2e]', 'demolition_wall_part[kgCO2e]', 'demolition_win_ag[kgCO2e]',
-    'demolition_roof[kgCO2e]', 'demolition_upperside[kgCO2e]', 'demolition_underside[kgCO2e]',
-    'demolition_floor[kgCO2e]', 'demolition_base[kgCO2e]', 'demolition_technical_systems[kgCO2e]'
-]
-list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_operational.keys())
+list_metrics_lifecycle_emissions = list(normalisation_name_mapping_emission_timeline_yearly.keys())
+list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_hourly_operational.keys())
 
 def get_list_list_metrics_with_date(config):
     list_list_metrics_with_date = []

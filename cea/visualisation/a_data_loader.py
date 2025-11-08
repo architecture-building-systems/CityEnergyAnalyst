@@ -7,7 +7,7 @@ Ensure this file exists or break the script.
 import cea.inputlocator
 import os
 
-from cea.import_export.result_summary import process_building_summary, emission_timeline_operational_colnames_nounit
+from cea.import_export.result_summary import process_building_summary, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 import pandas as pd
 
 
@@ -27,45 +27,8 @@ demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_endus
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
-lifecycle_emission_metrics = [
-    'operation_heating',
-    'operation_hot_water',
-    'operation_cooling',
-    'operation_appliances',
-    'production_wall_ag',
-    'production_wall_bg',
-    'production_wall_part',
-    'production_win_ag',
-    'production_roof',
-    'production_upperside',
-    'production_underside',
-    'production_floor',
-    'production_base',
-    'production_technical_systems',
-    'biogenic_wall_ag',
-    'biogenic_wall_bg',
-    'biogenic_wall_part',
-    'biogenic_win_ag',
-    'biogenic_roof',
-    'biogenic_upperside',
-    'biogenic_underside',
-    'biogenic_floor',
-    'biogenic_base',
-    'biogenic_technical_systems',
-    'demolition_wall_ag',
-    'demolition_wall_bg',
-    'demolition_wall_part',
-    'demolition_win_ag',
-    'demolition_roof',
-    'demolition_upperside',
-    'demolition_underside',
-    'demolition_floor',
-    'demolition_base',
-    'demolition_technical_systems',
-]
-
-
-operational_emission_metrics = emission_timeline_operational_colnames_nounit
+lifecycle_emission_metrics = emission_timeline_yearly_colnames_nounit
+operational_emission_metrics = emission_timeline_hourly_operational_colnames_nounit
 
 
 

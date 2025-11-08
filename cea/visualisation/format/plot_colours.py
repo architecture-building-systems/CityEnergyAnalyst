@@ -204,10 +204,10 @@ _BASE_COLUMN_COLORS = {
     "E_sys_NONE": "green_lighter",
 
     # ===== Lifecycle Emissions =====
-    "operation_heating": "red",
-    "operation_hot_water": "orange",
-    "operation_cooling": "blue",
-    "operation_appliances": "green",
+    "operation_Qhs_sys": "red",
+    "operation_Qww_sys": "orange",
+    "operation_Qcs_sys": "blue",
+    "operation_E_sys": "green",
     "production_wall_ag": "red_lighter",
     "production_wall_bg": "red_lighter",
     "production_wall_part": "red_lighter",
@@ -238,7 +238,6 @@ _BASE_COLUMN_COLORS = {
     "demolition_floor": "green_lighter",
     "demolition_base": "green_lighter",
     "demolition_technical_systems": "green_lighter",
-
 }
 
 

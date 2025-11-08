@@ -34,7 +34,7 @@ class EmissionTimelinePlot:
         df_to_plotly : pd.DataFrame
             DataFrame containing emission data with columns:
             - 'X': year values
-            - emission columns (e.g., 'operation_heating_kgCO2e', 'biogenic_wall_ag_kgCO2e', etc.)
+            - emission columns (e.g., 'operation_Qhs_sys_kgCO2e', 'biogenic_wall_ag_kgCO2e', etc.)
         list_y_columns : list
             List of column names to plot
         plot_title : str
@@ -486,7 +486,7 @@ class EmissionTimelinePlot:
         Parameters:
         -----------
         column_name : str
-            Column name with unit (e.g., 'operation_heating_kgCO2e')
+            Column name with unit (e.g., `operation_Qhs_sys_kgCO2e`)
 
         Returns:
         --------

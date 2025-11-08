@@ -5,7 +5,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 import pandas as pd
 import numpy as np
-from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_operational_colnames_nounit
+from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 
 
 __author__ = "Zhongming Shi"
@@ -162,44 +162,11 @@ class data_processor:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
             y_cea_metric_map = {
-                key: [key+"_kgCO2e"] for key in emission_timeline_operational_colnames_nounit
+                key: [key+"_kgCO2e"] for key in emission_timeline_hourly_operational_colnames_nounit
             }
         elif plot_cea_feature == 'lifecycle-emissions':
             y_cea_metric_map = {
-                'operation_heating': ['operation_heating_kgCO2e'],
-                'operation_hot_water': ['operation_hot_water_kgCO2e'],
-                'operation_cooling': ['operation_cooling_kgCO2e'],
-                'operation_appliances': ['operation_appliances_kgCO2e'],
-                'production_wall_ag': ['production_wall_ag_kgCO2e'],
-                'production_wall_bg': ['production_wall_bg_kgCO2e'],
-                'production_wall_part': ['production_wall_part_kgCO2e'],
-                'production_win_ag': ['production_win_ag_kgCO2e'],
-                'production_roof': ['production_roof_kgCO2e'],
-                'production_upperside': ['production_upperside_kgCO2e'],
-                'production_underside': ['production_underside_kgCO2e'],
-                'production_floor': ['production_floor_kgCO2e'],
-                'production_base': ['production_base_kgCO2e'],
-                'production_technical_systems': ['production_technical_systems_kgCO2e'],
-                'biogenic_wall_ag': ['biogenic_wall_ag_kgCO2e'],
-                'biogenic_wall_bg': ['biogenic_wall_bg_kgCO2e'],
-                'biogenic_wall_part': ['biogenic_wall_part_kgCO2e'],
-                'biogenic_win_ag': ['biogenic_win_ag_kgCO2e'],
-                'biogenic_roof': ['biogenic_roof_kgCO2e'],
-                'biogenic_upperside': ['biogenic_upperside_kgCO2e'],
-                'biogenic_underside': ['biogenic_underside_kgCO2e'],
-                'biogenic_floor': ['biogenic_floor_kgCO2e'],
-                'biogenic_base': ['biogenic_base_kgCO2e'],
-                'biogenic_technical_systems': ['biogenic_technical_systems_kgCO2e'],
-                'demolition_wall_ag': ['demolition_wall_ag_kgCO2e'],
-                'demolition_wall_bg': ['demolition_wall_bg_kgCO2e'],
-                'demolition_wall_part': ['demolition_wall_part_kgCO2e'],
-                'demolition_win_ag': ['demolition_win_ag_kgCO2e'],
-                'demolition_roof': ['demolition_roof_kgCO2e'],
-                'demolition_upperside': ['demolition_upperside_kgCO2e'],
-                'demolition_underside': ['demolition_underside_kgCO2e'],
-                'demolition_floor': ['demolition_floor_kgCO2e'],
-                'demolition_base': ['demolition_base_kgCO2e'],
-                'demolition_technical_systems': ['demolition_technical_systems_kgCO2e'],
+                key: [key+"_kgCO2e"] for key in emission_timeline_yearly_colnames_nounit
             }
 
         else:

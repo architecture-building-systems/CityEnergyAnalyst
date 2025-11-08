@@ -63,7 +63,7 @@ class OperationalHourlyTimeline:
         Create an operational timeline DataFrame containing:
         - `date`: date column from demand timeseries
         - per-tech emissions: one column per technology and feedstock combination,
-          e.g., `appliance_GRID_kgCO2e`, `heating_NG_kgCO2e`, etc., initialized to zero.
+          e.g., `E_sys_GRID_kgCO2e`, `Qhs_sys_NATURALGAS_kgCO2e`, etc., initialized to zero.
 
         The dataframe should have 8760 rows, one for each hour of the year, indexed by hour.
 
@@ -139,21 +139,20 @@ class OperationalHourlyTimeline:
         """
         Allocate on-site PV generation to offset hourly GRID electricity consumption across technologies,
         without mutating the original demand timeseries. Supports one or multiple PV types as separate
-        scenarios; stores each allocation under its PV name and returns a dict mapping PV name to its
-        allocation DataFrame.
+        scenarios; stores each allocation under its PV name in `self._pv_allocation`. Returns None.
 
         :param pv_codes: List of PV type names. Each is used with the locator
             to find the PV hourly results for this building.
         :type pv_codes: list[str]
         :param allocation_priority: Explicit priority order for technologies (keys of _tech_name_mapping) that are eligible for
             PV allocation. The first item gets PV first in each hour. If None, defaults to
-            `["appliances", "heating", "hot_water", "cooling"]`.
+            `["E_sys", "Qhs_sys", "Qww_sys", "Qcs_sys"]`.
             If the list contains less than 4 items, the remaining eligible technologies will still be appended.
         :type allocation_priority: list[str] | None, optional
-        :param allow_techs: Optional whitelist of technologies (`heating`, `hot_water`, `cooling`, `appliances`)
+        :param allowed_demands: Optional whitelist of technologies (`Qhs_sys`, `Qww_sys`, `Qcs_sys`, `E_sys`)
             to which PV can be allocated.
             If None, all technologies are allowed.
-        :type allow_techs: list[str] | None, optional
+        :type allowed_demands: list[str] | None, optional
         
 
         Notes
@@ -161,11 +160,11 @@ class OperationalHourlyTimeline:
         - Surplus PV is assumed exported (not credited toward operational emission reduction here).
         - PV offsets are calculated using the hourly GRID emission intensity timeline and are negative by convention.
 
-        - For each PV type, four types of columns are added to the timeline:
-            - `PV_{pv_code}_E_PV_gen` columns: how much of PV is sold, how much is used
-            - `PV_to_{demand}` columns: for each demand, how much PV did it use
-            - `PV_offset_{demand}` columns: for each demand, how much GRID emissions were avoided from using PV (negative)
-            - `PV_offset_total_kgCO2e`: total GRID emissions avoided from using PV (negative)
+        - For each PV type:  
+            - Power allocation (stored in `self._pv_allocation[pv_code]` only): `E_PV_gen_kWh`, `E_PV_gen_used_kWh`,  
+              `E_PV_gen_kWh_leftover`, and `PV_to_{demand}_kWh_input`.  
+            - Emission offsets (persisted in operational_emission_timeline): `PV_{pv_code}_offset_{demand}_kgCO2e`  
+              and `PV_{pv_code}_offset_total_kgCO2e` (negative). 
         """
         if len(pv_codes) == 0:
             raise ValueError("pv_codes must contain at least one PV type name.")
@@ -332,9 +331,9 @@ class OperationalHourlyTimeline:
         --------------------------
         - Base emission columns (per-tech and per-supply) are computed from demand and feedstock intensities and
             are NOT altered by PV.
-        - For each logged PV scenario (via `log_pv_contribution`), per-tech PV offset columns
-            `PV_offset_{tech}_kgCO2e__{pv}` and a total `PV_offset_total_kgCO2e__{pv}` are added to the timeline.
-        - No unsuffixed PV columns are written; all PV offsets carry the scenario suffix to avoid ambiguity.
+        - For each logged PV scenario (via `log_pv_contribution`), per-demand PV offset columns  
+          `PV_{pv_code}_offset_{demand}_kgCO2e` and a total `PV_{pv_code}_offset_total_kgCO2e` are added to the timeline.  
+        - No unsuffixed PV columns are written. 
         """
         for demand_type, supply_type in _tech_name_mapping.items():
             eff: float = self.bpr.supply[f"eff_{supply_type}"]
@@ -411,7 +410,12 @@ class OperationalHourlyTimeline:
             os.makedirs(self.locator.get_lca_timeline_folder())
 
         # Reset index to convert hour index to a column, then reorder columns
-        df_to_save = self.operational_emission_timeline.reset_index()
+        df_to_save = self.operational_emission_timeline
+        # merge df_to_save with emission_by_demand, emission_by_feedstock and reset index
+        df_to_save = pd.concat(
+            [df_to_save, self.emission_by_demand, self.emission_by_feedstock],
+            axis=1
+        ).reset_index()
         # Move hour column to the end, and ensure date column is first
         date_cols = ['date'] if 'date' in df_to_save.columns else []
         emission_cols = [col for col in df_to_save.columns if col not in ['hour', 'date']]
