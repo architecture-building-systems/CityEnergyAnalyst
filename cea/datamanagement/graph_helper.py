@@ -30,7 +30,11 @@ CORRECTION PIPELINE
 
 The apply_corrections() method applies corrections in this order:
 1. Remove self-loops - Eliminates invalid edges from nodes to themselves
-2. Merge close nodes - Fixes coordinate precision issues (within SNAP_TOLERANCE = 0.1m)
+2. Merge close nodes - Two-pass approach to fix coordinate precision issues:
+   - Pass 1 (Micro-precision): Merge nodes within 10^-6m using <= comparison
+     Handles floating-point rounding artifacts from geometric operations
+   - Pass 2 (Snap-tolerance): Merge nodes within 0.1m using < comparison
+     Handles data quality issues and near-miss connections
 3. Connect intersecting edges - Adds junction nodes where edges cross but don't connect
 4. Connect disconnected components - Last resort: adds edges between nearest nodes
 
@@ -753,15 +757,23 @@ class GraphCorrector:
 
     def merge_close_nodes(self, distance_threshold: Optional[float] = None) -> nx.Graph:
         """
-        Merge nodes that are closer than a specified distance threshold.
+        Merge nodes that are closer than a specified distance threshold using a two-pass approach.
 
         This helps fix issues where multiple nodes exist at nearly the same location
         due to coordinate precision issues or data quality problems. When nodes are merged,
         all edges from the merged nodes are transferred to the kept node.
 
-        Uses a two-pass approach:
-        1. Micro-precision pass: Merges nodes within floating-point epsilon (handles coordinate rounding artifacts)
-        2. Snap-tolerance pass: Merges nodes within SNAP_TOLERANCE (handles data quality issues)
+        Two-pass merging strategy:
+        1. Micro-precision pass: Merges nodes within 10^-6m (1 micrometer) using <= comparison
+           - Catches nodes at exactly the coordinate precision threshold
+           - Handles floating-point rounding artifacts from geometric operations (interpolate, substring, etc.)
+           - Example: nodes at (463229.970972, y) and (463229.970973, y) differ by 0.000001m
+        2. Snap-tolerance pass: Merges nodes within SNAP_TOLERANCE (0.1m) using < comparison
+           - Handles data quality issues and near-miss connections
+           - Uses strict < to avoid over-merging at larger tolerances
+
+        Protected nodes (e.g., building terminals) are never merged in either pass,
+        preserving exact building connection coordinates.
 
         Uses KDTree spatial indexing for efficient O(N log N) nearest neighbor search instead
         of O(N²) brute force, making it suitable for city-scale graphs with thousands of nodes.
@@ -792,11 +804,22 @@ class GraphCorrector:
         """
         Helper method to merge nodes within a specific distance threshold.
 
-        :param distance_threshold: Maximum distance for merging nodes
+        This method uses KDTree spatial indexing for efficient neighbor search and implements
+        different comparison operators based on threshold size:
+        - For micro-precision (< 0.001m): Uses <= to catch nodes at exactly the threshold distance
+        - For larger tolerances: Uses < to avoid over-merging
+
+        The <= operator for micro-precision is critical because geometric operations like
+        interpolate() and substring() can produce coordinates that differ by exactly 10^-6m
+        (the coordinate precision threshold), resulting in isolated components.
+
+        Protected nodes (building terminals) are skipped and never merged.
+
+        :param distance_threshold: Maximum distance for merging nodes (meters)
         :type distance_threshold: float
-        :param label: Label for logging purposes
+        :param label: Label for logging purposes (e.g., "micro-precision" or "snap-tolerance")
         :type label: str
-        :return: Number of nodes merged
+        :return: Number of nodes merged in this pass
         :rtype: int
         """
         nodes = list(self.graph.nodes())

@@ -4,58 +4,68 @@ Network connectivity module for connecting buildings to street networks.
 This module creates a graph of potential thermal network paths by connecting building centroids to the nearest
 points on a street network, preparing the data for Steiner tree optimization.
 
-WORKFLOW (Single-Pass with Preprocessing):
-==========================================
-1. Load and validate street network
-2. **CLEAN**: Preprocess raw street network
+PURPOSE
+=======
+Creates a fully connected network graph where:
+- Buildings are connected to their nearest street points via terminal lines
+- All streets are split at intersection points for proper topology
+- Graph is guaranteed to be connected (single component)
+- Coordinate precision is consistently maintained throughout
+- Building terminal coordinates are preserved exactly (protected from merging)
+
+WORKFLOW
+========
+1. **Load and validate** street network and building centroids
+2. **Clean street network** (preprocessing):
    - Split streets at intersection points (automatic detection via unary_union)
    - Snap near-miss endpoints to nearby lines (fix manual digitization errors)
    - Re-split to create junctions at newly connected points
-3. **CORRECT**: Apply graph corrections to cleaned network
-   - Fixes remaining topology issues: self-loops, close nodes, disconnected components
-   - Uses GraphCorrector with coordinate precision matching
-4. Create building terminal connection lines (geometries from building → nearest street point)
-5. **PASS 2 ELIMINATED**: No second correction pass needed!
-   - Junction additions maintain connectivity (split edges but don't disconnect)
-   - Terminal additions maintain connectivity (add connected edges)
-   - Geometry restoration snaps endpoints to rounded coordinates (preserves connectivity)
-6. Extract all significant points (line endpoints, including terminal connection points)
-7. Discretize network: split lines at all significant points in one efficient operation
-8. Output fully connected network for Steiner tree optimization
+3. **Correct street topology** (first pass):
+   - Remove self-loops (invalid edges)
+   - Merge close nodes (two-pass: micro-precision at 10^-6m, then snap-tolerance at 0.1m)
+   - Connect intersecting edges
+   - Connect disconnected components if needed
+4. **Create building terminals**:
+   - Find nearest point on street network for each building
+   - Create LineString geometries connecting building → street
+   - Split street lines at terminal junction points
+   - Normalize all coordinates to 6 decimal places (SHAPEFILE_TOLERANCE)
+5. **Correct combined topology** (second pass):
+   - Apply same corrections to streets + terminals network
+   - Protect building terminal nodes from being merged
+   - Resolve any micro-precision disconnections from geometric operations
+6. **Extract significant points**:
+   - Collect all unique line endpoints (streets and terminals)
+7. **Discretize network**:
+   - Split lines at all significant points in one efficient operation
+8. **Output** fully connected network ready for Steiner tree optimization
 
-RATIONALE FOR PREPROCESSING + SINGLE PASS:
-===========================================
-**Why preprocessing?** Cleaning the raw street network first:
-- Automatically detects and fixes intersection topology issues
-- Handles common data quality problems (near-miss connections, gaps)
-- Reduces burden on GraphCorrector (fewer edge cases to handle)
-- Results in higher quality network topology
+COORDINATE PRECISION HANDLING
+==============================
+This module implements robust coordinate normalization to prevent micro-precision disconnections:
 
-**Why single correction pass is sufficient?**
-- Preprocessing creates proper junctions at natural intersections
-- Endpoint snapping in geometry restoration prevents round-trip disconnections
-- Building terminal additions explicitly maintain connectivity
-- Second pass was defensive programming for issues now prevented upstream
+- All coordinates normalized to SHAPEFILE_TOLERANCE (6 decimal places = 1 micrometer)
+- Two-pass node merging strategy:
+  * Pass 1 (Micro-precision): Merges nodes within 10^-6m using <= comparison
+    Catches nodes at exactly the coordinate precision threshold
+  * Pass 2 (Snap-tolerance): Merges nodes within 0.1m using < comparison
+    Handles data quality issues
+- Exact coordinate comparison (not distance thresholds) for split point detection
+- Validation after terminal creation warns if disconnections detected
 
-ARCHITECTURE:
-=============
-- apply_graph_corrections: Unified function for all graph corrections (with optional protected nodes)
-  * Converts GeoDataFrame → NetworkX graph → applies GraphCorrector → converts back to GeoDataFrame
-  * GraphCorrector (graph_helper.py): Topology fixes with optional protected nodes
-  * Merges close nodes within SNAP_TOLERANCE (except protected nodes)
-  * Connects intersecting edges from different components
-  * Connects disconnected components (avoids direct building-to-building connections when protected nodes given)
-- create_terminals: Creates LineStrings from buildings to nearest street points
-- calculate_significant_points: Extracts unique line endpoints (includes terminal connection points)
-- split_streets_at_intersections: Automatically splits streets at intersection points using unary_union
-- snap_endpoints_to_nearby_lines: Fixes near-miss connections by snapping close endpoints
-- split_network_at_points: Discretizes network by snapping to specified points and splitting
+Why two correction passes?
+- Geometric operations (interpolate, substring) can produce floating-point artifacts
+- Coordinate rounding can create 1-micrometer gaps at junction points
+- Second pass automatically fixes these artifacts while protecting building terminals
 
-This approach ensures:
-- Street network topology is clean before adding buildings
-- Building centroids (protected nodes) are NOT moved from their exact locations
-- Final network is fully connected and suitable for Steiner tree optimization
-- Better network quality by following street topology for component connections
+GUARANTEES
+==========
+- Final network is 100% connected (single component)
+- Building terminal coordinates are exact (never moved)
+- Street topology follows actual street intersections
+- Coordinate precision is consistent (6 decimal places)
+- All geometric operations preserve connectivity
+- No micro-precision disconnections (automatically resolved)
 """
 
 import warnings
@@ -326,6 +336,10 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
     Optimization: Only considers endpoints that are "dangling" (terminal points not
     already connected), dramatically reducing the search space.
 
+    IMPORTANT FIX (2025-11): Changed line 404 from overwriting snap points to appending them.
+    This ensures that multiple dangling endpoints snapping to the same line are all preserved,
+    preventing disconnected components.
+
     Use Cases:
     ----------
     - Fixing manually digitized street networks with near-miss connections
@@ -338,8 +352,9 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
     1. Identify all dangling endpoints (appears exactly once in network)
     2. For each dangling endpoint, find nearby lines within tolerance
     3. Snap endpoint to nearest point on closest line
-    4. Split target lines at snap points to create explicit junctions
-    5. Rebuild geometries with snapped endpoints
+    4. Collect all snap points per line (using append, not overwrite)
+    5. Split target lines at all snap points to create explicit junctions
+    6. Rebuild geometries with snapped endpoints
 
     :param network_gdf: GeoDataFrame with street LineStrings
     :type network_gdf: gdf
@@ -616,17 +631,24 @@ def calculate_significant_points(prototype_network, crs):
 def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     """
     Create terminal connection lines from building centroids to nearest points on street network.
-    
-    This function:
-    1. Finds nearest point on street network for each building
-    2. Creates LineString geometries connecting building → street
-    3. Combines terminal lines with street network
-    
+
+    This function implements robust coordinate normalization to prevent micro-precision disconnections:
+    1. Finds nearest point on street network for each building (via near_analysis)
+    2. Normalizes all coordinates to SHAPEFILE_TOLERANCE precision (6 decimal places)
+    3. Creates LineString geometries connecting building → street with normalized coords
+    4. Splits street lines at terminal junction points using normalized split points
+    5. Validates connectivity and warns if disconnected components are detected
+
+    Key improvements for connectivity:
+    - Uses exact normalized coordinate comparison instead of distance thresholds
+    - Ensures all coordinates are consistently rounded before LineString creation
+    - Validates coordinate normalization and checks for micro-disconnections
+
     :param building_centroids: GeoDataFrame with building centroids and 'name' column
     :type building_centroids: gdf
     :param street_network: GeoDataFrame with street network LineStrings (already corrected)
     :type street_network: gdf
-    :return: Combined network (street + building terminals)
+    :return: Combined network (street + building terminals) with all coordinates normalized
     :rtype: gdf
     """
     # Find nearest point on street network for each building centroid
@@ -736,8 +758,17 @@ def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = Non
     Apply graph corrections to a network to fix connectivity issues.
 
     This function converts a GeoDataFrame to a NetworkX graph, applies corrections
-    using GraphCorrector (merging close nodes, connecting intersecting edges,
-    connecting disconnected components), then converts back to GeoDataFrame.
+    using GraphCorrector with a two-pass merging strategy, then converts back to GeoDataFrame.
+
+    Correction pipeline:
+    1. Remove self-loops (invalid edges from nodes to themselves)
+    2. Merge close nodes in two passes:
+       - Pass 1 (Micro-precision): Merge nodes within 10^-6m (1 micrometer) using <= comparison
+         Catches coordinate rounding artifacts from geometric operations
+       - Pass 2 (Snap-tolerance): Merge nodes within 0.1m using < comparison
+         Handles data quality issues and near-miss connections
+    3. Connect intersecting edges (add missing junction nodes)
+    4. Connect disconnected components (last resort connections between components)
 
     Protected nodes (e.g., building centroids) will not be merged or moved during
     corrections, ensuring their exact coordinates are preserved.
@@ -749,7 +780,7 @@ def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = Non
     :type network_gdf: gdf
     :param protected_nodes: Optional list of node coordinates to protect from merging
     :type protected_nodes: list, optional
-    :return: Corrected network as GeoDataFrame
+    :return: Corrected network as GeoDataFrame with all micro-precision disconnections resolved
     :rtype: gdf
     """
     coord_precision = SHAPEFILE_TOLERANCE
@@ -1006,10 +1037,24 @@ def calc_connectivity_network_with_geometry(
     """
     Create connectivity network preserving street geometries.
 
+    This function creates a fully connected network by:
+    1. Preparing inputs (CRS conversion, validation, street network cleaning)
+    2. Creating building terminal connections to nearest street points
+    3. Validating coordinate normalization
+    4. Applying graph corrections to fix micro-precision disconnections
+    5. Converting to NetworkX graph with building terminal metadata
+    6. Validating final connectivity (raises error if still disconnected)
+
+    The graph corrections step (added to fix connectivity issues) includes:
+    - Micro-precision node merging (10^-6m tolerance with <= comparison)
+    - Snap-tolerance node merging (0.1m tolerance with < comparison)
+    - Protected node handling (building terminals are never merged)
+
     :param streets_network_df: GeoDataFrame with street network geometries
     :param building_centroids_df: GeoDataFrame with building centroids
     :param return_graph: If True, return NetworkX graph with metadata; if False, return edges GeoDataFrame
     :return: Either GeoDataFrame of edges (default) or NetworkX graph with metadata
+    :raises ValueError: If network has disconnected components after all corrections applied
     """
     # Prepare inputs (CRS conversion, validation, cleaning)
     streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
