@@ -5,7 +5,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 import pandas as pd
 import numpy as np
-from cea.import_export.result_summary import month_names, month_hours, season_mapping
+from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_operational_colnames_nounit
 
 
 __author__ = "Zhongming Shi"
@@ -162,54 +162,7 @@ class data_processor:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
             y_cea_metric_map = {
-                'heating': ['heating_kgCO2e'],
-                'hot_water': ['hot_water_kgCO2e'],
-                'cooling': ['cooling_kgCO2e'],
-                'electricity': ['electricity_kgCO2e'],
-                'heating_NATURALGAS': ['heating_NATURALGAS_kgCO2e'],
-                'heating_BIOGAS': ['heating_BIOGAS_kgCO2e'],
-                'heating_SOLAR': ['heating_SOLAR_kgCO2e'],
-                'heating_DRYBIOMASS': ['heating_DRYBIOMASS_kgCO2e'],
-                'heating_WETBIOMASS': ['heating_WETBIOMASS_kgCO2e'],
-                'heating_GRID': ['heating_GRID_kgCO2e'],
-                'heating_COAL': ['heating_COAL_kgCO2e'],
-                'heating_WOOD': ['heating_WOOD_kgCO2e'],
-                'heating_OIL': ['heating_OIL_kgCO2e'],
-                'heating_HYDROGEN': ['heating_HYDROGEN_kgCO2e'],
-                'heating_NONE': ['heating_NONE_kgCO2e'],
-                'hot_water_NATURALGAS': ['hot_water_NATURALGAS_kgCO2e'],
-                'hot_water_BIOGAS': ['hot_water_BIOGAS_kgCO2e'],
-                'hot_water_SOLAR': ['hot_water_SOLAR_kgCO2e'],
-                'hot_water_DRYBIOMASS': ['hot_water_DRYBIOMASS_kgCO2e'],
-                'hot_water_WETBIOMASS': ['hot_water_WETBIOMASS_kgCO2e'],
-                'hot_water_GRID': ['hot_water_GRID_kgCO2e'],
-                'hot_water_COAL': ['hot_water_COAL_kgCO2e'],
-                'hot_water_WOOD': ['hot_water_WOOD_kgCO2e'],
-                'hot_water_OIL': ['hot_water_OIL_kgCO2e'],
-                'hot_water_HYDROGEN': ['hot_water_HYDROGEN_kgCO2e'],
-                'hot_water_NONE': ['hot_water_NONE_kgCO2e'],
-                'cooling_NATURALGAS': ['cooling_NATURALGAS_kgCO2e'],
-                'cooling_BIOGAS': ['cooling_BIOGAS_kgCO2e'],
-                'cooling_SOLAR': ['cooling_SOLAR_kgCO2e'],
-                'cooling_DRYBIOMASS': ['cooling_DRYBIOMASS_kgCO2e'],
-                'cooling_WETBIOMASS': ['cooling_WETBIOMASS_kgCO2e'],
-                'cooling_GRID': ['cooling_GRID_kgCO2e'],
-                'cooling_COAL': ['cooling_COAL_kgCO2e'],
-                'cooling_WOOD': ['cooling_WOOD_kgCO2e'],
-                'cooling_OIL': ['cooling_OIL_kgCO2e'],
-                'cooling_HYDROGEN': ['cooling_HYDROGEN_kgCO2e'],
-                'cooling_NONE': ['cooling_NONE_kgCO2e'],
-                'appliances_NATURALGAS': ['appliances_NATURALGAS_kgCO2e'],
-                'appliances_BIOGAS': ['appliances_BIOGAS_kgCO2e'],
-                'appliances_SOLAR': ['appliances_SOLAR_kgCO2e'],
-                'appliances_DRYBIOMASS': ['appliances_DRYBIOMASS_kgCO2e'],
-                'appliances_WETBIOMASS': ['appliances_WETBIOMASS_kgCO2e'],
-                'appliances_GRID': ['appliances_GRID_kgCO2e'],
-                'appliances_COAL': ['appliances_COAL_kgCO2e'],
-                'appliances_WOOD': ['appliances_WOOD_kgCO2e'],
-                'appliances_OIL': ['appliances_OIL_kgCO2e'],
-                'appliances_HYDROGEN': ['appliances_HYDROGEN_kgCO2e'],
-                'appliances_NONE': ['appliances_NONE_kgCO2e'],
+                key: [key+"_kgCO2e"] for key in emission_timeline_operational_colnames_nounit
             }
         elif plot_cea_feature == 'lifecycle-emissions':
             y_cea_metric_map = {
@@ -247,7 +200,6 @@ class data_processor:
                 'demolition_floor': ['demolition_floor_kgCO2e'],
                 'demolition_base': ['demolition_base_kgCO2e'],
                 'demolition_technical_systems': ['demolition_technical_systems_kgCO2e'],
-
             }
 
         else:

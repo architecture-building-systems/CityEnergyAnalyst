@@ -7,7 +7,7 @@ Ensure this file exists or break the script.
 import cea.inputlocator
 import os
 
-from cea.import_export.result_summary import process_building_summary
+from cea.import_export.result_summary import process_building_summary, emission_timeline_operational_colnames_nounit
 import pandas as pd
 
 
@@ -65,17 +65,7 @@ lifecycle_emission_metrics = [
 ]
 
 
-operational_emission_metrics = [
-     'heating', 'hot_water', 'cooling', 'appliances', 'heating_NATURALGAS', 'heating_BIOGAS', 'heating_SOLAR',
-     'heating_DRYBIOMASS', 'heating_WETBIOMASS', 'heating_GRID', 'heating_COAL', 'heating_WOOD', 'heating_OIL',
-     'heating_HYDROGEN', 'heating_NONE', 'hot_water_NATURALGAS', 'hot_water_BIOGAS', 'hot_water_SOLAR',
-     'hot_water_DRYBIOMASS', 'hot_water_WETBIOMASS', 'hot_water_GRID', 'hot_water_COAL', 'hot_water_WOOD',
-     'hot_water_OIL', 'hot_water_HYDROGEN', 'hot_water_NONE', 'cooling_NATURALGAS', 'cooling_BIOGAS', 'cooling_SOLAR',
-     'cooling_DRYBIOMASS', 'cooling_WETBIOMASS', 'cooling_GRID', 'cooling_COAL', 'cooling_WOOD', 'cooling_OIL',
-     'cooling_HYDROGEN', 'cooling_NONE', 'appliances_NATURALGAS', 'appliances_BIOGAS', 'appliances_SOLAR',
-     'appliances_DRYBIOMASS', 'appliances_WETBIOMASS', 'appliances_GRID', 'appliances_COAL', 'appliances_WOOD',
-     'appliances_OIL', 'appliances_HYDROGEN', 'appliances_NONE'
-]
+operational_emission_metrics = emission_timeline_operational_colnames_nounit
 
 
 

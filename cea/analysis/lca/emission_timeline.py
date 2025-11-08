@@ -384,7 +384,7 @@ class BuildingEmissionTimeline:
         4) Aggregate per-feedstock columns back to per-technology yearly totals and write into self.timeline.
 
         Column convention assumed: `{demand_type}_{feedstock}_kgCO2e` where demand_type is one of
-        {heating, hot_water, cooling, appliances} and feedstock is in the feedstock database (plus 'NONE').
+        {Qhs_sys, Qww_sys, Qcs_sys, E_sys} and feedstock is in the feedstock database (plus 'NONE').
         """
         self.check_demolished()
         demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
