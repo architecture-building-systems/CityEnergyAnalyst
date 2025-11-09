@@ -160,9 +160,9 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
             raise ValueError(f"Archetype '{archetype}' not found in construction type database.")
         for component, modifications in modify_recipe[archetype].items():
             code_current = archetype_df.at[archetype, f"type_{component}"]
-            # create a new component code by "(capitalized component)_(archetype)_year_(event_year)"
+            # create a new component code by "(capitalized component)_(archetype)_YEAR_(event_year)"
             component_db = envelope_lookup._df_for(component)
-            code_new = f"{component.capitalize()}_{archetype}_year_{year_of_state}"
+            code_new = f"{component.capitalize()}_{archetype}_YEAR_{year_of_state}"
 
             if code_new in component_db.index:
                 code_new = shift_code_name_plus1(component_db, code_new)
