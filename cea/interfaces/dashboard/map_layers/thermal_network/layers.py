@@ -18,7 +18,8 @@ class ThermalNetworkMapLayer(MapLayer):
     _network_types = ["DC", "DH"]
 
     def _get_network_types(self):
-        return self._network_types
+        # Return both choices and default (DC is default)
+        return {"choices": self._network_types, "default": self._network_types[0]}
 
     def _get_legacy_file_path(self, network_type, filename):
         """Get path to legacy file directly under network_type folder (not in layout/)"""
@@ -187,15 +188,16 @@ class ThermalNetworkMapLayer(MapLayer):
             # This allows the frontend to proceed with an empty selection and show the base layer without network
             if not available_networks:
                 print(f"[ThermalNetworkMapLayer] No networks found, returning placeholder option")
-                return ["No network available"]
+                return {"choices": ["No network available"], "default": "No network available"}
 
-            return available_networks
+            # Return both choices and default (most recent network)
+            return {"choices": available_networks, "default": available_networks[0]}
 
         except Exception as e:
             print(f"[ThermalNetworkMapLayer] Error in _get_network_names: {e}")
             import traceback
             traceback.print_exc()
-            return ["No network available"]
+            return {"choices": ["No network available"], "default": "No network available"}
 
     def _get_network_layout_files(self, parameters):
         network_type = parameters.get('network-type', 'DC')
