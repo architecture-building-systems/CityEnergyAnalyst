@@ -141,13 +141,13 @@ class InputLocator(object):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
     
-    def get_events_folder(self):
-        """Returns the folder containing event scenarios"""
-        return os.path.join(self.scenario, "events")
+    def get_district_timeline_states_folder(self):
+        """Returns the folder as a representation of district timeline, containing state-in-time scenarios"""
+        return os.path.join(self.scenario, "district_timeline_states")
 
-    def get_event_scenario_folder(self, event_year: int):
-        """Returns the folder containing a specific event scenario"""
-        return os.path.join(self.get_events_folder(), f'event_{event_year}')
+    def get_state_in_time_scenario_folder(self, year_of_state: int):
+        """Returns the folder containing a specific state-in-time scenario"""
+        return os.path.join(self.get_district_timeline_states_folder(), f'state_{year_of_state}')
     
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
