@@ -931,9 +931,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             for item in os.listdir(network_type_folder):
                 item_path = os.path.join(network_type_folder, item)
                 if os.path.isdir(item_path):
-                    # Check if this folder has network files (both edges and nodes required)
-                    edges_path = os.path.join(item_path, 'edges.shp')
-                    nodes_path = os.path.join(item_path, 'nodes.shp')
+                    # Check if this folder has network files in layout/ subfolder (both edges and nodes required)
+                    # Use InputLocator methods to get correct paths
+                    edges_path = locator.get_network_layout_edges_shapefile(network_type, item)
+                    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, item)
+
                     if os.path.exists(edges_path) and os.path.exists(nodes_path):
                         # Try to parse timestamp from folder name (format: YYYYMMDD_HHMMSS)
                         import re
@@ -979,14 +981,17 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def decode(self, value):
         """
         Decode and validate value exists in available networks.
-        Always returns the most recent network (first in sorted list) to ensure
-        users see the latest generated network when opening the tool.
+        Returns the selected value if valid, otherwise returns the most recent network as default.
         """
         # Update choices dynamically
         self._choices = self._get_available_networks()
 
-        # Always return the most recent network (first choice) if available
-        # This ensures users always see the latest network by default
+        # If value is provided and valid, return it
+        if value and value in self._choices:
+            return value
+
+        # Otherwise, return the most recent network (first choice) if available
+        # This ensures users see the latest network by default when opening the tool
         if self._choices:
             return self._choices[0]
 

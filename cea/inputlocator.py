@@ -986,34 +986,13 @@ class InputLocator(object):
         """
         scenario/outputs/thermal-network/DH or DC/{network_name}/layout/edges.shp
 
-        New structure (since v4.1): edges.shp stored in layout/ subfolder
-        Legacy structure: edges.shp directly under network_name/ folder
-
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
+        Layout files are stored in layout/ subfolder within the network_name folder
         """
-        # New structure: network_name/layout/edges.shp
-        new_structure_path = os.path.join(
+        shapefile_path = os.path.join(
             self.get_output_thermal_network_type_folder(network_type, network_name),
             'layout',
             'edges.shp'
         )
-
-        # Legacy structure: network_name/edges.shp (backwards compatibility)
-        legacy_structure_path = os.path.join(
-            self.get_output_thermal_network_type_folder(network_type, network_name),
-            'edges.shp'
-        )
-
-        # Auto-detect which structure exists
-        if os.path.exists(new_structure_path):
-            shapefile_path = new_structure_path
-        elif os.path.exists(legacy_structure_path):
-            # Legacy structure detected - return legacy path
-            shapefile_path = legacy_structure_path
-        else:
-            # Neither exists - return new structure path (for writing new files)
-            shapefile_path = new_structure_path
-
         check_cpg(shapefile_path)
         return shapefile_path
 
@@ -1021,34 +1000,13 @@ class InputLocator(object):
         """
         scenario/outputs/thermal-network/DH or DC/{network_name}/layout/nodes.shp
 
-        New structure (since v4.1): nodes.shp stored in layout/ subfolder
-        Legacy structure: nodes.shp directly under network_name/ folder
-
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
+        Layout files are stored in layout/ subfolder within the network_name folder
         """
-        # New structure: network_name/layout/nodes.shp
-        new_structure_path = os.path.join(
+        shapefile_path = os.path.join(
             self.get_output_thermal_network_type_folder(network_type, network_name),
             'layout',
             'nodes.shp'
         )
-
-        # Legacy structure: network_name/nodes.shp (backwards compatibility)
-        legacy_structure_path = os.path.join(
-            self.get_output_thermal_network_type_folder(network_type, network_name),
-            'nodes.shp'
-        )
-
-        # Auto-detect which structure exists
-        if os.path.exists(new_structure_path):
-            shapefile_path = new_structure_path
-        elif os.path.exists(legacy_structure_path):
-            # Legacy structure detected - return legacy path
-            shapefile_path = legacy_structure_path
-        else:
-            # Neither exists - return new structure path (for writing new files)
-            shapefile_path = new_structure_path
-
         check_cpg(shapefile_path)
         return shapefile_path
 
@@ -1058,40 +1016,25 @@ class InputLocator(object):
 
     def _get_part2_output_file_path(self, network_type, network_name, file_suffix):
         """
-        Helper method to resolve Part 2 output file paths with backwards compatibility.
+        Helper method to resolve Part 2 output file paths.
 
-        New structure (since v4.1): Files stored in network_name/ folder
-        Legacy structure: Files stored at thermal-network root level
+        Files are stored in network_name/ folder with format: {network_type}_{network_name}_{file_suffix}
 
         :param network_type: 'DH' or 'DC'
         :param network_name: Network name (timestamp or user-defined)
         :param file_suffix: File suffix (e.g., 'massflow_edges_kgs.csv')
-        :return: Resolved file path with backwards compatibility
+        :return: Resolved file path
         """
         if network_name:
-            # New structure: network_type/network_name/filename
-            new_structure_folder = self.get_output_thermal_network_type_folder(network_type, network_name)
-            new_structure_filename = f"{network_type}_{network_name}_{file_suffix}"
-            new_structure_path = os.path.join(new_structure_folder, new_structure_filename)
-
-            # Legacy structure: stored at root level
-            legacy_structure_folder = self.get_thermal_network_folder()
-            legacy_structure_filename = f"{network_type}_{network_name}_{file_suffix}"
-            legacy_structure_path = os.path.join(legacy_structure_folder, legacy_structure_filename)
-
-            # Auto-detect which structure exists
-            if os.path.exists(new_structure_path):
-                return new_structure_path
-            elif os.path.exists(legacy_structure_path):
-                return legacy_structure_path
-            else:
-                # Neither exists - return new structure path (for writing new files)
-                return new_structure_path
+            # Part 2 files stored in: network_type/network_name/filename
+            folder = self.get_output_thermal_network_type_folder(network_type, network_name)
+            filename = f"{network_type}_{network_name}_{file_suffix}"
+            return os.path.join(folder, filename)
         else:
-            # Empty network_name - legacy format at root level (e.g., DC__massflow_edges_kgs.csv)
+            # Empty network_name - root level with double underscore (e.g., DC__massflow_edges_kgs.csv)
             folder = self.get_thermal_network_folder()
-            file_name = f"{network_type}__{file_suffix}"
-            return os.path.join(folder, file_name)
+            filename = f"{network_type}__{file_suffix}"
+            return os.path.join(folder, filename)
 
     def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name=""):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
@@ -1166,10 +1109,7 @@ class InputLocator(object):
         """
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_edges_kgs.csv
 
-        New structure (since v4.1): massflow files stored in network_name/ folder with network_name in filename
-        Legacy structure: massflow files at thermal-network root with {network_type}__massflow_edges_kgs.csv format
-
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
+        Part 2 output files are stored in network_name/ folder with format: {network_type}_{network_name}_{file_suffix}
         """
         if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -1185,10 +1125,9 @@ class InputLocator(object):
         """
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_velocity_edges_mpers.csv
 
-        New structure (since v4.1): velocity files stored in network_name/ folder
-        Legacy structure: velocity files at thermal-network root
+        Part 2 output files are stored in network_name/ folder
+        
 
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
         """
         if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -1204,10 +1143,9 @@ class InputLocator(object):
         """
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_nodes_kgs.csv
 
-        New structure (since v4.1): massflow files stored in network_name/ folder with network_name in filename
-        Legacy structure: massflow files at thermal-network root with {network_type}__massflow_nodes_kgs.csv format
+        Part 2 output files are stored in network_name/ folder
+        
 
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
         """
         if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -1224,10 +1162,9 @@ class InputLocator(object):
         """
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_supply_nodes_K.csv
 
-        New structure (since v4.1): temperature files stored in network_name/ folder
-        Legacy structure: temperature files at thermal-network root
+        Part 2 output files are stored in network_name/ folder
+        
 
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
         """
         if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -1244,10 +1181,9 @@ class InputLocator(object):
         """
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_return_nodes_K.csv
 
-        New structure (since v4.1): temperature files stored in network_name/ folder
-        Legacy structure: temperature files at thermal-network root
+        Part 2 output files are stored in network_name/ folder
+        
 
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
         """
         if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
@@ -1264,10 +1200,9 @@ class InputLocator(object):
         """
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_plant_K.csv
 
-        New structure (since v4.1): temperature files stored in network_name/ folder
-        Legacy structure: temperature files at thermal-network root
+        Part 2 output files are stored in network_name/ folder
+        
 
-        Backwards compatibility: Auto-detects legacy structure and returns correct path
         """
         if representative_week:
             folder = self.get_representative_week_thermal_network_layout_folder()
