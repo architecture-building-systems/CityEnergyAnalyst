@@ -356,7 +356,8 @@ def layout_network(network_layout, locator, plant_building_name=None, output_nam
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
     path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
-    output_network_folder = locator.get_output_thermal_network_type_folder(type_network, output_name_network)
+    # output_network_folder should be the parent directory of edges.shp (i.e., the layout/ folder)
+    output_network_folder = os.path.dirname(path_output_edges_shp)
 
     disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
 

@@ -20,14 +20,56 @@ class ThermalNetworkMapLayer(MapLayer):
     def _get_network_types(self):
         return self._network_types
 
+    def _get_network_names(self, parameters):
+        """Get list of available network layouts for the selected network type"""
+        import os
+        network_type = parameters.get('network-type')
+
+        # Return empty list if network type not selected yet
+        if not network_type:
+            return []
+
+        # Get the network type folder
+        network_type_folder = self.locator.get_output_thermal_network_type_folder(network_type, '')
+        network_type_folder = network_type_folder.rstrip(os.sep)
+
+        if not os.path.exists(network_type_folder):
+            return []
+
+        # List subdirectories that contain valid network files (both edges and nodes required)
+        # Supports both new structure (layout/ subfolder) and legacy structure (direct shapefiles)
+        available_networks = []
+        for item in os.listdir(network_type_folder):
+            item_path = os.path.join(network_type_folder, item)
+            if os.path.isdir(item_path):
+                # Check new structure: network_name/layout/edges.shp
+                new_structure_edges = os.path.join(item_path, 'layout', 'edges.shp')
+                new_structure_nodes = os.path.join(item_path, 'layout', 'nodes.shp')
+
+                # Check legacy structure: network_name/edges.shp
+                legacy_structure_edges = os.path.join(item_path, 'edges.shp')
+                legacy_structure_nodes = os.path.join(item_path, 'nodes.shp')
+
+                # Add to list if either structure is valid
+                if (os.path.exists(new_structure_edges) and os.path.exists(new_structure_nodes)) or \
+                   (os.path.exists(legacy_structure_edges) and os.path.exists(legacy_structure_nodes)):
+                    available_networks.append(item)
+
+        # Sort by folder name (most recent timestamp first)
+        available_networks.sort(reverse=True)
+
+        return available_networks
+
     def _get_network_layout_files(self, parameters):
         network_type = parameters.get('network-type', 'DC')
+        network_name = parameters.get('network-name', '')
 
-        # FIXME: network_name is usually not used in the script
         return [
-            self.locator.get_network_layout_edges_shapefile(network_type, ""),
-            self.locator.get_network_layout_nodes_shapefile(network_type, ""),
-            self.locator.get_thermal_network_layout_massflow_edges_file(network_type, ""),
+            self.locator.get_network_layout_edges_shapefile(network_type, network_name),
+            self.locator.get_network_layout_nodes_shapefile(network_type, network_name),
+            # New structure: massflow files now stored in network_name folder
+            # InputLocator handles backwards compatibility automatically
+            self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name),
         ]
 
     # TODO: Add width parameter
@@ -41,6 +83,16 @@ class ThermalNetworkMapLayer(MapLayer):
                     description="Type of the network",
                     options_generator="_get_network_types",
                     selector="choice",
+                ),
+            'network-name':
+                ParameterDefinition(
+                    "Network Name",
+                    "string",
+                    default="",
+                    description="Name of the network layout to visualize",
+                    selector="choice",
+                    depends_on=["network-type"],
+                    options_generator="_get_network_names",
                 ),
             'scale':
                 ParameterDefinition(
@@ -64,7 +116,7 @@ class ThermalNetworkMapLayer(MapLayer):
             FileRequirement(
                 "Network Layout",
                 file_locator="layer:_get_network_layout_files",
-                depends_on=["network-type"],
+                depends_on=["network-type", "network-name"],
             ),
         ]
 
@@ -72,6 +124,7 @@ class ThermalNetworkMapLayer(MapLayer):
     def generate_data(self, parameters):
         """Generates the output for this layer"""
         network_type = parameters.get('network-type', 'DC')
+        network_name = parameters.get('network-name', '')
 
         if network_type not in self._network_types:
             raise ValueError(f"Invalid network type: {network_type}")
@@ -95,9 +148,10 @@ class ThermalNetworkMapLayer(MapLayer):
             }
         }
 
-        edges_path = self.locator.get_network_layout_edges_shapefile(network_type)
-        nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type)
-        massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, "")
+        edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
+        nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
+        # New structure: massflow files stored in network_name folder (InputLocator handles backwards compatibility)
+        massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name)
 
         crs = get_geographic_coordinate_system()
         edges_df = gpd.read_file(edges_path).to_crs(crs).set_index("name")
