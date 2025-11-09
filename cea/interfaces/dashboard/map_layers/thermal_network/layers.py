@@ -31,7 +31,7 @@ class ThermalNetworkMapLayer(MapLayer):
             # Return placeholder option if network type not selected yet
             if not network_type:
                 print(f"[ThermalNetworkMapLayer] No network type provided, returning placeholder")
-                return [""]
+                return ["No network available"]
 
             # Get the network type folder
             network_type_folder = self.locator.get_output_thermal_network_type_folder(network_type, '')
@@ -39,7 +39,7 @@ class ThermalNetworkMapLayer(MapLayer):
 
             if not os.path.exists(network_type_folder):
                 print(f"[ThermalNetworkMapLayer] Network type folder doesn't exist: {network_type_folder}, returning placeholder")
-                return [""]
+                return ["No network available"]
 
             # List subdirectories that contain valid network files in layout/ subfolder (both edges and nodes required)
             available_networks = []
@@ -58,11 +58,11 @@ class ThermalNetworkMapLayer(MapLayer):
 
             print(f"[ThermalNetworkMapLayer] Found {len(available_networks)} networks: {available_networks}")
 
-            # If no networks found, return a placeholder empty string option
+            # If no networks found, return a placeholder option
             # This allows the frontend to proceed with an empty selection and show the base layer without network
             if not available_networks:
-                print(f"[ThermalNetworkMapLayer] No networks found, returning placeholder empty string option")
-                return [""]
+                print(f"[ThermalNetworkMapLayer] No networks found, returning placeholder option")
+                return ["No network available"]
 
             return available_networks
 
@@ -70,7 +70,7 @@ class ThermalNetworkMapLayer(MapLayer):
             print(f"[ThermalNetworkMapLayer] Error in _get_network_names: {e}")
             import traceback
             traceback.print_exc()
-            return [""]
+            return ["No network available"]
 
     def _get_network_layout_files(self, parameters):
         network_type = parameters.get('network-type', 'DC')
@@ -144,8 +144,8 @@ class ThermalNetworkMapLayer(MapLayer):
         network_type = parameters.get('network-type', 'DC')
         network_name = parameters.get('network-name', '')
 
-        # Handle None, undefined, or empty string
-        if network_name is None or network_name == 'undefined':
+        # Handle None, undefined, empty string, or placeholder value
+        if network_name is None or network_name == 'undefined' or network_name == 'No network available':
             network_name = ''
 
         print(f"[ThermalNetworkMapLayer] generate_data called with network_type={network_type}, network_name='{network_name}'")
