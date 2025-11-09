@@ -68,7 +68,7 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
-def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name, network_type, locator):
+def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name, network_type, locator, expected_num_components=None):
     """
     Auto-create missing PLANT nodes in user-defined networks.
 
@@ -84,6 +84,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
     :param plant_building_name: User-specified plant building (or empty string)
     :param network_type: "DH" or "DC"
     :param locator: InputLocator instance
+    :param expected_num_components: Expected number of disconnected components (optional, for validation)
     :return: Tuple of (updated nodes_gdf, updated edges_gdf, list of created plants)
     """
     import networkx as nx
@@ -187,6 +188,21 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
 
     if len(components) == 0:
         return nodes_gdf, edges_gdf, []
+
+    # Validate number of components if expected_num_components is specified
+    if expected_num_components is not None:
+        actual_num_components = len(components)
+        if actual_num_components != expected_num_components:
+            raise ValueError(
+                f"Network component mismatch:\n"
+                f"  Expected: {expected_num_components} component(s)\n"
+                f"  Found: {actual_num_components} disconnected component(s) in provided network\n\n"
+                f"This usually means:\n"
+                f"  - If expected 1 component: Your network has unintentional gaps/disconnections.\n"
+                f"    → Please check your edges.shp for missing connections between edge endpoints.\n"
+                f"  - If expected {actual_num_components} components: Update 'number-of-components' to {actual_num_components}.\n"
+                f"  - To skip validation: Leave 'number-of-components' blank (null).\n"
+            )
 
     # Get building nodes for analysis
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
@@ -565,9 +581,13 @@ def main(config: cea.config.Configuration):
             plant_building_name = resolve_plant_building(plant_building_name, buildings_to_validate)
 
             # Auto-create plant nodes if missing (zone_gdf already loaded above)
+            # Get expected number of components from config
+            expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
+
             nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
                 nodes_gdf, edges_gdf, zone_gdf,
-                plant_building_name, network_type, locator
+                plant_building_name, network_type, locator,
+                expected_num_components
             )
 
             if created_plants:
