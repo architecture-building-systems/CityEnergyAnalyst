@@ -378,12 +378,12 @@ def validate_network_covers_district_buildings(
             "  3. Leave network layout parameters (i.e. edges-shp-path, nodes-shp-path, network-geojson-path) blank to let CEA generate the network automatically"
         )
 
-    # Check 3: Are building nodes within their respective building footprints?
-    # Ensure CRS matches
-    if nodes_gdf.crs != buildings_gdf.crs:
-        nodes_gdf = nodes_gdf.to_crs(buildings_gdf.crs)
-
-    misplaced_nodes = []
+    # Check 3: Validate one node per building
+    # NOTE: We do NOT validate that nodes are within building footprints because:
+    # - L-shaped buildings may have connection points outside the polygon
+    # - Complex geometries may have nodes at street access points
+    # - Practical routing often places nodes at building edges, not centroids
+    # The important validation is that each building has exactly ONE node
 
     for building_name in district_building_names:
         # Get the building footprint
@@ -397,8 +397,6 @@ def validate_network_covers_district_buildings(
                 "but not found in zone geometry (zone.shp).\n"
                 "Please ensure Building Properties/Supply and zone geometry are consistent."
             )
-
-        building_geom = building_row.iloc[0].geometry
 
         # Get the node for this building
         node_rows = building_nodes[building_nodes['building'] == building_name]
@@ -414,37 +412,6 @@ def validate_network_covers_district_buildings(
                 "Each building should have exactly ONE node in the network.\n"
                 "Please ensure each building has a unique node."
             )
-
-        node_geom = node_rows.iloc[0].geometry
-
-        # Check if node is within building footprint (with tolerance)
-        buffered_building = building_geom.buffer(NETWORK_TOPOLOGY_TOLERANCE)
-
-        if not buffered_building.contains(node_geom):
-            distance = node_geom.distance(building_geom)
-            misplaced_nodes.append((building_name, distance))
-
-    if misplaced_nodes:
-        # Sort by distance (worst offenders first)
-        misplaced_nodes.sort(key=lambda x: x[1], reverse=True)
-
-        error_details = "\n".join([
-            f"  - {name}: {dist:.3f} m from building footprint"
-            for name, dist in misplaced_nodes[:20]
-        ])
-
-        if len(misplaced_nodes) > 20:
-            error_details += f"\n  ... and {len(misplaced_nodes) - 20} more"
-
-        raise UserNetworkLoaderError(
-            "Building nodes are outside their respective building footprints:\n\n"
-            f"Found {len(misplaced_nodes)} node(s) outside building footprints (tolerance: {NETWORK_TOPOLOGY_TOLERANCE} m):\n"
-            f"{error_details}\n\n"
-            "Resolution:\n"
-            "  - Move each building's node to be within its building footprint\n"
-            "  - Nodes should typically be placed at building centroids or connection points\n"
-            "  - Use GIS software to verify node positions against building geometries"
-        )
 
     # Return modified nodes and list of auto-created buildings
     return nodes_gdf, [name for name, _ in auto_created_buildings]

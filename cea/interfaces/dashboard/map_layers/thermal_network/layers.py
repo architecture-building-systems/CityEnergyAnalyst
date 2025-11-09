@@ -132,6 +132,7 @@ class ThermalNetworkMapLayer(MapLayer):
         """Check if a network has at least one Part 2 result file (massflow is the key indicator)"""
         import os
         # Check for massflow file as indicator that Part 2 has been run
+        # This is used internally to decide whether to load massflow data, NOT to filter networks
         massflow_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name)
         return os.path.exists(massflow_path)
 
@@ -160,7 +161,7 @@ class ThermalNetworkMapLayer(MapLayer):
             self._migrate_legacy_network(network_type)
 
             # List subdirectories that contain valid network files in layout/ subfolder (both edges and nodes required)
-            # AND have Part 2 results (massflow file must exist)
+            # AND have Part 2 results (massflow file must exist) - map layer only shows completed networks
             available_networks = []
             for item in os.listdir(network_type_folder):
                 item_path = os.path.join(network_type_folder, item)
@@ -173,8 +174,9 @@ class ThermalNetworkMapLayer(MapLayer):
                     if os.path.exists(edges_path) and os.path.exists(nodes_path):
                         if self._has_part2_results(network_type, item):
                             available_networks.append(item)
+                            print(f"[ThermalNetworkMapLayer] Network {item}: included (has Part 2 results)")
                         else:
-                            print(f"[ThermalNetworkMapLayer] Network {item} has layout files but no Part 2 results, skipping")
+                            print(f"[ThermalNetworkMapLayer] Network {item}: skipped (no Part 2 results yet)")
 
             # Sort by folder name (most recent timestamp first)
             available_networks.sort(reverse=True)

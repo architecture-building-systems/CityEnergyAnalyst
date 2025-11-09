@@ -91,14 +91,13 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
     from shapely.geometry import Point, LineString
     import math
 
+    print(f"[auto_create_plant_nodes] expected_num_components = {expected_num_components}")
+
     # Check if any plants already exist
     existing_plants = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
+    print(f"[auto_create_plant_nodes] Found {len(existing_plants)} existing PLANT nodes")
 
-    if len(existing_plants) > 0:
-        # Plants already exist, no need to auto-create
-        return nodes_gdf, edges_gdf, []
-
-    # Build graph to detect components
+    # Build graph to detect components (need to do this even if plants exist, for validation)
     # Note: User-defined networks may not have start_node/end_node columns yet
     # We need to match edges to nodes by geometry
 
@@ -185,6 +184,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
             G.add_edge(start_node_idx, end_node_idx)
 
     components = list(nx.connected_components(G))
+    print(f"[auto_create_plant_nodes] Detected {len(components)} connected component(s)")
 
     if len(components) == 0:
         return nodes_gdf, edges_gdf, []
@@ -193,16 +193,37 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
     if expected_num_components is not None:
         actual_num_components = len(components)
         if actual_num_components != expected_num_components:
+            # Provide context-specific error message
+            if actual_num_components == 1:
+                context_msg = (
+                    f"  - Your network has only 1 connected component but you expected {expected_num_components}.\n"
+                    f"    → This means your network is fully connected (no gaps).\n"
+                    f"    → Update 'number-of-components' to 1, or leave it blank to skip validation.\n"
+                )
+            elif actual_num_components < expected_num_components:
+                context_msg = (
+                    f"  - Your network has fewer components ({actual_num_components}) than expected ({expected_num_components}).\n"
+                    f"    → Some components may be unintentionally connected.\n"
+                    f"    → Update 'number-of-components' to {actual_num_components}, or leave it blank to skip validation.\n"
+                )
+            else:  # actual > expected
+                context_msg = (
+                    f"  - Your network has more components ({actual_num_components}) than expected ({expected_num_components}).\n"
+                    f"    → Your network has unintentional gaps/disconnections.\n"
+                    f"    → Check edges.shp for missing connections, or update 'number-of-components' to {actual_num_components}.\n"
+                )
+
             raise ValueError(
                 f"Network component mismatch:\n"
                 f"  Expected: {expected_num_components} component(s)\n"
                 f"  Found: {actual_num_components} disconnected component(s) in provided network\n\n"
-                f"This usually means:\n"
-                f"  - If expected 1 component: Your network has unintentional gaps/disconnections.\n"
-                f"    → Please check your edges.shp for missing connections between edge endpoints.\n"
-                f"  - If expected {actual_num_components} components: Update 'number-of-components' to {actual_num_components}.\n"
-                f"  - To skip validation: Leave 'number-of-components' blank (null).\n"
+                f"{context_msg}"
             )
+
+    # If plants already exist, no need to auto-create (but we still ran validation above)
+    if len(existing_plants) > 0:
+        print(f"[auto_create_plant_nodes] Plants already exist, skipping auto-creation")
+        return nodes_gdf, edges_gdf, []
 
     # Get building nodes for analysis
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
@@ -583,6 +604,7 @@ def main(config: cea.config.Configuration):
             # Auto-create plant nodes if missing (zone_gdf already loaded above)
             # Get expected number of components from config
             expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
+            print(f"[main] number_of_components from config: {config.network_layout.number_of_components} -> expected_num_components: {expected_num_components}")
 
             nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
                 nodes_gdf, edges_gdf, zone_gdf,

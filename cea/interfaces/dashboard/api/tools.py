@@ -154,8 +154,15 @@ async def get_parameter_choices(config: CEAConfig, tool_name: str, payload: Dict
     if isinstance(target_parameter, cea.config.ChoiceParameter):
         print(f"[get_parameter_choices] Getting choices...")
         choices = target_parameter._choices
+
+        # Get the default/current value using decode()
+        # For NetworkLayoutChoiceParameter, this will return the most recent network
+        current_value = form_values.get(parameter_name, '')
+        default_value = target_parameter.decode(current_value)
+
+        print(f"[get_parameter_choices] current_value='{current_value}', default_value='{default_value}'")
         print(f"[get_parameter_choices] Returning {len(choices)} choices: {choices}")
-        return {"choices": choices}
+        return {"choices": choices, "default": default_value}
     else:
         raise HTTPException(status_code=400, detail=f"Parameter '{parameter_name}' is not a choice parameter")
 

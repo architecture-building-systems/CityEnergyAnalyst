@@ -951,11 +951,12 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
                                 sort_time = dt.timestamp()
                             except ValueError:
                                 # If parsing fails, fall back to filesystem time
-                                sort_time = os.path.getctime(item_path)
+                                sort_time = os.path.getmtime(edges_path)
                         else:
-                            # Custom name - use filesystem creation time
-                            sort_time = os.path.getctime(item_path)
+                            # Custom name - use edges.shp modification time (most reliable indicator of when network was created)
+                            sort_time = os.path.getmtime(edges_path)
 
+                        print(f"[NetworkLayoutChoiceParameter] Network {item}: sort_time={sort_time}")
                         available_networks.append((item, sort_time))
 
             # Sort by creation time (most recent first)
@@ -974,6 +975,69 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             traceback.print_exc()
             return []
 
+    def _find_most_recent_network_across_types(self):
+        """
+        Find the most recent network across ALL network types (DH and DC).
+        Returns (network_name, network_type) tuple, or (None, None) if no networks found.
+        """
+        import os
+        import re
+        from datetime import datetime
+
+        try:
+            scenario = self.config.scenario
+            if not scenario or not os.path.exists(scenario):
+                return None, None
+
+            locator = cea.inputlocator.InputLocator(scenario)
+            all_networks = []  # List of (network_name, network_type, timestamp)
+
+            # Check both DH and DC network types
+            for network_type in ['DH', 'DC']:
+                network_type_folder = locator.get_output_thermal_network_type_folder(network_type, '')
+                network_type_folder = network_type_folder.rstrip(os.sep)
+
+                if not os.path.exists(network_type_folder):
+                    continue
+
+                for item in os.listdir(network_type_folder):
+                    item_path = os.path.join(network_type_folder, item)
+                    if os.path.isdir(item_path):
+                        # Check for valid network files
+                        edges_path = locator.get_network_layout_edges_shapefile(network_type, item)
+                        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, item)
+
+                        if os.path.exists(edges_path) and os.path.exists(nodes_path):
+                            # Parse timestamp
+                            timestamp_match = re.match(r'^(\d{8})_(\d{6})$', item)
+                            if timestamp_match:
+                                try:
+                                    date_str = timestamp_match.group(1)
+                                    time_str = timestamp_match.group(2)
+                                    dt = datetime.strptime(f"{date_str}_{time_str}", "%Y%m%d_%H%M%S")
+                                    sort_time = dt.timestamp()
+                                except ValueError:
+                                    sort_time = os.path.getmtime(edges_path)
+                            else:
+                                # Use edges.shp modification time
+                                sort_time = os.path.getmtime(edges_path)
+
+                            print(f"[_find_most_recent_network_across_types] {network_type}/{item}: sort_time={sort_time}")
+                            all_networks.append((item, network_type, sort_time))
+
+            if not all_networks:
+                return None, None
+
+            # Sort by timestamp (most recent first)
+            all_networks.sort(key=lambda x: x[2], reverse=True)
+
+            # Return most recent network name and type
+            return all_networks[0][0], all_networks[0][1]
+
+        except Exception as e:
+            print(f"[NetworkLayoutChoiceParameter] Error finding most recent network: {e}")
+            return None, None
+
     def encode(self, value):
         """Encode value - just return as string"""
         return str(value) if value else ''
@@ -982,18 +1046,43 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         """
         Decode and validate value exists in available networks.
         Returns the selected value if valid, otherwise returns the most recent network as default.
+
+        If no value provided and no networks found for current network-type, try to find
+        the most recent network across ALL network types and switch network-type accordingly.
         """
+        print(f"[NetworkLayoutChoiceParameter.decode] Called with value='{value}'")
+
         # Update choices dynamically
         self._choices = self._get_available_networks()
+        print(f"[NetworkLayoutChoiceParameter.decode] Choices for current network-type: {self._choices}")
 
         # If value is provided and valid, return it
         if value and value in self._choices:
+            print(f"[NetworkLayoutChoiceParameter.decode] Value '{value}' is valid, returning it")
             return value
 
         # Otherwise, return the most recent network (first choice) if available
         # This ensures users see the latest network by default when opening the tool
         if self._choices:
+            print(f"[NetworkLayoutChoiceParameter.decode] No value provided, returning most recent: '{self._choices[0]}'")
             return self._choices[0]
+
+        # If no networks found for current network-type, try to find most recent across all types
+        # and auto-switch network-type to match
+        print(f"[NetworkLayoutChoiceParameter] No networks found for current network-type, checking all types...")
+        most_recent_network, most_recent_type = self._find_most_recent_network_across_types()
+
+        if most_recent_network:
+            print(f"[NetworkLayoutChoiceParameter] Found most recent network: {most_recent_network} (type: {most_recent_type})")
+            # Auto-switch network-type to match the most recent network
+            if hasattr(self.config, 'thermal_network'):
+                self.config.thermal_network.network_type = most_recent_type
+                print(f"[NetworkLayoutChoiceParameter] Auto-switched network-type to {most_recent_type}")
+            elif hasattr(self.config, 'optimization_new'):
+                self.config.optimization_new.network_type = most_recent_type
+                print(f"[NetworkLayoutChoiceParameter] Auto-switched network-type to {most_recent_type}")
+
+            return most_recent_network
 
         return ''
 
