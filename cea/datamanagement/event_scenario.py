@@ -6,6 +6,7 @@ import pandas as pd
 import geopandas as gpd
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
+from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 
 
 def create_event_scenario(config: Configuration, event_year: int) -> None:
@@ -145,9 +146,38 @@ def modify_event_construction(config: Configuration, event_year: int, modify_rec
                 }
             }
             ```
+            Note that the outer dictionary keys are archetype names, the middle dictionary keys are component types. 
+            These fields are sensitive to capitalization and must match exactly the envelope database column names.
     Returns:
         None
     """
-    archetypes = modify_recipe.keys()
+    archetypes_to_modify = modify_recipe.keys()
     event_locator = InputLocator(InputLocator(config.scenario).get_event_scenario_folder(event_year))
+    archetype_df = pd.read_csv(event_locator.get_database_archetypes_construction_type(), index_col="const_type")
+    envelope_lookup = EnvelopeLookup.from_locator(event_locator)
+    for archetype in archetypes_to_modify:
+        if archetype not in archetype_df.index:
+            raise ValueError(f"Archetype '{archetype}' not found in construction type database.")
+        for component, modifications in modify_recipe[archetype].items():
+            current_component_code = archetype_df.at[archetype, f"type_{component}"]
+            # create a new component code by "(capitalized component)_(archetype)_year_(event_year)"
+            component_db = envelope_lookup._df_for(component)
+            new_component_code = f"{component.capitalize()}_{archetype}_year_{event_year}"
+
+            if new_component_code in component_db.index:
+                new_component_code = shift_code_name_plus1(component_db, new_component_code)
+            component_db.loc[new_component_code] = component_db.loc[current_component_code]
+
+            for field, new_value in modifications.items():
+                envelope_lookup.set_item_value(new_component_code, field, new_value)
+
+            archetype_df.at[archetype, f"type_{component}"] = new_component_code
+
+    # save both the modified archetype df and the envelope database
+    archetype_df.reset_index(inplace=True)
+    archetype_df.to_csv(event_locator.get_database_archetypes_construction_type(), index=False)
+    envelope_lookup.envelope.save(event_locator)
     
+def shift_code_name_plus1(db, code_prefix):
+    n = db[db["code"].str.startswith(code_prefix)].shape[0]
+    return code_prefix + f"_{n + 1}"
