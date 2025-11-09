@@ -1,12 +1,14 @@
-import shutil
 import os
-from cea.config import Configuration
-from cea.inputlocator import InputLocator
-import pandas as pd
+import shutil
+
 import geopandas as gpd
-from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
-from cea.datamanagement.databases_verification import verify_input_geometry_zone
+import pandas as pd
+
+from cea.config import Configuration
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.datamanagement.databases_verification import verify_input_geometry_zone
+from cea.inputlocator import InputLocator
+from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
 
 def create_state_in_time_scenario(config: Configuration, year_of_state: int) -> None:
