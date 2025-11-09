@@ -234,7 +234,7 @@ Thermal Network Design:
     label: "Thermal Network Part 1: layout"
     short_description: Create or validate thermal network piping layout
     description: |
-      This Feature creates a thermal network's piping layout using minimum spanning tree algorithm following streets geometry, or validates and processes user-provided network layouts (shapefiles or GeoJSON).
+      This Feature creates a thermal network's piping layout using the minimum spanning tree algorithm following streets geometry, or validates and processes user-provided network layouts (shapefiles or GeoJSON). Auto-generated layouts all have a one-component layout with a single plant, while user-provided layouts can have a multi-component network with one plant for each component.
 
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
