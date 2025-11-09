@@ -931,10 +931,10 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             for item in os.listdir(network_type_folder):
                 item_path = os.path.join(network_type_folder, item)
                 if os.path.isdir(item_path):
-                    # Check if this folder has network files
+                    # Check if this folder has network files (both edges and nodes required)
                     edges_path = os.path.join(item_path, 'edges.shp')
                     nodes_path = os.path.join(item_path, 'nodes.shp')
-                    if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                    if os.path.exists(edges_path) and os.path.exists(nodes_path):
                         # Try to parse timestamp from folder name (format: YYYYMMDD_HHMMSS)
                         import re
                         from datetime import datetime
