@@ -315,49 +315,30 @@ def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = S
     return gdf(geometry=merged_geometries, crs=network_gdf.crs)
 
 
-def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> gdf:
+def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, split_lines: bool = True) -> gdf:
     """
-    Snap line endpoints to nearby lines within tolerance to fix near-miss connections.
+    Fix near-miss connections by snapping dangling endpoints to nearby lines.
 
-    This function addresses a common issue in manually digitized street networks where
-    lines should connect but have small gaps due to drawing inaccuracies. It finds
-    dangling endpoints (not already connected to other lines) that are close to other
-    lines and snaps them to create proper T-junctions that will be properly split
-    by subsequent union_all operations.
-
-    Optimization: Only considers endpoints that are "dangling" (terminal points not
-    already connected), dramatically reducing the search space.
-
-    IMPORTANT FIX (2025-11): Changed line 404 from overwriting snap points to appending them.
-    This ensures that multiple dangling endpoints snapping to the same line are all preserved,
-    preventing disconnected components.
-
-    Use Cases:
-    ----------
-    - Fixing manually digitized street networks with near-miss connections
-    - Cleaning data where GPS inaccuracies created small gaps
-    - Connecting street segments that should meet but have tiny offsets
-    - Creating T-junctions where endpoints touch line segments
-
-    Process:
-    --------
-    1. Identify all dangling endpoints (appears exactly once in network)
-    2. For each dangling endpoint, find nearby lines within tolerance
-    3. Snap endpoint to nearest point on closest line
-    4. Collect all snap points per line (using append, not overwrite)
-    5. Split target lines at all snap points to create explicit junctions
-    6. Rebuild geometries with snapped endpoints
+    Common issue: Street networks often have small gaps where lines should connect but
+    don't quite touch. This function finds "dangling" endpoints (that appear only once)
+    and snaps them to nearby lines within tolerance to create proper connections.
 
     :param network_gdf: GeoDataFrame with street LineStrings
-    :type network_gdf: gdf
     :param snap_tolerance: Maximum distance to snap endpoints (meters)
-    :type snap_tolerance: float
-    :return: GeoDataFrame with snapped connections and split lines at junctions
-    :rtype: gdf
+    :param split_lines: If True, split lines at snap points to create junctions; if False, only snap endpoints
+    :return: GeoDataFrame with snapped connections (and optionally split lines at junctions)
+
+    Process:
+    1. Find dangling endpoints (endpoints that appear only once in the network)
+    2. For each dangling endpoint, find nearby lines within snap_tolerance
+    3. Snap endpoint to nearest point on closest line
+    4. Optionally split target lines at snap points to create explicit T-junctions
 
     Example:
         >>> # Fix near-miss connections within 0.5 meters
-        >>> cleaned_streets = snap_endpoints_to_nearby_lines(streets_gdf, 0.5)
+        >>> cleaned = snap_endpoints_to_nearby_lines(streets_gdf, snap_tolerance=0.5)
+        >>> # Just snap without splitting
+        >>> snapped = snap_endpoints_to_nearby_lines(streets_gdf, snap_tolerance=0.5, split_lines=False)
     """
     from collections import Counter
 
@@ -438,8 +419,15 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         else:
             modified_geometries[idx] = line
 
-    # Step 4: Split lines that had endpoints snapped to them
+    # Just snap and not split
     final_geometries = []
+    # Step 4a: If no splitting needed, return snapped geometries directly
+    if not split_lines:
+        for idx, row in _network_gdf.iterrows():
+            final_geometries.append(modified_geometries[idx])
+        return gdf(geometry=final_geometries, crs=network_gdf.crs)
+
+    # Step 4b: Split lines that had endpoints snapped to them
     for idx, row in _network_gdf.iterrows():
         if idx in lines_to_split:
             # This line needs to be split at snap points
