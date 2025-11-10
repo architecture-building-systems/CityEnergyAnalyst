@@ -274,6 +274,46 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
         
     return modify_recipe
 
+def check_district_timeline_log_yaml_integrity(config: Configuration):
+    """Basic check to see if all the existing state-in-time scenarios are logged in the district_timeline_log.yml.
+    It only checks if the year in `state_{year}` also exists in the yaml log file.
+
+    :param config: _description_
+    :type config: Configuration
+    """
+    locator = InputLocator(config.scenario)
+    yml_path = locator.get_district_timeline_log_file()
+    if not os.path.exists(yml_path):
+        raise FileNotFoundError(f"District timeline log file '{yml_path}' does not exist.")
+    with open(yml_path, "r") as f:
+        existing_data_in_yml: dict[int, dict[str, dict[str, dict[str, float | int]]]] = yaml.safe_load(f) or {}
+        if not existing_data_in_yml:
+            raise ValueError(f"District timeline log file '{yml_path}' is empty.")
+    existing_years_in_yml = set(existing_data_in_yml.keys())
+    # check all existing state-in-time folders
+    existing_years_in_folders = set()
+    district_timeline_folder = locator.get_district_timeline_states_folder()
+    if os.path.exists(district_timeline_folder):
+        for folder_name in os.listdir(district_timeline_folder):
+            if folder_name.startswith("state_"):
+                year_str = folder_name.replace("state_", "")
+                try:
+                    year = int(year_str)
+                    existing_years_in_folders.add(year)
+                except ValueError:
+                    print(f"Warning: Invalid state-in-time folder name '{folder_name}' in district timeline folder.")
+
+    # ideally the two sets should be equal
+    years_only_in_folders = existing_years_in_folders - existing_years_in_yml
+    years_only_in_yml = existing_years_in_yml - existing_years_in_folders
+    if years_only_in_folders:
+        raise ValueError(f"The following state-in-time years exist in folders but not in the district timeline log file: {sorted(years_only_in_folders)}")
+    
+    if years_only_in_yml:
+        raise ValueError(f"The following state-in-time years exist in the district timeline log file but not in folders: {sorted(years_only_in_yml)}")
+    
+    return existing_data_in_yml
+
 def main(config: Configuration) -> None:
     year_of_state = config.district_events.year_of_event
     locator = InputLocator(config.scenario)
@@ -286,6 +326,7 @@ def main(config: Configuration) -> None:
     # delete_unexisting_buildings_from_event_scenario(config, year_of_state)
     modify_state_construction(config, year_of_state, modify_recipe)
     print(f"State-in-time scenario for year {year_of_state} created successfully. See folder: {event_scenario_folder}")
+    check_district_timeline_log_yaml_integrity(config)
 
 if __name__ == "__main__":
     main(Configuration())
