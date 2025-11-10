@@ -23,7 +23,7 @@ class EnvelopeLookup:
     """
 
     # Mapping for dynamic column suffix resolution for shared envelope fields
-    _SUFFIX = {"wall": "wall", "roof": "roof", "floor": "floor", "window": "win"}
+    _SUFFIX = {"wall": "wall", "roof": "roof", "floor": "floor", "window": "win", "base": "floor"}
     _INT_FIELDS = {"Service_Life"}
     _FLOAT_FIELDS = {
         "U",
@@ -66,11 +66,12 @@ class EnvelopeLookup:
     # --- helpers -----------------------------------------------------------------
     def _df_for(self, db: str) -> pd.DataFrame:
         """Return the DataFrame for a given envelope DB name or raise if missing/None."""
-        if not hasattr(self.envelope, db):
-            raise ValueError(f"Envelope has no attribute '{db}'.")
-        df = getattr(self.envelope, db)
+        suf = self._SUFFIX.get(db, db)
+        if not hasattr(self.envelope, suf):
+            raise ValueError(f"Envelope has no attribute '{suf}'.")
+        df = getattr(self.envelope, suf)
         if df is None:
-            raise ValueError(f"Envelope DataFrame '{db}' is None (not loaded).")
+            raise ValueError(f"Envelope DataFrame '{suf}' is None (not loaded).")
         return df
 
     @property

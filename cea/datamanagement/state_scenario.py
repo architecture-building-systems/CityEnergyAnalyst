@@ -159,11 +159,12 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
     state_locator = InputLocator(InputLocator(config.scenario).get_state_in_time_scenario_folder(year_of_state))
     archetype_df = pd.read_csv(state_locator.get_database_archetypes_construction_type(), index_col="const_type")
     envelope_lookup = EnvelopeLookup.from_locator(state_locator)
-    db_is_modified = False
+    dbs_overall_modified = 0
     for archetype in archetypes_to_modify:
         if archetype not in archetype_df.index:
             raise ValueError(f"Archetype '{archetype}' not found in construction type database.")
         for component, modifications in modify_recipe[archetype].items():
+            db_modified = 0
             code_current = archetype_df.at[archetype, f"type_{component}"]
             # create a new component code by "(capitalized component)_(archetype)_YEAR_(event_year)"
             component_db = envelope_lookup._df_for(component)
@@ -171,17 +172,23 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
 
             if code_new in component_db.index:
                 code_new = shift_code_name_plus1(component_db, code_new)
-            component_db.loc[code_new] = component_db.loc[code_current]
+            new_row = component_db.loc[code_current].copy()
+            new_row.name = code_new
 
             for field, new_value in modifications.items():
                 if new_value is not None:
-                    envelope_lookup.set_item_value(code_new, field, new_value)
-                    db_is_modified = True
+                    component_field_name = envelope_lookup._col(component, field)
+                    new_row[component_field_name] = new_value
+                    db_modified += 1
 
-            archetype_df.at[archetype, f"type_{component}"] = code_new
+            if db_modified:
+                component_db[new_row.name] = new_row
+                archetype_df.at[archetype, f"type_{component}"] = code_new
+                
+            dbs_overall_modified += db_modified
 
     # save both the modified archetype df and the envelope database
-    if not db_is_modified:
+    if not dbs_overall_modified:
         print(f"No modifications were made to the envelope database in year {year_of_state}.")
         return
     archetype_df.reset_index(inplace=True)
@@ -231,13 +238,16 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
 
 def main(config: Configuration) -> None:
     year_of_state = config.district_events.year_of_event
+    locator = InputLocator(config.scenario)
     if year_of_state is None:
         raise ValueError("Year of event must be specified in the configuration.")
-    create_state_in_time_scenario(config, year_of_state)
+    event_scenario_folder = locator.get_state_in_time_scenario_folder(year_of_state)
+    if not os.path.exists(event_scenario_folder):
+        create_state_in_time_scenario(config, year_of_state)
     modify_recipe = create_modify_recipe(config)
-    delete_unexisting_buildings_from_event_scenario(config, year_of_state)
+    # delete_unexisting_buildings_from_event_scenario(config, year_of_state)
     modify_state_construction(config, year_of_state, modify_recipe)
-    print(f"State-in-time scenario for year {year_of_state} created successfully.")
+    print(f"State-in-time scenario for year {year_of_state} created successfully. See folder: {event_scenario_folder}")
 
 if __name__ == "__main__":
     main(Configuration())
