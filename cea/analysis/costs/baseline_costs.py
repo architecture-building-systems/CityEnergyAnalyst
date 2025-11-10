@@ -12,6 +12,7 @@ import numpy as np
 from cea.inputlocator import InputLocator
 from cea.optimization_new.domain import Domain
 from cea.optimization_new.building import Building
+from cea.optimization_new.network import Network
 import cea.config
 
 __author__ = "Zhongming Shi"
@@ -65,14 +66,14 @@ def baseline_costs_main(locator, config):
     # Check if any networks were found
     has_networks = any(name.startswith('N') for name in final_results['name'])
     if has_networks:
-        print("\nℹ NOTE: Network costs shown are for central plants only.")
-        print("  Thermal network pipe costs are NOT included in these figures.")
-        print("  For complete network costs including pipes, refer to optimization results.")
+        print("\nℹ NOTE: Network costs include central plant equipment and thermal distribution piping.")
+        print("  Variable energy costs (electricity, fuels) are NOT included.")
+        print("  For complete costs including energy consumption, refer to optimization results.")
 
     return final_results
 
 
-def calculate_network_costs(network_buildings, building_energy_potentials, domain_potentials, network_type):
+def calculate_network_costs(network_buildings, building_energy_potentials, domain_potentials, network_type, networks_dict=None):
     """
     Calculate costs for thermal networks (district heating/cooling systems).
 
@@ -80,6 +81,7 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
     :param building_energy_potentials: dict of {building_id: potentials}
     :param domain_potentials: list of domain-level energy potentials
     :param network_type: 'DH' or 'DC'
+    :param networks_dict: dict of {network_id: Network} with pre-built networks (optional)
     :return: dict of {network_id: {cost_metrics}}
     """
     from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
@@ -144,11 +146,21 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
             network_supply_system, network_type, None
         )
 
+        # Get piping costs from pre-built network (if available)
+        piping_cost_annual = 0.0
+        if networks_dict and network_id in networks_dict:
+            network = networks_dict[network_id]
+            piping_cost_annual = network.annual_piping_cost
+            print(f"    Network piping cost: ${piping_cost_annual:,.2f}/year")
+        else:
+            print(f"    Warning: No network object found for {network_id}, piping costs not included")
+
         results[network_id] = {
             'network_type': network_type,  # This is for internal tracking
             'supply_system': network_supply_system,
             'buildings': buildings,  # List of buildings in this network
             'costs': network_costs,
+            'piping_cost_annual': piping_cost_annual,  # Add piping cost
             'is_network': True,
             'network_id': network_id  # Store network ID for detailed output
         }
@@ -206,6 +218,18 @@ def calculate_costs_for_network_type(locator, config, network_type):
 
         results = {}
 
+        # Build networks to calculate piping costs
+        networks_dict = {}  # {network_id: Network}
+        if network_buildings:
+            from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
+
+            # Create a DES to build networks
+            des = DistrictEnergySystem(domain)
+            built_networks = des.build_networks()
+            # Store networks by ID
+            for network in built_networks:
+                networks_dict[network.identifier] = network
+
         # Calculate costs for network-connected buildings
         if network_buildings:
             print(f"  Found {len(network_buildings)} thermal network(s) for {network_type}")
@@ -213,7 +237,7 @@ def calculate_costs_for_network_type(locator, config, network_type):
 
             network_results = calculate_network_costs(
                 network_buildings, building_energy_potentials,
-                domain.energy_potentials, network_type
+                domain.energy_potentials, network_type, networks_dict
             )
             results.update(network_results)
 
@@ -599,6 +623,23 @@ def format_output_like_system_costs(merged_results, locator):
                                 'opex_fixed_a_USD': comp['opex_fixed_a_USD'],
                                 'scale': scale
                             })
+
+            # Add network piping costs to detailed output (if this is a network)
+            if is_network and 'piping_cost_annual' in data and data['piping_cost_annual'] > 0:
+                piping_cost_annual = data['piping_cost_annual']
+                # Piping costs are shown as a separate line item for networks
+                detailed_rows.append({
+                    'name': identifier,
+                    'network_type': network_type,
+                    'service': f'{network_type}_network',  # e.g., DC_network or DH_network
+                    'component_code': 'PIPES',
+                    'capacity_kW': 0.0,  # N/A for pipes
+                    'placement': 'distribution',
+                    'capex_total_USD': 0.0,  # Not available in current calculation
+                    'capex_a_USD': piping_cost_annual,
+                    'opex_fixed_a_USD': 0.0,  # Piping O&M could be added if needed
+                    'scale': 'DISTRICT'
+                })
 
         # Calculate aggregated system totals (matching system_costs.py exactly)
         row['Capex_total_sys_USD'] = sum(row[f'{s}_capex_total_USD'] for s in services)
