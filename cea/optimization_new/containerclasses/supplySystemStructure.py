@@ -612,18 +612,37 @@ class SupplySystemStructure(object):
 
             if satisfied_secondary_flows:
                 # Add passive components to secondary component structure
+                matched_comp_codes = []
                 for comp_code, passive_comps in secondary_source_passive.items():
                     # Find which EC this component belongs to
+                    match_found = False
                     for ec_code in viable_secondary_and_passive_components.keys():
                         if any(comp.code == comp_code for comp in
                                viable_secondary_and_passive_components[ec_code]['active']):
                             if comp_code not in viable_secondary_and_passive_components[ec_code]['passive']:
                                 viable_secondary_and_passive_components[ec_code]['passive'][comp_code] = []
                             viable_secondary_and_passive_components[ec_code]['passive'][comp_code].extend(passive_comps)
+                            match_found = True
+                            matched_comp_codes.append(comp_code)
                             break
 
-                # Remove satisfied flows from remaining inputs
+                    if not match_found:
+                        warnings.warn(
+                            f"Warning: Passive source component '{comp_code}' could not be matched "
+                            f"to any active component in viable_secondary_and_passive_components. "
+                            f"Available active components: {list(viable_secondary_and_passive_components.keys())}. "
+                            f"Skipping this component and not removing associated flows to maintain consistency.",
+                            UserWarning
+                        )
+
+                # Only remove flows for successfully matched components
+                flows_to_remove = []
                 for ec_code in satisfied_secondary_flows.keys():
+                    # Check if all components using this flow were successfully matched
+                    if ec_code in remaining_secondary_inputs:
+                        flows_to_remove.append(ec_code)
+
+                for ec_code in flows_to_remove:
                     del remaining_secondary_inputs[ec_code]
 
         # Try passive conversion for remaining tertiary component inputs from sources
@@ -637,17 +656,36 @@ class SupplySystemStructure(object):
 
             if satisfied_tertiary_flows:
                 # Add passive components to tertiary component structure
+                matched_comp_codes = []
                 for comp_code, passive_comps in tertiary_source_passive.items():
                     # Find which EC this component belongs to
+                    match_found = False
                     for ec_code in viable_tertiary_and_passive_cmpts.keys():
                         if any(comp.code == comp_code for comp in viable_tertiary_and_passive_cmpts[ec_code]['active']):
                             if comp_code not in viable_tertiary_and_passive_cmpts[ec_code]['passive']:
                                 viable_tertiary_and_passive_cmpts[ec_code]['passive'][comp_code] = []
                             viable_tertiary_and_passive_cmpts[ec_code]['passive'][comp_code].extend(passive_comps)
+                            match_found = True
+                            matched_comp_codes.append(comp_code)
                             break
 
-                # Remove satisfied flows from remaining inputs
+                    if not match_found:
+                        warnings.warn(
+                            f"Warning: Passive source component '{comp_code}' could not be matched "
+                            f"to any active component in viable_tertiary_and_passive_cmpts. "
+                            f"Available active components: {list(viable_tertiary_and_passive_cmpts.keys())}. "
+                            f"Skipping this component and not removing associated flows to maintain consistency.",
+                            UserWarning
+                        )
+
+                # Only remove flows for successfully matched components
+                flows_to_remove = []
                 for ec_code in satisfied_tertiary_flows.keys():
+                    # Check if all components using this flow were successfully matched
+                    if ec_code in remaining_tertiary_inputs:
+                        flows_to_remove.append(ec_code)
+
+                for ec_code in flows_to_remove:
                     del remaining_tertiary_inputs[ec_code]
 
         unmet_inputs = {**remaining_secondary_inputs, **remaining_tertiary_inputs}
