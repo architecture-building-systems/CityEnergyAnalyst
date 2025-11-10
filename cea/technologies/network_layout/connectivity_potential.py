@@ -74,12 +74,12 @@ from typing import Union
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString
-from shapely.ops import snap, split
+from shapely.ops import snap, split, substring
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, nx_to_gdf, validate_normalized_coordinates
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, nx_to_gdf, normalize_coords
 
 
 def compute_end_points(lines, crs):
@@ -643,9 +643,6 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     # Note: near_analysis() now returns normalized points (after interpolate())
     near_points = near_analysis(building_centroids, street_network)
 
-    # Import normalization utilities
-    from cea.technologies.network_layout.graph_utils import normalize_coords
-
     # Create terminal lines using normalized coordinates
     # CRITICAL: Use normalized coordinates to prevent floating-point precision mismatches
     # Each line connects: building_centroid → nearest_street_point
@@ -665,8 +662,6 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
         lines_to_split[street_idx].append(Point(street_coord))
     
     # Split street lines at terminal connection points using substring method
-    from shapely.ops import substring
-
     for idx, line in street_network.iterrows():
         if idx not in lines_to_split:
             new_lines.append(line.geometry)
