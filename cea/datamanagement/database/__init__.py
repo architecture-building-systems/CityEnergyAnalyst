@@ -161,7 +161,10 @@ class BaseDatabase(Base):
                     config['columns'] = list(columns.keys())
                 
                 os.makedirs(os.path.dirname(path), exist_ok=True)
-                value.reset_index().to_csv(path, **config, index=False)
+                if value.index.name in config.get('columns', []):
+                    value.reset_index().to_csv(path, **config, index=False)
+                else:
+                    value.to_csv(path, **config)
             elif isinstance(value, dict):
                 # Assume is _library with special index handling
                 # e.g., Schedules and Feedstocks classes
