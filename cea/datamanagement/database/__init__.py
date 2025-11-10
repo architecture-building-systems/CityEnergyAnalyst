@@ -156,7 +156,7 @@ class BaseDatabase(Base):
                 config = {}
 
                 # Get columns from schema if available
-                columns = self.schema().get(field.name, {}).get('columns', None)
+                columns = self.schema().get(field.name, {}).get('schema', {}).get('columns', None)
                 if columns and isinstance(columns, dict):
                     config['columns'] = list(columns.keys())
                 
