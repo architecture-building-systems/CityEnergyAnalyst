@@ -617,21 +617,8 @@ class SupplySystemStructure(object):
                     # Find which EC this component belongs to
                     match_found = False
                     for ec_code in viable_secondary_and_passive_components.keys():
-                        # Validate that ec_code entry has the expected structure
-                        if ec_code not in viable_secondary_and_passive_components:
-                            continue
-                        if 'active' not in viable_secondary_and_passive_components[ec_code]:
-                            warnings.warn(
-                                f"Warning: Energy carrier '{ec_code}' in viable_secondary_and_passive_components "
-                                f"is missing 'active' key. Skipping this carrier.",
-                                UserWarning
-                            )
-                            continue
-
                         if any(comp.code == comp_code for comp in
                                viable_secondary_and_passive_components[ec_code]['active']):
-                            if 'passive' not in viable_secondary_and_passive_components[ec_code]:
-                                viable_secondary_and_passive_components[ec_code]['passive'] = {}
                             if comp_code not in viable_secondary_and_passive_components[ec_code]['passive']:
                                 viable_secondary_and_passive_components[ec_code]['passive'][comp_code] = []
                             viable_secondary_and_passive_components[ec_code]['passive'][comp_code].extend(passive_comps)
@@ -674,20 +661,7 @@ class SupplySystemStructure(object):
                     # Find which EC this component belongs to
                     match_found = False
                     for ec_code in viable_tertiary_and_passive_cmpts.keys():
-                        # Validate that ec_code entry has the expected structure
-                        if ec_code not in viable_tertiary_and_passive_cmpts:
-                            continue
-                        if 'active' not in viable_tertiary_and_passive_cmpts[ec_code]:
-                            warnings.warn(
-                                f"Warning: Energy carrier '{ec_code}' in viable_tertiary_and_passive_cmpts "
-                                f"is missing 'active' key. Skipping this carrier.",
-                                UserWarning
-                            )
-                            continue
-
                         if any(comp.code == comp_code for comp in viable_tertiary_and_passive_cmpts[ec_code]['active']):
-                            if 'passive' not in viable_tertiary_and_passive_cmpts[ec_code]:
-                                viable_tertiary_and_passive_cmpts[ec_code]['passive'] = {}
                             if comp_code not in viable_tertiary_and_passive_cmpts[ec_code]['passive']:
                                 viable_tertiary_and_passive_cmpts[ec_code]['passive'][comp_code] = []
                             viable_tertiary_and_passive_cmpts[ec_code]['passive'][comp_code].extend(passive_comps)
