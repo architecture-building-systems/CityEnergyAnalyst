@@ -662,9 +662,6 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         self.assertGreater(len(system.max_cap_active_components['primary']), 0)
         # Should build successfully without secondary components if power is available
 
-    @unittest.skip("TODO: Test fails because chiller produces T30W waste heat that cannot be rejected. "
-                   "Need to either: (1) add tertiary components (cooling tower) to handle waste heat, or "
-                   "(2) implement renewable potentials as heat sinks feature.")
     def test_build_with_primary_needing_passive_output_conversion(self):
         """
         Test building with primary component where output needs passive conversion.
@@ -708,9 +705,6 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
 
         self.assertIsNotNone(capacity_indicators)
 
-    @unittest.skip("TODO: Test fails because absorption chiller produces T30W waste heat that cannot be rejected. "
-                   "Need to either: (1) add tertiary components (cooling tower) to handle waste heat, or "
-                   "(2) implement renewable potentials as heat sinks feature.")
     def test_build_with_primary_and_secondary_user_specified(self):
         """
         Test building with both primary and secondary specified by user.
@@ -753,9 +747,6 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         # Verify user's secondary selection was respected
         self.assertIn('BO1', system.max_cap_active_components['secondary'])
 
-    @unittest.skip("TODO: Test fails because chiller produces T30W waste heat that cannot be rejected. "
-                   "Need to either: (1) add tertiary components (cooling tower) to handle waste heat, or "
-                   "(2) implement renewable potentials as heat sinks feature.")
     def test_build_with_renewable_potential_available(self):
         """
         Test building with renewable energy potential available.
@@ -808,9 +799,6 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
 
         self.assertIsNotNone(capacity_indicators)
 
-    @unittest.skip("TODO: Test fails because chiller produces T30W waste heat that cannot be rejected. "
-                   "Need to either: (1) add tertiary components (cooling tower) to handle waste heat, or "
-                   "(2) implement renewable potentials as heat sinks feature.")
     def test_build_with_passive_conversion_from_grid(self):
         """
         Test functionality: Primary needs input not directly available but convertible.
