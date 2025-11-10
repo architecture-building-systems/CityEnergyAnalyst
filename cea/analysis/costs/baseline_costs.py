@@ -65,14 +65,100 @@ def baseline_costs_main(locator, config):
     return final_results
 
 
+def calculate_network_costs(network_buildings, building_energy_potentials, domain_potentials, network_type):
+    """
+    Calculate costs for thermal networks (district heating/cooling systems).
+
+    :param network_buildings: dict of {network_id: [buildings]}
+    :param building_energy_potentials: dict of {building_id: potentials}
+    :param domain_potentials: list of domain-level energy potentials
+    :param network_type: 'DH' or 'DC'
+    :return: dict of {network_id: {cost_metrics}}
+    """
+    from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+    from cea.optimization_new.supplySystem import SupplySystem
+    from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+
+    results = {}
+
+    for network_id, buildings in network_buildings.items():
+        print(f"    Calculating costs for network {network_id} with {len(buildings)} buildings")
+
+        # Aggregate demand from all buildings in the network
+        aggregated_demand_profile = sum([building.demand_flow.profile for building in buildings])
+
+        # Create aggregated demand flow
+        # Use the first building's demand flow as template for energy carrier
+        first_building = buildings[0]
+        aggregated_demand = EnergyFlow(
+            input_category='primary',
+            output_category='consumer',
+            energy_carrier_code=first_building.demand_flow.energy_carrier.code,
+            energy_flow_profile=aggregated_demand_profile
+        )
+
+        # Get network component selection from SupplySystemStructure class variable
+        network_component_selection = SupplySystemStructure.initial_network_supply_systems_composition.get(
+            network_id, {'primary': [], 'secondary': [], 'tertiary': []}
+        )
+
+        # Aggregate potentials from all buildings in the network
+        network_potentials = {}
+        for building in buildings:
+            building_pots = building_energy_potentials.get(building.identifier, {})
+            for ec_code, potential in building_pots.items():
+                if ec_code in network_potentials:
+                    # Sum up potentials from multiple buildings
+                    network_potentials[ec_code].profile += potential.profile
+                else:
+                    network_potentials[ec_code] = potential
+
+        # Build network supply system
+        max_supply_flow = aggregated_demand.isolate_peak()
+        system_structure = SupplySystemStructure(
+            max_supply_flow=max_supply_flow,
+            available_potentials=network_potentials,
+            user_component_selection=network_component_selection,
+            target_building_or_network=network_id
+        )
+        system_structure.build()
+
+        # Create and evaluate supply system
+        network_supply_system = SupplySystem(
+            system_structure,
+            system_structure.capacity_indicators,
+            aggregated_demand
+        )
+        network_supply_system.evaluate()
+
+        # Extract costs from network supply system
+        # Use first building as representative for service mapping
+        network_costs = extract_costs_from_supply_system(
+            network_supply_system, network_type, first_building
+        )
+
+        results[network_id] = {
+            'network_type': network_type,
+            'supply_system': network_supply_system,
+            'buildings': buildings,  # List of buildings in this network
+            'costs': network_costs,
+            'is_network': True
+        }
+
+    return results
+
+
 def calculate_costs_for_network_type(locator, config, network_type):
     """
     Calculate costs for either DH or DC using optimization_new engine.
 
+    Respects network connectivity: buildings with scale='DISTRICT' are grouped into networks,
+    while buildings with scale='BUILDING' are calculated as standalone systems.
+
     :param locator: InputLocator instance
     :param config: Configuration instance
     :param network_type: 'DH' or 'DC'
-    :return: dict of {building_name: {cost_metrics}}
+    :return: dict of {building_name or network_name: {cost_metrics}}
     """
     # Temporarily set network type for optimization_new
     original_network_type = config.optimization_new.network_type
@@ -96,21 +182,50 @@ def calculate_costs_for_network_type(locator, config, network_type):
             domain.energy_potentials, domain.buildings
         )
 
-        results = {}
+        # Group buildings by connectivity state (network vs standalone)
+        network_buildings = {}  # {network_id: [buildings]}
+        standalone_buildings = []
+
         for building in domain.buildings:
-            building.calculate_supply_system(
-                building_energy_potentials[building.identifier]
+            if building.initial_connectivity_state == 'stand_alone':
+                standalone_buildings.append(building)
+            else:
+                # Building is connected to a network
+                network_id = building.initial_connectivity_state
+                if network_id not in network_buildings:
+                    network_buildings[network_id] = []
+                network_buildings[network_id].append(building)
+
+        results = {}
+
+        # Calculate costs for network-connected buildings
+        if network_buildings:
+            print(f"  Found {len(network_buildings)} thermal network(s) for {network_type}")
+            from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+
+            network_results = calculate_network_costs(
+                network_buildings, building_energy_potentials,
+                domain.energy_potentials, network_type
             )
+            results.update(network_results)
 
-            # Extract costs from the building's supply system
-            supply_system = building.stand_alone_supply_system
+        # Calculate costs for standalone buildings
+        if standalone_buildings:
+            print(f"  Calculating standalone systems for {len(standalone_buildings)} buildings")
+            for building in standalone_buildings:
+                building.calculate_supply_system(
+                    building_energy_potentials[building.identifier]
+                )
 
-            results[building.identifier] = {
-                'network_type': network_type,
-                'supply_system': supply_system,
-                'building': building,
-                'costs': extract_costs_from_supply_system(supply_system, network_type, building)
-            }
+                # Extract costs from the building's supply system
+                supply_system = building.stand_alone_supply_system
+
+                results[building.identifier] = {
+                    'network_type': network_type,
+                    'supply_system': supply_system,
+                    'building': building,
+                    'costs': extract_costs_from_supply_system(supply_system, network_type, building)
+                }
 
         return results
 
@@ -349,18 +464,46 @@ def format_output_like_system_costs(merged_results, locator):
         'GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data', 'GRID_ve'
     ]
 
-    for building_name, network_data in merged_results.items():
-        building_demand = demand[demand['name'] == building_name]
-        if building_demand.empty:
-            print(f"Warning: Building {building_name} not found in demand results, skipping.")
-            continue
+    for identifier, network_data in merged_results.items():
+        # Check if this is a network or a building
+        is_network = network_data.get('DH', {}).get('is_network', False) or \
+                     network_data.get('DC', {}).get('is_network', False)
 
-        building_demand = building_demand.iloc[0]
+        if is_network:
+            # This is a network identifier (e.g., 'N1001')
+            # Get all buildings in the network to sum GFA
+            buildings_in_network = network_data.get('DH', {}).get('buildings') or \
+                                 network_data.get('DC', {}).get('buildings', [])
 
-        row = {
-            'name': building_name,
-            'GFA_m2': building_demand['GFA_m2']
-        }
+            if not buildings_in_network:
+                print(f"Warning: Network {identifier} has no buildings, skipping.")
+                continue
+
+            # Sum GFA from all buildings in the network
+            total_gfa = 0.0
+            for building in buildings_in_network:
+                building_demand = demand[demand['name'] == building.identifier]
+                if not building_demand.empty:
+                    total_gfa += building_demand.iloc[0]['GFA_m2']
+
+            row = {
+                'name': identifier,
+                'GFA_m2': total_gfa
+            }
+        else:
+            # This is a building identifier
+            building_name = identifier
+            building_demand = demand[demand['name'] == building_name]
+            if building_demand.empty:
+                print(f"Warning: Building {building_name} not found in demand results, skipping.")
+                continue
+
+            building_demand = building_demand.iloc[0]
+
+            row = {
+                'name': building_name,
+                'GFA_m2': building_demand['GFA_m2']
+            }
 
         # Initialise all service columns to zero
         for service in services:
@@ -425,7 +568,7 @@ def format_output_like_system_costs(merged_results, locator):
                         # Add to detailed output
                         for comp in service_costs['components']:
                             detailed_rows.append({
-                                'name': building_name,
+                                'name': identifier,  # Use identifier (works for both buildings and networks)
                                 'network_type': network_type,
                                 'service': service_name,
                                 'component_code': comp['code'],
