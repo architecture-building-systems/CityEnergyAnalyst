@@ -13,7 +13,6 @@ from shapely import LineString, Point
 
 from cea.constants import SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
-from cea.technologies.network_layout.utility import read_shp
 from cea.datamanagement.graph_helper import GraphCorrector
 
 __author__ = "Jimeno A. Fonseca"
@@ -60,9 +59,9 @@ class SteinerAlgorithm(StrEnum):
 
 
 def calc_steiner_spanning_tree(crs_projected,
+                               building_centroids_df: gdf,
                                potential_network_gdf: gdf,
                                output_network_folder,
-                               temp_path_building_centroids_shp,
                                path_output_edges_shp,
                                path_output_nodes_shp,
                                type_mat_default,
@@ -79,9 +78,9 @@ def calc_steiner_spanning_tree(crs_projected,
     present form.
 
     :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
-    :param nx.Graph potential_network_gdf: potential network in networkx graph format
+    :param geopandas.GeoDataFrame building_centroids_df: GeoDataFrame of building centroids
+    :param geopandas.GeoDataFrame potential_network_gdf: potential network in networkx graph format
     :param str output_network_folder: "{general:scenario}/inputs/networks/DC"
-    :param str temp_path_building_centroids_shp: e.g. "%TEMP%/nodes_buildings.shp"
     :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
     :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
     :param str type_mat_default: e.g. "T1"
@@ -100,8 +99,8 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # TODO: Ensure CRS is used properly throughout the function (currently not applied)
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
-    building_nodes_graph = read_shp(temp_path_building_centroids_shp)
-    potential_network_graph = gdf_to_nx(potential_network_gdf) 
+    building_nodes_graph = gdf_to_nx(building_centroids_df, name="name")
+    potential_network_graph = gdf_to_nx(potential_network_gdf)
 
     if potential_network_graph is None or building_nodes_graph is None:
         raise ValueError('Could not read potential network or building centroids shapefiles. '

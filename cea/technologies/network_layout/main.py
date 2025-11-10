@@ -23,7 +23,6 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     if plant_building_names is None:
         plant_building_names = []
     total_demand_location = locator.get_total_demand()
-    temp_path_building_centroids_shp = locator.get_temporary_file("nodes_buildings.shp")
 
     # type_mat_default = network_layout.type_mat
     type_mat_default = TYPE_MAT_DEFAULT
@@ -60,8 +59,8 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     if crs_projected is None:
         raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
 
-    # Save building centroids with projected crs
-    building_centroids_df.to_crs(crs_projected).to_file(temp_path_building_centroids_shp, driver='ESRI Shapefile')
+    # Ensure building centroids is in projected crs
+    building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
@@ -71,9 +70,9 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
 
     calc_steiner_spanning_tree(crs_projected,
+                               building_centroids_df,
                                potential_network_df,
                                output_network_folder,
-                               temp_path_building_centroids_shp,
                                path_output_edges_shp,
                                path_output_nodes_shp,
                                type_mat_default,
