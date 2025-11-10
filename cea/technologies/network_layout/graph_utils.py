@@ -12,7 +12,7 @@ from geopandas import GeoDataFrame as gdf
 from cea.constants import SHAPEFILE_TOLERANCE
 
 
-def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, preserve_geometry=True, **edge_attrs):
+def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, preserve_geometry=True, **attrs):
     """
     Convert GeoDataFrame to NetworkX Graph.
 
@@ -26,9 +26,9 @@ def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, pres
     :type coord_precision: int
     :param preserve_geometry: If True, store full LineString geometry as edge attribute (default: True)
     :type preserve_geometry: bool
-    :param edge_attrs: Additional edge attributes to extract from GeoDataFrame columns
-    :type edge_attrs: dict
-    :return: NetworkX Graph with edges representing network connections and lone nodes for Points
+    :param attrs: Additional attributes to extract from GeoDataFrame columns
+    :type attrs: dict
+    :return: NetworkX Graph with edges representing network connections and nodes for Points
     :rtype: networkx.Graph
 
     Example:
@@ -64,26 +64,35 @@ def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, pres
         # Process different geometry types
         if geom.geom_type == 'Point':
             # Add Point as a lone node
-            _add_point_to_graph(G, geom, coord_precision)
+            _add_point_to_graph(G, geom, row, coord_precision, **attrs)
         elif geom.geom_type == 'LineString':
-            _add_linestring_to_graph(G, geom, row, idx, coord_precision, preserve_geometry, **edge_attrs)
+            _add_linestring_to_graph(G, geom, row, idx, coord_precision, preserve_geometry, **attrs)
         elif geom.geom_type == 'MultiLineString':
             for sub_line in geom.geoms:
-                _add_linestring_to_graph(G, sub_line, row, idx, coord_precision, preserve_geometry, **edge_attrs)
+                _add_linestring_to_graph(G, sub_line, row, idx, coord_precision, preserve_geometry, **attrs)
 
     return G
 
 
-def _add_point_to_graph(G, point, coord_precision):
+def _add_point_to_graph(G, point, row, coord_precision, **node_attrs):
     """
     Helper to add a single Point as a lone node to the graph.
 
     :param G: NetworkX graph to add node to
     :param point: Point geometry
+    :param row: GeoDataFrame row containing node attributes
     :param coord_precision: Decimal places for coordinate rounding
     """
     coords = tuple(round(c, coord_precision) for c in [point.x, point.y])
-    G.add_node(coords)
+
+    node_data = {}
+
+    # Add requested attributes from row
+    for attr_name, col_name in node_attrs.items():
+        if col_name in row.index:
+            node_data[attr_name] = row[col_name]
+
+    G.add_node(coords, **node_data)
 
 
 def _add_linestring_to_graph(G, line, row, idx, coord_precision, preserve_geometry, **edge_attrs):
