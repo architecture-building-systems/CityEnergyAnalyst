@@ -910,7 +910,8 @@ class GraphCorrector:
         num_nodes_after = self.graph.number_of_nodes()
         print(f"    Merged {merged_count} nodes. Graph now has {num_nodes_after} nodes (was {num_nodes_before})")
 
-        self._log_correction(f'merge_close_nodes_{label}', {
+        self._log_correction('merge_close_nodes', {
+            'pass': label,  # micro-precision or snap-tolerance
             'distance_threshold': distance_threshold,
             'nodes_merged': merged_count,
             'nodes_before': num_nodes_before,
