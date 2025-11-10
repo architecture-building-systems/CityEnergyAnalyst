@@ -69,7 +69,6 @@ GUARANTEES
 """
 
 import warnings
-from typing import Union
 
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
@@ -1017,8 +1016,7 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
 def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
-    return_graph: bool = False,
-) -> Union[gdf, nx.Graph]:
+) -> gdf:
     """
     Create connectivity network preserving street geometries.
 
@@ -1037,8 +1035,7 @@ def calc_connectivity_network_with_geometry(
 
     :param streets_network_df: GeoDataFrame with street network geometries
     :param building_centroids_df: GeoDataFrame with building centroids
-    :param return_graph: If True, return NetworkX graph with metadata; if False, return edges GeoDataFrame
-    :return: Either GeoDataFrame of edges (default) or NetworkX graph with metadata
+    :return: Connectivity network as GeoDataFrame with preserved geometries
     :raises ValueError: If network has disconnected components after all corrections applied
     """
     # Prepare inputs (CRS conversion, validation, cleaning)
