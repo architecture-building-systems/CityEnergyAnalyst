@@ -1087,24 +1087,12 @@ def calc_connectivity_network_with_geometry(
     G_filtered.graph['crs'] = crs
     G_filtered.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
-    # If caller wants the graph directly (for optimization), return it with metadata preserved
-    if return_graph:
-        # Validate and return graph
-        edges_for_validation = nx_to_gdf(G_filtered, crs=crs, preserve_geometry=True)
-        if 'weight' in edges_for_validation.columns:
-            edges_for_validation.rename(columns={'weight': 'length'}, inplace=True)
-
-        print("\nValidating network creation...")
-        _validate_network_creation(G_filtered, building_centroids_df, edges_for_validation)
-
-        return G_filtered
-
-    # Otherwise, convert to GeoDataFrame for standard usage
+    # Convert back to geodataframe with preserved geometries
     edges = nx_to_gdf(G_filtered, crs=crs, preserve_geometry=True)
 
-    # Rename 'weight' to 'length' for CEA convention (edge lengths in meters)
-    if 'weight' in edges.columns:
-        edges.rename(columns={'weight': 'length'}, inplace=True)
+    # Set length attribute from geometry if not already present
+    if 'geometry' in edges.columns:
+        edges['length'] = edges.geometry.length
 
     # Validate network creation before returning
     print("\nValidating network creation...")
