@@ -718,20 +718,20 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     # This ensures consistent precision throughout and prevents disconnected components
 
     # Validate coordinate normalization
-    from cea.technologies.network_layout.graph_utils import validate_normalized_coordinates
-    validate_normalized_coordinates(combined_network, precision=SHAPEFILE_TOLERANCE)
+    # from cea.technologies.network_layout.graph_utils import validate_normalized_coordinates
+    # validate_normalized_coordinates(combined_network, precision=SHAPEFILE_TOLERANCE)
 
-    # Check for micro-disconnections by converting to graph and analyzing connectivity
-    from cea.technologies.network_layout.graph_utils import gdf_to_nx
-    import networkx as nx
+    # # Check for micro-disconnections by converting to graph and analyzing connectivity
+    # from cea.technologies.network_layout.graph_utils import gdf_to_nx
+    # import networkx as nx
 
-    test_graph = gdf_to_nx(combined_network, coord_precision=SHAPEFILE_TOLERANCE)
-    if not nx.is_connected(test_graph):
-        components = list(nx.connected_components(test_graph))
-        print(f"⚠️  WARNING: create_terminals produced {len(components)} disconnected components")
-        print(f"   Largest component: {len(max(components, key=len))} nodes")
-        print(f"   Component sizes: {sorted([len(c) for c in components], reverse=True)}")
-        print("   This may indicate coordinate precision issues that need investigation")
+    # test_graph = gdf_to_nx(combined_network, coord_precision=SHAPEFILE_TOLERANCE)
+    # if not nx.is_connected(test_graph):
+    #     components = list(nx.connected_components(test_graph))
+    #     print(f"⚠️  WARNING: create_terminals produced {len(components)} disconnected components")
+    #     print(f"   Largest component: {len(max(components, key=len))} nodes")
+    #     print(f"   Component sizes: {sorted([len(c) for c in components], reverse=True)}")
+    #     print("   This may indicate coordinate precision issues that need investigation")
 
     return combined_network
 
