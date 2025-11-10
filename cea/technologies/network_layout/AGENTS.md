@@ -134,6 +134,13 @@ Convert GeoDataFrame to NetworkX graph.
 - Need graph representation for optimization
 - Want to analyze network connectivity
 - Performing graph algorithms (shortest path, Steiner tree)
+- Converting mixed Point/LineString geometries to graph
+
+**Geometry Support**:
+- **Point**: Added as lone nodes (degree 0) without edges
+- **LineString**: Converted to edges connecting two nodes
+- **MultiLineString**: Each component becomes a separate edge
+- **Mixed**: Can process GeoDataFrames with mixed geometry types
 
 **Example**:
 ```python
@@ -143,10 +150,18 @@ graph = gdf_to_nx(streets_gdf, preserve_geometry=True)
 # Extract additional attributes
 graph = gdf_to_nx(streets_gdf, preserve_geometry=True,
                   pipe_DN='pipe_DN', type_mat='type_mat')
+
+# Mixed geometries - Points become lone nodes
+mixed_gdf = gpd.GeoDataFrame({
+    'geometry': [Point(0, 0), LineString([(1, 1), (2, 2)])]
+})
+graph = gdf_to_nx(mixed_gdf)
+# Graph has 3 nodes: (0,0) as lone node, (1,1) and (2,2) as edge endpoints
 ```
 
 **Graph Structure**:
 - Nodes: `(x, y)` tuples rounded to `coord_precision`
+  - May include lone nodes from Point geometries (degree 0)
 - Edges: `{u, v, data}` where `data` contains:
   - `weight`: Line length (always present)
   - `geometry`: Full LineString (if `preserve_geometry=True`)

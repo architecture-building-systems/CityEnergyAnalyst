@@ -12,38 +12,47 @@ from geopandas import GeoDataFrame as gdf
 from cea.constants import SHAPEFILE_TOLERANCE
 
 
-def gdf_to_nx(network_gdf, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True, **edge_attrs):
+def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, preserve_geometry=True, **edge_attrs):
     """
     Convert GeoDataFrame to NetworkX Graph.
 
     This is a consolidated helper function for converting GeoDataFrame geometries
-    to NetworkX graphs with consistent handling of LineString and MultiLineString
+    to NetworkX graphs with consistent handling of Point, LineString and MultiLineString
     geometries.
 
-    :param network_gdf: GeoDataFrame with LineString/MultiLineString geometries
+    :param network_gdf: GeoDataFrame with Point/LineString/MultiLineString geometries
     :type network_gdf: geopandas.GeoDataFrame
-    :param coord_precision: Decimal places for coordinate rounding (default: 3)
+    :param coord_precision: Decimal places for coordinate rounding (default: SHAPEFILE_TOLERANCE)
     :type coord_precision: int
-    :param preserve_geometry: If True, store full LineString geometry as edge attribute (default: False)
+    :param preserve_geometry: If True, store full LineString geometry as edge attribute (default: True)
     :type preserve_geometry: bool
     :param edge_attrs: Additional edge attributes to extract from GeoDataFrame columns
     :type edge_attrs: dict
-    :return: NetworkX Graph with edges representing network connections
+    :return: NetworkX Graph with edges representing network connections and lone nodes for Points
     :rtype: networkx.Graph
 
     Example:
         >>> # Simple conversion
-        >>> G = gdf_to_nx(streets_gdf, coord_precision=3)
+        >>> G = gdf_to_nx(streets_gdf, coord_precision=6)
         >>>
         >>> # Preserve full geometries for curved streets
         >>> G = gdf_to_nx(streets_gdf, preserve_geometry=True)
         >>>
         >>> # Extract specific columns as edge attributes
         >>> G = gdf_to_nx(streets_gdf, type_mat='type_mat', pipe_DN='pipe_DN')
+        >>>
+        >>> # Mixed geometries - Points become lone nodes, LineStrings become edges
+        >>> mixed_gdf = gpd.GeoDataFrame({
+        ...     'geometry': [Point(0, 0), LineString([(1, 1), (2, 2)])]
+        ... })
+        >>> G = gdf_to_nx(mixed_gdf)
+        >>> list(G.nodes())  # [(0.0, 0.0), (1.0, 1.0), (2.0, 2.0)]
+        >>> list(G.edges())  # [((1.0, 1.0), (2.0, 2.0))]
 
     Notes:
         - Coordinates are rounded to avoid floating-point precision issues
-        - Both LineString and MultiLineString geometries are supported
+        - Point geometries are added as lone nodes (nodes without edges)
+        - LineString and MultiLineString geometries become edges
         - Edge weight is set to geometry length by default
         - If preserve_geometry=True, 'geometry' edge attribute contains full LineString
     """
@@ -52,14 +61,29 @@ def gdf_to_nx(network_gdf, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometr
     for idx, row in network_gdf.iterrows():
         geom = row.geometry
 
-        # Process LineString or MultiLineString
-        if geom.geom_type == 'LineString':
+        # Process different geometry types
+        if geom.geom_type == 'Point':
+            # Add Point as a lone node
+            _add_point_to_graph(G, geom, coord_precision)
+        elif geom.geom_type == 'LineString':
             _add_linestring_to_graph(G, geom, row, idx, coord_precision, preserve_geometry, **edge_attrs)
         elif geom.geom_type == 'MultiLineString':
             for sub_line in geom.geoms:
                 _add_linestring_to_graph(G, sub_line, row, idx, coord_precision, preserve_geometry, **edge_attrs)
 
     return G
+
+
+def _add_point_to_graph(G, point, coord_precision):
+    """
+    Helper to add a single Point as a lone node to the graph.
+
+    :param G: NetworkX graph to add node to
+    :param point: Point geometry
+    :param coord_precision: Decimal places for coordinate rounding
+    """
+    coords = tuple(round(c, coord_precision) for c in [point.x, point.y])
+    G.add_node(coords)
 
 
 def _add_linestring_to_graph(G, line, row, idx, coord_precision, preserve_geometry, **edge_attrs):
@@ -269,11 +293,17 @@ def validate_normalized_coordinates(network_gdf: gdf, precision: int = SHAPEFILE
         if geom.is_empty:
             continue
 
-        # Handle different geometry types (MultiLineString doesn't support .coords directly)
-        if geom.geom_type == 'MultiLineString':
+        # Handle different geometry types
+        if geom.geom_type == 'Point':
+            # Point has x, y attributes instead of coords
+            coord_lists = [[(geom.x, geom.y)]]
+        elif geom.geom_type == 'MultiLineString':
             coord_lists = [list(line.coords) for line in geom.geoms]
-        else:
+        elif geom.geom_type == 'LineString':
             coord_lists = [list(geom.coords)]
+        else:
+            # Skip unsupported geometry types
+            continue
 
         for coords in coord_lists:
             for coord_idx, coord in enumerate(coords):
@@ -283,7 +313,7 @@ def validate_normalized_coordinates(network_gdf: gdf, precision: int = SHAPEFILE
                 # Check if coordinate matches rounded value
                 if coord[0] != x_rounded or coord[1] != y_rounded:
                     raise ValueError(
-                        f"Geometry {idx} coordinate {coord_idx} has unnormalized values: "
+                        f"Geometry {idx} ({geom.geom_type}) coordinate {coord_idx} has unnormalized values: "
                         f"({coord[0]}, {coord[1]}) != ({x_rounded}, {y_rounded}). "
                         f"This indicates a precision handling bug that will cause disconnected components. "
                         f"All coordinates must be normalized to {precision} decimal places."
