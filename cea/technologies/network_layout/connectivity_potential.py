@@ -378,7 +378,9 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         return network_gdf
 
     # Step 2: Use GeoDataFrame's built-in spatial index for fast nearest-neighbor queries
-    sindex = network_gdf.sindex
+    _network_gdf = network_gdf.copy()
+    _network_gdf.reset_index(inplace=True, drop=True)  # Ensure clean index for sindex
+    sindex = _network_gdf.sindex
 
     # Track which lines need to be split and where
     lines_to_split = {}  # {line_idx: [snap_points]}
@@ -393,14 +395,15 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
         """
         point = Point(point_coords)
         # Query spatial index with buffered point to find candidates
-        nearby_indices = set(sindex.query(point.buffer(snap_tolerance), predicate='intersects'))
-        nearby_indices.discard(idx_to_exclude)  # Exclude the line itself
+        nearby_indices = sindex.query(point.buffer(snap_tolerance), predicate='intersects')
+        nearby_indices = [id for id in nearby_indices if id != idx_to_exclude]  # Exclude the line itself
 
         if not nearby_indices:
             return point_coords  # No nearby lines to snap to
 
-        nearest_index = int(network_gdf.iloc[list(nearby_indices)].geometry.distance(point).idxmin())
-        nearest_line: LineString = network_gdf.iloc[nearest_index].geometry
+        distance = _network_gdf.loc[nearby_indices].geometry.distance(point).sort_values()
+        nearest_index = distance.index[0]
+        nearest_line: LineString = _network_gdf.loc[nearest_index].geometry
 
         # Snap to nearest point on line
         snapped = nearest_line.interpolate(nearest_line.project(point))
@@ -414,7 +417,7 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
     # Step 3: Process lines with dangling endpoints first
     modified_geometries = {}  # {idx: geometry}
 
-    for idx, row in network_gdf.iterrows():
+    for idx, row in _network_gdf.iterrows():
         line = row.geometry
         coords = list(line.coords)
 
@@ -436,7 +439,7 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float) -> g
 
     # Step 4: Split lines that had endpoints snapped to them
     final_geometries = []
-    for idx, row in network_gdf.iterrows():
+    for idx, row in _network_gdf.iterrows():
         if idx in lines_to_split:
             # This line needs to be split at snap points
             line = modified_geometries[idx]
