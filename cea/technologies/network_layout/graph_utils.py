@@ -269,16 +269,22 @@ def validate_normalized_coordinates(network_gdf: gdf, precision: int = SHAPEFILE
         if geom.is_empty:
             continue
 
-        coords = list(geom.coords)
-        for coord_idx, coord in enumerate(coords):
-            x_rounded = round(coord[0], precision)
-            y_rounded = round(coord[1], precision)
+        # Handle different geometry types (MultiLineString doesn't support .coords directly)
+        if geom.geom_type == 'MultiLineString':
+            coord_lists = [list(line.coords) for line in geom.geoms]
+        else:
+            coord_lists = [list(geom.coords)]
 
-            # Check if coordinate matches rounded value
-            if coord[0] != x_rounded or coord[1] != y_rounded:
-                raise ValueError(
-                    f"Geometry {idx} coordinate {coord_idx} has unnormalized values: "
-                    f"({coord[0]}, {coord[1]}) != ({x_rounded}, {y_rounded}). "
-                    f"This indicates a precision handling bug that will cause disconnected components. "
-                    f"All coordinates must be normalized to {precision} decimal places."
-                )
+        for coords in coord_lists:
+            for coord_idx, coord in enumerate(coords):
+                x_rounded = round(coord[0], precision)
+                y_rounded = round(coord[1], precision)
+
+                # Check if coordinate matches rounded value
+                if coord[0] != x_rounded or coord[1] != y_rounded:
+                    raise ValueError(
+                        f"Geometry {idx} coordinate {coord_idx} has unnormalized values: "
+                        f"({coord[0]}, {coord[1]}) != ({x_rounded}, {y_rounded}). "
+                        f"This indicates a precision handling bug that will cause disconnected components. "
+                        f"All coordinates must be normalized to {precision} decimal places."
+                    )

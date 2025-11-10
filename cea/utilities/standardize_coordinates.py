@@ -108,6 +108,13 @@ def validate_crs_uses_meters(gdf: geopandas.GeoDataFrame, operation: str = "dist
         )
     
     # Check that units are meters (GeoPandas exposes pyproj's axis_info)
+    if not gdf.crs.axis_info:
+        raise ValueError(
+            f'The CRS does not have axis information defined. '
+            f'Current CRS: {gdf.crs.name}. '
+            f'Please use a standard projected CRS with meter units (e.g., UTM zone for your region).'
+        )
+
     axis_unit = gdf.crs.axis_info[0].unit_name.lower()
     if axis_unit not in {'metre', 'meter', 'm'}:
         raise ValueError(

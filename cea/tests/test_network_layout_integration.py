@@ -90,13 +90,6 @@ class TestNetworkLayoutIntegration:
         # Should have at least one edge with curved geometry
         assert not network.empty
 
-        # Check that some geometries have intermediate vertices (curves)
-        has_curved = False
-        for geom in network.geometry:
-            if len(geom.coords) > 2:
-                has_curved = True
-                break
-
         # Note: Curved streets may be split at building connections,
         # so we just verify the network was created successfully
         assert len(network) > 0

@@ -81,15 +81,6 @@ from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, nx_to_gdf, validate_normalized_coordinates
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Malcolm Kesson", "Mattijn"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Daren Thomas"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
-
 
 def compute_end_points(lines, crs):
     all_points = []
