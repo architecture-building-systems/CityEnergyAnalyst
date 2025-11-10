@@ -649,24 +649,18 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=user_selection
         )
 
-        try:
-            capacity_indicators = system.build()
+        capacity_indicators = system.build()
 
-            print("\n=== Test: Primary Only Direct Match ===")
-            print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
-            print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
-            print(f"Tertiary components: {list(system.max_cap_active_components['tertiary'].keys())}")
-            print(f"Passive components: {len(system.passive_component_selection)} total")
+        print("\n=== Test: Primary Only Direct Match ===")
+        print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
+        print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
+        print(f"Tertiary components: {list(system.max_cap_active_components['tertiary'].keys())}")
+        print(f"Passive components: {len(system.passive_component_selection)} total")
 
-            # Assertions
-            self.assertIsNotNone(capacity_indicators)
-            self.assertGreater(len(system.max_cap_active_components['primary']), 0)
-            # Should build successfully without secondary components if power is available
-
-        except Exception as e:
-            print(f"Build failed: {e}")
-            # Log for debugging
-            self.fail(f"Build should succeed with direct energy match: {e}")
+        # Assertions
+        self.assertIsNotNone(capacity_indicators)
+        self.assertGreater(len(system.max_cap_active_components['primary']), 0)
+        # Should build successfully without secondary components if power is available
 
     def test_build_with_primary_needing_passive_output_conversion(self):
         """
@@ -697,25 +691,19 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=user_selection
         )
 
-        try:
-            capacity_indicators = system.build()
+        capacity_indicators = system.build()
 
-            print("\n=== Test: Primary with Output Conversion ===")
-            print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
-            print(f"Passive components: {len(system.passive_component_selection)}")
+        print("\n=== Test: Primary with Output Conversion ===")
+        print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
+        print(f"Passive components: {len(system.passive_component_selection)}")
 
-            # Check if passive components were added
-            if system.passive_component_selection:
-                print("Passive components added:")
-                for active_comp_code, passive_comps in system.passive_component_selection.items():
-                    print(f"  For {active_comp_code}: {len(passive_comps)} passive component(s)")
+        # Check if passive components were added
+        if system.passive_component_selection:
+            print("Passive components added:")
+            for active_comp_code, passive_comps in system.passive_component_selection.items():
+                print(f"  For {active_comp_code}: {len(passive_comps)} passive component(s)")
 
-            self.assertIsNotNone(capacity_indicators)
-
-        except Exception as e:
-            print(f"Build result: {e}")
-            # This might fail if energy requirements can't be met
-            # We're testing to understand the behavior
+        self.assertIsNotNone(capacity_indicators)
 
     def test_build_with_primary_and_secondary_user_specified(self):
         """
@@ -745,24 +733,19 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=user_selection
         )
 
-        try:
-            system.build()
+        system.build()
 
-            print("\n=== Test: Primary + Secondary User Specified ===")
-            print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
-            print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
-            print(f"Tertiary components: {list(system.max_cap_active_components['tertiary'].keys())}")
+        print("\n=== Test: Primary + Secondary User Specified ===")
+        print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
+        print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
+        print(f"Tertiary components: {list(system.max_cap_active_components['tertiary'].keys())}")
 
-            # Should have both primary and secondary as user specified
-            self.assertGreater(len(system.max_cap_active_components['primary']), 0)
-            self.assertGreater(len(system.max_cap_active_components['secondary']), 0)
+        # Should have both primary and secondary as user specified
+        self.assertGreater(len(system.max_cap_active_components['primary']), 0)
+        self.assertGreater(len(system.max_cap_active_components['secondary']), 0)
 
-            # Verify user's secondary selection was respected
-            self.assertIn('BO1', system.max_cap_active_components['secondary'])
-
-        except Exception as e:
-            print(f"Build result: {e}")
-            # Log the error for debugging
+        # Verify user's secondary selection was respected
+        self.assertIn('BO1', system.max_cap_active_components['secondary'])
 
     def test_build_with_renewable_potential_available(self):
         """
@@ -802,23 +785,19 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=user_selection
         )
 
-        try:
-            capacity_indicators = system.build()
+        capacity_indicators = system.build()
 
-            print("\n=== Test: With Renewable Potential ===")
-            print(f"Available potentials: {list(available_potentials.keys())}")
-            print(f"Used potentials: {list(system.used_potentials.keys())}")
-            print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
+        print("\n=== Test: With Renewable Potential ===")
+        print(f"Available potentials: {list(available_potentials.keys())}")
+        print(f"Used potentials: {list(system.used_potentials.keys())}")
+        print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
 
-            # Check if potentials were used
-            if system.used_potentials:
-                for ec_code, used_flow in system.used_potentials.items():
-                    print(f"  Used {ec_code}: {used_flow.profile.iloc[0]} kW")
+        # Check if potentials were used
+        if system.used_potentials:
+            for ec_code, used_flow in system.used_potentials.items():
+                print(f"  Used {ec_code}: {used_flow.profile.iloc[0]} kW")
 
-            self.assertIsNotNone(capacity_indicators)
-
-        except Exception as e:
-            print(f"Build result: {e}")
+        self.assertIsNotNone(capacity_indicators)
 
     def test_build_with_passive_conversion_from_grid(self):
         """
@@ -856,31 +835,25 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=user_selection
         )
 
-        try:
-            capacity_indicators = system.build()
+        capacity_indicators = system.build()
 
-            print("\n=== Test: Passive Conversion from Grid ===")
-            print(f"User specified secondary: {user_selection['secondary']}")
-            print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
-            print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
-            print(f"Passive components: {len(system.passive_component_selection)}")
+        print("\n=== Test: Passive Conversion from Grid ===")
+        print(f"User specified secondary: {user_selection['secondary']}")
+        print(f"Primary components: {list(system.max_cap_active_components['primary'].keys())}")
+        print(f"Secondary components: {list(system.max_cap_active_components['secondary'].keys())}")
+        print(f"Passive components: {len(system.passive_component_selection)}")
 
-            # Check if passive components were added for input conversion
-            if system.passive_component_selection:
-                print("Passive components found (checking for source conversions):")
-                for active_comp, passives in system.passive_component_selection.items():
-                    for passive in passives:
-                        print(f"  {passive.code}: {passive.placement}")
-                        # Check if placed_before = 'source'
-                        if passive.placement.get('before') == 'source':
-                            print("    -> This is a source-to-component conversion!")
+        # Check if passive components were added for input conversion
+        if system.passive_component_selection:
+            print("Passive components found (checking for source conversions):")
+            for active_comp, passives in system.passive_component_selection.items():
+                for passive in passives:
+                    print(f"  {passive.code}: {passive.placement}")
+                    # Check if placed_before = 'source'
+                    if passive.placement.get('before') == 'source':
+                        print("    -> This is a source-to-component conversion!")
 
-            self.assertIsNotNone(capacity_indicators)
-
-        except Exception as e:
-            print(f"Build result: {e}")
-            # May fail with "unmet inputs" in old implementation
-            # Should succeed with passive conversion implementation
+        self.assertIsNotNone(capacity_indicators)
 
     def test_build_auto_system_selection(self):
         """
@@ -904,22 +877,17 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=None
         )
 
-        try:
-            capacity_indicators = system.build()
+        capacity_indicators = system.build()
 
-            print("\n=== Test: Automatic Component Selection ===")
-            print(f"Primary components auto-selected: {list(system.max_cap_active_components['primary'].keys())}")
-            print(f"Secondary components auto-selected: {list(system.max_cap_active_components['secondary'].keys())}")
-            print(f"Tertiary components auto-selected: {list(system.max_cap_active_components['tertiary'].keys())}")
+        print("\n=== Test: Automatic Component Selection ===")
+        print(f"Primary components auto-selected: {list(system.max_cap_active_components['primary'].keys())}")
+        print(f"Secondary components auto-selected: {list(system.max_cap_active_components['secondary'].keys())}")
+        print(f"Tertiary components auto-selected: {list(system.max_cap_active_components['tertiary'].keys())}")
 
-            # Should have selected at least primary components
-            self.assertGreater(len(system.max_cap_active_components['primary']), 0)
+        # Should have selected at least primary components
+        self.assertGreater(len(system.max_cap_active_components['primary']), 0)
 
-            self.assertIsNotNone(capacity_indicators)
-
-        except Exception as e:
-            print(f"Build result: {e}")
-            self.fail(f"Auto selection should work: {e}")
+        self.assertIsNotNone(capacity_indicators)
 
     def test_build_with_tertiary_user_specified(self):
         """
@@ -947,21 +915,17 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
             user_component_selection=user_selection
         )
 
-        try:
-            capacity_indicators = system.build()
+        capacity_indicators = system.build()
 
-            print("\n=== Test: With Tertiary User Specified ===")
-            print(f"Primary: {list(system.max_cap_active_components['primary'].keys())}")
-            print(f"Secondary: {list(system.max_cap_active_components['secondary'].keys())}")
-            print(f"Tertiary: {list(system.max_cap_active_components['tertiary'].keys())}")
+        print("\n=== Test: With Tertiary User Specified ===")
+        print(f"Primary: {list(system.max_cap_active_components['primary'].keys())}")
+        print(f"Secondary: {list(system.max_cap_active_components['secondary'].keys())}")
+        print(f"Tertiary: {list(system.max_cap_active_components['tertiary'].keys())}")
 
-            # Should have user's tertiary selection
-            self.assertIn('CT1', system.max_cap_active_components['tertiary'])
+        # Should have user's tertiary selection
+        self.assertIn('CT1', system.max_cap_active_components['tertiary'])
 
-            self.assertIsNotNone(capacity_indicators)
-
-        except Exception as e:
-            print(f"Build result: {e}")
+        self.assertIsNotNone(capacity_indicators)
 
     @unittest.skip("TODO: Fix test - current implementation produces T30W waste that cannot be released. "
                    "Will be resolved when renewable potentials as heat sinks feature is implemented.")
