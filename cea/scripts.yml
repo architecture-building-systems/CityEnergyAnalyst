@@ -303,6 +303,24 @@ Life Cycle Analysis:
       - [get_total_demand]
       - [get_building_supply]
 
+  - name: district-events
+    label: District Event Setup
+    short_description: Setup district-level construction renovation district-events
+    description: |
+      This Feature sets up district-level construction and renovation events, which overwrites envelope database properties for affected archetypes in specified years.
+      A event is when a set of buildings (categorized by archetype) changes its construction properties. After the event year, 
+      all buildings of the affected archetypes will have their construction properties updated in the scenario for all subsequent years, until the next event (if any).
+
+      **[Note]**: Only the input parameters will be updated. If you don't want certain parameters to be changed, keep the fields empty.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.state_scenario
+    parameters: ['general:scenario', district-events]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
 
 Energy Supply System Optimisation:
 

@@ -114,7 +114,7 @@ def delete_building_schedule(state_locator: InputLocator, building_name: str) ->
         os.remove(schedule_file_path)
     return None
 
-def modify_state_construction(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float]]]) -> None:
+def modify_state_construction(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float | int | None]]]) -> None:
     """
     Modify the construction recipe of buildings in the event scenario based on the provided modification dictionary.
     Parameters:
@@ -132,15 +132,15 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
                         "Service_Life": 50
                     },
                     "roof": {
-                        "U": 0.2,
-                        "GHG_kgCO2m2": 40,
-                        "GHG_biogenic_kgCO2m2": -5,
-                        "Service_Life": 40
+                        "U": 0.25,
+                        "GHG_kgCO2m2": None, # keep current value
+                        "GHG_biogenic_kgCO2m2": None, # keep current value
+                        "Service_Life": None # keep current value
                     }
                 },
                 "STANDARD2": {
                     "wall": {
-                        "U": 0.25,
+                        "U": None, # keep current value
                         "GHG_kgCO2m2": 45,
                         "GHG_biogenic_kgCO2m2": -8,
                         "Service_Life": 60
@@ -154,9 +154,12 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
         None
     """
     archetypes_to_modify = modify_recipe.keys()
+    if not archetypes_to_modify:
+        raise ValueError("No archetypes specified for modification in the event scenario.")
     state_locator = InputLocator(InputLocator(config.scenario).get_state_in_time_scenario_folder(year_of_state))
     archetype_df = pd.read_csv(state_locator.get_database_archetypes_construction_type(), index_col="const_type")
     envelope_lookup = EnvelopeLookup.from_locator(state_locator)
+    db_is_modified = False
     for archetype in archetypes_to_modify:
         if archetype not in archetype_df.index:
             raise ValueError(f"Archetype '{archetype}' not found in construction type database.")
@@ -171,11 +174,16 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
             component_db.loc[code_new] = component_db.loc[code_current]
 
             for field, new_value in modifications.items():
-                envelope_lookup.set_item_value(code_new, field, new_value)
+                if new_value is not None:
+                    envelope_lookup.set_item_value(code_new, field, new_value)
+                    db_is_modified = True
 
             archetype_df.at[archetype, f"type_{component}"] = code_new
 
     # save both the modified archetype df and the envelope database
+    if not db_is_modified:
+        print(f"No modifications were made to the envelope database in year {year_of_state}.")
+        return
     archetype_df.reset_index(inplace=True)
     archetype_df.to_csv(state_locator.get_database_archetypes_construction_type(), index=False)
     envelope_lookup.envelope.save(state_locator)
@@ -183,3 +191,53 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
 def shift_code_name_plus1(db, code_prefix):
     n = db[db["code"].str.startswith(code_prefix)].shape[0]
     return code_prefix + f"_{n + 1}"
+
+def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str, float | int | None]]]:
+    """
+    Create a modification recipe dictionary based on the configuration settings for the event scenario.
+    Parameters:
+        config (Configuration): The configuration object containing the current scenario settings.
+    Returns:
+        dict: A dictionary specifying the modifications to be made to the construction recipes.
+    """
+    modify_recipe: dict[str, dict[str, dict[str, float | int | None]]] = {}
+    config_section = config.district_events
+    archetypes_to_modify: list[str] = config_section.archetypes
+    if not archetypes_to_modify:
+        raise ValueError("No archetypes specified for modification in the event scenario.")
+    for archetype in archetypes_to_modify:
+        modify_recipe[archetype] = {
+            "wall": {
+                "U": config_section.wall_u_value,
+                "GHG_kgCO2m2": config_section.wall_ghg_emission,
+                "GHG_biogenic_kgCO2m2": config_section.wall_ghg_biogenic_emission,
+                "Service_Life": config_section.wall_lifetime,
+            },
+            "roof": {
+                "U": config_section.roof_u_value,
+                "GHG_kgCO2m2": config_section.roof_ghg_emission,
+                "GHG_biogenic_kgCO2m2": config_section.roof_ghg_biogenic_emission,
+                "Service_Life": config_section.roof_lifetime,
+            },
+            "base": {
+                "U": config_section.base_u_value,
+                "GHG_kgCO2m2": config_section.base_ghg_emission,
+                "GHG_biogenic_kgCO2m2": config_section.base_ghg_biogenic_emission,
+                "Service_Life": config_section.base_lifetime,
+            },
+        }
+        
+    return modify_recipe
+
+def main(config: Configuration) -> None:
+    year_of_state = config.district_events.year_of_event
+    if year_of_state is None:
+        raise ValueError("Year of event must be specified in the configuration.")
+    create_state_in_time_scenario(config, year_of_state)
+    modify_recipe = create_modify_recipe(config)
+    delete_unexisting_buildings_from_event_scenario(config, year_of_state)
+    modify_state_construction(config, year_of_state, modify_recipe)
+    print(f"State-in-time scenario for year {year_of_state} created successfully.")
+
+if __name__ == "__main__":
+    main(Configuration())
