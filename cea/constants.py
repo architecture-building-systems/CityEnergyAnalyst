@@ -20,7 +20,7 @@ __status__ = "Production"
 
 # Shapefile precision constants
 SHAPEFILE_TOLERANCE = 6
-"""Shapefile precision in millimeters."""
+"""Shapefile coordinate precision in decimal places for normalization."""
 
 SNAP_TOLERANCE = 0.1
 """Snap precision in meters."""
