@@ -114,7 +114,7 @@ def delete_building_schedule(state_locator: InputLocator, building_name: str) ->
         os.remove(schedule_file_path)
     return None
 
-def modify_state_construction(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float | int | None]]]) -> None:
+def modify_state_construction(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float | int]]]) -> None:
     """
     Modify the construction recipe of buildings in the event scenario based on the provided modification dictionary.
     Parameters:
@@ -199,7 +199,7 @@ def shift_code_name_plus1(db, code_prefix):
     n = db[db["code"].str.startswith(code_prefix)].shape[0]
     return code_prefix + f"_{n + 1}"
 
-def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str, float | int | None]]]:
+def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str, float | int]]]:
     """
     Create a modification recipe dictionary based on the configuration settings for the event scenario.
     Parameters:
@@ -207,7 +207,7 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
     Returns:
         dict: A dictionary specifying the modifications to be made to the construction recipes.
     """
-    modify_recipe: dict[str, dict[str, dict[str, float | int | None]]] = {}
+    modify_recipe = {}
     config_section = config.district_events
     archetypes_to_modify: list[str] = config_section.archetypes
     if not archetypes_to_modify:
@@ -233,6 +233,13 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
                 "Service_Life": config_section.base_lifetime,
             },
         }
+        # remove all None values from the recipe
+        for component in modify_recipe[archetype]:
+            modify_recipe[archetype][component] = {
+                k: v for k, v in modify_recipe[archetype][component].items() if v is not None
+            }
+            if not modify_recipe[archetype][component]:
+                del modify_recipe[archetype][component]
         
     return modify_recipe
 
