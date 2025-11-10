@@ -484,12 +484,9 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
 
     This function applies a sequence of cleaning operations to fix common issues
     in street network data:
-    1. Split streets at intersection points (automatic detection)
-    2. Snap near-miss endpoints to nearby lines (fix small gaps)
-    3. Split again at new intersections created by snapping
-    4. Simplify by merging degree-2 nodes (remove insignificant pass-through points)
-
-    This is the recommended preprocessing step before applying graph corrections.
+    1. Snap near-miss endpoints to nearby lines (fix small gaps)
+    2. Split streets at intersection points (automatic detection)
+    3. Simplify by merging degree-2 nodes (remove insignificant pass-through points)
 
     :param network_gdf: GeoDataFrame with raw street LineStrings
     :type network_gdf: gdf
@@ -504,16 +501,13 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
         >>> # Now apply graph corrections
         >>> corrected = apply_graph_corrections(cleaned)
     """
-    print("  1. Splitting streets at intersections...")
-    network_gdf = split_streets_at_intersections(network_gdf)
-
-    print("  2. Snapping near-miss endpoints...")
+    print("1. Snapping near-miss endpoints...")
     network_gdf = snap_endpoints_to_nearby_lines(network_gdf, snap_tolerance)
 
-    print("  3. Re-splitting after snapping (creates new intersections)...")
+    print("2. Splitting streets at intersections...")
     network_gdf = split_streets_at_intersections(network_gdf)
 
-    print("  4. Simplifying network (merging degree-2 nodes)...")
+    print("3. Simplifying network (merging degree-2 nodes)...")
     network_gdf = simplify_street_network_geometric(network_gdf)
 
     return network_gdf
