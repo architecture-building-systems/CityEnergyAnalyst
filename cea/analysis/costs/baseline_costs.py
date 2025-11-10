@@ -62,6 +62,13 @@ def baseline_costs_main(locator, config):
     print(f"\n✓ Baseline costs saved to: {locator.get_baseline_costs()}")
     print(f"✓ Detailed breakdown saved to: {locator.get_baseline_costs_detailed()}")
 
+    # Check if any networks were found
+    has_networks = any(name.startswith('N') for name in final_results['name'])
+    if has_networks:
+        print("\nℹ NOTE: Network costs shown are for central plants only.")
+        print("  Thermal network pipe costs are NOT included in these figures.")
+        print("  For complete network costs including pipes, refer to optimization results.")
+
     return final_results
 
 
@@ -132,17 +139,18 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
         network_supply_system.evaluate()
 
         # Extract costs from network supply system
-        # Use first building as representative for service mapping
+        # Pass None as building to indicate this is a network-level system
         network_costs = extract_costs_from_supply_system(
-            network_supply_system, network_type, first_building
+            network_supply_system, network_type, None
         )
 
         results[network_id] = {
-            'network_type': network_type,
+            'network_type': network_type,  # This is for internal tracking
             'supply_system': network_supply_system,
             'buildings': buildings,  # List of buildings in this network
             'costs': network_costs,
-            'is_network': True
+            'is_network': True,
+            'network_id': network_id  # Store network ID for detailed output
         }
 
     return results
@@ -316,12 +324,16 @@ def determine_scale(building, placement):
     """
     Determine if system is building, district, or city scale.
 
-    :param building: Building instance
+    :param building: Building instance (or None for network systems)
     :param placement: Component placement (primary/secondary/tertiary)
     :return: 'BUILDING', 'DISTRICT', or 'CITY'
     """
-    # If building is connected to a network initially, it's district scale
-    if building.initial_connectivity_state == 'network':
+    # If building is None, this is a network-level system
+    if building is None:
+        return 'DISTRICT'
+
+    # If building is connected to a network (state starts with 'N' for network IDs)
+    if building.initial_connectivity_state != 'stand_alone':
         return 'DISTRICT'
     else:
         return 'BUILDING'
@@ -373,7 +385,8 @@ def map_component_to_service(component, network_type, building):
         carrier = 'NG'
 
     # District heating/cooling
-    elif building.initial_connectivity_state == 'network':
+    # Check if this is a network-level system (building=None) or a building connected to a network
+    elif building is None or building.initial_connectivity_state == 'network':
         if network_type == 'DH':
             carrier = 'DH'
         else:
@@ -567,9 +580,16 @@ def format_output_like_system_costs(merged_results, locator):
 
                         # Add to detailed output
                         for comp in service_costs['components']:
+                            # Only include network_type for network systems (starts with 'N')
+                            # For standalone buildings, leave network_type empty
+                            if is_network:
+                                display_network_type = network_type  # Show DC/DH for networks
+                            else:
+                                display_network_type = ''  # Empty for standalone buildings
+
                             detailed_rows.append({
                                 'name': identifier,  # Use identifier (works for both buildings and networks)
-                                'network_type': network_type,
+                                'network_type': display_network_type,
                                 'service': service_name,
                                 'component_code': comp['code'],
                                 'capacity_kW': comp['capacity_kW'],
