@@ -17,7 +17,6 @@ from cea.technologies.network_layout.graph_utils import (
     gdf_to_nx,
     nx_to_gdf,
 )
-from cea.constants import SHAPEFILE_TOLERANCE
 
 
 class TestCoordinateNormalization:

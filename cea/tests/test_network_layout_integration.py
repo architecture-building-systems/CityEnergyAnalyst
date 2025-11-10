@@ -11,7 +11,7 @@ import networkx as nx
 from shapely.geometry import Point, LineString
 
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf, normalize_gdf_geometries
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf
 from cea.constants import SHAPEFILE_TOLERANCE
 
 

@@ -12,7 +12,7 @@ from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely import LineString, Point
 
 from cea.constants import SHAPEFILE_TOLERANCE
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords, nx_to_gdf
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
 from cea.technologies.network_layout.utility import read_shp
 from cea.datamanagement.graph_helper import GraphCorrector
 
