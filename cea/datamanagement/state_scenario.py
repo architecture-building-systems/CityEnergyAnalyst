@@ -1,5 +1,6 @@
 import os
 import shutil
+import yaml
 
 import geopandas as gpd
 import pandas as pd
@@ -196,9 +197,36 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
     archetype_df.reset_index(inplace=True)
     archetype_df.to_csv(state_locator.get_database_archetypes_construction_type(), index=False)
     envelope_lookup.envelope.save(state_locator)
+    log_modifications(config, year_of_state, modify_recipe)
+    return None
+
+def log_modifications(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float | int]]]) -> None:
+    """
+    Log the modifications made to the envelope database in a YAML file for record-keeping.
+    Parameters:
+        state_locator (InputLocator): The input locator object for the event scenario.
+        year_of_state (int): The year of the event scenario.
+        modify_recipe (dict): The modification recipe used for the modifications.
+    Returns:
+        None
+    """
+    locator = InputLocator(config.scenario)
+    yml_path = locator.get_district_timeline_log_file()
+    if os.path.exists(yml_path):
+        with open(yml_path, "r") as f:
+            existing_data: dict[int, dict[str, dict[str, dict[str, float | int]]]] = yaml.safe_load(f) or {}
+    else:
+        existing_data: dict[int, dict[str, dict[str, dict[str, float | int]]]] = {}
+    current_year_modifications = existing_data.get(year_of_state, {})
+    current_year_modifications.update(modify_recipe)
+    existing_data[year_of_state] = current_year_modifications
+    # ensure parent directory exists (open with 'w' creates the file if missing)
+    os.makedirs(os.path.dirname(yml_path), exist_ok=True)
+    with open(yml_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(existing_data, f, sort_keys=True)
     
 def shift_code_name_plus1(db, code_prefix):
-    n = db[db["code"].str.startswith(code_prefix)].shape[0]
+    n = db[db.index.str.startswith(code_prefix)].shape[0]
     return code_prefix + f"_{n + 1}"
 
 def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str, float | int]]]:
@@ -240,6 +268,7 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
             modify_recipe[archetype][component] = {
                 k: v for k, v in modify_recipe[archetype][component].items() if v is not None
             }
+        for component in list(modify_recipe[archetype].keys()):
             if not modify_recipe[archetype][component]:
                 del modify_recipe[archetype][component]
         
