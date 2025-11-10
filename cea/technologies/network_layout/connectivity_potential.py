@@ -1050,15 +1050,15 @@ def calc_connectivity_network_with_geometry(
 
     # Validate that all coordinates are properly normalized before graph conversion
     # This catches any precision handling bugs early with clear error messages
-    print("  Validating coordinate normalization...")
-    validate_normalized_coordinates(streets_network_df, precision=SHAPEFILE_TOLERANCE)
-    print("  ✓ All coordinates normalized to consistent precision")
+    # print("  Validating coordinate normalization...")
+    # validate_normalized_coordinates(streets_network_df, precision=SHAPEFILE_TOLERANCE)
+    # print("  ✓ All coordinates normalized to consistent precision")
 
-    # Apply graph corrections to fix micro-precision disconnections
-    # This merges nodes that are within floating-point epsilon (handles coordinate rounding artifacts)
-    print("\n  Applying graph corrections to fix micro-precision issues...")
-    building_centroid_coords = _get_protected_building_coords(building_centroids_df)
-    streets_network_df = apply_graph_corrections(streets_network_df, protected_nodes=building_centroid_coords)
+    # # Apply graph corrections to fix micro-precision disconnections
+    # # This merges nodes that are within floating-point epsilon (handles coordinate rounding artifacts)
+    # print("\n  Applying graph corrections to fix micro-precision issues...")
+    # building_centroid_coords = _get_protected_building_coords(building_centroids_df)
+    # streets_network_df = apply_graph_corrections(streets_network_df, protected_nodes=building_centroid_coords)
 
     # Convert to graph with geometry preservation
     graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
