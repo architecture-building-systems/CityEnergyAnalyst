@@ -60,6 +60,9 @@ def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, pres
 
     for idx, row in network_gdf.iterrows():
         geom = row.geometry
+        
+        if geom is None or geom.is_empty:
+            continue
 
         # Process different geometry types
         if geom.geom_type == 'Point':
