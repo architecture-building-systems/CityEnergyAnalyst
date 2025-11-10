@@ -557,6 +557,10 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
+    consider_pv_contributions: bool
+    pv_codes: list[str]
+    pv_offset_allowance: list[str]
+    pv_offset_priority: list[str]
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: str | None
     grid_decarbonise_reference_year: int | None
@@ -567,6 +571,14 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["year_end"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["consider_pv_contributions"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_offset_allowance"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_offset_priority"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload
@@ -1597,12 +1609,15 @@ class PlotsLifecycleEmissionsSection(Section):
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
     y_metric_to_plot: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1615,6 +1630,7 @@ class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
     plot_type: str
     y_metric_to_plot: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     net_zero_target_year: int
@@ -1624,6 +1640,8 @@ class PlotsEmissionTimelineSection(Section):
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
