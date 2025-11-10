@@ -1528,6 +1528,14 @@ class InputLocator(object):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
         return os.path.join(self.get_costs_folder(), 'supply_system_costs_today.csv')
 
+    def get_baseline_costs(self):
+        """scenario/outputs/data/costs/baseline_costs.csv"""
+        return os.path.join(self.get_costs_folder(), 'baseline_costs.csv')
+
+    def get_baseline_costs_detailed(self):
+        """scenario/outputs/data/costs/baseline_costs_detailed.csv"""
+        return os.path.join(self.get_costs_folder(), 'baseline_costs_detailed.csv')
+
     # GRAPHS
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""

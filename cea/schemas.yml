@@ -2117,265 +2117,72 @@ get_costs_operation_file:
   - system_costs
   file_path: outputs/data/costs/operation_costs.csv
   file_type: csv
+
+get_baseline_costs:
+  created_by:
+  - system_costs
+  file_path: outputs/data/costs/baseline_costs.csv
+  file_type: csv
   schema:
     columns:
-      Aocc_m2:
-        description: Occupied floor area (heated/cooled)
+      name:
+        description: Building name
+        type: string
+      GFA_m2:
+        description: Gross floor area
         type: float
         unit: '[m2]'
-        values: '{0.0...n}'
         min: 0.0
-      COAL_hs_cost_m2yr:
-        description: Operation costs of coal due to space heating per unit conditioned
-          floor area
+      TAC_sys_USD:
+        description: Total annualised cost for all supply systems
         type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
+        unit: '[USD/yr]'
         min: 0.0
-      COAL_hs_cost_yr:
-        description: Operation costs of coal due to space heating
+      Capex_a_sys_USD:
+        description: Annualised capital expenditure for all supply systems
         type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
+        unit: '[USD/yr]'
         min: 0.0
-      COAL_ww_cost_m2yr:
-        description: Operation costs of coal due to hotwater per unit conditioned
-          floor area
+      Opex_a_sys_USD:
+        description: Annualised operational expenditure for all supply systems
         type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
+        unit: '[USD/yr]'
         min: 0.0
-      COAL_ww_cost_yr:
-        description: Operation costs of coal due to hotwater
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      Capex_a_sys_district_scale_USD:
-        description: Annualized capital expenditures of district-scale systems
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      Capex_a_sys_building_scale_USD:
-        description: Annualized capital expenditures of building-scale systems
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DC_cdata_cost_m2yr:
-        description: Operation costs of district cooling due to data center cooling
-          per unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DC_cdata_cost_yr:
-        description: Operation costs of district cooling due to data center cooling
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DC_cre_cost_m2yr:
-        description: Operation costs of district cooling due to cool room refrigeration
-          per unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DC_cre_cost_yr:
-        description: Operation costs of district cooling due to cool room refrigeration
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DC_cs_cost_m2yr:
-        description: Operation costs of district cooling due to space cooling per
-          unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DC_cs_cost_yr:
-        description: Operation costs of district cooling due to space cooling
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DH_hs_cost_m2yr:
-        description: Operation costs of district heating due to space heating per
-          unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DH_hs_cost_yr:
-        description: Operation costs of district heating due to space heating
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DH_ww_cost_m2yr:
-        description: Operation costs of district heating due to domestic hot water
-          per unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      DH_ww_cost_yr:
-        description: Operation costs of district heating due to domestic hot water
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      GRID_cost_m2yr:
-        description: Operation costs due to electricity supply from the grid per unit
-          conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      GRID_cost_yr:
-        description: Operation costs due to electricity supply from the grid
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      NG_hs_cost_m2yr:
-        description: Operation costs of natural gas due to space heating per unit
-          conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      NG_hs_cost_yr:
-        description: Operation costs of natural gas due to space heating
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      NG_ww_cost_m2yr:
-        description: Operation costs of natural gas due to domestic hot water per
-          unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      NG_ww_cost_yr:
-        description: Operation costs of natural gas due to domestic hot water
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
+
+get_baseline_costs_detailed:
+  created_by:
+  - system_costs
+  file_path: outputs/data/costs/baseline_costs_detailed.csv
+  file_type: csv
+  schema:
+    columns:
       name:
-        description: Unique building ID. It must start with a letter.
+        description: Building name
         type: string
-        unit: '[-]'
-        values: alphanumeric
-      OIL_hs_cost_m2yr:
-        description: Operation costs of oil due to space heating per unit conditioned
-          floor area
+      network_type:
+        description: Network type (DH or DC)
+        type: string
+      service:
+        description: Energy service name
+        type: string
+      component_code:
+        description: Component code from database
+        type: string
+      capacity_kW:
+        description: Component capacity
         type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
+        unit: '[kW]'
         min: 0.0
-      OIL_hs_cost_yr:
-        description: Operation costs of oil due to space heating
+      capex_total_USD:
+        description: Total capital expenditure for component
         type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
+        unit: '[USD]'
         min: 0.0
-      OIL_ww_cost_m2yr:
-        description: Operation costs of oil due to domestic hot water per unit conditioned
-          floor area
+      capex_a_USD:
+        description: Annualised capital expenditure for component
         type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
+        unit: '[USD/yr]'
         min: 0.0
-      OIL_ww_cost_yr:
-        description: Operation costs of oil due to domestic hot water
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      Opex_a_sys_district_scale_USD:
-        description: Annual operational expenditures of district-scale systems
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      Opex_a_sys_building_scale_USD:
-        description: Annual operational expenditures of building-scale systems
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      PV_cost_m2yr:
-        description: Operation costs due to electricity supply from PV per unit conditioned
-          floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      PV_cost_yr:
-        description: Operation costs due to electricity supply from PV
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      SOLAR_hs_cost_m2yr:
-        description: Operation costs due to solar collectors for space heating per
-          unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      SOLAR_hs_cost_yr:
-        description: Operation costs due to solar collectors for space heating
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      SOLAR_ww_cost_m2yr:
-        description: Operation costs due to solar collectors for domestic hot water
-          per unit conditioned floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      SOLAR_ww_cost_yr:
-        description: Operation costs due to solar collectors for domestic hot water
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      WOOD_hs_cost_m2yr:
-        description: Operation costs of wood due to space heating per unit conditioned
-          floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      WOOD_hs_cost_yr:
-        description: Operation costs of wood due to space heating
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      WOOD_ww_cost_m2yr:
-        description: Operation costs of wood due to domestic hot water per unit conditioned
-          floor area
-        type: float
-        unit: "[$USD(2015)/m2.yr]"
-        values: '{0.0...n}'
-        min: 0.0
-      WOOD_ww_cost_yr:
-        description: Operation costs of wood due to domestic hot water
-        type: float
-        unit: "[$USD(2015)/yr]"
-        values: '{0.0...n}'
-        min: 0.0
-  used_by: []
 
 get_database_assemblies_envelope_mass:
   created_by:

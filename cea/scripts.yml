@@ -294,16 +294,48 @@ Life Cycle Analysis:
       - [get_radiation_metadata, building_name]
       - [get_radiation_building, building_name]
 
+#  - name: system-costs
+#    label: Energy Supply System Costs (DEPRECATED)
+#    short_description: "[DEPRECATED] Use 'baseline-costs' instead"
+#    description: |
+#      **⚠️ DEPRECATED**: This script is deprecated and will be removed in CEA v5.0.
+#
+#      Please use the new 'baseline-costs' script instead, which provides:
+#      - More accurate cost calculations (using COMPONENTS database)
+#      - Component-level cost breakdowns
+#      - Consistency with optimisation results
+#
+#      This script remains for backward compatibility only.
+#    interfaces: [cli]
+#    module: cea.analysis.costs.system_costs
+#    parameters: ['general:scenario', costs]
+#    input-files:
+#      - [get_total_demand]
+#      - [get_building_supply]
+
   - name: system-costs
     label: Energy Supply System Costs
-    short_description: Calculate costs for energy supply systems
-    description: This Feature calculates the costs for energy supply systems.
+    short_description: Calculate detailed costs for base case supply systems
+    description: |
+      This feature calculates costs for baseline supply systems using detailed
+      component specifications and hourly operation simulation.
+
+      **Calculates**:
+      - Capital costs (CAPEX) - annualised and total
+      - Operating costs (OPEX) - fixed and variable
+      - Total Annualised Cost (TAC)
+      - Breakdown by energy service (heating, cooling, DHW, electricity)
+      - Breakdown by scale (building, district, city)
+      - Component-level details
+
+      Uses the same calculation engine as optimisation for accuracy.
     interfaces: [cli, dashboard]
-    module: cea.analysis.costs.system_costs
-    parameters: ['general:scenario', costs]
+    module: cea.analysis.costs.baseline_costs
+    parameters: ['general:scenario', system-costs]
     input-files:
       - [get_total_demand]
       - [get_building_supply]
+      - [get_zone_geometry]
 
 
 Energy Supply System Optimisation:

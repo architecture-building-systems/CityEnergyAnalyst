@@ -1,7 +1,12 @@
 """
 costs according to supply systems
+
+**DEPRECATED**: This module is deprecated and will be removed in CEA v5.0.
+Please use cea.analysis.costs.baseline_costs instead, which provides more
+accurate cost calculations using the same engine as optimisation.
 """
 
+import warnings
 import numpy as np
 import pandas as pd
 import itertools
@@ -215,9 +220,18 @@ def get_databases(demand, locator):
 
 
 def main(config: cea.config.Configuration):
+    warnings.warn(
+        "The 'system-costs' script is deprecated and will be removed in CEA v5.0. "
+        "Please use 'baseline-costs' instead, which provides more detailed "
+        "cost calculations consistent with optimisation results.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running system-costs with scenario = %s' % config.scenario)
+    print('\n⚠️  WARNING: This script is deprecated. Please use "cea baseline-costs" instead.\n')
 
     costs_main(locator=locator, config=config)
 
