@@ -135,7 +135,7 @@ def split_streets_at_intersections(network_gdf: gdf) -> gdf:
     return result_gdf
 
 
-def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
+def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE) -> gdf:
     """
     Simplify street network by merging chains of segments at degree-2 nodes.
 
@@ -158,6 +158,8 @@ def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
 
     :param network_gdf: GeoDataFrame with street LineStrings (after splitting)
     :type network_gdf: gdf
+    :param coord_precision: Decimal places for coordinate rounding
+    :type coord_precision: int
     :return: Simplified GeoDataFrame with merged chains
     :rtype: gdf
 
@@ -172,7 +174,7 @@ def simplify_street_network_geometric(network_gdf: gdf) -> gdf:
     if len(network_gdf) == 0:
         return network_gdf
 
-    TOLERANCE = SHAPEFILE_TOLERANCE  # Use CEA's standard precision
+    TOLERANCE = coord_precision
 
     # Step 1: Build endpoint connectivity map
     endpoint_to_segments = defaultdict(list)
