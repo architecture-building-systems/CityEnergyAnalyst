@@ -503,6 +503,13 @@ class SupplySystemStructure(object):
             if disposed_flows_primary:
                 for comp_code, passive_comps in sink_passive_primary.items():
                     main_ec = self.maximum_supply.energy_carrier.code
+                    if main_ec not in viable_primary_and_passive_components:
+                        raise ValueError(
+                            f"Main energy carrier '{main_ec}' not found in viable_primary_and_passive_components "
+                            f"when assigning passive component '{comp_code}'. "
+                            f"Available carriers: {list(viable_primary_and_passive_components.keys())}. "
+                            f"This indicates an inconsistency in the supply system structure definition."
+                        )
                     if comp_code not in viable_primary_and_passive_components[main_ec]['passive']:
                         viable_primary_and_passive_components[main_ec]['passive'][comp_code] = []
                     viable_primary_and_passive_components[main_ec]['passive'][comp_code].extend(passive_comps)
@@ -513,13 +520,23 @@ class SupplySystemStructure(object):
             if disposed_flows_secondary:
                 for comp_code, passive_comps in sink_passive_secondary.items():
                     # Find which EC this component belongs to
+                    match_found = False
                     for ec_code in viable_secondary_and_passive_components.keys():
                         if any(comp.code == comp_code for comp in
                                viable_secondary_and_passive_components[ec_code]['active']):
                             if comp_code not in viable_secondary_and_passive_components[ec_code]['passive']:
                                 viable_secondary_and_passive_components[ec_code]['passive'][comp_code] = []
                             viable_secondary_and_passive_components[ec_code]['passive'][comp_code].extend(passive_comps)
+                            match_found = True
                             break
+
+                    if not match_found:
+                        raise ValueError(
+                            f"Passive component '{comp_code}' in sink_passive_secondary could not be matched "
+                            f"to any active component in viable_secondary_and_passive_components. "
+                            f"Available active components: {list(viable_secondary_and_passive_components.keys())}. "
+                            f"This indicates an inconsistency in the supply system structure definition."
+                        )
 
                 for ec_code in disposed_flows_secondary.keys():
                     del max_tertiary_demand_from_secondary[ec_code]
