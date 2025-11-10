@@ -10,11 +10,10 @@ from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
 from cea.demand.building_properties import BuildingProperties
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
-from cea.datamanagement.database.components import Feedstocks
 from cea.utilities import epwreader
 
 
-def _load_grid_intensity_override(config: Configuration):
+def _load_grid_emission_intensity_override(config: Configuration):
     """Load and validate an optional external CSV for grid carbon intensity.
 
     Returns a tuple (override, values) where:
@@ -90,23 +89,32 @@ def operational_hourly(config: Configuration) -> None:
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
     ]
     building_properties = BuildingProperties(locator, weather_data, buildings)
-    feedstock_db = Feedstocks.from_locator(locator)
     results: list[tuple[str, pd.DataFrame]] = []
     # Load optional GRID carbon intensity override once for all buildings
-    override_grid_emission, grid_emission_final_g = _load_grid_intensity_override(config)
+    override_grid_emission, grid_emission_final_g = _load_grid_emission_intensity_override(config)
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
     for building in buildings:
         bpr = building_properties[building]
+        hourly_timeline = OperationalHourlyTimeline(locator, bpr)
 
-        timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
         if override_grid_emission and grid_emission_final is not None:
-            timeline.emission_intensity_timeline["GRID"] = grid_emission_final
-        timeline.calculate_operational_emission()
-        timeline.save_results()
+            hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
+
+        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+        allowed_demands: list[str] | None = getattr(emissions_cfg, "pv_offset_allowance", None)
+        allocation_priority: list[str] | None = getattr(emissions_cfg, "pv_offset_priority", None)
+        pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
+
+        hourly_timeline.calculate_operational_emission()
+        
+        if consider_pv and pv_codes:
+            hourly_timeline.log_pv_contribution(pv_codes, allocation_priority, allowed_demands)
+
+        hourly_timeline.save_results()
         print(
             f"Hourly operational emissions for {building} calculated and saved in: {locator.get_lca_operational_hourly_building(building)}."
         )
-        results.append((building, timeline.operational_emission_timeline))
+        results.append((building, hourly_timeline.operational_emission_timeline))
 
     # df_by_building = to_ton(sum_by_building(results))
     df_by_building = sum_by_building(results)
@@ -146,13 +154,14 @@ def total_yearly(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_embodied_emissions()
+        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+        pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
+        if consider_pv and pv_codes:
+            timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
-        ref_yr_val = getattr(emissions_cfg, 'grid_decarbonise_reference_year', None)
-        tar_yr_val = getattr(emissions_cfg, 'grid_decarbonise_target_year', None)
-        tar_ef_val = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', None)
-        ref_yr: int | None = int(ref_yr_val) if ref_yr_val is not None and ref_yr_val != '' else None
-        tar_yr: int | None = int(tar_yr_val) if tar_yr_val is not None and tar_yr_val != '' else None
-        tar_ef: float | None = float(tar_ef_val) if tar_ef_val is not None and tar_ef_val != '' else None
+        ref_yr: int = getattr(emissions_cfg, 'grid_decarbonise_reference_year', -1)
+        tar_yr: int = getattr(emissions_cfg, 'grid_decarbonise_target_year', -1)
+        tar_ef: float = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', -1.0)
 
         all_none = ref_yr is None and tar_yr is None and tar_ef is None
         all_exist = ref_yr is not None and tar_yr is not None and tar_ef is not None
@@ -165,19 +174,6 @@ def total_yearly(config: Configuration) -> None:
         if all_none:
             feedstock_policies_arg = None
         else:
-            if ref_yr is None or tar_yr is None or tar_ef is None:
-                raise ValueError(f"Grid decarbonisation parameters should all be present: Reference year, target year, target emission factor. "
-                                 f"Got: {ref_yr}, {tar_yr}, {tar_ef}")
-            
-            # Validate grid decarbonisation parameters
-            if ref_yr >= tar_yr:
-                raise ValueError(
-                    f"Invalid grid decarbonisation configuration: reference year ({ref_yr}) must be before target year ({tar_yr})."
-                )
-            if tar_ef < 0:
-                raise ValueError(
-                    f"Invalid grid decarbonisation configuration: target emission factor ({tar_ef}) must be non-negative."
-                )
             feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
         timeline.fill_operational_emissions(
             feedstock_policies=feedstock_policies_arg
@@ -306,6 +302,8 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
             if date_series is None:
                 date_series = df_copy['date'].copy()
             df_copy = df_copy.drop(columns=['date'])
+        if "name" in df_copy.columns:
+            df_copy = df_copy.drop(columns=['name'])
         # Extract year values from index if it's a year index
         if has_year_index and year_series is None:
             year_series = pd.Series(df_copy.index.values, index=df_copy.index)

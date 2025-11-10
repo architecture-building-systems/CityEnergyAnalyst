@@ -154,10 +154,10 @@ _BASE_COLUMN_COLORS = {
     "SC_FP_walls_west_Q": "purple_light",
 
     # ===== Operational Emissions =====
-    "heating": "red",
-    "hot_water": "orange",
-    "cooling": "blue",
-    "electricity": "green",
+    # "Qhs_sys": "red", # repeated before so commented out
+    "Qww_sys": "orange",
+    # "Qcs_sys": "blue", # repeated before so commented out
+    # "E_sys": "green", # repeated before so commented out
     "Qhs_sys_NATURALGAS": "red_lighter",
     "Qhs_sys_BIOGAS": "red_lighter",
     "Qhs_sys_SOLAR": "red_lighter",
@@ -197,17 +197,21 @@ _BASE_COLUMN_COLORS = {
     "E_sys_DRYBIOMASS": "green_lighter",
     "E_sys_WETBIOMASS": "green_lighter",
     "E_sys_GRID": "green_lighter",
-    "E_sys_COAL": "green_lightert",
+    "E_sys_COAL": "green_lighter",
     "E_sys_WOOD": "green_lighter",
     "E_sys_OIL": "green_lighter",
     "E_sys_HYDROGEN": "green_lighter",
     "E_sys_NONE": "green_lighter",
+    "PV_PV1_offset_total": "yellow",
+    "PV_PV2_offset_total": "yellow",
+    "PV_PV3_offset_total": "yellow",
+    "PV_PV4_offset_total": "yellow",
 
     # ===== Lifecycle Emissions =====
-    "operation_heating": "red",
-    "operation_hot_water": "orange",
-    "operation_cooling": "blue",
-    "operation_electricity": "green",
+    "operation_Qhs_sys": "red",
+    "operation_Qww_sys": "orange",
+    "operation_Qcs_sys": "blue",
+    "operation_E_sys": "green",
     "production_wall_ag": "red_lighter",
     "production_wall_bg": "red_lighter",
     "production_wall_part": "red_lighter",
@@ -238,7 +242,10 @@ _BASE_COLUMN_COLORS = {
     "demolition_floor": "green_lighter",
     "demolition_base": "green_lighter",
     "demolition_technical_systems": "green_lighter",
-
+    # "PV_PV1_offset_total": "yellow",
+    # "PV_PV2_offset_total": "yellow",
+    # "PV_PV3_offset_total": "yellow",
+    # "PV_PV4_offset_total": "yellow",
 }
 
 
@@ -288,7 +295,7 @@ for base_name, color in _BASE_COLUMN_COLORS.items():
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}/m2"] = color
 
-    if 'sys' in base_name or base_name in ['heating', 'hot_water', 'cooling', 'electricity']:
+    if 'sys' in base_name or base_name in ['heating', 'hot_water', 'cooling', 'appliances']:
         # Emission metrics
         for unit in ['gCO2e', 'kgCO2e', 'tonCO2e']:
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color

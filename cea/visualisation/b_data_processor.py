@@ -5,7 +5,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 import pandas as pd
 import numpy as np
-from cea.import_export.result_summary import month_names, month_hours, season_mapping
+from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 
 
 __author__ = "Zhongming Shi"
@@ -27,6 +27,9 @@ class data_processor:
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
+        if plot_config.pv_code is not None:
+            pv_code = plot_config.pv_code
+            self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by
         self.x_to_plot = plot_instance.x
@@ -162,92 +165,11 @@ class data_processor:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
             y_cea_metric_map = {
-                'heating': ['heating_kgCO2e'],
-                'hot_water': ['hot_water_kgCO2e'],
-                'cooling': ['cooling_kgCO2e'],
-                'electricity': ['electricity_kgCO2e'],
-                'heating_NATURALGAS': ['Qhs_sys_NATURALGAS_kgCO2e'],
-                'heating_BIOGAS': ['Qhs_sys_BIOGAS_kgCO2e'],
-                'heating_SOLAR': ['Qhs_sys_SOLAR_kgCO2e'],
-                'heating_DRYBIOMASS': ['Qhs_sys_DRYBIOMASS_kgCO2e'],
-                'heating_WETBIOMASS': ['Qhs_sys_WETBIOMASS_kgCO2e'],
-                'heating_GRID': ['Qhs_sys_GRID_kgCO2e'],
-                'heating_COAL': ['Qhs_sys_COAL_kgCO2e'],
-                'heating_WOOD': ['Qhs_sys_WOOD_kgCO2e'],
-                'heating_OIL': ['Qhs_sys_OIL_kgCO2e'],
-                'heating_HYDROGEN': ['Qhs_sys_HYDROGEN_kgCO2e'],
-                'heating_NONE': ['Qhs_sys_NONE_kgCO2e'],
-                'hot_water_NATURALGAS': ['Qww_sys_NATURALGAS_kgCO2e'],
-                'hot_water_BIOGAS': ['Qww_sys_BIOGAS_kgCO2e'],
-                'hot_water_SOLAR': ['Qww_sys_SOLAR_kgCO2e'],
-                'hot_water_DRYBIOMASS': ['Qww_sys_DRYBIOMASS_kgCO2e'],
-                'hot_water_WETBIOMASS': ['Qww_sys_WETBIOMASS_kgCO2e'],
-                'hot_water_GRID': ['Qww_sys_GRID_kgCO2e'],
-                'hot_water_COAL': ['Qww_sys_COAL_kgCO2e'],
-                'hot_water_WOOD': ['Qww_sys_WOOD_kgCO2e'],
-                'hot_water_OIL': ['Qww_sys_OIL_kgCO2e'],
-                'hot_water_HYDROGEN': ['Qww_sys_HYDROGEN_kgCO2e'],
-                'hot_water_NONE': ['Qww_sys_NONE_kgCO2e'],
-                'cooling_NATURALGAS': ['Qcs_sys_NATURALGAS_kgCO2e'],
-                'cooling_BIOGAS': ['Qcs_sys_BIOGAS_kgCO2e'],
-                'cooling_SOLAR': ['Qcs_sys_SOLAR_kgCO2e'],
-                'cooling_DRYBIOMASS': ['Qcs_sys_DRYBIOMASS_kgCO2e'],
-                'cooling_WETBIOMASS': ['Qcs_sys_WETBIOMASS_kgCO2e'],
-                'cooling_GRID': ['Qcs_sys_GRID_kgCO2e'],
-                'cooling_COAL': ['Qcs_sys_COAL_kgCO2e'],
-                'cooling_WOOD': ['Qcs_sys_WOOD_kgCO2e'],
-                'cooling_OIL': ['Qcs_sys_OIL_kgCO2e'],
-                'cooling_HYDROGEN': ['Qcs_sys_HYDROGEN_kgCO2e'],
-                'cooling_NONE': ['Qcs_sys_NONE_kgCO2e'],
-                'electricity_NATURALGAS': ['E_sys_NATURALGAS_kgCO2e'],
-                'electricity_BIOGAS': ['E_sys_BIOGAS_kgCO2e'],
-                'electricity_SOLAR': ['E_sys_SOLAR_kgCO2e'],
-                'electricity_DRYBIOMASS': ['E_sys_DRYBIOMASS_kgCO2e'],
-                'electricity_WETBIOMASS': ['E_sys_WETBIOMASS_kgCO2e'],
-                'electricity_GRID': ['E_sys_GRID_kgCO2e'],
-                'electricity_COAL': ['E_sys_COAL_kgCO2e'],
-                'electricity_WOOD': ['E_sys_WOOD_kgCO2e'],
-                'electricity_OIL': ['E_sys_OIL_kgCO2e'],
-                'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2e'],
-                'electricity_NONE': ['E_sys_NONE_kgCO2e'],
+                key: [key+"_kgCO2e"] for key in emission_timeline_hourly_operational_colnames_nounit
             }
         elif plot_cea_feature == 'lifecycle-emissions':
             y_cea_metric_map = {
-                'operation_heating': ['operation_heating_kgCO2e'],
-                'operation_hot_water': ['operation_hot_water_kgCO2e'],
-                'operation_cooling': ['operation_cooling_kgCO2e'],
-                'operation_electricity': ['operation_electricity_kgCO2e'],
-                'production_wall_ag': ['production_wall_ag_kgCO2e'],
-                'production_wall_bg': ['production_wall_bg_kgCO2e'],
-                'production_wall_part': ['production_wall_part_kgCO2e'],
-                'production_win_ag': ['production_win_ag_kgCO2e'],
-                'production_roof': ['production_roof_kgCO2e'],
-                'production_upperside': ['production_upperside_kgCO2e'],
-                'production_underside': ['production_underside_kgCO2e'],
-                'production_floor': ['production_floor_kgCO2e'],
-                'production_base': ['production_base_kgCO2e'],
-                'production_technical_systems': ['production_technical_systems_kgCO2e'],
-                'biogenic_wall_ag': ['biogenic_wall_ag_kgCO2e'],
-                'biogenic_wall_bg': ['biogenic_wall_bg_kgCO2e'],
-                'biogenic_wall_part': ['biogenic_wall_part_kgCO2e'],
-                'biogenic_win_ag': ['biogenic_win_ag_kgCO2e'],
-                'biogenic_roof': ['biogenic_roof_kgCO2e'],
-                'biogenic_upperside': ['biogenic_upperside_kgCO2e'],
-                'biogenic_underside': ['biogenic_underside_kgCO2e'],
-                'biogenic_floor': ['biogenic_floor_kgCO2e'],
-                'biogenic_base': ['biogenic_base_kgCO2e'],
-                'biogenic_technical_systems': ['biogenic_technical_systems_kgCO2e'],
-                'demolition_wall_ag': ['demolition_wall_ag_kgCO2e'],
-                'demolition_wall_bg': ['demolition_wall_bg_kgCO2e'],
-                'demolition_wall_part': ['demolition_wall_part_kgCO2e'],
-                'demolition_win_ag': ['demolition_win_ag_kgCO2e'],
-                'demolition_roof': ['demolition_roof_kgCO2e'],
-                'demolition_upperside': ['demolition_upperside_kgCO2e'],
-                'demolition_underside': ['demolition_underside_kgCO2e'],
-                'demolition_floor': ['demolition_floor_kgCO2e'],
-                'demolition_base': ['demolition_base_kgCO2e'],
-                'demolition_technical_systems': ['demolition_technical_systems_kgCO2e'],
-
+                key: [key+"_kgCO2e"] for key in emission_timeline_yearly_colnames_nounit
             }
 
         else:
