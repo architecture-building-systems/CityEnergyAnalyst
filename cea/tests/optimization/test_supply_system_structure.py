@@ -43,30 +43,45 @@ class TestFindConvertibleEnergyCarriers(unittest.TestCase):
         cls.mock_domain.locator = cls.locator
         cls.mock_domain.weather = pd.DataFrame({'drybulb_C': [20.0] * 8760})  # Mock weather data
 
-        # Initialize EnergyCarrier class variables FIRST (required by everything else)
+        # Initialize class variables independently - track success of each
+        initialization_results = {
+            'EnergyCarrier': False,
+            'SupplySystemStructure': False,
+            'Component': False
+        }
+
+        # Initialize EnergyCarrier class variables
         try:
             EnergyCarrier.initialize_class_variables(cls.mock_domain)
+            initialization_results['EnergyCarrier'] = True
             print("EnergyCarrier class variables initialized successfully")
         except Exception as e:
             print(f"Error: Could not initialize EnergyCarrier: {e}")
-            cls.components_initialized = False
-            return
 
         # Initialize SupplySystemStructure class variables
         try:
             SupplySystemStructure.initialize_class_variables(cls.mock_domain)
+            initialization_results['SupplySystemStructure'] = True
             print("SupplySystemStructure class variables initialized successfully")
         except Exception as e:
-            print(f"Warning: Could not initialize SupplySystemStructure: {e}")
+            print(f"Error: Could not initialize SupplySystemStructure: {e}")
 
-        # Initialize Component class variables (required for all tests)
+        # Initialize Component class variables
         try:
             Component.initialize_class_variables(cls.mock_domain)
-            cls.components_initialized = True
+            initialization_results['Component'] = True
             print("Component class variables initialized successfully")
         except Exception as e:
-            print(f"Warning: Could not initialize components: {e}")
-            cls.components_initialized = False
+            print(f"Error: Could not initialize Component: {e}")
+
+        # Only mark as initialized if ALL three succeeded
+        cls.components_initialized = all(initialization_results.values())
+
+        if not cls.components_initialized:
+            failed = [name for name, success in initialization_results.items() if not success]
+            print(f"Warning: Initialization incomplete. Failed: {', '.join(failed)}")
+        else:
+            print("All component class variables initialized successfully")
 
     def setUp(self):
         """Set up resources specific to each individual test."""
