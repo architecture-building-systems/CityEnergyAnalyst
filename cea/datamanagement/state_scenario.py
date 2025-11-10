@@ -182,7 +182,9 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
                     db_modified += 1
 
             if db_modified:
-                component_db[new_row.name] = new_row
+                description_new = f"Modified {component} for archetype {archetype} in year {year_of_state}, based on {code_current}, fields modified: {', '.join(modifications.keys())}"
+                new_row["description"] = description_new
+                component_db.loc[new_row.name, :] = new_row
                 archetype_df.at[archetype, f"type_{component}"] = code_new
                 
             dbs_overall_modified += db_modified
