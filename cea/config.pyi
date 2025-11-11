@@ -1,7 +1,6 @@
-# Type stub file for cea.config
-# Auto-generated from default.config - do not edit manually
-
-from __future__ import annotations
+Generated type stub at /Users/zshi/Documents/GitHub/CityEnergyAnalyst/cea/config.pyi
+Found 58 sections
+ure__ import annotations
 
 from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal
 import configparser
@@ -1361,33 +1360,33 @@ class DecentralizedSection(Section):
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
     network_type: str
+    overwrite_supply_settings: bool
     connected_buildings: list[str]
-    plant_buildings: List[str]
-    pipe_diameter: int
     consider_only_buildings_with_demand: bool
-    algorithm: str
+    plant_building: str | None
     user_edges_shp_path: str | None
     user_nodes_shp_path: str | None
     user_network_geojson_path: str | None
+    algorithm: str
 
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
+    def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
+    @overload
     def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["plant_buildings"]) -> List[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["pipe_diameter"]) -> int: ...
     @overload
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["algorithm"]) -> str: ...
+    def __getattr__(self, item: Literal["plant_building"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["user_edges_shp_path"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["user_nodes_shp_path"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["user_network_geojson_path"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["algorithm"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class MultiCriteriaSection(Section):

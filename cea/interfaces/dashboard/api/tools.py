@@ -110,6 +110,63 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
     return 'Success'
 
 
+@router.post('/{tool_name}/parameter-choices')
+async def get_parameter_choices(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+    """
+    Get updated choices for a parameter based on current form values.
+    Useful for parameters with dynamic choices that depend on other parameters.
+
+    Payload should contain:
+    - parameter_name: the name of the parameter to get choices for
+    - form_values: dict of current form values to set on config before getting choices
+    """
+    parameter_name = payload.get('parameter_name')
+    form_values = payload.get('form_values', {})
+
+    print(f"\n[get_parameter_choices] tool_name={tool_name}, parameter_name={parameter_name}")
+    print(f"[get_parameter_choices] form_values={form_values}")
+
+    if not parameter_name:
+        raise HTTPException(status_code=400, detail="parameter_name is required")
+
+    # Temporarily set form values on config to get updated choices
+    for param in parameters_for_script(tool_name, config):
+        if param.name in form_values:
+            try:
+                print(f"[get_parameter_choices] Setting {param.name} = {form_values[param.name]}")
+                param.set(form_values[param.name])
+            except Exception as e:
+                print(f"[get_parameter_choices] Failed to set {param.name}: {e}")
+
+    # Find the parameter and get its choices
+    target_parameter = None
+    for param in parameters_for_script(tool_name, config):
+        if param.name == parameter_name:
+            target_parameter = param
+            break
+
+    if not target_parameter:
+        raise HTTPException(status_code=404, detail=f"Parameter '{parameter_name}' not found")
+
+    print(f"[get_parameter_choices] Found parameter: {target_parameter}, type: {type(target_parameter).__name__}")
+
+    # Get the parameter's choices
+    if isinstance(target_parameter, cea.config.ChoiceParameter):
+        print(f"[get_parameter_choices] Getting choices...")
+        choices = target_parameter._choices
+
+        # Get the default/current value using decode()
+        # For NetworkLayoutChoiceParameter, this will return the most recent network
+        current_value = form_values.get(parameter_name, '')
+        default_value = target_parameter.decode(current_value)
+
+        print(f"[get_parameter_choices] current_value='{current_value}', default_value='{default_value}'")
+        print(f"[get_parameter_choices] Returning {len(choices)} choices: {choices}")
+        return {"choices": choices, "default": default_value}
+    else:
+        raise HTTPException(status_code=400, detail=f"Parameter '{parameter_name}' is not a choice parameter")
+
+
 @router.post('/{tool_name}/check')
 async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
     # Set config parameters

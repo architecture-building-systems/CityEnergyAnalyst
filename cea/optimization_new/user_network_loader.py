@@ -43,7 +43,7 @@ class UserNetworkLoaderError(CEAException):
     pass
 
 
-def load_user_defined_network(config) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame] | None:
+def load_user_defined_network(config, locator, edges_shp=None, nodes_shp=None, geojson_path=None) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame] | None:
     """
     Load user-defined thermal network layout from config parameters.
 
@@ -52,12 +52,20 @@ def load_user_defined_network(config) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFram
     2. Combined GeoJSON (network-geojson-path)
 
     :param config: CEA configuration object
+    :param locator: InputLocator object
+    :param edges_shp: Optional path to edges shapefile (overrides config)
+    :param nodes_shp: Optional path to nodes shapefile (overrides config)
+    :param geojson_path: Optional path to GeoJSON file (overrides config)
     :return: Tuple of (nodes_gdf, edges_gdf) or None if no user network provided
     :raises UserNetworkLoaderError: If validation fails or conflicting formats provided
     """
-    edges_shp = config.optimization_new.edges_shp_path
-    nodes_shp = config.optimization_new.nodes_shp_path
-    geojson_path = config.optimization_new.network_geojson_path
+    # Use provided parameters or fall back to config.optimization_new
+    if edges_shp is None:
+        edges_shp = config.optimization_new.edges_shp_path if hasattr(config, 'optimization_new') else None
+    if nodes_shp is None:
+        nodes_shp = config.optimization_new.nodes_shp_path if hasattr(config, 'optimization_new') else None
+    if geojson_path is None:
+        geojson_path = config.optimization_new.network_geojson_path if hasattr(config, 'optimization_new') else None
 
     # Check for conflicting inputs
     shp_provided = bool(edges_shp or nodes_shp)
@@ -337,100 +345,21 @@ def validate_network_covers_district_buildings(
     auto_created_buildings = []
 
     if missing_buildings:
-        # Try to auto-create missing nodes from edges reaching buildings
-        nodes_to_add = []
-        ambiguous_buildings = []
-        unreachable_buildings = []
+        # Raise error - do NOT auto-create nodes
+        missing_list = sorted(list(missing_buildings))[:20]
+        missing_details = "\n  ".join(missing_list)
+        if len(missing_buildings) > 20:
+            missing_details += f"\n  ... and {len(missing_buildings) - 20} more"
 
-        # Ensure CRS matches for spatial operations
-        if edges_gdf.crs != buildings_gdf.crs:
-            edges_gdf = edges_gdf.to_crs(buildings_gdf.crs)
-
-        for building_name in missing_buildings:
-            # Get the building footprint
-            building_row = buildings_gdf[buildings_gdf['name'] == building_name]
-
-            if len(building_row) == 0:
-                unreachable_buildings.append(building_name)
-                continue
-
-            building_geom = building_row.iloc[0].geometry
-
-            # Find edges reaching this building
-            edges_reaching = _find_edges_reaching_building(
-                building_name, building_geom, edges_gdf
-            )
-
-            if len(edges_reaching) == 0:
-                # No edges reach this building
-                unreachable_buildings.append(building_name)
-            elif len(edges_reaching) == 1:
-                # Exactly one edge - auto-create node at its endpoint
-                edge_idx, endpoint, dist_to_centroid = edges_reaching[0]
-                edge_name = edges_gdf.loc[edge_idx].get('name', f'Edge_{edge_idx}')
-
-                # Create new node
-                new_node = {
-                    'geometry': endpoint,
-                    'building': building_name,
-                    'type': 'CONSUMER',
-                    'name': f'{building_name}_auto'
-                }
-                nodes_to_add.append(new_node)
-                auto_created_buildings.append((building_name, edge_name))
-            else:
-                # Multiple edges reach this building - ambiguous
-                ambiguous_buildings.append((building_name, len(edges_reaching)))
-
-        # Report errors for ambiguous or unreachable buildings
-        errors = []
-
-        if ambiguous_buildings:
-            amb_details = "\n".join([
-                f"  - {name}: {count} edges reach this building"
-                for name, count in ambiguous_buildings[:10]
-            ])
-            if len(ambiguous_buildings) > 10:
-                amb_details += f"\n  ... and {len(ambiguous_buildings) - 10} more"
-
-            errors.append(
-                f"Ambiguous node placement for {len(ambiguous_buildings)} building(s):\n"
-                f"{amb_details}\n\n"
-                "Cannot auto-create nodes when multiple edges reach the same building.\n"
-                "Please manually add a node for these buildings in your network layout."
-            )
-
-        if unreachable_buildings:
-            unreach_list = sorted(unreachable_buildings)[:20]
-            unreach_details = "\n  ".join(unreach_list)
-            if len(unreachable_buildings) > 20:
-                unreach_details += f"\n  ... and {len(unreachable_buildings) - 20} more"
-
-            errors.append(
-                f"No edges reach {len(unreachable_buildings)} building(s):\n  {unreach_details}\n\n"
-                "These buildings require district connection but have no edges in the network.\n"
-                "Please add edges connecting these buildings to the network."
-            )
-
-        if errors:
-            raise UserNetworkLoaderError(
-                "Cannot auto-create nodes for all missing buildings:\n\n"
-                + "\n\n".join(errors)
-            )
-
-        # Add auto-created nodes to the GeoDataFrame
-        if nodes_to_add:
-            new_nodes_gdf = gpd.GeoDataFrame(nodes_to_add, crs=nodes_gdf.crs)
-            nodes_gdf = gpd.GeoDataFrame(
-                pd.concat([nodes_gdf, new_nodes_gdf], ignore_index=True),
-                crs=nodes_gdf.crs
-            )
-
-            # Update building_nodes for subsequent checks
-            building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                                      (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                                      (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
-            network_building_names = set(building_nodes['building'].unique())
+        raise UserNetworkLoaderError(
+            f"User-defined network is missing nodes for {len(missing_buildings)} building(s):\n\n"
+            f"  {missing_details}\n\n"
+            "These buildings are designated for district connection but have no nodes in the network.\n\n"
+            "Resolution:\n"
+            "  1. Add nodes for these buildings in your network layout (with 'type' = 'CONSUMER' or 'NONE')\n"
+            "  2. Ensure node 'building' attribute exactly matches building names (case-sensitive)\n"
+            "  3. Remove these buildings from the connected-buildings parameter if they shouldn't be in the network"
+        )
 
     # Check 2: Are there extra buildings in the network that shouldn't be there?
     extra_buildings = network_building_names - district_building_set
@@ -451,12 +380,12 @@ def validate_network_covers_district_buildings(
             "  3. Leave network layout parameters (i.e. edges-shp-path, nodes-shp-path, network-geojson-path) blank to let CEA generate the network automatically"
         )
 
-    # Check 3: Are building nodes within their respective building footprints?
-    # Ensure CRS matches
-    if nodes_gdf.crs != buildings_gdf.crs:
-        nodes_gdf = nodes_gdf.to_crs(buildings_gdf.crs)
-
-    misplaced_nodes = []
+    # Check 3: Validate one node per building
+    # NOTE: We do NOT validate that nodes are within building footprints because:
+    # - L-shaped buildings may have connection points outside the polygon
+    # - Complex geometries may have nodes at street access points
+    # - Practical routing often places nodes at building edges, not centroids
+    # The important validation is that each building has exactly ONE node
 
     for building_name in district_building_names:
         # Get the building footprint
@@ -470,8 +399,6 @@ def validate_network_covers_district_buildings(
                 "but not found in zone geometry (zone.shp).\n"
                 "Please ensure Building Properties/Supply and zone geometry are consistent."
             )
-
-        building_geom = building_row.iloc[0].geometry
 
         # Get the node for this building
         node_rows = building_nodes[building_nodes['building'] == building_name]
@@ -487,37 +414,6 @@ def validate_network_covers_district_buildings(
                 "Each building should have exactly ONE node in the network.\n"
                 "Please ensure each building has a unique node."
             )
-
-        node_geom = node_rows.iloc[0].geometry
-
-        # Check if node is within building footprint (with tolerance)
-        buffered_building = building_geom.buffer(NETWORK_TOPOLOGY_TOLERANCE)
-
-        if not buffered_building.contains(node_geom):
-            distance = node_geom.distance(building_geom)
-            misplaced_nodes.append((building_name, distance))
-
-    if misplaced_nodes:
-        # Sort by distance (worst offenders first)
-        misplaced_nodes.sort(key=lambda x: x[1], reverse=True)
-
-        error_details = "\n".join([
-            f"  - {name}: {dist:.3f} m from building footprint"
-            for name, dist in misplaced_nodes[:20]
-        ])
-
-        if len(misplaced_nodes) > 20:
-            error_details += f"\n  ... and {len(misplaced_nodes) - 20} more"
-
-        raise UserNetworkLoaderError(
-            "Building nodes are outside their respective building footprints:\n\n"
-            f"Found {len(misplaced_nodes)} node(s) outside building footprints (tolerance: {NETWORK_TOPOLOGY_TOLERANCE} m):\n"
-            f"{error_details}\n\n"
-            "Resolution:\n"
-            "  - Move each building's node to be within its building footprint\n"
-            "  - Nodes should typically be placed at building centroids or connection points\n"
-            "  - Use GIS software to verify node positions against building geometries"
-        )
 
     # Return modified nodes and list of auto-created buildings
     return nodes_gdf, [name for name, _ in auto_created_buildings]
