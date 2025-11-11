@@ -138,7 +138,7 @@ class Domain(object):
         """
         try:
             # Attempt to load user-defined network
-            user_network = load_user_defined_network(self.config, self.locator)
+            user_network = load_user_defined_network(self.config)
 
             # If no user network provided, return early
             if user_network is None:

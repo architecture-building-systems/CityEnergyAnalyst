@@ -41,7 +41,7 @@ class UserNetworkLoaderError(Exception):
     pass
 
 
-def load_user_defined_network(config, locator) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame] | None:
+def load_user_defined_network(config) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame] | None:
     """
     Load user-defined thermal network layout from config parameters.
 
@@ -50,7 +50,6 @@ def load_user_defined_network(config, locator) -> Tuple[gpd.GeoDataFrame, gpd.Ge
     2. Combined GeoJSON (network-geojson-path)
 
     :param config: CEA configuration object
-    :param locator: InputLocator object
     :return: Tuple of (nodes_gdf, edges_gdf) or None if no user network provided
     :raises UserNetworkLoaderError: If validation fails or conflicting formats provided
     """

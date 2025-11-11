@@ -137,7 +137,7 @@ def main(config: cea.config.Configuration):
 
         # Load and validate user-defined network
         try:
-            result = load_user_defined_network(config, locator)
+            result = load_user_defined_network(config)
         except Exception as e:
             print(f"\n✗ Error loading user-defined network: {e}\n")
             print("=" * 80 + "\n")
