@@ -134,6 +134,7 @@ cea.api.demand(scenario='/path/to/scenario')
 3. **Config in Workers**: Don't modify `config` directly; use kwargs or create new instance
 4. **Multiprocessing**: Check `config.multiprocessing` before using `Pool`
 5. **Scenario Structure**: Respect `/inputs/`, `/outputs/` conventions
+6. **Config Type Hints**: After modifying `config.py`, regenerate `config.pyi` by running `pixi run python cea/utilities/config_type_generator.py`
 
 ## Module Documentation
 
