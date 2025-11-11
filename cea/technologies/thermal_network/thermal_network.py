@@ -22,11 +22,11 @@ import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
-import cea.utilities.workerstream
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
+from cea.technologies.thermal_network.utility import extract_network_from_shapefile
 from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
@@ -176,10 +176,10 @@ class ThermalNetwork(object):
                         so only negative values                                                           (n x e)
         :return all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                             and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
-        :return edge_df['pipe length']: vector containing the length of each edge in the network                    (1 x e)
+        :return edge_df['length_m']: vector containing the length of each edge in the network                    (1 x e)
         :rtype edge_node_df: DataFrame
         :rtype all_nodes_df: DataFrame
-        :rtype edge_df['pipe length']: array
+        :rtype edge_df['length_m']: array
 
         The following files are created by this script:
             - DH_EdgeNode: csv file containing edge_node_df stored in locator.get_optimization_network_layout_folder()
@@ -1252,7 +1252,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
 
     edge_node_df = thermal_network.edge_node_df.copy()
     pipe_diameter = np.array(thermal_network.pipe_properties[:]['D_int_m':'D_int_m'], dtype='float')
-    pipe_length = thermal_network.edge_df['pipe length'].values
+    pipe_length = thermal_network.edge_df['length_m'].values
     edge_mass_flow = thermal_network.edge_mass_flow_df.iloc[t].values
     node_mass_flow = thermal_network.node_mass_flow_df.iloc[t].values
 
@@ -1886,7 +1886,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
             # solve mass flow rates on edges
             mass_flow_edges_for_t = calc_mass_flow_edges(thermal_network.edge_node_df.copy(), required_flow_rate_df,
                                                          thermal_network.all_nodes_df, diameter_guess,
-                                                         thermal_network.edge_df['pipe length'], T_edge_K_initial,
+                                                         thermal_network.edge_df['length_m'], T_edge_K_initial,
                                                          thermal_network.find_loops)
         else:
             mass_flow_edges_for_t = np.zeros(len(thermal_network.edge_node_df.columns))
@@ -2133,7 +2133,7 @@ def initial_diameter_guess(thermal_network):
                     thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [
                         calc_mass_flow_edges(thermal_network_reduced.edge_node_df.copy(), required_flow_rate_df,
                                              thermal_network_reduced.all_nodes_df,
-                                             diameter_guess, thermal_network_reduced.edge_df['pipe length'].values,
+                                             diameter_guess, thermal_network_reduced.edge_df['length_m'].values,
                                              T_edge_initial_K, thermal_network_reduced.find_loops)]
                     thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
@@ -2282,7 +2282,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                thermal_network.all_nodes_df,
                                                                thermal_network.pipe_properties[:][
                                                                'D_int_m':'D_int_m'].values[0],
-                                                               thermal_network.edge_df['pipe length'],
+                                                               thermal_network.edge_df['length_m'],
                                                                t_edge__k,
                                                                thermal_network.find_loops)
 
@@ -2334,7 +2334,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                        thermal_network.all_nodes_df,
                                                                        thermal_network.pipe_properties[:][
                                                                        'D_int_m':'D_int_m'].values[0],
-                                                                       thermal_network.edge_df['pipe length'],
+                                                                       thermal_network.edge_df['length_m'],
                                                                        t_edge__k,
                                                                        thermal_network.find_loops)
                         VF_iter = VF_iter + 1
@@ -2430,7 +2430,7 @@ def solve_network_temperatures(thermal_network, t):
 
     # post-processing
     thermal_losses_system_kW = calc_thermal_loss_system(q_loss_edges_2_supply_kW, q_loss_edges_2_return_kW)
-    pipe_length = thermal_network.edge_df['pipe length'].values
+    pipe_length = thermal_network.edge_df['length_m'].values
     linear_thermal_loss_supply_edges_Wperm = q_loss_edges_2_supply_kW * 1000 / pipe_length
 
     # calculate velocity per edge
@@ -3142,7 +3142,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     .. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass
        Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
     """
-    L_pipe = edge_df['pipe length']
+    L_pipe = edge_df['length_m']
     conductivity_pipe = STEEL_lambda_WmK  # _[A. Kecebas et al., 2011]
     conductivity_insulation = PUR_lambda_WmK  # _[A. Kecebas et al., 2011]
     conductivity_ground = SOIL_lambda_WmK  # _[A. Kecebas et al., 2011]
@@ -3247,96 +3247,6 @@ def calc_thermal_loss_system(thermal_loss_pipe_supply, thermal_loss_pipe_return)
 # ============================
 # Other functions
 # ============================
-
-
-def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
-    """
-    Extracts network data into DataFrames for pipes and nodes in the network
-
-    :param edge_shapefile_df: DataFrame containing all data imported from the edge shapefile
-    :param node_shapefile_df: DataFrame containing all data imported from the node shapefile
-    :type edge_shapefile_df: DataFrame
-    :type node_shapefile_df: DataFrame
-    :return node_df: DataFrame containing all nodes and their corresponding coordinates
-    :return edge_df: list of edges and their corresponding lengths and start and end nodes
-    :rtype node_df: DataFrame
-    :rtype edge_df: DataFrame
-
-    """
-    # set precision of coordinates
-    decimals = 6
-    # create node dictionary with plant and consumer nodes
-    node_dict = {}
-    node_shapefile_df.set_index("name", inplace=True)
-    node_shapefile_df = node_shapefile_df.astype('object')
-    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-    # sort node_df by index number
-    node_sorted_index = node_shapefile_df.index.to_series().str.split('NODE', expand=True)[1].apply(int).sort_values(
-        ascending=True)
-    node_shapefile_df = node_shapefile_df.reindex(index=node_sorted_index.index)
-    # assign node properties (plant/consumer/none)
-    node_shapefile_df['plant'] = ''
-    node_shapefile_df['consumer'] = ''
-    node_shapefile_df['none'] = ''
-
-    for node, row in node_shapefile_df.iterrows():
-        coord_node = row['geometry'].coords[0]
-        if row['type'] == "PLANT":
-            node_shapefile_df.loc[node, 'plant'] = node
-        elif row['type'] == "CONSUMER":  # TODO: add 'PROSUMER' by splitting nodes
-            node_shapefile_df.loc[node, 'consumer'] = node
-        else:
-            node_shapefile_df.loc[node, 'none'] = node
-        coord_node_round = (round(coord_node[0], decimals), round(coord_node[1], decimals))
-        node_dict[coord_node_round] = node
-
-    # create edge dictionary with pipe lengths and start and end nodes
-    # complete node dictionary with missing nodes (i.e., joints)
-    edge_shapefile_df.set_index("name", inplace=True)
-    edge_shapefile_df = edge_shapefile_df.astype('object')
-    edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-    # sort edge_df by index number
-    edge_sorted_index = edge_shapefile_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
-        ascending=True)
-    edge_shapefile_df = edge_shapefile_df.reindex(index=edge_sorted_index.index)
-    # assign edge properties
-    edge_shapefile_df['pipe length'] = 0
-    edge_shapefile_df['start node'] = ''
-    edge_shapefile_df['end node'] = ''
-
-    for pipe, row in edge_shapefile_df.iterrows():
-        # get the length of the pipe and add to dataframe
-        edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
-        # get the start and end notes and add to dataframe
-        edge_coords = row['geometry'].coords
-        start_node = (round(edge_coords[0][0], decimals), round(edge_coords[0][1], decimals))
-        end_node = (round(edge_coords[1][0], decimals), round(edge_coords[1][1], decimals))
-        if start_node in node_dict.keys():
-            edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
-        else:
-            print('The start node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
-        if end_node in node_dict.keys():
-            edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
-        else:
-            print('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
-
-    # # If a consumer node is not connected to the network, find the closest node and connect them with a new edge
-    # # this part of the code was developed for a case in which the node and edge shapefiles were not defined
-    # # consistently. This has not been a problem after all, but it could eventually be a useful feature.
-    # for node in node_dict:
-    #     if node not in pipe_nodes:
-    #         min_dist = 1000
-    #         closest_node = pipe_nodes[0]
-    #         for pipe_node in pipe_nodes:
-    #             dist = ((node[0] - pipe_node[0])**2 + (node[1] - pipe_node[1])**2)**.5
-    #             if dist < min_dist:
-    #                 min_dist = dist
-    #                 closest_node = pipe_node
-    #         j += 1
-    #         edge_dict['EDGE' + str(j)] = [min_dist, node_dict[closest_node][0], node_dict[node][0]]
-
-    return node_shapefile_df, edge_shapefile_df
-
 
 def write_substation_values_to_nodes_df(all_nodes_df, df_value):
     """
