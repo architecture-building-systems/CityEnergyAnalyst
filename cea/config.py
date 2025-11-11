@@ -895,9 +895,13 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def _get_available_networks(self):
         """Get list of available network layouts for the current network type"""
         try:
-            # Get network type and scenario from config
-            # For thermal-network section
-            if hasattr(self.config, 'thermal_network'):
+            # Determine network type based on parameter name if it's hardcoded (e.g., network-name-dc, network-name-dh)
+            if self.name == 'network-name-dc':
+                network_type = 'DC'
+            elif self.name == 'network-name-dh':
+                network_type = 'DH'
+            # Otherwise get network type from config
+            elif hasattr(self.config, 'thermal_network'):
                 network_type = self.config.thermal_network.network_type
             # For optimization-new section
             elif hasattr(self.config, 'optimization_new'):
@@ -1047,8 +1051,12 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         Decode and validate value exists in available networks.
         Returns the selected value if valid, otherwise returns the most recent network as default.
 
-        If no value provided and no networks found for current network-type, try to find
-        the most recent network across ALL network types and switch network-type accordingly.
+        For nullable parameters (like network-name-dc, network-name-dh), returns empty string
+        if no networks found without error messages.
+
+        For non-nullable parameters, if no value provided and no networks found for current
+        network-type, try to find the most recent network across ALL network types and switch
+        network-type accordingly.
         """
         print(f"[NetworkLayoutChoiceParameter.decode] Called with value='{value}'")
 
@@ -1066,6 +1074,12 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         if self._choices:
             print(f"[NetworkLayoutChoiceParameter.decode] No value provided, returning most recent: '{self._choices[0]}'")
             return self._choices[0]
+
+        # For nullable parameters (like network-name-dc, network-name-dh), just return empty
+        # without trying to auto-switch network types or showing error messages
+        if getattr(self, 'nullable', False):
+            print(f"[NetworkLayoutChoiceParameter.decode] No networks found but parameter is nullable, returning empty string")
+            return ''
 
         # If no networks found for current network-type, try to find most recent across all types
         # and auto-switch network-type to match
