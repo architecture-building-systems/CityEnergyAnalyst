@@ -147,7 +147,7 @@ class ThermalNetworkMapLayer(MapLayer):
 
             # Return placeholder option if network type not selected yet
             if not network_type:
-                print(f"[ThermalNetworkMapLayer] No network type provided, returning placeholder")
+                print("[ThermalNetworkMapLayer] No network type provided, returning placeholder")
                 return ["No network available"]
 
             # Get the network type folder
@@ -187,7 +187,7 @@ class ThermalNetworkMapLayer(MapLayer):
             # If no networks found, return a placeholder option
             # This allows the frontend to proceed with an empty selection and show the base layer without network
             if not available_networks:
-                print(f"[ThermalNetworkMapLayer] No networks found, returning placeholder option")
+                print("[ThermalNetworkMapLayer] No networks found, returning placeholder option")
                 return {"choices": ["No network available"], "default": "No network available"}
 
             # Return both choices and default (most recent network)
@@ -301,7 +301,7 @@ class ThermalNetworkMapLayer(MapLayer):
 
         # Return empty data if no network is selected
         if not network_name:
-            print(f"[ThermalNetworkMapLayer] No network name provided, returning empty output")
+            print("[ThermalNetworkMapLayer] No network name provided, returning empty output")
             return output
 
         try:
@@ -326,7 +326,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 massflow_edges_df = pd.read_csv(massflow_edges_path)
                 edges_df["peak_mass_flow"] = massflow_edges_df.max().round(1)
             else:
-                print(f"[ThermalNetworkMapLayer] Massflow file doesn't exist, skipping")
+                print("[ThermalNetworkMapLayer] Massflow file doesn't exist, skipping")
 
             output['nodes'] = json.loads(nodes_df.to_json())
             output['edges'] = json.loads(edges_df.to_json())

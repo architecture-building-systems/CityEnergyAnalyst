@@ -152,7 +152,7 @@ async def get_parameter_choices(config: CEAConfig, tool_name: str, payload: Dict
 
     # Get the parameter's choices
     if isinstance(target_parameter, cea.config.ChoiceParameter):
-        print(f"[get_parameter_choices] Getting choices...")
+        print("[get_parameter_choices] Getting choices...")
         choices = target_parameter._choices
 
         # Get the default/current value using decode()
