@@ -1,157 +1,86 @@
-# CEA Database Structure Knowledge
+# CEA Database Structure
 
-This document explains the CEA database structure, relationships between files, and how different database components work together.
-
----
-
-## Grid Electricity: Two Sources of Truth
-
-### Overview
-Two CSV files define grid electricity properties that work together hierarchically:
-
-### SUPPLY_ELECTRICITY.csv (Assembly Level)
-**Location**: `databases/{region}/ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv`
-
-**Purpose**: Defines electricity supply assemblies (system configurations)
-
-**Key Fields**:
-- `CAPEX_USD2015kW`: Capital expenditure for infrastructure (panels, transformers, grid connection)
-- `efficiency`: System efficiency
-- `LT_yr`, `O&M_%`, `IR_%`: Lifetime, maintenance costs, interest rate
-
-**Used by**:
-- `cea/analysis/lca/operation.py:56`
-- `cea/analysis/costs/system_costs.py:181`
-- `cea/demand/building_properties/building_supply_systems.py:54`
-
-### GRID.csv (Feedstock Level)
-**Location**: `databases/{region}/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/GRID.csv`
-
-**Purpose**: Defines hourly grid electricity properties (24 rows for each hour)
-
-**Key Fields**:
-- `GHG_kgCO2MJ`: Emissions factor for grid electricity
-- `Opex_var_buy_USD2015kWh`: Variable operating cost to buy electricity
-- `Opex_var_sell_USD2015kWh`: Variable operating cost to sell electricity
-
-**How They Work Together**:
-```python
-# Step 1: Load supply assemblies (CAPEX)
-factors_electricity = pd.read_csv('SUPPLY_ELECTRICITY.csv')
-
-# Step 2: Load feedstocks (OPEX and emissions)
-factors_resources['GRID'] = pd.read_csv('GRID.csv')
-
-# Step 3: Merge together
-electricity_costs = factors_electricity.merge(factors_resources,
-                                             left_on='feedstock', right_on='code')
-```
-
-**Summary**:
-- **SUPPLY_ELECTRICITY.csv's CAPEX** = Infrastructure costs (one-time investment)
-- **GRID.csv's Opex_var_buy** = Energy purchase costs (ongoing operational)
-- They **complement** each other rather than duplicate information
-
----
-
-## Components vs Assemblies Relationship
-
-### Key Concept
-These are **NOT two sources of truth** - they have **different purposes** and work at different abstraction levels.
-
-### COMPONENTS = Building Blocks
-**Location**: `COMPONENTS/CONVERSION/*.csv` (e.g., BOILERS.csv)
-
-**Purpose**: Detailed technical specifications for individual equipment
-
-**Example: BO5 (Electrical Boiler)**:
-- Efficiency: 0.99 (detailed)
-- Cost Model: Complex curve (a+bx+cx²...)
-- Capacity range: 1 W to 10,000,000,000 W
-
-**Used for**:
-- Detailed optimization
-- District energy system design
-- Capacity-dependent cost curves
-
-### ASSEMBLIES = Simplified System Packages
-**Location**: `ASSEMBLIES/SUPPLY/*.csv` (e.g., SUPPLY_HOTWATER.csv)
-
-**Purpose**: Simplified system configurations for building-level analysis
-
-**Example: SUPPLY_HOTWATER_AS1 (Electrical boiler)**:
-- Efficiency: 0.9 (conservative/simplified)
-- Cost Model: Single value (200 USD/kW)
-- Aggregated/average capacity
-
-**Used for**:
-- Building demand calculations
-- Baseline cost estimates
-
-### Key Differences
-
-| Aspect | COMPONENTS | ASSEMBLIES |
-|--------|-----------|------------|
-| **Purpose** | Detailed equipment specs | Simplified system package |
-| **Cost Model** | Complex curve | Single value |
-| **Efficiency** | Detailed (0.99) | Conservative (0.9) |
-| **Used By** | Optimization, district systems | Building demand calculations |
-| **Capacity** | Size-dependent | Aggregated/average |
-
-### Relationship
-- ASSEMBLIES *can reference* COMPONENTS via `primary_components` field
-- Example: `SUPPLY_HEATING_AS4` → `BO5` → Detailed BO5 specs
-
-### When to Use Each
-
-**Use ASSEMBLIES when**:
-- Quick building-level assessments
-- "What type of system does this building have?"
-
-**Use COMPONENTS when**:
-- Detailed system optimization
-- "What specific boiler model and size should we install?"
-
----
-
-## File Structure Quick Reference
+## File Hierarchy
 
 ```
 databases/{region}/
-├── ASSEMBLIES/
-│   ├── SUPPLY/
-│   │   ├── SUPPLY_ELECTRICITY.csv  (CAPEX, system efficiency)
-│   │   ├── SUPPLY_HEATING.csv
-│   │   ├── SUPPLY_COOLING.csv
-│   │   └── SUPPLY_HOTWATER.csv
-│   └── HVAC/
-│       ├── HVAC_HEATING.csv
-│       └── HVAC_COOLING.csv
-└── COMPONENTS/
-    ├── CONVERSION/
-    │   ├── BOILERS.csv             (Detailed equipment specs)
-    │   └── CHILLERS.csv
-    └── FEEDSTOCKS/
-        └── FEEDSTOCKS_LIBRARY/
-            └── GRID.csv            (Hourly OPEX and emissions)
+├── ASSEMBLIES/           # Simplified system packages for building-level analysis
+│   ├── SUPPLY/          # Generation systems (CAPEX, efficiency, lifespan)
+│   ├── HVAC/            # Distribution/emission (temperatures, capacities)
+│   └── ENVELOPE/        # Building envelope (U-values, windows, shading)
+└── COMPONENTS/          # Detailed equipment for optimization
+    ├── CONVERSION/      # Boilers, chillers, heat pumps (cost curves)
+    └── FEEDSTOCKS/      # Grid electricity, fuels (hourly OPEX, emissions)
 ```
 
----
+## Key Patterns
 
-## Common Questions
+### COMPONENTS vs ASSEMBLIES
 
-**Q: Are SUPPLY_ELECTRICITY.csv and GRID.csv duplicates?**
-A: No, they complement each other. SUPPLY_ELECTRICITY has CAPEX (infrastructure), GRID.csv has OPEX (energy costs).
+**COMPONENTS** - Detailed equipment specs for optimization:
+- Location: `COMPONENTS/CONVERSION/*.csv`
+- Use: District energy optimization, capacity-dependent costs
+- Example: `BO5` electrical boiler - eff: 0.99, cost curve: a+bx+cx²
 
-**Q: Why do we have both COMPONENTS and ASSEMBLIES?**
-A: Different detail levels for different purposes. ASSEMBLIES for quick building analysis, COMPONENTS for detailed optimization.
+**ASSEMBLIES** - Simplified packages for building demand:
+- Location: `ASSEMBLIES/SUPPLY/*.csv`
+- Use: Building-level demand calculations, baseline costs
+- Example: `SUPPLY_HOTWATER_AS1` - eff: 0.9, cost: 200 USD/kW
 
-**Q: Can I modify just one file?**
-A: Be careful - ensure consistency. If you change a COMPONENT, check if any ASSEMBLY references it.
+| Aspect | COMPONENTS | ASSEMBLIES |
+|--------|-----------|------------|
+| Efficiency | 0.99 (detailed) | 0.9 (conservative) |
+| Cost | Complex curve | Single value |
+| Use Case | Optimization | Demand calculation |
 
----
+### Grid Electricity: Two Complementary Files
 
-**For more information, see**:
-- CEA documentation: https://docs.cityenergyanalyst.com
-- CEA schemas: `cea/schemas.yml`
-- Database documentation: `cea/databases/{region}/documentation.md`
+**SUPPLY_ELECTRICITY.csv** (Infrastructure):
+```python
+# Location: ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv
+CAPEX_USD2015kW    # One-time infrastructure (panels, transformers)
+efficiency, LT_yr  # System performance, lifetime
+```
+
+**GRID.csv** (Energy costs):
+```python
+# Location: COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/GRID.csv
+# 24 hourly rows
+GHG_kgCO2MJ              # Emissions factor
+Opex_var_buy_USD2015kWh  # Hourly purchase cost
+```
+
+**Merge pattern**:
+```python
+factors_electricity = pd.read_csv('SUPPLY_ELECTRICITY.csv')
+factors_resources = pd.read_csv('GRID.csv')
+costs = factors_electricity.merge(factors_resources, left_on='feedstock', right_on='code')
+```
+
+## ✅ DO
+
+```python
+# Use ASSEMBLIES for building demand
+supply = pd.read_csv('ASSEMBLIES/SUPPLY/SUPPLY_HEATING.csv')
+
+# Use COMPONENTS for optimization
+equipment = pd.read_csv('COMPONENTS/CONVERSION/BOILERS.csv')
+
+# Check references when modifying COMPONENTS
+assemblies = pd.read_csv('ASSEMBLIES/SUPPLY/SUPPLY_HEATING.csv')
+refs = assemblies['primary_components']  # e.g., "BO5"
+```
+
+## ❌ DON'T
+
+```python
+# Don't use COMPONENTS for simple demand calculations
+# Don't modify COMPONENTS without checking ASSEMBLY references
+# Don't treat SUPPLY_ELECTRICITY.csv and GRID.csv as duplicates
+```
+
+## Related Files
+- `cea/schemas.yml` - Database schema definitions
+- `cea/demand/building_properties/building_supply_systems.py` - ASSEMBLIES usage
+- `cea/optimization_new/` - COMPONENTS usage
+- `cea/analysis/costs/system_costs.py` - SUPPLY_ELECTRICITY + GRID merge
