@@ -1087,6 +1087,74 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         return ''
 
 
+class DCNetworkLayoutChoiceParameter(NetworkLayoutChoiceParameter):
+    """
+    Parameter for selecting DC (District Cooling) network layouts only.
+    Hardcoded to filter for DC networks.
+    """
+    def _get_available_networks(self):
+        """Get list of available DC network layouts"""
+        # Check if scenario is set before proceeding
+        scenario = getattr(self.config, 'scenario', None)
+        if not scenario or not os.path.exists(scenario):
+            return []
+
+        # Temporarily override network_type to DC
+        original_types = {}
+        if hasattr(self.config, 'thermal_network'):
+            original_types['thermal_network'] = self.config.thermal_network.network_type
+            self.config.thermal_network.network_type = 'DC'
+        if hasattr(self.config, 'optimization_new'):
+            original_types['optimization_new'] = self.config.optimization_new.network_type
+            self.config.optimization_new.network_type = 'DC'
+
+        try:
+            # Get networks for DC
+            networks = super()._get_available_networks()
+        finally:
+            # Restore original network types
+            if 'thermal_network' in original_types:
+                self.config.thermal_network.network_type = original_types['thermal_network']
+            if 'optimization_new' in original_types:
+                self.config.optimization_new.network_type = original_types['optimization_new']
+
+        return networks
+
+
+class DHNetworkLayoutChoiceParameter(NetworkLayoutChoiceParameter):
+    """
+    Parameter for selecting DH (District Heating) network layouts only.
+    Hardcoded to filter for DH networks.
+    """
+    def _get_available_networks(self):
+        """Get list of available DH network layouts"""
+        # Check if scenario is set before proceeding
+        scenario = getattr(self.config, 'scenario', None)
+        if not scenario or not os.path.exists(scenario):
+            return []
+
+        # Temporarily override network_type to DH
+        original_types = {}
+        if hasattr(self.config, 'thermal_network'):
+            original_types['thermal_network'] = self.config.thermal_network.network_type
+            self.config.thermal_network.network_type = 'DH'
+        if hasattr(self.config, 'optimization_new'):
+            original_types['optimization_new'] = self.config.optimization_new.network_type
+            self.config.optimization_new.network_type = 'DH'
+
+        try:
+            # Get networks for DH
+            networks = super()._get_available_networks()
+        finally:
+            # Restore original network types
+            if 'thermal_network' in original_types:
+                self.config.thermal_network.network_type = original_types['thermal_network']
+            if 'optimization_new' in original_types:
+                self.config.optimization_new.network_type = original_types['optimization_new']
+
+        return networks
+
+
 class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
