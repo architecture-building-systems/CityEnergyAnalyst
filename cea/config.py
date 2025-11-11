@@ -1363,7 +1363,10 @@ class SingleBuildingParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
-        pass
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
     @property
     def _choices(self):
@@ -1373,8 +1376,15 @@ class SingleBuildingParameter(ChoiceParameter):
         if not building_names:
             raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
         return building_names
+    
+    def decode(self, value):
+        if self.nullable and (value is None or value == ''):
+            return None
+        return super().decode(value)
 
     def encode(self, value):
+        if self.nullable and (value is None or value == ''):
+            return ''
         if str(value) not in self._choices:
             return self._choices[0]
         return str(value)
