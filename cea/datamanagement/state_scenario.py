@@ -10,6 +10,7 @@ from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
+from typing import Any
 
 
 def create_state_in_time_scenario(config: Configuration, year_of_state: int) -> None:
@@ -214,11 +215,12 @@ def log_modifications(config: Configuration, year_of_state: int, modify_recipe: 
     yml_path = locator.get_district_timeline_log_file()
     if os.path.exists(yml_path):
         with open(yml_path, "r") as f:
-            existing_data: dict[int, dict[str, dict[str, dict[str, float | int]]]] = yaml.safe_load(f) or {}
+            existing_data: dict[int, dict[str, Any]] = yaml.safe_load(f) or {}
     else:
-        existing_data: dict[int, dict[str, dict[str, dict[str, float | int]]]] = {}
+        existing_data: dict[int, dict[str, Any]] = {}
     current_year_modifications = existing_data.get(year_of_state, {})
-    current_year_modifications.update(modify_recipe)
+    current_year_modifications.setdefault("modifications", {}).update(modify_recipe)
+    current_year_modifications["latest_modified_at"] = str(pd.Timestamp.now())
     existing_data[year_of_state] = current_year_modifications
     # ensure parent directory exists (open with 'w' creates the file if missing)
     os.makedirs(os.path.dirname(yml_path), exist_ok=True)
@@ -286,7 +288,7 @@ def check_district_timeline_log_yaml_integrity(config: Configuration):
     if not os.path.exists(yml_path):
         raise FileNotFoundError(f"District timeline log file '{yml_path}' does not exist.")
     with open(yml_path, "r") as f:
-        existing_data_in_yml: dict[int, dict[str, dict[str, dict[str, float | int]]]] = yaml.safe_load(f) or {}
+        existing_data_in_yml: dict[int, dict[str, Any]] = yaml.safe_load(f) or {}
         if not existing_data_in_yml:
             raise ValueError(f"District timeline log file '{yml_path}' is empty.")
     existing_years_in_yml = set(existing_data_in_yml.keys())
