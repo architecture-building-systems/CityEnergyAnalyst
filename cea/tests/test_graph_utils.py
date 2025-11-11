@@ -83,7 +83,7 @@ class TestCoordinateNormalization:
 
         # Check second line
         coords2 = list(normalized.geoms[1].coords)
-        assert coords2[0] == (4.555555, 5.666667)  # Python rounds 5.5555555 down to 5.555555
+        assert coords2[0] == (4.555555, 5.666667)  # Python rounds 4.5555555 down to 4.555555
         assert coords2[1] == (6.777778, 7.888889)
 
     def test_normalize_geometry_unsupported_type(self):
