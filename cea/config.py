@@ -427,11 +427,11 @@ class Parameter:
         the default.config
         """
 
-    def encode(self, value):
+    def encode(self, value) -> str:
         """Encode ``value`` to a string representation for writing to the configuration file"""
         return str(value)
 
-    def decode(self, value):
+    def decode(self, value) -> Any:
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
