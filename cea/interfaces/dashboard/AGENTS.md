@@ -1,18 +1,25 @@
-# CEA Dashboard Job System
+# Dashboard Job System
 
 ## Architecture
 
-**Job Flow**: Client → Server (`jobs.py`) → Worker Process (`cea/worker.py`) → Server
-- **Server**: Manages job lifecycle, database (SQLModel), SocketIO events
-- **Worker**: Separate subprocess executing CEA scripts via `subprocess.Popen`
-- **Streams**: Captures stdout/stderr via HTTP (`streams.py`)
-- **Communication**: Worker POSTs to server endpoints, server emits SocketIO to client
+```
+Client → Server (jobs.py) → Worker (cea/worker.py) → Server
+         ↓                    ↓
+    Database (SQLModel)   CEA Scripts
+         ↓
+    SocketIO Events
+```
 
-## Job States (`models.py:JobState`)
+- **Server**: Job lifecycle, database, SocketIO
+- **Worker**: Subprocess executing CEA scripts (`subprocess.Popen`)
+- **Streams**: Stdout/stderr capture via HTTP
+- **Communication**: Worker POSTs to server → server emits SocketIO to client
 
-`PENDING(0)` → `STARTED(1)` → `SUCCESS(2)`/`ERROR(3)`/`CANCELED(4)`/`KILLED(5)`
+## Job States
 
-**Soft Deletion**: Jobs are soft-deleted using `JobInfo.deleted_at` and `JobInfo.deleted_by` fields rather than a state change. This preserves the original completion state (SUCCESS/ERROR/CANCELED/KILLED) for analytics and audit purposes.
+`PENDING → STARTED → SUCCESS/ERROR/CANCELED/KILLED`
+
+**Soft Deletion**: Uses `deleted_at`/`deleted_by` fields (not state change) to preserve completion state for analytics
 
 ## Job Creation
 
