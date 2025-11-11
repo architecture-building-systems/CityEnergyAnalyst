@@ -321,6 +321,23 @@ Life Cycle Analysis:
       - [get_db4_folder]
       - [get_building_properties_folder]
 
+  - name: state-simulations
+    label: State-in-Time Simulations
+    short_description: Run simulations for all state-in-time years defined in the district_timeline_states folder.
+    description: |
+      This Feature runs simulations for all state-in-time years defined in the `district_timeline_states` folder.
+      It runs:
+      - Radiation
+      - Occupancy-helper
+      - Demand
+      - Photovoltaic
+      - Emissions
+      
+      The parameters of these simulations must be saved in their respective dashboards before running this Feature.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.state_simulations
+    parameters: []
+
 
 Energy Supply System Optimisation:
 
