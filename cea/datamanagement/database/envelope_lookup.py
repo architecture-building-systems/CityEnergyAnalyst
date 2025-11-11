@@ -64,14 +64,13 @@ class EnvelopeLookup:
             raise ValueError(f"Duplicate codes across DBs are not allowed: {details}")
 
     # --- helpers -----------------------------------------------------------------
-    def _df_for(self, db: str) -> pd.DataFrame:
+    def _df_for(self, db_name: str) -> pd.DataFrame:
         """Return the DataFrame for a given envelope DB name or raise if missing/None."""
-        suf = self._SUFFIX.get(db, db)
-        if not hasattr(self.envelope, suf):
-            raise ValueError(f"Envelope has no attribute '{suf}'.")
-        df = getattr(self.envelope, suf)
+        if not hasattr(self.envelope, db_name):
+            raise ValueError(f"Envelope has no attribute '{db_name}'.")
+        df = getattr(self.envelope, db_name)
         if df is None:
-            raise ValueError(f"Envelope DataFrame '{suf}' is None (not loaded).")
+            raise ValueError(f"Envelope DataFrame '{db_name}' is None (not loaded).")
         return df
 
     @property
