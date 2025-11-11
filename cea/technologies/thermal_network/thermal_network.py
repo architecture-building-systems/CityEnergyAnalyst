@@ -176,10 +176,10 @@ class ThermalNetwork(object):
                         so only negative values                                                           (n x e)
         :return all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                             and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
-        :return edge_df['pipe length']: vector containing the length of each edge in the network                    (1 x e)
+        :return edge_df['length_m']: vector containing the length of each edge in the network                    (1 x e)
         :rtype edge_node_df: DataFrame
         :rtype all_nodes_df: DataFrame
-        :rtype edge_df['pipe length']: array
+        :rtype edge_df['length_m']: array
 
         The following files are created by this script:
             - DH_EdgeNode: csv file containing edge_node_df stored in locator.get_optimization_network_layout_folder()
@@ -1252,7 +1252,7 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
 
     edge_node_df = thermal_network.edge_node_df.copy()
     pipe_diameter = np.array(thermal_network.pipe_properties[:]['D_int_m':'D_int_m'], dtype='float')
-    pipe_length = thermal_network.edge_df['pipe length'].values
+    pipe_length = thermal_network.edge_df['length_m'].values
     edge_mass_flow = thermal_network.edge_mass_flow_df.iloc[t].values
     node_mass_flow = thermal_network.node_mass_flow_df.iloc[t].values
 
@@ -1886,7 +1886,7 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
             # solve mass flow rates on edges
             mass_flow_edges_for_t = calc_mass_flow_edges(thermal_network.edge_node_df.copy(), required_flow_rate_df,
                                                          thermal_network.all_nodes_df, diameter_guess,
-                                                         thermal_network.edge_df['pipe length'], T_edge_K_initial,
+                                                         thermal_network.edge_df['length_m'], T_edge_K_initial,
                                                          thermal_network.find_loops)
         else:
             mass_flow_edges_for_t = np.zeros(len(thermal_network.edge_node_df.columns))
@@ -2133,7 +2133,7 @@ def initial_diameter_guess(thermal_network):
                     thermal_network_reduced.edge_mass_flow_df[:][t:t + 1] = [
                         calc_mass_flow_edges(thermal_network_reduced.edge_node_df.copy(), required_flow_rate_df,
                                              thermal_network_reduced.all_nodes_df,
-                                             diameter_guess, thermal_network_reduced.edge_df['pipe length'].values,
+                                             diameter_guess, thermal_network_reduced.edge_df['length_m'].values,
                                              T_edge_initial_K, thermal_network_reduced.find_loops)]
                     thermal_network_reduced.node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
@@ -2282,7 +2282,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                thermal_network.all_nodes_df,
                                                                thermal_network.pipe_properties[:][
                                                                'D_int_m':'D_int_m'].values[0],
-                                                               thermal_network.edge_df['pipe length'],
+                                                               thermal_network.edge_df['length_m'],
                                                                t_edge__k,
                                                                thermal_network.find_loops)
 
@@ -2334,7 +2334,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                        thermal_network.all_nodes_df,
                                                                        thermal_network.pipe_properties[:][
                                                                        'D_int_m':'D_int_m'].values[0],
-                                                                       thermal_network.edge_df['pipe length'],
+                                                                       thermal_network.edge_df['length_m'],
                                                                        t_edge__k,
                                                                        thermal_network.find_loops)
                         VF_iter = VF_iter + 1
@@ -2430,7 +2430,7 @@ def solve_network_temperatures(thermal_network, t):
 
     # post-processing
     thermal_losses_system_kW = calc_thermal_loss_system(q_loss_edges_2_supply_kW, q_loss_edges_2_return_kW)
-    pipe_length = thermal_network.edge_df['pipe length'].values
+    pipe_length = thermal_network.edge_df['length_m'].values
     linear_thermal_loss_supply_edges_Wperm = q_loss_edges_2_supply_kW * 1000 / pipe_length
 
     # calculate velocity per edge
@@ -3142,7 +3142,7 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     .. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass
        Transfer. Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
     """
-    L_pipe = edge_df['pipe length']
+    L_pipe = edge_df['length_m']
     conductivity_pipe = STEEL_lambda_WmK  # _[A. Kecebas et al., 2011]
     conductivity_insulation = PUR_lambda_WmK  # _[A. Kecebas et al., 2011]
     conductivity_ground = SOIL_lambda_WmK  # _[A. Kecebas et al., 2011]
