@@ -452,9 +452,9 @@ class Network(object):
         streets_network_df = Gdf.from_file(domain.locator.get_street_network())
 
         # create a potential network graph with orthogonal connections between buildings and their closest street
-        # Request graph directly with return_graph=True to preserve building terminal metadata
+        # This returns a NetworkX graph with preserved geometries and building terminal metadata
         cls._domain_potential_network_graph = calc_connectivity_network_with_geometry(
-            streets_network_df, buildings_df, return_graph=True
+            streets_network_df, buildings_df
         )
 
         # store projected coordinate reference system of network

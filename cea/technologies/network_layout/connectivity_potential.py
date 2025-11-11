@@ -1,71 +1,31 @@
 """
-Network connectivity module for connecting buildings to street networks.
+Create thermal network connectivity graphs by connecting buildings to street networks.
 
-This module creates a graph of potential thermal network paths by connecting building centroids to the nearest
-points on a street network, preparing the data for Steiner tree optimization.
+This module builds a NetworkX graph suitable for Steiner tree optimization by:
+1. Cleaning street networks (snap near-miss endpoints, split at intersections, simplify)
+2. Creating building terminal connections to nearest street points
+3. Normalizing coordinates to 6 decimal places to prevent floating-point errors
+4. Preserving curved street geometries and building terminal metadata
 
-PURPOSE
-=======
-Creates a fully connected network graph where:
-- Buildings are connected to their nearest street points via terminal lines
-- All streets are split at intersection points for proper topology
-- Graph is guaranteed to be connected (single component)
-- Coordinate precision is consistently maintained throughout
-- Building terminal coordinates are preserved exactly (protected from merging)
+Main Function
+=============
+calc_connectivity_network_with_geometry(streets_gdf, buildings_gdf) → NetworkX graph
+    Returns a graph with:
+    - Nodes: (x, y) tuples with consistent coordinate precision
+    - Edges: With 'geometry' (curved LineStrings) and 'weight' (length) attributes
+    - Metadata: graph.graph['building_terminals'], graph.graph['crs'], graph.graph['coord_precision']
 
-WORKFLOW
-========
-1. **Load and validate** street network and building centroids
-2. **Clean street network** (preprocessing):
-   - Split streets at intersection points (automatic detection via unary_union)
-   - Snap near-miss endpoints to nearby lines (fix manual digitization errors)
-   - Re-split to create junctions at newly connected points
-3. **Correct street topology** (first pass):
-   - Remove self-loops (invalid edges)
-   - Merge close nodes (two-pass: micro-precision at 10^-6m, then snap-tolerance at 0.1m)
-   - Connect intersecting edges
-   - Connect disconnected components if needed
-4. **Create building terminals**:
-   - Find nearest point on street network for each building
-   - Create LineString geometries connecting building → street
-   - Split street lines at terminal junction points
-   - Normalize all coordinates to 6 decimal places (SHAPEFILE_TOLERANCE)
-5. **Correct combined topology** (second pass):
-   - Apply same corrections to streets + terminals network
-   - Protect building terminal nodes from being merged
-   - Resolve any micro-precision disconnections from geometric operations
-6. **Extract significant points**:
-   - Collect all unique line endpoints (streets and terminals)
-7. **Discretize network**:
-   - Split lines at all significant points in one efficient operation
-8. **Output** fully connected network ready for Steiner tree optimization
+Coordinate Precision
+====================
+All coordinates are normalized to SHAPEFILE_TOLERANCE (6 decimal places = 1 micrometer precision).
+This prevents floating-point errors from geometric operations like interpolate() and substring()
+that can create micro-gaps at junction points.
 
-COORDINATE PRECISION HANDLING
-==============================
-This module implements robust coordinate normalization to prevent micro-precision disconnections:
-
-- All coordinates normalized to SHAPEFILE_TOLERANCE (6 decimal places = 1 micrometer)
-- Two-pass node merging strategy:
-  * Pass 1 (Micro-precision): Merges nodes within 10^-6m using <= comparison
-    Catches nodes at exactly the coordinate precision threshold
-  * Pass 2 (Snap-tolerance): Merges nodes within 0.1m using < comparison
-    Handles data quality issues
-- Exact coordinate comparison (not distance thresholds) for split point detection
-- Validation after terminal creation warns if disconnections detected
-
-Why two correction passes?
-- Geometric operations (interpolate, substring) can produce floating-point artifacts
-- Coordinate rounding can create 1-micrometer gaps at junction points
-- Second pass automatically fixes these artifacts while protecting building terminals
-
-GUARANTEES
-==========
-- Final network is 100% connected (single component)
-- Building terminal coordinates are exact (never moved)
-- Street topology follows actual street intersections
-- Coordinate precision is consistent (6 decimal places)
-- All geometric operations preserve connectivity
-- No micro-precision disconnections (automatically resolved)
+Key guarantees:
+- Network is fully connected (single component)
+- Building coordinates are preserved exactly
+- Street geometries are preserved (including curves)
+- No floating-point precision issues
 """
 
 import warnings
@@ -73,25 +33,11 @@ import warnings
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString
-from shapely.ops import snap, split, substring
+from shapely.ops import substring
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
-from cea.datamanagement.graph_helper import GraphCorrector
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, nx_to_gdf, normalize_coords
-
-
-def compute_end_points(lines, crs):
-    all_points = []
-    for line in lines:
-        for i in [0, -1]:  # start and end point
-            all_points.append(line.coords[i])
-
-    unique_points = set(all_points)
-    endpts = [Point(p) for p in unique_points]
-    df = gdf(geometry=endpts, crs=crs)
-
-    return df
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, normalize_geometry
 
 
 def split_streets_at_intersections(network_gdf: gdf) -> gdf:
@@ -138,32 +84,23 @@ def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = S
     """
     Simplify street network by merging chains of segments at degree-2 nodes.
 
-    After split_streets_at_intersections(), we have many segments split at every
-    intersection. This function identifies "chains" of segments between real
-    intersections (degree >= 3) and merges them back into single segments while
-    preserving the full geometry.
+    After splitting at intersections, we have many segments. This function identifies
+    chains of segments between real intersections (degree >= 3) and merges them into
+    single segments while preserving full geometry. This reduces the number of nodes
+    for the Steiner tree algorithm to process.
 
-    This is a pure geometric operation using Shapely/GeoPandas that:
-    - Builds endpoint connectivity map to calculate node degrees
-    - Identifies chains of segments connected only through degree-2 nodes
-    - Merges each chain using shapely.ops.linemerge()
+    Key features:
+    - Merges chains of segments connected only through degree-2 nodes
     - Preserves all segments at degree-3+ nodes (real intersections)
-    - **Removes self-loops** (closed chains where start == end)
-
-    Benefits:
-    - Reduces segment count before graph construction → faster Steiner tree
-    - Removes insignificant pass-through nodes
-    - Preserves all real intersection topology
+    - Protects circular structures (roundabouts, cul-de-sacs)
+    - Removes self-loops ONLY when they're truly isolated loops
 
     :param network_gdf: GeoDataFrame with street LineStrings (after splitting)
-    :type network_gdf: gdf
     :param coord_precision: Decimal places for coordinate rounding
-    :type coord_precision: int
     :return: Simplified GeoDataFrame with merged chains
-    :rtype: gdf
 
     Example:
-        >>> # After splitting creates: A-B-C-D-E (4 segments with degree-2 at B,C,D)
+        >>> # After splitting: A-B-C-D-E (4 segments with degree-2 at B,C,D)
         >>> simplified = simplify_street_network_geometric(split_network)
         >>> # Result: A-----------E (1 segment, preserving all vertices)
     """
@@ -210,7 +147,6 @@ def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = S
     for edge_key, segs in edge_pairs.items():
         if len(segs) > 1:  # Multi-edge detected (e.g., roundabout, parallel roads)
             protected_nodes.update(edge_key)
-            print(f"    Multi-edge detected: {len(segs)} edges between nodes (protects circular structures)")
 
     # Step 2: Calculate degree of each endpoint (with protection for multi-edges)
     endpoint_degree = {}
@@ -269,16 +205,11 @@ def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = S
 
     # Step 4: Merge each chain using linemerge
     merged_geometries = []
-    self_loops_removed = 0
-    
+
     for chain in chains:
         if len(chain) == 1:
-            # Single segment - check if it's a self-loop
+            # Single segment - keep it even if it's a self-loop (could be a roundabout)
             seg = segment_list[chain[0]]
-            if seg['start'] == seg['end']:
-                # Self-loop detected - skip it
-                self_loops_removed += 1
-                continue
             merged_geometries.append(seg['geometry'])
         else:
             # Merge multiple segments
@@ -286,36 +217,22 @@ def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = S
             merged = linemerge(chain_geoms)
 
             if merged.geom_type == 'LineString':
-                # Check if merged line is a self-loop (closed ring)
-                coords = list(merged.coords)
-                start = tuple(round(c, TOLERANCE) for c in coords[0])
-                end = tuple(round(c, TOLERANCE) for c in coords[-1])
-                
-                if start == end:
-                    # Closed loop - skip it
-                    self_loops_removed += 1
-                    continue
-                
+                # Keep merged line even if closed - it could be a valid circular street
                 merged_geometries.append(merged)
             else:
-                # Fallback: keep original segments if merge fails (but filter self-loops)
+                # Fallback: keep original segments if merge fails
                 for geom in chain_geoms:
-                    coords = list(geom.coords)
-                    start = tuple(round(c, TOLERANCE) for c in coords[0])
-                    end = tuple(round(c, TOLERANCE) for c in coords[-1])
-                    if start != end:  # Only keep non-self-loops
-                        merged_geometries.append(geom)
-                    else:
-                        self_loops_removed += 1
+                    merged_geometries.append(geom)
 
     segments_removed = len(segment_list) - len(merged_geometries)
-    print(f"  Simplified: {len(segment_list)} → {len(merged_geometries)} segments "
-          f"({segments_removed} degree-2 nodes removed, {self_loops_removed} self-loops removed)")
+    if segments_removed > 0:
+        print(f"  Simplified: {len(segment_list)} → {len(merged_geometries)} segments "
+              f"({segments_removed} degree-2 nodes removed)")
 
     return gdf(geometry=merged_geometries, crs=network_gdf.crs)
 
 
-def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, split_lines: bool = True) -> gdf:
+def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, split_lines: bool = False) -> gdf:
     """
     Fix near-miss connections by snapping dangling endpoints to nearby lines.
 
@@ -478,20 +395,15 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
     in street network data:
     1. Snap near-miss endpoints to nearby lines (fix small gaps)
     2. Split streets at intersection points (automatic detection)
-    3. Simplify by merging degree-2 nodes (remove insignificant pass-through points)
+    3. Simplify by merging degree-2 nodes (reduces nodes for Steiner tree algorithm)
 
     :param network_gdf: GeoDataFrame with raw street LineStrings
-    :type network_gdf: gdf
     :param snap_tolerance: Maximum distance to snap endpoints (meters)
-    :type snap_tolerance: float
     :return: Cleaned GeoDataFrame with proper topology
-    :rtype: gdf
 
     Example:
         >>> # Clean raw street network before processing
         >>> cleaned = clean_street_network(raw_streets_gdf, SNAP_TOLERANCE)
-        >>> # Now apply graph corrections
-        >>> corrected = apply_graph_corrections(cleaned)
     """
     print("1. Snapping near-miss endpoints...")
     network_gdf = snap_endpoints_to_nearby_lines(network_gdf, snap_tolerance)
@@ -503,64 +415,6 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
     network_gdf = simplify_street_network_geometric(network_gdf)
 
     return network_gdf
-
-
-def split_network_at_points(gdf_line: gdf, gdf_points: gdf, snap_tolerance: float, crs: str):
-    """
-    Split network lines at specified point locations with snapping tolerance.
-
-    Unlike split_streets_at_intersections() which automatically finds intersections,
-    this function splits lines at explicitly provided points (e.g., building connection
-    points, manually specified junction locations). Points are snapped to the nearest
-    position on lines within the tolerance before splitting.
-
-    Use Cases:
-    ----------
-    - Adding building terminal connection points to a street network
-    - Splitting at manually specified junction locations
-    - Adding custom split points that aren't natural line intersections
-
-    Comparison:
-    -----------
-    - split_streets_at_intersections(): Automatic intersection detection via unary_union
-    - split_network_at_points(): Manual point specification with snapping tolerance
-
-    :param gdf_line: GeoDataFrame with network line segments (streets + building connections)
-    :type gdf_line: gdf
-    :param gdf_points: GeoDataFrame with point geometries where splits should occur
-    :type gdf_points: gdf
-    :param snap_tolerance: Distance tolerance for snapping points to lines (meters)
-    :type snap_tolerance: float
-    :param crs: Coordinate reference system
-    :type crs: str
-    :return: Discretized network as individual segments
-    :rtype: gdf
-
-    Example:
-        >>> # Split streets at building connection points
-        >>> building_points = gdf(geometry=[Point(100, 200), Point(150, 250)])
-        >>> split_network = split_network_at_points(streets_gdf, building_points,
-        ...                                          SNAP_TOLERANCE, crs)
-
-    Reference: https://github.com/ojdo/python-tools/blob/master/shapelytools.py#L144
-    """
-    # Union all geometries into single objects for splitting operation
-    line = gdf_line.geometry.union_all()
-    snap_points = gdf_points.geometry.union_all()
-
-    # Snap points to lines within tolerance, then split lines at those points
-    # This ensures all significant points become explicit vertices in the network
-    split_line = split(line, snap(snap_points, line, snap_tolerance))
-
-    # Vectorized extraction: use explode() to handle MultiLineString -> individual LineStrings
-    result_gdf = gdf(geometry=[split_line], crs=crs).explode(index_parts=False).reset_index(drop=True)
-
-    # Vectorized filtering: remove numerical artifacts (extremely short segments)
-    # Use threshold based on coordinate precision: 10^-6 meters (1 micrometer) with SHAPEFILE_TOLERANCE=6
-    min_length = 10 ** (-SHAPEFILE_TOLERANCE)
-    result_gdf = result_gdf[result_gdf.geometry.length > min_length].reset_index(drop=True)
-
-    return result_gdf
 
 
 def near_analysis(building_centroids, street_network: gdf):
@@ -578,31 +432,6 @@ def near_analysis(building_centroids, street_network: gdf):
 
     df = gdf({"idx": nearest_indexes}, geometry=nearest_points_normalized, crs=street_network.crs)
     return df
-
-
-def calculate_significant_points(prototype_network, crs):
-    """
-    Extract all significant points (line endpoints) from the network for discretization.
-
-    After GraphCorrector has processed street intersections and terminals have been added,
-    only line endpoints are needed. Terminal connection points are automatically included
-    as endpoints of terminal lines. The split_network_at_points function will handle
-    snapping and splitting lines at these points.
-
-    :param prototype_network: Combined network GeoDataFrame (streets + terminals)
-    :type prototype_network: gdf
-    :param crs: Coordinate reference system
-    :type crs: str
-    :return: GeoDataFrame of unique significant points
-    :rtype: gdf
-    """
-    # Extract all line endpoints (includes both street vertices and terminal connection points)
-    gdf_points = compute_end_points(prototype_network.geometry, crs)
-
-    # Remove duplicate points efficiently using drop_duplicates on geometry
-    gdf_points = gdf_points.drop_duplicates(subset=['geometry']).reset_index(drop=True)
-
-    return gdf_points
 
 
 def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
@@ -683,7 +512,6 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
 
             # Generate segments using substring
             # IMPORTANT: substring() produces raw float coordinates, so normalize immediately
-            from cea.technologies.network_layout.graph_utils import normalize_geometry
             for i in range(len(all_distances) - 1):
                 start_dist = all_distances[i]
                 end_dist = all_distances[i + 1]
@@ -700,88 +528,11 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     # Create GeoDataFrame with all network lines (streets + building terminals)
     combined_network = gdf(geometry=new_lines, crs=street_network.crs)
 
-    # Note: No normalization needed here - all coordinates are already normalized:
-    # - Terminal line endpoints: normalized before LineString creation (lines 621-622)
-    # - Street split points: normalized Points used for splitting (line 630)
-    # - Original streets: normalized in _prepare_network_inputs() before this function
-    # This ensures consistent precision throughout and prevents disconnected components
-
-    # Validate coordinate normalization
-    # from cea.technologies.network_layout.graph_utils import validate_normalized_coordinates
-    # validate_normalized_coordinates(combined_network, precision=SHAPEFILE_TOLERANCE)
-
-    # # Check for micro-disconnections by converting to graph and analyzing connectivity
-    # from cea.technologies.network_layout.graph_utils import gdf_to_nx
-    # import networkx as nx
-
-    # test_graph = gdf_to_nx(combined_network, coord_precision=SHAPEFILE_TOLERANCE)
-    # if not nx.is_connected(test_graph):
-    #     components = list(nx.connected_components(test_graph))
-    #     print(f"⚠️  WARNING: create_terminals produced {len(components)} disconnected components")
-    #     print(f"   Largest component: {len(max(components, key=len))} nodes")
-    #     print(f"   Component sizes: {sorted([len(c) for c in components], reverse=True)}")
-    #     print("   This may indicate coordinate precision issues that need investigation")
+    # Final cleaning: snap near-miss endpoints and split at intersections
+    combined_network = snap_endpoints_to_nearby_lines(combined_network, SNAP_TOLERANCE)
+    combined_network = split_streets_at_intersections(combined_network)
 
     return combined_network
-
-
-def apply_graph_corrections(network_gdf: gdf, protected_nodes: list | None = None) -> gdf:
-    """
-    Apply graph corrections to a network to fix connectivity issues.
-
-    This function converts a GeoDataFrame to a NetworkX graph, applies corrections
-    using GraphCorrector with a two-pass merging strategy, then converts back to GeoDataFrame.
-
-    Correction pipeline:
-    1. Remove self-loops (invalid edges from nodes to themselves)
-    2. Merge close nodes in two passes:
-       - Pass 1 (Micro-precision): Merge nodes within 10^-6m (1 micrometer) using <= comparison
-         Catches coordinate rounding artifacts from geometric operations
-       - Pass 2 (Snap-tolerance): Merge nodes within 0.1m using < comparison
-         Handles data quality issues and near-miss connections
-    3. Connect intersecting edges (add missing junction nodes)
-    4. Connect disconnected components (last resort connections between components)
-
-    Protected nodes (e.g., building centroids) will not be merged or moved during
-    corrections, ensuring their exact coordinates are preserved.
-
-    Note: Edge weights are not preserved during correction as they will be
-    recalculated from geometry later in the pipeline (Shape_Leng field).
-
-    :param network_gdf: GeoDataFrame with network LineStrings (streets or streets + terminals)
-    :type network_gdf: gdf
-    :param protected_nodes: Optional list of node coordinates to protect from merging
-    :type protected_nodes: list, optional
-    :return: Corrected network as GeoDataFrame with all micro-precision disconnections resolved
-    :rtype: gdf
-    """
-    coord_precision = SHAPEFILE_TOLERANCE
-
-    # Convert GeoDataFrame to NetworkX graph using consolidated helper
-    G = gdf_to_nx(network_gdf, coord_precision=coord_precision)
-
-    # Apply graph corrections with optional protected nodes
-    corrector = GraphCorrector(G, coord_precision=coord_precision, protected_nodes=protected_nodes)
-    G_corrected = corrector.apply_corrections()
-
-    # Validate connectivity
-    if not nx.is_connected(G_corrected):
-        num_components = nx.number_connected_components(G_corrected)
-        if protected_nodes:
-            raise ValueError(f"Network still has {num_components} disconnected components after corrections. "
-                           f"This indicates a serious connectivity issue that could not be automatically resolved.")
-        else:
-            warnings.warn(f"Network still has {num_components} disconnected components after corrections. "
-                        f"This may cause issues with Steiner tree optimization.")
-
-    # Convert corrected graph back to GeoDataFrame (straight lines)
-    corrected_lines = []
-    for u, v in G_corrected.edges():
-        line = LineString([u, v])
-        corrected_lines.append(line)
-
-    corrected_gdf = gdf(geometry=corrected_lines, crs=network_gdf.crs)
-    return corrected_gdf
 
 
 def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf) -> tuple[gdf, gdf, str]:
@@ -814,144 +565,11 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     streets_network_df = clean_street_network(streets_network_df, SNAP_TOLERANCE)
 
     # Normalize all coordinates to consistent precision (prevents floating-point issues)
-    print("Normalizing coordinates to consistent precision...")
+    print(f"\nNormalizing coordinates to consistent precision ({SHAPEFILE_TOLERANCE} decimal places)...")
     normalize_gdf_geometries(streets_network_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
     normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
 
     return streets_network_df, building_centroids_df, crs
-
-
-def _get_protected_building_coords(building_centroids_df: gdf) -> list:
-    """Get rounded building centroid coordinates for use as protected nodes."""
-    return [
-        (round(pt.coords[0][0], SHAPEFILE_TOLERANCE), round(pt.coords[0][1], SHAPEFILE_TOLERANCE))
-        for pt in building_centroids_df.geometry
-    ]
-
-
-def calc_connectivity_network(streets_network_df: gdf, building_centroids_df: gdf) -> gdf:
-    """
-    Create a graph of potential thermal network connections by connecting building centroids to the nearest street
-    network.
-
-    This function prepares a network suitable for Steiner tree optimization by:
-    1. Loading and validating the street network
-    2. Applying graph corrections to streets only (connect components, fix intersections, merge close nodes)
-    3. Creating building terminal connection lines (building → nearest street point)
-    4. Topologically merging and connecting all geometries (merge lines, snap endpoints, split at junctions)
-    5. Discretizing the network into graph-ready segments
-
-    The street network is assumed to be a good path for district heating or cooling networks.
-
-    Pipeline:
-    ---------
-    Streets → Graph Corrections → Add Building Lines → Merge/Snap Geometries → Discretize → Output
-
-    :param streets_network_df: GeoDataFrame with street network geometries
-    :type streets_network_df: gdf
-    :param building_centroids_df: GeoDataFrame with building centroids (must have 'name' column)
-    :type building_centroids_df: gdf
-    :return: Potential connectivity network as GeoDataFrame in projected CRS
-    :rtype: gdf
-    """
-    # Prepare inputs (CRS conversion and validation)
-    streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
-        streets_network_df, building_centroids_df
-    )
-
-    # PASS 1: Apply graph corrections to street network first (without terminals)
-    print("\nApplying graph corrections to street network (before connecting buildings)...")
-    street_network = apply_graph_corrections(streets_network_df)
-
-    # Create terminals from corrected street network to buildings
-    prototype_network = create_terminals(building_centroids_df, street_network)
-
-    # PASS 2: Apply graph corrections to the combined network (streets + terminals)
-    print("\nApplying graph corrections to combined network (streets + building terminals)...")
-    building_centroid_coords = _get_protected_building_coords(building_centroids_df)
-    prototype_network = apply_graph_corrections(
-        prototype_network, protected_nodes=building_centroid_coords
-    )
-
-    # Calculate all significant points (line endpoints) for discretization
-    # Terminal connection points are included as endpoints of terminal lines
-    gdf_points = calculate_significant_points(prototype_network, crs)
-
-    # Final discretization: split the combined network at all significant points
-    # This snaps points to lines and splits lines at those points in one operation
-    # Creates proper graph structure where each junction/endpoint is explicit
-    potential_network_df = split_network_at_points(prototype_network, gdf_points, SNAP_TOLERANCE, crs)
-
-    potential_network_df['length'] = potential_network_df.geometry.length
-
-    return potential_network_df
-
-
-def _validate_network_creation(graph: nx.Graph, building_centroids_df: gdf, output_edges: gdf) -> None:
-    """
-    Validate that network creation succeeded correctly.
-
-    Checks for common issues:
-    - Graph connectivity (single connected component)
-    - Building terminals exist in graph
-    - Edge geometries are valid
-    - Coordinate precision is consistent
-
-    :param graph: NetworkX graph to validate
-    :param building_centroids_df: GeoDataFrame of building centroids
-    :param output_edges: GeoDataFrame of output edges
-    :raises ValueError: If validation fails
-    """
-    # Check 1: Graph is connected
-    if not nx.is_connected(graph):
-        num_components = nx.number_connected_components(graph)
-        raise ValueError(
-            f"Network graph is not connected ({num_components} components found). "
-            f"This should have been caught earlier in processing."
-        )
-
-    # Check 2: All building terminals have corresponding nodes in graph
-    graph_nodes = set(graph.nodes())
-    missing_terminals = []
-
-    for idx, row in building_centroids_df.iterrows():
-        building_id = row.get('name', idx)
-        bldg_x, bldg_y = round(row.geometry.x, SHAPEFILE_TOLERANCE), round(row.geometry.y, SHAPEFILE_TOLERANCE)
-
-        # Check if a node exists very close to this building (within tolerance)
-        found = False
-        for node in graph_nodes:
-            if abs(node[0] - bldg_x) < 1.0 and abs(node[1] - bldg_y) < 1.0:
-                found = True
-                break
-
-        if not found:
-            missing_terminals.append(building_id)
-
-    if missing_terminals:
-        raise ValueError(
-            f"{len(missing_terminals)} building terminals not found in graph: {missing_terminals[:5]}..."
-        )
-
-    # Check 3: Output edges have valid geometries
-    if output_edges.empty:
-        raise ValueError("No edges in output GeoDataFrame")
-
-    invalid_geoms = ~output_edges.geometry.is_valid
-    if invalid_geoms.any():
-        raise ValueError(
-            f"{invalid_geoms.sum()} invalid geometries found in output edges"
-        )
-
-    # Check 4: Edges have required attributes
-    if 'length' not in output_edges.columns:
-        raise ValueError("Output edges missing 'length' column")
-
-    if (output_edges['length'] <= 0).any():
-        raise ValueError("Output edges contain zero or negative lengths")
-
-    print(f"  ✓ Validation passed: {len(graph.nodes())} nodes, {len(graph.edges())} edges, "
-          f"{len(building_centroids_df)} building terminals")
 
 
 def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf) -> dict:
@@ -1004,28 +622,33 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
 def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
-) -> gdf:
+):
     """
-    Create connectivity network preserving street geometries.
+    Create connectivity network graph preserving street geometries and building terminal metadata.
 
-    This function creates a fully connected network by:
+    This function creates a fully connected NetworkX graph by:
     1. Preparing inputs (CRS conversion, validation, street network cleaning)
     2. Creating building terminal connections to nearest street points
-    3. Validating coordinate normalization
-    4. Applying graph corrections to fix micro-precision disconnections
-    5. Converting to NetworkX graph with building terminal metadata
-    6. Validating final connectivity (raises error if still disconnected)
+    3. Converting to NetworkX graph with preserved geometries
+    4. Storing building terminal metadata in graph attributes
 
-    The graph corrections step (added to fix connectivity issues) includes:
-    - Micro-precision node merging (10^-6m tolerance with <= comparison)
-    - Snap-tolerance node merging (0.1m tolerance with < comparison)
-    - Protected node handling (building terminals are never merged)
+    The returned graph includes important metadata:
+    - graph.graph['building_terminals']: Dict mapping building_id → (x, y) node coordinates
+    - graph.graph['crs']: Coordinate reference system
+    - graph.graph['coord_precision']: Precision used (SHAPEFILE_TOLERANCE)
+    - Edge attributes: 'geometry' (curved LineStrings), 'weight' (length)
+
+    To get a GeoDataFrame from the graph:
+        edges_gdf = nx_to_gdf(graph, crs=graph.graph['crs'], preserve_geometry=True)
 
     :param streets_network_df: GeoDataFrame with street network geometries
     :param building_centroids_df: GeoDataFrame with building centroids
-    :return: Connectivity network as GeoDataFrame with preserved geometries
+    :return: NetworkX graph with preserved geometries and building terminal metadata
     :raises ValueError: If network has disconnected components after all corrections applied
     """
+    graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE)
+    print(f"Initial network graph: {len(graph.nodes())} nodes, {len(graph.edges())} edges, number of components: {nx.number_connected_components(graph)}")
+
     # Prepare inputs (CRS conversion, validation, cleaning)
     streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
         streets_network_df, building_centroids_df
@@ -1034,18 +657,6 @@ def calc_connectivity_network_with_geometry(
     # Create terminals from building centroids
     print("\nCreating building terminal connections...")
     streets_network_df = create_terminals(building_centroids_df, streets_network_df)
-
-    # Validate that all coordinates are properly normalized before graph conversion
-    # This catches any precision handling bugs early with clear error messages
-    # print("  Validating coordinate normalization...")
-    # validate_normalized_coordinates(streets_network_df, precision=SHAPEFILE_TOLERANCE)
-    # print("  ✓ All coordinates normalized to consistent precision")
-
-    # # Apply graph corrections to fix micro-precision disconnections
-    # # This merges nodes that are within floating-point epsilon (handles coordinate rounding artifacts)
-    # print("\n  Applying graph corrections to fix micro-precision issues...")
-    # building_centroid_coords = _get_protected_building_coords(building_centroids_df)
-    # streets_network_df = apply_graph_corrections(streets_network_df, protected_nodes=building_centroid_coords)
 
     # Convert to graph with geometry preservation
     graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
@@ -1059,30 +670,36 @@ def calc_connectivity_network_with_geometry(
     # Clean up graph components and connect them if needed
     components = list(nx.connected_components(graph))
 
-    # Drop single-node components (as they don't contribute to connectivity)
     if len(components) > 1:
-        raise ValueError(
-            f"Network graph has {len(components)} disconnected components after terminal creation. "
-            f"This indicates a serious connectivity issue that must be resolved."
-        )
+        # Try to remove single-node components
+        for component in components:
+            if len(component) == 1:
+                graph.remove_node(next(iter(component)))
+        
+        # Raise error if still disconnected
+        if len(list(nx.connected_components(graph))) > 1:
+            # Identify buildings in disconnected components
+            disconnected_buildings = []
+            print("\nDisconnected components detected in network graph:")
+            for i, component in enumerate(nx.connected_components(graph)):
+                print(f"  Component {i+1}: {len(component)} nodes")
+                # Assume first component is the main one
+                if i == 0:
+                    continue
+                for building_id, node_coords in terminal_mapping.items():
+                    if node_coords in component:
+                        disconnected_buildings.append(building_id)
 
-    # Use the fully connected graph
-    G_filtered = graph.copy()
+            raise ValueError(
+                f"Network graph has {len(components)} disconnected components after terminal creation.\n"
+                f"This indicates connectivity issues with the network provided.\n"
+                f"Disconnected buildings: {', '.join(disconnected_buildings)}\n"
+                "Check street network connectivity around these buildings."
+            )
 
-    # Update metadata
-    G_filtered.graph['building_terminals'] = terminal_mapping
-    G_filtered.graph['crs'] = crs
-    G_filtered.graph['coord_precision'] = SHAPEFILE_TOLERANCE
+    # Update metadata in graph
+    graph.graph['building_terminals'] = terminal_mapping
+    graph.graph['crs'] = crs
+    graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
-    # Convert back to geodataframe with preserved geometries
-    edges = nx_to_gdf(G_filtered, crs=crs, preserve_geometry=True)
-
-    # Set length attribute from geometry if not already present
-    if 'geometry' in edges.columns:
-        edges['length'] = edges.geometry.length
-
-    # Validate network creation before returning
-    print("\nValidating network creation...")
-    _validate_network_creation(G_filtered, building_centroids_df, edges)
-
-    return edges
+    return graph

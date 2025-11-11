@@ -51,18 +51,23 @@ class TestNetworkLayoutIntegration:
 
     def test_network_creation_basic(self, simple_street_network, simple_buildings):
         """Test basic network creation with simple geometry."""
-        # Create network
-        network = calc_connectivity_network_with_geometry(
+        # Create network graph
+        graph = calc_connectivity_network_with_geometry(
             simple_street_network,
             simple_buildings
         )
 
-        # Verify output structure
-        assert isinstance(network, gpd.GeoDataFrame)
-        assert not network.empty
-        assert 'length' in network.columns
-        assert all(network.geometry.is_valid)
-        assert all(network['length'] > 0)
+        # Verify output is a NetworkX graph with metadata
+        assert isinstance(graph, nx.Graph)
+        assert len(graph.nodes()) > 0
+        assert len(graph.edges()) > 0
+        assert 'building_terminals' in graph.graph
+        assert 'crs' in graph.graph
+
+        # Convert to GeoDataFrame and verify structure
+        network_gdf = nx_to_gdf(graph, crs=graph.graph['crs'], preserve_geometry=True)
+        assert not network_gdf.empty
+        assert all(network_gdf.geometry.is_valid)
 
     def test_network_preserves_geometries(self, simple_street_network, simple_buildings):
         """Test that network creation preserves street geometries."""
@@ -118,7 +123,7 @@ class TestNetworkLayoutIntegration:
         graph = calc_connectivity_network_with_geometry(
             simple_street_network,
             simple_buildings,
-            return_graph=True
+            
         )
 
         # Verify graph has building terminal metadata
@@ -259,7 +264,7 @@ class TestNetworkLayoutIntegration:
         )
 
         # Should handle disconnected components by connecting them
-        graph = calc_connectivity_network_with_geometry(streets, buildings, return_graph=True)
+        graph = calc_connectivity_network_with_geometry(streets, buildings, )
 
         # Graph should be connected (components are linked)
         assert nx.is_connected(graph), "Graph should be fully connected after component linking"

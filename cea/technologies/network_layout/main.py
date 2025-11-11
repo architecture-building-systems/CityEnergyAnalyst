@@ -8,6 +8,7 @@ from cea.technologies.network_layout.connectivity_potential import calc_connecti
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
+from cea.technologies.network_layout.graph_utils import nx_to_gdf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -49,12 +50,16 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     
     street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
 
-    # Calculate potential network with geometry preservation
-    potential_network_df = calc_connectivity_network_with_geometry(
+    # Calculate potential network graph with geometry preservation and building terminal metadata
+    potential_network_graph = calc_connectivity_network_with_geometry(
         street_network_df,
         building_centroids_df,
     )
-    crs_projected = potential_network_df.crs
+
+    # Convert graph to GeoDataFrame for Steiner tree algorithm
+    crs_projected = potential_network_graph.graph['crs']
+    potential_network_df = nx_to_gdf(potential_network_graph, crs=crs_projected, preserve_geometry=True)
+    potential_network_df['length'] = potential_network_df.geometry.length
     
     if crs_projected is None:
         raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
