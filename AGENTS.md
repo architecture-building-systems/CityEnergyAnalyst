@@ -3,12 +3,64 @@
 **Creating new documentation**:
 - **Always** create context-specific documentation as `AGENTS.md` (not `CLAUDE.md`)
 - **Always** symlink the new `AGENTS.md` file as `CLAUDE.md` in the same directory
-- This maintains consistency with the existing documentation structure where topic-specific instructions live in `AGENTS.md` files and are symlinked for compatibility
+- **Don't create AGENTS.md in every directory** - Only create when the directory contains complex patterns that aren't obvious from code
+
+**When to create AGENTS.md**:
+- ✅ **DO create** when the directory has:
+  - Complex architectural patterns not obvious from code
+  - Critical design decisions that affect how code should be written
+  - Non-obvious relationships between components
+  - Common pitfalls or important DO/DON'T patterns
+  - State management, data flow, or API patterns needing explanation
+
+- ❌ **DON'T create** when:
+  - Directory contains simple utility functions
+  - Code is self-explanatory with good docstrings
+  - It's a small module with straightforward logic
+  - Parent directory's AGENTS.md already covers it adequately
+  - Would duplicate information already in code/docstrings
+
+**Writing style for AGENTS.md**:
+- **Be concise and actionable** - Aim for <150 lines when possible
+- **Lead with API signatures** - Show function signatures and return types first
+- **Use code examples over prose** - Show DO/DON'T patterns instead of long explanations
+- **Focus on patterns, not details** - What to do, not why it exists
+- **Scannable structure** - Use headers, bullets, and short paragraphs
+- **Reference, don't explain** - Link to related files instead of duplicating information
+
+**Good example structure**:
+```markdown
+# Module Name
+
+## Main API
+- `function_name(args) → ReturnType` - One-line description
+
+## Key Patterns
+### ✅ DO: Pattern name
+```code example```
+
+### ❌ DON'T: Anti-pattern name
+```code example```
+
+## Related Files
+- `file.py` - Purpose
+```
 
 **Updating existing documentation**:
-- Update the relevant `AGENTS.md` file when you make changes to code in that directory
+- **IMPORTANT**: When making code changes in a directory, ALWAYS update the corresponding `AGENTS.md` file in that directory
+- If no `AGENTS.md` exists in the directory where you're making changes, create one following the structure above
 - Keep documentation synchronized with code changes to help other LLMs understand the current state
+- Update immediately after making code changes, not as an afterthought
+- **Prune verbose sections** - If AGENTS.md is >200 lines, look for opportunities to condense
 - Focus on architectural patterns, state management, data flow, and key concepts that aren't obvious from code alone
+- If you need to preserve detailed explanations, move them to a separate `*_GUIDE.md` file for human readers
+
+**Directory-specific AGENTS.md files**:
+- `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES
+- `cea/analysis/costs/AGENTS.md` - Cost calculation patterns
+- `cea/demand/AGENTS.md` - Demand calculations, HVAC vs SUPPLY, output columns
+- `cea/interfaces/dashboard/AGENTS.md` - Dashboard job system, worker process
+- `cea/technologies/network_layout/AGENTS.md` - Network connectivity, coordinate normalization
 
 ---
 ## Project Overview
