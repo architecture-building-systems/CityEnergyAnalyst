@@ -760,6 +760,65 @@ class NetworkLayoutNameParameter(StringParameter):
     Validates in real-time to prevent overwriting existing network layouts.
     """
 
+    def encode(self, value):
+        """
+        Validate and encode network name.
+        Raises ValueError if name contains invalid characters or collides with existing network.
+        """
+        # Blank/empty is OK - will auto-generate timestamp
+        if not value or not value.strip():
+            return ''
+
+        value = value.strip()
+
+        # Check for invalid filesystem characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Network name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing networks
+        try:
+            # Get network type from config
+            network_type = self.config.network_layout.network_type
+
+            # Get scenario
+            scenario = self.config.scenario
+
+            # Skip validation if scenario doesn't exist yet
+            if not scenario or not os.path.exists(scenario):
+                return str(value)
+
+            # Get locator to check paths
+            locator = cea.inputlocator.InputLocator(scenario)
+
+            # Check if network already exists
+            output_folder = locator.get_output_thermal_network_type_folder(network_type, value)
+
+            if os.path.exists(output_folder):
+                # Check if it has network files in layout/ subfolder
+                edges_path = os.path.join(output_folder, 'layout', 'edges.shp')
+                nodes_path = os.path.join(output_folder, 'layout', 'nodes.shp')
+
+                if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                    raise ValueError(
+                        f"Network '{value}' already exists for {network_type}. "
+                        f"Choose a different name or delete the existing folder."
+                    )
+        except ValueError:
+            # Re-raise validation errors
+            raise
+        except Exception as e:
+            # Catch other exceptions gracefully during validation
+            # Config not fully initialized, missing attributes, etc.
+            # This allows the parameter to be set even if validation can't be performed
+            print(f"[NetworkLayoutNameParameter] Could not validate: {e}")
+            pass
+
+        return str(value)
+
     def decode(self, value):
         """Validate network name doesn't collide with existing networks"""
         # Blank/empty is OK - will auto-generate timestamp
@@ -797,9 +856,9 @@ class NetworkLayoutNameParameter(StringParameter):
             output_folder = locator.get_output_thermal_network_type_folder(network_type, value)
 
             if os.path.exists(output_folder):
-                # Check if it has network files (build paths manually to avoid validation in locator methods)
-                edges_path = os.path.join(output_folder, 'edges.shp')
-                nodes_path = os.path.join(output_folder, 'nodes.shp')
+                # Check if it has network files in layout/ subfolder
+                edges_path = os.path.join(output_folder, 'layout', 'edges.shp')
+                nodes_path = os.path.join(output_folder, 'layout', 'nodes.shp')
 
                 if os.path.exists(edges_path) or os.path.exists(nodes_path):
                     raise ValueError(
@@ -903,7 +962,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             elif hasattr(self.config, 'optimization_new'):
                 network_type = self.config.optimization_new.network_type
             else:
-                print(f"[NetworkLayoutChoiceParameter] No thermal_network or optimization_new section found")
+                print("[NetworkLayoutChoiceParameter] No thermal_network or optimization_new section found")
                 return []
 
             scenario = self.config.scenario
@@ -1039,8 +1098,39 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             return None, None
 
     def encode(self, value):
-        """Encode value - just return as string"""
-        return str(value) if value else ''
+        """
+        Validate and encode value.
+        Raises ValueError if the network layout doesn't exist.
+        """
+        # Refresh choices to get current state
+        available_networks = self._get_available_networks()
+
+        # Empty value not allowed
+        if not value or value.strip() == '':
+            raise ValueError("Network layout is required. Please select a network layout.")
+
+        # Validate that the network exists
+        if value not in available_networks:
+            # Get network type for error message
+            if hasattr(self.config, 'thermal_network'):
+                network_type = self.config.thermal_network.network_type
+            elif hasattr(self.config, 'optimization_new'):
+                network_type = self.config.optimization_new.network_type
+            else:
+                network_type = "this network type"
+
+            if available_networks:
+                raise ValueError(
+                    f"Network layout '{value}' not found for {network_type}. "
+                    f"Available layouts: {', '.join(available_networks)}"
+                )
+            else:
+                raise ValueError(
+                    f"No network layouts found for {network_type}. "
+                    f"Run Thermal Network Part 1: layout to create a network first."
+                )
+
+        return str(value)
 
     def decode(self, value):
         """
@@ -1069,7 +1159,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
         # If no networks found for current network-type, try to find most recent across all types
         # and auto-switch network-type to match
-        print(f"[NetworkLayoutChoiceParameter] No networks found for current network-type, checking all types...")
+        print("[NetworkLayoutChoiceParameter] No networks found for current network-type, checking all types...")
         most_recent_network, most_recent_type = self._find_most_recent_network_across_types()
 
         if most_recent_network:
