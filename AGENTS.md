@@ -40,17 +40,32 @@ conda install --file conda-lock.yml
 pip install -e .
 ```
 
-### Docker
+## Environment Detection and Command Execution
 
+**IMPORTANT**: When executing Python commands, always check if a `.pixi` directory exists in the project root:
+
+- **If `.pixi` exists**: Use `pixi run python` or `pixi run <command>` for all Python-related commands
+  - Example: `pixi run python script.py` instead of `python script.py`
+  - Example: `pixi run pytest` instead of `pytest`
+  - Example: `pixi run cea demand --scenario path/to/scenario` instead of `cea demand --scenario path/to/scenario`
+
+- **If `.pixi` does not exist**: Use standard Python commands (`python`, `pytest`, `cea`, etc.)
+
+**Rationale**: The Pixi environment manager ensures consistent dependency versions and isolated environments. Using `pixi run` automatically activates the correct environment without manual activation.
+
+**Common Pixi Commands**:
 ```bash
-# Build image
-docker build -t cea .
+# Python scripts
+pixi run python -m cea.worker
+pixi run python -c "import cea; print(cea.__version__)"
 
-# Run dashboard (exposed on port 5050)
-docker run -p 5050:5050 cea
+# Testing
+pixi run pytest cea/tests/test_file.py
+pixi run pytest --cov=cea
 
-# Run worker
-docker run cea cea-worker <job_id> <server_url>
+# CEA commands
+pixi run cea demand --scenario path/to/scenario
+pixi run cea-config
 ```
 
 ## Common Commands
@@ -172,8 +187,6 @@ cea/
 
 **Signal Handling**: Worker registers `SIGTERM`/`SIGINT` handlers for graceful shutdown. Raises `SystemExit(0)` to trigger cleanup in finally block. Critical for Docker deployments (combined with tini init system).
 
-**Docker Deployment**: Uses `tini` as PID 1 init system for proper signal forwarding and zombie process reaping.
-
 ### Database Structure
 
 CEA uses hierarchical CSV databases in `cea/databases/`:
@@ -254,15 +267,10 @@ cea.api.demand(scenario='/path/to/scenario')
 
 ### Testing
 
+- **All test files must be placed in `cea/tests/`** - Never create test files in other directories
 - Integration tests use reference scenarios from `cea/examples/`
 - Test configuration: `cea/tests/cea.config`
 - Mock/fixture pattern for expensive operations (radiation, optimization)
-
-**Subdirectory Documentation**:
-- `cea/databases/AGENTS.md` - Database structure and relationships
-- `cea/analysis/costs/AGENTS.md` - Cost calculation architecture
-- `cea/demand/AGENTS.md` - Demand simulation patterns
-- `cea/interfaces/dashboard/AGENTS.md` - Job system architecture (detailed)
 
 ## Common Pitfalls
 
@@ -273,13 +281,6 @@ cea.api.demand(scenario='/path/to/scenario')
 5. **Docker Signal Handling**: Worker must handle `SIGTERM`/`SIGINT` for graceful shutdown; always use tini as init
 6. **Scenario Structure**: Respect scenario folder conventions (inputs/, outputs/), use InputLocator for paths
 7. **Database Regions**: Some databases are region-specific (CH, SG, etc.); use `config.region` to select
-
-## External Dependencies
-
-- **pythonocc-core**: 3D CAD kernel (pinned to 7.8.1, conda-only)
-- **wntr**: Water network modeling (no osx-arm64 conda build, use pip)
-- **DAYSIM**: External solar radiation engine (binary in `cea/resources/radiation/`)
-- **CRAX**: Alternative solar model (experimental, beta)
 
 ## Resources
 
