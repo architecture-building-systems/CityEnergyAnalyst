@@ -70,6 +70,12 @@ def load_log_yaml(locator: InputLocator) -> dict[int, dict[str, Any]]:
     return existing_data_in_yml
 
 
+def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) -> None:
+    yml_path = locator.get_district_timeline_log_file()
+    with open(yml_path, "w") as f:
+        yaml.dump(log_data, f)
+
+
 def simulate_all_states(config: Configuration) -> None:
     """Simulate all state-in-time scenarios as per the district timeline log YAML file.
 
@@ -89,12 +95,16 @@ def simulate_all_states(config: Configuration) -> None:
     for year in state_years:
         print(f"Simulating state-in-time scenario for year {year}...")
         state_config = generate_state_config(config, year)
-        if type(state_config.emissions.year_end) is int and year > state_config.emissions.year_end:
+        if (
+            type(state_config.emissions.year_end) is int
+            and year > state_config.emissions.year_end
+        ):
             state_config.emissions.year_end = year
         run_workflow(workflow, state_config)
         log_data[year]["simulation_workflow"] = workflow
         log_data[year]["latest_simulated_at"] = str(pd.Timestamp.now())
         print(f"Simulation for state-in-time scenario year {year} completed.")
+    save_log_yaml(locator, log_data)
 
 
 def main(config: Configuration) -> None:
