@@ -30,13 +30,15 @@ import networkx as nx
 from shapely.geometry import Point
 from typing import Tuple, Dict, List, Set
 
+from cea import CEAException
+
 # Tolerance for network topology validation (meters)
 # This is much tighter than CEA's general SHAPEFILE_TOLERANCE (6m)
 # to ensure precise network connectivity and node placement
 NETWORK_TOPOLOGY_TOLERANCE = 0.1  # 10 centimeters - standard GIS precision
 
 
-class UserNetworkLoaderError(Exception):
+class UserNetworkLoaderError(CEAException):
     """Custom exception for user network loading errors"""
     pass
 
