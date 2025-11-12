@@ -931,207 +931,89 @@ class ChoiceParameter(Parameter):
 
 class NetworkLayoutChoiceParameter(ChoiceParameter):
     """
-    Parameter for selecting existing network layouts.
-    Dynamically lists available network folders for the selected network type.
+    Parameter for selecting existing network layouts based on network type.
     """
 
     def initialize(self, parser):
-        # Don't call parent initialize - we'll build choices dynamically
-        self._choices_cache = None
         # Declare dependency: choices depend on network-type
         self.depends_on = ['network-type']
 
     @property
     def _choices(self):
-        """Dynamically get available networks (cached)"""
-        if self._choices_cache is None:
-            self._choices_cache = self._get_available_networks()
-        return self._choices_cache
-
-    @_choices.setter
-    def _choices(self, value):
-        """Allow setting choices (for decode method)"""
-        self._choices_cache = value
-
-    def _get_available_networks(self):
-        """Get list of available network layouts for the current network type"""
+        return self._get_available_networks(self._get_network_type())
+    
+    def _get_network_type(self) -> str:
+        """Get current network type from config"""
+        network_type = ""
         try:
-            # Get network type and scenario from config
+            # FIXME: optimization-new network_type should use from thermal-network section
             # For thermal-network section
             if hasattr(self.config, 'thermal_network'):
                 network_type = self.config.thermal_network.network_type
             # For optimization-new section
             elif hasattr(self.config, 'optimization_new'):
                 network_type = self.config.optimization_new.network_type
-            else:
-                print("[NetworkLayoutChoiceParameter] No thermal_network or optimization_new section found")
+
+            return network_type
+        except AttributeError:
+            return network_type
+    
+    def _get_network_file_paths(self, network_type: str, network_name: str) -> Tuple[str, str]:
+        """Get path for network node and edge files for the given network name"""
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        network_type_folder = locator.get_output_thermal_network_type_folder(network_type)
+        # Remove trailing slash/separator if present
+        network_type_folder = network_type_folder.rstrip(os.sep)
+
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
+        return edges_path, nodes_path
+
+    def _get_available_networks(self, network_type: str):
+        """Get list of available network layouts for the current network type"""        
+        try:
+            if not network_type:
+                print("[NetworkLayoutChoiceParameter] No network type specified.")
                 return []
 
-            scenario = self.config.scenario
-
-            # Skip if scenario doesn't exist
-            if not scenario or not os.path.exists(scenario):
-                print(f"[NetworkLayoutChoiceParameter] Scenario doesn't exist: {scenario}")
-                return []
-
-            # Get network type folder
-            locator = cea.inputlocator.InputLocator(scenario)
-            network_type_folder = locator.get_output_thermal_network_type_folder(network_type, '')
-
-            # Remove trailing slash/separator if present
-            network_type_folder = network_type_folder.rstrip(os.sep)
-
-            print(f"[NetworkLayoutChoiceParameter] Checking folder: {network_type_folder}")
-
-            # List subdirectories that contain valid network files
-            if not os.path.exists(network_type_folder):
-                print(f"[NetworkLayoutChoiceParameter] Network type folder doesn't exist: {network_type_folder}")
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            network_folder = locator.get_output_thermal_network_type_folder(network_type)
+            if not os.path.exists(network_folder):
+                print(f"[NetworkLayoutChoiceParameter] Network folder does not exist: {network_folder}")
                 return []
 
             available_networks = []
-            for item in os.listdir(network_type_folder):
-                item_path = os.path.join(network_type_folder, item)
-                if os.path.isdir(item_path):
-                    # Check if this folder has network files in layout/ subfolder (both edges and nodes required)
-                    # Use InputLocator methods to get correct paths
-                    edges_path = locator.get_network_layout_edges_shapefile(network_type, item)
-                    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, item)
+            for name in os.listdir(network_folder):
+                edges_path, nodes_path = self._get_network_file_paths(network_type,name)
+                if os.path.exists(edges_path) and os.path.exists(nodes_path):
+                    available_networks.append(name)
 
-                    if os.path.exists(edges_path) and os.path.exists(nodes_path):
-                        # Try to parse timestamp from folder name (format: YYYYMMDD_HHMMSS)
-                        import re
-                        from datetime import datetime
-                        timestamp_match = re.match(r'^(\d{8})_(\d{6})$', item)
-
-                        if timestamp_match:
-                            # Parse timestamp from folder name
-                            try:
-                                date_str = timestamp_match.group(1)  # YYYYMMDD
-                                time_str = timestamp_match.group(2)  # HHMMSS
-                                dt = datetime.strptime(f"{date_str}_{time_str}", "%Y%m%d_%H%M%S")
-                                sort_time = dt.timestamp()
-                            except ValueError:
-                                # If parsing fails, fall back to filesystem time
-                                sort_time = os.path.getmtime(edges_path)
-                        else:
-                            # Custom name - use edges.shp modification time (most reliable indicator of when network was created)
-                            sort_time = os.path.getmtime(edges_path)
-
-                        print(f"[NetworkLayoutChoiceParameter] Network {item}: sort_time={sort_time}")
-                        available_networks.append((item, sort_time))
-
-            # Sort by creation time (most recent first)
-            available_networks.sort(key=lambda x: x[1], reverse=True)
-
-            # Extract just the folder names
-            network_names = [name for name, _ in available_networks]
-
-            print(f"[NetworkLayoutChoiceParameter] Found {len(network_names)} networks (sorted by most recent): {network_names}")
-            return network_names
+            return available_networks
 
         except Exception as e:
-            # Config not ready, paths don't exist, etc.
-            print(f"[NetworkLayoutChoiceParameter] Error getting available networks: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"[NetworkLayoutChoiceParameter] Could not get available networks: {e}")
             return []
-
-    def _find_most_recent_network_across_types(self):
-        """
-        Find the most recent network across ALL network types (DH and DC).
-        Returns (network_name, network_type) tuple, or (None, None) if no networks found.
-        """
-        import os
-        import re
-        from datetime import datetime
-
-        try:
-            scenario = self.config.scenario
-            if not scenario or not os.path.exists(scenario):
-                return None, None
-
-            locator = cea.inputlocator.InputLocator(scenario)
-            all_networks = []  # List of (network_name, network_type, timestamp)
-
-            # Check both DH and DC network types
-            for network_type in ['DH', 'DC']:
-                network_type_folder = locator.get_output_thermal_network_type_folder(network_type, '')
-                network_type_folder = network_type_folder.rstrip(os.sep)
-
-                if not os.path.exists(network_type_folder):
-                    continue
-
-                for item in os.listdir(network_type_folder):
-                    item_path = os.path.join(network_type_folder, item)
-                    if os.path.isdir(item_path):
-                        # Check for valid network files
-                        edges_path = locator.get_network_layout_edges_shapefile(network_type, item)
-                        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, item)
-
-                        if os.path.exists(edges_path) and os.path.exists(nodes_path):
-                            # Parse timestamp
-                            timestamp_match = re.match(r'^(\d{8})_(\d{6})$', item)
-                            if timestamp_match:
-                                try:
-                                    date_str = timestamp_match.group(1)
-                                    time_str = timestamp_match.group(2)
-                                    dt = datetime.strptime(f"{date_str}_{time_str}", "%Y%m%d_%H%M%S")
-                                    sort_time = dt.timestamp()
-                                except ValueError:
-                                    sort_time = os.path.getmtime(edges_path)
-                            else:
-                                # Use edges.shp modification time
-                                sort_time = os.path.getmtime(edges_path)
-
-                            print(f"[_find_most_recent_network_across_types] {network_type}/{item}: sort_time={sort_time}")
-                            all_networks.append((item, network_type, sort_time))
-
-            if not all_networks:
-                return None, None
-
-            # Sort by timestamp (most recent first)
-            all_networks.sort(key=lambda x: x[2], reverse=True)
-
-            # Return most recent network name and type
-            return all_networks[0][0], all_networks[0][1]
-
-        except Exception as e:
-            print(f"[NetworkLayoutChoiceParameter] Error finding most recent network: {e}")
-            return None, None
-
+    
     def encode(self, value):
         """
         Validate and encode value.
         Raises ValueError if the network layout doesn't exist.
         """
-        # Refresh choices to get current state
-        available_networks = self._get_available_networks()
-
         # Empty value not allowed
         if not value or value.strip() == '':
             raise ValueError("Network layout is required. Please select a network layout.")
+        
+        network_type = self._get_network_type()
+        available_networks = self._get_available_networks(network_type)
 
         # Validate that the network exists
-        if value not in available_networks:
-            # Get network type for error message
-            if hasattr(self.config, 'thermal_network'):
-                network_type = self.config.thermal_network.network_type
-            elif hasattr(self.config, 'optimization_new'):
-                network_type = self.config.optimization_new.network_type
-            else:
-                network_type = "this network type"
-
-            if available_networks:
-                raise ValueError(
-                    f"Network layout '{value}' not found for {network_type}. "
-                    f"Available layouts: {', '.join(available_networks)}"
-                )
-            else:
-                raise ValueError(
-                    f"No network layouts found for {network_type}. "
-                    f"Run Thermal Network Part 1: layout to create a network first."
-                )
-
+        if str(value) not in available_networks:
+            raise ValueError(
+                f"Network layout '{value}' not found for {network_type}. "
+                f"Available layouts: {', '.join(available_networks)}"
+            )
         return str(value)
 
     def decode(self, value):
@@ -1142,40 +1024,30 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         If no value provided and no networks found for current network-type, try to find
         the most recent network across ALL network types and switch network-type accordingly.
         """
-        print(f"[NetworkLayoutChoiceParameter.decode] Called with value='{value}'")
-
-        # Update choices dynamically
-        self._choices = self._get_available_networks()
-        print(f"[NetworkLayoutChoiceParameter.decode] Choices for current network-type: {self._choices}")
+        network_type = self._get_network_type()
+        available_networks = self._get_available_networks(network_type)
 
         # If value is provided and valid, return it
-        if value and value in self._choices:
-            print(f"[NetworkLayoutChoiceParameter.decode] Value '{value}' is valid, returning it")
+        if value and value in available_networks:
             return value
 
         # Otherwise, return the most recent network (first choice) if available
-        # This ensures users see the latest network by default when opening the tool
         if self._choices:
-            print(f"[NetworkLayoutChoiceParameter.decode] No value provided, returning most recent: '{self._choices[0]}'")
-            return self._choices[0]
+            available_networks = self._choices
 
-        # If no networks found for current network-type, try to find most recent across all types
-        # and auto-switch network-type to match
-        print("[NetworkLayoutChoiceParameter] No networks found for current network-type, checking all types...")
-        most_recent_network, most_recent_type = self._find_most_recent_network_across_types()
+            modified_times = []
+            for network_name in available_networks:
+                edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
+                if os.path.exists(edges_path) and os.path.exists(nodes_path):
+                    sort_time = os.path.getmtime(edges_path)
+                    modified_times.append((network_name, sort_time))
 
-        if most_recent_network:
-            print(f"[NetworkLayoutChoiceParameter] Found most recent network: {most_recent_network} (type: {most_recent_type})")
-            # Auto-switch network-type to match the most recent network
-            if hasattr(self.config, 'thermal_network'):
-                self.config.thermal_network.network_type = most_recent_type
-                print(f"[NetworkLayoutChoiceParameter] Auto-switched network-type to {most_recent_type}")
-            elif hasattr(self.config, 'optimization_new'):
-                self.config.optimization_new.network_type = most_recent_type
-                print(f"[NetworkLayoutChoiceParameter] Auto-switched network-type to {most_recent_type}")
-
-            return most_recent_network
-
+            if modified_times:
+                # Sort by modification time, most recent first
+                modified_times.sort(key=lambda x: x[1], reverse=True)
+                return modified_times[0][0]
+        
+        print(f"[NetworkLayoutChoiceParameter] No available networks found for network type '{network_type}'.")
         return ''
 
 
