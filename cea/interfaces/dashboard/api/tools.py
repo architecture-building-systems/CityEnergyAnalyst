@@ -96,13 +96,46 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
 
 @router.post('/{tool_name}/save-config', dependencies=[CEASeverDemoAuthCheck])
 async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
-    """Save the configuration for this tool to the configuration file"""
+    """
+    Save the configuration for this tool to the configuration file.
+    Validates all parameters before saving and returns field-level errors if validation fails.
+    """
+    field_errors = {}
+
+    # First pass: validate all parameters using encode()
+    for parameter in parameters_for_script(tool_name, config):
+        if parameter.name != 'scenario' and parameter.name in payload:
+            value = payload[parameter.name]
+            try:
+                # Validate using encode() - this will raise ValueError if invalid
+                parameter.encode(value)
+            except ValueError as e:
+                # Collect validation errors
+                field_errors[parameter.name] = str(e)
+                print(f'[save_tool_config] Validation error for {parameter.name}: {e}')
+            except Exception as e:
+                # Other errors - treat as validation failures
+                field_errors[parameter.name] = f"Validation error: {str(e)}"
+                print(f'[save_tool_config] Unexpected error validating {parameter.name}: {e}')
+
+    # If there are validation errors, return them without saving
+    if field_errors:
+        print(f'[save_tool_config] Validation failed with {len(field_errors)} errors')
+        raise HTTPException(
+            status_code=400,
+            detail={
+                'message': 'Validation failed',
+                'field_errors': field_errors
+            }
+        )
+
+    # Second pass: set all parameters (validation passed)
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name != 'scenario' and parameter.name in payload:
             value = payload[parameter.name]
             print('%s: %s' % (parameter.name, value))
             parameter.set(value)
-    
+
     if isinstance(config, CEADatabaseConfig):
         await config.save()
     else:
@@ -110,35 +143,36 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
     return 'Success'
 
 
-@router.post('/{tool_name}/parameter-choices')
-async def get_parameter_choices(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+@router.post('/{tool_name}/validate-field')
+async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
     """
-    Get updated choices for a parameter based on current form values.
-    Useful for parameters with dynamic choices that depend on other parameters.
+    Validate a single field value using the parameter's encode() method.
 
     Payload should contain:
-    - parameter_name: the name of the parameter to get choices for
-    - form_values: dict of current form values to set on config before getting choices
+    - parameter_name: the name of the parameter to validate
+    - value: the value to validate
+    - form_values: dict of current form values to set on config before validation
     """
     parameter_name = payload.get('parameter_name')
+    value = payload.get('value')
     form_values = payload.get('form_values', {})
 
-    print(f"\n[get_parameter_choices] tool_name={tool_name}, parameter_name={parameter_name}")
-    print(f"[get_parameter_choices] form_values={form_values}")
+    print(f"\n[validate_field] tool_name={tool_name}, parameter_name={parameter_name}, value={value}")
+    print(f"[validate_field] form_values={form_values}")
 
     if not parameter_name:
         raise HTTPException(status_code=400, detail="parameter_name is required")
 
-    # Temporarily set form values on config to get updated choices
+    # Temporarily set form values on config to provide context for validation
     for param in parameters_for_script(tool_name, config):
-        if param.name in form_values:
+        if param.name in form_values and param.name != parameter_name:
             try:
-                print(f"[get_parameter_choices] Setting {param.name} = {form_values[param.name]}")
+                print(f"[validate_field] Setting {param.name} = {form_values[param.name]}")
                 param.set(form_values[param.name])
             except Exception as e:
-                print(f"[get_parameter_choices] Failed to set {param.name}: {e}")
+                print(f"[validate_field] Failed to set {param.name}: {e}")
 
-    # Find the parameter and get its choices
+    # Find the parameter to validate
     target_parameter = None
     for param in parameters_for_script(tool_name, config):
         if param.name == parameter_name:
@@ -148,23 +182,80 @@ async def get_parameter_choices(config: CEAConfig, tool_name: str, payload: Dict
     if not target_parameter:
         raise HTTPException(status_code=404, detail=f"Parameter '{parameter_name}' not found")
 
-    print(f"[get_parameter_choices] Found parameter: {target_parameter}, type: {type(target_parameter).__name__}")
+    # Validate using encode() method
+    try:
+        encoded_value = target_parameter.encode(value)
+        print(f"[validate_field] Validation passed, encoded value: {encoded_value}")
+        return {"valid": True, "error": None}
+    except ValueError as e:
+        error_message = str(e)
+        print(f"[validate_field] Validation failed: {error_message}")
+        return {"valid": False, "error": error_message}
+    except Exception as e:
+        error_message = f"Validation error: {str(e)}"
+        print(f"[validate_field] Unexpected error: {error_message}")
+        return {"valid": False, "error": error_message}
 
-    # Get the parameter's choices
-    if isinstance(target_parameter, cea.config.ChoiceParameter):
-        print("[get_parameter_choices] Getting choices...")
-        choices = target_parameter._choices
 
-        # Get the default/current value using decode()
-        # For NetworkLayoutChoiceParameter, this will return the most recent network
-        current_value = form_values.get(parameter_name, '')
-        default_value = target_parameter.decode(current_value)
+@router.post('/{tool_name}/parameter-metadata')
+async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+    """
+    Get updated parameter metadata based on current form values.
+    Does NOT save to config - uses temporary in-memory config state.
 
-        print(f"[get_parameter_choices] current_value='{current_value}', default_value='{default_value}'")
-        print(f"[get_parameter_choices] Returning {len(choices)} choices: {choices}")
-        return {"choices": choices, "default": default_value}
-    else:
-        raise HTTPException(status_code=400, detail=f"Parameter '{parameter_name}' is not a choice parameter")
+    Useful for updating dependent parameters when their dependencies change.
+    For example, when network-type changes, network-layout choices need to update.
+
+    Payload should contain:
+    - form_values: dict of current form values
+    - affected_parameters: optional list of parameter names to get metadata for
+    """
+    form_values = payload.get('form_values', {})
+    affected_parameters = payload.get('affected_parameters', None)
+
+    print(f"\n[get_parameter_metadata] tool_name={tool_name}")
+    print(f"[get_parameter_metadata] form_values={form_values}")
+    print(f"[get_parameter_metadata] affected_parameters={affected_parameters}")
+
+    # Temporarily set form values on config (in-memory only, don't save)
+    for param in parameters_for_script(tool_name, config):
+        if param.name in form_values:
+            try:
+                print(f"[get_parameter_metadata] Setting {param.name} = {form_values[param.name]}")
+                param.set(form_values[param.name])
+            except Exception as e:
+                print(f"[get_parameter_metadata] Failed to set {param.name}: {e}")
+
+    # TODO: Add plugin support
+    script = cea.scripts.by_name(tool_name, plugins=config.plugins)
+
+    # Build response with updated metadata
+    result = {}
+    for _, param in config.matching_parameters(script.parameters):
+        # If affected_parameters specified, only include those
+        if affected_parameters and param.name not in affected_parameters:
+            continue
+
+        # For ChoiceParameters, get updated choices
+        if isinstance(param, cea.config.ChoiceParameter):
+            try:
+                choices = param._choices
+                current_value = param.get()
+
+                # If current value not in choices, use first choice or None
+                if current_value not in choices:
+                    current_value = choices[0] if choices else None
+
+                result[param.name] = {
+                    'choices': choices,
+                    'value': current_value
+                }
+                print(f"[get_parameter_metadata] {param.name}: {len(choices)} choices, value={current_value}")
+            except Exception as e:
+                print(f"[get_parameter_metadata] Error getting metadata for {param.name}: {e}")
+
+    print(f"[get_parameter_metadata] Returning metadata for {len(result)} parameters")
+    return {'parameters': result}
 
 
 @router.post('/{tool_name}/check')
