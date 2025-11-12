@@ -31,7 +31,7 @@ def load_from_config(settings: Settings, config: Configuration) -> None:
                                 f"Make sure project_root in config is set correctly.")
 
 
-def main(config):
+def main(config: Configuration):
     # Load settings from env vars (priority) then config file
     settings = get_settings()
     load_from_config(settings, config)

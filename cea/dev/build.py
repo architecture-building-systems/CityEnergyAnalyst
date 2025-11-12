@@ -28,7 +28,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Create a new conda environment based on the current cea version. install cea into it, conda-pack it
     and place it in the setup/Dependencies/Python folder ready for the installer to compress.

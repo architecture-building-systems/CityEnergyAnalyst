@@ -11,7 +11,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     plot_2d, plot_3d =  pareto_front_main(config)
 
     return plot_2d.to_html(), plot_3d.to_html() if plot_3d is not None else ""

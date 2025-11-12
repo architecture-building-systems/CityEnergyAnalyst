@@ -101,18 +101,18 @@ class TestGraphCorrector(unittest.TestCase):
 
         self.assertIsNot(corrector.graph, simple_connected_graph)  # Should be a copy
         self.assertIs(corrector.original_graph, simple_connected_graph)
-        self.assertEqual(corrector.tolerance, SHAPEFILE_TOLERANCE)
+        self.assertEqual(corrector.coord_precision, SHAPEFILE_TOLERANCE)
         self.assertEqual(corrector.corrections_log, [])
         self.assertEqual(corrector.graph.number_of_nodes(), simple_connected_graph.number_of_nodes())
         self.assertEqual(corrector.graph.number_of_edges(), simple_connected_graph.number_of_edges())
 
-    def test_init_with_custom_tolerance(self):
-        """Test GraphCorrector initialization with custom tolerance."""
+    def test_init_with_custom_coord_precision(self):
+        """Test GraphCorrector initialization with custom coordinate precision."""
         simple_connected_graph = self.create_simple_connected_graph()
-        custom_tolerance = 0.5
-        corrector = GraphCorrector(simple_connected_graph, tolerance=custom_tolerance)
+        custom_coord_precision = 4
+        corrector = GraphCorrector(simple_connected_graph, coord_precision=custom_coord_precision)
 
-        self.assertEqual(corrector.tolerance, custom_tolerance)
+        self.assertEqual(corrector.coord_precision, custom_coord_precision)
 
     # ==================================================================================
     # VALIDATION TESTS

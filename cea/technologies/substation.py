@@ -1,6 +1,7 @@
 """
 Substation Model
 """
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -927,7 +928,6 @@ def calc_dTm_HEX(thi, tho, tci, tco):
 
     # Check for physically impossible situations
     if dT1 <= 0 or dT2 <= 0:
-        # **Check the emission_system database, there might be a problem with the selection of nominal temperatures
         raise ValueError(
             f"Invalid temperature configuration detected!\n"
             f"Temperature differences:\n"
@@ -1041,7 +1041,7 @@ def calc_DH_return(t_0, t_1):
 # Test
 # ============================
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     do some testing... (view this as a scratch-pad...
     """

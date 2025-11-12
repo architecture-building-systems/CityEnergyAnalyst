@@ -287,7 +287,7 @@ def is_date(value):
 
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Read the schema entry for a locator method, compare it to the current entry and print out a new, updated version.
     """

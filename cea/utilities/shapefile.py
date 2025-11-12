@@ -92,9 +92,9 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
 def serialize_geometry(geom):
     if geom.geom_type == 'Polygon':
-        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.exterior.coords for x, y, *z in [coord]]
+        return [[coord[0], coord[1], coord[2] if len(coord) == 3 else 0.0] for coord in geom.exterior.coords]
     elif geom.geom_type == 'LineString':
-        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.coords for x, y, *z in [coord]]
+        return [[coord[0], coord[1], coord[2] if len(coord) == 3 else 0.0] for coord in geom.coords]
     elif geom.geom_type == 'Point':
         if geom.has_z:
             return [geom.x, geom.y, geom.z]
@@ -140,7 +140,7 @@ def shapefile_to_csv_xlsx(shapefile, output_path, new_crs=None):
 
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`shp-to-csv-to-shp` with the values from the configuration file, section ``[shapefile-tools]``.
 

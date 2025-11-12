@@ -46,7 +46,7 @@ def disconnected_building_main(locator, total_demand, config, prices, lca):
     print("done.")
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     print('Running decentralized model for buildings with scenario = %s' % config.scenario)
     locator = cea.inputlocator.InputLocator(config.scenario)
     supply_systems = SupplySystemsDatabase(locator)

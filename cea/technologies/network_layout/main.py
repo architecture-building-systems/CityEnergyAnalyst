@@ -1,14 +1,14 @@
-
-
-
 import os
+
+import geopandas as gpd
 
 import cea.config
 import cea.inputlocator
-from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
+from cea.technologies.network_layout.graph_utils import nx_to_gdf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -23,10 +23,7 @@ __status__ = "Production"
 def layout_network(network_layout, locator, plant_building_names=None, output_name_network="", optimization_flag=False):
     if plant_building_names is None:
         plant_building_names = []
-    weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
-    temp_path_potential_network_shp = locator.get_temporary_file("potential_network.shp")  # shapefile, location of output.
-    temp_path_building_centroids_shp = locator.get_temporary_file("nodes_buildings.shp")
 
     # type_mat_default = network_layout.type_mat
     type_mat_default = TYPE_MAT_DEFAULT
@@ -42,18 +39,33 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     path_zone_shp = locator.get_zone_geometry()
 
     # Calculate points where the substations will be located (building centroids)
-    building_centroids_df = calc_building_centroids(path_zone_shp,
-                                                    temp_path_building_centroids_shp,
-                                                    list_district_scale_buildings,
-                                                    plant_building_names,
-                                                    consider_only_buildings_with_demand,
-                                                    type_network,
-                                                    total_demand_location)
+    building_centroids_df = calc_building_centroids(
+        path_zone_shp,
+        list_district_scale_buildings,
+        plant_building_names,
+        consider_only_buildings_with_demand,
+        type_network,
+        total_demand_location,
+    )
+    
+    street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
 
-    # Calculate potential network
-    crs_projected = calc_connectivity_network(path_streets_shp,
-                                              building_centroids_df,
-                                              path_potential_network=temp_path_potential_network_shp)
+    # Calculate potential network graph with geometry preservation and building terminal metadata
+    potential_network_graph = calc_connectivity_network_with_geometry(
+        street_network_df,
+        building_centroids_df,
+    )
+
+    # Convert graph to GeoDataFrame for Steiner tree algorithm
+    crs_projected = potential_network_graph.graph['crs']
+    potential_network_df = nx_to_gdf(potential_network_graph, crs=crs_projected, preserve_geometry=True)
+    potential_network_df['length'] = potential_network_df.geometry.length
+    
+    if crs_projected is None:
+        raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
+
+    # Ensure building centroids is in projected crs
+    building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
@@ -63,12 +75,11 @@ def layout_network(network_layout, locator, plant_building_names=None, output_na
     disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
 
     calc_steiner_spanning_tree(crs_projected,
-                               temp_path_potential_network_shp,
+                               building_centroids_df,
+                               potential_network_df,
                                output_network_folder,
-                               temp_path_building_centroids_shp,
                                path_output_edges_shp,
                                path_output_nodes_shp,
-                               weight_field,
                                type_mat_default,
                                pipe_diameter_default,
                                type_network,
@@ -105,7 +116,7 @@ class NetworkLayout(object):
                 setattr(self, attr, getattr(network_layout, attr))
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)

@@ -23,7 +23,6 @@ __status__ = "Production"
 
 
 def calc_building_centroids(input_buildings_shp,
-                            temp_path_building_centroids_shp,
                             list_district_scale_buildings,
                             plant_buildings,
                             consider_only_buildings_with_demand=False,
@@ -60,9 +59,6 @@ def calc_building_centroids(input_buildings_shp,
 
     # # decrease the number of units of the points
     building_centroids_df = simplify_points_accurracy(points, SHAPEFILE_TOLERANCE, points.crs)
-
-    # saving result
-    building_centroids_df.to_file(temp_path_building_centroids_shp, driver='ESRI Shapefile')
 
     return building_centroids_df
 

@@ -888,7 +888,7 @@ def mutate_generation(new_generation, network_info):
 # test
 # ============================
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     runs an optimization calculation for the plant location in the thermal network.
     """

@@ -549,7 +549,7 @@ def calc_network_size(network_info):
     return float(length_m), float(average_diameter_m)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
     :param config:

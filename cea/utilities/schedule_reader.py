@@ -128,7 +128,7 @@ def schedule_to_file(schedule, schedule_path):
     print('Schedule file written to {}'.format(schedule_path))
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     path_to_building_schedule = locator.get_database_standard_schedules_use('MULTI_RES')
     # print(read_cea_schedule(path_to_building_schedule))

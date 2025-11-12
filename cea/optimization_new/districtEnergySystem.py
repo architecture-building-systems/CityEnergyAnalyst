@@ -677,6 +677,9 @@ class DistrictEnergySystem(object):
     @staticmethod
     def initialize_class_variables(domain):
         """ Store maximum number of networks and optimisation algorithm parameters in class variables. """
+        # Reset counter to prevent state persistence across runs
+        DistrictEnergySystem._number_of_selected_DES = 0
+
         DistrictEnergySystem._max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
         DistrictEnergySystem._network_type = domain.config.optimization_new.network_type
 
