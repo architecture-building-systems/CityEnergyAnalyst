@@ -32,7 +32,7 @@ class TestFindConvertibleEnergyCarriers(unittest.TestCase):
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
 
         # Set optimization_new config values needed for component initialization
-        cls.config.optimization_new.network_type = 'DC'
+        cls.config.thermal_network.network_type = 'DC'
         cls.config.optimization_new.network_temperature = 10.0
         cls.config.optimization_new.available_energy_sources = ['power_grid']
         cls.config.optimization_new.component_efficiency_model_complexity = 'constant'
@@ -166,7 +166,7 @@ class TestPassiveComponentSelection(unittest.TestCase):
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
 
         # Set optimization_new config values
-        cls.config.optimization_new.network_type = 'DC'
+        cls.config.thermal_network.network_type = 'DC'
         cls.config.optimization_new.network_temperature = 10.0
         cls.config.optimization_new.available_energy_sources = ['power_grid']
         cls.config.optimization_new.component_efficiency_model_complexity = 'constant'
@@ -556,7 +556,7 @@ class TestSupplySystemBuildWithUserSelection(unittest.TestCase):
         cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
 
         # Set optimization_new config values
-        cls.config.optimization_new.network_type = 'DC'
+        cls.config.thermal_network.network_type = 'DC'
         cls.config.optimization_new.network_temperature = 10.0
         cls.config.optimization_new.available_energy_sources = ['power_grid', 'fossil_fuels', 'bio_fuels']
         cls.config.optimization_new.component_efficiency_model_complexity = 'constant'

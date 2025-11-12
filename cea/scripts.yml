@@ -334,7 +334,7 @@ Energy Supply System Optimisation:
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
-                 optimization-new]
+                 'thermal-network:network-type', 'thermal-network:network-name', 'optimization-new']
     input-files:
       - [get_street_network]
       - [get_total_demand]

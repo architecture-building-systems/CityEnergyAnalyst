@@ -906,14 +906,10 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         """Get current network type from config"""
         network_type = ""
         try:
-            # FIXME: optimization-new network_type should use from thermal-network section
             # For thermal-network section
             if hasattr(self.config, 'thermal_network'):
                 network_type = self.config.thermal_network.network_type
-            # For optimization-new section
-            elif hasattr(self.config, 'optimization_new'):
-                network_type = self.config.optimization_new.network_type
-
+            
             return network_type
         except AttributeError:
             return network_type
