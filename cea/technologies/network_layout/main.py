@@ -443,35 +443,35 @@ class NetworkLayout(object):
 
 
 def main(config: cea.config.Configuration):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)
     plant_building_name = config.network_layout.plant_building
     network_type = config.network_layout.network_type
-
-    # Determine network name (auto-generate timestamp if blank)
     network_name = config.network_layout.network_name
-    if not network_name or not network_name.strip():
-        network_name = datetime.now().strftime('%Y%m%d_%H%M%S')
-        print(f"Network name: {network_name} (auto-generated timestamp)")
-    else:
-        network_name = network_name.strip()
-        print(f"Network name: {network_name} (user-defined)")
 
-        # Safety check: Verify network doesn't already exist (backend validation fallback)
-        output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-        if os.path.exists(output_folder):
-            edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-            if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                raise ValueError(
-                    f"Network layout '{network_name}' already exists for {network_type}:\n"
-                    f"  {output_folder}\n\n"
-                    f"Resolution:\n"
-                    f"  1. Use a different network name (e.g., '{network_name}_v2')\n"
-                    f"  2. Delete the existing network folder manually\n"
-                    f"  3. Leave network-name blank to auto-generate timestamp"
-                )
+    if not network_name or not network_name.strip():
+        raise ValueError(
+            "Network name is required. Please provide a descriptive name for this network layout variant "
+            "(e.g., 'all-connected')."
+        )
+    
+    network_name = network_name.strip()
+    print(f"Network name: {network_name} (user-defined)")
+
+    # Safety check: Verify network doesn't already exist (backend validation fallback)
+    output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+    if os.path.exists(output_folder):
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+        if os.path.exists(edges_path) or os.path.exists(nodes_path):
+            raise ValueError(
+                f"Network layout '{network_name}' already exists for {network_type}:\n"
+                f"  {output_folder}\n\n"
+                f"Resolution:\n"
+                f"  1. Use a different network name (e.g., '{network_name}_v2')\n"
+                f"  2. Delete the existing network folder manually\n"
+                f"  3. Leave network-name blank to auto-generate timestamp"
+            )
 
     # Check if user provided custom network layout
     edges_shp = config.network_layout.edges_shp_path

@@ -765,9 +765,8 @@ class NetworkLayoutNameParameter(StringParameter):
         Validate and encode network name.
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
-        # Blank/empty is OK - will auto-generate timestamp
         if not value or not value.strip():
-            return ''
+            raise ValueError("Network name is required. Please provide a descriptive name for this network layout variant (e.g., 'all-connected').")
 
         value = value.strip()
 
@@ -821,9 +820,8 @@ class NetworkLayoutNameParameter(StringParameter):
 
     def decode(self, value):
         """Validate network name doesn't collide with existing networks"""
-        # Blank/empty is OK - will auto-generate timestamp
         if not value or not value.strip():
-            return value
+            raise ValueError("Network name is required. Please provide a descriptive name for this network layout variant (e.g., 'all-connected').")
 
         value = value.strip()
 
