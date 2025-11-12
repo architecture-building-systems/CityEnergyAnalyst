@@ -550,7 +550,7 @@ Annual recoverable heat (rule of thumb):
    - Geothermal (if ground access)
    - Water body (if nearby)
    - Sewage (if high water use)
-3. **Compare results** using [Export Results to CSV](01-import-export.md#export-results-to-csv)
+3. **Compare results** using [Export Results to CSV](01-import-export.md#export-results-to-csv-summary--analytics)
 4. **Visualise** using [Plot - Solar Technology](10-visualisation.md#plot-solar-technology)
 5. **Integrate into supply system optimisation**
 

@@ -259,7 +259,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 ### Tips
 
-1. **Temperature optimization**: Lower supply temperatures reduce heat losses
+1. **Temperature optimisation**: Lower supply temperatures reduce heat losses
 2. **Pressure management**: Long networks may need intermediate pumping stations
 3. **Insulation pays off**: Better insulation reduces operating costs
 4. **Validate with reality**: Compare results with existing network data if available
@@ -306,7 +306,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
    - Set appropriate supply/return temperatures (e.g., 80°C / 50°C)
    - Review results: pipe sizes, heat losses, pumping energy
 
-4. **Optimization** (Optional):
+4. **Optimisation** (Optional):
    - Run [District-Scale Optimisation](07-supply-optimisation.md) to find optimal plant and system configuration
    - Iterate on network configuration if needed
 
@@ -332,7 +332,7 @@ Same as heating, but:
 - **Future-proof**: Consider expansion areas
 
 ### Operating Strategy
-- **Temperature optimization**: Lower temps = lower losses
+- **Temperature optimisation**: Lower temps = lower losses
 - **Load management**: Balance peak loads across network
 - **Seasonal adjustment**: Vary temperatures with season
 - **Smart controls**: Use real-time monitoring and control

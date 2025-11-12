@@ -237,7 +237,7 @@ Visualises how emissions evolve over time, tracking cumulative lifecycle emissio
 - Stacked area shows how sources change over time
 - Early: Dominated by embodied
 - Long-term: Dominated by operational
-- Grid decarbonization = operational decreases over time
+- Grid decarbonisation = operational decreases over time
 
 ### Use Cases
 
@@ -487,7 +487,7 @@ Plots Pareto frontiers from optimisation results, visualising trade-offs between
    - Optionally highlight key solutions
    - Click **Run**
 
-3. **Outputs**: `{scenario}/outputs/plots/optimization/pareto_front/`
+3. **Outputs**: `{scenario}/outputs/plots/optimisation/pareto_front/`
 
 ### Chart Interpretation
 

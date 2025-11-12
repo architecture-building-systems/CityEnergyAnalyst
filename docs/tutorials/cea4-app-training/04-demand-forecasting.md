@@ -133,7 +133,7 @@ The feature calculates hourly demand for:
 
 **Electricity**:
 - Appliances (Eal)
-- Lighting (Eal)
+- Lighting (El)
 - Appliances and lighting (E)
 - Auxiliary energy for HVAC (Ea)
 - Process electricity (Epro)

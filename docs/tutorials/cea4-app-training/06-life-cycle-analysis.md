@@ -295,7 +295,7 @@ Calculates the capital (CAPEX) and operational (OPEX) costs for building energy 
    - Emissions (for carbon footprint)
    - Energy Supply System Costs (for economic analysis)
 
-2. **Export results**: Use [Export Results to CSV](01-import-export.md#export-results-to-csv)
+2. **Export results**: Use [Export Results to CSV](01-import-export.md#export-results-to-csv-summary--analytics)
 
 3. **Create comparison matrix**:
    - Scenario A vs B on emissions

@@ -81,19 +81,19 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 
 ### Output Files
 
-**Pareto optimal solutions**: `{scenario}/outputs/data/optimization/decentralized/pareto_solutions.csv`
+**Pareto optimal solutions**: `{scenario}/outputs/data/optimisation/decentralized/pareto_solutions.csv`
 - Non-dominated solutions (cost-emission trade-offs)
 - Technology configurations for each solution
 - Costs, emissions, and energy metrics
 - System capacities
 
-**Individual building results**: `{scenario}/outputs/data/optimization/decentralized/BXXX_optimal_systems.csv`
+**Individual building results**: `{scenario}/outputs/data/optimisation/decentralized/BXXX_optimal_systems.csv`
 - Optimal system configuration for each building
 - Equipment sizing (kW)
 - Annual costs and emissions
 - Energy generation/consumption
 
-**Summary statistics**: `{scenario}/outputs/data/optimization/decentralized/optimization_summary.csv`
+**Summary statistics**: `{scenario}/outputs/data/optimisation/decentralized/optimisation_summary.csv`
 - Best solutions by objective
 - Min cost solution
 - Min emissions solution
@@ -206,7 +206,7 @@ District optimisation must account for:
 |-----------|-------------|---------------|
 | **Optimisation algorithm** | Evolutionary algorithm | NSGA-II or similar |
 | **Population size** | Solutions per generation | 100-300 |
-| **Number of generations** | Optimization iterations | 50-150 |
+| **Number of generations** | Optimisation iterations | 50-150 |
 | **Allow district heating** | Include DH network option | Optional |
 | **Allow district cooling** | Include DC network option | Optional |
 | **Allow CHP** | Include combined heat & power | Optional |
@@ -239,24 +239,24 @@ District optimisation must account for:
 
 ### Output Files
 
-**Pareto frontier**: `{scenario}/outputs/data/optimization-new/pareto_optimal_solutions.csv`
+**Pareto frontier**: `{scenario}/outputs/data/optimisation-new/pareto_optimal_solutions.csv`
 - Non-dominated system configurations
 - Cost, emissions, and energy for each solution
 - Network configurations
 - Plant capacities and locations
 
-**Optimal system configurations**: `{scenario}/outputs/data/optimization-new/optimal_supply_systems_summary.csv`
+**Optimal system configurations**: `{scenario}/outputs/data/optimisation-new/optimal_supply_systems_summary.csv`
 - Detailed technology mix for each Pareto solution
 - Equipment types and capacities
 - Network characteristics
 - Annual performance metrics
 
-**Building connections**: `{scenario}/outputs/data/optimization-new/building_connections.csv`
+**Building connections**: `{scenario}/outputs/data/optimisation-new/building_connections.csv`
 - Which buildings connect to district systems (per solution)
 - Substation sizing
 - Connection costs
 
-**Hourly operation** (for selected solutions): `{scenario}/outputs/data/optimization-new/hourly_operation/`
+**Hourly operation** (for selected solutions): `{scenario}/outputs/data/optimisation-new/hourly_operation/`
 - Plant dispatch schedules
 - Storage operation
 - Network flows
