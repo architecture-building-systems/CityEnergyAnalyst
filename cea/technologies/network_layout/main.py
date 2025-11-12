@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 import geopandas as gpd
 import pandas as pd
@@ -346,7 +345,6 @@ def resolve_plant_building(plant_building_input, available_buildings):
 def layout_network(network_layout, locator, plant_building_name=None, output_name_network="", optimization_flag=False):
     if plant_building_name is None:
         plant_building_name = ""
-    weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
 
     # type_mat_default = network_layout.type_mat
