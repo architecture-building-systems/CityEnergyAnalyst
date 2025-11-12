@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 from typing import Dict, Any, List, Optional
+import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -12,6 +13,27 @@ from .utils import deconstruct_parameters
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+def validate_parameter(parameter, value, parameter_name: str = None) -> tuple[bool, str | None]:
+    """
+    Validate a parameter value using its encode() method.
+
+    Returns:
+        tuple[bool, str | None]: (is_valid, error_message)
+    """
+    try:
+        parameter.encode(value)
+        return True, None
+    except ValueError as e:
+        error_message = str(e)
+        logger.error(f"Validation failed for {parameter_name or parameter.name}: {error_message}")
+        return False, error_message
+    except Exception as e:
+        error_message = f"Validation error: {str(e)}"
+        logger.error(f"Unexpected validation error for {parameter_name or parameter.name}: {error_message}")
+        return False, error_message
 
 
 class ToolDescription(BaseModel):
@@ -81,7 +103,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
         default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
         # Don't set parameters that are not nullable and have an empty default value
         if default_value == "" and (not hasattr(parameter, "nullable") or not parameter.nullable):
-            print(f"Skipping {parameter.name} since it has no default value")
+            logger.debug(f"Skipping {parameter.name} since it has no default value")
             continue
 
         parameter.set(default_value)
@@ -102,25 +124,17 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
     """
     field_errors = {}
 
-    # First pass: validate all parameters using encode()
+    # Validate all parameters first
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name != 'scenario' and parameter.name in payload:
             value = payload[parameter.name]
-            try:
-                # Validate using encode() - this will raise ValueError if invalid
-                parameter.encode(value)
-            except ValueError as e:
-                # Collect validation errors
-                field_errors[parameter.name] = str(e)
-                print(f'[save_tool_config] Validation error for {parameter.name}: {e}')
-            except Exception as e:
-                # Other errors - treat as validation failures
-                field_errors[parameter.name] = f"Validation error: {str(e)}"
-                print(f'[save_tool_config] Unexpected error validating {parameter.name}: {e}')
+            is_valid, error_message = validate_parameter(parameter, value)
+            if not is_valid:
+                field_errors[parameter.name] = error_message
 
     # If there are validation errors, return them without saving
     if field_errors:
-        print(f'[save_tool_config] Validation failed with {len(field_errors)} errors')
+        logger.error(f'[save_tool_config] Validation failed with {len(field_errors)} errors')
         raise HTTPException(
             status_code=400,
             detail={
@@ -129,11 +143,10 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
             }
         )
 
-    # Second pass: set all parameters (validation passed)
+    # All parameters valid - set them
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name != 'scenario' and parameter.name in payload:
             value = payload[parameter.name]
-            print('%s: %s' % (parameter.name, value))
             parameter.set(value)
 
     if isinstance(config, CEADatabaseConfig):
@@ -157,9 +170,6 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
     value = payload.get('value')
     form_values = payload.get('form_values', {})
 
-    print(f"\n[validate_field] tool_name={tool_name}, parameter_name={parameter_name}, value={value}")
-    print(f"[validate_field] form_values={form_values}")
-
     if not parameter_name:
         raise HTTPException(status_code=400, detail="parameter_name is required")
 
@@ -167,10 +177,10 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
     for param in parameters_for_script(tool_name, config):
         if param.name in form_values and param.name != parameter_name:
             try:
-                print(f"[validate_field] Setting {param.name} = {form_values[param.name]}")
+                logger.debug(f"[validate_field] Setting {param.name} = {form_values[param.name]}")
                 param.set(form_values[param.name])
             except Exception as e:
-                print(f"[validate_field] Failed to set {param.name}: {e}")
+                logger.error(f"[validate_field] Failed to set {param.name}: {e}")
 
     # Find the parameter to validate
     target_parameter = None
@@ -183,18 +193,8 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
         raise HTTPException(status_code=404, detail=f"Parameter '{parameter_name}' not found")
 
     # Validate using encode() method
-    try:
-        encoded_value = target_parameter.encode(value)
-        print(f"[validate_field] Validation passed, encoded value: {encoded_value}")
-        return {"valid": True, "error": None}
-    except ValueError as e:
-        error_message = str(e)
-        print(f"[validate_field] Validation failed: {error_message}")
-        return {"valid": False, "error": error_message}
-    except Exception as e:
-        error_message = f"Validation error: {str(e)}"
-        print(f"[validate_field] Unexpected error: {error_message}")
-        return {"valid": False, "error": error_message}
+    is_valid, error_message = validate_parameter(target_parameter, value, parameter_name)
+    return {"valid": is_valid, "error": error_message}
 
 
 @router.post('/{tool_name}/parameter-metadata')
@@ -213,18 +213,14 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
     form_values = payload.get('form_values', {})
     affected_parameters = payload.get('affected_parameters', None)
 
-    print(f"\n[get_parameter_metadata] tool_name={tool_name}")
-    print(f"[get_parameter_metadata] form_values={form_values}")
-    print(f"[get_parameter_metadata] affected_parameters={affected_parameters}")
-
     # Temporarily set form values on config (in-memory only, don't save)
     for param in parameters_for_script(tool_name, config):
         if param.name in form_values:
             try:
-                print(f"[get_parameter_metadata] Setting {param.name} = {form_values[param.name]}")
+                logger.debug(f"[get_parameter_metadata] Setting {param.name} = {form_values[param.name]}")
                 param.set(form_values[param.name])
             except Exception as e:
-                print(f"[get_parameter_metadata] Failed to set {param.name}: {e}")
+                logger.error(f"[get_parameter_metadata] Failed to set {param.name}: {e}")
 
     # TODO: Add plugin support
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
@@ -239,7 +235,7 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
         # For ChoiceParameters, get updated choices
         if isinstance(param, cea.config.ChoiceParameter):
             try:
-                choices = param._choices
+                choices = param._choices  # type: ignore[attr-defined]
                 current_value = param.get()
 
                 # If current value not in choices, use first choice or None
@@ -250,11 +246,11 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
                     'choices': choices,
                     'value': current_value
                 }
-                print(f"[get_parameter_metadata] {param.name}: {len(choices)} choices, value={current_value}")
+                logger.debug(f"[get_parameter_metadata] {param.name}: {len(choices)} choices, value={current_value}")
             except Exception as e:
-                print(f"[get_parameter_metadata] Error getting metadata for {param.name}: {e}")
+                logger.error(f"[get_parameter_metadata] Error getting metadata for {param.name}: {e}")
 
-    print(f"[get_parameter_metadata] Returning metadata for {len(result)} parameters")
+    logger.debug(f"[get_parameter_metadata] Returning metadata for {len(result)} parameters")
     return {'parameters': result}
 
 
