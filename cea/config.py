@@ -760,6 +760,11 @@ class NetworkLayoutNameParameter(StringParameter):
     Validates in real-time to prevent overwriting existing network layouts.
     """
 
+    def initialize(self, parser):
+        super().initialize(parser)
+        # Declare dependency: validation depends on network-type
+        self.depends_on = ['network-type']
+
     def encode(self, value):
         """
         Validate and encode network name.
@@ -933,6 +938,8 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def initialize(self, parser):
         # Don't call parent initialize - we'll build choices dynamically
         self._choices_cache = None
+        # Declare dependency: choices depend on network-type
+        self.depends_on = ['network-type']
 
     @property
     def _choices(self):
