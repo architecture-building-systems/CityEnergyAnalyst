@@ -820,9 +820,6 @@ class NetworkLayoutNameParameter(StringParameter):
 
     def decode(self, value):
         """Validate network name doesn't collide with existing networks"""
-        if not value or not value.strip():
-            raise ValueError("Network name is required. Please provide a descriptive name for this network layout variant (e.g., 'all-connected').")
-
         value = value.strip()
 
         # Check for invalid filesystem characters (always check, doesn't depend on scenario)
