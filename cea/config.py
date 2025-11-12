@@ -766,7 +766,7 @@ class NetworkLayoutNameParameter(StringParameter):
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
         if not value or not value.strip():
-            raise ValueError("Network name is required. Please provide a descriptive name for this network layout variant (e.g., 'all-connected').")
+            raise ValueError("Network name cannot be empty.")
 
         value = value.strip()
 
