@@ -6,6 +6,10 @@ from __future__ import annotations
 from typing import Any, Dict, List, Union, Optional, Generator, Tuple, overload, Literal
 import configparser
 
+# Module-level constants
+CEA_CONFIG: str
+DEFAULT_CONFIG: str
+
 class Configuration:
     # Core configuration attributes
     default_config: configparser.ConfigParser
@@ -1122,6 +1126,7 @@ class OptimizationSection(Section):
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
     network_type: str
+    buildings: list[str]
     cooling_components: list[str]
     heating_components: list[str]
     heat_rejection_components: list[str]
@@ -1155,6 +1160,8 @@ class OptimizationNewSection(Section):
 
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["cooling_components"]) -> list[str]: ...
     @overload

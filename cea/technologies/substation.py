@@ -7,7 +7,7 @@ import pandas as pd
 from numba import jit
 
 import cea.config
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_MASS_FLOW_K, MIN_TEMP_DIFF_FOR_HEX_LMTD_K
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 
@@ -496,7 +496,48 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         if Qnom_W > 0:
             tco = Ths_supply_C + 273  # in K
             tci = Ths_return_C + 273  # in K
-            cc = Qhs_sys_W / (tco - tci)
+
+            # Check temperature difference before division
+            temp_diff = tco - tci
+
+            # Handle hours with zero or very small temperature difference
+            # This is physically correct: when temp_diff ≈ 0, there's no heat transfer, so cc should be 0
+            # Initialize cc array with zeros
+            cc = np.zeros_like(Qhs_sys_W)
+
+            # Only calculate cc for hours with sufficient temperature difference
+            valid_mask = np.abs(temp_diff) >= MIN_TEMP_DIFF_FOR_MASS_FLOW_K
+            if np.any(valid_mask):
+                cc[valid_mask] = Qhs_sys_W[valid_mask] / temp_diff[valid_mask]
+
+            # If no valid hours exist (all temp differences too small but demand exists), this is a configuration error
+            if not np.any(valid_mask) and np.any(Qhs_sys_W > 0):
+                raise ValueError(
+                    f"Invalid temperature configuration for space heating heat capacity calculation!\n"
+                    f"Supply and return temperatures are too close for ALL hours with heating demand.\n"
+                    f"Supply temperature (tco): {np.mean(tco):.2f} K (mean)\n"
+                    f"Return temperature (tci): {np.mean(tci):.2f} K (mean)\n"
+                    f"Maximum difference: {np.max(np.abs(temp_diff)):.6f} K\n\n"
+                    f"For valid calculation, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
+                    f"**Check the building space heating supply and return temperatures in HVAC database."
+                )
+
+            # Find the nominal condition index among valid hours only
+            # We need to ensure the peak hour has valid temperature difference
+            if not valid_mask[index]:
+                # If the original peak hour is invalid, find the peak among valid hours
+                valid_demand = Qhs_sys_W.copy()
+                valid_demand[~valid_mask] = 0  # Zero out invalid hours
+                if np.max(valid_demand) > 0:
+                    index = np.argmax(valid_demand)  # Find peak among valid hours
+                else:
+                    # This shouldn't happen due to earlier check, but safety fallback
+                    raise ValueError(
+                        "Cannot find valid nominal condition for space heating substation!\n"
+                        "All hours with heating demand have invalid temperature configurations.\n"
+                        "**Check the building space heating supply and return temperatures in HVAC database."
+                    )
+
             thi_0 = thi[index]
             tci_0 = tci[index]
             tco_0 = tco[index]
@@ -581,8 +622,21 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
         - Area_HEX_cooling = area of heat exchanger.
     '''
 
+    # Check temperature difference before division
+    temp_diff = thi_0 - tci_0
+    if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+        raise ValueError(
+            f"Invalid temperature configuration for cooling substation heat exchanger!\n"
+            f"Hot inlet temperature equals cold inlet temperature.\n"
+            f"Hot inlet (thi_0): {thi_0:.2f} K\n"
+            f"Cold inlet (tci_0): {tci_0:.2f} K\n"
+            f"Difference: {temp_diff:.6f} K\n\n"
+            f"For valid heat transfer, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
+            f"**Check the building and network supply temperatures for cooling."
+        )
+
     # nominal conditions network side
-    cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)
+    cc_0 = ch_0 * (thi_0 - tho_0) / (temp_diff * 0.9)
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
@@ -619,8 +673,21 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     if thi_0 <= tco_0:
         raise Exception("The temperature of the hot stream is lower than the cold stream, Please check inputs!")
 
+    # Check temperature difference before division
+    temp_diff = thi_0 - tci_0
+    if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+        raise ValueError(
+            f"Invalid temperature configuration for heating substation heat exchanger!\n"
+            f"Hot inlet temperature equals cold inlet temperature.\n"
+            f"Hot inlet (thi_0): {thi_0:.2f} K\n"
+            f"Cold inlet (tci_0): {tci_0:.2f} K\n"
+            f"Difference: {temp_diff:.6f} K\n\n"
+            f"For valid heat transfer, temperature difference must be > {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K.\n"
+            f"**Check the network and building supply temperatures for heating."
+        )
+
     # nominal condition of the secondary side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # estimate ch_0 assuming effectiveness = 0.9
+    ch_0 = cc_0 * (tco_0 - tci_0) / (temp_diff * 0.9)  # estimate ch_0 assuming effectiveness = 0.9
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0)
     # Area heat exchange and UA_heating
@@ -648,7 +715,13 @@ def calc_plate_HEX(NTU, cr):
 
 @jit('boolean(float64, float64)', nopython=True)
 def efficiencies_not_converged(previous_efficiency, current_efficiency):
-    tolerance = 0.00000001
+    # Convergence tolerance for heat exchanger efficiency iteration
+    tolerance = 1e-08  # Convergence tolerance value
+
+    # Validate previous_efficiency to avoid division by zero
+    if abs(previous_efficiency) < tolerance:
+        # If previous efficiency is essentially zero, check absolute difference instead
+        return abs(previous_efficiency - current_efficiency) > tolerance
     return abs((previous_efficiency - current_efficiency) / previous_efficiency) > tolerance
 
 
@@ -680,6 +753,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         - ``cc``, capacity mass flow rate secondary side
 
     """
+    # Check if primary side has meaningful temperature drop (thi != tho); if temperatures are essentially equal, no heat transfer occurs, skip iteration
     if ch_kWperK > 0 and not isclose(thi_K, tho_K):
         previous_efficiency = 0.1
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
@@ -708,8 +782,16 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
             # previous_efficiency = current_efficiency
             # current_efficiency = calculate_next_efficiency
 
-        cc_kWperK = Q_cooling_W / abs(tci_K - tco_K)
-        tco_C = tco_K - 273.0
+        # Validate secondary side temperature rise from iteration results (unlike primary side input validation above).
+        temp_diff = abs(tci_K - tco_K)
+        if temp_diff < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+            # When temperature difference is negligible, no meaningful heat transfer
+            # This can occur with very small cooling loads
+            tco_C = 0.0
+            cc_kWperK = 0.0
+        else:
+            cc_kWperK = Q_cooling_W / temp_diff
+            tco_C = tco_K - 273.0
     else:
         tco_C = 0.0
         cc_kWperK = 0.0
@@ -790,7 +872,12 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
         - ``ch``, capacity mass flow rate secondary side
 
     """
-    ch_kWperK = 0
+    ch_kWperK = 0.0
+    # Handle cases where either cc_kWperK is zero (no heat capacity flow)
+    # or Q_heating_W is zero (no heating load). This can occur when temperature difference between supply and return is negligible or there is no demand.
+    if cc_kWperK == 0.0 or Q_heating_W == 0.0:
+        return 0.0, 0.0
+
     if Q_heating_W > 0.0:
         dT_primary = tco_K - tci_K if not isclose(tco_K,
                                                   tci_K) else 0.0001  # to avoid errors with temperature changes < 0.001
@@ -815,8 +902,8 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
             tho_K = thi_K - current_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
         tho_C = tho_K - 273
     else:
-        tho_C = 0
-        ch_kWperK = 0
+        tho_C = 0.0
+        ch_kWperK = 0.0
     return float(tho_C), float(ch_kWperK)
 
 
@@ -837,19 +924,19 @@ def calc_dTm_HEX(thi, tho, tci, tco):
 
     # Check for physically impossible situations
     if dT1 <= 0 or dT2 <= 0:
-        # **Check the emission_system database, there might be a problem with the selection of nominal temperatures
         raise ValueError(
             f"Invalid temperature configuration detected!\n"
             f"Temperature differences:\n"
-            f"Hot end (thi - tco): {dT1:.2f}\n"
-            f"Cold end (tho - tci): {dT2:.2f}\n\n"
+            f"Hot end (thi - tco): {dT1:.2f} K\n"
+            f"Cold end (tho - tci): {dT2:.2f} K\n\n"
             f"For valid heat transfer, differences must be > 0:\n"
             f"- Hot inlet (thi) must be > Cold outlet (tco)\n"
-            f"- Hot outlet (tho) must be > Cold inlet (tci)"
+            f"- Hot outlet (tho) must be > Cold inlet (tci)\n\n"
+            f"**Check the emission_system database, there might be a problem with the selection of nominal temperatures."
         )
 
-    # Check if temperature differences are equal (to avoid division by zero)
-    if abs(dT1 - dT2) < 0.001:  # Using small threshold to avoid floating point issues
+    # Check if temperature differences are equal (to avoid division by zero in log calculation)
+    if abs(dT1 - dT2) < MIN_TEMP_DIFF_FOR_HEX_LMTD_K:  # Using small threshold to avoid floating point issues
         return dT1  # If differences are equal, LMTD equals either difference
 
     dTm = (dT1 - dT2) / np.log(dT1 / dT2)

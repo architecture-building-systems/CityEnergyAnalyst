@@ -12,7 +12,7 @@ class OutsideProjectRootError(Exception):
         super().__init__(f"Path `{path}` is not a valid path.")
         self.path = path
 
-def secure_path(path: Union[str, os.PathLike]) -> str:
+def secure_path(path: Union[str, os.PathLike], root: Union[str, os.PathLike, None] = None) -> str:
     """
     Validates and sanitizes a file path to prevent directory traversal attacks.
 
@@ -34,11 +34,13 @@ def secure_path(path: Union[str, os.PathLike]) -> str:
 
     # TODO: Remove dependency on settings
     if not get_settings().allow_path_transversal():
-        settings_project_root = get_settings().project_root
-        if settings_project_root is None:
-            raise ValueError("Project root not set. Unable to determine project root.")
-
-        project_root = os.path.realpath(settings_project_root)
+        if root is not None:
+            project_root = os.path.realpath(root)
+        else:
+            settings_project_root = get_settings().project_root
+            if settings_project_root is None:
+                raise ValueError("Project root not set. Unable to determine project root.")
+            project_root = os.path.realpath(settings_project_root)
 
         # Normalize case on case-insensitive filesystems for accurate comparison
         # This prevents false rejections while maintaining security

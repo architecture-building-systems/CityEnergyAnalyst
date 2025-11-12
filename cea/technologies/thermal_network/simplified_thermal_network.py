@@ -10,14 +10,16 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, SHAPEFILE_TOLERANCE
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.thermal_network.utility import extract_network_from_shapefile
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -94,66 +96,6 @@ def calculate_ground_temperature(locator):
     return T_ground_K
 
 
-def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
-    """
-    Extracts network data into DataFrames for pipes and nodes in the network
-
-    :param edge_shapefile_df: DataFrame containing all data imported from the edge shapefile
-    :param node_shapefile_df: DataFrame containing all data imported from the node shapefile
-    :type edge_shapefile_df: DataFrame
-    :type node_shapefile_df: DataFrame
-    :return node_df: DataFrame containing all nodes and their corresponding coordinates
-    :return edge_df: list of edges and their corresponding lengths and start and end nodes
-    :rtype node_df: DataFrame
-    :rtype edge_df: DataFrame
-
-    """
-    # create node dictionary with plant and consumer nodes
-    node_dict = {}
-    node_shapefile_df.set_index("name", inplace=True)
-    node_shapefile_df = node_shapefile_df.astype('object')
-    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-    # sort node_df by index number
-    node_sorted_index = node_shapefile_df.index.to_series().str.split('NODE', expand=True)[1].apply(int).sort_values(
-        ascending=True)
-    node_shapefile_df = node_shapefile_df.reindex(index=node_sorted_index.index)
-
-    for node, row in node_shapefile_df.iterrows():
-        coord_node = row['geometry'].coords[0]
-        coord_node_round = (round(coord_node[0], SHAPEFILE_TOLERANCE), round(coord_node[1], SHAPEFILE_TOLERANCE))
-        node_dict[coord_node_round] = node
-
-    # create edge dictionary with pipe lengths and start and end nodes
-    # complete node dictionary with missing nodes (i.e., joints)
-    edge_shapefile_df.set_index("name", inplace=True)
-    edge_shapefile_df = edge_shapefile_df.astype('object')
-    edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-    # sort edge_df by index number
-    edge_sorted_index = edge_shapefile_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
-        ascending=True)
-    edge_shapefile_df = edge_shapefile_df.reindex(index=edge_sorted_index.index)
-    # assign edge properties
-    edge_shapefile_df['start node'] = ''
-    edge_shapefile_df['end node'] = ''
-
-    for pipe, row in edge_shapefile_df.iterrows():
-        # get the length of the pipe and add to dataframe
-        edge_coords = row['geometry'].coords
-        edge_shapefile_df.loc[pipe, 'length_m'] = row['geometry'].length
-        start_node = (round(edge_coords[0][0], SHAPEFILE_TOLERANCE), round(edge_coords[0][1], SHAPEFILE_TOLERANCE))
-        end_node = (round(edge_coords[1][0], SHAPEFILE_TOLERANCE), round(edge_coords[1][1], SHAPEFILE_TOLERANCE))
-        if start_node in node_dict.keys():
-            edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
-        else:
-            print(f"The start node of {pipe} has no match in node_dict, check precision of the coordinates.")
-        if end_node in node_dict.keys():
-            edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
-        else:
-            print(f"The end node of {pipe} has no match in node_dict, check precision of the coordinates.")
-
-    return node_shapefile_df, edge_shapefile_df
-
-
 def get_thermal_network_from_shapefile(locator, network_type, network_name):
     """
     This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
@@ -184,7 +126,33 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, 
         raise ValueError("Pipe catalog is empty. Please check the thermal grid database.")
 
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
-    diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
+
+    # Validate parameters for diameter calculation
+    if velocity_ms <= 0:
+        raise ValueError(
+            f"Invalid velocity for pipe diameter calculation!\n"
+            f"Velocity: {velocity_ms:.6f} m/s\n\n"
+            f"Velocity must be > 0.\n"
+            f"Typical values: 0.5-3.0 m/s for district networks\n\n"
+            f"**Check the peak_load_velocity parameter in the thermal network configuration."
+        )
+
+    sqrt_arg = (volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi)
+    if sqrt_arg < 0:
+        raise ValueError(
+            f"Invalid argument for square root in pipe diameter calculation!\n"
+            f"Volume flow rate (corrected): {volume_flow_m3s_corrected_to_design:.6e} m³/s\n"
+            f"Velocity: {velocity_ms:.6f} m/s\n"
+            f"Square root argument: {sqrt_arg:.6e}\n\n"
+            f"For valid diameter calculation:\n"
+            f"- Volume flow rate must be >= 0\n"
+            f"- Velocity must be > 0\n\n"
+            f"**Check:\n"
+            f"  - Original volume flow: {volume_flow_m3s:.6e} m³/s\n"
+            f"  - Peak load percentage: {peak_load_percentage:.2f}%"
+        )
+
+    diameter_m = math.sqrt(sqrt_arg)
 
     # Calculate differences and find the index of the minimum difference
     differences = (pipe_catalog['D_int_m'] - diameter_m).abs()
@@ -211,6 +179,41 @@ def calc_linear_thermal_loss_coefficient(diameter_ext_m, diameter_int_m, diamete
     r_s_m = diameter_insulation_m / 2
     k_pipe_WpermK = 58.7  # steel pipe
     k_ins_WpermK = 0.059  # calcium silicate insulation
+
+    # Validate radii for logarithm calculations
+    if r_in_m <= 0 or r_out_m <= 0 or r_s_m <= 0:
+        raise ValueError(
+            f"Invalid pipe dimensions for thermal loss calculation!\n"
+            f"Inner radius (r_in): {r_in_m:.6f} m\n"
+            f"Outer radius (r_out): {r_out_m:.6f} m\n"
+            f"Insulation radius (r_s): {r_s_m:.6f} m\n\n"
+            f"All radii must be > 0.\n\n"
+            f"**Check pipe diameter values:\n"
+            f"  - Internal diameter: {diameter_int_m:.6f} m\n"
+            f"  - External diameter: {diameter_ext_m:.6f} m\n"
+            f"  - Insulation diameter: {diameter_insulation_m:.6f} m"
+        )
+
+    if r_out_m <= r_in_m:
+        raise ValueError(
+            f"Invalid pipe dimensions - outer radius must be > inner radius!\n"
+            f"Inner radius (r_in): {r_in_m:.6f} m\n"
+            f"Outer radius (r_out): {r_out_m:.6f} m\n\n"
+            f"**Check pipe diameter values:\n"
+            f"  - Internal diameter: {diameter_int_m:.6f} m\n"
+            f"  - External diameter: {diameter_ext_m:.6f} m"
+        )
+
+    if r_s_m <= r_out_m:
+        raise ValueError(
+            f"Invalid pipe dimensions - insulation radius must be > outer radius!\n"
+            f"Outer radius (r_out): {r_out_m:.6f} m\n"
+            f"Insulation radius (r_s): {r_s_m:.6f} m\n\n"
+            f"**Check pipe diameter values:\n"
+            f"  - External diameter: {diameter_ext_m:.6f} m\n"
+            f"  - Insulation diameter: {diameter_insulation_m:.6f} m"
+        )
+
     resistance_mKperW = ((math.log(r_out_m / r_in_m) / k_pipe_WpermK) + (math.log(r_s_m / r_out_m) / k_ins_WpermK))
     K_WperKm = 2 * math.pi / resistance_mKperW
     return K_WperKm
@@ -352,6 +355,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         wn.options.hydraulic.trials = 100
 
         # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+        print("Starting 1st iteration to calculate pipe diameters...")
         sim = wntr.sim.EpanetSimulator(wn)
         results = sim.run_sim()
         max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
@@ -366,6 +370,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
         # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+        print("Starting 2nd iteration to calculate pressure drops...")
         # modify diameter and run simulations
         edge_df['pipe_DN'] = pipe_dn
         edge_df['D_int_m'] = D_int_m
@@ -377,6 +382,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
 
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
+        print("Starting 3rd iteration to calculate final utilization of the grid...")
         # get accumulated head loss per hour
         unitary_head_ftperkft = results.link['headloss'].abs()
         unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
@@ -397,6 +403,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
 
     # POSTPROCESSING
+    print("Postprocessing thermal network results...")
 
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes

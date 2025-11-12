@@ -59,10 +59,10 @@ class EnergyPotential(object):
                              "Please assign one a valid scale: "
                              "Building, Network, Domain")
 
-    def load_PV_potential(self, locator, building_codes, panel_type):
+    def load_PV_potential(self, locator, building_codes: list[str], panel_type: str):
         self.type = 'SolarPV'
         self.scale = 'Building'
-        pv_potential_files = np.vectorize(locator.PV_results)(building_codes, panel_type)
+        pv_potential_files = [locator.PV_results(code, panel_type) for code in building_codes]
         potentials = self._get_building_potentials(pv_potential_files, building_codes, 'E_PV_gen_kWh')
         if potentials:
             main_energy_carrier = 'E230AC'
@@ -72,10 +72,10 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_PVT_potential(self, locator, building_codes, pv_panel_type, sc_panel_type):
+    def load_PVT_potential(self, locator, building_codes: list[str], pv_panel_type: str, sc_panel_type: str):
         self.type = 'SolarPVT'
         self.scale = 'Building'
-        pvt_potential_files = np.vectorize(locator.PVT_results)(building_codes, pv_panel_type, sc_panel_type)
+        pvt_potential_files = [locator.PVT_results(code, pv_panel_type, sc_panel_type) for code in building_codes]
         potentials = self._get_building_potentials(pvt_potential_files, building_codes,
                                                    'E_PVT_gen_kWh', 'T_PVT_re_C', 'Q_PVT_gen_kWh')
         if potentials:
@@ -89,10 +89,10 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_SCET_potential(self, locator, building_codes):
+    def load_SCET_potential(self, locator, building_codes: list[str]):
         self.type = 'SolarCollectorET'
         self.scale = 'Building'
-        scet_potential_files = np.vectorize(locator.SC_results)(building_codes, "ET")
+        scet_potential_files = [locator.SC_results(code, "ET") for code in building_codes]
         potentials = self._get_building_potentials(scet_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
@@ -103,10 +103,10 @@ class EnergyPotential(object):
         else:
             return None
 
-    def load_SCFP_potential(self, locator, building_codes):
+    def load_SCFP_potential(self, locator, building_codes: list[str]):
         self.type = 'SolarCollectorFP'
         self.scale = 'Building'
-        scfp_potential_files = np.vectorize(locator.SC_results)(building_codes, "FP")
+        scfp_potential_files = [locator.SC_results(code, "FP") for code in building_codes]
         potentials = self._get_building_potentials(scfp_potential_files, building_codes,
                                                                    'Q_SC_gen_kWh', 'T_SC_re_C')
         if potentials:
@@ -156,7 +156,7 @@ class EnergyPotential(object):
         else:
             return None
 
-    def _get_building_potentials(self, energy_potential_files, building_codes, main_potential_column_name,
+    def _get_building_potentials(self, energy_potential_files, building_codes: list[str], main_potential_column_name,
                                  temperature_column_name=None, auxiliary_potential_column_name=None):
         """
         Gets main and auxiliary potentials from the stored energy potential files and stores them in the corresponding
@@ -173,13 +173,12 @@ class EnergyPotential(object):
         # initialise necessary variables
         nbr_of_files = len(energy_potential_files)
         average_temps = [np.nan] * nbr_of_files
-        main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
-                                      columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+        cols = ['domain_potential'] + building_codes
+        main_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series, columns=cols)
         if auxiliary_potential_column_name is not None:
-            auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series,
-                                               columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+            auxiliary_potential = pd.DataFrame(0.0, index=EnergyFlow.time_series, columns=cols)
         else:
-            auxiliary_potential = pd.DataFrame(columns=pd.concat([pd.Series(['domain_potential']), building_codes]))
+            auxiliary_potential = pd.DataFrame(columns=cols)
 
         # if specific potential file for a building exists, save potential to object attribute (pd.Dataframe)
         for (file, i) in zip(energy_potential_files, np.arange(nbr_of_files)):

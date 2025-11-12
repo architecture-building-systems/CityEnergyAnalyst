@@ -97,9 +97,17 @@ def get_engine():
 
 # Create a session factory function rather than a global session
 def get_async_session_maker():
-    """Create a session factory for the current process"""
+    """
+    Create a session factory for the current process.
+
+    Uses expire_on_commit=True (SQLAlchemy default) which:
+    - Expires all objects after commit (attributes become stale)
+    - Prevents memory leaks by not holding loaded objects indefinitely
+    - Ensures data freshness in multi-worker environments
+    - Requires explicit refresh() before accessing expired objects
+    """
     engine = get_engine()
-    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
 
 
 async def get_session():
