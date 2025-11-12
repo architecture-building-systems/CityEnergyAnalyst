@@ -761,18 +761,13 @@ class NetworkLayoutNameParameter(StringParameter):
     """
 
     def initialize(self, parser):
-        super().initialize(parser)
         # Declare dependency: validation depends on network-type
         self.depends_on = ['network-type']
 
-    def encode(self, value):
+    def _validate_network_name(self, value) -> str:
         """
-        Validate and encode network name.
-        Raises ValueError if name contains invalid characters or collides with existing network.
+        Validate network name for invalid characters and collision with existing networks.
         """
-        if not value or not value.strip():
-            raise ValueError("Network name cannot be empty.")
-
         value = value.strip()
 
         # Check for invalid filesystem characters
@@ -785,97 +780,56 @@ class NetworkLayoutNameParameter(StringParameter):
 
         # Check for collision with existing networks
         try:
-            # Get network type from config
-            network_type = self.config.network_layout.network_type
-
-            # Get scenario
             scenario = self.config.scenario
 
             # Skip validation if scenario doesn't exist yet
             if not scenario or not os.path.exists(scenario):
-                return str(value)
+                return value
 
-            # Get locator to check paths
+            network_type = self.config.network_layout.network_type
             locator = cea.inputlocator.InputLocator(scenario)
 
-            # Check if network already exists
-            output_folder = locator.get_output_thermal_network_type_folder(network_type, value)
+            # Check if network already exists using InputLocator methods
+            edges_path = locator.get_network_layout_edges_shapefile(network_type, value)
+            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, value)
 
-            if os.path.exists(output_folder):
-                # Check if it has network files in layout/ subfolder
-                edges_path = os.path.join(output_folder, 'layout', 'edges.shp')
-                nodes_path = os.path.join(output_folder, 'layout', 'nodes.shp')
-
-                if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                    raise ValueError(
-                        f"Network '{value}' already exists for {network_type}. "
-                        f"Choose a different name or delete the existing folder."
-                    )
+            if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                raise ValueError(
+                    f"Network '{value}' already exists for {network_type}. "
+                    f"Choose a different name or delete the existing folder."
+                )
         except ValueError:
             # Re-raise validation errors
             raise
-        except Exception as e:
+        except Exception:
             # Catch other exceptions gracefully during validation
             # Config not fully initialized, missing attributes, etc.
-            # This allows the parameter to be set even if validation can't be performed
-            print(f"[NetworkLayoutNameParameter] Could not validate: {e}")
             pass
 
-        return str(value)
+        return value
+
+    def encode(self, value):
+        """
+        Validate and encode network name.
+        Raises ValueError if name contains invalid characters or collides with existing network.
+        """
+        return self._validate_network_name(value)
 
     def decode(self, value):
-        """Validate network name doesn't collide with existing networks"""
+        """Parse and normalize network name from config file"""
+        if not value:
+            return ""
+
         value = value.strip()
 
-        # Check for invalid filesystem characters (always check, doesn't depend on scenario)
+        # Only validate filesystem characters (security concern)
+        # Don't check collision - that's encode's job when saving
         invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
         if any(char in value for char in invalid_chars):
             raise ValueError(
                 f"Network name contains invalid characters. "
                 f"Avoid: {' '.join(invalid_chars)}"
             )
-
-        # Check for collision with existing networks
-        # This validation is "best effort" - skip gracefully if anything goes wrong
-        # The main() function has a safety check as fallback
-        try:
-            # Get network type from config
-            network_type = self.config.network_layout.network_type
-
-            # Get scenario - skip validation if not set or invalid
-            scenario = self.config.scenario
-
-            # Skip validation if scenario doesn't exist yet (e.g., during dashboard initialization)
-            if not scenario or not os.path.exists(scenario):
-                return value
-
-            # Get locator to check paths
-            locator = cea.inputlocator.InputLocator(scenario)
-
-            # Check if network already exists
-            output_folder = locator.get_output_thermal_network_type_folder(network_type, value)
-
-            if os.path.exists(output_folder):
-                # Check if it has network files in layout/ subfolder
-                edges_path = os.path.join(output_folder, 'layout', 'edges.shp')
-                nodes_path = os.path.join(output_folder, 'layout', 'nodes.shp')
-
-                if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                    raise ValueError(
-                        f"Network '{value}' already exists for {network_type}. "
-                        f"Choose a different name or delete the existing folder."
-                    )
-        except ValueError as e:
-            # Re-raise validation errors (our error messages)
-            if "already exists" in str(e) or "invalid characters" in str(e):
-                raise
-            # Other ValueErrors - skip validation gracefully
-            pass
-        except Exception:
-            # Catch ALL other exceptions during validation
-            # Config not fully initialized, circular dependencies, missing attributes, etc.
-            # Skip validation gracefully - main() will catch issues later
-            pass
 
         return value
 
