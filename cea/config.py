@@ -813,6 +813,9 @@ class NetworkLayoutNameParameter(StringParameter):
         Validate and encode network name.
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
+        if not value or value.strip() == '':
+            raise ValueError("Network name is required. Please provide a valid name.")
+
         return self._validate_network_name(value)
 
     def decode(self, value):
@@ -894,8 +897,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        return self._get_available_networks(self._get_network_type())
-    
+        network_type = self._get_network_type()
+        networks = self._get_available_networks(network_type)
+        sorted_networks = self._sort_networks_by_modification_time(networks, network_type)
+        return sorted_networks
+
     def _get_network_type(self) -> str:
         """Get current network type from config"""
         network_type = ""
@@ -950,6 +956,20 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             print(f"[NetworkLayoutChoiceParameter] Could not get available networks: {e}")
             return []
     
+    def _sort_networks_by_modification_time(self, network_names: List[str], network_type: str) -> List[str]:
+        """Sort network layouts by modification time (most recent first)"""
+        modified_times = []
+        for network_name in network_names:
+            edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
+            if os.path.exists(edges_path) and os.path.exists(nodes_path):
+                sort_time = os.path.getmtime(edges_path)
+                modified_times.append((network_name, sort_time))
+
+        # Sort by modification time, most recent first
+        modified_times.sort(key=lambda x: x[1], reverse=True)
+        sorted_networks = [network_name for network_name, _ in modified_times]
+        return sorted_networks
+    
     def encode(self, value):
         """
         Validate and encode value.
@@ -986,20 +1006,10 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             return value
 
         # Otherwise, return the most recent network (first choice) if available
-        if self._choices:
-            available_networks = self._choices
-
-            modified_times = []
-            for network_name in available_networks:
-                edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
-                if os.path.exists(edges_path) and os.path.exists(nodes_path):
-                    sort_time = os.path.getmtime(edges_path)
-                    modified_times.append((network_name, sort_time))
-
-            if modified_times:
-                # Sort by modification time, most recent first
-                modified_times.sort(key=lambda x: x[1], reverse=True)
-                return modified_times[0][0]
+        if available_networks:
+            sorted_networks = self._sort_networks_by_modification_time(available_networks, network_type)
+            most_recent_network = sorted_networks[0]
+            return most_recent_network
         
         print(f"[NetworkLayoutChoiceParameter] No available networks found for network type '{network_type}'.")
         return ''
