@@ -20,6 +20,7 @@ k_msc_max_WpermK = 0.217
 # glazing properties for PV
 n = 1.526  # refractive index of glass
 K = 4  # glazing extinction coefficient
+L = 0.004  # typical BIPV glazing thickness in meters 
 
 # environmental properties
 Pg = 0.2  # ground reflectance
@@ -31,3 +32,16 @@ T_IN_PVT = 35
 
 # standard testing condition (STC)
 STC_RADIATION_Wperm2 = 1000
+
+# Loss factor from Figure 4 in https://doi.org/10.1016/j.enbuild.2019.109623, roughly mean reflectance across PV spectrum (crystalline)
+front_cover_loss_factors = {
+    "clear": 0.0,
+    "gold": 0.128,
+    "purple": 0.111,
+    "pure_white": 0.452,
+    "basic_white": 0.347,
+    "medium_green": 0.152,
+    "terracotta": 0.094,
+    "dark_green": 0.091,
+    "light_grey": 0.118
+}

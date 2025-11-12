@@ -11,6 +11,8 @@ from multiprocessing.dummy import Pool
 import numpy as np
 import pandas as pd
 import pvlib
+from timezonefinder import TimezoneFinder
+from pvlib.location import Location
 from geopandas import GeoDataFrame as gdf
 from scipy import interpolate
 
@@ -20,7 +22,7 @@ import cea.utilities.parallel
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.solar import constants
-from cea.utilities import epwreader
+from cea.utilities import date, epwreader
 from cea.utilities import solar_equations
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
 
@@ -62,7 +64,7 @@ def projected_lifetime_output(
     lifetime_production = production_values * derate_factors
     return lifetime_production
 
-def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, datetime_local, building_name):
+def calc_PV(locator, config, type_PVpanel, latitude, longitude, elevation, weather_data, datetime_local, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -74,6 +76,8 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
     :type latitude: float
     :param longitude: longitude of the case study location
     :type longitude: float
+    :param elevation: elevation of the case study location (from the EPW file)
+    :type elevation: float
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
@@ -118,7 +122,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
 
         # print('generating groups of sensor points done')
 
-        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude,
+        final = calc_pv_generation(sensor_groups, weather_data, datetime_local, solar_properties, latitude, longitude, elevation,
                                    panel_properties_PV)
         locator.ensure_parent_folder_exists(locator.PV_results(building=building_name, panel_type=type_PVpanel))
         final.to_csv(locator.PV_results(building=building_name, panel_type=type_PVpanel), index=True,
@@ -153,7 +157,7 @@ def calc_PV(locator, config, type_PVpanel, latitude, longitude, weather_data, da
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, longitude,
+def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties, latitude, longitude, elevation,
                        panel_properties_PV):
     """
     To calculate the electricity generated from PV panels.
@@ -163,7 +167,7 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
     number_groups = sensor_groups['number_groups']  # number of groups of sensor points
     prop_observers = sensor_groups['prop_observers']  # mean values of sensor properties of each group of sensors
     hourly_radiation = sensor_groups['hourlydata_groups']  # mean hourly radiation of sensors in each group [Wh/m2]
-
+    
     # Adjust sign convention: in Duffie (2013) collector azimuth facing equator = 0◦ (p. xxxiii)
     if latitude >= 0:
         Az = solar_properties.Az - 180  # south is 0°, east is negative and west is positive (p. 13)
@@ -172,6 +176,25 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
 
     # convert degree to radians
     Sz_rad = np.radians(solar_properties.Sz)
+
+    # get meteorological data
+    drybulb_C = weather_data.drybulb_C.astype(float).values
+    # pressure_Pa = weather_data.atmos_Pa.astype(float).values
+    
+    # create a solar position object using the actual location and datetime
+    tf = TimezoneFinder()
+    tz = tf.timezone_at(lat=latitude, lng=longitude)
+    
+    # Use the actual date_local from the weather data with proper timezone
+    times = pd.DatetimeIndex(date_local)
+    # If already timezone-aware, convert to the correct timezone; otherwise localize
+    if times.tz is not None:
+        times = times.tz_convert(tz)
+    else:
+        times = times.tz_localize(tz)
+    
+    site = Location(latitude, longitude, tz=tz, altitude=elevation)
+    solpos = site.get_solarposition(times)
 
     # empty list to store results
     list_groups_area = [0 for i in range(number_groups)]
@@ -185,35 +208,40 @@ def calc_pv_generation(sensor_groups, weather_data, date_local, solar_properties
         potential['PV_' + panel_orientation + '_m2'] = 0
 
     eff_nom = panel_properties_PV['PV_n']  # nominal efficiency
+    
+    try:
+        front_cover_color = panel_properties_PV['front_cover_color']
+        if front_cover_color is "none":
+            front_cover_color = 'clear'
+    except KeyError:
+        front_cover_color = 'clear'
+    
 
     Bref = panel_properties_PV['PV_Bref']  # cell maximum power temperature coefficient
 
     misc_losses = panel_properties_PV['misc_losses']  # cabling, resistances etc..
+    
     for group in prop_observers.index.values:
         # calculate radiation types (direct/diffuse) in group
         radiation_Wperm2 = solar_equations.calc_radiation_type(group, hourly_radiation, weather_data)
-
-        # read panel properties of each group
-        teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
         tot_module_area_m2 = prop_observers.loc[group, 'area_installed_module_m2']
-        tilt_angle_deg = prop_observers.loc[group, 'B_deg']  # tilt angle of panels
-        tilt_rad = radians(tilt_angle_deg) # degree to radians
+        
+        # Instead of relying on the surface azimuth  from the metadata, we convert the normal vector to azimuth
+        azimuth_deg, _ = vector_to_azimuth_and_tilt((prop_observers.loc[group, 'Xdir'],
+                                                            prop_observers.loc[group, 'Ydir'],
+                                                            prop_observers.loc[group, 'Zdir']))
+        # get the tilt from the metadata
+        tilt_deg = prop_observers.loc[group, 'B_deg']
+        
+        # calculate absorbed radiation on PV panel
+        absorbed_radiation_Wperm2 = calc_absorbed_radiation_PV(radiation_Wperm2.I_direct.values, 
+                                                               radiation_Wperm2.I_diffuse.values, 
+                                                               front_cover_color, tilt_deg, azimuth_deg, 
+                                                               solpos)
+        # calculate cell temperature
+        T_cell_C = calc_cell_temperature(absorbed_radiation_Wperm2, drybulb_C, panel_properties_PV)
 
-        # calculate effective incident angles necessary
-        teta_deg = pvlib.irradiance.aoi(tilt_angle_deg, teta_z_deg, solar_properties.Sz, Az)
-        teta_rad = [radians(x) for x in teta_deg]
-
-        teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
-
-        absorbed_radiation_Wperm2 = calc_absorbed_radiation_PV(radiation_Wperm2.I_sol,
-                                                            radiation_Wperm2.I_direct,
-                                                            radiation_Wperm2.I_diffuse, tilt_rad,
-                                                            Sz_rad, teta_rad, teta_ed_rad,
-                                                            teta_eg_rad, panel_properties_PV,
-                                                            latitude, longitude)
-
-        T_cell_C = calc_cell_temperature(absorbed_radiation_Wperm2, weather_data.drybulb_C,panel_properties_PV)
-
+        # calculate electricity output from PV panel
         el_output_PV_kW = calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref, misc_losses)
 
         # write results from each group
@@ -270,173 +298,200 @@ def calc_cell_temperature(absorbed_radiation_Wperm2, T_external_C, panel_propert
     return T_cell_C
 
 
-def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
+# def calc_diffuseground_comp(tilt_radians):
+#     """
+#     To calculate reflected radiation and diffuse radiation.
+#     :param tilt_radians:  surface tilt angle [rad]
+#     :type tilt_radians: float
+#     :return teta_ed: effective incidence angle from diffuse radiation [rad]
+#     :return teta_eg: effective incidence angle from ground-reflected radiation [rad]
+#     :rtype teta_ed: float
+#     :rtype teta_eg: float
+
+#     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
+#                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
+#                  doi: 10.1002/9781118671603.ch5
+
+#     """
+#     tilt = degrees(tilt_radians)
+#     teta_ed = 59.7 - 0.1388 * tilt + 0.001497 * tilt ** 2  # [degrees] (5.4.2)
+#     teta_eG = 90 - 0.5788 * tilt + 0.002693 * tilt ** 2  # [degrees] (5.4.1)
+#     return radians(teta_ed), radians(teta_eG)
+
+def front_cover_loss(irradiance, color):
     """
-    To calculate angle of incidence from solar vector and surface normal vector.
-    (Validated with Sandia pvlib.irrandiance.aoi)
-
-    :param lat: latitude of the location of case study [radians]
-    :param g: declination of the solar position [radians]
-    :param ha: hour angle [radians]
-    :param tilt: panel surface tilt angle [radians]
-    :param teta_z: panel surface azimuth angle [radians]
-    :type lat: float
-    :type g: float
-    :type ha: float
-    :type tilt: float
-    :type teta_z: float
-    :return teta_B: angle of incidence [radians]
-    :rtype teta_B: float
-
-    .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
-        Renewable Energy, 32(7), 1187-1205.
-
+    Author: Justin McCarty
+    Adapted from https://doi.org/10.1016/j.enbuild.2019.109623
+    P Relative Loss in Figure 4, roughly mean reflectance across PV spectrum (crystalline)
+    :param irradiance: An irradiance value to be corrected
+    :param color: choose from the available list which we store in constants.py
+        color         loss_factor
+        clear         0.000
+        gold          0.128
+        purple        0.111
+        pure_white    0.452
+        basic_white   0.347
+        medium_green  0.152
+        terracotta    0.094
+        dark_green    0.091
+        light_grey    0.118
+    :return: irradiance multiplied by the loss factor
     """
-    # surface normal vector
-    n_E = sin(tilt) * sin(teta_z)
-    n_N = sin(tilt) * cos(teta_z)
-    n_Z = cos(tilt)
-    # solar vector
-    s_E = -cos(g) * sin(ha)
-    s_N = sin(g) * cos(lat) - cos(g) * sin(lat) * cos(ha)
-    s_Z = cos(g) * cos(lat) * cos(ha) + sin(g) * sin(lat)
+    loss_dict = constants.front_cover_loss_factors
+    try:
+        loss_factor = loss_dict[color]
+    except KeyError:
+        print(f"Color '{color}' not found in front cover loss factors. Assuming 'clear' solar glass with no loss.")
+        loss_factor = loss_dict['clear']
+    return irradiance * (1 - loss_factor)
 
-    # angle of incidence
-    teta_B = acos(n_E * s_E + n_N * s_N + n_Z * s_Z)
-    return teta_B
-
-
-def calc_diffuseground_comp(tilt_radians):
+def vector_to_azimuth_and_tilt(vector):
     """
-    To calculate reflected radiation and diffuse radiation.
-    :param tilt_radians:  surface tilt angle [rad]
-    :type tilt_radians: float
-    :return teta_ed: effective incidence angle from diffuse radiation [rad]
-    :return teta_eg: effective incidence angle from ground-reflected radiation [rad]
-    :rtype teta_ed: float
-    :rtype teta_eg: float
-
-    :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
-                 Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
-                 doi: 10.1002/9781118671603.ch5
-
-    """
-    tilt = degrees(tilt_radians)
-    teta_ed = 59.7 - 0.1388 * tilt + 0.001497 * tilt ** 2  # [degrees] (5.4.2)
-    teta_eG = 90 - 0.5788 * tilt + 0.002693 * tilt ** 2  # [degrees] (5.4.1)
-    return radians(teta_ed), radians(teta_eG)
-
-
-def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, panel_properties_PV,
-                               latitude, longitude):
-    """
-    :param I_sol: total solar radiation [Wh/m2]
-    :param I_direct: direct solar radiation [Wh/m2]
-    :param I_diffuse: diffuse solar radiation [Wh/m2]
-    :param tilt: solar panel tilt angle [rad]
-    :param Sz: solar zenith angle [rad]
-    :param teta: angle of incidence [rad]
-    :param tetaed: effective incidence angle from diffuse radiation [rad]
-    :param tetaeg: effective incidence angle from ground-reflected radiation [rad]
-    :type I_sol: float or numpy.ndarray
-    :type I_direct: float or numpy.ndarray
-    :type I_diffuse: float or numpy.ndarray
-    :type tilt: float or numpy.ndarray
-    :type Sz: float or numpy.ndarray
-    :type teta: float or numpy.ndarray
-    :type tetaed: float or numpy.ndarray
-    :type tetaeg: float or numpy.ndarray
-    :param panel_properties_PV: properties of the PV panel
-    :type panel_properties_PV: dataframe
-    :return: absorbed radiation [W/m2]
-    :rtype: float or numpy.ndarray
-
-    :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
-                 Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
-                 doi: 10.1002/9781118671603.ch5
-    """
-    # Convert inputs to numpy arrays if they're not already
-    I_sol = np.asarray(I_sol)
-    I_direct = np.asarray(I_direct)
-    I_diffuse = np.asarray(I_diffuse)
-    tilt = np.asarray(tilt)
-    Sz = np.asarray(Sz)
-    teta = np.asarray(teta)
+    Converts a 3D unit vector to azimuth and tilt angles.
     
-    # read variables
-    n = constants.n  # refractive index of glass
-    Pg = constants.Pg  # ground reflectance
-    K = constants.K  # glazing extinction coefficient
-    a0 = panel_properties_PV['PV_a0']
-    a1 = panel_properties_PV['PV_a1']
-    a2 = panel_properties_PV['PV_a2']
-    a3 = panel_properties_PV['PV_a3']
-    a4 = panel_properties_PV['PV_a4']
-    L = panel_properties_PV['PV_th']
-
-    # calculate ratio of beam radiation on a tilted plane to avoid inconvergence when I_sol = 0
-    lim1 = np.radians(0)
-    lim2 = np.radians(90)
-    lim3 = np.radians(89.999)
-
-    # Handle bounds for teta and Sz
-    teta = np.where(teta < lim1, np.minimum(lim3, np.abs(teta)), teta)
-    teta = np.where(teta >= lim2, lim3, teta)
+    Reference frame:
+    - Azimuth: 0° = North, 90° = East, 180° = South, 270° = West (clockwise from North)
+    - Tilt: 0° = horizontal (pointing up), 90° = vertical, 180° = pointing down
     
-    Sz = np.where(Sz < lim1, np.minimum(lim3, np.abs(Sz)), Sz)
-    Sz = np.where(Sz >= lim2, lim3, Sz)
-
-    # Rb: ratio of beam radiation of tilted surface to that on horizontal surface
-    Rb = np.where(Sz <= radians(85),
-                  np.cos(teta) / np.cos(Sz),
-                  0)  # Assume there is no direct radiation when the sun is close to the horizon.
-
-    # calculate air mass modifier
-    m = calc_air_mass(Sz, latitude, longitude)
-    M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
-    M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
-
-    # transmittance-absorptance product at normal incidence
-    Ta_n = np.exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
-
-    # incidence angle modifier for direct (beam) radiation
-    teta_r = np.arcsin(np.sin(teta) / n)  # refraction angle in radians
+    Author: Justin McCarty
     
-    # Calculate beam radiation component
-    kteta_B = np.zeros_like(teta)
-    mask_below_90 = teta < radians(90)
+    Args:
+        vector (array-like): 3D vector [x, y, z] with components in range [-1, 1]
+            where x = East, y = North, z = Up
     
-    if np.any(mask_below_90):
-        part1 = teta_r + teta
-        part2 = teta_r - teta
-        Ta_B = np.exp((-K * L) / np.cos(teta_r)) * (
-                1 - 0.5 * ((np.sin(part2) ** 2) / (np.sin(part1) ** 2) + 
-                           (np.tan(part2) ** 2) / (np.tan(part1) ** 2)))
-        kteta_B = np.where(mask_below_90, Ta_B / Ta_n, 0)
+    Returns:
+        tuple: (azimuth_deg, tilt_deg)
+            - azimuth_deg (float): Azimuth angle in degrees [0, 360)
+            - tilt_deg (float): Tilt angle from horizontal in degrees [0, 180]
+    
+    Examples:
+        >>> vector_to_azimuth_and_tilt([0, 1, 0])  # North-facing vertical
+        (0.0, 90.0)
+        >>> vector_to_azimuth_and_tilt([0, 0, 1])  # Horizontal
+        (0.0, 0.0)
+        >>> vector_to_azimuth_and_tilt([1, 0, 0])  # East-facing vertical
+        (90.0, 90.0)
+    """
+    x, y, z = vector
+    
+    # Calculate tilt from horizontal (angle from z-axis)
+    # tilt = 0° when vector points up (z=1), 90° when horizontal, 180° when pointing down
+    vector_magnitude = np.sqrt(x**2 + y**2 + z**2)
+    if vector_magnitude == 0:
+        return 0.0, 0.0
+    
+    # Normalize vector
+    x_norm = x / vector_magnitude
+    y_norm = y / vector_magnitude
+    z_norm = z / vector_magnitude
+    
+    # Tilt angle from vertical axis (0° = horizontal/up, 90° = vertical, 180° = down)
+    tilt_rad = np.arccos(np.clip(z_norm, -1.0, 1.0))
+    tilt_deg = np.degrees(tilt_rad)
+    
+    # Azimuth angle in horizontal plane
+    # Special case: if surface is horizontal (tilt = 0 or 180), azimuth is undefined, set to 0
+    if np.abs(tilt_deg) < 1e-6 or np.abs(tilt_deg - 180) < 1e-6:
+        azimuth_deg = 0.0
+    else:
+        # Calculate azimuth from x (East) and y (North) components
+        # 0° = North, 90° = East, 180° = South, 270° = West
+        azimuth_rad = np.arctan2(x_norm, y_norm)  # atan2(East, North) gives angle from North
+        azimuth_deg = np.degrees(azimuth_rad)
+        
+        # Normalize to [0, 360) range
+        if azimuth_deg < 0:
+            azimuth_deg += 360.0
+    
+    return azimuth_deg, tilt_deg
 
-    # incidence angle modifier for diffuse radiation
-    teta_r_d = np.arcsin(np.sin(tetaed) / n)  # refraction angle for diffuse radiation
-    part1_d = teta_r_d + tetaed
-    part2_d = teta_r_d - tetaed
-    Ta_D = np.exp((-K * L) / np.cos(teta_r_d)) * (
-            1 - 0.5 * ((np.sin(part2_d) ** 2) / (np.sin(part1_d) ** 2) + 
-                       (np.tan(part2_d) ** 2) / (np.tan(part1_d) ** 2)))
-    kteta_D = Ta_D / Ta_n
 
-    # incidence angle modifier for ground-reflected radiation
-    teta_r_g = np.arcsin(np.sin(tetaeg) / n)  # refraction angle for ground-reflected radiation
-    part1_g = teta_r_g + tetaeg
-    part2_g = teta_r_g - tetaeg
-    Ta_eG = np.exp((-K * L) / np.cos(teta_r_g)) * (
-            1 - 0.5 * ((np.sin(part2_g) ** 2) / (np.sin(part1_g) ** 2) + 
-                       (np.tan(part2_g) ** 2) / (np.tan(part1_g) ** 2)))
-    kteta_eG = Ta_eG / Ta_n
+# def calc_angular_loss_martin_ruiz(G_dir, G_diff, theta, a_r=0.17):
+#     """
+#     Author: Linus Walker, Justin McCarty
+#     :param G_dir:
+#     :param G_diff:
+#     :param theta:
+#     :param a_r:
+#     :return:
+#     """
+    
+#     k1 = np.where(theta > np.pi / 2, 0,
+#                  np.exp(1 / a_r) * (1 - np.exp(-np.cos(theta) / a_r)) / (np.exp(1 / a_r) - 1))
+    
+#     # This value stays constant and does not need to be recalculated each time
+#     # k2 =  k_martin_ruiz(np.pi/3, aa_r) (60 degrees)
+#     k2 = 0.94984480313119235
+#     G_eff = G_dir * k1 + G_diff * k2  # pi/3 is assumed for diffuse irrad
+#     return np.where(G_eff < 0, 0, G_eff)
 
-    # absorbed solar radiation
-    absorbed_radiation_Wperm2 = M * Ta_n * (
-            kteta_B * I_direct * Rb + 
-            kteta_D * I_diffuse * (1 + np.cos(tilt)) / 2 + 
-            kteta_eG * (I_sol * Pg) * (1 - np.cos(tilt)) / 2)  # [W/m2] (5.12.1)
+def calc_absorbed_radiation_PV(G_dir, G_diff, prop_front_cover_color, surface_tilt_deg, surface_azimuth_deg, solpos):
+    """
+    Calculate absorbed radiation on PV panel surface accounting for front cover losses and angle of incidence effects.
+    
+    This function implements a two-step process:
+    1. Apply front cover color losses (if applicable) to direct and diffuse irradiance
+    2. Calculate angle of incidence modifier using the de Soto physical model
+    
+    Author: Justin McCarty
+    
+    :type group: int
+    :param G_dir: Direct beam irradiance [W/m2]
+    :type G_dir: numpy.ndarray
+    :param G_diff: Diffuse irradiance [W/m2]
+    :type G_diff: numpy.ndarray
+    :param prop_front_cover_color: Color of the PV panel front cover (e.g., 'clear', 'gold', 'purple')
+    :type prop_front_cover_color: str
+    :param surface_tilt_deg: Panel tilt angle from horizontal [degrees]
+    :type surface_tilt_deg: float
+    :param surface_azimuth_deg: Panel surface azimuth, 0° = North, 90° = East [degrees]
+    :type surface_azimuth_deg: float
+    :param solpos: Solar position data containing 'zenith' and 'azimuth' columns
+    :type solpos: pandas.DataFrame
+    :return: Absorbed radiation on PV panel surface [W/m2]
+    :rtype: numpy.ndarray
+    
+    :References:
+        - De Soto et al. (2006) for the physical IAM model
+        - Front cover losses from https://doi.org/10.1016/j.enbuild.2019.109623
+    """
+    
+    # Ensure inputs are numpy arrays
+    G_dir = np.asarray(G_dir)
+    G_diff = np.asarray(G_diff)
+    
+    # part 1: account for colored front cover loss
+    if prop_front_cover_color == 'clear':
+        G_eff_dir = G_dir
+        G_eff_diff = G_diff
+    else:
+        G_eff_dir = front_cover_loss(G_dir, prop_front_cover_color)
+        G_eff_diff = front_cover_loss(G_diff, prop_front_cover_color)
+    
+    # part 2: angle of incidence modifier  
+    aoi = pvlib.irradiance.aoi(
+        surface_tilt=surface_tilt_deg,
+        surface_azimuth=surface_azimuth_deg,
+        solar_zenith=solpos['zenith'].values,
+        solar_azimuth=solpos['azimuth'].values,
+    )
+    
+    # de Soto IAM model
+    iam_dir = pvlib.iam.physical(aoi, 
+                       n=constants.n, 
+                       K=constants.K, 
+                       L=constants.L, 
+                       n_ar=None)
+    
+    # Convert to numpy array if it's a pandas Series
+    if hasattr(iam_dir, 'values'):
+        iam_dir = iam_dir.values
+    
+    # TODO switch the the mrtin ruiz models for iam that can account for the diffuse component
+    iam_diff = 1
+    
+    # Calculate absorbed radiation
+    absorbed_radiation_Wperm2 = (G_eff_dir * iam_dir) + (G_eff_diff * iam_diff)
     
     # ensure no negative values
     absorbed_radiation_Wperm2 = np.maximum(absorbed_radiation_Wperm2, 0.0)
@@ -445,41 +500,162 @@ def calc_absorbed_radiation_PV(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetae
     if np.size(absorbed_radiation_Wperm2) == 1:
         return float(absorbed_radiation_Wperm2)
     return absorbed_radiation_Wperm2
+    
 
 
-def calc_air_mass(Sz, latitude, longitude):
-    '''
-    Calculate air mass according to Duffie & Beckmann, p. 10.
-    For zenith angles from 0° to 70°, the air mass is calculated based on Equation 1.5.1.
-    For zenith angles above that, the empirical equation in footnote 3 (taken from Kasten & Young, 1989) is used.
+# def calc_absorbed_radiation_PV_archive(I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg, panel_properties_PV,
+#                                latitude, longitude):
+#     """
+#     :param I_sol: total solar radiation [Wh/m2]
+#     :param I_direct: direct solar radiation [Wh/m2]
+#     :param I_diffuse: diffuse solar radiation [Wh/m2]
+#     :param tilt: solar panel tilt angle [rad]
+#     :param Sz: solar zenith angle [rad]
+#     :param teta: angle of incidence [rad]
+#     :param tetaed: effective incidence angle from diffuse radiation [rad]
+#     :param tetaeg: effective incidence angle from ground-reflected radiation [rad]
+#     :type I_sol: float or numpy.ndarray
+#     :type I_direct: float or numpy.ndarray
+#     :type I_diffuse: float or numpy.ndarray
+#     :type tilt: float or numpy.ndarray
+#     :type Sz: float or numpy.ndarray
+#     :type teta: float or numpy.ndarray
+#     :type tetaed: float or numpy.ndarray
+#     :type tetaeg: float or numpy.ndarray
+#     :param panel_properties_PV: properties of the PV panel
+#     :type panel_properties_PV: dataframe
+#     :return: absorbed radiation [W/m2]
+#     :rtype: float or numpy.ndarray
 
-    :param Sz: solar zenith angle [rad]
-    :type Sz: float or numpy.ndarray
-    :param latitude: latitude of the location [degrees]
-    :type latitude: float
-    :param longitude: longitude of the location [degrees]
-    :type longitude: float
-    :return: air mass [-]
-    :rtype: float or numpy.ndarray
+#     :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
+#                  Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
+#                  doi: 10.1002/9781118671603.ch5
+#     """
+#     # Convert inputs to numpy arrays if they're not already
+#     I_sol = np.asarray(I_sol)
+#     I_direct = np.asarray(I_direct)
+#     I_diffuse = np.asarray(I_diffuse)
+#     tilt = np.asarray(tilt)
+#     Sz = np.asarray(Sz)
+#     teta = np.asarray(teta)
     
-    :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
-                 Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
-                 doi: 10.1002/9781118671603.ch5
-    '''
-    # Convert inputs to numpy arrays if they're not already
-    Sz = np.asarray(Sz)
+#     # read variables
+#     n = constants.n  # refractive index of glass
+#     Pg = constants.Pg  # ground reflectance
+#     K = constants.K  # glazing extinction coefficient
+#     a0 = panel_properties_PV['PV_a0']
+#     a1 = panel_properties_PV['PV_a1']
+#     a2 = panel_properties_PV['PV_a2']
+#     a3 = panel_properties_PV['PV_a3']
+#     a4 = panel_properties_PV['PV_a4']
+#     L = panel_properties_PV['PV_th']
+
+#     # calculate ratio of beam radiation on a tilted plane to avoid inconvergence when I_sol = 0
+#     lim1 = np.radians(0)
+#     lim2 = np.radians(90)
+#     lim3 = np.radians(89.999)
+
+#     # Handle bounds for teta and Sz
+#     teta = np.where(teta < lim1, np.minimum(lim3, np.abs(teta)), teta)
+#     teta = np.where(teta >= lim2, lim3, teta)
     
-    h = pvlib.location.lookup_altitude(latitude, longitude)  # altitude (in m)
+#     Sz = np.where(Sz < lim1, np.minimum(lim3, np.abs(Sz)), Sz)
+#     Sz = np.where(Sz >= lim2, lim3, Sz)
+
+#     # Rb: ratio of beam radiation of tilted surface to that on horizontal surface
+#     Rb = np.where(Sz <= radians(85),
+#                   np.cos(teta) / np.cos(Sz),
+#                   0)  # Assume there is no direct radiation when the sun is close to the horizon.
+
+#     # calculate air mass modifier
+#     m = calc_air_mass(Sz, latitude, longitude)
+#     M = a0 + a1 * m + a2 * m ** 2 + a3 * m ** 3 + a4 * m ** 4  # air mass modifier
+#     M = np.clip(M, 0.001, 1.1)  # De Soto et al., 2006
     
-    # Apply the appropriate formula based on solar zenith angle
-    m = np.where(np.abs(Sz) <= np.radians(70),
-                1 / np.cos(Sz),  # air mass (1.5.1)
-                np.exp(-0.0001184 * h) / (np.cos(Sz) + 0.5057 * (96.080 - np.degrees(Sz))**(-1.634)))  # air mass (footnote 3)
+#     # transmittance-absorptance product at normal incidence
+#     Ta_n = np.exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
+
+#     # incidence angle modifier for direct (beam) radiation
+#     teta_r = np.arcsin(np.sin(teta) / n)  # refraction angle in radians
     
-    # Return scalar if input was scalar
-    if np.size(m) == 1:
-        return float(m)
-    return m
+#     # Calculate beam radiation component
+#     kteta_B = np.zeros_like(teta)
+#     mask_below_90 = teta < radians(90)
+    
+#     if np.any(mask_below_90):
+#         part1 = teta_r + teta
+#         part2 = teta_r - teta
+#         Ta_B = np.exp((-K * L) / np.cos(teta_r)) * (
+#                 1 - 0.5 * ((np.sin(part2) ** 2) / (np.sin(part1) ** 2) + 
+#                            (np.tan(part2) ** 2) / (np.tan(part1) ** 2)))
+#         kteta_B = np.where(mask_below_90, Ta_B / Ta_n, 0)
+
+#     # incidence angle modifier for diffuse radiation
+#     teta_r_d = np.arcsin(np.sin(tetaed) / n)  # refraction angle for diffuse radiation
+#     part1_d = teta_r_d + tetaed
+#     part2_d = teta_r_d - tetaed
+#     Ta_D = np.exp((-K * L) / np.cos(teta_r_d)) * (
+#             1 - 0.5 * ((np.sin(part2_d) ** 2) / (np.sin(part1_d) ** 2) + 
+#                        (np.tan(part2_d) ** 2) / (np.tan(part1_d) ** 2)))
+#     kteta_D = Ta_D / Ta_n
+
+#     # incidence angle modifier for ground-reflected radiation
+#     teta_r_g = np.arcsin(np.sin(tetaeg) / n)  # refraction angle for ground-reflected radiation
+#     part1_g = teta_r_g + tetaeg
+#     part2_g = teta_r_g - tetaeg
+#     Ta_eG = np.exp((-K * L) / np.cos(teta_r_g)) * (
+#             1 - 0.5 * ((np.sin(part2_g) ** 2) / (np.sin(part1_g) ** 2) + 
+#                        (np.tan(part2_g) ** 2) / (np.tan(part1_g) ** 2)))
+#     kteta_eG = Ta_eG / Ta_n
+
+#     # absorbed solar radiation
+#     absorbed_radiation_Wperm2 = M * Ta_n * (
+#             kteta_B * I_direct * Rb + 
+#             kteta_D * I_diffuse * (1 + np.cos(tilt)) / 2 + 
+#             kteta_eG * (I_sol * Pg) * (1 - np.cos(tilt)) / 2)  # [W/m2] (5.12.1)
+    
+#     # ensure no negative values
+#     absorbed_radiation_Wperm2 = np.maximum(absorbed_radiation_Wperm2, 0.0)
+
+#     # Return scalar if input was scalar
+#     if np.size(absorbed_radiation_Wperm2) == 1:
+#         return float(absorbed_radiation_Wperm2)
+#     return absorbed_radiation_Wperm2
+
+
+# def calc_air_mass(Sz, latitude, longitude):
+    # '''
+    # Calculate air mass according to Duffie & Beckmann, p. 10.
+    # For zenith angles from 0° to 70°, the air mass is calculated based on Equation 1.5.1.
+    # For zenith angles above that, the empirical equation in footnote 3 (taken from Kasten & Young, 1989) is used.
+
+    # :param Sz: solar zenith angle [rad]
+    # :type Sz: float or numpy.ndarray
+    # :param latitude: latitude of the location [degrees]
+    # :type latitude: float
+    # :param longitude: longitude of the location [degrees]
+    # :type longitude: float
+    # :return: air mass [-]
+    # :rtype: float or numpy.ndarray
+    
+    # :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
+    #              Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
+    #              doi: 10.1002/9781118671603.ch5
+    # '''
+    # # Convert inputs to numpy arrays if they're not already
+    # Sz = np.asarray(Sz)
+    
+    # h = pvlib.location.lookup_altitude(latitude, longitude)  # altitude (in m)
+    
+    # # Apply the appropriate formula based on solar zenith angle
+    # m = np.where(np.abs(Sz) <= np.radians(70),
+    #             1 / np.cos(Sz),  # air mass (1.5.1)
+    #             np.exp(-0.0001184 * h) / (np.cos(Sz) + 0.5057 * (96.080 - np.degrees(Sz))**(-1.634)))  # air mass (footnote 3)
+    
+    # # Return scalar if input was scalar
+    # if np.size(m) == 1:
+    #     return float(m)
+    # return m
 
 def calc_PV_power(absorbed_radiation_Wperm2, T_cell_C, eff_nom, tot_module_area_m2, Bref_perC, misc_losses):
     """
@@ -840,6 +1016,8 @@ def main(config: cea.config.Configuration):
     zone_geometry_df = gdf.from_file(locator.get_zone_geometry())
     latitude, longitude = get_lat_lon_projected_shapefile(zone_geometry_df)
     weather_data = epwreader.epw_reader(locator.get_weather_file())
+    epw_loc_data = epwreader.epw_location(locator.get_weather_file())
+    elevation = epw_loc_data['elevation']
     date_local = solar_equations.calc_datetime_local_from_weather_file(weather_data, latitude, longitude)
 
     num_process = config.get_number_of_processes()
@@ -852,6 +1030,7 @@ def main(config: cea.config.Configuration):
                                                                repeat(type_PVpanel, n),
                                                                repeat(latitude, n),
                                                                repeat(longitude, n),
+                                                               repeat(elevation, n),
                                                                repeat(weather_data, n),
                                                                repeat(date_local, n),
                                                                building_names)

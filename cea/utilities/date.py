@@ -62,3 +62,8 @@ def generate_season_masks(df):
     }
 
     return masks
+
+def hoy_to_date(hoy, year=None):
+    if year is None:
+        year = pd.Timestamp.now().year
+    return pd.Timestamp(f'{year}-01-01') + pd.to_timedelta(hoy, unit='h')
