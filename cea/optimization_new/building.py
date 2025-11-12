@@ -101,7 +101,7 @@ class Building(object):
         if energy_system_type == 'DC':
             self.demand_flow = EnergyFlow('primary', 'consumer', 'T10W', demand_dataframe['QC_sys_kWh'])
         elif energy_system_type == 'DH':
-            self.demand_flow = EnergyFlow('primary', 'consumer', 'T60W', demand_dataframe['QH_sys_kWh'])
+            self.demand_flow = EnergyFlow('primary', 'consumer', 'T30W', demand_dataframe['QH_sys_kWh'])
         else:
             print('Please indicate a valid energy system type.')
 
@@ -222,6 +222,10 @@ class Building(object):
         building's allocated supply system, if it's not, correct the demand profile to match the supply system's
         energy carrier.
         """
+        if Component.code_to_class_mapping is None:
+            raise ValueError("Please make sure the Component-class has been initialised properly before checking the "
+                             "building's demand energy carrier.")
+
         primary_component_classes = [Component.code_to_class_mapping[component_code]
                                      for component_code in self._stand_alone_supply_system_composition['primary']]
         instantiated_components = [component_class(code, 'primary', self.demand_flow.profile.max())
@@ -232,8 +236,12 @@ class Building(object):
 
         if len(set(main_energy_carriers)) > 1:
             raise ValueError(f"The primary components of the building {self.identifier}'s supply system are not "
-                             f"compatible with one another compatible. Please correct your system choice in the INPUT "
+                             f"compatible with one another. Please correct your system choice in the INPUT "
                              f"EDITOR accordingly.")
+        elif len(set(main_energy_carriers)) == 0:
+            raise ValueError("Network type mismatch: 'DH' (district heating) cannot be used for cooling loads, "
+                           "and 'DC' (district cooling) cannot be used for heating loads. "
+                           "Please verify that the network-type matches the building's demand.")
         else:
             self.demand_flow.energy_carrier = main_energy_carriers[0]
 

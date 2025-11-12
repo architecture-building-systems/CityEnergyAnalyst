@@ -22,7 +22,7 @@ __status__ = "Production"
 from cea.datamanagement.format_helper.cea4_verify_db import get_csv_filenames
 
 
-def lca_operation(locator):
+def lca_operation(locator: cea.inputlocator.InputLocator):
     """
     Algorithm to calculate the primary energy and GHG_kgCO2MJ emissions of buildings according to the method used in the
     integrated model of [Fonseca-Schlueter-2015]_ and the performance factors of [ecobau.ch].
@@ -168,7 +168,7 @@ def lca_operation(locator):
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f', na_rep='nan')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 

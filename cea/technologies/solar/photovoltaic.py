@@ -767,7 +767,7 @@ def calc_Crem_pv(E_nom):
 
 def aggregate_results(locator, type_PVpanel, building_names):
     aggregated_hourly_results_df = pd.DataFrame()
-    aggregated_annual_results = pd.DataFrame()
+    annual_results_list = []
 
     for i, building in enumerate(building_names):
         hourly_results_per_building = pd.read_csv(locator.PV_results(building, type_PVpanel)).set_index('date')
@@ -779,7 +779,10 @@ def aggregate_results(locator, type_PVpanel, building_names):
         annual_energy_production = hourly_results_per_building.filter(like='_kWh').sum()
         panel_area_per_building = hourly_results_per_building.filter(like='_m2').iloc[0]
         building_annual_results = pd.concat([annual_energy_production, panel_area_per_building])
-        aggregated_annual_results[building] = building_annual_results
+        building_annual_results.name = building
+        annual_results_list.append(building_annual_results)
+
+    aggregated_annual_results = pd.concat(annual_results_list, axis=1)
 
     return aggregated_hourly_results_df, aggregated_annual_results
 
@@ -814,7 +817,7 @@ def write_aggregate_results(locator, type_PVpanel, building_names):
                                         float_format='%.2f', na_rep='nan')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     list_types_PVpanel = config.solar.type_PVpanel

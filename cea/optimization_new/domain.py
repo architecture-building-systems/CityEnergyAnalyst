@@ -17,7 +17,6 @@ __status__ = "Production"
 
 from os.path import exists
 import time
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 import multiprocessing
@@ -53,13 +52,13 @@ from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import M
 
 class Domain(object):
     def __init__(self, config: cea.config.Configuration, locator: InputLocator):
-        self.config = config
-        self.locator = locator
-        self.weather = self._load_weather(locator)
-        self.buildings = []
-        self.energy_potentials = []
-        self.initial_energy_system = None
-        self.optimal_energy_systems = []
+        self.config: cea.config.Configuration = config
+        self.locator: InputLocator = locator
+        self.weather: pd.DataFrame = self._load_weather(locator)
+        self.buildings: list[Building] = []
+        self.energy_potentials: list[EnergyPotential] = []
+        self.initial_energy_system: DistrictEnergySystem | None = None
+        self.optimal_energy_systems: list[DistrictEnergySystem] = []
 
         self._setup_save_directory()
         self._initialize_domain_descriptor_classes()
@@ -71,7 +70,7 @@ class Domain(object):
         EnergyFlow.time_series = self.weather['date']
         return self.weather
 
-    def load_buildings(self, buildings_in_domain=None):
+    def load_buildings(self, buildings_in_domain: list[str] | None = None) -> list[Building]:
         """
         Import demand, geometric properties and base supply systems of buildings from the current scenario.
 
@@ -82,11 +81,11 @@ class Domain(object):
         """
         shp_file = gpd.read_file(self.locator.get_zone_geometry())
         if buildings_in_domain is None:
-            buildings_in_domain = shp_file.name
+            buildings_in_domain = shp_file.name.tolist()
 
-        building_demand_files = np.vectorize(self.locator.get_demand_results_file)(buildings_in_domain)
+        building_demand_files = [self.locator.get_demand_results_file(building_code) for building_code in buildings_in_domain]
         network_type = self.config.optimization_new.network_type
-        for (building_code, demand_file) in zip(buildings_in_domain.values, building_demand_files):
+        for (building_code, demand_file) in zip(buildings_in_domain, building_demand_files):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
                 building.load_demand_profile(network_type)
@@ -99,7 +98,7 @@ class Domain(object):
 
         return self.buildings
 
-    def load_potentials(self, buildings_in_domain=None, pv_panel_type='PV1'):
+    def load_potentials(self, buildings_in_domain: list[str] | None = None, pv_panel_type='PV1') -> list[EnergyPotential]:
         """
         Import energy potentials from the current scenario.
 
@@ -109,7 +108,10 @@ class Domain(object):
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
         if buildings_in_domain is None:
-            buildings_in_domain = pd.Series([building.identifier for building in self.buildings])
+            if not self.buildings:
+                raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
+            else:
+                buildings_in_domain = [building.identifier for building in self.buildings]
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
@@ -176,9 +178,23 @@ class Domain(object):
                                   + component_classes
             main_process_memory = MemoryPreserver(algorithm.parallelize_computation, initialised_classes)
 
-            pool = multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores)
-            toolbox.register("map", pool.map)
+            # Use context manager to ensure pool is properly closed even on exceptions
+            with multiprocessing.get_context('spawn').Pool(algorithm.parallel_cores) as pool:
+                toolbox.register("map", pool.map)
+                return self._run_optimization_algorithm(
+                    toolbox, algorithm, tracker, main_process_memory
+                )
+        else:
+            # No multiprocessing - run directly
+            return self._run_optimization_algorithm(
+                toolbox, algorithm, tracker, main_process_memory
+            )
 
+    def _run_optimization_algorithm(self, toolbox, algorithm, tracker, main_process_memory):
+        """
+        Core optimization algorithm logic extracted to allow proper multiprocessing pool management.
+        This function is called from within the pool context manager when multiprocessing is enabled.
+        """
         # Generate fully connected network as basis for the clustering algorithm
         full_network = Network(self.buildings, 'Nfull')
         full_network_graph = full_network.generate_condensed_graph()
@@ -411,10 +427,16 @@ class Domain(object):
     @staticmethod
     def _write_system_structure(results_file: str, supply_system: SupplySystem):
         """Summarise supply system structure and write it to the indicated results file"""
-        supply_system_info = [{'Component_category': component_category,
-                               'Component_type': component.technology,
+        supply_system_info = [{'Component': component.technology,
+                               'Component_type': component.type,
                                'Component_code': component_code,
-                               'Capacity_kW': round(component.capacity, 3)}
+                               'Category': component_category,
+                               'Capacity_kW': round(component.capacity, 3),
+                               'Main_side': component.main_side,
+                               'Main_energy_carrier': component.main_energy_carrier.describe(),
+                               'Main_energy_carrier_code': component.main_energy_carrier.code,
+                               'Other_inputs': ', '.join([ip.code for ip in component.input_energy_carriers]),
+                               'Other_outputs': ', '.join([op.code for op in component.output_energy_carriers])}
                               for component_category, components in supply_system.installed_components.items()
                               for component_code, component in components.items()]
 
@@ -628,7 +650,7 @@ class Domain(object):
         ConnectivityVector.initialize_class_variables(self)
         Clustering.initialize_class_variables(self)
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole optimization routine
     """
@@ -637,13 +659,16 @@ def main(config):
     current_domain = Domain(config, locator)
     seed(100)
 
+    # Get buildings to optimize from config (if specified)
+    buildings_to_optimize = config.optimization_new.buildings if config.optimization_new.buildings else None
+
     start_time = time.time()
-    current_domain.load_buildings()
+    current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
     start_time = time.time()
-    current_domain.load_potentials()
+    current_domain.load_potentials(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading energy potentials: {end_time - start_time} s")
 

@@ -5,13 +5,14 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from cea.demand.constants import H_MS, H_IS, B_F
+from cea.demand.constants import H_MS, H_IS, B_F, LAMBDA_AT
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 from cea.demand.control_heating_cooling_systems import has_heating_system, has_cooling_system
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import geopandas as gpd
     from cea.inputlocator import InputLocator
 
 
@@ -21,7 +22,7 @@ class BuildingRCModel:
     """
 
     def __init__(self, locator: InputLocator, building_names: list[str],
-                 typology: pd.DataFrame, envelope: pd.DataFrame, geometry: pd.DataFrame,
+                 typology: pd.DataFrame, envelope: pd.DataFrame, geometry: gpd.GeoDataFrame,
                  hvac_temperatures: pd.DataFrame):
         """
         Read building RC Model properties and construct a new BuildingRCModel object.
@@ -44,7 +45,7 @@ class BuildingRCModel:
                            locator: InputLocator,
                            typology: pd.DataFrame,
                            envelope: pd.DataFrame,
-                           geometry: pd.DataFrame,
+                           geometry: gpd.GeoDataFrame,
                            hvac_temperatures: pd.DataFrame) -> pd.DataFrame:
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
@@ -104,50 +105,56 @@ class BuildingRCModel:
 
         """
 
-        # calculate building geometry
-        df = self.geometry_reader_radiation_daysim(locator, envelope, geometry)
-        df = df.merge(typology, left_index=True, right_index=True)
-        df = df.merge(hvac_temperatures, left_index=True, right_index=True)
+        # FIXME: Decide to use GFA from zone footprints or radiation geometry
+        # (should be the same, but not always the case, since radiation geometry goes through simplification)
+
+        # Calculate useful (electrified/conditioned/occupied) floor areas
+        areas_df = calc_useful_areas(geometry, envelope)
+        # calculate building geometry and update envelope areas
+        self.geometry_reader_radiation_daysim(locator, envelope, areas_df)
+
+        df = pd.DataFrame(index=geometry.index)
+
+        # df = df.merge(typology, left_index=True, right_index=True)
 
         for building in self.building_names:
             has_system_heating_flag = has_heating_system(hvac_temperatures.loc[building, 'class_hs'])
             has_system_cooling_flag = has_cooling_system(hvac_temperatures.loc[building, 'class_cs'])
-            if (not has_system_heating_flag and not has_system_cooling_flag and
-                    df.loc[building, 'Hs'] != 0.0):
-                df.loc[building, 'Hs'] = 0.0
+            if not has_system_heating_flag and not has_system_cooling_flag and envelope.loc[building, 'Hs'] != 0.0:
+                envelope.loc[building, 'Hs'] = 0.0
                 print('Building {building} has no heating and cooling system, Hs corrected to 0.'.format(
                     building=building))
 
-        # Calculate useful (electrified/conditioned/occupied) floor areas
-        df = calc_useful_areas(df)
+        # area of all surfaces facing the building zone
+        df['Atot'] = areas_df['Af'] * LAMBDA_AT
 
         # if 'Cm_Af' in self.get_overrides_columns():
         #     # Internal heat capacity is not part of input, calculate [J/K]
         #     df['Cm'] = self._overrides['Cm_Af'] * df['Af']
         # else:
-        df['Cm'] = df['Cm_Af'] * df['Af']
+        df['Cm'] = envelope['Cm_Af'] * areas_df['Af']
 
-        df['Am'] = df['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
+        df['Am'] = envelope['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * areas_df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
         # Thermal transmission coefficient for windows and glazing in [W/K]
         # Weigh area of windows with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['Htr_w'] = df['Awin_ag'] * df['U_win'] * np.sqrt(df['Hs_ag'])
+        df['Htr_w'] = envelope['Awin_ag'] * envelope['U_win'] * np.sqrt(areas_df['Hs_ag'])
 
         # check if buildings are completely above ground
-        is_floating = (df["void_deck"] > 0).astype(int)
+        is_floating = (geometry["void_deck"] > 0).astype(int)
 
         # direct thermal transmission coefficient to the external environment in [W/K]
         # Weigh area of with fraction of air-conditioned space, relationship of area and perimeter is squared
-        df['HD'] = (df['Awall_ag'] * df['U_wall'] * np.sqrt(df['Hs_ag']) # overall heat loss factor through vertical opaque facade
-                    + df['Aroof'] * df['U_roof'] * df['Hs_ag'] # overall heat loss factor through roof
-                    + is_floating * df['Aunderside'] * df['U_base'] * df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
+        df['HD'] = (envelope['Awall_ag'] * envelope['U_wall'] * np.sqrt(areas_df['Hs_ag']) # overall heat loss factor through vertical opaque facade
+                    + envelope['Aroof'] * envelope['U_roof'] * areas_df['Hs_ag'] # overall heat loss factor through roof
+                    + is_floating * envelope['Aunderside'] * envelope['U_base'] * areas_df['Hs_ag'] # overall heat loss factor through base above ground, 0 if building touches ground and base does not contact with air
                     )
         # steady-state Thermal transmission coefficient to the ground. in W/K
         # Aop_bg: opaque surface area below ground level;
         # U_base: basement U value, defined in envelope.csv
         # Hs_bg: Fraction of underground floor area air-conditioned.
-        df['Hg'] = B_F * df['Aop_bg'] * df['U_base'] * df['Hs_bg']
+        df['Hg'] = B_F * envelope['Aop_bg'] * envelope['U_base'] * areas_df['Hs_bg']
 
         # calculate RC model properties
         df['Htr_op'] = df['Hg'] + df['HD']
@@ -155,13 +162,7 @@ class BuildingRCModel:
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = H_IS * df['Atot']
 
-        fields = ['Atot', 'Awin_ag', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
-                  'Aroof', 'Aunderside', 'U_wall', 'U_roof', 'U_win', 'U_base', 'Htr_w', 'GFA_m2', 'Aocc', 'Aop_bg',
-                  'Awall_ag', 'footprint', 'Hs_ag']
-
-        result = df[fields]
-
-        return result
+        return df.merge(areas_df[['Af', 'Aef', 'footprint', 'GFA_m2', 'Aocc', 'Hs_ag']], left_index=True, right_index=True)
 
 
     def geometry_reader_radiation_daysim(self,
@@ -175,20 +176,21 @@ class BuildingRCModel:
 
         :param locator: an InputLocator for locating the input files
 
-        :param envelope: The contents of the `architecture.shp` file, indexed by building name.
+        :param envelope: The contents of the `envelope.csv` file indexed by building name.
 
         :param geometry: The contents of the `zone.shp` file indexed by building name.
 
         :return: Adjusted Daysim geometry data containing the following:
 
             - name: Name of building.
-            - Aw: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
+            - Awin_ag: Area of windows for each building (using mean window to wall ratio for building, excluding voids) [m2]
             - Awall_ag: Opaque wall areas above ground (excluding voids, windows and roof) [m2]
             - Aop_bg: Opaque areas below ground (including ground floor, excluding voids and windows) [m2]
             - Aroof: Area of the roof (considered flat and equal to the building footprint) [m2]
-            - GFA_m2: Gross floor area [m2]
-            - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
-            - surface_volume: Surface to volume ratio [m^-1]
+            - Aunderside: Area of the underside (only if building is floating, otherwise 0) [m2]
+            # - GFA_m2: Gross floor area [m2]
+            # - floors: Sum of floors below ground (floors_bg) and floors above ground (floors_ag) [m2]
+            # - surface_volume: Surface to volume ratio [m^-1]
 
         :rtype: DataFrame
 
@@ -223,19 +225,11 @@ class BuildingRCModel:
                 geometry_data['undersides_bottom_m2'] = 0
             envelope.loc[building_name, 'Aunderside'] = geometry_data['undersides_bottom_m2'][0]
 
-        df = envelope.merge(geometry, left_index=True, right_index=True)
-
 
         # adjust envelope areas with Void_deck
-        df['Aop_bg'] = df['height_bg'] * df['perimeter'] + df['footprint']
+        envelope['Aop_bg'] = geometry['height_bg'] * geometry['perimeter'] + geometry['footprint']
 
-        # get other quantities.
-        df['floors'] = df['floors_bg'] + df['floors_ag'] - df["void_deck"]
-        df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
-        df['GFA_ag_m2'] = df['footprint'] * (df['floors_ag'] - df["void_deck"])
-        df['GFA_bg_m2'] = df['footprint'] * df['floors_bg']
-
-        return df
+        return envelope
 
     def lookup_effective_mass_area_factor(self, cm):
         """

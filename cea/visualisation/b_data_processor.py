@@ -17,15 +17,15 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type']
+x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type', 'building_faceted_by_decades']
 
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
-    def __init__(self, plot_config, plot_config_general, plots_building_filter,plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
+    def __init__(self, plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
-        self.buildings = plot_config_general.buildings
+        self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by
@@ -160,6 +160,95 @@ class data_processor:
                 }
             else:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
+        elif plot_cea_feature == 'operational-emissions':
+            y_cea_metric_map = {
+                'heating': ['heating_kgCO2e'],
+                'hot_water': ['hot_water_kgCO2e'],
+                'cooling': ['cooling_kgCO2e'],
+                'electricity': ['electricity_kgCO2e'],
+                'heating_NATURALGAS': ['Qhs_sys_NATURALGAS_kgCO2e'],
+                'heating_BIOGAS': ['Qhs_sys_BIOGAS_kgCO2e'],
+                'heating_SOLAR': ['Qhs_sys_SOLAR_kgCO2e'],
+                'heating_DRYBIOMASS': ['Qhs_sys_DRYBIOMASS_kgCO2e'],
+                'heating_WETBIOMASS': ['Qhs_sys_WETBIOMASS_kgCO2e'],
+                'heating_GRID': ['Qhs_sys_GRID_kgCO2e'],
+                'heating_COAL': ['Qhs_sys_COAL_kgCO2e'],
+                'heating_WOOD': ['Qhs_sys_WOOD_kgCO2e'],
+                'heating_OIL': ['Qhs_sys_OIL_kgCO2e'],
+                'heating_HYDROGEN': ['Qhs_sys_HYDROGEN_kgCO2e'],
+                'heating_NONE': ['Qhs_sys_NONE_kgCO2e'],
+                'hot_water_NATURALGAS': ['Qww_sys_NATURALGAS_kgCO2e'],
+                'hot_water_BIOGAS': ['Qww_sys_BIOGAS_kgCO2e'],
+                'hot_water_SOLAR': ['Qww_sys_SOLAR_kgCO2e'],
+                'hot_water_DRYBIOMASS': ['Qww_sys_DRYBIOMASS_kgCO2e'],
+                'hot_water_WETBIOMASS': ['Qww_sys_WETBIOMASS_kgCO2e'],
+                'hot_water_GRID': ['Qww_sys_GRID_kgCO2e'],
+                'hot_water_COAL': ['Qww_sys_COAL_kgCO2e'],
+                'hot_water_WOOD': ['Qww_sys_WOOD_kgCO2e'],
+                'hot_water_OIL': ['Qww_sys_OIL_kgCO2e'],
+                'hot_water_HYDROGEN': ['Qww_sys_HYDROGEN_kgCO2e'],
+                'hot_water_NONE': ['Qww_sys_NONE_kgCO2e'],
+                'cooling_NATURALGAS': ['Qcs_sys_NATURALGAS_kgCO2e'],
+                'cooling_BIOGAS': ['Qcs_sys_BIOGAS_kgCO2e'],
+                'cooling_SOLAR': ['Qcs_sys_SOLAR_kgCO2e'],
+                'cooling_DRYBIOMASS': ['Qcs_sys_DRYBIOMASS_kgCO2e'],
+                'cooling_WETBIOMASS': ['Qcs_sys_WETBIOMASS_kgCO2e'],
+                'cooling_GRID': ['Qcs_sys_GRID_kgCO2e'],
+                'cooling_COAL': ['Qcs_sys_COAL_kgCO2e'],
+                'cooling_WOOD': ['Qcs_sys_WOOD_kgCO2e'],
+                'cooling_OIL': ['Qcs_sys_OIL_kgCO2e'],
+                'cooling_HYDROGEN': ['Qcs_sys_HYDROGEN_kgCO2e'],
+                'cooling_NONE': ['Qcs_sys_NONE_kgCO2e'],
+                'electricity_NATURALGAS': ['E_sys_NATURALGAS_kgCO2e'],
+                'electricity_BIOGAS': ['E_sys_BIOGAS_kgCO2e'],
+                'electricity_SOLAR': ['E_sys_SOLAR_kgCO2e'],
+                'electricity_DRYBIOMASS': ['E_sys_DRYBIOMASS_kgCO2e'],
+                'electricity_WETBIOMASS': ['E_sys_WETBIOMASS_kgCO2e'],
+                'electricity_GRID': ['E_sys_GRID_kgCO2e'],
+                'electricity_COAL': ['E_sys_COAL_kgCO2e'],
+                'electricity_WOOD': ['E_sys_WOOD_kgCO2e'],
+                'electricity_OIL': ['E_sys_OIL_kgCO2e'],
+                'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2e'],
+                'electricity_NONE': ['E_sys_NONE_kgCO2e'],
+            }
+        elif plot_cea_feature == 'lifecycle-emissions':
+            y_cea_metric_map = {
+                'operation_heating': ['operation_heating_kgCO2e'],
+                'operation_hot_water': ['operation_hot_water_kgCO2e'],
+                'operation_cooling': ['operation_cooling_kgCO2e'],
+                'operation_electricity': ['operation_electricity_kgCO2e'],
+                'production_wall_ag': ['production_wall_ag_kgCO2e'],
+                'production_wall_bg': ['production_wall_bg_kgCO2e'],
+                'production_wall_part': ['production_wall_part_kgCO2e'],
+                'production_win_ag': ['production_win_ag_kgCO2e'],
+                'production_roof': ['production_roof_kgCO2e'],
+                'production_upperside': ['production_upperside_kgCO2e'],
+                'production_underside': ['production_underside_kgCO2e'],
+                'production_floor': ['production_floor_kgCO2e'],
+                'production_base': ['production_base_kgCO2e'],
+                'production_technical_systems': ['production_technical_systems_kgCO2e'],
+                'biogenic_wall_ag': ['biogenic_wall_ag_kgCO2e'],
+                'biogenic_wall_bg': ['biogenic_wall_bg_kgCO2e'],
+                'biogenic_wall_part': ['biogenic_wall_part_kgCO2e'],
+                'biogenic_win_ag': ['biogenic_win_ag_kgCO2e'],
+                'biogenic_roof': ['biogenic_roof_kgCO2e'],
+                'biogenic_upperside': ['biogenic_upperside_kgCO2e'],
+                'biogenic_underside': ['biogenic_underside_kgCO2e'],
+                'biogenic_floor': ['biogenic_floor_kgCO2e'],
+                'biogenic_base': ['biogenic_base_kgCO2e'],
+                'biogenic_technical_systems': ['biogenic_technical_systems_kgCO2e'],
+                'demolition_wall_ag': ['demolition_wall_ag_kgCO2e'],
+                'demolition_wall_bg': ['demolition_wall_bg_kgCO2e'],
+                'demolition_wall_part': ['demolition_wall_part_kgCO2e'],
+                'demolition_win_ag': ['demolition_win_ag_kgCO2e'],
+                'demolition_roof': ['demolition_roof_kgCO2e'],
+                'demolition_upperside': ['demolition_upperside_kgCO2e'],
+                'demolition_underside': ['demolition_underside_kgCO2e'],
+                'demolition_floor': ['demolition_floor_kgCO2e'],
+                'demolition_base': ['demolition_base_kgCO2e'],
+                'demolition_technical_systems': ['demolition_technical_systems_kgCO2e'],
+
+            }
 
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
@@ -253,7 +342,7 @@ def normalise_dataframe_by_index(dataframe_A, dataframe_B):
     return merged
 
 
-def convert_energy_units(dataframe, target_unit, normalised=False):
+def convert_energy_units(dataframe, target_unit, normalised=False, plot_cea_feature=None):
     """
     Converts energy unit columns in a DataFrame to the specified unit.
 
@@ -265,24 +354,45 @@ def convert_energy_units(dataframe, target_unit, normalised=False):
     Returns:
         pd.DataFrame: A new DataFrame with converted energy units and renamed columns.
     """
-    assert target_unit in ['Wh', 'kWh', 'MWh'], "target_unit must be one of ['Wh', 'kWh', 'MWh']"
+    if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
+        assert target_unit in ['gCO2e', 'kgCO2e', 'tonCO2e'], "target_unit must be one of ['gCO2e', 'kgCO2e', 'tonCO2e']"
 
-    conversion_to_wh = {'Wh': 1, 'kWh': 1_000, 'MWh': 1_000_000}
-    df = dataframe.copy()
-    new_columns = {}
+        conversion_to_wh = {'gCO2e': 1, 'kgCO2e': 1_000, 'tonCO2e': 1_000_000}
+        df = dataframe.copy()
+        new_columns = {}
 
-    for col in df.columns:
-        for unit in conversion_to_wh:
-            if col.endswith(f"_{unit}"):
-                # Convert values
-                factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
-                df[col] = df[col] * factor
+        for col in df.columns:
+            for unit in conversion_to_wh:
+                if col.endswith(f"_{unit}"):
+                    # Convert values
+                    factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
+                    df[col] = df[col] * factor
 
-                # Rename column
-                suffix = f"{target_unit}/m2" if normalised else target_unit
-                new_col = col.replace(f"_{unit}", f"_{suffix}")
-                new_columns[col] = new_col
-                break  # Stop after first match
+                    # Rename column
+                    suffix = f"{target_unit}/m2" if normalised else target_unit
+                    new_col = col.replace(f"_{unit}", f"_{suffix}")
+                    new_columns[col] = new_col
+                    break  # Stop after first match
+
+    else:
+        assert target_unit in ['Wh', 'kWh', 'MWh'], "target_unit must be one of ['Wh', 'kWh', 'MWh']"
+
+        conversion_to_wh = {'Wh': 1, 'kWh': 1_000, 'MWh': 1_000_000}
+        df = dataframe.copy()
+        new_columns = {}
+
+        for col in df.columns:
+            for unit in conversion_to_wh:
+                if col.endswith(f"_{unit}"):
+                    # Convert values
+                    factor = conversion_to_wh[unit] / conversion_to_wh[target_unit]
+                    df[col] = df[col] * factor
+
+                    # Rename column
+                    suffix = f"{target_unit}/m2" if normalised else target_unit
+                    new_col = col.replace(f"_{unit}", f"_{suffix}")
+                    new_columns[col] = new_col
+                    break  # Stop after first match
 
     df.rename(columns=new_columns, inplace=True)
     return df
@@ -317,7 +427,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 2: Handle "by_building" mode
     if plot_instance.x_to_plot == 'by_building':
-        if plot_cea_feature == 'demand':
+        if plot_cea_feature in ('demand',  'operational-emissions', 'lifecycle-emissions'):
             df_to_plotly = normalise_dataframe_by_index(df_y_metrics, normaliser_m2)
 
         elif plot_cea_feature in ('pv', 'pvt', 'sc'):
@@ -372,7 +482,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 5: Convert energy units
     is_normalised = plot_instance.y_normalised_by != 'no_normalisation'
-    df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=is_normalised)
+    df_to_plotly = convert_energy_units(df_to_plotly, plot_instance.y_metric_unit, normalised=is_normalised, plot_cea_feature=plot_cea_feature)
 
     # Step 6: Refine list_y_columns
     valid_cols = df_to_plotly.columns.difference(['X', 'X_facet']).tolist()
@@ -383,7 +493,10 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         if col in valid_cols:
             updated_list_y_columns.append(col)
         else:
-            base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
+            if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
+                base = col.replace('_kgCO2e', f'_{plot_instance.y_metric_unit}')
+            else:
+                base = col.replace('_kWh', f'_{plot_instance.y_metric_unit}')
             maybe_col = f"{base}/m2" if is_normalised else base
             if maybe_col in valid_cols:
                 updated_list_y_columns.append(maybe_col)
@@ -541,9 +654,9 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 
 # Main function
 def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
-    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter,plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
+    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
 
-    if plot_cea_feature in ["demand", "pv", "pvt", "sc"]:
+    if plot_cea_feature in ["demand", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
 
         if plot_instance_b.x_to_plot in x_to_plot_building:

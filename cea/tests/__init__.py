@@ -20,7 +20,7 @@ __status__ = "Production"
 from cea.tests.test_workflow import TestWorkflows
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     test_type = config.test.type
 
     if test_type == "unittest":

@@ -8,9 +8,11 @@ import pandas as pd
 import numpy as np
 import cea.config
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
+
+from cea.demand.building_properties.useful_areas import calc_useful_areas
 
 
 __author__ = "Zhongming Shi, Reynold Mok, Justin McCarty"
@@ -51,8 +53,8 @@ season_hours = {
 # Define metrics for plot
 dict_plot_metrics_cea_feature = {
     'architecture': 'architecture',
-    'embodied_emissions': 'emissions',
-    'operation_emissions': 'emissions',
+    'lifecycle_emissions': 'lifecycle-emissions',
+    'operational_emissions': 'operational-emissions',
     'solar_irradiation': 'solar_irradiation',
     'demand': 'demand',
     'pv': 'pv',
@@ -60,11 +62,102 @@ dict_plot_metrics_cea_feature = {
     'pvt_FP': 'pvt',
     'sc_ET': 'sc',
     'sc_FP': 'sc',
-    'other_renewables': 'other_renewables',
+    'other_renewables': 'other-renewables',
     'dh': 'dh',
     'dc': 'dc',
 }
 
+normalisation_name_mapping = {
+    'grid_electricity_consumption[kWh]': 'EUI_grid_electricity[kWh/m2]',
+    'enduse_electricity_demand[kWh]': 'EUI_enduse_electricity[kWh/m2]',
+    'enduse_cooling_demand[kWh]': 'EUI_enduse_cooling[kWh/m2]',
+    'enduse_space_cooling_demand[kWh]': 'EUI_enduse_space_cooling[kWh/m2]',
+    'enduse_heating_demand[kWh]': 'EUI_enduse_heating[kWh/m2]',
+    'enduse_space_heating_demand[kWh]': 'EUI_enduse_space_heating[kWh/m2]',
+    'enduse_dhw_demand[kWh]': 'EUI_enduse_dhw[kWh/m2]',
+    'heating[kgCO2e]': 'heating[kgCO2e/m2]',
+    'hot_water[kgCO2e]': 'hot_water[kgCO2e/m2]',
+    'cooling[kgCO2e]': 'cooling[kgCO2e/m2]',
+    'electricity[kgCO2e]': 'electricity[kgCO2e/m2]',
+    'heating_NATURALGAS[kgCO2e]': 'heating_NATURALGAS[kgCO2e/m2]',
+    'heating_BIOGAS[kgCO2e]': 'heating_BIOGAS[kgCO2e/m2]',
+    'heating_SOLAR[kgCO2e]': 'heating_SOLAR[kgCO2e/m2]',
+    'heating_DRYBIOMASS[kgCO2e]': 'heating_DRYBIOMASS[kgCO2e/m2]',
+    'heating_WETBIOMASS[kgCO2e]': 'heating_WETBIOMASS[kgCO2e/m2]',
+    'heating_GRID[kgCO2e]': 'heating_GRID[kgCO2e/m2]',
+    'heating_COAL[kgCO2e]': 'heating_COAL[kgCO2e/m2]',
+    'heating_WOOD[kgCO2e]': 'heating_WOOD[kgCO2e/m2]',
+    'heating_OIL[kgCO2e]': 'heating_OIL[kgCO2e/m2]',
+    'heating_HYDROGEN[kgCO2e]': 'heating_HYDROGEN[kgCO2e/m2]',
+    'heating_NONE[kgCO2e]': 'heating_NONE[kgCO2e/m2]',
+    'hot_water_NATURALGAS[kgCO2e]': 'hot_water_NATURALGAS[kgCO2e/m2]',
+    'hot_water_BIOGAS[kgCO2e]': 'hot_water_BIOGAS[kgCO2e/m2]',
+    'hot_water_SOLAR[kgCO2e]': 'hot_water_SOLAR[kgCO2e/m2]',
+    'hot_water_DRYBIOMASS[kgCO2e]': 'hot_water_DRYBIOMASS[kgCO2e/m2]',
+    'hot_water_WETBIOMASS[kgCO2e]': 'hot_water_WETBIOMASS[kgCO2e/m2]',
+    'hot_water_GRID[kgCO2e]': 'hot_water_GRID[kgCO2e/m2]',
+    'hot_water_COAL[kgCO2e]': 'hot_water_COAL[kgCO2e/m2]',
+    'hot_water_WOOD[kgCO2e]': 'hot_water_WOOD[kgCO2e/m2]',
+    'hot_water_OIL[kgCO2e]': 'hot_water_OIL[kgCO2e/m2]',
+    'hot_water_HYDROGEN[kgCO2e]': 'hot_water_HYDROGEN[kgCO2e/m2]',
+    'hot_water_NONE[kgCO2e]': 'hot_water_NONE[kgCO2e/m2]',
+    'cooling_NATURALGAS[kgCO2e]': 'cooling_NATURALGAS[kgCO2e/m2]',
+    'cooling_BIOGAS[kgCO2e]': 'cooling_BIOGAS[kgCO2e/m2]',
+    'cooling_SOLAR[kgCO2e]': 'cooling_SOLAR[kgCO2e/m2]',
+    'cooling_DRYBIOMASS[kgCO2e]': 'cooling_DRYBIOMASS[kgCO2e/m2]',
+    'cooling_WETBIOMASS[kgCO2e]': 'cooling_WETBIOMASS[kgCO2e/m2]',
+    'cooling_GRID[kgCO2e]': 'cooling_GRID[kgCO2e/m2]',
+    'cooling_COAL[kgCO2e]': 'cooling_COAL[kgCO2e/m2]',
+    'cooling_WOOD[kgCO2e]': 'cooling_WOOD[kgCO2e/m2]',
+    'cooling_OIL[kgCO2e]': 'cooling_OIL[kgCO2e/m2]',
+    'cooling_HYDROGEN[kgCO2e]': 'cooling_HYDROGEN[kgCO2e/m2]',
+    'cooling_NONE[kgCO2e]': 'cooling_NONE[kgCO2e/m2]',
+    'electricity_NATURALGAS[kgCO2e]': 'electricity_NATURALGAS[kgCO2e/m2]',
+    'electricity_BIOGAS[kgCO2e]': 'electricity_BIOGAS[kgCO2e/m2]',
+    'electricity_SOLAR[kgCO2e]': 'electricity_SOLAR[kgCO2e/m2]',
+    'electricity_DRYBIOMASS[kgCO2e]': 'electricity_DRYBIOMASS[kgCO2e/m2]',
+    'electricity_WETBIOMASS[kgCO2e]': 'electricity_WETBIOMASS[kgCO2e/m2]',
+    'electricity_GRID[kgCO2e]': 'electricity_GRID[kgCO2e/m2]',
+    'electricity_COAL[kgCO2e]': 'electricity_COAL[kgCO2e/m2]',
+    'electricity_WOOD[kgCO2e]': 'electricity_WOOD[kgCO2e/m2]',
+    'electricity_OIL[kgCO2e]': 'electricity_OIL[kgCO2e/m2]',
+    'electricity_HYDROGEN[kgCO2e]': 'electricity_HYDROGEN[kgCO2e/m2]',
+    'electricity_NONE[kgCO2e]': 'electricity_NONE[kgCO2e/m2]',
+    'operation_heating[kgCO2e]': 'operation_heating[kgCO2e/m2]',
+    'operation_hot_water[kgCO2e]': 'operation_hot_water[kgCO2e/m2]',
+    'operation_cooling[kgCO2e]': 'operation_cooling[kgCO2e/m2]',
+    'operation_electricity[kgCO2e]': 'operation_electricity[kgCO2e/m2]',
+    'production_wall_ag[kgCO2e]': 'production_wall_ag[kgCO2e/m2]',
+    'production_wall_bg[kgCO2e]': 'production_wall_bg[kgCO2e/m2]',
+    'production_wall_part[kgCO2e]': 'production_wall_part[kgCO2e/m2]',
+    'production_win_ag[kgCO2e]': 'production_win_ag[kgCO2e/m2]',
+    'production_roof[kgCO2e]': 'production_roof[kgCO2e/m2]',
+    'production_upperside[kgCO2e]': 'production_upperside[kgCO2e/m2]',
+    'production_underside[kgCO2e]': 'production_underside[kgCO2e/m2]',
+    'production_floor[kgCO2e]': 'production_floor[kgCO2e/m2]',
+    'production_base[kgCO2e]': 'production_base[kgCO2e/m2]',
+    'production_technical_systems[kgCO2e]': 'production_technical_systems[kgCO2e/m2]',
+    'biogenic_wall_ag[kgCO2e]': 'biogenic_wall_ag[kgCO2e/m2]',
+    'biogenic_wall_bg[kgCO2e]': 'biogenic_wall_bg[kgCO2e/m2]',
+    'biogenic_wall_part[kgCO2e]': 'biogenic_wall_part[kgCO2e/m2]',
+    'biogenic_win_ag[kgCO2e]': 'biogenic_win_ag[kgCO2e/m2]',
+    'biogenic_roof[kgCO2e]': 'biogenic_roof[kgCO2e/m2]',
+    'biogenic_upperside[kgCO2e]': 'biogenic_upperside[kgCO2e/m2]',
+    'biogenic_underside[kgCO2e]': 'biogenic_underside[kgCO2e/m2]',
+    'biogenic_floor[kgCO2e]': 'biogenic_floor[kgCO2e/m2]',
+    'biogenic_base[kgCO2e]': 'biogenic_base[kgCO2e/m2]',
+    'biogenic_technical_systems[kgCO2e]': 'biogenic_technical_systems[kgCO2e/m2]',
+    'demolition_wall_ag[kgCO2e]': 'demolition_wall_ag[kgCO2e/m2]',
+    'demolition_wall_bg[kgCO2e]': 'demolition_wall_bg[kgCO2e/m2]',
+    'demolition_wall_part[kgCO2e]': 'demolition_wall_part[kgCO2e/m2]',
+    'demolition_win_ag[kgCO2e]': 'demolition_win_ag[kgCO2e/m2]',
+    'demolition_roof[kgCO2e]': 'demolition_roof[kgCO2e/m2]',
+    'demolition_upperside[kgCO2e]': 'demolition_upperside[kgCO2e/m2]',
+    'demolition_underside[kgCO2e]': 'demolition_underside[kgCO2e/m2]',
+    'demolition_floor[kgCO2e]': 'demolition_floor[kgCO2e/m2]',
+    'demolition_base[kgCO2e]': 'demolition_base[kgCO2e/m2]',
+    'demolition_technical_systems[kgCO2e]': 'demolition_technical_systems[kgCO2e/m2]'
+}
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Data preparation
@@ -172,15 +265,10 @@ def get_hours_start_end(config):
     return hour_start, hour_end
 
 
-def get_results_path(locator, cea_feature, list_buildings):
+def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list)-> tuple[list[str], list[str]]:
 
     list_paths = []
     list_appendix = []
-
-    if cea_feature == 'architecture':
-        path = locator.get_total_demand()
-        list_paths.append(path)
-        list_appendix.append(cea_feature)
 
     if cea_feature == 'demand':
         for building in list_buildings:
@@ -188,14 +276,16 @@ def get_results_path(locator, cea_feature, list_buildings):
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
-    if cea_feature == 'embodied_emissions':
-        path = locator.get_lca_embodied()
-        list_paths.append(path)
+    if cea_feature == 'lifecycle_emissions':
+        for building in list_buildings:
+            path = locator.get_lca_timeline_building(building)
+            list_paths.append(path)
         list_appendix.append(cea_feature)
 
-    if cea_feature == 'operation_emissions':
-        path = locator.get_lca_operation()
-        list_paths.append(path)
+    if cea_feature == 'operational_emissions':
+        for building in list_buildings:
+            path = locator.get_lca_operational_hourly_building(building)
+            list_paths.append(path)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'solar_irradiation':
@@ -302,18 +392,48 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
         "demand": ['grid_electricity_consumption[kWh]', 'enduse_electricity_demand[kWh]',
                    'enduse_cooling_demand[kWh]', 'enduse_space_cooling_demand[kWh]', 'enduse_heating_demand[kWh]',
                    'enduse_space_heating_demand[kWh]', 'enduse_dhw_demand[kWh]'],
-        "embodied_emissions": ['embodied_emissions_building_construction[tonCO2-eq/yr]'],
-        "operation_emissions": ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]'],
+        "lifecycle_emissions": [
+            'operation_heating[kgCO2e]', 'operation_hot_water[kgCO2e]', 'operation_cooling[kgCO2e]',
+            'operation_electricity[kgCO2e]',
+            'production_wall_ag[kgCO2e]', 'production_wall_bg[kgCO2e]', 'production_wall_part[kgCO2e]',
+            'production_win_ag[kgCO2e]', 'production_roof[kgCO2e]', 'production_upperside[kgCO2e]',
+            'production_underside[kgCO2e]', 'production_floor[kgCO2e]', 'production_base[kgCO2e]',
+            'production_technical_systems[kgCO2e]', 'biogenic_wall_ag[kgCO2e]', 'biogenic_wall_bg[kgCO2e]',
+            'biogenic_wall_part[kgCO2e]', 'biogenic_win_ag[kgCO2e]', 'biogenic_roof[kgCO2e]',
+            'biogenic_upperside[kgCO2e]', 'biogenic_underside[kgCO2e]', 'biogenic_floor[kgCO2e]',
+            'biogenic_base[kgCO2e]', 'biogenic_technical_systems[kgCO2e]', 'demolition_wall_ag[kgCO2e]',
+            'demolition_wall_bg[kgCO2e]', 'demolition_wall_part[kgCO2e]', 'demolition_win_ag[kgCO2e]',
+            'demolition_roof[kgCO2e]', 'demolition_upperside[kgCO2e]', 'demolition_underside[kgCO2e]',
+            'demolition_floor[kgCO2e]', 'demolition_base[kgCO2e]', 'demolition_technical_systems[kgCO2e]'
+        ],
+        "operational_emissions": [
+            'heating[kgCO2e]', 'hot_water[kgCO2e]', 'cooling[kgCO2e]', 'electricity[kgCO2e]',
+            'heating_NATURALGAS[kgCO2e]', 'heating_BIOGAS[kgCO2e]', 'heating_SOLAR[kgCO2e]',
+            'heating_DRYBIOMASS[kgCO2e]', 'heating_WETBIOMASS[kgCO2e]', 'heating_GRID[kgCO2e]',
+            'heating_COAL[kgCO2e]', 'heating_WOOD[kgCO2e]', 'heating_OIL[kgCO2e]',
+            'heating_HYDROGEN[kgCO2e]', 'heating_NONE[kgCO2e]', 'hot_water_NATURALGAS[kgCO2e]',
+            'hot_water_BIOGAS[kgCO2e]', 'hot_water_SOLAR[kgCO2e]', 'hot_water_DRYBIOMASS[kgCO2e]',
+            'hot_water_WETBIOMASS[kgCO2e]', 'hot_water_GRID[kgCO2e]', 'hot_water_COAL[kgCO2e]',
+            'hot_water_WOOD[kgCO2e]', 'hot_water_OIL[kgCO2e]', 'hot_water_HYDROGEN[kgCO2e]',
+            'hot_water_NONE[kgCO2e]', 'cooling_NATURALGAS[kgCO2e]', 'cooling_BIOGAS[kgCO2e]',
+            'cooling_SOLAR[kgCO2e]', 'cooling_DRYBIOMASS[kgCO2e]', 'cooling_WETBIOMASS[kgCO2e]',
+            'cooling_GRID[kgCO2e]', 'cooling_COAL[kgCO2e]', 'cooling_WOOD[kgCO2e]', 'cooling_OIL[kgCO2e]',
+            'cooling_HYDROGEN[kgCO2e]', 'cooling_NONE[kgCO2e]', 'electricity_NATURALGAS[kgCO2e]',
+            'electricity_BIOGAS[kgCO2e]',
+            'electricity_SOLAR[kgCO2e]', 'electricity_DRYBIOMASS[kgCO2e]', 'electricity_WETBIOMASS[kgCO2e]',
+            'electricity_GRID[kgCO2e]',
+            'electricity_COAL[kgCO2e]', 'electricity_WOOD[kgCO2e]', 'electricity_OIL[kgCO2e]',
+            'electricity_HYDROGEN[kgCO2e]', 'electricity_NONE[kgCO2e]'
+        ],
         "solar_irradiation": ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]','irradiation_wall_north[kWh]',
-                              'irradiation_window_south[kWh]','irradiation_wall_south[kWh]',
-                              'irradiation_window_east[kWh]','irradiation_wall_east[kWh]',
-                              'irradiation_window_west[kWh]','irradiation_wall_west[kWh]'],
+                          'irradiation_window_south[kWh]','irradiation_wall_south[kWh]',
+                          'irradiation_window_east[kWh]','irradiation_wall_east[kWh]',
+                          'irradiation_window_west[kWh]','irradiation_wall_west[kWh]'],
         "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
                'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
                'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
-               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]'
-               'PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
-               'PV_electricity_carbon_intensity[tonCO2-eq/kWh]'],
+               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]',
+               'PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]'],
         "pvt_ET": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
                     'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
                     'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
@@ -392,9 +512,6 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'enduse_heating_demand[kWh]': ['QH_sys_kWh'],
         'enduse_space_heating_demand[kWh]': ['Qhs_sys_kWh'],
         'enduse_dhw_demand[kWh]': ['Qww_kWh'],
-        'embodied_emissions_building_construction[tonCO2-eq/yr]': ['GHG_sys_embodied_tonCO2yr'],
-        'operation_emissions[tonCO2-eq/yr]': ['GHG_sys_tonCO2'],
-        'operation_emissions_grid[tonCO2-eq/yr]': ['GRID_tonCO2'],
         'irradiation_roof[kWh]': ['roofs_top_kW'],
         'irradiation_window_north[kWh]': ['windows_north_kW'],
         'irradiation_wall_north[kWh]': ['walls_north_kW'],
@@ -484,6 +601,88 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
         'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
         'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
+        'heating[kgCO2e]': ['heating_kgCO2e'],
+        'hot_water[kgCO2e]': ['hot_water_kgCO2e'],
+        'cooling[kgCO2e]': ['cooling_kgCO2e'],
+        'electricity[kgCO2e]': ['electricity_kgCO2e'],
+        'heating_NATURALGAS[kgCO2e]': ['Qhs_sys_NATURALGAS_kgCO2e'],
+        'heating_BIOGAS[kgCO2e]': ['Qhs_sys_BIOGAS_kgCO2e'],
+        'heating_SOLAR[kgCO2e]': ['Qhs_sys_SOLAR_kgCO2e'],
+        'heating_DRYBIOMASS[kgCO2e]': ['Qhs_sys_DRYBIOMASS_kgCO2e'],
+        'heating_WETBIOMASS[kgCO2e]': ['Qhs_sys_WETBIOMASS_kgCO2e'],
+        'heating_GRID[kgCO2e]': ['Qhs_sys_GRID_kgCO2e'],
+        'heating_COAL[kgCO2e]': ['Qhs_sys_COAL_kgCO2e'],
+        'heating_WOOD[kgCO2e]': ['Qhs_sys_WOOD_kgCO2e'],
+        'heating_OIL[kgCO2e]': ['Qhs_sys_OIL_kgCO2e'],
+        'heating_HYDROGEN[kgCO2e]': ['Qhs_sys_HYDROGEN_kgCO2e'],
+        'heating_NONE[kgCO2e]': ['Qhs_sys_NONE_kgCO2e'],
+        'hot_water_NATURALGAS[kgCO2e]': ['Qww_sys_NATURALGAS_kgCO2e'],
+        'hot_water_BIOGAS[kgCO2e]': ['Qww_sys_BIOGAS_kgCO2e'],
+        'hot_water_SOLAR[kgCO2e]': ['Qww_sys_SOLAR_kgCO2e'],
+        'hot_water_DRYBIOMASS[kgCO2e]': ['Qww_sys_DRYBIOMASS_kgCO2e'],
+        'hot_water_WETBIOMASS[kgCO2e]': ['Qww_sys_WETBIOMASS_kgCO2e'],
+        'hot_water_GRID[kgCO2e]': ['Qww_sys_GRID_kgCO2e'],
+        'hot_water_COAL[kgCO2e]': ['Qww_sys_COAL_kgCO2e'],
+        'hot_water_WOOD[kgCO2e]': ['Qww_sys_WOOD_kgCO2e'],
+        'hot_water_OIL[kgCO2e]': ['Qww_sys_OIL_kgCO2e'],
+        'hot_water_HYDROGEN[kgCO2e]': ['Qww_sys_HYDROGEN_kgCO2e'],
+        'hot_water_NONE[kgCO2e]': ['Qww_sys_NONE_kgCO2e'],
+        'cooling_NATURALGAS[kgCO2e]': ['Qcs_sys_NATURALGAS_kgCO2e'],
+        'cooling_BIOGAS[kgCO2e]': ['Qcs_sys_BIOGAS_kgCO2e'],
+        'cooling_SOLAR[kgCO2e]': ['Qcs_sys_SOLAR_kgCO2e'],
+        'cooling_DRYBIOMASS[kgCO2e]': ['Qcs_sys_DRYBIOMASS_kgCO2e'],
+        'cooling_WETBIOMASS[kgCO2e]': ['Qcs_sys_WETBIOMASS_kgCO2e'],
+        'cooling_GRID[kgCO2e]': ['Qcs_sys_GRID_kgCO2e'],
+        'cooling_COAL[kgCO2e]': ['Qcs_sys_COAL_kgCO2e'],
+        'cooling_WOOD[kgCO2e]': ['Qcs_sys_WOOD_kgCO2e'],
+        'cooling_OIL[kgCO2e]': ['Qcs_sys_OIL_kgCO2e'],
+        'cooling_HYDROGEN[kgCO2e]': ['Qcs_sys_HYDROGEN_kgCO2e'],
+        'cooling_NONE[kgCO2e]': ['Qcs_sys_NONE_kgCO2e'],
+        'electricity_NATURALGAS[kgCO2e]': ['E_sys_NATURALGAS_kgCO2e'],
+        'electricity_BIOGAS[kgCO2e]': ['E_sys_BIOGAS_kgCO2e'],
+        'electricity_SOLAR[kgCO2e]': ['E_sys_SOLAR_kgCO2e'],
+        'electricity_DRYBIOMASS[kgCO2e]': ['E_sys_DRYBIOMASS_kgCO2e'],
+        'electricity_WETBIOMASS[kgCO2e]': ['E_sys_WETBIOMASS_kgCO2e'],
+        'electricity_GRID[kgCO2e]': ['E_sys_GRID_kgCO2e'],
+        'electricity_COAL[kgCO2e]': ['E_sys_COAL_kgCO2e'],
+        'electricity_WOOD[kgCO2e]': ['E_sys_WOOD_kgCO2e'],
+        'electricity_OIL[kgCO2e]': ['E_sys_OIL_kgCO2e'],
+        'electricity_HYDROGEN[kgCO2e]': ['E_sys_HYDROGEN_kgCO2e'],
+        'electricity_NONE[kgCO2e]': ['E_sys_NONE_kgCO2e'],
+        'operation_heating[kgCO2e]': ['operation_heating_kgCO2e'],
+        'operation_hot_water[kgCO2e]': ['operation_hot_water_kgCO2e'],
+        'operation_cooling[kgCO2e]': ['operation_cooling_kgCO2e'],
+        'operation_electricity[kgCO2e]': ['operation_electricity_kgCO2e'],
+        'production_wall_ag[kgCO2e]': ['production_wall_ag_kgCO2e'],
+        'production_wall_bg[kgCO2e]': ['production_wall_bg_kgCO2e'],
+        'production_wall_part[kgCO2e]': ['production_wall_part_kgCO2e'],
+        'production_win_ag[kgCO2e]': ['production_win_ag_kgCO2e'],
+        'production_roof[kgCO2e]': ['production_roof_kgCO2e'],
+        'production_upperside[kgCO2e]': ['production_upperside_kgCO2e'],
+        'production_underside[kgCO2e]': ['production_underside_kgCO2e'],
+        'production_floor[kgCO2e]': ['production_floor_kgCO2e'],
+        'production_base[kgCO2e]': ['production_base_kgCO2e'],
+        'production_technical_systems[kgCO2e]': ['production_technical_systems_kgCO2e'],
+        'biogenic_wall_ag[kgCO2e]': ['biogenic_wall_ag_kgCO2e'],
+        'biogenic_wall_bg[kgCO2e]': ['biogenic_wall_bg_kgCO2e'],
+        'biogenic_wall_part[kgCO2e]': ['biogenic_wall_part_kgCO2e'],
+        'biogenic_win_ag[kgCO2e]': ['biogenic_win_ag_kgCO2e'],
+        'biogenic_roof[kgCO2e]': ['biogenic_roof_kgCO2e'],
+        'biogenic_upperside[kgCO2e]': ['biogenic_upperside_kgCO2e'],
+        'biogenic_underside[kgCO2e]': ['biogenic_underside_kgCO2e'],
+        'biogenic_floor[kgCO2e]': ['biogenic_floor_kgCO2e'],
+        'biogenic_base[kgCO2e]': ['biogenic_base_kgCO2e'],
+        'biogenic_technical_systems[kgCO2e]': ['biogenic_technical_systems_kgCO2e'],
+        'demolition_wall_ag[kgCO2e]': ['demolition_wall_ag_kgCO2e'],
+        'demolition_wall_bg[kgCO2e]': ['demolition_wall_bg_kgCO2e'],
+        'demolition_wall_part[kgCO2e]': ['demolition_wall_part_kgCO2e'],
+        'demolition_win_ag[kgCO2e]': ['demolition_win_ag_kgCO2e'],
+        'demolition_roof[kgCO2e]': ['demolition_roof_kgCO2e'],
+        'demolition_upperside[kgCO2e]': ['demolition_upperside_kgCO2e'],
+        'demolition_underside[kgCO2e]': ['demolition_underside_kgCO2e'],
+        'demolition_floor[kgCO2e]': ['demolition_floor_kgCO2e'],
+        'demolition_base[kgCO2e]': ['demolition_base_kgCO2e'],
+        'demolition_technical_systems[kgCO2e]': ['demolition_technical_systems_kgCO2e'],
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -645,7 +844,7 @@ def check_list_nesting(input_list):
         raise ValueError("The input list contains a mix of lists and non-lists.")
 
 
-def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_column_names):
+def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_column_names) -> list[pd.DataFrame]:
     """
     Iterates over a list of file paths, loads DataFrames from existing .csv files,
     and returns a list of these DataFrames.
@@ -676,6 +875,11 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
+                elif 'period' in df.columns:
+                    selected_columns = ['period'] + ['name'] + list_cea_column_names
+                    available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
+                    df = df[available_columns]
+                    list_dataframes.append(df)
                 else:
                     # Slice the useful columns
                     selected_columns = ['name'] + list_cea_column_names
@@ -727,8 +931,8 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
             cleaned_df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
             list_dataframes.append(cleaned_df)
 
-    # Check if all DataFrames share the same column names (excluding 'date')
-    column_sets = [set(df.columns) - {'date'} for df in list_dataframes]
+    # Check if all DataFrames share the same column names (excluding 'date', 'name')
+    column_sets = [set(df.columns) - {'date', 'name'} for df in list_dataframes]
     all_columns_match = all(column_set == column_sets[0] for column_set in column_sets)
 
     def combine_dataframes(list_dataframes):
@@ -765,24 +969,49 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
         # Aggregate DataFrames with the same columns
         if not list_dataframes:
             return None
-            
-        # Additional validation for consistent structure
-        if len(set(len(df) for df in list_dataframes)) > 1:
-            print("Warning: DataFrames have different numbers of rows, which may affect aggregation accuracy")
-            
-        aggregated_df = list_dataframes[0].copy()
-        
-        # Initialize aggregated_df with zeros (except date column)
-        for col in aggregated_df.columns:
-            if col != 'date':
-                aggregated_df[col] = 0
-        
-        # Sum all values first
-        for df in list_dataframes:
+
+        # Check if 'period' column exists for timeline aggregation
+        has_period_column = all('period' in df.columns for df in list_dataframes)
+
+        if has_period_column:
+            # Timeline aggregation: buildings may have different start years
+            # Concatenate all dataframes and aggregate by period
+            combined_df = pd.concat(list_dataframes, ignore_index=True)
+
+            # Validate 'name' column exists
+            if 'name' not in combined_df.columns:
+                raise ValueError("Timeline aggregation requires 'name' column in all dataframes")
+
+            # Get numeric columns to sum
+            numeric_cols = [col for col in combined_df.columns if col not in ['name', 'date', 'period']
+                           and pd.api.types.is_numeric_dtype(combined_df[col])]
+
+            # Aggregate by period, summing numeric columns
+            aggregated_df = combined_df.groupby('period', as_index=False)[numeric_cols].sum()
+
+            # Add concatenated building names
+            all_building_names = ','.join(sorted(combined_df['name'].unique()))
+            aggregated_df['name'] = all_building_names
+
+        else:
+            # Legacy behavior for non-timeline data with same row counts
+            # Additional validation for consistent structure
+            if len(set(len(df) for df in list_dataframes)) > 1:
+                print("Warning: DataFrames have different numbers of rows, which may affect aggregation accuracy")
+
+            aggregated_df = list_dataframes[0].copy()
+
+            # Initialize aggregated_df with zeros (except date and name columns)
             for col in aggregated_df.columns:
-                if col == 'date':
-                    continue
-                aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
+                if col not in ['date', 'name', 'period']:
+                    aggregated_df[col] = 0
+
+            # Sum all values first
+            for df in list_dataframes:
+                for col in aggregated_df.columns:
+                    # Only sum numeric columns, skip string columns like 'name' or 'date'
+                    if pd.api.types.is_numeric_dtype(aggregated_df[col]) and pd.api.types.is_numeric_dtype(df[col]):
+                        aggregated_df[col] = aggregated_df[col].add(df[col], fill_value=0)
         
         # Then apply appropriate operations
         for col in aggregated_df.columns:
@@ -829,11 +1058,11 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
 
     # Perform slicing based on hour_start and hour_end
     if hour_start <= hour_end:
-        # Normal case: Slice rows from hour_start to hour_end
-        sliced_df = df.iloc[hour_start:hour_end + 1].copy()
+        # Normal case: Slice rows from hour_start to hour_end (hour_end is already exclusive)
+        sliced_df = df.iloc[hour_start:hour_end].copy()
     else:
         # Wrapping case: Combine two slices (0 to hour_end and hour_start to 8760)
-        top_slice = df.iloc[0:hour_end + 1]
+        top_slice = df.iloc[0:hour_end]
         bottom_slice = df.iloc[hour_start:8760]
         sliced_df = pd.concat([bottom_slice, top_slice]).copy()
 
@@ -870,6 +1099,25 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
         for sublist_paths in list_paths:
             list_useful_cea_results = load_cea_results_from_csv_files(hour_start, hour_end, sublist_paths, list_cea_column_names)
             list_list_useful_cea_results.append(list_useful_cea_results)
+    
+    # Special handling for architecture feature
+    if cea_feature == 'architecture':
+        # Load source data
+        zone_df = gpd.read_file(locator.get_zone_geometry()).set_index('name')
+        architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
+
+        # Generate architecture data using calc_useful_areas
+        result_df = calc_useful_areas(zone_df, architecture_df)
+
+        # Extract only the columns needed for architecture metrics
+        architecture_data = result_df[['Af', 'footprint', 'GFA_m2', 'Aocc']].rename(columns={
+            'Af': 'Af_m2',
+            'footprint': 'Aroof_m2',  # Assuming footprint corresponds to roof area
+            'Aocc': 'Aocc_m2'
+        }).reset_index()
+
+        list_list_useful_cea_results.append([architecture_data])
+        list_appendix.append('architecture')
 
     return list_list_useful_cea_results, list_appendix
 
@@ -921,7 +1169,7 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
         # Handle remaining non-numeric columns
         remaining_cols = [col for col in df.columns if col not in energy_cols + area_cols + ([groupby_cols] if isinstance(groupby_cols, str) else groupby_cols if isinstance(groupby_cols, list) else [])]
         for col in remaining_cols:
-            if df[col].dtype in [int, float]:
+            if pd.api.types.is_numeric_dtype(df[col]):
                 result[col] = grouped[col].sum()
             else:
                 result[col] = grouped[col].first()
@@ -946,12 +1194,71 @@ def aggregate_solar_data_properly_temporal(df, groupby_cols=None):
         # Handle remaining non-numeric columns  
         remaining_cols = [col for col in df.columns if col not in energy_cols + area_cols]
         for col in remaining_cols:
-            if df[col].dtype in [int, float]:
+            if pd.api.types.is_numeric_dtype(df[col]):
                 result[col] = df[col].sum()
             else:
                 result[col] = df[col].iloc[0] if len(df) > 0 else None
         
         return result
+
+
+def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym,
+                            list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period,
+                            date_column='date', plot=False):
+    """
+    Aggregates building-level results based on the provided list of DataFrames.
+
+    Parameters:
+    - bool_use_acronym (bool): Whether to map columns to acronyms.
+    - list_list_useful_cea_results (list of lists of DataFrames): List of DataFrame lists to aggregate.
+    - list_buildings (list): List of building names.
+    - list_selected_time_period (list): List of selected time periods ('hourly', 'annually', 'monthly', 'seasonally').
+    - date_column (str): The column representing datetime.
+
+    Returns:
+    - list: A list of three lists of DataFrames corresponding to the time periods:
+        [hourly/annually results, monthly results, seasonally results].
+    """
+
+    for n in range(len(list_list_useful_cea_results)):
+        appendix = list_appendix[n]
+        list_useful_cea_results = list_list_useful_cea_results[n]
+
+        # Initialize aggregated dataframe with all buildings
+        aggregated_df = None
+
+        for i, df in enumerate(list_useful_cea_results):
+            if df is None or df.empty:
+                continue
+
+            # For lifecycle emissions, sum all rows for each building
+            if aggregated_df is None:
+                # First dataframe - initialize with a copy
+                aggregated_df = df.copy()
+            else:
+                # Append subsequent dataframes and then sum by building
+                aggregated_df = pd.concat([aggregated_df, df], ignore_index=True)
+
+        # After combining all dataframes, sum all rows for each building
+        if aggregated_df is not None and not aggregated_df.empty and 'name' in aggregated_df.columns:
+            # Get numeric columns to sum
+            numeric_cols = [col for col in aggregated_df.columns if col not in ['name', 'date']]
+            # Group by building name and sum all numeric columns
+            aggregated_df = aggregated_df.groupby('name', as_index=False)[numeric_cols].sum()
+
+        if aggregated_df is not None and not aggregated_df.empty:
+            # Convert column names if needed
+            if not bool_use_acronym:
+                aggregated_df.columns = map_metrics_and_cea_columns(aggregated_df.columns, direction="columns_to_metrics")
+
+            # Write to disk
+            cea_feature = "lifecycle_emissions"
+            _cea_feature = cea_feature if not plot else cea_feature.replace("_", "-")
+            _appendix = appendix if not plot else appendix.replace("_", "-")
+            path = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature=_cea_feature, appendix=_appendix)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            aggregated_df.to_csv(path, index=False, float_format='%.2f')
+
 
 
 def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
@@ -969,7 +1276,6 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
     - list: A list of three lists of DataFrames corresponding to the time periods:
         [hourly/annually results, monthly results, seasonally results].
     """
-    list_list_df = []
     for n in range(len(list_list_useful_cea_results)):
         appendix = list_appendix[n]
         list_useful_cea_results = list_list_useful_cea_results[n]
@@ -1094,7 +1400,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
         list_time_resolution = ['annually', 'monthly', 'seasonally']
 
         # Write to disk
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, [appendix], list_time_resolution, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
 
 
 def add_nominal_actual_and_coverage(df):
@@ -1183,6 +1489,7 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
+            print(f"Available columns: {df.columns.tolist()}")
             raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
         if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
             df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
@@ -1349,7 +1656,9 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
     if plot_cea_feature is not None:
         target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
     else:
-        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+        from cea.inputlocator import CEA_FEATURE_FOLDER_MAP
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        target_path = os.path.join(summary_folder, folder_name)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1359,76 +1668,41 @@ def results_writer_time_period(locator, hour_start, hour_end, summary_folder, li
         list_time_period = list_list_time_period[m]
         appendix = list_appendix[m]
 
+        # Convert underscores to hyphens if writing to plot folder
+        if plot:
+            cea_feature_formatted = cea_feature.replace('_', '-')
+            appendix_formatted = appendix.replace('_', '-')
+        else:
+            cea_feature_formatted = cea_feature
+            appendix_formatted = appendix
+
         # Write .csv files for each DataFrame
         for n in range(len(list_df_aggregate_time_period)):
             df = list_df_aggregate_time_period[n]
             time_period = list_time_period[n]
-            if df is not None:
-                # Determine time period name based on the content in Column ['period']
-                if time_period == 'annually':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
+            if df is None:
+                continue
 
-                # if only one day is involved
-                elif len(df) == 1 and time_period == 'daily':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-                    break
-
-                elif len(df) > 1 and time_period == 'daily':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
-                # if all days selected fall into the same month
-                elif len(df) == 1 and time_period == 'monthly':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-                    break
-                elif len(df) > 1 and time_period == 'monthly':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
-                elif time_period == 'seasonally':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
-                elif time_period == 'hourly':
-                    if bool_analytics:
-                        os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
-                        path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    else:
-                        path_csv = locator.get_export_results_summary_cea_feature_time_period_file(summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
-                    df.to_csv(path_csv, index=False, float_format="%.2f")
-
+            # Get the correct path based on analytics flag
+            if bool_analytics:
+                path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_file(
+                    summary_folder, cea_feature, appendix, time_period, hour_start, hour_end)
             else:
-                pass    # Allow the missing results and will just pass
+                path_csv = locator.get_export_results_summary_cea_feature_time_period_file(
+                    summary_folder, cea_feature_formatted, appendix_formatted, time_period, hour_start, hour_end)
+
+            # Ensure parent directory exists
+            os.makedirs(os.path.dirname(path_csv), exist_ok=True)
+
+            # Write the CSV
+            df.to_csv(path_csv, index=False, float_format="%.2f")
+
+            # Break early for specific single-day conditions
+            if len(df) == 1 and time_period in ('daily', 'monthly'):
+                break
 
 
-def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False):
+def results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df, list_appendix, list_time_resolution, bool_analytics, plot=False, bool_use_acronym=True):
     """
     Writes aggregated results for each building to CSV files.
 
@@ -1453,7 +1727,9 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
     if plot_cea_feature is not None:
         target_path = locator.get_export_plots_cea_feature_folder(plot_cea_feature)
     else:
-        target_path = locator.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature)
+        from cea.inputlocator import CEA_FEATURE_FOLDER_MAP
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        target_path = os.path.join(summary_folder, folder_name)
 
     # Create the folder if it doesn't exist
     os.makedirs(target_path, exist_ok=True)
@@ -1463,9 +1739,12 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
         appendix = list_appendix[0]
 
         if plot_cea_feature is None:
-            if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
+            if appendix in ('architecture', 'lifecycle_emissions'):
                 # Create the .csv file path
-                path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
+                if appendix == 'lifecycle_emissions':
+                    path_csv = locator.get_export_results_summary_cea_feature_timeline_file(summary_folder, cea_feature, appendix)
+                else:
+                    path_csv = locator.get_export_results_summary_cea_feature_buildings_file(summary_folder, cea_feature, appendix)
                 os.makedirs(locator.get_export_results_summary_cea_feature_analytics_folder(summary_folder, cea_feature), exist_ok=True)
             else:
                 if not bool_analytics:
@@ -1477,24 +1756,38 @@ def results_writer_time_period_building(locator, hour_start, hour_end, summary_f
                     time_resolution = list_time_resolution[m]
                     path_csv = locator.get_export_results_summary_cea_feature_analytics_time_resolution_buildings_file(summary_folder, cea_feature, appendix, time_resolution, hour_start, hour_end)
         else:
-            if appendix in ('architecture', 'embodied_emissions', 'operation_emissions'):
+            # Convert underscores to hyphens for plot file paths
+            plot_cea_feature_formatted = plot_cea_feature.replace('_', '-')
+            appendix_formatted = appendix.replace('_', '-')
+            cea_feature_formatted = cea_feature.replace('_', '-')
+
+            if appendix in ('architecture'):
                 # Create the .csv file path
-                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
-                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature, appendix)
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
+                path_csv = locator.get_export_plots_cea_feature_buildings_file(plot_cea_feature_formatted, appendix_formatted)
+            elif appendix in ('lifecycle_emissions'):
+                os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
+                path_csv = locator.get_export_results_summary_cea_feature_timeline_file(summary_folder, cea_feature_formatted, appendix_formatted)
             else:
                 if not bool_analytics:
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
-                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                    path_csv = locator.get_export_plots_cea_feature_time_resolution_buildings_file(plot_cea_feature_formatted, appendix_formatted, time_resolution, hour_start, hour_end)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
                 else:
-                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature), exist_ok=True)
+                    os.makedirs(locator.get_export_plots_cea_feature_folder(plot_cea_feature_formatted), exist_ok=True)
                     time_resolution = list_time_resolution[m]
-                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature, appendix, time_resolution, hour_start, hour_end)
+                    path_csv = locator.get_export_plots_cea_feature_analytics_time_resolution_buildings_file(plot_cea_feature_formatted, appendix_formatted, time_resolution, hour_start, hour_end)
 
-        # Write to .csv files
-        for df in list_df:
-            if not df.empty:
-                df.to_csv(path_csv, index=False, float_format="%.4f")
+        if appendix == 'lifecycle_emissions':
+            df_timeline = aggregate_or_combine_dataframes(bool_use_acronym, list_df)
+            if df_timeline is not None:
+                df_timeline.to_csv(path_csv, index=False, float_format="%.4f")
+
+        else:
+            # Write to .csv files
+            for df in list_df:
+                if not df.empty:
+                    df.to_csv(path_csv, index=False, float_format="%.4f")
 
 
 # Filter by criteria for buildings
@@ -1714,8 +2007,7 @@ def filter_by_building_names(df_typology, list_buildings):
 # Execute advanced UBEM analytics
 
 def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=False):
-    list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]',
-                         'PV_electricity_carbon_intensity[tonCO2-eq/kWh]']
+    list_pv_analytics = ['PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]']
     list_demand_metrics = ['grid_electricity_consumption[kWh]']
     list_list_useful_cea_results_pv, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_pv_analytics, list_buildings, bool_analytics=True)
     list_list_useful_cea_results_demand, _ = exec_read_and_slice(hour_start, hour_end, locator, list_demand_metrics, list_buildings)
@@ -1784,7 +2076,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
 
         # Handle different periods
         if period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"Day{x - 1:03d}")
+            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -1792,7 +2084,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             df['period'] = df[date_column].dt.month.map(season_mapping)
             df['period'] = pd.Categorical(df['period'], categories=season_names, ordered=True)
         elif period == 'annually':
-            df['period'] = 'year_' + df[date_column].dt.year.astype(str)
+            df['period'] = 'Y_' + df[date_column].dt.year.astype(str)
         else:
             raise ValueError(f"Invalid period: '{period}'. Must be one of ['hourly', 'daily', 'monthly', 'seasonally', 'annually'].")
 
@@ -1984,7 +2276,7 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             list_time_period = ['annually', 'monthly', 'seasonally']
 
             # Write to disk
-            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_pv_analytics, list_list_df, [appendix], list_time_period, bool_analytics=True, plot=plot, bool_use_acronym=bool_use_acronym)
 
 
 def calc_solar_energy_penetration_by_period(df, col, demand_col='GRID_kWh'):
@@ -2108,17 +2400,6 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
     else:
         plot_cea_feature = None
 
-    # Mapping metric names for user-friendly output
-    name_mapping = {
-        'grid_electricity_consumption[kWh]': 'EUI_grid_electricity[kWh/m²]',
-        'enduse_electricity_demand[kWh]': 'EUI_enduse_electricity[kWh/m²]',
-        'enduse_cooling_demand[kWh]': 'EUI_enduse_cooling[kWh/m²]',
-        'enduse_space_cooling_demand[kWh]': 'EUI_enduse_space_cooling[kWh/m²]',
-        'enduse_heating_demand[kWh]': 'EUI_enduse_heating[kWh/m²]',
-        'enduse_space_heating_demand[kWh]': 'EUI_enduse_space_heating[kWh/m²]',
-        'enduse_dhw_demand[kWh]': 'EUI_enduse_dhw[kWh/m²]',
-    }
-
     # Read and process the architecture DataFrame
     if plot_cea_feature is not None:
         df_building_path = locator.get_export_plots_selected_building_file()
@@ -2142,7 +2423,12 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         df_time_path = locator.get_export_results_summary_cea_feature_time_period_file(
             summary_folder, cea_feature, appendix, time_period, hour_start, hour_end
         )
-        df_time_resolution = pd.read_csv(df_time_path)
+
+        if not os.path.exists(df_time_path):
+            print(f"File not found: {df_time_path}.")
+            break
+        else:
+            df_time_resolution = pd.read_csv(df_time_path)
 
         if bool_use_acronym:
             df_time_resolution.columns = map_metrics_and_cea_columns(
@@ -2152,7 +2438,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         area_column = 'conditioned_floor_area[m2]' if bool_use_conditioned_floor_area_for_normalisation else 'gross_floor_area[m2]'
         df_time_resolution = normalize_dataframe(df_time_resolution, area_column)
 
-        result_time_resolution = df_time_resolution.rename(columns=name_mapping)
+        result_time_resolution = df_time_resolution.rename(columns=normalisation_name_mapping)
         list_result_time_resolution.append(result_time_resolution)
 
         # Write to disk
@@ -2183,12 +2469,12 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                             result_buildings[col] = result_buildings[col] / result_buildings[area_column]
                     result_buildings.drop(columns=[area_column], inplace=True)
 
-                    result_buildings = result_buildings.rename(columns=name_mapping)
+                    result_buildings = result_buildings.rename(columns=normalisation_name_mapping)
 
                     list_result_buildings.append(result_buildings)
 
                     results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics,
-                    [list_result_buildings], [appendix], [time_period], bool_analytics=True, plot=plot)
+                    [list_result_buildings], [appendix], [time_period], bool_analytics=True, plot=plot, bool_use_acronym=bool_use_acronym)
                 else:
                     print("Aggregation by buildings was skipped as the required input file was not found: {appendix}.".format(appendix=appendix))
 
@@ -2208,9 +2494,35 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
-list_metrics_embodied_emissions = ['embodied_emissions_building_construction[tonCO2-eq/yr]']
-list_metrics_operation_emissions = ['operation_emissions[tonCO2-eq/yr]', 'operation_emissions_grid[tonCO2-eq/yr]']
-
+list_metrics_lifecycle_emissions = [
+    'operation_heating[kgCO2e]', 'operation_hot_water[kgCO2e]', 'operation_cooling[kgCO2e]', 'operation_electricity[kgCO2e]',
+    'production_wall_ag[kgCO2e]', 'production_wall_bg[kgCO2e]', 'production_wall_part[kgCO2e]',
+    'production_win_ag[kgCO2e]', 'production_roof[kgCO2e]', 'production_upperside[kgCO2e]',
+    'production_underside[kgCO2e]', 'production_floor[kgCO2e]', 'production_base[kgCO2e]',
+    'production_technical_systems[kgCO2e]', 'biogenic_wall_ag[kgCO2e]', 'biogenic_wall_bg[kgCO2e]',
+    'biogenic_wall_part[kgCO2e]', 'biogenic_win_ag[kgCO2e]', 'biogenic_roof[kgCO2e]',
+    'biogenic_upperside[kgCO2e]', 'biogenic_underside[kgCO2e]', 'biogenic_floor[kgCO2e]',
+    'biogenic_base[kgCO2e]', 'biogenic_technical_systems[kgCO2e]', 'demolition_wall_ag[kgCO2e]',
+    'demolition_wall_bg[kgCO2e]', 'demolition_wall_part[kgCO2e]', 'demolition_win_ag[kgCO2e]',
+    'demolition_roof[kgCO2e]', 'demolition_upperside[kgCO2e]', 'demolition_underside[kgCO2e]',
+    'demolition_floor[kgCO2e]', 'demolition_base[kgCO2e]', 'demolition_technical_systems[kgCO2e]'
+]
+list_metrics_operational_emissions = [
+    'heating[kgCO2e]', 'hot_water[kgCO2e]', 'cooling[kgCO2e]', 'electricity[kgCO2e]',
+    'heating_NATURALGAS[kgCO2e]', 'heating_BIOGAS[kgCO2e]', 'heating_SOLAR[kgCO2e]',
+    'heating_DRYBIOMASS[kgCO2e]', 'heating_WETBIOMASS[kgCO2e]', 'heating_GRID[kgCO2e]',
+    'heating_COAL[kgCO2e]', 'heating_WOOD[kgCO2e]', 'heating_OIL[kgCO2e]',
+    'heating_HYDROGEN[kgCO2e]', 'heating_NONE[kgCO2e]', 'hot_water_NATURALGAS[kgCO2e]',
+    'hot_water_BIOGAS[kgCO2e]', 'hot_water_SOLAR[kgCO2e]', 'hot_water_DRYBIOMASS[kgCO2e]',
+    'hot_water_WETBIOMASS[kgCO2e]', 'hot_water_GRID[kgCO2e]', 'hot_water_COAL[kgCO2e]',
+    'hot_water_WOOD[kgCO2e]', 'hot_water_OIL[kgCO2e]', 'hot_water_HYDROGEN[kgCO2e]',
+    'hot_water_NONE[kgCO2e]', 'cooling_NATURALGAS[kgCO2e]', 'cooling_BIOGAS[kgCO2e]',
+    'cooling_SOLAR[kgCO2e]', 'cooling_DRYBIOMASS[kgCO2e]', 'cooling_WETBIOMASS[kgCO2e]',
+    'cooling_GRID[kgCO2e]', 'cooling_COAL[kgCO2e]', 'cooling_WOOD[kgCO2e]', 'cooling_OIL[kgCO2e]',
+    'cooling_HYDROGEN[kgCO2e]', 'cooling_NONE[kgCO2e]', 'electricity_NATURALGAS[kgCO2e]', 'electricity_BIOGAS[kgCO2e]',
+    'electricity_SOLAR[kgCO2e]', 'electricity_DRYBIOMASS[kgCO2e]', 'electricity_WETBIOMASS[kgCO2e]', 'electricity_GRID[kgCO2e]',
+    'electricity_COAL[kgCO2e]', 'electricity_WOOD[kgCO2e]', 'electricity_OIL[kgCO2e]', 'electricity_HYDROGEN[kgCO2e]', 'electricity_NONE[kgCO2e]'
+]
 
 def get_list_list_metrics_with_date(config):
     list_list_metrics_with_date = []
@@ -2232,6 +2544,8 @@ def get_list_list_metrics_with_date(config):
         list_list_metrics_with_date.append(list_metrics_district_heating)
     if config.result_summary.metrics_district_cooling:
         list_list_metrics_with_date.append(list_metrics_district_cooling)
+    if config.result_summary.metrics_emissions:
+        list_list_metrics_with_date.append(list_metrics_operational_emissions)
 
     return list_list_metrics_with_date
 
@@ -2256,24 +2570,23 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
         list_list_metrics_with_date.append(list_metrics_district_heating)
     if 'dc' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_district_cooling)
-
+    if 'operational_emissions' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_operational_emissions)
     return list_list_metrics_with_date
 
 
 def get_list_list_metrics_without_date(config):
     list_list_metrics_without_date = []
     if config.result_summary.metrics_emissions:
-        list_list_metrics_without_date.append(list_metrics_embodied_emissions)
-        list_list_metrics_without_date.append(list_metrics_operation_emissions)
+        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
 
     return list_list_metrics_without_date
 
 
 def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
     list_list_metrics_without_date = []
-    if 'emissions' in list_cea_feature_to_plot:
-        list_list_metrics_without_date.append(list_metrics_embodied_emissions)
-        list_list_metrics_without_date.append(list_metrics_operation_emissions)
+    if 'lifecycle_emissions' in list_cea_feature_to_plot:
+        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
 
     return list_list_metrics_without_date
 
@@ -2292,6 +2605,9 @@ def get_list_list_metrics_building(config):
     if config.result_summary.metrics_solar_collectors:
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
+    if config.result_summary.metrics_emissions:
+        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_building.append(list_metrics_operational_emissions)
 
     return list_list_metrics_building
 
@@ -2310,6 +2626,10 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
     if 'sc' in list_cea_feature_to_plot:
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
+    if 'operational_emissions' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_operational_emissions)
+    if 'lifecycle_emissions' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
 
     return list_list_metrics_building
 
@@ -2333,6 +2653,18 @@ def filter_buildings(locator, list_buildings,
         df_buildings = filter_by_main_use_ratio(df_buildings, ratio_main_use_type)
     list_buildings_out = df_buildings['name'].to_list()
     return df_buildings, list_buildings_out
+
+
+def replace_hyphens_with_underscores(string_list):
+    """
+    Replaces all hyphens (-) with underscores (_) in each string of the input list.
+    Args:
+        string_list (list of str): List of strings to process.
+    Returns:
+        list of str: List with hyphens replaced by underscores.
+    """
+    return [s.replace('-', '_') for s in string_list]
+
 
 def process_building_summary(config, locator,
                              hour_start, hour_end, list_buildings,
@@ -2377,6 +2709,7 @@ def process_building_summary(config, locator,
 
     else:
         if list_cea_feature_to_plot is not None:
+            list_cea_feature_to_plot = replace_hyphens_with_underscores(list_cea_feature_to_plot)
             list_list_metrics_with_date = get_list_list_metrics_with_date_plot(list_cea_feature_to_plot)
             list_list_metrics_without_date = get_list_list_metrics_without_date_plot(list_cea_feature_to_plot)
             list_list_metrics_building = get_list_list_metrics_building_plot(list_cea_feature_to_plot)
@@ -2385,8 +2718,9 @@ def process_building_summary(config, locator,
 
     # Step 2: Get User-Defined Folder Name & Create Folder if it Doesn't Exist
     if not plot:
-        folder_name = config.result_summary.folder_name_to_save_exported_results
-        summary_folder = locator.get_export_results_summary_folder(hour_start, hour_end, folder_name)
+        folder_name = config.result_summary.folder_name_to_save_exported_results or "summary"
+        summary_folder = locator.get_export_results_summary_folder(f"{folder_name}-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}")
+        print(f"Results will be saved to: {summary_folder}")
     else:
         summary_folder = locator.get_export_plots_folder()
     os.makedirs(summary_folder, exist_ok=True)
@@ -2416,7 +2750,7 @@ def process_building_summary(config, locator,
     for list_metrics in list_list_metrics_without_date:
         list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
         list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot)
+        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
 
     # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
     for list_metrics in list_list_metrics_with_date:
@@ -2428,11 +2762,17 @@ def process_building_summary(config, locator,
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
             list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            if list_appendix == ['lifecycle_emissions']:
+                exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            else:
+                exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
         if plot:
+            if list_cea_feature_to_plot is None:
+                raise ValueError("Specify the list of CEA features to plot.")
+
             if any(item in list_cea_feature_to_plot for item in ['demand']):
                 calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
                                                list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
@@ -2440,6 +2780,10 @@ def process_building_summary(config, locator,
             if any(item in list_cea_feature_to_plot for item in ['pv']):
                 calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+            if any(item in list_cea_feature_to_plot for item in ['operational_emissions']):
+                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
+                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
         else:
             if config.result_summary.metrics_building_energy_demand:
                 calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
@@ -2450,12 +2794,17 @@ def process_building_summary(config, locator,
                 calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
                                   bool_aggregate_by_building, bool_use_acronym, plot=plot)
 
+            if config.result_summary.metrics_emissions:
+                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
+                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Activate: Export results to .csv (summary & analytics)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Read through and summarise CEA results for all scenarios under a project.
 
@@ -2467,15 +2816,14 @@ def main(config):
     # Start the timer
     t0 = time.perf_counter()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
     # Gather info from config file
-    list_buildings = config.result_summary.buildings
-    integer_year_start = config.result_summary.filter_buildings_by_year_start
-    integer_year_end = config.result_summary.filter_buildings_by_year_end
-    list_standard = config.result_summary.filter_buildings_by_construction_type
-    list_main_use_type = config.result_summary.filter_buildings_by_use_type
-    ratio_main_use_type = config.result_summary.min_ratio_as_main_use
+    list_buildings = config.plots_building_filter.buildings
+    integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
+    integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
+    list_standard = config.plots_building_filter.filter_buildings_by_construction_type
+    list_main_use_type = config.plots_building_filter.filter_buildings_by_use_type
+    ratio_main_use_type = config.plots_building_filter.min_ratio_as_main_use
     bool_aggregate_by_building = config.result_summary.aggregate_by_building
     list_selected_time_period = config.result_summary.aggregate_by_time_period
     hour_start, hour_end = get_hours_start_end(config)

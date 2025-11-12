@@ -41,7 +41,7 @@ class SolarTechnologyPotentialsPlotBase(PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(SolarTechnologyPotentialsPlotBase, self).__init__(project, parameters, cache)
-        self.category_path = os.path.join('new_basic', self.category_name)
+        self.category_path = os.path.join('special', self.category_name)
         self.weather = self.locator.get_weather_file()
         self.pv_analysis_fields = ['PV_walls_east_E_kWh',
                                    'PV_walls_west_E_kWh',

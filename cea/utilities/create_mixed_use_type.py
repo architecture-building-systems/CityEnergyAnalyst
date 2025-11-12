@@ -103,7 +103,7 @@ def calculate_occupant_density(use_types, internal_loads_df):
     return occupant_densities
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     # Config Parameters
     use_type_name = config.create_mixed_use_type.use_type
     use_type_metadata = config.create_mixed_use_type.metadata

@@ -56,6 +56,8 @@ def calc_geothermal_potential(locator, config):
 
     # export
     output_file = locator.get_geothermal_potential()
+    # Ensure the output directory exists
+    locator.ensure_parent_folder_exists(output_file)
     pd.DataFrame({"date": pd.to_datetime(date_range), "Ts_C": t_source_final, "QGHP_kW": Q_max_kwh, "Area_avail_m2": area_geothermal}).to_csv(output_file,
                                                                                                           index=False,
                                                                                                           float_format='%.3f')
@@ -117,7 +119,7 @@ def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, densit
     return T_ground_K
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
     calc_geothermal_potential(locator=locator, config=config)
 

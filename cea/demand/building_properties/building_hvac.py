@@ -191,6 +191,7 @@ def verify_overlap_season(building_name, has_heating_season, has_cooling_season,
             return False
 
 
+# TODO: Remove building_name from function signature, not useful in function
 def verify_has_season(building_name, start, end):
     def invalid_date(date):
         if len(date) != 5 or "|" not in date:
@@ -210,25 +211,33 @@ def verify_has_season(building_name, start, end):
 
 
 def verify_hvac_system_combination(result, locator):
-    '''
-    This function verifies whether an infeasible combination of cooling and ventilation systems has been selected.
-    If an infeasible combination is selected, a warning is printed and the simulation is stopped.
-    '''
+    """
+    Verify that cooling systems requiring mechanical ventilation have it configured.
 
-    needs_mech_vent = result.apply(lambda row: row.class_cs in ['CENTRAL_AC', 'HYBRID_AC'], axis=1)
-    list_exceptions = []
-    for idx in result.loc[needs_mech_vent & (~ result.MECH_VENT)].index:
-        building_name = result.loc[idx, 'name']
-        class_cs = result.loc[idx, 'class_cs']
-        type_vent = result.loc[idx, 'type_vent']
-        hvac_database = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
-        mechanical_ventilation_systems = list(hvac_database.loc[hvac_database['MECH_VENT'], 'code'])
-        list_exceptions.append(Exception(
-            f'\nBuilding {building_name} has a cooling system as {class_cs} with a ventilation system {type_vent}.'
-            f'\nPlease re-assign a ventilation system from the technology database that includes mechanical ventilation: {mechanical_ventilation_systems}'))
-    if len(list_exceptions) > 0:
-        raise ValueError(
-            'Invalid combination of cooling and ventilation systems selected. Please check the following buildings:\n'
-            + '\n'.join([str(e) for e in list_exceptions])
-        )
+    CENTRAL_AC and HYBRID_AC systems require mechanical ventilation (MECH_VENT=True).
+    If an invalid combination is found, raises ValueError with details.
+    """
+    # Find buildings with cooling systems that require mechanical ventilation
+    needs_mech_vent = result['class_cs'].isin(['CENTRAL_AC', 'HYBRID_AC'])
+    invalid_buildings = result[needs_mech_vent & ~result['MECH_VENT']]
+
+    if invalid_buildings.empty:
+        return
+
+    # Load valid mechanical ventilation systems from database
+    hvac_database = pd.read_csv(locator.get_database_assemblies_hvac_ventilation())
+    mech_vent_systems = hvac_database.loc[hvac_database['MECH_VENT'], 'code'].tolist()
+
+    # Build error messages for each invalid building
+    error_messages = [
+        f'\nBuilding {building_name} has cooling system {row.class_cs} '
+        f'with ventilation system {row.hvac_type_vent}.'
+        f'\nPlease re-assign a mechanical ventilation system from: {mech_vent_systems}'
+        for building_name, row in invalid_buildings.iterrows()
+    ]
+
+    raise ValueError(
+        'Invalid combination of cooling and ventilation systems selected. '
+        'Please check the following buildings:\n' + '\n'.join(error_messages)
+    )
 

@@ -10,14 +10,16 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, SHAPEFILE_TOLERANCE
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.technologies.thermal_network.utility import extract_network_from_shapefile
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2019, Architecture and Building Systems - ETH Zurich"
@@ -94,66 +96,6 @@ def calculate_ground_temperature(locator):
     return T_ground_K
 
 
-def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
-    """
-    Extracts network data into DataFrames for pipes and nodes in the network
-
-    :param edge_shapefile_df: DataFrame containing all data imported from the edge shapefile
-    :param node_shapefile_df: DataFrame containing all data imported from the node shapefile
-    :type edge_shapefile_df: DataFrame
-    :type node_shapefile_df: DataFrame
-    :return node_df: DataFrame containing all nodes and their corresponding coordinates
-    :return edge_df: list of edges and their corresponding lengths and start and end nodes
-    :rtype node_df: DataFrame
-    :rtype edge_df: DataFrame
-
-    """
-    # create node dictionary with plant and consumer nodes
-    node_dict = {}
-    node_shapefile_df.set_index("name", inplace=True)
-    node_shapefile_df = node_shapefile_df.astype('object')
-    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-    # sort node_df by index number
-    node_sorted_index = node_shapefile_df.index.to_series().str.split('NODE', expand=True)[1].apply(int).sort_values(
-        ascending=True)
-    node_shapefile_df = node_shapefile_df.reindex(index=node_sorted_index.index)
-
-    for node, row in node_shapefile_df.iterrows():
-        coord_node = row['geometry'].coords[0]
-        coord_node_round = (round(coord_node[0], SHAPEFILE_TOLERANCE), round(coord_node[1], SHAPEFILE_TOLERANCE))
-        node_dict[coord_node_round] = node
-
-    # create edge dictionary with pipe lengths and start and end nodes
-    # complete node dictionary with missing nodes (i.e., joints)
-    edge_shapefile_df.set_index("name", inplace=True)
-    edge_shapefile_df = edge_shapefile_df.astype('object')
-    edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
-    # sort edge_df by index number
-    edge_sorted_index = edge_shapefile_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
-        ascending=True)
-    edge_shapefile_df = edge_shapefile_df.reindex(index=edge_sorted_index.index)
-    # assign edge properties
-    edge_shapefile_df['start node'] = ''
-    edge_shapefile_df['end node'] = ''
-
-    for pipe, row in edge_shapefile_df.iterrows():
-        # get the length of the pipe and add to dataframe
-        edge_coords = row['geometry'].coords
-        edge_shapefile_df.loc[pipe, 'length_m'] = row['geometry'].length
-        start_node = (round(edge_coords[0][0], SHAPEFILE_TOLERANCE), round(edge_coords[0][1], SHAPEFILE_TOLERANCE))
-        end_node = (round(edge_coords[1][0], SHAPEFILE_TOLERANCE), round(edge_coords[1][1], SHAPEFILE_TOLERANCE))
-        if start_node in node_dict.keys():
-            edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
-        else:
-            print(f"The start node of {pipe} has no match in node_dict, check precision of the coordinates.")
-        if end_node in node_dict.keys():
-            edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
-        else:
-            print(f"The end node of {pipe} has no match in node_dict, check precision of the coordinates.")
-
-    return node_shapefile_df, edge_shapefile_df
-
-
 def get_thermal_network_from_shapefile(locator, network_type, network_name):
     """
     This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
@@ -179,10 +121,18 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
     return edge_df, node_df
 
 
-def calc_max_diameter(volume_flow_m3s, pipe_catalog, velocity_ms, peak_load_percentage):
+def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
+    if pipe_catalog.empty:
+        raise ValueError("Pipe catalog is empty. Please check the thermal grid database.")
+
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
     diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
-    selection_of_catalog = pipe_catalog.loc[(pipe_catalog['D_int_m'] - diameter_m).abs().argsort()[:1]]
+
+    # Calculate differences and find the index of the minimum difference
+    differences = (pipe_catalog['D_int_m'] - diameter_m).abs()
+    closest_idx = differences.argsort().iloc[0]
+
+    selection_of_catalog = pipe_catalog.iloc[[closest_idx]]
     D_int_m = selection_of_catalog['D_int_m'].values[0]
     pipe_DN = selection_of_catalog['pipe_DN'].values[0]
     D_ext_m = selection_of_catalog['D_ext_m'].values[0]
@@ -239,13 +189,14 @@ def thermal_network_simplified(locator, config, network_name=''):
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
         DHN_barcode = "0"
-        if (buildings_name_with_heating != [] and buildings_name_with_space_heating != []):
-            building_names = [building for building in buildings_name_with_heating if building in
-                              node_df.building.values]
+        if buildings_name_with_heating and buildings_name_with_space_heating:
+            # Use set intersection to find buildings that exist in both collections
+            node_buildings_set = set(node_df.building.values)
+            buildings_with_heating_set = set(buildings_name_with_heating)
+            building_names = list(buildings_with_heating_set & node_buildings_set)
             substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
         else:
-            print('!!! CEA did not design a district heating network as there is no heating demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district heating network created as there is no heating demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -260,13 +211,14 @@ def thermal_network_simplified(locator, config, network_name=''):
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         DCN_barcode = "0"
-        if buildings_name_with_cooling != []:
-            building_names = [building for building in buildings_name_with_cooling if building in
-                              node_df.building.values]
+        if buildings_name_with_cooling:
+            # Use set intersection to find buildings that exist in both collections
+            node_buildings_set = set(node_df.building.values)
+            buildings_with_cooling_set = set(buildings_name_with_cooling)
+            building_names = list(buildings_with_cooling_set & node_buildings_set)
             substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
         else:
-            print('!!! CEA did not design a district heating network as there is no cooling demand from any building.')
-            sys.exit(1)
+            raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
@@ -342,6 +294,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         wn.options.hydraulic.trials = 100
 
         # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+        print("Starting 1st iteration to calculate pipe diameters...")
         sim = wntr.sim.EpanetSimulator(wn)
         results = sim.run_sim()
         max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
@@ -356,6 +309,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         diameter_ins_m = pd.Series(D_ins_m, pipe_names)
 
         # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+        print("Starting 2nd iteration to calculate pressure drops...")
         # modify diameter and run simulations
         edge_df['pipe_DN'] = pipe_dn
         edge_df['D_int_m'] = D_int_m
@@ -367,6 +321,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
 
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
+        print("Starting 3rd iteration to calculate final utilization of the grid...")
         # get accumulated head loss per hour
         unitary_head_ftperkft = results.link['headloss'].abs()
         unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
@@ -387,6 +342,7 @@ def thermal_network_simplified(locator, config, network_name=''):
         results = sim.run_sim()
 
     # POSTPROCESSING
+    print("Postprocessing thermal network results...")
 
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
@@ -589,7 +545,7 @@ def thermal_network_simplified(locator, config, network_name=''):
                      locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """

@@ -213,7 +213,7 @@ def fetch_tiff(min_x: float, min_y: float, max_x: float, max_y: float, zoom: int
     return out_dest, out_transform, out_meta, tile_info
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     grid_size = config.terrain_helper.grid_size
     buffer = config.terrain_helper.buffer
     locator = cea.inputlocator.InputLocator(config.scenario)

@@ -11,8 +11,8 @@ import pandas as pd
 import geopandas as gpd
 import cea.config
 import cea.inputlocator
-from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_list_of_uses_in_case_study, \
-    get_lists_of_var_names_and_var_values
+from cea.datamanagement.schedule_helper import calc_mixed_schedule, get_lists_of_var_names_and_var_values, \
+    get_occupant_densities_from_archetypes
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -67,17 +67,8 @@ def archetypes_mapper(locator,
     # Filter by selected buildings
     building_typology_df = building_typology_df[building_typology_df['name'].isin(list_buildings)]
 
-    # Validate list of uses in case study
-    list_uses = get_list_of_uses_in_case_study(building_typology_df)
-
-    # Get occupant densities from archetypes schedules
-    occupant_densities = {}
-    occ_densities = pd.read_csv(locator.get_database_archetypes_use_type()).set_index('use_type')
-    for use in list_uses:
-        if occ_densities.loc[use, 'Occ_m2p'] > 0.0:
-            occupant_densities[use] = 1 / occ_densities.loc[use, 'Occ_m2p']
-        else:
-            occupant_densities[use] = 0.0
+    # Get list of uses, validate, and calculate occupant densities
+    list_uses, occupant_densities, _ = get_occupant_densities_from_archetypes(locator, building_typology_df)
 
     # Get properties about the construction and architecture
     if update_architecture_dbf:
@@ -98,6 +89,7 @@ def archetypes_mapper(locator,
 
     if update_supply_systems_dbf:
         supply_mapper(locator, building_typology_df)
+
 
 
 def indoor_comfort_mapper(list_uses, locator, occupant_densities, building_typology_df):
@@ -401,7 +393,7 @@ def verify_building_standards(building_typology_df, db_standards):
         raise ValueError(f'The following standards are not found in the database: {", ".join(diff)}')
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.

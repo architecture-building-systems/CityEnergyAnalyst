@@ -33,7 +33,7 @@ def generate_empty_surroundings(crs) -> gdf:
     return gdf(columns=["name", "height_ag", "floors_ag"], geometry=[], crs=crs)
 
 
-def calc_surrounding_area(zone_gdf, buffer_m):
+def calc_surrounding_area(zone_gdf: gdf, buffer_m: float):
     """
     Adds buffer to zone to get surroundings area
 
@@ -41,7 +41,7 @@ def calc_surrounding_area(zone_gdf, buffer_m):
     :param float buffer_m: Buffer to add to zone building geometries
     :return: Surrounding area GeoDataFrame
     """
-    merged_zone = zone_gdf.geometry.unary_union
+    merged_zone = zone_gdf.geometry.union_all()
     if isinstance(merged_zone, MultiPolygon):
         merged_zone = merged_zone.convex_hull
 
@@ -184,7 +184,7 @@ def geometry_extractor_osm(locator, config):
     result.to_file(shapefile_out_path)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Create the surroundings.shp file
 

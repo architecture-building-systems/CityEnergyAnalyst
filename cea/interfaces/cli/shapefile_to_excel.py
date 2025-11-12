@@ -46,21 +46,21 @@ def shapefile_to_excel(shapefile, excel_file, index=None):
 
 
 def serialize_geometry(geometry):
-    """Take a shapely.geometry.polygon.Polygon and represent it as a string of tuples (x, y)
+    """Take a shapely.Polygon and represent it as a string of tuples (x, y)
 
     :param geometry: a polygon or polyline to extract the points from and represent as a json object
-    :type geometry: shapely.geometry.polygon.Polygon
+    :type geometry: shapely.Polygon
     """
-    if isinstance(geometry, shapely.geometry.polygon.Polygon):
+    if isinstance(geometry, shapely.Polygon):
         points = list(geometry.exterior.coords)
-    elif isinstance(geometry, shapely.geometry.LineString):
+    elif isinstance(geometry, shapely.LineString):
         points = list(geometry.coords)
     else:
         raise ValueError("Expected either a Polygon or a LineString, got %s" % type(geometry))
     return json.dumps(points)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`shapefile_to_excel` with the values from the configuration file, section `[shapefile-tools]`.
 

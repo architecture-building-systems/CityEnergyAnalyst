@@ -17,7 +17,7 @@ import warnings
 
 import cea.inputlocator
 import cea.plugin
-from cea.utilities import unique
+from cea.utilities import unique, parse_string_to_list
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -58,7 +58,7 @@ class Configuration:
         if not os.path.exists(CEA_CONFIG):
             self.save(config_file)
 
-    def __getattr__(self, item: str) -> Union[Section, Parameter]:
+    def __getattr__(self, item: str) -> Union['Section', Any]:
         """Return either a Section object or the value of a Parameter from `general`"""
         cid = config_identifier(item)
         if cid in self.sections:
@@ -251,7 +251,7 @@ class Configuration:
         """
         if self.multiprocessing:
             import multiprocessing
-            number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
+            number_of_processes = multiprocessing.cpu_count() - self.number_of_cpus_to_keep_free
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
             return 1
@@ -309,7 +309,7 @@ def config_identifier(python_identifier: str) -> str:
 class Section:
     """Instances of ``Section`` describe a section in the configuration file."""
 
-    def __init__(self, name: str, config: Configuration) -> None:
+    def __init__(self, name: str, config: 'Configuration') -> None:
         """
         :param name: The name of the section (as it appears in the configuration file, all lowercase)
         :type name: str
@@ -321,7 +321,7 @@ class Section:
         self.config = config
         self.parameters = self._init_parameters()
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
@@ -332,7 +332,7 @@ class Section:
         else:
             raise AttributeError(f"Parameter not found: {item}")
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter"""
         if key in {'name', 'config', 'parameters'}:
             # make sure the __init__ method doesn't trigger this
@@ -435,7 +435,7 @@ class Parameter:
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
-    def get(self):
+    def get(self) -> Any:
         """Return the value from the config file"""
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
@@ -550,6 +550,9 @@ class ResumeFileParameter(FileParameter):
     def decode(self, value):
         return self._check_path(str(value))
 
+class InputFileParameter(FileParameter):
+    """A parameter that describes a user provided input file."""
+
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
@@ -565,6 +568,7 @@ class JsonParameter(Parameter):
 
 class WeatherPathParameter(Parameter):
     THIRD_PARTY_WEATHER_SOURCES = ['climate.onebuilding.org']
+    MORPHING = ['pyepwmorph']
 
     def initialize(self, parser):
         self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
@@ -587,7 +591,7 @@ class WeatherPathParameter(Parameter):
             # allow using shortcuts
             weather_path = self.locator.get_weather(
                 [w for w in self.locator.get_weather_names() if w.lower().startswith(value.lower())][0])
-        elif value in self.THIRD_PARTY_WEATHER_SOURCES:
+        elif value in self.THIRD_PARTY_WEATHER_SOURCES or value in self.MORPHING:
             weather_path = value
         else:
             raise cea.ConfigError(f"Invalid weather path: {value}")
@@ -646,7 +650,7 @@ class IntegerParameter(Parameter):
             return ""
         return str(int(value))
 
-    def decode(self, value):
+    def decode(self, value) -> int | None:
         try:
             return int(value)
         except ValueError:
@@ -678,7 +682,7 @@ class RealParameter(Parameter):
             return ''
         return format(float(value), ".%i" % self._decimal_places)
 
-    def decode(self, value):
+    def decode(self, value) -> float | None:
         try:
             return float(value)
         except ValueError:
@@ -714,9 +718,9 @@ class PluginListParameter(ListParameter):
         super().set(value)
         self.config.refresh_plugins()
 
-    def encode(self, list_of_plugins):
+    def encode(self, value):
         """Make sure we don't duplicate any of the plugins"""
-        unique_plugins = unique(list_of_plugins)
+        unique_plugins = unique(value)
         return super().encode(unique_plugins)
 
     def decode(self, value):
@@ -943,7 +947,7 @@ class MultiChoiceParameter(ChoiceParameter):
             return []
         return self.decode(_default)
 
-    def get(self):
+    def get(self) -> list[str]:
         """Return the value from the config file"""
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
@@ -967,7 +971,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
         return ', '.join(map(str, value))
 
-    def decode(self, value):
+    def decode(self, value) -> list[str]:
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
@@ -1166,8 +1170,11 @@ def get_scenarios_list(project_path: str) -> List[str]:
 
         # TODO: Use .gitignore to ignore scenarios
         return (
-            os.path.isdir(folder_path) 
-            and os.path.exists(os.path.join(folder_path, 'inputs'))
+            os.path.isdir(folder_path)
+            and (
+                os.path.exists(os.path.join(folder_path, 'inputs')) or 
+                os.path.exists(os.path.join(folder_path, 'export', 'rhino'))
+                )
             and not folder_name.startswith(".")
             and folder_name != "__pycache__"
             and folder_name != "__MACOSX"
@@ -1190,15 +1197,6 @@ def get_systems_list(scenario_path):
 
 class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
     pass
-
-
-def parse_string_to_list(line):
-    """Parse a line in the csv format into a list of strings"""
-    if line is None:
-        return []
-    line = line.replace('\n', ' ')
-    line = line.replace('\r', ' ')
-    return [str(field.strip()) for field in line.split(',') if field.strip()]
 
 
 def parse_string_coordinate_list(string_tuples):
@@ -1279,7 +1277,7 @@ class ColumnChoiceParameter(ChoiceParameter):
             return list(codes)
         except FileNotFoundError as e:
             # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
-            raise FileNotFoundError(f'Could not find source file at {location}') from e
+            raise FileNotFoundError(f'Could not find source file at {location} to generate choices for {self.name}') from e
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 

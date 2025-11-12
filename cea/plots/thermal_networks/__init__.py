@@ -46,7 +46,7 @@ class ThermalNetworksPlotBase(PlotBase):
 
     def __init__(self, project, parameters, cache):
         super(ThermalNetworksPlotBase, self).__init__(project, parameters, cache)
-        self.category_path = os.path.join('new_basic', self.category_name)
+        self.category_path = os.path.join('special', self.category_name)
         self.network_name = parameters['network-name'] if parameters['network-name'] else ''
         self.network_type = parameters['network-type']
 

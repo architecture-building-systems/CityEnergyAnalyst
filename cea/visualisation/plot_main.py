@@ -1,12 +1,14 @@
 """
-CEAFrontEnd – Combines everything
+CEAFrontEnd - Combines everything
 
 """
 
 import sys
 from typing import Any
-import cea.config
+
+
 from cea import CEAException
+import cea.config
 from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
@@ -57,8 +59,8 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
         raise CEAException("Unable to determine feature to plot. Please specify the feature in the config using the context parameter. "
                            "e.g. {\"feature\": \"demand\"}")
     
-    hour_start = plot_dict.get('hour_start', 0)  
-    hour_end = plot_dict.get('hour_end', 8759)
+    period_start = plot_dict.get('period_start', 0)
+    period_end = plot_dict.get('period_end', 8759)
 
     print(f"Using context: {plot_dict}")
     
@@ -82,6 +84,10 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
                     f"Got: {solar_panel_types_dict}"
                 )
             solar_panel_types_list = [solar_panel_types_dict[plot_cea_feature]]
+
+    elif plot_cea_feature in ('lifecycle-emissions', 'operational-emissions'):
+        plot_cea_feature_umbrella = plot_cea_feature
+        solar_panel_types_list = []
     else:
         plot_cea_feature_umbrella = plot_cea_feature
         solar_panel_types_list = []
@@ -97,8 +103,8 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plot_config_general, plots_building_filter,scenario, plot_cea_feature,
-                                                                                hour_start, hour_end,
+    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature,
+                                                                                period_start, period_end,
                                                                                 solar_panel_types_list, bool_include_advanced_analytics)
     # Activate b_data_processor
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data,
@@ -110,17 +116,16 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     
     # Use 16:9 landscape aspect ratio for professional presentation
     plot_width = 1600
-    plot_height = int(plot_width / 16 * 9)  # 16:9 aspect ratio = 900px height
+    plot_height = int(plot_width / 16 * 7)  # 16:9 aspect ratio = 900px height
     
     fig.update_layout(width=plot_width, height=plot_height)
     
     return fig
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     scenario = config.scenario
     context: dict[str, Any] = config.plots_general.context
-
     fig = plot_all(config, scenario, context, hide_title=False)
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 

@@ -15,7 +15,7 @@ from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
-from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
+from cea.datamanagement.utils import migrate_void_deck_data
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -56,9 +56,6 @@ def demand_calculation(locator, config):
     building_names = config.demand.buildings
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
-    loads_output = config.demand.loads_output
-    massflows_output = config.demand.massflows_output
-    temperatures_output = config.demand.temperatures_output
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
@@ -87,9 +84,6 @@ def demand_calculation(locator, config):
         repeat(locator, n),
         repeat(use_dynamic_infiltration, n),
         repeat(resolution_output, n),
-        repeat(loads_output, n),
-        repeat(massflows_output, n),
-        repeat(temperatures_output, n),
         repeat(config, n),
         repeat(debug, n))
 
@@ -104,7 +98,7 @@ def print_progress(i, n, args, _):
     print("Building No. {i} completed out of {n}: {building}".format(i=i + 1, n=n, building=args[0]))
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     print('Running demand calculation for scenario %s' % config.scenario)
     print('Running demand calculation with dynamic infiltration=%s' %
@@ -116,7 +110,7 @@ def main(config):
 
     if not radiation_files_exist(locator, config):
         raise MissingInputDataException("Missing radiation data in scenario. Consider running radiation script first.")
-
+    
     demand_calculation(locator=locator, config=config)
 
 

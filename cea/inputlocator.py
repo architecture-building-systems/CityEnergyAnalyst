@@ -16,6 +16,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# CEA feature to folder name mapping
+CEA_FEATURE_FOLDER_MAP = {
+    'sc_ET': 'sc',
+    'sc_FP': 'sc',
+    'pvt_ET': 'pvt',
+    'pvt_FP': 'pvt',
+}
+
 
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
@@ -152,91 +160,64 @@ class InputLocator(object):
         """scenario/export/plots/{plot_cea_feature}/selected_buildings.csv"""
         return os.path.join(self.get_export_plots_folder(), 'selected_buildings.csv')
 
-    def get_export_results_summary_folder(self, hour_start, hour_end, folder_name):
-        if folder_name is None or folder_name.strip() == "":
-            """scenario/export/results/hours_{hour_start}_{hour_end}_done_{current_time}"""
-            path = os.path.join(self.get_export_results_folder(), f'unnamed_hours_{hour_start}_{hour_end}')
-        else:
-            """scenario/export/results/{folder_name}_done_{current_time}"""
-            path = os.path.join(self.get_export_results_folder(), f'{folder_name}_hours_{hour_start}_{hour_end}')
-
-        # new path ending with _1, _2, _3 if the user-defined path exists
-        base_path = path
-        counter = 1
-
-        while os.path.exists(path):
-            path = f"{base_path}_{counter}"
-            counter += 1
-
-        return path
+    def get_export_results_summary_folder(self, folder_name):
+        """scenario/export/results/{folder_name}"""
+        return os.path.join(self.get_export_results_folder(), folder_name)
 
     def get_export_results_summary_selected_building_file(self, summary_folder):
         """scenario/export/results/{folder_name}/selected_buildings.csv"""
         return os.path.join(summary_folder, '_selected_buildings.csv')
 
-    def get_export_results_summary_cea_feature_folder(self, summary_folder: str, cea_feature: str):
-        """scenario/export/results/{folder_name}/{cea_feature}"""
-        if cea_feature == 'sc_ET':
-            return os.path.join(summary_folder, 'sc')
-        elif cea_feature == 'sc_FP':
-            return os.path.join(summary_folder, 'sc')
-        elif cea_feature == 'pvt_ET':
-            return os.path.join(summary_folder, 'pvt')
-        elif cea_feature == 'pvt_FP':
-            return os.path.join(summary_folder, 'pvt')
-        elif cea_feature == 'embodied_emissions':
-            return os.path.join(summary_folder, 'emissions')
-        elif cea_feature == 'operation_emissions':
-            return os.path.join(summary_folder, 'emissions')
-        else:
-            return os.path.join(summary_folder, cea_feature)
-
-
-    def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature, appendix,
+    def get_export_results_summary_cea_feature_time_period_file(self, summary_folder, cea_feature: str, appendix,
                                                                 time_period, hour_start, hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_period}.csv"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f'{appendix}_selected_hours.csv')
+            return os.path.join(summary_folder, folder_name, f'{appendix}_selected_hours.csv')
         else:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f'{appendix}_{time_period}.csv')
+            return os.path.join(summary_folder, folder_name, f'{appendix}_{time_period}.csv')
 
-    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature, appendix):
+    def get_export_results_summary_cea_feature_buildings_file(self, summary_folder, cea_feature: str, appendix):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_buildings.csv"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                            f"{appendix}_buildings.csv")
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        return os.path.join(summary_folder, folder_name, f"{appendix}_buildings.csv")
+
+    def get_export_results_summary_cea_feature_timeline_file(self, summary_folder, cea_feature: str, appendix):
+        """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_timeline.csv"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        return os.path.join(summary_folder, folder_name, f"{appendix}_timeline.csv")
 
     def get_export_plots_cea_feature_buildings_file(self, plot_cea_feature, appendix):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_buildings.csv"""
         return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                             f"{appendix}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature,
+    def get_export_results_summary_cea_feature_time_resolution_buildings_file(self, summary_folder, cea_feature: str,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):
         """scenario/export/results/{folder_name}/{cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
         if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f'{appendix}_selected_hours_buildings.csv')
+            return os.path.join(summary_folder, folder_name, f'{appendix}_selected_hours_buildings.csv')
         else:
-            return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                                f"{appendix}_{time_period}_buildings.csv")
+            return os.path.join(summary_folder, folder_name, f"{appendix}_{time_period}_buildings.csv")
 
     def get_export_plots_cea_feature_time_resolution_buildings_file(self, plot_cea_feature, appendix,
                                                                       time_period, hour_start, hour_end):
         """scenario/export/plots/{plot_cea_feature}/{appendix}_{time_resolution}_buildings.csv"""
-        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+        if plot_cea_feature == 'lifecycle-emissions':
+            return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
+                                f"{appendix}_buildings.csv")
+        elif abs(hour_end - hour_start) != 8760 and time_period == 'annually':
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f'{appendix}_selected_hours_buildings.csv')
         else:
             return os.path.join(self.get_export_plots_cea_feature_folder(plot_cea_feature),
                                 f"{appendix}_{time_period}_buildings.csv")
 
-    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature):
+    def get_export_results_summary_cea_feature_analytics_folder(self, summary_folder, cea_feature: str):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
-        return os.path.join(self.get_export_results_summary_cea_feature_folder(summary_folder, cea_feature),
-                            'analytics')
+        return os.path.join(summary_folder, CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature), 'analytics')
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
@@ -556,59 +537,75 @@ class InputLocator(object):
         """Deletes the folder containing the scenario's results for the new optimization script"""
         return self._clear_folder(self.get_centralized_optimization_results_folder())
 
+    def get_new_optimization_des_solution_folders(self):
+        """Returns the folder structure of the optimization results folder"""
+        des_solution_folders = next(os.walk(self.get_centralized_optimization_results_folder()))[1]
+        des_solution_folders = [folder for folder in des_solution_folders if folder != 'debugging']
+        return des_solution_folders
+
     def get_new_optimization_base_case_folder(self, network_type):
         """Returns the folder containing the base-case energy systems against which optimal systems are compared"""
         return os.path.join(self.get_centralized_optimization_results_folder(), f'base_{network_type}S')
 
-    def get_new_optimization_optimal_district_energy_system_folder(self, district_energy_system_id='DES_000'):
+    def get_new_optimization_optimal_district_energy_system_folder(self,
+                                                                   district_energy_system_id='current_DES'):
         """Returns the results-folder for the n-th near pareto-optimal district energy system"""
         return os.path.join(self.get_centralized_optimization_results_folder(),
                                    f'{district_energy_system_id}')
 
-    def get_new_optimization_optimal_networks_folder(self, district_energy_system_id='DES_000'):
+    def get_new_optimization_optimal_networks_folder(self, district_energy_system_id='current_DES'):
         """Returns the results-folder for the i-th network of the n-th near-pareto-optimal DES"""
         des_folder = self.get_new_optimization_optimal_district_energy_system_folder(district_energy_system_id)
         return os.path.join(des_folder, 'networks')
 
-    def get_new_optimization_optimal_network_layout_file(self, district_energy_system_id='DES_000',
+    def get_new_optimization_optimal_network_layout_file(self, district_energy_system_id='current_DES',
                                                          network_id='N0000'):
         """Returns the result-path for the layout of the i-th network of the n-th near-pareto-optimal DES"""
         network_folder = self.get_new_optimization_optimal_networks_folder(district_energy_system_id)
         return os.path.join(network_folder, f'{network_id}_layout.geojson')
 
-    def get_new_optimization_optimal_supply_systems_folder(self, district_energy_system_id='DES_000'):
+    def get_new_optimization_optimal_supply_systems_folder(self, district_energy_system_id='current_DES'):
         """Returns the results-file for the general supply systems results of the n-th near-pareto-optimal DES"""
         des_folder = self.get_new_optimization_optimal_district_energy_system_folder(district_energy_system_id)
         return os.path.join(des_folder, 'Supply_systems')
 
-    def get_new_optimization_optimal_supply_system_file(self, district_energy_system_id='DES_000',
+    def get_new_optimization_optimal_supply_system_ids(self, district_energy_system_id='current_DES'):
+        """Returns the identifiers of the supply systems of the n-th near-pareto-optimal DES"""
+        des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
+        supply_system_files = next(os.walk(des_supsys_folder))[2]
+        supply_system_ids = [file.split('_')[0] for file in supply_system_files
+                             if file.split('.')[1] == 'csv' and file.split('_')[0] != 'Supply']
+        return supply_system_ids
+
+    def get_new_optimization_optimal_supply_system_file(self, district_energy_system_id='current_DES',
                                                         supply_system_id='N0000_or_B0000'):
         """Returns the results-file for the supply systems summary of the n-th near-pareto-optimal DES"""
         des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
         return os.path.join(des_supsys_folder, f'{supply_system_id}_supply_system_structure.csv')
 
-    def get_new_optimization_optimal_supply_systems_summary_file(self, district_energy_system_id='DES_000'):
+    def get_new_optimization_optimal_supply_systems_summary_file(self, district_energy_system_id='current_DES'):
         """Returns the results-file for the supply systems summary of the n-th near-pareto-optimal DES"""
         des_supsys_folder = self.get_new_optimization_optimal_supply_systems_folder(district_energy_system_id)
         return os.path.join(des_supsys_folder, 'Supply_systems_summary.csv')
 
-    def get_new_optimization_supply_system_details_folder(self, district_energy_system_id='DES_000'):
+    def get_new_optimization_supply_system_details_folder(self, district_energy_system_id='current_DES'):
         """Returns the results-folder for the detailed supply system information of the n-th near-pareto-optimal DES"""
         des_folder = self.get_new_optimization_optimal_district_energy_system_folder(district_energy_system_id)
         return os.path.join(des_folder, 'Supply_system_operation_details')
 
-    def get_new_optimization_detailed_network_performance_file(self, district_energy_system_id='DES_000'):
+    def get_new_optimization_detailed_network_performance_file(self, district_energy_system_id='current_DES'):
         """Returns the results-file for the detailed performance of the n-th near-pareto-optimal DES's networks"""
         des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
         return os.path.join(des_details_folder, 'network_performance.csv')
 
-    def get_new_optimization_supply_systems_detailed_operation_file(self, district_energy_system_id='DES_000',
+    def get_new_optimization_supply_systems_detailed_operation_file(self,
+                                                                    district_energy_system_id='current_DES',
                                                                     supply_system_id='N0000_or_B0000'):
         """Returns the results-file for the supply systems operation profiles of the n-th near-pareto-optimal DES"""
         des_details_folder = self.get_new_optimization_supply_system_details_folder(district_energy_system_id)
         return os.path.join(des_details_folder, f'{supply_system_id}_operation.csv')
 
-    def get_new_optimization_supply_systems_annual_breakdown_file(self, district_energy_system_id='DES_000',
+    def get_new_optimization_supply_systems_annual_breakdown_file(self, district_energy_system_id='current_DES',
                                                                   supply_system_id='N0000_or_B0000'):
         """Returns the results-file for the breakdown of a supply systems annual operation (in terms of energy demand,
         cost, GHG- and heat-emissions) in the n-th near-pareto-optimal DES"""
@@ -1424,15 +1421,44 @@ class InputLocator(object):
 
     def get_lca_embodied(self):
         """scenario/outputs/data/emissions/Total_LCA_embodied.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_embodied.csv')
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Simplified_LCA_embodied_selected_year.csv')
 
     def get_lca_operation(self):
-        """scenario/outputs/data/emissions/Total_LCA_operation.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
+        """scenario/outputs/data/emissions/Total_emissions_operation.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Simplified_LCA_operational_selected_year.csv')
 
     def get_lca_mobility(self):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
+    
+    def get_lca_timeline_folder(self):
+        """scenario/outputs/data/emissions/timeline"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "timeline")
+
+    def get_total_yearly_operational_building(self):
+        """scenario/outputs/data/emissions/timeline/Total_yearly_operational_building.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), "Total_yearly_operational_building.csv")
+
+    def get_total_yearly_operational_hour(self):
+        """scenario/outputs/data/emissions/timeline/Total_yearly_operational.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), "Total_yearly_operational.csv")
+
+    def get_total_emissions_building_year_end(self, year_end):
+        """scenario/outputs/data/emissions/timeline/Total_emission_building_{year_end}.csv"""
+        return os.path.join(
+            self.get_lca_timeline_folder(), f"Total_emission_building_{year_end}.csv")
+
+    def get_total_emissions_timeline_year_end(self, year_end):
+        """scenario/outputs/data/emissions/timeline/Total_emission_timeline_{year_end}.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), f"Total_emission_timeline_{year_end}.csv")
+    
+    def get_lca_timeline_building(self, building: str):
+        """scenario/outputs/data/emissions/timeline/{building}_timeline.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), f"{building}_timeline.csv")
+
+    def get_lca_operational_hourly_building(self, building: str):
+        """scenario/outputs/data/emissions/timeline/{building}_operational_hourly.csv"""
+        return os.path.join(self.get_lca_timeline_folder(), f"{building}_operational_hourly.csv")
 
     # COSTS
     def get_costs_folder(self):

@@ -14,7 +14,7 @@ from osgeo import gdal
 import cea.config
 import cea.inputlocator
 from cea.datamanagement.databases_verification import verify_input_geometry_zone, verify_input_geometry_surroundings
-from cea.datamanagement.void_deck_migrator import migrate_void_deck_data
+from cea.datamanagement.utils import migrate_void_deck_data
 from cea.resources.radiation import daysim, geometry_generator
 from cea.resources.radiation.daysim import GridSize
 from cea.resources.radiation.radiance import CEADaySim
@@ -119,7 +119,7 @@ def run_daysim_simulation(cea_daysim: CEADaySim, zone_building_names, locator, s
         )
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. The number of sensor points depends on the size of the grid selected in the config file and

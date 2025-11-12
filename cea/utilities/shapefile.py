@@ -10,7 +10,6 @@ The geometry column is serialized to a nested list of coordinates using the JSON
 """
 
 
-import shapely
 import cea.config
 import cea.inputlocator
 
@@ -27,7 +26,7 @@ __status__ = "Production"
 
 import pandas as pd
 import geopandas as gpd
-import shapely.geometry
+import shapely
 import json
 import os
 
@@ -75,11 +74,11 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
     # Convert geometry based on type
     if geometry_type == "polygon":
-        geometry = [shapely.geometry.Polygon(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Polygon(json.loads(g)) for g in df.geometry]
     elif geometry_type == "polyline":
-        geometry = [shapely.geometry.LineString(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.LineString(json.loads(g)) for g in df.geometry]
     elif geometry_type == "point":
-        geometry = [shapely.geometry.Point(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Point(json.loads(g)) for g in df.geometry]
     else:
         raise ValueError("Invalid geometry type. Use 'polygon', 'polyline', or 'point'.")
 
@@ -93,9 +92,9 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
 def serialize_geometry(geom):
     if geom.geom_type == 'Polygon':
-        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.exterior.coords for x, y, *z in [coord]]
+        return [[coord[0], coord[1], coord[2] if len(coord) == 3 else 0.0] for coord in geom.exterior.coords]
     elif geom.geom_type == 'LineString':
-        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.coords for x, y, *z in [coord]]
+        return [[coord[0], coord[1], coord[2] if len(coord) == 3 else 0.0] for coord in geom.coords]
     elif geom.geom_type == 'Point':
         if geom.has_z:
             return [geom.x, geom.y, geom.z]
@@ -141,7 +140,7 @@ def shapefile_to_csv_xlsx(shapefile, output_path, new_crs=None):
 
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`shp-to-csv-to-shp` with the values from the configuration file, section ``[shapefile-tools]``.
 
@@ -175,7 +174,8 @@ def main(config):
         print("Running shapefile-to-csv with shapefile = %s" % config.shapefile_tools.input_file)
         print("Running shapefile-to-csv with csv-file = %s" % config.shapefile_tools.output_path)
 
-        shapefile_to_csv_xlsx(shapefile=input_file, output_file_path=output_path, output_file_name=output_file_name)
+        output_file_path = os.path.join(output_path, output_file_name)
+        shapefile_to_csv_xlsx(shapefile=input_file, output_path=output_file_path)
 
         print("csv file has been generated.")
 

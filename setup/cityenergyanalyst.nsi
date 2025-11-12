@@ -1,4 +1,5 @@
 # NSIS script for creating the City Energy Analyst installer
+Unicode true
 !define CEA_TITLE "City Energy Analyst"
 !define VER $%CEA_VERSION%
 !define CEA_GUI_NAME "CEA-4 Desktop"  # references productName from GUI package.json. ensure it is the same
@@ -19,6 +20,8 @@
 
 ; include the modern UI stuff
 !include "MUI2.nsh"
+
+Var LauncherExtension
 
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
@@ -97,6 +100,13 @@ FunctionEnd
 Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
+    # Check if PowerShell exists
+    ${If} ${FileExists} "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
+        StrCpy $LauncherExtension "ps1"  # Use PowerShell
+    ${Else}
+        StrCpy $LauncherExtension "bat"  # Fallback to batch
+    ${EndIf}
+
     # Install GUI first so that rollback would not be as painful in case of failure
     # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
     File "gui_setup.exe"
@@ -154,8 +164,13 @@ Function BaseInstallationSection
     File "cea-icon.ico"
 
     # create a shortcut in the $INSTDIR for launching the CEA console
-    CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${If} $LauncherExtension == "ps1"
+        CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" '-ExecutionPolicy ByPass -NoExit -File "$INSTDIR\dependencies\cea-env.ps1"' \
+            "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${Else}
+        CreateShortcut "$INSTDIR\CEA Console.lnk" "$WINDIR\System32\cmd.exe" '/K ""$INSTDIR\dependencies\cea-env.bat""' \
+            "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${EndIf}
 
     # create a shortcut in the $INSTDIR for launching the CEA Desktop
     CreateShortcut "$INSTDIR\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
@@ -165,8 +180,13 @@ FunctionEnd
 Function CreateStartMenuShortcutsSection
     # create shortcuts in the start menu for launching the CEA console
     CreateDirectory '$SMPROGRAMS\${CEA_TITLE}'
-    CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${If} $LauncherExtension == "ps1"
+        CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" '-ExecutionPolicy ByPass -NoExit -File "$INSTDIR\dependencies\cea-env.ps1"' \
+            "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${Else}
+        CreateShortCut '$SMPROGRAMS\${CEA_TITLE}\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K ""$INSTDIR\dependencies\cea-env.bat""' \
+            "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${EndIf}
 
     CreateShortcut "$SMPROGRAMS\${CEA_TITLE}\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"
@@ -178,8 +198,13 @@ FunctionEnd
 
 Function CreateDesktopShortcutsSection
     # create shortcuts on the Desktop for launching the CEA console
-    CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K "$INSTDIR\dependencies\cea-env.bat"' \
-        "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${If} $LauncherExtension == "ps1"
+        CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" '-ExecutionPolicy ByPass -NoExit -File "$INSTDIR\dependencies\cea-env.ps1"' \
+            "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${Else}
+        CreateShortCut '$DESKTOP\CEA Console.lnk' "$WINDIR\System32\cmd.exe" '/K ""$INSTDIR\dependencies\cea-env.bat""' \
+            "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch the CEA Console"
+    ${EndIf}
 
     CreateShortcut "$DESKTOP\CEA Desktop.lnk" "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\${CEA_GUI_NAME}.exe" "" \
         "$INSTDIR\cea-icon.ico" 0 SW_SHOWNORMAL "" "Launch CEA Desktop"

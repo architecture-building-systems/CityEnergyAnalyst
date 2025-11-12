@@ -160,7 +160,7 @@ def copy_folder_contents(source_path, target_path):
             shutil.copy2(source_item, target_item)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
 
     # Start the timer
     t0 = time.perf_counter()

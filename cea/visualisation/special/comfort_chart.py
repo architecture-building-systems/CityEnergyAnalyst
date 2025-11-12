@@ -51,12 +51,12 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
 
     @property
     def data(self):
-        return self.hourly_loads[self.hourly_loads['name'] == self.building]
+        return self.hourly_loads
 
     @property
     def dict_graph(self):
         if not hasattr(self, '_dict_graph'):
-            self._dict_graph = calc_data(self.data, self.locator)
+            self._dict_graph = calc_data(self.building, self.data, self.locator)
         return self._dict_graph
 
     def calc_graph(self):
@@ -301,7 +301,7 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         return table_df
 
 
-def comfort_chart(data_frame, title, output_path, config, locator):
+def comfort_chart(building_name, data_frame, title, output_path, config, locator):
     """
     Main function of comfort chart plot
 
@@ -315,7 +315,7 @@ def comfort_chart(data_frame, title, output_path, config, locator):
     """
 
     # calculate points of comfort in different conditions
-    dict_graph = calc_data(data_frame, locator)
+    dict_graph = calc_data(building_name, data_frame, locator)
 
     # create scatter of comfort
     traces_graph = calc_graph(dict_graph)
@@ -469,7 +469,7 @@ def create_relative_humidity_lines():
     return traces
 
 
-def calc_data(data_frame, locator):
+def calc_data(building_name, data_frame, locator):
     """
     split up operative temperature and humidity points into 4 categories for plotting
     (1) occupied in heating season
@@ -479,10 +479,6 @@ def calc_data(data_frame, locator):
 
     :param data_frame: results from demand calculation
     :type data_frame: pandas.DataFrame
-    :param config: cea config
-    :type config: cea.config.Configuration
-    :param locator: cea input locator
-    :type locator: cea.inputlocator.InputLocator
     :return: dict of lists with operative temperatures and moistures
      \for 4 conditions (summer (un)occupied, winter (un)occupied)
     :rtype: dict
@@ -490,19 +486,27 @@ def calc_data(data_frame, locator):
     from cea.demand.building_properties.building_hvac import verify_has_season
 
     # read region-specific control parameters (identical for all buildings), i.e. heating and cooling season
-    building_name = data_frame.name.iloc[0]
-    air_con_data = pd.read_csv(locator.get_building_air_conditioning()).set_index('name')
-    has_winter = verify_has_season(building_name,
-                                   air_con_data.loc[building_name, 'hvac_heat_starts'],
-                                   air_con_data.loc[building_name, 'hvac_heat_ends'])
-    has_summer = verify_has_season(building_name,
-                                   air_con_data.loc[building_name, 'hvac_cool_starts'],
-                                   air_con_data.loc[building_name, 'hvac_cool_ends'])
+    hvac_path = locator.get_building_air_conditioning()
+    try:
+        air_con_data = pd.read_csv(hvac_path).set_index('name')
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"HVAC configuration not found at {hvac_path}") from e
+    
+    if building_name not in air_con_data.index:
+        raise ValueError(f"Building '{building_name}' not found in HVAC configuration at {hvac_path}")
 
-    winter_start = air_con_data.loc[building_name, 'hvac_heat_starts']
-    winter_end = air_con_data.loc[building_name, 'hvac_heat_ends']
-    summer_start = air_con_data.loc[building_name, 'hvac_cool_starts']
-    summer_end =  air_con_data.loc[building_name, 'hvac_cool_ends']
+    building_air_con_data = air_con_data.loc[building_name]
+    has_winter = verify_has_season(building_name,
+                                   building_air_con_data.loc['hvac_heat_starts'],
+                                   building_air_con_data.loc['hvac_heat_ends'])
+    has_summer = verify_has_season(building_name,
+                                   building_air_con_data.loc['hvac_cool_starts'],
+                                   building_air_con_data.loc['hvac_cool_ends'])
+
+    winter_start = building_air_con_data.loc['hvac_heat_starts']
+    winter_end = building_air_con_data.loc['hvac_heat_ends']
+    summer_start = building_air_con_data.loc['hvac_cool_starts']
+    summer_end =  building_air_con_data.loc['hvac_cool_ends']
 
     # split up operative temperature and humidity points into 4 categories
     # (1) occupied in heating season
@@ -797,25 +801,6 @@ def create_multi_building_plot(building_plots):
     output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "comfort-chart.html")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
-    # Generate charts HTML with horizontal layout
-    charts_html = ""
-    for i, chart_data in enumerate(charts_data):
-        margin_left = "100px" if i > 0 else "0px"
-        charts_html += f"""
-        <div style="display: inline-block; vertical-align: top; margin-left: {margin_left};">
-            <h2 style="text-align: left; color: #333; font-size: 18px; margin-bottom: 1px; margin-left: 5px;">
-                Building {chart_data['building']}
-            </h2>
-            <div style="background-color: transparent; padding: 0; margin-bottom: 20px; width: 300px;">
-                {chart_data['chart_html']}
-            </div>
-            <div style="background-color: transparent; padding: 0; width: 300px;">
-                {chart_data['table_html']}
-            </div>
-        </div>
-        """
-    
-    
     # Complete HTML document with improved layout
     full_html = f"""
     <!DOCTYPE html>
@@ -837,9 +822,9 @@ def create_multi_building_plot(building_plots):
             }}
             .charts-wrapper {{
                 display: flex;
-                flex-direction: row;
+                flex-wrap: wrap;
                 gap: 100px;
-                width: max-content;
+                width: 100%;
             }}
             .chart-item {{
                 display: flex;
@@ -897,14 +882,14 @@ def create_multi_building_plot(building_plots):
     return full_html
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     import cea.inputlocator
 
     locator = cea.inputlocator.InputLocator(config.scenario)
     # cache = cea.plots.cache.PlotCache(config.project)
     cache = cea.plots.cache.NullPlotCache()
 
-    list_buildings = config.plots_comfort_chart.buildings
+    list_buildings = config.plots_building_filter.buildings
     integer_year_start = config.plots_building_filter.filter_buildings_by_year_start
     integer_year_end = config.plots_building_filter.filter_buildings_by_year_end
     list_standard = config.plots_building_filter.filter_buildings_by_construction_type

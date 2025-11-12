@@ -10,7 +10,7 @@ from typing import Union
 import numpy as np
 import osmnx
 from geopandas import GeoDataFrame as Gdf
-from shapely.geometry import Polygon
+from shapely import Polygon
 import pandas as pd
 
 import cea.config
@@ -578,7 +578,7 @@ def flatten_geometries(gdf):
 
     return gdf
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     This script gets a polygon and calculates the zone.shp and the occupancy.dbf and age.dbf inputs files for CEA
     """

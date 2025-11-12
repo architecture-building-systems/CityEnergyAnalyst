@@ -1,0 +1,182 @@
+
+Components:
+    AC1:
+      icon: "dxChiller_icon.png"
+      color: "blue_lighter"
+    AC2:
+      icon: "dxChiller_icon.png"
+      color: "blue_lighter"
+    CH1:
+      icon: "vcChiller_icon.png"
+      color: "blue_light"
+    CH2:
+      icon: "vcChiller_icon.png"
+      color: "blue_light"
+    ACH1:
+      icon: "absorptionChiller_icon.png"
+      color: "blue"
+    ACH2:
+      icon: "absorptionChiller_icon.png"
+      color: "blue"
+    ACH3:
+      icon: "absorptionChiller_icon.png"
+      color: "blue"
+    BO1:
+      icon: "boiler_icon.png"
+      color: "brown_light"
+    BO2:
+      icon: "boiler_icon.png"
+      color: "brown_light"
+    BO3:
+      icon: "boiler_icon.png"
+      color: "brown_light"
+    CT1:
+      icon: "coolingTower_icon.png"
+      color: "orange_light"
+    CT2:
+      icon: "coolingTower_icon.png"
+      color: "orange_light"
+    HP1:
+      icon: "dxChiller_icon.png"
+      color: "red_lighter"
+    HP2:
+      icon: "dxChiller_icon.png"
+      color: "red_lighter"
+    HP3:
+      icon: "dxChiller_icon.png"
+      color: "red_lighter"
+    OEHR1:
+      icon: "generator_icon.png"
+      color: "green_lighter"
+    OEHR2:
+      icon: "generator_icon.png"
+      color: "green_lighter"
+    FORC1:
+      icon: "generator_icon.png"
+      color: "grey_light"
+    CCGT1:
+      icon: "gasTurbine_icon.png"
+      color: "grey"
+    TES1:
+      icon: "storage_icon.png"
+      color: "purple_lighter"
+    FU1:
+      icon: "furnace_icon.png"
+      color: "orange_light"
+    FU2:
+      icon: "furnace_icon.png"
+      color: "orange"
+    unknown:
+      icon: "unknownComponent_icon.png"
+      color: "grey"
+
+
+Consumers:
+    IconFiles:
+      building: "building_icon.png"
+      district: "district_icon.png"
+
+SinksAndSources:
+    IconFiles:
+      river: "river_icon.png"
+      wind: "wind_icon.png"
+      grid: "grid_icon.png"
+      wood: "wood_icon.png"
+      biomass: "biomass_icon.png"
+      coal: "coal_icon.png"
+      oil: "oil_icon.png"
+      gas: "gas_icon.png"
+      biogas: "biogas_icon.png"
+      hydrogen: "hydrogen_icon.png"
+      sunlight: "sunlight_icon.png"
+
+    EnergyCarrierToIconCode:
+      Sinks:
+        T_W: "river"
+        T_A: "wind"
+        E_AC: "grid"
+      Sources:
+        T_W: "river"
+        T_A: "wind"
+        E_AC: "grid"
+        Cwod: "wood"
+        Cwbm: "biomass"
+        Cdbm: "biomass"
+        Ccoa: "coal"
+        Coil: "oil"
+        Cgas: "gas"
+        Cbig: "biogas"
+        Chyd: "hydrogen"
+        Rsun: "sunlight"
+
+
+EnergyCarriers:
+    T100A:
+      color: "white"
+      hue: "red"
+    T35A:
+      color: "white"
+      hue: "red_light"
+    T25A:
+      color: "white"
+      hue: "red_lighter"
+    T10A:
+      color: "white"
+      hue: "blue_lighter"
+    T0B:
+      color: "grey_light"
+      hue: "blue"
+    T100W:
+      color: "blue"
+      hue: "red"
+    T60W:
+      color: "blue"
+      hue: "red_light"
+    T30W:
+      color: "blue"
+      hue: "red_lighter"
+    T20W:
+      color: "blue"
+      hue: "orange"
+    T10W:
+      color: "blue"
+      hue: "blue_lighter"
+    T0W:
+      color: "blue"
+      hue: "blue_light"
+    E230AC:
+      color: "black"
+      hue: "yellow_lighter"
+    E22kAC:
+      color: "black"
+      hue: "yellow_light"
+    E66kAC:
+      color: "black"
+      hue: "yellow"
+    Cwod:
+      color: "green"
+      hue: "brown"
+    Cbig:
+      color: "green"
+      hue: "brown_light"
+    Cdbm:
+      color: "green"
+      hue: "green_light"
+    Cwbm:
+      color: "green"
+      hue: "green_lighter"
+    Chyd:
+      color: "green"
+      hue: "blue_lighter"
+    Ccoa:
+      color: "brown"
+      hue: "black"
+    Coil:
+      color: "brown"
+      hue: "brown_light"
+    Cgas:
+      color: "brown"
+      hue: "brown_lighter"
+    Rsun:
+      color: "yellow"
+      hue: "yellow_lighter"

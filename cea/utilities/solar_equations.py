@@ -146,7 +146,7 @@ def calc_sun_properties(latitude, longitude, weather_data, datetime_local, confi
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(numeric_only=True), 2)
+    T_G_day = np.round(T_G_hour.groupby(['dayofyear'], observed=False).mean(numeric_only=True), 2)
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     transmittivity = (1 - T_G_day['diff']).mean()
 
@@ -234,26 +234,20 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     #. No solar panels on windows.
     """
 
-    def f(x):
-        # To filter the sensor points / hours with low radiation potential.
-        if x <= 50:
-            # eliminate points when hourly production < 50 W/m2
-            return 0
-        else:
-            # keep sensors above min radiation
-            return x
-
     # read radiation file
-    sensors_rad = feather.read_feather(radiation_sensor_path)
+    sensors_rad: pd.DataFrame = feather.read_feather(radiation_sensor_path)
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).to_frame('total_rad_Whm2')  # add new row with yearly radiation
+    sensors_rad_sum = sensors_rad.sum(axis=0).to_frame('total_rad_Whm2')  # add new row with yearly radiation
     sensors_metadata.set_index('SURFACE', inplace=True)
     sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)  # [Wh/m2]
 
     # remove window surfaces
     sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
+
+    # remove underside surfaces (PV panels should not be installed on building undersides)
+    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'undersides']
 
     # keep sensors if allow pv installation on walls or on roofs
     if config.solar.panel_on_roof is False:
@@ -269,7 +263,9 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= annual_radiation_threshold_Whperm2]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
 
-    sensors_rad_clean = sensors_rad_clean.applymap(lambda x: f(x))
+    # To filter the sensor points / hours with low radiation potential.
+    # eliminate points when hourly production < 50 W/m2
+    sensors_rad_clean = sensors_rad_clean.where(sensors_rad_clean > 50, 0)
 
     return max_annual_radiation, annual_radiation_threshold_Whperm2, sensors_rad_clean, sensors_metadata_clean
 
@@ -718,7 +714,7 @@ def calc_groups(radiation_of_sensors_clean, sensors_metadata_cat):
     sensors_metadata_cat['type_orientation'] = sensors_metadata_cat['TYPE'] + '_' + sensors_metadata_cat['orientation']
     sensors_metadata_cat['surface'] = sensors_metadata_cat.index
     # group the sensors by categories
-    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'])
+    sensor_groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z', 'type_orientation'], observed=False)
     group_keys = sensor_groups_ob.groups.keys()
     number_groups = len(group_keys)
 

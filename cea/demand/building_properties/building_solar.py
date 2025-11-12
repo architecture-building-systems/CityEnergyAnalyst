@@ -96,7 +96,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     I_sol_wall = I_sol_wall * \
                  prop_envelope.loc[building_name, 'a_wall'] * \
                  thermal_resistance_surface['RSE_wall'] * \
-                 prop_rc_model.loc[building_name, 'U_wall']
+                 prop_envelope.loc[building_name, 'U_wall']
 
     # sum roof
     # solar incident on all roofs [W]
@@ -106,7 +106,7 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
     I_sol_roof = I_sol_roof * \
                  prop_envelope.loc[building_name, 'a_roof'] * \
                  thermal_resistance_surface['RSE_roof'] * \
-                 prop_rc_model.loc[building_name, 'U_roof']
+                 prop_envelope.loc[building_name, 'U_roof']
 
     # sum window, considering shading
     I_sol_win = (radiation_data['windows_east_kW'] +

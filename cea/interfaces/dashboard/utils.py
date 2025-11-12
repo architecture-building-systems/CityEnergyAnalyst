@@ -12,21 +12,50 @@ class OutsideProjectRootError(Exception):
         super().__init__(f"Path `{path}` is not a valid path.")
         self.path = path
 
-def secure_path(path: Union[str, os.PathLike]) -> str:
+def secure_path(path: Union[str, os.PathLike], root: Union[str, os.PathLike, None] = None) -> str:
     """
-    Simple sanitation of path
+    Validates and sanitizes a file path to prevent directory traversal attacks.
+
+    Resolves the path to its canonical form (following symlinks) and ensures it
+    stays within the project root directory.
+
+    Args:
+        path: Path to validate (can be relative or absolute)
+
+    Returns:
+        Canonical absolute path as string
+
+    Raises:
+        ValueError: If project root is not set when path validation is enabled
+        OutsideProjectRootError: If resolved path is outside the project root
     """
+    # Resolve to canonical absolute path (follows symlinks, normalizes . and ..)
     real_path = os.path.realpath(path)
 
     # TODO: Remove dependency on settings
     if not get_settings().allow_path_transversal():
-        settings_project_root = get_settings().project_root
-        if settings_project_root is None:
-            raise ValueError("Project root not set. Unable to determine project root.")
-        
-        project_root = os.path.realpath(settings_project_root)
-        prefix = os.path.commonpath((project_root, real_path))
-        if project_root != prefix:
+        if root is not None:
+            project_root = os.path.realpath(root)
+        else:
+            settings_project_root = get_settings().project_root
+            if settings_project_root is None:
+                raise ValueError("Project root not set. Unable to determine project root.")
+            project_root = os.path.realpath(settings_project_root)
+
+        # Normalize case on case-insensitive filesystems for accurate comparison
+        # This prevents false rejections while maintaining security
+        normalized_project_root = os.path.normcase(project_root)
+        normalized_real_path = os.path.normcase(real_path)
+        try:
+            # os.path.commonpath raises ValueError if paths are on different drives (Windows)
+            prefix = os.path.commonpath((normalized_project_root, normalized_real_path))
+        except ValueError:
+            # Different drives on Windows - definitely outside project root
+            raise OutsideProjectRootError(path)
+
+        # Verify the resolved path is within or equal to project root
+        # Note: commonpath returns the longest common sub-path
+        if normalized_project_root != prefix:
             raise OutsideProjectRootError(path)
 
     return real_path
