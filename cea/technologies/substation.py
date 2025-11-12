@@ -717,7 +717,7 @@ def calc_plate_HEX(NTU, cr):
 @jit('boolean(float64, float64)', nopython=True)
 def efficiencies_not_converged(previous_efficiency, current_efficiency):
     # Convergence tolerance for heat exchanger efficiency iteration
-    tolerance = 1e-08  # Same as HEAT_EXCHANGER_EFFICIENCY_CONVERGENCE_TOL
+    tolerance = 1e-08  # Convergence tolerance value
 
     # Validate previous_efficiency to avoid division by zero
     if abs(previous_efficiency) < tolerance:
@@ -754,8 +754,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         - ``cc``, capacity mass flow rate secondary side
 
     """
-    # Check if primary side has meaningful temperature drop (thi != tho)
-    # If temperatures are essentially equal, no heat transfer occurs, skip iteration
+    # Check if primary side has meaningful temperature drop (thi != tho); if temperatures are essentially equal, no heat transfer occurs, skip iteration
     if ch_kWperK > 0 and not isclose(thi_K, tho_K):
         previous_efficiency = 0.1
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
@@ -784,9 +783,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
             # previous_efficiency = current_efficiency
             # current_efficiency = calculate_next_efficiency
 
-        # Check if secondary side has meaningful temperature rise (tci != tco)
-        # Even if primary side had temperature drop, heat exchanger may produce negligible secondary-side change
-        # This validates the RESULT of the iteration, while the check above validates the INPUT
+        # Validate secondary side temperature rise from iteration results (unlike primary side input validation above).
         temp_diff = abs(tci_K - tco_K)
         if temp_diff < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
             # When temperature difference is negligible, no meaningful heat transfer
@@ -877,8 +874,8 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
 
     """
     ch_kWperK = 0.0
-    # Handle case where cc_kWperK is zero (no heat capacity flow)
-    # This can occur when temperature difference between supply and return is negligible
+    # Handle cases where either cc_kWperK is zero (no heat capacity flow)
+    # or Q_heating_W is zero (no heating load). This can occur when temperature difference between supply and return is negligible or there is no demand.
     if cc_kWperK == 0.0 or Q_heating_W == 0.0:
         return 0.0, 0.0
 
