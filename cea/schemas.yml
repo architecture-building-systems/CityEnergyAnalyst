@@ -1915,7 +1915,6 @@ get_building_internal:
         min: 0.0
   used_by:
   - demand
-  - occupancy
 get_building_supply:
   created_by:
   - archetypes_mapper
@@ -2110,7 +2109,6 @@ get_building_weekly_schedules:
         type: float
   used_by:
   - demand
-  - occupancy
 
 get_costs_operation_file:
   created_by:
@@ -2405,7 +2403,6 @@ get_database_assemblies_envelope_mass:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_envelope_floor:
   created_by:
@@ -2454,7 +2451,6 @@ get_database_assemblies_envelope_floor:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_envelope_roof:
   created_by:
@@ -2525,7 +2521,6 @@ get_database_assemblies_envelope_roof:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_envelope_shading:
   created_by:
@@ -2556,7 +2551,6 @@ get_database_assemblies_envelope_shading:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_envelope_tightness:
   created_by:
@@ -2587,7 +2581,6 @@ get_database_assemblies_envelope_tightness:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_envelope_wall:
   created_by:
@@ -2657,7 +2650,6 @@ get_database_assemblies_envelope_wall:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_envelope_window:
   created_by:
@@ -2729,7 +2721,6 @@ get_database_assemblies_envelope_window:
   used_by:
   - demand
   - radiation
-  - occupancy
 
 get_database_assemblies_hvac_controller:
   created_by:
@@ -10568,7 +10559,6 @@ get_database_envelope_systems:
   used_by:
   - demand
   - radiation
-  - occupancy
 get_database_feedstocks:
   created_by:
   - database_helper
