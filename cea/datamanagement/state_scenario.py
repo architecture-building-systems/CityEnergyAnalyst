@@ -19,7 +19,8 @@ def create_state_in_time_scenario(config: Configuration, year_of_state: int) -> 
     Parameters:
         config (Configuration): The configuration object containing the current scenario settings.
         locator (InputLocator): The input locator object for file paths.
-        year_of_state (int): The year of the event scenario. If a building year is larger than this year, it will not be included in the event scenario.
+        year_of_state (int): The year of the event scenario. If a building year is larger than
+        this year, it will not be included in the event scenario.
         event_content (dict): A dictionary containing the content of the event scenario.
     Returns:
         None
@@ -30,6 +31,7 @@ def create_state_in_time_scenario(config: Configuration, year_of_state: int) -> 
     state_locator = InputLocator(time_specific_scenario_folder)
     # copy all files from the input folder to the event scenario folder
     shutil.copytree(input_folder_path, state_locator.get_input_folder(), dirs_exist_ok=True) # make sure existing files are overwritten
+    add_year_in_yaml(config, year_of_state)
     return None
 
 def remove_state_in_time_scenario(config: Configuration, year_of_state: int) -> None:
@@ -44,6 +46,7 @@ def remove_state_in_time_scenario(config: Configuration, year_of_state: int) -> 
     locator = InputLocator(config.scenario)
     event_scenario_folder = locator.get_state_in_time_scenario_folder(year_of_state)
     shutil.rmtree(event_scenario_folder, ignore_errors=True)
+    del_year_in_yaml(config, year_of_state)
     return None
 
 def delete_unexisting_buildings_from_event_scenario(config: Configuration, year_of_state: int) -> list[str]:
@@ -157,7 +160,8 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
     """
     archetypes_to_modify = modify_recipe.keys()
     if not archetypes_to_modify:
-        raise ValueError("No archetypes specified for modification in the event scenario.")
+        remove_state_in_time_scenario(config, year_of_state)
+        raise ValueError(f"No archetypes specified for modification in the event scenario. The state-in-time scenario for year {year_of_state} has been deleted.")
     state_locator = InputLocator(InputLocator(config.scenario).get_state_in_time_scenario_folder(year_of_state))
     archetype_df = pd.read_csv(state_locator.get_database_archetypes_construction_type(), index_col="const_type")
     envelope_lookup = EnvelopeLookup.from_locator(state_locator)
@@ -222,10 +226,7 @@ def log_modifications(config: Configuration, year_of_state: int, modify_recipe: 
     current_year_modifications.setdefault("modifications", {}).update(modify_recipe)
     current_year_modifications["latest_modified_at"] = str(pd.Timestamp.now())
     existing_data[year_of_state] = current_year_modifications
-    # ensure parent directory exists (open with 'w' creates the file if missing)
-    os.makedirs(os.path.dirname(yml_path), exist_ok=True)
-    with open(yml_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(existing_data, f, sort_keys=True)
+    save_log_yaml(locator, existing_data)
     
 def shift_code_name_plus1(db, code_prefix):
     n = db[db.index.str.startswith(code_prefix)].shape[0]
@@ -331,6 +332,39 @@ def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) ->
     os.makedirs(os.path.dirname(yml_path), exist_ok=True)
     with open(yml_path, "w") as f:
         yaml.dump(log_data, f)
+
+
+def add_year_in_yaml(config: Configuration, year_of_state: int) -> None:
+    """Add a new year entry in the district timeline log yaml file if it does not exist.
+
+    :param config: _description_
+    :type config: Configuration
+    :param year_of_state: _description_
+    :type year_of_state: int
+    """
+    locator = InputLocator(config.scenario)
+    log_data = load_log_yaml(locator)
+    if year_of_state not in log_data:
+        log_data[year_of_state] = {
+            "created_at": str(pd.Timestamp.now()),
+            "modifications": {},
+        }
+        save_log_yaml(locator, log_data)
+
+
+def del_year_in_yaml(config: Configuration, year_of_state: int) -> None:
+    """Delete a year entry in the district timeline log yaml file.
+
+    :param config: _description_
+    :type config: Configuration
+    :param year_of_state: _description_
+    :type year_of_state: int
+    """
+    locator = InputLocator(config.scenario)
+    log_data = load_log_yaml(locator)
+    if year_of_state in log_data:
+        del log_data[year_of_state]
+        save_log_yaml(locator, log_data)
 
 
 def main(config: Configuration) -> None:
