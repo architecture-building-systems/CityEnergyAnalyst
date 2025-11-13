@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass, field
 
 import geopandas as gpd
 import pandas as pd
@@ -341,19 +342,17 @@ def resolve_plant_building(plant_building_input, available_buildings):
         return ""
 
 
-def layout_network(network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None, output_name_network=""):
+def layout_network(network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None):
     if plant_building_name is None:
         plant_building_name = ""
     total_demand_location = locator.get_total_demand()
 
-    # type_mat_default = network_layout.type_mat
-    type_network = network_layout.network_type
+    type_network = "DH"
     list_district_scale_buildings = network_layout.connected_buildings
 
     # Resolve plant building name (case-insensitive, handles comma-separated input)
     plant_building_name = resolve_plant_building(plant_building_name, list_district_scale_buildings)
-    consider_only_buildings_with_demand = network_layout.consider_only_buildings_with_demand
-    # allow_looped_networks = network_layout.allow_looped_networks
+    consider_only_buildings_with_demand = False
     allow_looped_networks = False
     steiner_algorithm = network_layout.algorithm
 
@@ -392,8 +391,8 @@ def layout_network(network_layout, locator: cea.inputlocator.InputLocator, plant
     building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
     # calc minimum spanning tree and save results to disk
-    path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
-    path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
+    path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, network_layout.network_name)
+    path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
     os.makedirs(os.path.dirname(path_output_edges_shp), exist_ok=True)
     os.makedirs(os.path.dirname(path_output_nodes_shp), exist_ok=True)
 
@@ -412,58 +411,60 @@ def layout_network(network_layout, locator: cea.inputlocator.InputLocator, plant
                                steiner_algorithm)
 
 
-class NetworkLayout(object):
-    """Capture network layout information"""
 
-    def __init__(self, network_layout=None):
-        self.network_type = "DC"
-        self.connected_buildings = list(getattr(network_layout, 'connected_buildings', []))
-        self.disconnected_buildings = []
-        self.create_plant = True
-        self.allow_looped_networks = False
-        self.consider_only_buildings_with_demand = False
+# FIXME: Set network type as empty string for workaround
+network_type = ""
 
-        self.algorithm = None
+@dataclass
+class NetworkLayout:
+    network_name: str
+    connected_buildings: list[str]
+    algorithm: str = ""
 
-        attributes = ["network_type", "create_plant", "allow_looped_networks",
-                      "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings",
-                      "algorithm"]
-        for attr in attributes:
-            # copy any matching attributes in network_layout (because it could be an instance of NetworkInfo)
-            if hasattr(network_layout, attr):
-                setattr(self, attr, getattr(network_layout, attr))
+    # TODO: Remove unused fields
+    pipe_diameter: float = 0.0
+    type_mat: str = ""
+    allow_looped_networks: bool = False
+    consider_only_buildings_with_demand: bool = False
 
+    disconnected_buildings: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_config(cls, network_layout, locator: cea.inputlocator.InputLocator) -> 'NetworkLayout':
+        network_name = cls._validate_network_name(network_layout.network_name, locator)
+
+        return cls(network_name=network_name,
+                   connected_buildings=network_layout.connected_buildings,
+                   algorithm=network_layout.algorithm)
+
+    @staticmethod
+    def _validate_network_name(network_name: str, locator: cea.inputlocator.InputLocator) -> str:
+        if network_name is None or not network_name.strip():
+            raise ValueError(
+                "Network name is required. Provide a descriptive name for this network layout variant "
+                "(e.g., 'all-connected')."
+            )
+        # Ensure network name is stripped of flanking whitespaces
+        network_name = network_name.strip()
+
+        # Safety check: Verify network doesn't already exist (backend validation fallback)
+        output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        if os.path.exists(output_folder):
+            edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+            if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                raise ValueError(
+                    f"Network with name '{network_name}' already exists. "
+                    "Choose a different name or delete the existing network."
+                )
+        return network_name
 
 def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    network_layout = NetworkLayout(network_layout=config.network_layout)
+    network_layout = NetworkLayout.from_config(config.network_layout, locator)
     plant_building_name = config.network_layout.plant_building
-    network_type = config.network_layout.network_type
-    network_name = config.network_layout.network_name
 
-    if not network_name or not network_name.strip():
-        raise ValueError(
-            "Network name is required. Please provide a descriptive name for this network layout variant "
-            "(e.g., 'all-connected')."
-        )
-    
-    network_name = network_name.strip()
-    print(f"Network name: {network_name} (user-defined)")
-
-    # Safety check: Verify network doesn't already exist (backend validation fallback)
-    output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-    if os.path.exists(output_folder):
-        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-        if os.path.exists(edges_path) or os.path.exists(nodes_path):
-            raise ValueError(
-                f"Network layout '{network_name}' already exists for {network_type}:\n"
-                f"  {output_folder}\n\n"
-                f"Resolution:\n"
-                f"  1. Use a different network name (e.g., '{network_name}_v2')\n"
-                f"  2. Delete the existing network folder manually\n"
-                f"  3. Leave network-name blank to auto-generate timestamp"
-            )
+    print(f"Network name: {network_layout.network_name} (user-defined)")
 
     # Check if user provided custom network layout
     edges_shp = config.network_layout.edges_shp_path
@@ -614,8 +615,8 @@ def main(config: cea.config.Configuration):
                 print("  Note: Existing building nodes converted to PLANT type (in-memory only)")
 
             # Save to network-name location
-            output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-            output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+            output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_layout.network_name)
+            output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_layout.network_name)
 
             # Ensure output directory exists
             output_folder = os.path.dirname(output_edges_path)
@@ -636,7 +637,7 @@ def main(config: cea.config.Configuration):
         print("=" * 80 + "\n")
 
     # Generate network layout using Steiner tree (current behavior or fallback)
-    layout_network(network_layout, locator, plant_building_name=plant_building_name, output_name_network=network_name)
+    layout_network(network_layout, locator, plant_building_name=plant_building_name)
 
 
 if __name__ == '__main__':
