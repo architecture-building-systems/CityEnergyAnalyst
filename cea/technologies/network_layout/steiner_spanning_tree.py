@@ -12,6 +12,8 @@ from networkx.algorithms.approximation.steinertree import steiner_tree
 from shapely import LineString, Point
 
 from cea.constants import SHAPEFILE_TOLERANCE
+from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
+
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
 from cea.datamanagement.graph_helper import GraphCorrector
 
@@ -61,17 +63,17 @@ class SteinerAlgorithm(StrEnum):
 def calc_steiner_spanning_tree(crs_projected,
                                building_centroids_df: gdf,
                                potential_network_gdf: gdf,
-                               output_network_folder,
+
                                path_output_edges_shp,
                                path_output_nodes_shp,
-                               type_mat_default,
-                               pipe_diameter_default,
+
                                type_network,
                                total_demand_location,
                                allow_looped_networks,
-                               optimization_flag,
                                plant_building_names,
                                disconnected_building_names,
+                               type_mat_default=TYPE_MAT_DEFAULT,
+                               pipe_diameter_default=PIPE_DIAMETER_DEFAULT,
                                method: str = SteinerAlgorithm.Kou):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
@@ -80,7 +82,6 @@ def calc_steiner_spanning_tree(crs_projected,
     :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
     :param geopandas.GeoDataFrame building_centroids_df: GeoDataFrame of building centroids
     :param geopandas.GeoDataFrame potential_network_gdf: potential network in networkx graph format
-    :param str output_network_folder: "{general:scenario}/inputs/networks/DC"
     :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
     :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
     :param str type_mat_default: e.g. "T1"
@@ -89,7 +90,6 @@ def calc_steiner_spanning_tree(crs_projected,
     :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
     :param bool create_plant: e.g. True
     :param bool allow_looped_networks:
-    :param bool optimization_flag:
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
     :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
@@ -213,11 +213,6 @@ def calc_steiner_spanning_tree(crs_projected,
                                                     pipe_diameter_default)
         # mst_edges.drop(['weight'], inplace=True, axis=1)
 
-    if optimization_flag:
-        for building in plant_building_names:
-            building_anchor = building_node_from_name(building, mst_nodes)
-            mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                             type_mat_default, pipe_diameter_default)
     elif os.path.exists(total_demand_location):
         if len(plant_building_names) > 0:
             building_anchor = mst_nodes[mst_nodes['building'].isin(plant_building_names)]
@@ -226,8 +221,6 @@ def calc_steiner_spanning_tree(crs_projected,
         mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                          type_mat_default, pipe_diameter_default)
 
-    # Ensure output folder exists before writing
-    os.makedirs(output_network_folder, exist_ok=True)
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
     mst_edges['length_m'] = mst_edges['weight']

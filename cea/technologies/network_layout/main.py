@@ -8,7 +8,6 @@ import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.substations_location import calc_building_centroids
-from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.technologies.network_layout.graph_utils import nx_to_gdf
 
 __author__ = "Jimeno A. Fonseca"
@@ -342,14 +341,12 @@ def resolve_plant_building(plant_building_input, available_buildings):
         return ""
 
 
-def layout_network(network_layout, locator, plant_building_name=None, output_name_network="", optimization_flag=False):
+def layout_network(network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None, output_name_network=""):
     if plant_building_name is None:
         plant_building_name = ""
     total_demand_location = locator.get_total_demand()
 
     # type_mat_default = network_layout.type_mat
-    type_mat_default = TYPE_MAT_DEFAULT
-    pipe_diameter_default = PIPE_DIAMETER_DEFAULT
     type_network = network_layout.network_type
     list_district_scale_buildings = network_layout.connected_buildings
 
@@ -363,9 +360,11 @@ def layout_network(network_layout, locator, plant_building_name=None, output_nam
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_zone_shp = locator.get_zone_geometry()
 
+    zone_df = gpd.GeoDataFrame.from_file(path_zone_shp)
+
     # Calculate points where the substations will be located (building centroids)
     building_centroids_df = calc_building_centroids(
-        path_zone_shp,
+        zone_df,
         list_district_scale_buildings,
         [plant_building_name] if plant_building_name else [],
         consider_only_buildings_with_demand,
@@ -395,23 +394,19 @@ def layout_network(network_layout, locator, plant_building_name=None, output_nam
     # calc minimum spanning tree and save results to disk
     path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, output_name_network)
     path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, output_name_network)
-    # output_network_folder should be the parent directory of edges.shp (i.e., the layout/ folder)
-    output_network_folder = os.path.dirname(path_output_edges_shp)
+    os.makedirs(os.path.dirname(path_output_edges_shp), exist_ok=True)
+    os.makedirs(os.path.dirname(path_output_nodes_shp), exist_ok=True)
 
     disconnected_building_names = []
 
     calc_steiner_spanning_tree(crs_projected,
                                building_centroids_df,
                                potential_network_df,
-                               output_network_folder,
                                path_output_edges_shp,
                                path_output_nodes_shp,
-                               type_mat_default,
-                               pipe_diameter_default,
                                type_network,
                                total_demand_location,
                                allow_looped_networks,
-                               optimization_flag,
                                [plant_building_name] if plant_building_name else [],
                                disconnected_building_names,
                                steiner_algorithm)
@@ -424,14 +419,13 @@ class NetworkLayout(object):
         self.network_type = "DC"
         self.connected_buildings = list(getattr(network_layout, 'connected_buildings', []))
         self.disconnected_buildings = []
-        self.type_mat = TYPE_MAT_DEFAULT
         self.create_plant = True
         self.allow_looped_networks = False
         self.consider_only_buildings_with_demand = False
 
         self.algorithm = None
 
-        attributes = ["network_type", "type_mat", "create_plant", "allow_looped_networks",
+        attributes = ["network_type", "create_plant", "allow_looped_networks",
                       "consider_only_buildings_with_demand", "connected_buildings", "disconnected_buildings",
                       "algorithm"]
         for attr in attributes:
