@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 import geopandas as gpd
 import pandas as pd
@@ -89,8 +88,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
     :return: Tuple of (updated nodes_gdf, updated edges_gdf, list of created plants)
     """
     import networkx as nx
-    from shapely.geometry import Point, LineString
-    import math
+    from shapely.geometry import Point
 
     print(f"[auto_create_plant_nodes] expected_num_components = {expected_num_components}")
 
@@ -142,7 +140,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
     # Auto-create missing junction nodes
     if missing_nodes:
         print(f"  ⚠ Found {len(missing_nodes)} missing junction node(s) at edge endpoints")
-        print(f"    Auto-creating junction nodes to ensure network connectivity...")
+        print("    Auto-creating junction nodes to ensure network connectivity...")
 
         for key, (exact_point, edge_names) in missing_nodes.items():
             new_node = gpd.GeoDataFrame([{
@@ -223,7 +221,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
 
     # If plants already exist, no need to auto-create (but we still ran validation above)
     if len(existing_plants) > 0:
-        print(f"[auto_create_plant_nodes] Plants already exist, skipping auto-creation")
+        print("[auto_create_plant_nodes] Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
 
     # Get building nodes for analysis
@@ -309,7 +307,7 @@ def resolve_plant_building(plant_building_input, available_buildings):
     :return: Matched building name or empty string
     """
     if not plant_building_input or not plant_building_input.strip():
-        print(f"  ℹ Plant building: Not specified - will use anchor load (building with highest demand)")
+        print("  ℹ Plant building: Not specified - will use anchor load (building with highest demand)")
         return ""
 
     # Parse comma-separated input and take first value
@@ -340,14 +338,13 @@ def resolve_plant_building(plant_building_input, available_buildings):
         print(f"  ⚠ Warning: Plant building '{first_input}' not found in connected buildings")
         print(f"    Available buildings: {', '.join(sorted(available_buildings)[:5])}" +
               (f" ... and {len(available_buildings) - 5} more" if len(available_buildings) > 5 else ""))
-        print(f"    Plant will be placed at building with highest demand (default)")
+        print("    Plant will be placed at building with highest demand (default)")
         return ""
 
 
 def layout_network(network_layout, locator, plant_building_name=None, output_name_network="", optimization_flag=False):
     if plant_building_name is None:
         plant_building_name = ""
-    weight_field = 'Shape_Leng'
     total_demand_location = locator.get_total_demand()
 
     # type_mat_default = network_layout.type_mat
@@ -401,7 +398,7 @@ def layout_network(network_layout, locator, plant_building_name=None, output_nam
     # output_network_folder should be the parent directory of edges.shp (i.e., the layout/ folder)
     output_network_folder = os.path.dirname(path_output_edges_shp)
 
-    disconnected_building_names = [x for x in list_district_scale_buildings if x not in list_district_scale_buildings]
+    disconnected_building_names = []
 
     calc_steiner_spanning_tree(crs_projected,
                                building_centroids_df,
@@ -425,8 +422,7 @@ class NetworkLayout(object):
 
     def __init__(self, network_layout=None):
         self.network_type = "DC"
-        self.connected_buildings = []
-        self.connected_buildings = network_layout.connected_buildings
+        self.connected_buildings = list(getattr(network_layout, 'connected_buildings', []))
         self.disconnected_buildings = []
         self.type_mat = TYPE_MAT_DEFAULT
         self.create_plant = True
@@ -445,35 +441,35 @@ class NetworkLayout(object):
 
 
 def main(config: cea.config.Configuration):
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout(network_layout=config.network_layout)
     plant_building_name = config.network_layout.plant_building
     network_type = config.network_layout.network_type
-
-    # Determine network name (auto-generate timestamp if blank)
     network_name = config.network_layout.network_name
-    if not network_name or not network_name.strip():
-        network_name = datetime.now().strftime('%Y%m%d_%H%M%S')
-        print(f"Network name: {network_name} (auto-generated timestamp)")
-    else:
-        network_name = network_name.strip()
-        print(f"Network name: {network_name} (user-defined)")
 
-        # Safety check: Verify network doesn't already exist (backend validation fallback)
-        output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-        if os.path.exists(output_folder):
-            edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-            if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                raise ValueError(
-                    f"Network layout '{network_name}' already exists for {network_type}:\n"
-                    f"  {output_folder}\n\n"
-                    f"Resolution:\n"
-                    f"  1. Use a different network name (e.g., '{network_name}_v2')\n"
-                    f"  2. Delete the existing network folder manually\n"
-                    f"  3. Leave network-name blank to auto-generate timestamp"
-                )
+    if not network_name or not network_name.strip():
+        raise ValueError(
+            "Network name is required. Please provide a descriptive name for this network layout variant "
+            "(e.g., 'all-connected')."
+        )
+    
+    network_name = network_name.strip()
+    print(f"Network name: {network_name} (user-defined)")
+
+    # Safety check: Verify network doesn't already exist (backend validation fallback)
+    output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+    if os.path.exists(output_folder):
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+        if os.path.exists(edges_path) or os.path.exists(nodes_path):
+            raise ValueError(
+                f"Network layout '{network_name}' already exists for {network_type}:\n"
+                f"  {output_folder}\n\n"
+                f"Resolution:\n"
+                f"  1. Use a different network name (e.g., '{network_name}_v2')\n"
+                f"  2. Delete the existing network folder manually\n"
+                f"  3. Leave network-name blank to auto-generate timestamp"
+            )
 
     # Check if user provided custom network layout
     edges_shp = config.network_layout.edges_shp_path
@@ -550,13 +546,13 @@ def main(config: cea.config.Configuration):
                 if is_explicitly_set:
                     # User explicitly specified a subset of buildings
                     buildings_to_validate = connected_buildings_config
-                    print(f"  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
+                    print("  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
                     print(f"  - Connected buildings (from config): {len(buildings_to_validate)}")
                     print(f"  - Buildings in user layout: {len(network_building_names)}")
                 else:
                     # Blank connected-buildings (auto-populated): accept whatever is in user layout
                     # BUT we already validated building names exist in zone geometry above
-                    print(f"  - Mode: Overwrite supply.csv (connected-buildings blank)")
+                    print("  - Mode: Overwrite supply.csv (connected-buildings blank)")
                     print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
                     for building_name in network_building_names[:10]:
                         print(f"      - {building_name}")
@@ -566,7 +562,7 @@ def main(config: cea.config.Configuration):
             else:
                 # Use supply.csv to determine district buildings
                 buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
-                print(f"  - Mode: Use supply.csv settings")
+                print("  - Mode: Use supply.csv settings")
                 print(f"  - District buildings (from supply.csv): {len(buildings_to_validate)}")
                 print(f"  - Buildings in user layout: {len(network_building_names)}")
 
@@ -581,7 +577,7 @@ def main(config: cea.config.Configuration):
                     print(f"      - {building_name}")
                 if len(buildings_without_demand) > 10:
                     print(f"      ... and {len(buildings_without_demand) - 10} more")
-                print(f"  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+                print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
 
             # Validate network covers all specified buildings
             nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
@@ -598,7 +594,7 @@ def main(config: cea.config.Configuration):
                     print(f"      - {building_name} (at endpoint of {edge_name})")
                 if len(auto_created_buildings) > 10:
                     print(f"      ... and {len(auto_created_buildings) - 10} more")
-                print(f"  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
+                print("  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
             else:
                 print("  ✓ All specified buildings have valid nodes in network")
 
@@ -621,7 +617,7 @@ def main(config: cea.config.Configuration):
                 for plant_info in created_plants:
                     reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
                     print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-                print(f"  Note: Existing building nodes converted to PLANT type (in-memory only)")
+                print("  Note: Existing building nodes converted to PLANT type (in-memory only)")
 
             # Save to network-name location
             output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)

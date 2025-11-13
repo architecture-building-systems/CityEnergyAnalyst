@@ -24,7 +24,6 @@ __status__ = "Production"
 
 import os
 import itertools
-import pandas as pd
 import geopandas as gpd
 import networkx as nx
 from shapely.geometry import Point
