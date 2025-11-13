@@ -1,136 +1,89 @@
-# CEA Cost Calculations Knowledge
+# Cost Calculations
 
-This document explains how CAPEX and cost calculations work in CEA.
+## Main API
 
----
+**`calc_capex_annualized(capex_total, IR_%, LT_yr) → float`** - Convert total CAPEX to annual cost
 
-## CAPEX Usage in Cost Calculations
+## Cost Flow
 
-### Overview
-**CAPEX_USD2015kW** from database files (e.g., `SUPPLY_ELECTRICITY.csv`) is used in cost calculations in `cea/analysis/costs/system_costs.py`.
-
-### Calculation Flow
-
-**Location**: `cea/analysis/costs/system_costs.py`
-
-#### 1. Total CAPEX (line 107-109)
-```python
-result[service + '_capex_total_USD'] = (database[service + '0_kW'].values *
-                                        database['efficiency'].values *
-                                        database['CAPEX_USD2015kW'].values)
 ```
-
-**Formula**: `Total CAPEX = Peak Power (kW) × Efficiency × Unit CAPEX (USD2015/kW)`
-
-#### 2. Fixed OPEX (line 111)
-Maintenance costs calculated from CAPEX:
-```python
-electricity_opex_fixed_USD = capex_total × O&M_% / 100
-```
-
-#### 3. Annualized CAPEX (line 119-121)
-```python
-electricity_capex_a_USD = calc_capex_annualized(capex_total, IR_%, LT_yr)
-```
-
-Amortizes infrastructure costs over the system lifetime.
-
-#### 4. Total Annualized Cost - TAC (line 135)
-```python
-electricity_TAC_USD = opex_a_USD + capex_a_USD
-```
-
-Combines all annual costs.
-
----
-
-## Cost Components Breakdown
-
-### What CAPEX Represents
-For grid electricity with CAPEX = 62.1 USD2015/kW (Singapore example):
-- Electrical panels
-- Transformers
-- Grid connection infrastructure
-- Distribution equipment within the building
-
-**Unit**: USD2015 per kW of peak power demand
-
-### Cost Flow Diagram
-```
-CAPEX_USD2015kW (from database)
+Database Parameters (SUPPLY_*.csv)
     ↓
 Total CAPEX = Peak_kW × efficiency × CAPEX_USD2015kW
     ↓
-    ├─→ Fixed OPEX (O&M) = Total CAPEX × O&M_%
-    └─→ Annualized CAPEX = f(Total CAPEX, IR_%, LT_yr)
+    ├─→ Fixed OPEX = CAPEX × O&M_%
+    └─→ Annualized CAPEX = CAPEX × IR% / (1 - (1 + IR%)^-LT)
          ↓
-         Total Annualized Cost (TAC) = OPEX_a + CAPEX_a
+         TAC = OPEX_a + CAPEX_a + Variable_OPEX
 ```
 
----
+## Key Patterns
 
-## Key Parameters from Database
+### Cost Calculation in `system_costs.py`
 
-### From SUPPLY_*.csv files:
+```python
+# 1. Total CAPEX (line 107-109)
+capex_total = peak_kW * efficiency * CAPEX_USD2015kW
+
+# 2. Fixed OPEX (O&M) (line 111)
+opex_fixed = capex_total * (O&M_% / 100)
+
+# 3. Annualized CAPEX (line 119-121)
+capex_a = calc_capex_annualized(capex_total, IR_%, LT_yr)
+
+# 4. Total Annualized Cost (line 135)
+TAC = opex_a + capex_a
+```
+
+### Database Parameters
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
-| `CAPEX_USD2015kW` | Capital cost per kW | 62.1 USD/kW |
-| `LT_yr` | Lifetime in years | 20 years |
-| `O&M_%` | Annual O&M as % of CAPEX | 1.3% |
-| `IR_%` | Interest rate for annualization | 1.3% |
+| `CAPEX_USD2015kW` | Infrastructure cost per kW | 62.1 |
+| `LT_yr` | Lifetime | 20 |
+| `O&M_%` | Annual O&M as % of CAPEX | 1.3 |
+| `IR_%` | Interest rate | 1.3 |
 | `efficiency` | System efficiency | 0.99 |
 
-### Calculation Example
+**Source**: `databases/{region}/ASSEMBLIES/SUPPLY/SUPPLY_*.csv`
 
-**Given**:
-- Peak demand: 100 kW
-- Efficiency: 0.99
-- CAPEX: 62.1 USD2015/kW
-- LT: 20 years
-- O&M: 1.3%
-- IR: 1.3%
+## Example Calculation
 
-**Calculations**:
-1. Total CAPEX = 100 × 0.99 × 62.1 = **6,147.9 USD**
-2. Annual O&M = 6,147.9 × 0.013 = **79.9 USD/year**
-3. Annualized CAPEX = 6,147.9 × annuity_factor(1.3%, 20yr) = **~350 USD/year**
-4. TAC = 79.9 + 350 + Variable_OPEX = **~430 USD/year** (excluding energy costs)
+**Input**: 100 kW peak, eff=0.99, CAPEX=62.1, LT=20yr, O&M=1.3%, IR=1.3%
 
----
-
-## Important Notes
-
-### CAPEX vs OPEX
-- **CAPEX** (Capital Expenditure): One-time infrastructure investment
-- **Fixed OPEX**: Annual maintenance (% of CAPEX)
-- **Variable OPEX**: Energy purchase costs (from GRID.csv's `Opex_var_buy_USD2015kWh`)
-
-### Where Costs Are Used
-- **LCA calculations**: `cea/analysis/lca/operation.py`
-- **Cost calculations**: `cea/analysis/costs/system_costs.py`
-- **Building supply systems**: `cea/demand/building_properties/building_supply_systems.py`
-
-### Annualization Formula
-The `calc_capex_annualized` function converts total CAPEX to annual cost using:
 ```python
-annuity_factor = IR_% / (1 - (1 + IR_%)^(-LT_yr))
-annualized_capex = total_capex × annuity_factor
+capex_total = 100 × 0.99 × 62.1 = 6,148 USD
+opex_fixed = 6,148 × 0.013 = 80 USD/yr
+capex_a = 6,148 × 0.0655 = 350 USD/yr  # annuity factor ≈ 0.0655
+TAC = 80 + 350 + variable_opex = 430 USD/yr (+ energy costs)
 ```
 
----
+## ✅ DO
 
-## Quick Reference
+```python
+# Read CAPEX from SUPPLY assemblies
+supply = pd.read_csv('ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv')
+capex = supply['CAPEX_USD2015kW']
 
-**To find CAPEX values**: Check `databases/{region}/ASSEMBLIES/SUPPLY/SUPPLY_*.csv`
+# Read variable OPEX from feedstocks
+grid = pd.read_csv('COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/GRID.csv')
+opex_var = grid['Opex_var_buy_USD2015kWh']
 
-**To find OPEX values**: Check `databases/{region}/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/*.csv`
+# Merge for complete cost picture
+costs = supply.merge(grid, left_on='feedstock', right_on='code')
+```
 
-**To modify cost calculations**: See `cea/analysis/costs/system_costs.py`
+## ❌ DON'T
 
----
+```python
+# Don't confuse CAPEX (infrastructure) with variable OPEX (energy purchase)
+# Don't use COMPONENTS for building-level cost estimates
+# Don't forget to annualize CAPEX before comparing with annual OPEX
+```
 
-**For more information, see**:
-- CEA documentation: https://docs.cityenergyanalyst.com
-- Cost calculation script: `cea/analysis/costs/system_costs.py`
-- Database structure: `cea/databases/AGENTS.md`
+## Related Files
+- `cea/analysis/costs/system_costs.py:107-135` - Cost calculation flow
+- `cea/analysis/lca/operation.py` - Uses same database parameters
+- `cea/databases/AGENTS.md` - Database structure
+- `databases/{region}/ASSEMBLIES/SUPPLY/` - CAPEX, efficiency, lifetime
+- `databases/{region}/COMPONENTS/FEEDSTOCKS/` - Variable OPEX, emissions

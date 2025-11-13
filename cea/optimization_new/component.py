@@ -65,6 +65,22 @@ class Component(object):
         self.output_energy_carriers = {}
         self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
 
+    def __eq__(self, other):
+        """
+        Components are equal if they have the same code and capacity.
+        Subclasses may override to include additional attributes.
+        """
+        if not isinstance(other, Component):
+            return NotImplemented
+        return self.code == other.code and self.capacity == other.capacity
+
+    def __hash__(self):
+        """
+        Hash based on code and capacity.
+        Subclasses that override __eq__ must also override __hash__.
+        """
+        return hash((self.code, self.capacity))
+
     @staticmethod
     def initialize_class_variables(domain):
         """ Fetch components database from file and save it as a class variable (dict of pd.DataFrames)"""
@@ -194,6 +210,22 @@ class ActiveComponent(Component):
         super().__init__(data_base_tab, model_code, capacity)
         self.placement = placement_in_supply_system
 
+    def __eq__(self, other):
+        """
+        Active components are equal if they have the same code, capacity, and placement.
+        """
+        if not isinstance(other, ActiveComponent):
+            return NotImplemented
+        return (self.code == other.code and
+                self.capacity == other.capacity and
+                self.placement == other.placement)
+
+    def __hash__(self):
+        """
+        Hash based on code, capacity, and placement.
+        """
+        return hash((self.code, self.capacity, self.placement))
+
     @staticmethod
     def get_types(component_tab):
         component_types = list(Component._components_database[component_tab]['code'].unique())
@@ -215,6 +247,24 @@ class PassiveComponent(Component):
         super().__init__(data_base_tab, model_code, capacity)
         self.placement = {'after': placed_after,
                           'before': placed_before}
+
+    def __eq__(self, other):
+        """
+        Passive components are equal if they have the same code, capacity, and placement.
+        """
+        if not isinstance(other, PassiveComponent):
+            return NotImplemented
+        return (self.code == other.code and
+                self.capacity == other.capacity and
+                self.placement == other.placement)
+
+    def __hash__(self):
+        """
+        Hash based on code, capacity, and placement.
+        Since placement is a dict, convert to a hashable tuple.
+        """
+        placement_tuple = (self.placement.get('after'), self.placement.get('before'))
+        return hash((self.code, self.capacity, placement_tuple))
 
 
 class AbsorptionChiller(ActiveComponent):
