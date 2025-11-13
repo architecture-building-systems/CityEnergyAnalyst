@@ -459,6 +459,181 @@ class NetworkLayout:
                 )
         return network_name
 
+
+def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, plant_building_name):
+    """
+    Process user-defined network layout from shapefiles or GeoJSON.
+
+    :param config: Configuration instance
+    :param locator: InputLocator instance
+    :param network_layout: NetworkLayout instance
+    :param edges_shp: Path to edges shapefile (optional)
+    :param nodes_shp: Path to nodes shapefile (optional)
+    :param geojson_path: Path to GeoJSON file (optional)
+    :param plant_building_name: Plant building name from config
+    :return: True if network was saved successfully, False if should fall back to automatic generation
+    """
+
+    # Import validation functions from user_network_loader
+    from cea.optimization_new.user_network_loader import (
+        load_user_defined_network,
+        validate_network_covers_district_buildings
+    )
+
+    # Load and validate user-defined network
+    try:
+        result = load_user_defined_network(config, locator, edges_shp, nodes_shp, geojson_path)
+    except Exception as e:
+        print(f"\n✗ Error loading user-defined network: {e}\n")
+        print("=" * 80 + "\n")
+        raise
+
+    # Check if network was actually provided (None = no network provided)
+    if result is None:
+        print("  No user-defined network provided. Falling back to automatic generation.\n")
+        print("=" * 80 + "\n")
+        return False
+
+    nodes_gdf, edges_gdf = result
+
+    print(f"  - Nodes: {len(nodes_gdf)}")
+    print(f"  - Edges: {len(edges_gdf)}")
+
+    network_type = config.network_layout.network_type
+    overwrite_supply = config.network_layout.overwrite_supply_settings
+    connected_buildings_config = config.network_layout.connected_buildings
+
+    # Get building nodes from user-provided network
+    building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
+                               (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                               (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+    network_building_names = sorted(building_nodes['building'].unique())
+
+    # ALWAYS validate that network building names exist in zone geometry
+    # This prevents accidentally loading a network from a different scenario (e.g., Jakarta network for Singapore scenario)
+    all_zone_buildings = locator.get_zone_building_names()
+    zone_gdf = gpd.read_file(locator.get_zone_geometry())
+
+    # Check if ALL network buildings exist in the scenario's zone geometry
+    invalid_buildings = [b for b in network_building_names if b not in all_zone_buildings]
+    if invalid_buildings:
+        raise ValueError(
+            f"User-defined network contains building names that don't exist in scenario:\n\n"
+            f"  Scenario: {config.scenario}\n"
+            f"  Buildings in zone geometry: {len(all_zone_buildings)}\n"
+            f"  Buildings in network: {len(network_building_names)}\n"
+            f"  Invalid building names (not in zone.shp): {len(invalid_buildings)}\n\n"
+            f"  Invalid buildings:\n    " + "\n    ".join(invalid_buildings[:20]) +
+            (f"\n    ... and {len(invalid_buildings) - 20} more" if len(invalid_buildings) > 20 else "") +
+            "\n\n"
+            "This usually means you're using a network layout from a different scenario.\n"
+            "Resolution:\n"
+            "  1. Verify you're using the correct network layout for this scenario\n"
+            "  2. Check that building names in the network match the zone geometry\n"
+            "  3. Update the network layout to use correct building names"
+        )
+
+    # Determine which buildings should be in the network
+    if overwrite_supply:
+        # Use connected-buildings parameter (what-if scenarios)
+        # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
+        is_explicitly_set = (connected_buildings_config and
+                           set(connected_buildings_config) != set(all_zone_buildings))
+
+        if is_explicitly_set:
+            # User explicitly specified a subset of buildings
+            buildings_to_validate = connected_buildings_config
+            print("  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
+            print(f"  - Connected buildings (from config): {len(buildings_to_validate)}")
+            print(f"  - Buildings in user layout: {len(network_building_names)}")
+        else:
+            # Blank connected-buildings (auto-populated): accept whatever is in user layout
+            # BUT we already validated building names exist in zone geometry above
+            print("  - Mode: Overwrite supply.csv (connected-buildings blank)")
+            print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
+            for building_name in network_building_names[:10]:
+                print(f"      - {building_name}")
+            if len(network_building_names) > 10:
+                print(f"      ... and {len(network_building_names) - 10} more")
+            buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
+    else:
+        # Use supply.csv to determine district buildings
+        buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
+        print("  - Mode: Use supply.csv settings")
+        print(f"  - District buildings (from supply.csv): {len(buildings_to_validate)}")
+        print(f"  - Buildings in user layout: {len(network_building_names)}")
+
+    # Validate network coverage (buildings_to_validate is always set now)
+    # Check for buildings without demand and warn (Option 2: warn but include)
+    buildings_with_demand = get_buildings_with_demand(locator, network_type)
+    buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+
+    if buildings_without_demand:
+        print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
+        for building_name in buildings_without_demand[:10]:
+            print(f"      - {building_name}")
+        if len(buildings_without_demand) > 10:
+            print(f"      ... and {len(buildings_without_demand) - 10} more")
+        print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+
+    # Validate network covers all specified buildings
+    nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
+        nodes_gdf,
+        zone_gdf,  # Already loaded above for validation
+        buildings_to_validate,
+        network_type,
+        edges_gdf
+    )
+
+    if auto_created_buildings:
+        print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
+        for building_name, edge_name in auto_created_buildings[:10]:
+            print(f"      - {building_name} (at endpoint of {edge_name})")
+        if len(auto_created_buildings) > 10:
+            print(f"      ... and {len(auto_created_buildings) - 10} more")
+        print("  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
+    else:
+        print("  ✓ All specified buildings have valid nodes in network")
+
+    # Resolve plant building name (case-insensitive, handles comma-separated input)
+    plant_building_name = resolve_plant_building(plant_building_name, buildings_to_validate)
+
+    # Auto-create plant nodes if missing (zone_gdf already loaded above)
+    # Get expected number of components from config
+    expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
+    print(f"[process_user_defined_network] number_of_components from config: {config.network_layout.number_of_components} -> expected_num_components: {expected_num_components}")
+
+    nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
+        nodes_gdf, edges_gdf, zone_gdf,
+        plant_building_name, network_type, locator,
+        expected_num_components
+    )
+
+    if created_plants:
+        print(f"\n  ⚠ Auto-assigned {len(created_plants)} building node(s) as PLANT:")
+        for plant_info in created_plants:
+            reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
+            print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
+        print("  Note: Existing building nodes converted to PLANT type (in-memory only)")
+
+    # Save to network-name location
+    output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_layout.network_name)
+    output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_layout.network_name)
+
+    # Ensure output directory exists
+    output_folder = os.path.dirname(output_edges_path)
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Save to shapefiles
+    edges_gdf.to_file(output_edges_path, driver='ESRI Shapefile')
+    nodes_gdf.to_file(output_nodes_path, driver='ESRI Shapefile')
+
+    print("\n  ✓ User-defined network saved to:")
+    print(f"    {output_folder}")
+    print("\n" + "=" * 80 + "\n")
+
+
 def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout.from_config(config.network_layout, locator)
@@ -471,173 +646,24 @@ def main(config: cea.config.Configuration):
     nodes_shp = config.network_layout.nodes_shp_path
     geojson_path = config.network_layout.network_geojson_path
 
+    # Generate network layout from user-defined files if provided
     if edges_shp or nodes_shp or geojson_path:
         print("\n" + "=" * 80)
         print("USER-DEFINED NETWORK LAYOUT")
         print("=" * 80 + "\n")
 
-        # Import validation functions from user_network_loader
-        from cea.optimization_new.user_network_loader import (
-            load_user_defined_network,
-            validate_network_covers_district_buildings
+        process_user_defined_network(
+            config, locator, network_layout,
+            edges_shp, nodes_shp, geojson_path,
+            plant_building_name
         )
 
-        # Load and validate user-defined network
-        try:
-            result = load_user_defined_network(config, locator, edges_shp, nodes_shp, geojson_path)
-        except Exception as e:
-            print(f"\n✗ Error loading user-defined network: {e}\n")
-            print("=" * 80 + "\n")
-            raise
-
-        # Check if network was actually provided (None = no network provided)
-        if result is not None:
-            nodes_gdf, edges_gdf = result
-
-            print(f"  - Nodes: {len(nodes_gdf)}")
-            print(f"  - Edges: {len(edges_gdf)}")
-
-            network_type = config.network_layout.network_type
-            overwrite_supply = config.network_layout.overwrite_supply_settings
-            connected_buildings_config = config.network_layout.connected_buildings
-
-            # Get building nodes from user-provided network
-            building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                                       (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                                       (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
-            network_building_names = sorted(building_nodes['building'].unique())
-
-            # ALWAYS validate that network building names exist in zone geometry
-            # This prevents accidentally loading a network from a different scenario (e.g., Jakarta network for Singapore scenario)
-            all_zone_buildings = locator.get_zone_building_names()
-            zone_gdf = gpd.read_file(locator.get_zone_geometry())
-
-            # Check if ALL network buildings exist in the scenario's zone geometry
-            invalid_buildings = [b for b in network_building_names if b not in all_zone_buildings]
-            if invalid_buildings:
-                raise ValueError(
-                    f"User-defined network contains building names that don't exist in scenario:\n\n"
-                    f"  Scenario: {config.scenario}\n"
-                    f"  Buildings in zone geometry: {len(all_zone_buildings)}\n"
-                    f"  Buildings in network: {len(network_building_names)}\n"
-                    f"  Invalid building names (not in zone.shp): {len(invalid_buildings)}\n\n"
-                    f"  Invalid buildings:\n    " + "\n    ".join(invalid_buildings[:20]) +
-                    (f"\n    ... and {len(invalid_buildings) - 20} more" if len(invalid_buildings) > 20 else "") +
-                    "\n\n"
-                    "This usually means you're using a network layout from a different scenario.\n"
-                    "Resolution:\n"
-                    "  1. Verify you're using the correct network layout for this scenario\n"
-                    "  2. Check that building names in the network match the zone geometry\n"
-                    "  3. Update the network layout to use correct building names"
-                )
-
-            # Determine which buildings should be in the network
-            if overwrite_supply:
-                # Use connected-buildings parameter (what-if scenarios)
-                # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
-                is_explicitly_set = (connected_buildings_config and
-                                   set(connected_buildings_config) != set(all_zone_buildings))
-
-                if is_explicitly_set:
-                    # User explicitly specified a subset of buildings
-                    buildings_to_validate = connected_buildings_config
-                    print("  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
-                    print(f"  - Connected buildings (from config): {len(buildings_to_validate)}")
-                    print(f"  - Buildings in user layout: {len(network_building_names)}")
-                else:
-                    # Blank connected-buildings (auto-populated): accept whatever is in user layout
-                    # BUT we already validated building names exist in zone geometry above
-                    print("  - Mode: Overwrite supply.csv (connected-buildings blank)")
-                    print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
-                    for building_name in network_building_names[:10]:
-                        print(f"      - {building_name}")
-                    if len(network_building_names) > 10:
-                        print(f"      ... and {len(network_building_names) - 10} more")
-                    buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
-            else:
-                # Use supply.csv to determine district buildings
-                buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
-                print("  - Mode: Use supply.csv settings")
-                print(f"  - District buildings (from supply.csv): {len(buildings_to_validate)}")
-                print(f"  - Buildings in user layout: {len(network_building_names)}")
-
-            # Validate network coverage (buildings_to_validate is always set now)
-            # Check for buildings without demand and warn (Option 2: warn but include)
-            buildings_with_demand = get_buildings_with_demand(locator, network_type)
-            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
-
-            if buildings_without_demand:
-                print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
-                for building_name in buildings_without_demand[:10]:
-                    print(f"      - {building_name}")
-                if len(buildings_without_demand) > 10:
-                    print(f"      ... and {len(buildings_without_demand) - 10} more")
-                print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
-
-            # Validate network covers all specified buildings
-            nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
-                nodes_gdf,
-                zone_gdf,  # Already loaded above for validation
-                buildings_to_validate,
-                network_type,
-                edges_gdf
-            )
-
-            if auto_created_buildings:
-                print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
-                for building_name, edge_name in auto_created_buildings[:10]:
-                    print(f"      - {building_name} (at endpoint of {edge_name})")
-                if len(auto_created_buildings) > 10:
-                    print(f"      ... and {len(auto_created_buildings) - 10} more")
-                print("  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
-            else:
-                print("  ✓ All specified buildings have valid nodes in network")
-
-            # Resolve plant building name (case-insensitive, handles comma-separated input)
-            plant_building_name = resolve_plant_building(plant_building_name, buildings_to_validate)
-
-            # Auto-create plant nodes if missing (zone_gdf already loaded above)
-            # Get expected number of components from config
-            expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
-            print(f"[main] number_of_components from config: {config.network_layout.number_of_components} -> expected_num_components: {expected_num_components}")
-
-            nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
-                nodes_gdf, edges_gdf, zone_gdf,
-                plant_building_name, network_type, locator,
-                expected_num_components
-            )
-
-            if created_plants:
-                print(f"\n  ⚠ Auto-assigned {len(created_plants)} building node(s) as PLANT:")
-                for plant_info in created_plants:
-                    reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                    print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-                print("  Note: Existing building nodes converted to PLANT type (in-memory only)")
-
-            # Save to network-name location
-            output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_layout.network_name)
-            output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_layout.network_name)
-
-            # Ensure output directory exists
-            output_folder = os.path.dirname(output_edges_path)
-            if not os.path.exists(output_folder):
-                os.makedirs(output_folder)
-
-            # Save to shapefiles
-            edges_gdf.to_file(output_edges_path, driver='ESRI Shapefile')
-            nodes_gdf.to_file(output_nodes_path, driver='ESRI Shapefile')
-
-            print("\n  ✓ User-defined network saved to:")
-            print(f"    {output_folder}")
-            print("\n" + "=" * 80 + "\n")
-            return  # Exit early - network saved successfully
-
-        # If result is None, fall through to automatic generation
-        print("  No user-defined network provided. Falling back to automatic generation.\n")
-        print("=" * 80 + "\n")
-
     # Generate network layout using Steiner tree (current behavior or fallback)
-    layout_network(network_layout, locator, plant_building_name=plant_building_name)
+    else:
+        print("\n" + "=" * 80)
+        print("AUTOMATIC NETWORK LAYOUT GENERATION")
+        print("=" * 80 + "\n")
+        layout_network(network_layout, locator, plant_building_name=plant_building_name)
 
 
 if __name__ == '__main__':
