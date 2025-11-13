@@ -976,11 +976,25 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
+    def get_thermal_network_folder_network_name_folder(self, network_name):
+        """
+        scenario/outputs/thermal-network/{network_name}/
+        """
+        return os.path.join(self.get_thermal_network_folder(), network_name)
+
     def get_output_thermal_network_type_folder(self, network_type, network_name=""):
-        if network_name == '':  # in case there is no specific network name (default case)
-            return os.path.join(self.get_thermal_network_folder(), network_type)
-        else:
-            return os.path.join(self.get_thermal_network_folder(), network_type, network_name)
+        """
+        scenario/outputs/thermal-network/{network_name}/DH or DC/
+        """
+        return os.path.join(self.get_thermal_network_folder_network_name_folder(network_name), network_type)
+
+    def get_network_layout_shapefile(self, network_name=""):
+        """
+        scenario/outputs/thermal-network/{network_name}/layout.shp
+        """
+        return os.path.join(
+            self.get_thermal_network_folder_network_name_folder(network_name), 'layout.shp'
+        )
 
     def get_network_layout_edges_shapefile(self, network_type, network_name=""):
         """

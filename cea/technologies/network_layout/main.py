@@ -488,18 +488,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("=" * 80 + "\n")
         raise
 
-    # Check if network was actually provided (None = no network provided)
-    if result is None:
-        print("  No user-defined network provided. Falling back to automatic generation.\n")
-        print("=" * 80 + "\n")
-        return False
-
     nodes_gdf, edges_gdf = result
 
     print(f"  - Nodes: {len(nodes_gdf)}")
     print(f"  - Edges: {len(edges_gdf)}")
 
-    network_type = config.network_layout.network_type
     overwrite_supply = config.network_layout.overwrite_supply_settings
     connected_buildings_config = config.network_layout.connected_buildings
 
@@ -558,18 +551,33 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
     else:
         # Use supply.csv to determine district buildings
-        buildings_to_validate = get_buildings_from_supply_csv(locator, network_type)
-        print("  - Mode: Use supply.csv settings")
-        print(f"  - District buildings (from supply.csv): {len(buildings_to_validate)}")
+        if config.network_layout.connected_buildings_filter == 'buildings_with_district_cooling':
+            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type='DC')
+            buildings_with_demand = get_buildings_with_demand(locator, network_type='DC')
+            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+        elif config.network_layout.connected_buildings_filter == 'buildings_with_district_heating':
+            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type='DH')
+            buildings_with_demand = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+        else:
+            buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
+            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
+
+            buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
+            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
+
+            buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
+            buildings_with_demand = list(set(buildings_with_demand_dc) | set(buildings_with_demand_dh))
+            buildings_without_demand = list(set(buildings_without_demand_dc) | set(buildings_without_demand_dh))
+
+        print("  - Mode: Use Building Properties/Supply settings")
+        print(f"  - District buildings: {len(buildings_to_validate)}")
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
-    # Validate network coverage (buildings_to_validate is always set now)
-    # Check for buildings without demand and warn (Option 2: warn but include)
-    buildings_with_demand = get_buildings_with_demand(locator, network_type)
-    buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
-
     if buildings_without_demand:
-        print(f"  ⚠ Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
+        print(f"  Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
         for building_name in buildings_without_demand[:10]:
             print(f"      - {building_name}")
         if len(buildings_without_demand) > 10:
@@ -586,12 +594,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     )
 
     if auto_created_buildings:
-        print(f"  ⚠ Auto-created {len(auto_created_buildings)} missing building node(s):")
+        print(f"  Auto-created {len(auto_created_buildings)} missing building node(s):")
         for building_name, edge_name in auto_created_buildings[:10]:
             print(f"      - {building_name} (at endpoint of {edge_name})")
         if len(auto_created_buildings) > 10:
             print(f"      ... and {len(auto_created_buildings) - 10} more")
-        print("  Note: Nodes created at edge endpoints inside building footprints (in-memory only)")
+        print("  Note: Nodes created at edge endpoints inside building footprints")
     else:
         print("  ✓ All specified buildings have valid nodes in network")
 
@@ -610,15 +618,15 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     )
 
     if created_plants:
-        print(f"\n  ⚠ Auto-assigned {len(created_plants)} building node(s) as PLANT:")
+        print(f"\n Auto-assigned {len(created_plants)} building node(s) as PLANT:")
         for plant_info in created_plants:
             reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
             print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-        print("  Note: Existing building nodes converted to PLANT type (in-memory only)")
+        print("  Note: Existing building nodes converted to PLANT type")
 
     # Save to network-name location
-    output_edges_path = locator.get_network_layout_edges_shapefile(network_type, network_layout.network_name)
-    output_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_layout.network_name)
+    output_layout_path = locator.get_network_layout_edges_shapefile(network_type, network_layout.network_name)
+    output_terminal_path = locator.get_network_layout_nodes_shapefile(network_type, network_layout.network_name)
 
     # Ensure output directory exists
     output_folder = os.path.dirname(output_edges_path)
