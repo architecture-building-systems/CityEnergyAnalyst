@@ -30,7 +30,7 @@ class Configuration:
     radiation_crax: RadiationCraxSection
     radiation: RadiationSection
     radiation_simplified: RadiationSimplifiedSection
-    occupancy_helper: OccupancyHelperSection
+    occupancy: OccupancySection
     demand: DemandSection
     costs: CostsSection
     emissions: EmissionsSection
@@ -122,7 +122,7 @@ class Configuration:
     @overload
     def __getattr__(self, item: Literal["radiation_simplified"]) -> RadiationSimplifiedSection: ...
     @overload
-    def __getattr__(self, item: Literal["occupancy_helper"]) -> OccupancyHelperSection: ...
+    def __getattr__(self, item: Literal["occupancy"]) -> OccupancySection: ...
     @overload
     def __getattr__(self, item: Literal["demand"]) -> DemandSection: ...
     @overload
@@ -514,8 +514,8 @@ class RadiationSimplifiedSection(Section):
     def __getattr__(self, item: Literal["buffer"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
 
-class OccupancyHelperSection(Section):
-    """Typed section for occupancy-helper configuration"""
+class OccupancySection(Section):
+    """Typed section for occupancy configuration"""
     occupancy_model: str
     buildings: list[str]
 
