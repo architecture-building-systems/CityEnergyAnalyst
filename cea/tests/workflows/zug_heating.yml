@@ -28,7 +28,7 @@
 - script: radiation
   parameters:
     neglect-adjacent-buildings: false
-- script: occupancy-helper
+- script: occupancy
 - script: demand
 - script: emissions
 - script: system-costs
