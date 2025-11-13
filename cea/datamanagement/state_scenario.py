@@ -233,19 +233,17 @@ def shift_code_name_plus1(db, code_prefix):
 
 def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str, float | int]]]:
     """
-    Create a modification recipe dictionary based on the configuration settings for the event scenario.
-    Parameters:
-        config (Configuration): The configuration object containing the current scenario settings.
-    Returns:
-        dict: A dictionary specifying the modifications to be made to the construction recipes.
+    Build modification recipe, pruning None-valued fields and empty components / archetypes.
     """
-    modify_recipe = {}
     config_section = config.district_events
-    archetypes_to_modify: list[str] = config_section.archetypes
+    archetypes_to_modify = config_section.archetypes
     if not archetypes_to_modify:
         raise ValueError("No archetypes specified for modification in the event scenario.")
+
+    modify_recipe: dict[str, dict[str, dict[str, float | int]]] = {}
+
     for archetype in archetypes_to_modify:
-        modify_recipe[archetype] = {
+        raw_components = {
             "wall": {
                 "U": config_section.wall_u_value,
                 "GHG_kgCO2m2": config_section.wall_ghg_emission,
@@ -265,15 +263,19 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
                 "Service_Life": config_section.base_lifetime,
             },
         }
-        # remove all None values from the recipe
-        for component in modify_recipe[archetype]:
-            modify_recipe[archetype][component] = {
-                k: v for k, v in modify_recipe[archetype][component].items() if v is not None
-            }
-        for component in list(modify_recipe[archetype].keys()):
-            if not modify_recipe[archetype][component]:
-                del modify_recipe[archetype][component]
-        
+
+        # Drop None-valued fields per component
+        cleaned_components = {
+            comp: {k: v for k, v in fields.items() if v is not None}
+            for comp, fields in raw_components.items()
+        }
+
+        # Drop empty components
+        cleaned_components = {c: f for c, f in cleaned_components.items() if f}
+
+        if cleaned_components:
+            modify_recipe[archetype] = cleaned_components
+
     return modify_recipe
 
 def check_district_timeline_log_yaml_integrity(config: Configuration):
