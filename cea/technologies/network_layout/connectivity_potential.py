@@ -292,6 +292,8 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
         :param idx_to_exclude: The index of the line geometry to exclude (don't snap to itself)
         :return: Snapped coordinates (x, y) or original if no nearby line found
         """
+        # Ensure point_coords is a plain tuple (not numpy array or other sequence)
+        point_coords = tuple(point_coords)
         point = Point(point_coords)
         # Query spatial index with buffered point to find candidates
         nearby_indices = sindex.query(point.buffer(snap_tolerance), predicate='intersects')
@@ -306,12 +308,13 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
 
         # Snap to nearest point on line
         snapped = nearest_line.interpolate(nearest_line.project(point))
-        best_snap = (snapped.x, snapped.y)
+        # Normalize coordinates to prevent floating-point precision issues
+        best_snap = normalize_coords((snapped.x, snapped.y), SHAPEFILE_TOLERANCE)
         if lines_to_split.get(nearest_index) is None:
             lines_to_split[nearest_index] = []
         lines_to_split[nearest_index].append(Point(best_snap))
 
-        return best_snap if best_snap else point_coords
+        return best_snap
 
     # Step 3: Process lines with dangling endpoints first
     modified_geometries = {}  # {idx: geometry}
@@ -329,9 +332,10 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
 
         # Snap dangling endpoints
         if start_is_dangling or end_is_dangling:
-            new_start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else coords[0]
-            new_end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else coords[-1]
-            new_coords = [new_start] + coords[1:-1] + [new_end]
+            new_start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else tuple(coords[0])
+            new_end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else tuple(coords[-1])
+            # Ensure all middle coordinates are tuples too
+            new_coords = [new_start] + [tuple(c) for c in coords[1:-1]] + [new_end]
             modified_geometries[idx] = LineString(new_coords)
         else:
             modified_geometries[idx] = line
