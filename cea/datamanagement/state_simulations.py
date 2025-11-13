@@ -3,14 +3,14 @@ from copy import deepcopy
 from typing import Any
 
 import pandas as pd
-import yaml
 
 from cea.config import Configuration
+from cea.datamanagement.state_scenario import load_log_yaml, save_log_yaml
 from cea.inputlocator import InputLocator
-from cea.workflows.workflow import do_script_step, do_config_step
+from cea.workflows.workflow import do_config_step, do_script_step
 
 default_workflow = [
-    {"config": "."}, # use state-in-time scenario as base config
+    {"config": "."},  # use state-in-time scenario as base config
     {"script": "radiation"},
     {"script": "occupancy-helper"},
     {"script": "demand"},
@@ -19,9 +19,7 @@ default_workflow = [
 ]
 
 
-def generate_state_config(
-    config: Configuration, year_of_state: int
-) -> Configuration:
+def generate_state_config(config: Configuration, year_of_state: int) -> Configuration:
     """Modify the given configuration to point to the state-in-time scenario for the specified year.
 
     Args:
@@ -55,25 +53,6 @@ def run_workflow(
             raise ValueError(
                 "Invalid step configuration: {i} - {step}".format(i=i, step=step)
             )
-
-
-def load_log_yaml(locator: InputLocator) -> dict[int, dict[str, Any]]:
-    yml_path = locator.get_district_timeline_log_file()
-    if not os.path.exists(yml_path):
-        raise FileNotFoundError(
-            f"District timeline log file '{yml_path}' does not exist."
-        )
-    with open(yml_path, "r") as f:
-        existing_data_in_yml: dict[int, dict[str, Any]] = yaml.safe_load(f) or {}
-    if not existing_data_in_yml:
-        raise ValueError(f"District timeline log file '{yml_path}' is empty.")
-    return existing_data_in_yml
-
-
-def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) -> None:
-    yml_path = locator.get_district_timeline_log_file()
-    with open(yml_path, "w") as f:
-        yaml.dump(log_data, f)
 
 
 def simulate_all_states(config: Configuration) -> None:
