@@ -551,26 +551,14 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
     else:
         # Use supply.csv to determine district buildings
-        if config.network_layout.connected_buildings_filter == 'buildings_with_district_cooling':
-            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type='DC')
-            buildings_with_demand = get_buildings_with_demand(locator, network_type='DC')
-            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
-        elif config.network_layout.connected_buildings_filter == 'buildings_with_district_heating':
-            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type='DH')
-            buildings_with_demand = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
-        else:
+        if 'DC' in config.network_layout.include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
             buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
-
-            buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
-            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
-
-            buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
-            buildings_with_demand = list(set(buildings_with_demand_dc) | set(buildings_with_demand_dh))
-            buildings_without_demand = list(set(buildings_without_demand_dc) | set(buildings_without_demand_dh))
+        if 'DH' in config.network_layout.include_services:
+            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type='DH')
+            buildings_with_demand = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
 
         print("  - Mode: Use Building Properties/Supply settings")
         print(f"  - District buildings: {len(buildings_to_validate)}")
@@ -625,19 +613,30 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("  Note: Existing building nodes converted to PLANT type")
 
     # Save to network-name location
-    output_layout_path = locator.get_network_layout_edges_shapefile(network_type, network_layout.network_name)
-    output_terminal_path = locator.get_network_layout_nodes_shapefile(network_type, network_layout.network_name)
+    output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
+    output_node_path_dc = locator.get_network_layout_nodes_shapefile('DC', network_layout.network_name)
+    output_node_path_dh = locator.get_network_layout_nodes_shapefile('DH', network_layout.network_name)
 
     # Ensure output directory exists
-    output_folder = os.path.dirname(output_edges_path)
+    output_folder = os.path.dirname(output_layout_path)
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
     # Save to shapefiles
-    edges_gdf.to_file(output_edges_path, driver='ESRI Shapefile')
-    nodes_gdf.to_file(output_nodes_path, driver='ESRI Shapefile')
+    edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
-    print("\n  ✓ User-defined network saved to:")
+    if 'DC' in config.network_layout.include_services:
+        if not os.path.exists(output_node_path_dc):
+            output_folder = os.path.dirname(output_node_path_dc)
+            os.makedirs(output_folder)
+        nodes_gdf.to_file(output_node_path_dc, driver='ESRI Shapefile')
+    if 'DH' in config.network_layout.include_services:
+        if not os.path.exists(output_node_path_dh):
+            output_folder = os.path.dirname(output_node_path_dh)
+            os.makedirs(output_folder)
+        nodes_gdf.to_file(output_node_path_dh, driver='ESRI Shapefile')
+
+    print("\n  ✓ User-defined layout saved to:")
     print(f"    {output_folder}")
     print("\n" + "=" * 80 + "\n")
 
