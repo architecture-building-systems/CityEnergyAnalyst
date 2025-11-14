@@ -24,6 +24,20 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
+_MAPPING_DICT = {
+    "wall_ag": "wall",
+    "wall_bg": "base",
+    "wall_part": "part",
+    "win_ag": "win",
+    "roof": "roof",
+    "upperside": "roof",
+    "underside": "base",
+    "floor": "floor",
+    "base": "base",
+    "technical_systems": "technical_systems", # not implemented in CEA, dummy value
+}
+
+
 class BuildingEmissionTimeline:
     """
     A class to manage the emission timeline for a building.
@@ -72,18 +86,6 @@ class BuildingEmissionTimeline:
     in the timeline.
     """
 
-    _MAPPING_DICT = {
-        "wall_ag": "wall",
-        "wall_bg": "base",
-        "wall_part": "part",
-        "win_ag": "win",
-        "roof": "roof",
-        "upperside": "roof",
-        "underside": "base",
-        "floor": "floor",
-        "base": "base",
-        "technical_systems": "technical_systems", # not implemented in CEA, dummy value
-    }
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
     _OPERATIONAL_COLS = list(_COLUMN_MAPPING.values())
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
@@ -172,7 +174,7 @@ class BuildingEmissionTimeline:
         """
         self.check_demolished()
         
-        for key, value in self._MAPPING_DICT.items():
+        for key, value in _MAPPING_DICT.items():
             area: float = self.surface_area[f"A{key}"]
 
             if key == "technical_systems":
@@ -419,7 +421,7 @@ class BuildingEmissionTimeline:
         # Convert demolition_year to string format for comparison with timeline index
         demolition_year_str = f"Y_{demolition_year}"
         self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
-        for key, value in self._MAPPING_DICT.items():
+        for key, _ in _MAPPING_DICT.items():
             demolition: float = 0.0  # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
             # Convert max year to int for comparison
@@ -454,7 +456,7 @@ class BuildingEmissionTimeline:
                 **{
                     f"{emission}_{component}_kgCO2e": 0.0
                     for emission in self._EMISSION_TYPES
-                    for component in list(self._MAPPING_DICT.keys())
+                    for component in list(_MAPPING_DICT.keys())
                     + ["technical_systems"]
                 },
                 **{col: 0.0 for col in self._OPERATIONAL_COLS},

@@ -11,6 +11,7 @@ import time
 from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
+from cea.analysis.lca.emission_timeline import _MAPPING_DICT
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 
@@ -66,21 +67,11 @@ dict_plot_metrics_cea_feature = {
     'dh': 'dh',
     'dc': 'dc',
 }
-emission_timeline_pv_types = ["PV1", "PV2", "PV3", "PV4"]
+locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
+df_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
+emission_timeline_pv_types = df_pv['code'].dropna().unique().tolist()
+emission_timeline_operational_feedstocks = list(locator.get_db4_components_feedstocks_all().keys()) + ['NONE']
 emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
-emission_timeline_operational_feedstocks = [
-    "NATURALGAS",
-    "BIOGAS",
-    "SOLAR",
-    "DRYBIOMASS",
-    "WETBIOMASS",
-    "GRID",
-    "COAL",
-    "WOOD",
-    "OIL",
-    "HYDROGEN",
-    "NONE",
-]
 emission_timeline_pv_offset_columns_nounit = [
     f"PV_{pv_type}_offset_{type_energy}"
     for pv_type in emission_timeline_pv_types
@@ -98,7 +89,7 @@ normalisation_name_mapping_emission_timeline_hourly_operational = {
 }
 
 emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
-emission_timeline_embodied_parts = ["wall_ag", "wall_bg", "wall_part", "win_ag", "roof", "upperside", "underside", "floor", "base", "technical_systems"]
+emission_timeline_embodied_parts = list(_MAPPING_DICT.keys())
 emission_timeline_yearly_colnames_nounit = (
     [
         f"{type_emission}_{part}"
