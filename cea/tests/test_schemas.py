@@ -254,14 +254,14 @@ class TestSchemas(unittest.TestCase):
                             check_range(col_schema)
                         except ValueError as e:
                             col_label = ":".join([lm, ws, col])
-                            print(f"Error in column {col_label}:\n{e}\n")
+                            warnings.warn(f"Error in column {col_label}: {e}", UserWarning)
             else:
                 for col, col_schema in schemas[lm]["schema"]["columns"].items():
                     try:
                         check_range(col_schema)
                     except ValueError as e:
                         col_label = ":".join([lm, col])
-                        print(f"Error in column {col_label}:\n{e}\n")
+                        warnings.warn(f"Error in column {col_label}: {e}", UserWarning)
 
 
 def extract_locator_methods(locator):
