@@ -1,6 +1,6 @@
 # Guidelines for LLMs
 
-**Creating new documentation**:
+**Creating new documentation for agents (e.g. AGENTS.md` or `CLAUDE.md`)**:
 - **Always** create context-specific documentation as `AGENTS.md` (not `CLAUDE.md`)
 - **Always** symlink the new `AGENTS.md` file as `CLAUDE.md` in the same directory
 - **Don't create AGENTS.md in every directory** - Only create when the directory contains complex patterns that aren't obvious from code
@@ -46,7 +46,7 @@
 - `file.py` - Purpose
 ```
 
-**Updating existing documentation**:
+**Updating existing agent documentation**:
 - **IMPORTANT**: When making code changes in a directory, ALWAYS update the corresponding `AGENTS.md` file in that directory
 - If no `AGENTS.md` exists in the directory where you're making changes, create one following the structure above
 - Keep documentation synchronized with code changes to help other LLMs understand the current state
