@@ -497,6 +497,15 @@ def resolve_plant_buildings(plant_building_input, available_buildings, network_t
         else:
             unmatched_buildings.append(input_building)
 
+    # Throw error if any plant buildings don't exist in zone
+    if unmatched_buildings:
+        raise ValueError(
+            f"Plant building(s){label} not found in zone geometry:\n" +
+            "\n".join([f"  - {b}" for b in unmatched_buildings]) +
+            f"\n\nAvailable buildings: {', '.join(sorted(available_buildings)[:10])}" +
+            (" ..." if len(available_buildings) > 10 else "")
+        )
+
     # Cap to maximum 3 plant buildings
     MAX_PLANTS = 3
     if len(matched_buildings) > MAX_PLANTS:
@@ -743,6 +752,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
         # Generate Steiner tree for this network WITHOUT plant nodes
+        # Pass plant buildings list to prevent automatic anchor-based plant creation
         temp_nodes_path = output_layout_path.replace('layout.shp', f'_temp_nodes_{type_network}.shp')
         temp_edges_path = output_layout_path.replace('layout.shp', f'_temp_edges_{type_network}.shp')
 
@@ -755,7 +765,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                                    type_network,
                                    total_demand_location,
                                    allow_looped_networks,
-                                   [],  # Empty plant list - we'll add plants manually afterwards
+                                   None,  # None = skip plant creation (caller will add plants manually)
                                    disconnected_building_names,
                                    steiner_algorithm)
 
