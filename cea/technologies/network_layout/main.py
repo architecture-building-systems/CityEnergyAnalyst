@@ -356,17 +356,49 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
     # If plant buildings are specified, create plants for each one
     if plant_building_names:
+        from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
         for plant_building in plant_building_names:
-            # Find the building node
+            # Try to find the building node (it might be in the network or in the zone but not connected)
             plant_node = building_nodes[building_nodes['building'] == plant_building]
-            if plant_node.empty:
-                print(f"  ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
-                continue
+            temp_node_added = False
 
-            # Update the building node's type to PLANT
-            plant_node_idx = plant_node.index[0]
+            if plant_node.empty:
+                # Plant building not in network - try to find it in zone geometry
+                building_in_zone = zone_gdf[zone_gdf['name'] == plant_building]
+                if not building_in_zone.empty:
+                    # Add the building temporarily so we can create a plant near it
+                    building_geom = building_in_zone.iloc[0].geometry
+                    new_node_idx = len(nodes_gdf)
+                    new_node = gpd.GeoDataFrame([{
+                        'name': f'NODE{new_node_idx}',
+                        'building': plant_building,
+                        'type': 'CONSUMER',
+                        'geometry': building_geom.centroid
+                    }], crs=nodes_gdf.crs)
+                    nodes_gdf = pd.concat([nodes_gdf, new_node], ignore_index=True)
+                    plant_node = nodes_gdf[nodes_gdf['building'] == plant_building]
+                    temp_node_added = True
+                else:
+                    print(f"  ⚠ Warning: Plant building '{plant_building}' not found in zone geometry, skipping")
+                    continue
+
+            # Create a new PLANT node near this building
+            building_anchor = plant_node
+            nodes_gdf, edges_gdf = add_plant_close_to_anchor(
+                building_anchor,
+                nodes_gdf,
+                edges_gdf,
+                'T1',  # Default pipe material
+                150    # Default pipe diameter
+            )
+
+            # The newly created plant node is the last one
+            plant_node_idx = nodes_gdf.index[-1]
             plant_node_name = nodes_gdf.loc[plant_node_idx, 'name']
-            nodes_gdf.loc[plant_node_idx, 'type'] = 'PLANT'
+
+            # Remove the temporary building node if we added one
+            if temp_node_added:
+                nodes_gdf = nodes_gdf[nodes_gdf['building'] != plant_building]
 
             created_plants.append({
                 'network_id': 'N1001',  # Single component for auto-generated layouts
@@ -739,6 +771,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Add plant nodes for this network type (marked as PLANT_DC or PLANT_DH temporarily)
         if plant_buildings_for_type:
             from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
+            plant_buildings_to_remove = []
             for plant_building in plant_buildings_for_type:
                 # Find the building node for this plant
                 building_anchor = nodes_for_type[nodes_for_type['building'] == plant_building]
@@ -755,8 +788,16 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     last_node_idx = nodes_for_type.index[-1]
                     nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
                     print(f"    ✓ Added PLANT_{type_network} node for building '{plant_building}'")
+
+                    # Mark the original building node for removal
+                    plant_buildings_to_remove.append(plant_building)
                 else:
                     print(f"    ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
+
+            # Remove the original building nodes for plant buildings
+            if plant_buildings_to_remove:
+                nodes_for_type = nodes_for_type[~nodes_for_type['building'].isin(plant_buildings_to_remove)]
+                print(f"    Removed {len(plant_buildings_to_remove)} original building node(s) for plant buildings")
 
         # Collect edges from this network (including new plant edges)
         all_edges_list.append(edges_for_type)
