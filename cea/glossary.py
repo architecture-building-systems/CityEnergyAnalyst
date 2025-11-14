@@ -83,8 +83,12 @@ def _generate_values_display(column_def):
     # Also check choice_properties for backward compatibility
     choice_properties = column_def.get("choice_properties", {})
     if choice_properties and "values" in choice_properties:
-        # Return the list of valid choices
-        return str(choice_properties["values"])
+        # Return the list of valid choices as a formatted string
+        values = choice_properties["values"]
+        if isinstance(values, list):
+            return "{" + ", ".join(str(v) for v in values) + "}"
+        # Handle non-list inputs by coercing to an iterable of strings
+        return "{" + ", ".join(str(v) for v in [values]) + "}"
 
     # Generate values based on type
     if col_type == "boolean":
