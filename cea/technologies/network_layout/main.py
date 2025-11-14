@@ -471,7 +471,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     :param nodes_shp: Path to nodes shapefile (optional)
     :param geojson_path: Path to GeoJSON file (optional)
     :param plant_building_name: Plant building name from config
-    :return: True if network was saved successfully, False if should fall back to automatic generation
+    :return: None (raises exception if processing fails)
     """
 
     # Import validation functions from user_network_loader
@@ -496,6 +496,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     overwrite_supply = config.network_layout.overwrite_supply_settings
     connected_buildings_config = config.network_layout.connected_buildings
     list_include_services = config.network_layout.include_services
+    no_dc = False
+
+    # Validate include_services is not empty
+    if not list_include_services:
+        raise ValueError("No thermal services selected. Please specify at least one service in 'include-services' (DC and/or DH).")
 
     # Get building nodes from user-provided network
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
@@ -529,23 +534,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Determine which buildings should be in the network
     if overwrite_supply:
-        buildings_without_demand_dc = []
-        buildings_without_demand_dh = []
-
         # Use connected-buildings parameter (what-if scenarios)
         # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
         is_explicitly_set = (connected_buildings_config and
                            set(connected_buildings_config) != set(all_zone_buildings))
-
-        # Determine network type string for messages
-        if 'DC' in list_include_services and 'DH' in list_include_services:
-            network_type = 'DC+DH'
-        elif 'DC' in list_include_services:
-            network_type = 'DC'
-        elif 'DH' in list_include_services:
-            network_type = 'DH'
-        else:
-            raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
 
         if is_explicitly_set:
             # User explicitly specified a subset of buildings
@@ -564,10 +556,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 print(f"      ... and {len(network_building_names) - 10} more")
             buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
 
-        if network_type == 'DC' or network_type == 'DC+DH':
+        # Check demand separately for DC and DH
+        buildings_without_demand_dc = []
+        buildings_without_demand_dh = []
+        if 'DC' in list_include_services:
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
             buildings_without_demand_dc = [b for b in buildings_to_validate if b not in buildings_with_demand_dc]
-        if network_type == 'DH' or network_type == 'DC+DH':
+        if 'DH' in list_include_services:
             buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
             buildings_without_demand_dh = [b for b in buildings_to_validate if b not in buildings_with_demand_dh]
 
@@ -587,17 +582,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
             buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
 
-        # # Combine DC and DH buildings (union - unique values only)
+        # Combine DC and DH buildings (union - unique values only)
         buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
 
-        # Determine network type string for messages
-        if buildings_to_validate_dc and buildings_to_validate_dh:
-            network_type = 'DC+DH'
-        elif buildings_to_validate_dc:
-            network_type = 'DC'
-        elif buildings_to_validate_dh:
-            network_type = 'DH'
-        else:
+        # Validate at least one building found
+        if not buildings_to_validate:
             raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
 
         print("  - Mode: Use Building Properties/Supply settings")
@@ -605,28 +594,40 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             print(f"  - District buildings (DC): {len(buildings_to_validate_dc)}")
             print(f"  - District buildings (DH): {len(buildings_to_validate_dh)}")
         elif buildings_to_validate_dc:
-            print(f"  - District buildings (DC only): {len(buildings_to_validate)}")
+            print(f"  - District buildings (DC): {len(buildings_to_validate)}")
+            if 'DH' in list_include_services:
+                print("  - District buildings (DH): 0")
+                list_include_services.pop('DH')
         elif buildings_to_validate_dh:
-            print(f"  - District buildings (DH only): {len(buildings_to_validate)}")
-        else:
-            print(f"  - District buildings: {len(buildings_to_validate)}")
+            print(f"  - District buildings (DH): {len(buildings_to_validate)}")
+            if 'DC' in list_include_services:
+                print("  - District buildings (DC): 0")
+                list_include_services.pop('DC')
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
-    if buildings_without_demand_dc:
-        print(f"  Warning: {len(buildings_without_demand_dc)} building(s) have no cooling demand:")
-        for building_name in buildings_without_demand_dc[:10]:
-            print(f"      - {building_name}")
-        if len(buildings_without_demand_dc) > 10:
-            print(f"      ... and {len(buildings_without_demand_dc) - 10} more")
-        print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+    # Determine network type string (unified logic for both branches)
+    if 'DC' in list_include_services and 'DH' in list_include_services:
+        network_type = 'DC+DH'
+    elif 'DC' in list_include_services:
+        network_type = 'DC'
+    elif 'DH' in list_include_services:
+        network_type = 'DH'
+    else:
+        # This should never happen due to validation at line 501, but keep as safeguard
+        raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
 
-    if buildings_without_demand_dh:
-        print(f"  Warning: {len(buildings_without_demand_dh)} building(s) have no heating demand:")
-        for building_name in buildings_without_demand_dh[:10]:
-            print(f"      - {building_name}")
-        if len(buildings_without_demand_dh) > 10:
-            print(f"      ... and {len(buildings_without_demand_dh) - 10} more")
-        print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+    # Helper function to print demand warnings
+    def print_demand_warning(buildings_without_demand, service_name):
+        if buildings_without_demand:
+            print(f"  Warning: {len(buildings_without_demand)} building(s) have no {service_name} demand:")
+            for building_name in buildings_without_demand[:10]:
+                print(f"      - {building_name}")
+            if len(buildings_without_demand) > 10:
+                print(f"      ... and {len(buildings_without_demand) - 10} more")
+            print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+
+    print_demand_warning(buildings_without_demand_dc, "cooling")
+    print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Validate network covers all specified buildings
     nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
@@ -673,27 +674,20 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     output_node_path_dc = locator.get_network_layout_nodes_shapefile('DC', network_layout.network_name)
     output_node_path_dh = locator.get_network_layout_nodes_shapefile('DH', network_layout.network_name)
 
-    # Ensure output directory exists
-    output_folder = os.path.dirname(output_layout_path)
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    # Save to shapefiles
+    # Save edges shapefile
+    os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
     edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
+    # Save nodes to DC and/or DH folders based on network_type
     if network_type == 'DC' or network_type == 'DC+DH':
-        if not os.path.exists(output_node_path_dc):
-            output_folder = os.path.dirname(output_node_path_dc)
-            os.makedirs(output_folder)
+        os.makedirs(os.path.dirname(output_node_path_dc), exist_ok=True)
         nodes_gdf.to_file(output_node_path_dc, driver='ESRI Shapefile')
     if network_type == 'DH' or network_type == 'DC+DH':
-        if not os.path.exists(output_node_path_dh):
-            output_folder = os.path.dirname(output_node_path_dh)
-            os.makedirs(output_folder)
+        os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
         nodes_gdf.to_file(output_node_path_dh, driver='ESRI Shapefile')
 
     print("\n  ✓ User-defined layout saved to:")
-    print(f"    {output_folder}")
+    print(f"    {os.path.dirname(output_layout_path)}")
     print("\n" + "=" * 80 + "\n")
 
 
