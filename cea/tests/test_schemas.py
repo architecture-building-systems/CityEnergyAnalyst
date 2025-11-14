@@ -2,7 +2,6 @@
 Tests to make sure the schemas.yml file is structurally sound.
 """
 
-import re
 import unittest
 
 import os
