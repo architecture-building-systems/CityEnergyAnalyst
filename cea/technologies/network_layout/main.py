@@ -496,7 +496,6 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     overwrite_supply = config.network_layout.overwrite_supply_settings
     connected_buildings_config = config.network_layout.connected_buildings
     list_include_services = config.network_layout.include_services
-    no_dc = False
 
     # Validate include_services is not empty
     if not list_include_services:
@@ -597,12 +596,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             print(f"  - District buildings (DC): {len(buildings_to_validate)}")
             if 'DH' in list_include_services:
                 print("  - District buildings (DH): 0")
-                list_include_services.pop('DH')
+                list_include_services.remove('DH')
         elif buildings_to_validate_dh:
             print(f"  - District buildings (DH): {len(buildings_to_validate)}")
             if 'DC' in list_include_services:
                 print("  - District buildings (DC): 0")
-                list_include_services.pop('DC')
+                list_include_services.remove('DC')
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
     # Determine network type string (unified logic for both branches)
