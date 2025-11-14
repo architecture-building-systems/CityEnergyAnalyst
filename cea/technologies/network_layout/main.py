@@ -773,6 +773,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
             plant_buildings_to_remove = []
             for plant_building in plant_buildings_for_type:
+                # Check if this plant building is in the connected buildings list
+                is_connected_building = plant_building in connected_buildings_for_type
+
                 # Find the building node for this plant
                 building_anchor = nodes_for_type[nodes_for_type['building'] == plant_building]
                 if not building_anchor.empty:
@@ -789,15 +792,17 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
                     print(f"    ✓ Added PLANT_{type_network} node for building '{plant_building}'")
 
-                    # Mark the original building node for removal
-                    plant_buildings_to_remove.append(plant_building)
+                    # Only remove the original building node if it was NOT a connected building
+                    # If it's a connected building, we need to keep it to maintain network connectivity
+                    if not is_connected_building:
+                        plant_buildings_to_remove.append(plant_building)
                 else:
                     print(f"    ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
 
-            # Remove the original building nodes for plant buildings
+            # Remove the original building nodes for plant buildings that are NOT connected buildings
             if plant_buildings_to_remove:
                 nodes_for_type = nodes_for_type[~nodes_for_type['building'].isin(plant_buildings_to_remove)]
-                print(f"    Removed {len(plant_buildings_to_remove)} original building node(s) for plant buildings")
+                print(f"    Removed {len(plant_buildings_to_remove)} original building node(s) for plant buildings (not connected buildings)")
 
         # Collect edges from this network (including new plant edges)
         all_edges_list.append(edges_for_type)
