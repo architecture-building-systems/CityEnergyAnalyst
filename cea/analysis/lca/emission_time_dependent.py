@@ -114,7 +114,7 @@ def operational_hourly(config: Configuration) -> None:
         print(
             f"Hourly operational emissions for {building} calculated and saved in: {locator.get_lca_operational_hourly_building(building)}."
         )
-        results.append((building, hourly_timeline.operational_emission_timeline))
+        results.append((building, hourly_timeline.operational_emission_timeline_extended))
 
     # df_by_building = to_ton(sum_by_building(results))
     df_by_building = sum_by_building(results)

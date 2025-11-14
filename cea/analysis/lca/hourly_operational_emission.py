@@ -410,6 +410,24 @@ class OperationalHourlyTimeline:
             data[f"{feedstock}_kgCO2e"] = self.operational_emission_timeline[feedstock_cols].sum(axis=1)
         return pd.DataFrame(data)
 
+    @property
+    def operational_emission_timeline_extended(self) -> pd.DataFrame:
+        """
+        Get the operational emission timeline extended with total emissions,
+        per-demand emissions, and per-feedstock emissions.
+
+        :return: A DataFrame representing the extended operational emission timeline.
+        :rtype: pd.DataFrame
+        """
+        if not self._is_emission_calculated:
+            raise RuntimeError("Operational emissions have not been calculated yet. Please call calculate_operational_emission() first.")
+        df_extended = self.operational_emission_timeline.copy()
+        df_extended = pd.concat(
+            [df_extended, self.emission_by_demand, self.emission_by_feedstock],
+            axis=1
+        )
+        return df_extended
+
     def save_results(self) -> None:
         """
         Save the operational emission results to a CSV file.
