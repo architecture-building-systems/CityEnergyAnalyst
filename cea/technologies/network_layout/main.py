@@ -21,6 +21,76 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def convert_simplified_nodes_to_full_format(nodes_gdf):
+    """
+    Convert simplified user-provided nodes format to full CEA format.
+
+    Simplified format:
+    - Columns: type, geometry
+    - type field contains: building name OR "NONE" OR "PLANT"/"PLANT_DC"/"PLANT_DH"
+
+    Full format:
+    - Columns: building, name, type, geometry
+    - building: building name or "NONE"
+    - name: node identifier (NODE0, NODE1, ...)
+    - type: CONSUMER, NONE, PLANT, PLANT_DC, PLANT_DH
+
+    :param nodes_gdf: GeoDataFrame in simplified format
+    :return: GeoDataFrame in full format
+    """
+    # Check if already in full format (has 'building' and 'name' columns)
+    if 'building' in nodes_gdf.columns and 'name' in nodes_gdf.columns:
+        print("  ℹ Nodes already in full format, no conversion needed")
+        return nodes_gdf
+
+    # Check if in simplified format (only has 'type' and 'geometry')
+    if 'type' not in nodes_gdf.columns:
+        raise ValueError("Invalid nodes format: missing 'type' column")
+
+    print("  ℹ Converting simplified nodes format to full format...")
+
+    # Create full format dataframe
+    nodes_full = nodes_gdf.copy()
+
+    # Initialize new columns
+    nodes_full['building'] = 'NONE'
+    nodes_full['name'] = [f'NODE{i}' for i in range(len(nodes_full))]
+    nodes_full['type_original'] = nodes_full['type']  # Keep original for processing
+
+    # Classify nodes based on type field
+    plant_types = ['PLANT', 'PLANT_DC', 'PLANT_DH']
+
+    for idx, row in nodes_full.iterrows():
+        type_value = str(row['type_original']).strip()
+
+        if type_value.upper() in plant_types:
+            # It's a plant node
+            nodes_full.loc[idx, 'type'] = type_value.upper()
+            nodes_full.loc[idx, 'building'] = 'NONE'
+        elif type_value.upper() == 'NONE':
+            # It's a junction node
+            nodes_full.loc[idx, 'type'] = 'NONE'
+            nodes_full.loc[idx, 'building'] = 'NONE'
+        else:
+            # It's a building node (consumer)
+            nodes_full.loc[idx, 'building'] = type_value
+            nodes_full.loc[idx, 'type'] = 'CONSUMER'
+
+    # Drop temporary column
+    nodes_full = nodes_full.drop(columns=['type_original'])
+
+    # Reorder columns to match full format
+    nodes_full = nodes_full[['building', 'name', 'type', 'geometry']]
+
+    print(f"  ✓ Converted {len(nodes_full)} nodes to full format")
+    building_count = len(nodes_full[nodes_full['building'] != 'NONE'])
+    junction_count = len(nodes_full[(nodes_full['type'] == 'NONE') & (nodes_full['building'] == 'NONE')])
+    plant_count = len(nodes_full[nodes_full['type'].str.contains('PLANT', na=False)])
+    print(f"    - Buildings: {building_count}, Junctions: {junction_count}, Plants: {plant_count}")
+
+    return nodes_full
+
+
 def print_demand_warning(buildings_without_demand, service_name):
     if buildings_without_demand:
         print(f"  Warning: {len(buildings_without_demand)} building(s) have no {service_name} demand:")
@@ -371,7 +441,7 @@ def resolve_plant_buildings(plant_building_input, available_buildings, network_t
     label = f" ({network_type_label})" if network_type_label else ""
 
     if not plant_building_input or not plant_building_input.strip():
-        print(f"  ℹ Plant building{label}: Not specified - will use anchor load (building with highest demand)")
+        print(f"  ℹ Plant building{label}: Not specified - will use anchor load (building with highest demand) or user-defined PLANT nodes")
         return []
 
     # Parse comma-separated input

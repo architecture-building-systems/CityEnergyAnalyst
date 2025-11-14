@@ -58,13 +58,13 @@ def load_user_defined_network(config, locator, edges_shp=None, nodes_shp=None, g
     :return: Tuple of (nodes_gdf, edges_gdf) or None if no user network provided
     :raises UserNetworkLoaderError: If validation fails or conflicting formats provided
     """
-    # Use provided parameters or fall back to config.optimization_new
+    # Use provided parameters or fall back to config.network_layout
     if edges_shp is None:
-        edges_shp = config.optimization_new.edges_shp_path if hasattr(config, 'optimization_new') else None
+        edges_shp = config.network_layout.edges_shp_path if hasattr(config, 'network_layout') else None
     if nodes_shp is None:
-        nodes_shp = config.optimization_new.nodes_shp_path if hasattr(config, 'optimization_new') else None
+        nodes_shp = config.network_layout.nodes_shp_path if hasattr(config, 'network_layout') else None
     if geojson_path is None:
-        geojson_path = config.optimization_new.network_geojson_path if hasattr(config, 'optimization_new') else None
+        geojson_path = config.network_layout.network_geojson_path if hasattr(config, 'network_layout') else None
 
     # Check for conflicting inputs
     shp_provided = bool(edges_shp or nodes_shp)
@@ -101,6 +101,9 @@ def load_user_defined_network(config, locator, edges_shp=None, nodes_shp=None, g
     # Load from GeoJSON
     else:  # geojson_provided
         nodes_gdf, edges_gdf = _load_from_geojson(geojson_path)
+
+    # Convert simplified nodes format to full format if needed
+    nodes_gdf = _convert_simplified_nodes_to_full_format(nodes_gdf)
 
     # Validate required attributes
     _validate_required_attributes(nodes_gdf, edges_gdf)
@@ -242,11 +245,80 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
     return nodes_gdf, edges_gdf
 
 
-def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.GeoDataFrame):
-    """Validate that required attributes exist in the geodataframes"""
+def _convert_simplified_nodes_to_full_format(nodes_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """
+    Convert simplified user-provided nodes format to full CEA format.
 
-    # Check node attributes
-    required_node_attrs = ['building', 'type']
+    Simplified format:
+    - Columns: type, geometry
+    - type field contains: building name OR "NONE" OR "PLANT"/"PLANT_DC"/"PLANT_DH"
+
+    Full format:
+    - Columns: building, name, type, geometry
+    - building: building name or "NONE"
+    - name: node identifier (NODE0, NODE1, ...)
+    - type: CONSUMER, NONE, PLANT, PLANT_DC, PLANT_DH
+
+    :param nodes_gdf: GeoDataFrame in simplified or full format
+    :return: GeoDataFrame in full format
+    """
+    # Check if already in full format (has 'building' and 'name' columns)
+    if 'building' in nodes_gdf.columns and 'name' in nodes_gdf.columns:
+        return nodes_gdf
+
+    # Check if in simplified format (only has 'type' and 'geometry')
+    if 'type' not in nodes_gdf.columns:
+        raise UserNetworkLoaderError("Invalid nodes format: missing 'type' column")
+
+    print("  ℹ Converting simplified nodes format to full format...")
+
+    # Create full format dataframe
+    nodes_full = nodes_gdf.copy()
+
+    # Initialize new columns
+    nodes_full['building'] = 'NONE'
+    nodes_full['name'] = [f'NODE{i}' for i in range(len(nodes_full))]
+    nodes_full['type_original'] = nodes_full['type']  # Keep original for processing
+
+    # Classify nodes based on type field
+    plant_types = ['PLANT', 'PLANT_DC', 'PLANT_DH']
+
+    for idx, row in nodes_full.iterrows():
+        type_value = str(row['type_original']).strip()
+
+        if type_value.upper() in plant_types:
+            # It's a plant node
+            nodes_full.loc[idx, 'type'] = type_value.upper()
+            nodes_full.loc[idx, 'building'] = 'NONE'
+        elif type_value.upper() == 'NONE':
+            # It's a junction node
+            nodes_full.loc[idx, 'type'] = 'NONE'
+            nodes_full.loc[idx, 'building'] = 'NONE'
+        else:
+            # It's a building node (consumer)
+            nodes_full.loc[idx, 'building'] = type_value
+            nodes_full.loc[idx, 'type'] = 'CONSUMER'
+
+    # Drop temporary column
+    nodes_full = nodes_full.drop(columns=['type_original'])
+
+    # Reorder columns to match full format
+    nodes_full = nodes_full[['building', 'name', 'type', 'geometry']]
+
+    print(f"  ✓ Converted {len(nodes_full)} nodes to full format")
+    building_count = len(nodes_full[nodes_full['building'] != 'NONE'])
+    junction_count = len(nodes_full[(nodes_full['type'] == 'NONE') & (nodes_full['building'] == 'NONE')])
+    plant_count = len(nodes_full[nodes_full['type'].str.contains('PLANT', na=False)])
+    print(f"    - Buildings: {building_count}, Junctions: {junction_count}, Plants: {plant_count}")
+
+    return nodes_full
+
+
+def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.GeoDataFrame):
+    """Validate that required attributes exist in the geodataframes (after conversion to full format)"""
+
+    # Check node attributes - should be in full format after conversion
+    required_node_attrs = ['building', 'name', 'type']
     missing_node_attrs = [attr for attr in required_node_attrs if attr not in nodes_gdf.columns]
 
     if missing_node_attrs:
@@ -255,9 +327,7 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
             f"  Required: {required_node_attrs}\n"
             f"  Missing: {missing_node_attrs}\n"
             f"  Found: {nodes_gdf.columns.tolist()}\n\n"
-            "Nodes must have:\n"
-            "  - 'building' attribute (string) matching building names (or 'NONE' for non-building nodes)\n"
-            "  - 'type' attribute (string) indicating node type (e.g., 'CONSUMER', 'PLANT', 'NONE')"
+            "This error should not occur after format conversion. Please report this issue."
         )
 
     # Check edge attributes
