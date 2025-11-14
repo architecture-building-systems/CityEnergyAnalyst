@@ -14168,25 +14168,25 @@ get_lca_operational_hourly_building:
         unit: '[h]'
         values: '{0...n}'
         min: 0
-      heating_kgCO2:
+      Qhs_sys_kgCO2:
         description: hourly operational emission caused by satisfying space heating demand.
         type: float
         unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      hot_water_kgCO2:
+      Qww_sys_kgCO2:
         description: hourly operational emission caused by satisfying hot water demand.
         type: float
         unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      cooling_kgCO2:
+      Qcs_sys_kgCO2:
         description: hourly operational emission caused by satisfying cooling demand.
         type: float
         unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      appliances_kgCO2:
+      E_sys_kgCO2:
         description: hourly operational emission caused by satisfying electrical appliances demand.
         type: float
         unit: '[kg CO2-eq]'
@@ -19661,40 +19661,28 @@ get_total_yearly_operational_building:
         values: '{0...8759}'
         min: 0
         max: 8759
-      heating_tonCO2:
-        description: Total operational emissions from heating systems.
+      Qhs_sys_kgCO2:
+        description: total hourly operational emission of all buildings caused by satisfying space heating demand.
         type: float
-        unit: '[ton CO2-eq]'
+        unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      hot_water_tonCO2:
-        description: Total operational emissions from hot water systems.
+      Qww_sys_kgCO2:
+        description: total hourly operational emission of all buildings caused by satisfying hot water demand.
         type: float
-        unit: '[ton CO2-eq]'
+        unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      cooling_tonCO2:
-        description: Total operational emissions from cooling systems.
+      Qcs_sys_kgCO2:
+        description: total hourly operational emission of all buildings caused by satisfying cooling demand.
         type: float
-        unit: '[ton CO2-eq]'
+        unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
-      appliances_tonCO2:
-        description: Total operational emissions from electricity consumption.
+      E_sys_kgCO2:
+        description: total hourly operational emission of all buildings caused by satisfying electrical appliances demand.
         type: float
-        unit: '[ton CO2-eq]'
-        values: '{0.0...n}'
-        min: 0.0
-      Qcs_sys_NONE_tonCO2:
-        description: Total operational emissions from cooling systems (NONE category).
-        type: float
-        unit: '[ton CO2-eq]'
-        values: '{0.0...n}'
-        min: 0.0
-      E_sys_GRID_tonCO2:
-        description: Total operational emissions from grid electricity systems.
-        type: float
-        unit: '[ton CO2-eq]'
+        unit: '[kg CO2-eq]'
         values: '{0.0...n}'
         min: 0.0
   used_by: []

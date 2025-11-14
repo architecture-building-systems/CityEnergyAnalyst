@@ -295,7 +295,7 @@ for base_name, color in _BASE_COLUMN_COLORS.items():
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}/m2"] = color
 
-    if 'sys' in base_name or base_name in ['heating', 'hot_water', 'cooling', 'appliances']:
+    if 'sys' in base_name or base_name in ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']:
         # Emission metrics
         for unit in ['gCO2e', 'kgCO2e', 'tonCO2e']:
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color
