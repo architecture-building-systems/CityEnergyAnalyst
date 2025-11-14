@@ -229,8 +229,16 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 f"{context_msg}"
             )
 
-    # If plants already exist, no need to auto-create (but we still ran validation above)
+    # If plants already exist, validate that user didn't also specify plant buildings
     if len(existing_plants) > 0:
+        if plant_building_names:
+            raise ValueError(
+                f"User-defined network already contains {len(existing_plants)} PLANT node(s), but plant buildings are also specified.\n"
+                f"CEA cannot determine which plants to use.\n\n"
+                f"Resolution:\n"
+                f"  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
+                f"  2. Remove PLANT nodes from your network layout shapefile"
+            )
         print("[auto_create_plant_nodes] Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
 
