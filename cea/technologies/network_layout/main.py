@@ -21,6 +21,16 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def print_demand_warning(buildings_without_demand, service_name):
+    if buildings_without_demand:
+        print(f"  Warning: {len(buildings_without_demand)} building(s) have no {service_name} demand:")
+        for building_name in buildings_without_demand[:10]:
+            print(f"      - {building_name}")
+        if len(buildings_without_demand) > 10:
+            print(f"      ... and {len(buildings_without_demand) - 10} more")
+        print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+
+
 def get_buildings_from_supply_csv(locator, network_type):
     """
     Read supply.csv and return list of buildings configured for district heating/cooling.
@@ -342,73 +352,201 @@ def resolve_plant_building(plant_building_input, available_buildings):
         return ""
 
 
-def layout_network(network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None):
+def layout_network(config, network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None):
     if plant_building_name is None:
         plant_building_name = ""
     total_demand_location = locator.get_total_demand()
 
-    type_network = "DH"
-    list_district_scale_buildings = network_layout.connected_buildings
+    # Read config parameters
+    overwrite_supply = config.network_layout.overwrite_supply_settings
+    connected_buildings_config = config.network_layout.connected_buildings
+    list_include_services = config.network_layout.include_services
+    consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
+    allow_looped_networks = False
+    steiner_algorithm = network_layout.algorithm
+
+    # Validate include_services is not empty
+    if not list_include_services:
+        raise ValueError("No thermal services selected. Please specify at least one service in 'include-services' (DC and/or DH).")
+
+    # Get all zone buildings for validation
+    all_zone_buildings = locator.get_zone_building_names()
+
+    # Determine which buildings should be in the network
+    if overwrite_supply:
+        # Use connected-buildings parameter (what-if scenarios)
+        # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
+        is_explicitly_set = (connected_buildings_config and
+                           set(connected_buildings_config) != set(all_zone_buildings))
+
+        if is_explicitly_set:
+            # User explicitly specified a subset of buildings
+            list_district_scale_buildings = connected_buildings_config
+            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
+            print(f"  - User-defined connected buildings: {len(list_district_scale_buildings)}")
+        else:
+            # Blank connected-buildings (auto-populated): use all zone buildings
+            list_district_scale_buildings = all_zone_buildings
+            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
+            print(f"  - Using all buildings from zone geometry: {len(list_district_scale_buildings)}")
+
+        # Check demand separately for DC and DH
+        buildings_without_demand_dc = []
+        buildings_without_demand_dh = []
+        if 'DC' in list_include_services:
+            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_without_demand_dc = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dc]
+        if 'DH' in list_include_services:
+            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand_dh = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dh]
+
+    else:
+        # Use supply.csv to determine district buildings
+        buildings_to_validate_dc = []
+        buildings_to_validate_dh = []
+        buildings_without_demand_dc = []
+        buildings_without_demand_dh = []
+
+        if 'DC' in list_include_services:
+            buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
+            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
+        if 'DH' in list_include_services:
+            buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
+            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
+
+        # Combine DC and DH buildings (union - unique values only)
+        list_district_scale_buildings = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
+
+        # Validate at least one building found
+        if not list_district_scale_buildings:
+            raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
+
+        print("  - Mode: Use Building Properties/Supply settings")
+        if buildings_to_validate_dc and buildings_to_validate_dh:
+            print(f"  - District buildings (DC): {len(buildings_to_validate_dc)}")
+            print(f"  - District buildings (DH): {len(buildings_to_validate_dh)}")
+        elif buildings_to_validate_dc:
+            print(f"  - District buildings (DC): {len(list_district_scale_buildings)}")
+            if 'DH' in list_include_services:
+                print("  - District buildings (DH): 0")
+                list_include_services.remove('DH')
+        elif buildings_to_validate_dh:
+            print(f"  - District buildings (DH): {len(list_district_scale_buildings)}")
+            if 'DC' in list_include_services:
+                print("  - District buildings (DC): 0")
+                list_include_services.remove('DC')
+
+    # Print demand warnings
+    print_demand_warning(buildings_without_demand_dc, "cooling")
+    print_demand_warning(buildings_without_demand_dh, "heating")
+
+    # Apply consider_only_buildings_with_demand filter if enabled
+    if consider_only_buildings_with_demand:
+        # Filter to only buildings with demand for at least one service
+        buildings_with_any_demand = set()
+        if 'DC' in list_include_services:
+            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_with_any_demand.update(buildings_with_demand_dc)
+        if 'DH' in list_include_services:
+            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_with_any_demand.update(buildings_with_demand_dh)
+
+        buildings_before_filter = len(list_district_scale_buildings)
+        list_district_scale_buildings = [b for b in list_district_scale_buildings if b in buildings_with_any_demand]
+        buildings_after_filter = len(list_district_scale_buildings)
+
+        if buildings_before_filter > buildings_after_filter:
+            print(f"  - consider-only-buildings-with-demand: Filtered {buildings_before_filter} → {buildings_after_filter} buildings")
+
+    # Determine network type string (unified logic for both branches)
+    if 'DC' in list_include_services and 'DH' in list_include_services:
+        network_type = 'DC+DH'
+    elif 'DC' in list_include_services:
+        network_type = 'DC'
+    elif 'DH' in list_include_services:
+        network_type = 'DH'
+    else:
+        # This should never happen due to validation above, but keep as safeguard
+        raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
 
     # Resolve plant building name (case-insensitive, handles comma-separated input)
     plant_building_name = resolve_plant_building(plant_building_name, list_district_scale_buildings)
-    consider_only_buildings_with_demand = False
-    allow_looped_networks = False
-    steiner_algorithm = network_layout.algorithm
 
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_zone_shp = locator.get_zone_geometry()
 
     zone_df = gpd.GeoDataFrame.from_file(path_zone_shp)
 
-    # Calculate points where the substations will be located (building centroids)
-    building_centroids_df = calc_building_centroids(
-        zone_df,
-        list_district_scale_buildings,
-        [plant_building_name] if plant_building_name else [],
-        consider_only_buildings_with_demand,
-        type_network,
-        total_demand_location,
-    )
-    
-    street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
+    # Determine which network types to generate layouts for
+    network_types_to_generate = []
+    if network_type == 'DC+DH':
+        network_types_to_generate = ['DC', 'DH']
+    else:
+        network_types_to_generate = [network_type]
 
-    # Calculate potential network graph with geometry preservation and building terminal metadata
-    potential_network_graph = calc_connectivity_network_with_geometry(
-        street_network_df,
-        building_centroids_df,
-    )
+    # Generate network layout for each type (DC and/or DH)
+    for type_network in network_types_to_generate:
+        print(f"\n  Generating {type_network} network layout...")
 
-    # Convert graph to GeoDataFrame for Steiner tree algorithm
-    crs_projected = potential_network_graph.graph['crs']
-    potential_network_df = nx_to_gdf(potential_network_graph, crs=crs_projected, preserve_geometry=True)
-    potential_network_df['length'] = potential_network_df.geometry.length
-    
-    if crs_projected is None:
-        raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
+        # Calculate points where the substations will be located (building centroids)
+        building_centroids_df = calc_building_centroids(
+            zone_df,
+            list_district_scale_buildings,
+            [plant_building_name] if plant_building_name else [],
+            consider_only_buildings_with_demand,
+            type_network,
+            total_demand_location,
+        )
 
-    # Ensure building centroids is in projected crs
-    building_centroids_df = building_centroids_df.to_crs(crs_projected)
+        street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
 
-    # calc minimum spanning tree and save results to disk
-    path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, network_layout.network_name)
-    path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
-    os.makedirs(os.path.dirname(path_output_edges_shp), exist_ok=True)
-    os.makedirs(os.path.dirname(path_output_nodes_shp), exist_ok=True)
+        # Calculate potential network graph with geometry preservation and building terminal metadata
+        potential_network_graph = calc_connectivity_network_with_geometry(
+            street_network_df,
+            building_centroids_df,
+        )
 
-    disconnected_building_names = []
+        # Convert graph to GeoDataFrame for Steiner tree algorithm
+        crs_projected = potential_network_graph.graph['crs']
+        potential_network_df = nx_to_gdf(potential_network_graph, crs=crs_projected, preserve_geometry=True)
+        potential_network_df['length'] = potential_network_df.geometry.length
 
-    calc_steiner_spanning_tree(crs_projected,
-                               building_centroids_df,
-                               potential_network_df,
-                               path_output_edges_shp,
-                               path_output_nodes_shp,
-                               type_network,
-                               total_demand_location,
-                               allow_looped_networks,
-                               [plant_building_name] if plant_building_name else [],
-                               disconnected_building_names,
-                               steiner_algorithm)
+        if crs_projected is None:
+            raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
+
+        # Ensure building centroids is in projected crs
+        building_centroids_df = building_centroids_df.to_crs(crs_projected)
+
+        # calc minimum spanning tree and save results to disk
+        path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, network_layout.network_name)
+        path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
+
+        os.makedirs(os.path.dirname(path_output_edges_shp), exist_ok=True)
+        os.makedirs(os.path.dirname(path_output_nodes_shp), exist_ok=True)
+
+        disconnected_building_names = []
+
+        calc_steiner_spanning_tree(crs_projected,
+                                   building_centroids_df,
+                                   potential_network_df,
+                                   path_output_edges_shp,
+                                   path_output_nodes_shp,
+                                   type_network,
+                                   total_demand_location,
+                                   allow_looped_networks,
+                                   [plant_building_name] if plant_building_name else [],
+                                   disconnected_building_names,
+                                   steiner_algorithm)
+
+        print(f"  ✓ {type_network} network layout saved")
+
+    # Summary
+    print(f"\n  ✓ Network layout generation complete for: {', '.join(network_types_to_generate)}")
+    print(f"    Network name: {network_layout.network_name}")
+    if network_type == 'DC+DH':
+        print(f"    Output folders: DC/ and DH/")
 
 
 
@@ -616,15 +754,6 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
 
     # Helper function to print demand warnings
-    def print_demand_warning(buildings_without_demand, service_name):
-        if buildings_without_demand:
-            print(f"  Warning: {len(buildings_without_demand)} building(s) have no {service_name} demand:")
-            for building_name in buildings_without_demand[:10]:
-                print(f"      - {building_name}")
-            if len(buildings_without_demand) > 10:
-                print(f"      ... and {len(buildings_without_demand) - 10} more")
-            print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
-
     print_demand_warning(buildings_without_demand_dc, "cooling")
     print_demand_warning(buildings_without_demand_dh, "heating")
 
@@ -719,7 +848,7 @@ def main(config: cea.config.Configuration):
         print("\n" + "=" * 80)
         print("AUTOMATIC NETWORK LAYOUT GENERATION")
         print("=" * 80 + "\n")
-        layout_network(network_layout, locator, plant_building_name=plant_building_name)
+        layout_network(config, network_layout, locator, plant_building_name=plant_building_name)
 
 
 if __name__ == '__main__':
