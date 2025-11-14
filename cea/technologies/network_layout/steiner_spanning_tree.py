@@ -215,11 +215,20 @@ def calc_steiner_spanning_tree(crs_projected,
 
     elif os.path.exists(total_demand_location):
         if len(plant_building_names) > 0:
-            building_anchor = mst_nodes[mst_nodes['building'].isin(plant_building_names)]
-        else:
+            # Create a PLANT node for each specified plant building
+            for plant_building_name in plant_building_names:
+                building_anchor = mst_nodes[mst_nodes['building'] == plant_building_name]
+                if not building_anchor.empty:
+                    mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
+                                                                     type_mat_default, pipe_diameter_default)
+                else:
+                    print(f"  ⚠ Warning: Plant building '{plant_building_name}' not found in network, skipping")
+        elif type_network in ['DC', 'DH']:
+            # Only create anchor-based plant for single network types (not DC+DH)
+            # For DC+DH, plants will be added separately by the calling code
             building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
-        mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                         type_mat_default, pipe_diameter_default)
+            mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
+                                                             type_mat_default, pipe_diameter_default)
 
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected

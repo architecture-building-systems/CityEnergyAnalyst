@@ -481,12 +481,12 @@ def resolve_plant_buildings(plant_building_input, available_buildings, network_t
                 print(f"      - {building}")
 
     if unmatched_buildings:
-        print(f"  ⚠ Warning: {len(unmatched_buildings)} plant building(s){label} not found in connected buildings:")
+        print(f"  ⚠ Warning: {len(unmatched_buildings)} plant building(s){label} not found in zone:")
         for building in unmatched_buildings[:5]:
             print(f"      - {building}")
         if len(unmatched_buildings) > 5:
             print(f"      ... and {len(unmatched_buildings) - 5} more")
-        print(f"    Available buildings: {', '.join(sorted(available_buildings)[:5])}" +
+        print(f"    Available buildings in zone: {', '.join(sorted(available_buildings)[:5])}" +
               (f" ... and {len(available_buildings) - 5} more" if len(available_buildings) > 5 else ""))
 
     return matched_buildings
@@ -586,6 +586,10 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 print("  - District buildings (DC): 0")
                 list_include_services.remove('DC')
 
+    # Track which buildings belong to DC and DH networks separately
+    buildings_for_dc = []
+    buildings_for_dh = []
+
     # Apply consider_only_buildings_with_demand filter if enabled
     if consider_only_buildings_with_demand:
         # Filter separately for DC and DH services
@@ -594,6 +598,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         if 'DC' in list_include_services:
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_for_dc = [b for b in list_district_scale_buildings if b in buildings_with_demand_dc]
             buildings_filtered_dc = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dc]
             if buildings_filtered_dc:
                 print(f"  - consider-only-buildings-with-demand (DC): Filtered out {len(buildings_filtered_dc)} building(s) without cooling demand")
@@ -601,6 +606,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         if 'DH' in list_include_services:
             buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_for_dh = [b for b in list_district_scale_buildings if b in buildings_with_demand_dh]
             buildings_filtered_dh = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dh]
             if buildings_filtered_dh:
                 print(f"  - consider-only-buildings-with-demand (DH): Filtered out {len(buildings_filtered_dh)} building(s) without heating demand")
@@ -613,6 +619,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         if buildings_before_filter != buildings_after_filter:
             print(f"  - Total buildings after filtering: {buildings_after_filter} (was {buildings_before_filter})")
     else:
+        # When not filtering by demand, all buildings go to both networks
+        if 'DC' in list_include_services:
+            buildings_for_dc = list_district_scale_buildings.copy()
+        if 'DH' in list_include_services:
+            buildings_for_dh = list_district_scale_buildings.copy()
         # Print demand warnings when not filtering
         print_demand_warning(buildings_without_demand_dc, "cooling")
         print_demand_warning(buildings_without_demand_dh, "heating")
@@ -633,36 +644,56 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     zone_df = gpd.GeoDataFrame.from_file(path_zone_shp)
 
-    # Determine which network types to generate layouts for
+    # Get all zone building names for plant building validation
+    all_zone_buildings = zone_df['name'].tolist()
+
+    # Resolve plant buildings for both network types
+    # Plant buildings can be ANY building in the zone, not just connected buildings
+    cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, all_zone_buildings, "cooling")
+    heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, all_zone_buildings, "heating")
+
+    # Prepare for network generation
+    street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
+
+    # Paths for output files
+    output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
+    os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
+
+    # Collect all edges from both networks
+    all_edges_list = []
+
+    # Determine which network types to generate
     network_types_to_generate = []
     if network_type == 'DC+DH':
         network_types_to_generate = ['DC', 'DH']
-    else:
-        network_types_to_generate = [network_type]
+    elif network_type == 'DC':
+        network_types_to_generate = ['DC']
+    elif network_type == 'DH':
+        network_types_to_generate = ['DH']
 
-    # Generate network layout for each type (DC and/or DH)
+    # Generate Steiner tree for each network type separately
     for type_network in network_types_to_generate:
         print(f"\n  Generating {type_network} network layout...")
 
-        # Resolve plant buildings for this network type
+        # Get plant buildings and connected buildings for this network type
         if type_network == 'DC':
-            plant_buildings_list = resolve_plant_buildings(cooling_plant_building, list_district_scale_buildings, "cooling")
+            plant_buildings_for_type = cooling_plant_buildings_list
+            connected_buildings_for_type = buildings_for_dc
         else:  # DH
-            plant_buildings_list = resolve_plant_buildings(heating_plant_building, list_district_scale_buildings, "heating")
+            plant_buildings_for_type = heating_plant_buildings_list
+            connected_buildings_for_type = buildings_for_dh
 
-        # Calculate points where the substations will be located (building centroids)
+        # Calculate building centroids for this network type
         building_centroids_df = calc_building_centroids(
             zone_df,
-            list_district_scale_buildings,
-            plant_buildings_list,
-            consider_only_buildings_with_demand,
+            connected_buildings_for_type,
+            plant_buildings_for_type,
+            False,  # Already filtered by demand above
             type_network,
             total_demand_location,
         )
 
-        street_network_df = gpd.GeoDataFrame.from_file(path_streets_shp)
-
-        # Calculate potential network graph with geometry preservation and building terminal metadata
+        # Calculate potential network graph
         potential_network_graph = calc_connectivity_network_with_geometry(
             street_network_df,
             building_centroids_df,
@@ -674,35 +705,89 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         potential_network_df['length'] = potential_network_df.geometry.length
 
         if crs_projected is None:
-            raise ValueError("The CRS of the potential network shapefile is undefined. Please check if the input street network has a defined projection system.")
+            raise ValueError("The CRS of the potential network shapefile is undefined.")
 
         # Ensure building centroids is in projected crs
         building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
-        # calc minimum spanning tree and save results to disk
-        # Shared layout path (edges) - same for both DC and DH
-        output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
-        # Separate node path for this network type (DC or DH)
-        output_nodes_path = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
-
-        os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
-        os.makedirs(os.path.dirname(output_nodes_path), exist_ok=True)
+        # Generate Steiner tree for this network WITHOUT plant nodes
+        temp_nodes_path = output_layout_path.replace('layout.shp', f'_temp_nodes_{type_network}.shp')
+        temp_edges_path = output_layout_path.replace('layout.shp', f'_temp_edges_{type_network}.shp')
 
         disconnected_building_names = []
-
         calc_steiner_spanning_tree(crs_projected,
                                    building_centroids_df,
                                    potential_network_df,
-                                   output_layout_path,
-                                   output_nodes_path,
+                                   temp_edges_path,
+                                   temp_nodes_path,
                                    type_network,
                                    total_demand_location,
                                    allow_looped_networks,
-                                   plant_buildings_list,
+                                   [],  # Empty plant list - we'll add plants manually afterwards
                                    disconnected_building_names,
                                    steiner_algorithm)
 
-        print(f"  ✓ {type_network} network layout saved")
+        # Read generated nodes and edges
+        nodes_for_type = gpd.read_file(temp_nodes_path)
+        edges_for_type = gpd.read_file(temp_edges_path)
+
+        print(f"    Base network: {len(nodes_for_type)} nodes, {len(edges_for_type)} edges")
+
+        # Track initial edge count before adding plants
+        initial_edge_count = len(edges_for_type)
+
+        # Add plant nodes for this network type (marked as PLANT_DC or PLANT_DH temporarily)
+        if plant_buildings_for_type:
+            from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
+            for plant_building in plant_buildings_for_type:
+                # Find the building node for this plant
+                building_anchor = nodes_for_type[nodes_for_type['building'] == plant_building]
+                if not building_anchor.empty:
+                    nodes_for_type, edges_for_type = add_plant_close_to_anchor(
+                        building_anchor,
+                        nodes_for_type,
+                        edges_for_type,
+                        'T1',  # Default pipe material
+                        150    # Default pipe diameter
+                    )
+                    # Mark the newly created plant node with network-specific type
+                    # The last node added is the plant node
+                    last_node_idx = nodes_for_type.index[-1]
+                    nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
+                    print(f"    ✓ Added PLANT_{type_network} node for building '{plant_building}'")
+                else:
+                    print(f"    ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
+
+        # Collect edges from this network (including new plant edges)
+        all_edges_list.append(edges_for_type)
+
+        # Normalize plant types: PLANT_DC → PLANT for DC, PLANT_DH → PLANT for DH
+        nodes_for_type['type'] = nodes_for_type['type'].replace({f'PLANT_{type_network}': 'PLANT'})
+
+        # Save network-specific nodes
+        output_nodes_path = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
+        os.makedirs(os.path.dirname(output_nodes_path), exist_ok=True)
+        nodes_for_type.to_file(output_nodes_path, driver='ESRI Shapefile')
+        print(f"  ✓ {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
+
+        # Clean up temp files for this network
+        import glob
+        for f in glob.glob(temp_nodes_path.replace('.shp', '.*')):
+            os.remove(f)
+        for f in glob.glob(temp_edges_path.replace('.shp', '.*')):
+            os.remove(f)
+
+    # Combine all edges from both networks and save to layout.shp
+    if len(all_edges_list) > 0:
+        import pandas as pd
+        all_edges_gdf = gpd.GeoDataFrame(
+            pd.concat(all_edges_list, ignore_index=True),
+            crs=all_edges_list[0].crs
+        )
+        # Remove duplicate edges (edges that appear in both DC and DH networks)
+        all_edges_gdf = all_edges_gdf.drop_duplicates(subset=['geometry'], keep='first')
+        all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
+        print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
     # Summary
     print(f"\n  ✓ Network layout generation complete for: {', '.join(network_types_to_generate)}")
@@ -961,7 +1046,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     # Process nodes separately for DC and DH
     if network_type == 'DC' or network_type == 'DC+DH':
         # Resolve cooling plant buildings
-        cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, buildings_to_validate, "cooling")
+        # Plant buildings can be ANY building in the zone, not just connected buildings
+        cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, all_zone_buildings, "cooling")
 
         # Create copy of nodes for DC network
         nodes_gdf_dc = nodes_gdf.copy()
@@ -986,7 +1072,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     if network_type == 'DH' or network_type == 'DC+DH':
         # Resolve heating plant buildings
-        heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, buildings_to_validate, "heating")
+        # Plant buildings can be ANY building in the zone, not just connected buildings
+        heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, all_zone_buildings, "heating")
 
         # Create copy of nodes for DH network
         nodes_gdf_dh = nodes_gdf.copy()
