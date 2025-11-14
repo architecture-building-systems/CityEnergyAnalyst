@@ -45,7 +45,7 @@ class TestColdPcmThermalStorage(unittest.TestCase):
         cls.type_storage_list = cls.locator.get_database_conversion_systems_cold_thermal_storage_names()
         cls.type_storage = cls.type_storage_list[0]
 
-    def test_cold_pcm_thermal_storage(self, checkResults=False):
+    def test_cold_pcm_thermal_storage(self):
 
         # initialize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
@@ -95,14 +95,11 @@ class TestColdPcmThermalStorage(unittest.TestCase):
             data.loc[hour, "T_DailyStorage_C"] = tank.T_tank_K - 273.0
 
         # calculate results to assert
-        results = data.sum().values
-        # Just for the result comparison - check assertion
-        if checkResults:
-            np.testing.assert_allclose(results, self.expected_results)
+        results = data.sum().tolist()
+        # Verify results match expected values
+        np.testing.assert_allclose(results, self.expected_results)
 
-        return results, data, tank.description
-
-    def test_cold_pcm_thermal_storage_costs(self, checkResults=False):
+    def test_cold_pcm_thermal_storage_costs(self):
         # initialize tank
         tank = Storage_tank_PCM(size_Wh=self.size_storage_Wh,
                                 database_model_parameters=self.storage_properties,
@@ -112,11 +109,8 @@ class TestColdPcmThermalStorage(unittest.TestCase):
 
         # calculate results to assert
         results = [tank.V_tank_m3, Capex_a_storage_USD, Opex_fixed_storage_USD, Capex_total_USD]
-        # Just for the result comparison - check assertion
-        if checkResults:
-            np.testing.assert_allclose(results, self.expected_results_costs)
-
-        return results
+        # Verify results match expected values
+        np.testing.assert_allclose(results, self.expected_results_costs)
 
 
 class TestCoolingTower(unittest.TestCase):

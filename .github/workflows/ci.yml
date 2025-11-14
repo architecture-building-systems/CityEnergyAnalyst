@@ -43,8 +43,8 @@ jobs:
         run: pixi run pip install . --group dev
 
       - name: Run unit tests
-        run: pixi run cea test --type unittest
+        run: pixi run unittest
 
       - name: Run integration tests
         if: github.event.pull_request.draft == false
-        run: pixi run cea test --type integration
+        run: pixi run integration
