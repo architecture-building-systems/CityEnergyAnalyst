@@ -1,10 +1,10 @@
 """
 Create thermal network connectivity graphs by connecting buildings to street networks.
 
-This module builds a NetworkX graph suitable for Steiner tree optimization by:
+This module builds a NetworkX graph suitable for Steiner tree optimisation by:
 1. Cleaning street networks (snap near-miss endpoints, split at intersections, simplify)
 2. Creating building terminal connections to nearest street points
-3. Normalizing coordinates to 6 decimal places to prevent floating-point errors
+3. Normalising coordinates to 6 decimal places to prevent floating-point errors
 4. Preserving curved street geometries and building terminal metadata
 
 Main Function
@@ -569,8 +569,8 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     print("Cleaning street network...")
     streets_network_df = clean_street_network(streets_network_df, SNAP_TOLERANCE)
 
-    # Normalize all coordinates to consistent precision (prevents floating-point issues)
-    print(f"\nNormalizing coordinates to consistent precision ({SHAPEFILE_TOLERANCE} decimal places)...")
+    # Normalise all coordinates to consistent precision (prevents floating-point issues)
+    print(f"\nNormalising coordinates to consistent precision ({SHAPEFILE_TOLERANCE} decimal places)...")
     normalize_gdf_geometries(streets_network_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
     normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
 
