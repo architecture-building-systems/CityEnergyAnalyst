@@ -102,9 +102,29 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
     print(f"[auto_create_plant_nodes] expected_num_components = {expected_num_components}")
 
-    # Check if any plants already exist
-    existing_plants = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
-    print(f"[auto_create_plant_nodes] Found {len(existing_plants)} existing PLANT nodes")
+    # Check for existing plants based on network type
+    # PLANT = shared (both DC and DH)
+    # PLANT_DC = DC only
+    # PLANT_DH = DH only
+    plants_shared = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
+    plants_dc = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DC']
+    plants_dh = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+
+    # Determine which plants apply to this network type
+    if network_type == 'DC':
+        existing_plants = pd.concat([plants_shared, plants_dc]).drop_duplicates()
+    elif network_type == 'DH':
+        existing_plants = pd.concat([plants_shared, plants_dh]).drop_duplicates()
+    else:
+        existing_plants = plants_shared
+
+    print(f"[auto_create_plant_nodes] Found {len(existing_plants)} existing PLANT nodes for {network_type} network")
+    if len(plants_shared) > 0:
+        print(f"  - Shared plants (PLANT): {len(plants_shared)}")
+    if network_type == 'DC' and len(plants_dc) > 0:
+        print(f"  - DC-only plants (PLANT_DC): {len(plants_dc)}")
+    if network_type == 'DH' and len(plants_dh) > 0:
+        print(f"  - DH-only plants (PLANT_DH): {len(plants_dh)}")
 
     # Build graph to detect components (need to do this even if plants exist, for validation)
     # Note: User-defined networks may not have start_node/end_node columns yet
@@ -888,6 +908,9 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
             print("  Note: Existing building nodes converted to PLANT type")
 
+        # Normalize plant types: PLANT and PLANT_DC both become PLANT for DC network
+        nodes_gdf_dc['type'] = nodes_gdf_dc['type'].replace({'PLANT_DC': 'PLANT'})
+
         os.makedirs(os.path.dirname(output_node_path_dc), exist_ok=True)
         nodes_gdf_dc.to_file(output_node_path_dc, driver='ESRI Shapefile')
 
@@ -909,6 +932,9 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
                 print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
             print("  Note: Existing building nodes converted to PLANT type")
+
+        # Normalize plant types: PLANT and PLANT_DH both become PLANT for DH network
+        nodes_gdf_dh['type'] = nodes_gdf_dh['type'].replace({'PLANT_DH': 'PLANT'})
 
         os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
         nodes_gdf_dh.to_file(output_node_path_dh, driver='ESRI Shapefile')
