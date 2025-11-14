@@ -78,20 +78,20 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
-def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name, network_type, locator, expected_num_components=None):
+def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator, expected_num_components=None):
     """
     Auto-create missing PLANT nodes in user-defined networks.
 
-    Mimics auto-generation behavior:
-    1. Find anchor building (user-specified or highest demand)
-    2. Find closest junction node (type='NONE') to anchor building
-    3. Create new PLANT node offset 1m from junction
-    4. Create new edge connecting plant to junction
+    Supports multiple plant buildings per network:
+    - For auto-generated layouts (1 component): Creates plant at each specified building
+    - For user-defined layouts:
+      - 1 component: Creates plant at each specified building
+      - Multiple components: Raises error (cannot determine plant placement)
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param edges_gdf: GeoDataFrame of network edges
     :param zone_gdf: GeoDataFrame of building geometries
-    :param plant_building_name: User-specified plant building (or empty string)
+    :param plant_building_names: List of user-specified plant buildings (or empty list)
     :param network_type: "DH" or "DC"
     :param locator: InputLocator instance
     :param expected_num_components: Expected number of disconnected components (optional, for validation)
@@ -234,6 +234,17 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
         print("[auto_create_plant_nodes] Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
 
+    # Validate component count for multiple plants
+    if len(components) > 1 and plant_building_names:
+        raise ValueError(
+            f"User-defined network has {len(components)} disconnected components and plant buildings are specified.\n"
+            f"CEA cannot determine which plant should be placed in which component.\n\n"
+            f"Resolution:\n"
+            f"  1. Remove plant building specifications and CEA will automatically place one plant per component (anchor load), OR\n"
+            f"  2. Add PLANT nodes directly to your network layout shapefile, OR\n"
+            f"  3. Connect all components into a single network"
+        )
+
     # Get building nodes for analysis
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
                                 (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
@@ -245,27 +256,42 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
 
     created_plants = []
 
-    # For each component, create plant if needed
-    for component_id, component_nodes in enumerate(components):
-        # Get buildings in this component
-        buildings_in_component = []
-        for node_idx in component_nodes:
-            if node_idx in building_nodes.index:
-                building_name = building_nodes.loc[node_idx, 'building']
-                buildings_in_component.append(building_name)
+    # If plant buildings are specified, create plants for each one
+    if plant_building_names:
+        for plant_building in plant_building_names:
+            # Find the building node
+            plant_node = building_nodes[building_nodes['building'] == plant_building]
+            if plant_node.empty:
+                print(f"  ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
+                continue
 
-        if not buildings_in_component:
-            continue  # Skip components with no buildings
+            # Update the building node's type to PLANT
+            plant_node_idx = plant_node.index[0]
+            plant_node_name = nodes_gdf.loc[plant_node_idx, 'name']
+            nodes_gdf.loc[plant_node_idx, 'type'] = 'PLANT'
 
-        # Determine anchor building
-        anchor_building = None
+            created_plants.append({
+                'network_id': 'N1001',  # Single component for auto-generated layouts
+                'building': plant_building,
+                'node_name': plant_node_name,
+                'junction_node': None,
+                'distance_to_junction': 0.0,
+                'reason': 'user-specified'
+            })
 
-        if plant_building_name:
-            # Use user-specified building if it's in this component
-            if plant_building_name in buildings_in_component:
-                anchor_building = plant_building_name
+    else:
+        # No plant buildings specified - use anchor load (highest demand) for each component
+        for component_id, component_nodes in enumerate(components):
+            # Get buildings in this component
+            buildings_in_component = []
+            for node_idx in component_nodes:
+                if node_idx in building_nodes.index:
+                    building_name = building_nodes.loc[node_idx, 'building']
+                    buildings_in_component.append(building_name)
 
-        if not anchor_building:
+            if not buildings_in_component:
+                continue  # Skip components with no buildings
+
             # Find building with highest demand (anchor load)
             component_demand = total_demand[total_demand['name'].isin(buildings_in_component)]
             if not component_demand.empty and demand_field in component_demand.columns:
@@ -275,86 +301,100 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_name,
                 # Fallback: use first building alphabetically
                 anchor_building = sorted(buildings_in_component)[0]
 
-        # Get anchor building node
-        anchor_node = building_nodes[building_nodes['building'] == anchor_building]
-        if anchor_node.empty:
-            continue
+            # Get anchor building node
+            anchor_node = building_nodes[building_nodes['building'] == anchor_building]
+            if anchor_node.empty:
+                continue
 
-        # Simply update the anchor building node's type to PLANT
-        # This is simpler and avoids creating duplicate nodes for the same building
-        anchor_node_idx = anchor_node.index[0]
-        anchor_node_name = nodes_gdf.loc[anchor_node_idx, 'name']
+            # Update the anchor building node's type to PLANT
+            anchor_node_idx = anchor_node.index[0]
+            anchor_node_name = nodes_gdf.loc[anchor_node_idx, 'name']
+            nodes_gdf.loc[anchor_node_idx, 'type'] = 'PLANT'
 
-        # Update the type to PLANT
-        nodes_gdf.loc[anchor_node_idx, 'type'] = 'PLANT'
+            # Generate network identifier for reporting
+            network_id = f"N{1001 + component_id}"
 
-        # Generate network identifier for reporting
-        network_id = f"N{1001 + component_id}"
-
-        created_plants.append({
-            'network_id': network_id,
-            'building': anchor_building,
-            'node_name': anchor_node_name,
-            'junction_node': None,
-            'distance_to_junction': 0.0,
-            'reason': 'user-specified' if plant_building_name and plant_building_name == anchor_building else 'anchor-load'
-        })
+            created_plants.append({
+                'network_id': network_id,
+                'building': anchor_building,
+                'node_name': anchor_node_name,
+                'junction_node': None,
+                'distance_to_junction': 0.0,
+                'reason': 'anchor-load'
+            })
 
     return nodes_gdf, edges_gdf, created_plants
 
 
-def resolve_plant_building(plant_building_input, available_buildings):
+def resolve_plant_buildings(plant_building_input, available_buildings, network_type_label=""):
     """
-    Resolve plant building name with flexible matching.
+    Resolve plant building names with flexible matching.
 
-    - Parses comma-separated input (takes first value)
+    - Parses comma-separated input and matches all values
     - Case-insensitive matching against available buildings
-    - Returns matched building name or empty string if no match
+    - Returns list of matched building names
     - Logs the resolution process
 
     :param plant_building_input: User input (can be comma-separated, any case)
     :param available_buildings: List of actual building names in the scenario
-    :return: Matched building name or empty string
+    :param network_type_label: Label for logging (e.g., "cooling", "heating")
+    :return: List of matched building names (empty list if none match)
     """
-    if not plant_building_input or not plant_building_input.strip():
-        print("  ℹ Plant building: Not specified - will use anchor load (building with highest demand)")
-        return ""
+    label = f" ({network_type_label})" if network_type_label else ""
 
-    # Parse comma-separated input and take first value
+    if not plant_building_input or not plant_building_input.strip():
+        print(f"  ℹ Plant building{label}: Not specified - will use anchor load (building with highest demand)")
+        return []
+
+    # Parse comma-separated input
     input_parts = [s.strip() for s in plant_building_input.split(',') if s.strip()]
 
     if not input_parts:
-        return ""
-
-    first_input = input_parts[0]
-
-    # Log if multiple buildings were provided
-    if len(input_parts) > 1:
-        print(f"  ℹ Plant building: Multiple buildings provided '{plant_building_input}'")
-        print(f"    Using first value: '{first_input}'")
+        return []
 
     # Case-insensitive matching
-    input_lower = first_input.lower()
     building_map = {b.lower(): b for b in available_buildings}
+    matched_buildings = []
+    unmatched_buildings = []
 
-    if input_lower in building_map:
-        matched_building = building_map[input_lower]
-        if matched_building != first_input:
-            print(f"  ℹ Plant building: Matched '{first_input}' to '{matched_building}' (case-insensitive)")
+    for input_building in input_parts:
+        input_lower = input_building.lower()
+        if input_lower in building_map:
+            matched_building = building_map[input_lower]
+            matched_buildings.append(matched_building)
+            if matched_building != input_building:
+                print(f"  ℹ Plant building{label}: Matched '{input_building}' to '{matched_building}' (case-insensitive)")
         else:
-            print(f"  ℹ Plant building: Using '{matched_building}' as anchor for plant placement")
-        return matched_building
-    else:
-        print(f"  ⚠ Warning: Plant building '{first_input}' not found in connected buildings")
+            unmatched_buildings.append(input_building)
+
+    # Log results
+    if matched_buildings:
+        if len(matched_buildings) == 1:
+            print(f"  ℹ Plant building{label}: Using '{matched_buildings[0]}' as anchor for plant placement")
+        else:
+            print(f"  ℹ Plant buildings{label}: Using {len(matched_buildings)} buildings for plant placement:")
+            for building in matched_buildings[:5]:
+                print(f"      - {building}")
+            if len(matched_buildings) > 5:
+                print(f"      ... and {len(matched_buildings) - 5} more")
+
+    if unmatched_buildings:
+        print(f"  ⚠ Warning: {len(unmatched_buildings)} plant building(s){label} not found in connected buildings:")
+        for building in unmatched_buildings[:5]:
+            print(f"      - {building}")
+        if len(unmatched_buildings) > 5:
+            print(f"      ... and {len(unmatched_buildings) - 5} more")
         print(f"    Available buildings: {', '.join(sorted(available_buildings)[:5])}" +
               (f" ... and {len(available_buildings) - 5} more" if len(available_buildings) > 5 else ""))
-        print("    Plant will be placed at building with highest demand (default)")
-        return ""
+
+    return matched_buildings
 
 
-def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None):
-    if plant_building_name is None:
-        plant_building_name = ""
+def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputLocator, cooling_plant_building=None, heating_plant_building=None):
+    if cooling_plant_building is None:
+        cooling_plant_building = ""
+    if heating_plant_building is None:
+        heating_plant_building = ""
     total_demand_location = locator.get_total_demand()
 
     # Read config parameters
@@ -486,9 +526,6 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # This should never happen due to validation above, but keep as safeguard
         raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
 
-    # Resolve plant building name (case-insensitive, handles comma-separated input)
-    plant_building_name = resolve_plant_building(plant_building_name, list_district_scale_buildings)
-
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_zone_shp = locator.get_zone_geometry()
 
@@ -505,11 +542,17 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     for type_network in network_types_to_generate:
         print(f"\n  Generating {type_network} network layout...")
 
+        # Resolve plant buildings for this network type
+        if type_network == 'DC':
+            plant_buildings_list = resolve_plant_buildings(cooling_plant_building, list_district_scale_buildings, "cooling")
+        else:  # DH
+            plant_buildings_list = resolve_plant_buildings(heating_plant_building, list_district_scale_buildings, "heating")
+
         # Calculate points where the substations will be located (building centroids)
         building_centroids_df = calc_building_centroids(
             zone_df,
             list_district_scale_buildings,
-            [plant_building_name] if plant_building_name else [],
+            plant_buildings_list,
             consider_only_buildings_with_demand,
             type_network,
             total_demand_location,
@@ -553,7 +596,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                                    type_network,
                                    total_demand_location,
                                    allow_looped_networks,
-                                   [plant_building_name] if plant_building_name else [],
+                                   plant_buildings_list,
                                    disconnected_building_names,
                                    steiner_algorithm)
 
@@ -615,7 +658,7 @@ class NetworkLayout:
         return network_name
 
 
-def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, plant_building_name):
+def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, cooling_plant_building, heating_plant_building):
     """
     Process user-defined network layout from shapefiles or GeoJSON.
 
@@ -625,7 +668,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     :param edges_shp: Path to edges shapefile (optional)
     :param nodes_shp: Path to nodes shapefile (optional)
     :param geojson_path: Path to GeoJSON file (optional)
-    :param plant_building_name: Plant building name from config
+    :param cooling_plant_building: Cooling plant building names from config
+    :param heating_plant_building: Heating plant building names from config
     :return: None (raises exception if processing fails)
     """
 
@@ -799,43 +843,63 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     else:
         print("  ✓ All specified buildings have valid nodes in network")
 
-    # Resolve plant building name (case-insensitive, handles comma-separated input)
-    plant_building_name = resolve_plant_building(plant_building_name, buildings_to_validate)
-
-    # Auto-create plant nodes if missing (zone_gdf already loaded above)
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
     print(f"[process_user_defined_network] number_of_components from config: {config.network_layout.number_of_components} -> expected_num_components: {expected_num_components}")
-
-    nodes_gdf, edges_gdf, created_plants = auto_create_plant_nodes(
-        nodes_gdf, edges_gdf, zone_gdf,
-        plant_building_name, network_type, locator,
-        expected_num_components
-    )
-
-    if created_plants:
-        print(f"\n Auto-assigned {len(created_plants)} building node(s) as PLANT:")
-        for plant_info in created_plants:
-            reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-            print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-        print("  Note: Existing building nodes converted to PLANT type")
 
     # Save to network-name location
     output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
     output_node_path_dc = locator.get_network_layout_nodes_shapefile('DC', network_layout.network_name)
     output_node_path_dh = locator.get_network_layout_nodes_shapefile('DH', network_layout.network_name)
 
-    # Save layout-edges shapefile
+    # Save layout-edges shapefile (shared)
     os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
     edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
-    # Save nodes to DC and/or DH folders based on network_type
+    # Process nodes separately for DC and DH
     if network_type == 'DC' or network_type == 'DC+DH':
+        # Resolve cooling plant buildings
+        cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, buildings_to_validate, "cooling")
+
+        # Create copy of nodes for DC network
+        nodes_gdf_dc = nodes_gdf.copy()
+        nodes_gdf_dc, edges_gdf_dc, created_plants_dc = auto_create_plant_nodes(
+            nodes_gdf_dc, edges_gdf, zone_gdf,
+            cooling_plant_buildings_list, 'DC', locator,
+            expected_num_components
+        )
+
+        if created_plants_dc:
+            print(f"\n Auto-assigned {len(created_plants_dc)} building node(s) as PLANT (DC):")
+            for plant_info in created_plants_dc:
+                reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
+                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
+            print("  Note: Existing building nodes converted to PLANT type")
+
         os.makedirs(os.path.dirname(output_node_path_dc), exist_ok=True)
-        nodes_gdf.to_file(output_node_path_dc, driver='ESRI Shapefile')
+        nodes_gdf_dc.to_file(output_node_path_dc, driver='ESRI Shapefile')
+
     if network_type == 'DH' or network_type == 'DC+DH':
+        # Resolve heating plant buildings
+        heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, buildings_to_validate, "heating")
+
+        # Create copy of nodes for DH network
+        nodes_gdf_dh = nodes_gdf.copy()
+        nodes_gdf_dh, edges_gdf_dh, created_plants_dh = auto_create_plant_nodes(
+            nodes_gdf_dh, edges_gdf, zone_gdf,
+            heating_plant_buildings_list, 'DH', locator,
+            expected_num_components
+        )
+
+        if created_plants_dh:
+            print(f"\n Auto-assigned {len(created_plants_dh)} building node(s) as PLANT (DH):")
+            for plant_info in created_plants_dh:
+                reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
+                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
+            print("  Note: Existing building nodes converted to PLANT type")
+
         os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
-        nodes_gdf.to_file(output_node_path_dh, driver='ESRI Shapefile')
+        nodes_gdf_dh.to_file(output_node_path_dh, driver='ESRI Shapefile')
 
     print("\n  ✓ User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
@@ -845,9 +909,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     network_layout = NetworkLayout.from_config(config.network_layout, locator)
-    plant_building_name = config.network_layout.plant_building
+    cooling_plant_building = config.network_layout.cooling_plant_building
+    heating_plant_building = config.network_layout.heating_plant_building
 
-    print(f"Network name: {network_layout.network_name} (user-defined)")
+    print(f"Network name: {network_layout.network_name}")
 
     # Check if user provided custom network layout
     edges_shp = config.network_layout.edges_shp_path
@@ -863,7 +928,7 @@ def main(config: cea.config.Configuration):
         process_user_defined_network(
             config, locator, network_layout,
             edges_shp, nodes_shp, geojson_path,
-            plant_building_name
+            cooling_plant_building, heating_plant_building
         )
 
     # Generate network layout using Steiner tree (current behavior or fallback)
@@ -871,7 +936,7 @@ def main(config: cea.config.Configuration):
         print("\n" + "=" * 80)
         print("AUTOMATIC NETWORK LAYOUT GENERATION")
         print("=" * 80 + "\n")
-        auto_layout_network(config, network_layout, locator, plant_building_name=plant_building_name)
+        auto_layout_network(config, network_layout, locator, cooling_plant_building=cooling_plant_building, heating_plant_building=heating_plant_building)
 
 
 if __name__ == '__main__':
