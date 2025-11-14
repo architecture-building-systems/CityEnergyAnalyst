@@ -352,7 +352,7 @@ def resolve_plant_building(plant_building_input, available_buildings):
         return ""
 
 
-def layout_network(config, network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None):
+def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputLocator, plant_building_name=None):
     if plant_building_name is None:
         plant_building_name = ""
     total_demand_location = locator.get_total_demand()
@@ -438,27 +438,36 @@ def layout_network(config, network_layout, locator: cea.inputlocator.InputLocato
                 print("  - District buildings (DC): 0")
                 list_include_services.remove('DC')
 
-    # Print demand warnings
-    print_demand_warning(buildings_without_demand_dc, "cooling")
-    print_demand_warning(buildings_without_demand_dh, "heating")
-
     # Apply consider_only_buildings_with_demand filter if enabled
     if consider_only_buildings_with_demand:
-        # Filter to only buildings with demand for at least one service
+        # Filter separately for DC and DH services
+        buildings_before_filter = len(list_district_scale_buildings)
         buildings_with_any_demand = set()
+
         if 'DC' in list_include_services:
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_filtered_dc = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dc]
+            if buildings_filtered_dc:
+                print(f"  - consider-only-buildings-with-demand (DC): Filtered out {len(buildings_filtered_dc)} building(s) without cooling demand")
             buildings_with_any_demand.update(buildings_with_demand_dc)
+
         if 'DH' in list_include_services:
             buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_filtered_dh = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dh]
+            if buildings_filtered_dh:
+                print(f"  - consider-only-buildings-with-demand (DH): Filtered out {len(buildings_filtered_dh)} building(s) without heating demand")
             buildings_with_any_demand.update(buildings_with_demand_dh)
 
-        buildings_before_filter = len(list_district_scale_buildings)
+        # Keep buildings with demand for at least one service
         list_district_scale_buildings = [b for b in list_district_scale_buildings if b in buildings_with_any_demand]
         buildings_after_filter = len(list_district_scale_buildings)
 
-        if buildings_before_filter > buildings_after_filter:
-            print(f"  - consider-only-buildings-with-demand: Filtered {buildings_before_filter} → {buildings_after_filter} buildings")
+        if buildings_before_filter != buildings_after_filter:
+            print(f"  - Total buildings after filtering: {buildings_after_filter} (was {buildings_before_filter})")
+    else:
+        # Print demand warnings when not filtering
+        print_demand_warning(buildings_without_demand_dc, "cooling")
+        print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Determine network type string (unified logic for both branches)
     if 'DC' in list_include_services and 'DH' in list_include_services:
@@ -520,19 +529,21 @@ def layout_network(config, network_layout, locator: cea.inputlocator.InputLocato
         building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
         # calc minimum spanning tree and save results to disk
-        path_output_edges_shp = locator.get_network_layout_edges_shapefile(type_network, network_layout.network_name)
-        path_output_nodes_shp = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
+        # Shared layout path (edges) - same for both DC and DH
+        output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
+        # Separate node path for this network type (DC or DH)
+        output_nodes_path = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
 
-        os.makedirs(os.path.dirname(path_output_edges_shp), exist_ok=True)
-        os.makedirs(os.path.dirname(path_output_nodes_shp), exist_ok=True)
+        os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
+        os.makedirs(os.path.dirname(output_nodes_path), exist_ok=True)
 
         disconnected_building_names = []
 
         calc_steiner_spanning_tree(crs_projected,
                                    building_centroids_df,
                                    potential_network_df,
-                                   path_output_edges_shp,
-                                   path_output_nodes_shp,
+                                   output_layout_path,
+                                   output_nodes_path,
                                    type_network,
                                    total_demand_location,
                                    allow_looped_networks,
@@ -802,7 +813,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     output_node_path_dc = locator.get_network_layout_nodes_shapefile('DC', network_layout.network_name)
     output_node_path_dh = locator.get_network_layout_nodes_shapefile('DH', network_layout.network_name)
 
-    # Save edges shapefile
+    # Save layout-edges shapefile
     os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
     edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
@@ -848,7 +859,7 @@ def main(config: cea.config.Configuration):
         print("\n" + "=" * 80)
         print("AUTOMATIC NETWORK LAYOUT GENERATION")
         print("=" * 80 + "\n")
-        layout_network(config, network_layout, locator, plant_building_name=plant_building_name)
+        auto_layout_network(config, network_layout, locator, plant_building_name=plant_building_name)
 
 
 if __name__ == '__main__':
