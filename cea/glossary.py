@@ -52,8 +52,95 @@ def read_glossary_df(plugins):
     return __glossary_df
 
 
+def _generate_values_display(column_def):
+    """
+    Generate the VALUES display string for glossary based on column type.
+
+    Auto-generates appropriate display strings based on type:
+    - int/float: Range from min/max (e.g., "{0.0...n}", "{0...100}")
+    - boolean: "{true, false}"
+    - string: "alphanumeric" or "text"
+    - date/datetime: Date format string
+    - choice: List of valid choices if defined
+
+    Args:
+        column_def: Column definition dict from schema
+
+    Returns:
+        String representation of valid values for display
+    """
+    col_type = column_def.get("type")
+
+    # Check if this is a choice type with explicit values
+    choice_def = column_def.get("choice", {})
+    if "values" in choice_def:
+        # Return the list of valid choices as a formatted string
+        values_list = choice_def["values"]
+        if isinstance(values_list, list):
+            return "{" + ", ".join(str(v) for v in values_list) + "}"
+        return str(values_list)
+
+    # Also check choice_properties for backward compatibility
+    choice_properties = column_def.get("choice_properties", {})
+    if choice_properties and "values" in choice_properties:
+        # Return the list of valid choices
+        return str(choice_properties["values"])
+
+    # Generate values based on type
+    if col_type == "boolean":
+        return "{true, false}"
+
+    elif col_type in ["int", "float"]:
+        # Auto-generate from min/max
+        min_val = column_def.get("min")
+        max_val = column_def.get("max")
+
+        # Format min value
+        if min_val is None:
+            min_str = "n"
+        elif col_type == "float":
+            min_str = str(float(min_val))
+        else:
+            min_str = str(int(min_val))
+
+        # Format max value
+        if max_val is None:
+            max_str = "n"
+        elif col_type == "float":
+            max_str = str(float(max_val))
+        else:
+            max_str = str(int(max_val))
+
+        return f"{{{min_str}...{max_str}}}"
+
+    elif col_type == "string":
+        # Check if there's a pattern or format hint
+        if "pattern" in column_def:
+            return f"pattern: {column_def['pattern']}"
+        # Note: Before the values property was removed, some string columns
+        # had discrete value lists (e.g., {water, air, brine}) that weren't
+        # moved to choice.values. These are now lost, but the columns should
+        # ideally be updated to use choice.values for dropdown validation.
+        return "alphanumeric"
+
+    elif col_type == "date":
+        return "YYYY-MM-DD"
+
+    elif col_type == "datetime":
+        return "YYYY-MM-DD HH:MM:SS"
+
+    elif col_type == "time":
+        return "HH:MM:SS"
+
+    # For unknown types or TODO placeholders, return None
+    return None
+
+
 def glossary_row(script, file_path, col, lm, cd, worksheet):
     try:
+        # Auto-generate VALUES from min/max for numerical types, or use explicit values for choice types
+        values_display = _generate_values_display(cd)
+
         return {
             "SCRIPT": script,
             "LOCATOR_METHOD": lm,
@@ -61,7 +148,7 @@ def glossary_row(script, file_path, col, lm, cd, worksheet):
             "VARIABLE": col,
             "DESCRIPTION": cd["description"],
             "UNIT": cd.get("unit"),
-            "VALUES": cd.get("values"),
+            "VALUES": values_display,
             "TYPE": cd["type"],
             "COLOR": "",
             "FILE_NAME": ":".join((file_path, worksheet)) if worksheet else file_path
