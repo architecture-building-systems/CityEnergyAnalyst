@@ -549,19 +549,50 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             if len(network_building_names) > 10:
                 print(f"      ... and {len(network_building_names) - 10} more")
             buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
+
+        # Initialize for demand checking (not used in overwrite mode, but needed for later logic)
+        buildings_without_demand = []
     else:
         # Use supply.csv to determine district buildings
-        if 'DC' in config.network_layout.include_services:
+        buildings_to_validate_dc = []
+        buildings_to_validate_dh = []
+        buildings_with_demand_dc = []
+        buildings_with_demand_dh = []
+
+        list_include_services = config.network_layout.include_services
+
+        if 'DC' in list_include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
-            buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
-        if 'DH' in config.network_layout.include_services:
-            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type='DH')
-            buildings_with_demand = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+        if 'DH' in list_include_services:
+            buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
+            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+
+        # Combine DC and DH buildings (union - unique values only)
+        buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
+        buildings_with_demand = list(set(buildings_with_demand_dc) | set(buildings_with_demand_dh))
+        buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
+
+        # Determine network type string for messages
+        if buildings_to_validate_dc and buildings_to_validate_dh:
+            network_type = 'DC+DH'
+        elif buildings_to_validate_dc:
+            network_type = 'DC'
+        elif buildings_to_validate_dh:
+            network_type = 'DH'
+        else:
+            raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
 
         print("  - Mode: Use Building Properties/Supply settings")
-        print(f"  - District buildings: {len(buildings_to_validate)}")
+        if buildings_to_validate_dc and buildings_to_validate_dh:
+            print(f"  - District buildings (DC): {len(buildings_to_validate_dc)}")
+            print(f"  - District buildings (DH): {len(buildings_to_validate_dh)}")
+        elif buildings_to_validate_dc:
+            print(f"  - District buildings (DC only): {len(buildings_to_validate)}")
+        elif buildings_to_validate_dh:
+            print(f"  - District buildings (DH only): {len(buildings_to_validate)}")
+        else:
+            print(f"  - District buildings: {len(buildings_to_validate)}")
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
     if buildings_without_demand:
@@ -625,12 +656,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     # Save to shapefiles
     edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
-    if 'DC' in config.network_layout.include_services:
+    if network_type == 'DC' or network_type == 'DC+DH':
         if not os.path.exists(output_node_path_dc):
             output_folder = os.path.dirname(output_node_path_dc)
             os.makedirs(output_folder)
         nodes_gdf.to_file(output_node_path_dc, driver='ESRI Shapefile')
-    if 'DH' in config.network_layout.include_services:
+    if network_type == 'DH' or network_type == 'DC+DH':
         if not os.path.exists(output_node_path_dh):
             output_folder = os.path.dirname(output_node_path_dh)
             os.makedirs(output_folder)
