@@ -68,6 +68,10 @@ def simulate_all_states(config: Configuration) -> None:
         for f in os.listdir(timeline_folder)
         if f.startswith("state_")
     ]
+    if not state_years:
+        raise ValueError(
+            f"No state-in-time scenarios found in timeline folder: {timeline_folder}"
+        )
     state_years.sort()
     log_data = load_log_yaml(locator)
     workflow = deepcopy(default_workflow)
