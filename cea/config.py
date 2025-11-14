@@ -893,7 +893,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         """Get path for network node and edge files for the given network name"""
         locator = cea.inputlocator.InputLocator(self.config.scenario)
 
-        network_type_folder = locator.get_output_thermal_network_type_folder(network_type)
+        network_type_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
         # Remove trailing slash/separator if present
         network_type_folder = network_type_folder.rstrip(os.sep)
 
