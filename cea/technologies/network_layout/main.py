@@ -407,6 +407,12 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
+        # Warn if connected-buildings parameter has values that will be ignored
+        if connected_buildings_config:
+            print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
+            print(f"    Reason: 'overwrite-supply-settings' is False")
+            print(f"    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+
         if 'DC' in list_include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
@@ -720,6 +726,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         buildings_to_validate_dh = []
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
+
+        # Warn if connected-buildings parameter has values that will be ignored
+        if connected_buildings_config:
+            print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
+            print(f"    Reason: 'overwrite-supply-settings' is False")
+            print(f"    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
 
         if 'DC' in list_include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
