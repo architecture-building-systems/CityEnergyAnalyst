@@ -576,8 +576,8 @@ def plot_emission_timeline(config, context: dict):
     # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
     #     df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
     #     list_y_columns.append('biogenic_underside_kgCO2e/m2')
-    # if 'operation_appliances_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_appliances_kgCO2e/m2']
+    # if 'operation_E_sys_kgCO2e/m2' in df_to_plotly.columns:
+    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_E_sys_kgCO2e/m2']
     #     list_y_columns.append('pv_kgCO2e/m2')
 
     # Create EmissionTimelinePlot instance
