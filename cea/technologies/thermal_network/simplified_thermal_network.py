@@ -1,6 +1,7 @@
 import math
 import platform
 import time
+import warnings
 
 import geopandas as gpd
 import numpy as np
@@ -256,7 +257,20 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
         # add loads
         building_base_demand_m3s = {}
-        for building in volume_flow_m3pers_building.keys():
+        building_nodes = node_df[node_df["type"] == "CONSUMER"]
+        for node in building_nodes.iterrows():
+            building = node[1]['building']
+
+            if building not in volume_flow_m3pers_building.columns:
+                warnings.warn(
+                    f"Building {building} connected to node {node[0]} has no demand profile.\n"
+                    "Please check that the building has a cooling/heating demand, or remove it from the network.\n"
+                    "Setting base demand to 0."
+                )
+                building_base_demand_m3s[building] = 0
+                wn.add_pattern(building, [0]*len(volume_flow_m3pers_building))
+                continue
+
             building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
             pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
             wn.add_pattern(building, pattern_demand)
