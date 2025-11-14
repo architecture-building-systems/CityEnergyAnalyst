@@ -495,6 +495,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     overwrite_supply = config.network_layout.overwrite_supply_settings
     connected_buildings_config = config.network_layout.connected_buildings
+    list_include_services = config.network_layout.include_services
 
     # Get building nodes from user-provided network
     building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
@@ -528,21 +529,34 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Determine which buildings should be in the network
     if overwrite_supply:
+        buildings_without_demand_dc = []
+        buildings_without_demand_dh = []
+
         # Use connected-buildings parameter (what-if scenarios)
         # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
         is_explicitly_set = (connected_buildings_config and
                            set(connected_buildings_config) != set(all_zone_buildings))
 
+        # Determine network type string for messages
+        if 'DC' in list_include_services and 'DH' in list_include_services:
+            network_type = 'DC+DH'
+        elif 'DC' in list_include_services:
+            network_type = 'DC'
+        elif 'DH' in list_include_services:
+            network_type = 'DH'
+        else:
+            raise ValueError(f"No district thermal network connections found in Building Properties/Supply for service(s): {', '.join(list_include_services)}.")
+
         if is_explicitly_set:
             # User explicitly specified a subset of buildings
             buildings_to_validate = connected_buildings_config
-            print("  - Mode: Overwrite supply.csv (using connected-buildings parameter)")
-            print(f"  - Connected buildings (from config): {len(buildings_to_validate)}")
+            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
+            print(f"  - User-defined connected buildings: {len(buildings_to_validate)}")
             print(f"  - Buildings in user layout: {len(network_building_names)}")
         else:
             # Blank connected-buildings (auto-populated): accept whatever is in user layout
             # BUT we already validated building names exist in zone geometry above
-            print("  - Mode: Overwrite supply.csv (connected-buildings blank)")
+            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
             print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
             for building_name in network_building_names[:10]:
                 print(f"      - {building_name}")
@@ -550,28 +564,31 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 print(f"      ... and {len(network_building_names) - 10} more")
             buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
 
-        # Initialize for demand checking (not used in overwrite mode, but needed for later logic)
-        buildings_without_demand = []
+        if network_type == 'DC' or network_type == 'DC+DH':
+            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_without_demand_dc = [b for b in buildings_to_validate if b not in buildings_with_demand_dc]
+        if network_type == 'DH' or network_type == 'DC+DH':
+            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand_dh = [b for b in buildings_to_validate if b not in buildings_with_demand_dh]
+
     else:
         # Use supply.csv to determine district buildings
         buildings_to_validate_dc = []
         buildings_to_validate_dh = []
-        buildings_with_demand_dc = []
-        buildings_with_demand_dh = []
-
-        list_include_services = config.network_layout.include_services
+        buildings_without_demand_dc = []
+        buildings_without_demand_dh = []
 
         if 'DC' in list_include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
             buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
+            buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
         if 'DH' in list_include_services:
             buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
             buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
+            buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
 
-        # Combine DC and DH buildings (union - unique values only)
+        # # Combine DC and DH buildings (union - unique values only)
         buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
-        buildings_with_demand = list(set(buildings_with_demand_dc) | set(buildings_with_demand_dh))
-        buildings_without_demand = [b for b in buildings_to_validate if b not in buildings_with_demand]
 
         # Determine network type string for messages
         if buildings_to_validate_dc and buildings_to_validate_dh:
@@ -595,12 +612,20 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             print(f"  - District buildings: {len(buildings_to_validate)}")
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
-    if buildings_without_demand:
-        print(f"  Warning: {len(buildings_without_demand)} building(s) have no {network_type} demand:")
-        for building_name in buildings_without_demand[:10]:
+    if buildings_without_demand_dc:
+        print(f"  Warning: {len(buildings_without_demand_dc)} building(s) have no cooling demand:")
+        for building_name in buildings_without_demand_dc[:10]:
             print(f"      - {building_name}")
-        if len(buildings_without_demand) > 10:
-            print(f"      ... and {len(buildings_without_demand) - 10} more")
+        if len(buildings_without_demand_dc) > 10:
+            print(f"      ... and {len(buildings_without_demand_dc) - 10} more")
+        print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
+
+    if buildings_without_demand_dh:
+        print(f"  Warning: {len(buildings_without_demand_dh)} building(s) have no heating demand:")
+        for building_name in buildings_without_demand_dh[:10]:
+            print(f"      - {building_name}")
+        if len(buildings_without_demand_dh) > 10:
+            print(f"      ... and {len(buildings_without_demand_dh) - 10} more")
         print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
 
     # Validate network covers all specified buildings
