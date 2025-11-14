@@ -375,16 +375,20 @@ def resolve_plant_buildings(plant_building_input, available_buildings, network_t
         else:
             unmatched_buildings.append(input_building)
 
+    # Cap to maximum 3 plant buildings
+    MAX_PLANTS = 3
+    if len(matched_buildings) > MAX_PLANTS:
+        print(f"  ℹ Plant buildings{label}: {len(matched_buildings)} buildings specified, limiting to first {MAX_PLANTS}")
+        matched_buildings = matched_buildings[:MAX_PLANTS]
+
     # Log results
     if matched_buildings:
         if len(matched_buildings) == 1:
             print(f"  ℹ Plant building{label}: Using '{matched_buildings[0]}' as anchor for plant placement")
         else:
             print(f"  ℹ Plant buildings{label}: Using {len(matched_buildings)} buildings for plant placement:")
-            for building in matched_buildings[:5]:
+            for building in matched_buildings:
                 print(f"      - {building}")
-            if len(matched_buildings) > 5:
-                print(f"      ... and {len(matched_buildings) - 5} more")
 
     if unmatched_buildings:
         print(f"  ⚠ Warning: {len(unmatched_buildings)} plant building(s){label} not found in connected buildings:")
