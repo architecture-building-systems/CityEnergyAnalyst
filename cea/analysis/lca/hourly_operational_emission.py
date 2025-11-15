@@ -97,21 +97,8 @@ class OperationalHourlyTimeline:
             for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
         ]
 
-        # Add PV emission offset columns for each panel code
-        if self.conversion_db.photovoltaic_panels is not None:
-            for pv_code in self.conversion_db.photovoltaic_panels.keys():
-                # Per-component emission offset columns (12 GRID components)
-                pv_component_offsets = [
-                    f"PV_{pv_code}_offset_{comp}_kgCO2e" for comp in _GRID_COMPONENTS
-                ]
-
-                # Summary emission offset columns
-                pv_summary_offsets = [
-                    f"PV_{pv_code}_offset_grid_export_kgCO2e",
-                    f"PV_{pv_code}_offset_total_kgCO2e",
-                ]
-
-                base_cols += pv_component_offsets + pv_summary_offsets
+        # PV emission offset columns are added dynamically in log_pv_contribution()
+        # only when consider-pv-contributions is True
 
         timeline = pd.DataFrame(index=range(n_hours), columns=base_cols)
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
@@ -263,6 +250,23 @@ class OperationalHourlyTimeline:
 
             # Initialize per-component emission offsets (all 12 components)
             component_offsets = {comp: np.zeros(HOURS_IN_YEAR) for comp in _GRID_COMPONENTS}
+
+            # Add PV columns to operational_emission_timeline if they don't exist yet
+            # This ensures columns are only created when consider-pv-contributions is True
+            pv_columns_to_add = []
+            for comp in _GRID_COMPONENTS:
+                col_name = f'PV_{pv_code}_offset_{comp}_kgCO2e'
+                if col_name not in self.operational_emission_timeline.columns:
+                    pv_columns_to_add.append(col_name)
+
+            for col_name in [f'PV_{pv_code}_offset_grid_export_kgCO2e', f'PV_{pv_code}_offset_total_kgCO2e']:
+                if col_name not in self.operational_emission_timeline.columns:
+                    pv_columns_to_add.append(col_name)
+
+            # Add all new PV columns at once (more efficient than one by one)
+            if pv_columns_to_add:
+                for col in pv_columns_to_add:
+                    self.operational_emission_timeline[col] = 0.0
 
             # Allocate PV to components in user-specified priority order
             for comp in ordered_components:
