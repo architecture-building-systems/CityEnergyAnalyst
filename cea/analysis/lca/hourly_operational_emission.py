@@ -169,6 +169,7 @@ class OperationalHourlyTimeline:
     def log_pv_contribution(
         self,
         pv_codes: list[str],
+        offset_building: bool = True,
         allowed_components: list[str] | None = None,
         credit_export: bool = True,
     ) -> None:
@@ -180,12 +181,16 @@ class OperationalHourlyTimeline:
 
         :param pv_codes: List of PV panel codes to process
         :type pv_codes: list[str]
+        :param offset_building: If True, PV offsets building GRID demand before being exported.
+            If False, all PV is treated as export to grid (no building offset).
+        :type offset_building: bool
         :param allowed_components: Ordered list of GRID components that PV can offset.
             Valid values: ['GRID_a', 'GRID_l', 'GRID_v', 'GRID_ve', 'GRID_data', 'GRID_pro',
                            'GRID_aux', 'GRID_cdata', 'GRID_cre', 'GRID_hs', 'GRID_cs', 'GRID_ww']
             The ORDER determines allocation priority. PV offsets the first component fully before
             moving to the second, and so on.
-            If None or empty, all PV is exported to grid (no building offset).
+            Only used when offset_building=True. If None or empty when offset_building=True,
+            all GRID components will be used in default order.
         :type allowed_components: list[str] | None
         :param credit_export: If True, surplus PV exported to grid is credited as avoided emissions.
             If False, export offset is zero (conservative approach).
@@ -204,6 +209,7 @@ class OperationalHourlyTimeline:
         >>> # Offset lighting first, then appliances, export surplus
         >>> hourly_timeline.log_pv_contribution(
         ...     pv_codes=['PV1'],
+        ...     offset_building=True,
         ...     allowed_components=['GRID_l', 'GRID_a'],
         ...     credit_export=True
         ... )
@@ -211,14 +217,15 @@ class OperationalHourlyTimeline:
         >>> # Export all PV to grid without offsetting building
         >>> hourly_timeline.log_pv_contribution(
         ...     pv_codes=['PV1'],
-        ...     allowed_components=[],
+        ...     offset_building=False,
         ...     credit_export=True
         ... )
 
-        >>> # Offset building, don't credit export (conservative)
+        >>> # Offset building with all components, don't credit export (conservative)
         >>> hourly_timeline.log_pv_contribution(
         ...     pv_codes=['PV1'],
-        ...     allowed_components=['GRID_l', 'GRID_a', 'GRID_hs'],
+        ...     offset_building=True,
+        ...     allowed_components=None,
         ...     credit_export=False
         ... )
         """
@@ -228,8 +235,12 @@ class OperationalHourlyTimeline:
         # Validate and prepare allowed components (preserves order)
         # Note: CEA's MultiChoiceParameter returns ALL choices when parameter is empty
         # So allowed_components will be a full list when user leaves pv-offset-allowance empty
-        if allowed_components is None:
+        if not offset_building:
+            # If not offsetting building, set ordered_components to empty
             ordered_components = []
+        elif allowed_components is None:
+            # If offset_building=True and allowed_components=None, use all components in default order
+            ordered_components = list(_GRID_COMPONENTS)
         else:
             # Keep only valid components, preserving user-specified order
             ordered_components = [c for c in allowed_components if c in _GRID_COMPONENTS]
