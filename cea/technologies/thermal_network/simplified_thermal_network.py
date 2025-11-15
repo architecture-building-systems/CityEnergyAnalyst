@@ -410,6 +410,13 @@ def thermal_network_simplified(locator, config, network_name=''):
     # WRITE TO DISK
     locator.ensure_parent_folder_exists(locator.get_thermal_network_folder())
 
+    # Ensure network_name folder exists (for new structure: thermal-network/DC/network_name/)
+    if network_name:
+        import os
+        network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        if not os.path.exists(network_folder):
+            os.makedirs(network_folder)
+
     # LINEAR PRESSURE LOSSES (EDGES)
     linear_pressure_loss_Paperm.to_csv(locator.get_network_linear_pressure_drop_edges(network_type, network_name),
                                        index=False)

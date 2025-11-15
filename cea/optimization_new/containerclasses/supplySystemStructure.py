@@ -1506,7 +1506,7 @@ class SupplySystemStructure(object):
         # Set main energy carrier based on type of network-optimisation
         config = domain.config
         SupplySystemStructure._system_type \
-            = SupplySystemStructure.get_system_type(config.optimization_new.network_type)
+            = SupplySystemStructure.get_system_type(config.thermal_network.network_type)
         SupplySystemStructure._climatic_reference_temperature \
             = SupplySystemStructure.get_climatic_reference_temperature(domain.weather['drybulb_C'].mean())
         SupplySystemStructure._network_temperature \

@@ -3374,20 +3374,21 @@ def main(config: cea.config.Configuration):
 
     network_model = config.thermal_network.network_model
 
-    # FIXME: Hardcoded to consider one network for now. Best scenario is to allow multiple network layouts and run Part 2 for each layout.
-    network_names = ['']
+    # Get network name from config
+    # Future enhancement: Support multiple network layouts
+    network_name = config.thermal_network.network_name
+    if not network_name:
+        raise ValueError("Network name is required. Please select a network layout.")
 
     if network_model == 'simplified':
-        for network_name in network_names:
-            thermal_network_simplified(locator, config, network_name)
+        thermal_network_simplified(locator, config, network_name)
         # Print the time used for the entire processing
         time_elapsed = time.time() - start
         print('The process of simplified thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
     else:
-        for network_name in network_names:
-            check_heating_cooling_demand(locator, config)
-            thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
-            thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
+        check_heating_cooling_demand(locator, config)
+        thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
+        thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
         # Print the time used for the entire processing
         time_elapsed = time.time() - start
         print('The process of thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)

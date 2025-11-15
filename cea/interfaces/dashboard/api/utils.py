@@ -9,7 +9,7 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
             params['value'] = []
         else:
             params["value"] = p.get()
-    except cea.ConfigError as e:
+    except (cea.ConfigError, ValueError) as e:
         print(e)
         params["value"] = ""
 
@@ -32,4 +32,30 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
     except AttributeError:
         pass
 
+    # Add GUI metadata hints
+    params["needs_validation"] = _should_validate(p)
+
+    # Add depends_on information (new semantic dependency system)
+    if hasattr(p, 'depends_on') and p.depends_on:
+        params["depends_on"] = p.depends_on
+    else:
+        params["depends_on"] = None
+
     return params
+
+
+def _should_validate(p: cea.config.Parameter) -> bool:
+    """
+    Determine if a parameter needs backend validation on change.
+    This is a GUI optimization hint - doesn't affect core validation logic.
+    """
+    # Parameters with filesystem collision checks
+    if isinstance(p, cea.config.NetworkLayoutNameParameter):
+        return True
+
+    # Add more parameter types here as needed
+    # if isinstance(p, cea.config.SomeOtherComplexParameter):
+    #     return True
+
+    # By default, no explicit validation needed
+    return False

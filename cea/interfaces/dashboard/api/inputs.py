@@ -28,7 +28,7 @@ from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAu
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
-from cea.technologies.network_layout.main import layout_network, NetworkLayout
+from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
 from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, save_cea_schedules
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -325,7 +325,7 @@ def get_network(scenario: str, network_type):
             # Ignore demand and creating plants for layout in map
             config.network_layout.consider_only_buildings_with_demand = False
             network_layout = NetworkLayout(network_layout=config.network_layout)
-            layout_network(network_layout, locator, output_name_network=network_name)
+            auto_layout_network(network_layout, locator, output_name_network=network_name)
 
         edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
         nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)

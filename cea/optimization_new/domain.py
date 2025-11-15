@@ -15,6 +15,7 @@ __maintainer__ = "NA"
 __email__ = "mathias.niffeler@sec.ethz.ch"
 __status__ = "Production"
 
+import os
 from os.path import exists
 import time
 import pandas as pd
@@ -48,6 +49,10 @@ from cea.optimization_new.helperclasses.optimization.tracker import Optimization
 from cea.optimization_new.helperclasses.optimization.fitness import Fitness
 from cea.optimization_new.helperclasses.optimization.clustering import Clustering
 from cea.optimization_new.helperclasses.multiprocessing.memoryPreserver import MemoryPreserver
+from cea.optimization_new.user_network_loader import (
+    map_buildings_to_networks,
+    UserNetworkLoaderError
+)
 
 
 class Domain(object):
@@ -59,6 +64,11 @@ class Domain(object):
         self.energy_potentials: list[EnergyPotential] = []
         self.initial_energy_system: DistrictEnergySystem | None = None
         self.optimal_energy_systems: list[DistrictEnergySystem] = []
+
+        # Base network layout (for base case only)
+        self.base_network_nodes: gpd.GeoDataFrame | None = None
+        self.base_network_edges: gpd.GeoDataFrame | None = None
+        self.base_building_to_network: dict[str, str] | None = None  # building_name -> network_id
 
         self._setup_save_directory()
         self._initialize_domain_descriptor_classes()
@@ -84,19 +94,136 @@ class Domain(object):
             buildings_in_domain = shp_file.name.tolist()
 
         building_demand_files = [self.locator.get_demand_results_file(building_code) for building_code in buildings_in_domain]
-        network_type = self.config.optimization_new.network_type
+        network_type = self.config.thermal_network.network_type
         for (building_code, demand_file) in zip(buildings_in_domain, building_demand_files):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
                 building.load_demand_profile(network_type)
-                if not max(building.demand_flow.profile) > 0:
-                    continue
                 building.load_building_location(shp_file)
                 building.load_base_supply_system(self.locator, network_type)
-                building.check_demand_energy_carrier()
+
+                # Skip buildings with zero demand UNLESS they are configured for district systems
+                # (district buildings with zero demand should still be included for network validation)
+                has_demand = max(building.demand_flow.profile) > 0
+                is_district = building.initial_connectivity_state != 'stand_alone'
+
+                if not has_demand and not is_district:
+                    continue
+
+                # Only check demand energy carrier for buildings with actual demand
+                # (zero-demand buildings can't instantiate components)
+                if has_demand:
+                    building.check_demand_energy_carrier()
+
                 self.buildings.append(building)
 
         return self.buildings
+
+    def load_base_network(self):
+        """
+        Load base thermal network layout from existing network layout (config.thermal_network.network_name).
+        If provided, this will override the automatic network generation for the base case.
+
+        The network layout is loaded from:
+        scenario/outputs/data/thermal-network/{network_type}/{network_name}/layout/
+
+        Network components are detected and mapped to network IDs (N1001, N1002, etc.)
+
+        :raises UserNetworkLoaderError: If validation fails with detailed error message
+        """
+        try:
+            # Get network name from config
+            network_name = self.config.thermal_network.network_name
+
+            # If no network name specified, return early (silent fallback to auto-generation)
+            if not network_name or not network_name.strip():
+                print("No base network selected. CEA will generate network automatically.")
+                return
+
+            network_name = network_name.strip()
+            network_type = self.config.thermal_network.network_type
+
+            # Get network layout file paths using InputLocator
+            edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
+            nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
+            # Check if files exist
+            if not os.path.exists(edges_path) or not os.path.exists(nodes_path):
+                raise UserNetworkLoaderError(
+                    f"Base network layout '{network_name}' not found for {network_type}.\n"
+                    f"Expected location:\n"
+                    f"  - Edges: {edges_path}\n"
+                    f"  - Nodes: {nodes_path}\n\n"
+                    f"Resolution:\n"
+                    f"  1. Run 'network-layout' tool first to generate the network\n"
+                    f"  2. Check that network-name matches an existing layout\n"
+                    f"  3. Leave network-name blank to auto-generate network"
+                )
+
+            # Load shapefiles
+            nodes_gdf = gpd.read_file(nodes_path)
+            edges_gdf = gpd.read_file(edges_path)
+
+            print(f"\nBase network layout loaded: {network_name}")
+            # Defensive handling for NaN/non-string values in building and type columns
+            building_col = nodes_gdf.get('building', pd.Series(dtype=object)).fillna('').astype(str).str.upper()
+            type_col = nodes_gdf.get('type', pd.Series(dtype=object)).fillna('').astype(str).str.upper()
+            building_nodes_count = int(((building_col != '') & (building_col != 'NONE') & (type_col != 'PLANT')).sum())
+            print(f"  - Nodes: {len(nodes_gdf)} ({building_nodes_count} building nodes)")
+            print(f"  - Edges: {len(edges_gdf)}")
+
+            # Identify district buildings from Supply.csv (via building.initial_connectivity_state)
+            district_buildings = [building.identifier for building in self.buildings
+                                  if building.initial_connectivity_state != 'stand_alone']
+
+            if not district_buildings:
+                print("  Warning: No buildings designated for district networks in Building Properties/Supply")
+                print("           Base network will not be used.")
+                return
+
+            print(f"  - District buildings (from Building Properties/Supply): {len(district_buildings)}")
+
+            # Map buildings to network components
+            building_to_network, snapped_nodes, edge_snaps = map_buildings_to_networks(
+                nodes_gdf, edges_gdf, district_buildings
+            )
+
+            if edge_snaps:
+                print(f"  ⚠ Auto-snapped {len(edge_snaps)} edge endpoint(s) to nearby nodes:")
+                for edge_name, endpoint, node_name, gap_dist in edge_snaps[:10]:
+                    print(f"      - {edge_name} ({endpoint}) → {node_name} (gap: {gap_dist:.4f}m)")
+                if len(edge_snaps) > 10:
+                    print(f"      ... and {len(edge_snaps) - 10} more")
+                print("  Note: Edge endpoints within 10cm tolerance snapped to nodes (in-memory only)")
+
+            if snapped_nodes:
+                print(f"  ⚠ Auto-merged {len(snapped_nodes)} disconnected component(s):")
+                for node1_name, node2_name, gap_dist in snapped_nodes[:10]:
+                    print(f"      - {node1_name} <-> {node2_name} (gap: {gap_dist:.3f}m)")
+                if len(snapped_nodes) > 10:
+                    print(f"      ... and {len(snapped_nodes) - 10} more")
+                print("  Note: Small gaps between components detected and merged (in-memory only)")
+
+            # Count networks
+            networks = set(building_to_network.values())
+            print(f"  ✓ Detected {len(networks)} network component(s): {sorted(networks)}")
+
+            # Store for use in base case generation
+            self.base_network_nodes = nodes_gdf
+            self.base_network_edges = edges_gdf
+            self.base_building_to_network = building_to_network
+
+            print("  ✓ Base network validated successfully\n")
+
+        except UserNetworkLoaderError as e:
+            # Re-raise with clear context
+            raise UserNetworkLoaderError(
+                f"\n{'=' * 80}\n"
+                "ERROR: Base network loading failed\n"
+                f"{'=' * 80}\n\n"
+                f"{str(e)}\n"
+                f"{'=' * 80}\n"
+            ) from None
 
     def load_potentials(self, buildings_in_domain: list[str] | None = None, pv_panel_type='PV1') -> list[EnergyPotential]:
         """
@@ -266,10 +393,35 @@ class Domain(object):
         Model the energy system currently installed in the domain, i.e.:
         - reconstruct a network linking all buildings that are currently connected to a district energy system
         - determine the supply system for each network and each of the stand-alone buildings
+
+        If a base network layout is provided, it overrides the automatic connectivity determination.
         """
+        # Override building connectivity if base network is provided
+        if self.base_building_to_network is not None:
+            print("Using base network layout for base case connectivity")
+            for building in self.buildings:
+                if building.identifier in self.base_building_to_network:
+                    # Override connectivity with base network assignment
+                    building.initial_connectivity_state = self.base_building_to_network[building.identifier]
+                # else: keep existing connectivity (stand_alone or other)
+
+        # Helper function to parse connectivity state to network ID
+        def _parse_connectivity_id(state):
+            """Parse connectivity state to network ID"""
+            if state == 'stand_alone':
+                return 0
+            elif state == 'network' or not state:
+                # Generic 'network' state - assign to network 1
+                return 1
+            elif state.startswith('N') and state[1:].isdigit():
+                return int(state[1:]) - 1000
+            else:
+                # Fallback for unexpected format
+                print(f"Warning: Unexpected connectivity state '{state}', treating as stand_alone")
+                return 0
+
         # Determine buildings connected to a district energy system
-        connection_list = [Connection(0, building.identifier) if building.initial_connectivity_state == 'stand_alone'
-                           else Connection(int(building.initial_connectivity_state[1:]) - 1000, building.identifier)
+        connection_list = [Connection(_parse_connectivity_id(building.initial_connectivity_state), building.identifier)
                            for building in self.buildings]
 
         # Create a network of connected buildings
@@ -666,6 +818,11 @@ def main(config: cea.config.Configuration):
     current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
+
+    start_time = time.time()
+    current_domain.load_base_network()
+    end_time = time.time()
+    print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
 
     start_time = time.time()
     current_domain.load_potentials(buildings_to_optimize)
