@@ -114,6 +114,17 @@ class ThermalNetworkMapLayer(MapLayer):
             logger.error(f"Error in _get_network_names: {e}")
             return {"choices": ["No network available"], "default": "No network available"}
 
+    def _get_network_layout_files(self, parameters):
+        network_name = parameters.get('network-name')
+
+        # Handle None, undefined, or empty string
+        if network_name is None or network_name == 'undefined':
+            network_name = ''
+
+        return [
+            self.locator.get_network_layout_shapefile(network_name),
+        ]
+
     # TODO: Add width parameter
     @classmethod
     def expected_parameters(cls):
@@ -156,11 +167,11 @@ class ThermalNetworkMapLayer(MapLayer):
                 file_locator="locator:get_zone_geometry",
             ),
             # Network layout files are optional - layer will return empty data if not available
-            # FileRequirement(
-            #     "Network Layout",
-            #     file_locator="layer:_get_network_layout_files",
-            #     depends_on=["network-type", "network-name"],
-            # ),
+            FileRequirement(
+                "Network Layout",
+                file_locator="layer:_get_network_layout_files",
+                depends_on=["network-name"],
+            ),
         ]
 
     @cache_output
