@@ -61,18 +61,18 @@ class TestScheduleCreation(unittest.TestCase):
         reference_results = json.loads(test_config.get('test_mixed_use_schedules', 'reference_results'))
 
         for schedule in reference_results:
-            if (isinstance(calculated_schedules[schedule][REFERENCE_TIME], str)) and (isinstance(
+            if (isinstance(calculated_schedules[schedule].iloc[REFERENCE_TIME], str)) and (isinstance(
                     reference_results[schedule], str)):
-                self.assertEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                self.assertEqual(calculated_schedules[schedule].iloc[REFERENCE_TIME], reference_results[schedule],
                                  msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
-                                                                                 calculated_schedules[schedule][
+                                                                                 calculated_schedules[schedule].iloc[
                                                                                      REFERENCE_TIME],
                                                                                  reference_results[schedule]))
             else:
-                self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                self.assertAlmostEqual(calculated_schedules[schedule].iloc[REFERENCE_TIME], reference_results[schedule],
                                        places=4,
                                        msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
-                                                                                       calculated_schedules[schedule][
+                                                                                       calculated_schedules[schedule].iloc[
                                                                                            REFERENCE_TIME],
                                                                                        reference_results[schedule]))
 

@@ -887,9 +887,9 @@ class PowerTransformer(PassiveComponent):
                                                       ec_out in pt_high_voltage_side_ecs[transformer])
                                                   or (ec_in in pt_high_voltage_side_ecs[transformer] and
                                                       ec_out in pt_low_voltage_side_ecs[transformer])]))
-                    PowerTransformer.conversion_matrix[ec_in][ec_out] = viable_components
+                    PowerTransformer.conversion_matrix.loc[ec_in, ec_out] = viable_components
                 else:
-                    PowerTransformer.conversion_matrix[ec_in][ec_out] = []
+                    PowerTransformer.conversion_matrix.loc[ec_in, ec_out] = []
 
         PowerTransformer.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
                                               for ec_code, component_models
@@ -1077,9 +1077,9 @@ class HeatExchanger(PassiveComponent):
                                                       ec_out in he_secondary_side_ecs[heat_exchanger])
                                                   or (ec_in in he_secondary_side_ecs[heat_exchanger] and
                                                       ec_out in he_primary_side_ecs[heat_exchanger])]))
-                    HeatExchanger.conversion_matrix[ec_in][ec_out] = viable_components
+                    HeatExchanger.conversion_matrix.loc[ec_in, ec_out] = viable_components
                 else:
-                    HeatExchanger.conversion_matrix[ec_in][ec_out] = []
+                    HeatExchanger.conversion_matrix.loc[ec_in, ec_out] = []
 
         HeatExchanger.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
                                            for ec_code, component_models in HeatExchanger.conversion_matrix.iterrows()}
