@@ -107,7 +107,6 @@ class ThermalNetworkMapLayer(MapLayer):
 
             # Return both choices and default (most recent network)
             choices = [name for name, _ in available_networks]
-            print(choices)
             return {"choices": choices, "default": choices[0]}
 
         except Exception as e:
@@ -123,6 +122,42 @@ class ThermalNetworkMapLayer(MapLayer):
 
         return [
             self.locator.get_network_layout_shapefile(network_name),
+        ]
+
+    def _get_network_results_files(self, parameters):
+        network_type = parameters.get('network-type')
+        network_name = parameters.get('network-name')
+
+        # Handle None, undefined, or empty string
+        if network_name is None or network_name == 'undefined':
+            network_name = ''
+
+        return [
+            self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name),
+        ]
+    
+    def _get_network_nodes_files(self, parameters):
+        network_type = parameters.get('network-type')
+        network_name = parameters.get('network-name')
+
+        # Handle None, undefined, or empty string
+        if network_name is None or network_name == 'undefined':
+            network_name = ''
+
+        return [
+            self.locator.get_network_layout_nodes_shapefile(network_type, network_name),
+        ]
+    
+    def _get_network_edges_files(self, parameters):
+        network_type = parameters.get('network-type')
+        network_name = parameters.get('network-name')
+
+        # Handle None, undefined, or empty string
+        if network_name is None or network_name == 'undefined':
+            network_name = ''
+
+        return [
+            self.locator.get_network_layout_edges_shapefile(network_type, network_name),
         ]
 
     # TODO: Add width parameter
@@ -166,11 +201,29 @@ class ThermalNetworkMapLayer(MapLayer):
                 "Zone Buildings Geometry",
                 file_locator="locator:get_zone_geometry",
             ),
-            # Network layout files are optional - layer will return empty data if not available
             FileRequirement(
                 "Network Layout",
                 file_locator="layer:_get_network_layout_files",
                 depends_on=["network-name"],
+            ),
+            FileRequirement(
+                "Network Nodes",
+                file_locator="layer:_get_network_nodes_files",
+                depends_on=["network-name", "network-type"],
+            ),
+            # Edges files are optional, we can still show potential layout
+            FileRequirement(
+                "Network Edges",
+                file_locator="layer:_get_network_edges_files",
+                depends_on=["network-name", "network-type"],
+                optional=True,
+            ),
+            # Results files are optional, we can still show layout without mass flow data
+            FileRequirement(
+                "Network Results",
+                file_locator="layer:_get_network_results_files",
+                depends_on=["network-name", "network-type"],
+                optional=True,
             ),
         ]
 
