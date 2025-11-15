@@ -34,6 +34,7 @@ class Configuration:
     demand: DemandSection
     costs: CostsSection
     emissions: EmissionsSection
+    district_events: DistrictEventsSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
     dbf_tools: DbfToolsSection
@@ -129,6 +130,8 @@ class Configuration:
     def __getattr__(self, item: Literal["costs"]) -> CostsSection: ...
     @overload
     def __getattr__(self, item: Literal["emissions"]) -> EmissionsSection: ...
+    @overload
+    def __getattr__(self, item: Literal["district_events"]) -> DistrictEventsSection: ...
     @overload
     def __getattr__(self, item: Literal["extract_reference_case"]) -> ExtractReferenceCaseSection: ...
     @overload
@@ -557,6 +560,10 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
+    consider_pv_contributions: bool
+    pv_codes: list[str]
+    pv_offset_allowance: list[str]
+    pv_offset_priority: list[str]
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: str | None
     grid_decarbonise_reference_year: int | None
@@ -568,6 +575,14 @@ class EmissionsSection(Section):
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
+    def __getattr__(self, item: Literal["consider_pv_contributions"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_offset_allowance"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_offset_priority"]) -> list[str]: ...
+    @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["csv_carbon_intensity_column_name"]) -> str | None: ...
@@ -577,6 +592,53 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["grid_decarbonise_target_year"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["grid_decarbonise_target_emission_factor"]) -> float | None: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class DistrictEventsSection(Section):
+    """Typed section for district-events configuration"""
+    year_of_event: int | None
+    archetypes: list[str]
+    wall_u_value: float | None
+    wall_ghg_emission: float | None
+    wall_ghg_biogenic_emission: float | None
+    wall_lifetime: int | None
+    roof_u_value: float | None
+    roof_ghg_emission: float | None
+    roof_ghg_biogenic_emission: float | None
+    roof_lifetime: int | None
+    base_u_value: float | None
+    base_ghg_emission: float | None
+    base_ghg_biogenic_emission: float | None
+    base_lifetime: int | None
+
+    @overload
+    def __getattr__(self, item: Literal["year_of_event"]) -> int | None: ...
+    @overload
+    def __getattr__(self, item: Literal["archetypes"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["wall_u_value"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["wall_ghg_emission"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["wall_ghg_biogenic_emission"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["wall_lifetime"]) -> int | None: ...
+    @overload
+    def __getattr__(self, item: Literal["roof_u_value"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["roof_ghg_emission"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["roof_ghg_biogenic_emission"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["roof_lifetime"]) -> int | None: ...
+    @overload
+    def __getattr__(self, item: Literal["base_u_value"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["base_ghg_emission"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["base_ghg_biogenic_emission"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["base_lifetime"]) -> int | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):
@@ -1597,12 +1659,15 @@ class PlotsLifecycleEmissionsSection(Section):
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
     y_metric_to_plot: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1615,6 +1680,7 @@ class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
     plot_type: str
     y_metric_to_plot: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     net_zero_target_year: int
@@ -1624,6 +1690,8 @@ class PlotsEmissionTimelineSection(Section):
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
