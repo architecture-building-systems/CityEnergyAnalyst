@@ -7,7 +7,7 @@ Ensure this file exists or break the script.
 import cea.inputlocator
 import os
 
-from cea.import_export.result_summary import process_building_summary
+from cea.import_export.result_summary import process_building_summary, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 import pandas as pd
 
 
@@ -27,55 +27,8 @@ demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_endus
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
-lifecycle_emission_metrics = [
-    'operation_heating',
-    'operation_hot_water',
-    'operation_cooling',
-    'operation_electricity',
-    'production_wall_ag',
-    'production_wall_bg',
-    'production_wall_part',
-    'production_win_ag',
-    'production_roof',
-    'production_upperside',
-    'production_underside',
-    'production_floor',
-    'production_base',
-    'production_technical_systems',
-    'biogenic_wall_ag',
-    'biogenic_wall_bg',
-    'biogenic_wall_part',
-    'biogenic_win_ag',
-    'biogenic_roof',
-    'biogenic_upperside',
-    'biogenic_underside',
-    'biogenic_floor',
-    'biogenic_base',
-    'biogenic_technical_systems',
-    'demolition_wall_ag',
-    'demolition_wall_bg',
-    'demolition_wall_part',
-    'demolition_win_ag',
-    'demolition_roof',
-    'demolition_upperside',
-    'demolition_underside',
-    'demolition_floor',
-    'demolition_base',
-    'demolition_technical_systems'
-]
-
-
-operational_emission_metrics = [
-     'heating', 'hot_water', 'cooling', 'electricity', 'heating_NATURALGAS', 'heating_BIOGAS', 'heating_SOLAR',
-     'heating_DRYBIOMASS', 'heating_WETBIOMASS', 'heating_GRID', 'heating_COAL', 'heating_WOOD', 'heating_OIL',
-     'heating_HYDROGEN', 'heating_NONE', 'hot_water_NATURALGAS', 'hot_water_BIOGAS', 'hot_water_SOLAR',
-     'hot_water_DRYBIOMASS', 'hot_water_WETBIOMASS', 'hot_water_GRID', 'hot_water_COAL', 'hot_water_WOOD',
-     'hot_water_OIL', 'hot_water_HYDROGEN', 'hot_water_NONE', 'cooling_NATURALGAS', 'cooling_BIOGAS', 'cooling_SOLAR',
-     'cooling_DRYBIOMASS', 'cooling_WETBIOMASS', 'cooling_GRID', 'cooling_COAL', 'cooling_WOOD', 'cooling_OIL',
-     'cooling_HYDROGEN', 'cooling_NONE', 'electricity_NATURALGAS', 'electricity_BIOGAS', 'electricity_SOLAR',
-     'electricity_DRYBIOMASS', 'electricity_WETBIOMASS', 'electricity_GRID', 'electricity_COAL', 'electricity_WOOD',
-     'electricity_OIL', 'electricity_HYDROGEN', 'electricity_NONE'
-]
+lifecycle_emission_metrics = emission_timeline_yearly_colnames_nounit
+operational_emission_metrics = emission_timeline_hourly_operational_colnames_nounit
 
 
 
@@ -120,6 +73,9 @@ class csv_pointer:
         self.period_end = period_end
         self.buildings = plots_building_filter.buildings
         self.y_metric_to_plot = plot_config.y_metric_to_plot
+        if plot_config.pv_code is not None:
+            pv_code = plot_config.pv_code
+            self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
         self.y_normalised_by = plot_config.y_normalised_by
         self.x = x
         self.x_to_plot = plot_config.x_to_plot
