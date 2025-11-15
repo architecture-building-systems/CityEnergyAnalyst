@@ -557,10 +557,9 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
-    consider_pv_contributions: bool
     pv_codes: list[str]
     pv_offset_allowance: list[str]
-    pv_offset_priority: list[str]
+    pv_credit_grid_export: bool
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: str | None
     grid_decarbonise_reference_year: int | None
@@ -572,13 +571,11 @@ class EmissionsSection(Section):
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["consider_pv_contributions"]) -> bool: ...
-    @overload
     def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["pv_offset_allowance"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["pv_offset_priority"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["pv_credit_grid_export"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload

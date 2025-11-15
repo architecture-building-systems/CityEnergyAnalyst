@@ -100,15 +100,16 @@ def operational_hourly(config: Configuration) -> None:
         if override_grid_emission and grid_emission_final is not None:
             hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
 
-        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
-        allowed_demands: list[str] | None = getattr(emissions_cfg, "pv_offset_allowance", None)
-        allocation_priority: list[str] | None = getattr(emissions_cfg, "pv_offset_priority", None)
         pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
 
         hourly_timeline.calculate_operational_emission()
-        
-        if consider_pv and pv_codes:
-            hourly_timeline.log_pv_contribution(pv_codes, allocation_priority, allowed_demands)
+
+        if not pv_codes:
+            print("No PV panel codes specified in pv-codes parameter. Skipping PV emission calculations.")
+        else:
+            allowed_components: list[str] | None = getattr(emissions_cfg, "pv_offset_allowance", None)
+            credit_export: bool = getattr(emissions_cfg, "pv_credit_grid_export", True)
+            hourly_timeline.log_pv_contribution(pv_codes, allowed_components, credit_export)
 
         hourly_timeline.save_results()
         print(
@@ -154,9 +155,10 @@ def total_yearly(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_embodied_emissions()
-        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
         pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
-        if consider_pv and pv_codes:
+        if not pv_codes:
+            print("No PV panel codes specified in pv-codes parameter. Skipping PV embodied emission calculations.")
+        else:
             timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
         ref_yr: int = getattr(emissions_cfg, 'grid_decarbonise_reference_year', -1)
