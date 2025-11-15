@@ -136,7 +136,8 @@ platforms = [
 ]
 
 [tool.pixi.tasks]
-test = "cea test --type integration"
+unittest = "pytest cea/tests/"
+integration = "cea test --type integration"
 coverage = "pytest --cov=cea cea/tests/"
 
 # Development tasks
