@@ -783,7 +783,7 @@ class NetworkLayoutNameParameter(StringParameter):
         if os.path.exists(network_folder):
             raise ValueError(
                 f"Network '{value}' already exists. "
-                f"Choose a different name or delete the existing folder."
+                f"Choose a different name or delete the existing network."
             )
 
         return value
