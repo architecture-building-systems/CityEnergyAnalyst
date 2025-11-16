@@ -263,6 +263,12 @@ class OperationalHourlyTimeline:
                 if col_name not in self.operational_emission_timeline.columns:
                     pv_columns_to_add.append(col_name)
 
+            # Add demand-type summary columns
+            for demand_type in ['E_sys', 'Qww_sys', 'Qhs_sys', 'Qcs_sys']:
+                col_name = f'{demand_type}_{pv_code}_offset_kgCO2e'
+                if col_name not in self.operational_emission_timeline.columns:
+                    pv_columns_to_add.append(col_name)
+
             # Add all new PV columns at once (more efficient than one by one)
             if pv_columns_to_add:
                 for col in pv_columns_to_add:
@@ -320,6 +326,28 @@ class OperationalHourlyTimeline:
             # Summary offsets
             self.operational_emission_timeline[f'PV_{pv_code}_offset_grid_export_kgCO2e'] = offset_grid_export_kgCO2e
             self.operational_emission_timeline[f'PV_{pv_code}_offset_total_kgCO2e'] = offset_total_kgCO2e
+
+            # Demand-type summary offsets (aggregated by end-use category)
+            # E_sys: Pure electrical loads (7 components)
+            e_sys_components = ['GRID_a', 'GRID_l', 'GRID_v', 'GRID_ve',
+                                'GRID_data', 'GRID_pro', 'GRID_aux']
+            self.operational_emission_timeline[f'E_sys_{pv_code}_offset_kgCO2e'] = sum(
+                component_offsets[comp] for comp in e_sys_components
+            )
+
+            # Qww_sys: Hot water (1 component)
+            self.operational_emission_timeline[f'Qww_sys_{pv_code}_offset_kgCO2e'] = \
+                component_offsets['GRID_ww']
+
+            # Qhs_sys: Space heating (1 component)
+            self.operational_emission_timeline[f'Qhs_sys_{pv_code}_offset_kgCO2e'] = \
+                component_offsets['GRID_hs']
+
+            # Qcs_sys: Cooling (3 components)
+            qcs_components = ['GRID_cs', 'GRID_cdata', 'GRID_cre']
+            self.operational_emission_timeline[f'Qcs_sys_{pv_code}_offset_kgCO2e'] = sum(
+                component_offsets[comp] for comp in qcs_components
+            )
 
             # Store detailed allocation for internal tracking (power in kWh for validation/debugging)
             # This is NOT saved to output CSV, only kept in memory
