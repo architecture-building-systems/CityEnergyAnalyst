@@ -793,10 +793,10 @@ class NetworkLayoutNameParameter(StringParameter):
         Validate and encode network name.
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
-        if not value or value.strip() == '':
+        if not str(value) or str(value).strip() == '':
             raise ValueError("Network name is required. Please provide a valid name.")
 
-        return self._validate_network_name(value)
+        return self._validate_network_name(str(value))
 
     def decode(self, value):
         """Parse and normalize network name from config file"""
