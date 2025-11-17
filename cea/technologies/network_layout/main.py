@@ -574,15 +574,18 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             print(f"  - Using all buildings from zone geometry: {len(list_district_scale_buildings)}")
 
         # Check demand separately for DC and DH
+        district_buildings_set = set(list_district_scale_buildings)
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
-        if 'DC' in list_include_services:
-            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
-            buildings_without_demand_dc = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dc]
-        if 'DH' in list_include_services:
-            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand_dh = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dh]
 
+        for service in list_include_services:
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+            buildings_without_demand = district_buildings_set - buildings_with_demand
+
+            if service == 'DC':
+                buildings_without_demand_dc = list(buildings_without_demand)
+            elif service == 'DH':
+                buildings_without_demand_dh = list(buildings_without_demand)
     else:
         # Use supply.csv to determine district buildings
         buildings_to_validate_dc = []
@@ -596,14 +599,17 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             print("    Reason: 'overwrite-supply-settings' is False")
             print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
 
-        if 'DC' in list_include_services:
-            buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
-            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
-            buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
-        if 'DH' in list_include_services:
-            buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
-            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
+        for service in list_include_services:
+            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type=service)
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+            buildings_without_demand = set(buildings_to_validate) - buildings_with_demand
+
+            if service == 'DC':
+                buildings_to_validate_dc = buildings_to_validate
+                buildings_without_demand_dc = list(buildings_without_demand)
+            elif service == 'DH':
+                buildings_to_validate_dh = buildings_to_validate
+                buildings_without_demand_dh = list(buildings_without_demand)
 
         # Combine DC and DH buildings (union - unique values only)
         list_district_scale_buildings = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
@@ -633,28 +639,31 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Apply consider_only_buildings_with_demand filter if enabled
     if consider_only_buildings_with_demand:
-        # Filter separately for DC and DH services
         buildings_before_filter = len(list_district_scale_buildings)
+        district_buildings_set = set(list_district_scale_buildings)
         buildings_with_any_demand = set()
 
-        if 'DC' in list_include_services:
-            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
-            buildings_for_dc = [b for b in list_district_scale_buildings if b in buildings_with_demand_dc]
-            buildings_filtered_dc = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dc]
-            if buildings_filtered_dc:
-                print(f"  - consider-only-buildings-with-demand (DC): Filtered out {len(buildings_filtered_dc)} building(s) without cooling demand")
-            buildings_with_any_demand.update(buildings_with_demand_dc)
+        # Process each service type
+        for service in list_include_services:
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
 
-        if 'DH' in list_include_services:
-            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
-            buildings_for_dh = [b for b in list_district_scale_buildings if b in buildings_with_demand_dh]
-            buildings_filtered_dh = [b for b in list_district_scale_buildings if b not in buildings_with_demand_dh]
-            if buildings_filtered_dh:
-                print(f"  - consider-only-buildings-with-demand (DH): Filtered out {len(buildings_filtered_dh)} building(s) without heating demand")
-            buildings_with_any_demand.update(buildings_with_demand_dh)
+            # Assign buildings to service-specific list
+            if service == 'DC':
+                buildings_for_dc = list(district_buildings_set & buildings_with_demand)
+            elif service == 'DH':
+                buildings_for_dh = list(district_buildings_set & buildings_with_demand)
 
-        # Keep buildings with demand for at least one service
-        list_district_scale_buildings = [b for b in list_district_scale_buildings if b in buildings_with_any_demand]
+            # Track filtered buildings and print message
+            buildings_filtered = district_buildings_set - buildings_with_demand
+            if buildings_filtered:
+                demand_type = 'cooling' if service == 'DC' else 'heating'
+                print(f"  - consider-only-buildings-with-demand ({service}): Filtered out {len(buildings_filtered)} building(s) without {demand_type} demand")
+
+            # Accumulate buildings with demand for any service
+            buildings_with_any_demand.update(buildings_with_demand)
+
+        # Keep only buildings with demand for at least one service
+        list_district_scale_buildings = list(district_buildings_set & buildings_with_any_demand)
         buildings_after_filter = len(list_district_scale_buildings)
 
         if buildings_before_filter != buildings_after_filter:
@@ -995,14 +1004,18 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
 
         # Check demand separately for DC and DH
+        buildings_to_validate_set = set(buildings_to_validate)
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
-        if 'DC' in list_include_services:
-            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
-            buildings_without_demand_dc = [b for b in buildings_to_validate if b not in buildings_with_demand_dc]
-        if 'DH' in list_include_services:
-            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand_dh = [b for b in buildings_to_validate if b not in buildings_with_demand_dh]
+
+        for service in list_include_services:
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+            buildings_without_demand = buildings_to_validate_set - buildings_with_demand
+
+            if service == 'DC':
+                buildings_without_demand_dc = list(buildings_without_demand)
+            elif service == 'DH':
+                buildings_without_demand_dh = list(buildings_without_demand)
 
     else:
         # Use supply.csv to determine district buildings
@@ -1017,14 +1030,17 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             print("    Reason: 'overwrite-supply-settings' is False")
             print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
 
-        if 'DC' in list_include_services:
-            buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
-            buildings_with_demand_dc = get_buildings_with_demand(locator, network_type='DC')
-            buildings_without_demand_dc = [b for b in buildings_to_validate_dc if b not in buildings_with_demand_dc]
-        if 'DH' in list_include_services:
-            buildings_to_validate_dh = get_buildings_from_supply_csv(locator, network_type='DH')
-            buildings_with_demand_dh = get_buildings_with_demand(locator, network_type='DH')
-            buildings_without_demand_dh = [b for b in buildings_to_validate_dh if b not in buildings_with_demand_dh]
+        for service in list_include_services:
+            buildings_to_validate_service = get_buildings_from_supply_csv(locator, network_type=service)
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+            buildings_without_demand = set(buildings_to_validate_service) - buildings_with_demand
+
+            if service == 'DC':
+                buildings_to_validate_dc = buildings_to_validate_service
+                buildings_without_demand_dc = list(buildings_without_demand)
+            elif service == 'DH':
+                buildings_to_validate_dh = buildings_to_validate_service
+                buildings_without_demand_dh = list(buildings_without_demand)
 
         # Combine DC and DH buildings (union - unique values only)
         buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
