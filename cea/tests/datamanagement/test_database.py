@@ -22,6 +22,11 @@ class TestDatabase(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
+    def _get_db_dict(self):
+        """Helper method to get a database dictionary for testing."""
+        db = CEADatabase.from_locator(locator=self.locator)
+        return db.to_dict()
+
     def test_from_locator(self):
 
         # Initialize the database
@@ -35,10 +40,9 @@ class TestDatabase(unittest.TestCase):
         # Check if the to_dict method returns a dictionary
         db_dict = db.to_dict()
         self.assertIsInstance(db_dict, dict)
-        return db_dict
 
     def test_from_dict(self):
-        db_dict = self.test_from_locator()
+        db_dict = self._get_db_dict()
 
         db = CEADatabase.from_dict(db_dict)
         self.assertIsNotNone(db.archetypes)

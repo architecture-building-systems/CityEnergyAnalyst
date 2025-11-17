@@ -309,7 +309,8 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
         # Snap to nearest point on line
         snapped = nearest_line.interpolate(nearest_line.project(point))
         # Normalize coordinates to prevent floating-point precision issues
-        best_snap = normalize_coords((snapped.x, snapped.y), SHAPEFILE_TOLERANCE)
+        snapped_normalized = normalize_geometry(Point(snapped.x, snapped.y), SHAPEFILE_TOLERANCE)
+        best_snap = (snapped_normalized.x, snapped_normalized.y)
         if lines_to_split.get(nearest_index) is None:
             lines_to_split[nearest_index] = []
         lines_to_split[nearest_index].append(Point(best_snap))
