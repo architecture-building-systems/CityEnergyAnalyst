@@ -446,7 +446,9 @@ class OperationalHourlyTimeline:
         for demand_type in _tech_name_mapping.keys():
             demand_cols = [
                 col for col in self.operational_emission_timeline.columns
-                if col.startswith(f"{demand_type}_") and col.endswith("_kgCO2e") and col != f"{demand_type}_kgCO2e"
+                if col.startswith(f"{demand_type}_") and col.endswith("_kgCO2e")
+                and col != f"{demand_type}_kgCO2e"
+                and "_PV" not in col  # Exclude PV offset columns
             ]
             data[f"{demand_type}_kgCO2e"] = self.operational_emission_timeline[demand_cols].sum(axis=1)
         return pd.DataFrame(data)
