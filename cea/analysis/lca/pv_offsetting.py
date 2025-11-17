@@ -140,17 +140,18 @@ def _get_available_pv_panels(locator, building):
     """
     import os
 
-    pv_folder = os.path.join(locator.get_potentials_solar_folder(), building)
+    pv_folder = locator.solar_potential_folder_PV()
 
     if not os.path.exists(pv_folder):
         return []
 
-    # Find all PV result files
+    # Find all PV result files for this building
+    # Format: {building}_{panel_type}.csv (e.g., B1000_PV1.csv)
     pv_codes = []
     for filename in os.listdir(pv_folder):
-        if filename.startswith(building + '_') and filename.endswith('_PV.csv'):
-            # Extract PV code from filename: B001_PV1_PV.csv -> PV1
-            pv_code = filename.replace(building + '_', '').replace('_PV.csv', '')
+        if filename.startswith(building + '_') and filename.endswith('.csv'):
+            # Extract panel type from filename: B1000_PV1.csv -> PV1
+            pv_code = filename.replace(building + '_', '').replace('.csv', '')
             pv_codes.append(pv_code)
 
     return sorted(pv_codes)
