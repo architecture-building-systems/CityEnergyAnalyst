@@ -422,29 +422,62 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
     return network_gdf
 
 
-def near_analysis(building_centroids, street_network: gdf):
-    # Get the nearest edge for each building centroid
-    nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
-    nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)  # reset index so vectorization works
-
-    # Find length along line that is closest to the point (project) and get interpolated point on the line (interpolate)
-    # IMPORTANT: interpolate() returns raw float coordinates, so normalize immediately
-    nearest_points_raw = nearest_lines.interpolate(nearest_lines.project(building_centroids))
-
-    # Normalize all points to consistent precision to prevent floating-point mismatches
+def near_analysis(building_centroids, street_network: gdf, k: int = 1):
+    """
+    Find k-nearest street edges for each building centroid.
+    
+    :param building_centroids: GeoDataFrame of building centroids
+    :param street_network: GeoDataFrame of street network edges
+    :param k: Number of nearest edges to find per building (default 1)
+    :return: GeoDataFrame with building_idx, street_idx, and connection point geometry
+    """
     from cea.technologies.network_layout.graph_utils import normalize_geometry
-    nearest_points_normalized = [normalize_geometry(pt, SHAPEFILE_TOLERANCE) for pt in nearest_points_raw]
+    
+    if k == 1:
+        # Original single-nearest behavior for backward compatibility
+        nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
+        nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)
+        nearest_points_raw = nearest_lines.interpolate(nearest_lines.project(building_centroids))
+        nearest_points_normalized = [normalize_geometry(pt, SHAPEFILE_TOLERANCE) for pt in nearest_points_raw]
+        df = gdf({"idx": nearest_indexes, "building_idx": building_centroids.index}, 
+                 geometry=nearest_points_normalized, crs=street_network.crs)
+        return df
+    else:
+        # K-nearest behavior: find k nearest edges per building
+        results = []
+        for bldg_idx, bldg_row in building_centroids.iterrows():
+            bldg_geom = bldg_row.geometry
+            
+            # Calculate distances to all street edges
+            distances = street_network.distance(bldg_geom)
+            
+            # Get k nearest (or all if fewer than k streets exist)
+            k_nearest_count = min(k, len(street_network))
+            k_nearest_indices = distances.nsmallest(k_nearest_count).index.tolist()
+            
+            # For each of the k nearest streets, find the connection point
+            for street_idx in k_nearest_indices:
+                street_line = street_network.loc[street_idx].geometry
+                # Project building point onto street line and interpolate
+                connection_point_raw = street_line.interpolate(street_line.project(bldg_geom))
+                connection_point_normalized = normalize_geometry(connection_point_raw, SHAPEFILE_TOLERANCE)
+                
+                results.append({
+                    "building_idx": bldg_idx,
+                    "idx": street_idx,
+                    "geometry": connection_point_normalized
+                })
+        
+        df = gdf(results, crs=street_network.crs)
+        return df
 
-    df = gdf({"idx": nearest_indexes}, geometry=nearest_points_normalized, crs=street_network.crs)
-    return df
 
-
-def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
+def create_terminals(building_centroids: gdf, street_network: gdf, connection_candidates: int = 1) -> gdf:
     """
     Create terminal connection lines from building centroids to nearest points on street network.
 
     This function implements robust coordinate normalization to prevent micro-precision disconnections:
-    1. Finds nearest point on street network for each building (via near_analysis)
+    1. Finds k-nearest points on street network for each building (via near_analysis)
     2. Normalizes all coordinates to SHAPEFILE_TOLERANCE precision (6 decimal places)
     3. Creates LineString geometries connecting building → street with normalized coords
     4. Splits street lines at terminal junction points using normalized split points
@@ -454,24 +487,35 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     - Uses exact normalized coordinate comparison instead of distance thresholds
     - Ensures all coordinates are consistently rounded before LineString creation
     - Validates coordinate normalization and checks for micro-disconnections
+    - Supports k-nearest connections for better network optimization (when k > 1)
 
     :param building_centroids: GeoDataFrame with building centroids and 'name' column
     :type building_centroids: gdf
     :param street_network: GeoDataFrame with street network LineStrings (already corrected)
     :type street_network: gdf
+    :param connection_candidates: Number of nearest street edges to connect each building to (default 1)
+    :type connection_candidates: int
     :return: Combined network (street + building terminals) with all coordinates normalized
     :rtype: gdf
     """
-    # Find nearest point on street network for each building centroid
+    # Find k-nearest points on street network for each building centroid
     # Note: near_analysis() now returns normalized points (after interpolate())
-    near_points = near_analysis(building_centroids, street_network)
+    near_points = near_analysis(building_centroids, street_network, k=connection_candidates)
 
     # Create terminal lines using normalized coordinates
     # CRITICAL: Use normalized coordinates to prevent floating-point precision mismatches
-    # Each line connects: building_centroid → nearest_street_point
+    # Each line connects: building_centroid → k-nearest_street_points
+    # When k > 1, creates multiple connection options per building for Steiner tree optimization
     new_lines = []
     lines_to_split = {}
-    for bldg_pt, street_pt, street_idx in zip(building_centroids.geometry, near_points.geometry, near_points.idx):
+    
+    # Iterate through all near_points (which may include k candidates per building)
+    for idx, row in near_points.iterrows():
+        bldg_idx = row['building_idx']
+        street_idx = row['idx']
+        street_pt = row.geometry
+        bldg_pt = building_centroids.loc[bldg_idx].geometry
+        
         # Normalize both endpoints before creating LineString
         bldg_coord = normalize_coords([bldg_pt.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
         street_coord = normalize_coords([street_pt.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
@@ -533,9 +577,19 @@ def create_terminals(building_centroids: gdf, street_network: gdf) -> gdf:
     # Create GeoDataFrame with all network lines (streets + building terminals)
     combined_network = gdf(geometry=new_lines, crs=street_network.crs)
 
-    # Final cleaning: snap near-miss endpoints and split at intersections
-    combined_network = snap_endpoints_to_nearby_lines(combined_network, SNAP_TOLERANCE)
-    combined_network = split_streets_at_intersections(combined_network)
+    # Important: Do NOT run global snap/union here.
+    # Running topology operations (snap/intersection split) on the combined set of
+    # street + terminal lines can unintentionally merge terminal lines with street
+    # segments across multiple buildings, producing long segments with building-to-
+    # building endpoints. Those become direct building-to-building edges in the graph.
+    #
+    # Street network was already cleaned in _prepare_network_inputs(...) and each
+    # street line was explicitly split at terminal junctions above. Keeping the
+    # terminal lines separate here preserves the intended topology:
+    #  - Buildings connect to streets via leaf terminal edges only
+    #  - No direct building-to-building edges are created by global merges
+    # If further cleaning is needed, it must be applied to the street network
+    # BEFORE adding terminals (already done upstream), not after combining.
 
     return combined_network
 
@@ -627,6 +681,7 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
 def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
+    connection_candidates: int = 1,
 ):
     """
     Create connectivity network graph preserving street geometries and building terminal metadata.
@@ -648,6 +703,8 @@ def calc_connectivity_network_with_geometry(
 
     :param streets_network_df: GeoDataFrame with street network geometries
     :param building_centroids_df: GeoDataFrame with building centroids
+    :param connection_candidates: Number of nearest street edges to connect each building to.
+        Default is 1 (greedy nearest). Values > 1 enable k-nearest optimization with Kou algorithm.
     :return: NetworkX graph with preserved geometries and building terminal metadata
     :raises ValueError: If network has disconnected components after all corrections applied
     """
@@ -660,8 +717,11 @@ def calc_connectivity_network_with_geometry(
     )
 
     # Create terminals from building centroids
-    print("\nCreating building terminal connections...")
-    streets_network_df = create_terminals(building_centroids_df, streets_network_df)
+    if connection_candidates > 1:
+        print(f"\nCreating building terminal connections (k={connection_candidates} nearest per building)...")
+    else:
+        print("\nCreating building terminal connections...")
+    streets_network_df = create_terminals(building_centroids_df, streets_network_df, connection_candidates=connection_candidates)
 
     # Convert to graph with geometry preservation
     graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)

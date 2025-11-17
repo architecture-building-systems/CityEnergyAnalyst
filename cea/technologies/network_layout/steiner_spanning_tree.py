@@ -74,7 +74,8 @@ def calc_steiner_spanning_tree(crs_projected,
                                disconnected_building_names,
                                type_mat_default=TYPE_MAT_DEFAULT,
                                pipe_diameter_default=PIPE_DIAMETER_DEFAULT,
-                               method: str = SteinerAlgorithm.Kou):
+                               method: str = SteinerAlgorithm.Kou,
+                               connection_candidates: int = 1):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
@@ -93,9 +94,18 @@ def calc_steiner_spanning_tree(crs_projected,
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
     :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
+    :param int connection_candidates: Number of nearest street connection points to consider per building.
+        Default is 1 (greedy nearest). Values of 3-5 enable better optimization via Kou's metric closure.
+        Only works with Kou algorithm - Mehlhorn will use greedy nearest regardless.
     :return: ``(mst_edges, mst_nodes)``
     """
     steiner_algorithm = SteinerAlgorithm(method)
+
+    # Validate connection_candidates with Mehlhorn algorithm
+    if connection_candidates > 1 and steiner_algorithm == SteinerAlgorithm.Mehlhorn:
+        print("  ⚠ Warning: connection_candidates > 1 requires Kou algorithm for optimization.")
+        print("             Mehlhorn does not compute metric closure. Using greedy nearest connection.")
+        connection_candidates = 1
 
     # TODO: Ensure CRS is used properly throughout the function (currently not applied)
     # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
@@ -138,11 +148,97 @@ def calc_steiner_spanning_tree(crs_projected,
     else:
         # Calculate steiner spanning tree for multi-building network
         try:
-            steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
-            mst_non_directed = nx.minimum_spanning_tree(steiner_result)
+            # Note: steiner_tree() already returns a tree (both Kou and Mehlhorn algorithms)
+            # No need for additional MST computation
+            mst_non_directed = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
         except Exception as e:
             raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
                             'This is an unexpected error. Please report this issue with your streets.shp file.') from e
+
+    # Enforce constraints:
+    # 1) Building terminals should be leaves (degree == 1)
+    # 2) No direct building-to-building edges (must route through street network)
+    def _enforce_terminal_leafs_and_no_b2b(full_graph: nx.Graph, steiner_graph: nx.Graph, terminals: set[tuple]) -> nx.Graph:
+        sg = steiner_graph.copy()
+
+        # Helper to add a path from full_graph into sg
+        def _add_path_edges(path_nodes):
+            for u, v in zip(path_nodes[:-1], path_nodes[1:]):
+                if sg.has_edge(u, v):
+                    continue
+                data = full_graph.get_edge_data(u, v, default={})
+                # Fallback weight if missing
+                weight = data.get('weight', LineString([u, v]).length)
+                geom = data.get('geometry', LineString([u, v]))
+                sg.add_edge(u, v, weight=weight, geometry=geom)
+
+        terminals_set = set(tuple(t) for t in terminals)
+
+        # 2) Remove direct building-to-building edges, replace with street path
+        b2b_edges = [(u, v) for u, v in sg.edges() if u in terminals_set and v in terminals_set]
+        for u, v in b2b_edges:
+            # Compute shortest path between u and v in the full graph, allowing terminals only as endpoints
+            G2 = full_graph.copy()
+            # Remove all other terminals to prevent passing through buildings
+            for t in terminals_set - {u, v}:
+                if G2.has_node(t):
+                    G2.remove_node(t)
+            try:
+                path = nx.shortest_path(G2, source=u, target=v, weight='weight')
+            except nx.NetworkXNoPath:
+                # If no alternate path, keep edge but warn (shouldn't happen with proper streets)
+                print(f"  ⚠ Warning: No street path found to replace building-to-building edge {u}–{v}")
+                continue
+            # Replace edge with path along streets
+            if sg.has_edge(u, v):
+                sg.remove_edge(u, v)
+            _add_path_edges(path)
+
+        # 1) Enforce terminal nodes as leaves
+        for t in list(terminals_set):
+            if not sg.has_node(t):
+                continue
+            # While degree > 1, keep shortest incident edge and reroute others via streets
+            while True:
+                neighbours = list(sg.neighbors(t))
+                if len(neighbours) <= 1:
+                    break
+                # Choose the neighbour connected by the smallest weight edge
+                def edge_w(nbr):
+                    data = sg.get_edge_data(t, nbr, default={})
+                    return data.get('weight', LineString([t, nbr]).length)
+                keep = min(neighbours, key=edge_w)
+                to_reroute = [n for n in neighbours if n != keep]
+
+                # Reroute each extra neighbour to 'keep' via streets without passing through building terminals
+                for n in to_reroute:
+                    G2 = full_graph.copy()
+                    for other in terminals_set - {t}:
+                        if G2.has_node(other):
+                            G2.remove_node(other)
+                    # Remove the building node itself to avoid using it as transit
+                    if G2.has_node(t):
+                        G2.remove_node(t)
+                    try:
+                        path = nx.shortest_path(G2, source=n, target=keep, weight='weight')
+                    except nx.NetworkXNoPath:
+                        # If no path, skip reroute (keep original connection to maintain connectivity)
+                        print(f"  ⚠ Warning: Unable to reroute extra terminal edge from {t} to {n}")
+                        continue
+                    # Add reroute path and remove direct building edge
+                    _add_path_edges(path)
+                    if sg.has_edge(t, n):
+                        sg.remove_edge(t, n)
+
+        # Finalize: return a minimum spanning tree to remove any cycles introduced by rerouting
+        # Use weight attribute to keep distances consistent
+        if sg.number_of_edges() > 0:
+            sg = nx.minimum_spanning_tree(sg, weight='weight')
+        return sg
+
+    # Apply enforcement using the full potential graph (G) and terminal set
+    terminals_set = set(terminal_nodes_coordinates)
+    mst_non_directed = _enforce_terminal_leafs_and_no_b2b(G, mst_non_directed, terminals_set)
 
     mst_nodes = gdf([{
         "geometry": Point(coords),

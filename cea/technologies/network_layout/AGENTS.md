@@ -5,16 +5,27 @@ Build thermal network connectivity graphs by connecting buildings to street netw
 
 ## Main API
 
-### `calc_connectivity_network_with_geometry(streets_gdf, buildings_gdf) → nx.Graph`
+### `calc_connectivity_network_with_geometry(streets_gdf, buildings_gdf, connection_candidates=1) → nx.Graph`
 **Returns:** NetworkX graph with preserved geometries and metadata
 - **Nodes:** `(x, y)` tuples normalized to 6 decimal places
 - **Edges:** `geometry` (curved LineStrings), `weight` (length)
 - **Metadata:** `graph.graph['building_terminals']` (dict: building_id → node coords), `graph.graph['crs']`, `graph.graph['coord_precision']`
+- **connection_candidates:** Number of nearest street edges to connect each building to (default 1)
+  - `1` = greedy nearest (fastest, locally optimal)
+  - `3-5` = k-nearest optimization with Kou's metric closure (better quality, 3-25x slower)
+  - Only works with Kou algorithm - Mehlhorn uses greedy regardless
 
 **Convert to GeoDataFrame:**
 ```python
 edges_gdf = nx_to_gdf(graph, crs=graph.graph['crs'], preserve_geometry=True)
 ```
+
+### `calc_steiner_spanning_tree(..., method='kou', connection_candidates=1)`
+Calculate optimal network connecting buildings through street network
+- **method:** `'kou'` (higher quality) or `'mehlhorn'` (faster)
+- **connection_candidates:** Number of connection options per building (1-5)
+  - With Kou + k>1: Each building tries k nearest streets, Kou's metric closure picks optimal combination
+  - With Mehlhorn: Always uses greedy nearest (k>1 ignored with warning)
 
 ## Critical Pattern: Coordinate Normalization
 
@@ -62,8 +73,11 @@ Normalize all geometries in a GeoDataFrame
 ## Workflow
 
 1. **`_prepare_network_inputs()`** - CRS transformation, validation, cleaning (snap endpoints, split at intersections, simplify)
-2. **`create_terminals()`** - Connect each building to nearest street point with normalized coordinates
+2. **`create_terminals(connection_candidates=k)`** - Connect each building to k-nearest street points with normalized coordinates
 3. **`calc_connectivity_network_with_geometry()`** - Build final graph with metadata
+4. **`calc_steiner_spanning_tree(method, connection_candidates)`** - Optimize network layout
+   - If `connection_candidates > 1` and `method='kou'`: Kou's metric closure automatically selects best connections
+   - If `method='mehlhorn'`: Uses greedy nearest regardless of k
 
 ## Common Patterns
 

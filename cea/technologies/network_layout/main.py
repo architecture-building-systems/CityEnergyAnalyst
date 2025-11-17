@@ -546,6 +546,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     connected_buildings_config = config.network_layout.connected_buildings
     list_include_services = config.network_layout.include_services
     consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
+    connection_candidates = config.network_layout.connection_candidates
     allow_looped_networks = False
     steiner_algorithm = network_layout.algorithm
 
@@ -745,9 +746,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         )
 
         # Calculate potential network graph
+        # Use connection_candidates for k-nearest optimization (default 1 for greedy nearest)
         potential_network_graph = calc_connectivity_network_with_geometry(
             street_network_df,
             building_centroids_df,
+            connection_candidates=connection_candidates,
         )
 
         # Convert graph to GeoDataFrame for Steiner tree algorithm
@@ -777,7 +780,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                                    allow_looped_networks,
                                    None,  # None = skip plant creation (caller will add plants manually)
                                    disconnected_building_names,
-                                   steiner_algorithm)
+                                   steiner_algorithm,
+                                   connection_candidates=connection_candidates)
 
         # Read generated nodes and edges
         nodes_for_type = gpd.read_file(temp_nodes_path)

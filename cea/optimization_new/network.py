@@ -453,8 +453,9 @@ class Network(object):
 
         # create a potential network graph with orthogonal connections between buildings and their closest street
         # This returns a NetworkX graph with preserved geometries and building terminal metadata
+        # Default connection_candidates=1 for optimization (can be made configurable later if needed)
         cls._domain_potential_network_graph = calc_connectivity_network_with_geometry(
-            streets_network_df, buildings_df
+            streets_network_df, buildings_df, connection_candidates=1
         )
 
         # store projected coordinate reference system of network
