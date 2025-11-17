@@ -1,4 +1,5 @@
 import os
+import shutil
 from dataclasses import dataclass, field
 
 import geopandas as gpd
@@ -1204,7 +1205,9 @@ def main(config: cea.config.Configuration):
             auto_layout_network(config, network_layout, locator, cooling_plant_building=cooling_plant_building, heating_plant_building=heating_plant_building)
     except Exception:
         # Cleanup partially created network folder on error
-        os.rmdir(locator.get_thermal_network_folder_network_name_folder(network_layout.network_name))
+        network_folder = locator.get_thermal_network_folder_network_name_folder(network_layout.network_name)
+        if os.path.exists(network_folder):
+            shutil.rmtree(network_folder)
         raise
 
 
