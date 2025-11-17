@@ -320,6 +320,10 @@ Life Cycle Analysis:
     input-files:
       - [get_zone_geometry]
       - [get_demand_results_file, building_name]
+<<<<<<< Updated upstream
+=======
+      - [PV_results, building_name, panel_type]
+>>>>>>> Stashed changes
 
   - name: system-costs
     label: Energy Supply System Costs
