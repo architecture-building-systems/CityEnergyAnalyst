@@ -27,6 +27,7 @@
 - **Focus on patterns, not details** - What to do, not why it exists
 - **Scannable structure** - Use headers, bullets, and short paragraphs
 - **Reference, don't explain** - Link to related files instead of duplicating information
+- **No emoticons in code** - Never add emoji or emoticons to code files, comments, or print statements
 
 **Good example structure**:
 ```markdown
@@ -135,6 +136,7 @@ cea.api.demand(scenario='/path/to/scenario')
 4. **Multiprocessing**: Check `config.multiprocessing` before using `Pool`
 5. **Scenario Structure**: Respect `/inputs/`, `/outputs/` conventions
 6. **Config Type Hints**: After modifying `config.py`, regenerate `config.pyi` by running `pixi run python cea/utilities/config_type_generator.py`
+7. **F-strings**: Only use f-strings when string contains variables (e.g., `f"Value: {x}"`). Use regular strings otherwise (e.g., `"No variables"`) to avoid linter warnings
 
 ## Module Documentation
 
