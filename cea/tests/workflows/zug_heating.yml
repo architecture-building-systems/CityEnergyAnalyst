@@ -40,9 +40,11 @@
 - script: photovoltaic-thermal
 - script: network-layout
   parameters:
+    network-name: baseline
     network-type: DH
 - script: thermal-network
   parameters:
+    network-name: baseline
     network-type: DH
     network-model: detailed
     stop-t: 744 # run for one month
