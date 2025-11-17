@@ -1167,24 +1167,29 @@ def main(config: cea.config.Configuration):
     nodes_shp = config.network_layout.nodes_shp_path
     geojson_path = config.network_layout.network_geojson_path
 
-    # Generate network layout from user-defined files if provided
-    if edges_shp or nodes_shp or geojson_path:
-        print("\n" + "=" * 80)
-        print("USER-DEFINED NETWORK LAYOUT")
-        print("=" * 80 + "\n")
+    try:
+        # Generate network layout from user-defined files if provided
+        if edges_shp or nodes_shp or geojson_path:
+            print("\n" + "=" * 80)
+            print("USER-DEFINED NETWORK LAYOUT")
+            print("=" * 80 + "\n")
 
-        process_user_defined_network(
-            config, locator, network_layout,
-            edges_shp, nodes_shp, geojson_path,
-            cooling_plant_building, heating_plant_building
-        )
+            process_user_defined_network(
+                config, locator, network_layout,
+                edges_shp, nodes_shp, geojson_path,
+                cooling_plant_building, heating_plant_building
+            )
 
-    # Generate network layout using Steiner tree (current behavior or fallback)
-    else:
-        print("\n" + "=" * 80)
-        print("AUTOMATIC NETWORK LAYOUT GENERATION")
-        print("=" * 80 + "\n")
-        auto_layout_network(config, network_layout, locator, cooling_plant_building=cooling_plant_building, heating_plant_building=heating_plant_building)
+        # Generate network layout using Steiner tree (current behavior or fallback)
+        else:
+            print("\n" + "=" * 80)
+            print("AUTOMATIC NETWORK LAYOUT GENERATION")
+            print("=" * 80 + "\n")
+            auto_layout_network(config, network_layout, locator, cooling_plant_building=cooling_plant_building, heating_plant_building=heating_plant_building)
+    except Exception:
+        # Cleanup partially created network folder on error
+        os.rmdir(locator.get_thermal_network_folder_network_name_folder(network_layout.network_name))
+        raise
 
 
 if __name__ == '__main__':
