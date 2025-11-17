@@ -81,9 +81,49 @@ def _load_grid_emission_intensity_override(config: Configuration):
 
 
 def operational_hourly(config: Configuration) -> None:
+    import os
     locator = InputLocator(config.scenario)
     emissions_cfg = getattr(config, 'emissions')
     buildings = list(getattr(emissions_cfg, 'buildings', []))
+
+    # Check PV requirements BEFORE processing any buildings
+    consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+    if consider_pv:
+        pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
+        # Handle both string (CLI) and list (GUI) input
+        if isinstance(pv_codes_param, list):
+            pv_codes = pv_codes_param if pv_codes_param else None
+        elif isinstance(pv_codes_param, str):
+            pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
+        else:
+            pv_codes = None
+
+        if pv_codes and buildings:
+            # Check if PV files exist for the first building (representative check)
+            first_building = buildings[0]
+            from cea.analysis.lca.pv_offsetting import calculate_net_energy
+            try:
+                net_energy_check = calculate_net_energy(locator, first_building, include_pv=True, pv_codes=pv_codes)
+                pv_codes_available = net_energy_check['PV_codes']
+            except:
+                pv_codes_available = []
+
+            # Check which panels are missing
+            missing_panels = []
+            for pv_code in (pv_codes if pv_codes else []):
+                pv_path = locator.PV_results(first_building, pv_code)
+                if not os.path.exists(pv_path):
+                    missing_panels.append(pv_code)
+
+            if missing_panels:
+                missing_list = ', '.join(missing_panels)
+                error_msg = (
+                    f"PV electricity results missing for panel type(s): {missing_list}. "
+                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                )
+                print(f"ERROR: {error_msg}")
+                raise FileNotFoundError(error_msg)
+
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
@@ -100,19 +140,9 @@ def operational_hourly(config: Configuration) -> None:
         if override_grid_emission and grid_emission_final is not None:
             hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
 
-        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
-
         hourly_timeline.calculate_operational_emission()
 
         if consider_pv:
-            pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
-            # Handle both string (CLI) and list (GUI) input
-            if isinstance(pv_codes_param, list):
-                pv_codes = pv_codes_param if pv_codes_param else None
-            elif isinstance(pv_codes_param, str):
-                pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
-            else:
-                pv_codes = None
             hourly_timeline.apply_pv_offsetting(pv_codes)
 
         hourly_timeline.save_results()
@@ -133,6 +163,7 @@ def operational_hourly(config: Configuration) -> None:
 
 
 def total_yearly(config: Configuration) -> None:
+    import os
     locator = InputLocator(scenario=config.scenario)
     emissions_cfg = getattr(config, 'emissions')
     buildings = list(getattr(emissions_cfg, 'buildings', []))
@@ -142,6 +173,34 @@ def total_yearly(config: Configuration) -> None:
     else:
         # Coerce to int if provided as string
         end_year = int(year_end_val)
+
+    # Check PV requirements BEFORE processing any buildings
+    consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+    pv_codes: list[str] = []
+    if consider_pv:
+        pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
+        # Handle both string (CLI) and list (GUI) input
+        if isinstance(pv_codes_param, list):
+            pv_codes = pv_codes_param if pv_codes_param else []
+        elif isinstance(pv_codes_param, str):
+            pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else []
+
+        if pv_codes and buildings:
+            # Check which PV_total_buildings files are missing
+            missing_panels = []
+            for pv_code in pv_codes:
+                pv_total_path = locator.PV_total_buildings(pv_code)
+                if not os.path.exists(pv_total_path):
+                    missing_panels.append(pv_code)
+
+            if missing_panels:
+                missing_list = ', '.join(missing_panels)
+                error_msg = (
+                    f"PV electricity results missing for panel type(s): {missing_list}. "
+                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                )
+                print(f"ERROR: {error_msg}")
+                raise FileNotFoundError(error_msg)
 
     envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()
@@ -159,9 +218,7 @@ def total_yearly(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_embodied_emissions()
-        consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
         if consider_pv:
-            pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
             timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
         ref_yr: int = getattr(emissions_cfg, 'grid_decarbonise_reference_year', -1)

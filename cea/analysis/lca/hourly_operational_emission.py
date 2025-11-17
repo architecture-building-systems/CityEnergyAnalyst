@@ -380,7 +380,13 @@ class OperationalHourlyTimeline:
     def _load_pv_hourly(self, pv_code: str) -> pd.DataFrame:
         pv_results_path = self.locator.PV_results(self.bpr.name, pv_code)
         if not os.path.exists(pv_results_path):
-            raise FileNotFoundError(f"PV results file not found for {pv_code} at {pv_results_path}.")
+            error_msg = (
+                f"PV electricity results missing for building {self.bpr.name}, panel type: {pv_code}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results. "
+                f"Expected file: {pv_results_path}"
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
         df = pd.read_csv(pv_results_path, index_col=None)
         if len(df) != HOURS_IN_YEAR:
             raise ValueError(
@@ -395,10 +401,11 @@ class OperationalHourlyTimeline:
         """
         Apply simple net metering PV offsetting to GRID emissions.
 
-        Uses shared pv_offsetting utility: NetGRID = GRID_demand - PV_total
+        For each PV panel, calculates:
+        - PV_{code}_GRID_offset_kgCO2e: Avoided emissions from on-site use (negative)
+        - PV_{code}_GRID_export_kgCO2e: Avoided emissions from grid export (negative)
 
-        This replaces the complex component-level allocation with simple net metering.
-        Net grid can be negative (building as net exporter).
+        Both columns are negative values representing emission reductions.
 
         Parameters
         ----------
@@ -408,7 +415,7 @@ class OperationalHourlyTimeline:
         """
         from cea.analysis.lca.pv_offsetting import calculate_net_energy
 
-        # Get annual net energy (this is just for logging, we'll do hourly below)
+        # Get annual net energy (this is just for logging)
         net_energy_annual = calculate_net_energy(
             self.locator,
             self.bpr.name,
@@ -425,40 +432,66 @@ class OperationalHourlyTimeline:
             )
             return
 
-        # Calculate hourly PV generation (sum across all selected panels)
-        pv_generation_hourly = np.zeros(HOURS_IN_YEAR)
+        # Check which panels actually exist before processing
+        missing_panels = []
+        available_panels = []
         for pv_code in pv_codes_used:
-            pv_df = self._load_pv_hourly(pv_code)
-            pv_generation_hourly += pv_df['E_PV_gen_kWh'].to_numpy(dtype=float)
+            pv_path = self.locator.PV_results(self.bpr.name, pv_code)
+            if os.path.exists(pv_path):
+                available_panels.append(pv_code)
+            else:
+                missing_panels.append(pv_code)
+
+        if missing_panels:
+            missing_list = ', '.join(missing_panels)
+            error_msg = (
+                f"PV electricity results missing for building {self.bpr.name}, panel type(s): {missing_list}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
 
         # Get total GRID demand hourly
+        grid_intensity = self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
         grid_demand_hourly = np.zeros(HOURS_IN_YEAR)
         for comp in _GRID_COMPONENTS:
             col_name = f'{comp}_kgCO2e'
             if col_name in self.operational_emission_timeline.columns:
                 # Convert emissions back to kWh using grid intensity
-                grid_intensity = self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
                 grid_demand_hourly += self.operational_emission_timeline[col_name].to_numpy(dtype=float) / grid_intensity
 
-        # Calculate net grid hourly
-        net_grid_hourly = grid_demand_hourly - pv_generation_hourly
+        # Track remaining grid demand for sequential allocation
+        remaining_grid_demand = grid_demand_hourly.copy()
 
-        # Calculate net grid emissions
-        grid_intensity = self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
-        net_grid_emissions_hourly = net_grid_hourly * grid_intensity
+        # Process each PV panel
+        for pv_code in available_panels:
+            pv_df = self._load_pv_hourly(pv_code)
+            pv_generation_hourly = pv_df['E_PV_gen_kWh'].to_numpy(dtype=float)
 
-        # Add columns to timeline
-        self.operational_emission_timeline['NetGRID_kgCO2e'] = net_grid_emissions_hourly
-        self.operational_emission_timeline['PV_generation_kWh'] = pv_generation_hourly
-        self.operational_emission_timeline['PV_offset_kgCO2e'] = pv_generation_hourly * grid_intensity
+            # Calculate offset (on-site use) and export for this panel
+            # Offset = min(PV generation, remaining grid demand)
+            # Export = PV generation - offset
+            offset_hourly = np.minimum(pv_generation_hourly, remaining_grid_demand)
+            export_hourly = pv_generation_hourly - offset_hourly
 
-        # Log summary
-        total_pv_gen = pv_generation_hourly.sum()
-        total_grid_demand = grid_demand_hourly.sum()
-        total_net_grid = net_grid_hourly.sum()
-        print(f"  PV offsetting: {total_pv_gen:.0f} kWh generated, "
-              f"{total_grid_demand:.0f} kWh grid demand, "
-              f"{total_net_grid:.0f} kWh net grid (can be negative)")
+            # Update remaining grid demand
+            remaining_grid_demand -= offset_hourly
+
+            # Convert to emissions (both negative = emission reductions)
+            offset_emissions = -offset_hourly * grid_intensity
+            export_emissions = -export_hourly * grid_intensity
+
+            # Add columns to timeline
+            self.operational_emission_timeline[f'PV_{pv_code}_GRID_offset_kgCO2e'] = offset_emissions
+            self.operational_emission_timeline[f'PV_{pv_code}_GRID_export_kgCO2e'] = export_emissions
+
+            # Log summary for this panel
+            total_offset = offset_hourly.sum()
+            total_export = export_hourly.sum()
+            total_offset_emissions = offset_emissions.sum()
+            total_export_emissions = export_emissions.sum()
+            print(f"  PV panel {pv_code}: {total_offset:.0f} kWh offset on-site ({total_offset_emissions:.0f} kgCO2e avoided), "
+                  f"{total_export:.0f} kWh exported to grid ({total_export_emissions:.0f} kgCO2e avoided)")
 
     def calculate_operational_emission(self) -> None:
         """

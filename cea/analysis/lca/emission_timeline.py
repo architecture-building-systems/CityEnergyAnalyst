@@ -206,15 +206,18 @@ class BuildingEmissionTimeline:
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
         """Initialize the PV system in the building emission timeline.
-        It reads the area of each PV type from the building properties, 
+        It reads the area of each PV type from the building properties,
         and adds the corresponding columns to the timeline DataFrame.
+
+        Note: PV file existence is already checked in total_yearly() before calling this method.
         """
         self.check_demolished()
         pv_db = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS"), index_col='code')
+
         for pv_code in pv_codes:
             if pv_code not in pv_db.index:
                 raise ValueError(f"PV type {pv_code} not found in the PV database.")
-            
+
             district_pv_area = pd.read_csv(self.locator.PV_total_buildings(pv_code), index_col='name') # indexed with building name
             pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
             lifetime = cast(int, pv_db.loc[pv_code, 'LT_yr'])
