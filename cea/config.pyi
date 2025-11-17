@@ -1128,7 +1128,6 @@ class OptimizationSection(Section):
 
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
-    network_type: str
     buildings: list[str]
     cooling_components: list[str]
     heating_components: list[str]
@@ -1160,10 +1159,7 @@ class OptimizationNewSection(Section):
     equivalent_length_factor: float
     peak_load_percentage: float
     network_lifetime: float
-    network_name: str | None
 
-    @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
@@ -1226,8 +1222,6 @@ class OptimizationNewSection(Section):
     def __getattr__(self, item: Literal["peak_load_percentage"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["network_lifetime"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsSection(Section):
@@ -1357,11 +1351,12 @@ class DecentralizedSection(Section):
 
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
-    network_type: str
     network_name: str
+    include_services: list[str]
     overwrite_supply_settings: bool
     connected_buildings: list[str]
-    plant_building: Optional[str]
+    cooling_plant_building: Any
+    heating_plant_building: Any
     number_of_components: int | None
     edges_shp_path: str | None
     nodes_shp_path: str | None
@@ -1370,15 +1365,17 @@ class NetworkLayoutSection(Section):
     algorithm: str
 
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
-    @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["plant_building"]) -> Optional[str]: ...
+    def __getattr__(self, item: Literal["cooling_plant_building"]) -> Any: ...
+    @overload
+    def __getattr__(self, item: Literal["heating_plant_building"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["number_of_components"]) -> int | None: ...
     @overload
