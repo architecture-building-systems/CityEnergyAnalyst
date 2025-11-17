@@ -105,11 +105,15 @@ def operational_hourly(config: Configuration) -> None:
         hourly_timeline.calculate_operational_emission()
 
         if consider_pv:
-            pv_codes: list[str] = getattr(emissions_cfg, "pv_codes", [])
-            offset_building: bool = getattr(emissions_cfg, "pv_offset_building_demand", True)
-            allowed_components: list[str] | None = getattr(emissions_cfg, "pv_offset_allowance", None)
-            credit_export: bool = getattr(emissions_cfg, "pv_credit_grid_export", True)
-            hourly_timeline.log_pv_contribution(pv_codes, offset_building, allowed_components, credit_export)
+            pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
+            # Handle both string (CLI) and list (GUI) input
+            if isinstance(pv_codes_param, list):
+                pv_codes = pv_codes_param if pv_codes_param else None
+            elif isinstance(pv_codes_param, str):
+                pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
+            else:
+                pv_codes = None
+            hourly_timeline.apply_pv_offsetting(pv_codes)
 
         hourly_timeline.save_results()
         print(
