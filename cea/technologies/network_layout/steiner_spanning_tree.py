@@ -130,13 +130,19 @@ def calc_steiner_spanning_tree(crs_projected,
         raise ValueError(f'Graph validation failed before Steiner tree: {message}. '
                         f'This should not happen after corrections. Please report this issue.')
 
-    # calculate steiner spanning tree of undirected potential_network_graph
-    try:
-        steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
-        mst_non_directed= nx.minimum_spanning_tree(steiner_result)
-    except Exception as e:
-        raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
-                        'This is an unexpected error. Please report this issue with your streets.shp file.') from e
+    # Handle single-building case (no optimization needed)
+    if len(terminal_nodes_coordinates) == 1:
+        print("  Single building network: Skipping Steiner tree optimization")
+        mst_non_directed = nx.Graph()
+        mst_non_directed.add_node(terminal_nodes_coordinates[0])
+    else:
+        # Calculate steiner spanning tree for multi-building network
+        try:
+            steiner_result = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
+            mst_non_directed = nx.minimum_spanning_tree(steiner_result)
+        except Exception as e:
+            raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
+                            'This is an unexpected error. Please report this issue with your streets.shp file.') from e
 
     mst_nodes = gdf([{
         "geometry": Point(coords),
@@ -168,12 +174,22 @@ def calc_steiner_spanning_tree(crs_projected,
 
         return LineString(coords)
 
-    mst_edges = gdf([{
-        "geometry": replace_start_endpoints(data['geometry'], u, v),
-    } for u, v, data in mst_non_directed.edges(data=True)], crs=crs_projected)
+    mst_edges = gdf({
+        "geometry": [replace_start_endpoints(data['geometry'], u, v) 
+                     for u, v, data in mst_non_directed.edges(data=True)]}, crs=crs_projected)
 
-    # Recalculate weights after snapping
-    mst_edges['weight'] = mst_edges.geometry.length
+    # Handle single-building case (no edges)
+    if len(mst_edges) == 0:
+        # Create empty GeoDataFrame with proper schema
+        mst_edges = gdf(
+            columns=['geometry', 'type_mat', 'pipe_DN', 'name', 'weight'],
+            geometry='geometry',
+            crs=crs_projected
+        )
+        print("  Single-building network: No edges created")
+    else:
+        # Recalculate weights after snapping
+        mst_edges['weight'] = mst_edges.geometry.length
 
     # POPULATE FIELDS IN NODES
     pointer_coordinates_building_names = dict(zip(terminal_nodes_coordinates, terminal_nodes_names))
@@ -192,8 +208,7 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_nodes['name'] = mst_nodes.index.map(lambda x: "NODE" + str(x))
     mst_nodes['type'] = mst_nodes['building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
     
-    # do some checks to see that the building names was not compromised
-    if len(terminal_nodes_names) != (len(mst_nodes['building'].unique()) - 1):
+    if set(terminal_nodes_names) != (set(mst_nodes['building'].unique()) - {'NONE'} ):
         raise ValueError('There was an error while populating the nodes fields. '
                          'One or more buildings could not be matched to nodes of the network. '
                          'Try changing the constant SNAP_TOLERANCE in cea/constants.py to try to fix this')
@@ -428,7 +443,11 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
                 node_id = node[1]['name']
 
     if node_id is None:
-        raise ValueError("Could not find closest node.")
+        # Single building network - no NONE nodes available
+        # Create plant node offset from the building node itself
+        building_node = building_anchor.iloc[0]
+        node_id = building_node['name']
+        print("    Single-building network: Creating plant node offset from building node")
 
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
