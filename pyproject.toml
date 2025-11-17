@@ -112,9 +112,11 @@ cea = [
 
     # Web assets
     "interfaces/dashboard/plots/templates/*.html",
-    "plots/*.html",
 
     "plots/naming.csv",
+    "plots/*.html",
+    "plots/**/*.png",
+    "plots/**/*.yml",
 ]
 
 [tool.setuptools.dynamic]
