@@ -593,8 +593,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Warn if connected-buildings parameter has values that will be ignored
         if connected_buildings_config:
             print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
-            print(f"    Reason: 'overwrite-supply-settings' is False")
-            print(f"    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+            print("    Reason: 'overwrite-supply-settings' is False")
+            print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
 
         if 'DC' in list_include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
@@ -775,9 +775,6 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         print(f"    Base network: {len(nodes_for_type)} nodes, {len(edges_for_type)} edges")
 
-        # Track initial edge count before adding plants
-        initial_edge_count = len(edges_for_type)
-
         # Add plant nodes for this network type (marked as PLANT_DC or PLANT_DH temporarily)
         if plant_buildings_for_type:
             from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
@@ -849,7 +846,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     print(f"\n  ✓ Network layout generation complete for: {', '.join(network_types_to_generate)}")
     print(f"    Network name: {network_layout.network_name}")
     if network_type == 'DC+DH':
-        print(f"    Output folders: DC/ and DH/")
+        print("    Output folders: DC/ and DH/")
 
 
 
@@ -1017,8 +1014,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         # Warn if connected-buildings parameter has values that will be ignored
         if connected_buildings_config:
             print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
-            print(f"    Reason: 'overwrite-supply-settings' is False")
-            print(f"    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+            print("    Reason: 'overwrite-supply-settings' is False")
+            print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
 
         if 'DC' in list_include_services:
             buildings_to_validate_dc = get_buildings_from_supply_csv(locator, network_type='DC')
@@ -1078,11 +1075,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     if auto_created_buildings:
         print(f"  Auto-created {len(auto_created_buildings)} missing building node(s):")
-        for building_name, edge_name in auto_created_buildings[:10]:
-            print(f"      - {building_name} (at endpoint of {edge_name})")
+        for building_name in auto_created_buildings[:10]:
+            print(f"      - {building_name}")
         if len(auto_created_buildings) > 10:
             print(f"      ... and {len(auto_created_buildings) - 10} more")
-        print("  Note: Nodes created at edge endpoints inside building footprints")
+        print("  Note: Nodes created at edge endpoints closest to building centroids (in-memory only)")
     else:
         print("  ✓ All specified buildings have valid nodes in network")
 
