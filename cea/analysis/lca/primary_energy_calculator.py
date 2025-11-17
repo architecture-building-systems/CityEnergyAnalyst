@@ -63,6 +63,7 @@ def calculate_primary_energy(locator, building, config):
     """
     # Parse PV codes from config
     include_pv = config.primary_energy.include_pv
+<<<<<<< Updated upstream
     pv_codes_param = config.primary_energy.pv_codes
 
     # Handle both string (CLI) and list (GUI) input
@@ -72,6 +73,10 @@ def calculate_primary_energy(locator, building, config):
         pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
     else:
         pv_codes = None
+=======
+    pv_codes_str = config.primary_energy.pv_codes
+    pv_codes = [code.strip() for code in pv_codes_str.split(',')] if pv_codes_str else None
+>>>>>>> Stashed changes
 
     # Get PEF values from config
     pef = {
