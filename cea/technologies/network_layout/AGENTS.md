@@ -167,6 +167,41 @@ for node in graph.nodes():
         ...
 ```
 
+## Plant Node Architecture
+
+**Critical:** Plant nodes are **separate infrastructure nodes**, NOT building nodes with changed type.
+
+### Node Types in Network Layout
+- **CONSUMER nodes:** Building connection points (demand-side)
+- **PLANT nodes:** Thermal plant infrastructure (supply-side)
+- **NONE nodes:** Junction points in network (no building, no plant)
+
+### ✅ DO: Create separate plant node near anchor building
+```python
+# Good - building node remains CONSUMER, plant is separate node
+building_anchor = nodes[nodes['building'] == anchor_building]
+nodes, edges = add_plant_close_to_anchor(
+    building_anchor, nodes, edges, 'T1', 150
+)
+# Result:
+#   - Building node: type=CONSUMER, building=anchor_building
+#   - Plant node: type=PLANT, building=NONE (separate node)
+```
+
+### ❌ DON'T: Convert building node to plant
+```python
+# Bad - building loses its consumer status
+anchor_node_idx = nodes[nodes['building'] == anchor_building].index[0]
+nodes.loc[anchor_node_idx, 'type'] = 'PLANT'  # WRONG - building is now plant
+# Result: Building no longer acts as consumer (breaks demand calculations)
+```
+
+### Why Separate Nodes Matter
+- Building nodes represent **demand** (consumer connection points)
+- Plant nodes represent **supply** (production infrastructure)
+- A building can be near a plant but remains a consumer
+- Thermal network simulation expects plant nodes to be distinct from building nodes
+
 ## Constants
 - `SHAPEFILE_TOLERANCE = 6` - Decimal places (1 micrometer precision)
 - `SNAP_TOLERANCE = 0.1` - Meters for snapping near-miss connections
@@ -179,3 +214,4 @@ Tests are in `cea/tests/test_network_layout_integration.py`
 - `graph_utils.py` - Conversion utilities (gdf_to_nx, nx_to_gdf, normalize_*)
 - `optimization_new/network.py` - Uses graph with building terminal metadata
 - `main.py` - Converts graph to GeoDataFrame for Steiner tree
+- `steiner_spanning_tree.py` - Contains `add_plant_close_to_anchor()` for plant creation

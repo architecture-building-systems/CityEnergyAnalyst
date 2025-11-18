@@ -96,27 +96,42 @@ def calculate_ground_temperature(locator):
     return T_ground_K
 
 
-def get_thermal_network_from_shapefile(locator, network_type, network_name):
-    """
-    This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
-    (as defined by Oppelt et al., 2016) as well as the edge properties (length, start node, and end node) and node
-    coordinates.
-    """
-
+def get_thermal_network_from_shapefile(locator: cea.inputlocator.InputLocator, network_type: gpd.GeoDataFrame, network_name: str):
     # import shapefiles containing the network's edges and nodes
-    network_edges_df = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+    network_edges_df = gpd.read_file(locator.get_network_layout_shapefile(network_name))
     network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type, network_name))
 
     # check duplicated NODE/PIPE IDs
     duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
     duplicated_edges = network_edges_df[network_edges_df.name.duplicated(keep=False)]
     if duplicated_nodes.size > 0:
-        raise ValueError('There are duplicated NODE IDs:', duplicated_nodes)
+        raise ValueError('There are duplicated NODE IDs:', duplicated_nodes.name.values)
     if duplicated_edges.size > 0:
-        raise ValueError('There are duplicated PIPE IDs:', duplicated_nodes)
+        raise ValueError('There are duplicated PIPE IDs:', duplicated_edges.name.values)
 
     # get node and pipe information
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
+    
+    # Validate edges reference existing nodes
+    node_names_set = set(node_df.index)
+    invalid_edges = []
+    for edge_name, edge_data in edge_df.iterrows():
+        start_node = edge_data.get("start node")
+        end_node = edge_data.get("end node")
+        
+        if not start_node or not end_node:
+            invalid_edges.append((edge_name, "missing node name"))
+        elif start_node not in node_names_set:
+            invalid_edges.append((edge_name, f"start node '{start_node}' not found"))
+        elif end_node not in node_names_set:
+            invalid_edges.append((edge_name, f"end node '{end_node}' not found"))
+    
+    if invalid_edges:
+        print(f"Ignoring {len(invalid_edges)} invalid edge(s):")
+        for edge_name, reason in invalid_edges:
+            print(f"  - {edge_name}: {reason}")
+        # Remove invalid edges
+        edge_df = edge_df.drop([edge_name for edge_name, _ in invalid_edges])
 
     return edge_df, node_df
 
@@ -164,7 +179,7 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
-def thermal_network_simplified(locator, config, network_name=''):
+def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_name=''):
     # local variables
     network_type = config.thermal_network.network_type
     min_head_substation_kPa = config.thermal_network.min_head_substation
@@ -246,6 +261,11 @@ def thermal_network_simplified(locator, config, network_name=''):
             building_base_demand_m3s[building] = volume_flow_m3pers_building[building].max()
             pattern_demand = (volume_flow_m3pers_building[building].values / building_base_demand_m3s[building]).tolist()
             wn.add_pattern(building, pattern_demand)
+        
+        # check that there is one plant node
+        plant_nodes = node_df[node_df['type'] == 'PLANT']
+        if len(plant_nodes) != 1:
+            raise ValueError("There should be exactly one plant node in the network.")
 
         # add nodes
         consumer_nodes = []
@@ -279,8 +299,10 @@ def thermal_network_simplified(locator, config, network_name=''):
         for edge in edge_df.iterrows():
             length_m = edge[1]["length_m"]
             edge_name = edge[0]
-            wn.add_pipe(edge_name, edge[1]["start node"],
-                        edge[1]["end node"],
+            start_node = edge[1]["start node"]
+            end_node = edge[1]["end node"]
+            
+            wn.add_pipe(edge_name, start_node, end_node,
                         length=length_m * (1 + fraction_equivalent_length),
                         roughness=coefficient_friction_hazen_williams,
                         minor_loss=0.0,
@@ -538,18 +560,10 @@ def thermal_network_simplified(locator, config, network_name=''):
     fields_nodes = ['type', 'building']
     node_df[fields_nodes].to_csv(locator.get_thermal_network_node_types_csv_file(network_type, network_name))
 
-    # correct diameter of network and save to the shapefile
-    from cea.utilities.dbf import dataframe_to_dbf, dbf_to_dataframe
-    fields = ['length_m', 'pipe_DN', 'type_mat']
-    edge_df = edge_df[fields]
-    edge_df['name'] = edge_df.index.values
-    edge_df = edge_df.reset_index(drop=True)
-    network_edges_df = dbf_to_dataframe(
-        locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
-    network_edges_df = network_edges_df.merge(edge_df, left_on='name', right_on='name', suffixes=('_x', ''))
-    network_edges_df = network_edges_df.drop(['pipe_DN_x', 'type_mat_x', 'length_m_x'], axis=1)
-    dataframe_to_dbf(network_edges_df,
-                     locator.get_network_layout_edges_shapefile(network_type, network_name).split('.shp')[0] + '.dbf')
+    # save updated edge data back to shapefile
+    fields = ['length_m', 'pipe_DN', 'type_mat', 'geometry']
+    edge_df_gdf = gpd.GeoDataFrame(edge_df[fields], index=edge_df.index)
+    edge_df_gdf.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
 
 
 def main(config: cea.config.Configuration):

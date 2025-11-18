@@ -8,7 +8,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
-from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree, add_plant_close_to_anchor
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import nx_to_gdf
 
@@ -357,7 +357,6 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
     # If plant buildings are specified, create plants for each one
     if plant_building_names:
-        from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
         for plant_building in plant_building_names:
             # Try to find the building node (it might be in the network or in the zone but not connected)
             plant_node = building_nodes[building_nodes['building'] == plant_building]
@@ -791,7 +790,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         # Add plant nodes for this network type (marked as PLANT_DC or PLANT_DH temporarily)
         if plant_buildings_for_type:
-            from cea.technologies.network_layout.steiner_spanning_tree import add_plant_close_to_anchor
+            # User specified plant buildings - create plant at each one
             plant_buildings_to_remove = []
             for plant_building in plant_buildings_for_type:
                 # Check if this plant building is in the connected buildings list
@@ -824,6 +823,44 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             if plant_buildings_to_remove:
                 nodes_for_type = nodes_for_type[~nodes_for_type['building'].isin(plant_buildings_to_remove)]
                 print(f"    Removed {len(plant_buildings_to_remove)} original building node(s) for plant buildings (not connected buildings)")
+        else:
+            # No plant buildings specified - use anchor load (building with highest demand)
+            total_demand = pd.read_csv(total_demand_location)
+            demand_field = "QH_sys_MWhyr" if type_network == "DH" else "QC_sys_MWhyr"
+            
+            # Get building nodes
+            building_nodes = nodes_for_type[
+                nodes_for_type['building'].notna() &
+                (nodes_for_type['building'].fillna('').str.upper() != 'NONE')
+            ].copy()
+            
+            if not building_nodes.empty:
+                # Find building with highest demand in this network
+                buildings_in_network = building_nodes['building'].unique().tolist()
+                network_demand = total_demand[total_demand['name'].isin(buildings_in_network)]
+                
+                if not network_demand.empty and demand_field in network_demand.columns:
+                    anchor_idx = network_demand[demand_field].idxmax()
+                    anchor_building = network_demand.loc[anchor_idx, 'name']
+                else:
+                    # Fallback: use first building alphabetically
+                    anchor_building = sorted(buildings_in_network)[0]
+                
+                # Create a separate plant node near the anchor building
+                # Building node remains as CONSUMER, plant is a separate node
+                building_anchor = building_nodes[building_nodes['building'] == anchor_building]
+                nodes_for_type, edges_for_type = add_plant_close_to_anchor(
+                    building_anchor,
+                    nodes_for_type,
+                    edges_for_type,
+                    'T1',  # Default pipe material
+                    150    # Default pipe diameter
+                )
+                # Mark the newly created plant node with network-specific type
+                # The last node added is the plant node
+                last_node_idx = nodes_for_type.index[-1]
+                nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
+                print(f"    ✓ Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
 
         # Collect edges from this network (including new plant edges)
         all_edges_list.append(edges_for_type)
@@ -846,7 +883,15 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Combine all edges from both networks and save to layout.shp
     if len(all_edges_list) > 0:
-        import pandas as pd
+        # Renumber pipes globally to prevent duplicates when combining DC and DH networks
+        pipe_counter = 0
+        for edges_gdf in all_edges_list:
+            # Extract pipe numbers and renumber them
+            for idx in edges_gdf.index:
+                if 'name' in edges_gdf.columns and edges_gdf.loc[idx, 'name'].startswith('PIPE'):
+                    edges_gdf.loc[idx, 'name'] = f'PIPE{pipe_counter}'
+                    pipe_counter += 1
+        
         all_edges_gdf = gpd.GeoDataFrame(
             pd.concat(all_edges_list, ignore_index=True),
             crs=all_edges_list[0].crs

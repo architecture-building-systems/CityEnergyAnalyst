@@ -77,4 +77,3 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
             print(f"Warning: End node of {pipe_name} has no match within {tolerance_m}m (nearest: {end_dist:.6f}m)")
 
     return node_shapefile_df, edge_shapefile_df
-
