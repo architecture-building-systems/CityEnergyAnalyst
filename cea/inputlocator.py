@@ -1020,6 +1020,7 @@ class InputLocator(object):
 
     # THERMAL NETWORK OUTPUTS
     def get_thermal_network_folder(self):
+        """scenario/outputs/data/thermal-network"""
         return os.path.join(self.scenario, 'outputs', 'data', 'thermal-network')
 
     def _get_thermal_network_results_file_path(self, network_type, network_name, file_suffix):
@@ -1069,15 +1070,13 @@ class InputLocator(object):
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_thermal_network_node_types_csv_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
-        """
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_metadata_nodes.csv"""
         if not network_name:
             file_name = network_type + '_' + "_metadata_nodes.csv"
         else:
             file_name = network_type + '_' + network_name + '_metadata_nodes.csv'
 
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, file_name)
 
     def get_plant_nodes(self, network_type, network_name):
         """Return the list of "PLANT" nodes in a thermal network"""
@@ -1090,14 +1089,12 @@ class InputLocator(object):
         return []
 
     def get_thermal_network_edge_list_file(self, network_type, network_name=''):
-        """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
-        List of edges in a district heating or cooling network and their start and end nodes
-        """
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_metadata_edges.csv"""
         if not network_name:
             file_name = network_type + "_" + "_metadata_edges.csv"
         else:
             file_name = network_type + "_" + network_name + "_metadata_edges.csv"
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, file_name)
 
     def get_thermal_network_layout_massflow_edges_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_edges_kgs.csv"""
