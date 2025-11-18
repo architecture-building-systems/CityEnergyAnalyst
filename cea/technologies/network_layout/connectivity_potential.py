@@ -578,6 +578,20 @@ def create_terminals(building_centroids: gdf, street_network: gdf, connection_ca
     # Create GeoDataFrame with all network lines (streets + building terminals)
     combined_network = gdf(geometry=new_lines, crs=street_network.crs)
 
+    # CRITICAL FIX: Re-normalize all geometries after substring operations
+    # 
+    # substring() performs geometric interpolation which can introduce floating-point drift,
+    # especially at intermediate vertices of curved streets. Even though we normalize the
+    # result with normalize_geometry(), the preserved geometry in edge attributes may still
+    # contain unnormalized intermediate vertices. When gdf_to_nx() later extracts start/end
+    # coordinates and re-normalizes them, any terminal connection at an intermediate vertex
+    # will have a normalized coordinate that doesn't match the drifted vertex coordinate.
+    # This causes terminal edges and street segments to become disconnected nodes in the graph.
+    #
+    # Solution: Apply one final normalization pass to ALL geometries (including all vertices)
+    # to ensure absolute coordinate consistency across the entire combined network.
+    normalize_gdf_geometries(combined_network, precision=SHAPEFILE_TOLERANCE, inplace=True)
+
     # Important: Do NOT run global snap/union here.
     # Running topology operations (snap/intersection split) on the combined set of
     # street + terminal lines can unintentionally merge terminal lines with street
@@ -630,53 +644,6 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     normalize_gdf_geometries(building_centroids_df, precision=SHAPEFILE_TOLERANCE, inplace=True)
 
     return streets_network_df, building_centroids_df, crs
-
-
-def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf) -> dict:
-    """
-    Extract mapping of building IDs to their terminal node coordinates in the graph.
-
-    Uses spatial search (KDTree) to find the graph node closest to each building centroid.
-    This accounts for CRS transformation and coordinate rounding that occurred during
-    network creation.
-
-    :param graph: NetworkX graph with building terminals as nodes
-    :param building_centroids_df: GeoDataFrame of building centroids with 'name' column
-    :return: Dictionary mapping building_id → (x, y) node coordinates
-    :rtype: dict
-
-    Note: Building coordinates are already in the same CRS and precision as the graph
-    due to processing in _prepare_network_inputs and create_terminals.
-    """
-    from scipy.spatial import KDTree
-
-    # Build KDTree from graph nodes for efficient nearest-neighbor search
-    graph_nodes = list(graph.nodes())
-    if not graph_nodes:
-        return {}
-
-    node_coords = [(node[0], node[1]) for node in graph_nodes]
-    tree = KDTree(node_coords)
-
-    terminal_mapping = {}
-
-    for idx, row in building_centroids_df.iterrows():
-        building_id = row.get('name', idx)
-        bldg_geom = row.geometry
-
-        # Get building coordinates (already normalized in _prepare_network_inputs)
-        bldg_x, bldg_y = bldg_geom.x, bldg_geom.y
-
-        # Find nearest graph node
-        dist, node_idx = tree.query([bldg_x, bldg_y], k=1)
-
-        if dist > 1.0:  # Tolerance: 1 meter (should be much closer in practice)
-            print(f"  Warning: Building '{building_id}' terminal is {dist:.3f}m from nearest graph node")
-
-        # Store the actual graph node coordinates
-        terminal_mapping[building_id] = graph_nodes[node_idx]
-
-    return terminal_mapping
 
 
 def _validate_and_fix_connectivity(
@@ -865,19 +832,40 @@ def calc_connectivity_network_with_geometry(
     # Preserve a copy of the cleaned street network (without terminals) for diagnostics and retries
     streets_clean_df = streets_network_df.copy()
 
+    # Extract terminal node coordinates (building centroids, normalized)
+    # These will be used for:
+    # 1. Protecting terminal nodes during orphan merging
+    # 2. Building terminal mapping for graph metadata
+    terminal_nodes = set()
+    terminal_mapping = {}  # building_id -> (x, y) normalized coords
+    for idx, row in building_centroids_df.iterrows():
+        building_id = row.get('name', idx)
+        bldg_coord = normalize_coords([row.geometry.coords[0]], precision=SHAPEFILE_TOLERANCE)[0]
+        terminal_nodes.add(bldg_coord)
+        terminal_mapping[building_id] = bldg_coord
+
     # Create terminals from building centroids
     if connection_candidates > 1:
         print(f"\nCreating building terminal connections (k={connection_candidates} nearest per building)...")
     else:
         print("\nCreating building terminal connections...")
     combined_network_df = create_terminals(building_centroids_df, streets_network_df, connection_candidates=connection_candidates)
-    combined_network_df.to_file("combined_network_with_terminals.shp")
 
     # Convert to graph with geometry preservation
-    graph = gdf_to_nx(combined_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
+    graph = gdf_to_nx(
+        combined_network_df,
+        coord_precision=SHAPEFILE_TOLERANCE,
+        preserve_geometry=True
+    )
 
-        # Store building terminal metadata in graph for downstream use
-    terminal_mapping = _extract_building_terminal_nodes(graph, building_centroids_df)
+    # Clean orphan nodes: merge small isolated street fragments to main network
+    # This fixes disconnections from isolated street segments while protecting building terminals
+    from cea.technologies.network_layout.graph_utils import _merge_orphan_nodes_to_nearest
+    graph = _merge_orphan_nodes_to_nearest(
+        graph,
+        terminal_nodes=terminal_nodes,
+        merge_threshold=50.0  # Max 50m to connect isolated street fragments
+    )
     graph.graph['building_terminals'] = terminal_mapping
     graph.graph['crs'] = crs
     graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE

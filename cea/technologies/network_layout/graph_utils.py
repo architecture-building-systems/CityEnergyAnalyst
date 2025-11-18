@@ -77,6 +77,92 @@ def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, pres
     return G
 
 
+def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
+    """
+    Merge disconnected non-terminal components to nearest node in main component.
+    
+    This fixes isolated street fragments by connecting them to the main network.
+    Merges components that:
+    1. Are small (< 5 nodes)
+    2. Have at least one non-terminal node within merge_threshold of main component
+    
+    Terminal nodes themselves are never used as bridge points (to preserve building connections),
+    but components containing terminals CAN be merged via their street nodes.
+    
+    :param G: NetworkX graph
+    :param terminal_nodes: Set of (x, y) coordinates that are building terminals
+    :param merge_threshold: Maximum distance for merging (meters)
+    :return: Graph with orphan components merged
+    """
+    from scipy.spatial import KDTree
+    import numpy as np
+    
+    # Find connected components
+    components = list(nx.connected_components(G))
+    
+    if len(components) <= 1:
+        return G  # Already fully connected
+    
+    # Identify main component (largest)
+    main_component = max(components, key=len)
+    
+    # Build KDTree from main component nodes for efficient nearest-neighbor search
+    main_nodes = list(main_component)
+    main_coords = np.array([(node[0], node[1]) for node in main_nodes])
+    tree = KDTree(main_coords)
+    
+    components_merged = 0
+    edges_added = 0
+    
+    # Process small disconnected components
+    for component in components:
+        if component == main_component:
+            continue
+            
+        # Only process small isolated fragments (< 5 nodes)
+        # Larger components likely indicate real network gaps that should be reported
+        if len(component) >= 5:
+            continue
+        
+        # Find the node in this component closest to main component
+        # BUT: Don't use terminal nodes as the bridge point (they should stay connected to buildings)
+        best_orphan_node = None
+        best_distance = float('inf')
+        best_main_node = None
+        
+        for orphan_node in component:
+            # Skip terminal nodes when choosing bridge point
+            # (terminals must stay at their building connection points)
+            if orphan_node in terminal_nodes:
+                continue
+                
+            orphan_coords = [orphan_node[0], orphan_node[1]]
+            dist, nearest_idx = tree.query(orphan_coords, k=1)
+            
+            if dist < best_distance:
+                best_distance = dist
+                best_orphan_node = orphan_node
+                best_main_node = main_nodes[nearest_idx]
+        
+        # If we found a suitable bridge point within threshold, connect it
+        if best_orphan_node is not None and best_distance <= merge_threshold:
+            # Use average weight from orphan's existing edges, or distance as fallback
+            orphan_edges = list(G.edges(best_orphan_node, data=True))
+            if orphan_edges:
+                avg_weight = np.mean([data.get('weight', best_distance) for _, _, data in orphan_edges])
+            else:
+                avg_weight = best_distance
+            
+            G.add_edge(best_orphan_node, best_main_node, weight=avg_weight)
+            components_merged += 1
+            edges_added += 1
+    
+    if components_merged > 0:
+        print(f"Merged {components_merged} orphan component(s) to main network (added {edges_added} bridging edge(s))")
+    
+    return G
+
+
 def _add_point_to_graph(G, point, row, coord_precision, **node_attrs):
     """
     Helper to add a single Point as a lone node to the graph.

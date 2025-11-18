@@ -46,14 +46,71 @@ segment = normalize_geometry(segment_raw, SHAPEFILE_TOLERANCE)
 # Before creating geometries
 coords_normalized = normalize_coords(coords, SHAPEFILE_TOLERANCE)
 line = LineString(coords_normalized)
+
+# CRITICAL: After combining street + terminal networks
+# substring() on curved streets introduces drift at intermediate vertices
+# Final pass ensures ALL coordinates are consistent before graph conversion
+combined_network = create_terminals(buildings, streets, k)
+normalize_gdf_geometries(combined_network, SHAPEFILE_TOLERANCE, inplace=True)
 ```
+
+## Critical Pattern: Orphan Node Merging
+
+**Problem:** Isolated street fragments (e.g., disconnected road segments) cause building disconnections
+
+**Solution:** Use `_merge_orphan_nodes_to_nearest()` as explicit cleaning step after `gdf_to_nx()`
+
+### When Orphan Merging Occurs
+- Component has < 5 nodes (small isolated fragment)
+- Component has at least one non-terminal node within `merge_threshold` (default 50m)
+- Terminal nodes are never used as bridge points (preserves building connections)
+- **Key**: Components with terminals CAN be merged via their street nodes
+
+### Example
+```python
+# 1. Extract building terminal coordinates for protection
+terminal_nodes = set()
+terminal_mapping = {}  # building_id -> (x, y)
+for idx, row in buildings.iterrows():
+    building_id = row.get('name', idx)
+    coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+    terminal_nodes.add(coord)
+    terminal_mapping[building_id] = coord
+
+# 2. Create terminals and convert to graph
+combined_network = create_terminals(buildings, streets, connection_candidates=k)
+graph = gdf_to_nx(combined_network, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
+
+# 3. Apply orphan merging as explicit cleaning step
+from cea.technologies.network_layout.graph_utils import _merge_orphan_nodes_to_nearest
+graph = _merge_orphan_nodes_to_nearest(
+    graph,
+    terminal_nodes=terminal_nodes,  # Protect terminal nodes from being bridge points
+    merge_threshold=50.0  # Max distance to bridge gaps
+)
+# Output: "Merged 2 orphan component(s) to main network (added 2 bridging edge(s))"
+
+# 4. Store terminal mapping in graph metadata
+graph.graph['building_terminals'] = terminal_mapping
+```
+
+### Real-World Example: B1014 Case
+- Building B1014 connects to isolated street fragment 25.87m from main network
+- Without merging: ERROR "Network has 2 disconnected components"
+- With merging: Street node (non-terminal) used as bridge → fully connected ✅
 
 ## Key Helper Functions
 
-### `gdf_to_nx(gdf, coord_precision=6, preserve_geometry=True)`
+### `gdf_to_nx(gdf, coord_precision=6, preserve_geometry=True, **attrs)`
 Convert GeoDataFrame → NetworkX graph
 - Handles Point (lone nodes), LineString, MultiLineString
 - Set `preserve_geometry=True` to store full geometries in edge attributes
+- Returns graph with normalized node coordinates
+- **Note**: This is a pure conversion function - for orphan merging, use `_merge_orphan_nodes_to_nearest()` after conversion
+
+### `_merge_orphan_nodes_to_nearest(graph, terminal_nodes, merge_threshold=50.0)`
+**Cleaning function** - Merge small disconnected components to main network
+- `terminal_nodes`: Set of (x, y) building terminal coordinates to protect from merging
 - Returns graph with normalized node coordinates
 
 ### `nx_to_gdf(graph, crs, preserve_geometry=True)`
