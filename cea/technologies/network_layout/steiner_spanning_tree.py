@@ -174,15 +174,34 @@ def calc_steiner_spanning_tree(crs_projected,
 
         terminals_set = set(tuple(t) for t in terminals)
 
+        # Pre-create a graph with all terminals removed for efficient shortest path queries
+        # This avoids copying the full graph for every reroute operation (major performance optimization)
+        G_no_terminals = full_graph.copy()
+        for t in terminals_set:
+            if G_no_terminals.has_node(t):
+                G_no_terminals.remove_node(t)
+
         # 2) Remove direct building-to-building edges, replace with street path
         b2b_edges = [(u, v) for u, v in sg.edges() if u in terminals_set and v in terminals_set]
         for u, v in b2b_edges:
-            # Compute shortest path between u and v in the full graph, allowing terminals only as endpoints
-            G2 = full_graph.copy()
-            # Remove all other terminals to prevent passing through buildings
-            for t in terminals_set - {u, v}:
-                if G2.has_node(t):
-                    G2.remove_node(t)
+            # Compute shortest path between u and v in the street network (no terminals)
+            # Add back only the source and target terminals for this query
+            G2 = G_no_terminals.copy()
+            # Re-add u and v terminals with their edges to streets
+            for term in [u, v]:
+                # Add the terminal node itself first
+                if not G2.has_node(term):
+                    # Copy node attributes from full_graph
+                    if full_graph.has_node(term):
+                        G2.add_node(term, **full_graph.nodes[term])
+                    else:
+                        G2.add_node(term)
+                # Then add edges to street nodes
+                for neighbor in full_graph.neighbors(term):
+                    if neighbor not in terminals_set:  # Only connect to street nodes
+                        edge_data = full_graph.get_edge_data(term, neighbor, default={})
+                        G2.add_edge(term, neighbor, **edge_data)
+            
             try:
                 path = nx.shortest_path(G2, source=u, target=v, weight='weight')
             except nx.NetworkXNoPath:
@@ -211,22 +230,33 @@ def calc_steiner_spanning_tree(crs_projected,
                 to_reroute = [n for n in neighbours if n != keep]
 
                 # Reroute each extra neighbour to 'keep' via streets without passing through building terminals
+                # Build a query graph with only n and keep terminals added back (all other terminals excluded)
                 for n in to_reroute:
-                    G2 = full_graph.copy()
-                    for other in terminals_set - {t}:
-                        if G2.has_node(other):
-                            G2.remove_node(other)
-                    # Remove the building node itself to avoid using it as transit
-                    if G2.has_node(t):
-                        G2.remove_node(t)
+                    G2 = G_no_terminals.copy()
+                    # Re-add n and keep terminals with their edges to streets
+                    for term in [n, keep]:
+                        # Add the terminal node itself first
+                        if not G2.has_node(term):
+                            # Copy node attributes from full_graph
+                            if full_graph.has_node(term):
+                                G2.add_node(term, **full_graph.nodes[term])
+                            else:
+                                G2.add_node(term)
+                        # Then add edges to street nodes
+                        for neighbor in full_graph.neighbors(term):
+                            if neighbor not in terminals_set:  # Only connect to street nodes
+                                edge_data = full_graph.get_edge_data(term, neighbor, default={})
+                                G2.add_edge(term, neighbor, **edge_data)
+                    
                     try:
                         path = nx.shortest_path(G2, source=n, target=keep, weight='weight')
+                        # Add reroute path
+                        _add_path_edges(path)
                     except nx.NetworkXNoPath:
-                        # If no path, skip reroute (keep original connection to maintain connectivity)
+                        # If no path, we still need to remove the edge to avoid infinite loop
                         print(f"  ⚠ Warning: Unable to reroute extra terminal edge from {t} to {n}")
-                        continue
-                    # Add reroute path and remove direct building edge
-                    _add_path_edges(path)
+                    
+                    # Always remove the direct terminal edge (whether rerouted successfully or not)
                     if sg.has_edge(t, n):
                         sg.remove_edge(t, n)
 

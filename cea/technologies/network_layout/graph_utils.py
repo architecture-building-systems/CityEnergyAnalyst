@@ -119,9 +119,11 @@ def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
         if component == main_component:
             continue
             
-        # Only process small isolated fragments (< 5 nodes)
+        # Only process small isolated fragments (< 10 nodes)
         # Larger components likely indicate real network gaps that should be reported
-        if len(component) >= 5:
+        # Threshold of 10 accounts for slightly larger street fragments while still
+        # protecting against merging entire disconnected neighborhoods
+        if len(component) >= 10:
             continue
         
         # Find the node in this component closest to main component

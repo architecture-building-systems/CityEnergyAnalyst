@@ -61,7 +61,7 @@ normalize_gdf_geometries(combined_network, SHAPEFILE_TOLERANCE, inplace=True)
 **Solution:** Use `_merge_orphan_nodes_to_nearest()` as explicit cleaning step after `gdf_to_nx()`
 
 ### When Orphan Merging Occurs
-- Component has < 5 nodes (small isolated fragment)
+- Component has < 10 nodes (small isolated fragment)
 - Component has at least one non-terminal node within `merge_threshold` (default 50m)
 - Terminal nodes are never used as bridge points (preserves building connections)
 - **Key**: Components with terminals CAN be merged via their street nodes
