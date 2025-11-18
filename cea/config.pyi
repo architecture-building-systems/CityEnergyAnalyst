@@ -1620,7 +1620,7 @@ class PlotsLifecycleEmissionsSection(Section):
     y_category_to_plot: list[str]
     operation_services: list[str]
     envelope_components: list[str]
-    pv_codes: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
@@ -1632,7 +1632,7 @@ class PlotsLifecycleEmissionsSection(Section):
     @overload
     def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload

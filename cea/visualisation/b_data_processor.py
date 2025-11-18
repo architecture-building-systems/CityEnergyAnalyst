@@ -69,7 +69,7 @@ class data_processor:
                                        'pv_electricity_offset', 'pv_electricity_export']
         - envelope_components: list of ['wall_ag', 'wall_bg', 'wall_part', 'win_ag', 'roof',
                                         'upperside', 'underside', 'floor', 'base', 'technical_systems', 'pv']
-        - pv_codes: list of PV panel codes (e.g., ['PV1', 'PV2'])
+        - pv_code: str, single PV panel code (e.g., 'PV1')
 
         Returns:
         - list of column names (without unit suffix)
@@ -85,7 +85,7 @@ class data_processor:
         categories = plot_config.y_category_to_plot
         operation_services = getattr(plot_config, 'operation_services', [])
         envelope_components = getattr(plot_config, 'envelope_components', [])
-        pv_codes = getattr(plot_config, 'pv_codes', [])
+        pv_code = getattr(plot_config, 'pv_code', None)
 
         columns = []
 
@@ -95,23 +95,20 @@ class data_processor:
                 if service in service_to_tech:
                     # Regular operation service: operation_E_sys, operation_Qhs_sys, etc.
                     columns.append(f"operation_{service_to_tech[service]}")
-                elif service == 'pv_electricity_offset':
-                    # PV offset columns: PV_{pv_code}_GRID_offset
-                    for pv_code in pv_codes:
-                        columns.append(f"PV_{pv_code}_GRID_offset")
-                elif service == 'pv_electricity_export':
-                    # PV export columns: PV_{pv_code}_GRID_export
-                    for pv_code in pv_codes:
-                        columns.append(f"PV_{pv_code}_GRID_export")
+                elif service == 'pv_electricity_offset' and pv_code:
+                    # PV offset column: PV_{pv_code}_GRID_offset
+                    columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export' and pv_code:
+                    # PV export column: PV_{pv_code}_GRID_export
+                    columns.append(f"PV_{pv_code}_GRID_export")
 
         # Generate embodied columns (production, demolition, biogenic)
         for category in ['production', 'demolition', 'biogenic']:
             if category in categories:
                 for component in envelope_components:
-                    if component == 'pv':
+                    if component == 'pv' and pv_code:
                         # PV embodied emissions: production_PV_{pv_code}, demolition_PV_{pv_code}, etc.
-                        for pv_code in pv_codes:
-                            columns.append(f"{category}_PV_{pv_code}")
+                        columns.append(f"{category}_PV_{pv_code}")
                     else:
                         # Regular component: production_wall_ag, demolition_roof, biogenic_floor, etc.
                         columns.append(f"{category}_{component}")

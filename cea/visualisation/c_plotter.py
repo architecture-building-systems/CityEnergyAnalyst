@@ -9,6 +9,7 @@ from cea.import_export.result_summary import month_names, season_names
 from math import ceil
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import pandas as pd
 
 
 __author__ = "Zhongming Shi"
@@ -342,6 +343,10 @@ class bar_plot:
 
         if self.y_barmode == 'stack_percentage':
             barmode = 'stack'
+        elif self.y_barmode == 'stack':
+            # Use 'relative' mode for stacking to properly handle mixed positive/negative values
+            # This stacks positive bars upward from zero, negative bars downward from zero
+            barmode = 'relative'
         else:
             barmode = self.y_barmode
 
@@ -538,31 +543,43 @@ def plot_faceted_bars(
             else:
                 facet_df = facet_df.sort_values(by=x_col)
 
-            for j, val_col in enumerate(value_columns):
-                # Create mapping from column name to user-friendly surface name
-                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+            if barmode == 'stack':
+                # For stacked mode with positive and negative values:
+                # Use barmode='relative' to stack bars relative to zero
+                # This keeps positive bars above axis, negative below, in same position
+                for j, val_col in enumerate(value_columns):
+                    heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    color_key = get_column_color(val_col)
+                    bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
-                color_key = get_column_color(val_col)
-                bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
+                    bar_params = {
+                        'x': facet_df[x_col],
+                        'y': facet_df[val_col],
+                        'name': heading,
+                        'legendgroup': heading,
+                        'showlegend': (i == 0),
+                        'marker': dict(color=bar_color, line=dict(width=0)),
+                        'width': min(0.4, max(0.1, 200/len(facet_df))),
+                    }
 
-                # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
-                bar_params = {
-                    'x': facet_df[x_col],
-                    'y': facet_df[val_col],
-                    'name': heading,
-                    'legendgroup': heading,
-                    'showlegend': (i == 0),
-                    'marker': dict(color=bar_color, line=dict(width=0)),  # Remove bar borders
-                }
-                
-                # Only set width for stacked bars, not for grouped bars
-                if barmode != 'group':
-                    bar_params['width'] = min(0.4, max(0.1, 200/len(facet_df)))  # Dynamic bar width for stacked bars
-                
-                if barmode == 'group':
-                    bar_params['offsetgroup'] = j
-                
-                fig.add_trace(go.Bar(**bar_params), row=row, col=col)
+                    fig.add_trace(go.Bar(**bar_params), row=row, col=col)
+            else:
+                # Grouped mode - original logic
+                for j, val_col in enumerate(value_columns):
+                    heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    color_key = get_column_color(val_col)
+                    bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
+
+                    bar_params = {
+                        'x': facet_df[x_col],
+                        'y': facet_df[val_col],
+                        'name': heading,
+                        'legendgroup': heading,
+                        'showlegend': (i == 0),
+                        'marker': dict(color=bar_color, line=dict(width=0)),
+                        'offsetgroup': j,
+                    }
+                    fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
         # Set subplot vertical domains
         available_height = 0.88  # Use more vertical space since legend is below
@@ -611,46 +628,85 @@ def plot_faceted_bars(
     else:
         # No faceting
         fig = go.Figure()
-        for j, val_col in enumerate(value_columns):
-            # Create mapping from column name to user-friendly surface name
-            heading = get_display_name_for_column(val_col, y_metric_to_plot)
 
-            color_key = get_column_color(val_col)
-            bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
+        if barmode == 'stack':
+            # For stacked mode with positive and negative values:
+            # Use barmode='relative' to stack bars relative to zero
+            # This keeps positive bars above axis, negative below, in same position
+            for j, val_col in enumerate(value_columns):
+                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                color_key = get_column_color(val_col)
+                bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
-            # For grouped bars, use offsetgroup; for stacked bars, don't use offsetgroup
-            bar_params = {
-                'x': df[x_col],
-                'y': df[val_col],
-                'name': heading,
-                'legendgroup': heading,
-                'marker': dict(color=bar_color, line=dict(width=0)),  # Remove bar borders
-            }
-            
-            # Only set width for stacked bars, not for grouped bars
-            if barmode != 'group':
-                bar_params['width'] = min(0.25, max(0.1, 200/len(df)))  # Dynamic bar width for stacked bars
-            
-            if barmode == 'group':
-                bar_params['offsetgroup'] = j
-            
-            fig.add_trace(go.Bar(**bar_params))
+                bar_params = {
+                    'x': df[x_col],
+                    'y': df[val_col],
+                    'name': heading,
+                    'legendgroup': heading,
+                    'marker': dict(color=bar_color, line=dict(width=0)),
+                    'width': min(0.25, max(0.1, 200/len(df))),
+                }
+
+                fig.add_trace(go.Bar(**bar_params))
+        else:
+            # Grouped mode - original logic
+            for j, val_col in enumerate(value_columns):
+                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                color_key = get_column_color(val_col)
+                bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
+
+                bar_params = {
+                    'x': df[x_col],
+                    'y': df[val_col],
+                    'name': heading,
+                    'legendgroup': heading,
+                    'marker': dict(color=bar_color, line=dict(width=0)),
+                    'offsetgroup': j,
+                }
+                fig.add_trace(go.Bar(**bar_params))
 
         fig.update_layout(yaxis=dict(domain=[0.05, 0.95]))  # Use more vertical space with legend below
 
     # Y-Axis limits and tick steps
     if y_max is None:
         if barmode == "stack":
-            y_max = df[value_columns].sum(axis=1).max() * 1.05
+            # For stacked bars, only sum POSITIVE values to get max
+            # Negative values (biogenic, PV offsets) should not reduce the positive stack
+            positive_cols = [col for col in value_columns if df[col].sum() >= 0]
+            if positive_cols:
+                y_max = df[positive_cols].sum(axis=1).max() * 1.05
+            else:
+                y_max = 0  # All negative
         elif barmode == "stack_percentage":
             y_max = 100
         elif barmode == "group":
-            y_max = df[value_columns].max().max() * 1.05
+            # For grouped bars, only consider positive values for max
+            max_val = df[value_columns].max().max()
+            y_max = max(max_val, 0) * 1.05
         else:
             raise ValueError(f"Invalid barmode: {barmode}")
 
     if y_min is None:
-        y_min = 0
+        # Check if there are negative values in the data
+        # For both stacked and grouped bars, check individual column values
+        # because in lifecycle emissions, negative values (biogenic, PV offsets)
+        # should show below the x-axis separately
+        min_val = df[value_columns].min().min()
+
+        # Set y_min to accommodate negative values with some padding
+        if min_val < 0:
+            if barmode == "stack":
+                # For stacked bars, only sum NEGATIVE values to get min
+                negative_cols = [col for col in value_columns if df[col].sum() < 0]
+                if negative_cols:
+                    y_min = df[negative_cols].sum(axis=1).min() * 1.05
+                else:
+                    y_min = 0  # No negative values
+            else:
+                # For grouped bars, use individual minimum
+                y_min = min_val * 1.05  # Add 5% padding for negative values
+        else:
+            y_min = 0
 
     fig.update_yaxes(range=[y_min, y_max])
 
@@ -690,7 +746,7 @@ def parse_plot_type(plot_type_str):
 # Main function
 def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
 
-     if plot_config_general.plot_type.startswith("bar_plot"):
+    if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
         plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
 
@@ -702,9 +758,5 @@ def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns,
 
         return fig
 
-     else:
+    else:
         raise ValueError(f"Invalid plot type: {plot_config_general.plot_type}")
-
-
-
-
