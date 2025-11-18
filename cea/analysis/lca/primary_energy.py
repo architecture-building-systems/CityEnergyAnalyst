@@ -72,6 +72,15 @@ def main(config):
                 print(f"ERROR: {error_msg}")
                 raise FileNotFoundError(error_msg)
 
+    # Ensure output folders exist BEFORE processing buildings
+    output_folder = locator.get_primary_energy_folder()
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    hourly_folder = locator.get_primary_energy_hourly_folder()
+    if not os.path.exists(hourly_folder):
+        os.makedirs(hourly_folder)
+
     print(f"Calculating primary energy for {len(building_names)} buildings...")
 
     # Calculate primary energy for each building
@@ -96,6 +105,7 @@ def main(config):
             # Save per-building hourly file
             building_hourly_path = locator.get_primary_energy_hourly_building(building)
             hourly_result.to_csv(building_hourly_path, index=False)
+            print(f"    Saved: {building_hourly_path}")
 
             # Add building name for district aggregation
             hourly_result_with_name = hourly_result.copy()
@@ -109,11 +119,6 @@ def main(config):
     if not annual_results:
         print("ERROR: No buildings successfully calculated")
         return
-
-    # Ensure output folder exists
-    output_folder = locator.get_primary_energy_folder()
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
 
     # === Save Annual Results ===
     annual_df = pd.DataFrame(annual_results)
@@ -131,14 +136,28 @@ def main(config):
 
     # === Save District-Level Hourly Results ===
     if district_hourly_results:
-        # Concatenate all building hourly data
-        district_hourly_df = pd.concat(district_hourly_results, ignore_index=True)
+        # Sum across all buildings for each hour
+        # Remove 'Name' column from each building's data before summing
+        hourly_data_without_name = [df.drop(columns=['Name']) for df in district_hourly_results]
+
+        # Sum all buildings hour by hour
+        district_hourly_df = hourly_data_without_name[0].copy()
+        for df in hourly_data_without_name[1:]:
+            # Sum all numeric columns
+            numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+            district_hourly_df[numeric_cols] = district_hourly_df[numeric_cols] + df[numeric_cols]
+
+        # Round to 2 decimals
+        numeric_cols = district_hourly_df.select_dtypes(include=['float64', 'int64']).columns
+        district_hourly_df[numeric_cols] = district_hourly_df[numeric_cols].round(2)
 
         # Write district hourly results
         district_hourly_path = locator.get_primary_energy_hourly_district()
         district_hourly_df.to_csv(district_hourly_path, index=False)
 
-        print(f"District hourly results saved to: {district_hourly_path}")
+        print(f"\nHourly results:")
+        print(f"  Per-building files: {len(district_hourly_results)} buildings")
+        print(f"  District aggregation (8760 hours): {district_hourly_path}")
 
     # Print summary
     print("\n=== Primary Energy Summary ===")
