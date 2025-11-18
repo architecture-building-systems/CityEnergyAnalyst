@@ -304,7 +304,7 @@ Life Cycle Analysis:
 
   - name: primary-energy
     label: Primary Energy
-    short_description: Calculate primary energy consumption with optional PV offsetting
+    short_description: Calculate primary energy consumption from final energy using PEF
     description: |
       This Feature calculates primary energy consumption for each building using Primary Energy Factors (PEF).
 
@@ -314,16 +314,18 @@ Life Cycle Analysis:
       For example, grid electricity typically has PEF = 2.5, meaning 2.5 MJ of primary energy is needed
       to deliver 1 MJ of electricity to the building.
 
+      Primary energy represents the total energy resources consumed at source (e.g., fuel burned at power plant),
+      while final energy is what is delivered to the building boundary.
+
       **PV Offsetting**: When enabled, PV generation offsets grid electricity using net metering:
       NetGRID = GRID_demand - PV_total
 
       **Key outputs**:
-      - Final Energy by carrier (GRID, NATURALGAS, WOOD,etc.)
+      - Final Energy by carrier (GRID, NATURALGAS, WOOD, etc.)
       - Primary Energy by carrier (applying PEF to each carrier)
       - Net grid electricity after PV offsetting (can be negative for net exporters)
       - Normalised metrics per floor area (MJ/m²/year)
-
-      All PEF values are configurable in the parameters.
+      - Hourly timeseries for GRID and PV (other carriers use constant PEF)
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.primary_energy
     parameters: ['general:scenario', primary-energy]
