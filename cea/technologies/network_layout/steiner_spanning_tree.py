@@ -240,6 +240,135 @@ def calc_steiner_spanning_tree(crs_projected,
     terminals_set = set(terminal_nodes_coordinates)
     mst_non_directed = _enforce_terminal_leafs_and_no_b2b(G, mst_non_directed, terminals_set)
 
+    # Post-Steiner cleanup: remove non-terminal leaf stubs, then contract street chains
+    def _prune_nonterminal_leaves(steiner_graph: nx.Graph, terminals: set[tuple]) -> nx.Graph:
+        sg = steiner_graph.copy()
+        changed = True
+        terminals = set(tuple(t) for t in terminals)
+        while changed:
+            changed = False
+            leaves = []
+            for n in list(sg.nodes()):
+                if n in terminals:
+                    continue
+                if len(list(sg.neighbors(n))) == 1:
+                    leaves.append(n)
+            for n in leaves:
+                sg.remove_node(n)
+                changed = True
+        return sg
+
+    def _geometry_endpoints(line: LineString):
+        coords = list(line.coords)
+        return tuple(coords[0]), tuple(coords[-1])
+
+    def _merge_two_edges(u, n, v, data_un, data_nv) -> tuple[LineString, float]:
+        geom1: LineString = data_un.get('geometry', LineString([u, n]))
+        geom2: LineString = data_nv.get('geometry', LineString([n, v]))
+
+        # Orient so that geom1 ends at n and geom2 starts at n
+        g1s, g1e = _geometry_endpoints(geom1)
+        g2s, g2e = _geometry_endpoints(geom2)
+
+        if g1e != n and g1s == n:
+            # reverse geom1
+            geom1 = LineString(list(geom1.coords)[::-1])
+            g1s, g1e = g1e, g1s
+        if g2s != n and g2e == n:
+            # reverse geom2
+            geom2 = LineString(list(geom2.coords)[::-1])
+            g2s, g2e = g2e, g2s
+
+        # Concatenate, avoiding duplicate n
+        merged_coords = list(geom1.coords) + list(geom2.coords)[1:]
+        merged = LineString(merged_coords)
+        length = merged.length
+        return merged, length
+
+    def _contract_degree2_street_nodes(full_graph: nx.Graph, steiner_graph: nx.Graph, terminals: set[tuple]) -> nx.Graph:
+        sg = steiner_graph.copy()
+        terminals = set(tuple(t) for t in terminals)
+
+        # Helper to decide if an edge is a service stub (touches a terminal)
+        def is_service_edge(a, b):
+            return a in terminals or b in terminals
+
+        changed = True
+        while changed:
+            changed = False
+            # Work on a snapshot of nodes to avoid iteration issues
+            for n in list(sg.nodes()):
+                if n in terminals:
+                    continue
+                if n not in sg:
+                    continue
+                neigh = list(sg.neighbors(n))
+                if len(neigh) != 2:
+                    continue
+                a, b = neigh[0], neigh[1]
+
+                # Do not merge across terminal edges
+                if is_service_edge(a, n) or is_service_edge(n, b):
+                    continue
+
+                # Fetch edge data
+                data_an = sg.get_edge_data(a, n, default={})
+                data_nb = sg.get_edge_data(n, b, default={})
+
+                # Merge geometries and lengths
+                merged_geom, merged_len = _merge_two_edges(a, n, b, data_an, data_nb)
+
+                # Remove old and add merged
+                if sg.has_edge(a, n):
+                    sg.remove_edge(a, n)
+                if sg.has_edge(n, b):
+                    sg.remove_edge(n, b)
+
+                if sg.has_node(n) and len(list(sg.neighbors(n))) == 0:
+                    sg.remove_node(n)
+
+                # Add merged edge with geometry and weight
+                sg.add_edge(a, b, geometry=merged_geom, weight=merged_len)
+                changed = True
+        return sg
+
+    # 1) prune dangling non-terminal leaves
+    mst_non_directed = _prune_nonterminal_leaves(mst_non_directed, terminals_set)
+    # 2) contract degree-2 street chains
+    mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set)
+
+    # Reporting helper: print network stats and total length
+    def _report_network_stats(graph: nx.Graph, terminals: set[tuple], label: str = "Final"):
+        terminals = set(tuple(t) for t in terminals)
+        # Degrees
+        deg = {n: len(list(graph.neighbors(n))) for n in graph.nodes()}
+        non_terminal_leaves = [n for n, d in deg.items() if d == 1 and n not in terminals]
+        terminals_bad_degree = [n for n in terminals if n in graph and deg.get(n, 0) != 1]
+        # B2B edges (should be none)
+        b2b = [(u, v) for u, v in graph.edges() if u in terminals and v in terminals]
+        # Total length
+        total_len = 0.0
+        for u, v, data in graph.edges(data=True):
+            if 'weight' in data and isinstance(data['weight'], (int, float)):
+                total_len += float(data['weight'])
+            else:
+                try:
+                    from shapely import LineString as _LS
+                    total_len += _LS([u, v]).length
+                except Exception:
+                    # Fallback: ignore
+                    pass
+        print(f"\n[{label} network stats]")
+        print(f"  Nodes: {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
+        print(f"  Terminals: {len(terminals)} | Non-terminal leaves: {len(non_terminal_leaves)}")
+        if terminals_bad_degree:
+            print(f"  ⚠ Terminals with degree !=1: {len(terminals_bad_degree)}")
+        if b2b:
+            print(f"  ⚠ Building-to-building edges: {len(b2b)}")
+        print(f"  Total edge length: {total_len:.2f} m")
+
+    _report_network_stats(mst_non_directed, terminals_set, label="Final")
+
     mst_nodes = gdf([{
         "geometry": Point(coords),
     } for coords in mst_non_directed.nodes()], crs=crs_projected)
