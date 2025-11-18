@@ -352,11 +352,12 @@ class BuildingEmissionTimeline:
         operational_multi_years: pd.DataFrame,
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
     ) -> list[str]:
-        """Apply GRID policy in-place (if any) to discounted total columns for PV systems, and return the name of total columns."""
+        """Apply GRID policy in-place (if any) to PV offset/export columns, and return the column names."""
         list_final_pv_cols: list[str] = []
         for col in operational_multi_years.columns:
-            if col.startswith("PV_") and col.endswith("_offset_total_kgCO2e"):
-                # column name looks like PV_{pv_code}_offset_total_kgCO2e
+            # Include PV offset and export columns
+            if col.startswith("PV_") and col.endswith("_kgCO2e"):
+                # Columns look like: PV_{pv_code}_GRID_offset_kgCO2e or PV_{pv_code}_GRID_export_kgCO2e
                 if feedstock_policies and "GRID" in feedstock_policies:
                     ref, tgt, frac = feedstock_policies["GRID"]
                     operational_multi_years[col] = self.discount_over_year(
