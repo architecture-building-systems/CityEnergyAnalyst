@@ -266,12 +266,13 @@ class ThermalNetworkMapLayer(MapLayer):
 
         # Decide which files to load: either the full network (edges + nodes) or potential layout + nodes
         _edges_path = edges_path
-        if not self._check_valid_network(network_name, network_type) and self._check_potential_network(network_name, network_type):
-            logger.debug(f"Valid network files don't exist for {network_name} ({network_type}), loading potential layout instead.")
-            _edges_path = layout_path
-        else:
-            logger.debug(f"Network files don't exist at {edges_path}.")
-            return output
+        if not self._check_valid_network(network_name, network_type):
+            if self._check_potential_network(network_name, network_type):
+                logger.debug(f"Valid network files don't exist for {network_name} ({network_type}), loading potential layout instead.")
+                _edges_path = layout_path
+            else:
+                logger.debug(f"Network files don't exist at {edges_path}.")
+                return output
 
         logger.debug(f"Loading network from {_edges_path}")
         crs = get_geographic_coordinate_system()
