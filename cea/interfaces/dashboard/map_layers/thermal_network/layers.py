@@ -39,19 +39,32 @@ class ThermalNetworkMapLayer(MapLayer):
             return
 
         for network_type in self._network_types:
+            network_name_type = f"{network_name}_{network_type}"
             # Migrate old layout folder {network_folder}/DC to new folder e.g. {network_folder}/baseline/DC/
             old_layout_folder = os.path.join(network_folder, network_type)
-            new_network_folder = os.path.join(network_folder, network_name, network_type)
+            new_network_folder = os.path.join(network_folder, network_name_type, network_type)
             if os.path.exists(old_layout_folder):
                 new_layout_folder = os.path.join(new_network_folder, "layout")
-                # os.makedirs(new_layout_folder, exist_ok=True)
                 shutil.move(old_layout_folder, new_layout_folder)
+
+                # copy edge shapefile as layout shapefile
+                extensions = ['shp', 'shx', 'dbf', 'prj']
+                edge_shapefile_files = [
+                    f for ext in extensions 
+                    for f in glob.glob(os.path.join(new_layout_folder, f"edges.{ext}"))
+                ]
+                if all([os.path.exists(f) for f in edge_shapefile_files]):
+                    for ext in extensions:
+                        old_edge_file = os.path.join(new_layout_folder, f"edges.{ext}")
+                        new_layout_file = os.path.join(network_folder, network_name_type, f"layout.{ext}")
+                        shutil.copy(old_edge_file, new_layout_file)
+
             
             # Migrate old results files {network_folder}/DC__*.csv to new name e.g. {network_folder}/DC_baseline_*.csv
             old_results_files = glob.glob(os.path.join(network_folder, f"{network_type}__*.csv"))
             for old_results_file in old_results_files:
                 filename = os.path.basename(old_results_file)
-                new_filename = filename.replace(f"{network_type}__", f"{network_type}_{network_name}_", 1)
+                new_filename = filename.replace(f"{network_type}__", f"{network_type}_{network_name_type}_", 1)
                 new_results_file = os.path.join(new_network_folder, new_filename)
                 shutil.move(old_results_file, new_results_file)
         
