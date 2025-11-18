@@ -448,9 +448,10 @@ def convert_to_percent_stacked(df, list_y_columns):
     """
     Converts selected columns of a DataFrame to row-wise percentages for 100% stacked bar chart.
 
-    For mixed positive/negative values, calculates percentages separately:
+    For mixed positive/negative values:
     - Positive values: percentage of total positive values (0-100%)
-    - Negative values: percentage of total negative values (0 to -100%)
+    - Negative values: scaled by the same factor as positive values to show proportion relative to positive
+      (e.g., if positive=100, negative=-30, then negative shows as -30% to indicate 30% offset)
 
     Parameters:
         df (pd.DataFrame): Input DataFrame with numeric values.
@@ -461,26 +462,16 @@ def convert_to_percent_stacked(df, list_y_columns):
     """
     df_percent = df.copy()
 
-    # Calculate row-wise totals for positive and negative values separately
+    # Calculate row-wise total for positive values
     positive_sum = df_percent[list_y_columns].clip(lower=0).sum(axis=1)
-    negative_sum = df_percent[list_y_columns].clip(upper=0).sum(axis=1)
 
-    # Process each column
+    # Process each column - scale all values by the positive sum
     for col in list_y_columns:
-        # Separate positive and negative values
-        positive_mask = df_percent[col] > 0
-        negative_mask = df_percent[col] < 0
-
-        # Positive values: percentage of positive sum
-        valid_positive = positive_mask & (positive_sum > 0)
-        if valid_positive.any():
-            df_percent.loc[valid_positive, col] = (df_percent.loc[valid_positive, col] / positive_sum[valid_positive]) * 100
-
-        # Negative values: percentage of negative sum (keeps negative sign)
-        # Divide by absolute value of negative sum to preserve the negative sign
-        valid_negative = negative_mask & (negative_sum < 0)
-        if valid_negative.any():
-            df_percent.loc[valid_negative, col] = (df_percent.loc[valid_negative, col] / abs(negative_sum[valid_negative])) * 100
+        # All values (both positive and negative) scaled by positive sum
+        # This makes positive values sum to 100%, and negative values show as proportion of positive
+        valid_rows = positive_sum > 0
+        if valid_rows.any():
+            df_percent.loc[valid_rows, col] = (df_percent.loc[valid_rows, col] / positive_sum[valid_rows]) * 100
 
     return df_percent
 
