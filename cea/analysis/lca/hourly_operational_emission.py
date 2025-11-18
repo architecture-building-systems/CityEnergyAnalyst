@@ -617,7 +617,7 @@ class OperationalHourlyTimeline:
 
         df_to_save.to_csv(
             self.locator.get_lca_operational_hourly_building(self.bpr.name),
-            index=False, float_format='%.3f')
+            index=False, float_format='%.2f')
 
 
 if __name__ == "__main__":
