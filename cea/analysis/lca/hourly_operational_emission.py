@@ -454,12 +454,12 @@ class OperationalHourlyTimeline:
 
         # Get total GRID demand hourly
         grid_intensity = self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
-        grid_demand_hourly = np.zeros(HOURS_IN_YEAR)
-        for comp in _GRID_COMPONENTS:
-            col_name = f'{comp}_kgCO2e'
-            if col_name in self.operational_emission_timeline.columns:
-                # Convert emissions back to kWh using grid intensity
-                grid_demand_hourly += self.operational_emission_timeline[col_name].to_numpy(dtype=float) / grid_intensity
+
+        # Get GRID electricity demand from demand file
+        if 'GRID_kWh' not in self.demand_timeseries.columns:
+            raise ValueError(f"GRID_kWh column not found in demand timeseries for building {self.bpr.name}")
+
+        grid_demand_hourly = self.demand_timeseries['GRID_kWh'].to_numpy(dtype=float)
 
         # Track remaining grid demand for sequential allocation
         remaining_grid_demand = grid_demand_hourly.copy()
