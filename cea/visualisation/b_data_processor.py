@@ -27,15 +27,11 @@ class data_processor:
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
 
-        # For lifecycle-emissions, generate y_metric_to_plot from new parameters
-        if plot_cea_feature == 'lifecycle-emissions':
+        # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
+        if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
             self.y_metric_to_plot = self._generate_lifecycle_emission_columns(plot_config)
         else:
             self.y_metric_to_plot = plot_config.y_metric_to_plot
-            # Legacy PV handling for emission-timeline plot
-            if hasattr(plot_config, 'pv_code') and plot_config.pv_code is not None:
-                pv_code = plot_config.pv_code
-                self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
 
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by

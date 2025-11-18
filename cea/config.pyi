@@ -1664,7 +1664,9 @@ class PlotsOperationalEmissionsSection(Section):
 class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
     plot_type: str
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
     pv_code: str
     y_metric_unit: str
     y_normalised_by: str
@@ -1674,7 +1676,11 @@ class PlotsEmissionTimelineSection(Section):
     @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload

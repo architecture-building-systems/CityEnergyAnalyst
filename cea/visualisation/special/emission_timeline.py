@@ -86,8 +86,8 @@ class EmissionTimelinePlot:
             'operation': {'columns': [], 'positive': True},
             'production': {'columns': [], 'positive': True},
             'demolition': {'columns': [], 'positive': True},
-            'biogenic': {'columns': [], 'positive': True},
-            'pv': {'columns': [], 'positive': True}
+            'biogenic': {'columns': [], 'positive': False},  # Negative: carbon storage
+            'pv': {'columns': [], 'positive': False}  # Negative: PV offset/export
         }
 
         # Categorize columns
@@ -212,8 +212,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black',
-                rangemode='tozero'
+                zerolinecolor='black'
+                # Allow negative values to show below x-axis
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -321,8 +321,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black',
-                rangemode='tozero'
+                zerolinecolor='black'
+                # Allow negative values to show below x-axis for net emissions
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -388,7 +388,8 @@ class EmissionTimelinePlot:
             if negative_data:
                 negative_total = pd.DataFrame(negative_data).sum(axis=1)
                 for category in negative_data:
-                    negative_data[category] = (negative_data[category] / negative_total * 100).fillna(0)
+                    # Divide by absolute value to preserve negative sign (e.g., -30 / abs(-50) * 100 = -60%)
+                    negative_data[category] = (negative_data[category] / abs(negative_total) * 100).fillna(0)
 
         # Add positive emission traces (stacked)
         for category, data in positive_data.items():
@@ -416,11 +417,15 @@ class EmissionTimelinePlot:
             display_name = 'PV' if category == 'pv' else category.capitalize()
 
             hover_label = "Percentage" if percentage else ("Cumulative Emission" if self.bool_accumulated else "Emission")
-            hover_format = "-%{y:.1f}%" if percentage else "-%{y:.2f}"
+
+            # Data is already negative (either from source or from abs() division above)
+            # Use as-is to show below x-axis
+            y_data = data
+            hover_format = "%{y:.1f}%" if percentage else "%{y:.2f}"
 
             fig.add_trace(go.Scatter(
                 x=self.df['X'],
-                y=-data,  # Negate to show below x-axis
+                y=y_data,
                 mode='lines',
                 name=display_name,
                 line=dict(width=0, dash='dash'),
@@ -460,8 +465,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black',
-                rangemode='tozero'
+                zerolinecolor='black'
+                # Allow negative values to show below x-axis with stackgroup='negative'
             ),
             hovermode='x unified',
             plot_bgcolor='white',
