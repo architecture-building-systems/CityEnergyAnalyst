@@ -1473,6 +1473,14 @@ class InputLocator(object):
         """scenario/outputs/data/primary-energy/{building_name}_primary_energy.csv"""
         return os.path.join(self.get_primary_energy_folder(), f'{building_name}_primary_energy.csv')
 
+    def get_primary_energy_hourly_building(self, building_name):
+        """scenario/outputs/data/primary-energy/{building_name}_primary_energy_hourly.csv"""
+        return os.path.join(self.get_primary_energy_folder(), f'{building_name}_primary_energy_hourly.csv')
+
+    def get_primary_energy_hourly_district(self):
+        """scenario/outputs/data/primary-energy/Total_hourly_primary_energy.csv"""
+        return os.path.join(self.get_primary_energy_folder(), 'Total_hourly_primary_energy.csv')
+
     # COSTS
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""

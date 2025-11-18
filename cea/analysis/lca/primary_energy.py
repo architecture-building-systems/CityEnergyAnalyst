@@ -12,7 +12,11 @@ import pandas as pd
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-from cea.analysis.lca.primary_energy_calculator import calculate_primary_energy, calculate_normalized_metrics
+from cea.analysis.lca.primary_energy_calculator import (
+    calculate_primary_energy,
+    calculate_normalized_metrics,
+    calculate_hourly_primary_energy
+)
 
 
 def main(config):
@@ -71,59 +75,90 @@ def main(config):
     print(f"Calculating primary energy for {len(building_names)} buildings...")
 
     # Calculate primary energy for each building
-    results = []
+    annual_results = []
+    district_hourly_results = []
+
     for i, building in enumerate(building_names, 1):
         print(f"  [{i}/{len(building_names)}] {building}")
         try:
+            # Annual totals
             building_result = calculate_primary_energy(locator, building, config)
             building_result_normalized = calculate_normalized_metrics(building_result)
-            results.append(building_result_normalized)
+            annual_results.append(building_result_normalized)
+
+            # Hourly timeseries (GRID + PV only)
+            hourly_result = calculate_hourly_primary_energy(locator, building, config)
+
+            # Round numeric columns to 2 decimals
+            numeric_columns = hourly_result.select_dtypes(include=['float64', 'int64']).columns
+            hourly_result[numeric_columns] = hourly_result[numeric_columns].round(2)
+
+            # Save per-building hourly file
+            building_hourly_path = locator.get_primary_energy_hourly_building(building)
+            hourly_result.to_csv(building_hourly_path, index=False)
+
+            # Add building name for district aggregation
+            hourly_result_with_name = hourly_result.copy()
+            hourly_result_with_name.insert(0, 'Name', building)
+            district_hourly_results.append(hourly_result_with_name)
+
         except Exception as e:
             print(f"    WARNING: Failed to calculate primary energy for {building}: {e}")
             continue
 
-    if not results:
+    if not annual_results:
         print("ERROR: No buildings successfully calculated")
         return
-
-    # Combine results into DataFrame
-    results_df = pd.DataFrame(results)
-
-    # Round all numeric columns to 2 decimals
-    numeric_columns = results_df.select_dtypes(include=['float64', 'int64']).columns
-    results_df[numeric_columns] = results_df[numeric_columns].round(2)
 
     # Ensure output folder exists
     output_folder = locator.get_primary_energy_folder()
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Write annual results
-    output_path = locator.get_primary_energy_annual()
-    results_df.to_csv(output_path, index=False)
+    # === Save Annual Results ===
+    annual_df = pd.DataFrame(annual_results)
 
-    print(f"\nResults saved to: {output_path}")
-    print(f"Total buildings: {len(results_df)}")
+    # Round all numeric columns to 2 decimals
+    numeric_columns = annual_df.select_dtypes(include=['float64', 'int64']).columns
+    annual_df[numeric_columns] = annual_df[numeric_columns].round(2)
+
+    # Write annual results
+    annual_output_path = locator.get_primary_energy_annual()
+    annual_df.to_csv(annual_output_path, index=False)
+
+    print(f"\nAnnual results saved to: {annual_output_path}")
+    print(f"Total buildings: {len(annual_df)}")
+
+    # === Save District-Level Hourly Results ===
+    if district_hourly_results:
+        # Concatenate all building hourly data
+        district_hourly_df = pd.concat(district_hourly_results, ignore_index=True)
+
+        # Write district hourly results
+        district_hourly_path = locator.get_primary_energy_hourly_district()
+        district_hourly_df.to_csv(district_hourly_path, index=False)
+
+        print(f"District hourly results saved to: {district_hourly_path}")
 
     # Print summary
     print("\n=== Primary Energy Summary ===")
 
     # Sum base PE carriers (exclude NetGRID variations)
-    base_pe_cols = [col for col in results_df.columns
+    base_pe_cols = [col for col in annual_df.columns
                     if col.startswith('PE_') and col.endswith('_MJyr')
                     and 'NetGRID' not in col]
     if base_pe_cols:
-        print(f"Total PE (all carriers): {results_df[base_pe_cols].sum().sum() / 1000:.0f} GJ/yr")
+        print(f"Total PE (all carriers): {annual_df[base_pe_cols].sum().sum() / 1000:.0f} GJ/yr")
 
     if config.primary_energy.include_pv:
         # Find all NetGRID columns
-        netgrid_cols = [col for col in results_df.columns if col.startswith('PE_NetGRID_') and col.endswith('_MJyr')]
+        netgrid_cols = [col for col in annual_df.columns if col.startswith('PE_NetGRID_') and col.endswith('_MJyr')]
         for col in netgrid_cols:
             pv_code = col.replace('PE_NetGRID_', '').replace('_MJyr', '')
             pv_gen_col = f'PV_{pv_code}_generation_MJyr'
-            print(f"Total PE NetGRID ({pv_code}): {results_df[col].sum() / 1000:.0f} GJ/yr")
-            if pv_gen_col in results_df.columns:
-                print(f"Total PV generation ({pv_code}): {results_df[pv_gen_col].sum() / 1000:.0f} GJ/yr")
+            print(f"Total PE NetGRID ({pv_code}): {annual_df[col].sum() / 1000:.0f} GJ/yr")
+            if pv_gen_col in annual_df.columns:
+                print(f"Total PV generation ({pv_code}): {annual_df[pv_gen_col].sum() / 1000:.0f} GJ/yr")
 
 
 def get_building_names_from_zone(locator):
