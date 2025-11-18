@@ -28,11 +28,12 @@ def calculate_primary_energy(locator, building, config):
         - pv_codes : str (comma-separated, e.g., "PV1,PV2")
         - pef_grid : float (default: 2.5)
         - pef_naturalgas : float (default: 1.1)
-        - pef_dh : float (default: 1.0)
-        - pef_dc : float (default: 1.0)
         - pef_coal : float (default: 1.1)
         - pef_oil : float (default: 1.1)
         - pef_wood : float (default: 1.0)
+
+        Note: DH and DC are excluded - their primary energy is calculated
+        separately in thermal network and district optimization features.
 
     Returns
     -------
@@ -42,15 +43,11 @@ def calculate_primary_energy(locator, building, config):
             'building': str,
             'FE_GRID_MJyr': float,
             'FE_NATURALGAS_MJyr': float,
-            'FE_DH_MJyr': float,
-            'FE_DC_MJyr': float,
             'FE_COAL_MJyr': float,
             'FE_OIL_MJyr': float,
             'FE_WOOD_MJyr': float,
             'PE_GRID_MJyr': float,
             'PE_NATURALGAS_MJyr': float,
-            'PE_DH_MJyr': float,
-            'PE_DC_MJyr': float,
             'PE_COAL_MJyr': float,
             'PE_OIL_MJyr': float,
             'PE_WOOD_MJyr': float,
@@ -74,11 +71,10 @@ def calculate_primary_energy(locator, building, config):
         pv_codes = None
 
     # Get PEF values from config
+    # Note: DH and DC excluded - calculated in district optimization
     pef = {
         'GRID': config.primary_energy.pef_grid,
         'NATURALGAS': config.primary_energy.pef_naturalgas,
-        'DH': config.primary_energy.pef_dh,
-        'DC': config.primary_energy.pef_dc,
         'COAL': config.primary_energy.pef_coal,
         'OIL': config.primary_energy.pef_oil,
         'WOOD': config.primary_energy.pef_wood,
@@ -91,11 +87,10 @@ def calculate_primary_energy(locator, building, config):
     kWh_to_MJ = 3.6
 
     # Extract final energy (FE) in MJ
+    # Note: DH and DC excluded - their primary energy calculated in district optimization
     fe = {
         'GRID': net_energy['FE_GRID_kWh'] * kWh_to_MJ,
         'NATURALGAS': net_energy['FE_NATURALGAS_kWh'] * kWh_to_MJ,
-        'DH': net_energy['FE_DH_kWh'] * kWh_to_MJ,
-        'DC': net_energy['FE_DC_kWh'] * kWh_to_MJ,
         'COAL': net_energy['FE_COAL_kWh'] * kWh_to_MJ,
         'OIL': net_energy['FE_OIL_kWh'] * kWh_to_MJ,
         'WOOD': net_energy['FE_WOOD_kWh'] * kWh_to_MJ,
@@ -125,15 +120,11 @@ def calculate_primary_energy(locator, building, config):
         'building': building,
         'FE_GRID_MJyr': fe['GRID'],
         'FE_NATURALGAS_MJyr': fe['NATURALGAS'],
-        'FE_DH_MJyr': fe['DH'],
-        'FE_DC_MJyr': fe['DC'],
         'FE_COAL_MJyr': fe['COAL'],
         'FE_OIL_MJyr': fe['OIL'],
         'FE_WOOD_MJyr': fe['WOOD'],
         'PE_GRID_MJyr': pe['GRID'],
         'PE_NATURALGAS_MJyr': pe['NATURALGAS'],
-        'PE_DH_MJyr': pe['DH'],
-        'PE_DC_MJyr': pe['DC'],
         'PE_COAL_MJyr': pe['COAL'],
         'PE_OIL_MJyr': pe['OIL'],
         'PE_WOOD_MJyr': pe['WOOD'],
@@ -172,7 +163,7 @@ def calculate_normalized_metrics(building_results):
     # Add normalised metrics
     normalized = building_results.copy()
 
-    for carrier in ['GRID', 'NATURALGAS', 'DH', 'DC', 'COAL', 'OIL', 'WOOD']:
+    for carrier in ['GRID', 'NATURALGAS', 'COAL', 'OIL', 'WOOD']:
         normalized[f'FE_{carrier}_MJm2yr'] = building_results[f'FE_{carrier}_MJyr'] / gfa_m2
         normalized[f'PE_{carrier}_MJm2yr'] = building_results[f'PE_{carrier}_MJyr'] / gfa_m2
 

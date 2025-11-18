@@ -594,8 +594,6 @@ class PrimaryEnergySection(Section):
     pv_codes: list[str]
     pef_grid: float
     pef_naturalgas: float
-    pef_dh: float
-    pef_dc: float
     pef_coal: float
     pef_oil: float
     pef_wood: float
@@ -609,10 +607,6 @@ class PrimaryEnergySection(Section):
     def __getattr__(self, item: Literal["pef_grid"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["pef_naturalgas"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["pef_dh"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["pef_dc"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["pef_coal"]) -> float: ...
     @overload

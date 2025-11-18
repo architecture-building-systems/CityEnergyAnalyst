@@ -40,8 +40,6 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
         {
             'FE_GRID_kWh': float,           # Original grid demand (annual)
             'FE_NATURALGAS_kWh': float,     # Natural gas (annual)
-            'FE_DH_kWh': float,             # District heating (annual)
-            'FE_DC_kWh': float,             # District cooling (annual)
             'FE_COAL_kWh': float,           # Coal (annual)
             'FE_OIL_kWh': float,            # Oil (annual)
             'FE_WOOD_kWh': float,           # Wood (annual)
@@ -50,6 +48,12 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
             'PV_codes': list[str],          # List of included PV codes
             'hourly_data': pd.DataFrame     # Hourly timeseries (optional future use)
         }
+
+    Notes
+    -----
+    - DH (District Heating) and DC (District Cooling) are excluded from primary energy
+      calculations as their distribution losses and generation primary energy are
+      calculated separately in thermal network and district optimization features.
 
     Notes
     -----
@@ -63,11 +67,10 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
 
     # Extract final energy by carrier (kWh = Wh / 1000)
     # Use demand_energycarrier columns from demand output
+    # Note: DH and DC excluded - their primary energy calculated in district optimization
     carriers = {
         'GRID': demand_df['GRID_kWh'].sum() if 'GRID_kWh' in demand_df.columns else 0.0,
         'NATURALGAS': demand_df['NG_hs_kWh'].sum() if 'NG_hs_kWh' in demand_df.columns else 0.0,
-        'DH': demand_df['DH_hs_kWh'].sum() if 'DH_hs_kWh' in demand_df.columns else 0.0,
-        'DC': demand_df['DC_cs_kWh'].sum() if 'DC_cs_kWh' in demand_df.columns else 0.0,
         'COAL': demand_df['COAL_hs_kWh'].sum() if 'COAL_hs_kWh' in demand_df.columns else 0.0,
         'OIL': demand_df['OIL_hs_kWh'].sum() if 'OIL_hs_kWh' in demand_df.columns else 0.0,
         'WOOD': demand_df['WOOD_hs_kWh'].sum() if 'WOOD_hs_kWh' in demand_df.columns else 0.0,
@@ -110,8 +113,6 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
     return {
         'FE_GRID_kWh': carriers['GRID'],
         'FE_NATURALGAS_kWh': carriers['NATURALGAS'],
-        'FE_DH_kWh': carriers['DH'],
-        'FE_DC_kWh': carriers['DC'],
         'FE_COAL_kWh': carriers['COAL'],
         'FE_OIL_kWh': carriers['OIL'],
         'FE_WOOD_kWh': carriers['WOOD'],
