@@ -780,7 +780,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                                    allow_looped_networks,
                                    None,  # None = skip plant creation (caller will add plants manually)
                                    disconnected_building_names,
-                                   steiner_algorithm,
+                                   method=steiner_algorithm,
                                    connection_candidates=connection_candidates)
 
         # Read generated nodes and edges
