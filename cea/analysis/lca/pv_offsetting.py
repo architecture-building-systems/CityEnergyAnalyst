@@ -43,7 +43,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
             'FE_COAL_kWh': float,           # Coal (annual)
             'FE_OIL_kWh': float,            # Oil (annual)
             'FE_WOOD_kWh': float,           # Wood (annual)
-            'PV_per_panel': dict,           # {pv_code: generation_kWh} per panel
+            'PV_by_type': dict,             # {pv_code: generation_kWh} by panel type
             'hourly_data': pd.DataFrame     # Hourly timeseries (optional future use)
         }
 
@@ -75,7 +75,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
     }
 
     # Initialize PV offsetting
-    pv_per_panel = {}  # Store per-panel PV generation
+    pv_by_type = {}  # Store PV generation by panel type
 
     if include_pv:
         # Get available PV panels
@@ -97,7 +97,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
                 # PV generation column: E_PV_gen_kWh
                 if 'E_PV_gen_kWh' in pv_df.columns:
                     pv_generation = pv_df['E_PV_gen_kWh'].sum()
-                    pv_per_panel[pv_code] = pv_generation
+                    pv_by_type[pv_code] = pv_generation
             except FileNotFoundError:
                 # Panel file doesn't exist, skip
                 continue
@@ -109,7 +109,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
         'FE_COAL_kWh': carriers['COAL'],
         'FE_OIL_kWh': carriers['OIL'],
         'FE_WOOD_kWh': carriers['WOOD'],
-        'PV_per_panel': pv_per_panel,  # Dict: {pv_code: generation_kWh}
+        'PV_by_type': pv_by_type,  # Dict: {pv_code: generation_kWh}
         'hourly_data': demand_df  # For potential future hourly analysis
     }
 
