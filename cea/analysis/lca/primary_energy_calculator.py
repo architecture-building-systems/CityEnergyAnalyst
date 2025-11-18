@@ -177,3 +177,101 @@ def calculate_normalized_metrics(building_results):
             normalized[f'PV_{pv_code}_generation_MJm2yr'] = building_results[f'PV_{pv_code}_generation_MJyr'] / gfa_m2
 
     return normalized
+
+
+def calculate_hourly_primary_energy(locator, building, config):
+    """
+    Calculate hourly primary energy for GRID and PV only.
+
+    Other carriers (NATURALGAS, COAL, OIL, WOOD) have constant PEF,
+    so hourly breakdown provides no additional value.
+
+    Parameters
+    ----------
+    locator : InputLocator
+        File path resolver for scenario
+    building : str
+        Building name (e.g., "B001")
+    config : Configuration
+        CEA configuration with primary-energy section
+
+    Returns
+    -------
+    pd.DataFrame
+        Hourly timeseries with columns:
+        - date (datetime)
+        - GRID_MJ: Hourly grid electricity demand
+        - PE_GRID_MJ: Hourly primary energy from grid
+        - PV_{code}_generation_MJ: Hourly PV generation per panel
+        - NetGRID_{code}_MJ: Hourly net grid per panel
+        - PE_NetGRID_{code}_MJ: Hourly primary energy net grid per panel
+    """
+    # Get PEF for grid
+    pef_grid = config.primary_energy.pef_grid
+
+    # Parse PV codes from config
+    include_pv = config.primary_energy.include_pv
+    pv_codes_param = config.primary_energy.pv_codes
+
+    # Handle both string (CLI) and list (GUI) input
+    if isinstance(pv_codes_param, list):
+        pv_codes = pv_codes_param if pv_codes_param else None
+    elif isinstance(pv_codes_param, str):
+        pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
+    else:
+        pv_codes = None
+
+    # Read building demand (hourly)
+    demand_path = locator.get_demand_results_file(building)
+    demand_df = pd.read_csv(demand_path)
+
+    # Convert Wh to MJ (1 Wh = 0.0036 MJ)
+    Wh_to_MJ = 0.0036
+
+    # Extract hourly GRID demand
+    if 'GRID_kWh' in demand_df.columns:
+        hourly_grid_MJ = demand_df['GRID_kWh'].values * 3.6  # kWh to MJ
+    else:
+        hourly_grid_MJ = demand_df['GRID_Wh'].values * Wh_to_MJ if 'GRID_Wh' in demand_df.columns else 0.0
+
+    # Calculate primary energy for grid
+    hourly_pe_grid_MJ = hourly_grid_MJ * pef_grid
+
+    # Build base DataFrame
+    hourly_df = pd.DataFrame({
+        'date': demand_df['DATE'] if 'DATE' in demand_df.columns else range(len(demand_df)),
+        'GRID_MJ': hourly_grid_MJ,
+        'PE_GRID_MJ': hourly_pe_grid_MJ
+    })
+
+    # Add per-panel PV columns if enabled
+    if include_pv and pv_codes:
+        # Get available PV panels
+        import os
+        available_panels = []
+        for pv_code in pv_codes:
+            pv_path = locator.PV_results(building, pv_code)
+            if os.path.exists(pv_path):
+                available_panels.append(pv_code)
+
+        # Process each panel
+        for pv_code in available_panels:
+            pv_path = locator.PV_results(building, pv_code)
+            pv_df = pd.read_csv(pv_path)
+
+            # Get hourly PV generation
+            if 'E_PV_gen_kWh' in pv_df.columns:
+                hourly_pv_MJ = pv_df['E_PV_gen_kWh'].values * 3.6  # kWh to MJ
+            else:
+                hourly_pv_MJ = pv_df['E_PV_gen_Wh'].values * Wh_to_MJ if 'E_PV_gen_Wh' in pv_df.columns else 0.0
+
+            # Calculate net grid for this panel
+            hourly_netgrid_MJ = hourly_grid_MJ - hourly_pv_MJ
+            hourly_pe_netgrid_MJ = hourly_netgrid_MJ * pef_grid
+
+            # Add columns
+            hourly_df[f'PV_{pv_code}_generation_MJ'] = hourly_pv_MJ
+            hourly_df[f'NetGRID_{pv_code}_MJ'] = hourly_netgrid_MJ
+            hourly_df[f'PE_NetGRID_{pv_code}_MJ'] = hourly_pe_netgrid_MJ
+
+    return hourly_df
