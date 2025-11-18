@@ -158,7 +158,7 @@ def operational_hourly(config: Configuration) -> None:
     df_by_building.to_csv(locator.get_total_yearly_operational_building(), float_format='%.2f')
     df_by_hour.to_csv(locator.get_total_yearly_operational_hour(), index=False, float_format='%.2f')
     print(
-        f"District-level operational emissions saved in: {locator.get_lca_timeline_folder()}"
+        f"District-level operational emissions saved in: {locator.get_lca_emissions_results_folder()}"
     )
 
 

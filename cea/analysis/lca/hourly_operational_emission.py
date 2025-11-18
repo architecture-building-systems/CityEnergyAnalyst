@@ -597,8 +597,8 @@ class OperationalHourlyTimeline:
         """
         Save the operational emission results to a CSV file.
         """
-        if not os.path.exists(self.locator.get_lca_timeline_folder()):
-            os.makedirs(self.locator.get_lca_timeline_folder())
+        if not os.path.exists(self.locator.get_lca_operational_folder()):
+            os.makedirs(self.locator.get_lca_operational_folder())
 
         # Reset index to convert hour index to a column, then reorder columns
         df_to_save = self.operational_emission_timeline
