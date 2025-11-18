@@ -427,51 +427,50 @@ def clean_street_network(network_gdf: gdf, snap_tolerance: float) -> gdf:
 def near_analysis(building_centroids, street_network: gdf, k: int = 1):
     """
     Find k-nearest street edges for each building centroid.
-    
+
+    Single, index-safe implementation for all k ≥ 1.
+
     :param building_centroids: GeoDataFrame of building centroids
     :param street_network: GeoDataFrame of street network edges
     :param k: Number of nearest edges to find per building (default 1)
     :return: GeoDataFrame with building_idx, street_idx, and connection point geometry
     """
     from cea.technologies.network_layout.graph_utils import normalize_geometry
-    
-    if k == 1:
-        # Original single-nearest behavior for backward compatibility
-        nearest_indexes = street_network.sindex.nearest(building_centroids.geometry, return_all=False)[1]
-        nearest_lines = street_network.iloc[nearest_indexes].reset_index(drop=True)
-        nearest_points_raw = nearest_lines.interpolate(nearest_lines.project(building_centroids))
-        nearest_points_normalized = [normalize_geometry(pt, SHAPEFILE_TOLERANCE) for pt in nearest_points_raw]
-        df = gdf({"idx": nearest_indexes, "building_idx": building_centroids.index}, 
-                 geometry=nearest_points_normalized, crs=street_network.crs)
-        return df
-    else:
-        # K-nearest behavior: find k nearest edges per building
-        results = []
-        for bldg_idx, bldg_row in building_centroids.iterrows():
-            bldg_geom = bldg_row.geometry
-            
-            # Calculate distances to all street edges
-            distances = street_network.distance(bldg_geom)
-            
-            # Get k nearest (or all if fewer than k streets exist)
-            k_nearest_count = min(k, len(street_network))
-            k_nearest_indices = distances.nsmallest(k_nearest_count).index.tolist()
-            
-            # For each of the k nearest streets, find the connection point
-            for street_idx in k_nearest_indices:
-                street_line = street_network.loc[street_idx].geometry
-                # Project building point onto street line and interpolate
-                connection_point_raw = street_line.interpolate(street_line.project(bldg_geom))
-                connection_point_normalized = normalize_geometry(connection_point_raw, SHAPEFILE_TOLERANCE)
-                
-                results.append({
-                    "building_idx": bldg_idx,
-                    "idx": street_idx,
-                    "geometry": connection_point_normalized
-                })
-        
-        df = gdf(results, crs=street_network.crs)
-        return df
+
+    if k < 1:
+        k = 1
+
+    results = []
+    # Iterate buildings and compute (up to) k nearest streets each.
+    # This avoids index alignment pitfalls of vectorized nearest operations.
+    for bldg_idx, bldg_row in building_centroids.iterrows():
+        bldg_geom = bldg_row.geometry
+
+        # Compute distances to all streets (vectorized) and pick the smallest k
+        distances = street_network.geometry.distance(bldg_geom)
+        if distances.isna().all() or len(distances) == 0:
+            continue
+
+        k_nearest_count = min(k, len(street_network))
+        k_nearest_indices = distances.nsmallest(k_nearest_count).index.tolist()
+
+        for street_idx in k_nearest_indices:
+            street_line = street_network.loc[street_idx].geometry
+            # Project building point onto street line and interpolate
+            connection_point_raw = street_line.interpolate(street_line.project(bldg_geom))
+            connection_point_normalized = normalize_geometry(connection_point_raw, SHAPEFILE_TOLERANCE)
+
+            results.append({
+                "building_idx": bldg_idx,
+                "idx": street_idx,
+                "geometry": connection_point_normalized
+            })
+
+    if not results:
+        # No candidates found at all; return empty GDF with expected columns
+        return gdf({"building_idx": [], "idx": []}, geometry=[], crs=street_network.crs)
+
+    return gdf(results, crs=street_network.crs)
 
 
 def create_terminals(building_centroids: gdf, street_network: gdf, connection_candidates: int = 1) -> gdf:
@@ -680,6 +679,121 @@ def _extract_building_terminal_nodes(graph: nx.Graph, building_centroids_df: gdf
     return terminal_mapping
 
 
+def _validate_and_fix_connectivity(
+    graph: nx.Graph,
+    terminal_mapping: dict,
+    building_centroids_df: gdf,
+    streets_clean_df: gdf,
+    connection_candidates: int,
+    crs: str,
+) -> nx.Graph:
+    """
+    Validate graph connectivity and attempt auto-retry with k=3 if disconnected.
+
+    :param graph: NetworkX graph to validate
+    :param terminal_mapping: Dict mapping building_id → (x, y) node coordinates
+    :param building_centroids_df: GeoDataFrame of building centroids
+    :param streets_clean_df: GeoDataFrame of cleaned street network (without terminals)
+    :param connection_candidates: Number of connection candidates used
+    :param crs: Coordinate reference system
+    :return: Connected graph
+    :raises ValueError: If network remains disconnected after retry
+    """
+    components = list(nx.connected_components(graph))
+
+    if len(components) > 1:
+        # Try to remove single-node components
+        for component in components:
+            if len(component) == 1:
+                graph.remove_node(next(iter(component)))
+        
+        # Raise error if still disconnected
+        if len(list(nx.connected_components(graph))) > 1:
+            # Fallback: if user requested k=1, try automatically with k=3 to avoid attaching to isolated street fragments
+            if connection_candidates == 1:
+                print("\nDetected disconnection with k=1. Retrying terminal creation with k=3...")
+                combined_network_df = create_terminals(building_centroids_df, streets_clean_df, connection_candidates=3)
+                graph = gdf_to_nx(combined_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
+                terminal_mapping = _extract_building_terminal_nodes(graph, building_centroids_df)
+                graph.graph['building_terminals'] = terminal_mapping
+                graph.graph['crs'] = crs
+                graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
+                # Recompute components
+                if nx.number_connected_components(graph) == 1:
+                    print("Auto-retry with k=3 succeeded; proceeding with connected graph.")
+                    return graph
+                # If still disconnected, use the new terminal_mapping for diagnostics below
+
+            # Identify buildings in disconnected components and collect diagnostics
+            print("\nDisconnected components detected in network graph:")
+            all_components = list(nx.connected_components(graph))
+            for i, component in enumerate(all_components):
+                print(f"  Component {i+1}: {len(component)} nodes")
+
+            # Assume component 0 is the main one
+            main_component = all_components[0]
+            disconnected_buildings = []
+            diagnostics = []
+
+            for building_id, node_coords in terminal_mapping.items():
+                if node_coords not in main_component:
+                    disconnected_buildings.append(building_id)
+                    # Best-effort: get building geometry
+                    b_geom = None
+                    if 'name' in building_centroids_df.columns:
+                        _candidate = building_centroids_df[building_centroids_df['name'] == building_id]
+                        if len(_candidate) > 0:
+                            b_geom = _candidate.iloc[0].geometry
+                    if b_geom is None:
+                        # Fallback to index-based lookup if possible
+                        try:
+                            b_geom = building_centroids_df.loc[building_id].geometry  # type: ignore[index]
+                        except Exception:
+                            b_geom = None
+
+                    coord_str = "unknown"
+                    nearest_str = "n/a"
+                    if b_geom is not None:
+                        coord_str = f"({round(b_geom.x, 3)}, {round(b_geom.y, 3)})"
+                        try:
+                            # Use distances to the cleaned street network only (exclude terminal edges)
+                            dists = streets_clean_df.geometry.distance(b_geom)
+                            topk = dists.nsmallest(min(3, len(dists)))
+                            nearest_str = ", ".join([f"idx {idx}: {round(float(dist), 2)} m" for idx, dist in topk.items()])
+                        except Exception:
+                            nearest_str = "failed to compute"
+
+                    diagnostics.append(f"  - {building_id} at {coord_str}; nearest streets: {nearest_str}")
+
+            if connection_candidates == 1:
+                hint = (
+                    "The system already auto-retried with connection_candidates=3, but the network remains disconnected. "
+                    "This indicates the street network near the listed buildings is truly isolated from the main component. "
+                    "Please inspect the street geometry around these buildings for missing connections, micro-gaps, or orphan street segments."
+                )
+            else:
+                hint = (
+                    f"The network is disconnected even with connection_candidates={connection_candidates}. "
+                    "This indicates the street network near the listed buildings is truly isolated from the main component. "
+                    "Please inspect the street geometry around these buildings for missing connections, micro-gaps, or orphan street segments."
+                )
+
+            diag_text = "\n".join(diagnostics) if diagnostics else "  (no diagnostics available)"
+
+            raise ValueError(
+                "\n".join([
+                    f"Network graph has {len(all_components)} disconnected components after terminal creation.",
+                    "This indicates connectivity issues with the provided street network or terminal placement.",
+                    f"Disconnected buildings: {', '.join(disconnected_buildings) if disconnected_buildings else 'unknown'}",
+                    "Diagnostics:",
+                    diag_text,
+                    hint,
+                ])
+            )
+
+    return graph
+
+
 def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
@@ -718,51 +832,34 @@ def calc_connectivity_network_with_geometry(
         streets_network_df, building_centroids_df
     )
 
+    # Preserve a copy of the cleaned street network (without terminals) for diagnostics and retries
+    streets_clean_df = streets_network_df.copy()
+
     # Create terminals from building centroids
     if connection_candidates > 1:
         print(f"\nCreating building terminal connections (k={connection_candidates} nearest per building)...")
     else:
         print("\nCreating building terminal connections...")
-    streets_network_df = create_terminals(building_centroids_df, streets_network_df, connection_candidates=connection_candidates)
+    combined_network_df = create_terminals(building_centroids_df, streets_network_df, connection_candidates=connection_candidates)
 
     # Convert to graph with geometry preservation
-    graph = gdf_to_nx(streets_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
+    graph = gdf_to_nx(combined_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
 
-    # Store building terminal metadata in graph for downstream use
+        # Store building terminal metadata in graph for downstream use
     terminal_mapping = _extract_building_terminal_nodes(graph, building_centroids_df)
     graph.graph['building_terminals'] = terminal_mapping
     graph.graph['crs'] = crs
     graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
-    # Clean up graph components and connect them if needed
-    components = list(nx.connected_components(graph))
-
-    if len(components) > 1:
-        # Try to remove single-node components
-        for component in components:
-            if len(component) == 1:
-                graph.remove_node(next(iter(component)))
-        
-        # Raise error if still disconnected
-        if len(list(nx.connected_components(graph))) > 1:
-            # Identify buildings in disconnected components
-            disconnected_buildings = []
-            print("\nDisconnected components detected in network graph:")
-            for i, component in enumerate(nx.connected_components(graph)):
-                print(f"  Component {i+1}: {len(component)} nodes")
-                # Assume first component is the main one
-                if i == 0:
-                    continue
-                for building_id, node_coords in terminal_mapping.items():
-                    if node_coords in component:
-                        disconnected_buildings.append(building_id)
-
-            raise ValueError(
-                f"Network graph has {len(components)} disconnected components after terminal creation.\n"
-                f"This indicates connectivity issues with the network provided.\n"
-                f"Disconnected buildings: {', '.join(disconnected_buildings)}\n"
-                "Check street network connectivity around these buildings."
-            )
+    # Validate connectivity and attempt auto-fix if needed
+    graph = _validate_and_fix_connectivity(
+        graph=graph,
+        terminal_mapping=terminal_mapping,
+        building_centroids_df=building_centroids_df,
+        streets_clean_df=streets_clean_df,
+        connection_candidates=connection_candidates,
+        crs=crs,
+    )
 
     # Update metadata in graph
     graph.graph['building_terminals'] = terminal_mapping
