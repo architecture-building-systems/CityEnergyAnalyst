@@ -123,8 +123,8 @@ def calculate_primary_energy(locator, building, config):
     }
 
     # Add per-panel NetGRID columns if PV is included
-    pv_per_panel = net_energy.get('PV_per_panel', {})
-    for pv_code, pv_generation_kWh in pv_per_panel.items():
+    pv_by_type = net_energy.get('PV_by_type', {})
+    for pv_code, pv_generation_kWh in pv_by_type.items():
         pv_generation_MJ = pv_generation_kWh * kWh_to_MJ
         net_grid_MJ = fe['GRID'] - pv_generation_MJ
         pe_net_grid_MJ = net_grid_MJ * pef['GRID']

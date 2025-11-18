@@ -104,7 +104,8 @@ def operational_hourly(config: Configuration) -> None:
             from cea.analysis.lca.pv_offsetting import calculate_net_energy
             try:
                 net_energy_check = calculate_net_energy(locator, first_building, include_pv=True, pv_codes=pv_codes)
-                pv_codes_available = net_energy_check['PV_codes']
+                pv_by_type = net_energy_check['PV_by_type']
+                pv_codes_available = list(pv_by_type.keys())
             except:
                 pv_codes_available = []
 

@@ -423,7 +423,8 @@ class OperationalHourlyTimeline:
             pv_codes=pv_codes
         )
 
-        pv_codes_used = net_energy_annual['PV_codes']
+        pv_by_type = net_energy_annual['PV_by_type']
+        pv_codes_used = list(pv_by_type.keys())
 
         if not pv_codes_used:
             warnings.warn(
