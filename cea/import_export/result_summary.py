@@ -100,7 +100,15 @@ emission_timeline_yearly_colnames_nounit = (
         f"operation_{type_energy}"
         for type_energy in emission_timeline_operational_types
     ]
-    + [f"PV_{pv_type}_offset_total" for pv_type in emission_timeline_pv_types]
+    # PV operational columns (offset and export)
+    + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
+    + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
+    # PV embodied columns
+    + [
+        f"{type_emission}_PV_{pv_type}"
+        for type_emission in emission_timeline_embodied_types
+        for pv_type in emission_timeline_pv_types
+    ]
 )
 
 normalisation_name_mapping_emission_timeline_yearly = {
