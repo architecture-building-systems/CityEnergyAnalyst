@@ -379,17 +379,20 @@ class EmissionTimelinePlot:
 
         # Convert to percentage if requested
         if percentage:
-            # Calculate totals for each year
+            # Calculate positive total BEFORE converting to percentages (needed for negative scaling)
             if positive_data:
                 positive_total = pd.DataFrame(positive_data).sum(axis=1)
+
+            # Convert positive data to percentages (0-100%)
+            if positive_data:
                 for category in positive_data:
                     positive_data[category] = (positive_data[category] / positive_total * 100).fillna(0)
 
-            if negative_data:
-                negative_total = pd.DataFrame(negative_data).sum(axis=1)
+            # Scale negative values proportionate to positive values (not 0 to -100%)
+            # E.g., if positive=100, negative=-30, then negative shows as -30% (30% of positive)
+            if negative_data and positive_data:
                 for category in negative_data:
-                    # Divide by absolute value to preserve negative sign (e.g., -30 / abs(-50) * 100 = -60%)
-                    negative_data[category] = (negative_data[category] / abs(negative_total) * 100).fillna(0)
+                    negative_data[category] = (negative_data[category] / positive_total * 100).fillna(0)
 
         # Add positive emission traces (stacked)
         for category, data in positive_data.items():
