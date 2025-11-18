@@ -202,9 +202,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     Q_demand_kWh_building = pd.DataFrame()
     if network_type == "DH":
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
-        buildings_name_with_space_heating = get_building_names_with_load(total_demand, load_name='Qhs_sys_MWhyr')
         DHN_barcode = "0"
-        if buildings_name_with_heating and buildings_name_with_space_heating:
+        if buildings_name_with_heating:
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
             buildings_with_heating_set = set(buildings_name_with_heating)
