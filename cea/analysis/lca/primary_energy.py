@@ -38,6 +38,36 @@ def main(config):
         zone_df = get_building_names_from_zone(locator)
         building_names = zone_df['Name'].tolist()
 
+    # Check PV requirements BEFORE processing any buildings
+    include_pv = config.primary_energy.include_pv
+    if include_pv:
+        pv_codes_param = config.primary_energy.pv_codes
+        # Handle both string (CLI) and list (GUI) input
+        if isinstance(pv_codes_param, list):
+            pv_codes = pv_codes_param if pv_codes_param else None
+        elif isinstance(pv_codes_param, str):
+            pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
+        else:
+            pv_codes = None
+
+        if pv_codes and building_names:
+            # Check if PV files exist for the first building
+            first_building = building_names[0]
+            missing_panels = []
+            for pv_code in pv_codes:
+                pv_path = locator.PV_results(first_building, pv_code)
+                if not os.path.exists(pv_path):
+                    missing_panels.append(pv_code)
+
+            if missing_panels:
+                missing_list = ', '.join(missing_panels)
+                error_msg = (
+                    f"PV electricity results missing for panel type(s): {missing_list}. "
+                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                )
+                print(f"ERROR: {error_msg}")
+                raise FileNotFoundError(error_msg)
+
     print(f"Calculating primary energy for {len(building_names)} buildings...")
 
     # Calculate primary energy for each building
@@ -59,6 +89,10 @@ def main(config):
     # Combine results into DataFrame
     results_df = pd.DataFrame(results)
 
+    # Round all numeric columns to 2 decimals
+    numeric_columns = results_df.select_dtypes(include=['float64', 'int64']).columns
+    results_df[numeric_columns] = results_df[numeric_columns].round(2)
+
     # Ensure output folder exists
     output_folder = locator.get_primary_energy_folder()
     if not os.path.exists(output_folder):
@@ -73,11 +107,23 @@ def main(config):
 
     # Print summary
     print("\n=== Primary Energy Summary ===")
-    print(f"Total PE (all carriers): {results_df[[col for col in results_df.columns if col.startswith('PE_') and col.endswith('_MJyr')]].sum().sum() / 1000:.0f} GJ/yr")
-    print(f"Total PE NetGRID: {results_df['PE_NetGRID_MJyr'].sum() / 1000:.0f} GJ/yr")
+
+    # Sum base PE carriers (exclude NetGRID variations)
+    base_pe_cols = [col for col in results_df.columns
+                    if col.startswith('PE_') and col.endswith('_MJyr')
+                    and 'NetGRID' not in col]
+    if base_pe_cols:
+        print(f"Total PE (all carriers): {results_df[base_pe_cols].sum().sum() / 1000:.0f} GJ/yr")
 
     if config.primary_energy.include_pv:
-        print(f"Total PV generation: {results_df['PV_generation_MJyr'].sum() / 1000:.0f} GJ/yr")
+        # Find all NetGRID columns
+        netgrid_cols = [col for col in results_df.columns if col.startswith('PE_NetGRID_') and col.endswith('_MJyr')]
+        for col in netgrid_cols:
+            pv_code = col.replace('PE_NetGRID_', '').replace('_MJyr', '')
+            pv_gen_col = f'PV_{pv_code}_generation_MJyr'
+            print(f"Total PE NetGRID ({pv_code}): {results_df[col].sum() / 1000:.0f} GJ/yr")
+            if pv_gen_col in results_df.columns:
+                print(f"Total PV generation ({pv_code}): {results_df[pv_gen_col].sum() / 1000:.0f} GJ/yr")
 
 
 def get_building_names_from_zone(locator):
