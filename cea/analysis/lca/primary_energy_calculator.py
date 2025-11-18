@@ -51,11 +51,10 @@ def calculate_primary_energy(locator, building, config):
             'PE_COAL_MJyr': float,
             'PE_OIL_MJyr': float,
             'PE_WOOD_MJyr': float,
-            'NetGRID_MJyr': float,           # Net grid after PV offset
-            'PE_NetGRID_MJyr': float,        # Primary energy of net grid
-            'PV_generation_MJyr': float,
-            'PV_codes': str,                 # Comma-separated list
-            'GFA_m2': float                  # For normalisation
+            'NetGRID_{pv_code}_MJyr': float,      # Net grid after PV offset (per panel)
+            'PE_NetGRID_{pv_code}_MJyr': float,   # Primary energy of net grid (per panel)
+            'PV_{pv_code}_generation_MJyr': float, # PV generation (per panel)
+            'GFA_m2': float                        # For normalisation
         }
     """
     # Parse PV codes from config
@@ -102,21 +101,13 @@ def calculate_primary_energy(locator, building, config):
         for carrier in fe.keys()
     }
 
-    # Net grid (can be negative)
-    net_grid_MJ = net_energy['NetGRID_kWh'] * kWh_to_MJ
-    pe_net_grid_MJ = net_grid_MJ * pef['GRID']
-
-    # PV generation
-    pv_generation_MJ = net_energy['PV_generation_kWh'] * kWh_to_MJ
-    pv_codes_included = ','.join(net_energy['PV_codes'])
-
     # Get GFA for normalisation
     demand_path = locator.get_demand_results_file(building)
     demand_df = pd.read_csv(demand_path)
     gfa_m2 = demand_df['GFA_m2'].iloc[0] if 'GFA_m2' in demand_df.columns else 0.0
 
-    # Return results
-    return {
+    # Build base results
+    results = {
         'building': building,
         'FE_GRID_MJyr': fe['GRID'],
         'FE_NATURALGAS_MJyr': fe['NATURALGAS'],
@@ -128,12 +119,21 @@ def calculate_primary_energy(locator, building, config):
         'PE_COAL_MJyr': pe['COAL'],
         'PE_OIL_MJyr': pe['OIL'],
         'PE_WOOD_MJyr': pe['WOOD'],
-        'NetGRID_MJyr': net_grid_MJ,
-        'PE_NetGRID_MJyr': pe_net_grid_MJ,
-        'PV_generation_MJyr': pv_generation_MJ,
-        'PV_codes': pv_codes_included,
         'GFA_m2': gfa_m2
     }
+
+    # Add per-panel NetGRID columns if PV is included
+    pv_per_panel = net_energy.get('PV_per_panel', {})
+    for pv_code, pv_generation_kWh in pv_per_panel.items():
+        pv_generation_MJ = pv_generation_kWh * kWh_to_MJ
+        net_grid_MJ = fe['GRID'] - pv_generation_MJ
+        pe_net_grid_MJ = net_grid_MJ * pef['GRID']
+
+        results[f'NetGRID_{pv_code}_MJyr'] = net_grid_MJ
+        results[f'PE_NetGRID_{pv_code}_MJyr'] = pe_net_grid_MJ
+        results[f'PV_{pv_code}_generation_MJyr'] = pv_generation_MJ
+
+    return results
 
 
 def calculate_normalized_metrics(building_results):
@@ -151,7 +151,7 @@ def calculate_normalized_metrics(building_results):
         Same dict with added normalised columns:
         - FE_GRID_MJm2yr
         - PE_GRID_MJm2yr
-        - PE_NetGRID_MJm2yr
+        - NetGRID_{pv_code}_MJm2yr (per panel)
         - etc.
     """
     gfa_m2 = building_results['GFA_m2']
@@ -163,12 +163,17 @@ def calculate_normalized_metrics(building_results):
     # Add normalised metrics
     normalized = building_results.copy()
 
+    # Normalize base carriers
     for carrier in ['GRID', 'NATURALGAS', 'COAL', 'OIL', 'WOOD']:
         normalized[f'FE_{carrier}_MJm2yr'] = building_results[f'FE_{carrier}_MJyr'] / gfa_m2
         normalized[f'PE_{carrier}_MJm2yr'] = building_results[f'PE_{carrier}_MJyr'] / gfa_m2
 
-    normalized['NetGRID_MJm2yr'] = building_results['NetGRID_MJyr'] / gfa_m2
-    normalized['PE_NetGRID_MJm2yr'] = building_results['PE_NetGRID_MJyr'] / gfa_m2
-    normalized['PV_generation_MJm2yr'] = building_results['PV_generation_MJyr'] / gfa_m2
+    # Normalize per-panel NetGRID columns
+    for key in building_results.keys():
+        if key.startswith('NetGRID_') and key.endswith('_MJyr'):
+            pv_code = key.replace('NetGRID_', '').replace('_MJyr', '')
+            normalized[f'NetGRID_{pv_code}_MJm2yr'] = building_results[key] / gfa_m2
+            normalized[f'PE_NetGRID_{pv_code}_MJm2yr'] = building_results[f'PE_NetGRID_{pv_code}_MJyr'] / gfa_m2
+            normalized[f'PV_{pv_code}_generation_MJm2yr'] = building_results[f'PV_{pv_code}_generation_MJyr'] / gfa_m2
 
     return normalized

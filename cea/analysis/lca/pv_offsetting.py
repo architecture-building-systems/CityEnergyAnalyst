@@ -43,9 +43,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
             'FE_COAL_kWh': float,           # Coal (annual)
             'FE_OIL_kWh': float,            # Oil (annual)
             'FE_WOOD_kWh': float,           # Wood (annual)
-            'NetGRID_kWh': float,           # Net grid after PV offset (annual)
-            'PV_generation_kWh': float,     # Total PV generation (annual)
-            'PV_codes': list[str],          # List of included PV codes
+            'PV_per_panel': dict,           # {pv_code: generation_kWh} per panel
             'hourly_data': pd.DataFrame     # Hourly timeseries (optional future use)
         }
 
@@ -57,9 +55,9 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
 
     Notes
     -----
-    - NetGRID can be negative (building as net exporter)
     - All non-GRID carriers pass through unchanged
     - Uses demand_energycarrier columns from building demand file
+    - PV data returned per-panel for flexibility in downstream calculations
     """
     # Read building demand
     demand_path = locator.get_demand_results_file(building)
@@ -77,8 +75,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
     }
 
     # Initialize PV offsetting
-    pv_generation_total = 0.0
-    included_pv_codes = []
+    pv_per_panel = {}  # Store per-panel PV generation
 
     if include_pv:
         # Get available PV panels
@@ -92,7 +89,7 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
             # Include only requested panels that exist
             panels_to_include = [code for code in pv_codes if code in available_panels]
 
-        # Sum PV generation from selected panels
+        # Get PV generation for each panel separately
         for pv_code in panels_to_include:
             pv_path = locator.PV_results(building, pv_code)
             try:
@@ -100,25 +97,19 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
                 # PV generation column: E_PV_gen_kWh
                 if 'E_PV_gen_kWh' in pv_df.columns:
                     pv_generation = pv_df['E_PV_gen_kWh'].sum()
-                    pv_generation_total += pv_generation
-                    included_pv_codes.append(pv_code)
+                    pv_per_panel[pv_code] = pv_generation
             except FileNotFoundError:
                 # Panel file doesn't exist, skip
                 continue
 
-    # Calculate net grid electricity
-    net_grid = carriers['GRID'] - pv_generation_total
-
-    # Return results
+    # Return results with per-panel data
     return {
         'FE_GRID_kWh': carriers['GRID'],
         'FE_NATURALGAS_kWh': carriers['NATURALGAS'],
         'FE_COAL_kWh': carriers['COAL'],
         'FE_OIL_kWh': carriers['OIL'],
         'FE_WOOD_kWh': carriers['WOOD'],
-        'NetGRID_kWh': net_grid,
-        'PV_generation_kWh': pv_generation_total,
-        'PV_codes': included_pv_codes,
+        'PV_per_panel': pv_per_panel,  # Dict: {pv_code: generation_kWh}
         'hourly_data': demand_df  # For potential future hourly analysis
     }
 
