@@ -23,7 +23,6 @@ class ThermalNetworkMapLayer(MapLayer):
     description = "Thermal Network Design"
 
     _network_types = ["DC", "DH"]
-    _default_network_name = "baseline"
 
     def _get_network_types(self):
         # Return both choices and default (DC is default)
@@ -34,7 +33,7 @@ class ThermalNetworkMapLayer(MapLayer):
         if not any(os.path.exists(os.path.join(network_folder, network_type)) for network_type in self._network_types):
             return
 
-        network_name = self._default_network_name
+        network_name = "existing_network"
         if os.path.exists(os.path.join(network_folder, network_name)):
             # Default network folder already exists, no need to migrate
             return
@@ -42,9 +41,10 @@ class ThermalNetworkMapLayer(MapLayer):
         for network_type in self._network_types:
             # Migrate old layout folder {network_folder}/DC to new folder e.g. {network_folder}/baseline/DC/
             old_layout_folder = os.path.join(network_folder, network_type)
+            new_network_folder = os.path.join(network_folder, network_name, network_type)
             if os.path.exists(old_layout_folder):
-                new_layout_folder = os.path.join(network_folder, network_name)
-                os.makedirs(new_layout_folder, exist_ok=True)
+                new_layout_folder = os.path.join(new_network_folder, "layout")
+                # os.makedirs(new_layout_folder, exist_ok=True)
                 shutil.move(old_layout_folder, new_layout_folder)
             
             # Migrate old results files {network_folder}/DC__*.csv to new name e.g. {network_folder}/DC_baseline_*.csv
@@ -52,7 +52,7 @@ class ThermalNetworkMapLayer(MapLayer):
             for old_results_file in old_results_files:
                 filename = os.path.basename(old_results_file)
                 new_filename = filename.replace(f"{network_type}__", f"{network_type}_{network_name}_", 1)
-                new_results_file = os.path.join(network_folder, new_filename)
+                new_results_file = os.path.join(new_network_folder, new_filename)
                 shutil.move(old_results_file, new_results_file)
         
         logger.debug(f"Migrated old thermal network format in {network_folder} to new format.")
@@ -164,14 +164,6 @@ class ThermalNetworkMapLayer(MapLayer):
     @classmethod
     def expected_parameters(cls):
         return {
-            'network-type':
-                ParameterDefinition(
-                    "Network Type",
-                    "string",
-                    description="Type of the network",
-                    options_generator="_get_network_types",
-                    selector="choice",
-                ),
             'network-name':
                 ParameterDefinition(
                     "Network Name",
@@ -181,6 +173,14 @@ class ThermalNetworkMapLayer(MapLayer):
                     selector="choice",
                     depends_on=["network-type"],
                     options_generator="_get_network_names",
+                ),
+            'network-type':
+                ParameterDefinition(
+                    "Network Type",
+                    "string",
+                    description="Type of the network",
+                    options_generator="_get_network_types",
+                    selector="choice",
                 ),
             'scale':
                 ParameterDefinition(
@@ -205,6 +205,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 "Network Layout",
                 file_locator="layer:_get_network_layout_files",
                 depends_on=["network-name"],
+                optional=True,  # layout file is optional to support old network format without layout
             ),
             FileRequirement(
                 "Network Nodes",
