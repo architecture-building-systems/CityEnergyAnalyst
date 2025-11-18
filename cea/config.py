@@ -909,7 +909,6 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             network_time = []
             for network_type in self._network_types:
                 edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
-                print(edges_path, nodes_path)
                 if os.path.exists(edges_path) and os.path.exists(nodes_path):
                     sort_time = os.path.getmtime(edges_path)
                     network_time.append((network_name, sort_time))
