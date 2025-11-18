@@ -406,7 +406,15 @@ def nx_to_gdf(graph, crs, preserve_geometry=True):
         edges_data.append(edge_dict)
 
     # Create GeoDataFrame
-    edges_gdf = gdf(edges_data, crs=crs)
+    if edges_data:
+        edges_gdf = gdf(edges_data, crs=crs)
+    else:
+        # Handle empty graph (no edges)
+        edges_gdf = gdf(
+            columns=['geometry'],
+            geometry='geometry',
+            crs=crs
+        )
 
     return edges_gdf
 

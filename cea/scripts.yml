@@ -253,7 +253,6 @@ Thermal Network Design:
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
-      - [get_network_layout_nodes_shapefile, "thermal-network:network-type", "thermal-network:network-name"]
       - [get_demand_results_file, building_name]
       - [get_db4_components_conversion_folder]
       - [get_database_components_distribution_thermal_grid]

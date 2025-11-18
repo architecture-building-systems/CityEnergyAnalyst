@@ -3379,12 +3379,21 @@ def main(config: cea.config.Configuration):
     network_name = config.thermal_network.network_name
     if not network_name:
         raise ValueError("Network name is required. Please select a network layout.")
-
+    
+    network_types = config.thermal_network.network_type
     if network_model == 'simplified':
-        thermal_network_simplified(locator, config, network_name)
-        # Print the time used for the entire processing
-        time_elapsed = time.time() - start
-        print('The process of simplified thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
+        errors = []
+        for network_type in network_types:
+            try:
+                print(f"Processing {network_type} network...")
+                thermal_network_simplified(locator, config, network_type, network_name)
+                print(f"{network_type} network processing completed.")
+            except ValueError as e:
+                errors.append(f"Error processing {network_type} network: {e}")
+        if errors:
+            for error in errors:
+                print(error)
+            raise ValueError("One or more network types failed to process. See errors above.")
     else:
         check_heating_cooling_demand(locator, config)
         thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)

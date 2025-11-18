@@ -179,9 +179,8 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
-def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_name=''):
+def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_type, network_name):
     # local variables
-    network_type = config.thermal_network.network_type
     min_head_substation_kPa = config.thermal_network.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
     coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
@@ -251,7 +250,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     #   from within the set of utilities used by cea. In later steps, the contents of the nodes- and edges-shapefiles
     #   are transformed in a way that they can be properly interpreted by epanet.
     import cea.utilities
-    with cea.utilities.pushd(locator.get_thermal_network_folder()):
+    with cea.utilities.pushd(locator.get_output_thermal_network_type_folder(network_type, network_name)):
         # Create a water network model
         wn = wntr.network.WaterNetworkModel()
 
@@ -564,26 +563,3 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     fields = ['length_m', 'pipe_DN', 'type_mat', 'geometry']
     edge_df_gdf = gpd.GeoDataFrame(edge_df[fields], index=edge_df.index)
     edge_df_gdf.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
-
-
-def main(config: cea.config.Configuration):
-    """
-    run the whole network summary routine
-    """
-    start = time.time()
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-
-    network_names = config.thermal_network.network_names
-
-    if len(network_names) == 0:
-        network_names = ['']
-
-    for network_name in network_names:
-        thermal_network_simplified(locator, config, network_name)
-
-    print("done.")
-    print(f"total time: {time.time() - start}")
-
-
-if __name__ == '__main__':
-    main(cea.config.Configuration())
