@@ -342,7 +342,8 @@ class bar_plot:
                 raise ValueError(f"Invalid x-to-plot: {self.x_to_plot}")
 
         if self.y_barmode == 'stack_percentage':
-            barmode = 'stack'
+            # Use same 'relative' mode as regular stack, but with percentage values
+            barmode = 'relative'
         elif self.y_barmode == 'stack':
             # Use 'relative' mode for stacking to properly handle mixed positive/negative values
             # This stacks positive bars upward from zero, negative bars downward from zero
@@ -447,6 +448,10 @@ def convert_to_percent_stacked(df, list_y_columns):
     """
     Converts selected columns of a DataFrame to row-wise percentages for 100% stacked bar chart.
 
+    For mixed positive/negative values, calculates percentages separately:
+    - Positive values: percentage of total positive values (0-100%)
+    - Negative values: percentage of total negative values (0 to -100%)
+
     Parameters:
         df (pd.DataFrame): Input DataFrame with numeric values.
         list_y_columns (list of str): Columns to convert to percentage (must exist in df).
@@ -455,8 +460,28 @@ def convert_to_percent_stacked(df, list_y_columns):
         pd.DataFrame: DataFrame with same columns where list_y_columns are converted to percentages.
     """
     df_percent = df.copy()
-    row_sums = df_percent[list_y_columns].sum(axis=1)
-    df_percent[list_y_columns] = df_percent[list_y_columns].div(row_sums, axis=0) * 100
+
+    # Calculate row-wise totals for positive and negative values separately
+    positive_sum = df_percent[list_y_columns].clip(lower=0).sum(axis=1)
+    negative_sum = df_percent[list_y_columns].clip(upper=0).sum(axis=1)
+
+    # Process each column
+    for col in list_y_columns:
+        # Separate positive and negative values
+        positive_mask = df_percent[col] > 0
+        negative_mask = df_percent[col] < 0
+
+        # Positive values: percentage of positive sum
+        valid_positive = positive_mask & (positive_sum > 0)
+        if valid_positive.any():
+            df_percent.loc[valid_positive, col] = (df_percent.loc[valid_positive, col] / positive_sum[valid_positive]) * 100
+
+        # Negative values: percentage of negative sum (keeps negative sign)
+        # Divide by absolute value of negative sum to preserve the negative sign
+        valid_negative = negative_mask & (negative_sum < 0)
+        if valid_negative.any():
+            df_percent.loc[valid_negative, col] = (df_percent.loc[valid_negative, col] / abs(negative_sum[valid_negative])) * 100
+
     return df_percent
 
 
@@ -543,7 +568,7 @@ def plot_faceted_bars(
             else:
                 facet_df = facet_df.sort_values(by=x_col)
 
-            if barmode == 'stack':
+            if barmode == 'stack' or barmode == 'relative' or barmode == 'stack_percentage':
                 # For stacked mode with positive and negative values:
                 # Use barmode='relative' to stack bars relative to zero
                 # This keeps positive bars above axis, negative below, in same position
@@ -629,7 +654,7 @@ def plot_faceted_bars(
         # No faceting
         fig = go.Figure()
 
-        if barmode == 'stack':
+        if barmode == 'stack' or barmode == 'relative' or barmode == 'stack_percentage':
             # For stacked mode with positive and negative values:
             # Use barmode='relative' to stack bars relative to zero
             # This keeps positive bars above axis, negative below, in same position
