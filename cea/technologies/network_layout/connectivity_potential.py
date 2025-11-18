@@ -688,7 +688,10 @@ def _validate_and_fix_connectivity(
     crs: str,
 ) -> nx.Graph:
     """
-    Validate graph connectivity and attempt auto-retry with k=3 if disconnected.
+    Validate graph connectivity, fix issues, and update graph metadata.
+
+    This function validates terminal mapping integrity, removes orphan components,
+    and updates graph.graph metadata with terminal_mapping, crs, and coord_precision.
 
     :param graph: NetworkX graph to validate
     :param terminal_mapping: Dict mapping building_id → (x, y) node coordinates
@@ -696,34 +699,62 @@ def _validate_and_fix_connectivity(
     :param streets_clean_df: GeoDataFrame of cleaned street network (without terminals)
     :param connection_candidates: Number of connection candidates used
     :param crs: Coordinate reference system
-    :return: Connected graph
-    :raises ValueError: If network remains disconnected after retry
+    :return: Validated and fixed graph with updated metadata
+    :raises ValueError: If network remains disconnected with building terminals on separate components
     """
+    # Validate terminal mapping integrity
+    graph_nodes = set(graph.nodes())
+    building_terminal_nodes = set(terminal_mapping.values())
+    
+    # Check 1: All expected buildings have terminal mappings
+    expected_buildings = set(building_centroids_df['name']) if 'name' in building_centroids_df.columns else set(building_centroids_df.index)
+    mapped_buildings = set(terminal_mapping.keys())
+    missing_mappings = expected_buildings - mapped_buildings
+    if missing_mappings:
+        print(f"Warning: {len(missing_mappings)} building(s) missing from terminal_mapping: {list(missing_mappings)[:5]}")
+    
+    # Check 2: All terminal nodes exist in the graph
+    missing_nodes = building_terminal_nodes - graph_nodes
+    if missing_nodes:
+        print(f"Warning: {len(missing_nodes)} terminal node(s) not found in graph: {list(missing_nodes)[:5]}")
+        # Clean up terminal_mapping to remove invalid entries
+        terminal_mapping = {bid: node for bid, node in terminal_mapping.items() if node in graph_nodes}
+        building_terminal_nodes = set(terminal_mapping.values())
+    
+    # Check 3: Verify terminal nodes actually have edges (degree >= 1)
+    # Note: graph.degree is a DegreeView, not callable - iterate to check degrees
+    orphan_terminals = []
+    for node in building_terminal_nodes:
+        if node in graph and len(list(graph.neighbors(node))) == 0:
+            orphan_terminals.append(node)
+    if orphan_terminals:
+        print(f"Warning: {len(orphan_terminals)} terminal node(s) have no edges (isolated): {orphan_terminals[:5]}")
+    
     components = list(nx.connected_components(graph))
 
     if len(components) > 1:
-        # Try to remove single-node components
-        for component in components:
-            if len(component) == 1:
-                graph.remove_node(next(iter(component)))
+        # Safely discard orphan components that contain NO building terminals
+        # Components with building terminals indicate real connectivity issues that need to be reported
+        orphan_components_removed = 0
+        orphan_nodes_removed = 0
+        
+        for component in list(components):  # Use list() to avoid modification during iteration
+            # Check if this component has any building terminals
+            has_building = any(node in building_terminal_nodes for node in component)
+            
+            if not has_building:
+                # Safe to discard: this component contains only street nodes with no building connections
+                # This can happen from isolated street fragments, data artifacts, or network cleaning residue
+                for node in component:
+                    graph.remove_node(node)
+                    orphan_nodes_removed += 1
+                orphan_components_removed += 1
+        
+        if orphan_components_removed > 0:
+            print(f"Safely discarded {orphan_components_removed} orphan component(s) with {orphan_nodes_removed} street node(s) (no building terminals attached)")
         
         # Raise error if still disconnected
         if len(list(nx.connected_components(graph))) > 1:
-            # Fallback: if user requested k=1, try automatically with k=3 to avoid attaching to isolated street fragments
-            if connection_candidates == 1:
-                print("\nDetected disconnection with k=1. Retrying terminal creation with k=3...")
-                combined_network_df = create_terminals(building_centroids_df, streets_clean_df, connection_candidates=3)
-                graph = gdf_to_nx(combined_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
-                terminal_mapping = _extract_building_terminal_nodes(graph, building_centroids_df)
-                graph.graph['building_terminals'] = terminal_mapping
-                graph.graph['crs'] = crs
-                graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
-                # Recompute components
-                if nx.number_connected_components(graph) == 1:
-                    print("Auto-retry with k=3 succeeded; proceeding with connected graph.")
-                    return graph
-                # If still disconnected, use the new terminal_mapping for diagnostics below
-
             # Identify buildings in disconnected components and collect diagnostics
             print("\nDisconnected components detected in network graph:")
             all_components = list(nx.connected_components(graph))
@@ -765,21 +796,15 @@ def _validate_and_fix_connectivity(
 
                     diagnostics.append(f"  - {building_id} at {coord_str}; nearest streets: {nearest_str}")
 
-            if connection_candidates == 1:
-                hint = (
-                    "The system already auto-retried with connection_candidates=3, but the network remains disconnected. "
-                    "This indicates the street network near the listed buildings is truly isolated from the main component. "
-                    "Please inspect the street geometry around these buildings for missing connections, micro-gaps, or orphan street segments."
-                )
-            else:
-                hint = (
-                    f"The network is disconnected even with connection_candidates={connection_candidates}. "
-                    "This indicates the street network near the listed buildings is truly isolated from the main component. "
-                    "Please inspect the street geometry around these buildings for missing connections, micro-gaps, or orphan street segments."
-                )
+            hint = (
+                f"The network is disconnected with connection_candidates={connection_candidates}. "
+                "This indicates the street network near the listed buildings is isolated from the main component. "
+                "Try increasing connection_candidates (e.g., to 3) to allow buildings to consider alternative street connections, "
+                "or inspect the street geometry around these buildings for missing connections, micro-gaps, or orphan street segments."
+            )
 
             diag_text = "\n".join(diagnostics) if diagnostics else "  (no diagnostics available)"
-
+            
             raise ValueError(
                 "\n".join([
                     f"Network graph has {len(all_components)} disconnected components after terminal creation.",
@@ -790,6 +815,11 @@ def _validate_and_fix_connectivity(
                     hint,
                 ])
             )
+
+    # Update graph metadata with validated terminal mapping
+    graph.graph['building_terminals'] = terminal_mapping
+    graph.graph['crs'] = crs
+    graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
     return graph
 
@@ -841,6 +871,7 @@ def calc_connectivity_network_with_geometry(
     else:
         print("\nCreating building terminal connections...")
     combined_network_df = create_terminals(building_centroids_df, streets_network_df, connection_candidates=connection_candidates)
+    combined_network_df.to_file("combined_network_with_terminals.shp")
 
     # Convert to graph with geometry preservation
     graph = gdf_to_nx(combined_network_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True)
@@ -851,7 +882,7 @@ def calc_connectivity_network_with_geometry(
     graph.graph['crs'] = crs
     graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
-    # Validate connectivity and attempt auto-fix if needed
+    # Validate connectivity and fix issues
     graph = _validate_and_fix_connectivity(
         graph=graph,
         terminal_mapping=terminal_mapping,
@@ -860,10 +891,5 @@ def calc_connectivity_network_with_geometry(
         connection_candidates=connection_candidates,
         crs=crs,
     )
-
-    # Update metadata in graph
-    graph.graph['building_terminals'] = terminal_mapping
-    graph.graph['crs'] = crs
-    graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
     return graph
