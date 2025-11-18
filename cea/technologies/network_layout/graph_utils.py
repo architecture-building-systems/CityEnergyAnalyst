@@ -146,21 +146,54 @@ def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
                 best_orphan_node = orphan_node
                 best_main_node = main_nodes[nearest_idx]
         
-        # If we found a suitable bridge point within threshold, connect it
+        # If we found a suitable bridge point within threshold, merge it
         if best_orphan_node is not None and best_distance <= merge_threshold:
-            # Use average weight from orphan's existing edges, or distance as fallback
+            # Instead of adding a tiny edge, reconnect the orphan's edges to the main node
+            # This "snaps" the orphan node to the nearest main component node
             orphan_edges = list(G.edges(best_orphan_node, data=True))
-            if orphan_edges:
-                avg_weight = np.mean([data.get('weight', best_distance) for _, _, data in orphan_edges])
-            else:
-                avg_weight = best_distance
             
-            G.add_edge(best_orphan_node, best_main_node, weight=avg_weight)
+            for u, v, data in orphan_edges:
+                # Determine which end of the edge is the orphan node
+                other_node = v if u == best_orphan_node else u
+                
+                # Modify the geometry to reconnect the orphan endpoint to best_main_node
+                if 'geometry' in data:
+                    # Preserve the geometry but replace the orphan endpoint
+                    old_geom = data['geometry']
+                    coords = list(old_geom.coords)
+                    
+                    # Determine which end to replace based on which matches the orphan node
+                    if coords[0] == best_orphan_node or coords[0] == u:
+                        # Orphan is at start - replace first coordinate
+                        coords[0] = best_main_node
+                    else:
+                        # Orphan is at end - replace last coordinate
+                        coords[-1] = best_main_node
+                    
+                    # Create updated geometry with modified endpoint
+                    new_geom = LineString(coords)
+                    data['geometry'] = new_geom
+                    data['weight'] = new_geom.length
+                else:
+                    # No geometry preserved - just update weight based on new distance
+                    import math
+                    new_weight = math.sqrt(
+                        (best_main_node[0] - other_node[0])**2 + 
+                        (best_main_node[1] - other_node[1])**2
+                    )
+                    data['weight'] = new_weight
+                
+                # Add the reconnected edge (if it doesn't already exist)
+                if not G.has_edge(other_node, best_main_node):
+                    G.add_edge(other_node, best_main_node, **data)
+                    edges_added += 1
+            
+            # Remove the orphan node (its edges have been reconnected)
+            G.remove_node(best_orphan_node)
             components_merged += 1
-            edges_added += 1
     
     if components_merged > 0:
-        print(f"Merged {components_merged} orphan component(s) to main network (added {edges_added} bridging edge(s))")
+        print(f"Merged {components_merged} orphan component(s) to main network (snapped {edges_added} edge endpoint(s))")
     
     return G
 
