@@ -26,10 +26,17 @@ class data_processor:
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
-        self.y_metric_to_plot = plot_config.y_metric_to_plot
-        if plot_config.pv_code is not None:
-            pv_code = plot_config.pv_code
-            self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
+
+        # For lifecycle-emissions, generate y_metric_to_plot from new parameters
+        if plot_cea_feature == 'lifecycle-emissions':
+            self.y_metric_to_plot = self._generate_lifecycle_emission_columns(plot_config)
+        else:
+            self.y_metric_to_plot = plot_config.y_metric_to_plot
+            # Legacy PV handling for emission-timeline plot
+            if hasattr(plot_config, 'pv_code') and plot_config.pv_code is not None:
+                pv_code = plot_config.pv_code
+                self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
+
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by
         self.x_to_plot = plot_instance.x
@@ -51,6 +58,65 @@ class data_processor:
                 raise ValueError("PVT requires two solar panel types.")
         else:
             self.appendix = plot_cea_feature
+
+    def _generate_lifecycle_emission_columns(self, plot_config):
+        """
+        Generate column names for lifecycle emissions based on four config parameters.
+
+        Parameters from plot_config:
+        - y_category_to_plot: list of ['operation', 'production', 'demolition', 'biogenic']
+        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
+                                       'pv_electricity_offset', 'pv_electricity_export']
+        - envelope_components: list of ['wall_ag', 'wall_bg', 'wall_part', 'win_ag', 'roof',
+                                        'upperside', 'underside', 'floor', 'base', 'technical_systems', 'pv']
+        - pv_codes: list of PV panel codes (e.g., ['PV1', 'PV2'])
+
+        Returns:
+        - list of column names (without unit suffix)
+        """
+        # Service name to tech name mapping
+        service_to_tech = {
+            'electricity': 'E_sys',
+            'space_heating': 'Qhs_sys',
+            'space_cooling': 'Qcs_sys',
+            'dhw': 'Qww_sys',
+        }
+
+        categories = plot_config.y_category_to_plot
+        operation_services = getattr(plot_config, 'operation_services', [])
+        envelope_components = getattr(plot_config, 'envelope_components', [])
+        pv_codes = getattr(plot_config, 'pv_codes', [])
+
+        columns = []
+
+        # Generate operation columns
+        if 'operation' in categories:
+            for service in operation_services:
+                if service in service_to_tech:
+                    # Regular operation service: operation_E_sys, operation_Qhs_sys, etc.
+                    columns.append(f"operation_{service_to_tech[service]}")
+                elif service == 'pv_electricity_offset':
+                    # PV offset columns: PV_{pv_code}_GRID_offset
+                    for pv_code in pv_codes:
+                        columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export':
+                    # PV export columns: PV_{pv_code}_GRID_export
+                    for pv_code in pv_codes:
+                        columns.append(f"PV_{pv_code}_GRID_export")
+
+        # Generate embodied columns (production, demolition, biogenic)
+        for category in ['production', 'demolition', 'biogenic']:
+            if category in categories:
+                for component in envelope_components:
+                    if component == 'pv':
+                        # PV embodied emissions: production_PV_{pv_code}, demolition_PV_{pv_code}, etc.
+                        for pv_code in pv_codes:
+                            columns.append(f"{category}_PV_{pv_code}")
+                    else:
+                        # Regular component: production_wall_ag, demolition_roof, biogenic_floor, etc.
+                        columns.append(f"{category}_{component}")
+
+        return columns
 
     def process_architecture_data(self):
         if self.y_normalised_by == 'gross_floor_area':

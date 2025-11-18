@@ -72,10 +72,18 @@ class csv_pointer:
         self.period_start = period_start
         self.period_end = period_end
         self.buildings = plots_building_filter.buildings
-        self.y_metric_to_plot = plot_config.y_metric_to_plot
-        if plot_config.pv_code is not None:
-            pv_code = plot_config.pv_code
-            self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
+
+        # For lifecycle-emissions, y_metric_to_plot is generated in b_data_processor
+        # For other features, read it from config
+        if plot_cea_feature == 'lifecycle-emissions':
+            self.y_metric_to_plot = []  # Will be generated later in b_data_processor
+        else:
+            self.y_metric_to_plot = plot_config.y_metric_to_plot
+            # Legacy PV handling for emission-timeline plot
+            if hasattr(plot_config, 'pv_code') and plot_config.pv_code is not None:
+                pv_code = plot_config.pv_code
+                self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")
+
         self.y_normalised_by = plot_config.y_normalised_by
         self.x = x
         self.x_to_plot = plot_config.x_to_plot
