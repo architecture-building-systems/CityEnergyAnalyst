@@ -208,59 +208,74 @@ _BASE_COLUMN_COLORS = {
     "PV_PV4_offset_total": "yellow",
 
     # ===== Lifecycle Emissions =====
+    # Operation (keep existing colors)
     "operation_Qhs_sys": "red",
     "operation_Qww_sys": "orange",
     "operation_Qcs_sys": "blue",
     "operation_E_sys": "green",
-    "production_wall_ag": "red_lighter",
-    "production_wall_bg": "red_lighter",
-    "production_wall_part": "red_lighter",
-    "production_win_ag": "red_lighter",
-    "production_roof": "red_lighter",
-    "production_upperside": "red_lighter",
-    "production_underside": "red_lighter",
-    "production_floor": "red_lighter",
-    "production_base": "red_lighter",
-    "production_technical_systems": "red_lighter",
-    "biogenic_wall_ag": "blue_lighter",
-    "biogenic_wall_bg": "blue_lighter",
-    "biogenic_wall_part": "blue_lighter",
-    "biogenic_win_ag": "blue_lighter",
-    "biogenic_roof": "blue_lighter",
-    "biogenic_upperside": "blue_lighter",
-    "biogenic_underside": "blue_lighter",
-    "biogenic_floor": "blue_lighter",
-    "biogenic_base": "blue_lighter",
-    "biogenic_technical_systems": "blue_lighter",
-    "demolition_wall_ag": "green_lighter",
-    "demolition_wall_bg": "green_lighter",
-    "demolition_wall_part": "green_lighter",
-    "demolition_win_ag": "green_lighter",
-    "demolition_roof": "green_lighter",
-    "demolition_upperside": "green_lighter",
-    "demolition_underside": "green_lighter",
-    "demolition_floor": "green_lighter",
-    "demolition_base": "green_lighter",
-    "demolition_technical_systems": "green_lighter",
-    # "PV_PV1_offset_total": "yellow",
-    # "PV_PV2_offset_total": "yellow",
-    # "PV_PV3_offset_total": "yellow",
-    # "PV_PV4_offset_total": "yellow",
+
+    # Production - all purple
+    "production_wall_ag": "purple",
+    "production_wall_bg": "purple",
+    "production_wall_part": "purple",
+    "production_win_ag": "purple",
+    "production_roof": "purple",
+    "production_upperside": "purple",
+    "production_underside": "purple",
+    "production_floor": "purple",
+    "production_base": "purple",
+    "production_technical_systems": "purple",
+
+    # Biogenic - all blue
+    "biogenic_wall_ag": "blue",
+    "biogenic_wall_bg": "blue",
+    "biogenic_wall_part": "blue",
+    "biogenic_win_ag": "blue",
+    "biogenic_roof": "blue",
+    "biogenic_upperside": "blue",
+    "biogenic_underside": "blue",
+    "biogenic_floor": "blue",
+    "biogenic_base": "blue",
+    "biogenic_technical_systems": "blue",
+
+    # Demolition - all brown
+    "demolition_wall_ag": "brown",
+    "demolition_wall_bg": "brown",
+    "demolition_wall_part": "brown",
+    "demolition_win_ag": "brown",
+    "demolition_roof": "brown",
+    "demolition_upperside": "brown",
+    "demolition_underside": "brown",
+    "demolition_floor": "brown",
+    "demolition_base": "brown",
+    "demolition_technical_systems": "brown",
+
+    # PV Production/Demolition/Biogenic - use same colors as other components
+    "production_pv": "purple",
+    "biogenic_pv": "blue",
+    "demolition_pv": "brown",
 }
 
 
 def get_column_color(column_name):
     """
-    Get color for a column name, handling dynamic units.
+    Get color for a column name, handling dynamic units and PV patterns.
 
     Strips the unit suffix (e.g., _kWh, _MWh, _kgCO2e, _tonCO2e, /m2)
     from the column name and looks up the base color.
 
+    Also handles dynamic PV patterns:
+    - PV_*_GRID_offset → yellow
+    - PV_*_GRID_export → yellow_light
+    - production_PV_* → purple
+    - biogenic_PV_* → blue
+    - demolition_PV_* → brown
+
     Parameters:
-    - column_name (str): Column name with unit (e.g., 'GRID_MWh/m2')
+    - column_name (str): Column name with unit (e.g., 'GRID_MWh/m2', 'PV_PV1_GRID_offset_kgCO2e')
 
     Returns:
-    - str: Color name (e.g., 'purple')
+    - str: Color name (e.g., 'purple', 'yellow')
     """
     # Remove common unit patterns
     base_name = column_name
@@ -280,6 +295,20 @@ def get_column_color(column_name):
         if base_name.endswith(unit):
             base_name = base_name[:-len(unit)]
             break
+
+    # Handle PV offset/export patterns: PV_*_GRID_offset or PV_*_GRID_export
+    if base_name.startswith('PV_') and '_GRID_offset' in base_name:
+        return "yellow"
+    if base_name.startswith('PV_') and '_GRID_export' in base_name:
+        return "yellow_light"
+
+    # Handle PV production/biogenic/demolition patterns: production_PV_*, biogenic_PV_*, demolition_PV_*
+    if base_name.startswith('production_PV_'):
+        return "purple"
+    if base_name.startswith('biogenic_PV_'):
+        return "blue"
+    if base_name.startswith('demolition_PV_'):
+        return "brown"
 
     # Look up in base color mapping
     return _BASE_COLUMN_COLORS.get(base_name, "grey")
