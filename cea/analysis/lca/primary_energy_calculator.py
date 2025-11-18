@@ -237,9 +237,16 @@ def calculate_hourly_primary_energy(locator, building, config):
     # Calculate primary energy for grid
     hourly_pe_grid_MJ = hourly_grid_MJ * pef_grid
 
+    # Get date column (case-insensitive search)
+    date_col = next((col for col in demand_df.columns if col.lower() == 'date'), None)
+    if date_col:
+        date_values = demand_df[date_col].values
+    else:
+        raise ValueError(f"Date column not found in demand file for building {building}")
+
     # Build base DataFrame
     hourly_df = pd.DataFrame({
-        'date': demand_df['DATE'] if 'DATE' in demand_df.columns else range(len(demand_df)),
+        'date': date_values,
         'GRID_MJ': hourly_grid_MJ,
         'PE_GRID_MJ': hourly_pe_grid_MJ
     })

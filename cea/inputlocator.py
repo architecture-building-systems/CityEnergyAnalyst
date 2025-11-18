@@ -1465,21 +1465,25 @@ class InputLocator(object):
         """scenario/outputs/data/primary-energy"""
         return os.path.join(self.scenario, 'outputs', 'data', 'primary-energy')
 
+    def get_primary_energy_hourly_folder(self):
+        """scenario/outputs/data/primary-energy/hourly"""
+        return os.path.join(self.get_primary_energy_folder(), 'hourly')
+
     def get_primary_energy_annual(self):
-        """scenario/outputs/data/primary-energy/Total_annual_primary_energy.csv"""
-        return os.path.join(self.get_primary_energy_folder(), 'Total_annual_primary_energy.csv')
+        """scenario/outputs/data/primary-energy/Total_primary_energy_buildings.csv"""
+        return os.path.join(self.get_primary_energy_folder(), 'Total_primary_energy_buildings.csv')
 
     def get_primary_energy_building(self, building_name):
         """scenario/outputs/data/primary-energy/{building_name}_primary_energy.csv"""
         return os.path.join(self.get_primary_energy_folder(), f'{building_name}_primary_energy.csv')
 
     def get_primary_energy_hourly_building(self, building_name):
-        """scenario/outputs/data/primary-energy/{building_name}_primary_energy_hourly.csv"""
-        return os.path.join(self.get_primary_energy_folder(), f'{building_name}_primary_energy_hourly.csv')
+        """scenario/outputs/data/primary-energy/hourly/{building_name}_primary_energy_hourly.csv"""
+        return os.path.join(self.get_primary_energy_hourly_folder(), f'{building_name}_primary_energy_hourly.csv')
 
     def get_primary_energy_hourly_district(self):
-        """scenario/outputs/data/primary-energy/Total_hourly_primary_energy.csv"""
-        return os.path.join(self.get_primary_energy_folder(), 'Total_hourly_primary_energy.csv')
+        """scenario/outputs/data/primary-energy/Total_primary_energy_hourly.csv"""
+        return os.path.join(self.get_primary_energy_folder(), 'Total_primary_energy_hourly.csv')
 
     # COSTS
     def get_costs_folder(self):
