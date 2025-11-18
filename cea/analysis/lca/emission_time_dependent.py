@@ -87,7 +87,7 @@ def operational_hourly(config: Configuration) -> None:
     buildings = list(getattr(emissions_cfg, 'buildings', []))
 
     # Check PV requirements BEFORE processing any buildings
-    consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+    consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
     if consider_pv:
         pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
         # Handle both string (CLI) and list (GUI) input
@@ -175,7 +175,7 @@ def total_yearly(config: Configuration) -> None:
         end_year = int(year_end_val)
 
     # Check PV requirements BEFORE processing any buildings
-    consider_pv: bool = getattr(emissions_cfg, "consider_pv_contributions", False)
+    consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
     pv_codes: list[str] = []
     if consider_pv:
         pv_codes_param = getattr(emissions_cfg, "pv_codes", [])

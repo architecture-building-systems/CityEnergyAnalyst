@@ -560,7 +560,7 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
-    consider_pv_contributions: bool
+    include_pv: bool
     pv_codes: list[str]
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: str | None
@@ -573,7 +573,7 @@ class EmissionsSection(Section):
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["consider_pv_contributions"]) -> bool: ...
+    def __getattr__(self, item: Literal["include_pv"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
     @overload
@@ -590,7 +590,6 @@ class EmissionsSection(Section):
 
 class PrimaryEnergySection(Section):
     """Typed section for primary-energy configuration"""
-    buildings: list[str]
     include_pv: bool
     pv_codes: list[str]
     pef_grid: float
@@ -600,9 +599,8 @@ class PrimaryEnergySection(Section):
     pef_coal: float
     pef_oil: float
     pef_wood: float
+    buildings: list[str]
 
-    @overload
-    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["include_pv"]) -> bool: ...
     @overload
@@ -621,6 +619,8 @@ class PrimaryEnergySection(Section):
     def __getattr__(self, item: Literal["pef_oil"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["pef_wood"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):
