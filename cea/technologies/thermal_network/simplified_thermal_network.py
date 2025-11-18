@@ -263,8 +263,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         
         # check that there is one plant node
         plant_nodes = node_df[node_df['type'] == 'PLANT']
-        if len(plant_nodes) != 1:
-            raise ValueError("There should be exactly one plant node in the network.")
+        if not len(plant_nodes) >= 1:
+            raise ValueError("There should be at least one plant node in the network.")
 
         # add nodes
         consumer_nodes = []
