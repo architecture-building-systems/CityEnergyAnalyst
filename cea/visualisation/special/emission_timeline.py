@@ -220,7 +220,7 @@ class EmissionTimelinePlot:
             'electricity': COLOURS_TO_RGB['green'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
-            'biogenic': COLOURS_TO_RGB['blue'],
+            'biogenic': COLOURS_TO_RGB['grey'],
             'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
             'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
         }
@@ -431,7 +431,7 @@ class EmissionTimelinePlot:
             'electricity': COLOURS_TO_RGB['green'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
-            'biogenic': COLOURS_TO_RGB['blue'],
+            'biogenic': COLOURS_TO_RGB['grey'],
             'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
             'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
         }

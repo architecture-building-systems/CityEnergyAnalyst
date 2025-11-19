@@ -242,17 +242,17 @@ _BASE_COLUMN_COLORS = {
     "production_base": "purple",
     "production_technical_systems": "purple",
 
-    # Biogenic - all blue
-    "biogenic_wall_ag": "blue",
-    "biogenic_wall_bg": "blue",
-    "biogenic_wall_part": "blue",
-    "biogenic_win_ag": "blue",
-    "biogenic_roof": "blue",
-    "biogenic_upperside": "blue",
-    "biogenic_underside": "blue",
-    "biogenic_floor": "blue",
-    "biogenic_base": "blue",
-    "biogenic_technical_systems": "blue",
+    # Biogenic - all grey
+    "biogenic_wall_ag": "grey",
+    "biogenic_wall_bg": "grey",
+    "biogenic_wall_part": "grey",
+    "biogenic_win_ag": "grey",
+    "biogenic_roof": "grey",
+    "biogenic_upperside": "grey",
+    "biogenic_underside": "grey",
+    "biogenic_floor": "grey",
+    "biogenic_base": "grey",
+    "biogenic_technical_systems": "grey",
 
     # Demolition - all brown
     "demolition_wall_ag": "brown",
@@ -268,7 +268,7 @@ _BASE_COLUMN_COLORS = {
 
     # PV Production/Demolition/Biogenic - use same colors as other components
     "production_pv": "purple",
-    "biogenic_pv": "blue",
+    "biogenic_pv": "grey",
     "demolition_pv": "brown",
 }
 
@@ -284,7 +284,7 @@ def get_column_color(column_name):
     - PV_*_GRID_offset → yellow
     - PV_*_GRID_export → yellow_light
     - production_PV_* → purple
-    - biogenic_PV_* → blue
+    - biogenic_PV_* → grey
     - demolition_PV_* → brown
 
     Parameters:
@@ -322,7 +322,7 @@ def get_column_color(column_name):
     if base_name.startswith('production_PV_'):
         return "purple"
     if base_name.startswith('biogenic_PV_'):
-        return "blue"
+        return "grey"
     if base_name.startswith('demolition_PV_'):
         return "brown"
 
