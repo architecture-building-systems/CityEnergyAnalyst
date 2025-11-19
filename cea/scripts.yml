@@ -774,7 +774,7 @@ Visualisation:
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
+
 
   - name: plot-operational-emissions
     label: Plot - Operational Emissions

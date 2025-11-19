@@ -76,30 +76,30 @@ class EmissionTimelinePlot:
     def _aggregate_into_9_categories(self):
         """
         Aggregate emission columns into 9 main categories:
-        - heating (operation_Qhs_sys)
-        - cooling (operation_Qcs_sys)
-        - hotwater (operation_Qww_sys)
+        - space_heating (operation_Qhs_sys)
+        - space_cooling (operation_Qcs_sys)
+        - dhw (operation_Qww_sys)
         - electricity (operation_E_sys)
         - production (all production_*)
         - demolition (all demolition_*)
         - biogenic (all biogenic_*)
-        - pv_offset (PV_*_offset)
-        - pv_export (PV_*_export)
+        - pv_electricity_offset (PV_*_offset)
+        - pv_electricity_export (PV_*_export)
 
         Returns:
         --------
         dict: Dictionary with category names as keys and metadata
         """
         categories = {
-            'heating': {'columns': [], 'positive': True, 'display_name': 'Heating'},
-            'cooling': {'columns': [], 'positive': True, 'display_name': 'Cooling'},
-            'hotwater': {'columns': [], 'positive': True, 'display_name': 'Hot Water'},
-            'electricity': {'columns': [], 'positive': True, 'display_name': 'Electricity'},
-            'production': {'columns': [], 'positive': True, 'display_name': 'Production'},
-            'demolition': {'columns': [], 'positive': True, 'display_name': 'Demolition'},
-            'biogenic': {'columns': [], 'positive': False, 'display_name': 'Biogenic'},
-            'pv_offset': {'columns': [], 'positive': False, 'display_name': 'PV Offset'},
-            'pv_export': {'columns': [], 'positive': False, 'display_name': 'PV Export'}
+            'space_heating': {'columns': [], 'positive': True, 'display_name': 'space_heating'},
+            'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
+            'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
+            'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
+            'production': {'columns': [], 'positive': True, 'display_name': 'production'},
+            'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
+            'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
+            'pv_electricity_offset': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_offset'},
+            'pv_electricity_export': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_export'}
         }
 
         # Categorize columns
@@ -108,18 +108,18 @@ class EmissionTimelinePlot:
 
             # Check for specific operation services
             if 'operation_qhs_sys' in col_lower or 'operation_space_heating' in col_lower:
-                categories['heating']['columns'].append(col)
+                categories['space_heating']['columns'].append(col)
             elif 'operation_qcs_sys' in col_lower or 'operation_space_cooling' in col_lower:
-                categories['cooling']['columns'].append(col)
+                categories['space_cooling']['columns'].append(col)
             elif 'operation_qww_sys' in col_lower or 'operation_dhw' in col_lower:
-                categories['hotwater']['columns'].append(col)
+                categories['dhw']['columns'].append(col)
             elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
                 categories['electricity']['columns'].append(col)
             # Check for PV offset/export
             elif 'pv_' in col_lower and '_offset' in col_lower:
-                categories['pv_offset']['columns'].append(col)
+                categories['pv_electricity_offset']['columns'].append(col)
             elif 'pv_' in col_lower and '_export' in col_lower:
-                categories['pv_export']['columns'].append(col)
+                categories['pv_electricity_export']['columns'].append(col)
             # Check for lifecycle categories
             elif col_lower.startswith('biogenic'):
                 categories['biogenic']['columns'].append(col)
@@ -214,15 +214,15 @@ class EmissionTimelinePlot:
 
         # Define colors matching the bar plot scheme
         category_colors = {
-            'heating': COLOURS_TO_RGB['red'],
-            'cooling': COLOURS_TO_RGB['blue'],
-            'hotwater': COLOURS_TO_RGB['orange'],
+            'space_heating': COLOURS_TO_RGB['red'],
+            'space_cooling': COLOURS_TO_RGB['blue'],
+            'dhw': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['blue'],
-            'pv_offset': COLOURS_TO_RGB['yellow'],
-            'pv_export': COLOURS_TO_RGB['yellow_light']
+            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
+            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
         }
 
         fig = go.Figure()
@@ -425,15 +425,15 @@ class EmissionTimelinePlot:
 
         # Define colors matching the bar plot scheme
         category_colors = {
-            'heating': COLOURS_TO_RGB['red'],
-            'cooling': COLOURS_TO_RGB['blue'],
-            'hotwater': COLOURS_TO_RGB['orange'],
+            'space_heating': COLOURS_TO_RGB['red'],
+            'space_cooling': COLOURS_TO_RGB['blue'],
+            'dhw': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['blue'],
-            'pv_offset': COLOURS_TO_RGB['yellow'],
-            'pv_export': COLOURS_TO_RGB['yellow_light']
+            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
+            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
         }
 
         fig = go.Figure()
