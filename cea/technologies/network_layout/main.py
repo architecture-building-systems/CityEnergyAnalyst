@@ -7,9 +7,12 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
+from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
-from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree, add_plant_close_to_anchor, get_next_node_name
+from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name
 from cea.technologies.network_layout.substations_location import calc_building_centroids
+from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -220,8 +223,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     # Note: User-defined networks may not have start_node/end_node columns yet
     # We need to match edges to nodes by geometry
 
-    # Match edges to nodes by geometry (tolerance of 10cm)
-    TOPOLOGY_TOLERANCE = 0.1  # 10cm in meters
+    # Match edges to nodes by geometry using SNAP_TOLERANCE for consistency with connectivity_potential
 
     # First pass: identify missing nodes at edge endpoints and auto-create them
     missing_nodes = {}  # key: (x, y), value: (exact Point, list of edge names)
@@ -234,11 +236,11 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
         # Check if nodes exist at endpoints
         start_has_node = any(
-            node.geometry.distance(start_point) < TOPOLOGY_TOLERANCE
+            node.geometry.distance(start_point) < SNAP_TOLERANCE
             for _, node in nodes_gdf.iterrows()
         )
         end_has_node = any(
-            node.geometry.distance(end_point) < TOPOLOGY_TOLERANCE
+            node.geometry.distance(end_point) < SNAP_TOLERANCE
             for _, node in nodes_gdf.iterrows()
         )
 
@@ -292,10 +294,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
         for node_idx, node in nodes_gdf.iterrows():
             node_geom = node.geometry
 
-            if start_node_idx is None and node_geom.distance(start_point) < TOPOLOGY_TOLERANCE:
+            if start_node_idx is None and node_geom.distance(start_point) < SNAP_TOLERANCE:
                 start_node_idx = node_idx
 
-            if end_node_idx is None and node_geom.distance(end_point) < TOPOLOGY_TOLERANCE:
+            if end_node_idx is None and node_geom.distance(end_point) < SNAP_TOLERANCE:
                 end_node_idx = node_idx
 
             if start_node_idx is not None and end_node_idx is not None:
@@ -477,6 +479,9 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 'distance_to_junction': 0.0,
                 'reason': 'anchor-load'
             })
+
+    # ✅ Final normalization pass to ensure coordinate precision consistency
+    normalize_gdf_geometries(nodes_gdf, precision=SHAPEFILE_TOLERANCE, inplace=True)
 
     return nodes_gdf, edges_gdf, created_plants
 
@@ -896,21 +901,23 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Combine all edges from both networks and save to layout.shp
     if len(all_edges_list) > 0:
-        # Renumber pipes globally to prevent duplicates when combining DC and DH networks
-        pipe_counter = 0
-        for edges_gdf in all_edges_list:
-            # Extract pipe numbers and renumber them
-            for idx in edges_gdf.index:
-                if 'name' in edges_gdf.columns and edges_gdf.loc[idx, 'name'].startswith('PIPE'):
-                    edges_gdf.loc[idx, 'name'] = f'PIPE{pipe_counter}'
-                    pipe_counter += 1
-        
+        # Combine edges first
         all_edges_gdf = gpd.GeoDataFrame(
             pd.concat(all_edges_list, ignore_index=True),
             crs=all_edges_list[0].crs
         )
         # Remove duplicate edges (edges that appear in both DC and DH networks)
         all_edges_gdf = all_edges_gdf.drop_duplicates(subset=['geometry'], keep='first')
+        
+        # Renumber all pipes sequentially to prevent duplicates
+        pipe_counter = 0
+        for idx in all_edges_gdf.index:
+            if 'name' in all_edges_gdf.columns:
+                edge_name = all_edges_gdf.loc[idx, 'name']
+                if isinstance(edge_name, str) and edge_name.startswith('PIPE'):
+                    all_edges_gdf.loc[idx, 'name'] = f'PIPE{pipe_counter}'
+                    pipe_counter += 1
+        
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
         print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
@@ -1168,23 +1175,27 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     output_node_path_dc = locator.get_network_layout_nodes_shapefile('DC', network_layout.network_name)
     output_node_path_dh = locator.get_network_layout_nodes_shapefile('DH', network_layout.network_name)
 
-    # Save layout-edges shapefile (shared)
     os.makedirs(os.path.dirname(output_layout_path), exist_ok=True)
-    edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
-    # Process nodes separately for DC and DH
+    # Process nodes separately for DC and DH (this may add plant edges)
+    all_edges_with_plants = []
+    
     if 'DC' in network_types_to_generate:
         print(f"\n{'='*60}")
-        print(f"  DC NETWORK")
+        print("  DC NETWORK")
         print(f"{'='*60}")
 
         # Create copy of nodes for DC network
         nodes_gdf_dc = nodes_gdf.copy()
+        edges_gdf_dc = edges_gdf.copy()
         nodes_gdf_dc, edges_gdf_dc, created_plants_dc = auto_create_plant_nodes(
-            nodes_gdf_dc, edges_gdf, zone_gdf,
+            nodes_gdf_dc, edges_gdf_dc, zone_gdf,
             cooling_plant_buildings_list, 'DC', locator,
             expected_num_components
         )
+        
+        # Collect edges (including plant connection edges)
+        all_edges_with_plants.append(edges_gdf_dc)
 
         if created_plants_dc:
             print(f"\n Auto-assigned {len(created_plants_dc)} building node(s) as PLANT (DC):")
@@ -1201,16 +1212,20 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     if 'DH' in network_types_to_generate:
         print(f"\n{'='*60}")
-        print(f"  DH NETWORK")
+        print("  DH NETWORK")
         print(f"{'='*60}")
 
         # Create copy of nodes for DH network
         nodes_gdf_dh = nodes_gdf.copy()
+        edges_gdf_dh = edges_gdf.copy()
         nodes_gdf_dh, edges_gdf_dh, created_plants_dh = auto_create_plant_nodes(
-            nodes_gdf_dh, edges_gdf, zone_gdf,
+            nodes_gdf_dh, edges_gdf_dh, zone_gdf,
             heating_plant_buildings_list, 'DH', locator,
             expected_num_components
         )
+        
+        # Collect edges (including plant connection edges)
+        all_edges_with_plants.append(edges_gdf_dh)
 
         if created_plants_dh:
             print(f"\n Auto-assigned {len(created_plants_dh)} building node(s) as PLANT (DH):")
@@ -1225,7 +1240,36 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
         nodes_gdf_dh.to_file(output_node_path_dh, driver='ESRI Shapefile')
 
-    print("\n  ✓ User-defined layout saved to:")
+    # Save layout-edges shapefile with all edges (including plant connection edges)
+    if all_edges_with_plants:
+        # Combine edges from both networks (if both DC and DH)
+        combined_edges = gpd.GeoDataFrame(
+            pd.concat(all_edges_with_plants, ignore_index=True),
+            crs=all_edges_with_plants[0].crs
+        )
+        # Remove duplicate edges (if same edge appears in both networks)
+        combined_edges = combined_edges.drop_duplicates(subset=['geometry'], keep='first')
+        
+        # Renumber all pipes sequentially to prevent duplicates
+        pipe_counter = 0
+        for idx in combined_edges.index:
+            if 'name' in combined_edges.columns:
+                edge_name = combined_edges.loc[idx, 'name']
+                if isinstance(edge_name, str) and edge_name.startswith('PIPE'):
+                    combined_edges.loc[idx, 'name'] = f'PIPE{pipe_counter}'
+                    pipe_counter += 1
+        
+        # Normalize geometries to ensure consistent precision
+        normalize_gdf_geometries(combined_edges, precision=SHAPEFILE_TOLERANCE, inplace=True)
+        combined_edges.to_file(output_layout_path, driver='ESRI Shapefile')
+        print(f"\n  ✓ Saved layout.shp with {len(combined_edges)} edges (including plant connections)")
+    else:
+        # No plant edges added, save original edges with normalization
+        normalize_gdf_geometries(edges_gdf, precision=SHAPEFILE_TOLERANCE, inplace=True)
+        edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
+        print(f"\n  ✓ Saved layout.shp with {len(edges_gdf)} edges")
+
+    print("  ✓ User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
     print("\n" + "=" * 80 + "\n")
 
