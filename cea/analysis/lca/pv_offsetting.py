@@ -93,7 +93,7 @@ def calculate_net_energy(
     }
 
     # Initialize PV offsetting
-    pv_by_type = {}  # Store PV generation by panel type
+    pv_by_type: dict[str, float] = {}  # Store PV generation by panel type
 
     if include_pv:
         # Get available PV panels
@@ -114,7 +114,7 @@ def calculate_net_energy(
                 pv_df = pd.read_csv(pv_path)
                 # PV generation column: E_PV_gen_kWh
                 if 'E_PV_gen_kWh' in pv_df.columns:
-                    pv_generation = pv_df['E_PV_gen_kWh'].sum()
+                    pv_generation = float(pv_df['E_PV_gen_kWh'].sum())
                     pv_by_type[pv_code] = pv_generation
             except FileNotFoundError:
                 # Panel file doesn't exist, skip
@@ -132,7 +132,7 @@ def calculate_net_energy(
     }
 
 
-def _get_available_pv_panels(locator, building):
+def _get_available_pv_panels(locator: InputLocator, building: str) -> list[str]:
     """
     Get list of available PV panel codes for a building.
 
@@ -155,13 +155,10 @@ def _get_available_pv_panels(locator, building):
     if not os.path.exists(pv_folder):
         return []
 
-    # Find all PV result files for this building
-    # Format: {building}_{panel_type}.csv (e.g., B1000_PV1.csv)
-    pv_codes = []
-    for filename in os.listdir(pv_folder):
-        if filename.startswith(building + '_') and filename.endswith('.csv'):
-            # Extract panel type from filename: B1000_PV1.csv -> PV1
-            pv_code = filename.replace(building + '_', '').replace('.csv', '')
-            pv_codes.append(pv_code)
-
+    pv_codes_path = locator.get_db4_components_conversion_conversion_technology_csv(conversion_technology="PHOTOVOLTAIC_PANELS")
+    if os.path.exists(pv_codes_path):
+        pv_codes_df = pd.read_csv(pv_codes_path)
+        pv_codes: list[str] = pv_codes_df['code'].tolist()
+    else:
+        raise FileNotFoundError(f"PV components conversion file not found at {pv_codes_path}")
     return sorted(pv_codes)
