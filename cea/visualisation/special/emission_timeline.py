@@ -324,8 +324,8 @@ class EmissionTimelinePlot:
             else:
                 negative_total += data
 
-        # Calculate net emissions (positive - negative)
-        net_emissions = positive_total - negative_total
+        # Calculate net emissions (positive + negative, where negative values are already negative)
+        net_emissions = positive_total + negative_total
 
         # Apply cumulative sum (line_net always shows cumulative)
         net_emissions_cumulative = net_emissions.cumsum()
