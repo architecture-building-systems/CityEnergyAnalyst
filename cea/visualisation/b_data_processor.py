@@ -128,10 +128,10 @@ class data_processor:
         Returns:
         - list of column names (without unit suffix)
 
-        Examples:
-        - y_category='operation', services=['electricity', 'space_heating'] → ['E_sys', 'Qhs_sys']
-        - y_category='energy_carrier', carriers=['GRID', 'NATURALGAS'] → ['GRID', 'NATURALGAS']
-        - y_category='operation', services=['pv_electricity_offset'], pv_code='PV1' → ['PV_PV1_GRID_offset']
+        Logic:
+        - Both operation AND energy_carrier: Generate hybrids (Qhs_sys_NATURALGAS, E_sys_GRID, etc.)
+        - Only operation: Generate aggregated by service (Qhs_sys, E_sys, etc.) + PV if selected
+        - Only energy_carrier: Generate aggregated by carrier (GRID, NATURALGAS, etc.)
         """
         # Service name to tech name mapping
         service_to_tech = {
@@ -148,11 +148,29 @@ class data_processor:
 
         columns = []
 
-        # Generate operation columns (aggregated by service)
-        if 'operation' in categories:
+        # Check if both operation and energy_carrier are selected
+        both_selected = 'operation' in categories and 'energy_carrier' in categories
+
+        if both_selected:
+            # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS)
             for service in operation_services:
                 if service in service_to_tech:
-                    # Regular operation service: E_sys, Qhs_sys, Qcs_sys, Qww_sys
+                    service_name = service_to_tech[service]
+                    for carrier in energy_carriers:
+                        columns.append(f"{service_name}_{carrier}")
+
+            # Add PV columns if selected (PV doesn't combine with carriers)
+            for service in operation_services:
+                if service == 'pv_electricity_offset' and pv_code:
+                    columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export' and pv_code:
+                    columns.append(f"PV_{pv_code}_GRID_export")
+
+        elif 'operation' in categories:
+            # Only operation: aggregated by service
+            for service in operation_services:
+                if service in service_to_tech:
+                    # Aggregated service: E_sys, Qhs_sys, Qcs_sys, Qww_sys
                     columns.append(service_to_tech[service])
                 elif service == 'pv_electricity_offset' and pv_code:
                     # PV offset column: PV_{pv_code}_GRID_offset
@@ -161,8 +179,8 @@ class data_processor:
                     # PV export column: PV_{pv_code}_GRID_export
                     columns.append(f"PV_{pv_code}_GRID_export")
 
-        # Generate energy carrier columns (aggregated by carrier across all services)
-        if 'energy_carrier' in categories:
+        elif 'energy_carrier' in categories:
+            # Only energy_carrier: aggregated by carrier
             for carrier in energy_carriers:
                 # Carrier columns: GRID, NATURALGAS, BIOGAS, etc.
                 columns.append(carrier)
