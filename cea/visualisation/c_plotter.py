@@ -85,13 +85,14 @@ class bar_plot:
         # Get the settings for the format
         self.plot_title = plot_config_general.plot_title
 
-        # For lifecycle-emissions, y_metric_to_plot is not in config
+        # For lifecycle-emissions, emission-timeline, and operational-emissions,
+        # y_metric_to_plot is generated in b_data_processor
         # For other features, read it from config
-        if plot_cea_feature == 'lifecycle-emissions':
-            self.y_metric_to_plot = []  # Not used for lifecycle-emissions
+        if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline', 'operational-emissions'):
+            self.y_metric_to_plot = []  # Not used, columns are in list_y_columns
         else:
             self.y_metric_to_plot = plot_config.y_metric_to_plot
-            # Legacy PV handling for emission-timeline plot
+            # Legacy PV handling for other plots if needed
             if hasattr(plot_config, 'pv_code') and plot_config.pv_code is not None:
                 pv_code = plot_config.pv_code
                 self.y_metric_to_plot.append(f"PV_{pv_code}_offset_total")

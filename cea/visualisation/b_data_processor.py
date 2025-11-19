@@ -30,6 +30,8 @@ class data_processor:
         # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
         if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
             self.y_metric_to_plot = self._generate_lifecycle_emission_columns(plot_config)
+        elif plot_cea_feature == 'operational-emissions':
+            self.y_metric_to_plot = self._generate_operational_emission_columns(plot_config)
         else:
             self.y_metric_to_plot = plot_config.y_metric_to_plot
 
@@ -108,6 +110,62 @@ class data_processor:
                     else:
                         # Regular component: production_wall_ag, demolition_roof, biogenic_floor, etc.
                         columns.append(f"{category}_{component}")
+
+        return columns
+
+    def _generate_operational_emission_columns(self, plot_config):
+        """
+        Generate column names for operational emissions based on four config parameters.
+
+        Parameters from plot_config:
+        - y_category_to_plot: list of ['operation', 'energy_carrier']
+        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
+                                       'pv_electricity_offset', 'pv_electricity_export']
+        - energy_carriers: list of ['GRID', 'NATURALGAS', 'BIOGAS', 'SOLAR', 'DRYBIOMASS',
+                                    'WETBIOMASS', 'COAL', 'WOOD', 'OIL', 'HYDROGEN', 'NONE']
+        - pv_code: str, single PV panel code (e.g., 'PV1')
+
+        Returns:
+        - list of column names (without unit suffix)
+
+        Examples:
+        - y_category='operation', services=['electricity', 'space_heating'] → ['E_sys', 'Qhs_sys']
+        - y_category='energy_carrier', carriers=['GRID', 'NATURALGAS'] → ['GRID', 'NATURALGAS']
+        - y_category='operation', services=['pv_electricity_offset'], pv_code='PV1' → ['PV_PV1_GRID_offset']
+        """
+        # Service name to tech name mapping
+        service_to_tech = {
+            'electricity': 'E_sys',
+            'space_heating': 'Qhs_sys',
+            'space_cooling': 'Qcs_sys',
+            'dhw': 'Qww_sys',
+        }
+
+        categories = plot_config.y_category_to_plot
+        operation_services = getattr(plot_config, 'operation_services', [])
+        energy_carriers = getattr(plot_config, 'energy_carriers', [])
+        pv_code = getattr(plot_config, 'pv_code', None)
+
+        columns = []
+
+        # Generate operation columns (aggregated by service)
+        if 'operation' in categories:
+            for service in operation_services:
+                if service in service_to_tech:
+                    # Regular operation service: E_sys, Qhs_sys, Qcs_sys, Qww_sys
+                    columns.append(service_to_tech[service])
+                elif service == 'pv_electricity_offset' and pv_code:
+                    # PV offset column: PV_{pv_code}_GRID_offset
+                    columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export' and pv_code:
+                    # PV export column: PV_{pv_code}_GRID_export
+                    columns.append(f"PV_{pv_code}_GRID_export")
+
+        # Generate energy carrier columns (aggregated by carrier across all services)
+        if 'energy_carrier' in categories:
+            for carrier in energy_carriers:
+                # Carrier columns: GRID, NATURALGAS, BIOGAS, etc.
+                columns.append(carrier)
 
         return columns
 

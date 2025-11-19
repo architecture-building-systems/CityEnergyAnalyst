@@ -1643,14 +1643,20 @@ class PlotsLifecycleEmissionsSection(Section):
 
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    energy_carriers: list[str]
     pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["energy_carriers"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload

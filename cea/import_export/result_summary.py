@@ -81,7 +81,13 @@ emission_timeline_hourly_operational_colnames_nounit = [
     f"{type_energy}_{feedstock}"
     for type_energy in emission_timeline_operational_types
     for feedstock in emission_timeline_operational_feedstocks
-] + emission_timeline_operational_types
+] + emission_timeline_operational_types + emission_timeline_operational_feedstocks + [
+    f"PV_{pv_type}_GRID_offset"
+    for pv_type in emission_timeline_pv_types
+] + [
+    f"PV_{pv_type}_GRID_export"
+    for pv_type in emission_timeline_pv_types
+]
 
 normalisation_name_mapping_emission_timeline_hourly_operational = {
     f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
