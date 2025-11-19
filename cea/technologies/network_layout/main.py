@@ -8,7 +8,7 @@ import pandas as pd
 import cea.config
 import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
-from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree, add_plant_close_to_anchor
+from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree, add_plant_close_to_anchor, get_next_node_name
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import nx_to_gdf
 
@@ -244,14 +244,17 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
         print("    Auto-creating junction nodes to ensure network connectivity...")
 
         for key, (exact_point, edge_names) in missing_nodes.items():
+            # Generate unique node name
+            node_name = get_next_node_name(nodes_gdf)
+
             new_node = gpd.GeoDataFrame([{
-                'name': f'NODE{len(nodes_gdf)}',
+                'name': node_name,
                 'building': 'NONE',
                 'type': 'NONE',
                 'geometry': exact_point  # Use exact coordinates from edge endpoint
             }], crs=nodes_gdf.crs)
             nodes_gdf = pd.concat([nodes_gdf, new_node], ignore_index=True)
-            print(f"      - Created NODE{len(nodes_gdf)-1} at ({exact_point.x:.2f}, {exact_point.y:.2f}) for edges: {', '.join(edge_names[:3])}")
+            print(f"      - Created {node_name} at ({exact_point.x:.2f}, {exact_point.y:.2f}) for edges: {', '.join(edge_names[:3])}")
 
     # Now build graph with complete node set
     G = nx.Graph()
@@ -368,9 +371,12 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 if not building_in_zone.empty:
                     # Add the building temporarily so we can create a plant near it
                     building_geom = building_in_zone.iloc[0].geometry
-                    new_node_idx = len(nodes_gdf)
+
+                    # Generate unique node name
+                    node_name = get_next_node_name(nodes_gdf)
+
                     new_node = gpd.GeoDataFrame([{
-                        'name': f'NODE{new_node_idx}',
+                        'name': node_name,
                         'building': plant_building,
                         'type': 'CONSUMER',
                         'geometry': building_geom.centroid

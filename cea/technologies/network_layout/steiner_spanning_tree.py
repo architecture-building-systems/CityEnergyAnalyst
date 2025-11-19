@@ -27,6 +27,25 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def get_next_node_name(nodes_gdf):
+    """
+    Generate the next unique node name by finding the maximum existing node number.
+
+    This prevents duplicate node names when nodes are removed from the network during
+    plant creation or other operations.
+
+    :param nodes_gdf: GeoDataFrame containing existing nodes with 'name' column
+    :return: Unique node name in format 'NODE{n}' where n is max existing number + 1
+    """
+    existing_node_numbers = [
+        int(name.replace('NODE', ''))
+        for name in nodes_gdf['name']
+        if isinstance(name, str) and name.startswith('NODE')
+    ]
+    next_node_num = max(existing_node_numbers) + 1 if existing_node_numbers else 0
+    return f'NODE{next_node_num}'
+
+
 class SteinerAlgorithm(StrEnum):
     """
     Enum for the different algorithms that can be used to calculate the Steiner tree.
@@ -639,7 +658,7 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
                                     xoff=x_distance, yoff=y_distance)
                                 selected_node = copy_of_new_mst_nodes[
                                     copy_of_new_mst_nodes["coordinates"] == node_coords]
-                                selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
+                                selected_node["name"] = get_next_node_name(new_mst_nodes)
                                 selected_node["type"] = "NONE"
                                 geom = selected_node.geometry.values[0]
                                 normalized_coords = (round(geom.coords[0][0], SHAPEFILE_TOLERANCE),
@@ -711,11 +730,8 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["name"] == node_id].iloc[[0]]
 
-    # Generate unique node name by finding max existing node number
-    # (prevents duplicates when nodes are removed during plant creation)
-    existing_node_numbers = [int(name.replace('NODE', '')) for name in new_mst_nodes['name'] if name.startswith('NODE')]
-    next_node_num = max(existing_node_numbers) + 1 if existing_node_numbers else 0
-    selected_node["name"] = f"NODE{next_node_num}"
+    # Generate unique node name (prevents duplicates when nodes are removed during plant creation)
+    selected_node["name"] = get_next_node_name(new_mst_nodes)
 
     selected_node["type"] = "PLANT"
     new_mst_nodes = gdf(

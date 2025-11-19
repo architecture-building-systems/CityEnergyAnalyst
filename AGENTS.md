@@ -56,6 +56,14 @@
 - Focus on architectural patterns, state management, data flow, and key concepts that aren't obvious from code alone
 - If you need to preserve detailed explanations, move them to a separate `*_GUIDE.md` file for human readers
 
+**Code quality directives**:
+- **Avoid code duplication** - If you find yourself writing the same logic in 2+ places during editing:
+  - First, search for existing helper functions that do the same thing
+  - If none exist, extract the logic into a reusable helper function
+  - Place helper functions in an appropriate module (utility file or relevant domain module)
+  - Document the helper function with clear docstring explaining when to use it
+  - Example: Instead of repeating node name generation logic, use/create `get_next_node_name()`
+
 **Directory-specific AGENTS.md files**:
 - `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES
 - `cea/analysis/costs/AGENTS.md` - Cost calculation patterns

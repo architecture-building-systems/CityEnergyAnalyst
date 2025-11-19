@@ -136,7 +136,30 @@ Normalize all geometries in a GeoDataFrame
    - If `connection_candidates > 1` and `method='kou'`: Kou's metric closure automatically selects best connections
    - If `method='mehlhorn'`: Uses greedy nearest regardless of k
 
+## Key Helper Functions
+
+### `get_next_node_name(nodes_gdf)`
+Generate unique node names by finding max existing node number
+- Returns `NODE{n}` where n = max existing number + 1
+- Prevents duplicates when nodes are removed during network construction
+- **Always use this** instead of `len(nodes_gdf)` or `.name.count()` for node naming
+
 ## Common Patterns
+
+### ✅ DO: Use helper function for node naming
+```python
+# Good - handles node removal correctly
+from cea.technologies.network_layout.steiner_spanning_tree import get_next_node_name
+node_name = get_next_node_name(nodes_gdf)
+new_node = gpd.GeoDataFrame([{'name': node_name, ...}])
+```
+
+### ❌ DON'T: Use len() or count() for node naming
+```python
+# Bad - creates duplicates if nodes are removed
+node_name = f'NODE{len(nodes_gdf)}'  # WRONG
+node_name = f'NODE{nodes_gdf.name.count()}'  # WRONG
+```
 
 ### ✅ DO: Normalize after geometric operations
 ```python
