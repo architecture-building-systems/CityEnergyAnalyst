@@ -111,12 +111,6 @@ def operational_hourly(config: Configuration) -> None:
         if pv_codes and buildings:
             # Check if PV files exist for the first building (representative check)
             first_building = buildings[0]
-            from cea.analysis.lca.pv_offsetting import calculate_net_energy
-            try:
-                net_energy_check = calculate_net_energy(locator, first_building, include_pv=True, pv_codes=pv_codes)
-                pv_by_type = net_energy_check['PV_by_type']
-            except Exception:
-                pv_by_type = {}
 
             # Check which panels are missing
             missing_panels = []
