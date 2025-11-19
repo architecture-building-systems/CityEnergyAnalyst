@@ -9,7 +9,6 @@ from cea.import_export.result_summary import month_names, season_names
 from math import ceil
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import pandas as pd
 
 
 __author__ = "Zhongming Shi"

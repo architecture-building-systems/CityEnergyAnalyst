@@ -19,6 +19,15 @@ from cea.analysis.lca.primary_energy_calculator import (
 )
 
 
+__author__ = "Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 def main(config):
     """
     Calculate primary energy for all buildings in scenario.
@@ -155,7 +164,7 @@ def main(config):
         district_hourly_path = locator.get_primary_energy_hourly_district()
         district_hourly_df.to_csv(district_hourly_path, index=False)
 
-        print(f"\nHourly results:")
+        print("\nHourly results:")
         print(f"  Per-building files: {len(district_hourly_results)} buildings")
         print(f"  District aggregation (8760 hours): {district_hourly_path}")
 

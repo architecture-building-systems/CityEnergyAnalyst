@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 import cea.config
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, get_column_color
+from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 from cea.import_export.result_summary import filter_buildings
 
 __author__ = "Zhongming Shi"

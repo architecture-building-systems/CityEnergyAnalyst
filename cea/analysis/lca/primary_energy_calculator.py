@@ -11,6 +11,14 @@ Supports PV offsetting using net metering approach.
 import pandas as pd
 from cea.analysis.lca.pv_offsetting import calculate_net_energy
 
+__author__ = "Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def calculate_primary_energy(locator, building, config):
     """

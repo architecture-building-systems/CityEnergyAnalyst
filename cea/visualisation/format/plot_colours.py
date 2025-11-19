@@ -94,7 +94,6 @@ COLOURS_TO_RGB = {
 # Base color mapping without units - maps metric prefixes to colors
 _BASE_COLUMN_COLORS = {
     # ===== Grid & Demand =====
-    "GRID": "purple",
     "E_sys": "green",
     "QC_sys": "blue_lighter",
     "Qcs_sys": "blue",

@@ -9,8 +9,16 @@ Net metering approach: NetGRID = GRID_demand - PV_total
 """
 
 import pandas as pd
-from cea.demand import demand_writers
 
+
+__author__ = "Yiqiao Wang, Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Yiqiao Wang", "Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
     """

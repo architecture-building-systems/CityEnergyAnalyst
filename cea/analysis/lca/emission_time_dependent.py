@@ -13,6 +13,16 @@ from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.utilities import epwreader
 
 
+__author__ = "Yiqiao Wang, Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Yiqiao Wang", "Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 def _load_grid_emission_intensity_override(config: Configuration):
     """Load and validate an optional external CSV for grid carbon intensity.
 

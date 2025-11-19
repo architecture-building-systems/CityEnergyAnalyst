@@ -18,6 +18,16 @@ from cea.constants import (
 )
 from cea.datamanagement.database.components import Feedstocks
 
+__author__ = "Yiqiao Wang, Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Yiqiao Wang", "Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 if TYPE_CHECKING:
     from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
     from cea.demand.building_properties import BuildingProperties
