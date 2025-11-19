@@ -250,22 +250,12 @@ class OperationalHourlyTimeline:
 
         grid_demand_hourly = self.demand_timeseries['GRID_kWh'].to_numpy(dtype=float)
 
-        # Track remaining grid demand for sequential allocation
-        remaining_grid_demand = grid_demand_hourly.copy()
-
         # Process each PV panel
         for pv_code in available_panels:
             pv_df = self._load_pv_hourly(pv_code)
             pv_generation_hourly = pv_df['E_PV_gen_kWh'].to_numpy(dtype=float)
-
-            # Calculate offset (on-site use) and export for this panel
-            # Offset = min(PV generation, remaining grid demand)
-            # Export = PV generation - offset
-            offset_hourly = np.minimum(pv_generation_hourly, remaining_grid_demand)
+            offset_hourly = np.minimum(pv_generation_hourly, grid_demand_hourly)
             export_hourly = pv_generation_hourly - offset_hourly
-
-            # Update remaining grid demand
-            remaining_grid_demand -= offset_hourly
 
             # Convert to emissions (both negative = emission reductions)
             offset_emissions = -offset_hourly * self.grid_intensity
