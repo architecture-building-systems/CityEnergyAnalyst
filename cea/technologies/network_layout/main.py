@@ -684,14 +684,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         print_demand_warning(buildings_without_demand_dc, "cooling")
         print_demand_warning(buildings_without_demand_dh, "heating")
 
-    # Determine network type string (unified logic for both branches)
-    if 'DC' in list_include_services and 'DH' in list_include_services:
-        network_type = 'DC+DH'
-    elif 'DC' in list_include_services:
-        network_type = 'DC'
-    elif 'DH' in list_include_services:
-        network_type = 'DH'
-    else:
+    # Determine which network types to generate (use set for cleaner conditionals)
+    network_types_to_generate = set()
+    if 'DC' in list_include_services:
+        network_types_to_generate.add('DC')
+    if 'DH' in list_include_services:
+        network_types_to_generate.add('DH')
+
+    if not network_types_to_generate:
         # This should never happen due to validation above, but keep as safeguard
         raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
 
@@ -717,15 +717,6 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Collect all edges from both networks
     all_edges_list = []
-
-    # Determine which network types to generate
-    network_types_to_generate = []
-    if network_type == 'DC+DH':
-        network_types_to_generate = ['DC', 'DH']
-    elif network_type == 'DC':
-        network_types_to_generate = ['DC']
-    elif network_type == 'DH':
-        network_types_to_generate = ['DH']
 
     # Generate Steiner tree for each network type separately
     for type_network in network_types_to_generate:
@@ -914,9 +905,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
     # Summary
-    print(f"\n  ✓ Network layout generation complete for: {', '.join(network_types_to_generate)}")
+    print(f"\n  ✓ Network layout generation complete for: {', '.join(sorted(network_types_to_generate))}")
     print(f"    Network name: {network_layout.network_name}")
-    if network_type == 'DC+DH':
+    if len(network_types_to_generate) > 1:
         print("    Output folders: DC/ and DH/")
 
 
@@ -1127,14 +1118,14 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 list_include_services.remove('DC')
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
-    # Determine network type string (unified logic for both branches)
-    if 'DC' in list_include_services and 'DH' in list_include_services:
-        network_type = 'DC+DH'
-    elif 'DC' in list_include_services:
-        network_type = 'DC'
-    elif 'DH' in list_include_services:
-        network_type = 'DH'
-    else:
+    # Determine which network types to generate (use set for cleaner conditionals)
+    network_types_to_generate = set()
+    if 'DC' in list_include_services:
+        network_types_to_generate.add('DC')
+    if 'DH' in list_include_services:
+        network_types_to_generate.add('DH')
+
+    if not network_types_to_generate:
         # This should never happen due to validation at line 501, but keep as safeguard
         raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
 
@@ -1143,11 +1134,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Validate network covers all specified buildings
+    # Note: validate_network_covers_district_buildings expects a string, so convert set to string
+    network_type_str = 'DC+DH' if len(network_types_to_generate) > 1 else list(network_types_to_generate)[0]
     nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
         nodes_gdf,
         zone_gdf,  # Already loaded above for validation
         buildings_to_validate,
-        network_type,
+        network_type_str,
         edges_gdf
     )
 
@@ -1174,7 +1167,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
 
     # Process nodes separately for DC and DH
-    if network_type == 'DC' or network_type == 'DC+DH':
+    if 'DC' in network_types_to_generate:
         print(f"\n{'='*60}")
         print(f"  DC NETWORK")
         print(f"{'='*60}")
@@ -1204,7 +1197,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         os.makedirs(os.path.dirname(output_node_path_dc), exist_ok=True)
         nodes_gdf_dc.to_file(output_node_path_dc, driver='ESRI Shapefile')
 
-    if network_type == 'DH' or network_type == 'DC+DH':
+    if 'DH' in network_types_to_generate:
         print(f"\n{'='*60}")
         print(f"  DH NETWORK")
         print(f"{'='*60}")
