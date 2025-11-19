@@ -380,7 +380,7 @@ def validate_network_covers_district_buildings(
     nodes_gdf: gpd.GeoDataFrame,
     buildings_gdf: gpd.GeoDataFrame,
     district_building_names: List[str],
-    network_type: str,
+    network_types: List[str],
     edges_gdf: gpd.GeoDataFrame
 ) -> Tuple[gpd.GeoDataFrame, List[str]]:
     """
@@ -394,7 +394,7 @@ def validate_network_covers_district_buildings(
     :param nodes_gdf: GeoDataFrame of network nodes
     :param buildings_gdf: GeoDataFrame of building footprints from zone geometry
     :param district_building_names: List of building names that should be on district network
-    :param network_type: 'DH' or 'DC' for error messaging
+    :param network_types: List of network types (e.g., ['DH', 'DC']) for error messaging
     :param edges_gdf: GeoDataFrame of network edges (for auto-creating nodes)
     :return: Tuple of (modified nodes_gdf, list of auto-created building names)
     :raises UserNetworkLoaderError: If validation fails with detailed diagnostics
@@ -435,8 +435,9 @@ def validate_network_covers_district_buildings(
 
     if extra_buildings:
         extra_list = sorted(list(extra_buildings))
+        network_type_label = '/'.join(sorted(network_types))
         raise UserNetworkLoaderError(
-            f"User-defined network includes buildings NOT designated for district {network_type}:\n\n"
+            f"User-defined network includes buildings NOT designated for district {network_type_label}:\n\n"
             f"  - Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
             f"  - Buildings found in network nodes: {len(network_building_names)}\n"
             f"  - Extra buildings: {len(extra_buildings)}\n\n"

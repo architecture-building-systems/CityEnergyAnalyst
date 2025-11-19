@@ -57,12 +57,18 @@
 - If you need to preserve detailed explanations, move them to a separate `*_GUIDE.md` file for human readers
 
 **Code quality directives**:
-- **Avoid code duplication** - If you find yourself writing the same logic in 2+ places during editing:
-  - First, search for existing helper functions that do the same thing
-  - If none exist, extract the logic into a reusable helper function
-  - Place helper functions in an appropriate module (utility file or relevant domain module)
-  - Document the helper function with clear docstring explaining when to use it
-  - Example: Instead of repeating node name generation logic, use/create `get_next_node_name()`
+- **Extract meaningful patterns, not trivial wrappers** - Only create helper functions when they add real value:
+  - ✅ **DO extract** when:
+    - Logic must be done in a specific way to avoid bugs (e.g., `get_next_node_name()` - prevents duplicates)
+    - Complex workflow logic that's hard to understand inline (e.g., multi-step validation)
+    - Algorithm that requires deep understanding to get right
+    - Pattern that encapsulates important business rules
+  - ❌ **DON'T extract** when:
+    - It's just a 1-2 line wrapper around existing functions
+    - It's standard library usage (file I/O, simple pandas operations)
+    - The abstraction obscures rather than clarifies intent
+    - It would be clearer to just write inline
+  - **Rule of thumb**: If the helper function is shorter/simpler than its call sites, don't extract it
 
 **Directory-specific AGENTS.md files**:
 - `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES

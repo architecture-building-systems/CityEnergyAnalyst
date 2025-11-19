@@ -92,7 +92,28 @@ def convert_simplified_nodes_to_full_format(nodes_gdf):
     return nodes_full
 
 
+def determine_network_types(list_include_services):
+    """
+    Determine which network types to generate from the list of included services.
+
+    :param list_include_services: List of services to include (e.g., ['DC', 'DH'])
+    :return: Set of network types to generate (e.g., {'DC', 'DH'})
+    :raises ValueError: If no thermal services are selected
+    """
+    network_types_to_generate = set()
+    if 'DC' in list_include_services:
+        network_types_to_generate.add('DC')
+    if 'DH' in list_include_services:
+        network_types_to_generate.add('DH')
+
+    if not network_types_to_generate:
+        raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
+
+    return network_types_to_generate
+
+
 def print_demand_warning(buildings_without_demand, service_name):
+    """Print warning for buildings without demand for a specific service type."""
     if buildings_without_demand:
         print(f"  Warning: {len(buildings_without_demand)} building(s) have no {service_name} demand:")
         for building_name in buildings_without_demand[:10]:
@@ -685,15 +706,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Determine which network types to generate (use set for cleaner conditionals)
-    network_types_to_generate = set()
-    if 'DC' in list_include_services:
-        network_types_to_generate.add('DC')
-    if 'DH' in list_include_services:
-        network_types_to_generate.add('DH')
-
-    if not network_types_to_generate:
-        # This should never happen due to validation above, but keep as safeguard
-        raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
+    network_types_to_generate = determine_network_types(list_include_services)
 
     path_streets_shp = locator.get_street_network()  # shapefile with the stations
     path_zone_shp = locator.get_zone_geometry()
@@ -908,7 +921,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     print(f"\n  ✓ Network layout generation complete for: {', '.join(sorted(network_types_to_generate))}")
     print(f"    Network name: {network_layout.network_name}")
     if len(network_types_to_generate) > 1:
-        print("    Output folders: DC/ and DH/")
+        folders = ' '.join([f"{nt}/" for nt in sorted(network_types_to_generate)])
+        print(f"    Output folders: {folders}")
 
 
 
@@ -1119,28 +1133,18 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
     # Determine which network types to generate (use set for cleaner conditionals)
-    network_types_to_generate = set()
-    if 'DC' in list_include_services:
-        network_types_to_generate.add('DC')
-    if 'DH' in list_include_services:
-        network_types_to_generate.add('DH')
+    network_types_to_generate = determine_network_types(list_include_services)
 
-    if not network_types_to_generate:
-        # This should never happen due to validation at line 501, but keep as safeguard
-        raise ValueError(f"No thermal services selected: {', '.join(list_include_services)}.")
-
-    # Helper function to print demand warnings
+    # Print demand warnings
     print_demand_warning(buildings_without_demand_dc, "cooling")
     print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Validate network covers all specified buildings
-    # Note: validate_network_covers_district_buildings expects a string, so convert set to string
-    network_type_str = 'DC+DH' if len(network_types_to_generate) > 1 else list(network_types_to_generate)[0]
     nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
         nodes_gdf,
         zone_gdf,  # Already loaded above for validation
         buildings_to_validate,
-        network_type_str,
+        list(network_types_to_generate),
         edges_gdf
     )
 
@@ -1157,6 +1161,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
 
+    # Resolve plant buildings for both network types
+    # Plant buildings can be ANY building in the zone, not just connected buildings
+    cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, all_zone_buildings, "cooling")
+    heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, all_zone_buildings, "heating")
+
     # Save to network-name location
     output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
     output_node_path_dc = locator.get_network_layout_nodes_shapefile('DC', network_layout.network_name)
@@ -1171,10 +1180,6 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print(f"\n{'='*60}")
         print(f"  DC NETWORK")
         print(f"{'='*60}")
-
-        # Resolve cooling plant buildings
-        # Plant buildings can be ANY building in the zone, not just connected buildings
-        cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, all_zone_buildings, "cooling")
 
         # Create copy of nodes for DC network
         nodes_gdf_dc = nodes_gdf.copy()
@@ -1201,10 +1206,6 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print(f"\n{'='*60}")
         print(f"  DH NETWORK")
         print(f"{'='*60}")
-
-        # Resolve heating plant buildings
-        # Plant buildings can be ANY building in the zone, not just connected buildings
-        heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, all_zone_buildings, "heating")
 
         # Create copy of nodes for DH network
         nodes_gdf_dh = nodes_gdf.copy()
