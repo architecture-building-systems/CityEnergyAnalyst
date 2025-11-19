@@ -276,14 +276,13 @@ Life Cycle Analysis:
       **Embodied emissions** include construction materials and processes, building envelope, renovations, demolition, biogenic carbon storage (e.g. timber), and PV panel manufacturing.
 
       **Operational emissions** are calculated from **final energy consumption** (energy delivered to building) using emission factors (gCO2e/kWh).
-      Emission factors already include upstream generation, transmission, and distribution emissions, so no Primary Energy Factor (PEF) is applied.
 
-      Includes energy supply system operation for heating, cooling, electricity, and domestic hot water.
+      Includes energy supply system operation for space heating, space cooling, electricity, and domestic hot water (dhw).
 
-      Outputs include total annual emissions (kgCO2e/year), emissions intensity (kgCO2e/m²/year), optional hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
+      Outputs include total annual emissions (kgCO2e/year), emissions intensity (kgCO2e/m2/year), hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
 
       **[Optional]**: For location-specific grid emission data, download hourly carbon intensity datasets from [Electricity Maps](https://portal.electricitymaps.com/datasets),
-      and set column name to "Carbon intensity gCO2eq/kWh (direct)" in the parameters (be aware of the subscripted "2" characters).
+      and set column name to "Carbon intensity gCO2eq/kWh (direct)" in the parameters.
       _Ensure proper citation and compliance with their terms of use._
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
