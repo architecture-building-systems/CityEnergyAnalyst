@@ -1,6 +1,5 @@
 import math
 import platform
-import time
 import warnings
 
 import geopandas as gpd
@@ -111,28 +110,7 @@ def get_thermal_network_from_shapefile(locator: cea.inputlocator.InputLocator, n
         raise ValueError('There are duplicated PIPE IDs:', duplicated_edges.name.values)
 
     # get node and pipe information
-    node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
-    
-    # Validate edges reference existing nodes
-    node_names_set = set(node_df.index)
-    invalid_edges = []
-    for edge_name, edge_data in edge_df.iterrows():
-        start_node = edge_data.get("start node")
-        end_node = edge_data.get("end node")
-        
-        if not start_node or not end_node:
-            invalid_edges.append((edge_name, "missing node name"))
-        elif start_node not in node_names_set:
-            invalid_edges.append((edge_name, f"start node '{start_node}' not found"))
-        elif end_node not in node_names_set:
-            invalid_edges.append((edge_name, f"end node '{end_node}' not found"))
-    
-    if invalid_edges:
-        print(f"Ignoring {len(invalid_edges)} invalid edge(s):")
-        for edge_name, reason in invalid_edges:
-            print(f"  - {edge_name}: {reason}")
-        # Remove invalid edges
-        edge_df = edge_df.drop([edge_name for edge_name, _ in invalid_edges])
+    node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
 
     return edge_df, node_df
 
