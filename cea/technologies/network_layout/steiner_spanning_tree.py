@@ -407,7 +407,7 @@ def calc_steiner_spanning_tree(crs_projected,
                 except Exception:
                     # Fallback: ignore
                     pass
-        print(f"\n[{label} network stats]")
+        print(f"\n{label} network stats:")
         print(f"  Nodes: {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
         print(f"  Terminals: {len(terminals)} | Non-terminal leaves: {len(non_terminal_leaves)}")
         if terminals_bad_degree:

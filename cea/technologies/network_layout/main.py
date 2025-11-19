@@ -171,8 +171,6 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     import networkx as nx
     from shapely.geometry import Point
 
-    print(f"[auto_create_plant_nodes] expected_num_components = {expected_num_components}")
-
     # Check for existing plants based on network type
     # PLANT = shared (both DC and DH)
     # PLANT_DC = DC only
@@ -189,13 +187,14 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     else:
         existing_plants = plants_shared
 
-    print(f"[auto_create_plant_nodes] Found {len(existing_plants)} existing PLANT nodes for {network_type} network")
-    if len(plants_shared) > 0:
-        print(f"  - Shared plants (PLANT): {len(plants_shared)}")
-    if network_type == 'DC' and len(plants_dc) > 0:
-        print(f"  - DC-only plants (PLANT_DC): {len(plants_dc)}")
-    if network_type == 'DH' and len(plants_dh) > 0:
-        print(f"  - DH-only plants (PLANT_DH): {len(plants_dh)}")
+    if len(existing_plants) > 0:
+        print(f"  Found {len(existing_plants)} existing PLANT nodes for {network_type} network")
+        if len(plants_shared) > 0:
+            print(f"    - Shared plants (PLANT): {len(plants_shared)}")
+        if network_type == 'DC' and len(plants_dc) > 0:
+            print(f"    - DC-only plants (PLANT_DC): {len(plants_dc)}")
+        if network_type == 'DH' and len(plants_dh) > 0:
+            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh)}")
 
     # Build graph to detect components (need to do this even if plants exist, for validation)
     # Note: User-defined networks may not have start_node/end_node columns yet
@@ -287,7 +286,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             G.add_edge(start_node_idx, end_node_idx)
 
     components = list(nx.connected_components(G))
-    print(f"[auto_create_plant_nodes] Detected {len(components)} connected component(s)")
+    print(f"  Detected {len(components)} connected component(s)")
 
     if len(components) == 0:
         return nodes_gdf, edges_gdf, []
@@ -333,7 +332,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 f"  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
                 f"  2. Remove PLANT nodes from your network layout shapefile"
             )
-        print("[auto_create_plant_nodes] Plants already exist, skipping auto-creation")
+        print("  Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
 
     # Validate component count for multiple plants
@@ -730,7 +729,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Generate Steiner tree for each network type separately
     for type_network in network_types_to_generate:
-        print(f"\n  Generating {type_network} network layout...")
+        print(f"\n{'='*60}")
+        print(f"  {type_network} NETWORK")
+        print(f"{'='*60}")
 
         # Get plant buildings and connected buildings for this network type
         if type_network == 'DC':
@@ -1162,7 +1163,6 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
-    print(f"[process_user_defined_network] number_of_components from config: {config.network_layout.number_of_components} -> expected_num_components: {expected_num_components}")
 
     # Save to network-name location
     output_layout_path = locator.get_network_layout_shapefile(network_name=network_layout.network_name)
@@ -1175,6 +1175,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Process nodes separately for DC and DH
     if network_type == 'DC' or network_type == 'DC+DH':
+        print(f"\n{'='*60}")
+        print(f"  DC NETWORK")
+        print(f"{'='*60}")
+
         # Resolve cooling plant buildings
         # Plant buildings can be ANY building in the zone, not just connected buildings
         cooling_plant_buildings_list = resolve_plant_buildings(cooling_plant_building, all_zone_buildings, "cooling")
@@ -1201,6 +1205,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         nodes_gdf_dc.to_file(output_node_path_dc, driver='ESRI Shapefile')
 
     if network_type == 'DH' or network_type == 'DC+DH':
+        print(f"\n{'='*60}")
+        print(f"  DH NETWORK")
+        print(f"{'='*60}")
+
         # Resolve heating plant buildings
         # Plant buildings can be ANY building in the zone, not just connected buildings
         heating_plant_buildings_list = resolve_plant_buildings(heating_plant_building, all_zone_buildings, "heating")
