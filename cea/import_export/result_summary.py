@@ -495,13 +495,38 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
     }
 
     if direction == "metrics_to_features":
-        # Find all matches
+        # Find all matches - features where there's overlap with input metrics
         matched_features = {feature for feature, metrics in mapping_dict.items() if set(list_metrics_or_features) & set(metrics)}
 
         if not matched_features:
             return None
-        else:
+        elif len(matched_features) == 1:
             return list(matched_features)[0]
+        else:
+            # Multiple features match - need to disambiguate
+            # This happens when metrics are shared between features (e.g., PV columns in both lifecycle and operational emissions)
+
+            # Strategy: Return the feature where ALL input metrics are present (perfect match)
+            # If no perfect match, return the feature with the most overlap
+            perfect_matches = [feature for feature in matched_features
+                             if set(list_metrics_or_features).issubset(set(mapping_dict[feature]))]
+
+            if perfect_matches:
+                # If multiple perfect matches, prefer more specific features
+                # operational_emissions is more specific than lifecycle_emissions for hourly data
+                priority_order = ['operational_emissions', 'lifecycle_emissions', 'architecture', 'demand']
+                for priority_feature in priority_order:
+                    if priority_feature in perfect_matches:
+                        print(f"[DEBUG] Multiple features matched metrics, selected '{priority_feature}' from {perfect_matches}")
+                        return priority_feature
+                print(f"[DEBUG] Multiple perfect matches {perfect_matches}, returning first")
+                return perfect_matches[0]
+            else:
+                # No perfect match - return feature with most overlap
+                overlap_scores = {feature: len(set(list_metrics_or_features) & set(mapping_dict[feature]))
+                                for feature in matched_features}
+                best_match = max(overlap_scores, key=overlap_scores.get)
+                return best_match
 
     elif direction == "features_to_metrics":
         # Reverse the mapping dictionary
@@ -814,6 +839,28 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
+
+                # Validation: Check if this is timeline data (has 'period' column) when we expect operational data
+                # Timeline files are in .../emissions/timeline/ and operational files are in .../emissions/operational/
+                is_operational_path = '/emissions/operational/' in path or '_operational_hourly.csv' in path
+                is_timeline_path = '/emissions/timeline/' in path or '_timeline.csv' in path
+                has_period_column = 'period' in df.columns
+                has_date_column = bool(date_columns.intersection(df.columns))
+
+                # Validate data structure matches file path
+                if is_operational_path and has_period_column and not has_date_column:
+                    raise ValueError(
+                        f"Data structure mismatch: File '{path}' is an operational file but has 'period' column "
+                        f"instead of 'date' column. This suggests timeline data was incorrectly loaded. "
+                        f"Available columns: {df.columns.tolist()}"
+                    )
+                if is_timeline_path and has_date_column and not has_period_column:
+                    raise ValueError(
+                        f"Data structure mismatch: File '{path}' is a timeline file but has 'date' column "
+                        f"instead of 'period' column. This suggests operational data was incorrectly loaded. "
+                        f"Available columns: {df.columns.tolist()}"
+                    )
+
                 if date_columns.intersection(df.columns):
                     df = get_standardized_date_column(df)   # Change where ['DATE'] or ['Date'] to ['date']
 
@@ -827,11 +874,19 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
 
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
+
+                    # Debug logging for loaded data structure
+                    print(f"[DEBUG] Loaded hourly data from {path.split('/')[-1]}: {len(df)} rows, {len(df.columns)} columns (has 'date' column)")
+
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 elif 'period' in df.columns:
                     selected_columns = ['period'] + ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
+
+                    # Debug logging for loaded data structure
+                    print(f"[DEBUG] Loaded timeline data from {path.split('/')[-1]}: {len(df)} rows, {len(df.columns)} columns (has 'period' column)")
+
                     list_dataframes.append(df)
                 else:
                     # Slice the useful columns
@@ -1035,6 +1090,17 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
 
     # locate the path(s) to the results of the CEA Feature
     list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
+
+    # Debug logging: Track which files are being loaded for which feature
+    print(f"[DEBUG] Loading data for CEA feature: {cea_feature}")
+    if not check_list_nesting(list_paths):
+        print(f"[DEBUG] Loading {len(list_paths)} files:")
+        for i, path in enumerate(list_paths[:3]):  # Show first 3 paths
+            print(f"[DEBUG]   {i+1}. {path}")
+        if len(list_paths) > 3:
+            print(f"[DEBUG]   ... and {len(list_paths) - 3} more files")
+    else:
+        print(f"[DEBUG] Loading {len(list_paths)} nested file groups")
 
     # get the relevant CEA column names based on selected metrics
     if not bool_analytics:
@@ -1442,8 +1508,30 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
-            print(f"Available columns: {df.columns.tolist()}")
-            raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
+            # Enhanced error message with validation for common data structure issues
+            has_period = 'period' in df.columns
+            error_msg = f"The specified date_column '{date_column}' is not in the DataFrame.\n"
+            error_msg += f"Available columns: {df.columns.tolist()}\n"
+
+            if has_period and date_column == 'date':
+                error_msg += (
+                    "\nDETECTED ISSUE: DataFrame has 'period' column but expected 'date' column.\n"
+                    "This indicates timeline data (lifecycle emissions) was loaded instead of operational hourly data.\n"
+                    "POSSIBLE CAUSES:\n"
+                    "  1. Wrong file was loaded from source (check file paths in get_results_path)\n"
+                    "  2. Cached summary file from previous emission-timeline plot is being reused\n"
+                    "  3. Race condition between concurrent plot generation jobs\n"
+                    "SOLUTION: Check that operational emissions files (not timeline files) are being loaded."
+                )
+            elif not has_period and date_column == 'period':
+                error_msg += (
+                    "\nDETECTED ISSUE: DataFrame has 'date' column but expected 'period' column.\n"
+                    "This indicates operational hourly data was loaded instead of timeline data (lifecycle emissions).\n"
+                    "SOLUTION: Check that timeline files (not operational files) are being loaded."
+                )
+
+            print(error_msg)
+            raise KeyError(error_msg)
         if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
             df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
             if df[date_column].isnull().all():

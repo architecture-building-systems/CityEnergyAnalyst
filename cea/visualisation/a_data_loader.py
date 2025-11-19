@@ -275,8 +275,9 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
 
-    # Delete the existing file if it exists
+    # Delete the existing file if it exists to prevent loading stale cached data
     if os.path.exists(summary_results_csv_path):
+        print(f"[DEBUG] Removing existing summary file: {summary_results_csv_path}")
         os.remove(summary_results_csv_path)
 
     # Execute the summary process
@@ -285,6 +286,37 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
     # Load the summary results data
     try:
         df_summary_data = pd.read_csv(summary_results_csv_path)
+
+        # Validate data structure for operational-emissions
+        if plot_cea_feature == 'operational-emissions':
+            if 'period' in df_summary_data.columns and 'date' not in df_summary_data.columns:
+                error_msg = (
+                    f"Data structure error in summary file: {summary_results_csv_path}\n"
+                    f"Expected operational emissions data with 'date' column, but found 'period' column.\n"
+                    f"This suggests timeline data was incorrectly written to the operational emissions summary file.\n"
+                    f"Available columns: {df_summary_data.columns.tolist()}\n"
+                    f"File will be deleted and regenerated."
+                )
+                print(error_msg)
+                # Delete the incorrect file
+                os.remove(summary_results_csv_path)
+                raise ValueError(error_msg)
+        elif plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
+            if 'date' in df_summary_data.columns and 'period' not in df_summary_data.columns:
+                error_msg = (
+                    f"Data structure error in summary file: {summary_results_csv_path}\n"
+                    f"Expected lifecycle/timeline emissions data with 'period' column, but found 'date' column.\n"
+                    f"This suggests operational data was incorrectly written to the lifecycle/timeline emissions summary file.\n"
+                    f"Available columns: {df_summary_data.columns.tolist()}\n"
+                    f"File will be deleted and regenerated."
+                )
+                print(error_msg)
+                # Delete the incorrect file
+                os.remove(summary_results_csv_path)
+                raise ValueError(error_msg)
+
+        print(f"[DEBUG] Successfully loaded summary file with {len(df_summary_data)} rows and {len(df_summary_data.columns)} columns")
+
     except Exception as e:
         print(f"Error loading csv file: {e}")
         df_summary_data = None
