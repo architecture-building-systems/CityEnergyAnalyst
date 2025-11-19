@@ -1,7 +1,6 @@
 """
 This script calculates the minimum spanning tree of a shapefile network
 """
-import math
 import os
 from enum import StrEnum
 
@@ -15,6 +14,7 @@ from cea.constants import SHAPEFILE_TOLERANCE
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
+from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name
 from cea.datamanagement.graph_helper import GraphCorrector
 
 __author__ = "Jimeno A. Fonseca"
@@ -25,25 +25,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
-def get_next_node_name(nodes_gdf):
-    """
-    Generate the next unique node name by finding the maximum existing node number.
-
-    This prevents duplicate node names when nodes are removed from the network during
-    plant creation or other operations.
-
-    :param nodes_gdf: GeoDataFrame containing existing nodes with 'name' column
-    :return: Unique node name in format 'NODE{n}' where n is max existing number + 1
-    """
-    existing_node_numbers = [
-        int(name.replace('NODE', ''))
-        for name in nodes_gdf['name']
-        if isinstance(name, str) and name.startswith('NODE')
-    ]
-    next_node_num = max(existing_node_numbers) + 1 if existing_node_numbers else 0
-    return f'NODE{next_node_num}'
 
 
 class SteinerAlgorithm(StrEnum):
@@ -719,68 +700,3 @@ def calc_coord_anchor(total_demand_location, nodes_df, type_network):
 def building_node_from_name(building_name, nodes_df):
     building_series = nodes_df[nodes_df['building'] == building_name]
     return building_series
-
-
-def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn):
-    # find closest node
-    copy_of_new_mst_nodes = new_mst_nodes.copy()
-    building_coordinates = building_anchor.geometry.values[0].coords
-    x1 = building_coordinates[0][0]
-    y1 = building_coordinates[0][1]
-    delta = 10E24  # big number
-    node_id = None
-
-    for node in copy_of_new_mst_nodes.iterrows():
-        if node[1]['type'] == 'NONE':
-            x2 = node[1].geometry.coords[0][0]
-            y2 = node[1].geometry.coords[0][1]
-            distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-            if 0 < distance < delta:
-                delta = distance
-                node_id = node[1]['name']
-
-    if node_id is None:
-        # Single building network - no NONE nodes available
-        # Create plant node offset from the building node itself
-        building_node = building_anchor.iloc[0]
-        node_id = building_node['name']
-        print("    Single-building network: Creating plant node offset from building node")
-
-    # create copy of selected node and add to list of all nodes
-    copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
-    selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["name"] == node_id].iloc[[0]]
-
-    # Generate unique node name (prevents duplicates when nodes are removed during plant creation)
-    selected_node["name"] = get_next_node_name(new_mst_nodes)
-
-    selected_node["type"] = "PLANT"
-    new_mst_nodes = gdf(
-        pd.concat([new_mst_nodes, selected_node], ignore_index=True),
-        crs=new_mst_nodes.crs
-    )
-
-    # create new edge
-    point1 = (selected_node.iloc[0].geometry.x, selected_node.iloc[0].geometry.y)
-    point2 = (new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.x,
-              new_mst_nodes[new_mst_nodes["name"] == node_id].iloc[0].geometry.y)
-    line = LineString((point1, point2))
-    edge_weight = line.length
-    # Get next pipe number from existing pipe names
-    existing_pipe_numbers = [int(name.replace('PIPE', '')) for name in mst_edges['name'] if name.startswith('PIPE')]
-    next_pipe_num = max(existing_pipe_numbers) + 1 if existing_pipe_numbers else 0
-    new_edge = gdf(
-        pd.DataFrame([{"geometry": line, "pipe_DN": pipe_dn, "type_mat": type_mat,
-                       "name": f"PIPE{next_pipe_num}", "weight": edge_weight}]),
-        crs=mst_edges.crs
-    )
-    mst_edges = gdf(
-        pd.concat( [mst_edges, new_edge], ignore_index=True),
-        crs=mst_edges.crs
-    )
-
-    # Validation: Check for duplicate node names
-    if new_mst_nodes['name'].duplicated().any():
-        duplicates = new_mst_nodes[new_mst_nodes['name'].duplicated(keep=False)]['name'].unique().tolist()
-        raise ValueError(f"Duplicate node names detected after adding plant node: {duplicates}")
-
-    return new_mst_nodes, mst_edges
