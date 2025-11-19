@@ -161,34 +161,6 @@ class OperationalHourlyTimeline:
 
         return expanded_timeline
     
-    # ---- PV helpers (internal) -----------------------------------------------------
-
-    @property
-    def grid_intensity(self) -> np.ndarray:
-        if 'GRID' not in self.emission_intensity_timeline.columns:
-            raise ValueError("'GRID' emission intensity timeline is missing.")
-        return self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
-
-    def _load_pv_hourly(self, pv_code: str) -> pd.DataFrame:
-        pv_results_path = self.locator.PV_results(self.bpr.name, pv_code)
-        if not os.path.exists(pv_results_path):
-            error_msg = (
-                f"PV electricity results missing for building {self.bpr.name}, panel type: {pv_code}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results. "
-                f"Expected file: {pv_results_path}"
-            )
-            print(f"ERROR: {error_msg}")
-            raise FileNotFoundError(error_msg)
-        df = pd.read_csv(pv_results_path, index_col=None)
-        if len(df) != HOURS_IN_YEAR:
-            raise ValueError(
-                f"PV results for {pv_code} should have {HOURS_IN_YEAR} rows, but got {len(df)} rows."
-            )
-        df.index = self.demand_timeseries.index  # align to demand index
-        if 'E_PV_gen_kWh' not in df.columns:
-            raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {pv_code}.")
-        return df
-
     def apply_pv_offsetting(self, pv_codes: list[str] | None = None) -> None:
         """
         Apply simple net metering PV offsetting to GRID emissions.
@@ -241,6 +213,34 @@ class OperationalHourlyTimeline:
                 f"  PV panel {pv_code}: {total_offset:.0f} kWh offset on-site ({total_offset_emissions:.0f} kgCO2e avoided), "
                 f"{total_export:.0f} kWh exported to grid ({total_export_emissions:.0f} kgCO2e avoided)"
             )
+    
+    # ---- PV helpers (internal) -----------------------------------------------------
+
+    @property
+    def grid_intensity(self) -> np.ndarray:
+        if 'GRID' not in self.emission_intensity_timeline.columns:
+            raise ValueError("'GRID' emission intensity timeline is missing.")
+        return self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
+
+    def _load_pv_hourly(self, pv_code: str) -> pd.DataFrame:
+        pv_results_path = self.locator.PV_results(self.bpr.name, pv_code)
+        if not os.path.exists(pv_results_path):
+            error_msg = (
+                f"PV electricity results missing for building {self.bpr.name}, panel type: {pv_code}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results. "
+                f"Expected file: {pv_results_path}"
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
+        df = pd.read_csv(pv_results_path, index_col=None)
+        if len(df) != HOURS_IN_YEAR:
+            raise ValueError(
+                f"PV results for {pv_code} should have {HOURS_IN_YEAR} rows, but got {len(df)} rows."
+            )
+        df.index = self.demand_timeseries.index  # align to demand index
+        if 'E_PV_gen_kWh' not in df.columns:
+            raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {pv_code}.")
+        return df
 
     def _resolve_available_pv_panels(self, pv_codes: list[str] | None) -> list[str]:
         """Return list of available PV panel codes.
