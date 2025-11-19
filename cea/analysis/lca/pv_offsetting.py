@@ -7,8 +7,12 @@ Used by both:
 
 Net metering approach: NetGRID = GRID_demand - PV_total
 """
-
+from __future__ import annotations
 import pandas as pd
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from cea.inputlocator import InputLocator
 
 
 __author__ = "Yiqiao Wang, Zhongming Shi"
@@ -20,7 +24,12 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
+def calculate_net_energy(
+    locator: InputLocator,
+    building: str,
+    include_pv: bool = False,
+    pv_codes: list[str] | None = None,
+):
     """
     Calculate final energy consumption with optional PV offsetting.
 
@@ -69,7 +78,8 @@ def calculate_net_energy(locator, building, include_pv=False, pv_codes=None):
     """
     # Read building demand
     demand_path = locator.get_demand_results_file(building)
-    demand_df = pd.read_csv(demand_path)
+    demand_df = pd.read_csv(demand_path, index_col=None)
+    demand_df.index.set_names(['hour'], inplace=True)
 
     # Extract final energy by carrier (kWh = Wh / 1000)
     # Use demand_energycarrier columns from demand output

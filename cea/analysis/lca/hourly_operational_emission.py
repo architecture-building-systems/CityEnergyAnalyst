@@ -8,18 +8,18 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.database.components import Feedstocks, Conversion
+from cea.datamanagement.database.components import Feedstocks
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
 
-__author__ = "Yiqiao Wang, Zhongming Shi"
-__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Yiqiao Wang", "Zhongming Shi"]
-__license__ = "MIT"
-__version__ = "0.1"
-__maintainer__ = "Reynold Mok"
-__email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
+__author__      = "Yiqiao Wang, Zhongming Shi"
+__copyright__   = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__     = ["Yiqiao Wang", "Zhongming Shi"]
+__license__     = "MIT"
+__version__     = "0.1"
+__maintainer__  = "Reynold Mok"
+__email__       = "cea@arch.ethz.ch"
+__status__      = "Production"
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import (
@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 _tech_name_mapping = {
-    # tech_name: (<demand_col_name>, <supply_type_name>)
     "Qhs_sys": "hs",
     "Qww_sys": "dhw",
     "Qcs_sys": "cs",
@@ -60,11 +59,11 @@ class OperationalHourlyTimeline:
         self.locator = locator
         self.bpr = bpr
         self.feedstock_db = Feedstocks.from_locator(locator)
-        self.conversion_db = Conversion.from_locator(locator)
         # Track which per-tech PV allocation columns were added per PV code for traceability
         self._pv_allocation: dict[str, pd.DataFrame] = {}
         self.emission_intensity_timeline = self.expand_feedstock_emissions()
-        self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name))
+        self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name), index_col=None)
+        self.demand_timeseries.index.set_names(['hour'], inplace=True)
         self.operational_emission_timeline = self.create_operational_timeline(n_hours=HOURS_IN_YEAR)
 
     @classmethod
@@ -111,7 +110,7 @@ class OperationalHourlyTimeline:
 
         timeline = pd.DataFrame(index=range(n_hours), columns=base_cols)
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
-        timeline.index.name = "hour"
+        timeline.index.set_names(['hour'], inplace=True)
 
         # Add the date column from demand_timeseries
         date_col = next((col for col in self.demand_timeseries.columns if col.lower() == 'date'), None)
