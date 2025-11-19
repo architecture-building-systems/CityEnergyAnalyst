@@ -161,222 +161,6 @@ class OperationalHourlyTimeline:
 
         return expanded_timeline
     
-    def log_pv_contribution(
-        self,
-        pv_codes: list[str],
-        offset_building: bool = True,
-        allowed_components: list[str] | None = None,
-        credit_export: bool = True,
-    ) -> None:
-        """
-        Calculate PV emission offsets for GRID electricity components and grid export.
-
-        PV is allocated to building GRID components in the order specified by allowed_components.
-        Emission offsets are calculated per component and for grid export.
-
-        :param pv_codes: List of PV panel codes to process
-        :type pv_codes: list[str]
-        :param offset_building: If True, PV offsets building GRID demand before being exported.
-            If False, all PV is treated as export to grid (no building offset).
-        :type offset_building: bool
-        :param allowed_components: Ordered list of GRID components that PV can offset.
-            Valid values: ['GRID_a', 'GRID_l', 'GRID_v', 'GRID_ve', 'GRID_data', 'GRID_pro',
-                           'GRID_aux', 'GRID_cdata', 'GRID_cre', 'GRID_hs', 'GRID_cs', 'GRID_ww']
-            The ORDER determines allocation priority. PV offsets the first component fully before
-            moving to the second, and so on.
-            Only used when offset_building=True. If None or empty when offset_building=True,
-            all GRID components will be used in default order.
-        :type allowed_components: list[str] | None
-        :param credit_export: If True, surplus PV exported to grid is credited as avoided emissions.
-            If False, export offset is zero (conservative approach).
-        :type credit_export: bool
-
-        Notes
-        -----
-        - All emission offsets are negative by convention (emissions avoided)
-        - Components are only offset if they exist in the demand file and have non-zero demand
-        - Per-component offsets are stored in PV_{code}_offset_{component}_kgCO2e columns
-        - Grid export offset is stored in PV_{code}_offset_grid_export_kgCO2e column
-        - Total offset is sum of all per-component and export offsets
-
-        Examples
-        --------
-        >>> # Offset lighting first, then appliances, export surplus
-        >>> hourly_timeline.log_pv_contribution(
-        ...     pv_codes=['PV1'],
-        ...     offset_building=True,
-        ...     allowed_components=['GRID_l', 'GRID_a'],
-        ...     credit_export=True
-        ... )
-
-        >>> # Export all PV to grid without offsetting building
-        >>> hourly_timeline.log_pv_contribution(
-        ...     pv_codes=['PV1'],
-        ...     offset_building=False,
-        ...     credit_export=True
-        ... )
-
-        >>> # Offset building with all components, don't credit export (conservative)
-        >>> hourly_timeline.log_pv_contribution(
-        ...     pv_codes=['PV1'],
-        ...     offset_building=True,
-        ...     allowed_components=None,
-        ...     credit_export=False
-        ... )
-        """
-        if len(pv_codes) == 0:
-            raise ValueError("pv_codes must contain at least one PV panel code.")
-
-        # Validate and prepare allowed components (preserves order)
-        # Note: CEA's MultiChoiceParameter returns ALL choices when parameter is empty
-        # So allowed_components will be a full list when user leaves pv-offset-allowance empty
-        if not offset_building:
-            # If not offsetting building, set ordered_components to empty
-            ordered_components = []
-        elif allowed_components is None:
-            # If offset_building=True and allowed_components=None, use all components in default order
-            ordered_components = list(_GRID_COMPONENTS)
-        else:
-            # Keep only valid components, preserving user-specified order
-            ordered_components = [c for c in allowed_components if c in _GRID_COMPONENTS]
-
-            # Warn about invalid components
-            invalid = set(allowed_components) - set(_GRID_COMPONENTS)
-            if invalid:
-                warnings.warn(
-                    f"Invalid GRID components in pv-offset-allowance will be ignored: {invalid}. "
-                    f"Valid components are: {_GRID_COMPONENTS}",
-                    RuntimeWarning
-                )
-
-        for pv_code in pv_codes:
-            pv_hourly = self._load_pv_hourly(pv_code)
-            pv_gen = pv_hourly['E_PV_gen_kWh'].to_numpy(dtype=float)
-            pv_remaining = pv_gen.copy()  # Track remaining PV for sequential allocation
-
-            grid_intensity = self.grid_intensity  # kgCO2e/kWh
-
-            # Initialize per-component emission offsets (all 12 components)
-            component_offsets = {comp: np.zeros(HOURS_IN_YEAR) for comp in _GRID_COMPONENTS}
-
-            # Add PV columns to operational_emission_timeline if they don't exist yet
-            # This ensures columns are only created when consider-pv-contributions is True
-            pv_columns_to_add = []
-            for comp in _GRID_COMPONENTS:
-                col_name = f'PV_{pv_code}_offset_{comp}_kgCO2e'
-                if col_name not in self.operational_emission_timeline.columns:
-                    pv_columns_to_add.append(col_name)
-
-            for col_name in [f'PV_{pv_code}_offset_grid_export_kgCO2e', f'PV_{pv_code}_offset_total_kgCO2e']:
-                if col_name not in self.operational_emission_timeline.columns:
-                    pv_columns_to_add.append(col_name)
-
-            # Add demand-type summary columns
-            for demand_type in ['E_sys', 'Qww_sys', 'Qhs_sys', 'Qcs_sys']:
-                col_name = f'{demand_type}_{pv_code}_offset_kgCO2e'
-                if col_name not in self.operational_emission_timeline.columns:
-                    pv_columns_to_add.append(col_name)
-
-            # Add all new PV columns at once (more efficient than one by one)
-            if pv_columns_to_add:
-                for col in pv_columns_to_add:
-                    self.operational_emission_timeline[col] = 0.0
-
-            # Allocate PV to components in user-specified priority order
-            for comp in ordered_components:
-                comp_col = f'{comp}_kWh'
-
-                # Skip if component doesn't exist in demand file
-                if comp_col not in self.demand_timeseries.columns:
-                    continue
-
-                comp_demand = self.demand_timeseries[comp_col].to_numpy(dtype=float)
-
-                # Allocate as much PV as possible to this component
-                pv_to_comp = np.minimum(pv_remaining, comp_demand)
-
-                # Calculate emission offset for this component (negative = avoided emissions)
-                component_offsets[comp] = -pv_to_comp * grid_intensity
-
-                # Reduce remaining PV
-                pv_remaining -= pv_to_comp
-
-            # Remaining PV is exported to grid
-            pv_to_grid_export = pv_remaining
-
-            # Calculate grid export offset
-            if credit_export:
-                offset_grid_export_kgCO2e = -pv_to_grid_export * grid_intensity
-            else:
-                offset_grid_export_kgCO2e = np.zeros_like(pv_to_grid_export)
-
-                # Log uncredited surplus per-hour
-                if pv_to_grid_export.sum() > 0:
-                    total_uncredited_kwh = pv_to_grid_export.sum()
-                    total_uncredited_kgCO2e = (pv_to_grid_export * grid_intensity).sum()
-                    warnings.warn(
-                        f"PV panel {pv_code} in building {self.bpr.name}: "
-                        f"pv-credit-grid-export is False. "
-                        f"Total yearly uncredited export: {total_uncredited_kwh:.2f} kWh "
-                        f"({total_uncredited_kgCO2e:.2f} kgCO2e potential offset not counted). "
-                        f"Per-hour export logged in PV_{pv_code}_offset_grid_export_kgCO2e (all zeros).",
-                        RuntimeWarning
-                    )
-
-            # Calculate total offset (sum of all component offsets + export offset)
-            offset_total_kgCO2e = sum(component_offsets.values()) + offset_grid_export_kgCO2e
-
-            # Store in operational_emission_timeline
-            # Per-component offsets
-            for comp in _GRID_COMPONENTS:
-                self.operational_emission_timeline[f'PV_{pv_code}_offset_{comp}_kgCO2e'] = component_offsets[comp]
-
-            # Summary offsets
-            self.operational_emission_timeline[f'PV_{pv_code}_offset_grid_export_kgCO2e'] = offset_grid_export_kgCO2e
-            self.operational_emission_timeline[f'PV_{pv_code}_offset_total_kgCO2e'] = offset_total_kgCO2e
-
-            # Demand-type summary offsets (aggregated by end-use category)
-            # E_sys: Pure electrical loads (7 components)
-            e_sys_components = ['GRID_a', 'GRID_l', 'GRID_v', 'GRID_ve',
-                                'GRID_data', 'GRID_pro', 'GRID_aux']
-            self.operational_emission_timeline[f'E_sys_{pv_code}_offset_kgCO2e'] = sum(
-                component_offsets[comp] for comp in e_sys_components
-            )
-
-            # Qww_sys: Hot water (1 component)
-            self.operational_emission_timeline[f'Qww_sys_{pv_code}_offset_kgCO2e'] = \
-                component_offsets['GRID_ww']
-
-            # Qhs_sys: Space heating (1 component)
-            self.operational_emission_timeline[f'Qhs_sys_{pv_code}_offset_kgCO2e'] = \
-                component_offsets['GRID_hs']
-
-            # Qcs_sys: Cooling (3 components)
-            qcs_components = ['GRID_cs', 'GRID_cdata', 'GRID_cre']
-            self.operational_emission_timeline[f'Qcs_sys_{pv_code}_offset_kgCO2e'] = sum(
-                component_offsets[comp] for comp in qcs_components
-            )
-
-            # Store detailed allocation for internal tracking (power in kWh for validation/debugging)
-            # This is NOT saved to output CSV, only kept in memory
-            pv_allocations_kwh = {}
-            for comp in _GRID_COMPONENTS:
-                # Reverse-calculate kWh from emission offset
-                # offset = -kwh * intensity, so kwh = -offset / intensity
-                # Handle zero intensity to avoid division by zero
-                pv_allocations_kwh[f'E_PV_to_{comp}_kWh'] = np.where(
-                    grid_intensity != 0,
-                    -component_offsets[comp] / grid_intensity,
-                    0.0
-                )
-
-            self._pv_allocation[pv_code] = pd.DataFrame({
-                'E_PV_gen_kWh': pv_gen,
-                'E_PV_to_building_kWh': sum(pv_allocations_kwh.values()),
-                'E_PV_to_grid_kWh': pv_to_grid_export,
-                **pv_allocations_kwh,
-            }, index=self.demand_timeseries.index)
-
     # ---- PV helpers (internal) -----------------------------------------------------
 
     @property
@@ -431,7 +215,7 @@ class OperationalHourlyTimeline:
             pv_codes=pv_codes
         )
 
-        pv_by_type = net_energy_annual['PV_by_type']
+        pv_by_type: dict[str, float] = net_energy_annual['PV_by_type']
         pv_codes_used = list(pv_by_type.keys())
 
         if not pv_codes_used:
@@ -460,9 +244,6 @@ class OperationalHourlyTimeline:
             print(f"ERROR: {error_msg}")
             raise FileNotFoundError(error_msg)
 
-        # Get total GRID demand hourly
-        grid_intensity = self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
-
         # Get GRID electricity demand from demand file
         if 'GRID_kWh' not in self.demand_timeseries.columns:
             raise ValueError(f"GRID_kWh column not found in demand timeseries for building {self.bpr.name}")
@@ -487,8 +268,8 @@ class OperationalHourlyTimeline:
             remaining_grid_demand -= offset_hourly
 
             # Convert to emissions (both negative = emission reductions)
-            offset_emissions = -offset_hourly * grid_intensity
-            export_emissions = -export_hourly * grid_intensity
+            offset_emissions = -offset_hourly * self.grid_intensity
+            export_emissions = -export_hourly * self.grid_intensity
 
             # Add columns to timeline
             self.operational_emission_timeline[f'PV_{pv_code}_GRID_offset_kgCO2e'] = offset_emissions
