@@ -646,6 +646,36 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     return streets_network_df, building_centroids_df, crs
 
 
+def _identify_original_junctions(graph: nx.Graph, terminal_nodes: set[tuple], coord_precision: int = SHAPEFILE_TOLERANCE) -> set[tuple]:
+    """
+    Identify original street junctions (degree >= 3 nodes) from a graph, excluding terminal nodes.
+
+    Original junctions are nodes where 3 or more edges meet, representing real street
+    intersections from the input street network. Building terminals are excluded even
+    if they have high degree, as they represent connection points rather than junctions.
+
+    :param graph: NetworkX graph representing the street network
+    :param terminal_nodes: Set of (x, y) coordinates of building terminal nodes to exclude
+    :param coord_precision: Decimal places for coordinate normalization
+    :return: Set of (x, y) coordinates representing original street junctions
+    """
+    original_junctions = set()
+
+    for node in graph.nodes():
+        # Skip terminal nodes (building connections)
+        node_coord = tuple(round(c, coord_precision) for c in node) if not isinstance(node, tuple) else node
+        if node_coord in terminal_nodes:
+            continue
+
+        # Check degree (number of neighbors)
+        degree = graph.degree(node)
+        if degree >= 3:
+            original_junctions.add(node_coord)
+
+    print(f"  Identified {len(original_junctions)} original street junctions (degree >= 3) in graph")
+    return original_junctions
+
+
 def _validate_and_fix_connectivity(
     graph: nx.Graph,
     terminal_mapping: dict,
@@ -807,6 +837,7 @@ def calc_connectivity_network_with_geometry(
 
     The returned graph includes important metadata:
     - graph.graph['building_terminals']: Dict mapping building_id → (x, y) node coordinates
+    - graph.graph['original_junctions']: Set of (x, y) coordinates of original street junctions (calculated on-demand)
     - graph.graph['crs']: Coordinate reference system
     - graph.graph['coord_precision']: Precision used (SHAPEFILE_TOLERANCE)
     - Edge attributes: 'geometry' (curved LineStrings), 'weight' (length)
@@ -869,6 +900,11 @@ def calc_connectivity_network_with_geometry(
     graph.graph['building_terminals'] = terminal_mapping
     graph.graph['crs'] = crs
     graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
+
+    # Identify and store original street junctions (degree >= 3 nodes, excluding terminals)
+    # This is calculated from the graph structure rather than tracked through the pipeline
+    original_junctions = _identify_original_junctions(graph, terminal_nodes, SHAPEFILE_TOLERANCE)
+    graph.graph['original_junctions'] = original_junctions
 
     # Validate connectivity and fix issues
     graph = _validate_and_fix_connectivity(

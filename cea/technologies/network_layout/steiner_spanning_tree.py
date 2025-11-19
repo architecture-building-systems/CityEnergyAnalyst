@@ -81,7 +81,7 @@ class SteinerAlgorithm(StrEnum):
 
 def calc_steiner_spanning_tree(crs_projected,
                                building_centroids_df: gdf,
-                               potential_network_gdf: gdf,
+                               potential_network_graph: nx.Graph,
 
                                path_output_edges_shp,
                                path_output_nodes_shp,
@@ -101,7 +101,7 @@ def calc_steiner_spanning_tree(crs_projected,
 
     :param str crs_projected: e.g. "+proj=utm +zone=48N +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
     :param geopandas.GeoDataFrame building_centroids_df: GeoDataFrame of building centroids
-    :param geopandas.GeoDataFrame potential_network_gdf: potential network in networkx graph format
+    :param nx.Graph potential_network_graph: potential network as NetworkX graph with metadata
     :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
     :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
     :param str type_mat_default: e.g. "T1"
@@ -127,15 +127,19 @@ def calc_steiner_spanning_tree(crs_projected,
         connection_candidates = 1
 
     # TODO: Ensure CRS is used properly throughout the function (currently not applied)
-    # read shapefile into networkx format into a directed potential_network_graph, this is the potential network
-    building_nodes_graph = gdf_to_nx(building_centroids_df, name="name")
-    potential_network_graph = gdf_to_nx(potential_network_gdf)
+    # read building centroids shapefile into networkx format
+
+    building_nodes_graph = gdf_to_nx(building_centroids_df.to_crs(crs_projected), name="name")
 
     if potential_network_graph is None or building_nodes_graph is None:
         raise ValueError('Could not read potential network or building centroids shapefiles. '
                          'Please check the files exist and are valid shapefiles.')
 
-    # transform to an undirected potential_network_graph
+    # Extract original_junctions from graph metadata (if available)
+    # This metadata is set by calc_connectivity_network_with_geometry
+    original_junctions = potential_network_graph.graph.get('original_junctions', set())
+
+    # transform to an undirected graph
     # Note: Graph corrections are now applied in calc_connectivity_network BEFORE
     # building terminals are connected, to ensure terminal nodes are not affected
     G = potential_network_graph.to_undirected()
@@ -334,9 +338,10 @@ def calc_steiner_spanning_tree(crs_projected,
         length = merged.length
         return merged, length
 
-    def _contract_degree2_street_nodes(full_graph: nx.Graph, steiner_graph: nx.Graph, terminals: set[tuple]) -> nx.Graph:
+    def _contract_degree2_street_nodes(full_graph: nx.Graph, steiner_graph: nx.Graph, terminals: set[tuple], original_junctions: set[tuple] | None = None) -> nx.Graph:
         sg = steiner_graph.copy()
         terminals = set(tuple(t) for t in terminals)
+        original_junctions = set(tuple(j) for j in (original_junctions or set()))
 
         # Helper to decide if an edge is a service stub (touches a terminal)
         def is_service_edge(a, b):
@@ -348,6 +353,9 @@ def calc_steiner_spanning_tree(crs_projected,
             # Work on a snapshot of nodes to avoid iteration issues
             for n in list(sg.nodes()):
                 if n in terminals:
+                    continue
+                # Preserve original street junctions (degree >= 3 intersections)
+                if n in original_junctions:
                     continue
                 if n not in sg:
                     continue
@@ -383,8 +391,8 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # 1) prune dangling non-terminal leaves
     mst_non_directed = _prune_nonterminal_leaves(mst_non_directed, terminals_set)
-    # 2) contract degree-2 street chains
-    mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set)
+    # 2) contract degree-2 street chains (while preserving original junctions)
+    mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set, original_junctions)
 
     # Reporting helper: print network stats and total length
     def _report_network_stats(graph: nx.Graph, terminals: set[tuple], label: str = "Final"):
@@ -481,6 +489,18 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_nodes['building'] = mst_nodes['coordinates'].apply(lambda x: populate_fields(x))
     mst_nodes['name'] = mst_nodes.index.map(lambda x: "NODE" + str(x))
     mst_nodes['type'] = mst_nodes['building'].apply(lambda x: 'CONSUMER' if x != "NONE" else "NONE")
+
+    # Add junction type metadata to identify original street junctions
+    original_junctions = original_junctions or set()
+    def get_junction_type(coord):
+        if coord in terminal_nodes_coordinates:
+            return 'TERMINAL'
+        elif coord in original_junctions:
+            return 'ORIGINAL_JUNCTION'
+        else:
+            return 'NONE'
+
+    mst_nodes['Type_node'] = mst_nodes['coordinates'].apply(get_junction_type)
     
     if set(terminal_nodes_names) != (set(mst_nodes['building'].unique()) - {'NONE'} ):
         raise ValueError('There was an error while populating the nodes fields. '

@@ -10,7 +10,6 @@ import cea.inputlocator
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree, add_plant_close_to_anchor, get_next_node_name
 from cea.technologies.network_layout.substations_location import calc_building_centroids
-from cea.technologies.network_layout.graph_utils import nx_to_gdf
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -763,10 +762,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             connection_candidates=connection_candidates,
         )
 
-        # Convert graph to GeoDataFrame for Steiner tree algorithm
+        # Extract metadata from graph
         crs_projected = potential_network_graph.graph['crs']
-        potential_network_df = nx_to_gdf(potential_network_graph, crs=crs_projected, preserve_geometry=True)
-        potential_network_df['length'] = potential_network_df.geometry.length
 
         if crs_projected is None:
             raise ValueError("The CRS of the potential network shapefile is undefined.")
@@ -775,14 +772,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         building_centroids_df = building_centroids_df.to_crs(crs_projected)
 
         # Generate Steiner tree for this network WITHOUT plant nodes
-        # Pass plant buildings list to prevent automatic anchor-based plant creation
+        # Pass the graph directly (with original_junctions in graph.graph metadata)
         temp_nodes_path = output_layout_path.replace('layout.shp', f'_temp_nodes_{type_network}.shp')
         temp_edges_path = output_layout_path.replace('layout.shp', f'_temp_edges_{type_network}.shp')
 
         disconnected_building_names = []
         calc_steiner_spanning_tree(crs_projected,
                                    building_centroids_df,
-                                   potential_network_df,
+                                   potential_network_graph,
                                    temp_edges_path,
                                    temp_nodes_path,
                                    type_network,
