@@ -862,6 +862,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
                 print(f"    ✓ Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
 
+        # Validation: Check for duplicate node names after plant creation
+        if nodes_for_type['name'].duplicated().any():
+            duplicates = nodes_for_type[nodes_for_type['name'].duplicated(keep=False)]['name'].unique().tolist()
+            raise ValueError(f"Duplicate node names in {type_network} network after plant creation: {duplicates}")
+
         # Collect edges from this network (including new plant edges)
         all_edges_list.append(edges_for_type)
 

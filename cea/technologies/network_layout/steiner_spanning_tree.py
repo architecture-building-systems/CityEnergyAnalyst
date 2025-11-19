@@ -710,7 +710,13 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     # create copy of selected node and add to list of all nodes
     copy_of_new_mst_nodes.geometry = copy_of_new_mst_nodes.translate(xoff=1, yoff=1)
     selected_node = copy_of_new_mst_nodes[copy_of_new_mst_nodes["name"] == node_id].iloc[[0]]
-    selected_node["name"] = "NODE" + str(new_mst_nodes.name.count())
+
+    # Generate unique node name by finding max existing node number
+    # (prevents duplicates when nodes are removed during plant creation)
+    existing_node_numbers = [int(name.replace('NODE', '')) for name in new_mst_nodes['name'] if name.startswith('NODE')]
+    next_node_num = max(existing_node_numbers) + 1 if existing_node_numbers else 0
+    selected_node["name"] = f"NODE{next_node_num}"
+
     selected_node["type"] = "PLANT"
     new_mst_nodes = gdf(
         pd.concat([new_mst_nodes, selected_node], ignore_index=True),
@@ -735,4 +741,10 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
         pd.concat( [mst_edges, new_edge], ignore_index=True),
         crs=mst_edges.crs
     )
+
+    # Validation: Check for duplicate node names
+    if new_mst_nodes['name'].duplicated().any():
+        duplicates = new_mst_nodes[new_mst_nodes['name'].duplicated(keep=False)]['name'].unique().tolist()
+        raise ValueError(f"Duplicate node names detected after adding plant node: {duplicates}")
+
     return new_mst_nodes, mst_edges
