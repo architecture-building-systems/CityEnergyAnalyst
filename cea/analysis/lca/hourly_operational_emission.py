@@ -205,29 +205,72 @@ class OperationalHourlyTimeline:
             List of PV panel codes to include (e.g., ["PV1", "PV2"])
             If None, includes all available panels
         """
+        if not self._is_emission_calculated:
+            raise RuntimeError(
+                "Operational emissions have not been calculated yet. Please call calculate_operational_emission() first."
+            )
+
+        # Get GRID electricity demand from demand file
+        if "GRID_kWh" not in self.demand_timeseries.columns:
+            raise ValueError(
+                f"GRID_kWh column not found in demand timeseries for building {self.bpr.name}"
+            )
+
+        grid_demand_hourly = self.demand_timeseries["GRID_kWh"].to_numpy(dtype=float)
+        available_panels = self._resolve_available_pv_panels(pv_codes)
+
+        for pv_code in available_panels:
+            pv_df = self._load_pv_hourly(pv_code)
+            pv_generation_hourly = pv_df["E_PV_gen_kWh"].to_numpy(dtype=float)
+            offset_hourly = np.minimum(pv_generation_hourly, grid_demand_hourly)
+            export_hourly = pv_generation_hourly - offset_hourly
+
+            # Convert to emissions (both negative = emission reductions)
+            offset_emissions = -offset_hourly * self.grid_intensity
+            export_emissions = -export_hourly * self.grid_intensity
+
+            # Add columns to timeline
+            self.operational_emission_timeline[f"PV_{pv_code}_GRID_offset_kgCO2e"] = offset_emissions
+            self.operational_emission_timeline[f"PV_{pv_code}_GRID_export_kgCO2e"] = export_emissions
+            # Log summary for this panel
+            total_offset = offset_hourly.sum()
+            total_export = export_hourly.sum()
+            total_offset_emissions = offset_emissions.sum()
+            total_export_emissions = export_emissions.sum()
+            print(
+                f"  PV panel {pv_code}: {total_offset:.0f} kWh offset on-site ({total_offset_emissions:.0f} kgCO2e avoided), "
+                f"{total_export:.0f} kWh exported to grid ({total_export_emissions:.0f} kgCO2e avoided)"
+            )
+
+    def _resolve_available_pv_panels(self, pv_codes: list[str] | None) -> list[str]:
+        """Return list of available PV panel codes.
+
+        Steps:
+        - Retrieve net energy summary (to discover PV codes actually present).
+        - Warn & return [] if none found.
+        - Validate existence of each PV results file; raise one consolidated error if any missing.
+        - Return only the list of available panel codes (energy dict not required here).
+        """
         from cea.analysis.lca.pv_offsetting import calculate_net_energy
 
-        # Get annual net energy (this is just for logging)
         net_energy_annual = calculate_net_energy(
             self.locator,
             self.bpr.name,
             include_pv=True,
-            pv_codes=pv_codes
+            pv_codes=pv_codes,
         )
-
-        pv_by_type: dict[str, float] = net_energy_annual['PV_by_type']
+        pv_by_type: dict[str, float] = net_energy_annual.get('PV_by_type', {})  # we only need keys
         pv_codes_used = list(pv_by_type.keys())
 
         if not pv_codes_used:
             warnings.warn(
                 f"No PV panels found for building {self.bpr.name}. Skipping PV offsetting.",
-                RuntimeWarning
+                RuntimeWarning,
             )
-            return
+            return []
 
-        # Check which panels actually exist before processing
-        missing_panels = []
-        available_panels = []
+        missing_panels: list[str] = []
+        available_panels: list[str] = []
         for pv_code in pv_codes_used:
             pv_path = self.locator.PV_results(self.bpr.name, pv_code)
             if os.path.exists(pv_path):
@@ -244,34 +287,7 @@ class OperationalHourlyTimeline:
             print(f"ERROR: {error_msg}")
             raise FileNotFoundError(error_msg)
 
-        # Get GRID electricity demand from demand file
-        if 'GRID_kWh' not in self.demand_timeseries.columns:
-            raise ValueError(f"GRID_kWh column not found in demand timeseries for building {self.bpr.name}")
-
-        grid_demand_hourly = self.demand_timeseries['GRID_kWh'].to_numpy(dtype=float)
-
-        # Process each PV panel
-        for pv_code in available_panels:
-            pv_df = self._load_pv_hourly(pv_code)
-            pv_generation_hourly = pv_df['E_PV_gen_kWh'].to_numpy(dtype=float)
-            offset_hourly = np.minimum(pv_generation_hourly, grid_demand_hourly)
-            export_hourly = pv_generation_hourly - offset_hourly
-
-            # Convert to emissions (both negative = emission reductions)
-            offset_emissions = -offset_hourly * self.grid_intensity
-            export_emissions = -export_hourly * self.grid_intensity
-
-            # Add columns to timeline
-            self.operational_emission_timeline[f'PV_{pv_code}_GRID_offset_kgCO2e'] = offset_emissions
-            self.operational_emission_timeline[f'PV_{pv_code}_GRID_export_kgCO2e'] = export_emissions
-
-            # Log summary for this panel
-            total_offset = offset_hourly.sum()
-            total_export = export_hourly.sum()
-            total_offset_emissions = offset_emissions.sum()
-            total_export_emissions = export_emissions.sum()
-            print(f"  PV panel {pv_code}: {total_offset:.0f} kWh offset on-site ({total_offset_emissions:.0f} kgCO2e avoided), "
-                  f"{total_export:.0f} kWh exported to grid ({total_export_emissions:.0f} kgCO2e avoided)")
+        return available_panels
 
     def calculate_operational_emission(self) -> None:
         """
