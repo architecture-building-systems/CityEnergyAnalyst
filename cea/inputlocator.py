@@ -1359,7 +1359,7 @@ class InputLocator(object):
         return os.path.join(self.solar_potential_folder(), "PV_{panel_type}_total.csv".format(panel_type=panel_type))
 
     def PV_total_buildings(self, panel_type):
-        """scenario/outputs/data/potentials/solar/{building}_PV_{panel_type}_total_buildings.csv"""
+        """scenario/outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_%s_total_buildings.csv' % panel_type)
 
     def PV_metadata_results(self, building):

@@ -229,7 +229,10 @@ class BuildingEmissionTimeline:
                 raise ValueError(f"PV type {pv_code} not found in the PV database.")
 
             district_pv_area = pd.read_csv(self.locator.PV_total_buildings(pv_code), index_col='name') # indexed with building name
-            pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
+            try:
+                pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
+            except KeyError:
+                pv_area = 0.0
             lifetime = cast(int, pv_db.loc[pv_code, 'LT_yr'])
             pv_type_str = f"PV_{pv_code}"
             self.surface_area[f"APV_{pv_code}"] = pv_area

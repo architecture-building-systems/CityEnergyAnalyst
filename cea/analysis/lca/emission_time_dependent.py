@@ -1,17 +1,17 @@
-import pandas as pd
+import os
 import warnings
 from typing import Optional
-from pandas.errors import EmptyDataError, ParserError
 
-from cea.config import Configuration
-from cea.inputlocator import InputLocator
+import pandas as pd
+from pandas.errors import EmptyDataError, ParserError
 
 from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
-from cea.demand.building_properties import BuildingProperties
+from cea.config import Configuration
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.demand.building_properties import BuildingProperties
+from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
-
 
 __author__ = "Yiqiao Wang, Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -91,7 +91,6 @@ def _load_grid_emission_intensity_override(config: Configuration):
 
 
 def operational_hourly(config: Configuration) -> None:
-    import os
     locator = InputLocator(config.scenario)
     emissions_cfg = getattr(config, 'emissions')
     buildings = list(getattr(emissions_cfg, 'buildings', []))

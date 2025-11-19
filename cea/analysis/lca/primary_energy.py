@@ -28,7 +28,7 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def main(config):
+def main(config: Configuration) -> None:
     """
     Calculate primary energy for all buildings in scenario.
 
