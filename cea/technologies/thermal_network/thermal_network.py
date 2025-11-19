@@ -3382,17 +3382,27 @@ def main(config: cea.config.Configuration):
     
     network_types = config.thermal_network.network_type
     if network_model == 'simplified':
-        errors = []
+        errors = {}
         for network_type in network_types:
+            print(f"\n{'='*60}")
+            print(f"{network_type} Network Simplified Model")
+            print(f"{'='*60}")
+
             try:
                 print(f"Processing {network_type} network...")
                 thermal_network_simplified(locator, config, network_type, network_name)
                 print(f"{network_type} network processing completed.")
             except ValueError as e:
-                errors.append(f"Error processing {network_type} network: {e}")
+                print(f"An error occurred while processing the {network_type} network")
+                errors[network_type] = e
         if errors:
-            for error in errors:
+            print(f"\n{'='*60}")
+            print("Errors occurred during processing:")
+            print(f"{'='*60}")
+            for network_type, error in errors.items():
+                print(f"{network_type} network error\n")
                 print(error)
+                print(f"{'-'*60}")
             raise ValueError("One or more network types failed to process. See errors above.")
     else:
         check_heating_cooling_demand(locator, config)

@@ -141,6 +141,224 @@ def calc_head_loss_m(diameter_m, max_volume_flow_rates_m3s, coefficient_friction
     return head_loss_m
 
 
+def validate_network_topology_for_wntr(edge_df, node_df, consumer_nodes, plant_nodes, network_type):
+    """
+    Validate network topology before WNTR simulation to prevent cryptic EPANET errors.
+    
+    Performs comprehensive checks:
+    - Network connectivity (single connected component)
+    - Plant node presence and reachability from all consumers
+    - Node/edge reference consistency
+    - Isolated node detection
+    - Edge endpoint validation
+    
+    :param edge_df: DataFrame of network edges with 'start node', 'end node', 'length_m'
+    :param node_df: DataFrame of network nodes with index as node names
+    :param consumer_nodes: List of consumer node names
+    :param plant_nodes: DataFrame of plant nodes
+    :param network_type: "DH" or "DC"
+    :raises ValueError: If validation fails with detailed error message and resolution guidance
+    """
+    import networkx as nx
+    
+    print(f"Validating {network_type} network topology...")
+    
+    # 1. Check for duplicates (node IDs should already be validated, but double-check)
+    duplicated_nodes = node_df[node_df.index.duplicated(keep=False)]
+    duplicated_edges = edge_df[edge_df.index.duplicated(keep=False)]
+    if duplicated_nodes.size > 0:
+        raise ValueError(
+            f"Network validation error: Duplicated NODE IDs found: {duplicated_nodes.index.values}\n"
+            f"Each node must have a unique identifier.\n"
+            f"Resolution: Check your network layout nodes.shp file and remove duplicate node IDs."
+        )
+    if duplicated_edges.size > 0:
+        raise ValueError(
+            f"Network validation error: Duplicated PIPE IDs found: {duplicated_edges.index.values}\n"
+            f"Each pipe must have a unique identifier.\n"
+            f"Resolution: Check your network layout edges.shp file and remove duplicate pipe IDs."
+        )
+    
+    # 2. Validate edge endpoints reference existing nodes
+    node_names = set(node_df.index)
+    invalid_edges = []
+    for edge_name, edge in edge_df.iterrows():
+        start = edge['start node']
+        end = edge['end node']
+        
+        if start not in node_names:
+            invalid_edges.append(f"  - Edge '{edge_name}': start node '{start}' does not exist")
+        if end not in node_names:
+            invalid_edges.append(f"  - Edge '{edge_name}': end node '{end}' does not exist")
+    
+    if invalid_edges:
+        raise ValueError(
+            f"Network validation error: {len(invalid_edges)} edge(s) reference non-existent nodes:\n" +
+            "\n".join(invalid_edges[:10]) +
+            ("\n  ... and more" if len(invalid_edges) > 10 else "") +
+            "\n\nResolution:\n"
+            "  1. Check your network layout edges.shp file\n"
+            "  2. Ensure all 'start node' and 'end node' values match existing node names\n"
+            "  3. Regenerate network layout or manually fix node references"
+        )
+    
+    # 3. Build NetworkX graph for topology analysis
+    G = nx.Graph()
+    for node_name in node_df.index:
+        G.add_node(node_name)
+    
+    for edge_name, edge in edge_df.iterrows():
+        start = edge['start node']
+        end = edge['end node']
+        G.add_edge(start, end)
+    
+    # 4. Check connectivity
+    if not nx.is_connected(G):
+        num_components = nx.number_connected_components(G)
+        components = list(nx.connected_components(G))
+        component_sizes = [len(c) for c in components]
+        
+        # Identify which components have plants and which don't
+        plant_node_names = set(plant_nodes.index)
+        components_with_plants = []
+        components_without_plants = []
+        
+        for i, component in enumerate(components):
+            if component & plant_node_names:
+                components_with_plants.append((i, len(component)))
+            else:
+                components_without_plants.append((i, len(component), list(component)[:5]))
+        
+        error_details = [
+            f"Network validation error: Network has {num_components} disconnected components.",
+            f"Component sizes: {component_sizes}",
+            f"Components with plants: {len(components_with_plants)}",
+            f"Components without plants: {len(components_without_plants)}"
+        ]
+        
+        if components_without_plants:
+            error_details.append("\nDisconnected components without plant nodes:")
+            for comp_id, size, sample_nodes in components_without_plants[:3]:
+                error_details.append(f"  - Component {comp_id}: {size} nodes, including {sample_nodes}")
+        
+        error_details.extend([
+            "\nWNTR/EPANET requires a fully connected network to solve hydraulic equations.",
+            "\nResolution:",
+            "  1. Check your network layout (edges.shp) for missing connections",
+            "  2. Ensure all buildings are connected to the plant node(s)",
+        ])
+        
+        raise ValueError("\n".join(error_details))
+    
+    # 5. Check for isolated nodes (degree = 0)
+    isolated_nodes = [node for node, degree in G.degree() if degree == 0]
+    if isolated_nodes:
+        raise ValueError(
+            f"Network validation error: Found {len(isolated_nodes)} isolated node(s) with no connections:\n"
+            f"  {isolated_nodes[:10]}" +
+            (f"\n  ... and {len(isolated_nodes) - 10} more" if len(isolated_nodes) > 10 else "") +
+            "\n\nIsolated nodes cannot participate in network flow.\n"
+            "Resolution:\n"
+            "  1. Remove unused nodes from your network layout, or\n"
+            "  2. Connect these nodes to the network with pipes"
+        )
+    
+    # 6. Validate plant nodes
+    if len(plant_nodes) == 0:
+        raise ValueError(
+            "Network validation error: No PLANT nodes found.\n"
+            "At least one node must have type='PLANT' to serve as the network source.\n\n"
+            "Resolution:\n"
+            "  1. Check your network layout nodes.shp file\n"
+            "  2. Ensure at least one node has type='PLANT'\n"
+            "  3. Verify plant building names are correctly specified in configuration"
+        )
+    
+    # 7. Check plant reachability from all consumers
+    plant_nodes_list = plant_nodes.index.tolist()
+    unreachable_consumers = []
+    
+    for consumer in consumer_nodes:
+        has_path = any(nx.has_path(G, consumer, plant) for plant in plant_nodes_list)
+        if not has_path:
+            unreachable_consumers.append(consumer)
+    
+    if unreachable_consumers:
+        raise ValueError(
+            f"Network validation error: {len(unreachable_consumers)} consumer node(s) cannot reach any PLANT:\n"
+            f"  {unreachable_consumers[:10]}" +
+            (f"\n  ... and {len(unreachable_consumers) - 10} more" if len(unreachable_consumers) > 10 else "") +
+            "\n\nAll consumers must have a path to at least one plant node.\n"
+            "Resolution:\n"
+            "  1. Check network connectivity between isolated consumers and plants\n"
+            "  2. Add connecting pipes to link disconnected building groups\n"
+            "  3. Verify the network layout includes all necessary connections"
+        )
+    
+    # 8. Success - print summary
+    print("  \u2713 Network topology validation passed:")
+    print(f"    - {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
+    print(f"    - {len(plant_nodes)} plant node(s)")
+    print(f"    - {len(consumer_nodes)} consumer node(s)")
+    print("    - Network is fully connected")
+    print("    - All consumers reachable from plant(s)")
+
+
+def validate_demand_patterns(volume_flow_m3pers_building: pd.DataFrame, expected_hours: int = 8760):
+    """
+    Validate demand pattern consistency before WNTR simulation.
+    
+    Checks:
+    - All buildings have consistent pattern lengths
+    - Pattern length matches expected duration (default 8760 hours)
+    - No NaN or infinite values in demand data
+    
+    :param volume_flow_m3pers_building: DataFrame with building demand flow rates (hours x buildings)
+    :param expected_hours: Expected number of hours in demand patterns (default 8760 for full year)
+    :raises ValueError: If patterns have inconsistent lengths or infinite values
+    :raises Warning: If patterns don't match expected hours or contain NaN values
+    """
+    if volume_flow_m3pers_building.size == 0:
+        warnings.warn("No demand patterns to validate (empty DataFrame).")
+        return
+    
+    # Check pattern length consistency
+    pattern_lengths = {
+        building: len(volume_flow_m3pers_building[building]) 
+        for building in volume_flow_m3pers_building.columns
+    }
+    
+    if len(set(pattern_lengths.values())) > 1:
+        raise ValueError(
+            f"Network validation error: Demand patterns have inconsistent lengths: {pattern_lengths}\n"
+            "All buildings must have demand profiles for the same time period.\n"
+            "Resolution: Check your substation demand calculations."
+        )
+    
+    # Verify pattern length matches expected hours
+    actual_hours = list(pattern_lengths.values())[0] if pattern_lengths else 0
+    if actual_hours != expected_hours:
+        warnings.warn(
+            f"Demand patterns have {actual_hours} hours, expected {expected_hours}. "
+            "Simulation duration may not cover full year."
+        )
+    
+    # Check for NaN or infinite values in demand data
+    for building in volume_flow_m3pers_building.columns:
+        if volume_flow_m3pers_building[building].isna().any():
+            warnings.warn(
+                f"Building '{building}' has NaN values in demand profile. "
+                "This may cause WNTR simulation issues."
+            )
+        if np.isinf(volume_flow_m3pers_building[building]).any():
+            raise ValueError(
+                f"Network validation error: Building '{building}' has infinite values in demand profile.\n"
+                "Resolution: Check substation demand calculations for this building."
+            )
+    
+    print(f"  ✓ Demand pattern validation passed: {len(pattern_lengths)} building(s), {actual_hours} hours")
+
+
 def calc_linear_thermal_loss_coefficient(diameter_ext_m, diameter_int_m, diameter_insulation_m):
     r_out_m = diameter_ext_m / 2
     r_in_m = diameter_int_m / 2
@@ -257,6 +475,13 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         if not len(plant_nodes) >= 1:
             raise ValueError("There should be at least one plant node in the network.")
 
+        # Validate demand pattern consistency
+        validate_demand_patterns(volume_flow_m3pers_building, expected_hours=8760)
+
+        # Validate network topology before building WNTR model
+        consumer_nodes = node_df[node_df['type'] == 'CONSUMER'].index.tolist()
+        validate_network_topology_for_wntr(edge_df, node_df, consumer_nodes, plant_nodes, network_type)
+
         # add nodes
         consumer_nodes = []
         building_nodes_pairs = {}
@@ -285,7 +510,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                 elevation=0,
                                 coordinates=node[1]["coordinates"])
 
-        # add pipes
+        # add pipes (edge endpoints already validated in validate_network_topology_for_wntr)
         for edge in edge_df.iterrows():
             length_m = edge[1]["length_m"]
             edge_name = edge[0]
@@ -307,8 +532,73 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
         # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
         print("Starting 1st iteration to calculate pipe diameters...")
-        sim = wntr.sim.EpanetSimulator(wn)
-        results = sim.run_sim()
+        try:
+            sim = wntr.sim.EpanetSimulator(wn)
+            results = sim.run_sim()
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Provide context-specific error messages
+            if "110" in error_msg or "cannot solve" in error_msg.lower():
+                raise ValueError(
+                    f"WNTR simulation failed (Error 110 - cannot solve hydraulic equations):\n{error_msg}\n\n"
+                    f"This typically indicates network topology or hydraulic issues:\n"
+                    f"Possible causes:\n"
+                    f"  - Disconnected network components (already validated - this shouldn't happen)\n"
+                    f"  - Extreme pipe lengths or diameters causing numerical instability\n"
+                    f"  - Conflicting pressure/flow constraints\n"
+                    f"  - Insufficient pressure sources (check plant node configuration)\n\n"
+                    f"Resolution:\n"
+                    f"  1. Check network layout for very long pipes or unusual geometries\n"
+                    f"  2. Verify min_head_substation configuration (current: {min_head_substation_kPa} kPa)\n"
+                    f"  3. Check demand values are reasonable (not extremely high)\n"
+                    f"  4. Review pipe friction coefficient (current: {coefficient_friction_hazen_williams})"
+                ) from e
+            elif "convergence" in error_msg.lower():
+                raise ValueError(
+                    f"WNTR simulation failed to converge:\n{error_msg}\n\n"
+                    f"Possible causes:\n"
+                    f"  - Network has extreme pressure/flow conditions\n"
+                    f"  - Demand patterns have very high peaks\n"
+                    f"  - Pipe diameters too small for required flows\n\n"
+                    f"Resolution:\n"
+                    f"  1. Check peak_load_percentage setting (current: {peak_load_percentage}%)\n"
+                    f"  2. Increase initial pipe diameter estimates\n"
+                    f"  3. Verify demand profiles are reasonable"
+                ) from e
+            elif "negative pressure" in error_msg.lower():
+                raise ValueError(
+                    f"WNTR simulation error - negative pressure detected:\n{error_msg}\n\n"
+                    f"Possible causes:\n"
+                    f"  - Insufficient pump head at plant node\n"
+                    f"  - Network too long or high friction losses\n"
+                    f"  - Elevation differences not properly accounted for\n\n"
+                    f"Resolution:\n"
+                    f"  1. Increase min_head_substation (current: {min_head_substation_kPa} kPa)\n"
+                    f"  2. Check thermal_transfer_unit_design_head_m calculation\n"
+                    f"  3. Reduce friction coefficient or increase pipe diameters"
+                ) from e
+            else:
+                raise ValueError(
+                    f"WNTR simulation failed during 1st iteration (diameter calculation):\n{error_msg}\n\n"
+                    f"Check your network topology, demand patterns, and configuration parameters.\n"
+                    f"Enable debug mode for more details."
+                ) from e
+        
+        # Validate results
+        if results.link['flowrate'].empty:
+            raise ValueError(
+                "WNTR simulation produced empty flowrate results. "
+                "This indicates a problem with network definition or simulation setup."
+            )
+        
+        if results.link['flowrate'].isna().any().any():
+            nan_pipes = results.link['flowrate'].columns[results.link['flowrate'].isna().any()].tolist()
+            warnings.warn(
+                f"WNTR simulation produced NaN flowrates for {len(nan_pipes)} pipe(s): {nan_pipes[:5]}. "
+                f"Results may be unreliable. Check network connectivity and demand patterns."
+            )
+        
         max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
         pipe_names = max_volume_flow_rates_m3s.index.values
         pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
@@ -329,8 +619,28 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             edge_name = edge[0]
             pipe = wn.get_link(edge_name)
             pipe.diameter = diameter_int_m[edge_name]
-        sim = wntr.sim.EpanetSimulator(wn)
-        results = sim.run_sim()
+        
+        try:
+            sim = wntr.sim.EpanetSimulator(wn)
+            results = sim.run_sim()
+        except Exception as e:
+            error_msg = str(e)
+            raise ValueError(
+                f"WNTR simulation failed during 2nd iteration (pressure drop calculation):\n{error_msg}\n\n"
+                f"This error occurred after pipe diameters were updated.\n"
+                f"Calculated pipe diameters: DN {pipe_dn.min()}-{pipe_dn.max()} mm\n\n"
+                f"Resolution:\n"
+                f"  1. Check if calculated pipe diameters are reasonable\n"
+                f"  2. Verify pipe catalog has appropriate diameter range\n"
+                f"  3. Check if velocity constraint is too restrictive (current: {velocity_ms} m/s)"
+            ) from e
+        
+        # Validate results
+        if results.link['headloss'].isna().any().any():
+            warnings.warn(
+                "WNTR simulation produced NaN headloss values. "
+                "Pressure drop calculations may be unreliable."
+            )
 
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
         print("Starting 3rd iteration to calculate final utilization of the grid...")
@@ -350,8 +660,31 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         reservoir = wn.get_node(name_node_plant)
         reservoir.head_timeseries.base_value = int(base_head)
         reservoir.head_timeseries._pattern = 'reservoir'
-        sim = wntr.sim.EpanetSimulator(wn)
-        results = sim.run_sim()
+        
+        try:
+            sim = wntr.sim.EpanetSimulator(wn)
+            results = sim.run_sim()
+        except Exception as e:
+            error_msg = str(e)
+            raise ValueError(
+                f"WNTR simulation failed during 3rd iteration (final utilization):\n{error_msg}\n\n"
+                f"This error occurred during final network simulation with dynamic head pattern.\n"
+                f"Base head: {base_head:.2f} m\n"
+                f"Pattern range: {min(pattern_head_m):.3f} - {max(pattern_head_m):.3f}\n\n"
+                f"Resolution:\n"
+                f"  1. Check if head pattern values are reasonable\n"
+                f"  2. Verify calculated head losses are not extreme\n"
+                f"  3. Check for pipes with very high pressure drops"
+            ) from e
+        
+        # Final validation of complete results
+        if results.link['flowrate'].isna().all().all():
+            raise ValueError(
+                "WNTR final simulation produced all NaN flowrate results. "
+                "Network simulation completely failed. Check all previous warnings."
+            )
+        
+        print("All WNTR simulations completed successfully.")
 
     # POSTPROCESSING
     print("Postprocessing thermal network results...")
