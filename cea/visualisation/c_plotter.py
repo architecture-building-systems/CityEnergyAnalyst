@@ -711,7 +711,7 @@ def plot_faceted_bars(
 
         # Set y_min to accommodate negative values with some padding
         if min_val < 0:
-            if barmode == "stack":
+            if barmode == "stack" or barmode == "stack_percentage":
                 # For stacked bars, only sum NEGATIVE values to get min
                 negative_cols = [col for col in value_columns if df[col].sum() < 0]
                 if negative_cols:
