@@ -49,7 +49,14 @@ def main(config: Configuration) -> None:
     if not building_names:
         # Use all buildings in zone
         zone_df = get_building_names_from_zone(locator)
-        building_names = zone_df['Name'].tolist()
+        # Handle both 'Name' and 'name' column naming conventions
+        if 'Name' in zone_df.columns:
+            name_col = 'Name'
+        elif 'name' in zone_df.columns:
+            name_col = 'name'
+        else:
+            raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_df.columns.tolist()}")
+        building_names = zone_df[name_col].tolist()
 
     # Check PV requirements BEFORE processing any buildings
     include_pv = config.primary_energy.include_pv
@@ -201,7 +208,7 @@ def get_building_names_from_zone(locator):
     Returns
     -------
     pd.DataFrame
-        Zone geometry with 'Name' column
+        Zone geometry with 'Name' or 'name' column (caller should check both)
     """
     import geopandas as gpd
 
