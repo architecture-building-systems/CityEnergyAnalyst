@@ -1,20 +1,28 @@
-import pandas as pd
+import os
 import warnings
-from typing import Optional
-from pandas.errors import EmptyDataError, ParserError
 
-from cea.config import Configuration
-from cea.inputlocator import InputLocator
+import pandas as pd
+from pandas.errors import EmptyDataError, ParserError
 
 from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
-from cea.demand.building_properties import BuildingProperties
+from cea.config import Configuration
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
-from cea.datamanagement.database.components import Feedstocks
+from cea.demand.building_properties import BuildingProperties
+from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
+__author__ = "Yiqiao Wang, Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Yiqiao Wang", "Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
-def _load_grid_intensity_override(config: Configuration):
+
+def _load_grid_emission_intensity_override(config: Configuration):
     """Load and validate an optional external CSV for grid carbon intensity.
 
     Returns a tuple (override, values) where:
@@ -83,30 +91,58 @@ def _load_grid_intensity_override(config: Configuration):
 
 def operational_hourly(config: Configuration) -> None:
     locator = InputLocator(config.scenario)
-    emissions_cfg = getattr(config, 'emissions')
-    buildings = list(getattr(emissions_cfg, 'buildings', []))
+    emissions_cfg = config.emissions
+    buildings = emissions_cfg.buildings
+
+    # Check PV requirements BEFORE processing any buildings
+    consider_pv = emissions_cfg.include_pv
+    pv_codes: list[str] = [] # prevent unbound variable error later in apply_pv_offsetting
+    if consider_pv:
+        pv_codes = emissions_cfg.pv_codes
+        first_building = buildings[0]
+
+        # Check which panels are missing
+        missing_panels = []
+        for pv_code in (pv_codes if pv_codes else []):
+            pv_path = locator.PV_results(first_building, pv_code)
+            if not os.path.exists(pv_path):
+                missing_panels.append(pv_code)
+
+        if missing_panels:
+            missing_list = ', '.join(missing_panels)
+            error_msg = (
+                f"PV electricity results missing for panel type(s): {missing_list}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
+
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
     ]
     building_properties = BuildingProperties(locator, weather_data, buildings)
-    feedstock_db = Feedstocks.from_locator(locator)
     results: list[tuple[str, pd.DataFrame]] = []
     # Load optional GRID carbon intensity override once for all buildings
-    override_grid_emission, grid_emission_final_g = _load_grid_intensity_override(config)
+    override_grid_emission, grid_emission_final_g = _load_grid_emission_intensity_override(config)
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
     for building in buildings:
         bpr = building_properties[building]
+        hourly_timeline = OperationalHourlyTimeline(locator, bpr)
 
-        timeline = OperationalHourlyTimeline(locator, bpr, feedstock_db)
         if override_grid_emission and grid_emission_final is not None:
-            timeline.emission_intensity_timeline["GRID"] = grid_emission_final
-        timeline.calculate_operational_emission()
-        timeline.save_results()
+            hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
+
+        hourly_timeline.calculate_operational_emission()
+
+        if consider_pv:
+            hourly_timeline.apply_pv_offsetting(pv_codes)
+
+        hourly_timeline.save_results()
         print(
             f"Hourly operational emissions for {building} calculated and saved in: {locator.get_lca_operational_hourly_building(building)}."
         )
-        results.append((building, timeline.operational_emission_timeline))
+        results.append((building, hourly_timeline.operational_emission_timeline_extended))
 
     # df_by_building = to_ton(sum_by_building(results))
     df_by_building = sum_by_building(results)
@@ -115,20 +151,39 @@ def operational_hourly(config: Configuration) -> None:
     df_by_building.to_csv(locator.get_total_yearly_operational_building(), float_format='%.2f')
     df_by_hour.to_csv(locator.get_total_yearly_operational_hour(), index=False, float_format='%.2f')
     print(
-        f"District-level operational emissions saved in: {locator.get_lca_timeline_folder()}"
+        f"District-level operational emissions saved in: {locator.get_lca_emissions_results_folder()}"
     )
 
 
 def total_yearly(config: Configuration) -> None:
     locator = InputLocator(scenario=config.scenario)
-    emissions_cfg = getattr(config, 'emissions')
-    buildings = list(getattr(emissions_cfg, 'buildings', []))
-    year_end_val: Optional[int] = getattr(emissions_cfg, 'year_end', None)
+    emissions_cfg = config.emissions
+    buildings = emissions_cfg.buildings
+    year_end_val = emissions_cfg.year_end
     if year_end_val is None:
         end_year: int = 2100
     else:
         # Coerce to int if provided as string
         end_year = int(year_end_val)
+
+    # Check PV requirements BEFORE processing any buildings
+    consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
+    pv_codes: list[str] = []
+    if consider_pv:
+        missing_panels = []
+        for pv_code in pv_codes:
+            pv_total_path = locator.PV_total_buildings(pv_code)
+            if not os.path.exists(pv_total_path):
+                missing_panels.append(pv_code)
+
+        if missing_panels:
+            missing_list = ', '.join(missing_panels)
+            error_msg = (
+                f"PV electricity results missing for panel type(s): {missing_list}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
 
     envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()
@@ -146,39 +201,21 @@ def total_yearly(config: Configuration) -> None:
             end_year=end_year,
         )
         timeline.fill_embodied_emissions()
+        if consider_pv:
+            timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
-        ref_yr_val = getattr(emissions_cfg, 'grid_decarbonise_reference_year', None)
-        tar_yr_val = getattr(emissions_cfg, 'grid_decarbonise_target_year', None)
-        tar_ef_val = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', None)
-        ref_yr: int | None = int(ref_yr_val) if ref_yr_val is not None and ref_yr_val != '' else None
-        tar_yr: int | None = int(tar_yr_val) if tar_yr_val is not None and tar_yr_val != '' else None
-        tar_ef: float | None = float(tar_ef_val) if tar_ef_val is not None and tar_ef_val != '' else None
+        ref_yr = emissions_cfg.grid_decarbonise_reference_year
+        tar_yr = emissions_cfg.grid_decarbonise_target_year
+        tar_ef = emissions_cfg.grid_decarbonise_target_emission_factor
 
-        all_none = ref_yr is None and tar_yr is None and tar_ef is None
-        all_exist = ref_yr is not None and tar_yr is not None and tar_ef is not None
-        if not (all_none or all_exist):
+        if ref_yr is not None and tar_yr is not None and tar_ef is not None: # all exist
+            feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
+        elif ref_yr is None and tar_yr is None and tar_ef is None: # all None
+            feedstock_policies_arg = None
+        else:
             raise ValueError(
                 "If one of grid_decarbonise_reference_year, grid_decarbonise_target_year, or grid_decarbonise_target_emission_factor is set, all must be set."
             )
-        # Build feedstock policies only when all values are provided; otherwise pass None
-        feedstock_policies_arg: dict[str, tuple[int, int, float]] | None
-        if all_none:
-            feedstock_policies_arg = None
-        else:
-            if ref_yr is None or tar_yr is None or tar_ef is None:
-                raise ValueError(f"Grid decarbonisation parameters should all be present: Reference year, target year, target emission factor. "
-                                 f"Got: {ref_yr}, {tar_yr}, {tar_ef}")
-            
-            # Validate grid decarbonisation parameters
-            if ref_yr >= tar_yr:
-                raise ValueError(
-                    f"Invalid grid decarbonisation configuration: reference year ({ref_yr}) must be before target year ({tar_yr})."
-                )
-            if tar_ef < 0:
-                raise ValueError(
-                    f"Invalid grid decarbonisation configuration: target emission factor ({tar_ef}) must be non-negative."
-                )
-            feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
         timeline.fill_operational_emissions(
             feedstock_policies=feedstock_policies_arg
         )
@@ -306,6 +343,8 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
             if date_series is None:
                 date_series = df_copy['date'].copy()
             df_copy = df_copy.drop(columns=['date'])
+        if "name" in df_copy.columns:
+            df_copy = df_copy.drop(columns=['name'])
         # Extract year values from index if it's a year index
         if has_year_index and year_series is None:
             year_series = pd.Series(df_copy.index.values, index=df_copy.index)

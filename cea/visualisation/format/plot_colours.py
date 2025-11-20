@@ -94,7 +94,6 @@ COLOURS_TO_RGB = {
 # Base color mapping without units - maps metric prefixes to colors
 _BASE_COLUMN_COLORS = {
     # ===== Grid & Demand =====
-    "GRID": "purple",
     "E_sys": "green",
     "QC_sys": "blue_lighter",
     "Qcs_sys": "blue",
@@ -154,106 +153,144 @@ _BASE_COLUMN_COLORS = {
     "SC_FP_walls_west_Q": "purple_light",
 
     # ===== Operational Emissions =====
-    "heating": "red",
-    "hot_water": "orange",
-    "cooling": "blue",
-    "electricity": "green",
-    "Qhs_sys_NATURALGAS": "red_lighter",
-    "Qhs_sys_BIOGAS": "red_lighter",
-    "Qhs_sys_SOLAR": "red_lighter",
-    "Qhs_sys_DRYBIOMASS": "red_lighter",
-    "Qhs_sys_WETBIOMASS": "red_lighter",
-    "Qhs_sys_GRID": "red_lighter",
-    "Qhs_sys_COAL": "red_lighter",
-    "Qhs_sys_WOOD": "red_lighter",
-    "Qhs_sys_OIL": "red_lighter",
-    "Qhs_sys_HYDROGEN": "red_lighter",
-    "Qhs_sys_NONE": "red_lighter",
-    "Qww_sys_NATURALGAS": "orange_lighter",
-    "Qww_sys_BIOGAS": "orange_lighter",
-    "Qww_sys_SOLAR": "orange_lighter",
-    "Qww_sys_DRYBIOMASS": "orange_lighter",
-    "Qww_sys_WETBIOMASS": "orange_lighter",
-    "Qww_sys_GRID": "orange_lighter",
-    "Qww_sys_COAL": "orange_lighter",
-    "Qww_sys_WOOD": "orange_lighter",
-    "Qww_sys_OIL": "orange_lighter",
-    "Qww_sys_HYDROGEN": "orange_lighter",
-    "Qww_sys_NONE": "orange_lighter",
-    "Qcs_sys_NATURALGAS": "blue_lighter",
-    "Qcs_sys_BIOGAS": "blue_lighter",
-    "Qcs_sys_SOLAR": "blue_lighter",
-    "Qcs_sys_DRYBIOMASS": "blue_lighter",
-    "Qcs_sys_WETBIOMASS": "blue_lighter",
-    "Qcs_sys_GRID": "blue_lighter",
-    "Qcs_sys_COAL": "blue_lighter",
-    "Qcs_sys_WOOD": "blue_lighter",
-    "Qcs_sys_OIL": "blue_lighter",
-    "Qcs_sys_HYDROGEN": "blue_lighter",
-    "Qcs_sys_NONE": "blue_lighter",
-    "E_sys_NATURALGAS": "green_lighter",
-    "E_sys_BIOGAS": "green_lighter",
-    "E_sys_SOLAR": "green_lighter",
-    "E_sys_DRYBIOMASS": "green_lighter",
-    "E_sys_WETBIOMASS": "green_lighter",
-    "E_sys_GRID": "green_lighter",
-    "E_sys_COAL": "green_lightert",
-    "E_sys_WOOD": "green_lighter",
-    "E_sys_OIL": "green_lighter",
-    "E_sys_HYDROGEN": "green_lighter",
-    "E_sys_NONE": "green_lighter",
+    # "Qhs_sys": "red", # repeated before so commented out
+    "Qww_sys": "orange",
+    # "Qcs_sys": "blue", # repeated before so commented out
+    # "E_sys": "green", # repeated before so commented out
+
+    # Hybrids (service × carrier combinations) - use "_light" colors grouped by service
+    "Qhs_sys_NATURALGAS": "red_light",
+    "Qhs_sys_BIOGAS": "red_light",
+    "Qhs_sys_SOLAR": "red_light",
+    "Qhs_sys_DRYBIOMASS": "red_light",
+    "Qhs_sys_WETBIOMASS": "red_light",
+    "Qhs_sys_GRID": "red_light",
+    "Qhs_sys_COAL": "red_light",
+    "Qhs_sys_WOOD": "red_light",
+    "Qhs_sys_OIL": "red_light",
+    "Qhs_sys_HYDROGEN": "red_light",
+    "Qhs_sys_NONE": "red_light",
+    "Qww_sys_NATURALGAS": "orange_light",
+    "Qww_sys_BIOGAS": "orange_light",
+    "Qww_sys_SOLAR": "orange_light",
+    "Qww_sys_DRYBIOMASS": "orange_light",
+    "Qww_sys_WETBIOMASS": "orange_light",
+    "Qww_sys_GRID": "orange_light",
+    "Qww_sys_COAL": "orange_light",
+    "Qww_sys_WOOD": "orange_light",
+    "Qww_sys_OIL": "orange_light",
+    "Qww_sys_HYDROGEN": "orange_light",
+    "Qww_sys_NONE": "orange_light",
+    "Qcs_sys_NATURALGAS": "blue_light",
+    "Qcs_sys_BIOGAS": "blue_light",
+    "Qcs_sys_SOLAR": "blue_light",
+    "Qcs_sys_DRYBIOMASS": "blue_light",
+    "Qcs_sys_WETBIOMASS": "blue_light",
+    "Qcs_sys_GRID": "blue_light",
+    "Qcs_sys_COAL": "blue_light",
+    "Qcs_sys_WOOD": "blue_light",
+    "Qcs_sys_OIL": "blue_light",
+    "Qcs_sys_HYDROGEN": "blue_light",
+    "Qcs_sys_NONE": "blue_light",
+    "E_sys_NATURALGAS": "green_light",
+    "E_sys_BIOGAS": "green_light",
+    "E_sys_SOLAR": "green_light",
+    "E_sys_DRYBIOMASS": "green_light",
+    "E_sys_WETBIOMASS": "green_light",
+    "E_sys_GRID": "green_light",
+    "E_sys_COAL": "green_light",
+    "E_sys_WOOD": "green_light",
+    "E_sys_OIL": "green_light",
+    "E_sys_HYDROGEN": "green_light",
+    "E_sys_NONE": "green_light",
+
+    # Energy carriers (aggregated by carrier) - use "_light" colors, GRID is purple
+    "GRID": "purple_light",
+    "NATURALGAS": "red_light",
+    "BIOGAS": "green_light",
+    "SOLAR": "yellow_light",
+    "DRYBIOMASS": "brown_light",
+    "WETBIOMASS": "brown_light",
+    "COAL": "grey_light",
+    "WOOD": "orange_light",
+    "OIL": "blue_light",
+    "HYDROGEN": "uuen_blue_light",
+    "NONE": "grey",
+
+    "PV_PV1_offset_total": "yellow",
+    "PV_PV2_offset_total": "yellow",
+    "PV_PV3_offset_total": "yellow",
+    "PV_PV4_offset_total": "yellow",
 
     # ===== Lifecycle Emissions =====
-    "operation_heating": "red",
-    "operation_hot_water": "orange",
-    "operation_cooling": "blue",
-    "operation_electricity": "green",
-    "production_wall_ag": "red_lighter",
-    "production_wall_bg": "red_lighter",
-    "production_wall_part": "red_lighter",
-    "production_win_ag": "red_lighter",
-    "production_roof": "red_lighter",
-    "production_upperside": "red_lighter",
-    "production_underside": "red_lighter",
-    "production_floor": "red_lighter",
-    "production_base": "red_lighter",
-    "production_technical_systems": "red_lighter",
-    "biogenic_wall_ag": "blue_lighter",
-    "biogenic_wall_bg": "blue_lighter",
-    "biogenic_wall_part": "blue_lighter",
-    "biogenic_win_ag": "blue_lighter",
-    "biogenic_roof": "blue_lighter",
-    "biogenic_upperside": "blue_lighter",
-    "biogenic_underside": "blue_lighter",
-    "biogenic_floor": "blue_lighter",
-    "biogenic_base": "blue_lighter",
-    "biogenic_technical_systems": "blue_lighter",
-    "demolition_wall_ag": "green_lighter",
-    "demolition_wall_bg": "green_lighter",
-    "demolition_wall_part": "green_lighter",
-    "demolition_win_ag": "green_lighter",
-    "demolition_roof": "green_lighter",
-    "demolition_upperside": "green_lighter",
-    "demolition_underside": "green_lighter",
-    "demolition_floor": "green_lighter",
-    "demolition_base": "green_lighter",
-    "demolition_technical_systems": "green_lighter",
+    # Operation (keep existing colors)
+    "operation_Qhs_sys": "red",
+    "operation_Qww_sys": "orange",
+    "operation_Qcs_sys": "blue",
+    "operation_E_sys": "green",
 
+    # Production - all purple
+    "production_wall_ag": "purple",
+    "production_wall_bg": "purple",
+    "production_wall_part": "purple",
+    "production_win_ag": "purple",
+    "production_roof": "purple",
+    "production_upperside": "purple",
+    "production_underside": "purple",
+    "production_floor": "purple",
+    "production_base": "purple",
+    "production_technical_systems": "purple",
+
+    # Biogenic - all grey
+    "biogenic_wall_ag": "grey",
+    "biogenic_wall_bg": "grey",
+    "biogenic_wall_part": "grey",
+    "biogenic_win_ag": "grey",
+    "biogenic_roof": "grey",
+    "biogenic_upperside": "grey",
+    "biogenic_underside": "grey",
+    "biogenic_floor": "grey",
+    "biogenic_base": "grey",
+    "biogenic_technical_systems": "grey",
+
+    # Demolition - all brown
+    "demolition_wall_ag": "brown",
+    "demolition_wall_bg": "brown",
+    "demolition_wall_part": "brown",
+    "demolition_win_ag": "brown",
+    "demolition_roof": "brown",
+    "demolition_upperside": "brown",
+    "demolition_underside": "brown",
+    "demolition_floor": "brown",
+    "demolition_base": "brown",
+    "demolition_technical_systems": "brown",
+
+    # PV Production/Demolition/Biogenic - use same colors as other components
+    "production_pv": "purple",
+    "biogenic_pv": "grey",
+    "demolition_pv": "brown",
 }
 
 
 def get_column_color(column_name):
     """
-    Get color for a column name, handling dynamic units.
+    Get color for a column name, handling dynamic units and PV patterns.
 
     Strips the unit suffix (e.g., _kWh, _MWh, _kgCO2e, _tonCO2e, /m2)
     from the column name and looks up the base color.
 
+    Also handles dynamic PV patterns:
+    - PV_*_GRID_offset → yellow
+    - PV_*_GRID_export → yellow_light
+    - production_PV_* → purple
+    - biogenic_PV_* → grey
+    - demolition_PV_* → brown
+
     Parameters:
-    - column_name (str): Column name with unit (e.g., 'GRID_MWh/m2')
+    - column_name (str): Column name with unit (e.g., 'GRID_MWh/m2', 'PV_PV1_GRID_offset_kgCO2e')
 
     Returns:
-    - str: Color name (e.g., 'purple')
+    - str: Color name (e.g., 'purple', 'yellow')
     """
     # Remove common unit patterns
     base_name = column_name
@@ -274,6 +311,20 @@ def get_column_color(column_name):
             base_name = base_name[:-len(unit)]
             break
 
+    # Handle PV offset/export patterns: PV_*_GRID_offset or PV_*_GRID_export
+    if base_name.startswith('PV_') and '_GRID_offset' in base_name:
+        return "yellow"
+    if base_name.startswith('PV_') and '_GRID_export' in base_name:
+        return "yellow_light"
+
+    # Handle PV production/biogenic/demolition patterns: production_PV_*, biogenic_PV_*, demolition_PV_*
+    if base_name.startswith('production_PV_'):
+        return "purple"
+    if base_name.startswith('biogenic_PV_'):
+        return "grey"
+    if base_name.startswith('demolition_PV_'):
+        return "brown"
+
     # Look up in base color mapping
     return _BASE_COLUMN_COLORS.get(base_name, "grey")
 
@@ -288,7 +339,7 @@ for base_name, color in _BASE_COLUMN_COLORS.items():
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}/m2"] = color
 
-    if 'sys' in base_name or base_name in ['heating', 'hot_water', 'cooling', 'electricity']:
+    if 'sys' in base_name or base_name in ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']:
         # Emission metrics
         for unit in ['gCO2e', 'kgCO2e', 'tonCO2e']:
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color
