@@ -280,7 +280,22 @@ def normalize_coords(coords, precision=SHAPEFILE_TOLERANCE):
         >>> normalize_coords(coords, precision=6)
         [(1.123457, 2.987654), (3.111111, 5.0)]
     """
-    return [(round(x, precision), round(y, precision)) for x, y in coords]
+    rounded = []
+    for c in coords:
+        # Accept (x, y) or (x, y, z/other); ignore extra dimensions
+        # Also tolerate sequences like numpy arrays
+        if isinstance(c, (list, tuple)) and len(c) >= 2:
+            x = float(c[0])
+            y = float(c[1])
+        else:
+            # Fallback: attempt attribute access (e.g., shapely Point)
+            try:
+                x = float(c[0])  # type: ignore[index]
+                y = float(c[1])  # type: ignore[index]
+            except Exception as e:
+                raise ValueError(f"Invalid coordinate element for normalization: {c!r}") from e
+        rounded.append((round(x, precision), round(y, precision)))
+    return rounded
 
 
 def normalize_geometry(geom, precision=SHAPEFILE_TOLERANCE):

@@ -259,13 +259,19 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
     """
     from collections import Counter
 
+    # Ensure all geometries are LineStrings (explode MultiLineStrings first)
+    # This avoids errors when accessing `.coords` on MultiLineString geometries
+    if not all(network_gdf.geometry.geom_type == 'LineString'):
+        network_gdf = network_gdf.explode(index_parts=False).reset_index(drop=True)
+
     # Step 1: Find dangling endpoints (terminal points not connected)
     # Count how many times each endpoint appears across all lines
     endpoint_counts = Counter()
     for geom in network_gdf.geometry:
-        coords = list(geom.coords)
-        start = tuple(coords[0])
-        end = tuple(coords[-1])
+        # Convert to plain (float, float) tuples to avoid inhomogeneous types
+        coords = [(float(c[0]), float(c[1])) for c in geom.coords]
+        start = coords[0]
+        end = coords[-1]
         endpoint_counts[start] += 1
         endpoint_counts[end] += 1
 
@@ -284,7 +290,7 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
     # Track which lines need to be split and where
     lines_to_split = {}  # {line_idx: [snap_points]}
 
-    def _snap_point_to_nearby_lines(point_coords: tuple, idx_to_exclude) -> tuple:
+    def _snap_point_to_nearby_lines(point_coords: tuple, idx_to_exclude) -> tuple[float, float]:
         """
         Inner helper: Snap a single point to the nearest nearby line within tolerance.
 
@@ -310,8 +316,8 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
         snapped = nearest_line.interpolate(nearest_line.project(point))
         # Build normalized coordinate tuple directly to avoid geometry-type ambiguity
         best_snap = (
-            round(snapped.x, SHAPEFILE_TOLERANCE),
-            round(snapped.y, SHAPEFILE_TOLERANCE)
+            round(float(snapped.x), SHAPEFILE_TOLERANCE),
+            round(float(snapped.y), SHAPEFILE_TOLERANCE)
         )
         if lines_to_split.get(nearest_index) is None:
             lines_to_split[nearest_index] = []
@@ -324,10 +330,11 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
 
     for idx, row in _network_gdf.iterrows():
         line = row.geometry
-        coords = list(line.coords)
+        # Use homogeneous (float, float) tuples for all vertices
+        coords = [(float(c[0]), float(c[1])) for c in line.coords]
 
-        start = tuple(coords[0])
-        end = tuple(coords[-1])
+        start = coords[0]
+        end = coords[-1]
 
         # Check if endpoints are dangling
         start_is_dangling = start in dangling_endpoints
@@ -335,10 +342,10 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
 
         # Snap dangling endpoints
         if start_is_dangling or end_is_dangling:
-            new_start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else tuple(coords[0])
-            new_end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else tuple(coords[-1])
-            # Ensure all middle coordinates are tuples too
-            new_coords = [new_start] + [tuple(c) for c in coords[1:-1]] + [new_end]
+            new_start = _snap_point_to_nearby_lines(coords[0], idx) if start_is_dangling else coords[0]
+            new_end = _snap_point_to_nearby_lines(coords[-1], idx) if end_is_dangling else coords[-1]
+            # Ensure all middle coordinates are (float, float) tuples
+            new_coords = [new_start] + [(float(c[0]), float(c[1])) for c in coords[1:-1]] + [new_end]
             modified_geometries[idx] = LineString(new_coords)
         else:
             modified_geometries[idx] = line
@@ -360,7 +367,8 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
 
             # Manually split the line by inserting snap points
             # This is more reliable than Shapely's split() for points on lines
-            coords = list(line.coords)
+            # Use homogeneous (float, float) tuples for splitting operations
+            coords = [(float(c[0]), float(c[1])) for c in line.coords]
 
             # Calculate where each snap point falls along the line
             split_positions = []
@@ -668,7 +676,7 @@ def _identify_original_junctions(graph: nx.Graph, terminal_nodes: set[tuple], co
             continue
 
         # Check degree (number of neighbors)
-        degree = graph.degree(node)
+        degree = len(list(graph.neighbors(node)))
         if degree >= 3:
             original_junctions.add(node_coord)
 

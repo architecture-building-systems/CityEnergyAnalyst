@@ -136,6 +136,10 @@ Normalize all geometries in a GeoDataFrame
    - If `connection_candidates > 1` and `method='kou'`: Kou's metric closure automatically selects best connections
    - If `method='mehlhorn'`: Uses greedy nearest regardless of k
 
+### Street Cleaning Notes
+- `snap_endpoints_to_nearby_lines` now explodes `MultiLineString` geometries to individual `LineString`s at function entry to ensure safe access to `.coords` and consistent endpoint handling.
+- All coordinates are coerced to `(float, float)` tuples before constructing `LineString` during snapping/splitting to avoid mixed sequence types.
+
 ## Key Helper Functions
 
 ### `get_next_node_name(nodes_gdf)`
