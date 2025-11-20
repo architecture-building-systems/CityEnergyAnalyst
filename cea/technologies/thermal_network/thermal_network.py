@@ -3369,7 +3369,6 @@ def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """
-    start = time.time()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     network_model = config.thermal_network.network_model
@@ -3398,37 +3397,35 @@ def main(config: cea.config.Configuration):
             raise ValueError("Network name is required. Please select a network layout.")
     
     network_types = config.thermal_network.network_type
-    if network_model == 'simplified':
-        errors = {}
-        for network_type in network_types:
-            print(f"\n{'='*60}")
-            print(f"{network_type} Network Simplified Model")
-            print(f"{'='*60}")
+    errors = {}
+    for network_type in network_types:
+        print(f"\n{'='*60}")
+        print(f"{network_type} Network {network_model} Model")
+        print(f"{'='*60}")
 
-            try:
-                print(f"Processing {network_type} network...")
+        try:
+            if network_model == 'simplified':
                 thermal_network_simplified(locator, config, network_type, network_name)
-                print(f"{network_type} network processing completed.")
-            except ValueError as e:
-                print(f"An error occurred while processing the {network_type} network")
-                errors[network_type] = e
-        if errors:
-            print(f"\n{'='*60}")
-            print("Errors occurred during processing:")
-            print(f"{'='*60}")
-            for network_type, error in errors.items():
-                print(f"{network_type} network error\n")
-                print(error)
-                print(f"{'-'*60}")
-            raise ValueError("One or more network types failed to process. See errors above.")
-    else:
-        check_heating_cooling_demand(locator, config)
-        thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
-        thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
-        # Print the time used for the entire processing
-        time_elapsed = time.time() - start
-        print('The process of thermal network design is completed - time elapsed: %.2f seconds.' % time_elapsed)
-
+            elif network_model == 'detailed':
+                check_heating_cooling_demand(locator, config)
+                thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
+                thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
+            else:
+                raise RuntimeError(f"Unknown network model: {network_model}")
+            print(f"{network_type} network processing completed.")
+        except ValueError as e:
+            print(f"An error occurred while processing the {network_type} network")
+            errors[network_type] = e
+    
+    if errors:
+        print(f"\n{'='*60}")
+        print("Errors occurred during processing:")
+        print(f"{'='*60}")
+        for network_type, error in errors.items():
+            print(f"{network_type} network error\n")
+            print(error)
+            print(f"{'-'*60}")
+        raise ValueError("One or more network types failed to process. See errors above.")
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
