@@ -127,28 +127,6 @@ cea.api.demand(scenario='/path/to/scenario')
 - Reference scenarios: `cea/examples/`
 - Config: `cea/tests/cea.config`
 
-## Writing Conventions
-
-**British English**: All user-facing text MUST use British English spelling and terminology:
-- ✅ "normalised" (not "normalized")
-- ✅ "optimisation" (not "optimization")
-- ✅ "behaviour" (not "behavior")
-- ✅ "colour" (not "color")
-- ✅ "centre" (not "center")
-
-**Where to apply**:
-- `cea/default.config` - All help text and descriptions
-- `cea/scripts.yml` - All labels, short_description, and description fields
-- User-facing print statements in main modules
-- Docstrings for public APIs
-- Error messages shown to users
-
-**Where NOT to apply**:
-- Variable names, function names (keep American for consistency with Python ecosystem)
-- Column names in CSV outputs (existing convention)
-- Internal code comments (either is fine)
-- Database file names and keys
-
 ## Common Pitfalls
 
 1. **File Paths**: Always use `InputLocator` methods, never hardcode
@@ -157,7 +135,6 @@ cea.api.demand(scenario='/path/to/scenario')
 4. **Multiprocessing**: Check `config.multiprocessing` before using `Pool`
 5. **Scenario Structure**: Respect `/inputs/`, `/outputs/` conventions
 6. **Config Type Hints**: After modifying `config.py`, regenerate `config.pyi` by running `pixi run python cea/utilities/config_type_generator.py`
-7. **British English**: Use British English spelling in all user-facing text (see Writing Conventions above)
 
 ## Module Documentation
 
