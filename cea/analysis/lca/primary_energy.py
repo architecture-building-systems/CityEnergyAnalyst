@@ -156,15 +156,16 @@ def main(config: Configuration) -> None:
         # Remove 'Name' column from each building's data before summing
         hourly_data_without_name = [df.drop(columns=['Name']) for df in district_hourly_results]
 
-        # Sum all buildings hour by hour
-        district_hourly_df = hourly_data_without_name[0].copy()
-        for df in hourly_data_without_name[1:]:
-            # Sum all numeric columns
-            numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-            district_hourly_df[numeric_cols] = district_hourly_df[numeric_cols] + df[numeric_cols]
+        # Concatenate all building DataFrames (handles missing columns automatically with NaN)
+        concatenated_df = pd.concat(hourly_data_without_name, ignore_index=True)
 
-        # Round to 2 decimals
-        numeric_cols = district_hourly_df.select_dtypes(include=['float64', 'int64']).columns
+        # Identify numeric columns from the concatenated frame
+        numeric_cols = concatenated_df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+
+        # Group by 'date' column and sum numeric columns (NaN values are ignored in sum)
+        district_hourly_df = concatenated_df.groupby('date', as_index=False)[numeric_cols].sum()
+
+        # Round numeric columns to 2 decimals
         district_hourly_df[numeric_cols] = district_hourly_df[numeric_cols].round(2)
 
         # Write district hourly results
