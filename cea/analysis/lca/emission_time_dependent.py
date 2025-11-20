@@ -159,9 +159,9 @@ def operational_hourly(config: Configuration) -> None:
 def total_yearly(config: Configuration) -> None:
     import os
     locator = InputLocator(scenario=config.scenario)
-    emissions_cfg = getattr(config, 'emissions')
-    buildings = list(getattr(emissions_cfg, 'buildings', []))
-    year_end_val: Optional[int] = getattr(emissions_cfg, 'year_end', None)
+    emissions_cfg = config.emissions
+    buildings = emissions_cfg.buildings
+    year_end_val = emissions_cfg.year_end
     if year_end_val is None:
         end_year: int = 2100
     else:

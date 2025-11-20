@@ -91,7 +91,6 @@ class OperationalHourlyTimeline:
         - `date`: date column from demand timeseries
         - per-tech emissions: one column per technology and feedstock combination,
           e.g., `E_sys_GRID_kgCO2e`, `Qhs_sys_NATURALGAS_kgCO2e`, etc., initialized to zero.
-        - per-component PV emission offsets: one column per GRID component per PV code
 
         The dataframe should have 8760 rows, one for each hour of the year, indexed by hour.
 
@@ -164,6 +163,7 @@ class OperationalHourlyTimeline:
     def apply_pv_offsetting(self, pv_codes: list[str]) -> None:
         """
         Apply simple net metering PV offsetting to GRID emissions.
+        Each PV panel is considered as a separate scenario.
 
         For each PV panel, calculates:
         - PV_{code}_GRID_offset_kgCO2e: Avoided emissions from on-site use (negative)
@@ -173,9 +173,8 @@ class OperationalHourlyTimeline:
 
         Parameters
         ----------
-        pv_codes : list[str] | None
+        pv_codes : list[str]
             List of PV panel codes to include (e.g., ["PV1", "PV2"])
-            If None, includes all available panels
         """
         if not self._is_emission_calculated:
             raise RuntimeError(
@@ -286,6 +285,7 @@ class OperationalHourlyTimeline:
     def emission_by_demand(self) -> pd.DataFrame:
         """
         Get a DataFrame summarizing total operational emissions by demand type.
+        PV-related columns are excluded.
 
         :return: A DataFrame with total emissions per demand type in kgCO2e.
         :rtype: pd.DataFrame
@@ -307,6 +307,7 @@ class OperationalHourlyTimeline:
     def emission_by_feedstock(self) -> pd.DataFrame:
         """
         Get a DataFrame summarizing total operational emissions by feedstock type.
+        PV-related columns are excluded.
 
         :return: A DataFrame with total emissions per feedstock type in kgCO2e.
         :rtype: pd.DataFrame
@@ -326,8 +327,7 @@ class OperationalHourlyTimeline:
     @property
     def operational_emission_timeline_extended(self) -> pd.DataFrame:
         """
-        Get the operational emission timeline extended with total emissions,
-        per-demand emissions, and per-feedstock emissions.
+        Get the operational emission timeline extended with per-demand emissions and per-feedstock emissions.
 
         :return: A DataFrame representing the extended operational emission timeline.
         :rtype: pd.DataFrame
