@@ -10,9 +10,9 @@ import cea.inputlocator
 from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
-from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name
+from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name
 from cea.technologies.network_layout.substations_location import calc_building_centroids
-from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries
+from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -396,11 +396,14 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                     # Generate unique node name
                     node_name = get_next_node_name(nodes_gdf)
 
+                    # Normalize centroid coordinates for consistency
+                    centroid_normalized = normalize_geometry(building_geom.centroid, SHAPEFILE_TOLERANCE)
+
                     new_node = gpd.GeoDataFrame([{
                         'name': node_name,
                         'building': plant_building,
                         'type': 'CONSUMER',
-                        'geometry': building_geom.centroid
+                        'geometry': centroid_normalized
                     }], crs=nodes_gdf.crs)
                     nodes_gdf = pd.concat([nodes_gdf, new_node], ignore_index=True)
                     plant_node = nodes_gdf[nodes_gdf['building'] == plant_building]
@@ -463,10 +466,19 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             if anchor_node.empty:
                 continue
 
-            # Update the anchor building node's type to PLANT
-            anchor_node_idx = anchor_node.index[0]
-            anchor_node_name = nodes_gdf.loc[anchor_node_idx, 'name']
-            nodes_gdf.loc[anchor_node_idx, 'type'] = 'PLANT'
+            # Create a new PLANT node near this building (separate from building node)
+            building_anchor = anchor_node
+            nodes_gdf, edges_gdf = add_plant_close_to_anchor(
+                building_anchor,
+                nodes_gdf,
+                edges_gdf,
+                'T1',  # Default pipe material
+                150    # Default pipe diameter
+            )
+
+            # The newly created plant node is the last one
+            plant_node_idx = nodes_gdf.index[-1]
+            plant_node_name = nodes_gdf.loc[plant_node_idx, 'name']
 
             # Generate network identifier for reporting
             network_id = f"N{1001 + component_id}"
@@ -474,7 +486,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             created_plants.append({
                 'network_id': network_id,
                 'building': anchor_building,
-                'node_name': anchor_node_name,
+                'node_name': plant_node_name,
                 'junction_node': None,
                 'distance_to_junction': 0.0,
                 'reason': 'anchor-load'
@@ -908,15 +920,13 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         )
         # Remove duplicate edges (edges that appear in both DC and DH networks)
         all_edges_gdf = all_edges_gdf.drop_duplicates(subset=['geometry'], keep='first')
-        
-        # Renumber all pipes sequentially to prevent duplicates
-        pipe_counter = 0
+
+        # Renumber all pipes sequentially to prevent duplicates using helper function
         for idx in all_edges_gdf.index:
             if 'name' in all_edges_gdf.columns:
                 edge_name = all_edges_gdf.loc[idx, 'name']
                 if isinstance(edge_name, str) and edge_name.startswith('PIPE'):
-                    all_edges_gdf.loc[idx, 'name'] = f'PIPE{pipe_counter}'
-                    pipe_counter += 1
+                    all_edges_gdf.loc[idx, 'name'] = get_next_pipe_name(all_edges_gdf.loc[:idx])
         
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
         print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
@@ -1249,15 +1259,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         )
         # Remove duplicate edges (if same edge appears in both networks)
         combined_edges = combined_edges.drop_duplicates(subset=['geometry'], keep='first')
-        
-        # Renumber all pipes sequentially to prevent duplicates
-        pipe_counter = 0
+
+        # Renumber all pipes sequentially to prevent duplicates using helper function
         for idx in combined_edges.index:
             if 'name' in combined_edges.columns:
                 edge_name = combined_edges.loc[idx, 'name']
                 if isinstance(edge_name, str) and edge_name.startswith('PIPE'):
-                    combined_edges.loc[idx, 'name'] = f'PIPE{pipe_counter}'
-                    pipe_counter += 1
+                    combined_edges.loc[idx, 'name'] = get_next_pipe_name(combined_edges.loc[:idx])
         
         # Normalize geometries to ensure consistent precision
         normalize_gdf_geometries(combined_edges, precision=SHAPEFILE_TOLERANCE, inplace=True)
