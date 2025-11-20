@@ -261,7 +261,7 @@ Thermal Network Design:
 Life Cycle Analysis:
 
   - name: emissions
-    label: EmissionsE
+    label: Emissions
     short_description: Calculate embodied and operational GHG emissions
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
