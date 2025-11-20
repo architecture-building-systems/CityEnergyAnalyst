@@ -188,18 +188,27 @@ class data_processor:
         return columns
 
     def process_architecture_data(self):
+        # Filter to only buildings that exist in architecture data
+        # (some buildings may be filtered out by year/type/use criteria)
+        available_buildings = set(self.df_architecture_data['name'].unique())
+        buildings_to_use = [b for b in self.buildings if b in available_buildings]
+
+        if not buildings_to_use:
+            raise ValueError(f"None of the requested buildings are in the architecture data. "
+                           f"Requested: {self.buildings}, Available: {list(available_buildings)}")
+
+        missing = set(self.buildings) - available_buildings
+        if missing:
+            print(f"Warning: {len(missing)} buildings filtered out from architecture data: {sorted(missing)}")
+
         if self.y_normalised_by == 'gross_floor_area':
-            try:
-                normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['GFA_m2']].copy()
-            except KeyError as e:
-                missing = set(self.buildings) - set(self.df_architecture_data['name'].unique())
-                raise ValueError(f"Missing building entries in architecture data: {missing}") from e
+            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use, ['GFA_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
         elif self.y_normalised_by == 'conditioned_floor_area':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['Af_m2']].copy()
+            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use, ['Af_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'Af_m2': 'normaliser_m2'})
         elif self.y_normalised_by == 'no_normalisation':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
+            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use].copy()
             normaliser_m2['normaliser_m2'] = 1  # Replace all values with 1
         else:
             raise ValueError(f"Invalid y-normalised-by: {self.y_normalised_by}")

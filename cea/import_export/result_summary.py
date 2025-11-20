@@ -1113,7 +1113,16 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
     # Special handling for architecture feature
     if cea_feature == 'architecture':
         # Load source data
-        zone_df = gpd.read_file(locator.get_zone_geometry()).set_index('name')
+        zone_raw = gpd.read_file(locator.get_zone_geometry())
+        # Handle both 'Name' and 'name' column naming conventions
+        if 'Name' in zone_raw.columns:
+            name_col = 'Name'
+        elif 'name' in zone_raw.columns:
+            name_col = 'name'
+        else:
+            raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_raw.columns.tolist()}")
+        zone_df = zone_raw.set_index(name_col)
+
         architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
         # Generate architecture data using calc_useful_areas
@@ -1863,9 +1872,17 @@ def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_resul
 
 def determine_building_main_use(df_typology):
 
+    # Handle both 'Name' and 'name' column naming conventions
+    if 'Name' in df_typology.columns:
+        name_col = 'Name'
+    elif 'name' in df_typology.columns:
+        name_col = 'name'
+    else:
+        raise KeyError(f"Typology data must have either 'Name' or 'name' column. Available columns: {df_typology.columns.tolist()}")
+
     # Create a new DataFrame to store results
     result = pd.DataFrame()
-    result['name'] = df_typology['name']
+    result['name'] = df_typology[name_col]
 
     # Determine the main use type and its ratio
     result['main_use_type'] = df_typology.apply(
