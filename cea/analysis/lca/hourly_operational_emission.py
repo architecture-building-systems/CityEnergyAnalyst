@@ -161,7 +161,7 @@ class OperationalHourlyTimeline:
 
         return expanded_timeline
     
-    def apply_pv_offsetting(self, pv_codes: list[str] | None = None) -> None:
+    def apply_pv_offsetting(self, pv_codes: list[str]) -> None:
         """
         Apply simple net metering PV offsetting to GRID emissions.
 
@@ -189,9 +189,8 @@ class OperationalHourlyTimeline:
             )
 
         grid_demand_hourly = self.demand_timeseries["GRID_kWh"].to_numpy(dtype=float)
-        available_panels = self._resolve_available_pv_panels(pv_codes)
 
-        for pv_code in available_panels:
+        for pv_code in pv_codes:
             pv_df = self._load_pv_hourly(pv_code)
             pv_generation_hourly = pv_df["E_PV_gen_kWh"].to_numpy(dtype=float)
             offset_hourly = np.minimum(pv_generation_hourly, grid_demand_hourly)
@@ -241,53 +240,6 @@ class OperationalHourlyTimeline:
         if 'E_PV_gen_kWh' not in df.columns:
             raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {pv_code}.")
         return df
-
-    def _resolve_available_pv_panels(self, pv_codes: list[str] | None) -> list[str]:
-        """Return list of available PV panel codes.
-
-        Steps:
-        - Retrieve net energy summary (to discover PV codes actually present).
-        - Warn & return [] if none found.
-        - Validate existence of each PV results file; raise one consolidated error if any missing.
-        - Return only the list of available panel codes (energy dict not required here).
-        """
-        from cea.analysis.lca.pv_offsetting import calculate_net_energy
-
-        net_energy_annual = calculate_net_energy(
-            self.locator,
-            self.bpr.name,
-            include_pv=True,
-            pv_codes=pv_codes,
-        )
-        pv_by_type: dict[str, float] = net_energy_annual.get('PV_by_type', {})  # we only need keys
-        pv_codes_used = list(pv_by_type.keys())
-
-        if not pv_codes_used:
-            warnings.warn(
-                f"No PV panels found for building {self.bpr.name}. Skipping PV offsetting.",
-                RuntimeWarning,
-            )
-            return []
-
-        missing_panels: list[str] = []
-        available_panels: list[str] = []
-        for pv_code in pv_codes_used:
-            pv_path = self.locator.PV_results(self.bpr.name, pv_code)
-            if os.path.exists(pv_path):
-                available_panels.append(pv_code)
-            else:
-                missing_panels.append(pv_code)
-
-        if missing_panels:
-            missing_list = ', '.join(missing_panels)
-            error_msg = (
-                f"PV electricity results missing for building {self.bpr.name}, panel type(s): {missing_list}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
-            )
-            print(f"ERROR: {error_msg}")
-            raise FileNotFoundError(error_msg)
-
-        return available_panels
 
     def calculate_operational_emission(self) -> None:
         """

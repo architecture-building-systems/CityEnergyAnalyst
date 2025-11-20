@@ -92,40 +92,31 @@ def _load_grid_emission_intensity_override(config: Configuration):
 
 def operational_hourly(config: Configuration) -> None:
     locator = InputLocator(config.scenario)
-    emissions_cfg = getattr(config, 'emissions')
-    buildings = list(getattr(emissions_cfg, 'buildings', []))
+    emissions_cfg = config.emissions
+    buildings = emissions_cfg.buildings
 
     # Check PV requirements BEFORE processing any buildings
-    consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
+    consider_pv = emissions_cfg.include_pv
+    pv_codes: list[str] = [] # prevent unbound variable error later in apply_pv_offsetting
     if consider_pv:
-        pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
-        # Handle both string (CLI) and list (GUI) input
-        if isinstance(pv_codes_param, list):
-            pv_codes = pv_codes_param if pv_codes_param else None
-        elif isinstance(pv_codes_param, str):
-            pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else None
-        else:
-            pv_codes = None
+        pv_codes = emissions_cfg.pv_codes
+        first_building = buildings[0]
 
-        if pv_codes and buildings:
-            # Check if PV files exist for the first building (representative check)
-            first_building = buildings[0]
+        # Check which panels are missing
+        missing_panels = []
+        for pv_code in (pv_codes if pv_codes else []):
+            pv_path = locator.PV_results(first_building, pv_code)
+            if not os.path.exists(pv_path):
+                missing_panels.append(pv_code)
 
-            # Check which panels are missing
-            missing_panels = []
-            for pv_code in (pv_codes if pv_codes else []):
-                pv_path = locator.PV_results(first_building, pv_code)
-                if not os.path.exists(pv_path):
-                    missing_panels.append(pv_code)
-
-            if missing_panels:
-                missing_list = ', '.join(missing_panels)
-                error_msg = (
-                    f"PV electricity results missing for panel type(s): {missing_list}. "
-                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
-                )
-                print(f"ERROR: {error_msg}")
-                raise FileNotFoundError(error_msg)
+        if missing_panels:
+            missing_list = ', '.join(missing_panels)
+            error_msg = (
+                f"PV electricity results missing for panel type(s): {missing_list}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
 
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[
