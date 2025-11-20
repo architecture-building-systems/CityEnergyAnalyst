@@ -156,7 +156,6 @@ def operational_hourly(config: Configuration) -> None:
 
 
 def total_yearly(config: Configuration) -> None:
-    import os
     locator = InputLocator(scenario=config.scenario)
     emissions_cfg = config.emissions
     buildings = emissions_cfg.buildings
