@@ -280,7 +280,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
             # Get list of buildings to check
             buildings = plots_building_filter.buildings
             if not buildings:
-                from cea.import_export.result_summary import get_building_names_from_zone
+                from cea.analysis.lca.primary_energy import get_building_names_from_zone
                 zone_df = get_building_names_from_zone(locator)
                 buildings = zone_df['Name'].tolist()
 
@@ -313,13 +313,16 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
     try:
         df_summary_data = pd.read_csv(summary_results_csv_path)
 
-        # Validate data structure for operational-emissions
-        if plot_cea_feature == 'operational-emissions':
+        # Validate data structure based on time period
+        # Hourly/daily data should have 'date' column
+        # Monthly/seasonal/annual/timeline data should have 'period' column
+        if plot_instance_a.time_period in ('hourly', 'daily'):
+            # For hourly/daily operational emissions, expect 'date' column
             if 'period' in df_summary_data.columns and 'date' not in df_summary_data.columns:
                 error_msg = (
                     f"Data structure error in summary file: {summary_results_csv_path}\n"
-                    f"Expected operational emissions data with 'date' column, but found 'period' column.\n"
-                    f"This suggests timeline data was incorrectly written to the operational emissions summary file.\n"
+                    f"Expected {plot_instance_a.time_period} data with 'date' column, but found 'period' column.\n"
+                    f"This suggests aggregated period data was incorrectly written to the {plot_instance_a.time_period} summary file.\n"
                     f"Available columns: {df_summary_data.columns.tolist()}\n"
                     f"File will be deleted and regenerated."
                 )
@@ -327,12 +330,13 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                 # Delete the incorrect file
                 os.remove(summary_results_csv_path)
                 raise ValueError(error_msg)
-        elif plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
+        elif plot_instance_a.time_period in ('monthly', 'seasonally', 'annually', 'timeline'):
+            # For monthly/seasonal/annual/timeline data, expect 'period' column
             if 'date' in df_summary_data.columns and 'period' not in df_summary_data.columns:
                 error_msg = (
                     f"Data structure error in summary file: {summary_results_csv_path}\n"
-                    f"Expected lifecycle/timeline emissions data with 'period' column, but found 'date' column.\n"
-                    f"This suggests operational data was incorrectly written to the lifecycle/timeline emissions summary file.\n"
+                    f"Expected {plot_instance_a.time_period} data with 'period' column, but found 'date' column.\n"
+                    f"This suggests hourly/daily data was incorrectly written to the {plot_instance_a.time_period} summary file.\n"
                     f"Available columns: {df_summary_data.columns.tolist()}\n"
                     f"File will be deleted and regenerated."
                 )

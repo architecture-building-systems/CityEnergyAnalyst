@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
@@ -641,7 +642,7 @@ def plot_emission_timeline(config, context: dict):
     pv_code = getattr(plot_config, 'pv_code', None)
     if pv_code:
         from cea.inputlocator import InputLocator
-        from cea.import_export.result_summary import get_building_names_from_zone
+        from cea.analysis.lca.primary_energy import get_building_names_from_zone
         locator = InputLocator(scenario)
 
         # Get list of buildings to check
