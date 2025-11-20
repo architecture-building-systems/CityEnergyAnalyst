@@ -880,9 +880,20 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
 
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 elif 'period' in df.columns:
+                    # Timeline data (lifecycle emissions) - has 'period' column with years
                     selected_columns = ['period'] + ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
+
+                    # Filter by year range (similar to how hourly data is filtered by hours)
+                    # For timeline data, hour_start/hour_end represent years, not hours
+                    # Extract year from period column (format: 'Y_2024' -> 2024)
+                    df['_year'] = df['period'].astype(str).str.replace('Y_', '', regex=False)
+                    df['_year'] = pd.to_numeric(df['_year'], errors='coerce')
+
+                    # Filter rows by year range
+                    df = df[(df['_year'] >= hour_start) & (df['_year'] <= hour_end)]
+                    df = df.drop(columns=['_year'])
 
                     # Debug logging for loaded data structure
                     print(f"[DEBUG] Loaded timeline data from {path.split('/')[-1]}: {len(df)} rows, {len(df.columns)} columns (has 'period' column)")
