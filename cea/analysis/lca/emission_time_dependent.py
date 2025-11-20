@@ -1,6 +1,5 @@
 import os
 import warnings
-from typing import Optional
 
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
@@ -172,29 +171,20 @@ def total_yearly(config: Configuration) -> None:
     consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
     pv_codes: list[str] = []
     if consider_pv:
-        pv_codes_param = getattr(emissions_cfg, "pv_codes", [])
-        # Handle both string (CLI) and list (GUI) input
-        if isinstance(pv_codes_param, list):
-            pv_codes = pv_codes_param if pv_codes_param else []
-        elif isinstance(pv_codes_param, str):
-            pv_codes = [code.strip() for code in pv_codes_param.split(',')] if pv_codes_param else []
+        missing_panels = []
+        for pv_code in pv_codes:
+            pv_total_path = locator.PV_total_buildings(pv_code)
+            if not os.path.exists(pv_total_path):
+                missing_panels.append(pv_code)
 
-        if pv_codes and buildings:
-            # Check which PV_total_buildings files are missing
-            missing_panels = []
-            for pv_code in pv_codes:
-                pv_total_path = locator.PV_total_buildings(pv_code)
-                if not os.path.exists(pv_total_path):
-                    missing_panels.append(pv_code)
-
-            if missing_panels:
-                missing_list = ', '.join(missing_panels)
-                error_msg = (
-                    f"PV electricity results missing for panel type(s): {missing_list}. "
-                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
-                )
-                print(f"ERROR: {error_msg}")
-                raise FileNotFoundError(error_msg)
+        if missing_panels:
+            missing_list = ', '.join(missing_panels)
+            error_msg = (
+                f"PV electricity results missing for panel type(s): {missing_list}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
 
     envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()
@@ -215,22 +205,18 @@ def total_yearly(config: Configuration) -> None:
         if consider_pv:
             timeline.fill_pv_embodied_emissions(pv_codes=pv_codes)
         # Handle optional grid decarbonisation policy inputs
-        ref_yr: int = getattr(emissions_cfg, 'grid_decarbonise_reference_year', -1)
-        tar_yr: int = getattr(emissions_cfg, 'grid_decarbonise_target_year', -1)
-        tar_ef: float = getattr(emissions_cfg, 'grid_decarbonise_target_emission_factor', -1.0)
+        ref_yr = emissions_cfg.grid_decarbonise_reference_year
+        tar_yr = emissions_cfg.grid_decarbonise_target_year
+        tar_ef = emissions_cfg.grid_decarbonise_target_emission_factor
 
-        all_none = ref_yr is None and tar_yr is None and tar_ef is None
-        all_exist = ref_yr is not None and tar_yr is not None and tar_ef is not None
-        if not (all_none or all_exist):
+        if ref_yr is not None and tar_yr is not None and tar_ef is not None: # all exist
+            feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
+        elif ref_yr is None and tar_yr is None and tar_ef is None: # all None
+            feedstock_policies_arg = None
+        else:
             raise ValueError(
                 "If one of grid_decarbonise_reference_year, grid_decarbonise_target_year, or grid_decarbonise_target_emission_factor is set, all must be set."
             )
-        # Build feedstock policies only when all values are provided; otherwise pass None
-        feedstock_policies_arg: dict[str, tuple[int, int, float]] | None
-        if all_none:
-            feedstock_policies_arg = None
-        else:
-            feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
         timeline.fill_operational_emissions(
             feedstock_policies=feedstock_policies_arg
         )
