@@ -41,17 +41,14 @@
 - script: network-layout
   parameters:
     network-name: baseline
-    network-type: DC
     consider-only-buildings-with-demand: off
 - script: thermal-network
   parameters:
     network-name: baseline
-    network-type: DC
     network-model: detailed
     stop-t: 744 # run for one month
 - script: thermal-network
   parameters:
-    network-type: DC
     network-model: simplified
 - script: decentralized
 - script: optimization-new
