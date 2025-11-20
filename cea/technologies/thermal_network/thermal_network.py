@@ -3378,7 +3378,24 @@ def main(config: cea.config.Configuration):
     # Future enhancement: Support multiple network layouts
     network_name = config.thermal_network.network_name
     if not network_name:
-        raise ValueError("Network name is required. Please select a network layout.")
+        # Get available network layouts to provide helpful error message
+        try:
+            network_folder = locator.get_thermal_network_folder()
+            available_layouts = [name for name in os.listdir(network_folder)
+                                if os.path.isdir(os.path.join(network_folder, name))
+                                and name not in {'DH', 'DC'}]
+            if available_layouts:
+                raise ValueError(
+                    f"Network name is required. Please select a network layout.\n"
+                    f"Available layouts: {', '.join(available_layouts)}"
+                )
+            else:
+                raise ValueError(
+                    "Network name is required, but no network layouts found.\n"
+                    "Please create or import a network layout using 'thermal-network-layout'."
+                )
+        except Exception:
+            raise ValueError("Network name is required. Please select a network layout.")
     
     network_types = config.thermal_network.network_type
     if network_model == 'simplified':

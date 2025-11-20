@@ -930,8 +930,8 @@ class TraceInputlocatorSection(Section):
 
 class ThermalNetworkSection(Section):
     """Typed section for thermal-network configuration"""
-    network_type: str
     network_name: str
+    network_type: list[str]
     network_model: str
     min_head_substation: float
     hw_friction_coefficient: int
@@ -952,9 +952,9 @@ class ThermalNetworkSection(Section):
     plant_supply_temperature: float
 
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
-    @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["network_model"]) -> str: ...
     @overload
@@ -1363,6 +1363,7 @@ class NetworkLayoutSection(Section):
     network_geojson_path: str | None
     consider_only_buildings_with_demand: bool
     algorithm: str
+    connection_candidates: int
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
@@ -1388,6 +1389,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["algorithm"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["connection_candidates"]) -> int: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class MultiCriteriaSection(Section):
