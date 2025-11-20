@@ -269,6 +269,33 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
     Returns:
         None
     """
+    # Early validation: Check if PV panel results exist for emission plots
+    if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
+        pv_code = getattr(plot_config, 'pv_code', None)
+        if pv_code:
+            # Check if any building has PV data for this panel type
+            from cea.inputlocator import InputLocator
+            locator = InputLocator(scenario)
+
+            # Get list of buildings to check
+            buildings = plots_building_filter.buildings
+            if not buildings:
+                from cea.import_export.result_summary import get_building_names_from_zone
+                zone_df = get_building_names_from_zone(locator)
+                buildings = zone_df['Name'].tolist()
+
+            # Check if PV results exist for at least one building (representative check)
+            if buildings:
+                first_building = buildings[0]
+                pv_path = locator.PV_results(first_building, pv_code)
+                if not os.path.exists(pv_path):
+                    error_msg = (
+                        f"PV electricity results missing for panel type: {pv_code}. "
+                        f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
+                    )
+                    print(f"ERROR: {error_msg}")
+                    raise FileNotFoundError(error_msg)
+
     # Instantiate the csv_pointer class
     plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
 
@@ -277,7 +304,6 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
 
     # Delete the existing file if it exists to prevent loading stale cached data
     if os.path.exists(summary_results_csv_path):
-        print(f"[DEBUG] Removing existing summary file: {summary_results_csv_path}")
         os.remove(summary_results_csv_path)
 
     # Execute the summary process
@@ -314,8 +340,6 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                 # Delete the incorrect file
                 os.remove(summary_results_csv_path)
                 raise ValueError(error_msg)
-
-        print(f"[DEBUG] Successfully loaded summary file with {len(df_summary_data)} rows and {len(df_summary_data.columns)} columns")
 
     except Exception as e:
         print(f"Error loading csv file: {e}")

@@ -637,6 +637,31 @@ def plot_emission_timeline(config, context: dict):
     bool_include_advanced_analytics = False
     plot_config.x_to_plot = 'district_and_annually'
 
+    # Early validation: Check if PV panel results exist
+    pv_code = getattr(plot_config, 'pv_code', None)
+    if pv_code:
+        from cea.inputlocator import InputLocator
+        from cea.import_export.result_summary import get_building_names_from_zone
+        locator = InputLocator(scenario)
+
+        # Get list of buildings to check
+        buildings = plots_building_filter.buildings
+        if not buildings:
+            zone_df = get_building_names_from_zone(locator)
+            buildings = zone_df['Name'].tolist()
+
+        # Check if PV results exist for at least one building (representative check)
+        if buildings:
+            first_building = buildings[0]
+            pv_path = locator.PV_results(first_building, pv_code)
+            if not os.path.exists(pv_path):
+                error_msg = (
+                    f"PV electricity results missing for panel type: {pv_code}. "
+                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
+                )
+                print(f"ERROR: {error_msg}")
+                raise FileNotFoundError(error_msg)
+
     # FIXME: temporary fix for missing x_sorted_by and x_sorted_reversed in plot_config_general
     # use dummy config for plot_config_general
     class DummyConfig:

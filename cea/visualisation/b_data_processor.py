@@ -328,6 +328,35 @@ class data_processor:
         # Check if the required columns exist in the data
         missing_columns = [col for col in list_columns if col not in self.df_summary_data.columns]
         if missing_columns:
+            # Check if missing columns are PV-related
+            pv_missing_columns = [col for col in missing_columns if col.startswith('PV_') or '_PV_' in col]
+
+            if pv_missing_columns:
+                # Extract PV panel codes from missing column names
+                # Format: PV_{code}_GRID_offset, PV_{code}_GRID_export, production_PV_{code}, etc.
+                pv_codes = set()
+                for col in pv_missing_columns:
+                    if col.startswith('PV_'):
+                        # Format: PV_{code}_GRID_offset or PV_{code}_GRID_export
+                        parts = col.split('_')
+                        if len(parts) >= 2:
+                            pv_codes.add(parts[1])  # Extract code from PV_{code}_...
+                    elif '_PV_' in col:
+                        # Format: production_PV_{code}, demolition_PV_{code}, biogenic_PV_{code}
+                        parts = col.split('_PV_')
+                        if len(parts) == 2:
+                            pv_codes.add(parts[1])  # Extract code from ..._PV_{code}
+
+                if pv_codes:
+                    pv_codes_list = sorted(pv_codes)
+                    error_msg = (
+                        f"PV electricity results missing for panel type(s): {', '.join(pv_codes_list)}. "
+                        f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                    )
+                    print(f"ERROR: {error_msg}")
+                    raise FileNotFoundError(error_msg)
+
+            # For non-PV missing columns, just warn and filter
             print(f"⚠️ Missing columns in data: {missing_columns}")
             print(f"Available columns: {list(self.df_summary_data.columns)}")
             # Filter out missing columns

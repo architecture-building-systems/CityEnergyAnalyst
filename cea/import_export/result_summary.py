@@ -517,9 +517,7 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
                 priority_order = ['operational_emissions', 'lifecycle_emissions', 'architecture', 'demand']
                 for priority_feature in priority_order:
                     if priority_feature in perfect_matches:
-                        print(f"[DEBUG] Multiple features matched metrics, selected '{priority_feature}' from {perfect_matches}")
                         return priority_feature
-                print(f"[DEBUG] Multiple perfect matches {perfect_matches}, returning first")
                 return perfect_matches[0]
             else:
                 # No perfect match - return feature with most overlap
@@ -874,10 +872,6 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
 
                     df['date'] = pd.to_datetime(df['date'], errors='coerce')
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
-
-                    # Debug logging for loaded data structure
-                    print(f"[DEBUG] Loaded hourly data from {path.split('/')[-1]}: {len(df)} rows, {len(df.columns)} columns (has 'date' column)")
-
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 elif 'period' in df.columns:
                     # Timeline data (lifecycle emissions) - has 'period' column with years
@@ -894,9 +888,6 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     # Filter rows by year range
                     df = df[(df['_year'] >= hour_start) & (df['_year'] <= hour_end)]
                     df = df.drop(columns=['_year'])
-
-                    # Debug logging for loaded data structure
-                    print(f"[DEBUG] Loaded timeline data from {path.split('/')[-1]}: {len(df)} rows, {len(df.columns)} columns (has 'period' column)")
 
                     list_dataframes.append(df)
                 else:
@@ -1101,17 +1092,6 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
 
     # locate the path(s) to the results of the CEA Feature
     list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
-
-    # Debug logging: Track which files are being loaded for which feature
-    print(f"[DEBUG] Loading data for CEA feature: {cea_feature}")
-    if not check_list_nesting(list_paths):
-        print(f"[DEBUG] Loading {len(list_paths)} files:")
-        for i, path in enumerate(list_paths[:3]):  # Show first 3 paths
-            print(f"[DEBUG]   {i+1}. {path}")
-        if len(list_paths) > 3:
-            print(f"[DEBUG]   ... and {len(list_paths) - 3} more files")
-    else:
-        print(f"[DEBUG] Loading {len(list_paths)} nested file groups")
 
     # get the relevant CEA column names based on selected metrics
     if not bool_analytics:
