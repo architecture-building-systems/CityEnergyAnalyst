@@ -180,13 +180,38 @@ def get_buildings_with_demand(locator, network_type):
     :param network_type: "DH" or "DC"
     :return: List of building names
     """
-    total_demand = pd.read_csv(locator.get_total_demand())
+    # Load total demand file with error handling
+    demand_path = locator.get_total_demand()
+    try:
+        total_demand = pd.read_csv(demand_path)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Total demand file not found: {demand_path}\n"
+            f"Please run the 'demand' tool first to generate building demand data."
+        )
 
+    # Determine demand field based on network type
     if network_type == "DH":
         field = "QH_sys_MWhyr"
     else:  # DC
         field = "QC_sys_MWhyr"
 
+    # Verify required columns exist
+    if 'name' not in total_demand.columns:
+        raise ValueError(
+            f"Required column 'name' not found in total demand file: {demand_path}\n"
+            f"Available columns: {list(total_demand.columns)}"
+        )
+
+    if field not in total_demand.columns:
+        demand_type = "heating" if network_type == "DH" else "cooling"
+        raise ValueError(
+            f"Required column '{field}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
+            f"Available columns: {list(total_demand.columns)}\n"
+            f"Please ensure the 'demand' tool was run successfully."
+        )
+
+    # Filter buildings with demand
     buildings_with_demand = total_demand[total_demand[field] > 0.0]['name'].tolist()
     return buildings_with_demand
 
