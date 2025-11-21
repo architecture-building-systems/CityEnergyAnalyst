@@ -3460,7 +3460,7 @@ def main(config: cea.config.Configuration):
             else:
                 raise RuntimeError(f"Unknown network model: {network_model}")
             print(f"{network_type} network processing completed.")
-        except ValueError as e:
+        except (ValueError, FileNotFoundError) as e:
             print(f"An error occurred while processing the {network_type} network")
             errors[network_type] = e
     
