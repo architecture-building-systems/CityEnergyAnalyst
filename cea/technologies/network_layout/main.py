@@ -970,15 +970,22 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
 @dataclass
 class NetworkLayout:
+    """
+    Represents a network layout configuration for thermal networks.
+
+    Attributes:
+        network_name: Unique identifier for this network layout variant
+        connected_buildings: List of building IDs to include in the network
+        algorithm: Steiner tree algorithm to use ('kou' or 'mehlhorn')
+        disconnected_buildings: Buildings that could not be connected (populated during generation)
+
+    Note:
+        - pipe_diameter and type_mat are set as defaults in steiner_spanning_tree.py, not here
+        - consider_only_buildings_with_demand is read from config.network_layout, not this dataclass
+    """
     network_name: str
     connected_buildings: list[str]
     algorithm: str = ""
-
-    # TODO: Remove unused fields
-    pipe_diameter: float = 0.0
-    type_mat: str = ""
-    consider_only_buildings_with_demand: bool = False
-
     disconnected_buildings: list[str] = field(default_factory=list)
 
     @classmethod
