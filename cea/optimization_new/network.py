@@ -577,7 +577,7 @@ class Network(object):
             raise ValueError("The network calculation needs configuration before it can analyse any networks.")
         elif domain is not None:
             cls._domain_locator = domain.locator
-            network_type = domain.config.thermal_network.network_type
+            network_type = domain.config.optimization_new.network_type
             min_head_substation_kPa = domain.config.optimization_new.min_head_substation
             thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
             hazen_williams_friction_coefficient = domain.config.optimization_new.hw_friction_coefficient
@@ -676,7 +676,7 @@ class Network(object):
             # calculate substations for all buildings
             # local variables
             total_demand = pd.read_csv(cls._domain_locator.get_total_demand())
-            network_type = domain.config.thermal_network.network_type
+            network_type = domain.config.optimization_new.network_type
 
             if network_type == "DH":
                 buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')

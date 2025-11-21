@@ -94,7 +94,7 @@ class Domain(object):
             buildings_in_domain = shp_file.name.tolist()
 
         building_demand_files = [self.locator.get_demand_results_file(building_code) for building_code in buildings_in_domain]
-        network_type = self.config.thermal_network.network_type
+        network_type = self.config.optimization_new.network_type
         for (building_code, demand_file) in zip(buildings_in_domain, building_demand_files):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
@@ -121,27 +121,33 @@ class Domain(object):
 
     def load_base_network(self):
         """
-        Load base thermal network layout from existing network layout (config.thermal_network.network_name).
-        If provided, this will override the automatic network generation for the base case.
+        Load base thermal network layout from existing network layout (config.optimization_new.network_name).
+        A pre-generated network layout is required for optimization - no auto-generation is supported.
 
         The network layout is loaded from:
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/layout/
 
         Network components are detected and mapped to network IDs (N1001, N1002, etc.)
 
-        :raises UserNetworkLoaderError: If validation fails with detailed error message
+        :raises UserNetworkLoaderError: If network-name not specified or network files not found
         """
         try:
-            # Get network name from config
-            network_name = self.config.thermal_network.network_name
+            # Get network name and type from optimization-new config
+            network_name = self.config.optimization_new.network_name
+            network_type = self.config.optimization_new.network_type
 
-            # If no network name specified, return early (silent fallback to auto-generation)
+            # Network name is required for optimization - no auto-generation
             if not network_name or not network_name.strip():
-                print("No base network selected. CEA will generate network automatically.")
-                return
+                raise UserNetworkLoaderError(
+                    "No base network specified for optimization.\n\n"
+                    "The 'network-name' parameter is required for district-scale optimization.\n"
+                    "A pre-generated network layout must exist before running optimization.\n\n"
+                    "Resolution:\n"
+                    "  1. Run 'network-layout' tool first to generate a network layout\n"
+                    "  2. Set 'network-name' in [optimization-new] config to the generated network name"
+                )
 
             network_name = network_name.strip()
-            network_type = self.config.thermal_network.network_type
 
             # Get network layout file paths using InputLocator
             edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
@@ -156,8 +162,7 @@ class Domain(object):
                     f"  - Nodes: {nodes_path}\n\n"
                     f"Resolution:\n"
                     f"  1. Run 'network-layout' tool first to generate the network\n"
-                    f"  2. Check that network-name matches an existing layout\n"
-                    f"  3. Leave network-name blank to auto-generate network"
+                    f"  2. Check that network-name matches an existing layout"
                 )
 
             # Load shapefiles

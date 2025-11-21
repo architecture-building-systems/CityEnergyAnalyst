@@ -681,7 +681,7 @@ class DistrictEnergySystem(object):
         DistrictEnergySystem._number_of_selected_DES = 0
 
         DistrictEnergySystem._max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
-        DistrictEnergySystem._network_type = domain.config.thermal_network.network_type
+        DistrictEnergySystem._network_type = domain.config.optimization_new.network_type
 
         # set district energy system optimisation parameters
         selection_algorithm = domain.config.optimization_new.networks_algorithm

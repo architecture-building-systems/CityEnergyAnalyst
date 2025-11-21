@@ -1128,6 +1128,8 @@ class OptimizationSection(Section):
 
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
+    network_name: str
+    network_type: str
     buildings: list[str]
     cooling_components: list[str]
     heating_components: list[str]
@@ -1160,6 +1162,10 @@ class OptimizationNewSection(Section):
     peak_load_percentage: float
     network_lifetime: float
 
+    @overload
+    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
