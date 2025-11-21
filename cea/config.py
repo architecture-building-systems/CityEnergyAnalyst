@@ -886,6 +886,8 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def _get_available_networks(self) -> List[str]:
         locator = cea.inputlocator.InputLocator(self.config.scenario)
         network_folder = locator.get_thermal_network_folder()
+        if not os.path.exists(network_folder):
+            return []
         return [name for name in os.listdir(network_folder)
                 if os.path.isdir(os.path.join(network_folder, name)) and name not in self._network_types]
     
