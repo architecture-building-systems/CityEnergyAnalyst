@@ -3429,7 +3429,6 @@ def main(config: cea.config.Configuration):
     
     network_types = config.thermal_network.network_type
     errors = {}
-    succeeded = []
     for network_type in network_types:
         print(f"\n{'='*60}")
         print(f"{network_type} Network {network_model} Model")
@@ -3461,11 +3460,10 @@ def main(config: cea.config.Configuration):
             else:
                 raise RuntimeError(f"Unknown network model: {network_model}")
             print(f"{network_type} network processing completed.")
-            succeeded.append(network_type)
         except (ValueError, FileNotFoundError) as e:
             print(f"An error occurred while processing the {network_type} network")
             errors[network_type] = e
-
+    
     if errors:
         print(f"\n{'='*60}")
         print("Errors occurred during processing:")
@@ -3474,18 +3472,7 @@ def main(config: cea.config.Configuration):
             print(f"{network_type} network error\n")
             print(error)
             print(f"{'-'*60}")
-
-        # Build summary message
-        failed_list = ', '.join(sorted(errors.keys()))
-        if succeeded:
-            succeeded_list = ', '.join(sorted(succeeded))
-            raise ValueError(
-                f"Completed: {succeeded_list}. Failed: {failed_list}. See errors above."
-            )
-        else:
-            raise ValueError(
-                f"All network types failed to process ({failed_list}). See errors above."
-            )
+        raise ValueError("One or more network types failed to process. See errors above.")
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
