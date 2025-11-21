@@ -153,6 +153,7 @@ def calc_steiner_spanning_tree(crs_projected,
             # Note: steiner_tree() already returns a tree (both Kou and Mehlhorn algorithms)
             # No need for additional MST computation
             mst_non_directed = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
+            print(f"  DEBUG: After steiner_tree: {nx.number_connected_components(mst_non_directed)} components")
         except Exception as e:
             raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
                             'This is an unexpected error. Please report this issue with your streets.shp file.') from e
@@ -219,6 +220,8 @@ def calc_steiner_spanning_tree(crs_projected,
         for t in list(terminals_set):
             if not sg.has_node(t):
                 continue
+            # Track edges we couldn't reroute to avoid infinite loops
+            failed_reroutes = set()
             # While degree > 1, keep shortest incident edge and reroute others via streets
             while True:
                 neighbours = list(sg.neighbors(t))
@@ -229,7 +232,11 @@ def calc_steiner_spanning_tree(crs_projected,
                     data = sg.get_edge_data(t, nbr, default={})
                     return data.get('weight', LineString([t, nbr]).length)
                 keep = min(neighbours, key=edge_w)
-                to_reroute = [n for n in neighbours if n != keep]
+                to_reroute = [n for n in neighbours if n != keep and (t, n) not in failed_reroutes and (n, t) not in failed_reroutes]
+                
+                # If no edges left to reroute, we're done (some direct edges will remain)
+                if not to_reroute:
+                    break
 
                 # Reroute each extra neighbour to 'keep' via streets without passing through building terminals
                 # Build a query graph with only n and keep terminals added back (all other terminals excluded)
@@ -254,13 +261,15 @@ def calc_steiner_spanning_tree(crs_projected,
                         path = nx.shortest_path(G2, source=n, target=keep, weight='weight')
                         # Add reroute path
                         _add_path_edges(path)
+                        # Only remove the direct edge if rerouting succeeded
+                        if sg.has_edge(t, n):
+                            sg.remove_edge(t, n)
                     except nx.NetworkXNoPath:
-                        # If no path, we still need to remove the edge to avoid infinite loop
-                        print(f"  ⚠ Warning: Unable to reroute extra terminal edge from {t} to {n}")
-                    
-                    # Always remove the direct terminal edge (whether rerouted successfully or not)
-                    if sg.has_edge(t, n):
-                        sg.remove_edge(t, n)
+                        # If no path, keep the direct edge to maintain connectivity
+                        # Mark this edge as failed so we don't try again
+                        failed_reroutes.add((t, n))
+                        failed_reroutes.add((n, t))
+                        print(f"  ⚠ Warning: Unable to reroute extra terminal edge from {t} to {n} - keeping direct edge")
 
         # Finalize: return a minimum spanning tree to remove any cycles introduced by rerouting
         # Use weight attribute to keep distances consistent
@@ -271,6 +280,7 @@ def calc_steiner_spanning_tree(crs_projected,
     # Apply enforcement using the full potential graph (G) and terminal set
     terminals_set = set(terminal_nodes_coordinates)
     mst_non_directed = _enforce_terminal_leafs_and_no_b2b(G, mst_non_directed, terminals_set)
+    print(f"  DEBUG: After _enforce_terminal_leafs_and_no_b2b: {nx.number_connected_components(mst_non_directed)} components")
 
     # Post-Steiner cleanup: remove non-terminal leaf stubs, then contract street chains
     def _prune_nonterminal_leaves(steiner_graph: nx.Graph, terminals: set[tuple]) -> nx.Graph:
@@ -381,8 +391,10 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # 1) prune dangling non-terminal leaves
     mst_non_directed = _prune_nonterminal_leaves(mst_non_directed, terminals_set)
+    print(f"  DEBUG: After _prune_nonterminal_leaves: {nx.number_connected_components(mst_non_directed)} components")
     # 2) contract degree-2 street chains (while preserving original junctions)
     mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set, original_junctions)
+    print(f"  DEBUG: After _contract_degree2_street_nodes: {nx.number_connected_components(mst_non_directed)} components")
 
     # Reporting helper: print network stats and total length
     def _report_network_stats(graph: nx.Graph, terminals: set[tuple], label: str = "Final"):
