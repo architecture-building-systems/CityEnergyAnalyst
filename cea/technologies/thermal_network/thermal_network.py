@@ -227,7 +227,9 @@ class ThermalNetwork(object):
             raise ValueError('There are duplicated PIPE IDs:', duplicated_nodes)
 
         # get node and pipe information
-        node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
+        # filter_edges=True because layout.shp contains edges for all network types (DC+DH combined),
+        # but nodes are network-specific, so we filter to only edges that match this network's nodes
+        node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
 
         # create node catalogue indicating which nodes are plants and which consumers
 
