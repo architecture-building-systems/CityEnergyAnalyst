@@ -3408,7 +3408,7 @@ def main(config: cea.config.Configuration):
                 thermal_network_simplified(locator, config, network_type, network_name)
             elif network_model == 'detailed':
                 check_heating_cooling_demand(locator, config)
-                thermal_network = ThermalNetwork(locator, network_name, config.thermal_network)
+                thermal_network = ThermalNetwork(locator, network_name, network_type)
                 thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
             else:
                 raise RuntimeError(f"Unknown network model: {network_model}")
