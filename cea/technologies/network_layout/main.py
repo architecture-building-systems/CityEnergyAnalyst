@@ -1179,7 +1179,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Validate network covers all specified buildings
-    nodes_gdf, auto_created_buildings = validate_network_covers_district_buildings(
+    nodes_gdf, _ = validate_network_covers_district_buildings(
         nodes_gdf,
         zone_gdf,  # Already loaded above for validation
         buildings_to_validate,
@@ -1187,15 +1187,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         edges_gdf
     )
 
-    if auto_created_buildings:
-        print(f"  Auto-created {len(auto_created_buildings)} missing building node(s):")
-        for building_name in auto_created_buildings[:10]:
-            print(f"      - {building_name}")
-        if len(auto_created_buildings) > 10:
-            print(f"      ... and {len(auto_created_buildings) - 10} more")
-        print("  Note: Nodes created at edge endpoints closest to building centroids (in-memory only)")
-    else:
-        print("  ✓ All specified buildings have valid nodes in network")
+    print("  ✓ All specified buildings have valid nodes in network")
 
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
