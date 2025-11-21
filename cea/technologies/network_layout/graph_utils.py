@@ -80,168 +80,160 @@ def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, pres
 
 def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
     """
-    Merge ALL disconnected components to form a fully connected network.
-    
+    Merge small isolated street fragments to the main network component.
+
     Strategy:
-    1. Discard tiny orphan components (< 3 nodes) with no terminals
-    2. Find the two closest components and merge them (iteratively)
-    3. Prefer non-terminal nodes as bridge points
-    4. Use progressive thresholds: 50m → 100m → 200m → 500m until connected
-    
+    1. Discard isolated single nodes (no edges, no terminals)
+    2. Merge small orphan components (< 10 nodes) within merge_threshold distance
+    3. Skip components that contain building terminals (preserve for error reporting)
+    4. Prefer non-terminal nodes as bridge points
+
+    Large disconnected components and terminal-protected components are left disconnected
+    so they can be reported as errors by the validation function.
+
     :param G: NetworkX graph
     :param terminal_nodes: Set of (x, y) coordinates that are building terminals
-    :param merge_threshold: Initial maximum distance for merging (meters)
-    :return: Graph with all components merged into one connected network
+    :param merge_threshold: Maximum distance for merging (meters)
+    :return: Graph with small orphan components merged (may still be disconnected)
     """
     import numpy as np
     import math
-    
+
     components_merged_total = 0
     edges_added_total = 0
     components_discarded = 0
-    
-    # Progressive thresholds to ensure connectivity
-    thresholds = [merge_threshold, merge_threshold * 2, merge_threshold * 4, merge_threshold * 10]
-    
-    for threshold_idx, threshold in enumerate(thresholds):
-        MAX_ITERATIONS = 200  # Safety limit per threshold
-        iteration = 0
-        merges_at_this_threshold = 0
-        
-        while iteration < MAX_ITERATIONS:
-            iteration += 1
-            
-            # Find connected components
-            components = list(nx.connected_components(G))
-            
-            if len(components) <= 1:
-                break  # Fully connected!
-            
-            # First pass: Discard tiny orphans with no terminals
-            components = list(nx.connected_components(G))  # Get initial components
-            for component in list(components):  # Make a copy to iterate safely
-                component_terminals = [n for n in component if n in terminal_nodes]
-                if len(component) < 3 and len(component_terminals) == 0:
-                    for node in component:
-                        G.remove_node(node)
-                    components_discarded += 1
-                    
-            # Recompute components after discarding
-            components = list(nx.connected_components(G))
-            if len(components) <= 1:
-                break
-            
-            if iteration == 1 and threshold_idx == 0:
-                print(f"  DEBUG: After discarding, {len(components)} components remain, sizes: {sorted([len(c) for c in components], reverse=True)[:10]}")
-            
-            # Find the two closest components to merge
-            best_node_A = None
-            best_node_B = None
+
+    MAX_ITERATIONS = 100  # Safety limit
+    MAX_ORPHAN_SIZE = 10  # Only merge components smaller than this
+
+    for iteration in range(MAX_ITERATIONS):
+        # Find connected components
+        components = list(nx.connected_components(G))
+
+        if len(components) <= 1:
+            break  # Fully connected!
+
+        # Identify main component (largest) first
+        component_sizes = [(len(comp), comp) for comp in components]
+        component_sizes.sort(key=lambda x: x[0], reverse=True)
+        main_component = component_sizes[0][1]
+
+        # First pass: Discard single-node orphans (isolated nodes with no edges)
+        for size, component in component_sizes[1:]:  # Skip main component
+            component_terminals = [n for n in component if n in terminal_nodes]
+            # Only discard truly isolated single nodes, not edges (2 nodes)
+            if size == 1 and len(component_terminals) == 0:
+                for node in component:
+                    G.remove_node(node)
+                components_discarded += 1
+
+        # Recompute components after discarding
+        components = list(nx.connected_components(G))
+        if len(components) <= 1:
+            break
+
+        # Re-identify main component (may have changed after discarding)
+        component_sizes = [(len(comp), comp) for comp in components]
+        component_sizes.sort(key=lambda x: x[0], reverse=True)
+        main_component = component_sizes[0][1]
+
+        # Find small orphan components to merge (< MAX_ORPHAN_SIZE nodes, no terminals)
+        orphan_components = []
+        for size, comp in component_sizes[1:]:  # Skip main component
+            if size >= MAX_ORPHAN_SIZE:
+                continue  # Too large, likely a real disconnection
+            component_terminals = [n for n in comp if n in terminal_nodes]
+            if len(component_terminals) > 0:
+                continue  # Has terminals, preserve for error reporting
+            orphan_components.append(comp)
+
+        if not orphan_components:
+            break  # No more small orphans to merge
+
+        # Try to merge one orphan component per iteration
+        merged_this_iteration = False
+        for orphan_comp in orphan_components:
+            # Find closest node pair between orphan and main component
+            best_node_A = None  # Node in main component
+            best_node_B = None  # Node in orphan component
             best_distance = float('inf')
-            
-            # Check all pairs of components
-            for i, comp_A in enumerate(components):
-                # Build KDTree for comp_A nodes
-                comp_A_nodes = list(comp_A)
-                comp_A_coords = np.array([(n[0], n[1]) for n in comp_A_nodes])
-                tree_A = KDTree(comp_A_coords)
-                
-                for j, comp_B in enumerate(components[i+1:], start=i+1):
-                    # For each node in comp_B, find closest in comp_A
-                    for node_B in comp_B:
-                        # Prefer non-terminal nodes
-                        if node_B in terminal_nodes:
-                            continue
-                            
-                        coords_B = [node_B[0], node_B[1]]
-                        dist, nearest_idx = tree_A.query(coords_B, k=1)
-                        node_A = comp_A_nodes[nearest_idx]
-                        
-                        # Check if node_A is also non-terminal (preferred)
-                        if dist < best_distance and node_A not in terminal_nodes:
-                            best_distance = dist
-                            best_node_A = node_A
-                            best_node_B = node_B
-            
-            # If no non-terminal pairs found, allow terminal nodes
+
+            # Build KDTree for main component
+            main_nodes = list(main_component)
+            main_coords = np.array([(n[0], n[1]) for n in main_nodes])
+            tree_main = KDTree(main_coords)
+
+            # Find closest pair (prefer non-terminals)
+            for node_B in orphan_comp:
+                if node_B in terminal_nodes:
+                    continue  # Skip terminals in orphan
+
+                coords_B = [node_B[0], node_B[1]]
+                dist, nearest_idx = tree_main.query(coords_B, k=1)
+                node_A = main_nodes[nearest_idx]
+
+                # Prefer non-terminal bridge points
+                if dist < best_distance and node_A not in terminal_nodes:
+                    best_distance = dist
+                    best_node_A = node_A
+                    best_node_B = node_B
+
+            # If no non-terminal pairs found, allow terminal as bridge (rare)
             if best_node_A is None:
-                for i, comp_A in enumerate(components):
-                    comp_A_nodes = list(comp_A)
-                    comp_A_coords = np.array([(n[0], n[1]) for n in comp_A_nodes])
-                    tree_A = KDTree(comp_A_coords)
-                    
-                    for j, comp_B in enumerate(components[i+1:], start=i+1):
-                        for node_B in comp_B:
-                            coords_B = [node_B[0], node_B[1]]
-                            dist, nearest_idx = tree_A.query(coords_B, k=1)
-                            node_A = comp_A_nodes[nearest_idx]
-                            
-                            if dist < best_distance:
-                                best_distance = dist
-                                best_node_A = node_A
-                                best_node_B = node_B
-            
+                for node_B in orphan_comp:
+                    coords_B = [node_B[0], node_B[1]]
+                    dist, nearest_idx = tree_main.query(coords_B, k=1)
+                    node_A = main_nodes[nearest_idx]
+
+                    if dist < best_distance:
+                        best_distance = dist
+                        best_node_A = node_A
+                        best_node_B = node_B
+
             # Merge if within threshold
-            if best_distance <= threshold and best_node_A is not None:
+            if best_distance <= merge_threshold and best_node_A is not None:
                 # Snap best_node_B to best_node_A by reconnecting all edges
                 orphan_edges = list(G.edges(best_node_B, data=True))
-                
+
                 for u, v, data in orphan_edges:
                     other_node = v if u == best_node_B else u
-                    
+
                     if 'geometry' in data:
                         old_geom = data['geometry']
                         coords = list(old_geom.coords)
-                        
+
                         # Replace the orphan endpoint
                         if coords[0] == best_node_B or coords[0] == u:
                             coords[0] = best_node_A
                         else:
                             coords[-1] = best_node_A
-                        
+
                         new_geom = LineString(coords)
                         data['geometry'] = new_geom
                         data['weight'] = new_geom.length
                     else:
                         data['weight'] = math.sqrt(
-                            (best_node_A[0] - other_node[0])**2 + 
+                            (best_node_A[0] - other_node[0])**2 +
                             (best_node_A[1] - other_node[1])**2
                         )
-                    
+
                     if not G.has_edge(other_node, best_node_A):
                         G.add_edge(other_node, best_node_A, **data)
                         edges_added_total += 1
-                
+
                 G.remove_node(best_node_B)
                 components_merged_total += 1
-                merges_at_this_threshold += 1
-            else:
-                # No more components can be merged at this threshold
-                if threshold_idx == 0 and iteration == 1:
-                    print(f"  DEBUG: First attempt - best_distance={best_distance:.1f}m, threshold={threshold:.1f}m, best_node_A={best_node_A is not None}")
-                break
-        
-        # Check if fully connected now
-        if nx.number_connected_components(G) == 1:
-            if merges_at_this_threshold > 0:
-                print(f"  - Achieved full connectivity at threshold {threshold:.1f}m ({merges_at_this_threshold} merges)")
-            break
-        elif merges_at_this_threshold > 0:
-            print(f"  - Merged {merges_at_this_threshold} components at threshold {threshold:.1f}m, {nx.number_connected_components(G)} remain")
-    
-    # Final check
-    remaining_components = list(nx.connected_components(G))
-    if len(remaining_components) > 1:
-        component_sizes = sorted([len(c) for c in remaining_components], reverse=True)
-        print(f"  WARNING: Unable to fully connect network - {len(remaining_components)} components remain")
-        print(f"      Component sizes: {component_sizes}")
-        print(f"      Max threshold tried: {thresholds[-1]:.1f}m")
-    
+                merged_this_iteration = True
+                break  # Process one orphan per iteration, then recompute components
+
+        if not merged_this_iteration:
+            break  # No more orphans within threshold
+
     if components_merged_total > 0:
-        print(f"Merged {components_merged_total} orphan component(s) to main network (snapped {edges_added_total} edge endpoint(s))")
+        print(f"Merged {components_merged_total} orphan component(s) to main network (added {edges_added_total} bridging edge(s))")
     if components_discarded > 0:
-        print(f"Safely discarded {components_discarded} orphan component(s) with 2 street node(s) (no building terminals attached)")
-    
+        print(f"Discarded {components_discarded} isolated single-node component(s)")
+
     return G
 
 

@@ -602,12 +602,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Determine which buildings should be in the network
     if overwrite_supply:
         # Use connected-buildings parameter (what-if scenarios)
-        # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
-        is_explicitly_set = (connected_buildings_config and
-                           set(connected_buildings_config) != set(all_zone_buildings))
+        # Check if connected-buildings was explicitly set (non-empty list)
+        is_explicitly_set = bool(connected_buildings_config)
 
         if is_explicitly_set:
-            # User explicitly specified a subset of buildings
+            # User explicitly specified buildings
             list_district_scale_buildings = connected_buildings_config
             print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
             print(f"  - User-defined connected buildings: {len(list_district_scale_buildings)}")
@@ -957,7 +956,7 @@ class NetworkLayout:
     @classmethod
     def from_config(cls, network_layout, locator: cea.inputlocator.InputLocator) -> 'NetworkLayout':
         network_name = cls._validate_network_name(network_layout.network_name,
-                                                  network_layout.network_type,
+                                                  network_layout.include_services,
                                                   locator)
 
         return cls(network_name=network_name,
@@ -965,7 +964,7 @@ class NetworkLayout:
                    algorithm=network_layout.algorithm)
 
     @staticmethod
-    def _validate_network_name(network_name: str, network_type: str, locator: cea.inputlocator.InputLocator) -> str:
+    def _validate_network_name(network_name: str, network_types: list[str], locator: cea.inputlocator.InputLocator) -> str:
         if network_name is None or not network_name.strip():
             raise ValueError(
                 "Network name is required. Provide a descriptive name for this network layout variant "
@@ -975,15 +974,21 @@ class NetworkLayout:
         network_name = network_name.strip()
 
         # Safety check: Verify network doesn't already exist (backend validation fallback)
-        output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-        if os.path.exists(output_folder):
-            edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-            if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                raise ValueError(
-                    f"Network with name '{network_name}' already exists. "
-                    "Choose a different name or delete the existing network."
-                )
+        exists = []
+        for network_type in network_types:
+            output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+            if os.path.exists(output_folder):
+                edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+                if os.path.exists(edges_path) or os.path.exists(nodes_path):
+                    exists.append(network_type)
+        
+        if exists:
+            existing_networks = ', '.join(exists)
+            raise ValueError(
+                f"Network with name '{network_name}' already exists for network types: {existing_networks}. "
+                "Choose a different name or delete the existing network."
+            )
         return network_name
 
 
@@ -1056,12 +1061,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     # Determine which buildings should be in the network
     if overwrite_supply:
         # Use connected-buildings parameter (what-if scenarios)
-        # Check if connected-buildings was explicitly set or auto-populated with all zone buildings
-        is_explicitly_set = (connected_buildings_config and
-                           set(connected_buildings_config) != set(all_zone_buildings))
+        # Check if connected-buildings was explicitly set (non-empty list)
+        is_explicitly_set = bool(connected_buildings_config)
 
         if is_explicitly_set:
-            # User explicitly specified a subset of buildings
+            # User explicitly specified buildings
             buildings_to_validate = connected_buildings_config
             print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
             print(f"  - User-defined connected buildings: {len(buildings_to_validate)}")
