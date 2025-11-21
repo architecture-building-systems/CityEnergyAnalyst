@@ -928,7 +928,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         Raises ValueError if the network layout doesn't exist.
         """
         # Empty value not allowed
-        if not value or value.strip() == '':
+        if not value or str(value).strip() == '':
             raise ValueError("Network layout is required. Please select a network layout.")
 
         available_networks = self._get_available_networks()
