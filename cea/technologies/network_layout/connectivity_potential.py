@@ -639,8 +639,7 @@ def _validate_snap_tolerance(streets_network_df: gdf, snap_tolerance: float):
         return  # Empty network, skip validation
     
     median_length = segment_lengths.median()
-    percentile_95_length = segment_lengths.quantile(0.95)
-    
+
     # Calculate endpoint proximity statistics (estimate typical gaps between near-miss endpoints)
     # Use a sample if network is large (>1000 segments)
     sample_size = min(1000, len(streets_network_df))
@@ -694,23 +693,23 @@ def _validate_snap_tolerance(streets_network_df: gdf, snap_tolerance: float):
     
     if snap_tolerance > 0.25 * median_length:
         warning_triggered = True
-        print(f"  ⚠ WARNING: snap_tolerance ({snap_tolerance:.2f}m) is large relative to street segments")
+        print(f"  WARNING: snap_tolerance ({snap_tolerance:.2f}m) is large relative to street segments")
         print(f"      - Current tolerance: {snap_tolerance:.2f}m")
         print(f"      - Median street segment length: {median_length:.2f}m")
         print(f"      - Recommended maximum: {0.25 * median_length:.2f}m (25% of median segment)")
-        print(f"      → Large tolerance may distort short street segments")
-    
+        print("      - Large tolerance may distort short street segments")
+
     if typical_gap is not None and snap_tolerance > 2.0 * typical_gap:
         warning_triggered = True
-        print(f"  ⚠ WARNING: snap_tolerance ({snap_tolerance:.2f}m) exceeds typical endpoint gaps")
+        print(f"  WARNING: snap_tolerance ({snap_tolerance:.2f}m) exceeds typical endpoint gaps")
         print(f"      - Current tolerance: {snap_tolerance:.2f}m")
         print(f"      - Typical endpoint gap: {typical_gap:.2f}m (median)")
         print(f"      - 95th percentile gap: {gap_95th:.2f}m")
         print(f"      - Recommended maximum: {2.0 * typical_gap:.2f}m (2x typical gap)")
-        print(f"      → Large tolerance may connect unrelated street segments")
-    
+        print("      - Large tolerance may connect unrelated street segments")
+
     if warning_triggered:
-        print(f"  ℹ Advisory: Typical snap_tolerance range is 0.3-2.0m")
+        print("  INFO: Typical snap_tolerance range is 0.3-2.0m")
         print(f"             Leave snap-tolerance blank in config to use default ({SNAP_TOLERANCE}m)")
         print()
 

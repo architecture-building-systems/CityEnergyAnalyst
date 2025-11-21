@@ -135,8 +135,6 @@ def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
                 print(f"  DEBUG: After discarding, {len(components)} components remain, sizes: {sorted([len(c) for c in components], reverse=True)[:10]}")
             
             # Find the two closest components to merge
-            best_comp_A = None
-            best_comp_B = None
             best_node_A = None
             best_node_B = None
             best_distance = float('inf')
@@ -162,8 +160,6 @@ def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
                         # Check if node_A is also non-terminal (preferred)
                         if dist < best_distance and node_A not in terminal_nodes:
                             best_distance = dist
-                            best_comp_A = comp_A
-                            best_comp_B = comp_B
                             best_node_A = node_A
                             best_node_B = node_B
             
@@ -182,8 +178,6 @@ def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
                             
                             if dist < best_distance:
                                 best_distance = dist
-                                best_comp_A = comp_A
-                                best_comp_B = comp_B
                                 best_node_A = node_A
                                 best_node_B = node_B
             
@@ -230,16 +224,16 @@ def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
         # Check if fully connected now
         if nx.number_connected_components(G) == 1:
             if merges_at_this_threshold > 0:
-                print(f"  → Achieved full connectivity at threshold {threshold:.1f}m ({merges_at_this_threshold} merges)")
+                print(f"  - Achieved full connectivity at threshold {threshold:.1f}m ({merges_at_this_threshold} merges)")
             break
         elif merges_at_this_threshold > 0:
-            print(f"  → Merged {merges_at_this_threshold} components at threshold {threshold:.1f}m, {nx.number_connected_components(G)} remain")
+            print(f"  - Merged {merges_at_this_threshold} components at threshold {threshold:.1f}m, {nx.number_connected_components(G)} remain")
     
     # Final check
     remaining_components = list(nx.connected_components(G))
     if len(remaining_components) > 1:
         component_sizes = sorted([len(c) for c in remaining_components], reverse=True)
-        print(f"  ⚠ WARNING: Unable to fully connect network - {len(remaining_components)} components remain")
+        print(f"  WARNING: Unable to fully connect network - {len(remaining_components)} components remain")
         print(f"      Component sizes: {component_sizes}")
         print(f"      Max threshold tried: {thresholds[-1]:.1f}m")
     

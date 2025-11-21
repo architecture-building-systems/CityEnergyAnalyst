@@ -941,10 +941,6 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         print(f"    Output folders: {folders}")
 
 
-
-# FIXME: Set network type as empty string for workaround
-network_type = ""
-
 @dataclass
 class NetworkLayout:
     network_name: str
@@ -960,14 +956,16 @@ class NetworkLayout:
 
     @classmethod
     def from_config(cls, network_layout, locator: cea.inputlocator.InputLocator) -> 'NetworkLayout':
-        network_name = cls._validate_network_name(network_layout.network_name, locator)
+        network_name = cls._validate_network_name(network_layout.network_name,
+                                                  network_layout.network_type,
+                                                  locator)
 
         return cls(network_name=network_name,
                    connected_buildings=network_layout.connected_buildings,
                    algorithm=network_layout.algorithm)
 
     @staticmethod
-    def _validate_network_name(network_name: str, locator: cea.inputlocator.InputLocator) -> str:
+    def _validate_network_name(network_name: str, network_type: str, locator: cea.inputlocator.InputLocator) -> str:
         if network_name is None or not network_name.strip():
             raise ValueError(
                 "Network name is required. Provide a descriptive name for this network layout variant "

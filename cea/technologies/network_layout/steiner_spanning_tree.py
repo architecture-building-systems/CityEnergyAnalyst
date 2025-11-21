@@ -101,8 +101,8 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # Validate connection_candidates with Mehlhorn algorithm
     if connection_candidates > 1 and steiner_algorithm == SteinerAlgorithm.Mehlhorn:
-        print("  ⚠ Warning: connection_candidates > 1 requires Kou algorithm for optimization.")
-        print("             Mehlhorn does not compute metric closure. Using greedy nearest connection.")
+        print("  WARNING: connection_candidates > 1 requires Kou algorithm for optimization.")
+        print("           Mehlhorn does not compute metric closure. Using greedy nearest connection.")
         connection_candidates = 1
 
     # TODO: Ensure CRS is used properly throughout the function (currently not applied)
@@ -209,7 +209,7 @@ def calc_steiner_spanning_tree(crs_projected,
                 path = nx.shortest_path(G2, source=u, target=v, weight='weight')
             except nx.NetworkXNoPath:
                 # If no alternate path, keep edge but warn (shouldn't happen with proper streets)
-                print(f"  ⚠ Warning: No street path found to replace building-to-building edge {u}–{v}")
+                print(f"  WARNING: No street path found to replace building-to-building edge {u}–{v}")
                 continue
             # Replace edge with path along streets
             if sg.has_edge(u, v):
@@ -269,7 +269,7 @@ def calc_steiner_spanning_tree(crs_projected,
                         # Mark this edge as failed so we don't try again
                         failed_reroutes.add((t, n))
                         failed_reroutes.add((n, t))
-                        print(f"  ⚠ Warning: Unable to reroute extra terminal edge from {t} to {n} - keeping direct edge")
+                        print(f"  WARNING: Unable to reroute extra terminal edge from {t} to {n} - keeping direct edge")
 
         # Finalize: return a minimum spanning tree to remove any cycles introduced by rerouting
         # Use weight attribute to keep distances consistent
@@ -421,9 +421,9 @@ def calc_steiner_spanning_tree(crs_projected,
         print(f"  Nodes: {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
         print(f"  Terminals: {len(terminals)} | Non-terminal leaves: {len(non_terminal_leaves)}")
         if terminals_bad_degree:
-            print(f"  ⚠ Terminals with degree !=1: {len(terminals_bad_degree)}")
+            print(f"  WARNING: Terminals with degree !=1: {len(terminals_bad_degree)}")
         if b2b:
-            print(f"  ⚠ Building-to-building edges: {len(b2b)}")
+            print(f"  WARNING: Building-to-building edges: {len(b2b)}")
         print(f"  Total edge length: {total_len:.2f} m")
 
     _report_network_stats(mst_non_directed, terminals_set, label="Final")
@@ -523,7 +523,7 @@ def calc_steiner_spanning_tree(crs_projected,
                     mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                                      type_mat_default, pipe_diameter_default)
                 else:
-                    print(f"  ⚠ Warning: Plant building '{plant_building_name}' not found in network, skipping")
+                    print(f"  WARNING: Plant building '{plant_building_name}' not found in network, skipping")
         elif plant_building_names is not None and type_network in ['DC', 'DH']:
             # Only create anchor-based plant for single network types (not DC+DH)
             # If plant_building_names is None, skip plant creation (caller will add plants)
@@ -634,13 +634,13 @@ def _validate_steiner_tree(mst_graph: nx.Graph, mst_nodes: gdf, mst_edges: gdf, 
                 terminal_degree_violations.append((coord, degree))
     
     if terminal_degree_violations:
-        print(f"  ⚠ WARNING: {len(terminal_degree_violations)} terminal nodes have degree != 1")
+        print(f"  WARNING: {len(terminal_degree_violations)} terminal nodes have degree != 1")
         for coord, deg in terminal_degree_violations[:5]:
             print(f"      - Terminal at {coord}: degree={deg} (expected 1)")
         if len(terminal_degree_violations) > 5:
             print(f"      ... and {len(terminal_degree_violations) - 5} more")
     else:
-        print(f"  ✓ All {len(terminal_coords)} terminal nodes have degree == 1 (leaf nodes)")
+        print(f"  OK: All {len(terminal_coords)} terminal nodes have degree == 1 (leaf nodes)")
     
     # Check 2: No direct terminal-to-terminal edges
     terminal_to_terminal_edges = []
@@ -651,24 +651,24 @@ def _validate_steiner_tree(mst_graph: nx.Graph, mst_nodes: gdf, mst_edges: gdf, 
             terminal_to_terminal_edges.append((u_norm, v_norm))
     
     if terminal_to_terminal_edges:
-        print(f"  ⚠ WARNING: {len(terminal_to_terminal_edges)} direct terminal-to-terminal edges found")
+        print(f"  WARNING: {len(terminal_to_terminal_edges)} direct terminal-to-terminal edges found")
         for u, v in terminal_to_terminal_edges[:5]:
             print(f"      - Edge between terminals: {u} <-> {v}")
         if len(terminal_to_terminal_edges) > 5:
             print(f"      ... and {len(terminal_to_terminal_edges) - 5} more")
         print("      This may indicate issues with the Steiner tree algorithm")
     else:
-        print("  ✓ No direct terminal-to-terminal edges (valid Steiner tree property)")
+        print("  OK: No direct terminal-to-terminal edges (valid Steiner tree property)")
     
     # Check 3: Network connectivity (single component)
     num_components = nx.number_connected_components(mst_graph)
     if num_components > 1:
-        print(f"  ⚠ WARNING: Network has {num_components} disconnected components (expected 1)")
+        print(f"  WARNING: Network has {num_components} disconnected components (expected 1)")
         component_sizes = [len(c) for c in nx.connected_components(mst_graph)]
         print(f"      Component sizes: {sorted(component_sizes, reverse=True)}")
     else:
-        print(f"  ✓ Network is fully connected (single component)")
-    
+        print("  OK: Network is fully connected (single component)")
+
     # Print diagnostic statistics
     total_length = mst_edges['weight'].sum() if 'weight' in mst_edges.columns else mst_edges.geometry.length.sum()
     
@@ -676,8 +676,8 @@ def _validate_steiner_tree(mst_graph: nx.Graph, mst_nodes: gdf, mst_edges: gdf, 
     consumer_nodes = len(mst_nodes[mst_nodes['type'] == 'CONSUMER'])
     plant_nodes = len(mst_nodes[mst_nodes['type'].fillna('').str.upper().str.contains('PLANT')])
     steiner_nodes = len(mst_nodes[mst_nodes['type'] == 'NONE'])
-    
-    print(f"\n  Steiner tree statistics:")
+
+    print("\n  Steiner tree statistics:")
     print(f"      - Total network length: {total_length:.2f} m")
     print(f"      - Total nodes: {len(mst_nodes)} ({consumer_nodes} consumer, {plant_nodes} plant, {steiner_nodes} steiner)")
     print(f"      - Total edges: {len(mst_edges)}")
