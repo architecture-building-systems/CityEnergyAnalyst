@@ -194,10 +194,29 @@ class ThermalNetwork(object):
         t0 = time.perf_counter()
 
         # import shapefiles containing the network's edges and nodes
-        network_edges_df = gpd.read_file(
-            self.locator.get_network_layout_edges_shapefile(self.network_type, self.network_name))
-        network_nodes_df = gpd.read_file(
-            self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name))
+        edges_path = self.locator.get_network_layout_shapefile(self.network_name)
+        nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
+
+        # Check if network layout files exist with helpful error messages
+        if not os.path.exists(edges_path):
+            raise FileNotFoundError(
+                f"{self.network_type} network layout is missing: {edges_path}\n"
+                f"Please run 'Network Layout' (Part 1) first to create the network layout."
+            )
+
+        if not os.path.exists(nodes_path):
+            demand_type = "cooling" if self.network_type == "DC" else "heating"
+            raise FileNotFoundError(
+                f"{self.network_type} network nodes file is missing: {nodes_path}\n"
+                f"This can happen if:\n"
+                f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
+                f"  2. The {self.network_type} network was skipped because no buildings have {demand_type} demand.\n"
+                f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
+                f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
+            )
+
+        network_edges_df = gpd.read_file(edges_path)
+        network_nodes_df = gpd.read_file(nodes_path)
 
         # check duplicated NODE/PIPE IDs
         duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
@@ -1691,8 +1710,12 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
         diameter_guess = initial_diameter_guess(thermal_network)
     else:
         # no iteration necessary
-        # read in diameters from shp file
+        # read in diameters from shp file (may return None on first run)
         diameter_guess = read_in_diameters_from_shapefile(thermal_network)
+        if diameter_guess is None:
+            # First run - no previous diameters available, use initial guess
+            print('No previous pipe diameters found, using initial diameter guess...')
+            diameter_guess = initial_diameter_guess(thermal_network)
 
     print('start calculating mass flows in edges...')
     iterations = 0
@@ -1811,10 +1834,23 @@ def load_node_flowrate_from_previous_run(thermal_network):
 
 
 def read_in_diameters_from_shapefile(thermal_network):
-    network_edges = gpd.read_file(
-        thermal_network.locator.get_network_layout_edges_shapefile(thermal_network.network_type,
-                                                                   thermal_network.network_name))
-    diameter_guess = network_edges['pipe_DN']
+    edges_path = thermal_network.locator.get_network_layout_edges_shapefile(
+        thermal_network.network_type, thermal_network.network_name)
+
+    # On first run, edges.shp doesn't exist yet (only layout.shp from Network Layout Part 1)
+    # Fall back to layout.shp if edges.shp doesn't exist
+    if not os.path.exists(edges_path):
+        edges_path = thermal_network.locator.get_network_layout_shapefile(thermal_network.network_name)
+
+    network_edges = gpd.read_file(edges_path)
+
+    # pipe_DN may not exist in layout.shp (only added after first thermal network run)
+    if 'pipe_DN' in network_edges.columns:
+        diameter_guess = network_edges['pipe_DN']
+    else:
+        # Return None to indicate no diameter guess available (will use defaults)
+        diameter_guess = None
+
     return diameter_guess
 
 
