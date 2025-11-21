@@ -1,5 +1,6 @@
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
+from shapely.geometry import MultiLineString
 
 from cea.constants import SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.graph_utils import gdf_to_nx
@@ -86,8 +87,6 @@ def check_network_connectivity(network_gdf: gdf, plot: bool = False, output_path
     # Calculate distances from isolated linestrings to closest main network geometry
     isolated_distances = []
     if num_isolated > 0 and num_components > 1:
-        from shapely.geometry import MultiLineString
-
         # Build geometries for each component (excluding isolated ones)
         component_geometries = []
         for comp_id, comp in enumerate(components):

@@ -61,7 +61,7 @@ def split_streets_at_intersections(network_gdf: gdf) -> gdf:
 
     :param network_gdf: GeoDataFrame with street LineStrings
     :type network_gdf: gdf
-    :return: Cleaned GeoDataFrame with endpoints snapped to nearby lines
+    :return: GeoDataFrame with streets split at intersection points
     :rtype: gdf
     """
     # Union all geometries - this automatically splits at intersections
