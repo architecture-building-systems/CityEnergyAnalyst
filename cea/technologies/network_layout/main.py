@@ -766,7 +766,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         if not connected_buildings_for_type:
             demand_type = "cooling" if type_network == "DC" else "heating"
             print(f"  ⚠ Skipping {type_network} network: No buildings with {demand_type} demand")
-            print(f"    (All buildings were filtered out by 'consider-only-buildings-with-demand')")
+            print("    (All buildings were filtered out by 'consider-only-buildings-with-demand')")
             continue
 
         # Calculate building centroids for this network type
