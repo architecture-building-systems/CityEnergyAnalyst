@@ -1364,6 +1364,7 @@ class NetworkLayoutSection(Section):
     consider_only_buildings_with_demand: bool
     algorithm: str
     connection_candidates: int
+    snap_tolerance: float | None
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
@@ -1391,6 +1392,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["algorithm"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["connection_candidates"]) -> int: ...
+    @overload
+    def __getattr__(self, item: Literal["snap_tolerance"]) -> float | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class MultiCriteriaSection(Section):

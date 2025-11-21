@@ -6,6 +6,7 @@ and other graph-related utilities for thermal network layout.
 """
 
 import networkx as nx
+from scipy.spatial import KDTree
 from shapely.geometry import Point, LineString, MultiLineString
 from geopandas import GeoDataFrame as gdf
 

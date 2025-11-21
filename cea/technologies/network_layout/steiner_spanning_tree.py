@@ -69,13 +69,12 @@ def calc_steiner_spanning_tree(crs_projected,
 
                                type_network,
                                total_demand_location,
-                               allow_looped_networks,
                                plant_building_names,
                                disconnected_building_names,
                                type_mat_default=TYPE_MAT_DEFAULT,
                                pipe_diameter_default=PIPE_DIAMETER_DEFAULT,
                                method: str = SteinerAlgorithm.Kou,
-                               connection_candidates: int = 1):
+                               connection_candidates: int = 3):
     """
     Calculate the minimum spanning tree of the network. Note that this function can't be run in parallel in it's
     present form.
@@ -90,12 +89,11 @@ def calc_steiner_spanning_tree(crs_projected,
     :param str type_network: "DC" or "DH"
     :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
     :param bool create_plant: e.g. True
-    :param bool allow_looped_networks:
     :param List[str] plant_building_names: e.g. ``['B001']``
     :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
     :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
     :param int connection_candidates: Number of nearest street connection points to consider per building.
-        Default is 1 (greedy nearest). Values of 3-5 enable better optimization via Kou's metric closure.
+        Default is 3 (balanced quality/speed). Values of 1 (fastest greedy) to 5 (best quality) are supported.
         Only works with Kou algorithm - Mehlhorn will use greedy nearest regardless.
     :return: ``(mst_edges, mst_nodes)``
     """
@@ -335,19 +333,30 @@ def calc_steiner_spanning_tree(crs_projected,
             for n in list(sg.nodes()):
                 if n in terminals:
                     continue
-                # Preserve original street junctions (degree >= 3 intersections)
-                if n in original_junctions:
-                    continue
                 if n not in sg:
                     continue
                 neigh = list(sg.neighbors(n))
                 if len(neigh) != 2:
+                    # Only preserve nodes that are CURRENTLY degree >= 3 in the Steiner tree
+                    # Don't preserve nodes that were degree >= 3 in original streets but are now degree 2
                     continue
                 a, b = neigh[0], neigh[1]
 
-                # Do not merge across terminal edges
-                if is_service_edge(a, n) or is_service_edge(n, b):
+                # Check if node is adjacent to terminals
+                terminals_adjacent = sum([a in terminals, b in terminals])
+
+                if terminals_adjacent == 2:
+                    # Both neighbors are terminals (building-to-building edge)
+                    # This shouldn't exist but skip to be defensive
                     continue
+                elif terminals_adjacent == 1:
+                    # One neighbor is terminal - this is on a service stub
+                    # Only preserve if this is an original street junction
+                    if n in original_junctions:
+                        # Original junction serving as service connection point - preserve
+                        continue
+                    # else: Artificial intermediate node on service stub - contract it (fall through)
+                # else: terminals_adjacent == 0 - interior node, always contract (fall through)
 
                 # Fetch edge data
                 data_an = sg.get_edge_data(a, n, default={})
@@ -414,8 +423,6 @@ def calc_steiner_spanning_tree(crs_projected,
     # since edges of graph is guranteed to be connected to nodes, we alter the edge geometries to snap to the nodes before writing to shapefile
     # This is to avoid small discrepancies due to rounding errors or slight misalignments when creating the graph from shapefiles (defensive programming)
     def replace_start_endpoints(line: LineString, u, v):
-        from shapely.geometry import Point
-
         coords = list(line.coords)
         start_point = Point(coords[0])
 
@@ -493,17 +500,8 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_edges.loc[:, 'pipe_DN'] = pipe_diameter_default
     mst_edges.loc[:, 'name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
-    if allow_looped_networks:
-        # add loops to the network by connecting None nodes that exist in the potential network
-        mst_edges, mst_nodes = add_loops_to_network(G,
-                                                    mst_non_directed,
-                                                    mst_nodes,
-                                                    mst_edges,
-                                                    type_mat_default,
-                                                    pipe_diameter_default)
-        # mst_edges.drop(['weight'], inplace=True, axis=1)
-
-    elif os.path.exists(total_demand_location):
+    # Create plant nodes if demand data exists
+    if os.path.exists(total_demand_location):
         # Check if we should skip plant creation (indicated by None)
         if plant_building_names is not None and len(plant_building_names) > 0:
             # Create a PLANT node for each specified plant building
@@ -521,6 +519,9 @@ def calc_steiner_spanning_tree(crs_projected,
             building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
             mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
                                                              type_mat_default, pipe_diameter_default)
+
+    # Validate Steiner tree properties before saving
+    _validate_steiner_tree(mst_non_directed, mst_nodes, mst_edges, terminal_nodes_coordinates)
 
     mst_edges.crs = crs_projected
     mst_nodes.crs = crs_projected
@@ -594,7 +595,125 @@ def _add_edge_to_network(mst_edges: gdf, start_coords, end_coords, pipe_dn, type
     return mst_edges
 
 
+def _validate_steiner_tree(mst_graph: nx.Graph, mst_nodes: gdf, mst_edges: gdf, terminal_coords: set):
+    """
+    Validate Steiner tree properties and print diagnostic statistics.
+    
+    Checks:
+    1. Terminal nodes have degree == 1 (leaf nodes)
+    2. No direct terminal-to-terminal edges (violates Steiner tree property)
+    3. Network is fully connected (single component)
+    4. Print network statistics (total length, node counts by type)
+    
+    :param mst_graph: NetworkX graph of the MST
+    :param mst_nodes: GeoDataFrame of MST nodes
+    :param mst_edges: GeoDataFrame of MST edges
+    :param terminal_coords: Set of (x, y) coordinates of terminal (building) nodes
+    :raises AssertionError: If validation fails
+    """
+    print("\n  Validating Steiner tree properties...")
+    
+    # Check 1: Terminal nodes should have degree == 1
+    terminal_degree_violations = []
+    for coord in terminal_coords:
+        if coord in mst_graph:
+            degree = mst_graph.degree(coord)
+            if degree != 1:
+                terminal_degree_violations.append((coord, degree))
+    
+    if terminal_degree_violations:
+        print(f"  ⚠ WARNING: {len(terminal_degree_violations)} terminal nodes have degree != 1")
+        for coord, deg in terminal_degree_violations[:5]:
+            print(f"      - Terminal at {coord}: degree={deg} (expected 1)")
+        if len(terminal_degree_violations) > 5:
+            print(f"      ... and {len(terminal_degree_violations) - 5} more")
+    else:
+        print(f"  ✓ All {len(terminal_coords)} terminal nodes have degree == 1 (leaf nodes)")
+    
+    # Check 2: No direct terminal-to-terminal edges
+    terminal_to_terminal_edges = []
+    for u, v in mst_graph.edges():
+        u_norm = tuple(u) if isinstance(u, tuple) else u
+        v_norm = tuple(v) if isinstance(v, tuple) else v
+        if u_norm in terminal_coords and v_norm in terminal_coords:
+            terminal_to_terminal_edges.append((u_norm, v_norm))
+    
+    if terminal_to_terminal_edges:
+        print(f"  ⚠ WARNING: {len(terminal_to_terminal_edges)} direct terminal-to-terminal edges found")
+        for u, v in terminal_to_terminal_edges[:5]:
+            print(f"      - Edge between terminals: {u} <-> {v}")
+        if len(terminal_to_terminal_edges) > 5:
+            print(f"      ... and {len(terminal_to_terminal_edges) - 5} more")
+        print("      This may indicate issues with the Steiner tree algorithm")
+    else:
+        print("  ✓ No direct terminal-to-terminal edges (valid Steiner tree property)")
+    
+    # Check 3: Network connectivity (single component)
+    num_components = nx.number_connected_components(mst_graph)
+    if num_components > 1:
+        print(f"  ⚠ WARNING: Network has {num_components} disconnected components (expected 1)")
+        component_sizes = [len(c) for c in nx.connected_components(mst_graph)]
+        print(f"      Component sizes: {sorted(component_sizes, reverse=True)}")
+    else:
+        print(f"  ✓ Network is fully connected (single component)")
+    
+    # Print diagnostic statistics
+    total_length = mst_edges['weight'].sum() if 'weight' in mst_edges.columns else mst_edges.geometry.length.sum()
+    
+    # Count nodes by type
+    consumer_nodes = len(mst_nodes[mst_nodes['type'] == 'CONSUMER'])
+    plant_nodes = len(mst_nodes[mst_nodes['type'].fillna('').str.upper().str.contains('PLANT')])
+    steiner_nodes = len(mst_nodes[mst_nodes['type'] == 'NONE'])
+    
+    print(f"\n  Steiner tree statistics:")
+    print(f"      - Total network length: {total_length:.2f} m")
+    print(f"      - Total nodes: {len(mst_nodes)} ({consumer_nodes} consumer, {plant_nodes} plant, {steiner_nodes} steiner)")
+    print(f"      - Total edges: {len(mst_edges)}")
+    print(f"      - Average edge length: {total_length / len(mst_edges):.2f} m" if len(mst_edges) > 0 else "      - No edges")
+    print()
+
+
+def calc_coord_anchor(total_demand_location, nodes_df, type_network):
+    total_demand = pd.read_csv(total_demand_location)
+    nodes_names_demand = nodes_df.merge(total_demand, left_on="building", right_on="name", how="inner")
+    if type_network == "DH":
+        field = "QH_sys_MWhyr"
+    elif type_network == "DC":
+        field = "QC_sys_MWhyr"
+    else:
+        raise ValueError("Invalid value for variable 'type_network': {type_network}".format(type_network=type_network))
+
+    max_value = nodes_names_demand[field].max()
+    building_series = nodes_names_demand[nodes_names_demand[field] == max_value]
+
+    return building_series
+
+
+def building_node_from_name(building_name, nodes_df):
+    building_series = nodes_df[nodes_df['building'] == building_name]
+    return building_series
+
+
+# =============================================================================
+# LEGACY FUNCTIONS - DEPRECATED (kept for backward compatibility)
+# =============================================================================
+
 def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn) -> tuple[gdf, gdf]:
+    """
+    Add loops to network by connecting NONE nodes that exist in the potential network.
+    
+    DEPRECATED: This function is kept for legacy compatibility but is no longer used.
+    Loop augmentation has been removed from the default workflow as it can create
+    suboptimal network topologies and complicate thermal network simulation.
+    
+    :param G: Full potential network graph
+    :param mst_non_directed: Current MST graph
+    :param new_mst_nodes: GeoDataFrame of MST nodes
+    :param mst_edges: GeoDataFrame of MST edges
+    :param type_mat: Material type for new edges
+    :param pipe_dn: Pipe diameter for new edges
+    :return: Tuple of (updated mst_edges, updated mst_nodes)
+    """
     added_a_loop = False
 
     # Initialize set of existing edges from current mst_edges
@@ -680,23 +799,3 @@ def add_loops_to_network(G: nx.Graph, mst_non_directed: nx.Graph, new_mst_nodes:
         print('No loops added.')
     return mst_edges, new_mst_nodes
 
-
-def calc_coord_anchor(total_demand_location, nodes_df, type_network):
-    total_demand = pd.read_csv(total_demand_location)
-    nodes_names_demand = nodes_df.merge(total_demand, left_on="building", right_on="name", how="inner")
-    if type_network == "DH":
-        field = "QH_sys_MWhyr"
-    elif type_network == "DC":
-        field = "QC_sys_MWhyr"
-    else:
-        raise ValueError("Invalid value for variable 'type_network': {type_network}".format(type_network=type_network))
-
-    max_value = nodes_names_demand[field].max()
-    building_series = nodes_names_demand[nodes_names_demand[field] == max_value]
-
-    return building_series
-
-
-def building_node_from_name(building_name, nodes_df):
-    building_series = nodes_df[nodes_df['building'] == building_name]
-    return building_series

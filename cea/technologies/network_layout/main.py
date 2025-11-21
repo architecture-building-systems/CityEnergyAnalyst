@@ -3,7 +3,9 @@ import shutil
 from dataclasses import dataclass, field
 
 import geopandas as gpd
+import networkx as nx
 import pandas as pd
+from shapely.geometry import Point
 
 import cea.config
 import cea.inputlocator
@@ -13,6 +15,7 @@ from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_s
 from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
+from cea.optimization_new.user_network_loader import load_user_defined_network, validate_network_covers_district_buildings
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -172,7 +175,7 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
-def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator, expected_num_components=None):
+def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator, expected_num_components=None, snap_tolerance=SNAP_TOLERANCE):
     """
     Auto-create missing PLANT nodes in user-defined networks.
 
@@ -189,11 +192,9 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     :param network_type: "DH" or "DC"
     :param locator: InputLocator instance
     :param expected_num_components: Expected number of disconnected components (optional, for validation)
+    :param snap_tolerance: Maximum distance for snapping geometries (meters), defaults to SNAP_TOLERANCE
     :return: Tuple of (updated nodes_gdf, updated edges_gdf, list of created plants)
     """
-    import networkx as nx
-    from shapely.geometry import Point
-
     # Check for existing plants based on network type
     # PLANT = shared (both DC and DH)
     # PLANT_DC = DC only
@@ -223,7 +224,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     # Note: User-defined networks may not have start_node/end_node columns yet
     # We need to match edges to nodes by geometry
 
-    # Match edges to nodes by geometry using SNAP_TOLERANCE for consistency with connectivity_potential
+    # Match edges to nodes by geometry using snap_tolerance for consistency with connectivity_potential
 
     # First pass: identify missing nodes at edge endpoints and auto-create them
     missing_nodes = {}  # key: (x, y), value: (exact Point, list of edge names)
@@ -236,11 +237,11 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
         # Check if nodes exist at endpoints
         start_has_node = any(
-            node.geometry.distance(start_point) < SNAP_TOLERANCE
+            node.geometry.distance(start_point) < snap_tolerance
             for _, node in nodes_gdf.iterrows()
         )
         end_has_node = any(
-            node.geometry.distance(end_point) < SNAP_TOLERANCE
+            node.geometry.distance(end_point) < snap_tolerance
             for _, node in nodes_gdf.iterrows()
         )
 
@@ -294,10 +295,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
         for node_idx, node in nodes_gdf.iterrows():
             node_geom = node.geometry
 
-            if start_node_idx is None and node_geom.distance(start_point) < SNAP_TOLERANCE:
+            if start_node_idx is None and node_geom.distance(start_point) < snap_tolerance:
                 start_node_idx = node_idx
 
-            if end_node_idx is None and node_geom.distance(end_point) < SNAP_TOLERANCE:
+            if end_node_idx is None and node_geom.distance(end_point) < snap_tolerance:
                 end_node_idx = node_idx
 
             if start_node_idx is not None and end_node_idx is not None:
@@ -588,7 +589,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     list_include_services = config.network_layout.include_services
     consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
     connection_candidates = config.network_layout.connection_candidates
-    allow_looped_networks = False
+    snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
     steiner_algorithm = network_layout.algorithm
 
     # Validate include_services is not empty
@@ -772,11 +773,13 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         )
 
         # Calculate potential network graph
-        # Use connection_candidates for k-nearest optimization (default 1 for greedy nearest)
+        # Use connection_candidates for k-nearest optimization (default 3 for balanced quality/speed)
+        # Use snap_tolerance for endpoint snapping (configured or default SNAP_TOLERANCE)
         potential_network_graph = calc_connectivity_network_with_geometry(
             street_network_df,
             building_centroids_df,
             connection_candidates=connection_candidates,
+            snap_tolerance=snap_tolerance,
         )
 
         # Extract metadata from graph
@@ -801,7 +804,6 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                                    temp_nodes_path,
                                    type_network,
                                    total_demand_location,
-                                   allow_looped_networks,
                                    None,  # None = skip plant creation (caller will add plants manually)
                                    disconnected_building_names,
                                    method=steiner_algorithm,
@@ -952,7 +954,6 @@ class NetworkLayout:
     # TODO: Remove unused fields
     pipe_diameter: float = 0.0
     type_mat: str = ""
-    allow_looped_networks: bool = False
     consider_only_buildings_with_demand: bool = False
 
     disconnected_buildings: list[str] = field(default_factory=list)
@@ -988,7 +989,7 @@ class NetworkLayout:
         return network_name
 
 
-def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, cooling_plant_building, heating_plant_building):
+def process_user_defined_network(config, locator, network_layout, edges_shp, nodes_shp, geojson_path, cooling_plant_building, heating_plant_building, snap_tolerance=SNAP_TOLERANCE):
     """
     Process user-defined network layout from shapefiles or GeoJSON.
 
@@ -1000,15 +1001,9 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     :param geojson_path: Path to GeoJSON file (optional)
     :param cooling_plant_building: Cooling plant building names from config
     :param heating_plant_building: Heating plant building names from config
+    :param snap_tolerance: Maximum distance for snapping geometries (meters), defaults to SNAP_TOLERANCE
     :return: None (raises exception if processing fails)
     """
-
-    # Import validation functions from user_network_loader
-    from cea.optimization_new.user_network_loader import (
-        load_user_defined_network,
-        validate_network_covers_district_buildings
-    )
-
     # Load and validate user-defined network
     try:
         result = load_user_defined_network(config, locator, edges_shp, nodes_shp, geojson_path)
@@ -1201,7 +1196,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         nodes_gdf_dc, edges_gdf_dc, created_plants_dc = auto_create_plant_nodes(
             nodes_gdf_dc, edges_gdf_dc, zone_gdf,
             cooling_plant_buildings_list, 'DC', locator,
-            expected_num_components
+            expected_num_components,
+            snap_tolerance
         )
         
         # Collect edges (including plant connection edges)
@@ -1231,7 +1227,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         nodes_gdf_dh, edges_gdf_dh, created_plants_dh = auto_create_plant_nodes(
             nodes_gdf_dh, edges_gdf_dh, zone_gdf,
             heating_plant_buildings_list, 'DH', locator,
-            expected_num_components
+            expected_num_components,
+            snap_tolerance
         )
         
         # Collect edges (including plant connection edges)
@@ -1287,6 +1284,7 @@ def main(config: cea.config.Configuration):
     network_layout = NetworkLayout.from_config(config.network_layout, locator)
     cooling_plant_building = config.network_layout.cooling_plant_building
     heating_plant_building = config.network_layout.heating_plant_building
+    snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
 
     print(f"Network name: {network_layout.network_name}")
 
@@ -1305,7 +1303,8 @@ def main(config: cea.config.Configuration):
             process_user_defined_network(
                 config, locator, network_layout,
                 edges_shp, nodes_shp, geojson_path,
-                cooling_plant_building, heating_plant_building
+                cooling_plant_building, heating_plant_building,
+                snap_tolerance
             )
 
         # Generate network layout using Steiner tree (current behavior or fallback)

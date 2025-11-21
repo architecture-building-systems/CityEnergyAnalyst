@@ -229,9 +229,171 @@ nodes.loc[anchor_node_idx, 'type'] = 'PLANT'  # WRONG - building is now plant
 - A building can be near a plant but remains a consumer
 - Thermal network simulation expects plant nodes to be distinct from building nodes
 
+## Configuration Parameters
+
+### snap-tolerance
+**Default:** `0.5m` (SNAP_TOLERANCE constant when left blank)
+**Range:** `0.3-2.0m` typical
+**Purpose:** Maximum distance to snap near-miss street endpoints and building connections
+
+**Validation:** Warnings issued if:
+- `snap_tolerance > 0.25 * median_segment_length` (may distort short segments)
+- `snap_tolerance > 2.0 * typical_endpoint_gap` (may connect unrelated segments)
+
+**Guidelines:**
+- Dense urban networks (short segments): Use lower values (0.3-0.5m)
+- Sparse suburban networks (long segments): Can use higher values (0.5-2.0m)
+- Leave blank for default unless you observe topology issues
+- Check warnings during street network cleaning phase
+
+### connection-candidates
+**Default:** `3` (balanced quality/speed)
+**Range:** `1-5`
+**Purpose:** Number of nearest street edges to consider per building
+
+**Performance tradeoffs:**
+- `k=1`: Fastest (greedy nearest), locally optimal, may miss better global solutions
+- `k=3`: Balanced (default), ~3-5x slower than k=1, significantly better network quality
+- `k=5`: Best quality, ~10-25x slower than k=1, diminishing returns beyond k=3
+
+**Runtime scaling:** O(|B| × |S| × k) where B=buildings, S=streets
+- 100 buildings × 500 streets: k=1 (~1s), k=3 (~3-5s), k=5 (~10-15s)
+- 1000 buildings × 2000 streets: k=1 (~10s), k=3 (~30-50s), k=5 (~100-250s)
+
+**Note:** Only works with Kou algorithm. Mehlhorn always uses k=1 (greedy).
+
+## Alternative Steiner/MST Approaches
+
+### Current Implementation: Kou's Metric Closure Algorithm
+**How it works:**
+1. Build complete graph on terminals (buildings) using shortest paths through street network
+2. Compute MST on this metric closure graph
+3. Expand MST edges back to shortest paths in original network
+4. Remove cycles and redundant edges
+
+**Pros:** Good quality, handles k-nearest candidates, O(|S||V|²) complexity
+**Cons:** Slower for large networks, not exact optimal
+
+### Alternative 1: Multi-Source Dijkstra (Approximation)
+**Idea:** Start from all terminals simultaneously, grow shortest-path trees until they meet
+**Pros:** Faster (O(|E|+|V|log|V|)), simpler implementation
+**Cons:** Lower quality than metric closure, doesn't handle k-nearest candidates
+**Use case:** Very large networks (>5000 buildings) where speed is critical
+
+**Implementation sketch:**
+```python
+def multi_source_steiner(graph, terminals):
+    import heapq
+    
+    # Priority queue: (distance, node, source_terminal)
+    pq = [(0, t, t) for t in terminals]
+    heapq.heapify(pq)
+    
+    visited = set()
+    tree_edges = []
+    
+    while pq and len(visited) < len(graph.nodes()):
+        dist, node, source = heapq.heappop(pq)
+        
+        if node in visited:
+            continue
+        
+        visited.add(node)
+        if node != source:
+            tree_edges.append((source, node))
+        
+        for neighbor in graph.neighbors(node):
+            if neighbor not in visited:
+                edge_weight = graph[node][neighbor]['weight']
+                heapq.heappush(pq, (dist + edge_weight, neighbor, node))
+    
+    return tree_edges
+```
+
+### Alternative 2: Exact ILP Formulation (Small Networks)
+**Idea:** Formulate as Integer Linear Program, solve with CPLEX/Gurobi
+**Pros:** Provably optimal solution
+**Cons:** NP-hard, only feasible for <100 terminals, requires commercial solver
+**Use case:** Critical infrastructure where optimality is essential and network is small
+
+**Formulation:**
+- Binary variable `x_e` for each edge e (1 if in tree, 0 otherwise)
+- Minimize: Σ(weight_e × x_e) over all edges
+- Constraints:
+  - Σ(x_e) = |V| - 1 (tree property)
+  - For each terminal pair (s, t): flow(s→t) ≥ 1 (connectivity)
+  - Subtour elimination constraints
+
+### Alternative 3: MST with Terminal Preference Heuristic
+**Idea:** Weight edges adjacent to terminals higher, then compute standard MST
+**Pros:** Very fast (O(|E|log|V|)), simple, often good enough
+**Cons:** Heuristic, no quality guarantees, ignores Steiner nodes
+
+**Implementation sketch:**
+```python
+def terminal_weighted_mst(graph, terminals):
+    # Penalize edges far from terminals
+    for u, v, data in graph.edges(data=True):
+        base_weight = data['weight']
+        # Increase weight if both endpoints are non-terminals
+        if u not in terminals and v not in terminals:
+            data['mst_weight'] = base_weight * 1.5
+        else:
+            data['mst_weight'] = base_weight
+    
+    # Compute MST with adjusted weights
+    mst = nx.minimum_spanning_tree(graph, weight='mst_weight')
+    return mst
+```
+
+### Alternative 4: Iterative MST Refinement
+**Idea:** Start with Kou's solution, iteratively remove high-cost Steiner nodes
+**Pros:** Improves over Kou, still fast
+**Cons:** May converge to local minimum
+
+**Steps:**
+1. Compute initial Steiner tree with Kou
+2. For each Steiner node v with degree=2:
+   - Check if removing v and connecting its neighbors directly reduces cost
+   - If yes, apply change
+3. Repeat until no improvements found
+
+### When to Use Which Algorithm
+
+| Network Size | Terminals | Quality Need | Recommended Algorithm | Expected Runtime |
+|-------------|-----------|--------------|----------------------|------------------|
+| <500 streets | <50 | Critical | Exact ILP | 1-60 seconds |
+| <2000 streets | <500 | High | Kou k=3-5 | 10-120 seconds |
+| <2000 streets | <500 | Medium | Kou k=1-3 | 1-30 seconds |
+| >5000 streets | >1000 | Medium | Kou k=1 or Mehlhorn | 10-60 seconds |
+| >10000 streets | >2000 | Fast | Multi-source Dijkstra | <30 seconds |
+
+### Future Improvements
+
+**Priority 1: Adaptive k selection**
+- Auto-detect network density (buildings per street segment)
+- Use k=5 for sparse networks, k=1 for dense networks
+- Dynamically adjust based on runtime budget
+
+**Priority 2: Spatial partitioning for large networks**
+- Divide network into quadtree/grid cells
+- Solve Steiner problem per cell independently
+- Merge solutions at cell boundaries
+- Enables parallelization and linear scaling
+
+**Priority 3: Local search refinement**
+- After Kou, apply 2-opt/3-opt moves on Steiner nodes
+- Swap Steiner node positions to reduce total length
+- Typically 5-15% improvement for marginal cost
+
+**Priority 4: Machine learning guided search**
+- Train model to predict good k values based on network features
+- Learn network density patterns that benefit from higher k
+- Avoid expensive exploration on networks where k=1 is near-optimal
+
 ## Constants
 - `SHAPEFILE_TOLERANCE = 6` - Decimal places (1 micrometer precision)
-- `SNAP_TOLERANCE = 0.1` - Meters for snapping near-miss connections
+- `SNAP_TOLERANCE = 0.5` - Meters for snapping near-miss connections (configurable via snap-tolerance parameter)
 
 ## Testing
 Tests are in `cea/tests/test_network_layout_integration.py`

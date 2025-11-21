@@ -29,15 +29,17 @@ Key guarantees:
 """
 
 import warnings
+from collections import defaultdict, Counter
 
 import networkx as nx
+import numpy as np
 from geopandas import GeoDataFrame as gdf
 from shapely import Point, LineString
-from shapely.ops import substring
+from shapely.ops import substring, linemerge
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
-from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, normalize_geometry
+from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, normalize_geometry, _merge_orphan_nodes_to_nearest
 
 
 def split_streets_at_intersections(network_gdf: gdf) -> gdf:
@@ -53,14 +55,14 @@ def split_streets_at_intersections(network_gdf: gdf) -> gdf:
     2. Splits lines at intersection points
     3. Returns a MultiLineString with properly segmented lines
 
-    :param network_gdf: GeoDataFrame with street LineStrings
-    :type network_gdf: gdf
-    :return: GeoDataFrame with streets split at all intersections
-    :rtype: gdf
-
     Example:
         Before: Two crossing streets as continuous lines
         After: Four line segments meeting at intersection point
+
+    :param network_gdf: GeoDataFrame with street LineStrings
+    :type network_gdf: gdf
+    :return: Cleaned GeoDataFrame with endpoints snapped to nearby lines
+    :rtype: gdf
     """
     # Union all geometries - this automatically splits at intersections
     merged = network_gdf.geometry.union_all()
@@ -104,9 +106,6 @@ def simplify_street_network_geometric(network_gdf: gdf, coord_precision: int = S
         >>> simplified = simplify_street_network_geometric(split_network)
         >>> # Result: A-----------E (1 segment, preserving all vertices)
     """
-    from collections import defaultdict
-    from shapely.ops import linemerge
-
     if len(network_gdf) == 0:
         return network_gdf
 
@@ -257,8 +256,6 @@ def snap_endpoints_to_nearby_lines(network_gdf: gdf, snap_tolerance: float, spli
         >>> # Just snap without splitting
         >>> snapped = snap_endpoints_to_nearby_lines(streets_gdf, snap_tolerance=0.5, split_lines=False)
     """
-    from collections import Counter
-
     # Ensure all geometries are LineStrings (explode MultiLineStrings first)
     # This avoids errors when accessing `.coords` on MultiLineString geometries
     if not all(network_gdf.geometry.geom_type == 'LineString'):
@@ -436,36 +433,43 @@ def near_analysis(building_centroids, street_network: gdf, k: int = 1):
     """
     Find k-nearest street edges for each building centroid.
 
-    Single, index-safe implementation for all k ≥ 1.
+    Optimized implementation using vectorized operations and spatial indexing
+    for efficient k-nearest neighbor search.
 
     :param building_centroids: GeoDataFrame of building centroids
     :param street_network: GeoDataFrame of street network edges
     :param k: Number of nearest edges to find per building (default 1)
     :return: GeoDataFrame with building_idx, street_idx, and connection point geometry
     """
-    from cea.technologies.network_layout.graph_utils import normalize_geometry
-
     if k < 1:
         k = 1
 
+    if len(street_network) == 0 or len(building_centroids) == 0:
+        return gdf({"building_idx": [], "idx": []}, geometry=[], crs=street_network.crs)
+
     results = []
-    # Iterate buildings and compute (up to) k nearest streets each.
-    # This avoids index alignment pitfalls of vectorized nearest operations.
+    k_nearest_count = min(k, len(street_network))
+
+    # Pre-compute all distances in a vectorized manner
+    # For each building, calculate distances to all streets (vectorized)
+    # Then select k smallest per building
     for bldg_idx, bldg_row in building_centroids.iterrows():
         bldg_geom = bldg_row.geometry
 
-        # Compute distances to all streets (vectorized) and pick the smallest k
+        # Compute distances to all streets (vectorized)
         distances = street_network.geometry.distance(bldg_geom)
-        if distances.isna().all() or len(distances) == 0:
+        if distances.isna().all():
             continue
 
-        k_nearest_count = min(k, len(street_network))
+        # Get k-nearest street indices
         k_nearest_indices = distances.nsmallest(k_nearest_count).index.tolist()
 
+        # Batch process the k-nearest streets for this building
         for street_idx in k_nearest_indices:
             street_line = street_network.loc[street_idx].geometry
             # Project building point onto street line and interpolate
-            connection_point_raw = street_line.interpolate(street_line.project(bldg_geom))
+            projected_distance = street_line.project(bldg_geom)
+            connection_point_raw = street_line.interpolate(projected_distance)
             connection_point_normalized = normalize_geometry(connection_point_raw, SHAPEFILE_TOLERANCE)
 
             results.append({
@@ -617,7 +621,101 @@ def create_terminals(building_centroids: gdf, street_network: gdf, connection_ca
     return combined_network
 
 
-def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf) -> tuple[gdf, gdf, str]:
+def _validate_snap_tolerance(streets_network_df: gdf, snap_tolerance: float):
+    """
+    Validate snap_tolerance parameter and warn if value is too large relative to street geometry.
+    
+    Large tolerance values can cause unintended connections and distorted network topology.
+    This function calculates street segment statistics and warns if tolerance exceeds
+    reasonable thresholds based on the actual street network geometry.
+    
+    :param streets_network_df: GeoDataFrame with street network geometries
+    :param snap_tolerance: Configured snap tolerance value (meters)
+    """
+    # Calculate street segment lengths
+    segment_lengths = streets_network_df.geometry.length
+    
+    if len(segment_lengths) == 0:
+        return  # Empty network, skip validation
+    
+    median_length = segment_lengths.median()
+    percentile_95_length = segment_lengths.quantile(0.95)
+    
+    # Calculate endpoint proximity statistics (estimate typical gaps between near-miss endpoints)
+    # Use a sample if network is large (>1000 segments)
+    sample_size = min(1000, len(streets_network_df))
+    sample_df = streets_network_df.sample(n=sample_size, random_state=42) if len(streets_network_df) > sample_size else streets_network_df
+    
+    # Build spatial index for efficient proximity queries
+    sindex = streets_network_df.sindex
+    
+    # For each line endpoint, find distance to nearest other line
+    endpoint_gaps = []
+    for idx, row in sample_df.iterrows():
+        geom = row.geometry
+        if geom.is_empty:
+            continue
+        coords = list(geom.coords)
+        if len(coords) < 2:
+            continue
+        
+        # Check both endpoints
+        for endpoint_coord in [coords[0], coords[-1]]:
+            endpoint = Point(endpoint_coord)
+            
+            # Find nearby line segments (within 2 * snap_tolerance search radius)
+            search_radius = max(2.0 * snap_tolerance, 1.0)  # At least 1m search radius
+            nearby_indices = sindex.query(endpoint.buffer(search_radius), predicate='intersects')
+            
+            min_gap = float('inf')
+            for nearby_idx in nearby_indices:
+                if nearby_idx == idx:
+                    continue  # Skip self
+                nearby_geom = streets_network_df.iloc[nearby_idx].geometry
+                gap = endpoint.distance(nearby_geom)
+                if gap > 0:  # Exclude touching lines
+                    min_gap = min(min_gap, gap)
+            
+            if min_gap < float('inf'):
+                endpoint_gaps.append(min_gap)
+    
+    # Calculate gap statistics
+    if endpoint_gaps:
+        typical_gap = np.median(endpoint_gaps)
+        gap_95th = np.percentile(endpoint_gaps, 95)
+    else:
+        typical_gap = None
+        gap_95th = None
+    
+    # Warning thresholds
+    # 1. Tolerance should be < 25% of median segment length (prevents distorting short segments)
+    # 2. Tolerance should be < 2x typical endpoint gap (prevents over-snapping)
+    warning_triggered = False
+    
+    if snap_tolerance > 0.25 * median_length:
+        warning_triggered = True
+        print(f"  ⚠ WARNING: snap_tolerance ({snap_tolerance:.2f}m) is large relative to street segments")
+        print(f"      - Current tolerance: {snap_tolerance:.2f}m")
+        print(f"      - Median street segment length: {median_length:.2f}m")
+        print(f"      - Recommended maximum: {0.25 * median_length:.2f}m (25% of median segment)")
+        print(f"      → Large tolerance may distort short street segments")
+    
+    if typical_gap is not None and snap_tolerance > 2.0 * typical_gap:
+        warning_triggered = True
+        print(f"  ⚠ WARNING: snap_tolerance ({snap_tolerance:.2f}m) exceeds typical endpoint gaps")
+        print(f"      - Current tolerance: {snap_tolerance:.2f}m")
+        print(f"      - Typical endpoint gap: {typical_gap:.2f}m (median)")
+        print(f"      - 95th percentile gap: {gap_95th:.2f}m")
+        print(f"      - Recommended maximum: {2.0 * typical_gap:.2f}m (2x typical gap)")
+        print(f"      → Large tolerance may connect unrelated street segments")
+    
+    if warning_triggered:
+        print(f"  ℹ Advisory: Typical snap_tolerance range is 0.3-2.0m")
+        print(f"             Leave snap-tolerance blank in config to use default ({SNAP_TOLERANCE}m)")
+        print()
+
+
+def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf, snap_tolerance: float = SNAP_TOLERANCE) -> tuple[gdf, gdf, str]:
     """
     Preprocessing for connectivity network functions.
 
@@ -626,6 +724,7 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
     2. Validates geometries
     3. Cleans street network (splits at intersections, snaps near-miss endpoints)
 
+    :param snap_tolerance: Maximum distance to snap near-miss endpoints (meters), defaults to SNAP_TOLERANCE
     :return: Tuple of (streets_gdf, buildings_gdf, crs)
     """
     # Convert both streets and buildings to projected CRS for accurate distance calculations
@@ -644,7 +743,11 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf)
 
     # Clean street network: split at intersections and snap near-miss endpoints
     print("Cleaning street network...")
-    streets_network_df = clean_street_network(streets_network_df, SNAP_TOLERANCE)
+    
+    # Validate snap_tolerance before cleaning
+    _validate_snap_tolerance(streets_network_df, snap_tolerance)
+    
+    streets_network_df = clean_street_network(streets_network_df, snap_tolerance)
 
     # Normalise all coordinates to consistent precision (prevents floating-point issues)
     print(f"\nNormalising coordinates to consistent precision ({SHAPEFILE_TOLERANCE} decimal places)...")
@@ -833,6 +936,7 @@ def calc_connectivity_network_with_geometry(
     streets_network_df: gdf,
     building_centroids_df: gdf,
     connection_candidates: int = 1,
+    snap_tolerance: float = SNAP_TOLERANCE,
 ):
     """
     Create connectivity network graph preserving street geometries and building terminal metadata.
@@ -857,6 +961,7 @@ def calc_connectivity_network_with_geometry(
     :param building_centroids_df: GeoDataFrame with building centroids
     :param connection_candidates: Number of nearest street edges to connect each building to.
         Default is 1 (greedy nearest). Values > 1 enable k-nearest optimization with Kou algorithm.
+    :param snap_tolerance: Maximum distance to snap near-miss endpoints (meters), defaults to SNAP_TOLERANCE
     :return: NetworkX graph with preserved geometries and building terminal metadata
     :raises ValueError: If network has disconnected components after all corrections applied
     """
@@ -865,7 +970,7 @@ def calc_connectivity_network_with_geometry(
 
     # Prepare inputs (CRS conversion, validation, cleaning)
     streets_network_df, building_centroids_df, crs = _prepare_network_inputs(
-        streets_network_df, building_centroids_df
+        streets_network_df, building_centroids_df, snap_tolerance
     )
 
     # Preserve a copy of the cleaned street network (without terminals) for diagnostics and retries
@@ -899,7 +1004,6 @@ def calc_connectivity_network_with_geometry(
 
     # Clean orphan nodes: merge small isolated street fragments to main network
     # This fixes disconnections from isolated street segments while protecting building terminals
-    from cea.technologies.network_layout.graph_utils import _merge_orphan_nodes_to_nearest
     graph = _merge_orphan_nodes_to_nearest(
         graph,
         terminal_nodes=terminal_nodes,
@@ -909,9 +1013,12 @@ def calc_connectivity_network_with_geometry(
     graph.graph['crs'] = crs
     graph.graph['coord_precision'] = SHAPEFILE_TOLERANCE
 
-    # Identify and store original street junctions (degree >= 3 nodes, excluding terminals)
-    # This is calculated from the graph structure rather than tracked through the pipeline
-    original_junctions = _identify_original_junctions(graph, terminal_nodes, SHAPEFILE_TOLERANCE)
+    # Identify and store original street junctions (degree >= 3 nodes) from STREETS-ONLY network
+    # IMPORTANT: Must use streets_clean_df (before adding building terminals) to avoid inflating junction count
+    # If we use the combined graph, any street node connected to a building becomes degree >= 3 (junction),
+    # which prevents legitimate degree-2 nodes from being contracted in the Steiner tree
+    streets_only_graph = gdf_to_nx(streets_clean_df, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=False)
+    original_junctions = _identify_original_junctions(streets_only_graph, set(), SHAPEFILE_TOLERANCE)  # Empty terminal set for streets-only
     graph.graph['original_junctions'] = original_junctions
 
     # Validate connectivity and fix issues

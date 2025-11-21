@@ -1,6 +1,9 @@
 import networkx as nx
 from geopandas import GeoDataFrame as gdf
+from shapely.geometry import MultiLineString
+
 from cea.constants import SHAPEFILE_TOLERANCE
+from cea.technologies.network_layout.graph_utils import gdf_to_nx
 
 def check_network_connectivity(network_gdf: gdf, plot: bool = False, output_path: str | None = None) -> dict:
     """
