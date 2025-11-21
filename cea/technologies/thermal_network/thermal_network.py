@@ -3408,7 +3408,23 @@ def main(config: cea.config.Configuration):
                 thermal_network_simplified(locator, config, network_type, network_name)
             elif network_model == 'detailed':
                 check_heating_cooling_demand(locator, config)
-                thermal_network = ThermalNetwork(locator, network_name, network_type)
+                # Create a per-network config section with the correct network_type
+                # This is a simple namespace object that mimics the config section interface
+                class NetworkConfig:
+                    def __init__(self, base_config, network_type_override):
+                        self.network_type = network_type_override
+                        # Copy all other attributes from base config
+                        for attr in ['network_names', 'file_type', 'set_diameter',
+                                   'load_max_edge_flowrate_from_previous_run', 'start_t', 'stop_t',
+                                   'use_representative_week_per_month', 'minimum_mass_flow_iteration_limit',
+                                   'minimum_edge_mass_flow', 'diameter_iteration_limit',
+                                   'substation_cooling_systems', 'substation_heating_systems',
+                                   'temperature_control', 'plant_supply_temperature', 'equivalent_length_factor']:
+                            if hasattr(base_config, attr):
+                                setattr(self, attr, getattr(base_config, attr))
+
+                per_network_config = NetworkConfig(config.thermal_network, network_type)
+                thermal_network = ThermalNetwork(locator, network_name, per_network_config)
                 thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
             else:
                 raise RuntimeError(f"Unknown network model: {network_model}")
