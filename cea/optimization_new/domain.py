@@ -890,15 +890,30 @@ def main(config: cea.config.Configuration):
     # Get buildings to optimize from config (if specified)
     buildings_to_optimize = config.optimization_new.buildings if config.optimization_new.buildings else None
 
+    # If network-name is specified, load network FIRST to get district buildings
+    # (network layout is source of truth for which buildings to include)
+    if config.optimization_new.network_name:
+        start_time = time.time()
+        current_domain.load_base_network()
+        end_time = time.time()
+        print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
+
+        # Override buildings_to_optimize with buildings from network layout
+        if hasattr(current_domain, 'base_building_to_network'):
+            buildings_to_optimize = list(current_domain.base_building_to_network.keys())
+            print(f"Loading {len(buildings_to_optimize)} buildings from network layout: {buildings_to_optimize}\n")
+
     start_time = time.time()
     current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
-    start_time = time.time()
-    current_domain.load_base_network()
-    end_time = time.time()
-    print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
+    # Load base network again if not already loaded
+    if not config.optimization_new.network_name:
+        start_time = time.time()
+        current_domain.load_base_network()
+        end_time = time.time()
+        print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
 
     start_time = time.time()
     current_domain.load_potentials(buildings_to_optimize)
