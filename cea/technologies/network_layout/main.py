@@ -67,7 +67,23 @@ def convert_simplified_nodes_to_full_format(nodes_gdf):
     plant_types = ['PLANT', 'PLANT_DC', 'PLANT_DH']
 
     for idx, row in nodes_full.iterrows():
-        type_value = str(row['type_original']).strip()
+        # Check for null/NaN/empty values before converting to string
+        type_original = row['type_original']
+
+        # Handle NaN, None, or empty values - treat as junction nodes
+        if pd.isna(type_original):
+            nodes_full.loc[idx, 'type'] = 'NONE'
+            nodes_full.loc[idx, 'building'] = 'NONE'
+            continue
+
+        # Convert to string and strip whitespace
+        type_value = str(type_original).strip()
+
+        # Handle empty string or whitespace-only - treat as junction nodes
+        if not type_value:
+            nodes_full.loc[idx, 'type'] = 'NONE'
+            nodes_full.loc[idx, 'building'] = 'NONE'
+            continue
 
         if type_value.upper() in plant_types:
             # It's a plant node
