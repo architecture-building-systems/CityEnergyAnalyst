@@ -98,8 +98,31 @@ def calculate_ground_temperature(locator):
 
 def get_thermal_network_from_shapefile(locator: cea.inputlocator.InputLocator, network_type: gpd.GeoDataFrame, network_name: str):
     # import shapefiles containing the network's edges and nodes
-    network_edges_df = gpd.read_file(locator.get_network_layout_shapefile(network_name))
-    network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type, network_name))
+    import os
+
+    edges_path = locator.get_network_layout_shapefile(network_name)
+    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
+    # Check if network layout files exist with helpful error messages
+    if not os.path.exists(edges_path):
+        raise FileNotFoundError(
+            f"{network_type} network layout is missing: {edges_path}\n"
+            f"Please run 'Network Layout' (Part 1) first to create the network layout."
+        )
+
+    if not os.path.exists(nodes_path):
+        demand_type = "cooling" if network_type == "DC" else "heating"
+        raise FileNotFoundError(
+            f"{network_type} network nodes file is missing: {nodes_path}\n"
+            f"This can happen if:\n"
+            f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
+            f"  2. The {network_type} network was skipped because no buildings have {demand_type} demand.\n"
+            f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
+            f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
+        )
+
+    network_edges_df = gpd.read_file(edges_path)
+    network_nodes_df = gpd.read_file(nodes_path)
 
     # check duplicated NODE/PIPE IDs
     duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
