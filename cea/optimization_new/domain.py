@@ -244,16 +244,20 @@ class Domain(object):
             print(f"  - Nodes: {len(nodes_gdf)} ({building_nodes_count} building nodes)")
             print(f"  - Edges: {len(edges_gdf)}")
 
-            # Identify district buildings from Supply.csv (via building.initial_connectivity_state)
-            district_buildings = [building.identifier for building in self.buildings
-                                  if building.initial_connectivity_state != 'stand_alone']
+            # Extract district buildings from the network layout (network layout is source of truth)
+            # Buildings with nodes in the network are considered connected, regardless of Supply.csv
+            district_buildings = []
+            for idx, node in nodes_gdf.iterrows():
+                building_name = node.get('building', '')
+                if building_name and str(building_name).upper() not in ['', 'NONE'] and node.get('type', '').upper() != 'PLANT':
+                    district_buildings.append(building_name)
 
             if not district_buildings:
-                print("  Warning: No buildings designated for district networks in Building Properties/Supply")
+                print("  Warning: No building nodes found in network layout")
                 print("           Base network will not be used.")
                 return
 
-            print(f"  - District buildings (from Building Properties/Supply): {len(district_buildings)}")
+            print(f"  - District buildings (from network layout): {len(district_buildings)}")
 
             # Map buildings to network components
             building_to_network, snapped_nodes, edge_snaps = map_buildings_to_networks(
