@@ -948,9 +948,24 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         if len(networks_generated) > 1:
             folders = ' '.join([f"{nt}/" for nt in sorted(networks_generated)])
             print(f"    Output folders: {folders}")
+        # Warn about skipped networks
+        skipped_networks = set(network_types_to_generate) - set(networks_generated)
+        if skipped_networks:
+            for skipped in sorted(skipped_networks):
+                demand_type = "cooling" if skipped == "DC" else "heating"
+                print(f"    ⚠ {skipped} network was skipped (no buildings with {demand_type} demand)")
     else:
-        print(f"\n  ⚠ No networks were generated (all network types were skipped due to missing demand)")
-        print(f"    Network name: {network_layout.network_name}")
+        # All networks were skipped - this is an error
+        skipped_info = []
+        for nt in sorted(network_types_to_generate):
+            demand_type = "cooling" if nt == "DC" else "heating"
+            skipped_info.append(f"{nt} (no {demand_type} demand)")
+        raise ValueError(
+            f"No networks were generated - all requested network types were skipped:\n"
+            f"  {', '.join(skipped_info)}\n"
+            f"Please check that your buildings have the required demand, or adjust the "
+            f"'consider-only-buildings-with-demand' setting in Network Layout configuration."
+        )
 
 
 @dataclass
