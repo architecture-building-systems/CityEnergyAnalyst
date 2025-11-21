@@ -1847,13 +1847,31 @@ def read_in_diameters_from_shapefile(thermal_network):
     network_edges = gpd.read_file(edges_path)
 
     # pipe_DN may not exist in layout.shp (only added after first thermal network run)
-    if 'pipe_DN' in network_edges.columns:
-        diameter_guess = network_edges['pipe_DN']
-    else:
-        # Return None to indicate no diameter guess available (will use defaults)
-        diameter_guess = None
+    if 'pipe_DN' not in network_edges.columns:
+        return None
 
-    return diameter_guess
+    # Load thermal grid catalog to map DN codes to numeric diameters
+    thermal_grid_path = thermal_network.locator.get_database_components_distribution_thermal_grid()
+    thermal_grid = pd.read_csv(thermal_grid_path)
+
+    # Create mapping from DN code to internal diameter in meters
+    dn_to_diameter = dict(zip(thermal_grid['code'], thermal_grid['D_int_m']))
+
+    # Convert DN codes to numeric diameters in meters
+    # For any missing/invalid DN codes, use NaN (will be filled with initial_diameter_guess)
+    diameter_guess = network_edges['pipe_DN'].map(dn_to_diameter)
+
+    # Check if any DN codes failed to map
+    missing_count = diameter_guess.isna().sum()
+    if missing_count > 0:
+        print(f'  Warning: {missing_count} edge(s) have invalid/missing DN codes, will use initial diameter guess for those edges')
+        # Get initial diameter guess for fallback
+        fallback_diameters = initial_diameter_guess(thermal_network)
+        # Fill missing values with fallback
+        diameter_guess = diameter_guess.fillna(pd.Series(fallback_diameters, index=diameter_guess.index))
+
+    # Convert to numeric array (required by downstream functions)
+    return diameter_guess.values
 
 
 def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
