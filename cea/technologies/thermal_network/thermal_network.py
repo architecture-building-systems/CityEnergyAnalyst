@@ -136,7 +136,7 @@ class ThermalNetwork(object):
 
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
-        mini_me = ThermalNetwork(self.locator, self)
+        mini_me = ThermalNetwork(self.locator, self.network_name, self)
         mini_me.T_ground_K = list(self.T_ground_K)
         mini_me.buildings_demands = self.buildings_demands.copy()
         mini_me.substations_HEX_specs = self.substations_HEX_specs.copy()
@@ -1061,8 +1061,8 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
         # if loops exist:
         # 1. calculate initial guess solution of matrix A
         # delete first plant on an edge of matrix and solution space b as these are redundant
-        A = edge_node_df.drop(edge_node_df.index[0], 0)  # solution matrix A without loop equations (kirchhoff 2)
-        b_init = np.nan_to_num(mass_flow_substation_df.drop(mass_flow_substation_df.columns[0], 1).transpose())
+        A = edge_node_df.drop(edge_node_df.index[0], axis=0)  # solution matrix A without loop equations (kirchhoff 2)
+        b_init = np.nan_to_num(mass_flow_substation_df.drop(mass_flow_substation_df.columns[0], axis=1).transpose())
         # solution vector b of node demands
         mass_flow_edge = np.linalg.lstsq(A, b_init, rcond=-1)[0].transpose()[0]  # solve system
 
