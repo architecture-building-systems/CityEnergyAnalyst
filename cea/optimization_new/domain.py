@@ -149,8 +149,9 @@ class Domain(object):
 
             network_name = network_name.strip()
 
-            # Get network layout file paths using InputLocator
-            edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
+            # Get network layout file paths from Part 1 (network-layout tool)
+            # Part 1 saves: {network_name}/layout.shp (edges) and {network_name}/{network_type}/layout/nodes.shp
+            edges_path = self.locator.get_network_layout_shapefile(network_name)
             nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
             # Check if files exist
@@ -165,21 +166,16 @@ class Domain(object):
                     for item in os.listdir(network_type_folder):
                         item_path = os.path.join(network_type_folder, item)
                         if os.path.isdir(item_path):
-                            # Check if this network has the current type
-                            type_folder = os.path.join(item_path, network_type, 'layout')
-                            if os.path.exists(type_folder):
-                                edges = os.path.join(type_folder, 'edges.shp')
-                                nodes = os.path.join(type_folder, 'nodes.shp')
-                                if os.path.exists(edges) and os.path.exists(nodes):
-                                    available_networks_current_type.append(item)
+                            # Check Part 1 files using InputLocator methods
+                            edges = self.locator.get_network_layout_shapefile(item)
+                            nodes = self.locator.get_network_layout_nodes_shapefile(network_type, item)
+                            if os.path.exists(edges) and os.path.exists(nodes):
+                                available_networks_current_type.append(item)
 
                             # Check if this network has the other type
-                            other_type_folder = os.path.join(item_path, other_type, 'layout')
-                            if os.path.exists(other_type_folder):
-                                edges = os.path.join(other_type_folder, 'edges.shp')
-                                nodes = os.path.join(other_type_folder, 'nodes.shp')
-                                if os.path.exists(edges) and os.path.exists(nodes):
-                                    available_networks_other_type.append(item)
+                            other_nodes = self.locator.get_network_layout_nodes_shapefile(other_type, item)
+                            if os.path.exists(edges) and os.path.exists(other_nodes):
+                                available_networks_other_type.append(item)
 
                 if available_networks_current_type:
                     error_msg = (

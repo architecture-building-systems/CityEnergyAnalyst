@@ -990,6 +990,21 @@ class InputLocator(object):
             self.get_thermal_network_folder_network_name_folder(network_name), 'layout.shp'
         )
 
+    def get_network_layout_nodes_shapefile_from_part1(self, network_type, network_name):
+        """
+        scenario/outputs/thermal-network/{network_name}/{network_type}/nodes.shp
+
+        This returns the nodes shapefile from Part 1 (network-layout tool).
+        Part 1 stores nodes at: {network_name}/{network_type}/nodes.shp (no layout/ subfolder)
+        """
+        shapefile_path = os.path.join(
+            self.get_thermal_network_folder_network_name_folder(network_name),
+            network_type,
+            'nodes.shp'
+        )
+        check_cpg(shapefile_path)
+        return shapefile_path
+
     def get_network_layout_edges_shapefile(self, network_type, network_name):
         """
         scenario/outputs/thermal-network/{network_name}/{network_type}/layout/edges.shp
