@@ -211,9 +211,32 @@ class Domain(object):
 
             # Load shapefiles
             nodes_gdf = gpd.read_file(nodes_path)
-            edges_gdf = gpd.read_file(edges_path)
+            edges_gdf_all = gpd.read_file(edges_path)
 
-            print(f"\nBase network layout loaded: {network_name}")
+            # Filter edges to only include those that connect to nodes in this network type
+            # layout.shp contains edges for BOTH DC and DH, but nodes are network-type specific
+            node_coords = set()
+            for idx, node in nodes_gdf.iterrows():
+                # Normalize coordinates to match edge endpoints
+                x, y = node.geometry.x, node.geometry.y
+                node_coords.add((round(x, 6), round(y, 6)))
+
+            # Keep only edges where both endpoints connect to nodes
+            def edge_connects_to_nodes(geom):
+                coords = list(geom.coords)
+                start = (round(coords[0][0], 6), round(coords[0][1], 6))
+                end = (round(coords[-1][0], 6), round(coords[-1][1], 6))
+                return start in node_coords and end in node_coords
+
+            edges_gdf = edges_gdf_all[edges_gdf_all.geometry.apply(edge_connects_to_nodes)].copy()
+
+            if len(edges_gdf) < len(edges_gdf_all):
+                filtered_count = len(edges_gdf_all) - len(edges_gdf)
+                print(f"\nBase network layout loaded: {network_name}")
+                print(f"  - Filtered {filtered_count} edge(s) not connected to {network_type} nodes")
+            else:
+                print(f"\nBase network layout loaded: {network_name}")
+
             # Defensive handling for NaN/non-string values in building and type columns
             building_col = nodes_gdf.get('building', pd.Series(dtype=object)).fillna('').astype(str).str.upper()
             type_col = nodes_gdf.get('type', pd.Series(dtype=object)).fillna('').astype(str).str.upper()
