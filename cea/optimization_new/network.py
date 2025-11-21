@@ -682,7 +682,9 @@ class Network(object):
                 buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
                 buildings_name_with_space_heating = get_building_names_with_load(total_demand,
                                                                                  load_name='Qhs_sys_MWhyr')
-                if buildings_name_with_heating and buildings_name_with_space_heating:
+                # Check if there's ANY heating demand (total or space heating)
+                # In tropical climates, there may be DHW heating (QH) but no space heating (Qhs)
+                if buildings_name_with_heating or buildings_name_with_space_heating:
                     building_names = [building for building in buildings_name_with_heating]
                     substation.substation_main_heating(cls._domain_locator, total_demand, building_names,
                                                        DHN_barcode="0")

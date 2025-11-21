@@ -105,14 +105,18 @@ class Domain(object):
                 # Skip buildings with zero demand UNLESS they are configured for district systems
                 # (district buildings with zero demand should still be included for network validation)
                 has_demand = max(building.demand_flow.profile) > 0
-                is_district = building.initial_connectivity_state != 'stand_alone'
+
+                # When network-name is specified, ALL buildings are treated as district buildings
+                # (network layout is source of truth, not Supply.csv)
+                network_name_specified = self.config.optimization_new.network_name
+                is_district = (building.initial_connectivity_state != 'stand_alone') or network_name_specified
 
                 if not has_demand and not is_district:
                     continue
 
-                # Only check demand energy carrier for buildings with actual demand
-                # (zero-demand buildings can't instantiate components)
-                if has_demand:
+                # Only check demand energy carrier for standalone buildings with actual demand
+                # District buildings get their supply from the network, not individual components
+                if has_demand and not is_district:
                     building.check_demand_energy_carrier()
 
                 self.buildings.append(building)
@@ -355,10 +359,19 @@ class Domain(object):
         self._initialize_energy_system_descriptor_classes()
 
         # Calculate base-case supply systems for all buildings (i.e. initial state as per the input editor)
+        # Skip buildings with no supply components (e.g., SUPPLY_HEATING_AS0 with primary='-')
+        # These are placeholders for buildings in networks that get supply from the network
         print("\nCalculating operation of districts' initial supply systems...")
         building_energy_potentials = Building.distribute_building_potentials(self.energy_potentials, self.buildings)
+        buildings_with_supply = [b for b in self.buildings
+                                  if b._stand_alone_supply_system_composition['primary']]
+        buildings_without_supply = [b for b in self.buildings
+                                     if not b._stand_alone_supply_system_composition['primary']]
+        if buildings_without_supply:
+            print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components (network-supplied):")
+            print(f"    {[b.identifier for b in buildings_without_supply]}")
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
-            for building in self.buildings]
+            for building in buildings_with_supply]
         self.model_initial_energy_system()
 
         # Optimise district energy systems
@@ -907,6 +920,14 @@ def main(config: cea.config.Configuration):
     current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
+
+    # If network-name is specified, override connectivity to use network layout
+    # (network layout is the only source of truth, not Supply.csv)
+    if config.optimization_new.network_name and hasattr(current_domain, 'base_building_to_network'):
+        for building in current_domain.buildings:
+            if building.identifier in current_domain.base_building_to_network:
+                building.initial_connectivity_state = 'network'
+                print(f"  Overriding {building.identifier}: initial_connectivity_state = 'network' (from network layout)")
 
     # Load base network again if not already loaded
     if not config.optimization_new.network_name:
