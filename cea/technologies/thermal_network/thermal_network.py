@@ -788,20 +788,16 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                 thermal_network.network_type, thermal_network.network_name), index=False, float_format='%.3f')
 
     else:
-        representative_week = False
-
         # Edge Mass Flows
         pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_edges_file(thermal_network.network_type,
-                                                                                   thermal_network.network_name,
-                                                                                   representative_week),
+                                                                                   thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # Node Mass Flows
         pd.DataFrame(csv_outputs['node_mass_flows'], columns=thermal_network.edge_node_df.index).to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_nodes_file(thermal_network.network_type,
-                                                                                   thermal_network.network_name,
-                                                                                   representative_week),
+                                                                                   thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # velocities in supply edges
@@ -822,8 +818,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                      columns=['pressure_loss_supply_Pa', 'pressure_loss_return_Pa',
                               'pressure_loss_substations_Pa', 'pressure_loss_total_Pa']).to_csv(
             thermal_network.locator.get_network_total_pressure_drop_file(thermal_network.network_type,
-                                                                         thermal_network.network_name,
-                                                                         representative_week),
+                                                                         thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -832,16 +827,14 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                      columns=['pressure_loss_supply_kW', 'pressure_loss_return_kW',
                               'pressure_loss_substations_kW', 'pressure_loss_total_kW']).to_csv(
             thermal_network.locator.get_network_energy_pumping_requirements_file(thermal_network.network_type,
-                                                                                 thermal_network.network_name,
-                                                                                 representative_week),
+                                                                                 thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
         # pressure losses over substations of network
         pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns=thermal_network.building_names).to_csv(
             thermal_network.locator.get_thermal_network_substation_ploss_file(thermal_network.network_type,
-                                                                              thermal_network.network_name,
-                                                                              representative_week),
+                                                                              thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -874,7 +867,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pd.DataFrame(csv_outputs['pressure_loss_supply_edge_kW'], columns=thermal_network.edge_node_df.columns).to_csv(
             thermal_network.locator.get_thermal_network_pressure_losses_edges_file(
                 thermal_network.network_type,
-                thermal_network.network_name, representative_week),
+                thermal_network.network_name),
             index=False,
             float_format='%.3f')
 
@@ -892,7 +885,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
                          thermal_network.all_nodes_df.type == 'PLANT'].building.values))).to_csv(
             thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
-                thermal_network.network_name, representative_week),
+                thermal_network.network_name),
             index=False,
             header=['thermal_load_kW'],
             float_format='%.3f')
@@ -901,12 +894,12 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
             thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
-                thermal_network.network_name, representative_week),
+                thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
         pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
             thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
-                thermal_network.network_name, representative_week),
+                thermal_network.network_name),
             na_rep='NaN', index=False, float_format='%.3f')
 
         # plant supply and return temperatures
