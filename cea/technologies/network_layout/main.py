@@ -746,6 +746,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Collect all edges from both networks
     all_edges_list = []
+    networks_generated = []  # Track which networks were actually generated
 
     # Generate Steiner tree for each network type separately
     for type_network in network_types_to_generate:
@@ -760,6 +761,13 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         else:  # DH
             plant_buildings_for_type = heating_plant_buildings_list
             connected_buildings_for_type = buildings_for_dh
+
+        # Skip network generation if no buildings to connect
+        if not connected_buildings_for_type:
+            demand_type = "cooling" if type_network == "DC" else "heating"
+            print(f"  ⚠ Skipping {type_network} network: No buildings with {demand_type} demand")
+            print(f"    (All buildings were filtered out by 'consider-only-buildings-with-demand')")
+            continue
 
         # Calculate building centroids for this network type
         building_centroids_df = calc_building_centroids(
@@ -895,6 +903,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         # Collect edges from this network (including new plant edges)
         all_edges_list.append(edges_for_type)
+        networks_generated.append(type_network)  # Track successful generation
 
         # Normalize plant types: PLANT_DC → PLANT for DC, PLANT_DH → PLANT for DH
         nodes_for_type['type'] = nodes_for_type['type'].replace({f'PLANT_{type_network}': 'PLANT'})
@@ -933,11 +942,15 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
     # Summary
-    print(f"\n  ✓ Network layout generation complete for: {', '.join(sorted(network_types_to_generate))}")
-    print(f"    Network name: {network_layout.network_name}")
-    if len(network_types_to_generate) > 1:
-        folders = ' '.join([f"{nt}/" for nt in sorted(network_types_to_generate)])
-        print(f"    Output folders: {folders}")
+    if networks_generated:
+        print(f"\n  ✓ Network layout generation complete for: {', '.join(sorted(networks_generated))}")
+        print(f"    Network name: {network_layout.network_name}")
+        if len(networks_generated) > 1:
+            folders = ' '.join([f"{nt}/" for nt in sorted(networks_generated)])
+            print(f"    Output folders: {folders}")
+    else:
+        print(f"\n  ⚠ No networks were generated (all network types were skipped due to missing demand)")
+        print(f"    Network name: {network_layout.network_name}")
 
 
 @dataclass
