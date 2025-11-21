@@ -155,15 +155,63 @@ class Domain(object):
 
             # Check if files exist
             if not os.path.exists(edges_path) or not os.path.exists(nodes_path):
-                raise UserNetworkLoaderError(
-                    f"Base network layout '{network_name}' not found for {network_type}.\n"
-                    f"Expected location:\n"
-                    f"  - Edges: {edges_path}\n"
-                    f"  - Nodes: {nodes_path}\n\n"
-                    f"Resolution:\n"
-                    f"  1. Run 'network-layout' tool first to generate the network\n"
-                    f"  2. Check that network-name matches an existing layout"
-                )
+                # Check what networks are available for this network type
+                network_type_folder = self.locator.get_thermal_network_folder()
+                available_networks_current_type = []
+                available_networks_other_type = []
+                other_type = 'DH' if network_type == 'DC' else 'DC'
+
+                if os.path.exists(network_type_folder):
+                    for item in os.listdir(network_type_folder):
+                        item_path = os.path.join(network_type_folder, item)
+                        if os.path.isdir(item_path):
+                            # Check if this network has the current type
+                            type_folder = os.path.join(item_path, network_type, 'layout')
+                            if os.path.exists(type_folder):
+                                edges = os.path.join(type_folder, 'edges.shp')
+                                nodes = os.path.join(type_folder, 'nodes.shp')
+                                if os.path.exists(edges) and os.path.exists(nodes):
+                                    available_networks_current_type.append(item)
+
+                            # Check if this network has the other type
+                            other_type_folder = os.path.join(item_path, other_type, 'layout')
+                            if os.path.exists(other_type_folder):
+                                edges = os.path.join(other_type_folder, 'edges.shp')
+                                nodes = os.path.join(other_type_folder, 'nodes.shp')
+                                if os.path.exists(edges) and os.path.exists(nodes):
+                                    available_networks_other_type.append(item)
+
+                if available_networks_current_type:
+                    error_msg = (
+                        f"Base network layout '{network_name}' not found for network-type '{network_type}'.\n\n"
+                        f"Available networks for {network_type}:\n"
+                        f"  - {', '.join(available_networks_current_type)}\n\n"
+                        f"Resolution:\n"
+                        "  1. Check for typos in the network-name parameter (names are case-sensitive)"
+                    )
+                elif network_name and network_name in available_networks_other_type:
+                    # Network exists but for the wrong type (e.g., DH exists but DC was requested)
+                    error_msg = (
+                        f"Network '{network_name}' exists for {other_type} but not for {network_type}.\n\n"
+                        "Possible causes:\n"
+                        f"  - {network_type} was not selected when running 'network-layout' tool\n"
+                        f"  - Buildings have no {('cooling' if network_type == 'DC' else 'heating')} demand, so {network_type} was skipped\n\n"
+                        "Resolution:\n"
+                        f"  1. Re-run 'network-layout' tool ensuring {network_type} is selected in the network-type parameter\n"
+                        f"  2. Check if buildings have {('cooling' if network_type == 'DC' else 'heating')} demand in scenario/outputs/data/demand/\n"
+                    )
+                else:
+                    error_msg = (
+                        f"No {network_type} networks found in this scenario.\n\n"
+                        "Possible causes:\n"
+                        "  - Network-layout tool was not run yet\n"
+                        f"  - Network-layout tool skipped {network_type} generation due to zero demand\n\n"
+                        "Resolution:\n"
+                        f"  1. Run 'network-layout' tool to generate the network (ensure buildings have demand for {network_type})\n"
+                        f"  2. Check if buildings have {('cooling' if network_type == 'DC' else 'heating')} demand in scenario/outputs/data/demand/\n"
+                    )
+
+                raise UserNetworkLoaderError(error_msg)
 
             # Load shapefiles
             nodes_gdf = gpd.read_file(nodes_path)
