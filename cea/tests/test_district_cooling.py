@@ -43,6 +43,19 @@ class TestDistrictCooling(unittest.TestCase):
         # assign all network feature variables used to evaluate district cooling operation
         DHN_exists = False
         DCN_exists = True
+
+        # Check if required thermal network files exist
+        network_name = "DC"
+        network_type = "DC"
+        required_files = [
+            self.locator.get_thermal_network_node_types_csv_file(network_type, network_name),
+            self.locator.get_thermal_network_layout_massflow_nodes_file(network_type, network_name),
+            self.locator.get_thermal_network_edge_list_file(network_type, network_name)
+        ]
+
+        if not all(os.path.exists(f) for f in required_files):
+            self.skipTest("Required thermal network files do not exist in reference case")
+
         self.network_features = network_optimization_features.NetworkOptimizationFeatures(DHN_exists,
                                                                                           DCN_exists,
                                                                                           self.locator)

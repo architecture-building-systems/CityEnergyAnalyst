@@ -232,8 +232,10 @@ Thermal Network Design:
 
   - name: network-layout
     label: "Thermal Network Part 1: layout"
-    short_description: Create thermal network piping layout using minimum spanning tree
-    description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
+    short_description: Create or validate thermal network piping layout
+    description: |
+      This Feature creates a thermal network's piping layout using the minimum spanning tree algorithm following streets geometry, or validates and processes user-provided network layouts (shapefiles or GeoJSON). Auto-generated layouts all have a one-component layout with a single plant, while user-provided layouts can have a multi-component network with one plant for each component.
+
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
     parameters: ['general:scenario', network-layout]
@@ -251,7 +253,6 @@ Thermal Network Design:
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
-      - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
       - [get_db4_components_conversion_folder]
       - [get_database_components_distribution_thermal_grid]
@@ -316,7 +317,7 @@ Energy Supply System Optimisation:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: "Suppy System Optimisation: building-scale"
+    label: "Supply System Optimisation: building-scale"
     short_description: Optimise decentralised energy supply systems
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
@@ -326,13 +327,13 @@ Energy Supply System Optimisation:
       - [get_total_demand]
 
   - name: optimization-new
-    label: "Suppy System Optimisation: district-scale"
+    label: "Supply System Optimisation: district-scale"
     short_description: Optimise centralised energy supply systems
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
-                 optimization-new]
+               'optimization-new']
     input-files:
       - [get_street_network]
       - [get_total_demand]

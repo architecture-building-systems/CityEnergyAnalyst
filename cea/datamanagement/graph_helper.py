@@ -1007,8 +1007,9 @@ class GraphCorrector:
             return False, f"Graph is not connected ({num_components} components). Steiner tree requires connected graph."
 
         # Check if terminal nodes list is valid
-        if not terminal_nodes or len(terminal_nodes) < 2:
-            return False, f"Need at least 2 terminal nodes for Steiner tree, got {len(terminal_nodes) if terminal_nodes else 0}"
+        # Allow 1 terminal node (single-building networks create no edges but are valid)
+        if not terminal_nodes or len(terminal_nodes) < 1:
+            return False, f"Need at least 1 terminal node, got {len(terminal_nodes) if terminal_nodes else 0}"
 
         # Check if all terminal nodes exist in graph
         graph_nodes = set(graph.nodes())

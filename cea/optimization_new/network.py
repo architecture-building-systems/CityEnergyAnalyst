@@ -453,8 +453,9 @@ class Network(object):
 
         # create a potential network graph with orthogonal connections between buildings and their closest street
         # This returns a NetworkX graph with preserved geometries and building terminal metadata
+        # Default connection_candidates=1 for optimization (can be made configurable later if needed)
         cls._domain_potential_network_graph = calc_connectivity_network_with_geometry(
-            streets_network_df, buildings_df
+            streets_network_df, buildings_df, connection_candidates=1
         )
 
         # store projected coordinate reference system of network
@@ -681,7 +682,9 @@ class Network(object):
                 buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
                 buildings_name_with_space_heating = get_building_names_with_load(total_demand,
                                                                                  load_name='Qhs_sys_MWhyr')
-                if buildings_name_with_heating and buildings_name_with_space_heating:
+                # Check if there's ANY heating demand (total or space heating)
+                # In tropical climates, there may be DHW heating (QH) but no space heating (Qhs)
+                if buildings_name_with_heating or buildings_name_with_space_heating:
                     building_names = [building for building in buildings_name_with_heating]
                     substation.substation_main_heating(cls._domain_locator, total_demand, building_names,
                                                        DHN_barcode="0")
