@@ -1854,7 +1854,7 @@ def read_in_diameters_from_shapefile(thermal_network):
     expected_edge_count = len(thermal_network.edge_node_df.columns)
     if len(network_edges) != expected_edge_count:
         print(f'  Warning: Shapefile has {len(network_edges)} edges but thermal_network expects {expected_edge_count}')
-        print(f'  Falling back to initial diameter guess')
+        print('  Falling back to initial diameter guess')
         return None
 
     # Load thermal grid catalog to map DN codes to numeric diameters
@@ -1873,7 +1873,7 @@ def read_in_diameters_from_shapefile(thermal_network):
         # If ANY DN codes are invalid/missing, return None to use initial_diameter_guess
         # (We can't mix reused diameters with guessed ones because the edge order/count may differ)
         print(f'  Warning: {missing_count} edge(s) have invalid/missing DN codes')
-        print(f'  Falling back to initial diameter guess for all edges')
+        print('  Falling back to initial diameter guess for all edges')
         return None
 
     # All DN codes mapped successfully - convert to numeric array
