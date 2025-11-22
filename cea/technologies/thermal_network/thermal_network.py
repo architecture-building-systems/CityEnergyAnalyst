@@ -1850,6 +1850,13 @@ def read_in_diameters_from_shapefile(thermal_network):
     if 'pipe_DN' not in network_edges.columns:
         return None
 
+    # Verify edge count matches thermal_network
+    expected_edge_count = len(thermal_network.edge_node_df.columns)
+    if len(network_edges) != expected_edge_count:
+        print(f'  Warning: Shapefile has {len(network_edges)} edges but thermal_network expects {expected_edge_count}')
+        print(f'  Falling back to initial diameter guess')
+        return None
+
     # Load thermal grid catalog to map DN codes to numeric diameters
     thermal_grid_path = thermal_network.locator.get_database_components_distribution_thermal_grid()
     thermal_grid = pd.read_csv(thermal_grid_path)
@@ -1858,19 +1865,18 @@ def read_in_diameters_from_shapefile(thermal_network):
     dn_to_diameter = dict(zip(thermal_grid['code'], thermal_grid['D_int_m']))
 
     # Convert DN codes to numeric diameters in meters
-    # For any missing/invalid DN codes, use NaN (will be filled with initial_diameter_guess)
     diameter_guess = network_edges['pipe_DN'].map(dn_to_diameter)
 
     # Check if any DN codes failed to map
     missing_count = diameter_guess.isna().sum()
     if missing_count > 0:
-        print(f'  Warning: {missing_count} edge(s) have invalid/missing DN codes, will use initial diameter guess for those edges')
-        # Get initial diameter guess for fallback
-        fallback_diameters = initial_diameter_guess(thermal_network)
-        # Fill missing values with fallback
-        diameter_guess = diameter_guess.fillna(pd.Series(fallback_diameters, index=diameter_guess.index))
+        # If ANY DN codes are invalid/missing, return None to use initial_diameter_guess
+        # (We can't mix reused diameters with guessed ones because the edge order/count may differ)
+        print(f'  Warning: {missing_count} edge(s) have invalid/missing DN codes')
+        print(f'  Falling back to initial diameter guess for all edges')
+        return None
 
-    # Convert to numeric array (required by downstream functions)
+    # All DN codes mapped successfully - convert to numeric array
     return diameter_guess.values
 
 
