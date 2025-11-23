@@ -633,6 +633,10 @@ class Domain(object):
             supply_system_id = building.identifier
             supply_system = building.stand_alone_supply_system
 
+            # Skip buildings with zero demand (no supply system)
+            if supply_system is None:
+                continue
+
             # Summarise structure of the supply system & print to file
             building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
             self.locator.ensure_parent_folder_exists(building_file)
@@ -719,6 +723,10 @@ class Domain(object):
         for building in stand_alone_buildings:
             supply_system_id = building.identifier
             supply_system = building.stand_alone_supply_system
+
+            # Skip buildings with zero demand (no supply system)
+            if supply_system is None:
+                continue
 
             # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
             building_file = self.locator.get_new_optimization_supply_systems_detailed_operation_file(des_id,
