@@ -633,8 +633,13 @@ class Domain(object):
             supply_system_id = building.identifier
             supply_system = building.stand_alone_supply_system
 
-            # Skip buildings with zero demand (no supply system)
+            # Buildings with zero demand: add to summary with zeros, skip detailed files
             if supply_system is None:
+                supply_system_summary['Supply_System'].append(supply_system_id)
+                supply_system_summary['Heat_Emissions_kWh'].append(0.0)
+                supply_system_summary['System_Energy_Demand_kWh'].append(0.0)
+                supply_system_summary['GHG_Emissions_kgCO2'].append(0.0)
+                supply_system_summary['Cost_USD'].append(0.0)
                 continue
 
             # Summarise structure of the supply system & print to file

@@ -649,9 +649,11 @@ class DistrictEnergySystem(object):
         if not fitnesses:
             return (0,) * algorithm.nbr_objectives
 
+        # Sum fitness values for each objective across all buildings
+        # Use algorithm objectives to ensure we return the correct number of values
         return tuple(
-            sum(fitness[objective] for fitness in fitnesses)
-            for objective in fitnesses[0].keys()
+            sum(fitness.get(objective, 0) for fitness in fitnesses)
+            for objective in algorithm.objectives
         )
 
 
