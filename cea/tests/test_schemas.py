@@ -11,7 +11,6 @@ import inspect
 
 import cea.config
 import cea.inputlocator
-import cea.scripts
 import cea.schemas
 
 __author__ = "Daren Thomas"
@@ -181,7 +180,7 @@ class TestSchemas(unittest.TestCase):
                 method = getattr(locator, attrib)
                 parameters = {
                     "network_type": "DC",
-                    "network_name": "",
+                    "network_name": "baseline",
                     "gen_num": 1,
                     "category": "demand",
                     "type_of_district_network": "space-heating",
@@ -205,8 +204,13 @@ class TestSchemas(unittest.TestCase):
                     warnings.warn(f"{attrib} returned None, skipping...")
                     continue
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
-                self.assertNotIn(folder, folders,
-                                 f"{attrib} duplicates the result of {folders.get(folder, None)}")
+                if folder in folders:
+                    self.fail(
+                        f"Duplicate folder detected:\n"
+                        f"  Folder: {folder}\n"
+                        f"  First defined by: {folders[folder]}\n"
+                        f"  Also defined by: {attrib}"
+                    )
                 folders[folder] = attrib
 
     def test_scripts_use_underscores_not_hyphen(self):

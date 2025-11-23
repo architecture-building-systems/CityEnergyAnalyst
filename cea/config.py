@@ -427,11 +427,11 @@ class Parameter:
         the default.config
         """
 
-    def encode(self, value):
+    def encode(self, value) -> str:
         """Encode ``value`` to a string representation for writing to the configuration file"""
         return str(value)
 
-    def decode(self, value):
+    def decode(self, value) -> Any:
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
@@ -754,6 +754,69 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+class NetworkLayoutNameParameter(StringParameter):
+    """
+    Parameter for network layout names with collision detection.
+    Validates in real-time to prevent overwriting existing network layouts.
+    """
+
+    def _validate_network_name(self, value) -> str:
+        """
+        Validate network name for invalid characters and collision with existing networks.
+        """
+        value = value.strip()
+
+        # Check for invalid filesystem characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Network name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing networks
+        scenario = self.config.scenario
+        locator = cea.inputlocator.InputLocator(scenario)
+
+        # Check network folder exists
+        network_folder = locator.get_thermal_network_folder_network_name_folder(value)
+        if os.path.exists(network_folder):
+            raise ValueError(
+                f"Network '{value}' already exists. "
+                f"Choose a different name or delete the existing network."
+            )
+
+        return value
+
+    def encode(self, value):
+        """
+        Validate and encode network name.
+        Raises ValueError if name contains invalid characters or collides with existing network.
+        """
+        if not str(value) or str(value).strip() == '':
+            raise ValueError("Network name is required. Please provide a valid name.")
+
+        return self._validate_network_name(str(value))
+
+    def decode(self, value):
+        """Parse and normalize network name from config file"""
+        if not value:
+            return ""
+
+        value = value.strip()
+
+        # Only validate filesystem characters (security concern)
+        # Don't check collision - that's encode's job when saving
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Network name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        return value
+
+
 class OptimizationIndividualListParameter(ListParameter):
     def initialize(self, parser):
         # allow the parent option to be set
@@ -801,6 +864,106 @@ class ChoiceParameter(Parameter):
             if not self._choices:
                 raise ValueError(f"No choices for {self.fqname} to decode {value}")
             return self._choices[0]
+
+
+class NetworkLayoutChoiceParameter(ChoiceParameter):
+    """
+    Parameter for selecting existing network layouts based on network type.
+    """
+
+    _network_types = {'DH', 'DC'}
+
+    def initialize(self, parser):
+        # Override to dynamically populate choices based on available networks
+        pass
+
+    @property
+    def _choices(self):
+        networks = self._get_available_networks()
+        sorted_networks = self._sort_networks_by_modification_time(networks)
+        return sorted_networks
+    
+    def _get_available_networks(self) -> List[str]:
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        network_folder = locator.get_thermal_network_folder()
+        if not os.path.exists(network_folder):
+            return []
+        return [name for name in os.listdir(network_folder)
+                if os.path.isdir(os.path.join(network_folder, name)) and name not in self._network_types]
+    
+    def _get_network_file_paths(self, network_type: str, network_name: str) -> Tuple[str, str]:
+        """Get path for network node and edge files for the given network name"""
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        network_type_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        # Remove trailing slash/separator if present
+        network_type_folder = network_type_folder.rstrip(os.sep)
+
+        edges_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
+        return edges_path, nodes_path
+
+    def _sort_networks_by_modification_time(self, network_names: List[str]) -> List[str]:
+        """Sort network layouts by modification time (most recent first)"""
+        modified_times = []
+        for network_name in network_names:
+            network_time = []
+            for network_type in self._network_types:
+                edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
+                if os.path.exists(edges_path) and os.path.exists(nodes_path):
+                    sort_time = os.path.getmtime(edges_path)
+                    network_time.append((network_name, sort_time))
+            if network_time:
+                # Get the most recent modification time across network types
+                most_recent_time = max(time for _, time in network_time)
+                modified_times.append((network_name, most_recent_time))
+
+        # Sort by modification time, most recent first
+        modified_times.sort(key=lambda x: x[1], reverse=True)
+        sorted_networks = [network_name for network_name, _ in modified_times]
+        return sorted_networks
+    
+    def encode(self, value):
+        """
+        Validate and encode value.
+        Raises ValueError if the network layout doesn't exist.
+        """
+        # Empty value not allowed
+        if not value or str(value).strip() == '':
+            raise ValueError("Network layout is required. Please select a network layout.")
+
+        available_networks = self._get_available_networks()
+
+        # Validate that the network exists
+        if str(value) not in available_networks:
+            raise ValueError(
+                f"Network layout '{value}' not found. "
+                f"Available layouts: {', '.join(available_networks)}"
+            )
+        return str(value)
+
+    def decode(self, value):
+        """
+        Decode and validate value exists in available networks.
+        Returns the selected value if valid, otherwise returns the most recent network as default.
+
+        If no value provided and no networks found for current network-type, try to find
+        the most recent network across ALL network types and switch network-type accordingly.
+        """
+        available_networks = self._get_available_networks()
+
+        # If value is provided and valid, return it
+        if value and value in available_networks:
+            return value
+
+        # Otherwise, return the most recent network (first choice) if available
+        if available_networks:
+            sorted_networks = self._sort_networks_by_modification_time(available_networks)
+            most_recent_network = sorted_networks[0]
+            return most_recent_network
+
+        return ''
 
 
 class DatabasePathParameter(Parameter):
@@ -989,7 +1152,10 @@ class SingleBuildingParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
-        pass
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
     @property
     def _choices(self):
@@ -999,8 +1165,15 @@ class SingleBuildingParameter(ChoiceParameter):
         if not building_names:
             raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
         return building_names
+    
+    def decode(self, value):
+        if self.nullable and (value is None or value == ''):
+            return None
+        return super().decode(value)
 
     def encode(self, value):
+        if self.nullable and (value is None or value == ''):
+            return ''
         if str(value) not in self._choices:
             return self._choices[0]
         return str(value)

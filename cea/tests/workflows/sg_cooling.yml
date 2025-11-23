@@ -40,16 +40,15 @@
 - script: photovoltaic-thermal
 - script: network-layout
   parameters:
-    network-type: DC
+    network-name: baseline
     consider-only-buildings-with-demand: off
 - script: thermal-network
   parameters:
-    network-type: DC
+    network-name: baseline
     network-model: detailed
     stop-t: 744 # run for one month
 - script: thermal-network
   parameters:
-    network-type: DC
     network-model: simplified
 - script: decentralized
 - script: optimization-new
