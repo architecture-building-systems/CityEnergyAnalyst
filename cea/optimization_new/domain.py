@@ -447,7 +447,7 @@ class Domain(object):
         if buildings_without_supply:
             print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components in base case:")
             print(f"    {[b.identifier for b in buildings_without_supply]}")
-            print(f"    → These buildings will be network-supplied if connected during optimization")
+            print("    → These buildings will be network-supplied if connected during optimization")
 
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
             for building in buildings_with_supply]
