@@ -367,9 +367,88 @@ class Domain(object):
                                   if b._stand_alone_supply_system_composition['primary']]
         buildings_without_supply = [b for b in self.buildings
                                      if not b._stand_alone_supply_system_composition['primary']]
+
+        # Validate that at least some buildings have supply systems configured
+        # This catches scenarios where supply.csv has assemblies with no components (e.g., SUPPLY_HEATING_AS0)
+        # Exception: If buildings are already designated for networks (user-defined layout), they don't need standalone systems
+        buildings_designated_for_networks = [b for b in self.buildings if b.initial_connectivity_state != 'stand_alone']
+
+        if not buildings_with_supply and not buildings_designated_for_networks:
+            network_type = self.config.optimization_new.network_type
+
+            # Check if buildings have demand for this network type
+            # For DH: separate space heating (Qhs) and DHW (Qww) demand
+            # For DC: just cooling (QC) demand
+            total_demand = sum(b.demand_flow.profile.sum() for b in self.buildings)
+            buildings_with_demand = [b for b in self.buildings if b.demand_flow.profile.sum() > 0]
+
+            if total_demand > 0:
+                # For DH networks, break down by space heating vs DHW
+                if network_type == 'DH':
+                    buildings_with_hs = []
+                    buildings_with_dhw = []
+                    for building in self.buildings:
+                        demand_df = pd.read_csv(building.demands_file_path)
+                        # Check for space heating demand
+                        if 'Qhs_sys_kWh' in demand_df.columns and demand_df['Qhs_sys_kWh'].sum() > 0:
+                            buildings_with_hs.append(building.identifier)
+                        # Check for DHW demand
+                        if 'Qww_sys_kWh' in demand_df.columns and demand_df['Qww_sys_kWh'].sum() > 0:
+                            buildings_with_dhw.append(building.identifier)
+
+                    demand_breakdown = []
+                    if buildings_with_hs:
+                        demand_breakdown.append(f"{len(buildings_with_hs)} building(s) have space heating demand: {buildings_with_hs}")
+                    else:
+                        demand_breakdown.append("0 buildings have space heating demand (typical for tropical climates)")
+                    if buildings_with_dhw:
+                        demand_breakdown.append(f"{len(buildings_with_dhw)} building(s) have domestic hot water (DHW) demand: {buildings_with_dhw}")
+                    else:
+                        demand_breakdown.append("0 buildings have domestic hot water (DHW) demand")
+                    demand_description = "\n".join(demand_breakdown)
+                else:
+                    demand_description = f"{len(buildings_with_demand)} building(s) have space cooling demand: {[b.identifier for b in buildings_with_demand]}"
+
+                # Buildings have demand but no supply systems configured
+                raise ValueError(
+                    f"Cannot run {network_type} optimisation: All {len(self.buildings)} buildings have no supply system components.\n\n"
+                    f"However, buildings have demand for this network type:\n{demand_description}\n\n"
+                    "This typically means supply.csv is misconfigured for district-scale optimisation:\n"
+                    "  - For DH (district heating): Buildings with heating/DHW demand need heating supply assemblies with components\n"
+                    "  - For DC (district cooling): Buildings with cooling demand need cooling supply assemblies with components\n\n"
+                    "Common issue:\n"
+                    "  All buildings have assemblies with no components (e.g., SUPPLY_HEATING_AS0, SUPPLY_COOLING_AS0)\n"
+                    "  → These assemblies mean 'no system' and are only for buildings with zero demand\n\n"
+                    "Solutions:\n"
+                    "  1. Update Building Properties/Supply to use valid assemblies for buildings with demand:\n"
+                    "     → For BUILDING scale: SUPPLY_HEATING_AS1, SUPPLY_COOLING_AS1, etc.\n"
+                    "     → For DISTRICT scale: SUPPLY_HEATING_AS4, SUPPLY_COOLING_AS4, etc.\n"
+                    "  2. Or manually set at least one building to DISTRICT scale to define network supply options\n"
+                    "  3. Check assemblies database to see available options for your system type"
+                )
+            else:
+                # No buildings have demand for this network type
+                raise ValueError(
+                    f"Cannot run {network_type} optimisation: No buildings have {network_type} demand.\n\n"
+                    "This typically means the wrong network-type is selected for this scenario:\n"
+                    f"  - Selected: {network_type}\n"
+                    "  - For tropical climates (e.g., Singapore): Use DC for cooling, not DH for heating\n"
+                    "  - For temperate climates with heating: Use DH for heating\n\n"
+                    "Solutions:\n"
+                    "  1. Change network-type in config to match your scenario:\n"
+                    "     → DH for scenarios with heating demand\n"
+                    "     → DC for scenarios with cooling demand\n"
+                    "  2. Check demand calculation results to verify which demands exist:\n"
+                    "     → Review outputs/data/demand/Total_demand.csv\n"
+                    "     → For DH: Check QH_sys_MWhyr (heating demand)\n"
+                    "     → For DC: Check QC_sys_MWhyr (cooling demand)"
+                )
+
         if buildings_without_supply:
-            print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components (network-supplied):")
+            print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components in base case:")
             print(f"    {[b.identifier for b in buildings_without_supply]}")
+            print(f"    → These buildings will be network-supplied if connected during optimization")
+
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
             for building in buildings_with_supply]
         self.model_initial_energy_system()
@@ -1030,10 +1109,10 @@ def main(config: cea.config.Configuration):
         print("\nApplying network connectivity:")
         for building in current_domain.buildings:
             if building.identifier in network_buildings:
-                # Building is in network - clear standalone supply systems
-                building.initial_connectivity_state = 'network'
-                building._stand_alone_supply_system_composition = {'primary': [], 'secondary': [], 'tertiary': []}
-                print(f"  {building.identifier}: Connected to network (supply system cleared)")
+                # Building is in network - keep supply system composition as fallback for disconnection scenarios
+                # The connectivity state determines whether building uses standalone or network supply
+                building.initial_connectivity_state = current_domain.base_building_to_network[building.identifier]
+                print(f"  {building.identifier}: Connected to network {current_domain.base_building_to_network[building.identifier]}")
             else:
                 # Building is standalone
                 print(f"  {building.identifier}: Standalone building")
