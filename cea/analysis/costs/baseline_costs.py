@@ -20,9 +20,43 @@ __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
 __license__ = "MIT"
 __version__ = "0.1"
-__maintainer__ = "Zhongming Shi"
+__maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def validate_network_results_exist(locator, network_name, network_type):
+    """
+    Validate that thermal-network part 2 has been completed for the specified network.
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name
+    :param network_type: 'DH' or 'DC'
+    :raises ValueError: If required network result files don't exist
+    """
+    import os
+
+    # Check for key output files from thermal-network part 2
+    network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+    layout_folder = os.path.join(network_folder, 'layout')
+
+    # These files are created by thermal-network part 1 (layout)
+    required_files = [
+        os.path.join(layout_folder, 'edges.shp'),
+        os.path.join(layout_folder, 'nodes.shp'),
+    ]
+
+    missing_files = [f for f in required_files if not os.path.exists(f)]
+
+    if missing_files:
+        raise ValueError(
+            f"Thermal-network results not found for network '{network_name}' ({network_type}).\n\n"
+            f"Missing files:\n" + "\n".join(f"  - {f}" for f in missing_files) + "\n\n"
+            f"Please run 'thermal-network' script (both part 1 and part 2) before running baseline-costs.\n"
+            f"Alternatively, select a different network layout that has been completed."
+        )
+
+    print(f"  ✓ {network_type} network '{network_name}' results found")
 
 
 def baseline_costs_main(locator, config):
@@ -33,17 +67,34 @@ def baseline_costs_main(locator, config):
     :param config: Configuration instance
     :return: DataFrame with cost results
     """
-    network_types = config.system_costs.network_types
+    # Get network types (can be list like ['DH', 'DC'] or single value like 'DH')
+    network_types = config.system_costs.network_type
+    if isinstance(network_types, str):
+        network_types = [network_types]
 
-    if not network_types:
-        raise ValueError("No network types selected. Please select DH and/or DC in configuration.")
+    # Get network name - this is required
+    network_name = config.system_costs.network_name
+    if not network_name:
+        raise ValueError(
+            "Network name is required for baseline-costs calculation.\n"
+            "Please select a network layout from the 'network-name' parameter.\n"
+            "Networks are created by running 'thermal-network' script (part 1 and part 2)."
+        )
+
+    print(f"Running baseline-costs for network layout: {network_name}")
+    print(f"Network type(s): {', '.join(network_types)}")
+
+    # Validate that thermal-network part 2 has been run for each network type
+    print("\nValidating thermal-network results...")
+    for network_type in network_types:
+        validate_network_results_exist(locator, network_name, network_type)
 
     all_results = {}
 
-    # Calculate costs for each selected network type
+    # Calculate costs for each specified network type
     for network_type in network_types:
         print(f"\nCalculating {network_type} system costs...")
-        results = calculate_costs_for_network_type(locator, config, network_type)
+        results = calculate_costs_for_network_type(locator, config, network_type, network_name)
         all_results[network_type] = results
 
     # Merge results from all network types
@@ -68,7 +119,7 @@ def baseline_costs_main(locator, config):
     if has_networks:
         print("\nℹ NOTE: Network costs include central plant equipment and thermal distribution piping.")
         print("  Variable energy costs (electricity, fuels) are NOT included.")
-        print("  For complete costs including energy consumption, refer to optimization results.")
+        print("  For complete costs including energy consumption, refer to optimisation results.")
 
     return final_results
 
@@ -124,6 +175,12 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
 
         # Build network supply system
         max_supply_flow = aggregated_demand.isolate_peak()
+
+        # Skip if zero demand
+        if max_supply_flow.profile.max() == 0.0:
+            print(f"  {network_id}: Zero demand - skipping supply system instantiation")
+            return results
+
         system_structure = SupplySystemStructure(
             max_supply_flow=max_supply_flow,
             available_potentials=network_potentials,
@@ -168,7 +225,7 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
     return results
 
 
-def calculate_costs_for_network_type(locator, config, network_type):
+def calculate_costs_for_network_type(locator, config, network_type, network_name=None):
     """
     Calculate costs for either DH or DC using optimization_new engine.
 
@@ -178,92 +235,106 @@ def calculate_costs_for_network_type(locator, config, network_type):
     :param locator: InputLocator instance
     :param config: Configuration instance
     :param network_type: 'DH' or 'DC'
+    :param network_name: Specific network layout to use (optional)
     :return: dict of {building_name or network_name: {cost_metrics}}
     """
-    # Temporarily set network type for optimization_new
-    original_network_type = config.optimization_new.network_type
-    config.optimization_new.network_type = network_type
+    # Create a new config instance for Domain class
+    # Domain requires optimization_new parameters, but system-costs doesn't have them
+    # So we create a minimal config with just what Domain needs
+    import cea.config
+    domain_config = cea.config.Configuration()
+    domain_config.scenario = config.scenario
 
-    try:
-        # Initialise domain (reuse from optimization_new)
-        domain = Domain(config, locator)
+    # Set optimization_new parameters from system_costs parameters
+    domain_config.optimization_new.network_type = network_type
+    if network_name:
+        domain_config.optimization_new.network_name = network_name
+        domain_config.optimization_new.use_auto_generated_layout = False
+    else:
+        domain_config.optimization_new.use_auto_generated_layout = True
 
-        # Load buildings
-        domain.load_buildings()
+    # Initialise domain (reuse from optimization_new)
+    domain = Domain(domain_config, locator)
 
-        # Load energy potentials
-        domain.load_potentials()
+    # Load buildings
+    domain.load_buildings()
 
-        # Initialise classes
-        domain._initialize_energy_system_descriptor_classes()
+    # Load energy potentials
+    domain.load_potentials()
 
-        # Calculate base case supply systems
-        building_energy_potentials = Building.distribute_building_potentials(
-            domain.energy_potentials, domain.buildings
-        )
+    # Initialise classes
+    domain._initialize_energy_system_descriptor_classes()
 
-        # Group buildings by connectivity state (network vs standalone)
-        network_buildings = {}  # {network_id: [buildings]}
-        standalone_buildings = []
+    # Calculate base case supply systems
+    building_energy_potentials = Building.distribute_building_potentials(
+        domain.energy_potentials, domain.buildings
+    )
 
-        for building in domain.buildings:
-            if building.initial_connectivity_state == 'stand_alone':
-                standalone_buildings.append(building)
-            else:
-                # Building is connected to a network
-                network_id = building.initial_connectivity_state
-                if network_id not in network_buildings:
-                    network_buildings[network_id] = []
-                network_buildings[network_id].append(building)
+    # Build the initial energy system (includes networks)
+    domain.model_initial_energy_system()
 
-        results = {}
+    # Group buildings by connectivity state (network vs standalone)
+    network_buildings = {}  # {network_id: [buildings]}
+    standalone_buildings = []
 
-        # Build networks to calculate piping costs
-        networks_dict = {}  # {network_id: Network}
-        if network_buildings:
-            from cea.optimization_new.districtEnergySystem import DistrictEnergySystem
+    for building in domain.buildings:
+        if building.initial_connectivity_state == 'stand_alone':
+            standalone_buildings.append(building)
+        else:
+            # Building is connected to a network
+            network_id = building.initial_connectivity_state
+            if network_id not in network_buildings:
+                network_buildings[network_id] = []
+            network_buildings[network_id].append(building)
 
-            # Create a DES to build networks
-            des = DistrictEnergySystem(domain)
-            built_networks = des.build_networks()
+    results = {}
+
+    # Build networks to calculate piping costs
+    networks_dict = {}  # {network_id: Network}
+    if network_buildings:
+        # Use the initial_energy_system that was already built by domain
+        # This has all the networks already constructed
+        if hasattr(domain, 'initial_energy_system'):
+            des = domain.initial_energy_system
             # Store networks by ID
-            for network in built_networks:
+            for network in des.networks:
                 networks_dict[network.identifier] = network
 
-        # Calculate costs for network-connected buildings
-        if network_buildings:
-            print(f"  Found {len(network_buildings)} thermal network(s) for {network_type}")
-            from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+    # Calculate costs for network-connected buildings
+    if network_buildings:
+        print(f"  Found {len(network_buildings)} thermal network(s) for {network_type}")
+        from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
 
-            network_results = calculate_network_costs(
-                network_buildings, building_energy_potentials,
-                domain.energy_potentials, network_type, networks_dict
+        network_results = calculate_network_costs(
+            network_buildings, building_energy_potentials,
+            domain.energy_potentials, network_type, networks_dict
+        )
+        results.update(network_results)
+
+    # Calculate costs for standalone buildings
+    if standalone_buildings:
+        print(f"  Calculating standalone systems for {len(standalone_buildings)} buildings")
+        for building in standalone_buildings:
+            building.calculate_supply_system(
+                building_energy_potentials[building.identifier]
             )
-            results.update(network_results)
 
-        # Calculate costs for standalone buildings
-        if standalone_buildings:
-            print(f"  Calculating standalone systems for {len(standalone_buildings)} buildings")
-            for building in standalone_buildings:
-                building.calculate_supply_system(
-                    building_energy_potentials[building.identifier]
-                )
+            # Skip buildings with None supply system (zero demand)
+            if building.stand_alone_supply_system is None:
+                continue
 
-                # Extract costs from the building's supply system
-                supply_system = building.stand_alone_supply_system
+            # Extract costs from the building's supply system
+            supply_system = building.stand_alone_supply_system
 
-                results[building.identifier] = {
-                    'network_type': network_type,
-                    'supply_system': supply_system,
-                    'building': building,
-                    'costs': extract_costs_from_supply_system(supply_system, network_type, building)
-                }
+            results[building.identifier] = {
+                'network_type': network_type,
+                'supply_system': supply_system,
+                'building': building,
+                'costs': extract_costs_from_supply_system(supply_system, network_type, building),
+                'is_network': False
+            }
 
-        return results
-
-    finally:
-        # Restore original network type
-        config.optimization_new.network_type = original_network_type
+    return results
 
 
 def extract_costs_from_supply_system(supply_system, network_type, building):
@@ -272,7 +343,7 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
 
     :param supply_system: SupplySystem instance from optimization_new
     :param network_type: 'DH' or 'DC'
-    :param building: Building instance
+    :param building: Building instance (or None for network-level systems)
     :return: dict of cost metrics by service
     """
     costs = {}
@@ -369,7 +440,7 @@ def map_component_to_service(component, network_type, building):
 
     :param component: Component instance
     :param network_type: 'DH' or 'DC'
-    :param building: Building instance
+    :param building: Building instance (or None for network-level systems)
     :return: Service name string (e.g., 'NG_hs', 'GRID_cs')
     """
     # Determine service suffix based on network type
@@ -408,9 +479,13 @@ def map_component_to_service(component, network_type, building):
     elif comp_code.startswith('CCGT') or comp_code.startswith('FC'):
         carrier = 'NG'
 
+    # Cooling towers and heat rejection
+    elif comp_code.startswith('CT'):
+        carrier = 'GRID'  # Cooling towers use electricity for fans/pumps
+
     # District heating/cooling
     # Check if this is a network-level system (building=None) or a building connected to a network
-    elif building is None or building.initial_connectivity_state == 'network':
+    elif building is None or building.initial_connectivity_state != 'stand_alone':
         if network_type == 'DH':
             carrier = 'DH'
         else:
