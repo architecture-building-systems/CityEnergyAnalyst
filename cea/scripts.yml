@@ -194,8 +194,15 @@ Energy Demand Forecasting:
 
   - name: demand
     label: "Energy Demand Part 2: load modelling"
-    short_description: Forecast energy demand of buildings using CEA models
-    description: This Feature uses CEA models to forecast the energy demand of buildings.
+    short_description: Forecast end-use energy loads and final energy consumption by carrier
+    description: |
+      This Feature uses CEA models to forecast building energy demand at hourly resolution.
+
+      **End-use energy loads**: Heating, cooling, domestic hot water, electricity for appliances/lighting (by service)
+
+      **Final energy consumption**: Energy by carrier (GRID electricity, natural gas, district heating/cooling, etc.) delivered to the building boundary
+
+      Final energy represents what is delivered to and consumed at the building, before accounting for upstream generation/transmission losses (which are captured in Primary Energy calculations).
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
@@ -263,17 +270,19 @@ Life Cycle Analysis:
 
   - name: emissions
     label: Emissions
-    short_description: Calculate embodied and operational GHG emissions
+    short_description: Calculate embodied and operational GHG emissions from final energy
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
 
       **Embodied emissions** include construction materials and processes, building envelope, renovations, demolition, biogenic carbon storage (e.g. timber), and PV panel manufacturing.
 
-      **Operational emissions** include energy supply system operation for heating, cooling, electricity, and domestic hot water.
+      **Operational emissions** are calculated from **final energy consumption** (energy delivered to building) using emission factors (gCO2e/kWh).
 
-      Outputs include total annual emissions (kgCO2e/year), emissions intensity (kgCO2e/m2/year), optional hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
+      Includes energy supply system operation for space heating, space cooling, electricity, and domestic hot water (dhw).
 
-      **[Optional]**: For location-specific grid emission data, download hourly carbon intensity datasets from [Electricity Maps](https://portal.electricitymaps.com/datasets), 
+      Outputs include total annual emissions (kgCO2e/year), emissions intensity (kgCO2e/m2/year), hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
+
+      **[Optional]**: For location-specific grid emission data, download hourly carbon intensity datasets from [Electricity Maps](https://portal.electricitymaps.com/datasets),
       and set column name to "Carbon intensity gCO2eq/kWh (direct)" in the parameters.
       _Ensure proper citation and compliance with their terms of use._
     interfaces: [cli, dashboard]
@@ -734,7 +743,7 @@ Visualisation:
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
+
 
   - name: plot-operational-emissions
     label: Plot - Operational Emissions

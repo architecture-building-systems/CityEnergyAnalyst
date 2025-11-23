@@ -1238,7 +1238,7 @@ class InputLocator(object):
         return os.path.join(self.solar_potential_folder(), "PV_{panel_type}_total.csv".format(panel_type=panel_type))
 
     def PV_total_buildings(self, panel_type):
-        """scenario/outputs/data/potentials/solar/{building}_PV_{panel_type}_total_buildings.csv"""
+        """scenario/outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_%s_total_buildings.csv' % panel_type)
 
     def PV_metadata_results(self, building):
@@ -1310,34 +1310,38 @@ class InputLocator(object):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
     
+    def get_lca_operational_folder(self):
+        """scenario/outputs/data/emissions/operational"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "operational")
+
     def get_lca_timeline_folder(self):
         """scenario/outputs/data/emissions/timeline"""
         return os.path.join(self.get_lca_emissions_results_folder(), "timeline")
 
     def get_total_yearly_operational_building(self):
-        """scenario/outputs/data/emissions/timeline/Total_yearly_operational_building.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), "Total_yearly_operational_building.csv")
+        """scenario/outputs/data/emissions/Total_yearly_operational_building.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "Total_yearly_operational_building.csv")
 
     def get_total_yearly_operational_hour(self):
-        """scenario/outputs/data/emissions/timeline/Total_yearly_operational.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), "Total_yearly_operational.csv")
+        """scenario/outputs/data/emissions/Total_yearly_operational.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "Total_yearly_operational.csv")
 
     def get_total_emissions_building_year_end(self, year_end):
-        """scenario/outputs/data/emissions/timeline/Total_emission_building_{year_end}.csv"""
+        """scenario/outputs/data/emissions/Total_emission_building_{year_end}.csv"""
         return os.path.join(
-            self.get_lca_timeline_folder(), f"Total_emission_building_{year_end}.csv")
+            self.get_lca_emissions_results_folder(), f"Total_emission_building_{year_end}.csv")
 
     def get_total_emissions_timeline_year_end(self, year_end):
-        """scenario/outputs/data/emissions/timeline/Total_emission_timeline_{year_end}.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), f"Total_emission_timeline_{year_end}.csv")
-    
+        """scenario/outputs/data/emissions/Total_emission_timeline_{year_end}.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), f"Total_emission_timeline_{year_end}.csv")
+
     def get_lca_timeline_building(self, building: str):
         """scenario/outputs/data/emissions/timeline/{building}_timeline.csv"""
         return os.path.join(self.get_lca_timeline_folder(), f"{building}_timeline.csv")
 
     def get_lca_operational_hourly_building(self, building: str):
-        """scenario/outputs/data/emissions/timeline/{building}_operational_hourly.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), f"{building}_operational_hourly.csv")
+        """scenario/outputs/data/emissions/operational/{building}_operational_hourly.csv"""
+        return os.path.join(self.get_lca_operational_folder(), f"{building}_operational_hourly.csv")
 
     # COSTS
     def get_costs_folder(self):

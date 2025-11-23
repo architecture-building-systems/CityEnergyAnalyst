@@ -557,6 +557,8 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
+    include_pv: bool
+    pv_codes: list[str]
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: Any
     grid_decarbonise_reference_year: int | None
@@ -567,6 +569,10 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["year_end"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["include_pv"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload
@@ -1609,13 +1615,22 @@ class PlotsDemandSection(Section):
 
 class PlotsLifecycleEmissionsSection(Section):
     """Typed section for plots-lifecycle-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1626,13 +1641,22 @@ class PlotsLifecycleEmissionsSection(Section):
 
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    energy_carriers: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["energy_carriers"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1644,7 +1668,10 @@ class PlotsOperationalEmissionsSection(Section):
 class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
     plot_type: str
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     net_zero_target_year: int
@@ -1653,7 +1680,13 @@ class PlotsEmissionTimelineSection(Section):
     @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload

@@ -5,7 +5,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 import pandas as pd
 import numpy as np
-from cea.import_export.result_summary import month_names, month_hours, season_mapping
+from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 
 
 __author__ = "Zhongming Shi"
@@ -26,7 +26,15 @@ class data_processor:
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
-        self.y_metric_to_plot = plot_config.y_metric_to_plot
+
+        # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
+        if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
+            self.y_metric_to_plot = self._generate_lifecycle_emission_columns(plot_config)
+        elif plot_cea_feature == 'operational-emissions':
+            self.y_metric_to_plot = self._generate_operational_emission_columns(plot_config)
+        else:
+            self.y_metric_to_plot = plot_config.y_metric_to_plot
+
         self.y_metric_unit = plot_config.y_metric_unit
         self.y_normalised_by = plot_config.y_normalised_by
         self.x_to_plot = plot_instance.x
@@ -49,19 +57,158 @@ class data_processor:
         else:
             self.appendix = plot_cea_feature
 
+    def _generate_lifecycle_emission_columns(self, plot_config):
+        """
+        Generate column names for lifecycle emissions based on four config parameters.
+
+        Parameters from plot_config:
+        - y_category_to_plot: list of ['operation', 'production', 'demolition', 'biogenic']
+        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
+                                       'pv_electricity_offset', 'pv_electricity_export']
+        - envelope_components: list of ['wall_ag', 'wall_bg', 'wall_part', 'win_ag', 'roof',
+                                        'upperside', 'underside', 'floor', 'base', 'technical_systems', 'pv']
+        - pv_code: str, single PV panel code (e.g., 'PV1')
+
+        Returns:
+        - list of column names (without unit suffix)
+        """
+        # Service name to tech name mapping
+        service_to_tech = {
+            'electricity': 'E_sys',
+            'space_heating': 'Qhs_sys',
+            'space_cooling': 'Qcs_sys',
+            'dhw': 'Qww_sys',
+        }
+
+        categories = plot_config.y_category_to_plot
+        operation_services = getattr(plot_config, 'operation_services', [])
+        envelope_components = getattr(plot_config, 'envelope_components', [])
+        pv_code = getattr(plot_config, 'pv_code', None)
+
+        columns = []
+
+        # Generate operation columns
+        if 'operation' in categories:
+            for service in operation_services:
+                if service in service_to_tech:
+                    # Regular operation service: operation_E_sys, operation_Qhs_sys, etc.
+                    columns.append(f"operation_{service_to_tech[service]}")
+                elif service == 'pv_electricity_offset' and pv_code:
+                    # PV offset column: PV_{pv_code}_GRID_offset
+                    columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export' and pv_code:
+                    # PV export column: PV_{pv_code}_GRID_export
+                    columns.append(f"PV_{pv_code}_GRID_export")
+
+        # Generate embodied columns (production, demolition, biogenic)
+        for category in ['production', 'demolition', 'biogenic']:
+            if category in categories:
+                for component in envelope_components:
+                    if component == 'pv' and pv_code:
+                        # PV embodied emissions: production_PV_{pv_code}, demolition_PV_{pv_code}, etc.
+                        columns.append(f"{category}_PV_{pv_code}")
+                    else:
+                        # Regular component: production_wall_ag, demolition_roof, biogenic_floor, etc.
+                        columns.append(f"{category}_{component}")
+
+        return columns
+
+    def _generate_operational_emission_columns(self, plot_config):
+        """
+        Generate column names for operational emissions based on four config parameters.
+
+        Parameters from plot_config:
+        - y_category_to_plot: list of ['operation', 'energy_carrier']
+        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
+                                       'pv_electricity_offset', 'pv_electricity_export']
+        - energy_carriers: list of ['GRID', 'NATURALGAS', 'BIOGAS', 'SOLAR', 'DRYBIOMASS',
+                                    'WETBIOMASS', 'COAL', 'WOOD', 'OIL', 'HYDROGEN', 'NONE']
+        - pv_code: str, single PV panel code (e.g., 'PV1')
+
+        Returns:
+        - list of column names (without unit suffix)
+
+        Logic:
+        - Both operation AND energy_carrier: Generate hybrids (Qhs_sys_NATURALGAS, E_sys_GRID, etc.)
+        - Only operation: Generate aggregated by service (Qhs_sys, E_sys, etc.) + PV if selected
+        - Only energy_carrier: Generate aggregated by carrier (GRID, NATURALGAS, etc.)
+        """
+        # Service name to tech name mapping
+        service_to_tech = {
+            'electricity': 'E_sys',
+            'space_heating': 'Qhs_sys',
+            'space_cooling': 'Qcs_sys',
+            'dhw': 'Qww_sys',
+        }
+
+        categories = plot_config.y_category_to_plot
+        operation_services = getattr(plot_config, 'operation_services', [])
+        energy_carriers = getattr(plot_config, 'energy_carriers', [])
+        pv_code = getattr(plot_config, 'pv_code', None)
+
+        columns = []
+
+        # Check if both operation and energy_carrier are selected
+        both_selected = 'operation' in categories and 'energy_carrier' in categories
+
+        if both_selected:
+            # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS)
+            for service in operation_services:
+                if service in service_to_tech:
+                    service_name = service_to_tech[service]
+                    for carrier in energy_carriers:
+                        columns.append(f"{service_name}_{carrier}")
+
+            # Add PV columns if selected (PV doesn't combine with carriers)
+            for service in operation_services:
+                if service == 'pv_electricity_offset' and pv_code:
+                    columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export' and pv_code:
+                    columns.append(f"PV_{pv_code}_GRID_export")
+
+        elif 'operation' in categories:
+            # Only operation: aggregated by service
+            for service in operation_services:
+                if service in service_to_tech:
+                    # Aggregated service: E_sys, Qhs_sys, Qcs_sys, Qww_sys
+                    columns.append(service_to_tech[service])
+                elif service == 'pv_electricity_offset' and pv_code:
+                    # PV offset column: PV_{pv_code}_GRID_offset
+                    columns.append(f"PV_{pv_code}_GRID_offset")
+                elif service == 'pv_electricity_export' and pv_code:
+                    # PV export column: PV_{pv_code}_GRID_export
+                    columns.append(f"PV_{pv_code}_GRID_export")
+
+        elif 'energy_carrier' in categories:
+            # Only energy_carrier: aggregated by carrier
+            for carrier in energy_carriers:
+                # Carrier columns: GRID, NATURALGAS, BIOGAS, etc.
+                columns.append(carrier)
+
+        return columns
+
     def process_architecture_data(self):
+        # Filter to only buildings that exist in architecture data
+        # (some buildings may be filtered out by year/type/use criteria)
+        available_buildings = set(self.df_architecture_data['name'].unique())
+        buildings_to_use = [b for b in self.buildings if b in available_buildings]
+
+        if not buildings_to_use:
+            raise ValueError(f"None of the requested buildings are in the architecture data. "
+                           f"Requested: {self.buildings}, Available: {list(available_buildings)}")
+
+        missing = set(self.buildings) - available_buildings
+        if missing:
+            print(f"Warning: {len(missing)} buildings filtered out from architecture data: {sorted(missing)}")
+
         if self.y_normalised_by == 'gross_floor_area':
-            try:
-                normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['GFA_m2']].copy()
-            except KeyError as e:
-                missing = set(self.buildings) - set(self.df_architecture_data['name'].unique())
-                raise ValueError(f"Missing building entries in architecture data: {missing}") from e
+            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use, ['GFA_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
         elif self.y_normalised_by == 'conditioned_floor_area':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings, ['Af_m2']].copy()
+            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use, ['Af_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'Af_m2': 'normaliser_m2'})
         elif self.y_normalised_by == 'no_normalisation':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
+            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use].copy()
             normaliser_m2['normaliser_m2'] = 1  # Replace all values with 1
         else:
             raise ValueError(f"Invalid y-normalised-by: {self.y_normalised_by}")
@@ -162,92 +309,11 @@ class data_processor:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
             y_cea_metric_map = {
-                'heating': ['heating_kgCO2e'],
-                'hot_water': ['hot_water_kgCO2e'],
-                'cooling': ['cooling_kgCO2e'],
-                'electricity': ['electricity_kgCO2e'],
-                'heating_NATURALGAS': ['Qhs_sys_NATURALGAS_kgCO2e'],
-                'heating_BIOGAS': ['Qhs_sys_BIOGAS_kgCO2e'],
-                'heating_SOLAR': ['Qhs_sys_SOLAR_kgCO2e'],
-                'heating_DRYBIOMASS': ['Qhs_sys_DRYBIOMASS_kgCO2e'],
-                'heating_WETBIOMASS': ['Qhs_sys_WETBIOMASS_kgCO2e'],
-                'heating_GRID': ['Qhs_sys_GRID_kgCO2e'],
-                'heating_COAL': ['Qhs_sys_COAL_kgCO2e'],
-                'heating_WOOD': ['Qhs_sys_WOOD_kgCO2e'],
-                'heating_OIL': ['Qhs_sys_OIL_kgCO2e'],
-                'heating_HYDROGEN': ['Qhs_sys_HYDROGEN_kgCO2e'],
-                'heating_NONE': ['Qhs_sys_NONE_kgCO2e'],
-                'hot_water_NATURALGAS': ['Qww_sys_NATURALGAS_kgCO2e'],
-                'hot_water_BIOGAS': ['Qww_sys_BIOGAS_kgCO2e'],
-                'hot_water_SOLAR': ['Qww_sys_SOLAR_kgCO2e'],
-                'hot_water_DRYBIOMASS': ['Qww_sys_DRYBIOMASS_kgCO2e'],
-                'hot_water_WETBIOMASS': ['Qww_sys_WETBIOMASS_kgCO2e'],
-                'hot_water_GRID': ['Qww_sys_GRID_kgCO2e'],
-                'hot_water_COAL': ['Qww_sys_COAL_kgCO2e'],
-                'hot_water_WOOD': ['Qww_sys_WOOD_kgCO2e'],
-                'hot_water_OIL': ['Qww_sys_OIL_kgCO2e'],
-                'hot_water_HYDROGEN': ['Qww_sys_HYDROGEN_kgCO2e'],
-                'hot_water_NONE': ['Qww_sys_NONE_kgCO2e'],
-                'cooling_NATURALGAS': ['Qcs_sys_NATURALGAS_kgCO2e'],
-                'cooling_BIOGAS': ['Qcs_sys_BIOGAS_kgCO2e'],
-                'cooling_SOLAR': ['Qcs_sys_SOLAR_kgCO2e'],
-                'cooling_DRYBIOMASS': ['Qcs_sys_DRYBIOMASS_kgCO2e'],
-                'cooling_WETBIOMASS': ['Qcs_sys_WETBIOMASS_kgCO2e'],
-                'cooling_GRID': ['Qcs_sys_GRID_kgCO2e'],
-                'cooling_COAL': ['Qcs_sys_COAL_kgCO2e'],
-                'cooling_WOOD': ['Qcs_sys_WOOD_kgCO2e'],
-                'cooling_OIL': ['Qcs_sys_OIL_kgCO2e'],
-                'cooling_HYDROGEN': ['Qcs_sys_HYDROGEN_kgCO2e'],
-                'cooling_NONE': ['Qcs_sys_NONE_kgCO2e'],
-                'electricity_NATURALGAS': ['E_sys_NATURALGAS_kgCO2e'],
-                'electricity_BIOGAS': ['E_sys_BIOGAS_kgCO2e'],
-                'electricity_SOLAR': ['E_sys_SOLAR_kgCO2e'],
-                'electricity_DRYBIOMASS': ['E_sys_DRYBIOMASS_kgCO2e'],
-                'electricity_WETBIOMASS': ['E_sys_WETBIOMASS_kgCO2e'],
-                'electricity_GRID': ['E_sys_GRID_kgCO2e'],
-                'electricity_COAL': ['E_sys_COAL_kgCO2e'],
-                'electricity_WOOD': ['E_sys_WOOD_kgCO2e'],
-                'electricity_OIL': ['E_sys_OIL_kgCO2e'],
-                'electricity_HYDROGEN': ['E_sys_HYDROGEN_kgCO2e'],
-                'electricity_NONE': ['E_sys_NONE_kgCO2e'],
+                key: [key+"_kgCO2e"] for key in emission_timeline_hourly_operational_colnames_nounit
             }
         elif plot_cea_feature == 'lifecycle-emissions':
             y_cea_metric_map = {
-                'operation_heating': ['operation_heating_kgCO2e'],
-                'operation_hot_water': ['operation_hot_water_kgCO2e'],
-                'operation_cooling': ['operation_cooling_kgCO2e'],
-                'operation_electricity': ['operation_electricity_kgCO2e'],
-                'production_wall_ag': ['production_wall_ag_kgCO2e'],
-                'production_wall_bg': ['production_wall_bg_kgCO2e'],
-                'production_wall_part': ['production_wall_part_kgCO2e'],
-                'production_win_ag': ['production_win_ag_kgCO2e'],
-                'production_roof': ['production_roof_kgCO2e'],
-                'production_upperside': ['production_upperside_kgCO2e'],
-                'production_underside': ['production_underside_kgCO2e'],
-                'production_floor': ['production_floor_kgCO2e'],
-                'production_base': ['production_base_kgCO2e'],
-                'production_technical_systems': ['production_technical_systems_kgCO2e'],
-                'biogenic_wall_ag': ['biogenic_wall_ag_kgCO2e'],
-                'biogenic_wall_bg': ['biogenic_wall_bg_kgCO2e'],
-                'biogenic_wall_part': ['biogenic_wall_part_kgCO2e'],
-                'biogenic_win_ag': ['biogenic_win_ag_kgCO2e'],
-                'biogenic_roof': ['biogenic_roof_kgCO2e'],
-                'biogenic_upperside': ['biogenic_upperside_kgCO2e'],
-                'biogenic_underside': ['biogenic_underside_kgCO2e'],
-                'biogenic_floor': ['biogenic_floor_kgCO2e'],
-                'biogenic_base': ['biogenic_base_kgCO2e'],
-                'biogenic_technical_systems': ['biogenic_technical_systems_kgCO2e'],
-                'demolition_wall_ag': ['demolition_wall_ag_kgCO2e'],
-                'demolition_wall_bg': ['demolition_wall_bg_kgCO2e'],
-                'demolition_wall_part': ['demolition_wall_part_kgCO2e'],
-                'demolition_win_ag': ['demolition_win_ag_kgCO2e'],
-                'demolition_roof': ['demolition_roof_kgCO2e'],
-                'demolition_upperside': ['demolition_upperside_kgCO2e'],
-                'demolition_underside': ['demolition_underside_kgCO2e'],
-                'demolition_floor': ['demolition_floor_kgCO2e'],
-                'demolition_base': ['demolition_base_kgCO2e'],
-                'demolition_technical_systems': ['demolition_technical_systems_kgCO2e'],
-
+                key: [key+"_kgCO2e"] for key in emission_timeline_yearly_colnames_nounit
             }
 
         else:
@@ -271,6 +337,35 @@ class data_processor:
         # Check if the required columns exist in the data
         missing_columns = [col for col in list_columns if col not in self.df_summary_data.columns]
         if missing_columns:
+            # Check if missing columns are PV-related
+            pv_missing_columns = [col for col in missing_columns if col.startswith('PV_') or '_PV_' in col]
+
+            if pv_missing_columns:
+                # Extract PV panel codes from missing column names
+                # Format: PV_{code}_GRID_offset, PV_{code}_GRID_export, production_PV_{code}, etc.
+                pv_codes = set()
+                for col in pv_missing_columns:
+                    if col.startswith('PV_'):
+                        # Format: PV_{code}_GRID_offset or PV_{code}_GRID_export
+                        parts = col.split('_')
+                        if len(parts) >= 2:
+                            pv_codes.add(parts[1])  # Extract code from PV_{code}_...
+                    elif '_PV_' in col:
+                        # Format: production_PV_{code}, demolition_PV_{code}, biogenic_PV_{code}
+                        parts = col.split('_PV_')
+                        if len(parts) == 2:
+                            pv_codes.add(parts[1])  # Extract code from ..._PV_{code}
+
+                if pv_codes:
+                    pv_codes_list = sorted(pv_codes)
+                    error_msg = (
+                        f"PV electricity results missing for panel type(s): {', '.join(pv_codes_list)}. "
+                        f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                    )
+                    print(f"ERROR: {error_msg}")
+                    raise FileNotFoundError(error_msg)
+
+            # For non-PV missing columns, just warn and filter
             print(f"⚠️ Missing columns in data: {missing_columns}")
             print(f"Available columns: {list(self.df_summary_data.columns)}")
             # Filter out missing columns
