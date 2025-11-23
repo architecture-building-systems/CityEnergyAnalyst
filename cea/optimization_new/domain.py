@@ -367,9 +367,88 @@ class Domain(object):
                                   if b._stand_alone_supply_system_composition['primary']]
         buildings_without_supply = [b for b in self.buildings
                                      if not b._stand_alone_supply_system_composition['primary']]
+
+        # Validate that at least some buildings have supply systems configured
+        # This catches scenarios where supply.csv has assemblies with no components (e.g., SUPPLY_HEATING_AS0)
+        # Exception: If buildings are already designated for networks (user-defined layout), they don't need standalone systems
+        buildings_designated_for_networks = [b for b in self.buildings if b.initial_connectivity_state != 'stand_alone']
+
+        if not buildings_with_supply and not buildings_designated_for_networks:
+            network_type = self.config.optimization_new.network_type
+
+            # Check if buildings have demand for this network type
+            # For DH: separate space heating (Qhs) and DHW (Qww) demand
+            # For DC: just cooling (QC) demand
+            total_demand = sum(b.demand_flow.profile.sum() for b in self.buildings)
+            buildings_with_demand = [b for b in self.buildings if b.demand_flow.profile.sum() > 0]
+
+            if total_demand > 0:
+                # For DH networks, break down by space heating vs DHW
+                if network_type == 'DH':
+                    buildings_with_hs = []
+                    buildings_with_dhw = []
+                    for building in self.buildings:
+                        demand_df = pd.read_csv(building.demands_file_path)
+                        # Check for space heating demand
+                        if 'Qhs_sys_kWh' in demand_df.columns and demand_df['Qhs_sys_kWh'].sum() > 0:
+                            buildings_with_hs.append(building.identifier)
+                        # Check for DHW demand
+                        if 'Qww_sys_kWh' in demand_df.columns and demand_df['Qww_sys_kWh'].sum() > 0:
+                            buildings_with_dhw.append(building.identifier)
+
+                    demand_breakdown = []
+                    if buildings_with_hs:
+                        demand_breakdown.append(f"{len(buildings_with_hs)} building(s) have space heating demand: {buildings_with_hs}")
+                    else:
+                        demand_breakdown.append("0 buildings have space heating demand (typical for tropical climates)")
+                    if buildings_with_dhw:
+                        demand_breakdown.append(f"{len(buildings_with_dhw)} building(s) have domestic hot water (DHW) demand: {buildings_with_dhw}")
+                    else:
+                        demand_breakdown.append("0 buildings have domestic hot water (DHW) demand")
+                    demand_description = "\n".join(demand_breakdown)
+                else:
+                    demand_description = f"{len(buildings_with_demand)} building(s) have space cooling demand: {[b.identifier for b in buildings_with_demand]}"
+
+                # Buildings have demand but no supply systems configured
+                raise ValueError(
+                    f"Cannot run {network_type} optimisation: All {len(self.buildings)} buildings have no supply system components.\n\n"
+                    f"However, buildings have demand for this network type:\n{demand_description}\n\n"
+                    "This typically means supply.csv is misconfigured for district-scale optimisation:\n"
+                    "  - For DH (district heating): Buildings with heating/DHW demand need heating supply assemblies with components\n"
+                    "  - For DC (district cooling): Buildings with cooling demand need cooling supply assemblies with components\n\n"
+                    "Common issue:\n"
+                    "  All buildings have assemblies with no components (e.g., SUPPLY_HEATING_AS0, SUPPLY_COOLING_AS0)\n"
+                    "  → These assemblies mean 'no system' and are only for buildings with zero demand\n\n"
+                    "Solutions:\n"
+                    "  1. Update Building Properties/Supply to use valid assemblies for buildings with demand:\n"
+                    "     → For BUILDING scale: SUPPLY_HEATING_AS1, SUPPLY_COOLING_AS1, etc.\n"
+                    "     → For DISTRICT scale: SUPPLY_HEATING_AS4, SUPPLY_COOLING_AS4, etc.\n"
+                    "  2. Or manually set at least one building to DISTRICT scale to define network supply options\n"
+                    "  3. Check assemblies database to see available options for your system type"
+                )
+            else:
+                # No buildings have demand for this network type
+                raise ValueError(
+                    f"Cannot run {network_type} optimisation: No buildings have {network_type} demand.\n\n"
+                    "This typically means the wrong network-type is selected for this scenario:\n"
+                    f"  - Selected: {network_type}\n"
+                    "  - For tropical climates (e.g., Singapore): Use DC for cooling, not DH for heating\n"
+                    "  - For temperate climates with heating: Use DH for heating\n\n"
+                    "Solutions:\n"
+                    "  1. Change network-type in config to match your scenario:\n"
+                    "     → DH for scenarios with heating demand\n"
+                    "     → DC for scenarios with cooling demand\n"
+                    "  2. Check demand calculation results to verify which demands exist:\n"
+                    "     → Review outputs/data/demand/Total_demand.csv\n"
+                    "     → For DH: Check QH_sys_MWhyr (heating demand)\n"
+                    "     → For DC: Check QC_sys_MWhyr (cooling demand)"
+                )
+
         if buildings_without_supply:
-            print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components (network-supplied):")
+            print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components in base case:")
             print(f"    {[b.identifier for b in buildings_without_supply]}")
+            print("    → These buildings will be network-supplied if connected during optimization")
+
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
             for building in buildings_with_supply]
         self.model_initial_energy_system()
@@ -633,6 +712,15 @@ class Domain(object):
             supply_system_id = building.identifier
             supply_system = building.stand_alone_supply_system
 
+            # Buildings with zero demand: add to summary with zeros, skip detailed files
+            if supply_system is None:
+                supply_system_summary['Supply_System'].append(supply_system_id)
+                supply_system_summary['Heat_Emissions_kWh'].append(0.0)
+                supply_system_summary['System_Energy_Demand_kWh'].append(0.0)
+                supply_system_summary['GHG_Emissions_kgCO2'].append(0.0)
+                supply_system_summary['Cost_USD'].append(0.0)
+                continue
+
             # Summarise structure of the supply system & print to file
             building_file = self.locator.get_new_optimization_optimal_supply_system_file(system_name, supply_system_id)
             self.locator.ensure_parent_folder_exists(building_file)
@@ -719,6 +807,10 @@ class Domain(object):
         for building in stand_alone_buildings:
             supply_system_id = building.identifier
             supply_system = building.stand_alone_supply_system
+
+            # Skip buildings with zero demand (no supply system)
+            if supply_system is None:
+                continue
 
             # Summarise the objective function profiles (i.e. full time series) of the supply system & print to file
             building_file = self.locator.get_new_optimization_supply_systems_detailed_operation_file(des_id,
@@ -903,38 +995,143 @@ def main(config: cea.config.Configuration):
     # Get buildings to optimize from config (if specified)
     buildings_to_optimize = config.optimization_new.buildings if config.optimization_new.buildings else None
 
-    # If network-name is specified, load network FIRST to get district buildings
-    # (network layout is source of truth for which buildings to include)
-    if config.optimization_new.network_name:
+    # If using an existing network layout (not auto-generated), load it FIRST to identify district-connected buildings
+    # Note: We still load ALL buildings in the scenario, not just those in the network
+    # Buildings not in the network will be optimized as standalone systems
+    if not config.optimization_new.use_auto_generated_layout:
+        # User-defined network layout mode
+        if not config.optimization_new.network_name:
+            raise ValueError(
+                "When 'use_auto_generated_layout' is False, you must specify a 'network-name'.\n"
+                "Please select an existing network layout from the dropdown or set 'use_auto_generated_layout' to True."
+            )
+
+        print(f"\nUsing user-defined network layout: '{config.optimization_new.network_name}'")
         start_time = time.time()
         current_domain.load_base_network()
         end_time = time.time()
         print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
 
-        # Override buildings_to_optimize with buildings from network layout
+        # If buildings_to_optimize wasn't specified, load all buildings (not just network buildings)
+        # The network provides connectivity information, not a filter for which buildings to include
         if hasattr(current_domain, 'base_building_to_network'):
-            buildings_to_optimize = list(current_domain.base_building_to_network.keys())
-            print(f"Loading {len(buildings_to_optimize)} buildings from network layout: {buildings_to_optimize}\n")
+            network_buildings = list(current_domain.base_building_to_network.keys())
+            print(f"Network '{config.optimization_new.network_name}' includes {len(network_buildings)} buildings: {network_buildings}")
+            if not buildings_to_optimize:
+                print("  Loading ALL buildings in scenario (network + standalone)\n")
+            # Don't override buildings_to_optimize - let it load all buildings or user-specified subset
+    else:
+        # Autogenerated layout mode - Building Properties/Supply settings determines connectivity
+        print("\nUsing auto-generated network layout (connectivity from Building Properties/Supply settings DISTRICT scale)")
 
     start_time = time.time()
     current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
-    # If network-name is specified, override connectivity to use network layout
-    # (network layout is the only source of truth, not Supply.csv)
-    if config.optimization_new.network_name and hasattr(current_domain, 'base_building_to_network'):
-        for building in current_domain.buildings:
-            if building.identifier in current_domain.base_building_to_network:
-                building.initial_connectivity_state = 'network'
-                print(f"  Overriding {building.identifier}: initial_connectivity_state = 'network' (from network layout)")
+    # If using user-defined network layout, validate and apply it
+    if not config.optimization_new.use_auto_generated_layout and hasattr(current_domain, 'base_building_to_network'):
+        print("\n" + "="*80)
+        print(f"Validating network layout '{config.optimization_new.network_name}'")
+        print("="*80)
 
-    # Load base network again if not already loaded
-    if not config.optimization_new.network_name:
-        start_time = time.time()
-        current_domain.load_base_network()
-        end_time = time.time()
-        print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
+        # Get buildings in network layout and loaded buildings
+        network_buildings = set(current_domain.base_building_to_network.keys())
+        loaded_buildings = set(b.identifier for b in current_domain.buildings)
+
+        # VALIDATION 1: Check if all network buildings are in the loaded buildings
+        missing_buildings = network_buildings - loaded_buildings
+        if missing_buildings:
+            error_msg = (
+                f"\n✗ ERROR: Network layout '{config.optimization_new.network_name}' contains buildings "
+                f"that are not in the buildings filter or scenario:\n"
+                f"  Buildings in network: {sorted(network_buildings)}\n"
+                f"  Buildings loaded: {sorted(loaded_buildings)}\n"
+                f"  Missing buildings: {sorted(missing_buildings)}\n\n"
+                f"Please either:\n"
+                f"  1. Update the network layout to only include buildings in the scenario, OR\n"
+                f"  2. Add missing buildings to the scenario, OR\n"
+                f"  3. Update the 'buildings' parameter to include missing buildings"
+            )
+            raise ValueError(error_msg)
+
+        print(f"✓ All {len(network_buildings)} network buildings are in loaded buildings")
+
+        # VALIDATION 2: Check if Building Properties/Supply settings matches network layout
+        print("\nValidating Building Properties/Supply settings against network layout:")
+        mismatches = []
+
+        for building in current_domain.buildings:
+            building_id = building.identifier
+            in_network = building_id in network_buildings
+            # initial_connectivity_state is either 'stand_alone' or a network ID like 'N1001'
+            supply_is_district = building.initial_connectivity_state != 'stand_alone'
+
+            # Check for mismatches
+            if in_network and not supply_is_district:
+                # Building is in network but Building Properties/Supply settings has BUILDING scale
+                mismatches.append({
+                    'building': building_id,
+                    'issue': 'in_network_but_building_scale',
+                    'network': 'YES',
+                    'supply_csv': 'BUILDING scale'
+                })
+            elif not in_network and supply_is_district:
+                # Building is NOT in network but Building Properties/Supply settings has DISTRICT scale
+                mismatches.append({
+                    'building': building_id,
+                    'issue': 'not_in_network_but_district_scale',
+                    'network': 'NO',
+                    'supply_csv': 'DISTRICT scale'
+                })
+
+        # Report validation results
+        if mismatches:
+            print(f"\n✗ Found {len(mismatches)} configuration mismatch(es):")
+            print("\n{:<12} {:<15} {:<20}".format("Building", "In Network?", "Supply.csv Scale"))
+            print("-" * 50)
+            for m in mismatches:
+                print("{:<12} {:<15} {:<20}".format(m['building'], m['network'], m['supply_csv']))
+
+            error_msg = (
+                f"\n\n✗ ERROR: Building Properties/Supply settings do not match network layout '{config.optimization_new.network_name}'.\n\n"
+                "Buildings IN network must have DISTRICT scale in Building Properties/Supply settings:\n"
+                f"  - In network: {sorted(network_buildings)}\n\n"
+                "Buildings NOT in network must have BUILDING scale in Building Properties/Supply settings:\n"
+                f"  - Not in network: {sorted(loaded_buildings - network_buildings)}\n\n"
+                "Please update Building Properties/Supply settings to match the network layout."
+            )
+            raise ValueError(error_msg)
+
+        print("✓ All buildings have matching Building Properties/Supply settings")
+
+        # Apply network connectivity (all validations passed)
+        print("\nApplying network connectivity:")
+        for building in current_domain.buildings:
+            if building.identifier in network_buildings:
+                # Building is in network - keep supply system composition as fallback for disconnection scenarios
+                # The connectivity state determines whether building uses standalone or network supply
+                building.initial_connectivity_state = current_domain.base_building_to_network[building.identifier]
+                print(f"  {building.identifier}: Connected to network {current_domain.base_building_to_network[building.identifier]}")
+            else:
+                # Building is standalone
+                print(f"  {building.identifier}: Standalone building")
+
+        print("="*80 + "\n")
+
+    # If using auto-generated layout, just report connectivity from Building Properties/Supply settings
+    # The network layout will be generated dynamically during optimization using Steiner tree algorithm
+    # No need to load_base_network() - it would fail trying to load non-existent files
+    if config.optimization_new.use_auto_generated_layout:
+        print("\nConnectivity determined from Building Properties/Supply settings; layout will be auto-generated:")
+        network_buildings = [b.identifier for b in current_domain.buildings if b.initial_connectivity_state != 'stand_alone']
+        standalone_buildings = [b.identifier for b in current_domain.buildings if b.initial_connectivity_state == 'stand_alone']
+        if network_buildings:
+            print(f"  Buildings for auto-generated networks (DISTRICT scale in Building Properties/Supply settings): {network_buildings}")
+            print("    → Network layout will be generated using Steiner tree algorithm on street network")
+        if standalone_buildings:
+            print(f"  Standalone buildings (BUILDING scale in Building Properties/Supply settings): {standalone_buildings}")
+        print()
 
     start_time = time.time()
     current_domain.load_potentials(buildings_to_optimize)

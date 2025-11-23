@@ -410,7 +410,7 @@ def validate_network_covers_district_buildings(
     edges_gdf: gpd.GeoDataFrame
 ) -> Tuple[gpd.GeoDataFrame, List[str]]:
     """
-    Validate that all buildings designated as 'district' in Supply.csv have exactly one node
+    Validate that all buildings designated as 'district' in Building Properties/Supply settings have exactly one node
     in the network (matched by exact name, not geometric footprint location).
 
     Validation checks:
