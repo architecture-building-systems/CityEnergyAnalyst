@@ -453,8 +453,9 @@ class Network(object):
 
         # create a potential network graph with orthogonal connections between buildings and their closest street
         # This returns a NetworkX graph with preserved geometries and building terminal metadata
+        # Default connection_candidates=1 for optimization (can be made configurable later if needed)
         cls._domain_potential_network_graph = calc_connectivity_network_with_geometry(
-            streets_network_df, buildings_df
+            streets_network_df, buildings_df, connection_candidates=1
         )
 
         # store projected coordinate reference system of network
@@ -576,7 +577,7 @@ class Network(object):
             raise ValueError("The network calculation needs configuration before it can analyse any networks.")
         elif domain is not None:
             cls._domain_locator = domain.locator
-            network_type = domain.config.thermal_network.network_type
+            network_type = domain.config.optimization_new.network_type
             min_head_substation_kPa = domain.config.optimization_new.min_head_substation
             thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
             hazen_williams_friction_coefficient = domain.config.optimization_new.hw_friction_coefficient
@@ -675,13 +676,15 @@ class Network(object):
             # calculate substations for all buildings
             # local variables
             total_demand = pd.read_csv(cls._domain_locator.get_total_demand())
-            network_type = domain.config.thermal_network.network_type
+            network_type = domain.config.optimization_new.network_type
 
             if network_type == "DH":
                 buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
                 buildings_name_with_space_heating = get_building_names_with_load(total_demand,
                                                                                  load_name='Qhs_sys_MWhyr')
-                if buildings_name_with_heating and buildings_name_with_space_heating:
+                # Check if there's ANY heating demand (total or space heating)
+                # In tropical climates, there may be DHW heating (QH) but no space heating (Qhs)
+                if buildings_name_with_heating or buildings_name_with_space_heating:
                     building_names = [building for building in buildings_name_with_heating]
                     substation.substation_main_heating(cls._domain_locator, total_demand, building_names,
                                                        DHN_barcode="0")

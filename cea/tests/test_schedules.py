@@ -14,7 +14,7 @@ import pandas as pd
 import cea.config
 from cea.datamanagement.archetypes_mapper import calculate_average_multiuse
 from cea.datamanagement.databases_verification import COLUMNS_ZONE_TYPOLOGY
-from cea.demand.occupancy_helper import occupancy_helper_main
+from cea.demand.occupancy import occupancy_main
 from cea.inputlocator import ReferenceCaseOpenLocator
 
 REFERENCE_TIME = 3456
@@ -53,7 +53,7 @@ class TestScheduleCreation(unittest.TestCase):
         database_helper(config)
 
         # calculate schedules
-        occupancy_helper_main(locator, config)
+        occupancy_main(locator, config)
         calculated_schedules = pd.read_csv(locator.get_occupancy_model_file('B1011')).set_index('date')
 
         test_config = configparser.ConfigParser()
@@ -61,18 +61,18 @@ class TestScheduleCreation(unittest.TestCase):
         reference_results = json.loads(test_config.get('test_mixed_use_schedules', 'reference_results'))
 
         for schedule in reference_results:
-            if (isinstance(calculated_schedules[schedule][REFERENCE_TIME], str)) and (isinstance(
+            if (isinstance(calculated_schedules[schedule].iloc[REFERENCE_TIME], str)) and (isinstance(
                     reference_results[schedule], str)):
-                self.assertEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                self.assertEqual(calculated_schedules[schedule].iloc[REFERENCE_TIME], reference_results[schedule],
                                  msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
-                                                                                 calculated_schedules[schedule][
+                                                                                 calculated_schedules[schedule].iloc[
                                                                                      REFERENCE_TIME],
                                                                                  reference_results[schedule]))
             else:
-                self.assertAlmostEqual(calculated_schedules[schedule][REFERENCE_TIME], reference_results[schedule],
+                self.assertAlmostEqual(calculated_schedules[schedule].iloc[REFERENCE_TIME], reference_results[schedule],
                                        places=4,
                                        msg="Schedule '{}' at time {}, {} != {}".format(schedule, str(REFERENCE_TIME),
-                                                                                       calculated_schedules[schedule][
+                                                                                       calculated_schedules[schedule].iloc[
                                                                                            REFERENCE_TIME],
                                                                                        reference_results[schedule]))
 
@@ -132,7 +132,7 @@ def create_data():
     # weather_path = locator.get_weather_file()
     # weather_data = epwreader.epw_reader(weather_path)
 
-    calculated_schedules = occupancy_helper_main(locator, config)
+    calculated_schedules = occupancy_main(locator, config)
     if not test_config.has_section('test_mixed_use_schedules'):
         test_config.add_section('test_mixed_use_schedules')
     test_config.set('test_mixed_use_schedules', 'reference_results', json.dumps(

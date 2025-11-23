@@ -94,7 +94,7 @@ class Domain(object):
             buildings_in_domain = shp_file.name.tolist()
 
         building_demand_files = [self.locator.get_demand_results_file(building_code) for building_code in buildings_in_domain]
-        network_type = self.config.thermal_network.network_type
+        network_type = self.config.optimization_new.network_type
         for (building_code, demand_file) in zip(buildings_in_domain, building_demand_files):
             if exists(demand_file):
                 building = Building(building_code, demand_file)
@@ -105,14 +105,18 @@ class Domain(object):
                 # Skip buildings with zero demand UNLESS they are configured for district systems
                 # (district buildings with zero demand should still be included for network validation)
                 has_demand = max(building.demand_flow.profile) > 0
-                is_district = building.initial_connectivity_state != 'stand_alone'
+
+                # When network-name is specified, ALL buildings are treated as district buildings
+                # (network layout is source of truth, not Supply.csv)
+                network_name_specified = self.config.optimization_new.network_name
+                is_district = (building.initial_connectivity_state != 'stand_alone') or network_name_specified
 
                 if not has_demand and not is_district:
                     continue
 
-                # Only check demand energy carrier for buildings with actual demand
-                # (zero-demand buildings can't instantiate components)
-                if has_demand:
+                # Only check demand energy carrier for standalone buildings with actual demand
+                # District buildings get their supply from the network, not individual components
+                if has_demand and not is_district:
                     building.check_demand_energy_carrier()
 
                 self.buildings.append(building)
@@ -121,50 +125,122 @@ class Domain(object):
 
     def load_base_network(self):
         """
-        Load base thermal network layout from existing network layout (config.thermal_network.network_name).
-        If provided, this will override the automatic network generation for the base case.
+        Load base thermal network layout from existing network layout (config.optimization_new.network_name).
+        A pre-generated network layout is required for optimization - no auto-generation is supported.
 
         The network layout is loaded from:
         scenario/outputs/data/thermal-network/{network_type}/{network_name}/layout/
 
         Network components are detected and mapped to network IDs (N1001, N1002, etc.)
 
-        :raises UserNetworkLoaderError: If validation fails with detailed error message
+        :raises UserNetworkLoaderError: If network-name not specified or network files not found
         """
         try:
-            # Get network name from config
-            network_name = self.config.thermal_network.network_name
+            # Get network name and type from optimization-new config
+            network_name = self.config.optimization_new.network_name
+            network_type = self.config.optimization_new.network_type
 
-            # If no network name specified, return early (silent fallback to auto-generation)
+            # Network name is required for optimization - no auto-generation
             if not network_name or not network_name.strip():
-                print("No base network selected. CEA will generate network automatically.")
-                return
+                raise UserNetworkLoaderError(
+                    "No base network specified for optimization.\n\n"
+                    "The 'network-name' parameter is required for district-scale optimization.\n"
+                    "A pre-generated network layout must exist before running optimization.\n\n"
+                    "Resolution:\n"
+                    "  1. Run 'network-layout' tool first to generate a network layout\n"
+                    "  2. Set 'network-name' in [optimization-new] config to the generated network name"
+                )
 
             network_name = network_name.strip()
-            network_type = self.config.thermal_network.network_type
 
-            # Get network layout file paths using InputLocator
-            edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
+            # Get network layout file paths from Part 1 (network-layout tool)
+            # Part 1 saves: {network_name}/layout.shp (edges) and {network_name}/{network_type}/layout/nodes.shp
+            edges_path = self.locator.get_network_layout_shapefile(network_name)
             nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
             # Check if files exist
             if not os.path.exists(edges_path) or not os.path.exists(nodes_path):
-                raise UserNetworkLoaderError(
-                    f"Base network layout '{network_name}' not found for {network_type}.\n"
-                    f"Expected location:\n"
-                    f"  - Edges: {edges_path}\n"
-                    f"  - Nodes: {nodes_path}\n\n"
-                    f"Resolution:\n"
-                    f"  1. Run 'network-layout' tool first to generate the network\n"
-                    f"  2. Check that network-name matches an existing layout\n"
-                    f"  3. Leave network-name blank to auto-generate network"
-                )
+                # Check what networks are available for this network type
+                network_type_folder = self.locator.get_thermal_network_folder()
+                available_networks_current_type = []
+                available_networks_other_type = []
+                other_type = 'DH' if network_type == 'DC' else 'DC'
+
+                if os.path.exists(network_type_folder):
+                    for item in os.listdir(network_type_folder):
+                        item_path = os.path.join(network_type_folder, item)
+                        if os.path.isdir(item_path):
+                            # Check Part 1 files using InputLocator methods
+                            edges = self.locator.get_network_layout_shapefile(item)
+                            nodes = self.locator.get_network_layout_nodes_shapefile(network_type, item)
+                            if os.path.exists(edges) and os.path.exists(nodes):
+                                available_networks_current_type.append(item)
+
+                            # Check if this network has the other type
+                            other_nodes = self.locator.get_network_layout_nodes_shapefile(other_type, item)
+                            if os.path.exists(edges) and os.path.exists(other_nodes):
+                                available_networks_other_type.append(item)
+
+                if available_networks_current_type:
+                    error_msg = (
+                        f"Base network layout '{network_name}' not found for network-type '{network_type}'.\n\n"
+                        f"Available networks for {network_type}:\n"
+                        f"  - {', '.join(available_networks_current_type)}\n\n"
+                        f"Resolution:\n"
+                        "  1. Check for typos in the network-name parameter (names are case-sensitive)"
+                    )
+                elif network_name and network_name in available_networks_other_type:
+                    # Network exists but for the wrong type (e.g., DH exists but DC was requested)
+                    error_msg = (
+                        f"Network '{network_name}' exists for {other_type} but not for {network_type}.\n\n"
+                        "Possible causes:\n"
+                        f"  - {network_type} was not selected when running 'network-layout' tool\n"
+                        f"  - Buildings have no {('cooling' if network_type == 'DC' else 'heating')} demand, so {network_type} was skipped\n\n"
+                        "Resolution:\n"
+                        f"  1. Re-run 'network-layout' tool ensuring {network_type} is selected in the network-type parameter\n"
+                        f"  2. Check if buildings have {('cooling' if network_type == 'DC' else 'heating')} demand in scenario/outputs/data/demand/\n"
+                    )
+                else:
+                    error_msg = (
+                        f"No {network_type} networks found in this scenario.\n\n"
+                        "Possible causes:\n"
+                        "  - Network-layout tool was not run yet\n"
+                        f"  - Network-layout tool skipped {network_type} generation due to zero demand\n\n"
+                        "Resolution:\n"
+                        f"  1. Run 'network-layout' tool to generate the network (ensure buildings have demand for {network_type})\n"
+                        f"  2. Check if buildings have {('cooling' if network_type == 'DC' else 'heating')} demand in scenario/outputs/data/demand/\n"
+                    )
+
+                raise UserNetworkLoaderError(error_msg)
 
             # Load shapefiles
             nodes_gdf = gpd.read_file(nodes_path)
-            edges_gdf = gpd.read_file(edges_path)
+            edges_gdf_all = gpd.read_file(edges_path)
 
-            print(f"\nBase network layout loaded: {network_name}")
+            # Filter edges to only include those that connect to nodes in this network type
+            # layout.shp contains edges for BOTH DC and DH, but nodes are network-type specific
+            node_coords = set()
+            for idx, node in nodes_gdf.iterrows():
+                # Normalize coordinates to match edge endpoints
+                x, y = node.geometry.x, node.geometry.y
+                node_coords.add((round(x, 6), round(y, 6)))
+
+            # Keep only edges where both endpoints connect to nodes
+            def edge_connects_to_nodes(geom):
+                coords = list(geom.coords)
+                start = (round(coords[0][0], 6), round(coords[0][1], 6))
+                end = (round(coords[-1][0], 6), round(coords[-1][1], 6))
+                return start in node_coords and end in node_coords
+
+            edges_gdf = edges_gdf_all[edges_gdf_all.geometry.apply(edge_connects_to_nodes)].copy()
+
+            if len(edges_gdf) < len(edges_gdf_all):
+                filtered_count = len(edges_gdf_all) - len(edges_gdf)
+                print(f"\nBase network layout loaded: {network_name}")
+                print(f"  - Filtered {filtered_count} edge(s) not connected to {network_type} nodes")
+            else:
+                print(f"\nBase network layout loaded: {network_name}")
+
             # Defensive handling for NaN/non-string values in building and type columns
             building_col = nodes_gdf.get('building', pd.Series(dtype=object)).fillna('').astype(str).str.upper()
             type_col = nodes_gdf.get('type', pd.Series(dtype=object)).fillna('').astype(str).str.upper()
@@ -172,16 +248,20 @@ class Domain(object):
             print(f"  - Nodes: {len(nodes_gdf)} ({building_nodes_count} building nodes)")
             print(f"  - Edges: {len(edges_gdf)}")
 
-            # Identify district buildings from Supply.csv (via building.initial_connectivity_state)
-            district_buildings = [building.identifier for building in self.buildings
-                                  if building.initial_connectivity_state != 'stand_alone']
+            # Extract district buildings from the network layout (network layout is source of truth)
+            # Buildings with nodes in the network are considered connected, regardless of Supply.csv
+            district_buildings = []
+            for idx, node in nodes_gdf.iterrows():
+                building_name = node.get('building', '')
+                if building_name and str(building_name).upper() not in ['', 'NONE'] and node.get('type', '').upper() != 'PLANT':
+                    district_buildings.append(building_name)
 
             if not district_buildings:
-                print("  Warning: No buildings designated for district networks in Building Properties/Supply")
+                print("  Warning: No building nodes found in network layout")
                 print("           Base network will not be used.")
                 return
 
-            print(f"  - District buildings (from Building Properties/Supply): {len(district_buildings)}")
+            print(f"  - District buildings (from network layout): {len(district_buildings)}")
 
             # Map buildings to network components
             building_to_network, snapped_nodes, edge_snaps = map_buildings_to_networks(
@@ -279,10 +359,19 @@ class Domain(object):
         self._initialize_energy_system_descriptor_classes()
 
         # Calculate base-case supply systems for all buildings (i.e. initial state as per the input editor)
+        # Skip buildings with no supply components (e.g., SUPPLY_HEATING_AS0 with primary='-')
+        # These are placeholders for buildings in networks that get supply from the network
         print("\nCalculating operation of districts' initial supply systems...")
         building_energy_potentials = Building.distribute_building_potentials(self.energy_potentials, self.buildings)
+        buildings_with_supply = [b for b in self.buildings
+                                  if b._stand_alone_supply_system_composition['primary']]
+        buildings_without_supply = [b for b in self.buildings
+                                     if not b._stand_alone_supply_system_composition['primary']]
+        if buildings_without_supply:
+            print(f"  Note: {len(buildings_without_supply)} building(s) have no supply components (network-supplied):")
+            print(f"    {[b.identifier for b in buildings_without_supply]}")
         [building.calculate_supply_system(building_energy_potentials[building.identifier])
-            for building in self.buildings]
+            for building in buildings_with_supply]
         self.model_initial_energy_system()
 
         # Optimise district energy systems
@@ -814,15 +903,38 @@ def main(config: cea.config.Configuration):
     # Get buildings to optimize from config (if specified)
     buildings_to_optimize = config.optimization_new.buildings if config.optimization_new.buildings else None
 
+    # If network-name is specified, load network FIRST to get district buildings
+    # (network layout is source of truth for which buildings to include)
+    if config.optimization_new.network_name:
+        start_time = time.time()
+        current_domain.load_base_network()
+        end_time = time.time()
+        print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
+
+        # Override buildings_to_optimize with buildings from network layout
+        if hasattr(current_domain, 'base_building_to_network'):
+            buildings_to_optimize = list(current_domain.base_building_to_network.keys())
+            print(f"Loading {len(buildings_to_optimize)} buildings from network layout: {buildings_to_optimize}\n")
+
     start_time = time.time()
     current_domain.load_buildings(buildings_to_optimize)
     end_time = time.time()
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
-    start_time = time.time()
-    current_domain.load_base_network()
-    end_time = time.time()
-    print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
+    # If network-name is specified, override connectivity to use network layout
+    # (network layout is the only source of truth, not Supply.csv)
+    if config.optimization_new.network_name and hasattr(current_domain, 'base_building_to_network'):
+        for building in current_domain.buildings:
+            if building.identifier in current_domain.base_building_to_network:
+                building.initial_connectivity_state = 'network'
+                print(f"  Overriding {building.identifier}: initial_connectivity_state = 'network' (from network layout)")
+
+    # Load base network again if not already loaded
+    if not config.optimization_new.network_name:
+        start_time = time.time()
+        current_domain.load_base_network()
+        end_time = time.time()
+        print(f"Time elapsed for loading/validating base network: {end_time - start_time} s")
 
     start_time = time.time()
     current_domain.load_potentials(buildings_to_optimize)

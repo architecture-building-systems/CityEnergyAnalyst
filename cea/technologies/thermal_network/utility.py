@@ -8,16 +8,18 @@ from cea.utilities.standardize_coordinates import validate_crs_uses_meters
 
 
 def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_shapefile_df: gpd.GeoDataFrame,
-                                   coord_precision: float = SHAPEFILE_TOLERANCE) -> tuple[pd.DataFrame, pd.DataFrame]:
+                                   coord_precision: float = SHAPEFILE_TOLERANCE, filter_edges: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extracts network data into DataFrames for pipes and nodes in the network
 
     :param edge_shapefile_df: GeoDataFrame containing all data imported from the edge shapefile
     :param node_shapefile_df: GeoDataFrame containing all data imported from the node shapefile
     :param coord_precision: precision for coordinate matching between edges and nodes (in number of decimal places)
+    :param filter_edges: whether to filter edges that do not have matching start and end nodes
     :type edge_shapefile_df: GeoDataFrame
     :type node_shapefile_df: GeoDataFrame
     :type coord_precision: float
+    :type filter_edges: bool
     :return node_df: DataFrame containing all nodes and their corresponding coordinates
     :return edge_df: list of edges and their corresponding lengths and start and end nodes
     :rtype node_df: DataFrame
@@ -55,6 +57,7 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
     # Calculate pipe length
     edge_shapefile_df['length_m'] = edge_shapefile_df['geometry'].length
 
+    missing_edges = []
     for pipe_name, row in edge_shapefile_df.iterrows():
         # Get edge endpoints (handles curved LineStrings with multiple vertices)
         edge_coords = list(row['geometry'].coords)
@@ -69,12 +72,18 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
         if start_dist <= tolerance_m:
             edge_shapefile_df.loc[pipe_name, 'start node'] = node_names[start_idx]
         else:
-            print(f"Warning: Start node of {pipe_name} has no match within {tolerance_m}m (nearest: {start_dist:.6f}m)")
+            missing_edges.append(pipe_name)
 
         if end_dist <= tolerance_m:
             edge_shapefile_df.loc[pipe_name, 'end node'] = node_names[end_idx]
         else:
-            print(f"Warning: End node of {pipe_name} has no match within {tolerance_m}m (nearest: {end_dist:.6f}m)")
+            missing_edges.append(pipe_name)
 
+    if missing_edges:
+        if filter_edges:
+            edge_shapefile_df = edge_shapefile_df.drop(missing_edges)
+            print(f"Filtered out {len(missing_edges)} edges that do not have matching start and end nodes within the specified tolerance.")
+        else:
+            raise ValueError(f"The following edges do not have matching start and end nodes within the specified tolerance: {missing_edges}")
+    
     return node_shapefile_df, edge_shapefile_df
-

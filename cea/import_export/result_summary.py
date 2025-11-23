@@ -11,6 +11,7 @@ import time
 from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
+from cea.analysis.lca.emission_timeline import _MAPPING_DICT
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 
@@ -66,98 +67,70 @@ dict_plot_metrics_cea_feature = {
     'dh': 'dh',
     'dc': 'dc',
 }
+locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
+df_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
+emission_timeline_pv_types = df_pv['code'].dropna().unique().tolist()
+emission_timeline_operational_feedstocks = list(locator.get_db4_components_feedstocks_all().keys()) + ['NONE']
+emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
+emission_timeline_pv_offset_columns_nounit = [
+    f"PV_{pv_type}_offset_{type_energy}"
+    for pv_type in emission_timeline_pv_types
+    for type_energy in emission_timeline_operational_types + ["total"]
+]
+emission_timeline_hourly_operational_colnames_nounit = [
+    f"{type_energy}_{feedstock}"
+    for type_energy in emission_timeline_operational_types
+    for feedstock in emission_timeline_operational_feedstocks
+] + emission_timeline_operational_types + emission_timeline_operational_feedstocks + [
+    f"PV_{pv_type}_GRID_offset"
+    for pv_type in emission_timeline_pv_types
+] + [
+    f"PV_{pv_type}_GRID_export"
+    for pv_type in emission_timeline_pv_types
+]
+
+normalisation_name_mapping_emission_timeline_hourly_operational = {
+    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+    for colname in emission_timeline_hourly_operational_colnames_nounit
+}
+
+emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
+emission_timeline_embodied_parts = list(_MAPPING_DICT.keys())
+emission_timeline_yearly_colnames_nounit = (
+    [
+        f"{type_emission}_{part}"
+        for type_emission in emission_timeline_embodied_types
+        for part in emission_timeline_embodied_parts
+    ]
+    + [
+        f"operation_{type_energy}"
+        for type_energy in emission_timeline_operational_types
+    ]
+    # PV operational columns (offset and export)
+    + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
+    + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
+    # PV embodied columns
+    + [
+        f"{type_emission}_PV_{pv_type}"
+        for type_emission in emission_timeline_embodied_types
+        for pv_type in emission_timeline_pv_types
+    ]
+)
+
+normalisation_name_mapping_emission_timeline_yearly = {
+    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+    for colname in emission_timeline_yearly_colnames_nounit
+}
 
 normalisation_name_mapping = {
-    'grid_electricity_consumption[kWh]': 'EUI_grid_electricity[kWh/m2]',
-    'enduse_electricity_demand[kWh]': 'EUI_enduse_electricity[kWh/m2]',
-    'enduse_cooling_demand[kWh]': 'EUI_enduse_cooling[kWh/m2]',
-    'enduse_space_cooling_demand[kWh]': 'EUI_enduse_space_cooling[kWh/m2]',
-    'enduse_heating_demand[kWh]': 'EUI_enduse_heating[kWh/m2]',
-    'enduse_space_heating_demand[kWh]': 'EUI_enduse_space_heating[kWh/m2]',
-    'enduse_dhw_demand[kWh]': 'EUI_enduse_dhw[kWh/m2]',
-    'heating[kgCO2e]': 'heating[kgCO2e/m2]',
-    'hot_water[kgCO2e]': 'hot_water[kgCO2e/m2]',
-    'cooling[kgCO2e]': 'cooling[kgCO2e/m2]',
-    'electricity[kgCO2e]': 'electricity[kgCO2e/m2]',
-    'heating_NATURALGAS[kgCO2e]': 'heating_NATURALGAS[kgCO2e/m2]',
-    'heating_BIOGAS[kgCO2e]': 'heating_BIOGAS[kgCO2e/m2]',
-    'heating_SOLAR[kgCO2e]': 'heating_SOLAR[kgCO2e/m2]',
-    'heating_DRYBIOMASS[kgCO2e]': 'heating_DRYBIOMASS[kgCO2e/m2]',
-    'heating_WETBIOMASS[kgCO2e]': 'heating_WETBIOMASS[kgCO2e/m2]',
-    'heating_GRID[kgCO2e]': 'heating_GRID[kgCO2e/m2]',
-    'heating_COAL[kgCO2e]': 'heating_COAL[kgCO2e/m2]',
-    'heating_WOOD[kgCO2e]': 'heating_WOOD[kgCO2e/m2]',
-    'heating_OIL[kgCO2e]': 'heating_OIL[kgCO2e/m2]',
-    'heating_HYDROGEN[kgCO2e]': 'heating_HYDROGEN[kgCO2e/m2]',
-    'heating_NONE[kgCO2e]': 'heating_NONE[kgCO2e/m2]',
-    'hot_water_NATURALGAS[kgCO2e]': 'hot_water_NATURALGAS[kgCO2e/m2]',
-    'hot_water_BIOGAS[kgCO2e]': 'hot_water_BIOGAS[kgCO2e/m2]',
-    'hot_water_SOLAR[kgCO2e]': 'hot_water_SOLAR[kgCO2e/m2]',
-    'hot_water_DRYBIOMASS[kgCO2e]': 'hot_water_DRYBIOMASS[kgCO2e/m2]',
-    'hot_water_WETBIOMASS[kgCO2e]': 'hot_water_WETBIOMASS[kgCO2e/m2]',
-    'hot_water_GRID[kgCO2e]': 'hot_water_GRID[kgCO2e/m2]',
-    'hot_water_COAL[kgCO2e]': 'hot_water_COAL[kgCO2e/m2]',
-    'hot_water_WOOD[kgCO2e]': 'hot_water_WOOD[kgCO2e/m2]',
-    'hot_water_OIL[kgCO2e]': 'hot_water_OIL[kgCO2e/m2]',
-    'hot_water_HYDROGEN[kgCO2e]': 'hot_water_HYDROGEN[kgCO2e/m2]',
-    'hot_water_NONE[kgCO2e]': 'hot_water_NONE[kgCO2e/m2]',
-    'cooling_NATURALGAS[kgCO2e]': 'cooling_NATURALGAS[kgCO2e/m2]',
-    'cooling_BIOGAS[kgCO2e]': 'cooling_BIOGAS[kgCO2e/m2]',
-    'cooling_SOLAR[kgCO2e]': 'cooling_SOLAR[kgCO2e/m2]',
-    'cooling_DRYBIOMASS[kgCO2e]': 'cooling_DRYBIOMASS[kgCO2e/m2]',
-    'cooling_WETBIOMASS[kgCO2e]': 'cooling_WETBIOMASS[kgCO2e/m2]',
-    'cooling_GRID[kgCO2e]': 'cooling_GRID[kgCO2e/m2]',
-    'cooling_COAL[kgCO2e]': 'cooling_COAL[kgCO2e/m2]',
-    'cooling_WOOD[kgCO2e]': 'cooling_WOOD[kgCO2e/m2]',
-    'cooling_OIL[kgCO2e]': 'cooling_OIL[kgCO2e/m2]',
-    'cooling_HYDROGEN[kgCO2e]': 'cooling_HYDROGEN[kgCO2e/m2]',
-    'cooling_NONE[kgCO2e]': 'cooling_NONE[kgCO2e/m2]',
-    'electricity_NATURALGAS[kgCO2e]': 'electricity_NATURALGAS[kgCO2e/m2]',
-    'electricity_BIOGAS[kgCO2e]': 'electricity_BIOGAS[kgCO2e/m2]',
-    'electricity_SOLAR[kgCO2e]': 'electricity_SOLAR[kgCO2e/m2]',
-    'electricity_DRYBIOMASS[kgCO2e]': 'electricity_DRYBIOMASS[kgCO2e/m2]',
-    'electricity_WETBIOMASS[kgCO2e]': 'electricity_WETBIOMASS[kgCO2e/m2]',
-    'electricity_GRID[kgCO2e]': 'electricity_GRID[kgCO2e/m2]',
-    'electricity_COAL[kgCO2e]': 'electricity_COAL[kgCO2e/m2]',
-    'electricity_WOOD[kgCO2e]': 'electricity_WOOD[kgCO2e/m2]',
-    'electricity_OIL[kgCO2e]': 'electricity_OIL[kgCO2e/m2]',
-    'electricity_HYDROGEN[kgCO2e]': 'electricity_HYDROGEN[kgCO2e/m2]',
-    'electricity_NONE[kgCO2e]': 'electricity_NONE[kgCO2e/m2]',
-    'operation_heating[kgCO2e]': 'operation_heating[kgCO2e/m2]',
-    'operation_hot_water[kgCO2e]': 'operation_hot_water[kgCO2e/m2]',
-    'operation_cooling[kgCO2e]': 'operation_cooling[kgCO2e/m2]',
-    'operation_electricity[kgCO2e]': 'operation_electricity[kgCO2e/m2]',
-    'production_wall_ag[kgCO2e]': 'production_wall_ag[kgCO2e/m2]',
-    'production_wall_bg[kgCO2e]': 'production_wall_bg[kgCO2e/m2]',
-    'production_wall_part[kgCO2e]': 'production_wall_part[kgCO2e/m2]',
-    'production_win_ag[kgCO2e]': 'production_win_ag[kgCO2e/m2]',
-    'production_roof[kgCO2e]': 'production_roof[kgCO2e/m2]',
-    'production_upperside[kgCO2e]': 'production_upperside[kgCO2e/m2]',
-    'production_underside[kgCO2e]': 'production_underside[kgCO2e/m2]',
-    'production_floor[kgCO2e]': 'production_floor[kgCO2e/m2]',
-    'production_base[kgCO2e]': 'production_base[kgCO2e/m2]',
-    'production_technical_systems[kgCO2e]': 'production_technical_systems[kgCO2e/m2]',
-    'biogenic_wall_ag[kgCO2e]': 'biogenic_wall_ag[kgCO2e/m2]',
-    'biogenic_wall_bg[kgCO2e]': 'biogenic_wall_bg[kgCO2e/m2]',
-    'biogenic_wall_part[kgCO2e]': 'biogenic_wall_part[kgCO2e/m2]',
-    'biogenic_win_ag[kgCO2e]': 'biogenic_win_ag[kgCO2e/m2]',
-    'biogenic_roof[kgCO2e]': 'biogenic_roof[kgCO2e/m2]',
-    'biogenic_upperside[kgCO2e]': 'biogenic_upperside[kgCO2e/m2]',
-    'biogenic_underside[kgCO2e]': 'biogenic_underside[kgCO2e/m2]',
-    'biogenic_floor[kgCO2e]': 'biogenic_floor[kgCO2e/m2]',
-    'biogenic_base[kgCO2e]': 'biogenic_base[kgCO2e/m2]',
-    'biogenic_technical_systems[kgCO2e]': 'biogenic_technical_systems[kgCO2e/m2]',
-    'demolition_wall_ag[kgCO2e]': 'demolition_wall_ag[kgCO2e/m2]',
-    'demolition_wall_bg[kgCO2e]': 'demolition_wall_bg[kgCO2e/m2]',
-    'demolition_wall_part[kgCO2e]': 'demolition_wall_part[kgCO2e/m2]',
-    'demolition_win_ag[kgCO2e]': 'demolition_win_ag[kgCO2e/m2]',
-    'demolition_roof[kgCO2e]': 'demolition_roof[kgCO2e/m2]',
-    'demolition_upperside[kgCO2e]': 'demolition_upperside[kgCO2e/m2]',
-    'demolition_underside[kgCO2e]': 'demolition_underside[kgCO2e/m2]',
-    'demolition_floor[kgCO2e]': 'demolition_floor[kgCO2e/m2]',
-    'demolition_base[kgCO2e]': 'demolition_base[kgCO2e/m2]',
-    'demolition_technical_systems[kgCO2e]': 'demolition_technical_systems[kgCO2e/m2]'
-}
+        "grid_electricity_consumption[kWh]": "EUI_grid_electricity[kWh/m2]",
+        "enduse_electricity_demand[kWh]": "EUI_enduse_electricity[kWh/m2]",
+        "enduse_cooling_demand[kWh]": "EUI_enduse_cooling[kWh/m2]",
+        "enduse_space_cooling_demand[kWh]": "EUI_enduse_space_cooling[kWh/m2]",
+        "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
+        "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
+        "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
+    } | normalisation_name_mapping_emission_timeline_yearly | normalisation_name_mapping_emission_timeline_hourly_operational
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Data preparation
@@ -388,91 +361,170 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
     - ValueError: If the direction is invalid.
     """
     mapping_dict = {
-        "architecture": ['conditioned_floor_area[m2]', 'roof_area[m2]', 'gross_floor_area[m2]', 'occupied_floor_area[m2]'],
-        "demand": ['grid_electricity_consumption[kWh]', 'enduse_electricity_demand[kWh]',
-                   'enduse_cooling_demand[kWh]', 'enduse_space_cooling_demand[kWh]', 'enduse_heating_demand[kWh]',
-                   'enduse_space_heating_demand[kWh]', 'enduse_dhw_demand[kWh]'],
-        "lifecycle_emissions": [
-            'operation_heating[kgCO2e]', 'operation_hot_water[kgCO2e]', 'operation_cooling[kgCO2e]',
-            'operation_electricity[kgCO2e]',
-            'production_wall_ag[kgCO2e]', 'production_wall_bg[kgCO2e]', 'production_wall_part[kgCO2e]',
-            'production_win_ag[kgCO2e]', 'production_roof[kgCO2e]', 'production_upperside[kgCO2e]',
-            'production_underside[kgCO2e]', 'production_floor[kgCO2e]', 'production_base[kgCO2e]',
-            'production_technical_systems[kgCO2e]', 'biogenic_wall_ag[kgCO2e]', 'biogenic_wall_bg[kgCO2e]',
-            'biogenic_wall_part[kgCO2e]', 'biogenic_win_ag[kgCO2e]', 'biogenic_roof[kgCO2e]',
-            'biogenic_upperside[kgCO2e]', 'biogenic_underside[kgCO2e]', 'biogenic_floor[kgCO2e]',
-            'biogenic_base[kgCO2e]', 'biogenic_technical_systems[kgCO2e]', 'demolition_wall_ag[kgCO2e]',
-            'demolition_wall_bg[kgCO2e]', 'demolition_wall_part[kgCO2e]', 'demolition_win_ag[kgCO2e]',
-            'demolition_roof[kgCO2e]', 'demolition_upperside[kgCO2e]', 'demolition_underside[kgCO2e]',
-            'demolition_floor[kgCO2e]', 'demolition_base[kgCO2e]', 'demolition_technical_systems[kgCO2e]'
+        "architecture": [
+            "conditioned_floor_area[m2]",
+            "roof_area[m2]",
+            "gross_floor_area[m2]",
+            "occupied_floor_area[m2]",
         ],
-        "operational_emissions": [
-            'heating[kgCO2e]', 'hot_water[kgCO2e]', 'cooling[kgCO2e]', 'electricity[kgCO2e]',
-            'heating_NATURALGAS[kgCO2e]', 'heating_BIOGAS[kgCO2e]', 'heating_SOLAR[kgCO2e]',
-            'heating_DRYBIOMASS[kgCO2e]', 'heating_WETBIOMASS[kgCO2e]', 'heating_GRID[kgCO2e]',
-            'heating_COAL[kgCO2e]', 'heating_WOOD[kgCO2e]', 'heating_OIL[kgCO2e]',
-            'heating_HYDROGEN[kgCO2e]', 'heating_NONE[kgCO2e]', 'hot_water_NATURALGAS[kgCO2e]',
-            'hot_water_BIOGAS[kgCO2e]', 'hot_water_SOLAR[kgCO2e]', 'hot_water_DRYBIOMASS[kgCO2e]',
-            'hot_water_WETBIOMASS[kgCO2e]', 'hot_water_GRID[kgCO2e]', 'hot_water_COAL[kgCO2e]',
-            'hot_water_WOOD[kgCO2e]', 'hot_water_OIL[kgCO2e]', 'hot_water_HYDROGEN[kgCO2e]',
-            'hot_water_NONE[kgCO2e]', 'cooling_NATURALGAS[kgCO2e]', 'cooling_BIOGAS[kgCO2e]',
-            'cooling_SOLAR[kgCO2e]', 'cooling_DRYBIOMASS[kgCO2e]', 'cooling_WETBIOMASS[kgCO2e]',
-            'cooling_GRID[kgCO2e]', 'cooling_COAL[kgCO2e]', 'cooling_WOOD[kgCO2e]', 'cooling_OIL[kgCO2e]',
-            'cooling_HYDROGEN[kgCO2e]', 'cooling_NONE[kgCO2e]', 'electricity_NATURALGAS[kgCO2e]',
-            'electricity_BIOGAS[kgCO2e]',
-            'electricity_SOLAR[kgCO2e]', 'electricity_DRYBIOMASS[kgCO2e]', 'electricity_WETBIOMASS[kgCO2e]',
-            'electricity_GRID[kgCO2e]',
-            'electricity_COAL[kgCO2e]', 'electricity_WOOD[kgCO2e]', 'electricity_OIL[kgCO2e]',
-            'electricity_HYDROGEN[kgCO2e]', 'electricity_NONE[kgCO2e]'
+        "demand": [
+            "grid_electricity_consumption[kWh]",
+            "enduse_electricity_demand[kWh]",
+            "enduse_cooling_demand[kWh]",
+            "enduse_space_cooling_demand[kWh]",
+            "enduse_heating_demand[kWh]",
+            "enduse_space_heating_demand[kWh]",
+            "enduse_dhw_demand[kWh]",
         ],
-        "solar_irradiation": ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]','irradiation_wall_north[kWh]',
-                          'irradiation_window_south[kWh]','irradiation_wall_south[kWh]',
-                          'irradiation_window_east[kWh]','irradiation_wall_east[kWh]',
-                          'irradiation_window_west[kWh]','irradiation_wall_west[kWh]'],
-        "pv": ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]',
-               'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]',
-               'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]',
-               'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]',
-               'PV_generation_to_load[-]', 'PV_self_consumption[-]', 'PV_self_sufficiency[-]'],
-        "pvt_ET": ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]',
-                    'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]',
-                    'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]',
-                    'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]',
-                    'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]',
-                    'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]'],
-        "pvt_FP": ['PVT_FP_installed_area_total[m2]', 'PVT_FP_electricity_total[kWh]', 'PVT_FP_heat_total[kWh]',
-                    'PVT_FP_installed_area_roof[m2]', 'PVT_FP_electricity_roof[kWh]', 'PVT_FP_heat_roof[kWh]',
-                    'PVT_FP_installed_area_north[m2]', 'PVT_FP_electricity_north[kWh]', 'PVT_FP_heat_north[kWh]',
-                    'PVT_FP_installed_area_south[m2]', 'PVT_FP_electricity_south[kWh]', 'PVT_FP_heat_south[kWh]',
-                    'PVT_FP_installed_area_east[m2]', 'PVT_FP_electricity_east[kWh]', 'PVT_FP_heat_east[kWh]',
-                    'PVT_FP_installed_area_west[m2]', 'PVT_FP_electricity_west[kWh]', 'PVT_FP_heat_west[kWh]'],
-        "sc_ET": ['SC_ET_installed_area_total[m2]', 'SC_ET_heat_total[kWh]',
-                  'SC_ET_installed_area_roof[m2]', 'SC_ET_heat_roof[kWh]',
-                  'SC_ET_installed_area_north[m2]', 'SC_ET_heat_north[kWh]',
-                  'SC_ET_installed_area_south[m2]', 'SC_ET_heat_south[kWh]',
-                  'SC_ET_installed_area_east[m2]', 'SC_ET_heat_east[kWh]',
-                  'SC_ET_installed_area_west[m2]', 'SC_ET_heat_west[kWh]'],
-        "sc_FP": ['SC_FP_installed_area_total[m2]', 'SC_FP_heat_total[kWh]',
-                  'SC_FP_installed_area_roof[m2]', 'SC_FP_heat_roof[kWh]',
-                  'SC_FP_installed_area_north[m2]', 'SC_FP_heat_north[kWh]',
-                  'SC_FP_installed_area_south[m2]', 'SC_FP_heat_south[kWh]',
-                  'SC_FP_installed_area_east[m2]', 'SC_FP_heat_east[kWh]',
-                  'SC_FP_installed_area_west[m2]', 'SC_FP_heat_west[kWh]'],
-        "other_renewables": ['geothermal_heat_potential[kWh]', 'area_for_ground_source_heat_pump[m2]', 'sewage_heat_potential[kWh]', 'water_body_heat_potential[kWh]'],
-        "dh": ['DH_plant_thermal_load[kWh]', 'DH_plant_power[kW]',
-               'DH_electricity_consumption_for_pressure_loss[kWh]', 'DH_plant_pumping_power[kW]'],
-        "dc": ['DC_plant_thermal_load[kWh]', 'DC_plant_power[kW]',
-               'DC_electricity_consumption_for_pressure_loss[kWh]', 'DC_plant_pumping_power[kW]'],
+        "lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
+        "operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
+        "solar_irradiation": [
+            "irradiation_roof[kWh]",
+            "irradiation_window_north[kWh]",
+            "irradiation_wall_north[kWh]",
+            "irradiation_window_south[kWh]",
+            "irradiation_wall_south[kWh]",
+            "irradiation_window_east[kWh]",
+            "irradiation_wall_east[kWh]",
+            "irradiation_window_west[kWh]",
+            "irradiation_wall_west[kWh]",
+        ],
+        "pv": [
+            "PV_installed_area_total[m2]",
+            "PV_electricity_total[kWh]",
+            "PV_installed_area_roof[m2]",
+            "PV_electricity_roof[kWh]",
+            "PV_installed_area_north[m2]",
+            "PV_electricity_north[kWh]",
+            "PV_installed_area_south[m2]",
+            "PV_electricity_south[kWh]",
+            "PV_installed_area_east[m2]",
+            "PV_electricity_east[kWh]",
+            "PV_installed_area_west[m2]",
+            "PV_electricity_west[kWh]",
+            "PV_generation_to_load[-]",
+            "PV_self_consumption[-]",
+            "PV_self_sufficiency[-]",
+        ],
+        "pvt_ET": [
+            "PVT_ET_installed_area_total[m2]",
+            "PVT_ET_electricity_total[kWh]",
+            "PVT_ET_heat_total[kWh]",
+            "PVT_ET_installed_area_roof[m2]",
+            "PVT_ET_electricity_roof[kWh]",
+            "PVT_ET_heat_roof[kWh]",
+            "PVT_ET_installed_area_north[m2]",
+            "PVT_ET_electricity_north[kWh]",
+            "PVT_ET_heat_north[kWh]",
+            "PVT_ET_installed_area_south[m2]",
+            "PVT_ET_electricity_south[kWh]",
+            "PVT_ET_heat_south[kWh]",
+            "PVT_ET_installed_area_east[m2]",
+            "PVT_ET_electricity_east[kWh]",
+            "PVT_ET_heat_east[kWh]",
+            "PVT_ET_installed_area_west[m2]",
+            "PVT_ET_electricity_west[kWh]",
+            "PVT_ET_heat_west[kWh]",
+        ],
+        "pvt_FP": [
+            "PVT_FP_installed_area_total[m2]",
+            "PVT_FP_electricity_total[kWh]",
+            "PVT_FP_heat_total[kWh]",
+            "PVT_FP_installed_area_roof[m2]",
+            "PVT_FP_electricity_roof[kWh]",
+            "PVT_FP_heat_roof[kWh]",
+            "PVT_FP_installed_area_north[m2]",
+            "PVT_FP_electricity_north[kWh]",
+            "PVT_FP_heat_north[kWh]",
+            "PVT_FP_installed_area_south[m2]",
+            "PVT_FP_electricity_south[kWh]",
+            "PVT_FP_heat_south[kWh]",
+            "PVT_FP_installed_area_east[m2]",
+            "PVT_FP_electricity_east[kWh]",
+            "PVT_FP_heat_east[kWh]",
+            "PVT_FP_installed_area_west[m2]",
+            "PVT_FP_electricity_west[kWh]",
+            "PVT_FP_heat_west[kWh]",
+        ],
+        "sc_ET": [
+            "SC_ET_installed_area_total[m2]",
+            "SC_ET_heat_total[kWh]",
+            "SC_ET_installed_area_roof[m2]",
+            "SC_ET_heat_roof[kWh]",
+            "SC_ET_installed_area_north[m2]",
+            "SC_ET_heat_north[kWh]",
+            "SC_ET_installed_area_south[m2]",
+            "SC_ET_heat_south[kWh]",
+            "SC_ET_installed_area_east[m2]",
+            "SC_ET_heat_east[kWh]",
+            "SC_ET_installed_area_west[m2]",
+            "SC_ET_heat_west[kWh]",
+        ],
+        "sc_FP": [
+            "SC_FP_installed_area_total[m2]",
+            "SC_FP_heat_total[kWh]",
+            "SC_FP_installed_area_roof[m2]",
+            "SC_FP_heat_roof[kWh]",
+            "SC_FP_installed_area_north[m2]",
+            "SC_FP_heat_north[kWh]",
+            "SC_FP_installed_area_south[m2]",
+            "SC_FP_heat_south[kWh]",
+            "SC_FP_installed_area_east[m2]",
+            "SC_FP_heat_east[kWh]",
+            "SC_FP_installed_area_west[m2]",
+            "SC_FP_heat_west[kWh]",
+        ],
+        "other_renewables": [
+            "geothermal_heat_potential[kWh]",
+            "area_for_ground_source_heat_pump[m2]",
+            "sewage_heat_potential[kWh]",
+            "water_body_heat_potential[kWh]",
+        ],
+        "dh": [
+            "DH_plant_thermal_load[kWh]",
+            "DH_plant_power[kW]",
+            "DH_electricity_consumption_for_pressure_loss[kWh]",
+            "DH_plant_pumping_power[kW]",
+        ],
+        "dc": [
+            "DC_plant_thermal_load[kWh]",
+            "DC_plant_power[kW]",
+            "DC_electricity_consumption_for_pressure_loss[kWh]",
+            "DC_plant_pumping_power[kW]",
+        ],
     }
 
     if direction == "metrics_to_features":
-        # Find all matches
+        # Find all matches - features where there's overlap with input metrics
         matched_features = {feature for feature, metrics in mapping_dict.items() if set(list_metrics_or_features) & set(metrics)}
 
         if not matched_features:
             return None
-        else:
+        elif len(matched_features) == 1:
             return list(matched_features)[0]
+        else:
+            # Multiple features match - need to disambiguate
+            # This happens when metrics are shared between features (e.g., PV columns in both lifecycle and operational emissions)
+
+            # Strategy: Return the feature where ALL input metrics are present (perfect match)
+            # If no perfect match, return the feature with the most overlap
+            perfect_matches = [feature for feature in matched_features
+                             if set(list_metrics_or_features).issubset(set(mapping_dict[feature]))]
+
+            if perfect_matches:
+                # If multiple perfect matches, prefer more specific features
+                # operational_emissions is more specific than lifecycle_emissions for hourly data
+                priority_order = ['operational_emissions', 'lifecycle_emissions', 'architecture', 'demand']
+                for priority_feature in priority_order:
+                    if priority_feature in perfect_matches:
+                        return priority_feature
+                return perfect_matches[0]
+            else:
+                # No perfect match - return feature with most overlap
+                overlap_scores = {feature: len(set(list_metrics_or_features) & set(mapping_dict[feature]))
+                                for feature in matched_features}
+                best_match = max(overlap_scores, key=overlap_scores.get)
+                return best_match
 
     elif direction == "features_to_metrics":
         # Reverse the mapping dictionary
@@ -501,188 +553,112 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     - list: A list of mapped values (CEA column names or metrics).
     """
     mapping_dict = {
-        'conditioned_floor_area[m2]': ['Af_m2'],
-        'roof_area[m2]': ['Aroof_m2'],
-        'gross_floor_area[m2]': ['GFA_m2'],
-        'occupied_floor_area[m2]': ['Aocc_m2'],
-        'grid_electricity_consumption[kWh]': ['GRID_kWh'],
-        'enduse_electricity_demand[kWh]': ['E_sys_kWh'],
-        'enduse_cooling_demand[kWh]': ['QC_sys_kWh'],
-        'enduse_space_cooling_demand[kWh]': ['Qcs_sys_kWh'],
-        'enduse_heating_demand[kWh]': ['QH_sys_kWh'],
-        'enduse_space_heating_demand[kWh]': ['Qhs_sys_kWh'],
-        'enduse_dhw_demand[kWh]': ['Qww_kWh'],
-        'irradiation_roof[kWh]': ['roofs_top_kW'],
-        'irradiation_window_north[kWh]': ['windows_north_kW'],
-        'irradiation_wall_north[kWh]': ['walls_north_kW'],
-        'irradiation_window_south[kWh]': ['windows_south_kW'],
-        'irradiation_wall_south[kWh]': ['walls_south_kW'],
-        'irradiation_window_east[kWh]': ['windows_east_kW'],
-        'irradiation_wall_east[kWh]': ['walls_east_kW'],
-        'irradiation_window_west[kWh]': ['windows_west_kW'],
-        'irradiation_wall_west[kWh]': ['walls_west_kW'],
-        'PV_installed_area_total[m2]': ['area_PV_m2'],
-        'PV_electricity_total[kWh]': ['E_PV_gen_kWh'],
-        'PV_installed_area_roof[m2]': ['PV_roofs_top_m2'],
-        'PV_electricity_roof[kWh]': ['PV_roofs_top_E_kWh'],
-        'PV_installed_area_north[m2]': ['PV_walls_north_m2'],
-        'PV_electricity_north[kWh]': ['PV_walls_north_E_kWh'],
-        'PV_installed_area_south[m2]': ['PV_walls_south_m2'],
-        'PV_electricity_south[kWh]': ['PV_walls_south_E_kWh'],
-        'PV_installed_area_east[m2]': ['PV_walls_east_m2'],
-        'PV_electricity_east[kWh]': ['PV_walls_east_E_kWh'],
-        'PV_installed_area_west[m2]': ['PV_walls_west_m2'],
-        'PV_electricity_west[kWh]': ['PV_walls_west_E_kWh'],
-        'PVT_ET_installed_area_total[m2]': ['area_PVT_m2'],
-        'PVT_ET_electricity_total[kWh]': ['E_PVT_gen_kWh'],
-        'PVT_ET_heat_total[kWh]': ['Q_PVT_gen_kWh'],
-        'PVT_ET_installed_area_roof[m2]': ['PVT_ET_roofs_top_m2'],
-        'PVT_ET_electricity_roof[kWh]': ['PVT_ET_roofs_top_E_kWh'],
-        'PVT_ET_heat_roof[kWh]': ['PVT_ET_roofs_top_Q_kWh'],
-        'PVT_ET_installed_area_north[m2]': ['PVT_ET_walls_north_m2'],
-        'PVT_ET_electricity_north[kWh]': ['PVT_ET_walls_north_E_kWh'],
-        'PVT_ET_heat_north[kWh]': ['PVT_ET_walls_north_Q_kWh'],
-        'PVT_ET_installed_area_south[m2]': ['PVT_ET_walls_south_m2'],
-        'PVT_ET_electricity_south[kWh]': ['PVT_ET_walls_south_E_kWh'],
-        'PVT_ET_heat_south[kWh]': ['PVT_ET_walls_south_Q_kWh'],
-        'PVT_ET_installed_area_east[m2]': ['PVT_ET_walls_east_m2'],
-        'PVT_ET_electricity_east[kWh]': ['PVT_ET_walls_east_E_kWh'],
-        'PVT_ET_heat_east[kWh]': ['PVT_ET_walls_east_Q_kWh'],
-        'PVT_ET_installed_area_west[m2]': ['PVT_ET_walls_west_m2'],
-        'PVT_ET_electricity_west[kWh]': ['PVT_ET_walls_west_E_kWh'],
-        'PVT_ET_heat_west[kWh]': ['PVT_ET_walls_west_Q_kWh'],
-        'PVT_FP_installed_area_total[m2]': ['area_PVT_m2'],
-        'PVT_FP_electricity_total[kWh]': ['E_PVT_gen_kWh'],
-        'PVT_FP_heat_total[kWh]': ['Q_PVT_gen_kWh'],
-        'PVT_FP_installed_area_roof[m2]': ['PVT_FP_roofs_top_m2'],
-        'PVT_FP_electricity_roof[kWh]': ['PVT_FP_roofs_top_E_kWh'],
-        'PVT_FP_heat_roof[kWh]': ['PVT_FP_roofs_top_Q_kWh'],
-        'PVT_FP_installed_area_north[m2]': ['PVT_FP_walls_north_m2'],
-        'PVT_FP_electricity_north[kWh]': ['PVT_FP_walls_north_E_kWh'],
-        'PVT_FP_heat_north[kWh]': ['PVT_FP_walls_north_Q_kWh'],
-        'PVT_FP_installed_area_south[m2]': ['PVT_FP_walls_south_m2'],
-        'PVT_FP_electricity_south[kWh]': ['PVT_FP_walls_south_E_kWh'],
-        'PVT_FP_heat_south[kWh]': ['PVT_FP_walls_south_Q_kWh'],
-        'PVT_FP_installed_area_east[m2]': ['PVT_FP_walls_east_m2'],
-        'PVT_FP_electricity_east[kWh]': ['PVT_FP_walls_east_E_kWh'],
-        'PVT_FP_heat_east[kWh]': ['PVT_FP_walls_east_Q_kWh'],
-        'PVT_FP_installed_area_west[m2]': ['PVT_FP_walls_west_m2'],
-        'PVT_FP_electricity_west[kWh]': ['PVT_FP_walls_west_E_kWh'],
-        'PVT_FP_heat_west[kWh]': ['PVT_FP_walls_west_Q_kWh'],
-        'SC_ET_installed_area_total[m2]': ['area_SC_m2'],
-        'SC_ET_heat_total[kWh]': ['Q_SC_gen_kWh'],
-        'SC_ET_installed_area_roof[m2]': ['SC_ET_roofs_top_m2'],
-        'SC_ET_heat_roof[kWh]': ['SC_ET_roofs_top_Q_kWh'],
-        'SC_ET_installed_area_north[m2]': ['SC_ET_walls_north_m2'],
-        'SC_ET_heat_north[kWh]': ['SC_ET_walls_north_Q_kWh'],
-        'SC_ET_installed_area_south[m2]': ['SC_ET_walls_south_m2'],
-        'SC_ET_heat_south[kWh]': ['SC_ET_walls_south_Q_kWh'],
-        'SC_ET_installed_area_east[m2]': ['SC_ET_walls_east_m2'],
-        'SC_ET_heat_east[kWh]': ['SC_ET_walls_east_Q_kWh'],
-        'SC_ET_installed_area_west[m2]': ['SC_ET_walls_west_m2'],
-        'SC_ET_heat_west[kWh]': ['SC_ET_walls_west_Q_kWh'],
-        'SC_FP_installed_area_total[m2]': ['area_SC_m2'],
-        'SC_FP_heat_total[kWh]': ['Q_FP_gen_kWh'],
-        'SC_FP_installed_area_roof[m2]': ['SC_FP_roofs_top_m2'],
-        'SC_FP_heat_roof[kWh]': ['SC_FP_roofs_top_Q_kWh'],
-        'SC_FP_installed_area_north[m2]': ['SC_FP_walls_north_m2'],
-        'SC_FP_heat_north[kWh]': ['SC_FP_walls_north_Q_kWh'],
-        'SC_FP_installed_area_south[m2]': ['SC_FP_walls_south_m2'],
-        'SC_FP_heat_south[kWh]': ['SC_FP_walls_south_Q_kWh'],
-        'SC_FP_installed_area_east[m2]': ['SC_FP_walls_east_m2'],
-        'SC_FP_heat_east[kWh]': ['SC_FP_walls_east_Q_kWh'],
-        'SC_FP_installed_area_west[m2]': ['SC_FP_walls_west_m2'],
-        'SC_FP_heat_west[kWh]': ['SC_FP_walls_west_Q_kWh'],
-        'geothermal_heat_potential[kWh]': ['QGHP_kW'],
-        'area_for_ground_source_heat_pump[m2]': ['Area_avail_m2'],
-        'sewage_heat_potential[kWh]': ['Qsw_kW'],
-        'water_body_heat_potential[kWh]': ['QLake_kW'],
-        'DH_plant_thermal_load[kWh]': ['thermal_load_kW'],
-        'DH_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-        'DC_plant_thermal_load[kWh]': ['thermal_load_kW'],
-        'DC_electricity_consumption_for_pressure_loss[kWh]': ['pressure_loss_total_kW'],
-        'heating[kgCO2e]': ['heating_kgCO2e'],
-        'hot_water[kgCO2e]': ['hot_water_kgCO2e'],
-        'cooling[kgCO2e]': ['cooling_kgCO2e'],
-        'electricity[kgCO2e]': ['electricity_kgCO2e'],
-        'heating_NATURALGAS[kgCO2e]': ['Qhs_sys_NATURALGAS_kgCO2e'],
-        'heating_BIOGAS[kgCO2e]': ['Qhs_sys_BIOGAS_kgCO2e'],
-        'heating_SOLAR[kgCO2e]': ['Qhs_sys_SOLAR_kgCO2e'],
-        'heating_DRYBIOMASS[kgCO2e]': ['Qhs_sys_DRYBIOMASS_kgCO2e'],
-        'heating_WETBIOMASS[kgCO2e]': ['Qhs_sys_WETBIOMASS_kgCO2e'],
-        'heating_GRID[kgCO2e]': ['Qhs_sys_GRID_kgCO2e'],
-        'heating_COAL[kgCO2e]': ['Qhs_sys_COAL_kgCO2e'],
-        'heating_WOOD[kgCO2e]': ['Qhs_sys_WOOD_kgCO2e'],
-        'heating_OIL[kgCO2e]': ['Qhs_sys_OIL_kgCO2e'],
-        'heating_HYDROGEN[kgCO2e]': ['Qhs_sys_HYDROGEN_kgCO2e'],
-        'heating_NONE[kgCO2e]': ['Qhs_sys_NONE_kgCO2e'],
-        'hot_water_NATURALGAS[kgCO2e]': ['Qww_sys_NATURALGAS_kgCO2e'],
-        'hot_water_BIOGAS[kgCO2e]': ['Qww_sys_BIOGAS_kgCO2e'],
-        'hot_water_SOLAR[kgCO2e]': ['Qww_sys_SOLAR_kgCO2e'],
-        'hot_water_DRYBIOMASS[kgCO2e]': ['Qww_sys_DRYBIOMASS_kgCO2e'],
-        'hot_water_WETBIOMASS[kgCO2e]': ['Qww_sys_WETBIOMASS_kgCO2e'],
-        'hot_water_GRID[kgCO2e]': ['Qww_sys_GRID_kgCO2e'],
-        'hot_water_COAL[kgCO2e]': ['Qww_sys_COAL_kgCO2e'],
-        'hot_water_WOOD[kgCO2e]': ['Qww_sys_WOOD_kgCO2e'],
-        'hot_water_OIL[kgCO2e]': ['Qww_sys_OIL_kgCO2e'],
-        'hot_water_HYDROGEN[kgCO2e]': ['Qww_sys_HYDROGEN_kgCO2e'],
-        'hot_water_NONE[kgCO2e]': ['Qww_sys_NONE_kgCO2e'],
-        'cooling_NATURALGAS[kgCO2e]': ['Qcs_sys_NATURALGAS_kgCO2e'],
-        'cooling_BIOGAS[kgCO2e]': ['Qcs_sys_BIOGAS_kgCO2e'],
-        'cooling_SOLAR[kgCO2e]': ['Qcs_sys_SOLAR_kgCO2e'],
-        'cooling_DRYBIOMASS[kgCO2e]': ['Qcs_sys_DRYBIOMASS_kgCO2e'],
-        'cooling_WETBIOMASS[kgCO2e]': ['Qcs_sys_WETBIOMASS_kgCO2e'],
-        'cooling_GRID[kgCO2e]': ['Qcs_sys_GRID_kgCO2e'],
-        'cooling_COAL[kgCO2e]': ['Qcs_sys_COAL_kgCO2e'],
-        'cooling_WOOD[kgCO2e]': ['Qcs_sys_WOOD_kgCO2e'],
-        'cooling_OIL[kgCO2e]': ['Qcs_sys_OIL_kgCO2e'],
-        'cooling_HYDROGEN[kgCO2e]': ['Qcs_sys_HYDROGEN_kgCO2e'],
-        'cooling_NONE[kgCO2e]': ['Qcs_sys_NONE_kgCO2e'],
-        'electricity_NATURALGAS[kgCO2e]': ['E_sys_NATURALGAS_kgCO2e'],
-        'electricity_BIOGAS[kgCO2e]': ['E_sys_BIOGAS_kgCO2e'],
-        'electricity_SOLAR[kgCO2e]': ['E_sys_SOLAR_kgCO2e'],
-        'electricity_DRYBIOMASS[kgCO2e]': ['E_sys_DRYBIOMASS_kgCO2e'],
-        'electricity_WETBIOMASS[kgCO2e]': ['E_sys_WETBIOMASS_kgCO2e'],
-        'electricity_GRID[kgCO2e]': ['E_sys_GRID_kgCO2e'],
-        'electricity_COAL[kgCO2e]': ['E_sys_COAL_kgCO2e'],
-        'electricity_WOOD[kgCO2e]': ['E_sys_WOOD_kgCO2e'],
-        'electricity_OIL[kgCO2e]': ['E_sys_OIL_kgCO2e'],
-        'electricity_HYDROGEN[kgCO2e]': ['E_sys_HYDROGEN_kgCO2e'],
-        'electricity_NONE[kgCO2e]': ['E_sys_NONE_kgCO2e'],
-        'operation_heating[kgCO2e]': ['operation_heating_kgCO2e'],
-        'operation_hot_water[kgCO2e]': ['operation_hot_water_kgCO2e'],
-        'operation_cooling[kgCO2e]': ['operation_cooling_kgCO2e'],
-        'operation_electricity[kgCO2e]': ['operation_electricity_kgCO2e'],
-        'production_wall_ag[kgCO2e]': ['production_wall_ag_kgCO2e'],
-        'production_wall_bg[kgCO2e]': ['production_wall_bg_kgCO2e'],
-        'production_wall_part[kgCO2e]': ['production_wall_part_kgCO2e'],
-        'production_win_ag[kgCO2e]': ['production_win_ag_kgCO2e'],
-        'production_roof[kgCO2e]': ['production_roof_kgCO2e'],
-        'production_upperside[kgCO2e]': ['production_upperside_kgCO2e'],
-        'production_underside[kgCO2e]': ['production_underside_kgCO2e'],
-        'production_floor[kgCO2e]': ['production_floor_kgCO2e'],
-        'production_base[kgCO2e]': ['production_base_kgCO2e'],
-        'production_technical_systems[kgCO2e]': ['production_technical_systems_kgCO2e'],
-        'biogenic_wall_ag[kgCO2e]': ['biogenic_wall_ag_kgCO2e'],
-        'biogenic_wall_bg[kgCO2e]': ['biogenic_wall_bg_kgCO2e'],
-        'biogenic_wall_part[kgCO2e]': ['biogenic_wall_part_kgCO2e'],
-        'biogenic_win_ag[kgCO2e]': ['biogenic_win_ag_kgCO2e'],
-        'biogenic_roof[kgCO2e]': ['biogenic_roof_kgCO2e'],
-        'biogenic_upperside[kgCO2e]': ['biogenic_upperside_kgCO2e'],
-        'biogenic_underside[kgCO2e]': ['biogenic_underside_kgCO2e'],
-        'biogenic_floor[kgCO2e]': ['biogenic_floor_kgCO2e'],
-        'biogenic_base[kgCO2e]': ['biogenic_base_kgCO2e'],
-        'biogenic_technical_systems[kgCO2e]': ['biogenic_technical_systems_kgCO2e'],
-        'demolition_wall_ag[kgCO2e]': ['demolition_wall_ag_kgCO2e'],
-        'demolition_wall_bg[kgCO2e]': ['demolition_wall_bg_kgCO2e'],
-        'demolition_wall_part[kgCO2e]': ['demolition_wall_part_kgCO2e'],
-        'demolition_win_ag[kgCO2e]': ['demolition_win_ag_kgCO2e'],
-        'demolition_roof[kgCO2e]': ['demolition_roof_kgCO2e'],
-        'demolition_upperside[kgCO2e]': ['demolition_upperside_kgCO2e'],
-        'demolition_underside[kgCO2e]': ['demolition_underside_kgCO2e'],
-        'demolition_floor[kgCO2e]': ['demolition_floor_kgCO2e'],
-        'demolition_base[kgCO2e]': ['demolition_base_kgCO2e'],
-        'demolition_technical_systems[kgCO2e]': ['demolition_technical_systems_kgCO2e'],
+        "conditioned_floor_area[m2]": ["Af_m2"],
+        "roof_area[m2]": ["Aroof_m2"],
+        "gross_floor_area[m2]": ["GFA_m2"],
+        "occupied_floor_area[m2]": ["Aocc_m2"],
+        "grid_electricity_consumption[kWh]": ["GRID_kWh"],
+        "enduse_electricity_demand[kWh]": ["E_sys_kWh"],
+        "enduse_cooling_demand[kWh]": ["QC_sys_kWh"],
+        "enduse_space_cooling_demand[kWh]": ["Qcs_sys_kWh"],
+        "enduse_heating_demand[kWh]": ["QH_sys_kWh"],
+        "enduse_space_heating_demand[kWh]": ["Qhs_sys_kWh"],
+        "enduse_dhw_demand[kWh]": ["Qww_kWh"],
+        "irradiation_roof[kWh]": ["roofs_top_kW"],
+        "irradiation_window_north[kWh]": ["windows_north_kW"],
+        "irradiation_wall_north[kWh]": ["walls_north_kW"],
+        "irradiation_window_south[kWh]": ["windows_south_kW"],
+        "irradiation_wall_south[kWh]": ["walls_south_kW"],
+        "irradiation_window_east[kWh]": ["windows_east_kW"],
+        "irradiation_wall_east[kWh]": ["walls_east_kW"],
+        "irradiation_window_west[kWh]": ["windows_west_kW"],
+        "irradiation_wall_west[kWh]": ["walls_west_kW"],
+        "PV_installed_area_total[m2]": ["area_PV_m2"],
+        "PV_electricity_total[kWh]": ["E_PV_gen_kWh"],
+        "PV_installed_area_roof[m2]": ["PV_roofs_top_m2"],
+        "PV_electricity_roof[kWh]": ["PV_roofs_top_E_kWh"],
+        "PV_installed_area_north[m2]": ["PV_walls_north_m2"],
+        "PV_electricity_north[kWh]": ["PV_walls_north_E_kWh"],
+        "PV_installed_area_south[m2]": ["PV_walls_south_m2"],
+        "PV_electricity_south[kWh]": ["PV_walls_south_E_kWh"],
+        "PV_installed_area_east[m2]": ["PV_walls_east_m2"],
+        "PV_electricity_east[kWh]": ["PV_walls_east_E_kWh"],
+        "PV_installed_area_west[m2]": ["PV_walls_west_m2"],
+        "PV_electricity_west[kWh]": ["PV_walls_west_E_kWh"],
+        "PVT_ET_installed_area_total[m2]": ["area_PVT_m2"],
+        "PVT_ET_electricity_total[kWh]": ["E_PVT_gen_kWh"],
+        "PVT_ET_heat_total[kWh]": ["Q_PVT_gen_kWh"],
+        "PVT_ET_installed_area_roof[m2]": ["PVT_ET_roofs_top_m2"],
+        "PVT_ET_electricity_roof[kWh]": ["PVT_ET_roofs_top_E_kWh"],
+        "PVT_ET_heat_roof[kWh]": ["PVT_ET_roofs_top_Q_kWh"],
+        "PVT_ET_installed_area_north[m2]": ["PVT_ET_walls_north_m2"],
+        "PVT_ET_electricity_north[kWh]": ["PVT_ET_walls_north_E_kWh"],
+        "PVT_ET_heat_north[kWh]": ["PVT_ET_walls_north_Q_kWh"],
+        "PVT_ET_installed_area_south[m2]": ["PVT_ET_walls_south_m2"],
+        "PVT_ET_electricity_south[kWh]": ["PVT_ET_walls_south_E_kWh"],
+        "PVT_ET_heat_south[kWh]": ["PVT_ET_walls_south_Q_kWh"],
+        "PVT_ET_installed_area_east[m2]": ["PVT_ET_walls_east_m2"],
+        "PVT_ET_electricity_east[kWh]": ["PVT_ET_walls_east_E_kWh"],
+        "PVT_ET_heat_east[kWh]": ["PVT_ET_walls_east_Q_kWh"],
+        "PVT_ET_installed_area_west[m2]": ["PVT_ET_walls_west_m2"],
+        "PVT_ET_electricity_west[kWh]": ["PVT_ET_walls_west_E_kWh"],
+        "PVT_ET_heat_west[kWh]": ["PVT_ET_walls_west_Q_kWh"],
+        "PVT_FP_installed_area_total[m2]": ["area_PVT_m2"],
+        "PVT_FP_electricity_total[kWh]": ["E_PVT_gen_kWh"],
+        "PVT_FP_heat_total[kWh]": ["Q_PVT_gen_kWh"],
+        "PVT_FP_installed_area_roof[m2]": ["PVT_FP_roofs_top_m2"],
+        "PVT_FP_electricity_roof[kWh]": ["PVT_FP_roofs_top_E_kWh"],
+        "PVT_FP_heat_roof[kWh]": ["PVT_FP_roofs_top_Q_kWh"],
+        "PVT_FP_installed_area_north[m2]": ["PVT_FP_walls_north_m2"],
+        "PVT_FP_electricity_north[kWh]": ["PVT_FP_walls_north_E_kWh"],
+        "PVT_FP_heat_north[kWh]": ["PVT_FP_walls_north_Q_kWh"],
+        "PVT_FP_installed_area_south[m2]": ["PVT_FP_walls_south_m2"],
+        "PVT_FP_electricity_south[kWh]": ["PVT_FP_walls_south_E_kWh"],
+        "PVT_FP_heat_south[kWh]": ["PVT_FP_walls_south_Q_kWh"],
+        "PVT_FP_installed_area_east[m2]": ["PVT_FP_walls_east_m2"],
+        "PVT_FP_electricity_east[kWh]": ["PVT_FP_walls_east_E_kWh"],
+        "PVT_FP_heat_east[kWh]": ["PVT_FP_walls_east_Q_kWh"],
+        "PVT_FP_installed_area_west[m2]": ["PVT_FP_walls_west_m2"],
+        "PVT_FP_electricity_west[kWh]": ["PVT_FP_walls_west_E_kWh"],
+        "PVT_FP_heat_west[kWh]": ["PVT_FP_walls_west_Q_kWh"],
+        "SC_ET_installed_area_total[m2]": ["area_SC_m2"],
+        "SC_ET_heat_total[kWh]": ["Q_SC_gen_kWh"],
+        "SC_ET_installed_area_roof[m2]": ["SC_ET_roofs_top_m2"],
+        "SC_ET_heat_roof[kWh]": ["SC_ET_roofs_top_Q_kWh"],
+        "SC_ET_installed_area_north[m2]": ["SC_ET_walls_north_m2"],
+        "SC_ET_heat_north[kWh]": ["SC_ET_walls_north_Q_kWh"],
+        "SC_ET_installed_area_south[m2]": ["SC_ET_walls_south_m2"],
+        "SC_ET_heat_south[kWh]": ["SC_ET_walls_south_Q_kWh"],
+        "SC_ET_installed_area_east[m2]": ["SC_ET_walls_east_m2"],
+        "SC_ET_heat_east[kWh]": ["SC_ET_walls_east_Q_kWh"],
+        "SC_ET_installed_area_west[m2]": ["SC_ET_walls_west_m2"],
+        "SC_ET_heat_west[kWh]": ["SC_ET_walls_west_Q_kWh"],
+        "SC_FP_installed_area_total[m2]": ["area_SC_m2"],
+        "SC_FP_heat_total[kWh]": ["Q_FP_gen_kWh"],
+        "SC_FP_installed_area_roof[m2]": ["SC_FP_roofs_top_m2"],
+        "SC_FP_heat_roof[kWh]": ["SC_FP_roofs_top_Q_kWh"],
+        "SC_FP_installed_area_north[m2]": ["SC_FP_walls_north_m2"],
+        "SC_FP_heat_north[kWh]": ["SC_FP_walls_north_Q_kWh"],
+        "SC_FP_installed_area_south[m2]": ["SC_FP_walls_south_m2"],
+        "SC_FP_heat_south[kWh]": ["SC_FP_walls_south_Q_kWh"],
+        "SC_FP_installed_area_east[m2]": ["SC_FP_walls_east_m2"],
+        "SC_FP_heat_east[kWh]": ["SC_FP_walls_east_Q_kWh"],
+        "SC_FP_installed_area_west[m2]": ["SC_FP_walls_west_m2"],
+        "SC_FP_heat_west[kWh]": ["SC_FP_walls_west_Q_kWh"],
+        "geothermal_heat_potential[kWh]": ["QGHP_kW"],
+        "area_for_ground_source_heat_pump[m2]": ["Area_avail_m2"],
+        "sewage_heat_potential[kWh]": ["Qsw_kW"],
+        "water_body_heat_potential[kWh]": ["QLake_kW"],
+        "DH_plant_thermal_load[kWh]": ["thermal_load_kW"],
+        "DH_electricity_consumption_for_pressure_loss[kWh]": ["pressure_loss_total_kW"],
+        "DC_plant_thermal_load[kWh]": ["thermal_load_kW"],
+        "DC_electricity_consumption_for_pressure_loss[kWh]": ["pressure_loss_total_kW"],
+    } | {
+        name+"[kgCO2e]": [name+"_kgCO2e"]
+        for name in emission_timeline_hourly_operational_colnames_nounit
+    } | {
+        name+"[kgCO2e]": [name+"_kgCO2e"]
+        for name in emission_timeline_yearly_colnames_nounit
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -861,6 +837,28 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
+
+                # Validation: Check if this is timeline data (has 'period' column) when we expect operational data
+                # Timeline files are in .../emissions/timeline/ and operational files are in .../emissions/operational/
+                is_operational_path = '/emissions/operational/' in path or '_operational_hourly.csv' in path
+                is_timeline_path = '/emissions/timeline/' in path or '_timeline.csv' in path
+                has_period_column = 'period' in df.columns
+                has_date_column = bool(date_columns.intersection(df.columns))
+
+                # Validate data structure matches file path
+                if is_operational_path and has_period_column and not has_date_column:
+                    raise ValueError(
+                        f"Data structure mismatch: File '{path}' is an operational file but has 'period' column "
+                        f"instead of 'date' column. This suggests timeline data was incorrectly loaded. "
+                        f"Available columns: {df.columns.tolist()}"
+                    )
+                if is_timeline_path and has_date_column and not has_period_column:
+                    raise ValueError(
+                        f"Data structure mismatch: File '{path}' is a timeline file but has 'date' column "
+                        f"instead of 'period' column. This suggests operational data was incorrectly loaded. "
+                        f"Available columns: {df.columns.tolist()}"
+                    )
+
                 if date_columns.intersection(df.columns):
                     df = get_standardized_date_column(df)   # Change where ['DATE'] or ['Date'] to ['date']
 
@@ -876,9 +874,21 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 elif 'period' in df.columns:
+                    # Timeline data (lifecycle emissions) - has 'period' column with years
                     selected_columns = ['period'] + ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
+
+                    # Filter by year range (similar to how hourly data is filtered by hours)
+                    # For timeline data, hour_start/hour_end represent years, not hours
+                    # Extract year from period column (format: 'Y_2024' -> 2024)
+                    df['_year'] = df['period'].astype(str).str.replace('Y_', '', regex=False)
+                    df['_year'] = pd.to_numeric(df['_year'], errors='coerce')
+
+                    # Filter rows by year range
+                    df = df[(df['_year'] >= hour_start) & (df['_year'] <= hour_end)]
+                    df = df.drop(columns=['_year'])
+
                     list_dataframes.append(df)
                 else:
                     # Slice the useful columns
@@ -1103,7 +1113,16 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
     # Special handling for architecture feature
     if cea_feature == 'architecture':
         # Load source data
-        zone_df = gpd.read_file(locator.get_zone_geometry()).set_index('name')
+        zone_raw = gpd.read_file(locator.get_zone_geometry())
+        # Handle both 'Name' and 'name' column naming conventions
+        if 'Name' in zone_raw.columns:
+            name_col = 'Name'
+        elif 'name' in zone_raw.columns:
+            name_col = 'name'
+        else:
+            raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_raw.columns.tolist()}")
+        zone_df = zone_raw.set_index(name_col)
+
         architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
         # Generate architecture data using calc_useful_areas
@@ -1489,8 +1508,30 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
-            print(f"Available columns: {df.columns.tolist()}")
-            raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
+            # Enhanced error message with validation for common data structure issues
+            has_period = 'period' in df.columns
+            error_msg = f"The specified date_column '{date_column}' is not in the DataFrame.\n"
+            error_msg += f"Available columns: {df.columns.tolist()}\n"
+
+            if has_period and date_column == 'date':
+                error_msg += (
+                    "\nDETECTED ISSUE: DataFrame has 'period' column but expected 'date' column.\n"
+                    "This indicates timeline data (lifecycle emissions) was loaded instead of operational hourly data.\n"
+                    "POSSIBLE CAUSES:\n"
+                    "  1. Wrong file was loaded from source (check file paths in get_results_path)\n"
+                    "  2. Cached summary file from previous emission-timeline plot is being reused\n"
+                    "  3. Race condition between concurrent plot generation jobs\n"
+                    "SOLUTION: Check that operational emissions files (not timeline files) are being loaded."
+                )
+            elif not has_period and date_column == 'period':
+                error_msg += (
+                    "\nDETECTED ISSUE: DataFrame has 'date' column but expected 'period' column.\n"
+                    "This indicates operational hourly data was loaded instead of timeline data (lifecycle emissions).\n"
+                    "SOLUTION: Check that timeline files (not operational files) are being loaded."
+                )
+
+            print(error_msg)
+            raise KeyError(error_msg)
         if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
             df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
             if df[date_column].isnull().all():
@@ -1831,9 +1872,17 @@ def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_resul
 
 def determine_building_main_use(df_typology):
 
+    # Handle both 'Name' and 'name' column naming conventions
+    if 'Name' in df_typology.columns:
+        name_col = 'Name'
+    elif 'name' in df_typology.columns:
+        name_col = 'name'
+    else:
+        raise KeyError(f"Typology data must have either 'Name' or 'name' column. Available columns: {df_typology.columns.tolist()}")
+
     # Create a new DataFrame to store results
     result = pd.DataFrame()
-    result['name'] = df_typology['name']
+    result['name'] = df_typology[name_col]
 
     # Determine the main use type and its ratio
     result['main_use_type'] = df_typology.apply(
@@ -2494,35 +2543,8 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
-list_metrics_lifecycle_emissions = [
-    'operation_heating[kgCO2e]', 'operation_hot_water[kgCO2e]', 'operation_cooling[kgCO2e]', 'operation_electricity[kgCO2e]',
-    'production_wall_ag[kgCO2e]', 'production_wall_bg[kgCO2e]', 'production_wall_part[kgCO2e]',
-    'production_win_ag[kgCO2e]', 'production_roof[kgCO2e]', 'production_upperside[kgCO2e]',
-    'production_underside[kgCO2e]', 'production_floor[kgCO2e]', 'production_base[kgCO2e]',
-    'production_technical_systems[kgCO2e]', 'biogenic_wall_ag[kgCO2e]', 'biogenic_wall_bg[kgCO2e]',
-    'biogenic_wall_part[kgCO2e]', 'biogenic_win_ag[kgCO2e]', 'biogenic_roof[kgCO2e]',
-    'biogenic_upperside[kgCO2e]', 'biogenic_underside[kgCO2e]', 'biogenic_floor[kgCO2e]',
-    'biogenic_base[kgCO2e]', 'biogenic_technical_systems[kgCO2e]', 'demolition_wall_ag[kgCO2e]',
-    'demolition_wall_bg[kgCO2e]', 'demolition_wall_part[kgCO2e]', 'demolition_win_ag[kgCO2e]',
-    'demolition_roof[kgCO2e]', 'demolition_upperside[kgCO2e]', 'demolition_underside[kgCO2e]',
-    'demolition_floor[kgCO2e]', 'demolition_base[kgCO2e]', 'demolition_technical_systems[kgCO2e]'
-]
-list_metrics_operational_emissions = [
-    'heating[kgCO2e]', 'hot_water[kgCO2e]', 'cooling[kgCO2e]', 'electricity[kgCO2e]',
-    'heating_NATURALGAS[kgCO2e]', 'heating_BIOGAS[kgCO2e]', 'heating_SOLAR[kgCO2e]',
-    'heating_DRYBIOMASS[kgCO2e]', 'heating_WETBIOMASS[kgCO2e]', 'heating_GRID[kgCO2e]',
-    'heating_COAL[kgCO2e]', 'heating_WOOD[kgCO2e]', 'heating_OIL[kgCO2e]',
-    'heating_HYDROGEN[kgCO2e]', 'heating_NONE[kgCO2e]', 'hot_water_NATURALGAS[kgCO2e]',
-    'hot_water_BIOGAS[kgCO2e]', 'hot_water_SOLAR[kgCO2e]', 'hot_water_DRYBIOMASS[kgCO2e]',
-    'hot_water_WETBIOMASS[kgCO2e]', 'hot_water_GRID[kgCO2e]', 'hot_water_COAL[kgCO2e]',
-    'hot_water_WOOD[kgCO2e]', 'hot_water_OIL[kgCO2e]', 'hot_water_HYDROGEN[kgCO2e]',
-    'hot_water_NONE[kgCO2e]', 'cooling_NATURALGAS[kgCO2e]', 'cooling_BIOGAS[kgCO2e]',
-    'cooling_SOLAR[kgCO2e]', 'cooling_DRYBIOMASS[kgCO2e]', 'cooling_WETBIOMASS[kgCO2e]',
-    'cooling_GRID[kgCO2e]', 'cooling_COAL[kgCO2e]', 'cooling_WOOD[kgCO2e]', 'cooling_OIL[kgCO2e]',
-    'cooling_HYDROGEN[kgCO2e]', 'cooling_NONE[kgCO2e]', 'electricity_NATURALGAS[kgCO2e]', 'electricity_BIOGAS[kgCO2e]',
-    'electricity_SOLAR[kgCO2e]', 'electricity_DRYBIOMASS[kgCO2e]', 'electricity_WETBIOMASS[kgCO2e]', 'electricity_GRID[kgCO2e]',
-    'electricity_COAL[kgCO2e]', 'electricity_WOOD[kgCO2e]', 'electricity_OIL[kgCO2e]', 'electricity_HYDROGEN[kgCO2e]', 'electricity_NONE[kgCO2e]'
-]
+list_metrics_lifecycle_emissions = list(normalisation_name_mapping_emission_timeline_yearly.keys())
+list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_hourly_operational.keys())
 
 def get_list_list_metrics_with_date(config):
     list_list_metrics_with_date = []

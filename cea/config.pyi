@@ -30,7 +30,7 @@ class Configuration:
     radiation_crax: RadiationCraxSection
     radiation: RadiationSection
     radiation_simplified: RadiationSimplifiedSection
-    occupancy_helper: OccupancyHelperSection
+    occupancy: OccupancySection
     demand: DemandSection
     costs: CostsSection
     emissions: EmissionsSection
@@ -122,7 +122,7 @@ class Configuration:
     @overload
     def __getattr__(self, item: Literal["radiation_simplified"]) -> RadiationSimplifiedSection: ...
     @overload
-    def __getattr__(self, item: Literal["occupancy_helper"]) -> OccupancyHelperSection: ...
+    def __getattr__(self, item: Literal["occupancy"]) -> OccupancySection: ...
     @overload
     def __getattr__(self, item: Literal["demand"]) -> DemandSection: ...
     @overload
@@ -514,8 +514,8 @@ class RadiationSimplifiedSection(Section):
     def __getattr__(self, item: Literal["buffer"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
 
-class OccupancyHelperSection(Section):
-    """Typed section for occupancy-helper configuration"""
+class OccupancySection(Section):
+    """Typed section for occupancy configuration"""
     occupancy_model: str
     buildings: list[str]
 
@@ -557,6 +557,8 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
+    include_pv: bool
+    pv_codes: list[str]
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: Any
     grid_decarbonise_reference_year: int | None
@@ -567,6 +569,10 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["year_end"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["include_pv"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload
@@ -930,8 +936,8 @@ class TraceInputlocatorSection(Section):
 
 class ThermalNetworkSection(Section):
     """Typed section for thermal-network configuration"""
-    network_type: str
     network_name: str
+    network_type: list[str]
     network_model: str
     min_head_substation: float
     hw_friction_coefficient: int
@@ -952,9 +958,9 @@ class ThermalNetworkSection(Section):
     plant_supply_temperature: float
 
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
-    @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["network_model"]) -> str: ...
     @overload
@@ -1128,6 +1134,7 @@ class OptimizationSection(Section):
 
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
+    network_name: str
     network_type: str
     buildings: list[str]
     cooling_components: list[str]
@@ -1160,8 +1167,9 @@ class OptimizationNewSection(Section):
     equivalent_length_factor: float
     peak_load_percentage: float
     network_lifetime: float
-    network_name: str | None
 
+    @overload
+    def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
@@ -1226,8 +1234,6 @@ class OptimizationNewSection(Section):
     def __getattr__(self, item: Literal["peak_load_percentage"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["network_lifetime"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsSection(Section):
@@ -1357,28 +1363,33 @@ class DecentralizedSection(Section):
 
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
-    network_type: str
     network_name: str
+    include_services: list[str]
     overwrite_supply_settings: bool
     connected_buildings: list[str]
-    plant_building: Optional[str]
+    cooling_plant_building: Any
+    heating_plant_building: Any
     number_of_components: int | None
     edges_shp_path: str | None
     nodes_shp_path: str | None
     network_geojson_path: str | None
     consider_only_buildings_with_demand: bool
     algorithm: str
+    connection_candidates: int
+    snap_tolerance: float | None
 
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
-    @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["plant_building"]) -> Optional[str]: ...
+    def __getattr__(self, item: Literal["cooling_plant_building"]) -> Any: ...
+    @overload
+    def __getattr__(self, item: Literal["heating_plant_building"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["number_of_components"]) -> int | None: ...
     @overload
@@ -1391,6 +1402,10 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["algorithm"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["connection_candidates"]) -> int: ...
+    @overload
+    def __getattr__(self, item: Literal["snap_tolerance"]) -> float | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class MultiCriteriaSection(Section):
@@ -1600,13 +1615,22 @@ class PlotsDemandSection(Section):
 
 class PlotsLifecycleEmissionsSection(Section):
     """Typed section for plots-lifecycle-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1617,13 +1641,22 @@ class PlotsLifecycleEmissionsSection(Section):
 
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    energy_carriers: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["energy_carriers"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1635,7 +1668,10 @@ class PlotsOperationalEmissionsSection(Section):
 class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
     plot_type: str
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     net_zero_target_year: int
@@ -1644,7 +1680,13 @@ class PlotsEmissionTimelineSection(Section):
     @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload

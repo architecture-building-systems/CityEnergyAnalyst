@@ -58,13 +58,13 @@ def load_user_defined_network(config, locator, edges_shp=None, nodes_shp=None, g
     :return: Tuple of (nodes_gdf, edges_gdf) or None if no user network provided
     :raises UserNetworkLoaderError: If validation fails or conflicting formats provided
     """
-    # Use provided parameters or fall back to config.optimization_new
+    # Use provided parameters or fall back to config.network_layout
     if edges_shp is None:
-        edges_shp = config.optimization_new.edges_shp_path if hasattr(config, 'optimization_new') else None
+        edges_shp = config.network_layout.edges_shp_path if hasattr(config, 'network_layout') else None
     if nodes_shp is None:
-        nodes_shp = config.optimization_new.nodes_shp_path if hasattr(config, 'optimization_new') else None
+        nodes_shp = config.network_layout.nodes_shp_path if hasattr(config, 'network_layout') else None
     if geojson_path is None:
-        geojson_path = config.optimization_new.network_geojson_path if hasattr(config, 'optimization_new') else None
+        geojson_path = config.network_layout.network_geojson_path if hasattr(config, 'network_layout') else None
 
     # Check for conflicting inputs
     shp_provided = bool(edges_shp or nodes_shp)
@@ -101,6 +101,9 @@ def load_user_defined_network(config, locator, edges_shp=None, nodes_shp=None, g
     # Load from GeoJSON
     else:  # geojson_provided
         nodes_gdf, edges_gdf = _load_from_geojson(geojson_path)
+
+    # Convert simplified nodes format to full format if needed
+    nodes_gdf = _convert_simplified_nodes_to_full_format(nodes_gdf)
 
     # Validate required attributes
     _validate_required_attributes(nodes_gdf, edges_gdf)
@@ -242,12 +245,97 @@ def _load_from_geojson(geojson_path: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoData
     return nodes_gdf, edges_gdf
 
 
-def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.GeoDataFrame):
-    """Validate that required attributes exist in the geodataframes"""
+def _convert_simplified_nodes_to_full_format(nodes_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """
+    Convert simplified user-provided nodes format to full CEA format.
 
-    # Check node attributes
-    required_node_attrs = ['building', 'type']
-    missing_node_attrs = [attr for attr in required_node_attrs if attr not in nodes_gdf.columns]
+    Simplified format:
+    - Columns: type, geometry
+    - type field contains: building name OR "NONE" OR "PLANT"/"PLANT_DC"/"PLANT_DH"
+
+    Full format:
+    - Columns: building, name, type, geometry
+    - building: building name or "NONE"
+    - name: node identifier (NODE0, NODE1, ...)
+    - type: CONSUMER, NONE, PLANT, PLANT_DC, PLANT_DH
+
+    :param nodes_gdf: GeoDataFrame in simplified or full format
+    :return: GeoDataFrame in full format
+    """
+    # Normalize column names to lowercase for case-insensitive comparison
+    nodes_cols_lower = {col.lower(): col for col in nodes_gdf.columns}
+
+    # Check if already in full format (has 'building' and 'name' columns)
+    if 'building' in nodes_cols_lower and 'name' in nodes_cols_lower:
+        # Rename columns to lowercase if needed
+        nodes_gdf = nodes_gdf.rename(columns={
+            nodes_cols_lower['building']: 'building',
+            nodes_cols_lower['name']: 'name',
+            nodes_cols_lower.get('type', 'type'): 'type'
+        })
+        return nodes_gdf
+
+    # Check if in simplified format (only has 'type' and 'geometry')
+    if 'type' not in nodes_cols_lower:
+        raise UserNetworkLoaderError("Invalid nodes format: missing 'type' column (case-insensitive)")
+
+    print("  ℹ Converting simplified nodes format to full format...")
+
+    # Create full format dataframe
+    nodes_full = nodes_gdf.copy()
+
+    # Get the actual column name for 'type' (case-insensitive)
+    type_col = nodes_cols_lower['type']
+
+    # Initialize new columns
+    nodes_full['building'] = 'NONE'
+    nodes_full['name'] = [f'NODE{i}' for i in range(len(nodes_full))]
+    nodes_full['type_original'] = nodes_full[type_col]  # Keep original for processing
+
+    # Classify nodes based on type field
+    plant_types = ['PLANT', 'PLANT_DC', 'PLANT_DH']
+
+    for idx, row in nodes_full.iterrows():
+        type_value = str(row['type_original']).strip()
+
+        if type_value.upper() in plant_types:
+            # It's a plant node
+            nodes_full.loc[idx, 'type'] = type_value.upper()
+            nodes_full.loc[idx, 'building'] = 'NONE'
+        elif type_value.upper() == 'NONE':
+            # It's a junction node
+            nodes_full.loc[idx, 'type'] = 'NONE'
+            nodes_full.loc[idx, 'building'] = 'NONE'
+        else:
+            # It's a building node (consumer)
+            nodes_full.loc[idx, 'building'] = type_value
+            nodes_full.loc[idx, 'type'] = 'CONSUMER'
+
+    # Drop temporary column
+    nodes_full = nodes_full.drop(columns=['type_original'])
+
+    # Reorder columns to match full format
+    nodes_full = nodes_full[['building', 'name', 'type', 'geometry']]
+
+    print(f"  ✓ Converted {len(nodes_full)} nodes to full format")
+    building_count = len(nodes_full[nodes_full['building'] != 'NONE'])
+    junction_count = len(nodes_full[(nodes_full['type'] == 'NONE') & (nodes_full['building'] == 'NONE')])
+    plant_count = len(nodes_full[nodes_full['type'].str.contains('PLANT', na=False)])
+    print(f"    - Buildings: {building_count}, Junctions: {junction_count}, Plants: {plant_count}")
+
+    return nodes_full
+
+
+def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.GeoDataFrame):
+    """Validate that required attributes exist in the geodataframes (after conversion to full format)"""
+
+    # Normalize column names to lowercase for case-insensitive comparison
+    nodes_cols_lower = {col.lower(): col for col in nodes_gdf.columns}
+    edges_cols_lower = {col.lower(): col for col in edges_gdf.columns}
+
+    # Check node attributes - should be in full format after conversion
+    required_node_attrs = ['building', 'name', 'type']
+    missing_node_attrs = [attr for attr in required_node_attrs if attr not in nodes_cols_lower]
 
     if missing_node_attrs:
         raise UserNetworkLoaderError(
@@ -255,14 +343,19 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
             f"  Required: {required_node_attrs}\n"
             f"  Missing: {missing_node_attrs}\n"
             f"  Found: {nodes_gdf.columns.tolist()}\n\n"
-            "Nodes must have:\n"
-            "  - 'building' attribute (string) matching building names (or 'NONE' for non-building nodes)\n"
-            "  - 'type' attribute (string) indicating node type (e.g., 'CONSUMER', 'PLANT', 'NONE')"
+            "This error should not occur after format conversion. Please report this issue."
         )
+
+    # Normalize node column names to lowercase
+    nodes_gdf.rename(columns={
+        nodes_cols_lower['building']: 'building',
+        nodes_cols_lower['name']: 'name',
+        nodes_cols_lower['type']: 'type'
+    }, inplace=True)
 
     # Check edge attributes
     required_edge_attrs = ['type_mat']
-    missing_edge_attrs = [attr for attr in required_edge_attrs if attr not in edges_gdf.columns]
+    missing_edge_attrs = [attr for attr in required_edge_attrs if attr not in edges_cols_lower]
 
     if missing_edge_attrs:
         raise UserNetworkLoaderError(
@@ -272,6 +365,9 @@ def _validate_required_attributes(nodes_gdf: gpd.GeoDataFrame, edges_gdf: gpd.Ge
             f"  Found: {edges_gdf.columns.tolist()}\n\n"
             "Edges must have a 'type_mat' attribute (string) specifying pipe material type."
         )
+
+    # Normalize edge column name to lowercase
+    edges_gdf.rename(columns={edges_cols_lower['type_mat']: 'type_mat'}, inplace=True)
 
 
 def _find_edges_reaching_building(
@@ -310,23 +406,28 @@ def validate_network_covers_district_buildings(
     nodes_gdf: gpd.GeoDataFrame,
     buildings_gdf: gpd.GeoDataFrame,
     district_building_names: List[str],
-    network_type: str,
+    network_types: List[str],
     edges_gdf: gpd.GeoDataFrame
 ) -> Tuple[gpd.GeoDataFrame, List[str]]:
     """
-    Validate that all buildings designated as 'district' in Supply.csv have:
-    1. A corresponding node in the network, OR
-    2. Auto-create missing nodes if edges reach the building
+    Validate that all buildings designated as 'district' in Supply.csv have exactly one node
+    in the network (matched by exact name, not geometric footprint location).
 
-    If nodes are missing but edges reach the building, automatically create nodes
-    at the edge endpoint closest to the building centroid (in-memory only).
+    Validation checks:
+    - All district buildings have exactly one node (by exact name match)
+    - No extra buildings in network that aren't designated for district
+    - Each building has exactly one node (no duplicates)
+
+    NOTE: This does NOT validate that nodes are within building footprints geometrically.
+    L-shaped buildings or complex geometries may have nodes at street access points
+    outside the footprint polygon, which is acceptable for practical routing.
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param buildings_gdf: GeoDataFrame of building footprints from zone geometry
     :param district_building_names: List of building names that should be on district network
-    :param network_type: 'DH' or 'DC' for error messaging
-    :param edges_gdf: GeoDataFrame of network edges (for auto-creating nodes)
-    :return: Tuple of (modified nodes_gdf, list of auto-created building names)
+    :param network_types: List of network types (e.g., ['DH', 'DC']) for error messaging
+    :param edges_gdf: GeoDataFrame of network edges (unused - no auto-creation occurs)
+    :return: Tuple of (nodes_gdf, empty list - no auto-creation occurs)
     :raises UserNetworkLoaderError: If validation fails with detailed diagnostics
     """
 
@@ -340,8 +441,6 @@ def validate_network_covers_district_buildings(
 
     # Check 1: Are all district buildings represented in the network?
     missing_buildings = district_building_set - network_building_names
-
-    auto_created_buildings = []
 
     if missing_buildings:
         # Raise error - do NOT auto-create nodes
@@ -365,8 +464,9 @@ def validate_network_covers_district_buildings(
 
     if extra_buildings:
         extra_list = sorted(list(extra_buildings))
+        network_type_label = '/'.join(sorted(network_types))
         raise UserNetworkLoaderError(
-            f"User-defined network includes buildings NOT designated for district {network_type}:\n\n"
+            f"User-defined network includes buildings NOT designated for district {network_type_label}:\n\n"
             f"  - Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
             f"  - Buildings found in network nodes: {len(network_building_names)}\n"
             f"  - Extra buildings: {len(extra_buildings)}\n\n"
@@ -414,8 +514,8 @@ def validate_network_covers_district_buildings(
                 "Please ensure each building has a unique node."
             )
 
-    # Return modified nodes and list of auto-created buildings
-    return nodes_gdf, [name for name, _ in auto_created_buildings]
+    # Return nodes (no auto-creation happens - function raises error if buildings missing)
+    return nodes_gdf, []
 
 
 def detect_network_components(

@@ -945,7 +945,7 @@ class InputLocator(object):
         Second row contains 13 columns (MONTHLY_MULTIPLIER, <jan-multiplier>, <feb-multiplier>, etc.)
         The following rows are three sets of HOUR 1-24, one set for each of DAY in {WEEKDAY, SATURDAY, SUNDAY}
 
-        These weekly schedules are used by the occupancy-helper script to create the schedules for each hour of the
+        These weekly schedules are used by the occupancy script to create the schedules for each hour of the
         year (``get_occupancy_model_file``).
 
         Do not read this file yourself, instead, use :py:func`cea.utilities.schedule_reader.read_cea_schedule`
@@ -976,15 +976,38 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
-    def get_output_thermal_network_type_folder(self, network_type, network_name=""):
-        if network_name == '':  # in case there is no specific network name (default case)
-            return os.path.join(self.get_thermal_network_folder(), network_type)
-        else:
-            return os.path.join(self.get_thermal_network_folder(), network_type, network_name)
+    def get_thermal_network_folder_network_name_folder(self, network_name):
+        """scenario/outputs/thermal-network/{network_name}/"""
+        return os.path.join(self.get_thermal_network_folder(), network_name)
 
-    def get_network_layout_edges_shapefile(self, network_type, network_name=""):
+    def get_output_thermal_network_type_folder(self, network_type, network_name):
+        """scenario/outputs/thermal-network/{network_name}/{network_type}/"""
+        return os.path.join(self.get_thermal_network_folder_network_name_folder(network_name), network_type)
+
+    def get_network_layout_shapefile(self, network_name):
+        """scenario/outputs/thermal-network/{network_name}/layout.shp"""
+        return os.path.join(
+            self.get_thermal_network_folder_network_name_folder(network_name), 'layout.shp'
+        )
+
+    def get_network_layout_nodes_shapefile_from_part1(self, network_type, network_name):
         """
-        scenario/outputs/thermal-network/DH or DC/{network_name}/layout/edges.shp
+        scenario/outputs/thermal-network/{network_name}/{network_type}/nodes.shp
+
+        This returns the nodes shapefile from Part 1 (network-layout tool).
+        Part 1 stores nodes at: {network_name}/{network_type}/nodes.shp (no layout/ subfolder)
+        """
+        shapefile_path = os.path.join(
+            self.get_thermal_network_folder_network_name_folder(network_name),
+            network_type,
+            'nodes.shp'
+        )
+        check_cpg(shapefile_path)
+        return shapefile_path
+
+    def get_network_layout_edges_shapefile(self, network_type, network_name):
+        """
+        scenario/outputs/thermal-network/{network_name}/{network_type}/layout/edges.shp
 
         Layout files are stored in layout/ subfolder within the network_name folder
         """
@@ -996,9 +1019,9 @@ class InputLocator(object):
         check_cpg(shapefile_path)
         return shapefile_path
 
-    def get_network_layout_nodes_shapefile(self, network_type, network_name=""):
+    def get_network_layout_nodes_shapefile(self, network_type, network_name):
         """
-        scenario/outputs/thermal-network/DH or DC/{network_name}/layout/nodes.shp
+        scenario/outputs/thermal-network/{network_name}/{network_type}/layout/nodes.shp
 
         Layout files are stored in layout/ subfolder within the network_name folder
         """
@@ -1012,29 +1035,22 @@ class InputLocator(object):
 
     # THERMAL NETWORK OUTPUTS
     def get_thermal_network_folder(self):
+        """scenario/outputs/data/thermal-network"""
         return os.path.join(self.scenario, 'outputs', 'data', 'thermal-network')
 
-    def _get_part2_output_file_path(self, network_type, network_name, file_suffix):
+    def _get_thermal_network_results_file_path(self, network_type, network_name, file_suffix):
         """
-        Helper method to resolve Part 2 output file paths.
-
-        Files are stored in network_name/ folder with format: {network_type}_{network_name}_{file_suffix}
-
-        :param network_type: 'DH' or 'DC'
-        :param network_name: Network name (timestamp or user-defined)
-        :param file_suffix: File suffix (e.g., 'massflow_edges_kgs.csv')
-        :return: Resolved file path
+        Helper method to resolve the path to thermal network results files.
         """
         if network_name:
-            # Part 2 files stored in: network_type/network_name/filename
+            # Named networks: thermal-network/{network_name}/{network_type}/
             folder = self.get_output_thermal_network_type_folder(network_type, network_name)
-            filename = f"{network_type}_{network_name}_{file_suffix}"
-            return os.path.join(folder, filename)
         else:
-            # Empty network_name - root level with double underscore (e.g., DC__massflow_edges_kgs.csv)
+            # Default/unnamed networks: thermal-network/
             folder = self.get_thermal_network_folder()
-            filename = f"{network_type}__{file_suffix}"
-            return os.path.join(folder, filename)
+        
+        filename = f"{network_type}_{network_name}_{file_suffix}"
+        return os.path.join(folder, filename)
 
     def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name=""):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
@@ -1069,15 +1085,13 @@ class InputLocator(object):
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_thermal_network_node_types_csv_file(self, network_type, network_name):
-        """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
-        """
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_metadata_nodes.csv"""
         if not network_name:
             file_name = network_type + '_' + "_metadata_nodes.csv"
         else:
             file_name = network_type + '_' + network_name + '_metadata_nodes.csv'
 
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, file_name)
 
     def get_plant_nodes(self, network_type, network_name):
         """Return the list of "PLANT" nodes in a thermal network"""
@@ -1090,264 +1104,80 @@ class InputLocator(object):
         return []
 
     def get_thermal_network_edge_list_file(self, network_type, network_name=''):
-        """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
-        List of edges in a district heating or cooling network and their start and end nodes
-        """
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_metadata_edges.csv"""
         if not network_name:
             file_name = network_type + "_" + "_metadata_edges.csv"
         else:
             file_name = network_type + "_" + network_name + "_metadata_edges.csv"
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, file_name)
 
-    def get_representative_week_thermal_network_layout_folder(self):
-        """scenario/outputs/data/optimization/network/layout
-        Network layout files
-        """
-        return os.path.join(self.get_thermal_network_folder(), "reduced_timesteps")
+    def get_thermal_network_layout_massflow_edges_file(self, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_edges_kgs.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "massflow_edges_kgs.csv")
 
-    def get_thermal_network_layout_massflow_edges_file(self, network_type, network_name, representative_week=False):
-        """
-        scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_edges_kgs.csv
+    def get_thermal_network_velocity_edges_file(self, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_velocity_edges_mpers.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "velocity_edges_mpers.csv")
 
-        Part 2 output files are stored in network_name/ folder with format: {network_type}_{network_name}_{file_suffix}
-        """
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_massflow_edges_kgs.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_massflow_edges_kgs.csv"
-            return os.path.join(folder, file_name)
+    def get_thermal_network_layout_massflow_nodes_file(self, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_nodes_kgs.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "massflow_nodes_kgs.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "massflow_edges_kgs.csv")
+    def get_network_temperature_supply_nodes_file(self, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_supply_nodes_K.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "temperature_supply_nodes_K.csv")
 
-    def get_thermal_network_velocity_edges_file(self, network_type, network_name, representative_week=False):
-        """
-        scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_velocity_edges_mpers.csv
+    def get_network_temperature_return_nodes_file(self, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_return_nodes_K.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "temperature_return_nodes_K.csv")
 
-        Part 2 output files are stored in network_name/ folder
-        
+    def get_network_temperature_plant(self, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_plant_K.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "temperature_plant_K.csv")
 
-        """
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_velocity_edges_mpers.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_velocity_edges_mpers.csv"
-            return os.path.join(folder, file_name)
-
-        return self._get_part2_output_file_path(network_type, network_name, "velocity_edges_mpers.csv")
-
-    def get_thermal_network_layout_massflow_nodes_file(self, network_type, network_name, representative_week=False):
-        """
-        scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_nodes_kgs.csv
-
-        Part 2 output files are stored in network_name/ folder
-        
-
-        """
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_massflow_nodes_kgs.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_massflow_nodes_kgs.csv"
-            return os.path.join(folder, file_name)
-
-        return self._get_part2_output_file_path(network_type, network_name, "massflow_nodes_kgs.csv")
-
-    def get_network_temperature_supply_nodes_file(self, network_type, network_name,
-                                                  representative_week=False):
-        """
-        scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_supply_nodes_K.csv
-
-        Part 2 output files are stored in network_name/ folder
-        
-
-        """
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_temperature_supply_nodes_K.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_temperature_supply_nodes_K.csv"
-            return os.path.join(folder, file_name)
-
-        return self._get_part2_output_file_path(network_type, network_name, "temperature_supply_nodes_K.csv")
-
-    def get_network_temperature_return_nodes_file(self, network_type, network_name,
-                                                  representative_week=False):
-        """
-        scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_return_nodes_K.csv
-
-        Part 2 output files are stored in network_name/ folder
-        
-
-        """
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_temperature_return_nodes_K.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_temperature_return_nodes_K.csv"
-            return os.path.join(folder, file_name)
-
-        return self._get_part2_output_file_path(network_type, network_name, "temperature_return_nodes_K.csv")
-
-    def get_network_temperature_plant(self, network_type, network_name,
-                                      representative_week=False):
-        """
-        scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_temperature_plant_K.csv
-
-        Part 2 output files are stored in network_name/ folder
-        
-
-        """
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_temperature_plant_K.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_temperature_plant_K.csv"
-            return os.path.join(folder, file_name)
-
-        return self._get_part2_output_file_path(network_type, network_name, "temperature_plant_K.csv")
-
-    def get_thermal_network_substation_ploss_file(self, network_type, network_name, representative_week=False):
+    def get_thermal_network_substation_ploss_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_pumping_load_due_to_substations_kW.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_pumping_load_due_to_substations_kW.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_pumping_load_due_to_substations_kW.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "pumping_load_due_to_substations_kW.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "pumping_load_due_to_substations_kW.csv")
-
-    def get_thermal_demand_csv_file(self, network_type, network_name, representative_week=False):
+    def get_thermal_demand_csv_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_thermal_demand_per_building_W.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_thermal_demand_per_building_W.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_thermal_demand_per_building_W.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "thermal_demand_per_building_W.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "thermal_demand_per_building_W.csv")
-
-    def get_network_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
+    def get_network_thermal_loss_edges_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_thermal_loss_edges_kW.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_thermal_loss_edges_kW.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_thermal_loss_edges_kW.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "thermal_loss_edges_kW.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "thermal_loss_edges_kW.csv")
-
-    def get_network_linear_thermal_loss_edges_file(self, network_type, network_name, representative_week=False):
+    def get_network_linear_thermal_loss_edges_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_linear_thermal_loss_edges_Wperm.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_linear_thermal_loss_edges_Wperm.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_linear_thermal_loss_edges_Wperm.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "linear_thermal_loss_edges_Wperm.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "linear_thermal_loss_edges_Wperm.csv")
-
-    def get_network_total_thermal_loss_file(self, network_type, network_name, representative_week=False):
+    def get_network_total_thermal_loss_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_total_thermal_loss_edges_kW.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_total_thermal_loss_edges_kW.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_total_thermal_loss_edges_kW.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "total_thermal_loss_edges_kW.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "total_thermal_loss_edges_kW.csv")
-
-    def get_thermal_network_pressure_losses_edges_file(self, network_type, network_name,
-                                                       representative_week=False):
+    def get_thermal_network_pressure_losses_edges_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_pressure_losses_edges_kW.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_pressure_losses_edges_kW.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_pressure_losses_edges_kW.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "pressure_losses_edges_kW.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "pressure_losses_edges_kW.csv")
-
-    def get_network_total_pressure_drop_file(self, network_type, network_name, representative_week=False):
+    def get_network_total_pressure_drop_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_plant_pumping_pressure_loss_Pa.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_plant_pumping_pressure_loss_Pa.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_plant_pumping_pressure_loss_Pa.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "plant_pumping_pressure_loss_Pa.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "plant_pumping_pressure_loss_Pa.csv")
-
-    def get_network_linear_pressure_drop_edges(self, network_type, network_name, representative_week=False):
+    def get_network_linear_pressure_drop_edges(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_linear_pressure_drop_edges_Paperm.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_linear_pressure_drop_edges_Paperm.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_linear_pressure_drop_edges_Paperm.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "linear_pressure_drop_edges_Paperm.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "linear_pressure_drop_edges_Paperm.csv")
-
-    def get_network_pressure_at_nodes(self, network_type, network_name, representative_week=False):
+    def get_network_pressure_at_nodes(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_pressure_at_nodes_Pa.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_pressure_at_nodes_Pa.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_pressure_at_nodes_Pa.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "pressure_at_nodes_Pa.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "pressure_at_nodes_Pa.csv")
-
-    def get_network_energy_pumping_requirements_file(self, network_type, network_name,
-                                                     representative_week=False):
+    def get_network_energy_pumping_requirements_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_plant_pumping_load_kW.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_plant_pumping_load_kW.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_plant_pumping_load_kW.csv"
-            return os.path.join(folder, file_name)
+        return self._get_thermal_network_results_file_path(network_type, network_name, "plant_pumping_load_kW.csv")
 
-        return self._get_part2_output_file_path(network_type, network_name, "plant_pumping_load_kW.csv")
-
-    def get_thermal_network_plant_heat_requirement_file(self, network_type, network_name,
-                                                        representative_week=False):
+    def get_thermal_network_plant_heat_requirement_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_plant_thermal_load_kW.csv"""
-        if representative_week:
-            folder = self.get_representative_week_thermal_network_layout_folder()
-            if not network_name:
-                file_name = network_type + "_" + "_plant_thermal_load_kW.csv"
-            else:
-                file_name = network_type + "_" + network_name + "_plant_thermal_load_kW.csv"
-            return os.path.join(folder, file_name)
-
-        return self._get_part2_output_file_path(network_type, network_name, "plant_thermal_load_kW.csv")
+        return self._get_thermal_network_results_file_path(network_type, network_name, "plant_thermal_load_kW.csv")
 
     def get_networks_folder(self):
         return os.path.join(self.scenario, 'inputs', 'networks')
@@ -1408,7 +1238,7 @@ class InputLocator(object):
         return os.path.join(self.solar_potential_folder(), "PV_{panel_type}_total.csv".format(panel_type=panel_type))
 
     def PV_total_buildings(self, panel_type):
-        """scenario/outputs/data/potentials/solar/{building}_PV_{panel_type}_total_buildings.csv"""
+        """scenario/outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_%s_total_buildings.csv' % panel_type)
 
     def PV_metadata_results(self, building):
@@ -1480,34 +1310,38 @@ class InputLocator(object):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
     
+    def get_lca_operational_folder(self):
+        """scenario/outputs/data/emissions/operational"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "operational")
+
     def get_lca_timeline_folder(self):
         """scenario/outputs/data/emissions/timeline"""
         return os.path.join(self.get_lca_emissions_results_folder(), "timeline")
 
     def get_total_yearly_operational_building(self):
-        """scenario/outputs/data/emissions/timeline/Total_yearly_operational_building.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), "Total_yearly_operational_building.csv")
+        """scenario/outputs/data/emissions/Total_yearly_operational_building.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "Total_yearly_operational_building.csv")
 
     def get_total_yearly_operational_hour(self):
-        """scenario/outputs/data/emissions/timeline/Total_yearly_operational.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), "Total_yearly_operational.csv")
+        """scenario/outputs/data/emissions/Total_yearly_operational.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), "Total_yearly_operational.csv")
 
     def get_total_emissions_building_year_end(self, year_end):
-        """scenario/outputs/data/emissions/timeline/Total_emission_building_{year_end}.csv"""
+        """scenario/outputs/data/emissions/Total_emission_building_{year_end}.csv"""
         return os.path.join(
-            self.get_lca_timeline_folder(), f"Total_emission_building_{year_end}.csv")
+            self.get_lca_emissions_results_folder(), f"Total_emission_building_{year_end}.csv")
 
     def get_total_emissions_timeline_year_end(self, year_end):
-        """scenario/outputs/data/emissions/timeline/Total_emission_timeline_{year_end}.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), f"Total_emission_timeline_{year_end}.csv")
-    
+        """scenario/outputs/data/emissions/Total_emission_timeline_{year_end}.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), f"Total_emission_timeline_{year_end}.csv")
+
     def get_lca_timeline_building(self, building: str):
         """scenario/outputs/data/emissions/timeline/{building}_timeline.csv"""
         return os.path.join(self.get_lca_timeline_folder(), f"{building}_timeline.csv")
 
     def get_lca_operational_hourly_building(self, building: str):
-        """scenario/outputs/data/emissions/timeline/{building}_operational_hourly.csv"""
-        return os.path.join(self.get_lca_timeline_folder(), f"{building}_operational_hourly.csv")
+        """scenario/outputs/data/emissions/operational/{building}_operational_hourly.csv"""
+        return os.path.join(self.get_lca_operational_folder(), f"{building}_operational_hourly.csv")
 
     # COSTS
     def get_costs_folder(self):

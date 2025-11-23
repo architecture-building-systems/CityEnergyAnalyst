@@ -112,9 +112,11 @@ cea = [
 
     # Web assets
     "interfaces/dashboard/plots/templates/*.html",
-    "plots/*.html",
 
     "plots/naming.csv",
+    "plots/*.html",
+    "plots/**/*.png",
+    "plots/**/*.yml",
 ]
 
 [tool.setuptools.dynamic]
@@ -136,7 +138,8 @@ platforms = [
 ]
 
 [tool.pixi.tasks]
-test = "cea test --type integration"
+unittest = "pytest cea/tests/"
+integration = "cea test --type integration"
 coverage = "pytest --cov=cea cea/tests/"
 
 # Development tasks
