@@ -7,6 +7,7 @@ engine as optimization_new, providing accurate component-level cost breakdowns.
 Replaces the deprecated system_costs.py with more detailed calculations.
 """
 
+import os
 import pandas as pd
 import numpy as np
 from cea.inputlocator import InputLocator
@@ -365,21 +366,40 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         network_supply_system, network_type, None
     )
 
-    # Calculate piping costs from network layout
+    # Calculate piping costs from thermal-network output files
     piping_cost_annual = 0.0
     piping_cost_total = 0.0
     try:
-        # Load network from thermal-network part 2 results
-        import cea.config
-        network_config = cea.config.Configuration()
-        network_config.scenario = config.scenario
-        network = Network(locator, network_name, network_type, network_config)
-        piping_cost_annual = network.annual_piping_cost
-        network_lifetime_yrs = network.configuration_defaults.get('network_lifetime_yrs', 20.0)
-        piping_cost_total = piping_cost_annual * network_lifetime_yrs
-        print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
+        # Read pipe segments from thermal-network part 2 results
+        edges_file = locator.get_thermal_network_edge_list_file(network_type, network_name)
+        if os.path.exists(edges_file):
+            pipes_df = pd.read_csv(edges_file)
+
+            # Read pipe catalog with unit costs
+            pipe_catalog_path = locator.get_database_components_distribution_thermal_grid()
+            pipe_catalog_df = pd.read_csv(pipe_catalog_path)
+
+            # Create lookup dict: pipe_DN -> unit cost (USD/m)
+            unit_cost_dict = {row['pipe_DN']: row['Inv_USD2015perm']
+                             for _, row in pipe_catalog_df.iterrows()}
+
+            # Calculate total piping cost: sum(unit_cost × length)
+            piping_cost_total = sum(
+                unit_cost_dict.get(row['pipe_DN'], 0.0) * row['length_m']
+                for _, row in pipes_df.iterrows()
+            )
+
+            # Annualize (default network lifetime: 20 years)
+            network_lifetime_yrs = 20.0
+            piping_cost_annual = piping_cost_total / network_lifetime_yrs
+
+            print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
+        else:
+            print(f"      Warning: Network edges file not found: {edges_file}")
     except Exception as e:
+        import traceback
         print(f"      Warning: Could not load piping costs: {e}")
+        print(f"      Traceback: {traceback.format_exc()}")
 
     results[network_id] = {
         'network_type': network_type,
