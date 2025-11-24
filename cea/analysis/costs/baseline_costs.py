@@ -74,6 +74,41 @@ def get_components_from_supply_assembly(locator, supply_code, category):
     return result
 
 
+def filter_to_single_component_per_category(capacity_indicator_vector):
+    """
+    Filter capacity indicators to keep only ONE component per category.
+
+    For baseline costs without optimisation, we don't want to size ALL possible
+    components at full capacity (e.g., all 6 boiler types). Instead, keep only
+    the first viable component of each type.
+
+    :param capacity_indicator_vector: CapacityIndicatorVector instance
+    :return: CapacityIndicatorVector with filtered indicators
+    """
+    from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector
+
+    # Track which component classes we've already seen per category
+    seen_classes = {}
+    filtered_indicators = []
+
+    for indicator in capacity_indicator_vector.capacity_indicators:
+        category = indicator.category  # 'primary', 'secondary', 'tertiary'
+        code = indicator.code  # e.g., 'BO1', 'BO2', 'CH1'
+
+        # Get the component class (e.g., 'BOILERS' from 'BO1')
+        component_class = code[:2]  # 'BO' for BO1-BO6, 'CH' for CH1-CH2, 'CT' for cooling towers
+
+        # Create a key combining category and component class
+        key = f"{category}_{component_class}"
+
+        if key not in seen_classes:
+            # This is the first component of this class in this category - keep it
+            seen_classes[key] = code
+            filtered_indicators.append(indicator)
+
+    return CapacityIndicatorVector(filtered_indicators, capacity_indicator_vector.dependencies)
+
+
 def validate_network_results_exist(locator, network_name, network_type):
     """
     Validate that thermal-network part 2 has been completed for the specified network.
@@ -254,7 +289,8 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     # Map network_type to the relevant supply category
     if network_type == 'DC':
         supply_code = config.system_costs.supply_type_cs
-        if supply_code:
+        # Check if user selected "Use component settings below" or if field is empty
+        if supply_code and supply_code != "Use component settings below":
             # Mode 1: Use SUPPLY assembly
             print(f"      Using SUPPLY assembly: {supply_code}")
             supply_components = get_components_from_supply_assembly(locator, supply_code, 'SUPPLY_COOLING')
@@ -264,14 +300,15 @@ def calculate_district_network_costs(locator, config, network_type, network_name
                 print(f"        Tertiary components: {supply_components['tertiary']}")
         else:
             # Mode 2: Fallback to component category
-            print(f"      No SUPPLY assembly - using fallback: {config.system_costs.cooling_components}")
+            print(f"      Using component settings: {config.system_costs.cooling_components}")
             use_fallback = True
 
     elif network_type == 'DH':
         supply_code_hs = config.system_costs.supply_type_hs
         supply_code_dhw = config.system_costs.supply_type_dhw
         # For DH, we use heating system components (DHW is separate service)
-        if supply_code_hs:
+        # Check if user selected "Use component settings below" or if field is empty
+        if supply_code_hs and supply_code_hs != "Use component settings below":
             # Mode 1: Use SUPPLY assembly
             print(f"      Using SUPPLY assembly: {supply_code_hs}")
             supply_components = get_components_from_supply_assembly(locator, supply_code_hs, 'SUPPLY_HEATING')
@@ -279,7 +316,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
                 print(f"        Primary components: {supply_components['primary']}")
         else:
             # Mode 2: Fallback to component category
-            print(f"      No SUPPLY assembly - using fallback: {config.system_costs.heating_components}")
+            print(f"      Using component settings: {config.system_costs.heating_components}")
             use_fallback = True
 
     # Set user_component_selection based on mode
