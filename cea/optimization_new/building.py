@@ -146,7 +146,18 @@ class Building(object):
                              f"system for building '{self.identifier}' could therefore not be assigned.")
 
         # load the 'assemblies'-supply systems database as a class variable
-        if Building._supply_system_database.empty:
+        # Check if we need to reload the database (switching from DH to DC or vice versa)
+        needs_reload = False
+        if not Building._supply_system_database.empty:
+            # Check if the current database matches the requested energy_system_type
+            # Heating systems have codes like SUPPLY_HEATING_AS*, cooling like SUPPLY_COOLING_AS*
+            sample_code = Building._supply_system_database['code'].iloc[0]
+            if energy_system_type == 'DH' and 'COOLING' in sample_code:
+                needs_reload = True  # Need heating database but have cooling
+            elif energy_system_type == 'DC' and 'HEATING' in sample_code:
+                needs_reload = True  # Need cooling database but have heating
+
+        if Building._supply_system_database.empty or needs_reload:
             if energy_system_type == 'DH':
                 Building._supply_system_database = pd.read_csv(locator.get_database_assemblies_supply_heating())
             elif energy_system_type == 'DC':
@@ -173,6 +184,11 @@ class Building(object):
         # register if the building is connected to a district heating or cooling network or has a stand-alone system
         system_details = Building._supply_system_database[Building._supply_system_database['code']
                                                           == self._stand_alone_supply_system_code]
+
+        if system_details.empty:
+            raise ValueError(f"Supply system code '{self._stand_alone_supply_system_code}' not found in database. "
+                           f"Database contains: {Building._supply_system_database['code'].unique().tolist()}")
+
         energy_system_scale = system_details['scale'].values[0].replace(" ", "").lower()
 
         if energy_system_scale in ['', '-', 'building']:

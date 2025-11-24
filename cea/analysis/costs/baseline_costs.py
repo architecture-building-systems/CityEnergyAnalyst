@@ -176,18 +176,29 @@ def baseline_costs_main(locator, config):
 
     all_results = {}
 
+    # Calculate standalone building costs ONCE for all services (not per network_type)
+    # Standalone buildings should show all their systems regardless of which networks are being analyzed
+    print(f"\nCalculating standalone building costs...")
+    standalone_results = calculate_standalone_building_costs(locator, config, network_name)
+
     # Calculate costs for each specified network type
     for network_type in network_types:
         print(f"\nCalculating {network_type} system costs...")
         try:
-            results = calculate_costs_for_network_type(locator, config, network_type, network_name)
+            results = calculate_costs_for_network_type(locator, config, network_type, network_name, standalone_results)
             all_results[network_type] = results
         except ValueError as e:
             # Check if this is a "no demand" or "no supply system" error
             error_msg = str(e)
             if "None of the components chosen" in error_msg or "T30W" in error_msg or "T10W" in error_msg:
-                print(f"  ⚠ Skipping {network_type}: No valid supply systems found for this network type")
-                print(f"    (This is expected for scenarios with no {network_type} demand)")
+                # Show detailed error if it's an energy carrier mismatch
+                if "ERROR: Insufficient capacity" in error_msg:
+                    # This is our detailed error message - show it
+                    print(error_msg)
+                else:
+                    # Generic message for simple cases
+                    print(f"  ⚠ Skipping {network_type}: No valid supply systems found for this network type")
+                    print(f"    (This is expected for scenarios with no {network_type} demand)")
                 continue
             else:
                 # Re-raise other errors
@@ -230,6 +241,94 @@ def baseline_costs_main(locator, config):
     return final_results
 
 
+def calculate_standalone_building_costs(locator, config, network_name):
+    """
+    Calculate costs for standalone buildings (NOT connected to any network).
+
+    These buildings use their existing supply.csv configuration and calculate costs
+    for ALL services (cooling, heating, DHW, electricity), not just one network type.
+
+    This function is called ONCE (not per network_type) to avoid duplicate calculation.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param network_name: Network layout name
+    :return: dict of {building_name: {cost_data}}
+    """
+    import geopandas as gpd
+    import pandas as pd
+    import os
+
+    # Read ALL network layouts to determine which buildings are standalone
+    # A building is standalone if it's NOT in ANY network layout
+    all_network_buildings = set()
+
+    # Check both DH and DC networks if they exist
+    for nt in ['DH', 'DC']:
+        try:
+            network_folder = locator.get_output_thermal_network_type_folder(nt, network_name)
+            layout_folder = os.path.join(network_folder, 'layout')
+            nodes_file = os.path.join(layout_folder, 'nodes.shp')
+
+            if os.path.exists(nodes_file):
+                nodes_df = gpd.read_file(nodes_file)
+                network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
+                network_buildings = [b for b in network_buildings if b and b != 'NONE']
+                all_network_buildings.update(network_buildings)
+        except:
+            pass  # Network doesn't exist, that's fine
+
+    # Load domain WITHOUT network_type filter to get ALL services
+    print(f"  Loading buildings and demands (all services)...")
+    domain_config = cea.config.Configuration()
+    domain_config.scenario = config.scenario
+    # DON'T set network_type - we want ALL services for standalone buildings
+
+    domain = Domain(domain_config, locator)
+    domain.load_buildings()
+    domain.load_potentials()
+    domain._initialize_energy_system_descriptor_classes()
+
+    building_potentials = Building.distribute_building_potentials(
+        domain.energy_potentials, domain.buildings
+    )
+
+    # Identify standalone buildings (not in any network)
+    standalone_buildings = [b for b in domain.buildings
+                           if b.identifier not in all_network_buildings]
+
+    print(f"  Found {len(standalone_buildings)} standalone buildings")
+
+    results = {}
+
+    # Calculate supply systems for each standalone building
+    for building in standalone_buildings:
+        building.calculate_supply_system(building_potentials[building.identifier])
+
+        if building.stand_alone_supply_system is None:
+            print(f"    {building.identifier}: Zero demand (all costs = 0)")
+            results[building.identifier] = {
+                'supply_system': None,
+                'building': building,
+                'costs': {},
+                'is_network': False
+            }
+        else:
+            # Extract costs from all services (not just one network_type)
+            supply_system = building.stand_alone_supply_system
+            # Pass None as network_type since we want all services
+            costs = extract_costs_from_supply_system(supply_system, None, building)
+            results[building.identifier] = {
+                'supply_system': supply_system,
+                'building': building,
+                'costs': costs,
+                'is_network': False
+            }
+            print(f"    {building.identifier}: Calculated using {building._stand_alone_supply_system_code}")
+
+    return results
+
+
 def calculate_district_network_costs(locator, config, network_type, network_name,
                                      network_buildings, building_energy_potentials, domain_potentials):
     """
@@ -269,6 +368,10 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         energy_flow_profile=aggregated_demand_profile
     )
 
+    # Debug: Show aggregated demand
+    print(f"      DEBUG: Aggregated demand profile max: {aggregated_demand_profile.max():.2f} kW")
+    print(f"      DEBUG: Aggregated demand profile shape: {aggregated_demand_profile.shape}")
+
     # Aggregate potentials from all buildings in the network
     network_potentials = {}
     for building in network_buildings:
@@ -292,15 +395,22 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         supply_code = config.system_costs.supply_type_cs
         # Check if user selected "Use component settings below" or if field is empty
         if supply_code and supply_code != "Use component settings below":
-            # Mode 1: Use SUPPLY assembly
-            print(f"      Using SUPPLY assembly: {supply_code}")
+            # SUPPLY assemblies are designed for building-scale systems and may not size correctly
+            # for district networks with large aggregated demands.
+            # For district networks, fallback mode is recommended.
+            print(f"      WARNING: SUPPLY assembly '{supply_code}' specified for district network.")
+            print(f"      SUPPLY assemblies may not size correctly for large district demands.")
+            print(f"      Consider using 'Use component settings below' (fallback mode) instead.")
+            print(f"      Attempting to use SUPPLY assembly...")
+
+            # Mode 1: Use SUPPLY assembly (may fail with capacity errors for large networks)
             supply_components = get_components_from_supply_assembly(locator, supply_code, 'SUPPLY_COOLING')
             if supply_components.get('primary'):
                 print(f"        Primary components: {supply_components['primary']}")
             if supply_components.get('tertiary'):
                 print(f"        Tertiary components: {supply_components['tertiary']}")
         else:
-            # Mode 2: Fallback to component category
+            # Mode 2: Fallback to component category (RECOMMENDED for district networks)
             print(f"      Using component settings: {config.system_costs.cooling_components}")
             use_fallback = True
 
@@ -347,11 +457,17 @@ def calculate_district_network_costs(locator, config, network_type, network_name
 
     # Filter capacity indicators if using fallback mode
     capacity_indicators = system_structure.capacity_indicators
+
     if use_fallback:
         # Fallback mode: Filter to keep only ONE component per category
         # This prevents sizing all boiler types (BO1-BO6) at full capacity
         capacity_indicators = filter_to_single_component_per_category(capacity_indicators)
         print(f"      Fallback mode: Filtered to use first viable component of each type")
+
+        # Debug: Show capacity indicators AFTER filtering
+        print(f"      DEBUG: Capacity indicators AFTER filtering ({len(capacity_indicators.capacity_indicators)} components):")
+        for ind in capacity_indicators.capacity_indicators:
+            print(f"        {ind.code} ({ind.category}): value={ind.value}")
 
     # Create and evaluate supply system
     network_supply_system = SupplySystem(
@@ -359,7 +475,59 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         capacity_indicators,
         aggregated_demand
     )
-    network_supply_system.evaluate()
+
+    try:
+        network_supply_system.evaluate()
+    except ValueError as e:
+        if "capacity was insufficient" in str(e):
+            # Check if it's an energy carrier mismatch
+            installed_primary = network_supply_system.installed_components.get('primary', {})
+            if installed_primary:
+                comp_list = [f"{code} (capacity={comp.capacity:.0f} kW, EC={comp.main_energy_carrier.code})"
+                           for code, comp in installed_primary.items()]
+                installed_info = "\n    ".join(comp_list)
+            else:
+                installed_info = "NONE"
+
+            # Check if activation order is empty
+            activation_issue = ""
+            if not system_structure.activation_order.get('primary'):
+                max_cap_comps = list(system_structure.max_cap_active_components.get('primary', {}).keys())
+                activation_issue = (
+                    f"\nROOT CAUSE: Component activation order is EMPTY!\n"
+                    f"  Installed components: {max_cap_comps}\n"
+                    f"  Activation order: {list(system_structure.activation_order.get('primary', []))}\n"
+                    f"  This means installed components cannot be activated to meet demand.\n"
+                    f"  This is a known limitation when using SUPPLY assemblies.\n\n"
+                )
+
+            # Provide helpful error message for capacity issues
+            error_msg = (
+                f"\n{'='*70}\n"
+                f"ERROR: Insufficient capacity for district network '{network_id}'\n"
+                f"{'='*70}\n"
+                f"{str(e)}\n\n"
+                f"Installed primary components:\n    {installed_info}\n"
+                f"{activation_issue}"
+                f"This error occurs because SUPPLY assemblies specify component codes\n"
+                f"that aren't in the optimization framework's activation priority list.\n"
+                f"The components are installed but never activated.\n\n"
+                f"RECOMMENDED SOLUTION:\n"
+                f"  Use 'fallback mode' which uses component CATEGORIES instead of codes:\n"
+                f"  1. Set 'supply-type-cs' to 'Use component settings below' (for cooling)\n"
+                f"  2. Set 'supply-type-hs' to 'Use component settings below' (for heating)\n"
+                f"  3. Select appropriate component categories:\n"
+                f"     - cooling-components: ABSORPTION_CHILLERS or VAPOR_COMPRESSION_CHILLERS\n"
+                f"     - heating-components: BOILERS\n"
+                f"     - heat-rejection-components: COOLING_TOWERS\n\n"
+                f"Fallback mode automatically finds ALL viable components and builds\n"
+                f"a correct activation order, avoiding this issue.\n"
+                f"{'='*70}\n"
+            )
+            raise ValueError(error_msg) from e
+        else:
+            # Re-raise other ValueError types
+            raise
 
     # Extract costs from network supply system
     network_costs = extract_costs_from_supply_system(
@@ -521,18 +689,19 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
     return results
 
 
-def calculate_costs_for_network_type(locator, config, network_type, network_name=None):
+def calculate_costs_for_network_type(locator, config, network_type, network_name=None, standalone_results=None):
     """
     Calculate costs for either DH or DC using optimization_new engine.
 
     Four-case logic (network layout is source of truth for connectivity):
     - Case 1 & 2: Building IN network layout → Use district supply types from config (supply-type-cs/hs/dhw)
-    - Case 3 & 4: Building NOT in layout → Use existing supply.csv configuration
+    - Case 3 & 4: Building NOT in layout → Use existing supply.csv configuration (pre-calculated in standalone_results)
 
     :param locator: InputLocator instance
     :param config: Configuration instance
     :param network_type: 'DH' or 'DC'
     :param network_name: Specific network layout to use (required)
+    :param standalone_results: Pre-calculated standalone building costs (dict of {building_name: {cost_data}})
     :return: dict of {building_name or network_name: {cost_metrics}}
     """
     import geopandas as gpd
@@ -556,7 +725,28 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
         print(f"  ⚠ No buildings connected in {network_type} network layout - skipping")
         return {}
 
-    # Step 2: Load ALL buildings with their existing supply.csv (NO MODIFICATIONS)
+    results = {}
+
+    # Step 2: Add pre-calculated standalone building costs (Case 3 & 4)
+    # These were calculated once with ALL services, not per network_type
+    # We identify standalone buildings by checking which ones are NOT in network_buildings_from_layout
+    if standalone_results:
+        standalone_building_ids = [bid for bid in standalone_results.keys()
+                                   if bid not in network_buildings_from_layout]
+        if standalone_building_ids:
+            print(f"\n  Including standalone building costs ({len(standalone_building_ids)} buildings):")
+            for building_id in standalone_building_ids:
+                # Add network_type to the result for this network type
+                result_copy = standalone_results[building_id].copy()
+                result_copy['network_type'] = network_type
+                results[building_id] = result_copy
+                print(f"    {building_id}: Included")
+
+    # Step 3: Calculate district network costs (Case 1 & 2)
+    # These buildings use district supply types from config, not supply.csv
+    # Load domain ONLY for network-connected buildings to calculate their costs
+    print(f"\n  Calculating district network costs ({len(network_buildings_from_layout)} buildings):")
+
     import cea.config
     domain_config = cea.config.Configuration()
     domain_config.scenario = config.scenario
@@ -564,13 +754,15 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
     # Set component priorities for fallback mode (when SUPPLY assemblies don't exist)
     # These will be used by SupplySystemStructure when user_component_selection=None
-    # Note: system-costs uses ChoiceParameter (returns string), but optimization_new expects lists
-    domain_config.optimization_new.cooling_components = [config.system_costs.cooling_components] if config.system_costs.cooling_components else []
-    domain_config.optimization_new.heating_components = [config.system_costs.heating_components] if config.system_costs.heating_components else []
-    domain_config.optimization_new.heat_rejection_components = [config.system_costs.heat_rejection_components] if config.system_costs.heat_rejection_components else []
+    # Note: All component parameters are now MultiChoiceParameter (already lists)
+    domain_config.optimization_new.cooling_components = config.system_costs.cooling_components if config.system_costs.cooling_components else []
+    domain_config.optimization_new.heating_components = config.system_costs.heating_components if config.system_costs.heating_components else []
+    domain_config.optimization_new.heat_rejection_components = config.system_costs.heat_rejection_components if config.system_costs.heat_rejection_components else []
 
     domain = Domain(domain_config, locator)
-    domain.load_buildings()
+    # IMPORTANT: Only load network-connected buildings to avoid errors with buildings that don't have
+    # systems for this network_type (e.g., Singapore buildings with SUPPLY_HEATING_AS0 when network_type=DH)
+    domain.load_buildings(buildings_in_domain=network_buildings_from_layout)
 
     # Load potentials and initialize classes
     domain.load_potentials()
@@ -581,59 +773,17 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
         domain.energy_potentials, domain.buildings
     )
 
-    # Step 3: Separate buildings by connectivity (network layout is source of truth)
-    print(f"\n  Four-case logic:")
-    network_connected_buildings = []
-    standalone_buildings = []
+    # All buildings in domain are network-connected (we filtered in load_buildings)
+    network_connected_buildings = domain.buildings
 
-    for building in domain.buildings:
-        if building.identifier in network_buildings_from_layout:
-            # Case 1 & 2: Building IN network layout → Use district supply types from config
-            network_connected_buildings.append(building)
-            print(f"    {building.identifier}: IN layout → district plant (supply-type from config)")
-        else:
-            # Case 3 & 4: Building NOT in layout → Use existing supply.csv
-            standalone_buildings.append(building)
-            print(f"    {building.identifier}: NOT in layout → standalone ({building._stand_alone_supply_system_code})")
+    print(f"    Buildings in domain: {[b.identifier for b in domain.buildings]}")
 
-    results = {}
-
-    # Step 4: Calculate standalone building costs (Case 3 & 4)
-    # These buildings use their existing supply.csv configuration
-    if standalone_buildings:
-        print(f"\n  Calculating standalone building costs ({len(standalone_buildings)} buildings):")
-        for building in standalone_buildings:
-            building.calculate_supply_system(
-                building_energy_potentials[building.identifier]
-            )
-
-            # Skip buildings with None supply system (zero demand)
-            if building.stand_alone_supply_system is None:
-                print(f"    {building.identifier}: Skipped (zero demand)")
-                continue
-
-            # Extract costs from the building's supply system
-            supply_system = building.stand_alone_supply_system
-
-            results[building.identifier] = {
-                'network_type': network_type,
-                'supply_system': supply_system,
-                'building': building,
-                'costs': extract_costs_from_supply_system(supply_system, network_type, building),
-                'is_network': False
-            }
-            print(f"    {building.identifier}: Calculated using {building._stand_alone_supply_system_code}")
-
-    # Step 5: Calculate district network costs (Case 1 & 2)
-    # These buildings use district supply types from config, not supply.csv
-    if network_connected_buildings:
-        print(f"\n  Calculating district network costs ({len(network_connected_buildings)} buildings):")
-        network_results = calculate_district_network_costs(
-            locator, config, network_type, network_name,
-            network_connected_buildings, building_energy_potentials,
-            domain.energy_potentials
-        )
-        results.update(network_results)
+    network_results = calculate_district_network_costs(
+        locator, config, network_type, network_name,
+        network_connected_buildings, building_energy_potentials,
+        domain.energy_potentials
+    )
+    results.update(network_results)
 
     return results
 
@@ -1073,3 +1223,4 @@ def main(config: cea.config.Configuration):
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
+
