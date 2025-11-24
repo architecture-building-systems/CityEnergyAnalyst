@@ -25,6 +25,55 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def get_components_from_supply_assembly(locator, supply_code, category):
+    """
+    Extract component codes from SUPPLY assembly definition.
+
+    :param locator: InputLocator instance
+    :param supply_code: SUPPLY assembly code (e.g., 'SUPPLY_COOLING_AS4')
+    :param category: 'SUPPLY_COOLING', 'SUPPLY_HEATING', or 'SUPPLY_HOTWATER'
+    :return: dict with keys 'primary', 'secondary', 'tertiary' containing lists of component codes
+    """
+    import pandas as pd
+
+    # Map category to locator method
+    category_to_method = {
+        'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+        'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+        'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+    }
+
+    method = category_to_method.get(category)
+    if not method:
+        return {'primary': [], 'secondary': [], 'tertiary': []}
+
+    filepath = method()
+    if not pd.io.common.file_exists(filepath):
+        return {'primary': [], 'secondary': [], 'tertiary': []}
+
+    df = pd.read_csv(filepath)
+
+    # Find the row for this supply code
+    row = df[df['code'] == supply_code]
+    if row.empty:
+        return {'primary': [], 'secondary': [], 'tertiary': []}
+
+    # Extract component codes from columns
+    def parse_components(value):
+        """Parse component string, handling '-' and comma-separated values"""
+        if pd.isna(value) or value == '-':
+            return []
+        return [c.strip() for c in str(value).split(',') if c.strip() and c.strip() != '-']
+
+    result = {
+        'primary': parse_components(row['primary_components'].iloc[0]) if 'primary_components' in row.columns else [],
+        'secondary': parse_components(row['secondary_components'].iloc[0]) if 'secondary_components' in row.columns else [],
+        'tertiary': parse_components(row['tertiary_components'].iloc[0]) if 'tertiary_components' in row.columns else [],
+    }
+
+    return result
+
+
 def validate_network_results_exist(locator, network_name, network_type):
     """
     Validate that thermal-network part 2 has been completed for the specified network.
@@ -148,9 +197,10 @@ def baseline_costs_main(locator, config):
 def calculate_district_network_costs(locator, config, network_type, network_name,
                                      network_buildings, building_energy_potentials, domain_potentials):
     """
-    Calculate district network costs using component parameters (not supply.csv assemblies).
+    Calculate district network costs using district supply types from config.
 
-    This implements Case 1 & 2: Buildings IN network layout use component selection.
+    This implements Case 1 & 2: Buildings IN network layout use district supply assemblies
+    specified in config (supply-type-cs, supply-type-hs, supply-type-dhw).
 
     :param locator: InputLocator instance
     :param config: Configuration instance
@@ -170,10 +220,6 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     network_id = f'{network_name}_{network_type}'  # Use meaningful network ID
 
     print(f"    Network {network_id}: {len(network_buildings)} buildings")
-    print(f"    Using component parameters (not supply.csv):")
-    print(f"      - cooling-components: {config.system_costs.cooling_components}")
-    print(f"      - heating-components: {config.system_costs.heating_components}")
-    print(f"      - heat-rejection: {config.system_costs.heat_rejection_components}")
 
     # Aggregate demand from all buildings in the network
     aggregated_demand_profile = sum([building.demand_flow.profile for building in network_buildings])
@@ -197,28 +243,82 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             else:
                 network_potentials[ec_code] = potential
 
-    # Build network supply system using component parameters (NO user_component_selection)
-    # This allows SupplySystemStructure to use the component parameters from config
+    # Build network supply system using district supply assemblies OR fallback to component categories
+    # Two modes:
+    # 1. SUPPLY assembly mode: Use specific components from SUPPLY_*_AS* assemblies (preferred)
+    # 2. Fallback mode: Use component categories (BOILERS, CHILLERS, etc.) when no assemblies exist
+
+    supply_components = {}
+    use_fallback = False
+
+    # Map network_type to the relevant supply category
+    if network_type == 'DC':
+        supply_code = config.system_costs.supply_type_cs
+        if supply_code:
+            # Mode 1: Use SUPPLY assembly
+            print(f"      Using SUPPLY assembly: {supply_code}")
+            supply_components = get_components_from_supply_assembly(locator, supply_code, 'SUPPLY_COOLING')
+            if supply_components.get('primary'):
+                print(f"        Primary components: {supply_components['primary']}")
+            if supply_components.get('tertiary'):
+                print(f"        Tertiary components: {supply_components['tertiary']}")
+        else:
+            # Mode 2: Fallback to component category
+            print(f"      No SUPPLY assembly - using fallback: {config.system_costs.cooling_components}")
+            use_fallback = True
+
+    elif network_type == 'DH':
+        supply_code_hs = config.system_costs.supply_type_hs
+        supply_code_dhw = config.system_costs.supply_type_dhw
+        # For DH, we use heating system components (DHW is separate service)
+        if supply_code_hs:
+            # Mode 1: Use SUPPLY assembly
+            print(f"      Using SUPPLY assembly: {supply_code_hs}")
+            supply_components = get_components_from_supply_assembly(locator, supply_code_hs, 'SUPPLY_HEATING')
+            if supply_components.get('primary'):
+                print(f"        Primary components: {supply_components['primary']}")
+        else:
+            # Mode 2: Fallback to component category
+            print(f"      No SUPPLY assembly - using fallback: {config.system_costs.heating_components}")
+            use_fallback = True
+
+    # Set user_component_selection based on mode
+    if use_fallback:
+        # Fallback mode: Pass None to let system use all components of the selected category
+        # The filtering logic will select the first viable component
+        user_component_selection = None
+    else:
+        # SUPPLY assembly mode: Use specific components from assembly
+        # user_component_selection expects dict like: {'primary': ['BO1'], 'secondary': [], 'tertiary': []}
+        user_component_selection = supply_components
+
     max_supply_flow = aggregated_demand.isolate_peak()
 
     if max_supply_flow.profile.max() == 0.0:
         print(f"      Zero demand - skipping")
         return results
 
-    # Build system structure WITHOUT user_component_selection
-    # This makes it use config parameters (cooling_components, heating_components)
+    # Build system structure
     system_structure = SupplySystemStructure(
         max_supply_flow=max_supply_flow,
         available_potentials=network_potentials,
-        user_component_selection=None,  # Use config parameters, not supply.csv
+        user_component_selection=user_component_selection,  # None for fallback, dict for SUPPLY assembly
         target_building_or_network=network_id
     )
     system_structure.build()
 
+    # Filter capacity indicators if using fallback mode
+    capacity_indicators = system_structure.capacity_indicators
+    if use_fallback:
+        # Fallback mode: Filter to keep only ONE component per category
+        # This prevents sizing all boiler types (BO1-BO6) at full capacity
+        capacity_indicators = filter_to_single_component_per_category(capacity_indicators)
+        print(f"      Fallback mode: Filtered to use first viable component of each type")
+
     # Create and evaluate supply system
     network_supply_system = SupplySystem(
         system_structure,
-        system_structure.capacity_indicators,
+        capacity_indicators,
         aggregated_demand
     )
     network_supply_system.evaluate()
@@ -369,7 +469,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     Calculate costs for either DH or DC using optimization_new engine.
 
     Four-case logic (network layout is source of truth for connectivity):
-    - Case 1 & 2: Building IN network layout → Use component parameters (ignore supply.csv)
+    - Case 1 & 2: Building IN network layout → Use district supply types from config (supply-type-cs/hs/dhw)
     - Case 3 & 4: Building NOT in layout → Use existing supply.csv configuration
 
     :param locator: InputLocator instance
@@ -405,10 +505,12 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     domain_config.scenario = config.scenario
     domain_config.optimization_new.network_type = network_type
 
-    # Important: Set component parameters from system-costs config
-    domain_config.optimization_new.cooling_components = config.system_costs.cooling_components
-    domain_config.optimization_new.heating_components = config.system_costs.heating_components
-    domain_config.optimization_new.heat_rejection_components = config.system_costs.heat_rejection_components
+    # Set component priorities for fallback mode (when SUPPLY assemblies don't exist)
+    # These will be used by SupplySystemStructure when user_component_selection=None
+    # Note: system-costs uses ChoiceParameter (returns string), but optimization_new expects lists
+    domain_config.optimization_new.cooling_components = [config.system_costs.cooling_components] if config.system_costs.cooling_components else []
+    domain_config.optimization_new.heating_components = [config.system_costs.heating_components] if config.system_costs.heating_components else []
+    domain_config.optimization_new.heat_rejection_components = [config.system_costs.heat_rejection_components] if config.system_costs.heat_rejection_components else []
 
     domain = Domain(domain_config, locator)
     domain.load_buildings()
@@ -429,9 +531,9 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
     for building in domain.buildings:
         if building.identifier in network_buildings_from_layout:
-            # Case 1 & 2: Building IN network layout → Use component parameters
+            # Case 1 & 2: Building IN network layout → Use district supply types from config
             network_connected_buildings.append(building)
-            print(f"    {building.identifier}: IN layout → district plant (component parameters)")
+            print(f"    {building.identifier}: IN layout → district plant (supply-type from config)")
         else:
             # Case 3 & 4: Building NOT in layout → Use existing supply.csv
             standalone_buildings.append(building)
@@ -466,7 +568,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
             print(f"    {building.identifier}: Calculated using {building._stand_alone_supply_system_code}")
 
     # Step 5: Calculate district network costs (Case 1 & 2)
-    # These buildings use component parameters, not supply.csv
+    # These buildings use district supply types from config, not supply.csv
     if network_connected_buildings:
         print(f"\n  Calculating district network costs ({len(network_connected_buildings)} buildings):")
         network_results = calculate_district_network_costs(

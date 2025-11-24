@@ -970,6 +970,127 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         return ''
 
 
+class DistrictSupplyTypeParameter(ChoiceParameter):
+    """
+    Parameter for selecting district-scale supply system types.
+
+    Filters SUPPLY assemblies to show only those with scale=DISTRICT.
+    Prioritizes options already used in the scenario's supply.csv.
+    """
+
+    def initialize(self, parser):
+        """Get the supply category from the parameter definition"""
+        try:
+            self.supply_category = parser.get(self.section.name, f"{self.name}.supply-category")
+        except:
+            raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (e.g., SUPPLY_COOLING, SUPPLY_HEATING, SUPPLY_HOTWATER)")
+
+    @property
+    def _choices(self):
+        """Get district-scale supply options, prioritizing those already in use"""
+        try:
+            # Get all district-scale options from database
+            district_options = self._get_district_supply_options()
+
+            # Get options currently in use in supply.csv
+            options_in_use = self._get_supply_options_in_use()
+
+            # Prioritize: options in use first, then rest alphabetically
+            in_use_sorted = sorted([opt for opt in district_options if opt in options_in_use])
+            not_in_use_sorted = sorted([opt for opt in district_options if opt not in options_in_use])
+
+            result = in_use_sorted + not_in_use_sorted
+
+            # Always add default option at the end to trigger component-based fallback
+            result.append("Use component settings below")
+
+            return result
+        except Exception:
+            # Fallback to default option if there's any issue
+            return ["Use component settings below"]
+
+    def _get_district_supply_options(self):
+        """Get all district-scale supply codes from the database"""
+        import pandas as pd
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        # Map category to locator method
+        category_to_method = {
+            'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+            'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+            'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+        }
+
+        if self.supply_category not in category_to_method:
+            return []
+
+        filepath = category_to_method[self.supply_category]()
+
+        if not os.path.exists(filepath):
+            return []
+
+        df = pd.read_csv(filepath)
+
+        # Filter to district scale only
+        if 'scale' in df.columns:
+            district_df = df[df['scale'] == 'DISTRICT']
+            return district_df['code'].tolist()
+
+        return []
+
+    def _get_supply_options_in_use(self):
+        """Get supply options currently used in supply.csv"""
+        import pandas as pd
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        supply_csv_path = locator.get_building_supply()
+
+        if not os.path.exists(supply_csv_path):
+            return []
+
+        supply_df = pd.read_csv(supply_csv_path)
+
+        # Map category to column name
+        category_to_column = {
+            'SUPPLY_COOLING': 'supply_type_cs',
+            'SUPPLY_HEATING': 'supply_type_hs',
+            'SUPPLY_HOTWATER': 'supply_type_dhw',
+        }
+
+        column = category_to_column.get(self.supply_category)
+        if column not in supply_df.columns:
+            return []
+
+        # Get unique values that are actually district scale
+        district_options = set(self._get_district_supply_options())
+        options_in_use = supply_df[column].unique().tolist()
+
+        # Return only those that are district scale
+        return [opt for opt in options_in_use if opt in district_options]
+
+    def encode(self, value):
+        """Validate that the selected value is a valid district-scale supply option"""
+        # Treat "Use component settings below" as empty string (triggers component-based fallback)
+        if not value or str(value).strip() == '' or str(value) == "Use component settings below":
+            return ''
+
+        available_options = self._get_district_supply_options()
+        if str(value) not in available_options:
+            raise ValueError(
+                f"'{value}' is not a valid district-scale {self.supply_category} option. "
+                f"Available options: {', '.join(available_options)}"
+            )
+
+        return str(value)
+
+    def decode(self, value):
+        """Decode value, defaulting to 'Use component settings below' for component-based fallback"""
+        if value and value in self._get_district_supply_options():
+            return value
+
+        # Return "Use component settings below" as default (triggers component-based fallback)
+        return "Use component settings below"
+
+
 class DCNetworkLayoutChoiceParameter(NetworkLayoutChoiceParameter):
     """
     Parameter for selecting DC (District Cooling) network layouts only.
