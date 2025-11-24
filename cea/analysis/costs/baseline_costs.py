@@ -94,8 +94,29 @@ def baseline_costs_main(locator, config):
     # Calculate costs for each specified network type
     for network_type in network_types:
         print(f"\nCalculating {network_type} system costs...")
-        results = calculate_costs_for_network_type(locator, config, network_type, network_name)
-        all_results[network_type] = results
+        try:
+            results = calculate_costs_for_network_type(locator, config, network_type, network_name)
+            all_results[network_type] = results
+        except ValueError as e:
+            # Check if this is a "no demand" or "no supply system" error
+            error_msg = str(e)
+            if "None of the components chosen" in error_msg or "T30W" in error_msg or "T10W" in error_msg:
+                print(f"  ⚠ Skipping {network_type}: No valid supply systems found for this network type")
+                print(f"    (This is expected for scenarios with no {network_type} demand)")
+                continue
+            else:
+                # Re-raise other errors
+                raise
+
+    # Check if we got any results
+    if not all_results:
+        raise ValueError(
+            "No valid supply systems found for any of the selected network types.\n"
+            f"Selected network types: {', '.join(network_types)}\n\n"
+            "Please check that:\n"
+            "1. Buildings have supply systems configured in supply.csv\n"
+            "2. The selected network type matches the building demands (DH for heating, DC for cooling)"
+        )
 
     # Merge results from all network types
     print("\nMerging results...")
@@ -122,6 +143,118 @@ def baseline_costs_main(locator, config):
         print("  For complete costs including energy consumption, refer to optimisation results.")
 
     return final_results
+
+
+def calculate_district_network_costs(locator, config, network_type, network_name,
+                                     network_buildings, building_energy_potentials, domain_potentials):
+    """
+    Calculate district network costs using component parameters (not supply.csv assemblies).
+
+    This implements Case 1 & 2: Buildings IN network layout use component selection.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param network_type: 'DH' or 'DC'
+    :param network_name: Network layout name
+    :param network_buildings: list of Building objects connected to network
+    :param building_energy_potentials: dict of {building_id: potentials}
+    :param domain_potentials: list of domain-level energy potentials
+    :return: dict of {network_id: {cost_metrics}}
+    """
+    from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+    from cea.optimization_new.supplySystem import SupplySystem
+    from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+    from cea.optimization_new.network import Network
+
+    results = {}
+    network_id = f'{network_name}_{network_type}'  # Use meaningful network ID
+
+    print(f"    Network {network_id}: {len(network_buildings)} buildings")
+    print(f"    Using component parameters (not supply.csv):")
+    print(f"      - cooling-components: {config.system_costs.cooling_components}")
+    print(f"      - heating-components: {config.system_costs.heating_components}")
+    print(f"      - heat-rejection: {config.system_costs.heat_rejection_components}")
+
+    # Aggregate demand from all buildings in the network
+    aggregated_demand_profile = sum([building.demand_flow.profile for building in network_buildings])
+
+    # Create aggregated demand flow
+    first_building = network_buildings[0]
+    aggregated_demand = EnergyFlow(
+        input_category='primary',
+        output_category='consumer',
+        energy_carrier_code=first_building.demand_flow.energy_carrier.code,
+        energy_flow_profile=aggregated_demand_profile
+    )
+
+    # Aggregate potentials from all buildings in the network
+    network_potentials = {}
+    for building in network_buildings:
+        building_pots = building_energy_potentials.get(building.identifier, {})
+        for ec_code, potential in building_pots.items():
+            if ec_code in network_potentials:
+                network_potentials[ec_code].profile += potential.profile
+            else:
+                network_potentials[ec_code] = potential
+
+    # Build network supply system using component parameters (NO user_component_selection)
+    # This allows SupplySystemStructure to use the component parameters from config
+    max_supply_flow = aggregated_demand.isolate_peak()
+
+    if max_supply_flow.profile.max() == 0.0:
+        print(f"      Zero demand - skipping")
+        return results
+
+    # Build system structure WITHOUT user_component_selection
+    # This makes it use config parameters (cooling_components, heating_components)
+    system_structure = SupplySystemStructure(
+        max_supply_flow=max_supply_flow,
+        available_potentials=network_potentials,
+        user_component_selection=None,  # Use config parameters, not supply.csv
+        target_building_or_network=network_id
+    )
+    system_structure.build()
+
+    # Create and evaluate supply system
+    network_supply_system = SupplySystem(
+        system_structure,
+        system_structure.capacity_indicators,
+        aggregated_demand
+    )
+    network_supply_system.evaluate()
+
+    # Extract costs from network supply system
+    network_costs = extract_costs_from_supply_system(
+        network_supply_system, network_type, None
+    )
+
+    # Calculate piping costs from network layout
+    piping_cost_annual = 0.0
+    piping_cost_total = 0.0
+    try:
+        # Load network from thermal-network part 2 results
+        import cea.config
+        network_config = cea.config.Configuration()
+        network_config.scenario = config.scenario
+        network = Network(locator, network_name, network_type, network_config)
+        piping_cost_annual = network.annual_piping_cost
+        network_lifetime_yrs = network.configuration_defaults.get('network_lifetime_yrs', 20.0)
+        piping_cost_total = piping_cost_annual * network_lifetime_yrs
+        print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
+    except Exception as e:
+        print(f"      Warning: Could not load piping costs: {e}")
+
+    results[network_id] = {
+        'network_type': network_type,
+        'supply_system': network_supply_system,
+        'buildings': network_buildings,
+        'costs': network_costs,
+        'piping_cost_annual': piping_cost_annual,
+        'piping_cost_total': piping_cost_total,
+        'is_network': True
+    }
+
+    return results
 
 
 def calculate_network_costs(network_buildings, building_energy_potentials, domain_potentials, network_type, networks_dict=None):
@@ -205,10 +338,15 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
 
         # Get piping costs from pre-built network (if available)
         piping_cost_annual = 0.0
+        piping_cost_total = 0.0
         if networks_dict and network_id in networks_dict:
             network = networks_dict[network_id]
             piping_cost_annual = network.annual_piping_cost
-            print(f"    Network piping cost: ${piping_cost_annual:,.2f}/year")
+            # Calculate total CAPEX from annualized cost
+            # Network._calculate_piping_cost uses: annualised = total / network_lifetime_yrs
+            network_lifetime_yrs = network.configuration_defaults.get('network_lifetime_yrs', 20.0)
+            piping_cost_total = piping_cost_annual * network_lifetime_yrs
+            print(f"    Network piping cost: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
         else:
             print(f"    Warning: No network object found for {network_id}, piping costs not included")
 
@@ -217,7 +355,8 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
             'supply_system': network_supply_system,
             'buildings': buildings,  # List of buildings in this network
             'costs': network_costs,
-            'piping_cost_annual': piping_cost_annual,  # Add piping cost
+            'piping_cost_annual': piping_cost_annual,  # Annualized piping cost
+            'piping_cost_total': piping_cost_total,  # Total piping CAPEX
             'is_network': True,
             'network_id': network_id  # Store network ID for detailed output
         }
@@ -229,40 +368,53 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     """
     Calculate costs for either DH or DC using optimization_new engine.
 
-    Respects network connectivity: buildings with scale='DISTRICT' are grouped into networks,
-    while buildings with scale='BUILDING' are calculated as standalone systems.
+    Four-case logic (network layout is source of truth for connectivity):
+    - Case 1 & 2: Building IN network layout → Use component parameters (ignore supply.csv)
+    - Case 3 & 4: Building NOT in layout → Use existing supply.csv configuration
 
     :param locator: InputLocator instance
     :param config: Configuration instance
     :param network_type: 'DH' or 'DC'
-    :param network_name: Specific network layout to use (optional)
+    :param network_name: Specific network layout to use (required)
     :return: dict of {building_name or network_name: {cost_metrics}}
     """
-    # Create a new config instance for Domain class
-    # Domain requires optimization_new parameters, but system-costs doesn't have them
-    # So we create a minimal config with just what Domain needs
+    import geopandas as gpd
+    import pandas as pd
+    import os
+
+    # Step 1: Read network layout to determine building connectivity
+    # Network layout = SOURCE OF TRUTH for connectivity
+    network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+    layout_folder = os.path.join(network_folder, 'layout')
+    nodes_file = os.path.join(layout_folder, 'nodes.shp')
+
+    nodes_df = gpd.read_file(nodes_file)
+    network_buildings_from_layout = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
+    network_buildings_from_layout = [b for b in network_buildings_from_layout if b and b != 'NONE']
+
+    print(f"  Network layout '{network_name}' connects {len(network_buildings_from_layout)} buildings")
+    print(f"    Connected: {network_buildings_from_layout}")
+
+    if not network_buildings_from_layout:
+        print(f"  ⚠ No buildings connected in {network_type} network layout - skipping")
+        return {}
+
+    # Step 2: Load ALL buildings with their existing supply.csv (NO MODIFICATIONS)
     import cea.config
     domain_config = cea.config.Configuration()
     domain_config.scenario = config.scenario
-
-    # Set optimization_new parameters from system_costs parameters
     domain_config.optimization_new.network_type = network_type
-    if network_name:
-        domain_config.optimization_new.network_name = network_name
-        domain_config.optimization_new.use_auto_generated_layout = False
-    else:
-        domain_config.optimization_new.use_auto_generated_layout = True
 
-    # Initialise domain (reuse from optimization_new)
+    # Important: Set component parameters from system-costs config
+    domain_config.optimization_new.cooling_components = config.system_costs.cooling_components
+    domain_config.optimization_new.heating_components = config.system_costs.heating_components
+    domain_config.optimization_new.heat_rejection_components = config.system_costs.heat_rejection_components
+
     domain = Domain(domain_config, locator)
-
-    # Load buildings
     domain.load_buildings()
 
-    # Load energy potentials
+    # Load potentials and initialize classes
     domain.load_potentials()
-
-    # Initialise classes
     domain._initialize_energy_system_descriptor_classes()
 
     # Calculate base case supply systems
@@ -270,50 +422,27 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
         domain.energy_potentials, domain.buildings
     )
 
-    # Build the initial energy system (includes networks)
-    domain.model_initial_energy_system()
-
-    # Group buildings by connectivity state (network vs standalone)
-    network_buildings = {}  # {network_id: [buildings]}
+    # Step 3: Separate buildings by connectivity (network layout is source of truth)
+    print(f"\n  Four-case logic:")
+    network_connected_buildings = []
     standalone_buildings = []
 
     for building in domain.buildings:
-        if building.initial_connectivity_state == 'stand_alone':
-            standalone_buildings.append(building)
+        if building.identifier in network_buildings_from_layout:
+            # Case 1 & 2: Building IN network layout → Use component parameters
+            network_connected_buildings.append(building)
+            print(f"    {building.identifier}: IN layout → district plant (component parameters)")
         else:
-            # Building is connected to a network
-            network_id = building.initial_connectivity_state
-            if network_id not in network_buildings:
-                network_buildings[network_id] = []
-            network_buildings[network_id].append(building)
+            # Case 3 & 4: Building NOT in layout → Use existing supply.csv
+            standalone_buildings.append(building)
+            print(f"    {building.identifier}: NOT in layout → standalone ({building._stand_alone_supply_system_code})")
 
     results = {}
 
-    # Build networks to calculate piping costs
-    networks_dict = {}  # {network_id: Network}
-    if network_buildings:
-        # Use the initial_energy_system that was already built by domain
-        # This has all the networks already constructed
-        if hasattr(domain, 'initial_energy_system'):
-            des = domain.initial_energy_system
-            # Store networks by ID
-            for network in des.networks:
-                networks_dict[network.identifier] = network
-
-    # Calculate costs for network-connected buildings
-    if network_buildings:
-        print(f"  Found {len(network_buildings)} thermal network(s) for {network_type}")
-        from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-
-        network_results = calculate_network_costs(
-            network_buildings, building_energy_potentials,
-            domain.energy_potentials, network_type, networks_dict
-        )
-        results.update(network_results)
-
-    # Calculate costs for standalone buildings
+    # Step 4: Calculate standalone building costs (Case 3 & 4)
+    # These buildings use their existing supply.csv configuration
     if standalone_buildings:
-        print(f"  Calculating standalone systems for {len(standalone_buildings)} buildings")
+        print(f"\n  Calculating standalone building costs ({len(standalone_buildings)} buildings):")
         for building in standalone_buildings:
             building.calculate_supply_system(
                 building_energy_potentials[building.identifier]
@@ -321,6 +450,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
             # Skip buildings with None supply system (zero demand)
             if building.stand_alone_supply_system is None:
+                print(f"    {building.identifier}: Skipped (zero demand)")
                 continue
 
             # Extract costs from the building's supply system
@@ -333,6 +463,18 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
                 'costs': extract_costs_from_supply_system(supply_system, network_type, building),
                 'is_network': False
             }
+            print(f"    {building.identifier}: Calculated using {building._stand_alone_supply_system_code}")
+
+    # Step 5: Calculate district network costs (Case 1 & 2)
+    # These buildings use component parameters, not supply.csv
+    if network_connected_buildings:
+        print(f"\n  Calculating district network costs ({len(network_connected_buildings)} buildings):")
+        network_results = calculate_district_network_costs(
+            locator, config, network_type, network_name,
+            network_connected_buildings, building_energy_potentials,
+            domain.energy_potentials
+        )
+        results.update(network_results)
 
     return results
 
@@ -576,7 +718,13 @@ def format_output_like_system_costs(merged_results, locator):
         'GRID_pro', 'GRID_l', 'GRID_aux', 'GRID_v', 'GRID_a', 'GRID_data', 'GRID_ve'
     ]
 
-    for identifier, network_data in merged_results.items():
+    # Sort results: buildings first (B*), then networks (N*)
+    # This makes the output more logical and easier to read
+    sorted_identifiers = sorted(merged_results.keys(),
+                                key=lambda x: (x.startswith('N'), x))
+
+    for identifier in sorted_identifiers:
+        network_data = merged_results[identifier]
         # Check if this is a network or a building
         is_network = network_data.get('DH', {}).get('is_network', False) or \
                      network_data.get('DC', {}).get('is_network', False)
@@ -702,6 +850,7 @@ def format_output_like_system_costs(merged_results, locator):
             # Add network piping costs to detailed output (if this is a network)
             if is_network and 'piping_cost_annual' in data and data['piping_cost_annual'] > 0:
                 piping_cost_annual = data['piping_cost_annual']
+                piping_cost_total = data.get('piping_cost_total', 0.0)
                 # Piping costs are shown as a separate line item for networks
                 detailed_rows.append({
                     'name': identifier,
@@ -710,7 +859,7 @@ def format_output_like_system_costs(merged_results, locator):
                     'component_code': 'PIPES',
                     'capacity_kW': 0.0,  # N/A for pipes
                     'placement': 'distribution',
-                    'capex_total_USD': 0.0,  # Not available in current calculation
+                    'capex_total_USD': piping_cost_total,
                     'capex_a_USD': piping_cost_annual,
                     'opex_fixed_a_USD': 0.0,  # Piping O&M could be added if needed
                     'scale': 'DISTRICT'
