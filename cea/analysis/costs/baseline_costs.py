@@ -1214,17 +1214,34 @@ def map_energy_carrier_to_service(ec_code, network_type):
     suffix = '_hs' if network_type == 'DH' else '_cs'
 
     # Map energy carriers to service prefixes
-    # Note: Energy carrier codes come from optimization_new (e.g., 'E230AC' for electricity)
+    # Note: Energy carrier codes come from COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv
+    # Format: {carrier_code: service_prefix}
     carrier_map = {
-        'NATURALGAS': 'NG',
-        'Cgas': 'NG',  # Natural gas from optimization_new
-        'E230AC': 'GRID',  # Electricity (grid)
-        'GRID': 'GRID',
-        'OIL': 'OIL',
-        'COAL': 'COAL',
-        'WOOD': 'WOOD',
-        'DH': 'DH',
-        'DC': 'DC',
+        # Electrical carriers (E prefix)
+        'E230AC': 'GRID',   # Electricity - low voltage
+        'E22kAC': 'GRID',   # Electricity - medium voltage
+        'E66kAC': 'GRID',   # Electricity - high voltage
+        'GRID': 'GRID',     # Legacy/generic electricity
+
+        # Fossil fuels (C prefix)
+        'Cgas': 'NG',       # Natural gas
+        'NATURALGAS': 'NG', # Legacy natural gas
+        'Coil': 'OIL',      # Oil
+        'OIL': 'OIL',       # Legacy oil
+        'Ccoa': 'COAL',     # Coal
+        'COAL': 'COAL',     # Legacy coal
+
+        # Biofuels (C prefix)
+        'Cwod': 'WOOD',     # Wood
+        'WOOD': 'WOOD',     # Legacy wood
+        'Cbig': 'BIOGAS',   # Biogas
+        'Cwbm': 'WETBIOMASS',  # Wet biomass
+        'Cdbm': 'DRYBIOMASS',  # Dry biomass
+        'Chyd': 'HYDROGEN', # Hydrogen
+
+        # District networks
+        'DH': 'DH',         # District heating
+        'DC': 'DC',         # District cooling
     }
 
     carrier = carrier_map.get(ec_code)
