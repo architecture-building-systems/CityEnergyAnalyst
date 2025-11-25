@@ -308,7 +308,7 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         labels={
             id_col: 'Category',
             'total_cost': f'Cost ({unit_label})',
-            'cost_type': 'Cost Type'
+            'cost_type': 'Cost Category'
         },
         hover_data={
             id_col: True,
@@ -325,7 +325,7 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         xaxis_title=f'Cost ({unit_label})',
         yaxis_title='',
         hovermode='closest',
-        legend_title='Cost Type',
+        legend_title='Cost Category',
         height=max(400, len(df_long[id_col].unique()) * 40),  # Dynamic height
         margin=dict(l=150, r=50, t=80, b=60),
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
@@ -335,7 +335,7 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
     # Format hover template
     fig.update_traces(
         hovertemplate='<b>%{y}</b><br>' +
-                      'Cost Type: %{fullData.name}<br>' +
+                      'Cost Category: %{fullData.name}<br>' +
                       f'Cost: %{{x:,.2f}} {unit_label}<br>' +
                       '<extra></extra>'
     )
