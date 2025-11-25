@@ -117,7 +117,7 @@ def validate_network_results_exist(locator, network_name, network_type):
     :param locator: InputLocator instance
     :param network_name: Network layout name
     :param network_type: 'DH' or 'DC'
-    :raises ValueError: If required network result files don't exist
+    :return: (is_valid, error_message) - is_valid is True if files exist, False otherwise
     """
     import os
 
@@ -134,14 +134,15 @@ def validate_network_results_exist(locator, network_name, network_type):
     missing_files = [f for f in required_files if not os.path.exists(f)]
 
     if missing_files:
-        raise ValueError(
+        error_msg = (
             f"Thermal-network results not found for network '{network_name}' ({network_type}).\n\n"
             f"Missing files:\n" + "\n".join(f"  - {f}" for f in missing_files) + "\n\n"
             f"Please run 'thermal-network' script (both part 1 and part 2) before running baseline-costs.\n"
             f"Alternatively, select a different network layout that has been completed."
         )
+        return False, error_msg
 
-    print(f"  ✓ {network_type} network '{network_name}' results found")
+    return True, None
 
 
 def baseline_costs_main(locator, config):
@@ -175,8 +176,37 @@ def baseline_costs_main(locator, config):
     # Validate that thermal-network part 2 has been run for each network type
     print(f"\n{'-'*70}")
     print("Validating thermal-network results...")
+    validation_errors = {}
+    valid_network_types = []
+
     for network_type in network_types:
-        validate_network_results_exist(locator, network_name, network_type)
+        is_valid, error_msg = validate_network_results_exist(locator, network_name, network_type)
+        if is_valid:
+            print(f"  ✓ {network_type} network '{network_name}' results found")
+            valid_network_types.append(network_type)
+        else:
+            validation_errors[network_type] = error_msg
+
+    # If no network types passed validation, stop here
+    if not valid_network_types:
+        print(f"\n{'='*70}")
+        print("VALIDATION ERRORS")
+        print(f"{'='*70}")
+        for network_type, error in validation_errors.items():
+            print(f"\n{network_type} network:\n{error}\n")
+        raise ValueError(
+            f"All network types failed validation ({', '.join(network_types)}). "
+            f"See errors above."
+        )
+
+    # Show validation warnings for failed network types (but continue with valid ones)
+    if validation_errors:
+        print(f"\n{'-'*70}")
+        print("VALIDATION WARNINGS")
+        print(f"{'-'*70}")
+        for network_type, error in validation_errors.items():
+            print(f"\n{network_type} network:\n{error}\n")
+        print(f"Continuing with valid network types: {', '.join(valid_network_types)}")
 
     all_results = {}
 
@@ -186,13 +216,17 @@ def baseline_costs_main(locator, config):
     print("Calculating standalone building costs...")
     standalone_results = calculate_standalone_building_costs(locator, config, network_name)
 
-    # Calculate costs for each specified network type
-    for network_type in network_types:
+    # Calculate costs for each VALID network type
+    calculation_errors = {}
+    succeeded = []
+
+    for network_type in valid_network_types:
         print(f"\n{'-'*70}")
         print(f"Calculating {network_type} district network costs...")
         try:
             results = calculate_costs_for_network_type(locator, config, network_type, network_name, standalone_results)
             all_results[network_type] = results
+            succeeded.append(network_type)
         except ValueError as e:
             # Check if this is a "no demand" or "no supply system" error
             error_msg = str(e)
@@ -205,6 +239,7 @@ def baseline_costs_main(locator, config):
                     # Generic message for simple cases
                     print(f"  ⚠ Skipping {network_type}: No valid supply systems")
                     print(f"    (Expected for scenarios with no {network_type} demand)")
+                calculation_errors[network_type] = error_msg
                 continue
             else:
                 # Re-raise other errors
@@ -212,6 +247,11 @@ def baseline_costs_main(locator, config):
 
     # Check if we got any results
     if not all_results:
+        print(f"\n{'='*70}")
+        print("CALCULATION ERRORS")
+        print(f"{'='*70}")
+        for network_type, error in calculation_errors.items():
+            print(f"\n{network_type} network:\n{error}\n")
         raise ValueError(
             "No valid supply systems found for any of the selected network types.\n"
             f"Selected network types: {', '.join(network_types)}\n\n"
@@ -233,11 +273,24 @@ def baseline_costs_main(locator, config):
     final_results.to_csv(locator.get_baseline_costs(), index=False, float_format='%.2f', na_rep='nan')
     detailed_results.to_csv(locator.get_baseline_costs_detailed(), index=False, float_format='%.2f', na_rep='nan')
 
+    # Show completion status based on success/failure
+    all_errors = {**validation_errors, **calculation_errors}
     print(f"\n{'='*70}")
-    print("COMPLETED")
+    if all_errors:
+        print("PARTIALLY COMPLETED")
+    else:
+        print("COMPLETED")
     print(f"{'='*70}")
     print(f"Summary: {locator.get_baseline_costs()}")
     print(f"Detailed: {locator.get_baseline_costs_detailed()}")
+
+    # Show summary of what succeeded and what failed (matching thermal-network behavior)
+    if all_errors:
+        failed_types = ', '.join(sorted(all_errors.keys()))
+        succeeded_types = ', '.join(sorted(succeeded))
+        print(f"\nCompleted: {succeeded_types}. Failed: {failed_types}.")
+    else:
+        print(f"\nAll network types completed successfully: {', '.join(sorted(succeeded))}")
 
     # Check if any networks were found
     has_networks = any(name.startswith('N') for name in final_results['name'])
