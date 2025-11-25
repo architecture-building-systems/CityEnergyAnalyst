@@ -68,16 +68,13 @@ def format_output_simplified(merged_results, locator):
             'Opex_var_a_USD': 0.0,
             'Opex_a_USD': 0.0,
             'TAC_USD': 0.0,
-            # Scale breakdowns
+            # Scale breakdowns (building vs district)
             'Capex_total_building_scale_USD': 0.0,
             'Capex_total_district_scale_USD': 0.0,
-            'Capex_total_city_scale_USD': 0.0,
             'Capex_a_building_scale_USD': 0.0,
             'Capex_a_district_scale_USD': 0.0,
-            'Capex_a_city_scale_USD': 0.0,
             'Opex_a_building_scale_USD': 0.0,
             'Opex_a_district_scale_USD': 0.0,
-            'Opex_a_city_scale_USD': 0.0,
         }
 
         # Process costs from each network type (DH, DC, or standalone)
@@ -112,10 +109,7 @@ def format_output_simplified(merged_results, locator):
                     summary['Capex_total_district_scale_USD'] += service_costs['capex_total_USD']
                     summary['Capex_a_district_scale_USD'] += service_costs['capex_a_USD']
                     summary['Opex_a_district_scale_USD'] += service_costs['opex_a_USD']
-                elif scale == 'CITY':
-                    summary['Capex_total_city_scale_USD'] += service_costs['capex_total_USD']
-                    summary['Capex_a_city_scale_USD'] += service_costs['capex_a_USD']
-                    summary['Opex_a_city_scale_USD'] += service_costs['opex_a_USD']
+                # Note: CITY scale removed - not commonly used and can be added back if needed
 
                 # Add physical components to detailed output
                 for comp in service_costs['components']:
@@ -123,9 +117,9 @@ def format_output_simplified(merged_results, locator):
                         'name': display_name,
                         'network_type': display_network_type,
                         'service': service_name,
-                        'component_code': comp['code'],
+                        'code': comp['code'],
                         'capacity_kW': comp['capacity_kW'],
-                        'component_placement': comp['placement'],  # Renamed from 'placement'
+                        'placement': comp['placement'],
                         'capex_total_USD': comp['capex_total_USD'],
                         'capex_a_USD': comp['capex_a_USD'],
                         'opex_fixed_a_USD': comp['opex_fixed_a_USD'],
@@ -139,9 +133,9 @@ def format_output_simplified(merged_results, locator):
                         'name': display_name,
                         'network_type': display_network_type,
                         'service': service_name,
-                        'component_code': energy_cost['carrier'],  # e.g., E230AC, NATURALGAS
+                        'code': energy_cost['carrier'],  # e.g., E230AC, NATURALGAS
                         'capacity_kW': 0.0,  # N/A for energy carriers
-                        'component_placement': 'energy_carrier',  # Changed from 'energy' to 'energy_carrier'
+                        'placement': 'energy_carrier',
                         'capex_total_USD': 0.0,
                         'capex_a_USD': 0.0,
                         'opex_fixed_a_USD': 0.0,
@@ -166,9 +160,9 @@ def format_output_simplified(merged_results, locator):
                     'name': display_name,
                     'network_type': network_type,
                     'service': f'{network_type}_network',
-                    'component_code': 'PIPES',
+                    'code': 'PIPES',
                     'capacity_kW': 0.0,
-                    'component_placement': 'distribution',
+                    'placement': 'distribution',
                     'capex_total_USD': piping_cost_total,
                     'capex_a_USD': piping_cost_annual,
                     'opex_fixed_a_USD': 0.0,
@@ -182,9 +176,9 @@ def format_output_simplified(merged_results, locator):
                 'name': display_name,
                 'network_type': '',
                 'service': 'NONE',
-                'component_code': 'NONE',
+                'code': 'NONE',
                 'capacity_kW': 0.0,
-                'component_placement': 'NONE',
+                'placement': 'NONE',
                 'capex_total_USD': 0.0,
                 'capex_a_USD': 0.0,
                 'opex_fixed_a_USD': 0.0,
