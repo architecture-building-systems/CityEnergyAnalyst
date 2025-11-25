@@ -9,11 +9,9 @@ Replaces the deprecated system_costs.py with more detailed calculations.
 
 import os
 import pandas as pd
-import numpy as np
 from cea.inputlocator import InputLocator
 from cea.optimization_new.domain import Domain
 from cea.optimization_new.building import Building
-from cea.optimization_new.network import Network
 import cea.config
 
 __author__ = "Zhongming Shi"
@@ -35,7 +33,6 @@ def get_components_from_supply_assembly(locator, supply_code, category):
     :param category: 'SUPPLY_COOLING', 'SUPPLY_HEATING', or 'SUPPLY_HOTWATER'
     :return: dict with keys 'primary', 'secondary', 'tertiary' containing lists of component codes
     """
-    import pandas as pd
 
     # Map category to locator method
     category_to_method = {
@@ -137,8 +134,8 @@ def validate_network_results_exist(locator, network_name, network_type):
         error_msg = (
             f"Thermal-network results not found for network '{network_name}' ({network_type}).\n\n"
             f"Missing files:\n" + "\n".join(f"  - {f}" for f in missing_files) + "\n\n"
-            f"Please run 'thermal-network' script (both part 1 and part 2) before running baseline-costs.\n"
-            f"Alternatively, select a different network layout that has been completed."
+            "Please run 'thermal-network' script (both part 1 and part 2) before running baseline-costs.\n"
+            "Alternatively, select a different network layout that has been completed."
         )
         return False, error_msg
 
@@ -196,7 +193,7 @@ def baseline_costs_main(locator, config):
             print(f"\n{network_type} network:\n{error}\n")
         raise ValueError(
             f"All network types failed validation ({', '.join(network_types)}). "
-            f"See errors above."
+            "See errors above."
         )
 
     # Show validation warnings for failed network types (but continue with valid ones)
@@ -298,7 +295,7 @@ def baseline_costs_main(locator, config):
     # Check if any networks were found
     has_networks = any(name.startswith('N') for name in final_results['name'])
     if has_networks:
-        print(f"\nNote: Network costs include central plant equipment and piping.")
+        print("\nNote: Network costs include central plant equipment and piping.")
         print("      Variable energy costs (electricity, fuels) are NOT included.")
         print("  For complete costs including energy consumption, refer to optimisation results.")
 
@@ -350,7 +347,6 @@ def calculate_standalone_building_costs(locator, config, network_name):
     :return: dict of {building_name: {cost_data, 'services': {service_name: components}}}
     """
     import geopandas as gpd
-    import pandas as pd
     import os
 
     # Read ALL network layouts to determine which buildings are standalone
@@ -373,7 +369,7 @@ def calculate_standalone_building_costs(locator, config, network_name):
             pass  # Network doesn't exist, that's fine
 
     # Load domain WITHOUT network_type filter to get ALL services
-    print(f"  Loading buildings and demands (all services)...")
+    print("  Loading buildings and demands (all services)...")
     domain_config = cea.config.Configuration()
     domain_config.scenario = config.scenario
     # DON'T set network_type - we want ALL services for standalone buildings
@@ -418,7 +414,7 @@ def calculate_standalone_building_costs(locator, config, network_name):
 
     # Calculate building-level supply systems for ALL buildings
     # We'll filter services later based on network connectivity
-    print(f"  Calculating building-level supply systems for all buildings...")
+    print("  Calculating building-level supply systems for all buildings...")
     print(f"    ({len(domain.buildings)} total, {len(all_network_buildings)} in networks)")
 
     results = {}
@@ -531,7 +527,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             # for district networks with large aggregated demands.
             # For district networks, fallback mode is recommended.
             print(f"      Note: Using SUPPLY assembly '{supply_code}' for district network")
-            print(f"            (SUPPLY assemblies may not size correctly for large demands)")
+            print("            (SUPPLY assemblies may not size correctly for large demands)")
 
             # Mode 1: Use SUPPLY assembly (may fail with capacity errors for large networks)
             supply_components = get_components_from_supply_assembly(locator, supply_code, 'SUPPLY_COOLING')
@@ -588,7 +584,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         # Fallback mode: Filter to keep only ONE component per category
         # This prevents sizing all boiler types (BO1-BO6) at full capacity
         capacity_indicators = filter_to_single_component_per_category(capacity_indicators)
-        print(f"      Using fallback mode: selected first viable component per category")
+        print("      Using fallback mode: selected first viable component per category")
 
     # Create and evaluate supply system
     network_supply_system = SupplySystem(
@@ -615,11 +611,11 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             if not system_structure.activation_order.get('primary'):
                 max_cap_comps = list(system_structure.max_cap_active_components.get('primary', {}).keys())
                 activation_issue = (
-                    f"\nROOT CAUSE: Component activation order is EMPTY!\n"
+                    "\nROOT CAUSE: Component activation order is EMPTY!\n"
                     f"  Installed components: {max_cap_comps}\n"
                     f"  Activation order: {list(system_structure.activation_order.get('primary', []))}\n"
-                    f"  This means installed components cannot be activated to meet demand.\n"
-                    f"  This is a known limitation when using SUPPLY assemblies.\n\n"
+                    "  This means installed components cannot be activated to meet demand.\n"
+                    "  This is a known limitation when using SUPPLY assemblies.\n\n"
                 )
 
             # Provide helpful error message for capacity issues
@@ -630,19 +626,19 @@ def calculate_district_network_costs(locator, config, network_type, network_name
                 f"{str(e)}\n\n"
                 f"Installed primary components:\n    {installed_info}\n"
                 f"{activation_issue}"
-                f"This error occurs because SUPPLY assemblies specify component codes\n"
-                f"that aren't in the optimization framework's activation priority list.\n"
-                f"The components are installed but never activated.\n\n"
-                f"RECOMMENDED SOLUTION:\n"
-                f"  Use 'fallback mode' which uses component CATEGORIES instead of codes:\n"
-                f"  1. Set 'supply-type-cs' to 'Use component settings below' (for cooling)\n"
-                f"  2. Set 'supply-type-hs' to 'Use component settings below' (for heating)\n"
-                f"  3. Select appropriate component categories:\n"
-                f"     - cooling-components: ABSORPTION_CHILLERS or VAPOR_COMPRESSION_CHILLERS\n"
-                f"     - heating-components: BOILERS\n"
-                f"     - heat-rejection-components: COOLING_TOWERS\n\n"
-                f"Fallback mode automatically finds ALL viable components and builds\n"
-                f"a correct activation order, avoiding this issue.\n"
+                "This error occurs because SUPPLY assemblies specify component codes\n"
+                "that aren't in the optimization framework's activation priority list.\n"
+                "The components are installed but never activated.\n\n"
+                "RECOMMENDED SOLUTION:\n"
+                "  Use 'fallback mode' which uses component CATEGORIES instead of codes:\n"
+                "  1. Set 'supply-type-cs' to 'Use component settings below' (for cooling)\n"
+                "  2. Set 'supply-type-hs' to 'Use component settings below' (for heating)\n"
+                "  3. Select appropriate component categories:\n"
+                "     - cooling-components: ABSORPTION_CHILLERS or VAPOR_COMPRESSION_CHILLERS\n"
+                "     - heating-components: BOILERS\n"
+                "     - heat-rejection-components: COOLING_TOWERS\n\n"
+                "Fallback mode automatically finds ALL viable components and builds\n"
+                "a correct activation order, avoiding this issue.\n"
                 f"{'='*70}\n"
             )
             raise ValueError(error_msg) from e
@@ -661,9 +657,9 @@ def calculate_district_network_costs(locator, config, network_type, network_name
 
     edges_file = locator.get_thermal_network_edge_list_file(network_type, network_name)
     if not os.path.exists(edges_file):
-        print(f"      Warning: Piping costs not calculated - missing file:")
+        print("      Warning: Piping costs not calculated - missing file:")
         print(f"               {edges_file}")
-        print(f"               Run 'thermal-network' (part 1 & 2) to generate network files")
+        print("               Run 'thermal-network' (part 1 & 2) to generate network files")
     else:
         try:
             pipes_df = pd.read_csv(edges_file)
@@ -689,7 +685,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
         except Exception as e:
             print(f"      Warning: Failed to calculate piping costs - {str(e)}")
-            print(f"               Check that thermal-network files are valid")
+            print("               Check that thermal-network files are valid")
 
     results[network_id] = {
         'network_type': network_type,
@@ -881,7 +877,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
                 pass
 
         if buildings_to_include:
-            print(f"\n  Including building-level supply systems:")
+            print("\n  Including building-level supply systems:")
             print(f"    {len([b for b, s in buildings_to_include if s == 'all'])} building(s) with all services")
             if network_type == 'DC':
                 print(f"    {len([b for b, s in buildings_to_include if s == 'heating_dhw'])} building(s) in DC network with heating/DHW")
@@ -925,7 +921,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
                     if missing_services:
                         print(f"    ⚠ {building_id}: Has demand but missing components for {', '.join(missing_services)} "
-                              f"(check Properties/Supply settings and Database/Components)")
+                              "(check Properties/Supply settings and Database/Components)")
 
                 result_copy = building_data.copy()
                 result_copy['costs'] = filtered_costs
@@ -935,7 +931,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     # Step 3: Calculate district network costs (Case 1 & 2)
     # These buildings use district supply types from config, not Properties/Supply settings
     # Load domain ONLY for network-connected buildings to calculate their costs
-    print(f"\n  Calculating district network central plant costs...")
+    print("\n  Calculating district network central plant costs...")
 
     import cea.config
     domain_config = cea.config.Configuration()
