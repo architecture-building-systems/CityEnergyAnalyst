@@ -1202,6 +1202,22 @@ def format_output_like_system_costs(merged_results, locator):
         row['Opex_a_sys_district_scale_USD'] = sum(row[f'{s}_opex_a_district_scale_USD'] for s in services)
         row['Opex_a_sys_city_scale_USD'] = sum(row[f'{s}_opex_a_city_scale_USD'] for s in services)
 
+        # Add zero-cost placeholder row to detailed output for buildings with no costs
+        # This ensures all buildings appear in the detailed CSV, even if they have zero demand
+        if not is_network and row['Capex_total_sys_USD'] == 0.0:
+            detailed_rows.append({
+                'name': identifier,
+                'network_type': '',
+                'service': 'NONE',
+                'component_code': 'NONE',
+                'capacity_kW': 0.0,
+                'placement': 'NONE',
+                'capex_total_USD': 0.0,
+                'capex_a_USD': 0.0,
+                'opex_fixed_a_USD': 0.0,
+                'scale': 'BUILDING'
+            })
+
         final_rows.append(row)
 
     final_df = pd.DataFrame(final_rows)
