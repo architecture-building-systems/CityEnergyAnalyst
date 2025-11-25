@@ -302,19 +302,49 @@ def baseline_costs_main(locator, config):
     return final_results
 
 
+def filter_services_by_network_type(costs_dict, network_type, services_filter):
+    """
+    Filter cost services based on network connectivity.
+
+    :param costs_dict: Dict of {service_name: cost_data}
+    :param network_type: 'DC' or 'DH'
+    :param services_filter: 'all', 'heating_dhw', or 'cooling'
+    :return: Filtered dict of {service_name: cost_data}
+    """
+    if services_filter == 'all':
+        return costs_dict
+
+    filtered = {}
+    for service_name, service_costs in costs_dict.items():
+        # Determine service category
+        if services_filter == 'heating_dhw':
+            # Include heating and DHW services (exclude cooling)
+            if '_hs' in service_name or '_ww' in service_name:
+                filtered[service_name] = service_costs
+        elif services_filter == 'cooling':
+            # Include cooling services only
+            if '_cs' in service_name or '_cdata' in service_name or '_cre' in service_name:
+                filtered[service_name] = service_costs
+
+    return filtered
+
+
 def calculate_standalone_building_costs(locator, config, network_name):
     """
-    Calculate costs for standalone buildings (NOT connected to any network).
+    Calculate costs for building-level supply systems (from supply.csv).
 
-    These buildings use their existing supply.csv configuration and calculate costs
-    for ALL services (cooling, heating, DHW, electricity), not just one network type.
+    This calculates costs for ALL buildings and ALL their services (cooling, heating, DHW).
+    Later, when processing each network type (DC/DH), we'll filter which services to include:
+    - Buildings in DC network: Include their standalone heating/DHW costs (cooling from network)
+    - Buildings in DH network: Include their standalone cooling costs (heating/DHW from network)
+    - Buildings in neither network: Include ALL their standalone costs
 
-    This function is called ONCE (not per network_type) to avoid duplicate calculation.
+    This function is called ONCE (not per network_type) to calculate all building-level systems.
 
     :param locator: InputLocator instance
     :param config: Configuration instance
-    :param network_name: Network layout name
-    :return: dict of {building_name: {cost_data}}
+    :param network_name: Network layout name (used to identify which buildings are in networks)
+    :return: dict of {building_name: {cost_data, 'services': {service_name: components}}}
     """
     import geopandas as gpd
     import pandas as pd
@@ -354,17 +384,35 @@ def calculate_standalone_building_costs(locator, config, network_name):
         domain.energy_potentials, domain.buildings
     )
 
-    # Identify standalone buildings (not in any network)
-    standalone_buildings = [b for b in domain.buildings
-                           if b.identifier not in all_network_buildings]
+    # Store which buildings are in which networks
+    dc_network_buildings = set()
+    dh_network_buildings = set()
+    for nt in ['DH', 'DC']:
+        try:
+            network_folder = locator.get_output_thermal_network_type_folder(nt, network_name)
+            layout_folder = os.path.join(network_folder, 'layout')
+            nodes_file = os.path.join(layout_folder, 'nodes.shp')
 
-    print(f"  Found {len(standalone_buildings)} standalone buildings")
+            if os.path.exists(nodes_file):
+                nodes_df = gpd.read_file(nodes_file)
+                network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
+                network_buildings = [b for b in network_buildings if b and b != 'NONE']
+                if nt == 'DC':
+                    dc_network_buildings.update(network_buildings)
+                else:
+                    dh_network_buildings.update(network_buildings)
+        except:
+            pass
+
+    # Calculate building-level supply systems for ALL buildings
+    # We'll filter services later based on network connectivity
+    print(f"  Calculating building-level supply systems for all buildings...")
+    print(f"    ({len(domain.buildings)} total, {len(all_network_buildings)} in networks)")
 
     results = {}
-
-    # Calculate supply systems for each standalone building
     zero_demand_count = 0
-    for building in standalone_buildings:
+
+    for building in domain.buildings:
         building.calculate_supply_system(building_potentials[building.identifier])
 
         if building.stand_alone_supply_system is None:
@@ -373,18 +421,44 @@ def calculate_standalone_building_costs(locator, config, network_name):
                 'supply_system': None,
                 'building': building,
                 'costs': {},
-                'is_network': False
+                'is_network': False,
+                'in_dc_network': building.identifier in dc_network_buildings,
+                'in_dh_network': building.identifier in dh_network_buildings
             }
         else:
-            # Extract costs from all services (not just one network_type)
+            # Extract costs from all services
             supply_system = building.stand_alone_supply_system
-            # Pass None as network_type since we want all services
+            # Pass None as network_type to get all services
             costs = extract_costs_from_supply_system(supply_system, None, building)
+
+            # Check if building has demand but no components (database configuration issue)
+            # This can happen when components are missing from database or supply.csv configuration is incomplete
+            import pandas as pd
+            demand_df = pd.read_csv(locator.get_total_demand())
+            building_demand = demand_df[demand_df['name'] == building.identifier]
+            if not building_demand.empty:
+                qhs = building_demand['Qhs_sys_kWh'].values[0] if 'Qhs_sys_kWh' in building_demand.columns else 0
+                qww = building_demand['Qww_sys_kWh'].values[0] if 'Qww_sys_kWh' in building_demand.columns else 0
+                qcs = building_demand['Qcs_sys_kWh'].values[0] if 'Qcs_sys_kWh' in building_demand.columns else 0
+                if qhs > 0 or qww > 0 or qcs > 0:
+                    missing_services = []
+                    if qhs > 0 and not any('_hs' in s for s in costs.keys()):
+                        missing_services.append('heating')
+                    if qww > 0 and not any('_ww' in s for s in costs.keys()):
+                        missing_services.append('DHW')
+                    if qcs > 0 and not any('_cs' in s for s in costs.keys()):
+                        missing_services.append('cooling')
+                    if missing_services:
+                        print(f"  ⚠ {building.identifier}: Missing components for {', '.join(missing_services)} "
+                              f"(check supply.csv and database)")
+
             results[building.identifier] = {
                 'supply_system': supply_system,
                 'building': building,
                 'costs': costs,
-                'is_network': False
+                'is_network': False,
+                'in_dc_network': building.identifier in dc_network_buildings,
+                'in_dh_network': building.identifier in dh_network_buildings
             }
 
     if zero_demand_count > 0:
@@ -779,17 +853,53 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
     results = {}
 
-    # Step 2: Add pre-calculated standalone building costs (Case 3 & 4)
-    # These were calculated once with ALL services, not per network_type
-    # We identify standalone buildings by checking which ones are NOT in network_buildings_from_layout
+    # Step 2: Add building-level supply system costs
+    # For each building, determine which services to include based on network connectivity:
+    # - Buildings in DC network: Include their heating/DHW building-scale costs (cooling from district)
+    # - Buildings in DH network: Include their cooling building-scale costs (heating/DHW from district)
+    # - Buildings in BOTH networks: Include based on which network type we're calculating
+    # - Buildings in NO network: Include all services (but only once to avoid duplicates)
     if standalone_results:
-        standalone_building_ids = [bid for bid in standalone_results.keys()
-                                   if bid not in network_buildings_from_layout]
-        if standalone_building_ids:
-            print(f"\n  Including {len(standalone_building_ids)} standalone building(s) in results")
-            for building_id in standalone_building_ids:
-                # Add network_type to the result for this network type
-                result_copy = standalone_results[building_id].copy()
+        buildings_to_include = []
+        for bid, building_data in standalone_results.items():
+            in_dc = building_data.get('in_dc_network', False)
+            in_dh = building_data.get('in_dh_network', False)
+
+            if not in_dc and not in_dh:
+                # Building not in ANY network - include all their services
+                # But only in DC results to avoid duplicates in detailed CSV
+                if network_type == 'DC':
+                    buildings_to_include.append((bid, 'all'))
+            elif in_dc and not in_dh:
+                # Building in DC network only - include their heating/DHW building-scale components
+                # (cooling comes from DC network)
+                if network_type == 'DC':
+                    buildings_to_include.append((bid, 'heating_dhw'))
+            elif in_dh and not in_dc:
+                # Building in DH network only - include their cooling building-scale components
+                # (heating/DHW comes from DH network)
+                if network_type == 'DH':
+                    buildings_to_include.append((bid, 'cooling'))
+            elif in_dc and in_dh:
+                # Building in BOTH networks - NO building-scale components needed
+                # All services (cooling from DC, heating/DHW from DH) come from networks
+                pass
+
+        if buildings_to_include:
+            print(f"\n  Including building-level supply systems:")
+            print(f"    {len([b for b, s in buildings_to_include if s == 'all'])} building(s) with all services")
+            if network_type == 'DC':
+                print(f"    {len([b for b, s in buildings_to_include if s == 'heating_dhw'])} building(s) in DC network with heating/DHW")
+            else:
+                print(f"    {len([b for b, s in buildings_to_include if s == 'cooling'])} building(s) in DH network with cooling")
+
+            for building_id, services_filter in buildings_to_include:
+                building_data = standalone_results[building_id]
+                # Filter services based on network connectivity
+                filtered_costs = filter_services_by_network_type(building_data['costs'], network_type, services_filter)
+
+                result_copy = building_data.copy()
+                result_copy['costs'] = filtered_costs
                 result_copy['network_type'] = network_type
                 results[building_id] = result_copy
 
@@ -940,18 +1050,43 @@ def map_component_to_service(component, network_type, building):
     Map component code to energy service name (matching system_costs.py conventions).
 
     :param component: Component instance
-    :param network_type: 'DH' or 'DC'
+    :param network_type: 'DH', 'DC', or None (for all services)
     :param building: Building instance (or None for network-level systems)
-    :return: Service name string (e.g., 'NG_hs', 'GRID_cs')
+    :return: Service name string (e.g., 'NG_hs', 'GRID_cs', 'GRID_ww')
     """
-    # Determine service suffix based on network type
+    # Get component code first to help determine service type
+    comp_code = component.code if hasattr(component, 'code') else str(component)
+
+    # Determine service suffix
+    # For network-level systems, use network_type to determine suffix
+    # For building-level systems with network_type=None, infer from component type
     if network_type == 'DH':
         suffix = '_hs'  # heating service
-    else:  # DC
+    elif network_type == 'DC':
         suffix = '_cs'  # cooling service
-
-    # Get component code
-    comp_code = component.code if hasattr(component, 'code') else str(component)
+    else:
+        # network_type is None - need to infer service type from component
+        # Check if component is for cooling, heating, or DHW
+        if comp_code.startswith('CH') or comp_code.startswith('VCCH') or comp_code.startswith('ACH') or comp_code.startswith('CT'):
+            # Chillers and cooling towers → cooling service
+            suffix = '_cs'
+        elif comp_code.startswith('BO') or comp_code.startswith('HP'):
+            # Boilers and heat pumps could be for heating OR DHW
+            # We need to check the component's output energy carrier to distinguish
+            # For now, use the main_energy_carrier's temperature to determine
+            if hasattr(component, 'output_energy_carrier') and hasattr(component.output_energy_carrier, 'code'):
+                ec_code = component.output_energy_carrier.code
+                # T60W is for heating, T10W or lower temps for DHW
+                if 'T60W' in ec_code or 'T80W' in ec_code or 'T90W' in ec_code:
+                    suffix = '_hs'  # space heating
+                else:
+                    suffix = '_ww'  # DHW (usually T10W-T40W)
+            else:
+                # Fallback: assume heating if we can't determine
+                suffix = '_hs'
+        else:
+            # Default to heating for unknown components
+            suffix = '_hs'
 
     # Map based on component database definitions
     # These mappings come from COMPONENTS/CONVERSION/*.csv files
