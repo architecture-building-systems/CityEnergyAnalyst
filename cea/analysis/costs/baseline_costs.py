@@ -256,7 +256,7 @@ def baseline_costs_main(locator, config):
             "No valid supply systems found for any of the selected network types.\n"
             f"Selected network types: {', '.join(network_types)}\n\n"
             "Please check that:\n"
-            "1. Buildings have supply systems configured in supply.csv\n"
+            "1. Buildings have supply systems configured in Building Properties/Supply settings\n"
             "2. The selected network type matches the building demands (DH for heating, DC for cooling)"
         )
 
@@ -331,7 +331,7 @@ def filter_services_by_network_type(costs_dict, network_type, services_filter):
 
 def calculate_standalone_building_costs(locator, config, network_name):
     """
-    Calculate costs for building-level supply systems (from supply.csv).
+    Calculate costs for building-level supply systems (from Properties/Supply).
 
     This calculates costs for ALL buildings and ALL their services (cooling, heating, DHW).
     Later, when processing each network type (DC/DH), we'll filter which services to include:
@@ -431,26 +431,9 @@ def calculate_standalone_building_costs(locator, config, network_name):
             # Pass None as network_type to get all services
             costs = extract_costs_from_supply_system(supply_system, None, building)
 
-            # Check if building has demand but no components (database configuration issue)
-            # This can happen when components are missing from database or supply.csv configuration is incomplete
-            import pandas as pd
-            demand_df = pd.read_csv(locator.get_total_demand())
-            building_demand = demand_df[demand_df['name'] == building.identifier]
-            if not building_demand.empty:
-                qhs = building_demand['Qhs_sys_kWh'].values[0] if 'Qhs_sys_kWh' in building_demand.columns else 0
-                qww = building_demand['Qww_sys_kWh'].values[0] if 'Qww_sys_kWh' in building_demand.columns else 0
-                qcs = building_demand['Qcs_sys_kWh'].values[0] if 'Qcs_sys_kWh' in building_demand.columns else 0
-                if qhs > 0 or qww > 0 or qcs > 0:
-                    missing_services = []
-                    if qhs > 0 and not any('_hs' in s for s in costs.keys()):
-                        missing_services.append('heating')
-                    if qww > 0 and not any('_ww' in s for s in costs.keys()):
-                        missing_services.append('DHW')
-                    if qcs > 0 and not any('_cs' in s for s in costs.keys()):
-                        missing_services.append('cooling')
-                    if missing_services:
-                        print(f"  ⚠ {building.identifier}: Missing components for {', '.join(missing_services)} "
-                              f"(check supply.csv and database)")
+            # Note: We don't check for missing components here because we don't know yet
+            # which services the building will need building-scale equipment for.
+            # That check happens later when we filter services based on network connectivity.
 
             results[building.identifier] = {
                 'supply_system': supply_system,
@@ -822,7 +805,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
     Four-case logic (network layout is source of truth for connectivity):
     - Case 1 & 2: Building IN network layout → Use district supply types from config (supply-type-cs/hs/dhw)
-    - Case 3 & 4: Building NOT in layout → Use existing supply.csv configuration (pre-calculated in standalone_results)
+    - Case 3 & 4: Building NOT in layout → Use existing Properties/Supply configuration (pre-calculated in standalone_results)
 
     :param locator: InputLocator instance
     :param config: Configuration instance
@@ -898,13 +881,47 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
                 # Filter services based on network connectivity
                 filtered_costs = filter_services_by_network_type(building_data['costs'], network_type, services_filter)
 
+                # Check if building has demand for required services but no components
+                # This helps identify missing database configuration
+                import pandas as pd
+                demand_df = pd.read_csv(locator.get_total_demand())
+                building_demand = demand_df[demand_df['name'] == building_id]
+                if not building_demand.empty:
+                    qhs = building_demand['Qhs_sys_MWhyr'].values[0] if 'Qhs_sys_MWhyr' in building_demand.columns else 0
+                    qww = building_demand['Qww_sys_MWhyr'].values[0] if 'Qww_sys_MWhyr' in building_demand.columns else 0
+                    qcs = building_demand['Qcs_sys_MWhyr'].values[0] if 'Qcs_sys_MWhyr' in building_demand.columns else 0
+
+                    missing_services = []
+                    if services_filter == 'all':
+                        # Standalone building - check all services
+                        if qhs > 0 and not any('_hs' in s for s in filtered_costs.keys()):
+                            missing_services.append(f'heating ({qhs:.1f} MWh/yr)')
+                        if qww > 0 and not any('_ww' in s for s in filtered_costs.keys()):
+                            missing_services.append(f'DHW ({qww:.1f} MWh/yr)')
+                        if qcs > 0 and not any('_cs' in s for s in filtered_costs.keys()):
+                            missing_services.append(f'cooling ({qcs:.1f} MWh/yr)')
+                    elif services_filter == 'heating_dhw':
+                        # Building in DC network - needs building-scale heating/DHW
+                        if qhs > 0 and not any('_hs' in s for s in filtered_costs.keys()):
+                            missing_services.append(f'heating ({qhs:.1f} MWh/yr)')
+                        if qww > 0 and not any('_ww' in s for s in filtered_costs.keys()):
+                            missing_services.append(f'DHW ({qww:.1f} MWh/yr)')
+                    elif services_filter == 'cooling':
+                        # Building in DH network - needs building-scale cooling
+                        if qcs > 0 and not any('_cs' in s for s in filtered_costs.keys()):
+                            missing_services.append(f'cooling ({qcs:.1f} MWh/yr)')
+
+                    if missing_services:
+                        print(f"    ⚠ {building_id}: Has demand but missing components for {', '.join(missing_services)} "
+                              f"(check Properties/Supply settings and Database/Components)")
+
                 result_copy = building_data.copy()
                 result_copy['costs'] = filtered_costs
                 result_copy['network_type'] = network_type
                 results[building_id] = result_copy
 
     # Step 3: Calculate district network costs (Case 1 & 2)
-    # These buildings use district supply types from config, not supply.csv
+    # These buildings use district supply types from config, not Properties/Supply settings
     # Load domain ONLY for network-connected buildings to calculate their costs
     print(f"\n  Calculating district network central plant costs...")
 
