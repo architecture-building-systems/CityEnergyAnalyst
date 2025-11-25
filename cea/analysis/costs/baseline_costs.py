@@ -1217,6 +1217,7 @@ def map_energy_carrier_to_service(ec_code, network_type):
     # Note: Energy carrier codes come from optimization_new (e.g., 'E230AC' for electricity)
     carrier_map = {
         'NATURALGAS': 'NG',
+        'Cgas': 'NG',  # Natural gas from optimization_new
         'E230AC': 'GRID',  # Electricity (grid)
         'GRID': 'GRID',
         'OIL': 'OIL',

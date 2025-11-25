@@ -7,6 +7,14 @@ Detailed file: All components with full information
 
 import pandas as pd
 
+__author__ = "Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def format_output_simplified(merged_results, locator):
     """
@@ -47,8 +55,8 @@ def format_output_simplified(merged_results, locator):
                 if not building_demand.empty:
                     total_gfa += building_demand.iloc[0]['GFA_m2']
 
-            # Remove _DC or _DH suffix from network name
-            display_name = identifier.replace('_DC', '').replace('_DH', '')
+            # Keep _DC or _DH suffix to distinguish network types
+            display_name = identifier
         else:
             # Building: get GFA from demand
             building_demand = demand[demand['name'] == identifier]
