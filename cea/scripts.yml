@@ -831,3 +831,15 @@ Visualisation:
     parameters: ['general:scenario']
     input-files:
       - [get_new_optimization_optimal_supply_systems_summary_file]
+
+  - name: plot-cost-breakdown
+    label: Plot - Cost Breakdown
+    short_description: Plot cost breakdown for energy supply systems
+    description: This Feature plots cost breakdown for energy supply systems
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.cost_breakdown
+    parameters: ['general:scenario',
+#                 plots-general,
+                 plots-cost-breakdown]
+    input-files:
+      - [get_baseline_costs_detailed]
