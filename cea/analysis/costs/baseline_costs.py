@@ -166,11 +166,15 @@ def baseline_costs_main(locator, config):
             "Networks are created by running 'thermal-network' script (part 1 and part 2)."
         )
 
-    print(f"Running baseline-costs for network layout: {network_name}")
-    print(f"Network type(s): {', '.join(network_types)}")
+    print(f"\n{'='*70}")
+    print("BASELINE COSTS CALCULATION")
+    print(f"{'='*70}")
+    print(f"Network layout: {network_name}")
+    print(f"Network types: {', '.join(network_types)}")
 
     # Validate that thermal-network part 2 has been run for each network type
-    print("\nValidating thermal-network results...")
+    print(f"\n{'-'*70}")
+    print("Validating thermal-network results...")
     for network_type in network_types:
         validate_network_results_exist(locator, network_name, network_type)
 
@@ -178,12 +182,14 @@ def baseline_costs_main(locator, config):
 
     # Calculate standalone building costs ONCE for all services (not per network_type)
     # Standalone buildings should show all their systems regardless of which networks are being analyzed
-    print(f"\nCalculating standalone building costs...")
+    print(f"\n{'-'*70}")
+    print("Calculating standalone building costs...")
     standalone_results = calculate_standalone_building_costs(locator, config, network_name)
 
     # Calculate costs for each specified network type
     for network_type in network_types:
-        print(f"\nCalculating {network_type} system costs...")
+        print(f"\n{'-'*70}")
+        print(f"Calculating {network_type} district network costs...")
         try:
             results = calculate_costs_for_network_type(locator, config, network_type, network_name, standalone_results)
             all_results[network_type] = results
@@ -197,8 +203,8 @@ def baseline_costs_main(locator, config):
                     print(error_msg)
                 else:
                     # Generic message for simple cases
-                    print(f"  ⚠ Skipping {network_type}: No valid supply systems found for this network type")
-                    print(f"    (This is expected for scenarios with no {network_type} demand)")
+                    print(f"  ⚠ Skipping {network_type}: No valid supply systems")
+                    print(f"    (Expected for scenarios with no {network_type} demand)")
                 continue
             else:
                 # Re-raise other errors
@@ -215,27 +221,29 @@ def baseline_costs_main(locator, config):
         )
 
     # Merge results from all network types
-    print("\nMerging results...")
+    print(f"\n{'-'*70}")
+    print("Merging and formatting results...")
     merged_results = merge_network_type_costs(all_results)
-
-    # Format to match system_costs.py output structure
-    print("Formatting output...")
     final_results, detailed_results = format_output_like_system_costs(merged_results, locator)
 
     # Save results
+    print(f"\n{'-'*70}")
     print("Saving results...")
     locator.ensure_parent_folder_exists(locator.get_baseline_costs())
     final_results.to_csv(locator.get_baseline_costs(), index=False, float_format='%.2f', na_rep='nan')
     detailed_results.to_csv(locator.get_baseline_costs_detailed(), index=False, float_format='%.2f', na_rep='nan')
 
-    print(f"\n✓ Baseline costs saved to: {locator.get_baseline_costs()}")
-    print(f"✓ Detailed breakdown saved to: {locator.get_baseline_costs_detailed()}")
+    print(f"\n{'='*70}")
+    print("COMPLETED")
+    print(f"{'='*70}")
+    print(f"Summary: {locator.get_baseline_costs()}")
+    print(f"Detailed: {locator.get_baseline_costs_detailed()}")
 
     # Check if any networks were found
     has_networks = any(name.startswith('N') for name in final_results['name'])
     if has_networks:
-        print("\nℹ NOTE: Network costs include central plant equipment and thermal distribution piping.")
-        print("  Variable energy costs (electricity, fuels) are NOT included.")
+        print(f"\nNote: Network costs include central plant equipment and piping.")
+        print("      Variable energy costs (electricity, fuels) are NOT included.")
         print("  For complete costs including energy consumption, refer to optimisation results.")
 
     return final_results
@@ -302,11 +310,12 @@ def calculate_standalone_building_costs(locator, config, network_name):
     results = {}
 
     # Calculate supply systems for each standalone building
+    zero_demand_count = 0
     for building in standalone_buildings:
         building.calculate_supply_system(building_potentials[building.identifier])
 
         if building.stand_alone_supply_system is None:
-            print(f"    {building.identifier}: Zero demand (all costs = 0)")
+            zero_demand_count += 1
             results[building.identifier] = {
                 'supply_system': None,
                 'building': building,
@@ -324,7 +333,9 @@ def calculate_standalone_building_costs(locator, config, network_name):
                 'costs': costs,
                 'is_network': False
             }
-            print(f"    {building.identifier}: Calculated using {building._stand_alone_supply_system_code}")
+
+    if zero_demand_count > 0:
+        print(f"  ({zero_demand_count} building(s) with zero demand)")
 
     return results
 
@@ -354,7 +365,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     results = {}
     network_id = f'{network_name}_{network_type}'  # Use meaningful network ID
 
-    print(f"    Network {network_id}: {len(network_buildings)} buildings")
+    print(f"  Network {network_id}: {len(network_buildings)} connected buildings")
 
     # Aggregate demand from all buildings in the network
     aggregated_demand_profile = sum([building.demand_flow.profile for building in network_buildings])
@@ -368,9 +379,8 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         energy_flow_profile=aggregated_demand_profile
     )
 
-    # Debug: Show aggregated demand
-    print(f"      DEBUG: Aggregated demand profile max: {aggregated_demand_profile.max():.2f} kW")
-    print(f"      DEBUG: Aggregated demand profile shape: {aggregated_demand_profile.shape}")
+    # Log aggregated demand for network sizing
+    print(f"      Peak demand: {aggregated_demand_profile.max():.2f} kW")
 
     # Aggregate potentials from all buildings in the network
     network_potentials = {}
@@ -398,17 +408,11 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             # SUPPLY assemblies are designed for building-scale systems and may not size correctly
             # for district networks with large aggregated demands.
             # For district networks, fallback mode is recommended.
-            print(f"      WARNING: SUPPLY assembly '{supply_code}' specified for district network.")
-            print(f"      SUPPLY assemblies may not size correctly for large district demands.")
-            print(f"      Consider using 'Use component settings below' (fallback mode) instead.")
-            print(f"      Attempting to use SUPPLY assembly...")
+            print(f"      Note: Using SUPPLY assembly '{supply_code}' for district network")
+            print(f"            (SUPPLY assemblies may not size correctly for large demands)")
 
             # Mode 1: Use SUPPLY assembly (may fail with capacity errors for large networks)
             supply_components = get_components_from_supply_assembly(locator, supply_code, 'SUPPLY_COOLING')
-            if supply_components.get('primary'):
-                print(f"        Primary components: {supply_components['primary']}")
-            if supply_components.get('tertiary'):
-                print(f"        Tertiary components: {supply_components['tertiary']}")
         else:
             # Mode 2: Fallback to component category (RECOMMENDED for district networks)
             print(f"      Using component settings: {config.system_costs.cooling_components}")
@@ -462,12 +466,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         # Fallback mode: Filter to keep only ONE component per category
         # This prevents sizing all boiler types (BO1-BO6) at full capacity
         capacity_indicators = filter_to_single_component_per_category(capacity_indicators)
-        print(f"      Fallback mode: Filtered to use first viable component of each type")
-
-        # Debug: Show capacity indicators AFTER filtering
-        print(f"      DEBUG: Capacity indicators AFTER filtering ({len(capacity_indicators.capacity_indicators)} components):")
-        for ind in capacity_indicators.capacity_indicators:
-            print(f"        {ind.code} ({ind.category}): value={ind.value}")
+        print(f"      Using fallback mode: selected first viable component per category")
 
     # Create and evaluate supply system
     network_supply_system = SupplySystem(
@@ -537,10 +536,14 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     # Calculate piping costs from thermal-network output files
     piping_cost_annual = 0.0
     piping_cost_total = 0.0
-    try:
-        # Read pipe segments from thermal-network part 2 results
-        edges_file = locator.get_thermal_network_edge_list_file(network_type, network_name)
-        if os.path.exists(edges_file):
+
+    edges_file = locator.get_thermal_network_edge_list_file(network_type, network_name)
+    if not os.path.exists(edges_file):
+        print(f"      Warning: Piping costs not calculated - missing file:")
+        print(f"               {edges_file}")
+        print(f"               Run 'thermal-network' (part 1 & 2) to generate network files")
+    else:
+        try:
             pipes_df = pd.read_csv(edges_file)
 
             # Read pipe catalog with unit costs
@@ -562,12 +565,9 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             piping_cost_annual = piping_cost_total / network_lifetime_yrs
 
             print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
-        else:
-            print(f"      Warning: Network edges file not found: {edges_file}")
-    except Exception as e:
-        import traceback
-        print(f"      Warning: Could not load piping costs: {e}")
-        print(f"      Traceback: {traceback.format_exc()}")
+        except Exception as e:
+            print(f"      Warning: Failed to calculate piping costs - {str(e)}")
+            print(f"               Check that thermal-network files are valid")
 
     results[network_id] = {
         'network_type': network_type,
@@ -671,9 +671,9 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
             # Network._calculate_piping_cost uses: annualised = total / network_lifetime_yrs
             network_lifetime_yrs = network.configuration_defaults.get('network_lifetime_yrs', 20.0)
             piping_cost_total = piping_cost_annual * network_lifetime_yrs
-            print(f"    Network piping cost: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
+            print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
         else:
-            print(f"    Warning: No network object found for {network_id}, piping costs not included")
+            print(f"      Warning: Piping costs not included (network object not found)")
 
         results[network_id] = {
             'network_type': network_type,  # This is for internal tracking
@@ -718,8 +718,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     network_buildings_from_layout = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
     network_buildings_from_layout = [b for b in network_buildings_from_layout if b and b != 'NONE']
 
-    print(f"  Network layout '{network_name}' connects {len(network_buildings_from_layout)} buildings")
-    print(f"    Connected: {network_buildings_from_layout}")
+    print(f"  Network layout '{network_name}': {len(network_buildings_from_layout)} buildings connected")
 
     if not network_buildings_from_layout:
         print(f"  ⚠ No buildings connected in {network_type} network layout - skipping")
@@ -734,18 +733,17 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
         standalone_building_ids = [bid for bid in standalone_results.keys()
                                    if bid not in network_buildings_from_layout]
         if standalone_building_ids:
-            print(f"\n  Including standalone building costs ({len(standalone_building_ids)} buildings):")
+            print(f"\n  Including {len(standalone_building_ids)} standalone building(s) in results")
             for building_id in standalone_building_ids:
                 # Add network_type to the result for this network type
                 result_copy = standalone_results[building_id].copy()
                 result_copy['network_type'] = network_type
                 results[building_id] = result_copy
-                print(f"    {building_id}: Included")
 
     # Step 3: Calculate district network costs (Case 1 & 2)
     # These buildings use district supply types from config, not supply.csv
     # Load domain ONLY for network-connected buildings to calculate their costs
-    print(f"\n  Calculating district network costs ({len(network_buildings_from_layout)} buildings):")
+    print(f"\n  Calculating district network central plant costs...")
 
     import cea.config
     domain_config = cea.config.Configuration()
@@ -776,7 +774,6 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     # All buildings in domain are network-connected (we filtered in load_buildings)
     network_connected_buildings = domain.buildings
 
-    print(f"    Buildings in domain: {[b.identifier for b in domain.buildings]}")
 
     network_results = calculate_district_network_costs(
         locator, config, network_type, network_name,
@@ -1055,8 +1052,10 @@ def format_output_like_system_costs(merged_results, locator):
                 if not building_demand.empty:
                     total_gfa += building_demand.iloc[0]['GFA_m2']
 
+            # Remove _DC or _DH suffix from network name for output
+            network_name_display = identifier.replace('_DC', '').replace('_DH', '')
             row = {
-                'name': identifier,
+                'name': network_name_display,
                 'GFA_m2': total_gfa
             }
         else:
@@ -1140,11 +1139,14 @@ def format_output_like_system_costs(merged_results, locator):
                             # For standalone buildings, leave network_type empty
                             if is_network:
                                 display_network_type = network_type  # Show DC/DH for networks
+                                # Remove _DC or _DH suffix from network name for output
+                                display_name = identifier.replace('_DC', '').replace('_DH', '')
                             else:
                                 display_network_type = ''  # Empty for standalone buildings
+                                display_name = identifier
 
                             detailed_rows.append({
-                                'name': identifier,  # Use identifier (works for both buildings and networks)
+                                'name': display_name,
                                 'network_type': display_network_type,
                                 'service': service_name,
                                 'component_code': comp['code'],
@@ -1160,9 +1162,11 @@ def format_output_like_system_costs(merged_results, locator):
             if is_network and 'piping_cost_annual' in data and data['piping_cost_annual'] > 0:
                 piping_cost_annual = data['piping_cost_annual']
                 piping_cost_total = data.get('piping_cost_total', 0.0)
+                # Remove _DC or _DH suffix from network name for output
+                display_name = identifier.replace('_DC', '').replace('_DH', '')
                 # Piping costs are shown as a separate line item for networks
                 detailed_rows.append({
-                    'name': identifier,
+                    'name': display_name,
                     'network_type': network_type,
                     'service': f'{network_type}_network',  # e.g., DC_network or DH_network
                     'component_code': 'PIPES',
@@ -1233,7 +1237,6 @@ def main(config: cea.config.Configuration):
     :param config: Configuration instance
     """
     locator = InputLocator(config.scenario)
-    print(f'Running baseline-costs with scenario = {config.scenario}')
     baseline_costs_main(locator, config)
 
 
