@@ -1013,7 +1013,8 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
                     'opex_var_USD': 0.0,
                     'opex_a_var_USD': 0.0,
                     'scale': scale,
-                    'components': []
+                    'components': [],
+                    'energy_costs': []  # Track energy costs separately for detailed output
                 }
 
             costs[service_name]['capex_total_USD'] += component.inv_cost
@@ -1030,9 +1031,35 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
             })
 
     # 2. Energy carrier costs (variable OPEX)
+    # Note: supply_system.annual_cost contains BOTH component costs and energy costs
+    # Component costs (CH1, CT1, BO1, etc.) are already extracted in step 1 above
+    # Here we only extract energy carrier costs (E230AC, NATURALGAS, etc.)
+
+    # Component codes to skip (already extracted in step 1)
+    component_codes = set()
+    for placement_dict in supply_system.installed_components.values():
+        for component_code in placement_dict.keys():
+            component_codes.add(component_code)
+
+    # Debug: Confirm new code is running
+    if component_codes:
+        print(f"    [NEW CODE ACTIVE] Filtering out {len(component_codes)} component codes from energy cost extraction")
+
     for ec_code, annual_cost in supply_system.annual_cost.items():
-        # Map energy carrier to service (e.g., NATURALGAS → NG_hs)
+        # Skip non-numeric entries
+        if not isinstance(annual_cost, (int, float)):
+            continue
+
+        # Skip component codes (already extracted in step 1)
+        if ec_code in component_codes:
+            continue
+
+        # Map energy carrier to service (e.g., NATURALGAS → NG_hs, E230AC → GRID_cs)
         service_name = map_energy_carrier_to_service(ec_code, network_type)
+
+        # Warn about unmapped energy carriers with significant costs
+        if not service_name and annual_cost > 1000:
+            print(f"    WARNING: Unmapped energy carrier '{ec_code}' with cost ${annual_cost:,.2f}/year")
 
         if service_name:  # Only process if mapping exists
             if service_name not in costs:
@@ -1044,12 +1071,21 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
                     'opex_var_USD': 0.0,
                     'opex_a_var_USD': 0.0,
                     'scale': determine_scale(building, 'primary'),
-                    'components': []
+                    'components': [],
+                    'energy_costs': []  # Track energy costs separately for detailed output
                 }
 
             # Energy costs are already annual and variable
             costs[service_name]['opex_var_USD'] += annual_cost
             costs[service_name]['opex_a_var_USD'] += annual_cost
+
+            # Add energy cost entry for detailed output
+            # (not a physical component, but needs to appear in detailed report)
+            costs[service_name]['energy_costs'].append({
+                'carrier': ec_code,
+                'opex_var_USD': annual_cost,
+                'opex_a_var_USD': annual_cost
+            })
 
     # 3. Calculate totals per service
     for service_name, service_costs in costs.items():
@@ -1179,8 +1215,10 @@ def map_energy_carrier_to_service(ec_code, network_type):
     suffix = '_hs' if network_type == 'DH' else '_cs'
 
     # Map energy carriers to service prefixes
+    # Note: Energy carrier codes come from optimization_new (e.g., 'E230AC' for electricity)
     carrier_map = {
         'NATURALGAS': 'NG',
+        'E230AC': 'GRID',  # Electricity (grid)
         'GRID': 'GRID',
         'OIL': 'OIL',
         'COAL': 'COAL',
@@ -1355,18 +1393,17 @@ def format_output_like_system_costs(merged_results, locator):
                             row[f'{service_name}_opex_city_scale_USD'] += service_costs['opex_USD']
                             row[f'{service_name}_opex_a_city_scale_USD'] += service_costs['opex_a_USD']
 
-                        # Add to detailed output
-                        for comp in service_costs['components']:
-                            # Only include network_type for network systems (starts with 'N')
-                            # For standalone buildings, leave network_type empty
-                            if is_network:
-                                display_network_type = network_type  # Show DC/DH for networks
-                                # Remove _DC or _DH suffix from network name for output
-                                display_name = identifier.replace('_DC', '').replace('_DH', '')
-                            else:
-                                display_network_type = ''  # Empty for standalone buildings
-                                display_name = identifier
+                        # Determine display name and network_type for detailed output
+                        if is_network:
+                            display_network_type = network_type  # Show DC/DH for networks
+                            # Remove _DC or _DH suffix from network name for output
+                            display_name = identifier.replace('_DC', '').replace('_DH', '')
+                        else:
+                            display_network_type = ''  # Empty for standalone buildings
+                            display_name = identifier
 
+                        # Add physical components to detailed output
+                        for comp in service_costs['components']:
                             detailed_rows.append({
                                 'name': display_name,
                                 'network_type': display_network_type,
@@ -1377,6 +1414,23 @@ def format_output_like_system_costs(merged_results, locator):
                                 'capex_total_USD': comp['capex_total_USD'],
                                 'capex_a_USD': comp['capex_a_USD'],
                                 'opex_fixed_a_USD': comp['opex_fixed_a_USD'],
+                                'opex_var_a_USD': 0.0,  # Components don't have variable costs
+                                'scale': scale
+                            })
+
+                        # Add energy costs to detailed output
+                        for energy_cost in service_costs.get('energy_costs', []):
+                            detailed_rows.append({
+                                'name': display_name,
+                                'network_type': display_network_type,
+                                'service': service_name,
+                                'component_code': energy_cost['carrier'],  # e.g., E230AC, NATURALGAS
+                                'capacity_kW': 0.0,  # N/A for energy carriers
+                                'placement': 'energy',  # Distinguish from components
+                                'capex_total_USD': 0.0,
+                                'capex_a_USD': 0.0,
+                                'opex_fixed_a_USD': 0.0,
+                                'opex_var_a_USD': energy_cost['opex_a_var_USD'],
                                 'scale': scale
                             })
 
@@ -1397,6 +1451,7 @@ def format_output_like_system_costs(merged_results, locator):
                     'capex_total_USD': piping_cost_total,
                     'capex_a_USD': piping_cost_annual,
                     'opex_fixed_a_USD': 0.0,  # Piping O&M could be added if needed
+                    'opex_var_a_USD': 0.0,  # No variable costs for piping
                     'scale': 'DISTRICT'
                 })
 
@@ -1441,6 +1496,7 @@ def format_output_like_system_costs(merged_results, locator):
                 'capex_total_USD': 0.0,
                 'capex_a_USD': 0.0,
                 'opex_fixed_a_USD': 0.0,
+                'opex_var_a_USD': 0.0,
                 'scale': 'BUILDING'
             })
 
