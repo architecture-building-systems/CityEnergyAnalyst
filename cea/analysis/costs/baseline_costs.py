@@ -377,8 +377,17 @@ def calculate_standalone_building_costs(locator, config, network_name):
 
     domain = Domain(domain_config, locator)
     domain.load_buildings()
-    domain.load_potentials()
-    domain._initialize_energy_system_descriptor_classes()
+
+    # Suppress optimization messages about missing potentials (not relevant for cost calculation)
+    import sys
+    import io
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        domain.load_potentials()
+        domain._initialize_energy_system_descriptor_classes()
+    finally:
+        sys.stdout = old_stdout
 
     building_potentials = Building.distribute_building_potentials(
         domain.energy_potentials, domain.buildings
@@ -943,8 +952,16 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     domain.load_buildings(buildings_in_domain=network_buildings_from_layout)
 
     # Load potentials and initialize classes
-    domain.load_potentials()
-    domain._initialize_energy_system_descriptor_classes()
+    # Suppress optimization messages about missing potentials (not relevant for cost calculation)
+    import sys
+    import io
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        domain.load_potentials()
+        domain._initialize_energy_system_descriptor_classes()
+    finally:
+        sys.stdout = old_stdout
 
     # Calculate base case supply systems
     building_energy_potentials = Building.distribute_building_potentials(
