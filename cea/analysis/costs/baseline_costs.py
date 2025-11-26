@@ -72,39 +72,47 @@ def get_components_from_supply_assembly(locator, supply_code, category):
     return result
 
 
-def filter_to_single_component_per_category(capacity_indicator_vector):
+def get_component_codes_from_categories(locator, component_categories, network_type, peak_demand_kw=None):
     """
-    Filter capacity indicators to keep only ONE component per category.
+    Convert component category names to actual component codes from the database.
 
-    For baseline costs without optimisation, we don't want to size ALL possible
-    components at full capacity (e.g., all 6 boiler types). Instead, keep only
-    the first viable component of each type.
-
-    :param capacity_indicator_vector: CapacityIndicatorVector instance
-    :return: CapacityIndicatorVector with filtered indicators
+    :param locator: InputLocator instance
+    :param component_categories: List of category names like ['VAPOR_COMPRESSION_CHILLERS', 'BOILERS']
+    :param network_type: 'DH' or 'DC'
+    :param peak_demand_kw: Optional peak demand in kW - if provided, only return codes that can handle this capacity
+    :return: List of component codes like ['CH1', 'CH2', 'BO1', 'BO2']
     """
-    from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicatorVector
+    import pandas as pd
 
-    # Track which component classes we've already seen per category
-    seen_classes = {}
-    filtered_indicators = []
+    component_codes = []
 
-    for indicator in capacity_indicator_vector.capacity_indicators:
-        category = indicator.category  # 'primary', 'secondary', 'tertiary'
-        code = indicator.code  # e.g., 'BO1', 'BO2', 'CH1'
+    for category in component_categories:
+        # Read the appropriate conversion technology database using the correct method
+        db_path = locator.get_db4_components_conversion_conversion_technology_csv(category)
+        df = pd.read_csv(db_path)
 
-        # Get the component class (e.g., 'BOILERS' from 'BO1')
-        component_class = code[:2]  # 'BO' for BO1-BO6, 'CH' for CH1-CH2, 'CT' for cooling towers
+        if peak_demand_kw is not None:
+            # Filter to only codes that can handle the peak demand
+            # Check if the peak demand falls within any capacity range for this code
+            peak_demand_w = peak_demand_kw * 1000  # Convert to W
 
-        # Create a key combining category and component class
-        key = f"{category}_{component_class}"
+            # Group by code and check if peak_demand_w can be covered
+            valid_codes = []
+            for code in df['code'].dropna().unique():
+                code_data = df[df['code'] == code]
+                # Check if any row has a cap_max >= peak_demand_w
+                if (code_data['cap_max'] >= peak_demand_w).any():
+                    valid_codes.append(code)
 
-        if key not in seen_classes:
-            # This is the first component of this class in this category - keep it
-            seen_classes[key] = code
-            filtered_indicators.append(indicator)
+            component_codes.extend(valid_codes)
+        else:
+            # No filtering - get all codes
+            codes = df['code'].dropna().unique().tolist()
+            component_codes.extend(codes)
 
-    return CapacityIndicatorVector(filtered_indicators, capacity_indicator_vector.dependencies)
+    return component_codes
+
+
 
 
 def validate_network_results_exist(locator, network_name, network_type):
@@ -552,21 +560,71 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             print(f"      Using component settings: {config.system_costs.heating_components}")
             use_fallback = True
 
-    # Set user_component_selection based on mode
-    if use_fallback:
-        # Fallback mode: Pass None to let system use all components of the selected category
-        # The filtering logic will select the first viable component
-        user_component_selection = None
-    else:
-        # SUPPLY assembly mode: Use specific components from assembly
-        # user_component_selection expects dict like: {'primary': ['BO1'], 'secondary': [], 'tertiary': []}
-        user_component_selection = supply_components
-
+    # Calculate peak demand first to filter components by capacity
     max_supply_flow = aggregated_demand.isolate_peak()
 
     if max_supply_flow.profile.max() == 0.0:
         print(f"      Zero demand - skipping")
         return results
+
+    # Get peak demand in kW for component filtering
+    # max_supply_flow.profile is already in kW
+    peak_demand_kw = max_supply_flow.profile.max()
+
+    # Set user_component_selection based on mode
+    if use_fallback:
+        # Fallback mode: Build explicit component selection based on network type
+        # This prevents SupplySystemStructure from including ALL components from database
+        user_component_selection = {}
+
+        if network_type == 'DC':
+            # District Cooling: only cooling components (primary) and heat rejection (tertiary)
+            # Use the categories specified in config
+            cooling_cats = config.system_costs.cooling_components if config.system_costs.cooling_components else []
+            heat_rejection_cats = config.system_costs.heat_rejection_components if config.system_costs.heat_rejection_components else []
+
+            # For baseline costs, exclude absorption chillers as they require heat sources in secondary category
+            # which adds complexity beyond the scope of baseline cost estimation
+            cooling_cats_simple = [cat for cat in cooling_cats if 'ABSORPTION' not in cat]
+            if len(cooling_cats_simple) < len(cooling_cats):
+                print(f"      Note: Excluding absorption chillers for baseline costs (require heat source configuration)")
+                print(f"            Using: {cooling_cats_simple}")
+
+            # Convert component categories to actual component codes from database
+            # Filter by peak demand to only include codes that can handle the required capacity
+            cooling_codes = get_component_codes_from_categories(locator, cooling_cats_simple, network_type, peak_demand_kw)
+            heat_rejection_codes = get_component_codes_from_categories(locator, heat_rejection_cats, network_type, peak_demand_kw)
+
+            # For baseline costs, use only the FIRST viable component per category
+            # This gives a simple, conservative baseline estimate rather than an optimized mix
+            # e.g., prefer CH1 (centrifugal) over CH2 (reciprocating) for large systems
+            cooling_primary = cooling_codes[:1] if cooling_codes else []
+            heat_rejection_tertiary = heat_rejection_codes[:1] if heat_rejection_codes else []
+
+            # Cooling goes in primary, heat rejection in tertiary
+            user_component_selection['primary'] = cooling_primary  # e.g., ['CH1'] only
+            user_component_selection['secondary'] = []  # No heating for DC
+            user_component_selection['tertiary'] = heat_rejection_tertiary  # e.g., ['CT1'] only
+
+        elif network_type == 'DH':
+            # District Heating: only heating components (primary/secondary)
+            heating_cats = config.system_costs.heating_components if config.system_costs.heating_components else []
+
+            # Convert component categories to actual component codes
+            # Filter by peak demand to only include codes that can handle the required capacity
+            heating_codes = get_component_codes_from_categories(locator, heating_cats, network_type, peak_demand_kw)
+
+            # For baseline costs, use only the FIRST viable component
+            # This gives a simple, conservative baseline estimate rather than an optimized mix
+            heating_primary = heating_codes[:1] if heating_codes else []
+
+            user_component_selection['primary'] = heating_primary  # e.g., ['BO1'] only (filtered by capacity)
+            user_component_selection['secondary'] = []
+            user_component_selection['tertiary'] = []  # No heat rejection for DH
+    else:
+        # SUPPLY assembly mode: Use specific components from assembly
+        # user_component_selection expects dict like: {'primary': ['BO1'], 'secondary': [], 'tertiary': []}
+        user_component_selection = supply_components
 
     # Build system structure
     system_structure = SupplySystemStructure(
@@ -577,14 +635,11 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     )
     system_structure.build()
 
-    # Filter capacity indicators if using fallback mode
+    # Get capacity indicators from system structure
+    # No filtering needed since we explicitly selected components in user_component_selection
     capacity_indicators = system_structure.capacity_indicators
 
-    if use_fallback:
-        # Fallback mode: Filter to keep only ONE component per category
-        # This prevents sizing all boiler types (BO1-BO6) at full capacity
-        capacity_indicators = filter_to_single_component_per_category(capacity_indicators)
-        print("      Using fallback mode: selected first viable component per category")
+    # No debug output needed - system is working correctly
 
     # Create and evaluate supply system
     network_supply_system = SupplySystem(
@@ -941,9 +996,17 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     # Set component priorities for fallback mode (when SUPPLY assemblies don't exist)
     # These will be used by SupplySystemStructure when user_component_selection=None
     # Note: All component parameters are now MultiChoiceParameter (already lists)
-    domain_config.optimization_new.cooling_components = config.system_costs.cooling_components if config.system_costs.cooling_components else []
-    domain_config.optimization_new.heating_components = config.system_costs.heating_components if config.system_costs.heating_components else []
-    domain_config.optimization_new.heat_rejection_components = config.system_costs.heat_rejection_components if config.system_costs.heat_rejection_components else []
+    # IMPORTANT: Only set components relevant to this network type
+    if network_type == 'DC':
+        # District Cooling: only cooling and heat rejection components
+        domain_config.optimization_new.cooling_components = config.system_costs.cooling_components if config.system_costs.cooling_components else []
+        domain_config.optimization_new.heating_components = []  # No heating for DC
+        domain_config.optimization_new.heat_rejection_components = config.system_costs.heat_rejection_components if config.system_costs.heat_rejection_components else []
+    elif network_type == 'DH':
+        # District Heating: only heating components, no cooling
+        domain_config.optimization_new.cooling_components = []  # No cooling for DH
+        domain_config.optimization_new.heating_components = config.system_costs.heating_components if config.system_costs.heating_components else []
+        domain_config.optimization_new.heat_rejection_components = []  # No heat rejection for DH
 
     domain = Domain(domain_config, locator)
     # IMPORTANT: Only load network-connected buildings to avoid errors with buildings that don't have
