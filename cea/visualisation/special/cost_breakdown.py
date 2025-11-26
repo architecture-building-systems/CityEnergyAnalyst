@@ -10,6 +10,8 @@ Creates a stacked horizontal bar chart showing total costs broken down by:
 
 import pandas as pd
 import plotly.express as px
+import geopandas as gpd
+import os
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
@@ -22,6 +24,46 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def get_network_buildings_and_area(locator, network_name, network_type, architecture_df, area_col):
+    """
+    Get the list of buildings connected to a network and calculate their total area.
+
+    :param locator: InputLocator instance
+    :param network_name: Network name (e.g., 'qqq')
+    :param network_type: 'DH' or 'DC'
+    :param architecture_df: DataFrame with building areas
+    :param area_col: 'GFA_m2' or 'Af_m2'
+    :return: Total area of buildings connected to this network
+    """
+    try:
+        # Get the nodes.shp file for this network
+        network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        layout_folder = os.path.join(network_folder, 'layout')
+        nodes_file = os.path.join(layout_folder, 'nodes.shp')
+
+        if not os.path.exists(nodes_file):
+            # If nodes file doesn't exist, return 0
+            return 0
+
+        # Read nodes and get buildings connected to network
+        nodes = gpd.read_file(nodes_file)
+        network_buildings = nodes[nodes['type'] == 'CONSUMER']['building'].unique().tolist()
+
+        # Calculate total area of these buildings
+        arch_lookup = architecture_df.set_index('name')
+        total_area = 0
+        for building in network_buildings:
+            if building in arch_lookup.index:
+                total_area += arch_lookup.loc[building, area_col]
+
+        return total_area
+
+    except Exception as e:
+        # If any error occurs, return 0
+        print(f"Warning: Could not calculate area for {network_name}_{network_type}: {e}")
+        return 0
 
 
 def load_baseline_costs_data(locator):
@@ -96,7 +138,7 @@ def get_component_name(code):
 
 
 def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_categories,
-                               y_normalised_by, y_metric_unit):
+                               y_normalised_by, y_metric_unit, locator, config):
     """
     Process and aggregate data according to x-axis grouping and cost categories.
 
@@ -106,6 +148,8 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
     :param y_cost_categories: List of cost categories to include
     :param y_normalised_by: Normalisation option
     :param y_metric_unit: Unit for display
+    :param locator: InputLocator instance
+    :param config: Configuration object
     :return: DataFrame in long format for plotting
     """
     # Remove zero-cost placeholder rows
@@ -197,11 +241,21 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
             # Apply normalisation per building/network
             for idx, row in df_agg.iterrows():
                 name = row['name']
-                # For networks, use total area (sum of all buildings in network)
-                if name.endswith('_DC') or name.endswith('_DH'):
-                    # Use total area as approximation for network normalisation
-                    # TODO: Calculate actual GFA of buildings in this specific network
-                    normaliser = total_area
+                # For networks, calculate actual sum of areas of serving buildings
+                if name.endswith('_DC'):
+                    # Extract network name from network_id (format: {network_name}_DC)
+                    network_name = name[:-3]  # Remove '_DC' suffix
+                    # Get DC network buildings and their total area
+                    normaliser = get_network_buildings_and_area(locator, network_name, 'DC', architecture_df, area_col)
+                    if normaliser == 0:
+                        normaliser = 1  # Avoid division by zero
+                elif name.endswith('_DH'):
+                    # Extract network name from network_id (format: {network_name}_DH)
+                    network_name = name[:-3]  # Remove '_DH' suffix
+                    # Get DH network buildings and their total area
+                    normaliser = get_network_buildings_and_area(locator, network_name, 'DH', architecture_df, area_col)
+                    if normaliser == 0:
+                        normaliser = 1  # Avoid division by zero
                 elif name in arch_lookup.index:
                     normaliser = arch_lookup.loc[name, area_col]
                 else:
@@ -249,13 +303,37 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
     group_totals.columns = [id_col, 'group_total']
     df_long = df_long.merge(group_totals, on=id_col)
 
-    # Sort by total (descending)
-    df_long = df_long.sort_values('group_total', ascending=True)  # True for horizontal bars
+    # Apply sorting based on x-sorted-by parameter from plots-general
+    plot_config_general = config.plots_general
+    x_sorted_by = plot_config_general.x_sorted_by
+    x_sorted_reversed = plot_config_general.x_sorted_reversed
+
+    # For cost breakdown, "default" means sort by total cost
+    if x_sorted_by == 'default':
+        # Sort by total cost (default for cost plots)
+        df_long = df_long.sort_values('group_total', ascending=not x_sorted_reversed)
+    elif x_sorted_by in ['gross_floor_area', 'conditioned_floor_area']:
+        # Sort by building area (only works for by_building_and_network)
+        if x_to_plot == 'by_building_and_network':
+            area_col = 'GFA_m2' if x_sorted_by == 'gross_floor_area' else 'Af_m2'
+            arch_lookup = architecture_df.set_index('name')
+            # Add area column to df_long for sorting
+            df_long['sort_area'] = df_long[id_col].apply(
+                lambda x: arch_lookup.loc[x, area_col] if x in arch_lookup.index else 0
+            )
+            df_long = df_long.sort_values('sort_area', ascending=not x_sorted_reversed)
+        else:
+            # Fall back to total cost sorting if not by_building_and_network
+            df_long = df_long.sort_values('group_total', ascending=not x_sorted_reversed)
+    else:
+        # For other sorting options in plots-general (construction_year, roof_area, etc.)
+        # that don't apply to cost breakdown, fall back to total cost sorting
+        df_long = df_long.sort_values('group_total', ascending=not x_sorted_reversed)
 
     return df_long, id_col
 
 
-def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot):
+def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general):
     """
     Create stacked horizontal bar chart of costs.
 
@@ -264,6 +342,7 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
     :param y_metric_unit: Unit for display
     :param y_normalised_by: Normalisation option
     :param x_to_plot: Grouping option for title
+    :param plot_config_general: General plot configuration
     :return: Plotly Figure object
     """
     # Define CEA color scheme for cost types
@@ -286,15 +365,29 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
     unit_label = f"{y_metric_unit}{unit_suffix}"
 
     # Determine title based on grouping
-    grouping_titles = {
-        'by_scale': 'by Scale',
-        'by_building_and_network': 'by Building and Network',
-        'by_energy_carrier': 'by Energy Carrier',
-        'by_operation_service': 'by Operation Service',
-        'by_component_type': 'by Component Type'
-    }
+    if plot_config_general.plot_title:
+        title = plot_config_general.plot_title
+    else:
+        grouping_titles = {
+            'by_scale': 'by Scale',
+            'by_building_and_network': 'by Building and Network',
+            'by_energy_carrier': 'by Energy Carrier',
+            'by_operation_service': 'by Operation Service',
+            'by_component_type': 'by Component Type'
+        }
+        title = f"Cost Breakdown {grouping_titles.get(x_to_plot, '')}"
 
-    title = f"Cost Breakdown {grouping_titles.get(x_to_plot, '')}"
+    # Determine y-axis label
+    if plot_config_general.y_label:
+        y_label = plot_config_general.y_label
+    else:
+        y_label = f'Cost ({unit_label})'
+
+    # Determine x-axis label
+    if plot_config_general.x_label:
+        x_label = plot_config_general.x_label
+    else:
+        x_label = ''
 
     # Create stacked horizontal bar chart
     fig = px.bar(
@@ -305,8 +398,8 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         orientation='h',
         title=title,
         labels={
-            id_col: 'Category',
-            'total_cost': f'Cost ({unit_label})',
+            id_col: x_label if x_label else 'Category',
+            'total_cost': y_label,
             'cost_type': 'Cost Category'
         },
         hover_data={
@@ -321,8 +414,8 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
 
     # Improve layout with CEA background color
     fig.update_layout(
-        xaxis_title=f'Cost ({unit_label})',
-        yaxis_title='',
+        xaxis_title=y_label,
+        yaxis_title=x_label if x_label else '',
         hovermode='closest',
         legend_title='Cost Category',
         height=max(400, len(df_long[id_col].unique()) * 40),  # Dynamic height
@@ -330,6 +423,10 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white']
     )
+
+    # Apply y-axis range if specified (note: for horizontal bars, this affects x-axis)
+    if plot_config_general.y_min is not None or plot_config_general.y_max is not None:
+        fig.update_xaxes(range=[plot_config_general.y_min, plot_config_general.y_max])
 
     # Format hover template
     fig.update_traces(
@@ -351,8 +448,9 @@ def main(config):
     """
     locator = InputLocator(config.scenario)
 
-    # Get plot configuration
+    # Get plot configurations
     plot_config = config.plots_cost_breakdown
+    plot_config_general = config.plots_general
 
     # Extract parameters
     y_cost_categories = plot_config.y_cost_category_to_plot
@@ -370,11 +468,12 @@ def main(config):
         df_long, id_col = process_data_by_grouping(
             detailed_df, architecture_df,
             x_to_plot, y_cost_categories,
-            y_normalised_by, y_metric_unit
+            y_normalised_by, y_metric_unit,
+            locator, config
         )
 
         # Create visualization
-        fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot)
+        fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general)
 
         return fig.to_html()
 
@@ -409,8 +508,9 @@ if __name__ == '__main__':
     config = cea.config.Configuration()
     locator = InputLocator(config.scenario)
 
-    # Get plot configuration
+    # Get plot configurations
     plot_config = config.plots_cost_breakdown
+    plot_config_general = config.plots_general
 
     # Load data
     detailed_df, architecture_df = load_baseline_costs_data(locator)
@@ -421,7 +521,8 @@ if __name__ == '__main__':
         plot_config.x_to_plot,
         plot_config.y_cost_category_to_plot,
         plot_config.y_normalised_by,
-        plot_config.y_metric_unit
+        plot_config.y_metric_unit,
+        locator, config
     )
 
     # Create and show visualization
@@ -429,6 +530,7 @@ if __name__ == '__main__':
         df_long, id_col,
         plot_config.y_metric_unit,
         plot_config.y_normalised_by,
-        plot_config.x_to_plot
+        plot_config.x_to_plot,
+        plot_config_general
     )
     fig.show(renderer="browser")
