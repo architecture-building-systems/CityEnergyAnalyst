@@ -869,8 +869,7 @@ class ResultSummarySection(Section):
     metrics_photovoltaic_thermal_panels: bool
     metrics_solar_collectors: bool
     metrics_other_renewables: bool
-    metrics_district_heating: bool
-    metrics_district_cooling: bool
+    network_name: str
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
     use_conditioned_floor_area_for_normalisation: bool
@@ -900,9 +899,7 @@ class ResultSummarySection(Section):
     @overload
     def __getattr__(self, item: Literal["metrics_other_renewables"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["metrics_district_heating"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["metrics_district_cooling"]) -> bool: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["include_advanced_analytics"]) -> bool: ...
     @overload
