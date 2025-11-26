@@ -2464,7 +2464,10 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         if area_column not in df_architecture.columns:
             raise ValueError(f"Column '{area_column}' not found in architecture data.")
         total_area = df_architecture[area_column].sum()
-        df[list_metrics] = df[list_metrics].div(total_area)
+        # Only normalize columns that actually exist in the dataframe
+        existing_metrics = [col for col in list_metrics if col in df.columns]
+        if existing_metrics:
+            df[existing_metrics] = df[existing_metrics].div(total_area)
         return df
 
     for time_period in list_time_period:
