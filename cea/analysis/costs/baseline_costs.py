@@ -274,6 +274,29 @@ def baseline_costs_main(locator, config):
     from cea.analysis.costs.format_simplified import format_output_simplified
     final_results, detailed_results = format_output_simplified(merged_results, locator)
 
+    # Calculate solar panel costs
+    print(f"\n{'-'*70}")
+    print("Calculating solar panel costs...")
+    from cea.analysis.costs.solar_costs import calculate_building_solar_costs, merge_solar_costs_to_buildings
+
+    # Get list of all building names for solar calculation
+    all_building_names = []
+    for building_name in merged_results.keys():
+        if building_name not in ['DC', 'DH']:  # Exclude network-level entries
+            all_building_names.append(building_name)
+
+    solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
+
+    # Append solar details to costs_components.csv
+    if not solar_details.empty:
+        detailed_results = pd.concat([detailed_results, solar_details], ignore_index=True)
+        print(f"  Added {len(solar_details)} solar panel component rows")
+
+    # Add/update solar costs in costs_buildings.csv
+    if not solar_summary.empty:
+        final_results = merge_solar_costs_to_buildings(final_results, solar_summary)
+        print(f"  Updated costs for {len(solar_summary)} buildings with solar panels")
+
     # Save results
     print(f"\n{'-'*70}")
     print("Saving results...")
