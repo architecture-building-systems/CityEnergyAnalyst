@@ -2705,6 +2705,9 @@ def process_building_summary(config, locator,
     Args:
         config: Configuration object containing user inputs.
         locator: Locator object to find file paths.
+
+    Returns:
+        dict: Summary of processing results with status and any errors encountered
         hour_start (int): Start hour for analysis.
         hour_end (int): End hour for analysis.
         list_buildings (list): List of building names to process.
@@ -2721,8 +2724,11 @@ def process_building_summary(config, locator,
         plot (bool): Whether to plot the results.
 
     Returns:
-        None
+        dict: Summary of processing results including status and any errors
     """
+
+    # Track errors for final summary
+    errors_encountered = []
 
     # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
 
@@ -2761,36 +2767,63 @@ def process_building_summary(config, locator,
     df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
 
     # Step 5: Save Building Summary to Disk
-    # Round all numeric columns to 2 decimal places
-    numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
-    df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
-    
-    if not plot:
-        buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
-    else:
-        buildings_path = locator.get_export_plots_selected_building_file()
-    df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    try:
+        # Round all numeric columns to 2 decimal places
+        numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
+        df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+
+        if not plot:
+            buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+        else:
+            buildings_path = locator.get_export_plots_selected_building_file()
+        df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    except Exception as e:
+        error_msg = f"Step 5 (Save Building Summary): {str(e)}"
+        errors_encountered.append(error_msg)
+        print(f"Warning: {error_msg}")
+        print("         Continuing with remaining steps...")
 
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
     for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
+        try:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
+        except Exception as e:
+            error_msg = f"Step 6 (Export Results Without Date) - metrics {list_metrics}: {str(e)}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+            print("         Continuing with next metrics...")
+            continue
 
     # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
     for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+        try:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+            results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+        except Exception as e:
+            error_msg = f"Step 7 (Export Results With Date) - metrics {list_metrics}: {str(e)}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+            print("         Continuing with next metrics...")
+            continue
 
     # Step 8: Aggregate by Building (if Enabled)
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            if list_appendix == ['lifecycle_emissions']:
-                exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
-            else:
-                exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            try:
+                list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+                if list_appendix == ['lifecycle_emissions']:
+                    exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+                else:
+                    exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            except Exception as e:
+                error_msg = f"Step 8 (Aggregate by Building) - metrics {list_metrics}: {str(e)}"
+                errors_encountered.append(error_msg)
+                print(f"Warning: {error_msg}")
+                print("         Continuing with next metrics...")
+                continue
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
@@ -2799,30 +2832,74 @@ def process_building_summary(config, locator,
                 raise ValueError("Specify the list of CEA features to plot.")
 
             if any(item in list_cea_feature_to_plot for item in ['demand']):
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - demand): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
             if any(item in list_cea_feature_to_plot for item in ['pv']):
-                calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
-                                  list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                try:
+                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
+                                      list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - pv): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
             if any(item in list_cea_feature_to_plot for item in ['operational_emissions']):
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - operational_emissions): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
         else:
             if config.result_summary.metrics_building_energy_demand:
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - demand): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
 
             if config.result_summary.metrics_photovoltaic_panels:
-                calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
-                                  bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                try:
+                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
+                                      bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - pv): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
 
             if config.result_summary.metrics_emissions:
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - operational_emissions): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
+
+    # Return summary
+    return {
+        'status': 'COMPLETED' if len(errors_encountered) == 0 else 'PARTIALLY COMPLETED',
+        'errors': errors_encountered,
+        'error_count': len(errors_encountered),
+        'summary_folder': summary_folder
+    }
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -2857,18 +2934,39 @@ def main(config: cea.config.Configuration):
     bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
 
     # Process building summary
-    process_building_summary(config, locator, hour_start, hour_end, list_buildings,
-                             integer_year_start, integer_year_end, list_standard,
-                             list_main_use_type, ratio_main_use_type,
-                             bool_use_acronym, bool_aggregate_by_building,
-                             bool_include_advanced_analytics, list_selected_time_period,
-                             bool_use_conditioned_floor_area_for_normalisation, plot=False)
+    summary = process_building_summary(config, locator, hour_start, hour_end, list_buildings,
+                                        integer_year_start, integer_year_end, list_standard,
+                                        list_main_use_type, ratio_main_use_type,
+                                        bool_use_acronym, bool_aggregate_by_building,
+                                        bool_include_advanced_analytics, list_selected_time_period,
+                                        bool_use_conditioned_floor_area_for_normalisation, plot=False)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire process of exporting and summarising the CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
+    # Build summary text
+    summary_text = []
+    summary_text.append('=' * 70)
+    summary_text.append(f'STATUS: {summary["status"]}')
+    summary_text.append('=' * 70)
+    if summary['error_count'] > 0:
+        summary_text.append('')
+        summary_text.append(f'{summary["error_count"]} error(s) encountered during processing:')
+        for i, error in enumerate(summary['errors'], 1):
+            summary_text.append(f'  {i}. {error}')
+        summary_text.append('')
+    summary_text.append(f'Time elapsed: {time_elapsed:.1f} seconds')
+    summary_text.append('=' * 70)
+
+    # Display completion status and summary
+    print('\n' + '\n'.join(summary_text))
+
+    # Save log file to summary folder
+    log_path = os.path.join(summary['summary_folder'], 'log.txt')
+    with open(log_path, 'w') as f:
+        f.write('\n'.join(summary_text))
+    print(f'\nSummary log saved to: {log_path}')
 
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-
