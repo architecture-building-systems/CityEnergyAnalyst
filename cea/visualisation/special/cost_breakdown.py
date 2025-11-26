@@ -174,14 +174,17 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
 
     # Apply normalisation
     if y_normalised_by != 'no_normalisation':
+        # Calculate total area upfront (needed for both aggregated and building/network views)
+        if y_normalised_by == 'gross_floor_area':
+            total_area = architecture_df['GFA_m2'].sum()
+            area_col = 'GFA_m2'
+        else:  # conditioned_floor_area
+            total_area = architecture_df['Af_m2'].sum()
+            area_col = 'Af_m2'
+
         # Get normalisation factors
         if x_to_plot in ['by_scale', 'by_energy_carrier', 'by_operation_service', 'by_component_type']:
             # For aggregated views, use total GFA/Af across all buildings
-            if y_normalised_by == 'gross_floor_area':
-                total_area = architecture_df['GFA_m2'].sum()
-            else:  # conditioned_floor_area
-                total_area = architecture_df['Af_m2'].sum()
-
             # Divide all cost columns by total area
             for col in selected_cost_cols:
                 df_agg[col] = df_agg[col] / total_area
@@ -191,18 +194,14 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
             # Create normaliser lookup
             arch_lookup = architecture_df.set_index('name')
 
-            # Get area column
-            area_col = 'GFA_m2' if y_normalised_by == 'gross_floor_area' else 'Af_m2'
-
             # Apply normalisation per building/network
             for idx, row in df_agg.iterrows():
                 name = row['name']
-                # For networks, sum GFA of buildings in network
+                # For networks, use total area (sum of all buildings in network)
                 if name.endswith('_DC') or name.endswith('_DH'):
-                    # Get buildings in network from detailed_df
-                    network_buildings = df[df['name'] == name]['name'].unique()
-                    # For now, use total area (this is approximate)
-                    normaliser = total_area if y_normalised_by == 'gross_floor_area' else architecture_df['Af_m2'].sum()
+                    # Use total area as approximation for network normalisation
+                    # TODO: Calculate actual GFA of buildings in this specific network
+                    normaliser = total_area
                 elif name in arch_lookup.index:
                     normaliser = arch_lookup.loc[name, area_col]
                 else:
