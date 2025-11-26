@@ -1652,6 +1652,111 @@ class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
 
 
+class SolarPanelChoiceParameter(ChoiceParameter):
+    """
+    Parameter for selecting solar technology types available in the scenario.
+    Scans potentials/solar folder for PV, PVT, and SC results.
+    Includes 'No solar technology installed' option.
+    """
+
+    def initialize(self, parser):
+        # Override to dynamically populate choices based on available solar results
+        pass
+
+    @property
+    def _choices(self):
+        """Dynamically generate list of available solar technologies"""
+        choices = ['No solar technology installed']
+        solar_techs = self._get_available_solar_technologies()
+        choices.extend(solar_techs)
+        return choices
+
+    def _get_available_solar_technologies(self) -> List[str]:
+        """
+        Scan potentials/solar folder for available solar technology results.
+        Returns list of technology codes like: PV_PV1, PVT_PV1_FP, SC_FP, etc.
+        """
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        solar_folder = locator.get_potentials_solar_folder()
+
+        if not os.path.exists(solar_folder):
+            return []
+
+        technologies = []
+
+        # Scan for PV results (e.g., PV_PV1_total.csv)
+        pv_pattern = os.path.join(solar_folder, 'PV_*_total.csv')
+        for filepath in glob.glob(pv_pattern):
+            filename = os.path.basename(filepath)
+            # Extract technology code: PV_PV1_total.csv -> PV_PV1
+            tech_code = filename.replace('_total.csv', '')
+            technologies.append(tech_code)
+
+        # Scan for PVT results (e.g., PVT_PV1_FP_total.csv)
+        pvt_pattern = os.path.join(solar_folder, 'PVT_*_total.csv')
+        for filepath in glob.glob(pvt_pattern):
+            filename = os.path.basename(filepath)
+            # Extract technology code: PVT_PV1_FP_total.csv -> PVT_PV1_FP
+            tech_code = filename.replace('_total.csv', '')
+            technologies.append(tech_code)
+
+        # Scan for SC results (e.g., SC_FP_total.csv)
+        sc_pattern = os.path.join(solar_folder, 'SC_*_total.csv')
+        for filepath in glob.glob(sc_pattern):
+            filename = os.path.basename(filepath)
+            # Extract technology code: SC_FP_total.csv -> SC_FP
+            tech_code = filename.replace('_total.csv', '')
+            technologies.append(tech_code)
+
+        return sorted(set(technologies))
+
+    def decode(self, value):
+        """
+        Decode value - lenient parsing for config loading.
+        Returns empty string if value is None or empty.
+        """
+        if not value or str(value).strip() == '':
+            return 'No solar technology installed'
+
+        value = str(value).strip()
+
+        # Always allow 'No solar technology installed'
+        if value == 'No solar technology installed':
+            return value
+
+        # Check if value matches available technologies
+        available = self._get_available_solar_technologies()
+        if value in available:
+            return value
+
+        # If value not found but solar folder exists, default to 'No solar technology installed'
+        return 'No solar technology installed'
+
+    def encode(self, value):
+        """
+        Encode value - strict validation for saving.
+        Raises ValueError if technology doesn't exist (unless 'No solar technology installed').
+        """
+        if not value or str(value).strip() == '':
+            return 'No solar technology installed'
+
+        value = str(value).strip()
+
+        # Always allow 'No solar technology installed'
+        if value == 'No solar technology installed':
+            return value
+
+        # Validate that the technology exists
+        available = self._get_available_solar_technologies()
+        if value not in available:
+            raise ValueError(
+                f"Solar technology '{value}' not found. "
+                f"Available technologies: {', '.join(['No solar technology installed'] + available)}"
+            )
+
+        return value
+
+
 class PlotContextParameter(Parameter):
     """A parameter that accepts a dict containing plot context information."""
     
