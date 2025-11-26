@@ -238,7 +238,7 @@ def get_hours_start_end(config):
     return hour_start, hour_end
 
 
-def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list)-> tuple[list[str], list[str]]:
+def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list, network_name: str = '')-> tuple[list[str], list[str]]:
 
     list_paths = []
     list_appendix = []
@@ -328,15 +328,15 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         list_appendix.append(cea_feature)
 
     if cea_feature == 'dh':
-        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', '')
-        path_pump = locator.get_network_energy_pumping_requirements_file('DH', '')
+        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', network_name)
+        path_pump = locator.get_network_energy_pumping_requirements_file('DH', network_name)
         list_paths.append(path_thermal)
         list_paths.append(path_pump)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'dc':
-        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', '')
-        path_pump = locator.get_network_energy_pumping_requirements_file('DC', '')
+        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', network_name)
+        path_pump = locator.get_network_energy_pumping_requirements_file('DC', network_name)
         list_paths.append(path_thermal)
         list_paths.append(path_pump)
         list_appendix.append(cea_feature)
@@ -1085,13 +1085,13 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
     return sliced_df
 
 
-def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False):
+def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False, network_name=''):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # locate the path(s) to the results of the CEA Feature
-    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
+    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings, network_name)
 
     # get the relevant CEA column names based on selected metrics
     if not bool_analytics:
@@ -2565,10 +2565,20 @@ def get_list_list_metrics_with_date(config):
         list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
     if config.result_summary.metrics_other_renewables:
         list_list_metrics_with_date.append(list_metrics_other_renewables)
-    if config.result_summary.metrics_district_heating:
-        list_list_metrics_with_date.append(list_metrics_district_heating)
-    if config.result_summary.metrics_district_cooling:
-        list_list_metrics_with_date.append(list_metrics_district_cooling)
+
+    # Check if network files exist for the specified network_name and add metrics accordingly
+    network_name = config.result_summary.network_name
+    if network_name:
+        locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+        # Check DH files
+        dh_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DH', network_name)
+        if os.path.exists(dh_thermal_path):
+            list_list_metrics_with_date.append(list_metrics_district_heating)
+        # Check DC files
+        dc_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DC', network_name)
+        if os.path.exists(dc_thermal_path):
+            list_list_metrics_with_date.append(list_metrics_district_cooling)
+
     if config.result_summary.metrics_emissions:
         list_list_metrics_with_date.append(list_metrics_operational_emissions)
 
@@ -2730,6 +2740,9 @@ def process_building_summary(config, locator,
     # Track errors for final summary
     errors_encountered = []
 
+    # Get network name from config
+    network_name = config.result_summary.network_name if not plot else ''
+
     # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
 
     # Step 1: Get Selected Metrics
@@ -2762,7 +2775,7 @@ def process_building_summary(config, locator,
                              list_main_use_type, ratio_main_use_type)
 
     # Step 4: Get Building GFA & Merge with df_buildings
-    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
+    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings, network_name=network_name)
     list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
     df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
 
@@ -2786,7 +2799,7 @@ def process_building_summary(config, locator,
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
     for list_metrics in list_list_metrics_without_date:
         try:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=network_name)
             list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
             results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
         except Exception as e:
@@ -2799,7 +2812,7 @@ def process_building_summary(config, locator,
     # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
     for list_metrics in list_list_metrics_with_date:
         try:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=network_name)
             list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
             results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
         except Exception as e:
@@ -2813,7 +2826,7 @@ def process_building_summary(config, locator,
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
             try:
-                list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
+                list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=network_name)
                 if list_appendix == ['lifecycle_emissions']:
                     exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
                 else:
