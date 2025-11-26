@@ -328,15 +328,15 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         list_appendix.append(cea_feature)
 
     if cea_feature == 'dh':
-        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', '', representative_week=False)
-        path_pump = locator.get_network_energy_pumping_requirements_file('DH', '', representative_week=False)
+        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', '')
+        path_pump = locator.get_network_energy_pumping_requirements_file('DH', '')
         list_paths.append(path_thermal)
         list_paths.append(path_pump)
         list_appendix.append(cea_feature)
 
     if cea_feature == 'dc':
-        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', '', representative_week=False)
-        path_pump = locator.get_network_energy_pumping_requirements_file('DC', '', representative_week=False)
+        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', '')
+        path_pump = locator.get_network_energy_pumping_requirements_file('DC', '')
         list_paths.append(path_thermal)
         list_paths.append(path_pump)
         list_appendix.append(cea_feature)
