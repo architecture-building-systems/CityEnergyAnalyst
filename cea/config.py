@@ -923,17 +923,14 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def _sort_networks_by_modification_time(self, network_names: List[str]) -> List[str]:
         """Sort network layouts by modification time (most recent first)"""
         modified_times = []
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
         for network_name in network_names:
-            network_time = []
-            for network_type in self._network_types:
-                edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
-                if os.path.exists(edges_path) and os.path.exists(nodes_path):
-                    sort_time = os.path.getmtime(edges_path)
-                    network_time.append((network_name, sort_time))
-            if network_time:
-                # Get the most recent modification time across network types
-                most_recent_time = max(time for _, time in network_time)
-                modified_times.append((network_name, most_recent_time))
+            # Only check for layout.shp (shared edges file)
+            layout_path = locator.get_network_layout_shapefile(network_name)
+            if os.path.exists(layout_path):
+                sort_time = os.path.getmtime(layout_path)
+                modified_times.append((network_name, sort_time))
 
         # Sort by modification time, most recent first
         modified_times.sort(key=lambda x: x[1], reverse=True)
@@ -995,7 +992,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
             # Otherwise default to most recent network (e.g., export-to-rhino-gh)
             sorted_networks = self._sort_networks_by_modification_time(available_networks)
-            return sorted_networks[0]
+            if sorted_networks:
+                return sorted_networks[0]
+            else:
+                # No valid networks found (folders exist but missing files)
+                return ''
 
         available_networks = self._get_available_networks()
 
@@ -1009,8 +1010,12 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
         # Default to most recent network if value not found
         sorted_networks = self._sort_networks_by_modification_time(available_networks)
-        most_recent_network = sorted_networks[0]
-        return most_recent_network
+        if sorted_networks:
+            most_recent_network = sorted_networks[0]
+            return most_recent_network
+        else:
+            # No valid networks found (folders exist but missing files)
+            return ''
 
 
 class DatabasePathParameter(Parameter):
