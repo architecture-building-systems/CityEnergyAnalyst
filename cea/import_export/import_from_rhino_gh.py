@@ -24,6 +24,39 @@ __status__ = "Production"
 
 
 
+def generate_network_name(locator, base_name="network-gh"):
+    """
+    Generate a unique network name by checking existing networks.
+    If base_name exists, try network-gh-1, network-gh-2, etc.
+
+    Args:
+        locator: InputLocator instance
+        base_name: Base name for the network (default: "network-gh")
+
+    Returns:
+        str: Unique network name
+    """
+    thermal_network_folder = locator.get_thermal_network_folder()
+
+    # If thermal-network folder doesn't exist, use base_name
+    if not os.path.exists(thermal_network_folder):
+        return base_name
+
+    # Check if base_name exists
+    existing_networks = [d for d in os.listdir(thermal_network_folder)
+                        if os.path.isdir(os.path.join(thermal_network_folder, d))]
+
+    if base_name not in existing_networks:
+        return base_name
+
+    # Generate numbered name
+    counter = 1
+    while f"{base_name}-{counter}" in existing_networks:
+        counter += 1
+
+    return f"{base_name}-{counter}"
+
+
 def exec_import_csv_from_rhino(locator):
     """
 
@@ -33,6 +66,10 @@ def exec_import_csv_from_rhino(locator):
     :type cea_scenario: file path
     :return:
     """
+    # Generate unique network name
+    network_name = generate_network_name(locator)
+    print(f"Importing network layout as: {network_name}")
+
     # Acquire the user inputs from config
     export_folder_path = locator.get_export_folder()
 
@@ -84,21 +121,35 @@ def exec_import_csv_from_rhino(locator):
         os.makedirs(trees_path, exist_ok=True)
         csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path)
 
-    if os.path.isfile(dh_edges_csv_path):
-        os.makedirs(locator.get_output_thermal_network_type_folder('DH'), exist_ok=True)
-        csv_xlsx_to_shapefile(dh_edges_csv_path, locator.get_output_thermal_network_type_folder('DH'), 'edges.shp', reference_txt_path,  geometry_type="polyline")
+    # Import DH network if provided
+    if os.path.isfile(dh_edges_csv_path) or os.path.isfile(dh_nodes_csv_path):
+        dh_layout_folder = os.path.join(
+            locator.get_output_thermal_network_type_folder('DH', network_name),
+            'layout'
+        )
+        os.makedirs(dh_layout_folder, exist_ok=True)
 
-    if os.path.isfile(dc_edges_csv_path):
-        os.makedirs(locator.get_output_thermal_network_type_folder('DC'), exist_ok=True)
-        csv_xlsx_to_shapefile(dc_edges_csv_path, locator.get_output_thermal_network_type_folder('DC'), 'edges.shp', reference_txt_path, geometry_type="polyline")
+        if os.path.isfile(dh_edges_csv_path):
+            csv_xlsx_to_shapefile(dh_edges_csv_path, dh_layout_folder, 'edges.shp', reference_txt_path, geometry_type="polyline")
 
-    if os.path.isfile(dh_nodes_csv_path):
-        os.makedirs(locator.get_output_thermal_network_type_folder('DH'), exist_ok=True)
-        csv_xlsx_to_shapefile(dh_nodes_csv_path, locator.get_output_thermal_network_type_folder('DH'), 'nodes.shp', reference_txt_path, geometry_type="point")
+        if os.path.isfile(dh_nodes_csv_path):
+            csv_xlsx_to_shapefile(dh_nodes_csv_path, dh_layout_folder, 'nodes.shp', reference_txt_path, geometry_type="point")
 
-    if os.path.isfile(dc_nodes_csv_path):
-        os.makedirs(locator.get_output_thermal_network_type_folder('DC'), exist_ok=True)
-        csv_xlsx_to_shapefile(dc_nodes_csv_path, locator.get_output_thermal_network_type_folder('DC'), 'nodes.shp', reference_txt_path, geometry_type="point")
+    # Import DC network if provided
+    if os.path.isfile(dc_edges_csv_path) or os.path.isfile(dc_nodes_csv_path):
+        dc_layout_folder = os.path.join(
+            locator.get_output_thermal_network_type_folder('DC', network_name),
+            'layout'
+        )
+        os.makedirs(dc_layout_folder, exist_ok=True)
+
+        if os.path.isfile(dc_edges_csv_path):
+            csv_xlsx_to_shapefile(dc_edges_csv_path, dc_layout_folder, 'edges.shp', reference_txt_path, geometry_type="polyline")
+
+        if os.path.isfile(dc_nodes_csv_path):
+            csv_xlsx_to_shapefile(dc_nodes_csv_path, dc_layout_folder, 'nodes.shp', reference_txt_path, geometry_type="point")
+
+    return network_name
 
 
 def copy_data_from_reference_to_new_scenarios(config, locator):
@@ -168,7 +219,7 @@ def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project
 
-    exec_import_csv_from_rhino(locator)
+    network_name = exec_import_csv_from_rhino(locator)
     copy_data_from_reference_to_new_scenarios(config, locator)
     list_buildings = locator.get_zone_building_names()
 
@@ -193,6 +244,10 @@ def main(config: cea.config.Configuration):
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
     print('The entire import files from Rhino/Grasshopper to CEA is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
+    if network_name:
+        print(f'\nNetwork layout saved as: {network_name}')
+        print('You can now run thermal-network simulation using this network name.')
 
 
 if __name__ == '__main__':
