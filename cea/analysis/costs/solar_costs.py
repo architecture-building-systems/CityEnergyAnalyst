@@ -100,8 +100,6 @@ def get_solar_panel_database_params(locator, technology_type, panel_code_for_dat
 
     # Extract parameters
     params = {
-        'capacity_Wp': panel_data['capacity_Wp'].values[0],
-        'module_area_m2': panel_data['module_area_m2'].values[0],
         'a': panel_data['a'].values[0],
         'b': panel_data['b'].values[0],
         'c': panel_data['c'].values[0],
@@ -110,8 +108,18 @@ def get_solar_panel_database_params(locator, technology_type, panel_code_for_dat
         'LT_yr': panel_data['LT_yr'].values[0],
         'O&M_%': panel_data['O&M_%'].values[0],
         'IR_%': panel_data['IR_%'].values[0],
-        'code': panel_code_for_database
+        'code': panel_code_for_database,
+        'technology_type': technology_type
     }
+
+    # Only PV has capacity_Wp and module_area_m2 columns
+    # PVT and SC are thermal systems - we'll use area directly
+    if technology_type == 'PV':
+        params['capacity_Wp'] = panel_data['capacity_Wp'].values[0]
+        params['module_area_m2'] = panel_data['module_area_m2'].values[0]
+    else:
+        params['capacity_Wp'] = None
+        params['module_area_m2'] = None
 
     return params
 
@@ -132,16 +140,18 @@ def read_solar_area_data(locator, technology_type, panel_code_for_files, buildin
     """
     solar_folder = locator.get_potentials_solar_folder()
 
-    # Construct filename based on technology type
+    # Construct filename and column prefix based on technology type
     if technology_type == 'PV':
         filename = f"PV_{panel_code_for_files}_total_buildings.csv"
-        prefix = 'PV'
+        prefix = 'PV'  # Column prefix is just 'PV'
     elif technology_type == 'PVT':
+        # panel_code_for_files is like 'PV1_FP', extract SC type (FP or ET)
+        sc_type = panel_code_for_files.split('_')[-1]  # Get 'FP' from 'PV1_FP'
         filename = f"PVT_{panel_code_for_files}_total_buildings.csv"
-        prefix = 'PVT'
+        prefix = f'PVT_{sc_type}'  # Column prefix is 'PVT_FP'
     elif technology_type == 'SC':
         filename = f"SC_{panel_code_for_files}_total_buildings.csv"
-        prefix = 'SC'
+        prefix = f'SC_{panel_code_for_files}'  # Column prefix is 'SC_FP' or 'SC_ET'
     else:
         raise ValueError(f"Unknown technology type: {technology_type}")
 
@@ -188,44 +198,39 @@ def calculate_solar_panel_costs(area_m2, panel_params):
     """
     Calculate solar panel costs using abcde cost formula from optimization-new.
 
-    Formula: CAPEX = a + b×capacity_W^c + (d + e×capacity_W)×log(capacity_W)
+    Formula: CAPEX = a + b×area_m2^c + (d + e×area_m2)×log(area_m2)
+
+    Uses installed area directly in the cost formula, as the database cost parameters
+    are calibrated for area-based calculations.
 
     Args:
         area_m2: Installed area in square metres
-        panel_params: Dict with capacity_Wp, module_area_m2, a, b, c, d, e, LT_yr, O&M_%, IR_%
+        panel_params: Dict with technology_type, a, b, c, d, e, LT_yr, O&M_%, IR_%
 
     Returns:
-        dict: capacity_kW, capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD
+        dict: area_m2, capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD
     """
     if area_m2 <= 0:
         return {
-            'capacity_kW': 0.0,
+            'area_m2': 0.0,
             'capex_total_USD': 0.0,
             'capex_a_USD': 0.0,
             'opex_fixed_a_USD': 0.0,
             'opex_var_a_USD': 0.0
         }
 
-    # Calculate capacity: area × (panel_capacity / panel_area)
-    capacity_per_m2_W = panel_params['capacity_Wp'] / panel_params['module_area_m2']
-    capacity_W = area_m2 * capacity_per_m2_W
-    capacity_kW = capacity_W / 1000
-
-    # Calculate CAPEX using abcde formula
+    # Calculate CAPEX using abcde formula with area directly
     a = panel_params['a']
     b = panel_params['b']
     c = panel_params['c']
     d = panel_params['d']
     e = panel_params['e']
 
-    if capacity_W <= 0:
-        capex_total_USD = 0.0
-    else:
-        capex_total_USD = (
-            a +
-            b * (capacity_W ** c) +
-            (d + e * capacity_W) * log(capacity_W)
-        )
+    capex_total_USD = (
+        a +
+        b * (area_m2 ** c) +
+        (d + e * area_m2) * log(area_m2)
+    )
 
     # Calculate annualised costs
     IR_percent = panel_params['IR_%']
@@ -237,7 +242,7 @@ def calculate_solar_panel_costs(area_m2, panel_params):
     opex_var_a_USD = 0.0  # Solar has no variable costs (for now - future: sell to grid)
 
     return {
-        'capacity_kW': capacity_kW,
+        'area_m2': area_m2,
         'capex_total_USD': capex_total_USD,
         'capex_a_USD': capex_a_USD,
         'opex_fixed_a_USD': opex_fixed_a_USD,
@@ -327,7 +332,7 @@ def calculate_building_solar_costs(config, locator, buildings):
             # Calculate costs
             costs = calculate_solar_panel_costs(area_m2, panel_params)
 
-            if costs['capacity_kW'] <= 0:
+            if costs['area_m2'] <= 0:
                 continue
 
             # Create detail row
@@ -336,7 +341,7 @@ def calculate_building_solar_costs(config, locator, buildings):
                 'network_type': '',
                 'service': 'SOLAR',
                 'code': tech_code,
-                'capacity_kW': costs['capacity_kW'],
+                'capacity_kW': costs['area_m2'],  # Store area in the capacity column
                 'placement': facade_suffix.replace('_m2', ''),  # e.g., 'roofs_top'
                 'capex_total_USD': costs['capex_total_USD'],
                 'capex_a_USD': costs['capex_a_USD'],

@@ -265,14 +265,8 @@ def baseline_costs_main(locator, config):
             "2. The selected network type matches the building demands (DH for heating, DC for cooling)"
         )
 
-    # Merge results from all network types
-    print(f"\n{'-'*70}")
-    print("Merging and formatting results...")
+    # Merge results from all network types (but don't format yet)
     merged_results = merge_network_type_costs(all_results)
-
-    # Import simplified formatting function
-    from cea.analysis.costs.format_simplified import format_output_simplified
-    final_results, detailed_results = format_output_simplified(merged_results, locator)
 
     # Calculate solar panel costs
     print(f"\n{'-'*70}")
@@ -287,6 +281,12 @@ def baseline_costs_main(locator, config):
 
     solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
 
+    # Merge and format all results (after solar costs are calculated)
+    print(f"\n{'-'*70}")
+    print("Merging and formatting results...")
+    from cea.analysis.costs.format_simplified import format_output_simplified
+    final_results, detailed_results = format_output_simplified(merged_results, locator)
+
     # Append solar details to costs_components.csv
     if not solar_details.empty:
         detailed_results = pd.concat([detailed_results, solar_details], ignore_index=True)
@@ -296,6 +296,10 @@ def baseline_costs_main(locator, config):
     if not solar_summary.empty:
         final_results = merge_solar_costs_to_buildings(final_results, solar_summary)
         print(f"  Updated costs for {len(solar_summary)} buildings with solar panels")
+
+    # Sort results by building name
+    final_results = final_results.sort_values('name').reset_index(drop=True)
+    detailed_results = detailed_results.sort_values('name').reset_index(drop=True)
 
     # Save results
     print(f"\n{'-'*70}")
