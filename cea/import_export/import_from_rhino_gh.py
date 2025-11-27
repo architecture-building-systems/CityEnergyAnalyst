@@ -144,7 +144,7 @@ def exec_import_csv_from_rhino(locator):
 
             if dh_edges_exist and dc_edges_exist:
                 # Both exist - merge and remove duplicates
-                print(f"Merging DH and DC edges into shared layout.shp")
+                print("Merging DH and DC edges into shared layout.shp")
 
                 # Read both CSV files
                 dh_edges_df = pd.read_csv(dh_edges_csv_path)
@@ -308,7 +308,7 @@ def main(config: cea.config.Configuration):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire import files from Rhino/Grasshopper to CEA is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire import files from Rhino/Grasshopper to CEA is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
     if network_name:
         print(f'\nNetwork layout saved as: {network_name}')
