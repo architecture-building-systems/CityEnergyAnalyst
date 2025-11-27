@@ -314,11 +314,12 @@ class Domain(object):
         :return self.energy_potentials: list of energy potentials with the scale they apply to (building or domain)
         :rtype self.energy_potentials: list of <cea.optimization_new.energyPotential>-EnergyPotential objects
         """
-        if buildings_in_domain is None:
-            if not self.buildings:
-                raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
-            else:
-                buildings_in_domain = [building.identifier for building in self.buildings]
+        # Always use buildings that were actually loaded (after filtering by supply.csv and demand)
+        # The buildings_in_domain parameter is ignored because load_buildings() already filtered appropriately
+        if not self.buildings:
+            raise ValueError("No buildings were loaded yet. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
+
+        buildings_in_domain = [building.identifier for building in self.buildings]
 
         # building-specific potentials
         pv_potential = EnergyPotential().load_PV_potential(self.locator, buildings_in_domain, pv_panel_type)
