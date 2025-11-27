@@ -694,8 +694,7 @@ class ToRhinoGhSection(Section):
     include_surroundings: bool
     include_streets: bool
     include_trees: bool
-    include_district_heating_network: bool
-    include_district_cooling_network: bool
+    network_name: str | None
 
     @overload
     def __getattr__(self, item: Literal["include_zone"]) -> bool: ...
@@ -708,9 +707,7 @@ class ToRhinoGhSection(Section):
     @overload
     def __getattr__(self, item: Literal["include_trees"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["include_district_heating_network"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["include_district_cooling_network"]) -> bool: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class FromRhinoGhSection(Section):
@@ -905,8 +902,7 @@ class ResultSummarySection(Section):
     metrics_photovoltaic_thermal_panels: bool
     metrics_solar_collectors: bool
     metrics_other_renewables: bool
-    metrics_district_heating: bool
-    metrics_district_cooling: bool
+    network_name: str
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
     use_conditioned_floor_area_for_normalisation: bool
@@ -936,9 +932,7 @@ class ResultSummarySection(Section):
     @overload
     def __getattr__(self, item: Literal["metrics_other_renewables"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["metrics_district_heating"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["metrics_district_cooling"]) -> bool: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["include_advanced_analytics"]) -> bool: ...
     @overload
@@ -1170,8 +1164,7 @@ class OptimizationSection(Section):
 
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
-    use_auto_generated_layout: bool
-    network_name: str
+    network_name: str | None
     network_type: str
     buildings: list[str]
     cooling_components: list[str]
@@ -1206,9 +1199,7 @@ class OptimizationNewSection(Section):
     network_lifetime: float
 
     @overload
-    def __getattr__(self, item: Literal["use_auto_generated_layout"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload

@@ -875,12 +875,28 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # Override to dynamically populate choices based on available networks
-        pass
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
+
+        # Check if this parameter should default to (none) instead of most recent network
+        try:
+            self.default_to_none = parser.getboolean(self.section.name, f"{self.name}.default-to-none")
+        except configparser.NoOptionError:
+            self.default_to_none = False
 
     @property
     def _choices(self):
         networks = self._get_available_networks()
         sorted_networks = self._sort_networks_by_modification_time(networks)
+
+        # If nullable, add option to skip network selection
+        if self.nullable:
+            # Always provide skip option for nullable parameters
+            # This prevents "no valid choices" error when no networks exist
+            sorted_networks.insert(0, "(none)")
+
         return sorted_networks
     
     def _get_available_networks(self) -> List[str]:
@@ -899,7 +915,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         # Remove trailing slash/separator if present
         network_type_folder = network_type_folder.rstrip(os.sep)
 
-        edges_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
         nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
         return edges_path, nodes_path
@@ -907,17 +923,14 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def _sort_networks_by_modification_time(self, network_names: List[str]) -> List[str]:
         """Sort network layouts by modification time (most recent first)"""
         modified_times = []
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
         for network_name in network_names:
-            network_time = []
-            for network_type in self._network_types:
-                edges_path, nodes_path = self._get_network_file_paths(network_type, network_name)
-                if os.path.exists(edges_path) and os.path.exists(nodes_path):
-                    sort_time = os.path.getmtime(edges_path)
-                    network_time.append((network_name, sort_time))
-            if network_time:
-                # Get the most recent modification time across network types
-                most_recent_time = max(time for _, time in network_time)
-                modified_times.append((network_name, most_recent_time))
+            # Only check for layout.shp (shared edges file)
+            layout_path = locator.get_network_layout_shapefile(network_name)
+            if os.path.exists(layout_path):
+                sort_time = os.path.getmtime(layout_path)
+                modified_times.append((network_name, sort_time))
 
         # Sort by modification time, most recent first
         modified_times.sort(key=lambda x: x[1], reverse=True)
@@ -927,20 +940,31 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def encode(self, value):
         """
         Validate and encode value.
-        Raises ValueError if the network layout doesn't exist.
+        Raises ValueError if the network layout doesn't exist (unless nullable).
         """
-        # Empty value not allowed
+        # Handle (none) choice for nullable parameters - save special marker
+        if self.nullable and str(value) == "(none)":
+            return '(none)'
+
+        # Handle empty value based on nullable setting
         if not value or str(value).strip() == '':
-            raise ValueError("Network layout is required. Please select a network layout.")
+            if self.nullable:
+                return '(none)'
+            else:
+                raise ValueError("Network layout is required. Please select a network layout.")
 
         available_networks = self._get_available_networks()
 
         # Validate that the network exists
         if str(value) not in available_networks:
-            raise ValueError(
-                f"Network layout '{value}' not found. "
-                f"Available layouts: {', '.join(available_networks)}"
-            )
+            if self.nullable:
+                # If nullable and network doesn't exist, return (none)
+                return '(none)'
+            else:
+                raise ValueError(
+                    f"Network layout '{value}' not found. "
+                    f"Available layouts: {', '.join(available_networks)}"
+                )
         return str(value)
 
     def decode(self, value):
@@ -955,19 +979,47 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         network-type, try to find the most recent network across ALL network types and switch
         network-type accordingly.
         """
+        # Handle (none) marker - user explicitly chose no network
+        if value == '(none)':
+            return ''
+
+        # If empty value (from config file), default based on default_to_none setting
+        if not value or value == '':
+            available_networks = self._get_available_networks()
+            # If no networks, return empty
+            if not available_networks:
+                return ''
+
+            # If default_to_none is True (e.g., optimization-new), return empty
+            if self.default_to_none:
+                return ''
+
+            # Otherwise default to most recent network (e.g., export-to-rhino-gh)
+            sorted_networks = self._sort_networks_by_modification_time(available_networks)
+            if sorted_networks:
+                return sorted_networks[0]
+            else:
+                # No valid networks found (folders exist but missing files)
+                return ''
+
         available_networks = self._get_available_networks()
 
         # If value is provided and valid, return it
-        if value and value in available_networks:
+        if value in available_networks:
             return value
 
-        # Otherwise, return the most recent network (first choice) if available
-        if available_networks:
-            sorted_networks = self._sort_networks_by_modification_time(available_networks)
+        # If value is not found and no networks available, return empty
+        if not available_networks:
+            return ''
+
+        # Default to most recent network if value not found
+        sorted_networks = self._sort_networks_by_modification_time(available_networks)
+        if sorted_networks:
             most_recent_network = sorted_networks[0]
             return most_recent_network
-
-        return ''
+        else:
+            # No valid networks found (folders exist but missing files)
+            return ''
 
 
 class DistrictSupplyTypeParameter(ChoiceParameter):
