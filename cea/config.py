@@ -875,7 +875,10 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # Override to dynamically populate choices based on available networks
-        pass
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
     @property
     def _choices(self):
@@ -927,20 +930,27 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def encode(self, value):
         """
         Validate and encode value.
-        Raises ValueError if the network layout doesn't exist.
+        Raises ValueError if the network layout doesn't exist (unless nullable).
         """
-        # Empty value not allowed
+        # Handle empty value based on nullable setting
         if not value or str(value).strip() == '':
-            raise ValueError("Network layout is required. Please select a network layout.")
+            if self.nullable:
+                return ''
+            else:
+                raise ValueError("Network layout is required. Please select a network layout.")
 
         available_networks = self._get_available_networks()
 
         # Validate that the network exists
         if str(value) not in available_networks:
-            raise ValueError(
-                f"Network layout '{value}' not found. "
-                f"Available layouts: {', '.join(available_networks)}"
-            )
+            if self.nullable:
+                # If nullable and network doesn't exist, allow empty
+                return ''
+            else:
+                raise ValueError(
+                    f"Network layout '{value}' not found. "
+                    f"Available layouts: {', '.join(available_networks)}"
+                )
         return str(value)
 
     def decode(self, value):
@@ -951,17 +961,21 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         If no value provided and no networks found for current network-type, try to find
         the most recent network across ALL network types and switch network-type accordingly.
         """
+        # If nullable and value is empty, respect that
+        if self.nullable and not value:
+            return ''
+
         available_networks = self._get_available_networks()
 
         # If value is provided and valid, return it
         if value and value in available_networks:
             return value
 
-        # Otherwise, return the most recent network (first choice) if available
+        # Otherwise, return the most recent network (first choice) if available (unless nullable)
         if available_networks:
             sorted_networks = self._sort_networks_by_modification_time(available_networks)
             most_recent_network = sorted_networks[0]
-            return most_recent_network
+            return most_recent_network if not self.nullable else ''
 
         return ''
 
