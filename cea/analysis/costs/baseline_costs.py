@@ -179,33 +179,17 @@ def baseline_costs_main(locator, config):
         # Calculate ALL buildings as standalone (ignore district-scale designation)
         all_results = calculate_all_buildings_as_standalone(locator, config, network_types)
 
-        # Create simple DataFrame for output
-        import pandas as pd
-        rows = []
-        for building_name, services in all_results.get('DH', {}).items():
-            for service_name, costs in services.items():
-                rows.append({
-                    'name': building_name,
-                    'service': service_name,
-                    'CAPEX_total_USD': costs.get('CAPEX_total_USD', 0),
-                    'OPEX_fixed_USD': costs.get('OPEX_fixed_USD', 0),
-                    'TAC_USD': costs.get('TAC_USD', 0),
-                    'note': costs.get('note', '')
-                })
-
-        if rows:
-            results_df = pd.DataFrame(rows)
-        else:
-            # Empty results
-            results_df = pd.DataFrame(columns=['name', 'service', 'CAPEX_total_USD', 'OPEX_fixed_USD', 'TAC_USD', 'note'])
+        # Format using the same formatter as normal mode
+        merged_results = merge_network_type_costs(all_results)
+        from cea.analysis.costs.format_simplified import format_output_simplified
+        final_results, detailed_results = format_output_simplified(merged_results, locator)
 
         # Save results
         print(f"\n{'-'*70}")
         print("Saving results...")
         locator.ensure_parent_folder_exists(locator.get_baseline_costs())
-        results_df.to_csv(locator.get_baseline_costs(), index=False, float_format='%.2f')
-        # Also save as detailed (same content for standalone mode)
-        results_df.to_csv(locator.get_baseline_costs_detailed(), index=False, float_format='%.2f')
+        final_results.to_csv(locator.get_baseline_costs(), index=False, float_format='%.2f', na_rep='nan')
+        detailed_results.to_csv(locator.get_baseline_costs_detailed(), index=False, float_format='%.2f', na_rep='nan')
 
         print(f"\n{'='*70}")
         print("COMPLETED (Standalone Mode)")
@@ -426,67 +410,150 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
     # Get all buildings in scenario
     building_names = locator.get_zone_building_names()
     print(f"  Total buildings: {len(building_names)}")
-    print("  Calculating costs for all services (cooling, heating, DHW)...")
 
-    # Read supply.csv to understand what services each building needs
-    import pandas as pd
-    supply_df = pd.read_csv(locator.get_building_supply())
+    # We need to calculate costs for ALL services
+    # Strategy: Call calculate_standalone_building_costs twice (once for DC, once for DH)
+    # Then merge the results
 
-    standalone_results = {}
+    print("  Loading cooling systems (DC)...")
+    # First get cooling system costs
+    try:
+        # Temporarily override config to DC
+        original_network_type = config.system_costs.network_type if hasattr(config.system_costs, 'network_type') else None
 
-    # Process each building independently
-    for building_name in building_names:
-        print(f"    Processing {building_name}...")
+        # Create a domain config for DC (cooling)
+        domain_config_dc = cea.config.Configuration()
+        domain_config_dc.scenario = config.scenario
+        domain_config_dc.optimization_new.network_type = 'DC'
 
-        building_supply = supply_df[supply_df['name'] == building_name].iloc[0]
+        domain_dc = Domain(domain_config_dc, locator)
+        domain_dc.load_buildings()  # Load all buildings (network_name=None means all are standalone)
 
-        # Collect all services for this building
-        building_costs = {}
+        # Set all buildings to standalone mode
+        for building in domain_dc.buildings:
+            building.initial_connectivity_state = 'stand_alone'
 
-        # Check which services this building has (based on supply.csv type codes)
-        has_cooling = building_supply.get('supply_type_cs', '') and building_supply['supply_type_cs'] not in ['NONE', 'SUPPLY_COOLING_AS0']
-        has_heating = building_supply.get('supply_type_hs', '') and building_supply['supply_type_hs'] not in ['NONE', 'SUPPLY_HEATING_AS0']
-        has_dhw = building_supply.get('supply_type_dhw', '') and building_supply['supply_type_dhw'] not in ['NONE', 'SUPPLY_HOTWATER_AS0']
+        # Suppress potentials loading messages
+        import sys, io
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            domain_dc.load_potentials()
+            domain_dc._initialize_energy_system_descriptor_classes()
+        finally:
+            sys.stdout = old_stdout
 
-        # For standalone mode, we just return placeholder results
-        # The actual cost calculation would require loading domains which causes the error
-        # So we'll just indicate which services exist
-        if has_cooling:
-            building_costs[f'{building_name}_cs'] = {
-                'CAPEX_total_USD': 0,
-                'OPEX_fixed_USD': 0,
-                'TAC_USD': 0,
-                'note': 'Standalone mode - district systems treated as building-scale'
-            }
+        building_potentials_dc = Building.distribute_building_potentials(
+            domain_dc.energy_potentials, domain_dc.buildings
+        )
 
-        if has_heating:
-            building_costs[f'{building_name}_hs'] = {
-                'CAPEX_total_USD': 0,
-                'OPEX_fixed_USD': 0,
-                'TAC_USD': 0,
-                'note': 'Standalone mode - district systems treated as building-scale'
-            }
+        # Calculate cooling costs for each building
+        results_dc = {}
+        for building in domain_dc.buildings:
+            building.calculate_supply_system(building_potentials_dc[building.identifier])
+            if building.stand_alone_supply_system:
+                # Extract cooling service costs - use the same format as calculate_standalone_building_costs
+                supply_system = building.stand_alone_supply_system
+                costs = extract_costs_from_supply_system(supply_system, 'DC', building)
 
-        if has_dhw:
-            building_costs[f'{building_name}_ww'] = {
-                'CAPEX_total_USD': 0,
-                'OPEX_fixed_USD': 0,
-                'TAC_USD': 0,
-                'note': 'Standalone mode - district systems treated as building-scale'
-            }
+                results_dc[building.identifier] = {
+                    'supply_system': supply_system,
+                    'building': building,
+                    'costs': costs,
+                    'is_network': False,
+                    'in_dc_network': False,
+                    'in_dh_network': False
+                }
 
-        if building_costs:
-            standalone_results[building_name] = building_costs
+        print(f"    ✓ Calculated cooling costs for {len(results_dc)} buildings with systems")
+    except Exception as e:
+        print(f"    ! No cooling systems: {e}")
+        results_dc = {}
 
-    # For output compatibility, save results under both DH and DC
-    # (both contain the same data - all services for all buildings)
+    print("  Loading heating systems (DH)...")
+    # Then get heating/DHW system costs
+    try:
+        domain_config_dh = cea.config.Configuration()
+        domain_config_dh.scenario = config.scenario
+        domain_config_dh.optimization_new.network_type = 'DH'
+
+        domain_dh = Domain(domain_config_dh, locator)
+        domain_dh.load_buildings()
+
+        # Set all buildings to standalone mode
+        for building in domain_dh.buildings:
+            building.initial_connectivity_state = 'stand_alone'
+
+        # Suppress potentials loading messages
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            domain_dh.load_potentials()
+            domain_dh._initialize_energy_system_descriptor_classes()
+        finally:
+            sys.stdout = old_stdout
+
+        building_potentials_dh = Building.distribute_building_potentials(
+            domain_dh.energy_potentials, domain_dh.buildings
+        )
+
+        # Calculate heating/DHW costs for each building
+        results_dh = {}
+        for building in domain_dh.buildings:
+            building.calculate_supply_system(building_potentials_dh[building.identifier])
+            if building.stand_alone_supply_system:
+                # Extract heating/DHW service costs - use the same format
+                supply_system = building.stand_alone_supply_system
+                costs = extract_costs_from_supply_system(supply_system, 'DH', building)
+
+                results_dh[building.identifier] = {
+                    'supply_system': supply_system,
+                    'building': building,
+                    'costs': costs,
+                    'is_network': False,
+                    'in_dc_network': False,
+                    'in_dh_network': False
+                }
+
+        print(f"    ✓ Calculated heating/DHW costs for {len(results_dh)} buildings with systems")
+    except Exception as e:
+        print(f"    ! No heating systems: {e}")
+        results_dh = {}
+
+    # Merge results from both network types
+    # Need to merge costs dictionaries properly (not just overwrite)
+    merged_results = {}
+    all_building_names = set(list(results_dc.keys()) + list(results_dh.keys()))
+
+    for building_name in all_building_names:
+        # Start with base structure from one of the results
+        if building_name in results_dc:
+            merged_results[building_name] = results_dc[building_name].copy()
+            merged_costs = results_dc[building_name]['costs'].copy()
+        elif building_name in results_dh:
+            merged_results[building_name] = results_dh[building_name].copy()
+            merged_costs = results_dh[building_name]['costs'].copy()
+        else:
+            continue
+
+        # Merge costs from the other network type if present
+        if building_name in results_dc and building_name in results_dh:
+            # Merge costs from DH results into DC costs
+            dh_costs = results_dh[building_name]['costs']
+            for service_name, service_costs in dh_costs.items():
+                if service_name not in merged_costs:
+                    merged_costs[service_name] = service_costs
+                # If service exists in both, keep one (shouldn't happen with DC vs DH)
+
+        merged_results[building_name]['costs'] = merged_costs
+
+    # Return results only under DC to avoid duplicates in output
+    # DC is used as the "primary" network type for standalone-only mode
     results_by_network_type = {
-        'DH': standalone_results.copy(),
-        'DC': standalone_results.copy()
+        'DC': merged_results
     }
 
     print("  ✓ Standalone cost calculations completed")
-    print(f"  Note: Standalone-only mode is a simplified calculation")
     return results_by_network_type
 
 
