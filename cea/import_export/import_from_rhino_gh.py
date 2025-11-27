@@ -297,7 +297,7 @@ def main(config: cea.config.Configuration):
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire import files from Rhino/Grasshopper to CEA is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+    print('The entire import files from Rhino/Grasshopper to CEA is now completed - time elapsed: %.2f seconds' % time_elapsed)
 
     if network_name:
         print(f'\nNetwork layout saved as: {network_name}')
