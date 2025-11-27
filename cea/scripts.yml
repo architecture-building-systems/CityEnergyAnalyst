@@ -70,7 +70,7 @@ Solar Radiation Analysis:
       It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion
       to fast assess building solar exposure in dense urban environments.
       
-      Reference: https://doi.org/10.1016/j.buildenv.2022.109937
+      Reference: https://doi.org/10.1016/j.buildenv.2022.109937 https://doi.org/10.1088/1742-6596/3140/4/042024
     interfaces: [cli, dashboard]
     module: cea.resources.radiationCRAX.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
