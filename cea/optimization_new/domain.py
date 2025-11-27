@@ -998,14 +998,8 @@ def main(config: cea.config.Configuration):
     # If using an existing network layout (not auto-generated), load it FIRST to identify district-connected buildings
     # Note: We still load ALL buildings in the scenario, not just those in the network
     # Buildings not in the network will be optimized as standalone systems
-    if not config.optimization_new.use_auto_generated_layout:
+    if config.optimization_new.network_name:
         # User-defined network layout mode
-        if not config.optimization_new.network_name:
-            raise ValueError(
-                "When 'use_auto_generated_layout' is False, you must specify a 'network-name'.\n"
-                "Please select an existing network layout from the dropdown or set 'use_auto_generated_layout' to True."
-            )
-
         print(f"\nUsing user-defined network layout: '{config.optimization_new.network_name}'")
         start_time = time.time()
         current_domain.load_base_network()
@@ -1030,7 +1024,7 @@ def main(config: cea.config.Configuration):
     print(f"Time elapsed for loading buildings in domain: {end_time - start_time} s")
 
     # If using user-defined network layout, validate and apply it
-    if not config.optimization_new.use_auto_generated_layout and hasattr(current_domain, 'base_building_to_network'):
+    if config.optimization_new.network_name and hasattr(current_domain, 'base_building_to_network'):
         print("\n" + "="*80)
         print(f"Validating network layout '{config.optimization_new.network_name}'")
         print("="*80)
@@ -1122,7 +1116,7 @@ def main(config: cea.config.Configuration):
     # If using auto-generated layout, just report connectivity from Building Properties/Supply settings
     # The network layout will be generated dynamically during optimization using Steiner tree algorithm
     # No need to load_base_network() - it would fail trying to load non-existent files
-    if config.optimization_new.use_auto_generated_layout:
+    if not config.optimization_new.network_name:
         print("\nConnectivity determined from Building Properties/Supply settings; layout will be auto-generated:")
         network_buildings = [b.identifier for b in current_domain.buildings if b.initial_connectivity_state != 'stand_alone']
         standalone_buildings = [b.identifier for b in current_domain.buildings if b.initial_connectivity_state == 'stand_alone']

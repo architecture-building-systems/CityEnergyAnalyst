@@ -880,6 +880,12 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         except configparser.NoOptionError:
             self.nullable = False
 
+        # Check if this parameter should default to (none) instead of most recent network
+        try:
+            self.default_to_none = parser.getboolean(self.section.name, f"{self.name}.default-to-none")
+        except configparser.NoOptionError:
+            self.default_to_none = False
+
     @property
     def _choices(self):
         networks = self._get_available_networks()
