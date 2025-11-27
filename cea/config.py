@@ -884,6 +884,13 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
     def _choices(self):
         networks = self._get_available_networks()
         sorted_networks = self._sort_networks_by_modification_time(networks)
+
+        # If nullable, add option to skip network selection
+        if self.nullable:
+            # Always provide skip option for nullable parameters
+            # This prevents "no valid choices" error when no networks exist
+            sorted_networks.insert(0, "(none)")
+
         return sorted_networks
     
     def _get_available_networks(self) -> List[str]:
@@ -932,10 +939,14 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         Validate and encode value.
         Raises ValueError if the network layout doesn't exist (unless nullable).
         """
+        # Handle (none) choice for nullable parameters - save special marker
+        if self.nullable and str(value) == "(none)":
+            return '(none)'
+
         # Handle empty value based on nullable setting
         if not value or str(value).strip() == '':
             if self.nullable:
-                return ''
+                return '(none)'
             else:
                 raise ValueError("Network layout is required. Please select a network layout.")
 
@@ -944,8 +955,8 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         # Validate that the network exists
         if str(value) not in available_networks:
             if self.nullable:
-                # If nullable and network doesn't exist, allow empty
-                return ''
+                # If nullable and network doesn't exist, return (none)
+                return '(none)'
             else:
                 raise ValueError(
                     f"Network layout '{value}' not found. "
@@ -961,23 +972,34 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         If no value provided and no networks found for current network-type, try to find
         the most recent network across ALL network types and switch network-type accordingly.
         """
-        # If nullable and value is empty, respect that
-        if self.nullable and not value:
+        # Handle (none) marker - user explicitly chose no network
+        if value == '(none)':
             return ''
+
+        # If empty value (from config file), default to most recent
+        if not value or value == '':
+            available_networks = self._get_available_networks()
+            # If no networks, return empty
+            if not available_networks:
+                return ''
+            # If networks exist, default to most recent
+            sorted_networks = self._sort_networks_by_modification_time(available_networks)
+            return sorted_networks[0]
 
         available_networks = self._get_available_networks()
 
         # If value is provided and valid, return it
-        if value and value in available_networks:
+        if value in available_networks:
             return value
 
-        # Otherwise, return the most recent network (first choice) if available (unless nullable)
-        if available_networks:
-            sorted_networks = self._sort_networks_by_modification_time(available_networks)
-            most_recent_network = sorted_networks[0]
-            return most_recent_network if not self.nullable else ''
+        # If value is not found and no networks available, return empty
+        if not available_networks:
+            return ''
 
-        return ''
+        # Default to most recent network if value not found
+        sorted_networks = self._sort_networks_by_modification_time(available_networks)
+        most_recent_network = sorted_networks[0]
+        return most_recent_network
 
 
 class DatabasePathParameter(Parameter):
