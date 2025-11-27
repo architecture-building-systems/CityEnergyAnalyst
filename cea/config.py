@@ -982,13 +982,18 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         if value == '(none)':
             return ''
 
-        # If empty value (from config file), default to most recent
+        # If empty value (from config file), default based on default_to_none setting
         if not value or value == '':
             available_networks = self._get_available_networks()
             # If no networks, return empty
             if not available_networks:
                 return ''
-            # If networks exist, default to most recent
+
+            # If default_to_none is True (e.g., optimization-new), return empty
+            if self.default_to_none:
+                return ''
+
+            # Otherwise default to most recent network (e.g., export-to-rhino-gh)
             sorted_networks = self._sort_networks_by_modification_time(available_networks)
             return sorted_networks[0]
 
