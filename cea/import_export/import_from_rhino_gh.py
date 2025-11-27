@@ -133,7 +133,7 @@ def exec_import_csv_from_rhino(locator):
 
         if dh_edges_exist and dc_edges_exist:
             # Both exist - merge and remove duplicates
-            print(f"Merging DH and DC edges into shared layout.shp")
+            print("Merging DH and DC edges into shared layout.shp")
 
             # Read both CSV files
             dh_edges_df = pd.read_csv(dh_edges_csv_path)
