@@ -547,7 +547,7 @@ class DemandSection(Section):
 
 class SystemCostsSection(Section):
     """Typed section for system-costs configuration"""
-    network_name: str
+    network_name: str | None
     network_type: list[str]
     supply_type_cs: str
     supply_type_hs: str
@@ -562,7 +562,7 @@ class SystemCostsSection(Section):
     panels_on_wall_west: str
 
     @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
     @overload
