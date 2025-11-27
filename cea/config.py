@@ -915,7 +915,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         # Remove trailing slash/separator if present
         network_type_folder = network_type_folder.rstrip(os.sep)
 
-        edges_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
         nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
         return edges_path, nodes_path
