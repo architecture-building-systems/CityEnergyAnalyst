@@ -65,12 +65,8 @@ def exec_import_csv_from_rhino(locator):
     :type config: cea.config.Configuration
     :param cea_scenario: path to the CEA scenario to be assessed using CEA
     :type cea_scenario: file path
-    :return:
+    :return: network_name if network files were imported, None otherwise
     """
-    # Generate unique network name
-    network_name = generate_network_name(locator)
-    print(f"Importing network layout as: {network_name}")
-
     # Acquire the user inputs from config
     export_folder_path = locator.get_export_folder()
 
@@ -85,6 +81,19 @@ def exec_import_csv_from_rhino(locator):
     dh_nodes_csv_path = os.path.join(input_path, 'dh_nodes_in.csv')
     dc_edges_csv_path = os.path.join(input_path, 'dc_edges_in.csv')
     dc_nodes_csv_path = os.path.join(input_path, 'dc_nodes_in.csv')
+
+    # Check if any network files exist
+    network_files_exist = (os.path.isfile(dh_edges_csv_path) or
+                          os.path.isfile(dh_nodes_csv_path) or
+                          os.path.isfile(dc_edges_csv_path) or
+                          os.path.isfile(dc_nodes_csv_path))
+
+    # Only generate network name if network files exist
+    if network_files_exist:
+        network_name = generate_network_name(locator)
+        print(f"Importing network layout as: {network_name}")
+    else:
+        network_name = None
 
     # Create the CEA Directory for the new scenario
     input_path = locator.get_input_folder()
@@ -123,85 +132,87 @@ def exec_import_csv_from_rhino(locator):
         csv_xlsx_to_shapefile(trees_csv_path, trees_path, 'trees.shp', reference_txt_path)
 
     # Import network edges - merge DH and DC edges into single layout.shp
-    dh_edges_exist = os.path.isfile(dh_edges_csv_path)
-    dc_edges_exist = os.path.isfile(dc_edges_csv_path)
+    # Only proceed if we have a network name (i.e., network files exist)
+    if network_name:
+        dh_edges_exist = os.path.isfile(dh_edges_csv_path)
+        dc_edges_exist = os.path.isfile(dc_edges_csv_path)
 
-    if dh_edges_exist or dc_edges_exist:
-        # Network folder (top level - shared between DH and DC)
-        network_folder = locator.get_thermal_network_folder_network_name_folder(network_name)
-        os.makedirs(network_folder, exist_ok=True)
+        if dh_edges_exist or dc_edges_exist:
+            # Network folder (top level - shared between DH and DC)
+            network_folder = locator.get_thermal_network_folder_network_name_folder(network_name)
+            os.makedirs(network_folder, exist_ok=True)
 
-        if dh_edges_exist and dc_edges_exist:
-            # Both exist - merge and remove duplicates
-            print(f"Merging DH and DC edges into shared layout.shp")
+            if dh_edges_exist and dc_edges_exist:
+                # Both exist - merge and remove duplicates
+                print(f"Merging DH and DC edges into shared layout.shp")
 
-            # Read both CSV files
-            dh_edges_df = pd.read_csv(dh_edges_csv_path)
-            dc_edges_df = pd.read_csv(dc_edges_csv_path)
+                # Read both CSV files
+                dh_edges_df = pd.read_csv(dh_edges_csv_path)
+                dc_edges_df = pd.read_csv(dc_edges_csv_path)
 
-            # Concatenate
-            merged_edges_df = pd.concat([dh_edges_df, dc_edges_df], ignore_index=True)
+                # Concatenate
+                merged_edges_df = pd.concat([dh_edges_df, dc_edges_df], ignore_index=True)
 
-            # Remove duplicates based on geometry column only
-            if 'geometry' in merged_edges_df.columns:
-                merged_edges_df = merged_edges_df.drop_duplicates(subset=['geometry'], keep='first')
+                # Remove duplicates based on geometry column only
+                if 'geometry' in merged_edges_df.columns:
+                    merged_edges_df = merged_edges_df.drop_duplicates(subset=['geometry'], keep='first')
 
-            # Rebuild name column to ensure unique names following PIPExxx format
-            merged_edges_df['name'] = [f'PIPE{str(i+1).zfill(3)}' for i in range(len(merged_edges_df))]
+                # Rebuild name column to ensure unique names following PIPExxx format
+                merged_edges_df['name'] = [f'PIPE{str(i+1).zfill(3)}' for i in range(len(merged_edges_df))]
 
-            # Save merged CSV temporarily
-            merged_csv_path = os.path.join(input_path, 'merged_edges_temp.csv')
-            merged_edges_df.to_csv(merged_csv_path, index=False)
+                # Save merged CSV temporarily
+                merged_csv_path = os.path.join(input_path, 'merged_edges_temp.csv')
+                merged_edges_df.to_csv(merged_csv_path, index=False)
 
-            # Convert to shapefile as layout.shp
-            csv_xlsx_to_shapefile(merged_csv_path, network_folder, 'layout.shp', reference_txt_path, geometry_type="polyline")
+                # Convert to shapefile as layout.shp
+                csv_xlsx_to_shapefile(merged_csv_path, network_folder, 'layout.shp', reference_txt_path, geometry_type="polyline")
 
-            # Clean up temporary file
-            os.remove(merged_csv_path)
-        elif dh_edges_exist:
-            # Only DH edges exist
-            print(f"Importing DH edges as layout.shp")
+                # Clean up temporary file
+                os.remove(merged_csv_path)
+            elif dh_edges_exist:
+                # Only DH edges exist
+                print("Importing DH edges as layout.shp")
 
-            # Read and rebuild name column
-            dh_edges_df = pd.read_csv(dh_edges_csv_path)
-            dh_edges_df['name'] = [f'PIPE{str(i+1).zfill(3)}' for i in range(len(dh_edges_df))]
+                # Read and rebuild name column
+                dh_edges_df = pd.read_csv(dh_edges_csv_path)
+                dh_edges_df['name'] = [f'PIPE{str(i+1).zfill(3)}' for i in range(len(dh_edges_df))]
 
-            # Save temporarily and convert
-            temp_csv_path = os.path.join(input_path, 'dh_edges_temp.csv')
-            dh_edges_df.to_csv(temp_csv_path, index=False)
-            csv_xlsx_to_shapefile(temp_csv_path, network_folder, 'layout.shp', reference_txt_path, geometry_type="polyline")
-            os.remove(temp_csv_path)
-        else:
-            # Only DC edges exist
-            print(f"Importing DC edges as layout.shp")
+                # Save temporarily and convert
+                temp_csv_path = os.path.join(input_path, 'dh_edges_temp.csv')
+                dh_edges_df.to_csv(temp_csv_path, index=False)
+                csv_xlsx_to_shapefile(temp_csv_path, network_folder, 'layout.shp', reference_txt_path, geometry_type="polyline")
+                os.remove(temp_csv_path)
+            else:
+                # Only DC edges exist
+                print("Importing DC edges as layout.shp")
 
-            # Read and rebuild name column
-            dc_edges_df = pd.read_csv(dc_edges_csv_path)
-            dc_edges_df['name'] = [f'PIPE{str(i+1).zfill(3)}' for i in range(len(dc_edges_df))]
+                # Read and rebuild name column
+                dc_edges_df = pd.read_csv(dc_edges_csv_path)
+                dc_edges_df['name'] = [f'PIPE{str(i+1).zfill(3)}' for i in range(len(dc_edges_df))]
 
-            # Save temporarily and convert
-            temp_csv_path = os.path.join(input_path, 'dc_edges_temp.csv')
-            dc_edges_df.to_csv(temp_csv_path, index=False)
-            csv_xlsx_to_shapefile(temp_csv_path, network_folder, 'layout.shp', reference_txt_path, geometry_type="polyline")
-            os.remove(temp_csv_path)
+                # Save temporarily and convert
+                temp_csv_path = os.path.join(input_path, 'dc_edges_temp.csv')
+                dc_edges_df.to_csv(temp_csv_path, index=False)
+                csv_xlsx_to_shapefile(temp_csv_path, network_folder, 'layout.shp', reference_txt_path, geometry_type="polyline")
+                os.remove(temp_csv_path)
 
-    # Import DH nodes (type-specific)
-    if os.path.isfile(dh_nodes_csv_path):
-        dh_layout_folder = os.path.join(
-            locator.get_output_thermal_network_type_folder('DH', network_name),
-            'layout'
-        )
-        os.makedirs(dh_layout_folder, exist_ok=True)
-        csv_xlsx_to_shapefile(dh_nodes_csv_path, dh_layout_folder, 'nodes.shp', reference_txt_path, geometry_type="point")
+        # Import DH nodes (type-specific)
+        if os.path.isfile(dh_nodes_csv_path):
+            dh_layout_folder = os.path.join(
+                locator.get_output_thermal_network_type_folder('DH', network_name),
+                'layout'
+            )
+            os.makedirs(dh_layout_folder, exist_ok=True)
+            csv_xlsx_to_shapefile(dh_nodes_csv_path, dh_layout_folder, 'nodes.shp', reference_txt_path, geometry_type="point")
 
-    # Import DC nodes (type-specific)
-    if os.path.isfile(dc_nodes_csv_path):
-        dc_layout_folder = os.path.join(
-            locator.get_output_thermal_network_type_folder('DC', network_name),
-            'layout'
-        )
-        os.makedirs(dc_layout_folder, exist_ok=True)
-        csv_xlsx_to_shapefile(dc_nodes_csv_path, dc_layout_folder, 'nodes.shp', reference_txt_path, geometry_type="point")
+        # Import DC nodes (type-specific)
+        if os.path.isfile(dc_nodes_csv_path):
+            dc_layout_folder = os.path.join(
+                locator.get_output_thermal_network_type_folder('DC', network_name),
+                'layout'
+            )
+            os.makedirs(dc_layout_folder, exist_ok=True)
+            csv_xlsx_to_shapefile(dc_nodes_csv_path, dc_layout_folder, 'nodes.shp', reference_txt_path, geometry_type="point")
 
     return network_name
 
