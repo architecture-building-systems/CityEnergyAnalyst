@@ -113,6 +113,209 @@ def get_component_codes_from_categories(locator, component_categories, network_t
     return component_codes
 
 
+def get_dhw_component_fallback(locator, building_identifier, feedstock):
+    """
+    Get fallback DHW component code based on feedstock type.
+
+    This is used when SUPPLY_HOTWATER assembly doesn't specify components.
+    The function matches the feedstock to appropriate boiler type from COMPONENTS database.
+
+    :param locator: InputLocator instance
+    :param building_identifier: Building name (for error messages)
+    :param feedstock: Feedstock code from SUPPLY_HOTWATER assembly ('GRID', 'NATURALGAS', etc.)
+    :return: Component code string (e.g., 'BO5' for electrical boiler) or None if no match
+    """
+    import pandas as pd
+
+    # Map feedstock to fuel_code in BOILERS.csv
+    # Based on databases/SG/COMPONENTS/CONVERSION/BOILERS.csv
+    feedstock_to_fuel = {
+        'GRID': 'E230AC',      # Electrical boiler (BO5)
+        'NATURALGAS': 'Cgas',  # Natural gas boiler (BO1/BO3)
+        'Cgas': 'Cgas',        # Direct fuel code
+        'OIL': 'Coil',         # Oil boiler (BO2)
+        'Coil': 'Coil',        # Direct fuel code
+        'COAL': 'Ccoa',        # Coal boiler (BO4)
+        'Ccoa': 'Ccoa',        # Direct fuel code
+        'WOOD': 'Cwod',        # Wood boiler (BO6)
+        'Cwod': 'Cwod',        # Direct fuel code
+    }
+
+    fuel_code = feedstock_to_fuel.get(feedstock)
+    if not fuel_code:
+        print(f"    ⚠ {building_identifier}: Cannot find DHW component for feedstock '{feedstock}'")
+        return None
+
+    # Read boilers database
+    boilers_path = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
+    if not pd.io.common.file_exists(boilers_path):
+        print(f"    ⚠ {building_identifier}: BOILERS database not found at {boilers_path}")
+        return None
+
+    boilers_df = pd.read_csv(boilers_path)
+
+    # Find matching boiler by fuel_code
+    matching_boilers = boilers_df[boilers_df['fuel_code'] == fuel_code]
+
+    if matching_boilers.empty:
+        print(f"    ⚠ {building_identifier}: No boiler found for fuel '{fuel_code}'")
+        return None
+
+    # Get the first matching boiler code
+    # For electrical: BO5
+    # For natural gas: BO1 (conventional) or BO3 (condensing) - prefer BO1 for simplicity
+    # For oil: BO2
+    component_code = matching_boilers['code'].iloc[0]
+
+    return component_code
+
+
+def apply_dhw_component_fallback(locator, building, supply_system):
+    """
+    Apply DHW component fallback when SUPPLY_HOTWATER assembly has no components.
+
+    This function:
+    1. Reads the building's supply_type_dhw from supply.csv
+    2. Gets the feedstock from SUPPLY_HOTWATER.csv
+    3. Matches feedstock to boiler component (e.g., GRID → BO5)
+    4. Creates a synthetic DHW supply system with that component
+    5. Calculates and returns costs for DHW service
+
+    :param locator: InputLocator instance
+    :param building: Building instance (or minimal building with just .identifier attribute)
+    :param supply_system: Existing heating supply system (for reference, can be None)
+    :return: dict of DHW service costs or None if fallback fails
+    """
+    import pandas as pd
+    from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+    from cea.optimization_new.supplySystem import SupplySystem
+    from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+    from cea.optimization_new.domain import Domain
+    from cea.optimization_new.component import Component
+    import cea.config
+
+    # Read building's DHW supply system code from supply.csv
+    supply_systems_df = pd.read_csv(locator.get_building_supply())
+    building_supply = supply_systems_df[supply_systems_df['name'] == building.identifier]
+
+    if building_supply.empty or 'supply_type_dhw' not in building_supply.columns:
+        return None
+
+    dhw_supply_code = building_supply['supply_type_dhw'].values[0]
+
+    # Read SUPPLY_HOTWATER.csv to get feedstock
+    dhw_assemblies_path = locator.get_database_assemblies_supply_hot_water()
+    if not pd.io.common.file_exists(dhw_assemblies_path):
+        return None
+
+    dhw_assemblies_df = pd.read_csv(dhw_assemblies_path)
+    dhw_assembly = dhw_assemblies_df[dhw_assemblies_df['code'] == dhw_supply_code]
+
+    if dhw_assembly.empty:
+        return None
+
+    feedstock = dhw_assembly['feedstock'].values[0]
+
+    # Skip if feedstock is NONE (no DHW system)
+    if not feedstock or feedstock == 'NONE':
+        return None
+
+    # Get fallback component code based on feedstock
+    component_code = get_dhw_component_fallback(locator, building.identifier, feedstock)
+    if not component_code:
+        return None
+
+    # Read DHW demand to size the system
+    demand_df = pd.read_csv(locator.get_total_demand())
+    building_demand = demand_df[demand_df['name'] == building.identifier]
+
+    if building_demand.empty:
+        return None
+
+    # Get DHW demand profile from building's demand file
+    # Use Qww_sys_kWh column which is the hourly DHW demand
+    building_demand_file = locator.get_demand_results_file(building.identifier)
+    if not pd.io.common.file_exists(building_demand_file):
+        return None
+
+    hourly_demand_df = pd.read_csv(building_demand_file)
+    if 'Qww_sys_kWh' not in hourly_demand_df.columns:
+        return None
+
+    dhw_demand_profile = hourly_demand_df['Qww_sys_kWh']  # pandas Series, not .values (numpy array)
+
+    # Skip if zero demand
+    if dhw_demand_profile.max() == 0:
+        return None
+
+    # Create DHW demand flow
+    # DHW typically requires medium temperature water (T60W, 60°C)
+    # Boilers with T_water_out_rating=80°C will now produce T60W after energyCarrier.py fix
+    # (when equidistant from T60W and T100W, prefer lower temperature to minimise energy waste)
+    dhw_demand_flow = EnergyFlow(
+        input_category='primary',
+        output_category='consumer',
+        energy_carrier_code='T60W',  # Medium temperature for DHW (physically correct)
+        energy_flow_profile=dhw_demand_profile
+    )
+
+    # Initialize Component class if not already done
+    # This is needed to map component codes to their energy carriers
+    if Component.code_to_class_mapping is None:
+        # Create a minimal domain just to initialize Component class
+        domain_config_dhw = cea.config.Configuration()
+        # Get scenario from locator (locator.scenario is the current scenario path)
+        domain_config_dhw.scenario = locator.scenario
+        temp_domain = Domain(domain_config_dhw, locator)
+        Component.initialize_class_variables(temp_domain)
+
+    # Build supply system with fallback component
+    max_dhw_flow = dhw_demand_flow.isolate_peak()
+    user_component_selection = {
+        'primary': [component_code],
+        'secondary': [],
+        'tertiary': []
+    }
+
+    # Build system structure
+    system_structure = SupplySystemStructure(
+        max_supply_flow=max_dhw_flow,
+        available_potentials={},  # No potentials for DHW fallback
+        user_component_selection=user_component_selection,
+        target_building_or_network=building.identifier + '_dhw'
+    )
+    system_structure.build()
+
+    # Create and evaluate DHW supply system
+    dhw_supply_system = SupplySystem(
+        system_structure,
+        system_structure.capacity_indicators,
+        dhw_demand_flow
+    )
+
+    try:
+        dhw_supply_system.evaluate()
+    except Exception as e:
+        print(f"    ⚠ {building.identifier}: Failed to evaluate DHW fallback system - {e}")
+        return None
+
+    # Extract costs from DHW supply system
+    # Use 'DH' as network_type to indicate this is a heating-related service
+    dhw_costs = extract_costs_from_supply_system(dhw_supply_system, 'DH', building)
+
+    # Rename services to include '_ww' suffix for DHW
+    dhw_costs_renamed = {}
+    for service_name, service_costs in dhw_costs.items():
+        # Change service suffix from '_hs' to '_ww'
+        if '_hs' in service_name:
+            new_service_name = service_name.replace('_hs', '_ww')
+            dhw_costs_renamed[new_service_name] = service_costs
+        else:
+            dhw_costs_renamed[service_name] = service_costs
+
+    return dhw_costs_renamed
+
+
 
 
 def validate_network_results_exist(locator, network_name, network_type):
@@ -478,7 +681,52 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
         domain_config_dh.optimization_new.network_type = 'DH'
 
         domain_dh = Domain(domain_config_dh, locator)
-        domain_dh.load_buildings()
+
+        # Try to load buildings - this may fail if ALL buildings have zero heating demand
+        # (e.g., Singapore scenario where all buildings have SUPPLY_HEATING_AS0 with no components)
+        try:
+            domain_dh.load_buildings()
+        except ValueError as e:
+            if "Network type mismatch" in str(e):
+                # All buildings have zero heating demand - but may have DHW demand
+                # Skip loading DH domain and apply DHW fallback for all buildings later
+                print("    ⚠ All buildings have zero heating demand")
+                print("      Attempting DHW-only cost calculation...")
+
+                # Manually process DHW for each building without loading DH domain
+                building_names = locator.get_zone_building_names()
+                results_dh = {}
+                dhw_fallback_count = 0
+
+                for building_name in building_names:
+                    # Create minimal building object for DHW fallback
+                    class MinimalBuilding:
+                        def __init__(self, identifier):
+                            self.identifier = identifier
+                            self.initial_connectivity_state = 'stand_alone'  # Required by map_component_to_service
+
+                    minimal_building = MinimalBuilding(building_name)
+                    dhw_costs = apply_dhw_component_fallback(locator, minimal_building, None)
+
+                    if dhw_costs:
+                        results_dh[building_name] = {
+                            'supply_system': None,
+                            'building': minimal_building,
+                            'costs': dhw_costs,
+                            'is_network': False,
+                            'in_dc_network': False,
+                            'in_dh_network': False
+                        }
+                        dhw_fallback_count += 1
+
+                if dhw_fallback_count > 0:
+                    print(f"    ✓ Applied DHW component fallback for {dhw_fallback_count} building(s)")
+
+                # Skip the rest of DH processing and jump to merging results
+                raise StopIteration("DHW-only processing complete")
+            else:
+                # Re-raise other errors
+                raise
 
         # Set all buildings to standalone mode
         for building in domain_dh.buildings:
@@ -499,12 +747,50 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
 
         # Calculate heating/DHW costs for each building
         results_dh = {}
+        dhw_fallback_count = 0
         for building in domain_dh.buildings:
-            building.calculate_supply_system(building_potentials_dh[building.identifier])
+            try:
+                building.calculate_supply_system(building_potentials_dh[building.identifier])
+            except ValueError as e:
+                # Skip buildings with zero heating demand or no heating components
+                if "Network type mismatch" in str(e) or "None of the components chosen" in str(e):
+                    # Building has zero heating demand - but may still have DHW demand
+                    # Try to apply DHW fallback directly
+                    dhw_costs = apply_dhw_component_fallback(locator, building, None)
+                    if dhw_costs:
+                        results_dh[building.identifier] = {
+                            'supply_system': None,
+                            'building': building,
+                            'costs': dhw_costs,
+                            'is_network': False,
+                            'in_dc_network': False,
+                            'in_dh_network': False
+                        }
+                        dhw_fallback_count += 1
+                    continue
+                else:
+                    # Re-raise other errors
+                    raise
+
             if building.stand_alone_supply_system:
                 # Extract heating/DHW service costs - use the same format
                 supply_system = building.stand_alone_supply_system
                 costs = extract_costs_from_supply_system(supply_system, 'DH', building)
+
+                # Check if DHW costs are missing and apply fallback
+                has_dhw_costs = any('_ww' in service_name for service_name in costs.keys())
+                if not has_dhw_costs:
+                    # Check if building has DHW demand
+                    demand_df = pd.read_csv(locator.get_total_demand())
+                    building_demand = demand_df[demand_df['name'] == building.identifier]
+                    if not building_demand.empty:
+                        qww = building_demand['Qww_sys_MWhyr'].values[0] if 'Qww_sys_MWhyr' in building_demand.columns else 0
+                        if qww > 0:
+                            # Building has DHW demand but no costs - apply fallback
+                            dhw_costs = apply_dhw_component_fallback(locator, building, supply_system)
+                            if dhw_costs:
+                                costs.update(dhw_costs)
+                                dhw_fallback_count += 1
 
                 results_dh[building.identifier] = {
                     'supply_system': supply_system,
@@ -516,6 +802,12 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
                 }
 
         print(f"    ✓ Calculated heating/DHW costs for {len(results_dh)} buildings with systems")
+        if dhw_fallback_count > 0:
+            print(f"    ✓ Applied DHW component fallback for {dhw_fallback_count} building(s)")
+    except StopIteration as e:
+        # DHW-only processing completed successfully (from line 710)
+        # results_dh is already populated, just continue
+        pass
     except Exception as e:
         print(f"    ! No heating systems: {e}")
         results_dh = {}
