@@ -1295,12 +1295,17 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
             options_in_use = self._get_supply_options_in_use()
 
             # Prioritize: options in use first, then rest alphabetically within each scale
+            # Add scale suffix to each option for display
             result = []
             for scale in ['BUILDING', 'DISTRICT']:
                 scale_options = [opt for opt in all_options if all_options[opt] == scale]
                 in_use = sorted([opt for opt in scale_options if opt in options_in_use])
                 not_in_use = sorted([opt for opt in scale_options if opt not in options_in_use])
-                result.extend(in_use + not_in_use)
+
+                # Add scale label suffix for display
+                scale_label = '(building)' if scale == 'BUILDING' else '(district)'
+                labeled_options = [f"{opt} {scale_label}" for opt in (in_use + not_in_use)]
+                result.extend(labeled_options)
 
             # Always add default option at the end to trigger component-based fallback
             result.append("Use component settings below")
@@ -1362,6 +1367,16 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
         return supply_df[column].unique().tolist()
 
+    def _strip_scale_label(self, value):
+        """Strip scale label suffix like '(building)' or '(district)' from value"""
+        if not value:
+            return value
+        # Remove ' (building)' or ' (district)' suffix if present
+        for suffix in [' (building)', ' (district)']:
+            if value.endswith(suffix):
+                return value[:-len(suffix)]
+        return value
+
     def encode(self, value: list):
         """Validate multi-select: max 1 building-scale + max 1 district-scale"""
         # Handle "Use component settings below" as empty
@@ -1372,8 +1387,8 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
         if not isinstance(value, list):
             value = [value]
 
-        # Filter out "Use component settings below" and empty values
-        value = [v for v in value if v and v != "Use component settings below"]
+        # Strip scale labels from display values and filter out "Use component settings below"
+        value = [self._strip_scale_label(v) for v in value if v and v != "Use component settings below"]
 
         if not value:
             return ''
@@ -1408,15 +1423,15 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
         return ', '.join(map(str, value))
 
     def decode(self, value) -> list:
-        """Decode comma-separated values into list"""
+        """Decode comma-separated values into list (without scale labels for internal storage)"""
         if not value or value == '' or value == "Use component settings below":
             return []
 
         choices = parse_string_to_list(value)
         all_options = self._get_all_supply_options()
 
-        # Filter to valid choices only
-        return [choice for choice in choices if choice in all_options]
+        # Strip labels and filter to valid choices only
+        return [self._strip_scale_label(choice) for choice in choices if self._strip_scale_label(choice) in all_options]
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
