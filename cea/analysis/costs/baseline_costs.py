@@ -72,6 +72,65 @@ def get_components_from_supply_assembly(locator, supply_code, category):
     return result
 
 
+def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
+    """
+    Filter multi-select supply codes based on building context (standalone vs district-connected).
+
+    When supply_type parameters are multi-select (list of codes), filter to return only the
+    appropriate code based on the building's connectivity state:
+    - Standalone buildings → Use BUILDING-scale assembly
+    - District-connected buildings → Use DISTRICT-scale assembly
+
+    :param locator: InputLocator instance
+    :param supply_codes: Single code (str) or list of codes from multi-select parameter
+    :param category: 'SUPPLY_COOLING', 'SUPPLY_HEATING', or 'SUPPLY_HOTWATER'
+    :param is_standalone: True if building is standalone, False if connected to district network
+    :return: Single supply code (str) or None if no match
+    """
+    # Handle single value (backward compatibility with non-multi-select configs)
+    if isinstance(supply_codes, str):
+        return supply_codes
+
+    # Handle multi-select list
+    if not isinstance(supply_codes, list) or len(supply_codes) == 0:
+        return None
+
+    # If only one code selected, use it regardless of scale
+    if len(supply_codes) == 1:
+        return supply_codes[0]
+
+    # Map category to locator method
+    category_to_method = {
+        'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+        'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+        'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+    }
+
+    method = category_to_method.get(category)
+    if not method:
+        return supply_codes[0]  # Fallback to first code
+
+    filepath = method()
+    if not pd.io.common.file_exists(filepath):
+        return supply_codes[0]
+
+    df = pd.read_csv(filepath)
+
+    # Determine target scale based on building connectivity
+    target_scale = 'BUILDING' if is_standalone else 'DISTRICT'
+
+    # Filter codes by target scale
+    for code in supply_codes:
+        row = df[df['code'] == code]
+        if not row.empty and 'scale' in row.columns:
+            scale = row['scale'].iloc[0]
+            if str(scale).upper() == target_scale:
+                return code
+
+    # Fallback: return first code if no scale match found
+    return supply_codes[0]
+
+
 def get_component_codes_from_categories(locator, component_categories, network_type, peak_demand_kw=None):
     """
     Convert component category names to actual component codes from the database.
@@ -849,6 +908,86 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
     return results_by_network_type
 
 
+def apply_supply_code_fallback_for_standalone(locator, config, building, is_in_dc_network, is_in_dh_network):
+    """
+    Apply config fallback when building's supply.csv has wrong scale for standalone service.
+
+    This implements Case 3/5/6: When building provides its own service (not from network),
+    check if supply.csv has district-scale code. If so, use config parameter filtered to
+    building scale as fallback.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param building: Building object
+    :param is_in_dc_network: True if building is in DC network
+    :param is_in_dh_network: True if building is in DH network
+    :return: dict of {service: fallback_code} or {} if no fallback needed
+    """
+    import pandas as pd
+
+    fallbacks = {}
+
+    # Read building's supply.csv
+    supply_csv_path = locator.get_building_supply()
+    if not os.path.exists(supply_csv_path):
+        return fallbacks
+
+    supply_df = pd.read_csv(supply_csv_path)
+    building_row = supply_df[supply_df['name'] == building.identifier]
+
+    if building_row.empty:
+        return fallbacks
+
+    # Helper to check if supply code is wrong scale
+    def get_scale(supply_code, category):
+        if not supply_code or supply_code == '':
+            return None
+
+        category_to_method = {
+            'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+            'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+            'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+        }
+
+        filepath = category_to_method.get(category)()
+        if not os.path.exists(filepath):
+            return None
+
+        df = pd.read_csv(filepath)
+        row = df[df['code'] == supply_code]
+        if not row.empty and 'scale' in row.columns:
+            return row['scale'].iloc[0]
+        return None
+
+    # Check each service the building provides (not from network)
+    services_to_check = []
+
+    if not is_in_dc_network:  # Building provides own cooling
+        services_to_check.append(('supply_type_cs', 'SUPPLY_COOLING', config.system_costs.supply_type_cs))
+
+    if not is_in_dh_network:  # Building provides own heating/DHW
+        services_to_check.append(('supply_type_hs', 'SUPPLY_HEATING', config.system_costs.supply_type_hs))
+        services_to_check.append(('supply_type_dhw', 'SUPPLY_HOTWATER', config.system_costs.supply_type_dhw))
+
+    for column, category, config_value in services_to_check:
+        if column not in building_row.columns:
+            continue
+
+        csv_code = building_row[column].iloc[0]
+        scale = get_scale(csv_code, category)
+
+        # If CSV has district scale, but building is standalone for this service
+        if scale == 'DISTRICT':
+            # Use config as fallback, filter to BUILDING scale
+            fallback_code = filter_supply_code_by_scale(
+                locator, config_value, category, is_standalone=True
+            )
+            if fallback_code:
+                fallbacks[column] = fallback_code
+
+    return fallbacks
+
+
 def calculate_standalone_building_costs(locator, config, network_name):
     """
     Calculate costs for building-level supply systems (from Properties/Supply).
@@ -938,6 +1077,34 @@ def calculate_standalone_building_costs(locator, config, network_name):
     # We'll filter services later based on network connectivity
     print("  Calculating building-level supply systems for all buildings...")
     print(f"    ({len(domain.buildings)} total, {len(all_network_buildings)} in networks)")
+
+    # Apply supply code fallbacks BEFORE calculating supply systems
+    supply_csv_path = locator.get_building_supply()
+    if os.path.exists(supply_csv_path):
+        supply_df = pd.read_csv(supply_csv_path)
+        fallback_count = 0
+
+        for building in domain.buildings:
+            is_in_dc = building.identifier in dc_network_buildings
+            is_in_dh = building.identifier in dh_network_buildings
+
+            # Get fallbacks if needed
+            fallbacks = apply_supply_code_fallback_for_standalone(
+                locator, config, building, is_in_dc, is_in_dh
+            )
+
+            # Apply fallbacks to supply.csv
+            if fallbacks:
+                fallback_count += 1
+                building_row_idx = supply_df[supply_df['name'] == building.identifier].index
+                if len(building_row_idx) > 0:
+                    for column, fallback_code in fallbacks.items():
+                        supply_df.at[building_row_idx[0], column] = fallback_code
+
+        # Write back modified supply.csv temporarily
+        if fallback_count > 0:
+            print(f"  Applied config fallbacks for {fallback_count} standalone building(s) with wrong scale in supply.csv")
+            supply_df.to_csv(supply_csv_path, index=False)
 
     results = {}
     zero_demand_count = 0
@@ -1042,7 +1209,10 @@ def calculate_district_network_costs(locator, config, network_type, network_name
 
     # Map network_type to the relevant supply category
     if network_type == 'DC':
-        supply_code = config.system_costs.supply_type_cs
+        supply_code_raw = config.system_costs.supply_type_cs
+        # Filter multi-select codes for district scale (is_standalone=False)
+        supply_code = filter_supply_code_by_scale(locator, supply_code_raw, 'SUPPLY_COOLING', is_standalone=False)
+
         # Check if user selected "Use component settings below" or if field is empty
         if supply_code and supply_code != "Use component settings below":
             # SUPPLY assemblies are designed for building-scale systems and may not size correctly
@@ -1059,8 +1229,12 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             use_fallback = True
 
     elif network_type == 'DH':
-        supply_code_hs = config.system_costs.supply_type_hs
-        supply_code_dhw = config.system_costs.supply_type_dhw
+        supply_code_hs_raw = config.system_costs.supply_type_hs
+        supply_code_dhw_raw = config.system_costs.supply_type_dhw
+        # Filter multi-select codes for district scale (is_standalone=False)
+        supply_code_hs = filter_supply_code_by_scale(locator, supply_code_hs_raw, 'SUPPLY_HEATING', is_standalone=False)
+        supply_code_dhw = filter_supply_code_by_scale(locator, supply_code_dhw_raw, 'SUPPLY_HOTWATER', is_standalone=False)
+
         # For DH, we use heating system components (DHW is separate service)
         # Check if user selected "Use component settings below" or if field is empty
         if supply_code_hs and supply_code_hs != "Use component settings below":
