@@ -1308,12 +1308,12 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
                 result.extend(labeled_options)
 
             # Always add default option at the end to trigger component-based fallback
-            result.append("Use component settings below")
+            result.append("Custom (use component settings below)")
 
             return result
         except Exception:
             # Fallback to default option if there's any issue
-            return ["Use component settings below"]
+            return ["Custom (use component settings below)"]
 
     def _get_all_supply_options(self):
         """Get all supply codes from database with their scale (BUILDING or DISTRICT)"""
@@ -1367,6 +1367,64 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
         return supply_df[column].unique().tolist()
 
+    def _get_auto_default(self):
+        """
+        Auto-select most prevalent building-scale and district-scale assemblies from supply.csv.
+        Returns list with up to 2 items: [most_common_building, most_common_district]
+        """
+        import pandas as pd
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        supply_csv_path = locator.get_building_supply()
+
+        if not os.path.exists(supply_csv_path):
+            return []
+
+        supply_df = pd.read_csv(supply_csv_path)
+
+        # Map category to column name
+        category_to_column = {
+            'SUPPLY_COOLING': 'supply_type_cs',
+            'SUPPLY_HEATING': 'supply_type_hs',
+            'SUPPLY_HOTWATER': 'supply_type_dhw',
+        }
+
+        column = category_to_column.get(self.supply_category)
+        if column not in supply_df.columns:
+            return []
+
+        # Get all available options with their scales
+        all_options = self._get_all_supply_options()
+
+        # Count occurrences of each code in supply.csv
+        value_counts = supply_df[column].value_counts()
+
+        # Find most common building-scale and district-scale
+        most_common_building = None
+        most_common_district = None
+
+        for code, count in value_counts.items():
+            if code not in all_options:
+                continue
+
+            scale = all_options[code]
+            if scale == 'BUILDING' and most_common_building is None:
+                most_common_building = code
+            elif scale == 'DISTRICT' and most_common_district is None:
+                most_common_district = code
+
+            # Stop once we've found both
+            if most_common_building and most_common_district:
+                break
+
+        # Return list with non-None values
+        result = []
+        if most_common_building:
+            result.append(most_common_building)
+        if most_common_district:
+            result.append(most_common_district)
+
+        return result
+
     def _strip_scale_label(self, value):
         """Strip scale label suffix like '(building)' or '(district)' from value"""
         if not value:
@@ -1379,16 +1437,16 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
     def encode(self, value: list):
         """Validate multi-select: max 1 building-scale + max 1 district-scale"""
-        # Handle "Use component settings below" as empty
-        if not value or (isinstance(value, str) and (value.strip() == '' or value == "Use component settings below")):
+        # Handle "Custom (use component settings below)" as empty
+        if not value or (isinstance(value, str) and (value.strip() == '' or value == "Custom (use component settings below)")):
             return ''
 
         # Convert single value to list for consistent handling
         if not isinstance(value, list):
             value = [value]
 
-        # Strip scale labels from display values and filter out "Use component settings below"
-        value = [self._strip_scale_label(v) for v in value if v and v != "Use component settings below"]
+        # Strip scale labels from display values and filter out "Custom (use component settings below)"
+        value = [self._strip_scale_label(v) for v in value if v and v != "Custom (use component settings below)"]
 
         if not value:
             return ''
@@ -1424,7 +1482,7 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
     def decode(self, value) -> list:
         """Decode comma-separated values into list (without scale labels for internal storage)"""
-        if not value or value == '' or value == "Use component settings below":
+        if not value or value == '' or value == "Custom (use component settings below)":
             return []
 
         choices = parse_string_to_list(value)
@@ -1432,6 +1490,22 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
         # Strip labels and filter to valid choices only
         return [self._strip_scale_label(choice) for choice in choices if self._strip_scale_label(choice) in all_options]
+
+    def get(self):
+        """Get parameter value, returning auto-selected defaults if config is empty"""
+        # Get the actual config value
+        config_value = super().get()
+
+        # If config has a value, return it
+        if config_value:
+            return config_value
+
+        # Otherwise, return auto-selected defaults from supply.csv
+        try:
+            return self._get_auto_default()
+        except Exception:
+            # If auto-default fails, return empty list
+            return []
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):

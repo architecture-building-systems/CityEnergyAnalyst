@@ -1213,8 +1213,8 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         # Filter multi-select codes for district scale (is_standalone=False)
         supply_code = filter_supply_code_by_scale(locator, supply_code_raw, 'SUPPLY_COOLING', is_standalone=False)
 
-        # Check if user selected "Use component settings below" or if field is empty
-        if supply_code and supply_code != "Use component settings below":
+        # Check if user selected "Custom (use component settings below)" or if field is empty
+        if supply_code and supply_code != "Custom (use component settings below)":
             # SUPPLY assemblies are designed for building-scale systems and may not size correctly
             # for district networks with large aggregated demands.
             # For district networks, fallback mode is recommended.
@@ -1236,8 +1236,8 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         supply_code_dhw = filter_supply_code_by_scale(locator, supply_code_dhw_raw, 'SUPPLY_HOTWATER', is_standalone=False)
 
         # For DH, we use heating system components (DHW is separate service)
-        # Check if user selected "Use component settings below" or if field is empty
-        if supply_code_hs and supply_code_hs != "Use component settings below":
+        # Check if user selected "Custom (use component settings below)" or if field is empty
+        if supply_code_hs and supply_code_hs != "Custom (use component settings below)":
             # Mode 1: Use SUPPLY assembly
             print(f"      Using SUPPLY assembly: {supply_code_hs}")
             supply_components = get_components_from_supply_assembly(locator, supply_code_hs, 'SUPPLY_HEATING')
@@ -1374,8 +1374,8 @@ def calculate_district_network_costs(locator, config, network_type, network_name
                 "The components are installed but never activated.\n\n"
                 "RECOMMENDED SOLUTION:\n"
                 "  Use 'fallback mode' which uses component CATEGORIES instead of codes:\n"
-                "  1. Set 'supply-type-cs' to 'Use component settings below' (for cooling)\n"
-                "  2. Set 'supply-type-hs' to 'Use component settings below' (for heating)\n"
+                "  1. Set 'supply-type-cs' to 'Custom (use component settings below)' (for cooling)\n"
+                "  2. Set 'supply-type-hs' to 'Custom (use component settings below)' (for heating)\n"
                 "  3. Select appropriate component categories:\n"
                 "     - cooling-components: ABSORPTION_CHILLERS or VAPOR_COMPRESSION_CHILLERS\n"
                 "     - heating-components: BOILERS\n"
