@@ -1,9 +1,13 @@
 """
 costs according to supply systems
 
-**DEPRECATED**: This module is deprecated and will be removed in CEA v5.0.
-Please use cea.analysis.costs.baseline_costs instead, which provides more
-accurate cost calculations using the same engine as optimisation.
+**DEPRECATED**: This module is deprecated and will be removed by 2026-06-30.
+
+The 'system-costs' CLI command now uses cea.analysis.costs.main, which provides
+more accurate cost calculations using the same engine as optimisation.
+
+If you are importing this module directly in your code, please update to use
+cea.analysis.costs.main instead.
 """
 
 import warnings
@@ -27,6 +31,14 @@ from cea.technologies.supply_systems_database import get_csv_filenames
 
 
 def costs_main(locator, config):
+    warnings.warn(
+        "cea.analysis.costs.system_costs is deprecated and will be removed by 2026-06-30. "
+        "The 'system-costs' CLI command now uses cea.analysis.costs.main. "
+        "If you are importing this module directly, please update your code.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+
     # get local variables
     # capital = config.costs.capital
     # operational = config.costs.operational
@@ -221,8 +233,8 @@ def get_databases(demand, locator):
 
 def main(config: cea.config.Configuration):
     warnings.warn(
-        "The 'system-costs' script is deprecated and will be removed in CEA v5.0. "
-        "Please use 'baseline-costs' instead, which provides more detailed "
+        "cea.analysis.costs.system_costs.main() is deprecated and will be removed by 2026-06-30. "
+        "The 'system-costs' CLI command now uses cea.analysis.costs.main, which provides more detailed "
         "cost calculations consistent with optimisation results.",
         DeprecationWarning,
         stacklevel=2
