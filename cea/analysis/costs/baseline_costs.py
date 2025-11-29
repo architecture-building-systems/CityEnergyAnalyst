@@ -87,9 +87,18 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
     :param is_standalone: True if building is standalone, False if connected to district network
     :return: Single supply code (str) or None if no match
     """
+    # Helper to strip scale labels like '(building)' or '(district)'
+    def strip_label(value):
+        if not value:
+            return value
+        for suffix in [' (building)', ' (district)']:
+            if value.endswith(suffix):
+                return value[:-len(suffix)]
+        return value
+
     # Handle single value (backward compatibility with non-multi-select configs)
     if isinstance(supply_codes, str):
-        return supply_codes
+        return strip_label(supply_codes)
 
     # Handle multi-select list
     if not isinstance(supply_codes, list) or len(supply_codes) == 0:
@@ -97,7 +106,7 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
 
     # If only one code selected, use it regardless of scale
     if len(supply_codes) == 1:
-        return supply_codes[0]
+        return strip_label(supply_codes[0])
 
     # Map category to locator method
     category_to_method = {
@@ -120,15 +129,16 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
     target_scale = 'BUILDING' if is_standalone else 'DISTRICT'
 
     # Filter codes by target scale
-    for code in supply_codes:
+    for code_with_label in supply_codes:
+        code = strip_label(code_with_label)  # Strip label before database lookup
         row = df[df['code'] == code]
         if not row.empty and 'scale' in row.columns:
             scale = row['scale'].iloc[0]
             if str(scale).upper() == target_scale:
-                return code
+                return code  # Return bare code without label
 
     # Fallback: return first code if no scale match found
-    return supply_codes[0]
+    return strip_label(supply_codes[0])
 
 
 def get_component_codes_from_categories(locator, component_categories, network_type, peak_demand_kw=None):
@@ -433,7 +443,7 @@ def baseline_costs_main(locator, config):
     print(f"{'='*70}")
 
     # Check if user selected "(none)" - assess all buildings as standalone
-    if not network_name or network_name == '':
+    if not network_name or network_name == '' or network_name == '(none)':
         print("Mode: STANDALONE ONLY (all buildings assessed as standalone systems)")
         print("District-scale supply systems will be treated as building-scale for cost calculations.")
         print(f"Network types (for supply system selection): {', '.join(network_types)}")
@@ -656,9 +666,7 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
     Calculate costs treating ALL buildings as standalone systems.
     This is used when network-name is "(none)" or empty.
 
-    District-scale supply systems are treated as if they were building-scale
-    for cost calculation purposes. Network type selection is IGNORED - results
-    are saved for both DH and DC for compatibility with existing output format.
+    Uses the regular standalone building calculation which respects SUPPLY assembly configuration.
 
     :param locator: InputLocator instance
     :param config: Configuration instance
@@ -667,245 +675,16 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
     """
     print(f"\n{'-'*70}")
     print("Calculating ALL buildings as standalone systems...")
-    print("NOTE: Network-type selection is ignored - all services calculated")
 
-    # Get all buildings in scenario
-    building_names = locator.get_zone_building_names()
-    print(f"  Total buildings: {len(building_names)}")
+    # Calculate all buildings as standalone (network_name=None means all buildings are standalone)
+    # This function returns dict of {building_name: cost_data} for ALL buildings
+    all_results = calculate_standalone_building_costs(locator, config, network_name=None)
 
-    # We need to calculate costs for ALL services
-    # Strategy: Call calculate_standalone_building_costs twice (once for DC, once for DH)
-    # Then merge the results
+    print(f"  ✓ Standalone cost calculations completed")
 
-    print("  Loading cooling systems (DC)...")
-    # First get cooling system costs
-    try:
-        # Temporarily override config to DC
-        original_network_type = config.system_costs.network_type if hasattr(config.system_costs, 'network_type') else None
-
-        # Create a domain config for DC (cooling)
-        domain_config_dc = cea.config.Configuration()
-        domain_config_dc.scenario = config.scenario
-        domain_config_dc.optimization_new.network_type = 'DC'
-
-        domain_dc = Domain(domain_config_dc, locator)
-        domain_dc.load_buildings()  # Load all buildings (network_name=None means all are standalone)
-
-        # Set all buildings to standalone mode
-        for building in domain_dc.buildings:
-            building.initial_connectivity_state = 'stand_alone'
-
-        # Suppress potentials loading messages
-        import sys, io
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
-        try:
-            domain_dc.load_potentials()
-            domain_dc._initialize_energy_system_descriptor_classes()
-        finally:
-            sys.stdout = old_stdout
-
-        building_potentials_dc = Building.distribute_building_potentials(
-            domain_dc.energy_potentials, domain_dc.buildings
-        )
-
-        # Calculate cooling costs for each building
-        results_dc = {}
-        for building in domain_dc.buildings:
-            building.calculate_supply_system(building_potentials_dc[building.identifier])
-            if building.stand_alone_supply_system:
-                # Extract cooling service costs - use the same format as calculate_standalone_building_costs
-                supply_system = building.stand_alone_supply_system
-                costs = extract_costs_from_supply_system(supply_system, 'DC', building)
-
-                results_dc[building.identifier] = {
-                    'supply_system': supply_system,
-                    'building': building,
-                    'costs': costs,
-                    'is_network': False,
-                    'in_dc_network': False,
-                    'in_dh_network': False
-                }
-
-        print(f"    ✓ Calculated cooling costs for {len(results_dc)} buildings with systems")
-    except Exception as e:
-        print(f"    ! No cooling systems: {e}")
-        results_dc = {}
-
-    print("  Loading heating systems (DH)...")
-    # Then get heating/DHW system costs
-    try:
-        domain_config_dh = cea.config.Configuration()
-        domain_config_dh.scenario = config.scenario
-        domain_config_dh.optimization_new.network_type = 'DH'
-
-        domain_dh = Domain(domain_config_dh, locator)
-
-        # Try to load buildings - this may fail if ALL buildings have zero heating demand
-        # (e.g., Singapore scenario where all buildings have SUPPLY_HEATING_AS0 with no components)
-        try:
-            domain_dh.load_buildings()
-        except ValueError as e:
-            if "Network type mismatch" in str(e):
-                # All buildings have zero heating demand - but may have DHW demand
-                # Skip loading DH domain and apply DHW fallback for all buildings later
-                print("    ⚠ All buildings have zero heating demand")
-                print("      Attempting DHW-only cost calculation...")
-
-                # Manually process DHW for each building without loading DH domain
-                building_names = locator.get_zone_building_names()
-                results_dh = {}
-                dhw_fallback_count = 0
-
-                for building_name in building_names:
-                    # Create minimal building object for DHW fallback
-                    class MinimalBuilding:
-                        def __init__(self, identifier):
-                            self.identifier = identifier
-                            self.initial_connectivity_state = 'stand_alone'  # Required by map_component_to_service
-
-                    minimal_building = MinimalBuilding(building_name)
-                    dhw_costs = apply_dhw_component_fallback(locator, minimal_building, None)
-
-                    if dhw_costs:
-                        results_dh[building_name] = {
-                            'supply_system': None,
-                            'building': minimal_building,
-                            'costs': dhw_costs,
-                            'is_network': False,
-                            'in_dc_network': False,
-                            'in_dh_network': False
-                        }
-                        dhw_fallback_count += 1
-
-                if dhw_fallback_count > 0:
-                    print(f"    ✓ Applied DHW component fallback for {dhw_fallback_count} building(s)")
-
-                # Skip the rest of DH processing and jump to merging results
-                raise StopIteration("DHW-only processing complete")
-            else:
-                # Re-raise other errors
-                raise
-
-        # Set all buildings to standalone mode
-        for building in domain_dh.buildings:
-            building.initial_connectivity_state = 'stand_alone'
-
-        # Suppress potentials loading messages
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
-        try:
-            domain_dh.load_potentials()
-            domain_dh._initialize_energy_system_descriptor_classes()
-        finally:
-            sys.stdout = old_stdout
-
-        building_potentials_dh = Building.distribute_building_potentials(
-            domain_dh.energy_potentials, domain_dh.buildings
-        )
-
-        # Calculate heating/DHW costs for each building
-        results_dh = {}
-        dhw_fallback_count = 0
-        for building in domain_dh.buildings:
-            try:
-                building.calculate_supply_system(building_potentials_dh[building.identifier])
-            except ValueError as e:
-                # Skip buildings with zero heating demand or no heating components
-                if "Network type mismatch" in str(e) or "None of the components chosen" in str(e):
-                    # Building has zero heating demand - but may still have DHW demand
-                    # Try to apply DHW fallback directly
-                    dhw_costs = apply_dhw_component_fallback(locator, building, None)
-                    if dhw_costs:
-                        results_dh[building.identifier] = {
-                            'supply_system': None,
-                            'building': building,
-                            'costs': dhw_costs,
-                            'is_network': False,
-                            'in_dc_network': False,
-                            'in_dh_network': False
-                        }
-                        dhw_fallback_count += 1
-                    continue
-                else:
-                    # Re-raise other errors
-                    raise
-
-            if building.stand_alone_supply_system:
-                # Extract heating/DHW service costs - use the same format
-                supply_system = building.stand_alone_supply_system
-                costs = extract_costs_from_supply_system(supply_system, 'DH', building)
-
-                # Check if DHW costs are missing and apply fallback
-                has_dhw_costs = any('_ww' in service_name for service_name in costs.keys())
-                if not has_dhw_costs:
-                    # Check if building has DHW demand
-                    demand_df = pd.read_csv(locator.get_total_demand())
-                    building_demand = demand_df[demand_df['name'] == building.identifier]
-                    if not building_demand.empty:
-                        qww = building_demand['Qww_sys_MWhyr'].values[0] if 'Qww_sys_MWhyr' in building_demand.columns else 0
-                        if qww > 0:
-                            # Building has DHW demand but no costs - apply fallback
-                            dhw_costs = apply_dhw_component_fallback(locator, building, supply_system)
-                            if dhw_costs:
-                                costs.update(dhw_costs)
-                                dhw_fallback_count += 1
-
-                results_dh[building.identifier] = {
-                    'supply_system': supply_system,
-                    'building': building,
-                    'costs': costs,
-                    'is_network': False,
-                    'in_dc_network': False,
-                    'in_dh_network': False
-                }
-
-        print(f"    ✓ Calculated heating/DHW costs for {len(results_dh)} buildings with systems")
-        if dhw_fallback_count > 0:
-            print(f"    ✓ Applied DHW component fallback for {dhw_fallback_count} building(s)")
-    except StopIteration as e:
-        # DHW-only processing completed successfully (from line 710)
-        # results_dh is already populated, just continue
-        pass
-    except Exception as e:
-        print(f"    ! No heating systems: {e}")
-        results_dh = {}
-
-    # Merge results from both network types
-    # Need to merge costs dictionaries properly (not just overwrite)
-    merged_results = {}
-    all_building_names = set(list(results_dc.keys()) + list(results_dh.keys()))
-
-    for building_name in all_building_names:
-        # Start with base structure from one of the results
-        if building_name in results_dc:
-            merged_results[building_name] = results_dc[building_name].copy()
-            merged_costs = results_dc[building_name]['costs'].copy()
-        elif building_name in results_dh:
-            merged_results[building_name] = results_dh[building_name].copy()
-            merged_costs = results_dh[building_name]['costs'].copy()
-        else:
-            continue
-
-        # Merge costs from the other network type if present
-        if building_name in results_dc and building_name in results_dh:
-            # Merge costs from DH results into DC costs
-            dh_costs = results_dh[building_name]['costs']
-            for service_name, service_costs in dh_costs.items():
-                if service_name not in merged_costs:
-                    merged_costs[service_name] = service_costs
-                # If service exists in both, keep one (shouldn't happen with DC vs DH)
-
-        merged_results[building_name]['costs'] = merged_costs
-
-    # Return results only under DC to avoid duplicates in output
-    # DC is used as the "primary" network type for standalone-only mode
-    results_by_network_type = {
-        'DC': merged_results
-    }
-
-    print("  ✓ Standalone cost calculations completed")
-    return results_by_network_type
+    # Return results in the expected format: {network_type: {building: costs}}
+    # For standalone mode, we put all results under 'DH' to match expected structure
+    return {'DH': all_results, 'DC': {}}
 
 
 def apply_supply_code_fallback_for_standalone(locator, config, building, is_in_dc_network, is_in_dh_network):
