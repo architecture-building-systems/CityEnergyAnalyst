@@ -1416,12 +1416,12 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
             if most_common_building and most_common_district:
                 break
 
-        # Return list with non-None values
+        # Return list with non-None values, WITH scale labels
         result = []
         if most_common_building:
-            result.append(most_common_building)
+            result.append(f"{most_common_building} (building)")
         if most_common_district:
-            result.append(most_common_district)
+            result.append(f"{most_common_district} (district)")
 
         return result
 
@@ -1492,15 +1492,25 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
         return [self._strip_scale_label(choice) for choice in choices if self._strip_scale_label(choice) in all_options]
 
     def get(self):
-        """Get parameter value, returning auto-selected defaults if config is empty"""
-        # Get the actual config value
+        """Get parameter value, always returning values with scale labels"""
+        # Get the actual config value (stored without labels)
         config_value = super().get()
 
-        # If config has a value, return it
+        # If config has a value, add labels to it
         if config_value:
-            return config_value
+            all_options = self._get_all_supply_options()
+            labeled_values = []
+            for code in config_value:
+                if code in all_options:
+                    scale = all_options[code]
+                    scale_label = '(building)' if scale == 'BUILDING' else '(district)'
+                    labeled_values.append(f"{code} {scale_label}")
+                else:
+                    # If code not in database, use it without label
+                    labeled_values.append(code)
+            return labeled_values
 
-        # Otherwise, return auto-selected defaults from supply.csv
+        # Otherwise, return auto-selected defaults from supply.csv (already labeled)
         try:
             return self._get_auto_default()
         except Exception:
