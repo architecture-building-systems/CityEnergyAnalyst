@@ -2672,6 +2672,51 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
 
     return list_list_metrics_building
 
+
+def copy_costs_to_summary(locator, summary_folder):
+    """
+    Copy cost calculation results to summary folder.
+
+    Unlike other metrics, costs are already summary-level so we just copy the files.
+
+    :param locator: InputLocator instance
+    :param summary_folder: Path to summary folder
+    :return: tuple (success: bool, error_message: str or None)
+    """
+    import shutil
+
+    try:
+        # Get source file paths
+        costs_buildings_src = locator.get_baseline_costs()
+        costs_components_src = locator.get_baseline_costs_detailed()
+
+        # Check if cost files exist
+        if not os.path.exists(costs_buildings_src):
+            return False, "costs_buildings.csv not found. Please run 'system-costs' first."
+        if not os.path.exists(costs_components_src):
+            return False, "costs_components.csv not found. Please run 'system-costs' first."
+
+        # Get destination file paths using InputLocator
+        costs_buildings_dst = locator.get_export_results_summary_costs_buildings_file(summary_folder)
+        costs_components_dst = locator.get_export_results_summary_costs_components_file(summary_folder)
+
+        # Create costs subfolder
+        costs_folder = locator.get_export_results_summary_costs_folder(summary_folder)
+        os.makedirs(costs_folder, exist_ok=True)
+
+        # Copy files to summary folder
+        shutil.copy2(costs_buildings_src, costs_buildings_dst)
+        shutil.copy2(costs_components_src, costs_components_dst)
+
+        print("  ✓ Copied costs_buildings.csv")
+        print("  ✓ Copied costs_components.csv")
+
+        return True, None
+
+    except Exception as e:
+        return False, f"Error copying cost files: {str(e)}"
+
+
 def filter_buildings(locator, list_buildings,
                      integer_year_start, integer_year_end, list_standard,
                      list_main_use_type, ratio_main_use_type):
@@ -2841,6 +2886,22 @@ def process_building_summary(config, locator,
                 print(f"Warning: {error_msg}")
                 print("         Continuing with next metrics...")
                 continue
+
+    # Step 8.5: Copy Cost Files (if Enabled)
+    if not plot and config.result_summary.metrics_costs:
+        try:
+            print("\nCopying cost calculation results...")
+            success, error_msg = copy_costs_to_summary(locator, summary_folder)
+            if not success:
+                error_msg = f"Step 8.5 (Copy Cost Files): {error_msg}"
+                errors_encountered.append(error_msg)
+                print(f"Warning: {error_msg}")
+                print("         Continuing with remaining steps...")
+        except Exception as e:
+            error_msg = f"Step 8.5 (Copy Cost Files): {str(e)}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+            print("         Continuing with remaining steps...")
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:

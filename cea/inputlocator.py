@@ -219,6 +219,18 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
         return os.path.join(summary_folder, CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature), 'analytics')
 
+    def get_export_results_summary_costs_folder(self, summary_folder):
+        """scenario/export/results/{folder_name}/costs"""
+        return os.path.join(summary_folder, 'costs')
+
+    def get_export_results_summary_costs_buildings_file(self, summary_folder):
+        """scenario/export/results/{folder_name}/costs/costs_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_costs_folder(summary_folder), 'costs_buildings.csv')
+
+    def get_export_results_summary_costs_components_file(self, summary_folder):
+        """scenario/export/results/{folder_name}/costs/costs_components.csv"""
+        return os.path.join(self.get_export_results_summary_costs_folder(summary_folder), 'costs_components.csv')
+
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):
