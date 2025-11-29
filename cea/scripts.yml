@@ -338,7 +338,7 @@ Life Cycle Analysis:
 
       Uses the same calculation engine as optimisation for accuracy.
     interfaces: [cli, dashboard]
-    module: cea.analysis.costs.baseline_costs
+    module: cea.analysis.costs.main
     parameters: ['general:scenario', system-costs]
     input-files:
       - [get_total_demand]
