@@ -142,9 +142,176 @@ system_structure = SupplySystemStructure(
 # Don't filter CapacityIndicatorVector after creation - this breaks dependency chains
 ```
 
+## Baseline Costs: 6-Case Building Connectivity Logic
+
+The `baseline_costs.py` module implements a 6-case logic system to determine how buildings receive energy services and which supply assemblies to use.
+
+### Case 1: Standalone-only mode (network-name = "(none)")
+- **Triggers when**: User selects "(none)" or leaves network-name empty
+- **Building connectivity**: ALL buildings treated as standalone
+- **Service provision**:
+  - Cooling: Building-scale (standalone)
+  - Heating: Building-scale (standalone)
+  - DHW: Building-scale (standalone)
+- **Supply system selection**:
+  1. Check Building Properties/Supply for each service
+  2. If DISTRICT-scale code found:
+     - Config parameter has value → Use BUILDING-scale from config (fallback)
+     - Config parameter empty → Keep DISTRICT code (⚠️ may cause error)
+  3. If BUILDING-scale code → Use it directly
+- **Cost output**: All building-scale costs, zero district-scale costs
+- **Use case**: Initial baseline without networks, all-standalone comparison scenarios
+
+### Case 2: Building IN selected network
+- **Note**: Case 2 is embedded in Cases 4, 5, 6 for the services that come from networks
+- Services from district network have no standalone calculation
+- No fallback needed (building doesn't provide those services)
+
+### Case 3: Building NOT in network
+- **Triggers when**: Building not found in network layout nodes.shp
+- **Service provision**: Same as Case 1 (all standalone)
+- **Supply system selection**: Same fallback logic as Case 1
+- **Use case**: Buildings outside network coverage, future expansion areas
+
+### Case 4: Building in BOTH DC and DH networks
+- **Building connectivity**: Found in both DC/nodes.shp and DH/nodes.shp
+- **Service provision**:
+  - Cooling: District-scale (from DC network)
+  - Heating: District-scale (from DH network)
+  - DHW: District-scale (from DH network)
+- **Supply system selection**:
+  - Cooling: `filter_supply_code_by_scale(config.supply_type_cs, is_standalone=False)` → DISTRICT
+  - Heating: `filter_supply_code_by_scale(config.supply_type_hs, is_standalone=False)` → DISTRICT
+  - DHW: `filter_supply_code_by_scale(config.supply_type_dhw, is_standalone=False)` → DISTRICT
+- **Fallback**: None needed (no standalone services)
+- **Cost output**: All district-scale costs, zero building-scale costs
+- **Use case**: Dense urban areas with full district energy coverage
+
+### Case 5: Building in DC network only
+- **Building connectivity**: In DC/nodes.shp, NOT in DH/nodes.shp
+- **Service provision**:
+  - Cooling: District-scale (from DC network)
+  - Heating: Building-scale (standalone)
+  - DHW: Building-scale (standalone)
+- **Supply system selection**:
+  - Cooling: Config filtered to DISTRICT-scale
+  - Heating: Check Building Properties/Supply with fallback logic (Case 1)
+  - DHW: Check Building Properties/Supply with fallback logic (Case 1)
+- **Cost output**: Mixed - district cooling costs + building heating/DHW costs
+- **Use case**: Cooling-dominant climates (Singapore, Middle East), phased deployment
+
+### Case 6: Building in DH network only
+- **Building connectivity**: In DH/nodes.shp, NOT in DC/nodes.shp
+- **Service provision**:
+  - Cooling: Building-scale (standalone)
+  - Heating: District-scale (from DH network)
+  - DHW: District-scale (from DH network)
+- **Supply system selection**:
+  - Cooling: Check Building Properties/Supply with fallback logic (Case 1)
+  - Heating: Config filtered to DISTRICT-scale
+  - DHW: Config filtered to DISTRICT-scale
+- **Cost output**: Mixed - building cooling costs + district heating/DHW costs
+- **Use case**: Heating-dominant climates (Northern Europe, North America)
+
+### Config Parameter Filtering
+
+**`filter_supply_code_by_scale(locator, supply_codes, category, is_standalone)`**
+
+Behavior depends on input:
+
+1. **supply_codes is empty list `[]`**:
+   - Returns `None`
+   - No fallback applied
+   - Uses Building Properties/Supply as-is (⚠️ risk if wrong scale)
+
+2. **supply_codes has 1 item** (e.g., `["AS1 (building)"]`):
+   - Returns that item (stripped of label)
+   - Used regardless of scale match
+
+3. **supply_codes has 2 items** (e.g., `["AS1 (building)", "AS4 (district)"]`):
+   - Filters by target scale:
+     - `is_standalone=True` → Look for BUILDING-scale → Return AS1
+     - `is_standalone=False` → Look for DISTRICT-scale → Return AS4
+   - If no scale match → Return first item
+
+4. **supply_codes is "Custom"**:
+   - Not handled by filter function
+   - Uses component parameters instead
+
+### Decision Tree
+
+```
+START: Calculate costs for building X
+
+├─ network-name = "(none)" or empty?
+│  └─ YES → CASE 1 (all buildings standalone)
+│
+└─ NO → Check building connectivity:
+   ├─ In DC/nodes.shp? → in_dc_network = True/False
+   └─ In DH/nodes.shp? → in_dh_network = True/False
+
+   Determine case:
+   ├─ in_dc_network=True AND in_dh_network=True → CASE 4
+   ├─ in_dc_network=True AND in_dh_network=False → CASE 5
+   ├─ in_dc_network=False AND in_dh_network=True → CASE 6
+   └─ in_dc_network=False AND in_dh_network=False → CASE 3
+```
+
+### Fallback Logic Summary
+
+**When fallback applies** (Cases 1, 3, 5, 6 for standalone services):
+
+```python
+def apply_supply_code_fallback_for_standalone(building, is_in_dc, is_in_dh):
+    fallbacks = {}
+
+    # Check services building provides standalone
+    if not is_in_dc:  # Cooling is standalone
+        csv_code = building_supply['supply_type_cs']
+        if get_scale(csv_code) == 'DISTRICT':
+            fallback = filter_supply_code_by_scale(
+                config.supply_type_cs, 'SUPPLY_COOLING', is_standalone=True
+            )
+            if fallback:  # Only if config has value
+                fallbacks['supply_type_cs'] = fallback
+
+    if not is_in_dh:  # Heating/DHW are standalone
+        # Same logic for supply_type_hs and supply_type_dhw
+
+    return fallbacks  # Applied to Building Properties/Supply before calculation
+```
+
+**Key behavior**:
+- Only checks services the building provides standalone
+- Only applies if Building Properties/Supply has DISTRICT-scale code
+- Only applies if config parameter has value (empty → no fallback)
+- Modifies Building Properties/Supply temporarily before Domain reads it
+
+### Output Files
+
+**costs_buildings.csv**:
+```csv
+name, GFA_m2, Capex_total_USD, TAC_USD,
+Capex_total_building_scale_USD,  # From standalone services
+Capex_total_district_scale_USD,  # Allocated from networks
+Capex_a_building_scale_USD,
+Capex_a_district_scale_USD,
+...
+```
+
+**costs_components.csv**:
+```csv
+name, network_type, service, code, capacity_kW, scale,
+capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD
+```
+- `network_type`: "DH", "DC", or NaN (standalone)
+- `scale`: "BUILDING" or "DISTRICT"
+- `service`: e.g., "GRID_cs" (cooling from grid), "NG_hs" (heating from natural gas)
+
 ## Related Files
+- `cea/analysis/costs/baseline_costs.py` - Main implementation of 6-case logic
 - `cea/analysis/costs/system_costs.py:107-135` - Cost calculation flow
-- `cea/analysis/lca/operation.py` - Uses same database parameters
+- `cea/config.py:1269-1519` - DistrictSupplyTypeParameter (multi-select with scale labels)
+- `cea/default.config:393-408` - Config help text for supply-type parameters
 - `cea/databases/AGENTS.md` - Database structure
 - `databases/{region}/ASSEMBLIES/SUPPLY/` - CAPEX, efficiency, lifetime
-- `databases/{region}/COMPONENTS/FEEDSTOCKS/` - Variable OPEX, emissions
