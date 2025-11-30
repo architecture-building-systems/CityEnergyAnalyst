@@ -549,9 +549,9 @@ class SystemCostsSection(Section):
     """Typed section for system-costs configuration"""
     network_name: str | None
     network_type: list[str]
-    supply_type_cs: str
-    supply_type_hs: str
-    supply_type_dhw: str
+    supply_type_cs: list
+    supply_type_hs: list
+    supply_type_dhw: list
     cooling_components: list[str]
     heating_components: list[str]
     heat_rejection_components: list[str]
@@ -566,11 +566,11 @@ class SystemCostsSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_cs"]) -> str: ...
+    def __getattr__(self, item: Literal["supply_type_cs"]) -> list: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_hs"]) -> str: ...
+    def __getattr__(self, item: Literal["supply_type_hs"]) -> list: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_dhw"]) -> str: ...
+    def __getattr__(self, item: Literal["supply_type_dhw"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["cooling_components"]) -> list[str]: ...
     @overload
@@ -902,6 +902,7 @@ class ResultSummarySection(Section):
     metrics_photovoltaic_thermal_panels: bool
     metrics_solar_collectors: bool
     metrics_other_renewables: bool
+    metrics_costs: bool
     network_name: str
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
@@ -931,6 +932,8 @@ class ResultSummarySection(Section):
     def __getattr__(self, item: Literal["metrics_solar_collectors"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["metrics_other_renewables"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["metrics_costs"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
