@@ -100,6 +100,7 @@ def test_baseline_costs_dc_only(config):
     assert any(col in results.columns for col in cooling_cost_cols), "No cooling cost columns found"
 
 
+@pytest.mark.skip(reason="Requires reference case to be extracted")
 def test_baseline_costs_empty_network_types():
     """Test that empty network_types raises error"""
     config = cea.config.Configuration()
