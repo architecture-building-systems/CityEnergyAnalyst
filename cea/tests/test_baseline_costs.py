@@ -31,7 +31,7 @@ def test_baseline_costs_reference_case(config):
     """
     # Set up configuration
     config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
-    config.baseline_costs.network_types = ['DH', 'DC']
+    config.system_costs.network_types = ['DH', 'DC']
 
     # Run baseline-costs
     baseline_costs_main(config)
@@ -70,7 +70,7 @@ def test_baseline_costs_reference_case(config):
 def test_baseline_costs_dh_only(config):
     """Test baseline-costs with DH only"""
     config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
-    config.baseline_costs.network_types = ['DH']
+    config.system_costs.network_types = ['DH']
 
     baseline_costs_main(config)
 
@@ -87,7 +87,7 @@ def test_baseline_costs_dh_only(config):
 def test_baseline_costs_dc_only(config):
     """Test baseline-costs with DC only"""
     config.scenario = os.path.join(os.path.dirname(__file__), '..', 'examples', 'reference-case-open', 'baseline')
-    config.baseline_costs.network_types = ['DC']
+    config.system_costs.network_types = ['DC']
 
     baseline_costs_main(config)
 
@@ -103,10 +103,10 @@ def test_baseline_costs_dc_only(config):
 def test_baseline_costs_empty_network_types():
     """Test that empty network_types raises error"""
     config = cea.config.Configuration()
-    config.baseline_costs.network_types = []
+    config.system_costs.network_types = []
 
     with pytest.raises(ValueError, match="No network types selected"):
-        from cea.analysis.costs.baseline_costs import baseline_costs_main
+        from cea.analysis.costs.main import baseline_costs_main
         locator = cea.inputlocator.InputLocator(config.scenario)
         baseline_costs_main(locator, config)
 

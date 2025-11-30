@@ -1866,6 +1866,7 @@ get_baseline_costs:
       name:
         description: Building or network name
         type: string
+        unit: NA
       GFA_m2:
         description: Gross floor area (sum of all buildings for networks)
         type: float
@@ -1943,15 +1944,19 @@ get_baseline_costs_detailed:
       name:
         description: Building or network name
         type: string
+        unit: NA
       network_type:
         description: Network type (DC for district cooling, DH for district heating) or empty for standalone buildings
         type: string
+        unit: NA
       service:
         description: Energy service (e.g., GRID_cs for grid cooling, DC_network for district cooling network, NONE for buildings with no systems)
         type: string
+        unit: NA
       code:
         description: Component code (e.g., CH1 for chiller type 1, CT1 for cooling tower type 1, PIPES for distribution piping) or energy carrier code (e.g., E230AC for electricity, NATURALGAS for natural gas)
         type: string
+        unit: NA
       capacity_kW:
         description: Component capacity in kilowatts (0 for energy carriers and piping)
         type: float
@@ -1960,6 +1965,7 @@ get_baseline_costs_detailed:
       placement:
         description: Component placement in system (primary for heat/cooling generation, secondary for intermediate conversion, tertiary for heat rejection, distribution for piping, energy_carrier for fuel/electricity costs)
         type: string
+        unit: NA
       capex_total_USD:
         description: Total capital expenditure for component
         type: float
@@ -1983,6 +1989,7 @@ get_baseline_costs_detailed:
       scale:
         description: System scale (BUILDING for individual building systems, DISTRICT for district network systems)
         type: string
+        unit: NA
   used_by: []
 get_database_assemblies_envelope_mass:
   created_by:
