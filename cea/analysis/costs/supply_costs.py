@@ -1175,6 +1175,17 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
                     qcs = building_demand['Qcs_sys_MWhyr'].values[0] if 'Qcs_sys_MWhyr' in building_demand.columns else 0
 
                     missing_services = []
+
+                    # Try DHW fallback if DHW is missing
+                    if qww > 0 and not any('_ww' in s for s in filtered_costs.keys()):
+                        if services_filter in ['all', 'heating_dhw']:
+                            # Try to apply DHW component fallback
+                            dhw_costs = apply_dhw_component_fallback(locator, building_data['building'], building_data['supply_system'])
+                            if dhw_costs:
+                                # Merge DHW costs into filtered_costs
+                                filtered_costs.update(dhw_costs)
+
+                    # Check for remaining missing services after fallback attempts
                     if services_filter == 'all':
                         # Standalone building - check all services
                         if qhs > 0 and not any('_hs' in s for s in filtered_costs.keys()):
