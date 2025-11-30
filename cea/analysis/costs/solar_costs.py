@@ -6,7 +6,6 @@ based on user-selected technologies per building facade.
 """
 import os
 import pandas as pd
-import numpy as np
 from math import log
 
 from cea.analysis.costs.equations import calc_capex_annualized

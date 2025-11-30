@@ -131,10 +131,10 @@ def baseline_costs_main(locator, config):
         print(f"{'='*70}")
         print(f"Summary: {locator.get_baseline_costs()}")
         print(f"Detailed: {locator.get_baseline_costs_detailed()}")
-        print(f"\nNote: Standalone-only mode provides simplified cost estimates")
+        print("\nNote: Standalone-only mode provides simplified cost estimates")
         return
 
-    print(f"Mode: NETWORK + STANDALONE")
+    print("Mode: NETWORK + STANDALONE")
     print(f"Network layout: {network_name}")
     print(f"Network types: {', '.join(network_types)}")
 
