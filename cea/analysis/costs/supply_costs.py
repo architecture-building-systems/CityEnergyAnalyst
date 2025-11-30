@@ -8,7 +8,6 @@ and orchestration logic is in main.py.
 
 import os
 import pandas as pd
-from cea.inputlocator import InputLocator
 from cea.optimization_new.domain import Domain
 from cea.optimization_new.building import Building
 import cea.config
@@ -433,7 +432,7 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
     # This function returns dict of {building_name: cost_data} for ALL buildings
     all_results = calculate_standalone_building_costs(locator, config, network_name=None)
 
-    print(f"  ✓ Standalone cost calculations completed")
+    print("  ✓ Standalone cost calculations completed")
 
     # Return results in the expected format: {network_type: {building: costs}}
     # For standalone mode, we put all results under 'DH' to match expected structure
@@ -558,7 +557,7 @@ def calculate_standalone_building_costs(locator, config, network_name):
                     network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
                     network_buildings = [b for b in network_buildings if b and b != 'NONE']
                     all_network_buildings.update(network_buildings)
-            except:
+            except Exception:
                 pass  # Network doesn't exist, that's fine
 
     # Load domain - use DC as default (will load all buildings with their demands)
@@ -602,7 +601,7 @@ def calculate_standalone_building_costs(locator, config, network_name):
                     dc_network_buildings.update(network_buildings)
                 else:
                     dh_network_buildings.update(network_buildings)
-        except:
+        except Exception:
             pass
 
     # Calculate building-level supply systems for ALL buildings
