@@ -1537,11 +1537,9 @@ def map_energy_carrier_to_service(ec_code, network_type):
     Map energy carrier code to service name.
 
     :param ec_code: Energy carrier code from optimization_new
-    :param network_type: 'DH' or 'DC'
+    :param network_type: 'DH', 'DC', or None (for standalone systems)
     :return: Service name string or None if not applicable
     """
-    suffix = '_hs' if network_type == 'DH' else '_cs'
-
     # Map energy carriers to service prefixes
     # Note: Energy carrier codes come from COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv
     # Format: {carrier_code: service_prefix}
@@ -1573,10 +1571,33 @@ def map_energy_carrier_to_service(ec_code, network_type):
         'DC': 'DC',         # District cooling
     }
 
+    # Heating carriers (fuels typically used for heating)
+    heating_carriers = {'NG', 'OIL', 'COAL', 'WOOD', 'BIOGAS', 'WETBIOMASS', 'DRYBIOMASS', 'HYDROGEN', 'DH'}
+    # Cooling carriers
+    cooling_carriers = {'DC'}
+
     carrier = carrier_map.get(ec_code)
-    if carrier:
-        return f"{carrier}{suffix}"
-    else:
+    if not carrier:
         # Return None for carriers that don't map to services (e.g., heat rejection)
         return None
+
+    # Determine suffix based on network_type or infer from carrier
+    if network_type == 'DH':
+        suffix = '_hs'
+    elif network_type == 'DC':
+        suffix = '_cs'
+    elif network_type is None:
+        # Standalone system - infer from carrier type
+        if carrier in heating_carriers:
+            suffix = '_hs'
+        elif carrier in cooling_carriers:
+            suffix = '_cs'
+        else:
+            # GRID (electricity) - ambiguous, return None for caller to handle
+            return None
+    else:
+        # Unknown network_type
+        return None
+
+    return f"{carrier}{suffix}"
 
