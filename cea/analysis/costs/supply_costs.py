@@ -1126,9 +1126,29 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     layout_folder = os.path.join(network_folder, 'layout')
     nodes_file = os.path.join(layout_folder, 'nodes.shp')
 
-    nodes_df = gpd.read_file(nodes_file)
-    network_buildings_from_layout = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
-    network_buildings_from_layout = [b for b in network_buildings_from_layout if b and b != 'NONE']
+    # Check if network layout files exist
+    if not os.path.exists(layout_folder):
+        print(f"  ⚠ Network layout folder not found for {network_type} network '{network_name}' - skipping")
+        print(f"    Expected: {layout_folder}")
+        print(f"    Please run 'thermal-network' (part 1 and 2) first")
+        return {}
+
+    if not os.path.exists(nodes_file):
+        print(f"  ⚠ Network nodes file not found for {network_type} network '{network_name}' - skipping")
+        print(f"    Expected: {nodes_file}")
+        print(f"    Please run 'thermal-network' (part 1 and 2) first")
+        return {}
+
+    # Try to read network layout
+    try:
+        nodes_df = gpd.read_file(nodes_file)
+        network_buildings_from_layout = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
+        network_buildings_from_layout = [b for b in network_buildings_from_layout if b and b != 'NONE']
+    except Exception as e:
+        print(f"  ⚠ Failed to read network layout for {network_type} network '{network_name}' - skipping")
+        print(f"    Error: {str(e)}")
+        print(f"    File: {nodes_file}")
+        return {}
 
     print(f"  Network layout '{network_name}': {len(network_buildings_from_layout)} buildings connected")
 
