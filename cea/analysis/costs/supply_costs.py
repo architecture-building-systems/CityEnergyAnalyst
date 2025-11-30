@@ -560,11 +560,12 @@ def calculate_standalone_building_costs(locator, config, network_name):
             except Exception:
                 pass  # Network doesn't exist, that's fine
 
-    # Load domain - use DC as default (will load all buildings with their demands)
+    # Load domain - use default 'DH' for standalone mode
+    # (doesn't affect standalone calculations - all services calculated regardless)
     print("  Loading buildings and demands...")
     domain_config = cea.config.Configuration()
     domain_config.scenario = config.scenario
-    domain_config.optimization_new.network_type = 'DC'
+    # Don't override network_type - use default 'DH' from Configuration()
 
     domain = Domain(domain_config, locator)
     domain.load_buildings()
