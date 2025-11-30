@@ -699,7 +699,6 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
     from cea.optimization_new.supplySystem import SupplySystem
     from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-    from cea.optimization_new.network import Network
 
     results = {}
     network_id = f'{network_name}_{network_type}'  # Use meaningful network ID
@@ -771,7 +770,9 @@ def calculate_district_network_costs(locator, config, network_type, network_name
         # Check if user selected "Custom (use component settings below)" or if field is empty
         if supply_code_hs and supply_code_hs != "Custom (use component settings below)":
             # Mode 1: Use SUPPLY assembly
-            print(f"      Using SUPPLY assembly: {supply_code_hs}")
+            print(f"      Using SUPPLY assembly (heating): {supply_code_hs}")
+            if supply_code_dhw and supply_code_dhw != "Custom (use component settings below)":
+                print(f"      Using SUPPLY assembly (DHW): {supply_code_dhw}")
             supply_components = get_components_from_supply_assembly(locator, supply_code_hs, 'SUPPLY_HEATING')
             if supply_components.get('primary'):
                 print(f"        Primary components: {supply_components['primary']}")
@@ -784,7 +785,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
     max_supply_flow = aggregated_demand.isolate_peak()
 
     if max_supply_flow.profile.max() == 0.0:
-        print(f"      Zero demand - skipping")
+        print("      Zero demand - skipping")
         return results
 
     # Get peak demand in kW for component filtering
@@ -807,7 +808,7 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             # which adds complexity beyond the scope of baseline cost estimation
             cooling_cats_simple = [cat for cat in cooling_cats if 'ABSORPTION' not in cat]
             if len(cooling_cats_simple) < len(cooling_cats):
-                print(f"      Note: Excluding absorption chillers for baseline costs (require heat source configuration)")
+                print("      Note: Excluding absorption chillers for baseline costs (require heat source configuration)")
                 print(f"            Using: {cooling_cats_simple}")
 
             # Convert component categories to actual component codes from database
@@ -1066,7 +1067,7 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
             piping_cost_total = piping_cost_annual * network_lifetime_yrs
             print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
         else:
-            print(f"      Warning: Piping costs not included (network object not found)")
+            print("      Warning: Piping costs not included (network object not found)")
 
         results[network_id] = {
             'network_type': network_type,  # This is for internal tracking

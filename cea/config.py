@@ -1281,7 +1281,7 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
         """Get the supply category from the parameter definition"""
         try:
             self.supply_category = parser.get(self.section.name, f"{self.name}.supply-category")
-        except:
+        except Exception:
             raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (e.g., SUPPLY_COOLING, SUPPLY_HEATING, SUPPLY_HOTWATER)")
 
     @property
