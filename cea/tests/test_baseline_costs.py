@@ -8,7 +8,7 @@ import pytest
 
 import cea.config
 import cea.inputlocator
-from cea.analysis.costs.baseline_costs import main as baseline_costs_main
+from cea.analysis.costs.main import main as baseline_costs_main
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
