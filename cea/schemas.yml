@@ -1991,6 +1991,132 @@ get_baseline_costs_detailed:
         type: string
         unit: NA
   used_by: []
+
+get_heat_rejection_buildings:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/heat_rejection_buildings.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or network plant name
+        type: string
+        unit: NA
+      type:
+        description: Type of heat source (building for individual buildings, plant for district energy plants)
+        type: string
+        unit: NA
+      GFA_m2:
+        description: Gross floor area (0 for plant nodes)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      x_coord:
+        description: X coordinate for spatial location (longitude or projected coordinate)
+        type: float
+        unit: '[m]'
+      y_coord:
+        description: Y coordinate for spatial location (latitude or projected coordinate)
+        type: float
+        unit: '[m]'
+      heat_rejection_annual_MWh:
+        description: Total annual heat rejection to environment (sum of all energy carriers)
+        type: float
+        unit: '[MWh]'
+        min: 0.0
+      peak_heat_rejection_kW:
+        description: Peak hourly heat rejection rate
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      peak_datetime:
+        description: Date and time of peak heat rejection
+        type: string
+        unit: NA
+      scale:
+        description: System scale (BUILDING for individual building systems, DISTRICT for district network plants)
+        type: string
+        unit: NA
+  used_by: []
+
+get_heat_rejection_components:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/heat_rejection_components.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or network plant name
+        type: string
+        unit: NA
+      network_type:
+        description: Network type (DC for district cooling, DH for district heating) or empty for standalone buildings
+        type: string
+        unit: NA
+      service:
+        description: Energy service (e.g., GRID_cs for grid cooling, DC_plant for district cooling plant)
+        type: string
+        unit: NA
+      component_code:
+        description: Component code (e.g., CH1 for chiller type 1, CT1 for cooling tower type 1)
+        type: string
+        unit: NA
+      energy_carrier:
+        description: Energy carrier code for heat rejection medium (e.g., T_AIR_20C for air at 20C, T_AIR_ODB for outdoor air)
+        type: string
+        unit: NA
+      heat_rejection_annual_MWh:
+        description: Annual heat rejection for this component and energy carrier
+        type: float
+        unit: '[MWh]'
+        min: 0.0
+      peak_heat_rejection_kW:
+        description: Peak hourly heat rejection rate for this component
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      scale:
+        description: System scale (BUILDING for individual building systems, DISTRICT for district network plants)
+        type: string
+        unit: NA
+  used_by: []
+
+get_heat_rejection_hourly_spatial:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/heat_rejection_hourly_spatial.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or network plant name
+        type: string
+        unit: NA
+      type:
+        description: Type of heat source (building for individual buildings, plant for district energy plants)
+        type: string
+        unit: NA
+      x_coord:
+        description: X coordinate for spatial location (longitude or projected coordinate)
+        type: float
+        unit: '[m]'
+      y_coord:
+        description: Y coordinate for spatial location (latitude or projected coordinate)
+        type: float
+        unit: '[m]'
+      DATE:
+        description: Timestamp for this hour (8760 hours per location)
+        type: string
+        unit: NA
+      Heat_rejection_kW:
+        description: Heat rejection rate at this hour (sum of all energy carriers)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+  used_by: []
+
 get_database_assemblies_envelope_mass:
   created_by:
   - database_helper

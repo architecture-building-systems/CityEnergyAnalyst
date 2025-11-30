@@ -345,6 +345,36 @@ Life Cycle Analysis:
       - [get_building_supply]
       - [get_zone_geometry]
 
+  - name: anthropogenic-heat
+    label: Anthropogenic Heat Assessment
+    short_description: Calculate heat rejection to environment from energy systems
+    description: |
+      This feature calculates anthropogenic heat emissions (heat rejection) from
+      building and district energy systems to assess urban heat island impacts.
+
+      **Calculates**:
+      - Total annual heat rejection (MWh/yr)
+      - Peak hourly heat rejection (kW)
+      - Spatial distribution (building and plant locations)
+      - Hourly time series profiles
+      - Breakdown by component type (chillers, cooling towers, boilers)
+      - Building-scale vs. district-scale contributions
+
+      **Outputs**:
+      - Summary by building/plant with coordinates
+      - Hourly spatial data for heatmap visualisation
+      - Component-level breakdown
+
+      Uses heat rejection tracking from optimisation engine. Supports multiple
+      plants per network with equal heat distribution.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.heat.main
+    parameters: ['general:scenario', anthropogenic-heat]
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
+      - [get_zone_geometry]
+
 
 Energy Supply System Optimisation:
 

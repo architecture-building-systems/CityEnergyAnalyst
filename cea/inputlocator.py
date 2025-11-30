@@ -1375,6 +1375,23 @@ class InputLocator(object):
         """scenario/outputs/data/costs/costs_components.csv"""
         return os.path.join(self.get_costs_folder(), 'costs_components.csv')
 
+    # HEAT REJECTION
+    def get_heat_folder(self):
+        """scenario/outputs/data/heat"""
+        return os.path.join(self.scenario, 'outputs', 'data', 'heat')
+
+    def get_heat_rejection_buildings(self):
+        """scenario/outputs/data/heat/heat_rejection_buildings.csv"""
+        return os.path.join(self.get_heat_folder(), 'heat_rejection_buildings.csv')
+
+    def get_heat_rejection_components(self):
+        """scenario/outputs/data/heat/heat_rejection_components.csv"""
+        return os.path.join(self.get_heat_folder(), 'heat_rejection_components.csv')
+
+    def get_heat_rejection_hourly_spatial(self):
+        """scenario/outputs/data/heat/heat_rejection_hourly_spatial.csv"""
+        return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
+
     # GRAPHS
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""
