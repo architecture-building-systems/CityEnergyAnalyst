@@ -61,7 +61,7 @@ class CeaPlugin:
         schemas_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "schemas.yml")
         if not os.path.exists(schemas_yml):
             return {}
-        with open(schemas_yml, "r") as schemas_yml_fp:
+        with open(schemas_yml, "r", encoding="utf-8") as schemas_yml_fp:
             schemas = yaml.safe_load(schemas_yml_fp) or {}
         return schemas
 
