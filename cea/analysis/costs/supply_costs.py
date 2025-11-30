@@ -560,15 +560,33 @@ def calculate_standalone_building_costs(locator, config, network_name):
             except Exception:
                 pass  # Network doesn't exist, that's fine
 
-    # Load domain - use default 'DH' for standalone mode
-    # (doesn't affect standalone calculations - all services calculated regardless)
+    # Load buildings with Domain - need to load both heating and cooling buildings
+    # Domain filters by network_type, so load twice and combine to get ALL buildings
     print("  Loading buildings and demands...")
-    domain_config = cea.config.Configuration()
-    domain_config.scenario = config.scenario
-    # Don't override network_type - use default 'DH' from Configuration()
 
-    domain = Domain(domain_config, locator)
-    domain.load_buildings()
+    # Load buildings with heating demand (network_type='DH')
+    domain_config_dh = cea.config.Configuration()
+    domain_config_dh.scenario = config.scenario
+    domain_config_dh.optimization_new.network_type = 'DH'
+    domain_config_dh.optimization_new.network_name = None  # Ensure standalone mode
+    domain_dh = Domain(domain_config_dh, locator)
+    domain_dh.load_buildings()
+
+    # Load buildings with cooling demand (network_type='DC')
+    domain_config_dc = cea.config.Configuration()
+    domain_config_dc.scenario = config.scenario
+    domain_config_dc.optimization_new.network_type = 'DC'
+    domain_config_dc.optimization_new.network_name = None  # Ensure standalone mode
+    domain_dc = Domain(domain_config_dc, locator)
+    domain_dc.load_buildings()
+
+    # Combine buildings from both domains (avoid duplicates)
+    all_buildings = {b.identifier: b for b in domain_dh.buildings}
+    all_buildings.update({b.identifier: b for b in domain_dc.buildings})
+
+    # Use the combined domain for further processing
+    domain = domain_dh  # Keep domain_dh as the base domain
+    domain.buildings = list(all_buildings.values())  # Replace with combined buildings list
 
     # Suppress optimization messages about missing potentials (not relevant for cost calculation)
     import sys
