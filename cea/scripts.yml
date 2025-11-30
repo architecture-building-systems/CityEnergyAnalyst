@@ -306,7 +306,7 @@ Life Cycle Analysis:
 #    label: Energy Supply System Costs (DEPRECATED)
 #    short_description: "[DEPRECATED] Use 'baseline-costs' instead"
 #    description: |
-#      **⚠️ DEPRECATED**: This script is deprecated and will be removed in CEA v5.0.
+#      **DEPRECATED**: This script is deprecated and will be removed in CEA v5.0.
 #
 #      Please use the new 'baseline-costs' script instead, which provides:
 #      - More accurate cost calculations (using COMPONENTS database)
