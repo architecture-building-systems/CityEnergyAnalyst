@@ -581,8 +581,40 @@ def calculate_standalone_building_costs(locator, config, network_name):
     domain_dc.load_buildings()
 
     # Combine buildings from both domains (avoid duplicates)
-    all_buildings = {b.identifier: b for b in domain_dh.buildings}
-    all_buildings.update({b.identifier: b for b in domain_dc.buildings})
+    # IMPORTANT: Need to merge supply systems from BOTH domains for buildings with both heating and cooling demand
+    # If we just use update(), buildings lose their heating systems!
+
+    # Create dict of heating buildings
+    dh_buildings = {b.identifier: b for b in domain_dh.buildings}
+    dc_buildings = {b.identifier: b for b in domain_dc.buildings}
+
+    # Start with all DH buildings (heating systems)
+    all_buildings = dict(dh_buildings)
+
+    # For DC buildings:
+    # - If building NOT in DH dict: add it (cooling-only building)
+    # - If building IS in DH dict: need to merge supply systems (building has both heating and cooling)
+    for bid, dc_building in dc_buildings.items():
+        if bid not in all_buildings:
+            # Cooling-only building - add it
+            all_buildings[bid] = dc_building
+        else:
+            # Building has BOTH heating and cooling - merge supply systems
+            # Keep the DH building as base (has heating system) and add cooling system from DC building
+            dh_building = all_buildings[bid]
+
+            # Merge installed_components from DC building into DH building
+            # DC building has cooling components, DH building has heating components
+            if hasattr(dc_building, 'supply_system') and hasattr(dh_building, 'supply_system'):
+                if dc_building.supply_system and dh_building.supply_system:
+                    # Merge installed components from both supply systems
+                    for placement, components_dict in dc_building.supply_system.installed_components.items():
+                        if placement not in dh_building.supply_system.installed_components:
+                            dh_building.supply_system.installed_components[placement] = {}
+                        dh_building.supply_system.installed_components[placement].update(components_dict)
+
+                    # Merge annual costs
+                    dh_building.supply_system.annual_cost.update(dc_building.supply_system.annual_cost)
 
     # Use the combined domain for further processing
     domain = domain_dh  # Keep domain_dh as the base domain
