@@ -346,8 +346,8 @@ Life Cycle Analysis:
       - [get_zone_geometry]
 
   - name: anthropogenic-heat
-    label: Anthropogenic Heat Assessment
-    short_description: Calculate heat rejection to environment from energy systems
+    label: Anthropogenic Heat
+    short_description: Calculate heat rejection to the environment from energy systems
     description: |
       This feature calculates anthropogenic heat emissions (heat rejection) from
       building and district energy systems to assess urban heat island impacts.
