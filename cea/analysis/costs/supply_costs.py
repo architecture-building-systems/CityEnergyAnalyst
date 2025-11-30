@@ -1385,6 +1385,26 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
         # Map energy carrier to service (e.g., NATURALGAS → NG_hs, E230AC → GRID_cs)
         service_name = map_energy_carrier_to_service(ec_code, network_type)
 
+        # For standalone systems (network_type=None), if mapping returns None (ambiguous carrier like GRID),
+        # try to infer service by matching carrier prefix to existing cost entries
+        if not service_name and network_type is None:
+            # Extract carrier prefix from energy carrier code
+            carrier_prefix = ec_code.split('_')[0] if '_' in ec_code else ec_code
+            # Map carrier code to carrier prefix using the same logic as map_energy_carrier_to_service
+            carrier_map = {
+                'E230AC': 'GRID', 'E22kAC': 'GRID', 'E66kAC': 'GRID', 'GRID': 'GRID',
+                'Cgas': 'NG', 'NATURALGAS': 'NG', 'Coil': 'OIL', 'OIL': 'OIL',
+                'Ccoa': 'COAL', 'COAL': 'COAL', 'Cwod': 'WOOD', 'WOOD': 'WOOD',
+                'Cbig': 'BIOGAS', 'Cwbm': 'WETBIOMASS', 'Cdbm': 'DRYBIOMASS', 'Chyd': 'HYDROGEN'
+            }
+            carrier_prefix = carrier_map.get(ec_code, carrier_prefix)
+
+            # Search existing costs for a matching service (e.g., GRID_hs, GRID_cs)
+            for existing_service in costs.keys():
+                if existing_service.startswith(f"{carrier_prefix}_"):
+                    service_name = existing_service
+                    break
+
         # Warn about unmapped energy carriers with significant costs
         if not service_name and annual_cost > 1000:
             print(f"    WARNING: Unmapped energy carrier '{ec_code}' with cost ${annual_cost:,.2f}/year")
@@ -1551,20 +1571,20 @@ def map_energy_carrier_to_service(ec_code, network_type):
         'GRID': 'GRID',     # Legacy/generic electricity
 
         # Fossil fuels (C prefix)
-        'Cgas': 'NG',       # Natural gas
-        'NATURALGAS': 'NG', # Legacy natural gas
-        'Coil': 'OIL',      # Oil
-        'OIL': 'OIL',       # Legacy oil
-        'Ccoa': 'COAL',     # Coal
-        'COAL': 'COAL',     # Legacy coal
+        'Cgas': 'NG',        # Natural gas
+        'NATURALGAS': 'NG',  # Legacy natural gas
+        'Coil': 'OIL',       # Oil
+        'OIL': 'OIL',        # Legacy oil
+        'Ccoa': 'COAL',      # Coal
+        'COAL': 'COAL',      # Legacy coal
 
         # Biofuels (C prefix)
-        'Cwod': 'WOOD',     # Wood
-        'WOOD': 'WOOD',     # Legacy wood
-        'Cbig': 'BIOGAS',   # Biogas
+        'Cwod': 'WOOD',      # Wood
+        'WOOD': 'WOOD',      # Legacy wood
+        'Cbig': 'BIOGAS',    # Biogas
         'Cwbm': 'WETBIOMASS',  # Wet biomass
         'Cdbm': 'DRYBIOMASS',  # Dry biomass
-        'Chyd': 'HYDROGEN', # Hydrogen
+        'Chyd': 'HYDROGEN',  # Hydrogen
 
         # District networks
         'DH': 'DH',         # District heating
@@ -1600,4 +1620,3 @@ def map_energy_carrier_to_service(ec_code, network_type):
         return None
 
     return f"{carrier}{suffix}"
-
