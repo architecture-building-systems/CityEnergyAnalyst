@@ -1571,47 +1571,46 @@ def map_component_to_service(component, network_type, building):
             # Default to heating for unknown components
             suffix = '_hs'
 
-    # Map based on component database definitions
-    # These mappings come from COMPONENTS/CONVERSION/*.csv files
+    # Map based on component's actual input energy carriers (from database)
+    # This is flexible and works with any custom database structure
 
-    # Boilers
-    if comp_code in ['BO1', 'BO7', 'BO8', 'BO9', 'BO10']:  # Natural gas boilers
-        carrier = 'NG'
-    elif comp_code in ['BO2']:  # Oil boilers
-        carrier = 'OIL'
-    elif comp_code in ['BO4']:  # Coal boilers
-        carrier = 'COAL'
-    elif comp_code in ['BO5']:  # Electric boilers
-        carrier = 'GRID'
-    elif comp_code in ['BO6']:  # Wood boilers
-        carrier = 'WOOD'
+    # Try to get the primary input energy carrier from the component
+    carrier = None
 
-    # Heat pumps (use electricity)
-    elif comp_code.startswith('HP'):
-        carrier = 'GRID'
+    if hasattr(component, 'input_energy_carriers') and component.input_energy_carriers:
+        # Get the first (primary) input energy carrier
+        primary_input = component.input_energy_carriers[0] if isinstance(component.input_energy_carriers, list) else list(component.input_energy_carriers.values())[0]
 
-    # Chillers (use electricity)
-    elif comp_code.startswith('CH') or comp_code.startswith('VCCH') or comp_code.startswith('ACH'):
-        carrier = 'GRID'
+        if hasattr(primary_input, 'code'):
+            ec_code = primary_input.code
 
-    # Cogeneration plants
-    elif comp_code.startswith('CCGT') or comp_code.startswith('FC'):
-        carrier = 'NG'
+            # Map energy carrier code to service prefix
+            # Based on COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv
+            carrier_map = {
+                # Electrical carriers
+                'E230AC': 'GRID', 'E22kAC': 'GRID', 'E66kAC': 'GRID',
+                # Fossil fuels
+                'Cgas': 'NG', 'Coil': 'OIL', 'Ccoa': 'COAL',
+                # Biofuels
+                'Cwod': 'WOOD', 'Cbig': 'BIOGAS', 'Cwbm': 'WETBIOMASS',
+                'Cdbm': 'DRYBIOMASS', 'Chyd': 'HYDROGEN',
+                # District networks
+                'DH': 'DH', 'DC': 'DC'
+            }
 
-    # Cooling towers and heat rejection
-    elif comp_code.startswith('CT'):
-        carrier = 'GRID'  # Cooling towers use electricity for fans/pumps
+            carrier = carrier_map.get(ec_code)
 
-    # District heating/cooling
-    # Check if this is a network-level system (building=None) or a building connected to a network
-    elif building is None or building.initial_connectivity_state != 'stand_alone':
-        if network_type == 'DH':
-            carrier = 'DH'
-        else:
-            carrier = 'DC'
+    # Fallback: Check if this is a network-level system
+    if not carrier:
+        if building is None or (hasattr(building, 'initial_connectivity_state') and
+                                building.initial_connectivity_state != 'stand_alone'):
+            if network_type == 'DH':
+                carrier = 'DH'
+            elif network_type == 'DC':
+                carrier = 'DC'
 
-    # Default to GRID if unknown
-    else:
+    # Final fallback: Default to GRID if we couldn't determine carrier
+    if not carrier:
         carrier = 'GRID'
 
     return f"{carrier}{suffix}"
