@@ -368,7 +368,8 @@ def apply_dhw_component_fallback(locator, building, supply_system):
 
     # Extract costs from DHW supply system
     # Use 'DH' as network_type to indicate this is a heating-related service
-    dhw_costs = extract_costs_from_supply_system(dhw_supply_system, 'DH', building)
+    # DHW fallback is always for standalone buildings
+    dhw_costs = extract_costs_from_supply_system(dhw_supply_system, 'DH', building, is_network_building=False)
 
     # Rename services to include '_ww' suffix for DHW
     dhw_costs_renamed = {}
@@ -708,7 +709,10 @@ def calculate_standalone_building_costs(locator, config, network_name):
             # Extract costs from all services
             supply_system = building.stand_alone_supply_system
             # Pass None as network_type to get all services
-            costs = extract_costs_from_supply_system(supply_system, None, building)
+            # Check if building is in any network
+            is_network_building = (building.identifier in dc_network_buildings or
+                                   building.identifier in dh_network_buildings)
+            costs = extract_costs_from_supply_system(supply_system, None, building, is_network_building)
 
             # Note: We don't check for missing components here because we don't know yet
             # which services the building will need building-scale equipment for.
@@ -973,8 +977,9 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             raise
 
     # Extract costs from network supply system
+    # Network central plant is district-scale infrastructure
     network_costs = extract_costs_from_supply_system(
-        network_supply_system, network_type, None
+        network_supply_system, network_type, None, is_network_building=True
     )
 
     # Calculate piping costs from thermal-network output files
@@ -1101,8 +1106,9 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
 
         # Extract costs from network supply system
         # Pass None as building to indicate this is a network-level system
+        # Network infrastructure is district-scale
         network_costs = extract_costs_from_supply_system(
-            network_supply_system, network_type, None
+            network_supply_system, network_type, None, is_network_building=True
         )
 
         # Get piping costs from pre-built network (if available)
@@ -1346,13 +1352,14 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     return results
 
 
-def extract_costs_from_supply_system(supply_system, network_type, building):
+def extract_costs_from_supply_system(supply_system, network_type, building, is_network_building=False):
     """
     Extract cost metrics from optimization_new supply system.
 
     :param supply_system: SupplySystem instance from optimization_new
-    :param network_type: 'DH' or 'DC'
+    :param network_type: 'DH' or 'DC' or None (for standalone buildings)
     :param building: Building instance (or None for network-level systems)
+    :param is_network_building: True if building is connected to network, False for standalone
     :return: dict of cost metrics by service
     """
     costs = {}
@@ -1364,8 +1371,8 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
             # Map component to energy service (e.g., BO1 → NG_hs, HP1 → GRID_hs)
             service_name = map_component_to_service(component, network_type, building)
 
-            # Determine scale based on placement and initial connectivity
-            scale = determine_scale(building, placement)
+            # Determine scale based on actual network connectivity (not assembly scale)
+            scale = determine_scale(building, placement, is_network_building)
 
             # Aggregate costs by service
             if service_name not in costs:
@@ -1450,7 +1457,7 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
                     'opex_a_fixed_USD': 0.0,
                     'opex_var_USD': 0.0,
                     'opex_a_var_USD': 0.0,
-                    'scale': determine_scale(building, 'primary'),
+                    'scale': determine_scale(building, 'primary', is_network_building),
                     'components': [],
                     'energy_costs': []  # Track energy costs separately for detailed output
                 }
@@ -1476,23 +1483,26 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
     return costs
 
 
-def determine_scale(building, placement):
+def determine_scale(building, placement, is_network_building=False):
     """
     Determine if system is building, district, or city scale.
 
     :param building: Building instance (or None for network systems)
     :param placement: Component placement (primary/secondary/tertiary)
+    :param is_network_building: True if building is actually connected to a network, False for standalone
     :return: 'BUILDING', 'DISTRICT', or 'CITY'
     """
     # If building is None, this is a network-level system
     if building is None:
         return 'DISTRICT'
 
-    # If building is connected to a network (state starts with 'N' for network IDs)
-    if building.initial_connectivity_state != 'stand_alone':
-        return 'DISTRICT'
-    else:
+    # For standalone mode, always return BUILDING regardless of assembly scale
+    # (assemblies might say DISTRICT but building is actually standalone)
+    if not is_network_building:
         return 'BUILDING'
+
+    # Building is actually in a network - return DISTRICT
+    return 'DISTRICT'
 
 
 def map_component_to_service(component, network_type, building):
