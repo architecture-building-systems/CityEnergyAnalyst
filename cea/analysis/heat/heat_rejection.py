@@ -480,7 +480,8 @@ def merge_heat_rejection_results(standalone_results, network_results, is_standal
                 'peak_datetime': peak_datetime,
                 'scale': 'BUILDING',
                 'hourly_profile': combined_hourly,
-                'heat_rejection_by_carrier': data['heat_rejection']
+                'heat_rejection_by_carrier': data['heat_rejection'],
+                'supply_system': data.get('supply_system')  # Include supply system for component extraction
             })
 
     # Add network plants
@@ -509,6 +510,53 @@ def get_building_coordinates(building):
             return 0.0, 0.0
     except:
         return 0.0, 0.0
+
+
+def extract_component_heat_rejection(supply_system, building_name, building_type, scale):
+    """
+    Extract heat rejection details from a SupplySystem, showing breakdown by component.
+
+    :param supply_system: SupplySystem instance
+    :param building_name: Name of building or plant
+    :param building_type: 'building' or 'plant'
+    :param scale: 'BUILDING' or 'DISTRICT'
+    :return: list of component dictionaries
+    """
+    component_details = []
+
+    # List installed components with their capacities
+    for placement, components_dict in supply_system.installed_components.items():
+        for component_code, component in components_dict.items():
+            component_details.append({
+                'name': building_name,
+                'type': building_type,
+                'component_code': component_code,
+                'component_type': component.__class__.__name__,
+                'placement': placement,
+                'capacity_kW': component.capacity,
+                'scale': scale
+            })
+
+    # Add heat rejection totals by carrier (from system-level tracking)
+    # Note: Heat rejection is tracked at system level, not per component
+    for carrier_code, heat_series in supply_system.heat_rejection.items():
+        annual_MWh = heat_series.sum() / 1000  # kWh to MWh
+        peak_kW = heat_series.max()
+
+        if annual_MWh > 0.001:  # Only include significant values
+            component_details.append({
+                'name': building_name,
+                'type': building_type,
+                'component_code': carrier_code,
+                'component_type': 'energy_carrier',
+                'placement': 'heat_rejection',
+                'capacity_kW': 0.0,
+                'heat_rejection_annual_MWh': annual_MWh,
+                'peak_heat_rejection_kW': peak_kW,
+                'scale': scale
+            })
+
+    return component_details
 
 
 def save_heat_rejection_outputs(locator, results, is_standalone_only):
@@ -570,33 +618,37 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         spatial_df.to_csv(output_file, index=False)
         print(f"  ✓ Saved hourly spatial: {output_file}")
 
-    # 3. Components detailed file - breakdown by energy carrier
+    # 3. Components detailed file - detailed breakdown by individual component
     component_rows = []
+    buildings_with_systems = 0
     for building_data in results['buildings']:
         building_name = building_data['name']
         building_type = building_data['type']
         scale = building_data['scale']
-        heat_rejection_by_carrier = building_data.get('heat_rejection_by_carrier', {})
+        supply_system = building_data.get('supply_system')
 
-        # Create one row per energy carrier
-        for carrier_code, heat_series in heat_rejection_by_carrier.items():
-            annual_MWh = heat_series.sum() / 1000  # Convert kWh to MWh
-            peak_kW = heat_series.max()
+        if supply_system:
+            buildings_with_systems += 1
+            # Extract component-level details from supply system
+            component_details = extract_component_heat_rejection(
+                supply_system, building_name, building_type, scale
+            )
+            component_rows.extend(component_details)
 
-            component_rows.append({
-                'name': building_name,
-                'type': building_type,
-                'energy_carrier': carrier_code,
-                'heat_rejection_annual_MWh': annual_MWh,
-                'peak_heat_rejection_kW': peak_kW,
-                'scale': scale
-            })
+    print(f"  Extracted components from {buildings_with_systems} buildings/plants")
 
     if component_rows:
         components_df = pd.DataFrame(component_rows)
+        # Reorder columns for better readability (only include columns that exist)
+        desired_order = [
+            'name', 'type', 'component_code', 'component_type', 'placement',
+            'capacity_kW', 'heat_rejection_annual_MWh', 'peak_heat_rejection_kW', 'scale'
+        ]
+        columns_order = [col for col in desired_order if col in components_df.columns]
+        components_df = components_df[columns_order]
         output_file = locator.get_heat_rejection_components()
         components_df.to_csv(output_file, index=False)
-        print(f"  ✓ Saved components breakdown: {output_file}")
+        print(f"  ✓ Saved components breakdown ({len(component_rows)} rows): {output_file}")
     else:
         # Create empty placeholder
         components_df = pd.DataFrame()
