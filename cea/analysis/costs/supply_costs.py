@@ -1168,13 +1168,13 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     if not os.path.exists(layout_folder):
         print(f"  ⚠ Network layout folder not found for {network_type} network '{network_name}' - skipping")
         print(f"    Expected: {layout_folder}")
-        print(f"    Please run 'thermal-network' (part 1 and 2) first")
+        print("    Please run 'thermal-network' (part 1 and 2) first")
         return {}
 
     if not os.path.exists(nodes_file):
         print(f"  ⚠ Network nodes file not found for {network_type} network '{network_name}' - skipping")
         print(f"    Expected: {nodes_file}")
-        print(f"    Please run 'thermal-network' (part 1 and 2) first")
+        print("    Please run 'thermal-network' (part 1 and 2) first")
         return {}
 
     # Try to read network layout
