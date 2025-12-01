@@ -260,7 +260,8 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
             'peak_datetime': peak_datetime,
             'scale': 'DISTRICT',
             'hourly_profile': plant_heat_hourly,  # For spatial output
-            'heat_rejection_by_carrier': total_heat_rejection  # For component breakdown
+            'heat_rejection_by_carrier': total_heat_rejection,  # For component breakdown
+            'supply_system': plant_supply_system  # Include supply system for component extraction
         })
 
     return {
