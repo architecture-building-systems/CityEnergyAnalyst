@@ -308,13 +308,20 @@ def create_network_supply_system(locator, config, network_type, network_name,
         )
 
     if not supply_code or supply_code == "Custom (use component settings below)":
-        # Use component selection
+        # Use component selection from config parameters
         print(f"      Using COMPONENT selection for {network_type} network")
-        # Will be handled by SupplySystemStructure with user_component_selection
         user_components = get_user_component_selection(config, network_type)
     else:
+        # Extract components from SUPPLY assembly
         print(f"      Using SUPPLY assembly: {supply_code}")
-        user_components = None  # Let assembly handle it
+        from cea.analysis.costs.supply_costs import get_components_from_supply_assembly
+
+        if network_type == 'DC':
+            category = 'SUPPLY_COOLING'
+        else:
+            category = 'SUPPLY_HEATING'
+
+        user_components = get_components_from_supply_assembly(locator, supply_code, category)
 
     # Calculate total network demand from connected buildings
     total_demand_profile = calculate_network_demand_profile(
