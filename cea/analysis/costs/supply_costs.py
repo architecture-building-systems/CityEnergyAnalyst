@@ -1109,8 +1109,8 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
 
         # Skip if zero demand
         if max_supply_flow.profile.max() == 0.0:
-            print(f"  {network_id}: Zero demand - skipping supply system instantiation")
-            return results
+            print(f"  {network_id}: Zero demand - skipping this network")
+            continue
 
         system_structure = SupplySystemStructure(
             max_supply_flow=max_supply_flow,
@@ -1364,7 +1364,6 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
 
     # All buildings in domain are network-connected (we filtered in load_buildings)
     network_connected_buildings = domain.buildings
-
 
     network_results = calculate_district_network_costs(
         locator, config, network_type, network_name,
