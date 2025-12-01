@@ -581,45 +581,69 @@ def calculate_standalone_building_costs(locator, config, network_name):
     domain_dc = Domain(domain_config_dc, locator)
     domain_dc.load_buildings()
 
-    # Combine buildings from both domains (avoid duplicates)
-    # IMPORTANT: Need to merge supply systems from BOTH domains for buildings with both heating and cooling demand
-    # If we just use update(), buildings lose their heating systems!
+    # Check which domains have buildings
+    has_heating = len(domain_dh.buildings) > 0
+    has_cooling = len(domain_dc.buildings) > 0
 
-    # Create dict of heating buildings
-    dh_buildings = {b.identifier: b for b in domain_dh.buildings}
-    dc_buildings = {b.identifier: b for b in domain_dc.buildings}
+    print(f"  Found {len(domain_dh.buildings)} buildings with heating/DHW demand")
+    print(f"  Found {len(domain_dc.buildings)} buildings with cooling demand")
 
-    # Start with all DH buildings (heating systems)
-    all_buildings = dict(dh_buildings)
+    # Handle different demand scenarios
+    if not has_heating and not has_cooling:
+        print("  No buildings with any demand found.")
+        return {}
 
-    # For DC buildings:
-    # - If building NOT in DH dict: add it (cooling-only building)
-    # - If building IS in DH dict: need to merge supply systems (building has both heating and cooling)
-    for bid, dc_building in dc_buildings.items():
-        if bid not in all_buildings:
-            # Cooling-only building - add it
-            all_buildings[bid] = dc_building
-        else:
-            # Building has BOTH heating and cooling - merge supply systems
-            # Keep the DH building as base (has heating system) and add cooling system from DC building
-            dh_building = all_buildings[bid]
+    if not has_heating:
+        # Cooling-only scenario (e.g., Singapore)
+        print("  Cooling-only scenario (no heating/DHW demand)")
+        domain = domain_dc
+        all_buildings = {b.identifier: b for b in domain_dc.buildings}
+    elif not has_cooling:
+        # Heating-only scenario (rare, but possible)
+        print("  Heating-only scenario (no cooling demand)")
+        domain = domain_dh
+        all_buildings = {b.identifier: b for b in domain_dh.buildings}
+    else:
+        # Mixed scenario - need to merge buildings from both domains
+        print("  Mixed scenario (both heating and cooling demand)")
 
-            # Merge installed_components from DC building into DH building
-            # DC building has cooling components, DH building has heating components
-            if hasattr(dc_building, 'supply_system') and hasattr(dh_building, 'supply_system'):
-                if dc_building.supply_system and dh_building.supply_system:
-                    # Merge installed components from both supply systems
-                    for placement, components_dict in dc_building.supply_system.installed_components.items():
-                        if placement not in dh_building.supply_system.installed_components:
-                            dh_building.supply_system.installed_components[placement] = {}
-                        dh_building.supply_system.installed_components[placement].update(components_dict)
+        # Create dict of heating buildings
+        dh_buildings = {b.identifier: b for b in domain_dh.buildings}
+        dc_buildings = {b.identifier: b for b in domain_dc.buildings}
 
-                    # Merge annual costs
-                    dh_building.supply_system.annual_cost.update(dc_building.supply_system.annual_cost)
+        # Start with all DH buildings (heating systems)
+        all_buildings = dict(dh_buildings)
 
-    # Use the combined domain for further processing
-    domain = domain_dh  # Keep domain_dh as the base domain
-    domain.buildings = list(all_buildings.values())  # Replace with combined buildings list
+        # For DC buildings:
+        # - If building NOT in DH dict: add it (cooling-only building)
+        # - If building IS in DH dict: need to merge supply systems (building has both heating and cooling)
+        for bid, dc_building in dc_buildings.items():
+            if bid not in all_buildings:
+                # Cooling-only building - add it
+                all_buildings[bid] = dc_building
+            else:
+                # Building has BOTH heating and cooling - merge supply systems
+                # Keep the DH building as base (has heating system) and add cooling system from DC building
+                dh_building = all_buildings[bid]
+
+                # Merge installed_components from DC building into DH building
+                # DC building has cooling components, DH building has heating components
+                if hasattr(dc_building, 'supply_system') and hasattr(dh_building, 'supply_system'):
+                    if dc_building.supply_system and dh_building.supply_system:
+                        # Merge installed components from both supply systems
+                        for placement, components_dict in dc_building.supply_system.installed_components.items():
+                            if placement not in dh_building.supply_system.installed_components:
+                                dh_building.supply_system.installed_components[placement] = {}
+                            dh_building.supply_system.installed_components[placement].update(components_dict)
+
+                        # Merge annual costs
+                        dh_building.supply_system.annual_cost.update(dc_building.supply_system.annual_cost)
+
+        # Use DH domain as base (has more buildings typically)
+        domain = domain_dh
+        domain.buildings = list(all_buildings.values())  # Replace with combined buildings list
+
+    print(f"  Total unique buildings: {len(all_buildings)}")
 
     # Suppress optimization messages about missing potentials (not relevant for cost calculation)
     import sys
