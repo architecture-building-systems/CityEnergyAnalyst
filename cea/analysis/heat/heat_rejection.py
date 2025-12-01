@@ -119,30 +119,42 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
     """
     Calculate heat rejection for all buildings using building-scale systems.
 
-    This creates a Domain with all buildings and extracts heat_rejection from their
-    stand_alone_supply_system.
+    This is a twin of supply_costs.py - it reuses the same supply system calculation
+    but extracts heat_rejection instead of costs from the SupplySystem objects.
 
     :param locator: InputLocator instance
     :param config: Configuration instance
     :param network_types: List of network types ['DH', 'DC']
     :return: dict of {building_id: heat_rejection_data}
     """
-    print("  Loading buildings and demands...")
+    import cea.config
+    from cea.analysis.costs.supply_costs import calculate_all_buildings_as_standalone
 
-    # Create domain to load all buildings
-    # Note: We pass network_types to config but don't use networks yet
-    domain = Domain(config, locator)
+    # Create a config that maps anthropogenic_heat parameters to system_costs parameters
+    # This allows us to reuse the supply_costs functions
+    cost_config = cea.config.Configuration()
+    cost_config.scenario = config.scenario
+    cost_config.system_costs.network_name = None  # Force standalone mode
+    cost_config.system_costs.network_type = network_types
+    cost_config.system_costs.supply_type_cs = config.anthropogenic_heat.supply_type_cs
+    cost_config.system_costs.supply_type_hs = config.anthropogenic_heat.supply_type_hs
+    cost_config.system_costs.supply_type_dhw = config.anthropogenic_heat.supply_type_dhw
 
-    print(f"  Calculating building-level heat rejection for all buildings...")
-    print(f"    ({len(domain.buildings)} total)")
+    # Reuse supply_costs function to create supply systems
+    # This returns {network_type: {building_name: {supply_system, building, costs, ...}}}
+    cost_results = calculate_all_buildings_as_standalone(locator, cost_config, network_types)
 
+    # Extract buildings from cost results (they're stored under 'DH' key)
+    building_cost_results = cost_results.get('DH', {})
+
+    # Convert to heat rejection results format
     results = {}
-    zero_demand_count = 0
+    for building_id, cost_data in building_cost_results.items():
+        supply_system = cost_data.get('supply_system')
+        building = cost_data.get('building')
 
-    for building in domain.buildings:
-        if building.stand_alone_supply_system is None:
-            zero_demand_count += 1
-            results[building.identifier] = {
+        if supply_system is None:
+            results[building_id] = {
                 'supply_system': None,
                 'building': building,
                 'heat_rejection': {},
@@ -150,20 +162,14 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
             }
         else:
             # Extract heat rejection from supply system
-            supply_system = building.stand_alone_supply_system
             heat_rejection = supply_system.heat_rejection  # Dict[str, pd.Series]
 
-            results[building.identifier] = {
+            results[building_id] = {
                 'supply_system': supply_system,
                 'building': building,
                 'heat_rejection': heat_rejection,
                 'is_network': False
             }
-
-    if zero_demand_count > 0:
-        print(f"  ({zero_demand_count} building(s) with zero demand)")
-
-    print("  ✓ Standalone heat rejection calculations completed")
 
     return results
 
@@ -182,7 +188,7 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     :return: dict with network heat rejection data or None if validation fails
     """
     # Validate network results exist
-    nodes_file = locator.get_network_layout_nodes_shapefile(network_name, network_type)
+    nodes_file = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
     if not os.path.exists(nodes_file):
         print(f"  ⚠ Warning: Network layout not found for {network_type} network '{network_name}'")
@@ -191,7 +197,7 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
 
     # Read network nodes to find plants
     nodes_gdf = gpd.read_file(nodes_file)
-    plant_nodes = nodes_gdf[nodes_gdf['Type'].str.contains('PLANT', case=False, na=False)]
+    plant_nodes = nodes_gdf[nodes_gdf['type'].str.contains('PLANT', case=False, na=False)]
 
     if len(plant_nodes) == 0:
         print(f"  ⚠ Warning: No PLANT nodes found in {network_type} network '{network_name}'")
@@ -200,8 +206,8 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     print(f"  Network layout '{network_name}': {len(plant_nodes)} plant(s)")
 
     # Get buildings connected to this network
-    consumer_nodes = nodes_gdf[nodes_gdf['Type'] == 'CONSUMER']
-    connected_building_ids = consumer_nodes['Building'].dropna().unique().tolist()
+    consumer_nodes = nodes_gdf[nodes_gdf['type'] == 'CONSUMER']
+    connected_building_ids = consumer_nodes['building'].dropna().unique().tolist()
 
     print(f"  Connected buildings: {len(connected_building_ids)}")
 
@@ -320,9 +326,9 @@ def create_network_supply_system(locator, config, network_type, network_name,
 
     # Create demand flow
     if network_type == 'DC':
-        energy_carrier = 'T12W'  # Chilled water
+        energy_carrier = 'T10W'  # Chilled water (10°C)
     else:  # DH
-        energy_carrier = 'T80W'  # Hot water
+        energy_carrier = 'T30W'  # Hot water (30°C)
 
     demand_flow = EnergyFlow(
         input_category='primary',
@@ -336,7 +342,7 @@ def create_network_supply_system(locator, config, network_type, network_name,
     for building_id in connected_building_ids:
         if building_id in standalone_results:
             building = standalone_results[building_id]['building']
-            if building:
+            if building and hasattr(building, 'potentials'):
                 building_potentials[building_id] = building.potentials
 
     # Create supply system structure
@@ -469,7 +475,6 @@ def merge_heat_rejection_results(standalone_results, network_results, is_standal
                 'type': 'building',
                 'x_coord': x_coord,
                 'y_coord': y_coord,
-                'GFA_m2': building.GFA if building else 0,
                 'heat_rejection_annual_MWh': annual_total / 1000,
                 'peak_heat_rejection_kW': peak_kw,
                 'peak_datetime': peak_datetime,
@@ -525,7 +530,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
     if not buildings_df.empty:
         # Reorder columns
         columns_order = [
-            'name', 'type', 'GFA_m2', 'x_coord', 'y_coord',
+            'name', 'type', 'x_coord', 'y_coord',
             'heat_rejection_annual_MWh', 'peak_heat_rejection_kW',
             'peak_datetime', 'scale'
         ]
