@@ -570,10 +570,36 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         spatial_df.to_csv(output_file, index=False)
         print(f"  ✓ Saved hourly spatial: {output_file}")
 
-    # 3. Components detailed file
-    # TODO: Extract component-level breakdown from heat_rejection_by_carrier
-    # For now, create placeholder
-    components_df = pd.DataFrame()
-    output_file = locator.get_heat_rejection_components()
-    components_df.to_csv(output_file, index=False)
-    print(f"  ✓ Saved components (placeholder): {output_file}")
+    # 3. Components detailed file - breakdown by energy carrier
+    component_rows = []
+    for building_data in results['buildings']:
+        building_name = building_data['name']
+        building_type = building_data['type']
+        scale = building_data['scale']
+        heat_rejection_by_carrier = building_data.get('heat_rejection_by_carrier', {})
+
+        # Create one row per energy carrier
+        for carrier_code, heat_series in heat_rejection_by_carrier.items():
+            annual_MWh = heat_series.sum() / 1000  # Convert kWh to MWh
+            peak_kW = heat_series.max()
+
+            component_rows.append({
+                'name': building_name,
+                'type': building_type,
+                'energy_carrier': carrier_code,
+                'heat_rejection_annual_MWh': annual_MWh,
+                'peak_heat_rejection_kW': peak_kW,
+                'scale': scale
+            })
+
+    if component_rows:
+        components_df = pd.DataFrame(component_rows)
+        output_file = locator.get_heat_rejection_components()
+        components_df.to_csv(output_file, index=False)
+        print(f"  ✓ Saved components breakdown: {output_file}")
+    else:
+        # Create empty placeholder
+        components_df = pd.DataFrame()
+        output_file = locator.get_heat_rejection_components()
+        components_df.to_csv(output_file, index=False)
+        print(f"  ✓ Saved components (empty): {output_file}")
