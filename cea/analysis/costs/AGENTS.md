@@ -257,10 +257,19 @@ START: Calculate costs for building X
    └─ in_dc_network=False AND in_dh_network=False → CASE 3
 ```
 
-### Fallback Logic Summary
+## Multi-Level Fallback Logic
 
-**When fallback applies** (Cases 1, 3, 5, 6 for standalone services):
+The system has **3 levels** of fallbacks when determining supply systems for buildings. These fallbacks cascade from config-level to assembly-level to component-level.
 
+### Level 1: Config Fallback (Scale Mismatch)
+
+**Location**: `supply_costs.py:443-520` (`apply_supply_code_fallback_for_standalone`)
+
+**Trigger**: Building's `supply.csv` has **DISTRICT-scale** code but building is **standalone** for that service
+
+**When applies**: Cases 1, 3, 5, 6 for standalone services only
+
+**Process**:
 ```python
 def apply_supply_code_fallback_for_standalone(building, is_in_dc, is_in_dh):
     fallbacks = {}
@@ -281,11 +290,111 @@ def apply_supply_code_fallback_for_standalone(building, is_in_dc, is_in_dh):
     return fallbacks  # Applied to Building Properties/Supply before calculation
 ```
 
-**Key behavior**:
+**Example**:
+```python
+# supply.csv has: supply_type_cs = "AS4" (DISTRICT scale)
+# But building NOT in DC network (Case 6)
+# Config has: supply_type_cs = ["AS1 (building)", "AS4 (district)"]
+# Result: Use "AS1" (building-scale) from config
+```
+
+**Key behaviour**:
 - Only checks services the building provides standalone
 - Only applies if Building Properties/Supply has DISTRICT-scale code
 - Only applies if config parameter has value (empty → no fallback)
-- Modifies Building Properties/Supply temporarily before Domain reads it
+- Modifies `supply.csv` temporarily before Domain reads it (`supply_costs.py:689-714`)
+
+### Level 2: Multi-Select Scale Filtering
+
+**Location**: `supply_costs.py:73-140` (`filter_supply_code_by_scale`)
+
+**Trigger**: Config parameter has **multiple codes** (multi-select)
+
+**Process**:
+1. **1 code** → Use it directly (no filtering)
+2. **2 codes** → Filter by target scale:
+   - `is_standalone=True` → Select BUILDING-scale code
+   - `is_standalone=False` → Select DISTRICT-scale code
+3. **No scale match** → Return first code
+
+**Example**:
+```python
+supply_codes = ["AS1 (building)", "AS4 (district)"]
+
+filter_supply_code_by_scale(supply_codes, is_standalone=True)
+# → Returns "AS1"
+
+filter_supply_code_by_scale(supply_codes, is_standalone=False)
+# → Returns "AS4"
+```
+
+**Used in**:
+- District network cost calculation (`supply_costs.py:823, 844-845`)
+- Config fallback for standalone buildings (`supply_costs.py:514-516`)
+
+### Level 3: DHW Component Fallback
+
+**Location**: `supply_costs.py:183-384` (`apply_dhw_component_fallback`)
+
+**Trigger**: `SUPPLY_HOTWATER` assembly has **no components** specified (empty primary/secondary/tertiary columns)
+
+**Process**:
+1. Read building's DHW supply code from `supply.csv`
+2. Read `SUPPLY_HOTWATER.csv` to get feedstock (e.g., "GRID", "NATURALGAS")
+3. Map feedstock to boiler component code from `BOILERS.csv`:
+   - `GRID` → `BO5` (electric boiler)
+   - `NATURALGAS`/`Cgas` → `BO1` (gas boiler)
+   - `OIL`/`Coil` → `BO2` (oil boiler)
+   - `COAL`/`Ccoa` → `BO4`, `WOOD`/`Cwod` → `BO6`
+4. Create synthetic DHW supply system with that component
+5. Calculate and return DHW costs (service suffix changed from `_hs` to `_ww`)
+
+**Example**:
+```python
+# SUPPLY_HOTWATER_AS1 assembly has no components
+# But assembly specifies feedstock = "GRID"
+# Fallback: Use BO5 (electric boiler) sized to DHW demand
+# Output: Service name "GRID_ww" instead of "GRID_hs"
+```
+
+**Feedstock mapping** (`supply_costs.py:199-209`):
+```python
+feedstock_to_fuel = {
+    'GRID': 'E230AC',      # BO5 - Electric boiler
+    'NATURALGAS': 'Cgas',  # BO1 - Natural gas boiler
+    'OIL': 'Coil',         # BO2 - Oil boiler
+    'COAL': 'Ccoa',        # BO4 - Coal boiler
+    'WOOD': 'Cwod',        # BO6 - Wood boiler
+}
+```
+
+**When triggered**: During building cost calculation when DHW demand exists but no components found (`supply_costs.py:1281-1287`)
+
+**DHW energy carrier**: Uses `T60W` (60°C water) for medium-temperature DHW demand (`supply_costs.py:321-327`)
+
+## Fallback Priority Chain
+
+```
+1. Check network connectivity (nodes.shp)
+   ↓
+2. For standalone services:
+   ├─ Level 1: Check supply.csv scale
+   │  └─ DISTRICT scale? → Use config (filtered to BUILDING)
+   │
+   ├─ Level 2: Multi-select filtering
+   │  └─ Config has multiple codes? → Filter by is_standalone
+   │
+   └─ Level 3: DHW component fallback
+      └─ Assembly missing components? → Map feedstock to boiler
+```
+
+**Decision flow**:
+```
+Network layout (truth)
+  → Config parameters (Level 1 & 2)
+    → Assembly components (Level 3)
+      → Feedstock-based components (last resort)
+```
 
 ### Output Files
 
@@ -309,8 +418,28 @@ capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD
 - `service`: e.g., "GRID_cs" (cooling from grid), "NG_hs" (heating from natural gas)
 
 ## Related Files
-- `cea/analysis/costs/baseline_costs.py` - Main implementation of 6-case logic
-- `cea/analysis/costs/system_costs.py:107-135` - Cost calculation flow
+
+**Main module**:
+- `main.py:82-297` - Entry point, orchestration, case handling, validation
+- `supply_costs.py` - Core cost calculation logic
+
+**6-case logic implementation**:
+- `main.py:109-135` - Case 1: Standalone-only mode
+- `main.py:137-297` - Cases 3-6: Network + standalone mode
+- `supply_costs.py:523-757` - `calculate_standalone_building_costs()` - Cases 3, 5, 6
+- `supply_costs.py:1166-1376` - `calculate_costs_for_network_type()` - Cases 4, 5, 6
+
+**Multi-level fallback**:
+- `supply_costs.py:443-520` - Level 1: Config fallback (`apply_supply_code_fallback_for_standalone`)
+- `supply_costs.py:73-140` - Level 2: Multi-select filtering (`filter_supply_code_by_scale`)
+- `supply_costs.py:183-384` - Level 3: DHW fallback (`apply_dhw_component_fallback`)
+
+**Network calculations**:
+- `supply_costs.py:760-1055` - `calculate_district_network_costs()` - Central plant sizing
+- `supply_costs.py:142-180` - `get_component_codes_from_categories()` - Component selection
+- `supply_costs.py:1010-1043` - Piping cost calculation from thermal-network outputs
+
+**Config and database**:
 - `cea/config.py:1269-1519` - DistrictSupplyTypeParameter (multi-select with scale labels)
 - `cea/default.config:393-408` - Config help text for supply-type parameters
 - `cea/databases/AGENTS.md` - Database structure

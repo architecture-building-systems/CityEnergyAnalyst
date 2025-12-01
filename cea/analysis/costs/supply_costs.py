@@ -368,7 +368,8 @@ def apply_dhw_component_fallback(locator, building, supply_system):
 
     # Extract costs from DHW supply system
     # Use 'DH' as network_type to indicate this is a heating-related service
-    dhw_costs = extract_costs_from_supply_system(dhw_supply_system, 'DH', building)
+    # DHW fallback is always for standalone buildings
+    dhw_costs = extract_costs_from_supply_system(dhw_supply_system, 'DH', building, is_network_building=False)
 
     # Rename services to include '_ww' suffix for DHW
     dhw_costs_renamed = {}
@@ -560,15 +561,89 @@ def calculate_standalone_building_costs(locator, config, network_name):
             except Exception:
                 pass  # Network doesn't exist, that's fine
 
-    # Load domain - use default 'DH' for standalone mode
-    # (doesn't affect standalone calculations - all services calculated regardless)
+    # Load buildings with Domain - need to load both heating and cooling buildings
+    # Domain filters by network_type, so load twice and combine to get ALL buildings
     print("  Loading buildings and demands...")
-    domain_config = cea.config.Configuration()
-    domain_config.scenario = config.scenario
-    # Don't override network_type - use default 'DH' from Configuration()
 
-    domain = Domain(domain_config, locator)
-    domain.load_buildings()
+    # Load buildings with heating demand (network_type='DH')
+    domain_config_dh = cea.config.Configuration()
+    domain_config_dh.scenario = config.scenario
+    domain_config_dh.optimization_new.network_type = 'DH'
+    domain_config_dh.optimization_new.network_name = None  # Ensure standalone mode
+    domain_dh = Domain(domain_config_dh, locator)
+    domain_dh.load_buildings()
+
+    # Load buildings with cooling demand (network_type='DC')
+    domain_config_dc = cea.config.Configuration()
+    domain_config_dc.scenario = config.scenario
+    domain_config_dc.optimization_new.network_type = 'DC'
+    domain_config_dc.optimization_new.network_name = None  # Ensure standalone mode
+    domain_dc = Domain(domain_config_dc, locator)
+    domain_dc.load_buildings()
+
+    # Check which domains have buildings
+    has_heating = len(domain_dh.buildings) > 0
+    has_cooling = len(domain_dc.buildings) > 0
+
+    print(f"  Found {len(domain_dh.buildings)} buildings with heating/DHW demand")
+    print(f"  Found {len(domain_dc.buildings)} buildings with cooling demand")
+
+    # Handle different demand scenarios
+    if not has_heating and not has_cooling:
+        print("  No buildings with any demand found.")
+        return {}
+
+    if not has_heating:
+        # Cooling-only scenario (e.g., Singapore)
+        print("  Cooling-only scenario (no heating/DHW demand)")
+        domain = domain_dc
+        all_buildings = {b.identifier: b for b in domain_dc.buildings}
+    elif not has_cooling:
+        # Heating-only scenario (rare, but possible)
+        print("  Heating-only scenario (no cooling demand)")
+        domain = domain_dh
+        all_buildings = {b.identifier: b for b in domain_dh.buildings}
+    else:
+        # Mixed scenario - need to merge buildings from both domains
+        print("  Mixed scenario (both heating and cooling demand)")
+
+        # Create dict of heating buildings
+        dh_buildings = {b.identifier: b for b in domain_dh.buildings}
+        dc_buildings = {b.identifier: b for b in domain_dc.buildings}
+
+        # Start with all DH buildings (heating systems)
+        all_buildings = dict(dh_buildings)
+
+        # For DC buildings:
+        # - If building NOT in DH dict: add it (cooling-only building)
+        # - If building IS in DH dict: need to merge supply systems (building has both heating and cooling)
+        for bid, dc_building in dc_buildings.items():
+            if bid not in all_buildings:
+                # Cooling-only building - add it
+                all_buildings[bid] = dc_building
+            else:
+                # Building has BOTH heating and cooling - merge supply systems
+                # Keep the DH building as base (has heating system) and add cooling system from DC building
+                dh_building = all_buildings[bid]
+
+                # Merge installed_components from DC building into DH building
+                # DC building has cooling components, DH building has heating components
+                if hasattr(dc_building, 'supply_system') and hasattr(dh_building, 'supply_system'):
+                    if dc_building.supply_system and dh_building.supply_system:
+                        # Merge installed components from both supply systems
+                        for placement, components_dict in dc_building.supply_system.installed_components.items():
+                            if placement not in dh_building.supply_system.installed_components:
+                                dh_building.supply_system.installed_components[placement] = {}
+                            dh_building.supply_system.installed_components[placement].update(components_dict)
+
+                        # Merge annual costs
+                        dh_building.supply_system.annual_cost.update(dc_building.supply_system.annual_cost)
+
+        # Use DH domain as base (has more buildings typically)
+        domain = domain_dh
+        domain.buildings = list(all_buildings.values())  # Replace with combined buildings list
+
+    print(f"  Total unique buildings: {len(all_buildings)}")
 
     # Suppress optimization messages about missing potentials (not relevant for cost calculation)
     import sys
@@ -658,7 +733,10 @@ def calculate_standalone_building_costs(locator, config, network_name):
             # Extract costs from all services
             supply_system = building.stand_alone_supply_system
             # Pass None as network_type to get all services
-            costs = extract_costs_from_supply_system(supply_system, None, building)
+            # Check if building is in any network
+            is_network_building = (building.identifier in dc_network_buildings or
+                                   building.identifier in dh_network_buildings)
+            costs = extract_costs_from_supply_system(supply_system, None, building, is_network_building)
 
             # Note: We don't check for missing components here because we don't know yet
             # which services the building will need building-scale equipment for.
@@ -923,8 +1001,9 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             raise
 
     # Extract costs from network supply system
+    # Network central plant is district-scale infrastructure
     network_costs = extract_costs_from_supply_system(
-        network_supply_system, network_type, None
+        network_supply_system, network_type, None, is_network_building=True
     )
 
     # Calculate piping costs from thermal-network output files
@@ -1030,8 +1109,8 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
 
         # Skip if zero demand
         if max_supply_flow.profile.max() == 0.0:
-            print(f"  {network_id}: Zero demand - skipping supply system instantiation")
-            return results
+            print(f"  {network_id}: Zero demand - skipping this network")
+            continue
 
         system_structure = SupplySystemStructure(
             max_supply_flow=max_supply_flow,
@@ -1051,8 +1130,9 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
 
         # Extract costs from network supply system
         # Pass None as building to indicate this is a network-level system
+        # Network infrastructure is district-scale
         network_costs = extract_costs_from_supply_system(
-            network_supply_system, network_type, None
+            network_supply_system, network_type, None, is_network_building=True
         )
 
         # Get piping costs from pre-built network (if available)
@@ -1108,9 +1188,29 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     layout_folder = os.path.join(network_folder, 'layout')
     nodes_file = os.path.join(layout_folder, 'nodes.shp')
 
-    nodes_df = gpd.read_file(nodes_file)
-    network_buildings_from_layout = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
-    network_buildings_from_layout = [b for b in network_buildings_from_layout if b and b != 'NONE']
+    # Check if network layout files exist
+    if not os.path.exists(layout_folder):
+        print(f"  ⚠ Network layout folder not found for {network_type} network '{network_name}' - skipping")
+        print(f"    Expected: {layout_folder}")
+        print("    Please run 'thermal-network' (part 1 and 2) first")
+        return {}
+
+    if not os.path.exists(nodes_file):
+        print(f"  ⚠ Network nodes file not found for {network_type} network '{network_name}' - skipping")
+        print(f"    Expected: {nodes_file}")
+        print("    Please run 'thermal-network' (part 1 and 2) first")
+        return {}
+
+    # Try to read network layout
+    try:
+        nodes_df = gpd.read_file(nodes_file)
+        network_buildings_from_layout = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
+        network_buildings_from_layout = [b for b in network_buildings_from_layout if b and b != 'NONE']
+    except Exception as e:
+        print(f"  ⚠ Failed to read network layout for {network_type} network '{network_name}' - skipping")
+        print(f"    Error: {str(e)}")
+        print(f"    File: {nodes_file}")
+        return {}
 
     print(f"  Network layout '{network_name}': {len(network_buildings_from_layout)} buildings connected")
 
@@ -1265,7 +1365,6 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     # All buildings in domain are network-connected (we filtered in load_buildings)
     network_connected_buildings = domain.buildings
 
-
     network_results = calculate_district_network_costs(
         locator, config, network_type, network_name,
         network_connected_buildings, building_energy_potentials,
@@ -1276,13 +1375,14 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     return results
 
 
-def extract_costs_from_supply_system(supply_system, network_type, building):
+def extract_costs_from_supply_system(supply_system, network_type, building, is_network_building=False):
     """
     Extract cost metrics from optimization_new supply system.
 
     :param supply_system: SupplySystem instance from optimization_new
-    :param network_type: 'DH' or 'DC'
+    :param network_type: 'DH' or 'DC' or None (for standalone buildings)
     :param building: Building instance (or None for network-level systems)
+    :param is_network_building: True if building is connected to network, False for standalone
     :return: dict of cost metrics by service
     """
     costs = {}
@@ -1294,8 +1394,8 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
             # Map component to energy service (e.g., BO1 → NG_hs, HP1 → GRID_hs)
             service_name = map_component_to_service(component, network_type, building)
 
-            # Determine scale based on placement and initial connectivity
-            scale = determine_scale(building, placement)
+            # Determine scale based on actual network connectivity (not assembly scale)
+            scale = determine_scale(building, placement, is_network_building)
 
             # Aggregate costs by service
             if service_name not in costs:
@@ -1347,6 +1447,26 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
         # Map energy carrier to service (e.g., NATURALGAS → NG_hs, E230AC → GRID_cs)
         service_name = map_energy_carrier_to_service(ec_code, network_type)
 
+        # For standalone systems (network_type=None), if mapping returns None (ambiguous carrier like GRID),
+        # try to infer service by matching carrier prefix to existing cost entries
+        if not service_name and network_type is None:
+            # Extract carrier prefix from energy carrier code
+            carrier_prefix = ec_code.split('_')[0] if '_' in ec_code else ec_code
+            # Map carrier code to carrier prefix using the same logic as map_energy_carrier_to_service
+            carrier_map = {
+                'E230AC': 'GRID', 'E22kAC': 'GRID', 'E66kAC': 'GRID', 'GRID': 'GRID',
+                'Cgas': 'NG', 'NATURALGAS': 'NG', 'Coil': 'OIL', 'OIL': 'OIL',
+                'Ccoa': 'COAL', 'COAL': 'COAL', 'Cwod': 'WOOD', 'WOOD': 'WOOD',
+                'Cbig': 'BIOGAS', 'Cwbm': 'WETBIOMASS', 'Cdbm': 'DRYBIOMASS', 'Chyd': 'HYDROGEN'
+            }
+            carrier_prefix = carrier_map.get(ec_code, carrier_prefix)
+
+            # Search existing costs for a matching service (e.g., GRID_hs, GRID_cs)
+            for existing_service in costs.keys():
+                if existing_service.startswith(f"{carrier_prefix}_"):
+                    service_name = existing_service
+                    break
+
         # Warn about unmapped energy carriers with significant costs
         if not service_name and annual_cost > 1000:
             print(f"    WARNING: Unmapped energy carrier '{ec_code}' with cost ${annual_cost:,.2f}/year")
@@ -1360,7 +1480,7 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
                     'opex_a_fixed_USD': 0.0,
                     'opex_var_USD': 0.0,
                     'opex_a_var_USD': 0.0,
-                    'scale': determine_scale(building, 'primary'),
+                    'scale': determine_scale(building, 'primary', is_network_building),
                     'components': [],
                     'energy_costs': []  # Track energy costs separately for detailed output
                 }
@@ -1386,23 +1506,26 @@ def extract_costs_from_supply_system(supply_system, network_type, building):
     return costs
 
 
-def determine_scale(building, placement):
+def determine_scale(building, placement, is_network_building=False):
     """
     Determine if system is building, district, or city scale.
 
     :param building: Building instance (or None for network systems)
     :param placement: Component placement (primary/secondary/tertiary)
+    :param is_network_building: True if building is actually connected to a network, False for standalone
     :return: 'BUILDING', 'DISTRICT', or 'CITY'
     """
     # If building is None, this is a network-level system
     if building is None:
         return 'DISTRICT'
 
-    # If building is connected to a network (state starts with 'N' for network IDs)
-    if building.initial_connectivity_state != 'stand_alone':
-        return 'DISTRICT'
-    else:
+    # For standalone mode, always return BUILDING regardless of assembly scale
+    # (assemblies might say DISTRICT but building is actually standalone)
+    if not is_network_building:
         return 'BUILDING'
+
+    # Building is actually in a network - return DISTRICT
+    return 'DISTRICT'
 
 
 def map_component_to_service(component, network_type, building):
@@ -1448,47 +1571,46 @@ def map_component_to_service(component, network_type, building):
             # Default to heating for unknown components
             suffix = '_hs'
 
-    # Map based on component database definitions
-    # These mappings come from COMPONENTS/CONVERSION/*.csv files
+    # Map based on component's actual input energy carriers (from database)
+    # This is flexible and works with any custom database structure
 
-    # Boilers
-    if comp_code in ['BO1', 'BO7', 'BO8', 'BO9', 'BO10']:  # Natural gas boilers
-        carrier = 'NG'
-    elif comp_code in ['BO2']:  # Oil boilers
-        carrier = 'OIL'
-    elif comp_code in ['BO4']:  # Coal boilers
-        carrier = 'COAL'
-    elif comp_code in ['BO5']:  # Electric boilers
-        carrier = 'GRID'
-    elif comp_code in ['BO6']:  # Wood boilers
-        carrier = 'WOOD'
+    # Try to get the primary input energy carrier from the component
+    carrier = None
 
-    # Heat pumps (use electricity)
-    elif comp_code.startswith('HP'):
-        carrier = 'GRID'
+    if hasattr(component, 'input_energy_carriers') and component.input_energy_carriers:
+        # Get the first (primary) input energy carrier
+        primary_input = component.input_energy_carriers[0] if isinstance(component.input_energy_carriers, list) else list(component.input_energy_carriers.values())[0]
 
-    # Chillers (use electricity)
-    elif comp_code.startswith('CH') or comp_code.startswith('VCCH') or comp_code.startswith('ACH'):
-        carrier = 'GRID'
+        if hasattr(primary_input, 'code'):
+            ec_code = primary_input.code
 
-    # Cogeneration plants
-    elif comp_code.startswith('CCGT') or comp_code.startswith('FC'):
-        carrier = 'NG'
+            # Map energy carrier code to service prefix
+            # Based on COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv
+            carrier_map = {
+                # Electrical carriers
+                'E230AC': 'GRID', 'E22kAC': 'GRID', 'E66kAC': 'GRID',
+                # Fossil fuels
+                'Cgas': 'NG', 'Coil': 'OIL', 'Ccoa': 'COAL',
+                # Biofuels
+                'Cwod': 'WOOD', 'Cbig': 'BIOGAS', 'Cwbm': 'WETBIOMASS',
+                'Cdbm': 'DRYBIOMASS', 'Chyd': 'HYDROGEN',
+                # District networks
+                'DH': 'DH', 'DC': 'DC'
+            }
 
-    # Cooling towers and heat rejection
-    elif comp_code.startswith('CT'):
-        carrier = 'GRID'  # Cooling towers use electricity for fans/pumps
+            carrier = carrier_map.get(ec_code)
 
-    # District heating/cooling
-    # Check if this is a network-level system (building=None) or a building connected to a network
-    elif building is None or building.initial_connectivity_state != 'stand_alone':
-        if network_type == 'DH':
-            carrier = 'DH'
-        else:
-            carrier = 'DC'
+    # Fallback: Check if this is a network-level system
+    if not carrier:
+        if building is None or (hasattr(building, 'initial_connectivity_state') and
+                                building.initial_connectivity_state != 'stand_alone'):
+            if network_type == 'DH':
+                carrier = 'DH'
+            elif network_type == 'DC':
+                carrier = 'DC'
 
-    # Default to GRID if unknown
-    else:
+    # Final fallback: Default to GRID if we couldn't determine carrier
+    if not carrier:
         carrier = 'GRID'
 
     return f"{carrier}{suffix}"
@@ -1499,11 +1621,9 @@ def map_energy_carrier_to_service(ec_code, network_type):
     Map energy carrier code to service name.
 
     :param ec_code: Energy carrier code from optimization_new
-    :param network_type: 'DH' or 'DC'
+    :param network_type: 'DH', 'DC', or None (for standalone systems)
     :return: Service name string or None if not applicable
     """
-    suffix = '_hs' if network_type == 'DH' else '_cs'
-
     # Map energy carriers to service prefixes
     # Note: Energy carrier codes come from COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv
     # Format: {carrier_code: service_prefix}
@@ -1515,30 +1635,52 @@ def map_energy_carrier_to_service(ec_code, network_type):
         'GRID': 'GRID',     # Legacy/generic electricity
 
         # Fossil fuels (C prefix)
-        'Cgas': 'NG',       # Natural gas
-        'NATURALGAS': 'NG', # Legacy natural gas
-        'Coil': 'OIL',      # Oil
-        'OIL': 'OIL',       # Legacy oil
-        'Ccoa': 'COAL',     # Coal
-        'COAL': 'COAL',     # Legacy coal
+        'Cgas': 'NG',        # Natural gas
+        'NATURALGAS': 'NG',  # Legacy natural gas
+        'Coil': 'OIL',       # Oil
+        'OIL': 'OIL',        # Legacy oil
+        'Ccoa': 'COAL',      # Coal
+        'COAL': 'COAL',      # Legacy coal
 
         # Biofuels (C prefix)
-        'Cwod': 'WOOD',     # Wood
-        'WOOD': 'WOOD',     # Legacy wood
-        'Cbig': 'BIOGAS',   # Biogas
+        'Cwod': 'WOOD',      # Wood
+        'WOOD': 'WOOD',      # Legacy wood
+        'Cbig': 'BIOGAS',    # Biogas
         'Cwbm': 'WETBIOMASS',  # Wet biomass
         'Cdbm': 'DRYBIOMASS',  # Dry biomass
-        'Chyd': 'HYDROGEN', # Hydrogen
+        'Chyd': 'HYDROGEN',  # Hydrogen
 
         # District networks
         'DH': 'DH',         # District heating
         'DC': 'DC',         # District cooling
     }
 
+    # Heating carriers (fuels typically used for heating)
+    heating_carriers = {'NG', 'OIL', 'COAL', 'WOOD', 'BIOGAS', 'WETBIOMASS', 'DRYBIOMASS', 'HYDROGEN', 'DH'}
+    # Cooling carriers
+    cooling_carriers = {'DC'}
+
     carrier = carrier_map.get(ec_code)
-    if carrier:
-        return f"{carrier}{suffix}"
-    else:
+    if not carrier:
         # Return None for carriers that don't map to services (e.g., heat rejection)
         return None
 
+    # Determine suffix based on network_type or infer from carrier
+    if network_type == 'DH':
+        suffix = '_hs'
+    elif network_type == 'DC':
+        suffix = '_cs'
+    elif network_type is None:
+        # Standalone system - infer from carrier type
+        if carrier in heating_carriers:
+            suffix = '_hs'
+        elif carrier in cooling_carriers:
+            suffix = '_cs'
+        else:
+            # GRID (electricity) - ambiguous, return None for caller to handle
+            return None
+    else:
+        # Unknown network_type
+        return None
+
+    return f"{carrier}{suffix}"

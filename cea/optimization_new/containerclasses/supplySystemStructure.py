@@ -135,12 +135,12 @@ class SupplySystemStructure(object):
                                  f" and {SupplySystemStructure._MAX_NETWORK_TEMPERATURE}°C. Please adjust your "
                                  "configurations accordingly.")
         elif SupplySystemStructure._system_type == "cooling":
-            if not (SupplySystemStructure._MIN_NETWORK_TEMPERATURE <= new_network_temperature
-                    <= SupplySystemStructure._climatic_reference_temperature):
-                raise ValueError("For district cooling networks, the network temperature needs to fall between the"
-                                 f"{SupplySystemStructure._MIN_NETWORK_TEMPERATURE}°C and the average outdoor temperature "
-                                 f"{SupplySystemStructure._climatic_reference_temperature}°C. Please adjust your configurations "
-                                 "accordingly.")
+            # For DC networks, only validate minimum temperature (must be above freezing)
+            # Don't validate against annual average outdoor temp - summer cooling demand is valid even in cold climates
+            if new_network_temperature < SupplySystemStructure._MIN_NETWORK_TEMPERATURE:
+                raise ValueError("For district cooling networks, the network temperature needs to be above "
+                                 f"{SupplySystemStructure._MIN_NETWORK_TEMPERATURE}°C (freezing point). "
+                                 f"Current temperature: {new_network_temperature}°C. Please adjust your configurations accordingly.")
 
         return new_network_temperature
 
