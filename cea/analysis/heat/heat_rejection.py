@@ -638,23 +638,80 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
         'components': []
     }
 
-    # Collect buildings connected to networks (should be excluded from standalone output)
-    connected_buildings = set()
+    # Collect buildings connected to networks by type
+    dc_connected_buildings = set()
+    dh_connected_buildings = set()
     if not is_standalone_only:
         for network_type, network_data in network_results.items():
-            connected_buildings.update(network_data['connected_buildings'])
+            if network_type == 'DC':
+                dc_connected_buildings.update(network_data['connected_buildings'])
+            elif network_type == 'DH':
+                dh_connected_buildings.update(network_data['connected_buildings'])
 
-    # Process standalone buildings (exclude those connected to networks)
+    # Process standalone buildings
     for building_id, data in standalone_results.items():
-        # Skip buildings connected to networks
-        if building_id in connected_buildings:
-            continue
-        if data['heat_rejection']:
-            # Calculate totals
-            annual_total = sum([heat_series.sum() for heat_series in data['heat_rejection'].values()])
+        # Determine what services this building provides standalone
+        # - Buildings in DC network: Include only WW (DHW) heat rejection (cooling from district)
+        # - Buildings in DH network: Include only cooling heat rejection (heating/DHW from district)
+        # - Buildings in both networks: Skip completely (all services from district)
+        # - Standalone buildings: Include ALL heat rejection
 
-            if len(data['heat_rejection']) > 0:
-                combined_hourly = pd.concat(list(data['heat_rejection'].values()), axis=1).sum(axis=1)
+        is_in_dc = building_id in dc_connected_buildings
+        is_in_dh = building_id in dh_connected_buildings
+
+        # Skip buildings in BOTH networks (all services from district)
+        if is_in_dc and is_in_dh:
+            continue
+
+        # Filter heat rejection by service type
+        filtered_heat_rejection = {}
+        filtered_supply_systems = []
+
+        if data['heat_rejection']:
+            # Get the supply systems to filter by service type
+            supply_systems = data.get('supply_systems', [])
+
+            if is_in_dc and not is_in_dh:
+                # Building in DC network: Only include WW (DHW) heat rejection
+                # Identify WW supply systems (boilers with T100A heat rejection)
+                for system in supply_systems:
+                    if hasattr(system, 'heat_rejection') and system.heat_rejection:
+                        # Check if this system has high-temperature heat rejection (T100A from boilers = DHW)
+                        for carrier, heat_series in system.heat_rejection.items():
+                            if 'T100' in carrier or 'T90' in carrier or 'T80' in carrier:
+                                # This is DHW heat rejection (high temperature from boilers)
+                                if carrier in filtered_heat_rejection:
+                                    filtered_heat_rejection[carrier] = filtered_heat_rejection[carrier] + heat_series
+                                else:
+                                    filtered_heat_rejection[carrier] = heat_series
+                                if system not in filtered_supply_systems:
+                                    filtered_supply_systems.append(system)
+
+            elif is_in_dh and not is_in_dc:
+                # Building in DH network: Only include cooling heat rejection (T25A from chillers)
+                for system in supply_systems:
+                    if hasattr(system, 'heat_rejection') and system.heat_rejection:
+                        for carrier, heat_series in system.heat_rejection.items():
+                            if 'T25' in carrier or 'T20' in carrier or 'T15' in carrier:
+                                # This is cooling heat rejection (low temperature from chillers/cooling towers)
+                                if carrier in filtered_heat_rejection:
+                                    filtered_heat_rejection[carrier] = filtered_heat_rejection[carrier] + heat_series
+                                else:
+                                    filtered_heat_rejection[carrier] = heat_series
+                                if system not in filtered_supply_systems:
+                                    filtered_supply_systems.append(system)
+
+            else:
+                # Standalone building: Include ALL heat rejection
+                filtered_heat_rejection = data['heat_rejection']
+                filtered_supply_systems = supply_systems
+
+        if filtered_heat_rejection:
+            # Calculate totals from filtered heat rejection
+            annual_total = sum([heat_series.sum() for heat_series in filtered_heat_rejection.values()])
+
+            if len(filtered_heat_rejection) > 0:
+                combined_hourly = pd.concat(list(filtered_heat_rejection.values()), axis=1).sum(axis=1)
                 peak_kw = combined_hourly.max()
                 peak_datetime = combined_hourly.idxmax()
             else:
@@ -675,8 +732,8 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
                 'peak_datetime': peak_datetime,
                 'scale': 'BUILDING',
                 'hourly_profile': combined_hourly,
-                'heat_rejection_by_carrier': data['heat_rejection'],
-                'supply_systems': data.get('supply_systems', [])  # Include ALL supply systems for component extraction
+                'heat_rejection_by_carrier': filtered_heat_rejection,  # Use filtered data
+                'supply_systems': filtered_supply_systems  # Include only filtered supply systems
             })
 
     # Add network plants
