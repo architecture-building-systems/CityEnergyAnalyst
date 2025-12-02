@@ -626,9 +626,8 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
             timestamp = pd.Timestamp('2020-01-01') + pd.Timedelta(hours=hour_idx)
             spatial_rows.append({
                 'name': building_name,
-                'type': building_type,
-                'DATE': timestamp,
-                'Heat_rejection_kW': heat_kw
+                'type': building_type,                'date': timestamp,
+                'heat_rejection_kW': heat_kw
             })
 
     if spatial_rows:

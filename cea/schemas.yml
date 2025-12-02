@@ -2098,19 +2098,11 @@ get_heat_rejection_hourly_spatial:
         description: Type of heat source (building for individual buildings, plant for district energy plants)
         type: string
         unit: NA
-      x_coord:
-        description: X coordinate for spatial location (longitude or projected coordinate)
-        type: float
-        unit: '[m]'
-      y_coord:
-        description: Y coordinate for spatial location (latitude or projected coordinate)
-        type: float
-        unit: '[m]'
-      DATE:
+      date:
         description: Timestamp for this hour (8760 hours per location)
         type: string
         unit: NA
-      Heat_rejection_kW:
+      heat_rejection_kW:
         description: Heat rejection rate at this hour (sum of all energy carriers)
         type: float
         unit: '[kW]'

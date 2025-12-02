@@ -365,3 +365,152 @@ class EmissionTimelineMapLayer(MapLayer):
 
     def generate_data(self, parameters: dict) -> dict:
         return {}
+
+
+class AnthropogenicHeatMapLayer(MapLayer):
+    category = LifeCycleAnalysisCategory
+    name = "anthropogenic-heat-rejection"
+    label = "Anthropogenic Heat Rejection (Hourly/Daily)"
+    description = "Visualise heat rejection from building systems and district cooling plants"
+
+    def _get_results_files(self, _):
+        """Return required files for caching"""
+        return [
+            self.locator.get_heat_rejection_buildings(),
+            self.locator.get_heat_rejection_hourly_spatial()
+        ]
+
+    @classmethod
+    def expected_parameters(cls):
+        return {
+            'period':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    default=[1, 365],
+                    description="Period to generate the data (start, end) in days",
+                    selector="time-series",
+                ),
+            'radius':
+                ParameterDefinition(
+                    "Radius",
+                    "number",
+                    default=5,
+                    description="Radius of hexagon bin in metres",
+                    selector="input",
+                    range=[0, 100],
+                    filter="radius",
+                ),
+            'scale':
+                ParameterDefinition(
+                    "Scale",
+                    "number",
+                    default=1,
+                    description="Scale of hexagon bin height",
+                    selector="input",
+                    range=[0.1, 10],
+                    filter="scale",
+                ),
+        }
+
+    @classmethod
+    def file_requirements(cls):
+        return [
+            FileRequirement(
+                "Zone Buildings Geometry",
+                file_locator="locator:get_zone_geometry",
+            ),
+            FileRequirement(
+                "Heat Rejection Buildings Summary",
+                file_locator="locator:get_heat_rejection_buildings",
+            ),
+            FileRequirement(
+                "Heat Rejection Hourly Spatial Data",
+                file_locator="locator:get_heat_rejection_hourly_spatial",
+            ),
+        ]
+
+    @cache_output
+    def generate_data(self, parameters):
+        """Generates the hexagon heatmap output for anthropogenic heat rejection"""
+
+        period = parameters['period']
+        start, end = day_range_to_hour_range(period[0], period[1])
+
+        # Read hourly spatial data
+        spatial_df = pd.read_csv(self.locator.get_heat_rejection_hourly_spatial())
+
+        # Parse date to get hour index (0-8759)
+        spatial_df['date'] = pd.to_datetime(spatial_df['date'])
+        spatial_df['hour'] = (spatial_df['date'].dt.dayofyear - 1) * 24 + spatial_df['date'].dt.hour
+
+        # Get building names from spatial data
+        entity_names = spatial_df['name'].unique()
+
+        output = {
+            "data": [],
+            "properties": {
+                "name": self.name,
+                "label": "Anthropogenic Heat Rejection",
+                "description": self.description,
+                "colours": {
+                    "colour_array": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
+                    "points": 12
+                }
+            }
+        }
+
+        def get_data(entity_name, centroid):
+            # Get hourly data for this entity
+            entity_df = spatial_df[spatial_df['name'] == entity_name]
+            data = entity_df.set_index('hour')['heat_rejection_kW']
+
+            total_value = data.sum()
+
+            if start < end:
+                period_value = data.loc[start:end].sum() if len(data.loc[start:end]) > 0 else 0
+            else:
+                period_value = data.loc[start:].sum() + data.loc[:end].sum()
+
+            data_point = {"position": [centroid.x, centroid.y], "value": period_value}
+
+            return total_value, period_value, data_point
+
+        # Read buildings file to get coordinates
+        buildings_df = pd.read_csv(self.locator.get_heat_rejection_buildings())
+        buildings_df = buildings_df.set_index('name')
+
+        # Get zone geometry for CRS
+        zone_gdf = gpd.read_file(self.locator.get_zone_geometry())
+
+        # Create GeoDataFrame with entity coordinates
+        entity_gdf = gpd.GeoDataFrame(
+            buildings_df.loc[entity_names],
+            geometry=gpd.points_from_xy(
+                buildings_df.loc[entity_names]['x_coord'],
+                buildings_df.loc[entity_names]['y_coord']
+            ),
+            crs=zone_gdf.crs
+        )
+        entity_centroids = entity_gdf.geometry.to_crs(CRS.from_epsg(4326))
+
+        values = (get_data(entity_name, centroid)
+                  for entity_name, centroid in zip(entity_names, entity_centroids))
+
+        total_values, period_values, data = zip(*values)
+
+        output['data'] = data
+        output['properties']['range'] = {
+            'total': {
+                'label': 'Total Range',
+                'min': float(min(total_values)),
+                'max': float(max(total_values))
+            },
+            'period': {
+                'label': 'Period Range',
+                'min': float(min(period_values)),
+                'max': float(max(period_values))
+            }
+        }
+
+        return output
