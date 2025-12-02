@@ -438,8 +438,9 @@ class AnthropogenicHeatMapLayer(MapLayer):
                 file_locator="locator:get_heat_rejection_buildings",
             ),
             FileRequirement(
-                "Heat Rejection Hourly Spatial Data",
-                file_locator="locator:get_heat_rejection_hourly_spatial",
+                "Heat Rejection Hourly Building Files",
+                file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing, handled gracefully
             ),
         ]
 
@@ -504,22 +505,40 @@ class AnthropogenicHeatMapLayer(MapLayer):
         )
         entity_centroids = entity_gdf.geometry.to_crs(CRS.from_epsg(4326))
 
+        # Handle case where there are no entities or all files are missing
+        if not entity_names:
+            output['data'] = []
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         values = (get_data(entity_name, centroid)
                   for entity_name, centroid in zip(entity_names, entity_centroids))
 
         total_values, period_values, data = zip(*values)
 
+        # Filter out entities with zero values (missing files)
+        non_zero_data = [(t, p, d) for t, p, d in zip(total_values, period_values, data) if p > 0 or t > 0]
+
+        if non_zero_data:
+            total_values, period_values, data = zip(*non_zero_data)
+        else:
+            # All entities have zero values
+            total_values, period_values, data = (0.0,), (0.0,), []
+
         output['data'] = data
         output['properties']['range'] = {
             'total': {
                 'label': 'Total Range',
-                'min': float(min(total_values)),
-                'max': float(max(total_values))
+                'min': float(min(total_values)) if total_values else 0.0,
+                'max': float(max(total_values)) if total_values else 0.0
             },
             'period': {
                 'label': 'Period Range',
-                'min': float(min(period_values)),
-                'max': float(max(period_values))
+                'min': float(min(period_values)) if period_values else 0.0,
+                'max': float(max(period_values)) if period_values else 0.0
             }
         }
 
