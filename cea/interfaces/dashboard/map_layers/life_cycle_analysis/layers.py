@@ -1,4 +1,5 @@
 from typing import Optional
+import os
 
 import pandas as pd
 import geopandas as gpd
@@ -375,10 +376,22 @@ class AnthropogenicHeatMapLayer(MapLayer):
 
     def _get_results_files(self, _):
         """Return required files for caching"""
-        return [
-            self.locator.get_heat_rejection_buildings(),
-            self.locator.get_heat_rejection_hourly_spatial()
-        ]
+        # Read buildings file to get list of entities
+        buildings_file = self.locator.get_heat_rejection_buildings()
+        if not os.path.exists(buildings_file):
+            return []
+
+        buildings_df = pd.read_csv(buildings_file)
+        entity_names = buildings_df['name'].tolist()
+
+        # Return buildings file + all individual entity files
+        files = [buildings_file]
+        for entity_name in entity_names:
+            entity_file = self.locator.get_heat_rejection_hourly_building(entity_name)
+            if os.path.exists(entity_file):
+                files.append(entity_file)
+
+        return files
 
     @classmethod
     def expected_parameters(cls):
@@ -437,15 +450,9 @@ class AnthropogenicHeatMapLayer(MapLayer):
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        # Read hourly spatial data
-        spatial_df = pd.read_csv(self.locator.get_heat_rejection_hourly_spatial())
-
-        # Parse date to get hour index (0-8759)
-        spatial_df['date'] = pd.to_datetime(spatial_df['date'])
-        spatial_df['hour'] = (spatial_df['date'].dt.dayofyear - 1) * 24 + spatial_df['date'].dt.hour
-
-        # Get building names from spatial data
-        entity_names = spatial_df['name'].unique()
+        # Read buildings file to get entity list and coordinates
+        buildings_df = pd.read_csv(self.locator.get_heat_rejection_buildings())
+        entity_names = buildings_df['name'].tolist()
 
         output = {
             "data": [],
@@ -461,23 +468,26 @@ class AnthropogenicHeatMapLayer(MapLayer):
         }
 
         def get_data(entity_name, centroid):
-            # Get hourly data for this entity
-            entity_df = spatial_df[spatial_df['name'] == entity_name]
-            data = entity_df.set_index('hour')['heat_rejection_kW']
+            # Read individual entity file
+            entity_file = self.locator.get_heat_rejection_hourly_building(entity_name)
 
-            total_value = data.sum()
+            if not os.path.exists(entity_file):
+                return 0.0, 0.0, {"position": [centroid.x, centroid.y], "value": 0.0}
 
-            if start < end:
-                period_value = data.loc[start:end].sum() if len(data.loc[start:end]) > 0 else 0
-            else:
-                period_value = data.loc[start:].sum() + data.loc[:end].sum()
+            entity_df = pd.read_csv(entity_file)
+
+            # Sum all heat rejection for this entity across all hours (should be exactly 8760)
+            total_value = entity_df['heat_rejection_kW'].sum()
+
+            # Filter by period (start and end are 0-indexed hour numbers)
+            period_df = entity_df.iloc[start:end+1]
+            period_value = period_df['heat_rejection_kW'].sum()
 
             data_point = {"position": [centroid.x, centroid.y], "value": period_value}
 
             return total_value, period_value, data_point
 
-        # Read buildings file to get coordinates
-        buildings_df = pd.read_csv(self.locator.get_heat_rejection_buildings())
+        # Set buildings file as index
         buildings_df = buildings_df.set_index('name')
 
         # Get zone geometry for CRS

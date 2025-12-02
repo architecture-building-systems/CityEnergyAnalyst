@@ -28,6 +28,24 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def remove_leap_day(hourly_series):
+    """
+    Remove Feb 29 from hourly time series data to ensure 8760 hours.
+
+    In a leap year, Feb 29 is day 60 (0-indexed: day 59).
+    Hours 1416-1439 (24 hours) need to be removed.
+
+    :param hourly_series: pd.Series or list with 8784 hours (leap year)
+    :return: pd.Series or list with 8760 hours
+    """
+    if isinstance(hourly_series, pd.Series):
+        # Remove hours 1416-1439 (Feb 29)
+        return pd.concat([hourly_series.iloc[:1416], hourly_series.iloc[1440:]])
+    else:
+        # For lists
+        return hourly_series[:1416] + hourly_series[1440:]
+
+
 def anthropogenic_heat_main(locator, config):
     """
     Main function to calculate anthropogenic heat rejection.
@@ -152,34 +170,31 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
 
     # Reuse supply_costs function to create supply systems
     # This returns {network_type: {building_name: {supply_system, building, costs, ...}}}
+    # NOTE: calculate_all_buildings_as_standalone puts ALL buildings under 'DH' key (with complete systems)
+    # The 'DC' key is empty - this is expected behaviour from supply_costs
     cost_results = calculate_all_buildings_as_standalone(locator, cost_config, network_types)
 
-    # Extract buildings from cost results (they're stored under 'DH' key)
+    # Extract building data from 'DH' key (contains all buildings with all their supply systems)
+    # calculate_all_buildings_as_standalone already merged DH and DC domains internally
     building_cost_results = cost_results.get('DH', {})
 
-    # Convert to heat rejection results format
+    # Convert to heat rejection results
     results = {}
     for building_id, cost_data in building_cost_results.items():
+        building_obj = cost_data.get('building')
         supply_system = cost_data.get('supply_system')
-        building = cost_data.get('building')
 
-        if supply_system is None:
-            results[building_id] = {
-                'supply_system': None,
-                'building': building,
-                'heat_rejection': {},
-                'is_network': False
-            }
-        else:
-            # Extract heat rejection from supply system
-            heat_rejection = supply_system.heat_rejection  # Dict[str, pd.Series]
+        # Extract heat rejection from supply system
+        heat_rejection_data = {}
+        if supply_system is not None and hasattr(supply_system, 'heat_rejection'):
+            heat_rejection_data = supply_system.heat_rejection
 
-            results[building_id] = {
-                'supply_system': supply_system,
-                'building': building,
-                'heat_rejection': heat_rejection,
-                'is_network': False
-            }
+        results[building_id] = {
+            'supply_system': supply_system,  # Single merged supply system (has all components)
+            'building': building_obj,
+            'heat_rejection': heat_rejection_data,
+            'is_network': False
+        }
 
     return results
 
@@ -469,8 +484,17 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
         'components': []
     }
 
-    # Process standalone buildings
+    # Collect buildings connected to networks (should be excluded from standalone output)
+    connected_buildings = set()
+    if not is_standalone_only:
+        for network_type, network_data in network_results.items():
+            connected_buildings.update(network_data['connected_buildings'])
+
+    # Process standalone buildings (exclude those connected to networks)
     for building_id, data in standalone_results.items():
+        # Skip buildings connected to networks
+        if building_id in connected_buildings:
+            continue
         if data['heat_rejection']:
             # Calculate totals
             annual_total = sum([heat_series.sum() for heat_series in data['heat_rejection'].values()])
@@ -498,7 +522,7 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
                 'scale': 'BUILDING',
                 'hourly_profile': combined_hourly,
                 'heat_rejection_by_carrier': data['heat_rejection'],
-                'supply_system': data.get('supply_system')  # Include supply system for component extraction
+                'supply_systems': data.get('supply_systems', [])  # Include ALL supply systems for component extraction
             })
 
     # Add network plants
@@ -613,28 +637,31 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         buildings_output.to_csv(output_file, index=False)
         print(f"  ✓ Saved buildings summary: {output_file}")
 
-    # 2. Hourly spatial file (for heatmaps) - without coordinates to save space
-    spatial_rows = []
+    # 2. Individual hourly files per building/plant (similar to demand)
+    # Create timestamps for 8760 hours (non-leap year)
+    timestamps = pd.date_range('2020-01-01', periods=8760, freq='H')
+
     for building_data in results['buildings']:
         building_name = building_data['name']
-        building_type = building_data['type']
         hourly_profile = building_data['hourly_profile']
 
-        # Create one row per hour (coordinates will be joined from buildings file in map layer)
-        for hour_idx, heat_kw in enumerate(hourly_profile):
-            # Create timestamp (assuming 2020 for now)
-            timestamp = pd.Timestamp('2020-01-01') + pd.Timedelta(hours=hour_idx)
-            spatial_rows.append({
-                'name': building_name,
-                'type': building_type,                'date': timestamp,
-                'heat_rejection_kW': heat_kw
-            })
+        # Ensure exactly 8760 hours (remove leap day if present)
+        if len(hourly_profile) > 8760:
+            # Remove Feb 29 (day 60, hours 1416-1439 in leap year)
+            hourly_profile = remove_leap_day(hourly_profile)
 
-    if spatial_rows:
-        spatial_df = pd.DataFrame(spatial_rows)
-        output_file = locator.get_heat_rejection_hourly_spatial()
-        spatial_df.to_csv(output_file, index=False)
-        print(f"  ✓ Saved hourly spatial: {output_file}")
+        # Create DataFrame with DATE and heat_rejection_kW columns
+        entity_df = pd.DataFrame({
+            'DATE': timestamps,
+            'heat_rejection_kW': hourly_profile[:8760]  # Ensure exactly 8760 values
+        })
+
+        # Save individual file
+        output_file = locator.get_heat_rejection_hourly_building(building_name)
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        entity_df.to_csv(output_file, index=False)
+
+    print(f"  ✓ Saved {len(results['buildings'])} individual hourly files")
 
     # 3. Components detailed file - detailed breakdown by individual component
     component_rows = []
@@ -643,15 +670,23 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         building_name = building_data['name']
         building_type = building_data['type']
         scale = building_data['scale']
-        supply_system = building_data.get('supply_system')
 
-        if supply_system:
+        # Handle both old single supply_system and new supply_systems list
+        supply_systems = building_data.get('supply_systems', [])
+        if not supply_systems:
+            # Fallback to single supply_system (for network plants)
+            supply_system = building_data.get('supply_system')
+            if supply_system:
+                supply_systems = [supply_system]
+
+        if supply_systems:
             buildings_with_systems += 1
-            # Extract component-level details from supply system
-            component_details = extract_component_heat_rejection(
-                supply_system, building_name, building_type, scale
-            )
-            component_rows.extend(component_details)
+            # Extract component-level details from ALL supply systems
+            for supply_system in supply_systems:
+                component_details = extract_component_heat_rejection(
+                    supply_system, building_name, building_type, scale
+                )
+                component_rows.extend(component_details)
 
     print(f"  Extracted components from {buildings_with_systems} buildings/plants")
 

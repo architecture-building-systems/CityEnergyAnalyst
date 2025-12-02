@@ -1388,8 +1388,15 @@ class InputLocator(object):
         """scenario/outputs/data/heat/heat_rejection_components.csv"""
         return os.path.join(self.get_heat_folder(), 'heat_rejection_components.csv')
 
+    def get_heat_rejection_hourly_building(self, building_name):
+        """scenario/outputs/data/heat/{building_name}.csv"""
+        return os.path.join(self.get_heat_folder(), f'{building_name}.csv')
+
     def get_heat_rejection_hourly_spatial(self):
-        """scenario/outputs/data/heat/heat_rejection_hourly_spatial.csv"""
+        """
+        DEPRECATED: Use get_heat_rejection_hourly_building() instead.
+        scenario/outputs/data/heat/heat_rejection_hourly_spatial.csv
+        """
         return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
 
     # GRAPHS

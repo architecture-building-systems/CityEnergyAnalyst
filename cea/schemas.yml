@@ -2083,11 +2083,31 @@ get_heat_rejection_components:
         unit: NA
   used_by: []
 
+get_heat_rejection_hourly_building:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/{building}.csv
+  file_type: csv
+  schema:
+    columns:
+      DATE:
+        description: Timestamp for this hour (8760 hours total, no leap day)
+        type: string
+        unit: NA
+      heat_rejection_kW:
+        description: Heat rejection rate at this hour (sum of all energy carriers)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+  used_by: []
+
 get_heat_rejection_hourly_spatial:
   created_by:
   - anthropogenic_heat
   file_path: outputs/data/heat/heat_rejection_hourly_spatial.csv
   file_type: csv
+  deprecated: true
+  deprecated_note: 'Use get_heat_rejection_hourly_building() instead for individual building files'
   schema:
     columns:
       name:
