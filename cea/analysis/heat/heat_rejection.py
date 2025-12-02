@@ -184,19 +184,173 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
         building_obj = cost_data.get('building')
         supply_system = cost_data.get('supply_system')
 
-        # Extract heat rejection from supply system
+        # Collect all supply systems (main + DHW fallback)
+        supply_systems_list = []
         heat_rejection_data = {}
+
+        # Extract heat rejection from main supply system
         if supply_system is not None and hasattr(supply_system, 'heat_rejection'):
-            heat_rejection_data = supply_system.heat_rejection
+            heat_rejection_data.update(supply_system.heat_rejection)
+            supply_systems_list.append(supply_system)
+
+        # Check if building needs DHW fallback (same logic as supply_costs.py:1281-1287)
+        # DHW systems have separate heat rejection that must be included
+        demand_df = pd.read_csv(locator.get_total_demand())
+        building_demand = demand_df[demand_df['name'] == building_id]
+        if not building_demand.empty:
+            qww = building_demand['Qww_sys_MWhyr'].values[0] if 'Qww_sys_MWhyr' in building_demand.columns else 0
+
+            # Try DHW fallback if DHW demand exists
+            if qww > 0:
+                from cea.analysis.costs.supply_costs import apply_dhw_component_fallback
+                dhw_system = create_dhw_heat_rejection_system(locator, building_obj, supply_system)
+
+                if dhw_system is not None:
+                    # Extract heat rejection from DHW system
+                    if hasattr(dhw_system, 'heat_rejection') and dhw_system.heat_rejection:
+                        # Merge DHW heat rejection into total
+                        for carrier, heat_series in dhw_system.heat_rejection.items():
+                            if carrier in heat_rejection_data:
+                                heat_rejection_data[carrier] = heat_rejection_data[carrier] + heat_series
+                            else:
+                                heat_rejection_data[carrier] = heat_series
+                        supply_systems_list.append(dhw_system)
 
         results[building_id] = {
-            'supply_system': supply_system,  # Single merged supply system (has all components)
+            'supply_systems': supply_systems_list,  # Changed to plural to match extraction logic
             'building': building_obj,
             'heat_rejection': heat_rejection_data,
             'is_network': False
         }
 
     return results
+
+
+def create_dhw_heat_rejection_system(locator, building, main_supply_system):
+    """
+    Create DHW supply system to extract heat rejection (mirrors apply_dhw_component_fallback).
+
+    This is needed because DHW is a separate service with its own heat rejection.
+    The main building supply system only has cooling OR heating, not DHW.
+
+    :param locator: InputLocator instance
+    :param building: Building instance
+    :param main_supply_system: Main supply system (heating or cooling)
+    :return: DHW SupplySystem instance or None
+    """
+    from cea.analysis.costs.supply_costs import apply_dhw_component_fallback
+
+    # Use the same DHW fallback logic from supply_costs
+    # This creates a complete DHW supply system with heat rejection tracking
+    try:
+        dhw_system = apply_dhw_component_fallback(locator, building, main_supply_system)
+
+        # apply_dhw_component_fallback returns costs dict, not the supply system
+        # We need to recreate the DHW supply system to get heat rejection
+        # Actually, we need a different approach - let's directly call the DHW system creation
+
+        # Import the necessary modules
+        import pandas as pd
+        from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+        from cea.optimization_new.supplySystem import SupplySystem
+        from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+        from cea.optimization_new.domain import Domain
+        from cea.optimization_new.component import Component
+        from cea.analysis.costs.supply_costs import get_dhw_component_fallback
+        import cea.config
+
+        # Read building's DHW supply system code from supply.csv
+        supply_systems_df = pd.read_csv(locator.get_building_supply())
+        building_supply = supply_systems_df[supply_systems_df['name'] == building.identifier]
+
+        if building_supply.empty or 'supply_type_dhw' not in building_supply.columns:
+            return None
+
+        dhw_supply_code = building_supply['supply_type_dhw'].values[0]
+
+        # Read SUPPLY_HOTWATER.csv to get feedstock
+        dhw_assemblies_path = locator.get_database_assemblies_supply_hot_water()
+        if not pd.io.common.file_exists(dhw_assemblies_path):
+            return None
+
+        dhw_assemblies_df = pd.read_csv(dhw_assemblies_path)
+        dhw_assembly = dhw_assemblies_df[dhw_assemblies_df['code'] == dhw_supply_code]
+
+        if dhw_assembly.empty:
+            return None
+
+        feedstock = dhw_assembly['feedstock'].values[0]
+
+        # Skip if feedstock is NONE (no DHW system)
+        if not feedstock or feedstock == 'NONE':
+            return None
+
+        # Get fallback component code based on feedstock
+        component_code = get_dhw_component_fallback(locator, building.identifier, feedstock)
+        if not component_code:
+            return None
+
+        # Get DHW demand profile from building's demand file
+        building_demand_file = locator.get_demand_results_file(building.identifier)
+        if not pd.io.common.file_exists(building_demand_file):
+            return None
+
+        hourly_demand_df = pd.read_csv(building_demand_file)
+        if 'Qww_sys_kWh' not in hourly_demand_df.columns:
+            return None
+
+        dhw_demand_profile = hourly_demand_df['Qww_sys_kWh']
+
+        # Skip if zero demand
+        if dhw_demand_profile.max() == 0:
+            return None
+
+        # Create DHW demand flow
+        dhw_demand_flow = EnergyFlow(
+            input_category='primary',
+            output_category='consumer',
+            energy_carrier_code='T60W',  # Medium temperature for DHW
+            energy_flow_profile=dhw_demand_profile
+        )
+
+        # Initialize Component class if not already done
+        if Component.code_to_class_mapping is None:
+            domain_config_dhw = cea.config.Configuration()
+            domain_config_dhw.scenario = locator.scenario
+            temp_domain = Domain(domain_config_dhw, locator)
+            Component.initialize_class_variables(temp_domain)
+
+        # Build supply system with fallback component
+        max_dhw_flow = dhw_demand_flow.isolate_peak()
+        user_component_selection = {
+            'primary': [component_code],
+            'secondary': [],
+            'tertiary': []
+        }
+
+        # Build system structure
+        system_structure = SupplySystemStructure(
+            max_supply_flow=max_dhw_flow,
+            available_potentials={},
+            user_component_selection=user_component_selection,
+            target_building_or_network=building.identifier + '_dhw'
+        )
+        system_structure.build()
+
+        # Create and evaluate DHW supply system
+        dhw_supply_system = SupplySystem(
+            system_structure,
+            system_structure.capacity_indicators,
+            dhw_demand_flow
+        )
+
+        dhw_supply_system.evaluate()
+
+        return dhw_supply_system
+
+    except Exception as e:
+        print(f"    ⚠ {building.identifier}: Failed to create DHW heat rejection system - {e}")
+        return None
 
 
 def calculate_network_heat_rejection(locator, config, network_type, network_name, standalone_results):
