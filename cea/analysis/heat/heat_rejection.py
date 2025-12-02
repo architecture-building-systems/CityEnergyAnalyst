@@ -132,13 +132,23 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
 
     # Create a config that maps anthropogenic_heat parameters to system_costs parameters
     # This allows us to reuse the supply_costs functions
+    from cea.analysis.costs.supply_costs import filter_supply_code_by_scale
+
     cost_config = cea.config.Configuration()
     cost_config.scenario = config.scenario
     cost_config.system_costs.network_name = None  # Force standalone mode
     cost_config.system_costs.network_type = network_types
-    cost_config.system_costs.supply_type_cs = config.anthropogenic_heat.supply_type_cs
-    cost_config.system_costs.supply_type_hs = config.anthropogenic_heat.supply_type_hs
-    cost_config.system_costs.supply_type_dhw = config.anthropogenic_heat.supply_type_dhw
+
+    # Filter supply codes to building-scale only for standalone calculations
+    cost_config.system_costs.supply_type_cs = filter_supply_code_by_scale(
+        locator, config.anthropogenic_heat.supply_type_cs, 'SUPPLY_COOLING', is_standalone=True
+    )
+    cost_config.system_costs.supply_type_hs = filter_supply_code_by_scale(
+        locator, config.anthropogenic_heat.supply_type_hs, 'SUPPLY_HEATING', is_standalone=True
+    )
+    cost_config.system_costs.supply_type_dhw = filter_supply_code_by_scale(
+        locator, config.anthropogenic_heat.supply_type_dhw, 'SUPPLY_HOTWATER', is_standalone=True
+    )
 
     # Reuse supply_costs function to create supply systems
     # This returns {network_type: {building_name: {supply_system, building, costs, ...}}}
