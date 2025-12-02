@@ -95,7 +95,7 @@ def anthropogenic_heat_main(locator, config):
     print("Merging and formatting results...")
 
     all_results = merge_heat_rejection_results(
-        standalone_results, network_results, is_standalone_only
+        locator, standalone_results, network_results, is_standalone_only
     )
 
     # Step 4: Save outputs
@@ -445,7 +445,7 @@ def calculate_network_demand_profile(locator, connected_building_ids, network_ty
     return total_demand
 
 
-def merge_heat_rejection_results(standalone_results, network_results, is_standalone_only):
+def merge_heat_rejection_results(locator, standalone_results, network_results, is_standalone_only):
     """
     Merge standalone and network heat rejection results.
 
@@ -474,9 +474,8 @@ def merge_heat_rejection_results(standalone_results, network_results, is_standal
                 peak_kw = 0
                 peak_datetime = None
 
-            # Get building geometry for coordinates
-            building = data['building']
-            x_coord, y_coord = get_building_coordinates(building)
+            # Get building coordinates from zone geometry
+            x_coord, y_coord = get_building_coordinates_from_geometry(building_id, locator)
 
             merged['buildings'].append({
                 'name': building_id,
@@ -501,22 +500,28 @@ def merge_heat_rejection_results(standalone_results, network_results, is_standal
     return merged
 
 
-def get_building_coordinates(building):
+def get_building_coordinates_from_geometry(building_name, locator):
     """
-    Extract building coordinates from building object.
+    Extract building coordinates from zone geometry shapefile.
 
-    :param building: Building instance from Domain
+    :param building_name: Building name/ID
+    :param locator: InputLocator instance
     :return: tuple (x_coord, y_coord)
     """
+    import geopandas as gpd
+
     try:
-        if hasattr(building, 'geometry') and building.geometry:
-            centroid = building.geometry.centroid
+        zone_geom_path = locator.get_zone_geometry()
+        zone_geom = gpd.read_file(zone_geom_path).set_index('name')
+
+        if building_name in zone_geom.index:
+            centroid = zone_geom.loc[building_name].geometry.centroid
             return centroid.x, centroid.y
-        elif hasattr(building, 'coordinates') and building.coordinates:
-            return building.coordinates
         else:
+            print(f"      Warning: Building {building_name} not found in zone geometry, using (0.0, 0.0)")
             return 0.0, 0.0
-    except:
+    except Exception as e:
+        print(f"      Warning: Could not extract coordinates for {building_name}: {e}")
         return 0.0, 0.0
 
 
@@ -525,7 +530,7 @@ def extract_component_heat_rejection(supply_system, building_name, building_type
     Extract heat rejection details from a SupplySystem, showing breakdown by component.
 
     :param supply_system: SupplySystem instance
-    :param building_name: Name of building or plant
+    :param building_name: name of building or plant
     :param building_type: 'building' or 'plant'
     :param scale: 'BUILDING' or 'DISTRICT'
     :return: list of component dictionaries
@@ -598,24 +603,20 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         buildings_output.to_csv(output_file, index=False)
         print(f"  ✓ Saved buildings summary: {output_file}")
 
-    # 2. Hourly spatial file (for heatmaps)
+    # 2. Hourly spatial file (for heatmaps) - without coordinates to save space
     spatial_rows = []
     for building_data in results['buildings']:
         building_name = building_data['name']
         building_type = building_data['type']
-        x = building_data['x_coord']
-        y = building_data['y_coord']
         hourly_profile = building_data['hourly_profile']
 
-        # Create one row per hour
+        # Create one row per hour (coordinates will be joined from buildings file in map layer)
         for hour_idx, heat_kw in enumerate(hourly_profile):
             # Create timestamp (assuming 2020 for now)
             timestamp = pd.Timestamp('2020-01-01') + pd.Timedelta(hours=hour_idx)
             spatial_rows.append({
                 'name': building_name,
                 'type': building_type,
-                'x_coord': x,
-                'y_coord': y,
                 'DATE': timestamp,
                 'Heat_rejection_kW': heat_kw
             })
