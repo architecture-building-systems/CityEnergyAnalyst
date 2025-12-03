@@ -83,6 +83,9 @@ def get_lat_lon_projected_shapefile(data):
     # Check validity AFTER transformation (returns filtered GeoDataFrame if some are invalid)
     data = validate_geometries_after_crs_transform(data, original_crs, shapefile_name="shapefile")
 
+    if data.empty:
+        raise ValueError("No valid geometries remain in shapefile after CRS transformation and filtering.")
+
     # Use the first valid geometry as representative point
     representative_point = data.iloc[0].geometry.representative_point()
 
