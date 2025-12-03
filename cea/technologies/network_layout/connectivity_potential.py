@@ -734,13 +734,12 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
             name = row.get('name', row.get('Name', f'index_{idx}'))
             invalid_names_before.append(str(name))
 
-        invalid_list = ', '.join(invalid_names_before[:10])
-        if len(invalid_names_before) > 10:
-            invalid_list += f' ... and {len(invalid_names_before) - 10} more'
+        # Show all geometry names
+        invalid_list = ', '.join(invalid_names_before)
 
         raise ValueError(
             f"Invalid geometries found in the original streets shapefile (before CRS transformation). "
-            f"These geometries must be fixed in the source file: {invalid_list}"
+            f"{len(invalid_names_before)} geometries must be fixed in the source file:\n{invalid_list}"
         )
 
     # Convert both streets and buildings to projected CRS for accurate distance calculations
@@ -759,16 +758,15 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
             name = row.get('name', row.get('Name', f'index_{idx}'))
             all_names.append(str(name))
 
-        name_list = ', '.join(all_names[:10])
-        if len(all_names) > 10:
-            name_list += f' ... and {len(all_names) - 10} more'
+        # Show all geometry names
+        name_list = ', '.join(all_names)
 
         raise ValueError(
-            f"All street geometries became invalid after CRS transformation. "
+            f"All {len(all_names)} street geometries became invalid after CRS transformation. "
             f"This typically indicates: (1) missing or incorrect CRS in the streets shapefile, "
             f"(2) complex geometries with precision issues, or (3) projection distortion. "
-            f"Affected geometries: {name_list}. "
-            f"Original CRS: {original_crs}"
+            f"Original CRS: {original_crs}. "
+            f"Affected geometries:\n{name_list}"
         )
     elif len(streets_network_df) != valid_geometries.sum():
         # Some geometries became invalid during transformation
@@ -778,14 +776,14 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
             name = row.get('name', row.get('Name', f'index_{idx}'))
             invalid_names.append(str(name))
 
-        invalid_list = ', '.join(invalid_names[:10])
-        if len(invalid_names) > 10:
-            invalid_list += f' ... and {len(invalid_names) - 10} more'
+        # Show all geometry names
+        invalid_list = ', '.join(invalid_names)
 
         warnings.warn(
             f"{len(invalid_names)} street geometries became invalid after CRS transformation "
             f"(out of {len(streets_network_df)} total). This may indicate precision issues or projection distortion. "
-            f"Invalid geometries: {invalid_list}. Discarding invalid geometries and continuing."
+            f"Invalid geometries:\n{invalid_list}\n"
+            f"Discarding invalid geometries and continuing."
         )
         streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
 

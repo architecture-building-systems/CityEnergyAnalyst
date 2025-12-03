@@ -81,13 +81,12 @@ def get_lat_lon_projected_shapefile(data):
             name = row.get('name', row.get('Name', f'index_{idx}'))
             invalid_names_before.append(str(name))
 
-        invalid_list = ', '.join(invalid_names_before[:10])
-        if len(invalid_names_before) > 10:
-            invalid_list += f' ... and {len(invalid_names_before) - 10} more'
+        # Show all geometry names
+        invalid_list = ', '.join(invalid_names_before)
 
         raise ValueError(
-            f"Attention: {len(invalid_list)} geometries must be fixed in the source file: {invalid_list}"
-            "Invalid geometries found in the original shapefile (before CRS transformation). "
+            f"Invalid geometries found in the original shapefile (before CRS transformation). "
+            f"{len(invalid_names_before)} geometries must be fixed in the source file:\n{invalid_list}"
         )
 
     # Transform to WGS84
@@ -102,16 +101,15 @@ def get_lat_lon_projected_shapefile(data):
             name = row.get('name', row.get('Name', f'index_{idx}'))
             all_names.append(str(name))
 
-        name_list = ', '.join(all_names[:10])
-        if len(all_names) > 10:
-            name_list += f' ... and {len(all_names) - 10} more'
+        # Show all geometry names
+        name_list = ', '.join(all_names)
 
         raise ValueError(
-            f"All geometries became invalid after CRS transformation to WGS84. "
+            f"All {len(all_names)} geometries became invalid after CRS transformation to WGS84. "
             f"This typically indicates: (1) missing or incorrect CRS in the shapefile, "
             f"(2) complex geometries with precision issues, or (3) projection distortion. "
-            f"Affected geometries: {name_list}. "
-            f"Original CRS: {data.crs if hasattr(data, 'crs') else 'Unknown'}"
+            f"Original CRS: {data.crs if hasattr(data, 'crs') else 'Unknown'}. "
+            f"Affected geometries:\n{name_list}"
         )
     elif len(data) != len(valid_geometries):
         # Some geometries became invalid during transformation
@@ -121,14 +119,14 @@ def get_lat_lon_projected_shapefile(data):
             name = row.get('name', row.get('Name', f'index_{idx}'))
             invalid_names.append(str(name))
 
-        invalid_list = ', '.join(invalid_names[:10])
-        if len(invalid_names) > 10:
-            invalid_list += f' ... and {len(invalid_names) - 10} more'
+        # Show all geometry names
+        invalid_list = ', '.join(invalid_names)
 
         warnings.warn(
             f"{len(invalid_names)} geometries became invalid after CRS transformation to WGS84 "
             f"(out of {len(data)} total). This may indicate precision issues or projection distortion. "
-            f"Invalid geometries: {invalid_list}. Using the first valid geometry for coordinate reference."
+            f"Invalid geometries:\n{invalid_list}\n"
+            f"Using the first valid geometry for coordinate reference."
         )
 
     # Use the first valid geometry as representative point
