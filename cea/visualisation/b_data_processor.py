@@ -357,13 +357,8 @@ class data_processor:
                             pv_codes.add(parts[1])  # Extract code from ..._PV_{code}
 
                 if pv_codes:
-                    pv_codes_list = sorted(pv_codes)
-                    error_msg = (
-                        f"PV electricity results missing for panel type(s): {', '.join(pv_codes_list)}. "
-                        f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
-                    )
-                    print(f"ERROR: {error_msg}")
-                    raise FileNotFoundError(error_msg)
+                    from cea.visualisation.a_data_loader import raise_missing_pv_error
+                    raise_missing_pv_error(list(pv_codes), context='emission')
 
             # For non-PV missing columns, just warn and filter
             print(f"⚠️ Missing columns in data: {missing_columns}")

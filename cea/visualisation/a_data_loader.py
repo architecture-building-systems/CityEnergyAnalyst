@@ -6,7 +6,7 @@ Ensure this file exists or break the script.
 
 import cea.inputlocator
 import os
-
+from cea.analysis.lca.emission_timeline import get_building_names_from_zone
 from cea.import_export.result_summary import process_building_summary, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 import pandas as pd
 
@@ -20,6 +20,50 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def raise_missing_pv_error(pv_codes, context='file'):
+    """
+    Raise FileNotFoundError for missing PV results.
+
+    :param pv_codes: Single PV code (str) or list of PV codes (list)
+    :param context: 'file' for missing PV files, 'emission' for missing PV data in emission results
+    :raises FileNotFoundError: Always raises with formatted error message
+    """
+    if isinstance(pv_codes, str):
+        pv_codes = [pv_codes]
+
+    if context == 'emission':
+        # Error when PV columns are missing from emission results
+        if len(pv_codes) == 1:
+            error_msg = (
+                f"PV data missing for panel type: {pv_codes[0]} in emission results. "
+                f"Please run the 'emissions' script with include_pv=True and pv_codes=['{pv_codes[0]}'] "
+                f"to include PV offsetting in emission calculations."
+            )
+        else:
+            pv_list = ', '.join([f"'{code}'" for code in sorted(pv_codes)])
+            error_msg = (
+                f"PV data missing for panel type(s): {', '.join(sorted(pv_codes))} in emission results. "
+                f"Please run the 'emissions' script with include_pv=True and pv_codes=[{pv_list}] "
+                f"to include PV offsetting in emission calculations."
+            )
+    else:
+        # Error when PV result files don't exist
+        if len(pv_codes) == 1:
+            error_msg = (
+                f"PV electricity results missing for panel type: {pv_codes[0]}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
+            )
+        else:
+            error_msg = (
+                f"PV electricity results missing for panel type(s): {', '.join(sorted(pv_codes))}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+
+    print(f"ERROR: {error_msg}")
+    raise FileNotFoundError(error_msg)
+
 
 demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_cooling_demand', 'enduse_space_cooling_demand',	'enduse_heating_demand', 'enduse_space_heating_demand',	'enduse_dhw_demand']
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
@@ -280,21 +324,15 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
             # Get list of buildings to check
             buildings = plots_building_filter.buildings
             if not buildings:
-                from cea.analysis.lca.primary_energy import get_building_names_from_zone
                 zone_df = get_building_names_from_zone(locator)
-                buildings = zone_df['Name'].tolist()
+                buildings = zone_df['name'].tolist()
 
             # Check if PV results exist for at least one building (representative check)
             if buildings:
                 first_building = buildings[0]
                 pv_path = locator.PV_results(first_building, pv_code)
                 if not os.path.exists(pv_path):
-                    error_msg = (
-                        f"PV electricity results missing for panel type: {pv_code}. "
-                        f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
-                    )
-                    print(f"ERROR: {error_msg}")
-                    raise FileNotFoundError(error_msg)
+                    raise_missing_pv_error(pv_code)
 
     # Instantiate the csv_pointer class
     plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
@@ -324,7 +362,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                     f"Expected {plot_instance_a.time_period} data with 'date' column, but found 'period' column.\n"
                     f"This suggests aggregated period data was incorrectly written to the {plot_instance_a.time_period} summary file.\n"
                     f"Available columns: {df_summary_data.columns.tolist()}\n"
-                    f"File will be deleted and regenerated."
+                    "File will be deleted and regenerated."
                 )
                 print(error_msg)
                 # Delete the incorrect file
@@ -338,7 +376,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                     f"Expected {plot_instance_a.time_period} data with 'period' column, but found 'date' column.\n"
                     f"This suggests hourly/daily data was incorrectly written to the {plot_instance_a.time_period} summary file.\n"
                     f"Available columns: {df_summary_data.columns.tolist()}\n"
-                    f"File will be deleted and regenerated."
+                    "File will be deleted and regenerated."
                 )
                 print(error_msg)
                 # Delete the incorrect file

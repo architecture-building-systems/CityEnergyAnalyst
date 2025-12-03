@@ -28,7 +28,6 @@ Key guarantees:
 - No floating-point precision issues
 """
 
-import warnings
 from collections import defaultdict, Counter
 
 import networkx as nx
@@ -38,7 +37,12 @@ from shapely import Point, LineString
 from shapely.ops import substring, linemerge
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import (
+    get_projected_coordinate_system,
+    get_lat_lon_projected_shapefile,
+    validate_geometries_before_crs_transform,
+    validate_geometries_after_crs_transform
+)
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, normalize_geometry, _merge_orphan_nodes_to_nearest
 
 
@@ -726,19 +730,20 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
     :param snap_tolerance: Maximum distance to snap near-miss endpoints (meters), defaults to SNAP_TOLERANCE
     :return: Tuple of (streets_gdf, buildings_gdf, crs)
     """
+    # Validate street geometries BEFORE transformation
+    validate_geometries_before_crs_transform(streets_network_df, shapefile_name="streets shapefile")
+
     # Convert both streets and buildings to projected CRS for accurate distance calculations
     lat, lon = get_lat_lon_projected_shapefile(building_centroids_df)
     crs = get_projected_coordinate_system(lat, lon)
+    original_crs = streets_network_df.crs
     streets_network_df = streets_network_df.to_crs(crs)
     building_centroids_df = building_centroids_df.to_crs(crs)
 
-    # Validate geometries
-    valid_geometries = streets_network_df.geometry.is_valid
-    if not valid_geometries.any():
-        raise ValueError("No valid geometries found in the shapefile.")
-    elif len(streets_network_df) != valid_geometries.sum():
-        warnings.warn("Invalid geometries found in the shapefile. Discarding all invalid geometries.")
-        streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
+    # Validate geometries AFTER transformation (returns filtered GeoDataFrame if some are invalid)
+    streets_network_df = validate_geometries_after_crs_transform(
+        streets_network_df, original_crs, shapefile_name="streets shapefile"
+    )
 
     # Clean street network: split at intersections and snap near-miss endpoints
     print("Cleaning street network...")
