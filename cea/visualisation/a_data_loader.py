@@ -6,7 +6,7 @@ Ensure this file exists or break the script.
 
 import cea.inputlocator
 import os
-
+from cea.analysis.lca.emission_timeline import get_building_names_from_zone
 from cea.import_export.result_summary import process_building_summary, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
 import pandas as pd
 
@@ -280,9 +280,8 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
             # Get list of buildings to check
             buildings = plots_building_filter.buildings
             if not buildings:
-                from cea.analysis.lca.primary_energy import get_building_names_from_zone
                 zone_df = get_building_names_from_zone(locator)
-                buildings = zone_df['Name'].tolist()
+                buildings = zone_df['name'].tolist()
 
             # Check if PV results exist for at least one building (representative check)
             if buildings:
