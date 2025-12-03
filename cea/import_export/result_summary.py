@@ -2640,6 +2640,9 @@ def get_list_list_metrics_with_date(config):
     if config.result_summary.metrics_emissions:
         list_list_metrics_with_date.append(list_metrics_operational_emissions)
 
+    if config.result_summary.metrics_heat_rejection:
+        list_list_metrics_with_date.append(list_metrics_heat_rejection)
+
     return list_list_metrics_with_date
 
 
@@ -2703,6 +2706,9 @@ def get_list_list_metrics_building(config):
     if config.result_summary.metrics_emissions:
         list_list_metrics_building.append(list_metrics_lifecycle_emissions)
         list_list_metrics_building.append(list_metrics_operational_emissions)
+
+    if config.result_summary.metrics_heat_rejection:
+        list_list_metrics_building.append(list_metrics_heat_rejection)
 
     return list_list_metrics_building
 
@@ -3025,6 +3031,17 @@ def process_building_summary(config, locator,
                                                    bool_use_conditioned_floor_area_for_normalisation, plot=plot)
                 except Exception as e:
                     error_msg = f"Step 9 (Advanced Analytics - operational_emissions): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
+
+            if config.result_summary.metrics_heat_rejection:
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "heat-rejection", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - heat-rejection): {str(e)}"
                     errors_encountered.append(error_msg)
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")

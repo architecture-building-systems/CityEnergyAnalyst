@@ -938,6 +938,7 @@ class ResultSummarySection(Section):
     metrics_solar_collectors: bool
     metrics_other_renewables: bool
     metrics_costs: bool
+    metrics_heat_rejection: bool
     network_name: str
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
@@ -969,6 +970,8 @@ class ResultSummarySection(Section):
     def __getattr__(self, item: Literal["metrics_other_renewables"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["metrics_costs"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["metrics_heat_rejection"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
