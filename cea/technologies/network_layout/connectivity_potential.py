@@ -28,7 +28,6 @@ Key guarantees:
 - No floating-point precision issues
 """
 
-import warnings
 from collections import defaultdict, Counter
 
 import networkx as nx
