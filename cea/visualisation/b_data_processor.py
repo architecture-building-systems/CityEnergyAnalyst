@@ -612,7 +612,7 @@ def convert_energy_units(dataframe, target_unit, normalised=False, plot_cea_feat
     return df
 
 
-def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architecture_data, plot_cea_feature):
+def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architecture_data, plot_cea_feature, scenario=None):
     """
     Generate a Plotly-ready DataFrame based on user-defined configuration.
 
@@ -626,6 +626,8 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         Metadata for buildings (e.g., use type, construction year).
     plot_cea_feature : str
         Feature to be plotted: 'demand', 'pv', 'pvt', or 'sc'.
+    scenario : str, optional
+        Path to the scenario folder.
 
     Returns
     -------
@@ -663,7 +665,25 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         if facet in ['months', 'seasons']:
             df_to_plotly['X_facet'] = df_summary_data['period']
         elif facet in ['construction_type', 'main_use_type']:
-            df_to_plotly['X_facet'] = df_architecture_data[facet]
+            # For heat-rejection, plants should have their own "PLANT" facet category
+            if plot_cea_feature == 'heat-rejection':
+                from cea.inputlocator import InputLocator
+                locator = InputLocator(scenario)
+                zone_buildings = set(locator.get_zone_building_names())
+
+                # Create a mapping from building name to facet value
+                df_arch_with_name = df_architecture_data.set_index('name')
+
+                # Create facet column: 'PLANT' for plants, architecture data for buildings
+                facet_values = []
+                for entity_name in df_to_plotly['X']:
+                    if entity_name not in zone_buildings:
+                        facet_values.append('PLANT')
+                    else:
+                        facet_values.append(df_arch_with_name.loc[entity_name, facet])
+                df_to_plotly['X_facet'] = facet_values
+            else:
+                df_to_plotly['X_facet'] = df_architecture_data[facet]
         elif facet is not None:
             raise ValueError(f"Invalid x_facet: {facet}")
 
@@ -871,7 +891,7 @@ def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plo
     plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list, scenario)
 
     if plot_cea_feature in ["demand", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions", "heat-rejection"]:
-        df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
+        df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature, scenario)
 
         if plot_instance_b.x_to_plot in x_to_plot_building:
             df_to_plotly = sort_df_by_sorting_key(plot_instance_b.process_sorting_key(), df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
