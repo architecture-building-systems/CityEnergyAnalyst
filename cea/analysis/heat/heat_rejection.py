@@ -471,12 +471,12 @@ def create_network_supply_system(locator, config, network_type, network_name,
     import cea.config
 
     print(f"    Creating {network_type} network supply system...")
-
+    from cea.analysis.costs.supply_costs import filter_supply_code_by_scale
     # Get supply type from config (reuse system-costs parameters)
     if network_type == 'DC':
         supply_code_raw = config.anthropogenic_heat.supply_type_cs
         # Filter for district scale
-        from cea.analysis.costs.supply_costs import filter_supply_code_by_scale
+
         supply_code = filter_supply_code_by_scale(
             locator, supply_code_raw, 'SUPPLY_COOLING', is_standalone=False
         )

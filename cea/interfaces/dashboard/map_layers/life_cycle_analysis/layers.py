@@ -17,6 +17,36 @@ def period_to_year(period: pd.Series) -> pd.Series:
     return period.str.extract(r'Y_(\d{4})')[0].astype(int)
 
 
+def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
+    """
+    Filter buildings to only include those that exist in zone geometry.
+    Returns tuple of (filtered_buildings, geometry_df, centroids).
+    Gracefully handles missing buildings by excluding them.
+    """
+    import geopandas as gpd
+    from pyproj import CRS
+
+    if not buildings:
+        return [], None, []
+
+    try:
+        zone_gdf = gpd.read_file(locator.get_zone_geometry()).set_index("name")
+
+        # Filter to only buildings that exist in geometry
+        existing_buildings = [b for b in buildings if b in zone_gdf.index]
+
+        if not existing_buildings:
+            return [], None, []
+
+        geometry_df = zone_gdf.loc[existing_buildings]
+        centroids = geometry_df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+
+        return existing_buildings, geometry_df, centroids
+    except Exception as e:
+        print(f"Warning: Error reading zone geometry: {e}")
+        return [], None, []
+
+
 class LifecycleEmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "lifecycle-emissions"
@@ -104,6 +134,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
             FileRequirement(
                 "Embodied Emissions Timeline Files",
                 file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -131,30 +162,52 @@ class LifecycleEmissionsMapLayer(MapLayer):
             }
         }
 
+        # Filter buildings that exist in geometry
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
+
+        if not buildings:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         def get_data(building, centroid):
-            df = pd.read_csv(
-                self.locator.get_lca_timeline_building(building), usecols=["period", data_column]
-            )
+            try:
+                building_file = self.locator.get_lca_timeline_building(building)
+                if not os.path.exists(building_file):
+                    return None
 
-            data = df[data_column]
-            data.index = period_to_year(df['period'])
+                df = pd.read_csv(building_file, usecols=["period", data_column])
 
-            total_min = 0
-            total_max = data.sum()
+                data = df[data_column]
+                data.index = period_to_year(df['period'])
 
-            period_value = data.loc[start:end].sum()
-            period_min = period_value
-            period_max = period_value
+                total_min = 0
+                total_max = data.sum()
 
-            data = {"position": [centroid.x, centroid.y], "value": period_value}
+                period_value = data.loc[start:end].sum()
+                period_min = period_value
+                period_max = period_value
 
-            return total_min, total_max, period_min, period_max, data
+                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
-        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+                return total_min, total_max, period_min, period_max, data_point
+            except Exception as e:
+                print(f"Warning: Error reading lifecycle emissions for {building}: {e}")
+                return None
 
-        values = (get_data(building, centroid)
-                  for building, centroid in zip(buildings, building_centroids))
+        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+
+        # Filter out None values (missing files)
+        values = [v for v in values if v is not None]
+
+        if not values:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
@@ -249,6 +302,7 @@ class OperationalEmissionsMapLayer(MapLayer):
             FileRequirement(
                 "Operational Emissions Hourly Files",
                 file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -260,12 +314,11 @@ class OperationalEmissionsMapLayer(MapLayer):
         buildings = self.locator.get_zone_building_names()
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
-        
+
         data_column = parameters['data-column']
 
         if data_column is None or data_column not in self._get_data_columns():
             raise ValueError(f"Invalid data column: {data_column}")
-
 
         output = {
             "data": [],
@@ -280,28 +333,52 @@ class OperationalEmissionsMapLayer(MapLayer):
             }
         }
 
+        # Filter buildings that exist in geometry
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
+
+        if not buildings:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         def get_data(building, centroid):
-            data = pd.read_csv(self.locator.get_lca_operational_hourly_building(building), usecols=[data_column])[data_column]
+            try:
+                building_file = self.locator.get_lca_operational_hourly_building(building)
+                if not os.path.exists(building_file):
+                    return None
 
-            total_min = 0
-            total_max = data.sum()
+                data = pd.read_csv(building_file, usecols=[data_column])[data_column]
 
-            if start < end:
-                period_value = data.iloc[start:end + 1].sum()
-            else:
-                period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
-            period_min = period_value
-            period_max = period_value
+                total_min = 0
+                total_max = data.sum()
 
-            data = {"position": [centroid.x, centroid.y], "value": period_value}
+                if start < end:
+                    period_value = data.iloc[start:end + 1].sum()
+                else:
+                    period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
+                period_min = period_value
+                period_max = period_value
 
-            return total_min, total_max, period_min, period_max, data
+                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
-        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+                return total_min, total_max, period_min, period_max, data_point
+            except Exception as e:
+                print(f"Warning: Error reading operational emissions for {building}: {e}")
+                return None
 
-        values = (get_data(building, centroid)
-                  for building, centroid in zip(buildings, building_centroids))
+        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+
+        # Filter out None values (missing files)
+        values = [v for v in values if v is not None]
+
+        if not values:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
