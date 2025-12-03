@@ -86,8 +86,8 @@ def get_lat_lon_projected_shapefile(data):
             invalid_list += f' ... and {len(invalid_names_before) - 10} more'
 
         raise ValueError(
-            f"Invalid geometries found in the original shapefile (before CRS transformation). "
             f"These geometries must be fixed in the source file: {invalid_list}"
+            f"Invalid geometries found in the original shapefile (before CRS transformation). "
         )
 
     # Transform to WGS84
