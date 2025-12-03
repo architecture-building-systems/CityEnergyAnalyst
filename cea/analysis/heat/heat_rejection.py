@@ -863,7 +863,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
 
         # Create DataFrame with DATE and heat_rejection_kW columns
         entity_df = pd.DataFrame({
-            'DATE': timestamps,
+            'date': timestamps,
             'heat_rejection_kW': hourly_profile[:8760]  # Ensure exactly 8760 values
         })
 
