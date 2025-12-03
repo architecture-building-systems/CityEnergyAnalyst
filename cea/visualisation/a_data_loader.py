@@ -362,7 +362,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                     f"Expected {plot_instance_a.time_period} data with 'date' column, but found 'period' column.\n"
                     f"This suggests aggregated period data was incorrectly written to the {plot_instance_a.time_period} summary file.\n"
                     f"Available columns: {df_summary_data.columns.tolist()}\n"
-                    f"File will be deleted and regenerated."
+                    "File will be deleted and regenerated."
                 )
                 print(error_msg)
                 # Delete the incorrect file
@@ -376,7 +376,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                     f"Expected {plot_instance_a.time_period} data with 'period' column, but found 'date' column.\n"
                     f"This suggests hourly/daily data was incorrectly written to the {plot_instance_a.time_period} summary file.\n"
                     f"Available columns: {df_summary_data.columns.tolist()}\n"
-                    f"File will be deleted and regenerated."
+                    "File will be deleted and regenerated."
                 )
                 print(error_msg)
                 # Delete the incorrect file
