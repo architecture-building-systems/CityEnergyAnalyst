@@ -649,7 +649,7 @@ def plot_emission_timeline(config, context: dict):
         buildings = plots_building_filter.buildings
         if not buildings:
             zone_df = get_building_names_from_zone(locator)
-            buildings = zone_df['Name'].tolist()
+            buildings = zone_df['name'].tolist()
 
         # Check if PV results exist for at least one building (representative check)
         if buildings:
