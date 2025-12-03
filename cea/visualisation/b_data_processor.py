@@ -254,7 +254,13 @@ class data_processor:
 
             # Count number of plants of same type
             # Get all entities from summary data
-            all_entities = self.df_summary_data['name'].tolist()
+            # Handle case where 'name' is a column or the index
+            if 'name' in self.df_summary_data.columns:
+                all_entities = self.df_summary_data['name'].tolist()
+            elif self.df_summary_data.index.name == 'name':
+                all_entities = self.df_summary_data.index.tolist()
+            else:
+                all_entities = self.df_summary_data.index.tolist()
             plant_suffix = f'_{network_type}_plant_'
             num_plants = sum(1 for entity in all_entities if plant_suffix in entity)
 
@@ -277,7 +283,13 @@ class data_processor:
         # For heat-rejection, include ALL entities from summary data (buildings + plants)
         if plot_cea_feature == 'heat-rejection' and self.df_summary_data is not None:
             # Get all entities from the summary data
-            all_entities = set(self.df_summary_data['name'].unique())
+            # Handle case where 'name' is a column or the index
+            if 'name' in self.df_summary_data.columns:
+                all_entities = set(self.df_summary_data['name'].unique())
+            elif self.df_summary_data.index.name == 'name':
+                all_entities = set(self.df_summary_data.index.unique())
+            else:
+                all_entities = set(self.df_summary_data.index.unique())
             buildings_to_use = list(all_entities)
         else:
             # Filter to only buildings that exist in architecture data
