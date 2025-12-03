@@ -658,7 +658,7 @@ def plot_emission_timeline(config, context: dict):
             if not os.path.exists(pv_path):
                 error_msg = (
                     f"PV electricity results missing for panel type: {pv_code}. "
-                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
+                    f"Please include this panel type in the 'emissions' script ."
                 )
                 print(f"ERROR: {error_msg}")
                 raise FileNotFoundError(error_msg)
