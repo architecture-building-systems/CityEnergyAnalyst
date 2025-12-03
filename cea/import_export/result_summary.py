@@ -679,7 +679,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         name+"[kgCO2e]": [name+"_kgCO2e"]
         for name in emission_timeline_yearly_colnames_nounit
     } | {
-        "heat_rejection[kWh]": ["heat_rejection_kW"]
+        "heat_rejection[kWh]": ["heat_rejection_kWh"]
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -858,6 +858,10 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
+
+                # Rename heat_rejection_kW to heat_rejection_kWh for consistency with energy units
+                if 'heat_rejection_kW' in df.columns:
+                    df = df.rename(columns={'heat_rejection_kW': 'heat_rejection_kWh'})
 
                 # Validation: Check if this is timeline data (has 'period' column) when we expect operational data
                 # Timeline files are in .../emissions/timeline/ and operational files are in .../emissions/operational/

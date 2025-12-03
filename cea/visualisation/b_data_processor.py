@@ -317,7 +317,7 @@ class data_processor:
             }
         elif plot_cea_feature == 'heat-rejection':
             y_cea_metric_map = {
-                'heat_rejection': 'heat_rejection_kW'
+                'heat_rejection': 'heat_rejection_kWh'
             }
 
         else:
