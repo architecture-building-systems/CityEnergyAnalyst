@@ -774,6 +774,17 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
+  - name: plot-heat-rejection
+    label: Plot - Anthropogenic Heat Rejection
+    short_description: Plot bar chart of building anthropogenic heat rejection
+    description: This Feature plots bar chart of the results of anthropogenic heat rejection analysis
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-heat-rejection, plots-building-filter]
+    input-files:
+      - [get_heat_rejection_buildings]
+      - [get_zone_geometry]
+
   - name: plot-lifecycle-emissions
     label: Plot - Lifecycle Emissions
     short_description: Plot bar chart of building lifecycle emissions

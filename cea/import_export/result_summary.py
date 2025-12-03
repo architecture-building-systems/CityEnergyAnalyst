@@ -66,6 +66,7 @@ dict_plot_metrics_cea_feature = {
     'other_renewables': 'other-renewables',
     'dh': 'dh',
     'dc': 'dc',
+    'heat_rejection': 'heat-rejection',
 }
 locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
 df_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
@@ -130,6 +131,7 @@ normalisation_name_mapping = {
         "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
         "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
         "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
+        "heat_rejection[kWh]": "heat_rejection[kWh/m2]",
     } | normalisation_name_mapping_emission_timeline_yearly | normalisation_name_mapping_emission_timeline_hourly_operational
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -261,6 +263,16 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
+    if cea_feature == 'heat_rejection':
+        # Heat rejection includes both buildings and plants
+        # Read from heat_rejection_buildings.csv to get all entities
+        heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+        entity_names = heat_buildings_df['name'].tolist()
+        for entity_name in entity_names:
+            path = locator.get_heat_rejection_hourly_building(entity_name)
+            list_paths.append(path)
+        list_appendix.append(cea_feature)
+
     if cea_feature == 'solar_irradiation':
         for building in list_buildings:
             path = locator.get_radiation_building(building)
@@ -382,6 +394,9 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
         ],
         "lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
         "operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
+        "heat_rejection": [
+            "heat_rejection[kWh]",
+        ],
         "solar_irradiation": [
             "irradiation_roof[kWh]",
             "irradiation_window_north[kWh]",
@@ -663,6 +678,8 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
         for name in emission_timeline_yearly_colnames_nounit
+    } | {
+        "heat_rejection[kWh]": ["heat_rejection_kW"]
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -1356,8 +1373,19 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if not hourly_annually_df.empty:
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
-                if len(hourly_annually_df) / len(hourly_annually_df['period'].unique().tolist()) == len(list_buildings):
-                    hourly_annually_df.insert(0, 'name', list_buildings)
+
+                # For heat_rejection, use entity names from the data files instead of zone buildings
+                if appendix == 'heat_rejection':
+                    # Get entity names from heat_rejection_buildings.csv
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    entity_names = heat_buildings_df['name'].tolist()
+                    num_entities_per_period = len(entity_names)
+                else:
+                    entity_names = list_buildings
+                    num_entities_per_period = len(list_buildings)
+
+                if len(hourly_annually_df) / len(hourly_annually_df['period'].unique().tolist()) == num_entities_per_period:
+                    hourly_annually_df.insert(0, 'name', entity_names)
                     if not bool_use_acronym:
                         hourly_annually_df.columns = map_metrics_and_cea_columns(
                             hourly_annually_df.columns, direction="columns_to_metrics"
@@ -1369,11 +1397,21 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
         if monthly_rows:
             monthly_df = pd.DataFrame(monthly_rows)
             if not monthly_df.empty:
-                if len(monthly_df) / len(monthly_df['period'].unique().tolist()) == len(list_buildings):
+                # For heat_rejection, use entity names from the data files instead of zone buildings
+                if appendix == 'heat_rejection':
+                    # Get entity names from heat_rejection_buildings.csv
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    entity_names = heat_buildings_df['name'].tolist()
+                    num_entities_per_period = len(entity_names)
+                else:
+                    entity_names = list_buildings
+                    num_entities_per_period = len(list_buildings)
+
+                if len(monthly_df) / len(monthly_df['period'].unique().tolist()) == num_entities_per_period:
                     monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
                     # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                     monthly_df = add_nominal_actual_and_coverage(monthly_df)
-                    list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
+                    list_buildings_repeated = [item for item in entity_names for _ in range(len(monthly_df['period'].unique()))]
                     list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
                     monthly_df.insert(0, 'name', list_buildings_series)
                     if not bool_use_acronym:
@@ -1407,8 +1445,19 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
 
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
-                list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
-                if len(seasonally_df) / len(seasonally_df['period'].unique().tolist()) == len(list_buildings):
+
+                # For heat_rejection, use entity names from the data files instead of zone buildings
+                if appendix == 'heat_rejection':
+                    # Get entity names from heat_rejection_buildings.csv
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    entity_names = heat_buildings_df['name'].tolist()
+                    num_entities_per_period = len(entity_names)
+                else:
+                    entity_names = list_buildings
+                    num_entities_per_period = len(list_buildings)
+
+                list_buildings_repeated = [item for item in entity_names for _ in range(len(seasonally_df['period'].unique()))]
+                if len(seasonally_df) / len(seasonally_df['period'].unique().tolist()) == num_entities_per_period:
                     list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
                     seasonally_df.insert(0, 'name', list_buildings_series)
                     if not bool_use_acronym:
@@ -2552,6 +2601,7 @@ list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_co
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
 list_metrics_lifecycle_emissions = list(normalisation_name_mapping_emission_timeline_yearly.keys())
 list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_hourly_operational.keys())
+list_metrics_heat_rejection = ['heat_rejection[kWh]']
 
 def get_list_list_metrics_with_date(config):
     list_list_metrics_with_date = []
@@ -2611,6 +2661,8 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
         list_list_metrics_with_date.append(list_metrics_district_cooling)
     if 'operational_emissions' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_operational_emissions)
+    if 'heat_rejection' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_heat_rejection)
     return list_list_metrics_with_date
 
 
@@ -2669,6 +2721,8 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
         list_list_metrics_building.append(list_metrics_operational_emissions)
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
         list_list_metrics_building.append(list_metrics_lifecycle_emissions)
+    if 'heat_rejection' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_heat_rejection)
 
     return list_list_metrics_building
 

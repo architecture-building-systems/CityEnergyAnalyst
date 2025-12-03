@@ -91,38 +91,52 @@ x, y = plant_node.geometry.x, plant_node.geometry.y
 
 ### 1. `heat_rejection_buildings.csv` (Summary)
 ```csv
-name, type, GFA_m2, x_coord, y_coord,
-heat_rejection_annual_MWh, peak_heat_rejection_kW, peak_datetime, scale
+name,type,x_coord,y_coord,heat_rejection_annual_MWh,peak_heat_rejection_kW,peak_datetime,scale
+B1001,building,374252.82,146016.62,0.47,0.14,2013-01-02 06:00:00,BUILDING
+crycry_DC_plant_001,plant,374305.97,146155.99,11537.03,2333.37,2011-05-08 16:00:00,DISTRICT
 ```
 
 **Rows**:
-- Buildings: One row per building with `type='building'`
-- Plants: One row per plant node with `type='plant'`
+- Buildings: One row per building with `type='building'`, `scale='BUILDING'`
+- Plants: One row per plant node with `type='plant'`, `scale='DISTRICT'`
 
 **Key columns**:
 - `type`: 'building' or 'plant'
 - `scale`: 'BUILDING' or 'DISTRICT'
-- `x_coord, y_coord`: Spatial location for heatmaps
+- `x_coord, y_coord`: Spatial location for map layers
+- **No GFA column** - GFA calculated from zone geometry when needed
 
-### 2. `heat_rejection_hourly_spatial.csv` (For Heatmaps)
+### 2. Individual Hourly Files: `{name}.csv`
+One file per building/plant in `/outputs/data/heat/`:
 ```csv
-name, type, x_coord, y_coord, DATE, Heat_rejection_kW
+DATE,heat_rejection_kW
+2020-01-01 00:00:00,1115.34
+2020-01-01 01:00:00,1082.71
+...
 ```
 
-**Size**: 8760 rows × number of buildings/plants
+**Size**: 8760 rows per file (leap day removed)
 
 **Usage**:
-- Load into QGIS with temporal controller
-- Animate hourly heat rejection
-- Filter by `type` for buildings-only or plants-only views
+- Time series plotting (district-level)
+- Map layer temporal animation
+- Building-specific analysis
 
-### 3. `heat_rejection_components.csv` (Detailed - Future)
+### 3. `heat_rejection_components.csv` (Component Breakdown)
 ```csv
-name, network_type, service, component_code, energy_carrier,
-heat_rejection_annual_MWh, peak_heat_rejection_kW, scale
+name,type,component_code,component_type,placement,capacity_kW,heat_rejection_annual_MWh,peak_heat_rejection_kW,scale
+B1014,building,CH2,VapourCompressionChiller,primary,650.398,,,BUILDING
+B1014,building,CT2,CoolingTower,tertiary,773.11,,,BUILDING
+B1014,building,T25A,energy_carrier,heat_rejection,0.0,3509.29,797.47,BUILDING
 ```
 
-Currently placeholder - will extract from `heat_rejection_by_carrier`
+**Rows per building**:
+- Component rows: Equipment capacity (component_type = equipment class)
+- Energy carrier rows: Heat rejection by carrier (component_type = 'energy_carrier')
+
+**Energy carrier codes**:
+- `T25A`: Cooling heat rejection (from chillers/cooling towers)
+- `T100A`: DHW heat rejection (from boilers/high-temp systems)
 
 ## 6-Case Building Connectivity Logic
 
@@ -191,9 +205,76 @@ validation_DC_plant_002, plant, 103.865, 1.298, 925.2, 310.2, DISTRICT
 - Grid exports: Electrical energy exported, not heat rejection
 - Infinite carriers: Fuel supplies, not environmental outputs
 
+## Visualisation Integration
+
+### Plot Configuration: `[plots-heat-rejection]`
+
+**Single metric only**: `heat_rejection`
+```ini
+y-metric-to-plot = heat_rejection
+y-metric-to-plot.type = ChoiceParameter  # Single choice
+y-metric-to-plot.choices = heat_rejection
+
+y-normalised-by = no_normalisation
+y-normalised-by.type = ChoiceParameter
+y-normalised-by.choices = no_normalisation, gross_floor_area, conditioned_floor_area
+```
+
+### Normalisation Logic
+
+**For buildings**:
+```python
+# GFA from zone geometry
+gfa_m2 = zone.loc[building_name].geometry.area * zone.loc[building_name].floors_ag
+normalised = heat_rejection_MWh / gfa_m2 * 1000  # kWh/m²
+```
+
+**For plants (district-scale)**:
+```python
+# Get all buildings connected to this network
+connected_buildings = network.get_consumer_buildings()
+total_gfa = sum(zone.loc[bid].geometry.area * zone.loc[bid].floors_ag for bid in connected_buildings)
+
+# Divide by number of plants
+plant_gfa = total_gfa / num_plants
+normalised = heat_rejection_MWh / plant_gfa * 1000  # kWh/m²
+```
+
+✅ **DO**: Treat plants as "buildings" with serviced GFA for normalisation
+❌ **DON'T**: Use plant footprint area - meaningless for district systems
+
+### Data Loader Integration
+
+Add to `cea/visualisation/a_data_loader.py`:
+```python
+dict_plot_metrics_cea_feature = {
+    'demand': demand_metrics,
+    'heat-rejection': ['heat_rejection'],  # Single metric
+    # ...
+}
+
+dict_plot_analytics_cea_feature = {
+    'demand': demand_analytics,
+    'heat-rejection': [],  # No analytics metrics
+    # ...
+}
+```
+
+### Map Layer Integration
+
+When user selects "Anthropogenic Heat Rejection" from map dropdown:
+1. Load `heat_rejection_buildings.csv`
+2. Display points colored by `heat_rejection_annual_MWh`
+3. Distinguish buildings (circles) from plants (stars/squares)
+4. Set plot context: `{"feature": "heat-rejection"}`
+5. Plot form automatically updates with heat rejection config options
+
 ## Related Files
 
 - `cea/optimization_new/supplySystem.py:58,398-409` - Heat rejection tracking
 - `cea/technologies/cooling_tower.py:22-39` - Anthropogenic heat calculation
 - `cea/analysis/costs/supply_costs.py` - Similar structure (costs vs. heat)
 - `cea/technologies/network_layout/` - Plant node operations
+- `cea/visualisation/a_data_loader.py` - Plot metrics registration
+- `cea/visualisation/plot_main.py` - Plot orchestration
+- `cea/default.config` - Plot configuration parameters

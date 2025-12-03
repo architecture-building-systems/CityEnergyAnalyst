@@ -39,7 +39,8 @@ dict_plot_metrics_cea_feature = {
     'sc': solar_metrics,
     'lifecycle-emissions': lifecycle_emission_metrics,
     'operational-emissions': operational_emission_metrics,
-    'emission-timeline': lifecycle_emission_metrics
+    'emission-timeline': lifecycle_emission_metrics,
+    'heat-rejection': ['heat_rejection']
 }
 
 dict_plot_analytics_cea_feature = {
@@ -48,7 +49,8 @@ dict_plot_analytics_cea_feature = {
     'pvt': [],
     'sc': [],
     'lifecycle-emissions': [],
-    'operational-emissions': []
+    'operational-emissions': [],
+    'heat-rejection': []
 }
 
 # Trigger the summary feature and point to the csv results file

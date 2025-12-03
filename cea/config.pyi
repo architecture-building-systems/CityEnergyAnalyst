@@ -34,6 +34,7 @@ class Configuration:
     demand: DemandSection
     system_costs: SystemCostsSection
     emissions: EmissionsSection
+    anthropogenic_heat: AnthropogenicHeatSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
     dbf_tools: DbfToolsSection
@@ -72,6 +73,7 @@ class Configuration:
     plots_general: PlotsGeneralSection
     plots_building_filter: PlotsBuildingFilterSection
     plots_demand: PlotsDemandSection
+    plots_heat_rejection: PlotsHeatRejectionSection
     plots_lifecycle_emissions: PlotsLifecycleEmissionsSection
     plots_operational_emissions: PlotsOperationalEmissionsSection
     plots_emission_timeline: PlotsEmissionTimelineSection
@@ -130,6 +132,8 @@ class Configuration:
     def __getattr__(self, item: Literal["system_costs"]) -> SystemCostsSection: ...
     @overload
     def __getattr__(self, item: Literal["emissions"]) -> EmissionsSection: ...
+    @overload
+    def __getattr__(self, item: Literal["anthropogenic_heat"]) -> AnthropogenicHeatSection: ...
     @overload
     def __getattr__(self, item: Literal["extract_reference_case"]) -> ExtractReferenceCaseSection: ...
     @overload
@@ -206,6 +210,8 @@ class Configuration:
     def __getattr__(self, item: Literal["plots_building_filter"]) -> PlotsBuildingFilterSection: ...
     @overload
     def __getattr__(self, item: Literal["plots_demand"]) -> PlotsDemandSection: ...
+    @overload
+    def __getattr__(self, item: Literal["plots_heat_rejection"]) -> PlotsHeatRejectionSection: ...
     @overload
     def __getattr__(self, item: Literal["plots_lifecycle_emissions"]) -> PlotsLifecycleEmissionsSection: ...
     @overload
@@ -619,6 +625,35 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["grid_decarbonise_target_year"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["grid_decarbonise_target_emission_factor"]) -> float | None: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class AnthropogenicHeatSection(Section):
+    """Typed section for anthropogenic-heat configuration"""
+    network_name: str | None
+    network_type: list[str]
+    supply_type_cs: list
+    supply_type_hs: list
+    supply_type_dhw: list
+    cooling_components: list[str]
+    heating_components: list[str]
+    heat_rejection_components: list[str]
+
+    @overload
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["supply_type_cs"]) -> list: ...
+    @overload
+    def __getattr__(self, item: Literal["supply_type_hs"]) -> list: ...
+    @overload
+    def __getattr__(self, item: Literal["supply_type_dhw"]) -> list: ...
+    @overload
+    def __getattr__(self, item: Literal["cooling_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["heating_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["heat_rejection_components"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):
@@ -1631,6 +1666,23 @@ class PlotsBuildingFilterSection(Section):
 
 class PlotsDemandSection(Section):
     """Typed section for plots-demand configuration"""
+    y_metric_to_plot: list[str]
+    y_metric_unit: str
+    y_normalised_by: str
+    x_to_plot: str
+
+    @overload
+    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["x_to_plot"]) -> str: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PlotsHeatRejectionSection(Section):
+    """Typed section for plots-heat-rejection configuration"""
     y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
