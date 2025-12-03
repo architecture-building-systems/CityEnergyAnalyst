@@ -73,13 +73,63 @@ def crs_to_epsg(crs: str) -> int:
 
 
 def get_lat_lon_projected_shapefile(data):
+    # Check validity BEFORE transformation
+    invalid_before = data[~data.geometry.is_valid]
+    if not invalid_before.empty:
+        invalid_names_before = []
+        for idx, row in invalid_before.iterrows():
+            name = row.get('name', row.get('Name', f'index_{idx}'))
+            invalid_names_before.append(str(name))
+
+        invalid_list = ', '.join(invalid_names_before[:10])
+        if len(invalid_names_before) > 10:
+            invalid_list += f' ... and {len(invalid_names_before) - 10} more'
+
+        raise ValueError(
+            f"Invalid geometries found in the original shapefile (before CRS transformation). "
+            f"These geometries must be fixed in the source file: {invalid_list}"
+        )
+
+    # Transform to WGS84
     data = data.to_crs(get_geographic_coordinate_system())
     valid_geometries = data[data.geometry.is_valid]
 
     if valid_geometries.empty:
-        raise ValueError("No valid geometries found in the shapefile")
+        # All geometries became invalid during transformation
+        # This suggests CRS issues or precision problems
+        all_names = []
+        for idx, row in data.iterrows():
+            name = row.get('name', row.get('Name', f'index_{idx}'))
+            all_names.append(str(name))
+
+        name_list = ', '.join(all_names[:10])
+        if len(all_names) > 10:
+            name_list += f' ... and {len(all_names) - 10} more'
+
+        raise ValueError(
+            f"All geometries became invalid after CRS transformation to WGS84. "
+            f"This typically indicates: (1) missing or incorrect CRS in the shapefile, "
+            f"(2) complex geometries with precision issues, or (3) projection distortion. "
+            f"Affected geometries: {name_list}. "
+            f"Original CRS: {data.crs if hasattr(data, 'crs') else 'Unknown'}"
+        )
     elif len(data) != len(valid_geometries):
-        warnings.warn("Invalid geometries found in the shapefile. Using the first valid geometry.")
+        # Some geometries became invalid during transformation
+        invalid_after = data[~data.geometry.is_valid]
+        invalid_names = []
+        for idx, row in invalid_after.iterrows():
+            name = row.get('name', row.get('Name', f'index_{idx}'))
+            invalid_names.append(str(name))
+
+        invalid_list = ', '.join(invalid_names[:10])
+        if len(invalid_names) > 10:
+            invalid_list += f' ... and {len(invalid_names) - 10} more'
+
+        warnings.warn(
+            f"{len(invalid_names)} geometries became invalid after CRS transformation to WGS84 "
+            f"(out of {len(data)} total). This may indicate precision issues or projection distortion. "
+            f"Invalid geometries: {invalid_list}. Using the first valid geometry for coordinate reference."
+        )
 
     # Use the first valid geometry as representative point
     representative_point = valid_geometries.iloc[0].geometry.representative_point()
