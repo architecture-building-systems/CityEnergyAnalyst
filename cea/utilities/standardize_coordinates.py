@@ -74,7 +74,33 @@ def crs_to_epsg(crs: str) -> int:
 
 def get_lat_lon_projected_shapefile(data):
     # Check validity BEFORE transformation
-    invalid_before = data[~data.geometry.is_valid]
+    validate_geometries_before_crs_transform(data, shapefile_name="shapefile")
+
+    # Transform to WGS84
+    original_crs = data.crs
+    data = data.to_crs(get_geographic_coordinate_system())
+
+    # Check validity AFTER transformation (returns filtered GeoDataFrame if some are invalid)
+    data = validate_geometries_after_crs_transform(data, original_crs, shapefile_name="shapefile")
+
+    # Use the first valid geometry as representative point
+    representative_point = data.iloc[0].geometry.representative_point()
+
+    lon = representative_point.x
+    lat = representative_point.y
+
+    return lat, lon
+
+
+def validate_geometries_before_crs_transform(gdf: geopandas.GeoDataFrame, shapefile_name: str = "shapefile") -> None:
+    """
+    Validate that all geometries are valid before CRS transformation.
+
+    :param gdf: GeoDataFrame to validate
+    :param shapefile_name: Name of shapefile for error messages (e.g., "zone", "streets")
+    :raises ValueError: If any geometries are invalid
+    """
+    invalid_before = gdf[~gdf.geometry.is_valid]
     if not invalid_before.empty:
         invalid_names_before = []
         for idx, row in invalid_before.iterrows():
@@ -85,19 +111,27 @@ def get_lat_lon_projected_shapefile(data):
         invalid_list = ', '.join(invalid_names_before)
 
         raise ValueError(
-            f"Invalid geometries found in the original shapefile (before CRS transformation). "
+            f"Invalid geometries found in the original {shapefile_name} (before CRS transformation). "
             f"{len(invalid_names_before)} geometries must be fixed in the source file:\n{invalid_list}"
         )
 
-    # Transform to WGS84
-    data = data.to_crs(get_geographic_coordinate_system())
-    valid_geometries = data[data.geometry.is_valid]
 
-    if valid_geometries.empty:
+def validate_geometries_after_crs_transform(gdf: geopandas.GeoDataFrame, original_crs, shapefile_name: str = "shapefile") -> geopandas.GeoDataFrame:
+    """
+    Validate geometries after CRS transformation and handle invalid cases.
+
+    :param gdf: GeoDataFrame after CRS transformation
+    :param original_crs: Original CRS before transformation (for error messages)
+    :param shapefile_name: Name of shapefile for error messages (e.g., "zone", "streets")
+    :return: GeoDataFrame with only valid geometries (may be filtered)
+    :raises ValueError: If all geometries became invalid after transformation
+    """
+    valid_geometries = gdf.geometry.is_valid
+
+    if not valid_geometries.any():
         # All geometries became invalid during transformation
-        # This suggests CRS issues or precision problems
         all_names = []
-        for idx, row in data.iterrows():
+        for idx, row in gdf.iterrows():
             name = row.get('name', row.get('Name', f'index_{idx}'))
             all_names.append(str(name))
 
@@ -105,15 +139,15 @@ def get_lat_lon_projected_shapefile(data):
         name_list = ', '.join(all_names)
 
         raise ValueError(
-            f"All {len(all_names)} geometries became invalid after CRS transformation to WGS84. "
+            f"All {len(all_names)} geometries in {shapefile_name} became invalid after CRS transformation. "
             f"This typically indicates: (1) missing or incorrect CRS in the shapefile, "
             f"(2) complex geometries with precision issues, or (3) projection distortion. "
-            f"Original CRS: {data.crs if hasattr(data, 'crs') else 'Unknown'}. "
+            f"Original CRS: {original_crs}. "
             f"Affected geometries:\n{name_list}"
         )
-    elif len(data) != len(valid_geometries):
+    elif len(gdf) != valid_geometries.sum():
         # Some geometries became invalid during transformation
-        invalid_after = data[~data.geometry.is_valid]
+        invalid_after = gdf[~gdf.geometry.is_valid]
         invalid_names = []
         for idx, row in invalid_after.iterrows():
             name = row.get('name', row.get('Name', f'index_{idx}'))
@@ -123,19 +157,14 @@ def get_lat_lon_projected_shapefile(data):
         invalid_list = ', '.join(invalid_names)
 
         warnings.warn(
-            f"{len(invalid_names)} geometries became invalid after CRS transformation to WGS84 "
-            f"(out of {len(data)} total). This may indicate precision issues or projection distortion. "
+            f"{len(invalid_names)} geometries in {shapefile_name} became invalid after CRS transformation "
+            f"(out of {len(gdf)} total). This may indicate precision issues or projection distortion. "
             f"Invalid geometries:\n{invalid_list}\n"
-            f"Using the first valid geometry for coordinate reference."
+            f"Discarding invalid geometries and continuing."
         )
+        gdf = gdf[gdf.geometry.is_valid]
 
-    # Use the first valid geometry as representative point
-    representative_point = valid_geometries.iloc[0].geometry.representative_point()
-
-    lon = representative_point.x
-    lat = representative_point.y
-
-    return lat, lon
+    return gdf
 
 
 def validate_crs_uses_meters(gdf: geopandas.GeoDataFrame, operation: str = "distance calculations") -> None:

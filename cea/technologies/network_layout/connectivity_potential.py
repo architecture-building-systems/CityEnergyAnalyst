@@ -38,7 +38,12 @@ from shapely import Point, LineString
 from shapely.ops import substring, linemerge
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
-from cea.utilities.standardize_coordinates import get_projected_coordinate_system, get_lat_lon_projected_shapefile
+from cea.utilities.standardize_coordinates import (
+    get_projected_coordinate_system,
+    get_lat_lon_projected_shapefile,
+    validate_geometries_before_crs_transform,
+    validate_geometries_after_crs_transform
+)
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_gdf_geometries, normalize_coords, normalize_geometry, _merge_orphan_nodes_to_nearest
 
 
@@ -727,20 +732,7 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
     :return: Tuple of (streets_gdf, buildings_gdf, crs)
     """
     # Validate street geometries BEFORE transformation
-    invalid_streets_before = streets_network_df[~streets_network_df.geometry.is_valid]
-    if not invalid_streets_before.empty:
-        invalid_names_before = []
-        for idx, row in invalid_streets_before.iterrows():
-            name = row.get('name', row.get('Name', f'index_{idx}'))
-            invalid_names_before.append(str(name))
-
-        # Show all geometry names
-        invalid_list = ', '.join(invalid_names_before)
-
-        raise ValueError(
-            f"Invalid geometries found in the original streets shapefile (before CRS transformation). "
-            f"{len(invalid_names_before)} geometries must be fixed in the source file:\n{invalid_list}"
-        )
+    validate_geometries_before_crs_transform(streets_network_df, shapefile_name="streets shapefile")
 
     # Convert both streets and buildings to projected CRS for accurate distance calculations
     lat, lon = get_lat_lon_projected_shapefile(building_centroids_df)
@@ -749,43 +741,10 @@ def _prepare_network_inputs(streets_network_df: gdf, building_centroids_df: gdf,
     streets_network_df = streets_network_df.to_crs(crs)
     building_centroids_df = building_centroids_df.to_crs(crs)
 
-    # Validate geometries AFTER transformation
-    valid_geometries = streets_network_df.geometry.is_valid
-    if not valid_geometries.any():
-        # All geometries became invalid during transformation
-        all_names = []
-        for idx, row in streets_network_df.iterrows():
-            name = row.get('name', row.get('Name', f'index_{idx}'))
-            all_names.append(str(name))
-
-        # Show all geometry names
-        name_list = ', '.join(all_names)
-
-        raise ValueError(
-            f"All {len(all_names)} street geometries became invalid after CRS transformation. "
-            f"This typically indicates: (1) missing or incorrect CRS in the streets shapefile, "
-            f"(2) complex geometries with precision issues, or (3) projection distortion. "
-            f"Original CRS: {original_crs}. "
-            f"Affected geometries:\n{name_list}"
-        )
-    elif len(streets_network_df) != valid_geometries.sum():
-        # Some geometries became invalid during transformation
-        invalid_after = streets_network_df[~streets_network_df.geometry.is_valid]
-        invalid_names = []
-        for idx, row in invalid_after.iterrows():
-            name = row.get('name', row.get('Name', f'index_{idx}'))
-            invalid_names.append(str(name))
-
-        # Show all geometry names
-        invalid_list = ', '.join(invalid_names)
-
-        warnings.warn(
-            f"{len(invalid_names)} street geometries became invalid after CRS transformation "
-            f"(out of {len(streets_network_df)} total). This may indicate precision issues or projection distortion. "
-            f"Invalid geometries:\n{invalid_list}\n"
-            f"Discarding invalid geometries and continuing."
-        )
-        streets_network_df = streets_network_df[streets_network_df.geometry.is_valid]
+    # Validate geometries AFTER transformation (returns filtered GeoDataFrame if some are invalid)
+    streets_network_df = validate_geometries_after_crs_transform(
+        streets_network_df, original_crs, shapefile_name="streets shapefile"
+    )
 
     # Clean street network: split at intersections and snap near-miss endpoints
     print("Cleaning street network...")
