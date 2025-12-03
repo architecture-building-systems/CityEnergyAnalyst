@@ -3,6 +3,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
+import os
 import pandas as pd
 import numpy as np
 from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
@@ -22,10 +23,11 @@ x_to_plot_building = ['building', 'building_faceted_by_months', 'building_facete
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
-    def __init__(self, plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
+    def __init__(self, plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list, scenario=None):
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
+        self.scenario_path = scenario
 
         # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
         if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
@@ -187,29 +189,153 @@ class data_processor:
 
         return columns
 
-    def process_architecture_data(self):
-        # Filter to only buildings that exist in architecture data
-        # (some buildings may be filtered out by year/type/use criteria)
-        available_buildings = set(self.df_architecture_data['name'].unique())
-        buildings_to_use = [b for b in self.buildings if b in available_buildings]
+    def _calculate_plant_floor_area(self, plant_name, area_type='GFA_m2'):
+        """
+        Calculate floor area for a plant based on buildings it services.
 
-        if not buildings_to_use:
-            raise ValueError(f"None of the requested buildings are in the architecture data. "
-                           f"Requested: {self.buildings}, Available: {list(available_buildings)}")
+        Plant area = Sum(area of serviced buildings) / Number of plants of same type
 
-        missing = set(self.buildings) - available_buildings
-        if missing:
-            print(f"Warning: {len(missing)} buildings filtered out from architecture data: {sorted(missing)}")
+        Args:
+            plant_name: Name of the plant (e.g., 'crycry_DC_plant_001')
+            area_type: Type of area to calculate ('GFA_m2' or 'Af_m2')
+
+        Returns:
+            float: Calculated floor area for the plant
+        """
+        import pandas as pd
+
+        # Determine network type from plant name
+        if '_DC_plant_' in plant_name:
+            network_type = 'DC'
+        elif '_DH_plant_' in plant_name:
+            network_type = 'DH'
+        else:
+            print(f"Warning: Cannot determine network type for plant {plant_name}, using GFA=0")
+            return 0.0
+
+        # Extract network name from plant name (e.g., 'crycry_DC_plant_001' -> 'validation')
+        # The network name is stored in locator.get_thermal_network_folder_building_names
+        try:
+            from cea.inputlocator import InputLocator
+            locator = InputLocator(self.scenario_path)
+
+            # Get list of network names by scanning thermal network folder
+            thermal_network_folder = locator.get_thermal_network_folder()
+            if not os.path.exists(thermal_network_folder):
+                print(f"Warning: Thermal network folder not found at {thermal_network_folder}")
+                return 0.0
+
+            # Get all subdirectories as network names
+            network_names = [d for d in os.listdir(thermal_network_folder)
+                           if os.path.isdir(os.path.join(thermal_network_folder, d)) and not d.startswith('.')]
+
+            # For each network, check if the plant services any buildings
+            serviced_buildings = []
+            for network_name in network_names:
+                try:
+                    # Read the metadata nodes file to find which buildings are serviced
+                    metadata_file = locator.get_thermal_network_node_types_csv_file(network_type, network_name)
+                    if not os.path.exists(metadata_file):
+                        continue
+
+                    metadata_df = pd.read_csv(metadata_file)
+
+                    # Get buildings where type == 'CONSUMER'
+                    consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
+                    buildings = consumer_nodes['building'].tolist()
+                    serviced_buildings.extend([b for b in buildings if b != 'NONE'])
+                except Exception as e:
+                    print(f"Warning: Could not read metadata for {network_type}/{network_name}: {e}")
+                    continue
+
+            if not serviced_buildings:
+                print(f"Warning: No serviced buildings found for plant {plant_name}, using GFA=0")
+                return 0.0
+
+            # Get GFA for serviced buildings from architecture data
+            arch_data = self.df_architecture_data.set_index('name')
+            available_buildings = [b for b in serviced_buildings if b in arch_data.index]
+
+            if not available_buildings:
+                print(f"Warning: No architecture data for buildings serviced by {plant_name}, using area=0")
+                return 0.0
+
+            # Sum the specified area type for serviced buildings
+            total_area = arch_data.loc[available_buildings, area_type].sum()
+
+            # Count number of plants of same type
+            # Get all entities from summary data
+            all_entities = self.df_summary_data['name'].tolist()
+            plant_suffix = f'_{network_type}_plant_'
+            num_plants = sum(1 for entity in all_entities if plant_suffix in entity)
+
+            if num_plants == 0:
+                print(f"Warning: No plants of type {network_type} found, using area=0")
+                return 0.0
+
+            plant_area = total_area / num_plants
+            area_name = 'GFA' if area_type == 'GFA_m2' else 'Af'
+            print(f"Calculated {area_name} for {plant_name}: {plant_area:.2f} m² "
+                  f"(total: {total_area:.2f} m² / {num_plants} {network_type} plant(s))")
+
+            return plant_area
+
+        except Exception as e:
+            print(f"Warning: Error calculating GFA for plant {plant_name}: {e}")
+            return 0.0
+
+    def process_architecture_data(self, plot_cea_feature=None):
+        # For heat-rejection, include ALL entities from summary data (buildings + plants)
+        if plot_cea_feature == 'heat-rejection' and self.df_summary_data is not None:
+            # Get all entities from the summary data
+            all_entities = set(self.df_summary_data['name'].unique())
+            buildings_to_use = list(all_entities)
+        else:
+            # Filter to only buildings that exist in architecture data
+            # (some buildings may be filtered out by year/type/use criteria)
+            available_buildings = set(self.df_architecture_data['name'].unique())
+            buildings_to_use = [b for b in self.buildings if b in available_buildings]
+
+            if not buildings_to_use:
+                raise ValueError(f"None of the requested buildings are in the architecture data. "
+                               f"Requested: {self.buildings}, Available: {list(available_buildings)}")
+
+            missing = set(self.buildings) - available_buildings
+            if missing:
+                print(f"Warning: {len(missing)} buildings filtered out from architecture data: {sorted(missing)}")
 
         if self.y_normalised_by == 'gross_floor_area':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use, ['GFA_m2']].copy()
+            # Get architecture data for buildings that exist in it
+            arch_data = self.df_architecture_data.set_index('name')
+            buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
+            normaliser_m2 = arch_data.loc[buildings_in_arch, ['GFA_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
+
+            # For heat-rejection, calculate GFA for plants
+            if plot_cea_feature == 'heat-rejection':
+                plants = [b for b in buildings_to_use if b not in buildings_in_arch]
+                for plant in plants:
+                    plant_area = self._calculate_plant_floor_area(plant, area_type='GFA_m2')
+                    normaliser_m2.loc[plant] = plant_area
+
         elif self.y_normalised_by == 'conditioned_floor_area':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use, ['Af_m2']].copy()
+            arch_data = self.df_architecture_data.set_index('name')
+            buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
+            normaliser_m2 = arch_data.loc[buildings_in_arch, ['Af_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'Af_m2': 'normaliser_m2'})
+
+            # For heat-rejection, calculate conditioned floor area for plants
+            if plot_cea_feature == 'heat-rejection':
+                plants = [b for b in buildings_to_use if b not in buildings_in_arch]
+                for plant in plants:
+                    plant_area = self._calculate_plant_floor_area(plant, area_type='Af_m2')
+                    normaliser_m2.loc[plant] = plant_area
+
         elif self.y_normalised_by == 'no_normalisation':
-            normaliser_m2 = self.df_architecture_data.set_index('name').loc[buildings_to_use].copy()
-            normaliser_m2['normaliser_m2'] = 1  # Replace all values with 1
+            # Create normaliser with value 1 for ALL entities (including plants)
+            import pandas as pd
+            normaliser_m2 = pd.DataFrame({'normaliser_m2': 1}, index=buildings_to_use)
+            normaliser_m2.index.name = 'name'
         else:
             raise ValueError(f"Invalid y-normalised-by: {self.y_normalised_by}")
 
@@ -521,7 +647,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     """
     # Step 1: Prepare normaliser and raw Y-axis metrics
     if plot_instance.y_normalised_by in ('no_normalisation', 'gross_floor_area', 'conditioned_floor_area'):
-        normaliser_m2 = plot_instance.process_architecture_data()
+        normaliser_m2 = plot_instance.process_architecture_data(plot_cea_feature)
     df_y_metrics, list_y_columns = plot_instance.process_data(plot_cea_feature)
 
     # Step 2: Handle "by_building" mode
@@ -752,8 +878,8 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 
 
 # Main function
-def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list):
-    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list)
+def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list, scenario=None):
+    plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list, scenario)
 
     if plot_cea_feature in ["demand", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions", "heat-rejection"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature)
