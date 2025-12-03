@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
@@ -8,7 +7,6 @@ from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 from cea.import_export.result_summary import filter_buildings
-from cea.analysis.lca.emission_timeline import get_building_names_from_zone
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
