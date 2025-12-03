@@ -204,55 +204,44 @@ class data_processor:
         """
         import pandas as pd
 
-        # Determine network type from plant name
+        # Determine network type and name from plant name
+        # Format: {network_name}_{DC|DH}_plant_{number}
+        # Example: 'crycry_DC_plant_001' -> network_type='DC', network_name='crycry'
         if '_DC_plant_' in plant_name:
             network_type = 'DC'
+            network_name = plant_name.split('_DC_plant_')[0]
         elif '_DH_plant_' in plant_name:
             network_type = 'DH'
+            network_name = plant_name.split('_DH_plant_')[0]
         else:
-            print(f"Warning: Cannot determine network type for plant {plant_name}, using GFA=0")
+            print(f"Warning: Cannot determine network type for plant {plant_name}, using area=0")
             return 0.0
 
-        # Extract network name from plant name (e.g., 'crycry_DC_plant_001' -> 'validation')
-        # The network name is stored in locator.get_thermal_network_folder_building_names
+        # Read thermal network metadata to find serviced buildings
         try:
             from cea.inputlocator import InputLocator
             locator = InputLocator(self.scenario_path)
 
-            # Get list of network names by scanning thermal network folder
-            thermal_network_folder = locator.get_thermal_network_folder()
-            if not os.path.exists(thermal_network_folder):
-                print(f"Warning: Thermal network folder not found at {thermal_network_folder}")
+            # Get metadata file for this specific network
+            metadata_file = locator.get_thermal_network_node_types_csv_file(network_type, network_name)
+            if not os.path.exists(metadata_file):
+                print(f"Warning: Metadata file not found for {network_type} network '{network_name}': {metadata_file}")
                 return 0.0
 
-            # Get all subdirectories as network names
-            network_names = [d for d in os.listdir(thermal_network_folder)
-                           if os.path.isdir(os.path.join(thermal_network_folder, d)) and not d.startswith('.')]
-
-            # For each network, check if the plant services any buildings
+            # Read metadata and find serviced buildings
             serviced_buildings = []
-            for network_name in network_names:
-                try:
-                    # Read the metadata nodes file to find which buildings are serviced
-                    metadata_file = locator.get_thermal_network_node_types_csv_file(network_type, network_name)
-                    if not os.path.exists(metadata_file):
-                        continue
+            metadata_df = pd.read_csv(metadata_file)
 
-                    metadata_df = pd.read_csv(metadata_file)
-
-                    # Get buildings where type == 'CONSUMER'
-                    consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
-                    buildings = consumer_nodes['building'].tolist()
-                    serviced_buildings.extend([b for b in buildings if b != 'NONE'])
-                except Exception as e:
-                    print(f"Warning: Could not read metadata for {network_type}/{network_name}: {e}")
-                    continue
+            # Get buildings where type == 'CONSUMER'
+            consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
+            buildings = consumer_nodes['building'].tolist()
+            serviced_buildings = [b for b in buildings if b != 'NONE']
 
             if not serviced_buildings:
-                print(f"Warning: No serviced buildings found for plant {plant_name}, using GFA=0")
+                print(f"Warning: No serviced buildings found for plant {plant_name} in network '{network_name}'")
                 return 0.0
 
-            # Get GFA for serviced buildings from architecture data
+            # Get floor area for serviced buildings from architecture data
             arch_data = self.df_architecture_data.set_index('name')
             available_buildings = [b for b in serviced_buildings if b in arch_data.index]
 
@@ -281,7 +270,7 @@ class data_processor:
             return plant_area
 
         except Exception as e:
-            print(f"Warning: Error calculating GFA for plant {plant_name}: {e}")
+            print(f"Warning: Error calculating floor area for plant {plant_name}: {e}")
             return 0.0
 
     def process_architecture_data(self, plot_cea_feature=None):
