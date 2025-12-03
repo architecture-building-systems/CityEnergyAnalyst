@@ -346,7 +346,7 @@ Life Cycle Analysis:
       - [get_zone_geometry]
 
   - name: anthropogenic-heat
-    label: Anthropogenic Heat
+    label: Anthropogenic Heat Rejection
     short_description: Calculate heat rejection to the environment from energy systems
     description: |
       This feature calculates anthropogenic heat emissions (heat rejection) from
