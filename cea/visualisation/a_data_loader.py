@@ -21,6 +21,50 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
+def raise_missing_pv_error(pv_codes, context='file'):
+    """
+    Raise FileNotFoundError for missing PV results.
+
+    :param pv_codes: Single PV code (str) or list of PV codes (list)
+    :param context: 'file' for missing PV files, 'emission' for missing PV data in emission results
+    :raises FileNotFoundError: Always raises with formatted error message
+    """
+    if isinstance(pv_codes, str):
+        pv_codes = [pv_codes]
+
+    if context == 'emission':
+        # Error when PV columns are missing from emission results
+        if len(pv_codes) == 1:
+            error_msg = (
+                f"PV data missing for panel type: {pv_codes[0]} in emission results. "
+                f"Please run the 'emissions' script with include_pv=True and pv_codes=['{pv_codes[0]}'] "
+                f"to include PV offsetting in emission calculations."
+            )
+        else:
+            pv_list = ', '.join([f"'{code}'" for code in sorted(pv_codes)])
+            error_msg = (
+                f"PV data missing for panel type(s): {', '.join(sorted(pv_codes))} in emission results. "
+                f"Please run the 'emissions' script with include_pv=True and pv_codes=[{pv_list}] "
+                f"to include PV offsetting in emission calculations."
+            )
+    else:
+        # Error when PV result files don't exist
+        if len(pv_codes) == 1:
+            error_msg = (
+                f"PV electricity results missing for panel type: {pv_codes[0]}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
+            )
+        else:
+            error_msg = (
+                f"PV electricity results missing for panel type(s): {', '.join(sorted(pv_codes))}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+            )
+
+    print(f"ERROR: {error_msg}")
+    raise FileNotFoundError(error_msg)
+
+
 demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_cooling_demand', 'enduse_space_cooling_demand',	'enduse_heating_demand', 'enduse_space_heating_demand',	'enduse_dhw_demand']
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
 
@@ -288,12 +332,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                 first_building = buildings[0]
                 pv_path = locator.PV_results(first_building, pv_code)
                 if not os.path.exists(pv_path):
-                    error_msg = (
-                        f"PV electricity results missing for panel type: {pv_code}. "
-                        f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
-                    )
-                    print(f"ERROR: {error_msg}")
-                    raise FileNotFoundError(error_msg)
+                    raise_missing_pv_error(pv_code)
 
     # Instantiate the csv_pointer class
     plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
