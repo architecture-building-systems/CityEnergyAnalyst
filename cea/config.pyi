@@ -561,6 +561,7 @@ class SystemCostsSection(Section):
     cooling_components: list[str]
     heating_components: list[str]
     heat_rejection_components: list[str]
+    buildings: list[str]
     panels_on_roof: str
     panels_on_wall_north: str
     panels_on_wall_south: str
@@ -583,6 +584,8 @@ class SystemCostsSection(Section):
     def __getattr__(self, item: Literal["heating_components"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["heat_rejection_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["panels_on_roof"]) -> str: ...
     @overload
