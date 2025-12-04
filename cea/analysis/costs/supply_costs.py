@@ -869,7 +869,7 @@ def calculate_heating_systems(locator, config, service_needs, dh_network_buildin
         sys.stdout = old_stdout2
 
     if zero_demand_count > 0:
-        print(f"    {zero_demand_count} building(s) with DHW-only (no heating components) - will use heating-component fallback")
+        print(f"{zero_demand_count} building(s) with DHW-only (no heating components) - will use heating-component fallback")
 
     return results
 
