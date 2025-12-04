@@ -2968,7 +2968,7 @@ def process_building_summary(config, locator,
             print("\nFiltering cost calculation results...")
             success, error_msg = copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=network_name)
             if not success:
-                error_msg = f"Step 8.5 - metrics costs: {error_msg}"
+                error_msg = f"Step 8 - metrics costs: {error_msg}"
                 errors_encountered.append(error_msg)
                 print(f"Warning: {error_msg}")
                 print("         Continuing with remaining steps...")
