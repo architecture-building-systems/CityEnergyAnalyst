@@ -189,7 +189,10 @@ def baseline_costs_main(locator, config):
         print(f"\n{'-'*70}")
         print(f"Calculating {network_type} district network costs...")
         try:
-            results = calculate_costs_for_network_type(locator, config, network_type, network_name, standalone_results)
+            results = calculate_costs_for_network_type(
+                locator, config, network_type, network_name, standalone_results,
+                all_selected_network_types=valid_network_types
+            )
             all_results[network_type] = results
             succeeded.append(network_type)
         except ValueError as e:

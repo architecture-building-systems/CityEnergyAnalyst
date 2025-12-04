@@ -520,132 +520,248 @@ def apply_supply_code_fallback_for_standalone(locator, config, building, is_in_d
     return fallbacks
 
 
-def calculate_standalone_building_costs(locator, config, network_name):
+def get_network_buildings(locator, network_name, network_type):
     """
-    Calculate costs for building-level supply systems (from Properties/Supply).
-
-    This calculates costs for ALL buildings and ALL their services (cooling, heating, DHW).
-    Later, when processing each network type (DC/DH), we'll filter which services to include:
-    - Buildings in DC network: Include their standalone heating/DHW costs (cooling from network)
-    - Buildings in DH network: Include their standalone cooling costs (heating/DHW from network)
-    - Buildings in neither network: Include ALL their standalone costs
-
-    This function is called ONCE (not per network_type) to calculate all building-level systems.
+    Get list of buildings connected to a specific network.
 
     :param locator: InputLocator instance
-    :param config: Configuration instance
-    :param network_name: Network layout name (used to identify which buildings are in networks)
-    :return: dict of {building_name: {cost_data, 'services': {service_name: components}}}
+    :param network_name: Network layout name
+    :param network_type: 'DH' or 'DC'
+    :return: set of building identifiers in the network
     """
     import geopandas as gpd
     import os
 
-    # Read ALL network layouts to determine which buildings are standalone
-    # A building is standalone if it's NOT in ANY network layout
-    # If network_name is None, treat ALL buildings as standalone
-    all_network_buildings = set()
+    if not network_name or network_name == "(none)":
+        return set()
 
-    if network_name:
-        # Check both DH and DC networks if they exist
-        for nt in ['DH', 'DC']:
-            try:
-                network_folder = locator.get_output_thermal_network_type_folder(nt, network_name)
-                layout_folder = os.path.join(network_folder, 'layout')
-                nodes_file = os.path.join(layout_folder, 'nodes.shp')
+    try:
+        network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        layout_folder = os.path.join(network_folder, 'layout')
+        nodes_file = os.path.join(layout_folder, 'nodes.shp')
 
-                if os.path.exists(nodes_file):
-                    nodes_df = gpd.read_file(nodes_file)
-                    network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
-                    network_buildings = [b for b in network_buildings if b and b != 'NONE']
-                    all_network_buildings.update(network_buildings)
-            except Exception:
-                pass  # Network doesn't exist, that's fine
+        if os.path.exists(nodes_file):
+            nodes_df = gpd.read_file(nodes_file)
+            network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
+            return set([b for b in network_buildings if b and b != 'NONE'])
+    except Exception:
+        pass
 
-    # Load buildings with Domain - need to load both heating and cooling buildings
-    # Domain filters by network_type, so load twice and combine to get ALL buildings
+    return set()
+
+
+def get_all_building_ids(locator):
+    """
+    Get all building IDs from zone geometry.
+
+    :param locator: InputLocator instance
+    :return: set of all building identifiers
+    """
+    import geopandas as gpd
+    zone_df = gpd.read_file(locator.get_zone_geometry())
+    return set(zone_df['name'].tolist())
+
+
+def determine_building_service_needs(network_name, network_types_selected, dh_network_buildings, dc_network_buildings, all_building_ids):
+    """
+    Determine which services each building needs at building-level.
+    Implements 4-case logic based on network selection.
+
+    :param network_name: Network layout name
+    :param network_types_selected: list of network types selected (e.g. ['DH', 'DC'])
+    :param dh_network_buildings: set of building IDs in DH network
+    :param dc_network_buildings: set of building IDs in DC network
+    :param all_building_ids: set of all building IDs
+    :return: dict of {building_id: {'needs_heating': bool, 'needs_cooling': bool, 'needs_dhw': bool, 'case': int}}
+    """
+    service_needs = {}
+
+    # Check if networks are selected (based on config, not building presence)
+    no_network = (network_name == "(none)" or not network_name)
+    dh_selected = 'DH' in network_types_selected
+    dc_selected = 'DC' in network_types_selected
+
+    for bid in all_building_ids:
+        in_dh = bid in dh_network_buildings
+        in_dc = bid in dc_network_buildings
+
+        if no_network:
+            # Case 1: No network - all building-level
+            service_needs[bid] = {
+                'needs_heating': True,
+                'needs_cooling': True,
+                'needs_dhw': True,
+                'case': 1
+            }
+
+        elif dc_selected and not dh_selected:
+            # Case 2: Only DC network selected
+            service_needs[bid] = {
+                'needs_heating': True,      # Always building-level
+                'needs_cooling': not in_dc, # Building-level if NOT in DC network
+                'needs_dhw': True,          # Always building-level
+                'case': 2
+            }
+
+        elif dh_selected and not dc_selected:
+            # Case 3: Only DH network selected
+            service_needs[bid] = {
+                'needs_heating': not in_dh, # Building-level if NOT in DH network
+                'needs_cooling': True,      # Always building-level (DC not selected!)
+                'needs_dhw': not in_dh,     # Building-level if NOT in DH network
+                'case': 3
+            }
+
+        elif dc_selected and dh_selected:
+            # Case 4: Both DC and DH networks selected
+            service_needs[bid] = {
+                'needs_heating': not in_dh, # Building-level if NOT in DH network
+                'needs_cooling': not in_dc, # Building-level if NOT in DC network
+                'needs_dhw': not in_dh,     # Building-level if NOT in DH network
+                'case': 4
+            }
+
+    return service_needs
+
+
+def calculate_standalone_building_costs(locator, config, network_name):
+    """
+    Calculate costs for building-level supply systems.
+    Implements 4-case logic for network scenarios.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param network_name: Network layout name
+    :return: dict of {building_name: {cost_data}}
+    """
+    import os
+
     print("  Loading buildings and demands...")
 
-    # Load buildings with heating demand (network_type='DH')
-    domain_config_dh = cea.config.Configuration()
-    domain_config_dh.scenario = config.scenario
-    domain_config_dh.optimization_new.network_type = 'DH'
-    domain_config_dh.optimization_new.network_name = None  # Ensure standalone mode
-    domain_dh = Domain(domain_config_dh, locator)
-    domain_dh.load_buildings()
+    # 1. Get network connectivity
+    dh_network_buildings = get_network_buildings(locator, network_name, 'DH')
+    dc_network_buildings = get_network_buildings(locator, network_name, 'DC')
 
-    # Load buildings with cooling demand (network_type='DC')
-    domain_config_dc = cea.config.Configuration()
-    domain_config_dc.scenario = config.scenario
-    domain_config_dc.optimization_new.network_type = 'DC'
-    domain_config_dc.optimization_new.network_name = None  # Ensure standalone mode
-    domain_dc = Domain(domain_config_dc, locator)
-    domain_dc.load_buildings()
+    # 2. Get all building IDs
+    all_building_ids = get_all_building_ids(locator)
 
-    # Check which domains have buildings
-    has_heating = len(domain_dh.buildings) > 0
-    has_cooling = len(domain_dc.buildings) > 0
+    # 3. Get which network types are selected from config
+    network_types_selected = config.system_costs.network_type
 
-    print(f"  Found {len(domain_dh.buildings)} buildings with heating/DHW demand")
-    print(f"  Found {len(domain_dc.buildings)} buildings with cooling demand")
+    # 4. Determine which services each building needs at building-level (4-case logic)
+    service_needs = determine_building_service_needs(
+        network_name, network_types_selected, dh_network_buildings, dc_network_buildings, all_building_ids
+    )
 
-    # Handle different demand scenarios
-    if not has_heating and not has_cooling:
-        print("  No buildings with any demand found.")
+    print(f"  Found {len(dh_network_buildings)} buildings in DH network")
+    print(f"  Found {len(dc_network_buildings)} buildings in DC network")
+    print(f"  Total buildings: {len(all_building_ids)}")
+    print(f"  Network types selected: {network_types_selected}")
+
+    # 5. Apply Level 1 fallback: Config fallback for scale mismatch
+    apply_config_fallbacks_for_service_needs(locator, config, service_needs, dh_network_buildings, dc_network_buildings)
+
+    # 6. Calculate heating systems (for buildings that need building-level heating/DHW)
+    heating_results = calculate_heating_systems(locator, config, service_needs, dh_network_buildings, dc_network_buildings)
+
+    # 7. Calculate cooling systems (for buildings that need building-level cooling)
+    cooling_results = calculate_cooling_systems(locator, config, service_needs, dh_network_buildings, dc_network_buildings)
+
+    # 8. Merge heating and cooling results
+    results = merge_heating_cooling_results(heating_results, cooling_results, service_needs, dh_network_buildings, dc_network_buildings)
+
+    return results
+
+
+def apply_config_fallbacks_for_service_needs(locator, config, service_needs, dh_network_buildings, dc_network_buildings):
+    """
+    Apply Level 1 fallback: Config fallback for scale mismatch.
+    Modifies supply.csv temporarily before calculating supply systems.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param service_needs: dict of building service needs
+    :param dh_network_buildings: set of buildings in DH network
+    :param dc_network_buildings: set of buildings in DC network
+    """
+    import pandas as pd
+    import os
+
+    supply_csv_path = locator.get_building_supply()
+    if not os.path.exists(supply_csv_path):
+        return
+
+    supply_df = pd.read_csv(supply_csv_path)
+    fallback_count = 0
+
+    for bid, needs in service_needs.items():
+        # Determine if building needs fallback for each service
+        is_in_dc = bid in dc_network_buildings
+        is_in_dh = bid in dh_network_buildings
+
+        # Create a mock building object for fallback function
+        class MockBuilding:
+            def __init__(self, identifier):
+                self.identifier = identifier
+
+        mock_building = MockBuilding(bid)
+
+        # Get fallbacks if needed
+        fallbacks = apply_supply_code_fallback_for_standalone(
+            locator, config, mock_building, is_in_dc, is_in_dh
+        )
+
+        # Apply fallbacks to supply.csv
+        if fallbacks:
+            fallback_count += 1
+            building_row_idx = supply_df[supply_df['name'] == bid].index
+            if len(building_row_idx) > 0:
+                for column, fallback_code in fallbacks.items():
+                    supply_df.at[building_row_idx[0], column] = fallback_code
+
+    # Write back modified supply.csv temporarily
+    if fallback_count > 0:
+        print(f"  Applied config fallbacks for {fallback_count} building(s) with scale mismatch")
+        supply_df.to_csv(supply_csv_path, index=False)
+
+
+def calculate_heating_systems(locator, config, service_needs, dh_network_buildings, dc_network_buildings):
+    """
+    Calculate heating systems only for buildings that need building-level heating/DHW.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param service_needs: dict of building service needs
+    :param dh_network_buildings: set of buildings in DH network
+    :param dc_network_buildings: set of buildings in DC network
+    :return: dict of {building_id: {'building': Building, 'supply_system': SupplySystem, 'costs': dict}}
+    """
+    from cea.optimization_new.domain import Domain
+    from cea.optimization_new.building import Building
+
+    # Get buildings that need heating/DHW at building-level
+    buildings_needing_heating = [bid for bid, needs in service_needs.items()
+                                  if needs['needs_heating'] or needs['needs_dhw']]
+
+    if not buildings_needing_heating:
+        print("  No buildings need building-level heating systems")
         return {}
 
-    if not has_heating:
-        # Cooling-only scenario (e.g., Singapore)
-        print("  Cooling-only scenario (no heating/DHW demand)")
-        domain = domain_dc
-        all_buildings = {b.identifier: b for b in domain_dc.buildings}
-    elif not has_cooling:
-        # Heating-only scenario (rare, but possible)
-        print("  Heating-only scenario (no cooling demand)")
-        domain = domain_dh
-        all_buildings = {b.identifier: b for b in domain_dh.buildings}
-    else:
-        # Mixed scenario - need to merge buildings from both domains
-        print("  Mixed scenario (both heating and cooling demand)")
+    print(f"  Calculating heating systems for {len(buildings_needing_heating)} building(s)...")
 
-        # Create dict of heating buildings
-        dh_buildings = {b.identifier: b for b in domain_dh.buildings}
-        dc_buildings = {b.identifier: b for b in domain_dc.buildings}
+    # Load DH domain - create config for DH
+    domain_config = cea.config.Configuration()
+    domain_config.scenario = config.scenario
+    domain_config.optimization_new.network_type = 'DH'
+    domain_config.optimization_new.network_name = None
+    domain = Domain(domain_config, locator)
+    domain.load_buildings(buildings_needing_heating)
 
-        # Start with all DH buildings (heating systems)
-        all_buildings = dict(dh_buildings)
+    if len(domain.buildings) == 0:
+        print("  No buildings with heating demand found")
+        return {}
 
-        # For DC buildings:
-        # - If building NOT in DH dict: add it (cooling-only building)
-        # - If building IS in DH dict: need to merge supply systems (building has both heating and cooling)
-        for bid, dc_building in dc_buildings.items():
-            if bid not in all_buildings:
-                # Cooling-only building - add it
-                all_buildings[bid] = dc_building
-            else:
-                # Building has BOTH heating and cooling - merge supply systems
-                # Keep the DH building as base (has heating system) and add cooling system from DC building
-                dh_building = all_buildings[bid]
-
-                # Merge installed_components from DC building into DH building
-                # DC building has cooling components, DH building has heating components
-                if hasattr(dc_building, 'supply_system') and hasattr(dh_building, 'supply_system'):
-                    if dc_building.supply_system and dh_building.supply_system:
-                        # Merge installed components from both supply systems
-                        for placement, components_dict in dc_building.supply_system.installed_components.items():
-                            if placement not in dh_building.supply_system.installed_components:
-                                dh_building.supply_system.installed_components[placement] = {}
-                            dh_building.supply_system.installed_components[placement].update(components_dict)
-
-                        # Merge annual costs
-                        dh_building.supply_system.annual_cost.update(dc_building.supply_system.annual_cost)
-
-        # Use DH domain as base (has more buildings typically)
-        domain = domain_dh
-        domain.buildings = list(all_buildings.values())  # Replace with combined buildings list
-
-    print(f"  Total unique buildings: {len(all_buildings)}")
-
-    # Suppress optimization messages about missing potentials (not relevant for cost calculation)
+    # Load potentials (suppress messages)
     import sys
     import io
     old_stdout = sys.stdout
@@ -660,59 +776,7 @@ def calculate_standalone_building_costs(locator, config, network_name):
         domain.energy_potentials, domain.buildings
     )
 
-    # Store which buildings are in which networks
-    dc_network_buildings = set()
-    dh_network_buildings = set()
-    for nt in ['DH', 'DC']:
-        try:
-            network_folder = locator.get_output_thermal_network_type_folder(nt, network_name)
-            layout_folder = os.path.join(network_folder, 'layout')
-            nodes_file = os.path.join(layout_folder, 'nodes.shp')
-
-            if os.path.exists(nodes_file):
-                nodes_df = gpd.read_file(nodes_file)
-                network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
-                network_buildings = [b for b in network_buildings if b and b != 'NONE']
-                if nt == 'DC':
-                    dc_network_buildings.update(network_buildings)
-                else:
-                    dh_network_buildings.update(network_buildings)
-        except Exception:
-            pass
-
-    # Calculate building-level supply systems for ALL buildings
-    # We'll filter services later based on network connectivity
-    print("  Calculating building-level supply systems for all buildings...")
-    print(f"    ({len(domain.buildings)} total, {len(all_network_buildings)} in networks)")
-
-    # Apply supply code fallbacks BEFORE calculating supply systems
-    supply_csv_path = locator.get_building_supply()
-    if os.path.exists(supply_csv_path):
-        supply_df = pd.read_csv(supply_csv_path)
-        fallback_count = 0
-
-        for building in domain.buildings:
-            is_in_dc = building.identifier in dc_network_buildings
-            is_in_dh = building.identifier in dh_network_buildings
-
-            # Get fallbacks if needed
-            fallbacks = apply_supply_code_fallback_for_standalone(
-                locator, config, building, is_in_dc, is_in_dh
-            )
-
-            # Apply fallbacks to supply.csv
-            if fallbacks:
-                fallback_count += 1
-                building_row_idx = supply_df[supply_df['name'] == building.identifier].index
-                if len(building_row_idx) > 0:
-                    for column, fallback_code in fallbacks.items():
-                        supply_df.at[building_row_idx[0], column] = fallback_code
-
-        # Write back modified supply.csv temporarily
-        if fallback_count > 0:
-            print(f"  Applied config fallbacks for {fallback_count} standalone building(s) with wrong scale in supply.csv")
-            supply_df.to_csv(supply_csv_path, index=False)
-
+    # Calculate systems
     results = {}
     zero_demand_count = 0
 
@@ -722,39 +786,177 @@ def calculate_standalone_building_costs(locator, config, network_name):
         if building.stand_alone_supply_system is None:
             zero_demand_count += 1
             results[building.identifier] = {
-                'supply_system': None,
                 'building': building,
+                'supply_system': None,
                 'costs': {},
-                'is_network': False,
                 'in_dc_network': building.identifier in dc_network_buildings,
                 'in_dh_network': building.identifier in dh_network_buildings
             }
         else:
-            # Extract costs from all services
-            supply_system = building.stand_alone_supply_system
-            # Pass None as network_type to get all services
-            # Check if building is in any network
             is_network_building = (building.identifier in dc_network_buildings or
                                    building.identifier in dh_network_buildings)
-            costs = extract_costs_from_supply_system(supply_system, None, building, is_network_building)
-
-            # Note: We don't check for missing components here because we don't know yet
-            # which services the building will need building-scale equipment for.
-            # That check happens later when we filter services based on network connectivity.
+            costs = extract_costs_from_supply_system(
+                building.stand_alone_supply_system, None, building, is_network_building
+            )
 
             results[building.identifier] = {
-                'supply_system': supply_system,
                 'building': building,
+                'supply_system': building.stand_alone_supply_system,
                 'costs': costs,
-                'is_network': False,
                 'in_dc_network': building.identifier in dc_network_buildings,
                 'in_dh_network': building.identifier in dh_network_buildings
             }
 
     if zero_demand_count > 0:
-        print(f"  ({zero_demand_count} building(s) with zero demand)")
+        print(f"    ({zero_demand_count} building(s) with zero demand or DHW-only)")
 
     return results
+
+
+def calculate_cooling_systems(locator, config, service_needs, dh_network_buildings, dc_network_buildings):
+    """
+    Calculate cooling systems only for buildings that need building-level cooling.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param service_needs: dict of building service needs
+    :param dh_network_buildings: set of buildings in DH network
+    :param dc_network_buildings: set of buildings in DC network
+    :return: dict of {building_id: {'building': Building, 'supply_system': SupplySystem, 'costs': dict}}
+    """
+    from cea.optimization_new.domain import Domain
+    from cea.optimization_new.building import Building
+
+    # Get buildings that need cooling at building-level
+    buildings_needing_cooling = [bid for bid, needs in service_needs.items()
+                                  if needs['needs_cooling']]
+
+    if not buildings_needing_cooling:
+        print("  No buildings need building-level cooling systems")
+        return {}
+
+    print(f"  Calculating cooling systems for {len(buildings_needing_cooling)} building(s)...")
+    print(f"    Buildings: {sorted(buildings_needing_cooling)[:10]}...")
+
+    # Load DC domain - create config for DC
+    domain_config = cea.config.Configuration()
+    domain_config.scenario = config.scenario
+    domain_config.optimization_new.network_type = 'DC'
+    domain_config.optimization_new.network_name = None
+    domain = Domain(domain_config, locator)
+    domain.load_buildings(buildings_needing_cooling)
+
+    print(f"    Domain loaded {len(domain.buildings)} buildings with cooling demand")
+    if len(domain.buildings) > 0:
+        print(f"    Buildings loaded: {sorted([b.identifier for b in domain.buildings])}")
+
+    if len(domain.buildings) == 0:
+        print("  No buildings with cooling demand found")
+        return {}
+
+    # Load potentials (suppress messages)
+    import sys
+    import io
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        domain.load_potentials()
+        domain._initialize_energy_system_descriptor_classes()
+    finally:
+        sys.stdout = old_stdout
+
+    building_potentials = Building.distribute_building_potentials(
+        domain.energy_potentials, domain.buildings
+    )
+
+    # Calculate systems
+    results = {}
+    zero_demand_count = 0
+
+    for building in domain.buildings:
+        building.calculate_supply_system(building_potentials[building.identifier])
+
+        if building.stand_alone_supply_system is None:
+            zero_demand_count += 1
+            results[building.identifier] = {
+                'building': building,
+                'supply_system': None,
+                'costs': {},
+                'in_dc_network': building.identifier in dc_network_buildings,
+                'in_dh_network': building.identifier in dh_network_buildings
+            }
+        else:
+            is_network_building = (building.identifier in dc_network_buildings or
+                                   building.identifier in dh_network_buildings)
+            costs = extract_costs_from_supply_system(
+                building.stand_alone_supply_system, None, building, is_network_building
+            )
+
+            results[building.identifier] = {
+                'building': building,
+                'supply_system': building.stand_alone_supply_system,
+                'costs': costs,
+                'in_dc_network': building.identifier in dc_network_buildings,
+                'in_dh_network': building.identifier in dh_network_buildings
+            }
+
+    if zero_demand_count > 0:
+        print(f"    ({zero_demand_count} building(s) with zero demand)")
+
+    return results
+
+
+def merge_heating_cooling_results(heating_results, cooling_results, service_needs, dh_network_buildings, dc_network_buildings):
+    """
+    Merge heating and cooling supply systems.
+
+    :param heating_results: dict of heating results
+    :param cooling_results: dict of cooling results
+    :param service_needs: dict of building service needs
+    :param dh_network_buildings: set of buildings in DH network
+    :param dc_network_buildings: set of buildings in DC network
+    :return: dict of merged results
+    """
+    print("  Merging heating and cooling systems...")
+
+    all_results = heating_results.copy()
+    merge_count = 0
+
+    for bid, cooling_data in cooling_results.items():
+        if bid in all_results:
+            # Building has both heating and cooling - merge systems
+            heating_system = all_results[bid]['supply_system']
+            cooling_system = cooling_data['supply_system']
+
+            if heating_system and cooling_system:
+                # Merge components
+                for placement, components in cooling_system.installed_components.items():
+                    if placement not in heating_system.installed_components:
+                        heating_system.installed_components[placement] = {}
+                    heating_system.installed_components[placement].update(components)
+
+                # Merge costs
+                heating_system.annual_cost.update(cooling_system.annual_cost)
+
+                # Re-extract costs with merged system
+                is_network_building = (bid in dc_network_buildings or bid in dh_network_buildings)
+                all_results[bid]['costs'] = extract_costs_from_supply_system(
+                    heating_system, None, all_results[bid]['building'], is_network_building
+                )
+                merge_count += 1
+            elif cooling_system and not heating_system:
+                # Only cooling system exists (DHW-only building in DH network)
+                all_results[bid]['supply_system'] = cooling_system
+                all_results[bid]['costs'] = cooling_data['costs']
+                merge_count += 1
+        else:
+            # Cooling-only building (not in heating_results)
+            all_results[bid] = cooling_data
+
+    if merge_count > 0:
+        print(f"  Merged systems for {merge_count} building(s)")
+
+    return all_results
 
 
 def calculate_district_network_costs(locator, config, network_type, network_name,
@@ -1163,7 +1365,7 @@ def calculate_network_costs(network_buildings, building_energy_potentials, domai
     return results
 
 
-def calculate_costs_for_network_type(locator, config, network_type, network_name=None, standalone_results=None):
+def calculate_costs_for_network_type(locator, config, network_type, network_name=None, standalone_results=None, all_selected_network_types=None):
     """
     Calculate costs for either DH or DC using optimization_new engine.
 
@@ -1176,6 +1378,7 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     :param network_type: 'DH' or 'DC'
     :param network_name: Specific network layout to use (required)
     :param standalone_results: Pre-calculated standalone building costs (dict of {building_name: {cost_data}})
+    :param all_selected_network_types: list of ALL selected network types (e.g., ['DH'] or ['DH', 'DC'])
     :return: dict of {building_name or network_name: {cost_metrics}}
     """
     import geopandas as gpd
@@ -1221,35 +1424,47 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     results = {}
 
     # Step 2: Add building-level supply system costs
-    # For each building, determine which services to include based on network connectivity:
-    # - Buildings in DC network: Include their heating/DHW building-scale costs (cooling from district)
-    # - Buildings in DH network: Include their cooling building-scale costs (heating/DHW from district)
-    # - Buildings in BOTH networks: Include based on which network type we're calculating
-    # - Buildings in NO network: Include all services (but only once to avoid duplicates)
+    # For each building, determine which services to include based on:
+    # 1. Network connectivity (whether building is IN network layout)
+    # 2. Network selection (which networks are SELECTED by user)
+    #
+    # Logic:
+    # - Cooling building-level: If building NOT in DC layout OR DC not selected
+    # - Heating/DHW building-level: If building NOT in DH layout OR DH not selected
     if standalone_results:
+        # Default to current network type if not provided
+        if all_selected_network_types is None:
+            all_selected_network_types = [network_type]
+
+        dc_selected = 'DC' in all_selected_network_types
+        dh_selected = 'DH' in all_selected_network_types
+
         buildings_to_include = []
         for bid, building_data in standalone_results.items():
             in_dc = building_data.get('in_dc_network', False)
             in_dh = building_data.get('in_dh_network', False)
 
-            if not in_dc and not in_dh:
-                # Building not in ANY network - include all their services
-                # But only in DC results to avoid duplicates in detailed CSV
+            # Determine which services this building needs at building-level
+            # Based on BOTH connectivity AND selection
+            needs_cooling_building_level = (not in_dc) or (not dc_selected)
+            needs_heating_dhw_building_level = (not in_dh) or (not dh_selected)
+
+            # Determine what to include
+            if needs_cooling_building_level and needs_heating_dhw_building_level:
+                # Building needs ALL services at building-level
+                # Only include in DC results to avoid duplicates
                 if network_type == 'DC':
                     buildings_to_include.append((bid, 'all'))
-            elif in_dc and not in_dh:
-                # Building in DC network only - include their heating/DHW building-scale components
-                # (cooling comes from DC network)
+            elif needs_heating_dhw_building_level and not needs_cooling_building_level:
+                # Building needs heating/DHW at building-level, cooling from DC
                 if network_type == 'DC':
                     buildings_to_include.append((bid, 'heating_dhw'))
-            elif in_dh and not in_dc:
-                # Building in DH network only - include their cooling building-scale components
-                # (heating/DHW comes from DH network)
+            elif needs_cooling_building_level and not needs_heating_dhw_building_level:
+                # Building needs cooling at building-level, heating/DHW from DH
                 if network_type == 'DH':
                     buildings_to_include.append((bid, 'cooling'))
-            elif in_dc and in_dh:
-                # Building in BOTH networks - NO building-scale components needed
-                # All services (cooling from DC, heating/DHW from DH) come from networks
+            else:
+                # Building gets ALL services from district networks
                 pass
 
         if buildings_to_include:
