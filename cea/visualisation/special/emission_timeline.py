@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
@@ -638,30 +637,9 @@ def plot_emission_timeline(config, context: dict):
     bool_include_advanced_analytics = False
     plot_config.x_to_plot = 'district_and_annually'
 
-    # Early validation: Check if PV panel results exist
-    pv_code = getattr(plot_config, 'pv_code', None)
-    if pv_code:
-        from cea.inputlocator import InputLocator
-        from cea.analysis.lca.primary_energy import get_building_names_from_zone
-        locator = InputLocator(scenario)
-
-        # Get list of buildings to check
-        buildings = plots_building_filter.buildings
-        if not buildings:
-            zone_df = get_building_names_from_zone(locator)
-            buildings = zone_df['Name'].tolist()
-
-        # Check if PV results exist for at least one building (representative check)
-        if buildings:
-            first_building = buildings[0]
-            pv_path = locator.PV_results(first_building, pv_code)
-            if not os.path.exists(pv_path):
-                error_msg = (
-                    f"PV electricity results missing for panel type: {pv_code}. "
-                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for this panel type."
-                )
-                print(f"ERROR: {error_msg}")
-                raise FileNotFoundError(error_msg)
+    # Note: PV validation is deferred to after data loading
+    # We need to check if PV columns exist in the loaded emission data,
+    # not just if PV result files exist
 
     # FIXME: temporary fix for missing x_sorted_by and x_sorted_reversed in plot_config_general
     # use dummy config for plot_config_general
@@ -684,6 +662,20 @@ def plot_emission_timeline(config, context: dict):
                                                    plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,
                                                    solar_panel_types_list, scenario)
+
+    # Validate PV columns exist in loaded data (column-level validation)
+    pv_code = getattr(plot_config, 'pv_code', None)
+    if pv_code:
+        # Check if expected PV columns exist in the data
+        expected_pv_patterns = [f'PV_{pv_code}_', f'_PV_{pv_code}']
+        pv_columns_found = any(
+            any(pattern in col for pattern in expected_pv_patterns)
+            for col in df_to_plotly.columns
+        )
+
+        if not pv_columns_found:
+            from cea.visualisation.a_data_loader import raise_missing_pv_error
+            raise_missing_pv_error(pv_code, context='emission')
 
     # # Add placeholder columns for biogenic and PV if their source columns exist (dummy values)
     # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:

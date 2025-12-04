@@ -94,6 +94,19 @@ def operational_hourly(config: Configuration) -> None:
     emissions_cfg = config.emissions
     buildings = emissions_cfg.buildings
 
+    # Validate zone geometry EARLY before expensive calculations
+    print("Validating zone geometry...")
+    import geopandas as gpd
+    from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
+    try:
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+        # This will raise ValueError with detailed message if geometries are invalid
+        get_lat_lon_projected_shapefile(zone_gdf)
+        print("Zone geometry validation passed.")
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        raise
+
     # Check PV requirements BEFORE processing any buildings
     consider_pv = emissions_cfg.include_pv
     pv_codes: list[str] = [] # prevent unbound variable error later in apply_pv_offsetting
@@ -165,6 +178,19 @@ def total_yearly(config: Configuration) -> None:
     else:
         # Coerce to int if provided as string
         end_year = int(year_end_val)
+
+    # Validate zone geometry EARLY before expensive calculations
+    print("Validating zone geometry...")
+    import geopandas as gpd
+    from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile
+    try:
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+        # This will raise ValueError with detailed message if geometries are invalid
+        get_lat_lon_projected_shapefile(zone_gdf)
+        print("Zone geometry validation passed.")
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        raise
 
     # Check PV requirements BEFORE processing any buildings
     consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
