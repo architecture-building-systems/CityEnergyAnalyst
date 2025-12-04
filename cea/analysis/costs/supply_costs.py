@@ -835,35 +835,41 @@ def calculate_heating_systems(locator, config, service_needs, dh_network_buildin
     network_types_selected = config.system_costs.network_type
     dh_selected = 'DH' in network_types_selected
 
-    for building in domain.buildings:
-        building.calculate_supply_system(building_potentials[building.identifier])
+    # Suppress individual "No supply system components (DHW-only)" messages
+    old_stdout2 = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        for building in domain.buildings:
+            building.calculate_supply_system(building_potentials[building.identifier])
 
-        if building.stand_alone_supply_system is None:
-            zero_demand_count += 1
-            results[building.identifier] = {
-                'building': building,
-                'supply_system': None,
-                'costs': {},
-                'in_dc_network': building.identifier in dc_network_buildings,
-                'in_dh_network': building.identifier in dh_network_buildings
-            }
-        else:
-            # Mark as district scale only if building is in DH network AND DH is selected
-            is_network_building = (building.identifier in dh_network_buildings) and dh_selected
-            costs = extract_costs_from_supply_system(
-                building.stand_alone_supply_system, None, building, is_network_building
-            )
+            if building.stand_alone_supply_system is None:
+                zero_demand_count += 1
+                results[building.identifier] = {
+                    'building': building,
+                    'supply_system': None,
+                    'costs': {},
+                    'in_dc_network': building.identifier in dc_network_buildings,
+                    'in_dh_network': building.identifier in dh_network_buildings
+                }
+            else:
+                # Mark as district scale only if building is in DH network AND DH is selected
+                is_network_building = (building.identifier in dh_network_buildings) and dh_selected
+                costs = extract_costs_from_supply_system(
+                    building.stand_alone_supply_system, None, building, is_network_building
+                )
 
-            results[building.identifier] = {
-                'building': building,
-                'supply_system': building.stand_alone_supply_system,
-                'costs': costs,
-                'in_dc_network': building.identifier in dc_network_buildings,
-                'in_dh_network': building.identifier in dh_network_buildings
-            }
+                results[building.identifier] = {
+                    'building': building,
+                    'supply_system': building.stand_alone_supply_system,
+                    'costs': costs,
+                    'in_dc_network': building.identifier in dc_network_buildings,
+                    'in_dh_network': building.identifier in dh_network_buildings
+                }
+    finally:
+        sys.stdout = old_stdout2
 
     if zero_demand_count > 0:
-        print(f"    ({zero_demand_count} building(s) with zero demand or DHW-only)")
+        print(f"    {zero_demand_count} building(s) with DHW-only (no heating components) - will use heating-component fallback")
 
     return results
 
