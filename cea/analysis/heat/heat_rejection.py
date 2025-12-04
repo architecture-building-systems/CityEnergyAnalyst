@@ -172,7 +172,7 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
     # This returns {network_type: {building_name: {supply_system, building, costs, ...}}}
     # NOTE: calculate_all_buildings_as_standalone puts ALL buildings under 'DH' key (with complete systems)
     # The 'DC' key is empty - this is expected behaviour from supply_costs
-    cost_results = calculate_all_buildings_as_standalone(locator, cost_config, network_types)
+    cost_results = calculate_all_buildings_as_standalone(locator, cost_config)
 
     # Extract building data from 'DH' key (contains all buildings with all their supply systems)
     # calculate_all_buildings_as_standalone already merged DH and DC domains internally

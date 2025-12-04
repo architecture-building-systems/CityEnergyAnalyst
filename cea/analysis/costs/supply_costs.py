@@ -414,7 +414,7 @@ def filter_services_by_network_type(costs_dict, network_type, services_filter):
     return filtered
 
 
-def calculate_all_buildings_as_standalone(locator, config, network_types):
+def calculate_all_buildings_as_standalone(locator, config):
     """
     Calculate costs treating ALL buildings as standalone systems.
     This is used when network-name is "(none)" or empty.
@@ -423,7 +423,6 @@ def calculate_all_buildings_as_standalone(locator, config, network_types):
 
     :param locator: InputLocator instance
     :param config: Configuration instance
-    :param network_types: List of network types (ignored but results saved for all types)
     :return: dict of {network_type: {building_name: cost_data}}
     """
     print(f"\n{'-'*70}")
@@ -638,9 +637,19 @@ def calculate_standalone_building_costs(locator, config, network_name):
 
     print("  Loading buildings and demands...")
 
+    # 0. Determine STANDALONE mode or NETWORK mode
+    if network_name is None or network_name == "(none)":
+        all_buildings_standalone = True
+    else:
+        all_buildings_standalone = False
+
     # 1. Get network connectivity
-    dh_network_buildings = get_network_buildings(locator, network_name, 'DH')
-    dc_network_buildings = get_network_buildings(locator, network_name, 'DC')
+    if all_buildings_standalone:
+        dh_network_buildings = set()
+        dc_network_buildings = set()
+    else:
+        dh_network_buildings = get_network_buildings(locator, network_name, 'DH')
+        dc_network_buildings = get_network_buildings(locator, network_name, 'DC')
 
     # 2. Get all building IDs
     all_building_ids = get_all_building_ids(locator)
@@ -657,6 +666,8 @@ def calculate_standalone_building_costs(locator, config, network_name):
     print(f"  Found {len(dc_network_buildings)} buildings in DC network")
     print(f"  Total buildings: {len(all_building_ids)}")
     print(f"  Network types selected: {network_types_selected}")
+    if all_buildings_standalone:
+        print("All thermal services are provided at the BUILDING level.")
 
     # 5. Apply Level 1 fallback: Config fallback for scale mismatch
     apply_config_fallbacks_for_service_needs(locator, config, service_needs, dh_network_buildings, dc_network_buildings)
@@ -669,6 +680,46 @@ def calculate_standalone_building_costs(locator, config, network_name):
 
     # 8. Merge heating and cooling results
     results = merge_heating_cooling_results(heating_results, cooling_results, service_needs, dh_network_buildings, dc_network_buildings)
+
+    # 9. Apply Level 3 fallback: DHW component fallback for buildings with DHW demand but no heating components
+    # This handles DHW-only buildings (common in tropical climates with zero space heating demand)
+    import pandas as pd
+    demand_df = pd.read_csv(locator.get_total_demand())
+
+    for bid in all_building_ids:
+        building_demand = demand_df[demand_df['name'] == bid]
+        if building_demand.empty:
+            continue
+
+        qww = building_demand['Qww_sys_MWhyr'].values[0] if 'Qww_sys_MWhyr' in building_demand.columns else 0
+
+        # Check if building has DHW demand but no DHW components in results
+        if qww > 0:
+            has_dhw_service = False
+            if bid in results and 'costs' in results[bid]:
+                has_dhw_service = any('_ww' in service for service in results[bid]['costs'].keys())
+
+            if not has_dhw_service:
+                # Building has DHW demand but no DHW components - apply fallback
+                # Get building data from heating_results if available
+                if bid in heating_results and heating_results[bid].get('building'):
+                    building_obj = heating_results[bid]['building']
+                    supply_system = heating_results[bid].get('supply_system')
+
+                    # Apply DHW fallback
+                    dhw_costs = apply_dhw_component_fallback(locator, building_obj, supply_system)
+
+                    if dhw_costs:
+                        # Add DHW costs to results
+                        if bid not in results:
+                            results[bid] = {
+                                'building': building_obj,
+                                'supply_system': supply_system,
+                                'costs': {},
+                                'in_dc_network': bid in dc_network_buildings,
+                                'in_dh_network': bid in dh_network_buildings
+                            }
+                        results[bid]['costs'].update(dhw_costs)
 
     return results
 

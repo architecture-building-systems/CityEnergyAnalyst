@@ -109,10 +109,9 @@ def baseline_costs_main(locator, config):
     if not network_name or network_name == '' or network_name == '(none)':
         print("Mode: STANDALONE ONLY (all buildings assessed as standalone systems)")
         print("District-scale supply systems will be treated as building-scale for cost calculations.")
-        print(f"Network types (for supply system selection): {', '.join(network_types)}")
 
         # Calculate ALL buildings as standalone (ignore district-scale designation)
-        all_results = calculate_all_buildings_as_standalone(locator, config, network_types)
+        all_results = calculate_all_buildings_as_standalone(locator, config)
 
         # Format using the same formatter as normal mode
         merged_results = merge_network_type_costs(all_results)
@@ -134,7 +133,7 @@ def baseline_costs_main(locator, config):
         print("\nNote: Standalone-only mode provides simplified cost estimates")
         return
 
-    print("Mode: NETWORK + STANDALONE")
+    print("Mode: NETWORK (+ STANDALONE)")
     print(f"Network layout: {network_name}")
     print(f"Network types: {', '.join(network_types)}")
 
