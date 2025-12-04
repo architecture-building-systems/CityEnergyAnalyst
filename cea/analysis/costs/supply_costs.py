@@ -780,6 +780,10 @@ def calculate_heating_systems(locator, config, service_needs, dh_network_buildin
     results = {}
     zero_demand_count = 0
 
+    # For heating: only mark as district scale if DH network is selected
+    network_types_selected = config.system_costs.network_type
+    dh_selected = 'DH' in network_types_selected
+
     for building in domain.buildings:
         building.calculate_supply_system(building_potentials[building.identifier])
 
@@ -793,8 +797,8 @@ def calculate_heating_systems(locator, config, service_needs, dh_network_buildin
                 'in_dh_network': building.identifier in dh_network_buildings
             }
         else:
-            is_network_building = (building.identifier in dc_network_buildings or
-                                   building.identifier in dh_network_buildings)
+            # Mark as district scale only if building is in DH network AND DH is selected
+            is_network_building = (building.identifier in dh_network_buildings) and dh_selected
             costs = extract_costs_from_supply_system(
                 building.stand_alone_supply_system, None, building, is_network_building
             )
@@ -873,6 +877,10 @@ def calculate_cooling_systems(locator, config, service_needs, dh_network_buildin
     results = {}
     zero_demand_count = 0
 
+    # For cooling: only mark as district scale if DC network is selected
+    network_types_selected = config.system_costs.network_type
+    dc_selected = 'DC' in network_types_selected
+
     for building in domain.buildings:
         building.calculate_supply_system(building_potentials[building.identifier])
 
@@ -886,8 +894,8 @@ def calculate_cooling_systems(locator, config, service_needs, dh_network_buildin
                 'in_dh_network': building.identifier in dh_network_buildings
             }
         else:
-            is_network_building = (building.identifier in dc_network_buildings or
-                                   building.identifier in dh_network_buildings)
+            # Mark as district scale only if building is in DC network AND DC is selected
+            is_network_building = (building.identifier in dc_network_buildings) and dc_selected
             costs = extract_costs_from_supply_system(
                 building.stand_alone_supply_system, None, building, is_network_building
             )

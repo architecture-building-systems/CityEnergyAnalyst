@@ -102,7 +102,7 @@ def baseline_costs_main(locator, config):
     network_name = config.system_costs.network_name
 
     print(f"\n{'='*70}")
-    print("BASELINE COSTS CALCULATION")
+    print("BUILDING ENERGY SUPPLY SYSTEM COSTS CALCULATION")
     print(f"{'='*70}")
 
     # Check if user selected "(none)" - assess all buildings as standalone
