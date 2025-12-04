@@ -122,12 +122,15 @@ def baseline_costs_main(locator, config):
         print(f"\n{'-'*70}")
         print("Calculating solar panel costs...")
         from cea.analysis.costs.solar_costs import calculate_building_solar_costs, merge_solar_costs_to_buildings
+        import geopandas as gpd
 
-        # Get list of all building names for solar calculation
-        all_building_names = []
-        for building_name in merged_results.keys():
-            if building_name not in ['DC', 'DH']:  # Exclude network-level entries
-                all_building_names.append(building_name)
+        # Get ALL buildings from zone geometry (solar is independent of network connectivity)
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+        all_building_names = zone_gdf['name'].tolist()
+
+        # Filter by config.system_costs.buildings if specified
+        if config.system_costs.buildings:
+            all_building_names = [b for b in all_building_names if b in config.system_costs.buildings]
 
         solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
 
@@ -261,12 +264,15 @@ def baseline_costs_main(locator, config):
     print(f"\n{'-'*70}")
     print("Calculating solar panel costs...")
     from cea.analysis.costs.solar_costs import calculate_building_solar_costs, merge_solar_costs_to_buildings
+    import geopandas as gpd
 
-    # Get list of all building names for solar calculation
-    all_building_names = []
-    for building_name in merged_results.keys():
-        if building_name not in ['DC', 'DH']:  # Exclude network-level entries
-            all_building_names.append(building_name)
+    # Get ALL buildings from zone geometry (solar is independent of network connectivity)
+    zone_gdf = gpd.read_file(locator.get_zone_geometry())
+    all_building_names = zone_gdf['name'].tolist()
+
+    # Filter by config.system_costs.buildings if specified
+    if config.system_costs.buildings:
+        all_building_names = [b for b in all_building_names if b in config.system_costs.buildings]
 
     solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
 
