@@ -274,6 +274,81 @@ def calculate_building_solar_costs(config, locator, buildings):
         'panels_on_wall_west': 'walls_west'
     }
 
+    # First pass: validate that all required solar results exist
+    configured_techs = []
+    for config_param in facade_mapping.keys():
+        try:
+            tech_code = getattr(config.system_costs, config_param)
+        except AttributeError:
+            continue
+
+        if tech_code and tech_code != 'No solar technology installed':
+            configured_techs.append((config_param, tech_code))
+
+    if not configured_techs:
+        # No solar technologies configured - return empty results
+        print("  No solar panels configured or no valid data found")
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Validate required files exist
+    missing_files = []
+    missing_buildings_by_file = {}
+
+    for config_param, tech_code in configured_techs:
+        try:
+            technology_type, panel_code_for_files, _ = parse_solar_tech_code(tech_code)
+        except ValueError:
+            continue
+
+        if technology_type is None:
+            continue
+
+        # Construct expected filename
+        if technology_type == 'PV':
+            filename = f"PV_{panel_code_for_files}_total_buildings.csv"
+        elif technology_type == 'PVT':
+            filename = f"PVT_{panel_code_for_files}_total_buildings.csv"
+        elif technology_type == 'SC':
+            filename = f"SC_{panel_code_for_files}_total_buildings.csv"
+        else:
+            continue
+
+        solar_folder = locator.get_potentials_solar_folder()
+        filepath = os.path.join(solar_folder, filename)
+
+        if not os.path.exists(filepath):
+            missing_files.append((config_param, filename))
+        else:
+            # File exists - check if all requested buildings are present
+            df = pd.read_csv(filepath)
+            buildings_in_file = set(df['name'].tolist())
+            missing_buildings = [b for b in buildings if b not in buildings_in_file]
+            if missing_buildings:
+                missing_buildings_by_file[filename] = missing_buildings
+
+    # Throw error if any files or buildings are missing
+    if missing_files or missing_buildings_by_file:
+        error_msg = "\n" + "="*70 + "\n"
+        error_msg += "ERROR: Missing solar technology results\n"
+        error_msg += "="*70 + "\n"
+
+        if missing_files:
+            error_msg += "\nMissing solar results files:\n"
+            for config_param, filename in missing_files:
+                error_msg += f"  - {filename} (required for {config_param})\n"
+
+        if missing_buildings_by_file:
+            error_msg += "\nMissing buildings in solar results:\n"
+            for filename, missing_bldgs in missing_buildings_by_file.items():
+                error_msg += f"  - {filename}: {', '.join(missing_bldgs)}\n"
+
+        error_msg += "\nPlease run the solar radiation analysis for all buildings:\n"
+        error_msg += "  1. Run 'cea solar-radiation' to calculate solar radiation on all surfaces\n"
+        error_msg += "  2. Run 'cea photovoltaic' and/or 'cea photovoltaic-thermal' for configured panel types\n"
+        error_msg += "="*70
+
+        raise ValueError(error_msg)
+
     detail_rows = []
 
     # Process each facade
