@@ -122,15 +122,15 @@ def baseline_costs_main(locator, config):
         # Save results
         print(f"\n{'-'*70}")
         print("Saving results...")
-        locator.ensure_parent_folder_exists(locator.get_baseline_costs())
-        final_results.to_csv(locator.get_baseline_costs(), index=False, float_format='%.2f', na_rep='nan')
-        detailed_results.to_csv(locator.get_baseline_costs_detailed(), index=False, float_format='%.2f', na_rep='nan')
+        locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=None))
+        final_results.to_csv(locator.get_baseline_costs(network_name=None), index=False, float_format='%.2f', na_rep='nan')
+        detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=None), index=False, float_format='%.2f', na_rep='nan')
 
         print(f"\n{'='*70}")
         print("COMPLETED (Standalone Mode)")
         print(f"{'='*70}")
-        print(f"Summary: {locator.get_baseline_costs()}")
-        print(f"Detailed: {locator.get_baseline_costs_detailed()}")
+        print(f"Summary: {locator.get_baseline_costs(network_name=None)}")
+        print(f"Detailed: {locator.get_baseline_costs_detailed(network_name=None)}")
         print("\nNote: Standalone-only mode provides simplified cost estimates")
         return
 
@@ -264,9 +264,9 @@ def baseline_costs_main(locator, config):
     # Save results
     print(f"\n{'-'*70}")
     print("Saving results...")
-    locator.ensure_parent_folder_exists(locator.get_baseline_costs())
-    final_results.to_csv(locator.get_baseline_costs(), index=False, float_format='%.2f', na_rep='nan')
-    detailed_results.to_csv(locator.get_baseline_costs_detailed(), index=False, float_format='%.2f', na_rep='nan')
+    locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=network_name))
+    final_results.to_csv(locator.get_baseline_costs(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
+    detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
 
     # Show completion status based on success/failure
     all_errors = {**validation_errors, **calculation_errors}
@@ -276,8 +276,8 @@ def baseline_costs_main(locator, config):
     else:
         print("COMPLETED")
     print(f"{'='*70}")
-    print(f"Summary: {locator.get_baseline_costs()}")
-    print(f"Detailed: {locator.get_baseline_costs_detailed()}")
+    print(f"Summary: {locator.get_baseline_costs(network_name=network_name)}")
+    print(f"Detailed: {locator.get_baseline_costs_detailed(network_name=network_name)}")
 
     # Show summary of what succeeded and what failed (matching thermal-network behavior)
     if all_errors:

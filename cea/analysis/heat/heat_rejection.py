@@ -120,7 +120,7 @@ def anthropogenic_heat_main(locator, config):
     print("\n" + "-" * 70)
     print("Saving results...")
 
-    save_heat_rejection_outputs(locator, all_results, is_standalone_only)
+    save_heat_rejection_outputs(locator, all_results, is_standalone_only, network_name=network_name)
 
     print("\n" + "=" * 70)
     if is_standalone_only:
@@ -128,8 +128,8 @@ def anthropogenic_heat_main(locator, config):
     else:
         print("COMPLETED")
     print("=" * 70)
-    print(f"Summary: {locator.get_heat_rejection_buildings()}")
-    print(f"Detailed: {locator.get_heat_rejection_components()}")
+    print(f"Summary: {locator.get_heat_rejection_buildings(network_name=network_name)}")
+    print(f"Detailed: {locator.get_heat_rejection_components(network_name=network_name)}")
     print(f"Spatial: {locator.get_heat_rejection_hourly_spatial()}")
 
 
@@ -817,7 +817,7 @@ def extract_component_heat_rejection(supply_system, building_name, building_type
     return component_details
 
 
-def save_heat_rejection_outputs(locator, results, is_standalone_only):
+def save_heat_rejection_outputs(locator, results, is_standalone_only, network_name=None):
     """
     Save heat rejection results to CSV files.
 
@@ -829,6 +829,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
     :param locator: InputLocator instance
     :param results: Merged results dict
     :param is_standalone_only: bool
+    :param network_name: Network layout name for subfolder organization
     """
     # 1. Buildings summary file
     buildings_df = pd.DataFrame(results['buildings'])
@@ -843,7 +844,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         buildings_output = buildings_df[columns_order].copy()
 
         # Save
-        output_file = locator.get_heat_rejection_buildings()
+        output_file = locator.get_heat_rejection_buildings(network_name=network_name)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         buildings_output.to_csv(output_file, index=False)
         print(f"  ✓ Saved buildings summary: {output_file}")
@@ -868,7 +869,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         })
 
         # Save individual file
-        output_file = locator.get_heat_rejection_hourly_building(building_name)
+        output_file = locator.get_heat_rejection_hourly_building(building_name, network_name=network_name)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         entity_df.to_csv(output_file, index=False)
 
@@ -910,12 +911,12 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only):
         ]
         columns_order = [col for col in desired_order if col in components_df.columns]
         components_df = components_df[columns_order]
-        output_file = locator.get_heat_rejection_components()
+        output_file = locator.get_heat_rejection_components(network_name=network_name)
         components_df.to_csv(output_file, index=False)
         print(f"  ✓ Saved components breakdown ({len(component_rows)} rows): {output_file}")
     else:
         # Create empty placeholder
         components_df = pd.DataFrame()
-        output_file = locator.get_heat_rejection_components()
+        output_file = locator.get_heat_rejection_components(network_name=network_name)
         components_df.to_csv(output_file, index=False)
         print(f"  ✓ Saved components (empty): {output_file}")

@@ -266,10 +266,10 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
     if cea_feature == 'heat_rejection':
         # Heat rejection includes both buildings and plants
         # Read from heat_rejection_buildings.csv to get all entities
-        heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+        heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
         entity_names = heat_buildings_df['name'].tolist()
         for entity_name in entity_names:
-            path = locator.get_heat_rejection_hourly_building(entity_name)
+            path = locator.get_heat_rejection_hourly_building(entity_name, network_name=network_name)
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
@@ -1381,7 +1381,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -1404,7 +1404,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -1453,7 +1453,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -2737,7 +2737,7 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
     return list_list_metrics_building
 
 
-def copy_costs_to_summary(locator, summary_folder, list_buildings):
+def copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=None):
     """
     Filter and copy cost calculation results to summary folder.
 
@@ -2746,14 +2746,15 @@ def copy_costs_to_summary(locator, summary_folder, list_buildings):
     :param locator: InputLocator instance
     :param summary_folder: Path to summary folder
     :param list_buildings: List of building names to include
+    :param network_name: Network layout name for subfolder organization
     :return: tuple (success: bool, error_message: str or None)
     """
     import pandas as pd
 
     try:
         # Get source file paths
-        costs_buildings_src = locator.get_baseline_costs()
-        costs_components_src = locator.get_baseline_costs_detailed()
+        costs_buildings_src = locator.get_baseline_costs(network_name=network_name)
+        costs_components_src = locator.get_baseline_costs_detailed(network_name=network_name)
 
         # Check if cost files exist
         if not os.path.exists(costs_buildings_src):
@@ -2964,15 +2965,15 @@ def process_building_summary(config, locator,
     # Step 8.5: Filter and Copy Cost Files (if Enabled)
     if not plot and config.result_summary.metrics_costs:
         try:
-            print("\nFiltering and copying cost calculation results...")
-            success, error_msg = copy_costs_to_summary(locator, summary_folder, list_buildings)
+            print("\nFiltering cost calculation results...")
+            success, error_msg = copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=network_name)
             if not success:
-                error_msg = f"Step 8.5 (Filter and Copy Cost Files): {error_msg}"
+                error_msg = f"Step 8.5 - metrics costs: {error_msg}"
                 errors_encountered.append(error_msg)
                 print(f"Warning: {error_msg}")
                 print("         Continuing with remaining steps...")
         except Exception as e:
-            error_msg = f"Step 8.5 (Copy Cost Files): {str(e)}"
+            error_msg = f"Step 8 - metrics costs: {str(e)}"
             errors_encountered.append(error_msg)
             print(f"Warning: {error_msg}")
             print("         Continuing with remaining steps...")

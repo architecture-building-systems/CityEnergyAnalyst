@@ -1367,30 +1367,66 @@ class InputLocator(object):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
         return os.path.join(self.get_costs_folder(), 'supply_system_costs_today.csv')
 
-    def get_baseline_costs(self):
-        """scenario/outputs/data/costs/costs_buildings.csv"""
-        return os.path.join(self.get_costs_folder(), 'costs_buildings.csv')
+    def get_baseline_costs(self, network_name=None):
+        """
+        scenario/outputs/data/costs/{network_name}/costs_buildings.csv
 
-    def get_baseline_costs_detailed(self):
-        """scenario/outputs/data/costs/costs_components.csv"""
-        return os.path.join(self.get_costs_folder(), 'costs_components.csv')
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_costs_folder(), network_name)
+        return os.path.join(folder, 'costs_buildings.csv')
+
+    def get_baseline_costs_detailed(self, network_name=None):
+        """
+        scenario/outputs/data/costs/{network_name}/costs_components.csv
+
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_costs_folder(), network_name)
+        return os.path.join(folder, 'costs_components.csv')
 
     # HEAT REJECTION
     def get_heat_folder(self):
         """scenario/outputs/data/heat"""
         return os.path.join(self.scenario, 'outputs', 'data', 'heat')
 
-    def get_heat_rejection_buildings(self):
-        """scenario/outputs/data/heat/heat_rejection_buildings.csv"""
-        return os.path.join(self.get_heat_folder(), 'heat_rejection_buildings.csv')
+    def get_heat_rejection_buildings(self, network_name=None):
+        """
+        scenario/outputs/data/heat/{network_name}/heat_rejection_buildings.csv
 
-    def get_heat_rejection_components(self):
-        """scenario/outputs/data/heat/heat_rejection_components.csv"""
-        return os.path.join(self.get_heat_folder(), 'heat_rejection_components.csv')
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_heat_folder(), network_name)
+        return os.path.join(folder, 'heat_rejection_buildings.csv')
 
-    def get_heat_rejection_hourly_building(self, building_name):
-        """scenario/outputs/data/heat/{building_name}.csv"""
-        return os.path.join(self.get_heat_folder(), f'{building_name}.csv')
+    def get_heat_rejection_components(self, network_name=None):
+        """
+        scenario/outputs/data/heat/{network_name}/heat_rejection_components.csv
+
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_heat_folder(), network_name)
+        return os.path.join(folder, 'heat_rejection_components.csv')
+
+    def get_heat_rejection_hourly_building(self, building_name, network_name=None):
+        """
+        scenario/outputs/data/heat/{network_name}/{building_name}.csv
+
+        :param building_name: Name of the building
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_heat_folder(), network_name)
+        return os.path.join(folder, f'{building_name}.csv')
 
     def get_heat_rejection_hourly_spatial(self):
         """
