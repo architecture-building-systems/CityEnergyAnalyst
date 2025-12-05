@@ -296,31 +296,51 @@ def baseline_costs_main(locator, config):
     final_results = final_results.sort_values('name').reset_index(drop=True)
     detailed_results = detailed_results.sort_values('name').reset_index(drop=True)
 
-    # Save results
+    # Check for errors BEFORE saving - fail fast if any network failed
+    all_errors = {**validation_errors, **calculation_errors}
+
+    if all_errors:
+        # If any network failed, raise error instead of partial completion
+        failed_types = sorted(all_errors.keys())
+        succeeded_types = sorted(succeeded)
+
+        print(f"\n{'='*70}")
+        print("ERROR: INCOMPLETE RESULTS")
+        print(f"{'='*70}")
+
+        error_details = []
+        for network_type, error_msg in all_errors.items():
+            error_details.append(f"  {network_type}: {error_msg}")
+
+        error_message = (
+            f"System-costs calculation failed for {len(failed_types)} of {len(network_types)} requested network type(s).\n"
+            f"\n"
+            f"Requested: {', '.join(network_types)}\n"
+            f"Succeeded: {', '.join(succeeded_types) if succeeded_types else 'None'}\n"
+            f"Failed: {', '.join(failed_types)}\n"
+            f"\n"
+            f"Error details:\n"
+            f"{chr(10).join(error_details)}\n"
+            f"\n"
+            f"Please fix the errors above and run again.\n"
+            f"Partial results have NOT been saved."
+        )
+
+        raise RuntimeError(error_message)
+
+    # Only save results if all networks succeeded
     print(f"\n{'-'*70}")
     print("Saving results...")
     locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=network_name))
     final_results.to_csv(locator.get_baseline_costs(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
     detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
 
-    # Show completion status based on success/failure
-    all_errors = {**validation_errors, **calculation_errors}
     print(f"\n{'='*70}")
-    if all_errors:
-        print("PARTIALLY COMPLETED")
-    else:
-        print("COMPLETED")
+    print("COMPLETED")
     print(f"{'='*70}")
     print(f"Summary: {locator.get_baseline_costs(network_name=network_name)}")
     print(f"Detailed: {locator.get_baseline_costs_detailed(network_name=network_name)}")
-
-    # Show summary of what succeeded and what failed (matching thermal-network behavior)
-    if all_errors:
-        failed_types = ', '.join(sorted(all_errors.keys()))
-        succeeded_types = ', '.join(sorted(succeeded))
-        print(f"\nCompleted: {succeeded_types}. Failed: {failed_types}.")
-    else:
-        print(f"\nAll network types completed successfully: {', '.join(sorted(succeeded))}")
+    print(f"\nAll network types completed successfully: {', '.join(sorted(succeeded))}")
 
     # Check if any networks were found
     has_networks = any(name.startswith('N') for name in final_results['name'])
