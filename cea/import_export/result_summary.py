@@ -1937,18 +1937,29 @@ def determine_building_main_use(df_typology):
     else:
         raise KeyError(f"Typology data must have either 'Name' or 'name' column. Available columns: {df_typology.columns.tolist()}")
 
+    # Make a copy to avoid modifying the original DataFrame
+    df_work = df_typology.copy()
+
+    # Handle incomplete use type entries: fill empty/NaN use_type2 and use_type3 with 'NONE' and ratios with 0
+    # This ensures buildings with only one use type (e.g., "MULTI_RES, 1.0") are correctly identified
+    # instead of being filtered out due to NaN/empty values
+    df_work['use_type2'] = df_work['use_type2'].fillna('NONE').replace('', 'NONE')
+    df_work['use_type3'] = df_work['use_type3'].fillna('NONE').replace('', 'NONE')
+    df_work['use_type2r'] = pd.to_numeric(df_work['use_type2r'], errors='coerce').fillna(0)
+    df_work['use_type3r'] = pd.to_numeric(df_work['use_type3r'], errors='coerce').fillna(0)
+
     # Create a new DataFrame to store results
     result = pd.DataFrame()
-    result['name'] = df_typology[name_col]
+    result['name'] = df_work[name_col]
 
     # Determine the main use type and its ratio
-    result['main_use_type'] = df_typology.apply(
+    result['main_use_type'] = df_work.apply(
         lambda row: row['use_type1'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3'],
         axis=1
     )
-    result['main_use_type_ratio'] = df_typology.apply(
+    result['main_use_type_ratio'] = df_work.apply(
         lambda row: row['use_type1r'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2r'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3r'],

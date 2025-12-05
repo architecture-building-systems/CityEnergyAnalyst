@@ -195,21 +195,33 @@ def total_yearly(config: Configuration) -> None:
     # Check PV requirements BEFORE processing any buildings
     consider_pv: bool = getattr(emissions_cfg, "include_pv", False)
     pv_codes: list[str] = []
-    if consider_pv:
-        missing_panels = []
-        for pv_code in pv_codes:
-            pv_total_path = locator.PV_total_buildings(pv_code)
-            if not os.path.exists(pv_total_path):
-                missing_panels.append(pv_code)
 
-        if missing_panels:
-            missing_list = ', '.join(missing_panels)
-            error_msg = (
-                f"PV electricity results missing for panel type(s): {missing_list}. "
-                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
-            )
-            print(f"ERROR: {error_msg}")
-            raise FileNotFoundError(error_msg)
+    if consider_pv:
+        # Get PV codes from configuration (user must specify which PV types to include)
+        pv_codes = getattr(emissions_cfg, "pv_codes", [])
+
+        if not pv_codes:
+            print("  Warning: include-pv is True but no PV codes specified in pv-codes parameter.")
+            print("           No PV embodied emissions will be included.")
+            consider_pv = False
+        else:
+            # Validate that results exist for all configured PV codes
+            missing_panels = []
+            for pv_code in pv_codes:
+                pv_total_path = locator.PV_total_buildings(pv_code)
+                if not os.path.exists(pv_total_path):
+                    missing_panels.append(pv_code)
+
+            if missing_panels:
+                missing_list = ', '.join(missing_panels)
+                error_msg = (
+                    f"PV electricity results missing for panel type(s): {missing_list}. "
+                    f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results for these panel types."
+                )
+                print(f"ERROR: {error_msg}")
+                raise FileNotFoundError(error_msg)
+
+            print(f"  Including PV life cycle emissions for panel types: {', '.join(pv_codes)}")
 
     envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()
