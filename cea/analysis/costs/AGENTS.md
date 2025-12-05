@@ -314,7 +314,130 @@ The system automatically ensures BOTH building-scale and district-scale assembli
 
 ## Multi-Level Fallback Logic
 
-The system has **3 levels** of fallbacks when determining supply systems for buildings. These fallbacks cascade from config-level to assembly-level to component-level.
+The system has **3 levels** of fallbacks when determining supply systems for buildings and district networks. These fallbacks cascade from config-level to assembly-level to component-level, with strict scale matching enforcement.
+
+### 4-Case Usage Scenarios
+
+The fallback system handles 4 distinct scenarios based on configuration completeness:
+
+#### Case 1: Complete Configuration (Both Scales Available)
+**Scenario**: Config/supply.csv has both BUILDING-scale AND DISTRICT-scale assemblies
+
+**Example**:
+```python
+config.supply_type_cs = ['SUPPLY_COOLING_AS1 (building)', 'SUPPLY_COOLING_AS3 (district)']
+```
+
+**Behavior**:
+- Standalone buildings → Use AS1 (building scale) ✅
+- District network → Use AS3 (district scale) ✅
+- **No fallback needed** - Direct scale matching works
+
+**Use case**: Production systems with properly configured databases
+
+---
+
+#### Case 2: Building-Scale Only (District Auto-Added)
+**Scenario**: Config/supply.csv has only BUILDING-scale assemblies
+
+**Example**:
+```python
+# User config or supply.csv:
+supply_type_cs = SUPPLY_COOLING_AS1  # Building scale only
+
+# System returns (auto-adds AS3):
+['SUPPLY_COOLING_AS1 (building)', 'SUPPLY_COOLING_AS3 (district)']
+```
+
+**Behavior**:
+- Standalone buildings → Use AS1 (building scale) ✅
+- District network → Use AS3 (auto-added district scale) ✅
+- **Fallback triggered**: Bidirectional auto-selection adds first district-scale from database
+
+**Use case**: Scenarios designed for standalone buildings, user wants to explore district networks
+
+---
+
+#### Case 3: District-Scale Only (Building Auto-Added)
+**Scenario**: Config/supply.csv has only DISTRICT-scale assemblies
+
+**Example**:
+```python
+# User config:
+supply_type_cs = SUPPLY_COOLING_AS4  # District scale only
+
+# System returns (auto-adds AS1):
+['SUPPLY_COOLING_AS4 (district)', 'SUPPLY_COOLING_AS1 (building)']
+```
+
+**Behavior**:
+- Standalone buildings → Use AS1 (auto-added building scale) ✅
+- District network → Use AS4 (district scale) ✅
+- **Fallback triggered**: Bidirectional auto-selection adds first building-scale from database
+
+**Use case**: District-focused studies, user wants to compare with standalone buildings
+
+---
+
+#### Case 4: Wrong Scale or Empty Config (Component-Based Fallback)
+**Scenario**: Config has wrong scale OR no assemblies configured, AND no components configured
+
+**Example A - Wrong scale not auto-corrected**:
+```python
+# Config has only building-scale, but bidirectional auto-add is disabled/failed
+config.supply_type_cs = ['SUPPLY_COOLING_AS1 (building)']  # No district available
+
+# For district network:
+# Level 2 returns None (scale mismatch)
+# Level 3 checks component categories
+```
+
+**Example B - Empty config**:
+```python
+config.supply_type_cs = []
+config.cooling_components = []
+```
+
+**Behavior**:
+- **Level 2 returns None** (no scale match or empty)
+- **Level 3A checks**: Are component categories configured?
+  - YES → Use component-based system ✅
+  - NO → **ERROR** ❌
+
+**Error message**:
+```
+No DISTRICT-scale cooling assembly or component configuration found for DC network 'validation'.
+Please either:
+  1. Create a DISTRICT-scale SUPPLY_COOLING assembly in your database, OR
+  2. Configure 'cooling-components' and 'heat-rejection-components' parameters
+```
+
+**Use case**:
+- Database migration scenarios
+- Custom component-based systems
+- Configuration errors (guides user to fix)
+
+---
+
+### Overview: 3-Level Fallback System
+
+```
+Level 1: Config Fallback (Scale Mismatch in supply.csv)
+   ↓ (Standalone buildings only)
+Level 2: Multi-Select Scale Filtering & Verification
+   ↓ (Returns code if scale matches, None if mismatch)
+Level 3A: Component Category Fallback (District Networks)
+   OR
+Level 3B: DHW Component Fallback (Buildings - DHW only)
+```
+
+**Key Principle**: Scale matching is **strictly enforced**. If config has wrong scale, system proceeds to component-based fallback rather than using mismatched assembly.
+
+**When each level applies**:
+- **Level 1**: Only for standalone buildings with DISTRICT-scale code in supply.csv
+- **Level 2**: Always applied - filters config by scale, returns None if no match
+- **Level 3A**: District networks when Level 2 returns None
+- **Level 3B**: Buildings DHW service when assembly has no components
 
 ### Level 1: Config Fallback (Scale Mismatch)
 
@@ -471,44 +594,149 @@ feedstock_to_fuel = {
 
 ## Fallback Priority Chain
 
-### For Standalone Buildings (Cases 1, 3, 5, 6)
+### Complete 3-Level Fallback Flow
+
 ```
-1. Check network connectivity (nodes.shp)
-   ↓
-2. For standalone services:
-   ├─ Level 1: Check supply.csv scale
-   │  └─ DISTRICT scale? → Use config (filtered to BUILDING)
-   │
-   ├─ Level 2: Multi-select filtering & scale verification
-   │  └─ Config code matches BUILDING scale? → Use it
-   │  └─ No match? → Return None (proceed to Level 3B)
-   │
-   └─ Level 3B: DHW component fallback
-      └─ Assembly missing components? → Map feedstock to boiler
+START: Determine supply system for building or district network
+│
+├─── STANDALONE BUILDING (Cases 1, 3, 5, 6) ─────────────────────────┐
+│                                                                     │
+│    Step 1: Check supply.csv for this building                      │
+│    ├─ Has DISTRICT-scale code? (e.g., AS4)                         │
+│    │  ├─ YES → LEVEL 1: Config Fallback                            │
+│    │  │         └─ Config has BUILDING-scale? → Replace with it    │
+│    │  │         └─ Config empty? → Keep DISTRICT (may error)       │
+│    │  └─ NO → Continue to Level 2                                  │
+│    │                                                                │
+│    Step 2: LEVEL 2 - Scale Filtering                               │
+│    ├─ Filter config by scale (is_standalone=True)                  │
+│    ├─ Found BUILDING-scale match? → USE IT ✅                       │
+│    ├─ No match? → Return None, proceed to Level 3B                 │
+│    │                                                                │
+│    Step 3: LEVEL 3B - DHW Component Fallback (DHW service only)    │
+│    ├─ Assembly has components? → Use assembly ✅                    │
+│    └─ No components? → Map feedstock to boiler (BO1, BO5, etc.) ✅  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+├─── DISTRICT NETWORK (DC or DH) ────────────────────────────────────┐
+│                                                                     │
+│    Step 1: LEVEL 2 - Scale Filtering                               │
+│    ├─ Filter config by scale (is_standalone=False)                 │
+│    ├─ Found DISTRICT-scale match? → USE IT ✅                       │
+│    ├─ No match or empty? → Return None, proceed to Level 3A        │
+│    │                                                                │
+│    Step 2: LEVEL 3A - Component Category Fallback                  │
+│    ├─ Component categories configured?                             │
+│    │  ├─ DC: cooling-components + heat-rejection-components        │
+│    │  └─ DH: heating-components                                    │
+│    ├─ YES → Use component-based system ✅                           │
+│    └─ NO → ERROR ❌                                                 │
+│              └─ "Create DISTRICT-scale assembly OR configure       │
+│                  component parameters"                              │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### For District Networks (Cases 4, 5, 6)
+### Key Decision Points
+
+**When does each level activate?**
+
+| Level | Trigger Condition | Applies To | Outcome |
+|-------|------------------|------------|---------|
+| **Level 1** | supply.csv has DISTRICT-scale code | Standalone buildings only | Replaces with BUILDING-scale from config |
+| **Level 2** | Config has value (any scale) | Both buildings & networks | Returns code if scale matches, else `None` |
+| **Level 3A** | Level 2 returned `None` | District networks only | Uses components or raises error |
+| **Level 3B** | Assembly missing components | Building DHW service only | Maps feedstock to boiler |
+
+### Decision Flow Summary
+
 ```
-1. Check network connectivity (nodes.shp)
-   ↓
-2. For district services:
-   ├─ Level 2: Multi-select filtering & scale verification
-   │  └─ Config code matches DISTRICT scale? → Use it
-   │  └─ No match? → Return None (proceed to Level 3A)
-   │
-   └─ Level 3A: Component category fallback
-      ├─ Component categories configured? → Use component-based system
-      └─ No components? → ERROR: Must create assembly or configure components
+Network layout (truth - from nodes.shp)
+  ↓
+Config parameters (bidirectional auto-selection adds missing scale)
+  ↓
+┌─────────────────────┬─────────────────────┐
+│ STANDALONE BUILDING │ DISTRICT NETWORK    │
+├─────────────────────┼─────────────────────┤
+│ Level 1: supply.csv │ (skip Level 1)      │
+│   Scale mismatch?   │                     │
+│   → Config fallback │                     │
+├─────────────────────┼─────────────────────┤
+│ Level 2: Config     │ Level 2: Config     │
+│   Filter to BUILDING│   Filter to DISTRICT│
+│   Match? ✅         │   Match? ✅         │
+│   No? → Level 3B    │   No? → Level 3A    │
+├─────────────────────┼─────────────────────┤
+│ Level 3B: DHW only  │ Level 3A: Components│
+│   No components?    │   Configured? ✅    │
+│   → Feedstock map   │   No? → ERROR ❌    │
+└─────────────────────┴─────────────────────┘
 ```
 
-**Decision flow**:
+### Example Scenarios
+
+#### Scenario A: Complete Config (No Fallback)
+```python
+config.supply_type_cs = ['AS1 (building)', 'AS3 (district)']
+supply.csv: AS1 for all buildings
+network: DC with 10 buildings
+
+# Standalone buildings (8 buildings)
+Level 2: Filter to BUILDING → Returns AS1 ✅
+
+# District network
+Level 2: Filter to DISTRICT → Returns AS3 ✅
+
+# Result: No fallback needed
 ```
-Network layout (truth)
-  → Config parameters (Level 1 & 2)
-    → Scale verification (Level 2)
-      → Assembly components OR component categories (Level 3A)
-        → Feedstock-based DHW components (Level 3B, buildings only)
-          → ERROR if nothing configured (district networks only)
+
+#### Scenario B: Building-Only Config (Auto-Add Triggers)
+```python
+config.supply_type_cs = ['AS1 (building)']  # Only building
+supply.csv: AS1 for all buildings
+network: DC with 10 buildings
+
+# Bidirectional auto-selection adds AS3 first
+config.supply_type_cs → ['AS1 (building)', 'AS3 (district)']
+
+# Standalone buildings
+Level 2: Filter to BUILDING → Returns AS1 ✅
+
+# District network
+Level 2: Filter to DISTRICT → Returns AS3 ✅
+
+# Result: Auto-add fallback succeeded
+```
+
+#### Scenario C: Wrong Scale (Component Fallback)
+```python
+# Hypothetical case where auto-add failed
+config.supply_type_cs = ['AS1 (building)']  # Only building, no AS3 in database
+config.cooling_components = ['VAPOR_COMPRESSION_CHILLERS']
+supply.csv: AS1 for all buildings
+network: DC with 10 buildings
+
+# District network
+Level 2: Filter to DISTRICT → Returns None (no match)
+Level 3A: Check components → Found, use CH1+CT1 ✅
+
+# Result: Component-based fallback succeeded
+```
+
+#### Scenario D: Missing Everything (Error)
+```python
+config.supply_type_cs = []  # Empty
+config.cooling_components = []  # Empty
+network: DC with 10 buildings
+
+# District network
+Level 2: Empty config → Returns None
+Level 3A: Check components → None configured → ERROR ❌
+
+Error: "No DISTRICT-scale cooling assembly or component configuration found..."
+
+# Result: User must configure assemblies or components
 ```
 
 ### Output Files
