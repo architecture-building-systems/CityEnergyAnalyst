@@ -314,16 +314,16 @@ def baseline_costs_main(locator, config):
 
         error_message = (
             f"System-costs calculation failed for {len(failed_types)} of {len(network_types)} requested network type(s).\n"
-            f"\n"
+            "\n"
             f"Requested: {', '.join(network_types)}\n"
             f"Succeeded: {', '.join(succeeded_types) if succeeded_types else 'None'}\n"
             f"Failed: {', '.join(failed_types)}\n"
-            f"\n"
-            f"Error details:\n"
+            "\n"
+            "Error details:\n"
             f"{chr(10).join(error_details)}\n"
-            f"\n"
-            f"Please fix the errors above and run again.\n"
-            f"Partial results have NOT been saved."
+            "\n"
+            "Please fix the errors above and run again.\n"
+            "Partial results have NOT been saved."
         )
 
         raise RuntimeError(error_message)
