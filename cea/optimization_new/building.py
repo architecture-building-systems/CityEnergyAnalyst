@@ -254,6 +254,13 @@ class Building(object):
         """
         # determine the required system capacity
         max_supply_flow = self.demand_flow.isolate_peak()
+
+        # If building has zero demand, skip building supply system (no components needed)
+        if max_supply_flow.profile.max() == 0.0:
+            print(f"  {self.identifier}: Zero demand - skipping supply system instantiation")
+            self.stand_alone_supply_system = None
+            return None
+
         user_component_selection = self._stand_alone_supply_system_composition
 
         # use the SupplySystemStructure methods to dimension each of the system's components

@@ -1,12 +1,15 @@
 """
-Run the CEA scripts and unit tests as part of our CI efforts (cf. The Jenkins)
+Run the CEA unit tests and integration tests.
 """
 
 import os
-import unittest
-
 import cea.config
-import cea.inputlocator
+from cea.tests.test_workflow import TestWorkflows
+
+try:
+    import pytest
+except ImportError:
+    raise ImportError("The 'pytest' package is required to run the CEA tests. Please install it via 'pip install pytest'.")
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2020, Architecture and Building Systems - ETH Zurich"
@@ -17,18 +20,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.tests.test_workflow import TestWorkflows
-
 
 def main(config: cea.config.Configuration):
     test_type = config.test.type
 
     if test_type == "unittest":
-        test_suite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
-        result = unittest.TextTestRunner().run(test_suite)
-
-        if not result.wasSuccessful():
-            raise AssertionError("Unittests failed.")
+        exit_code = pytest.main([os.path.dirname(__file__)])
+        if exit_code != 0:
+            raise AssertionError("Tests failed.")
 
     elif test_type == "integration":
         TestWorkflows()._test_workflows()

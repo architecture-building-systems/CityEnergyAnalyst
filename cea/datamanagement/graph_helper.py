@@ -30,7 +30,11 @@ CORRECTION PIPELINE
 
 The apply_corrections() method applies corrections in this order:
 1. Remove self-loops - Eliminates invalid edges from nodes to themselves
-2. Merge close nodes - Fixes coordinate precision issues (within SNAP_TOLERANCE = 0.1m)
+2. Merge close nodes - Two-pass approach to fix coordinate precision issues:
+   - Pass 1 (Micro-precision): Merge nodes within 10^-6m using <= comparison
+     Handles floating-point rounding artifacts from geometric operations
+   - Pass 2 (Snap-tolerance): Merge nodes within 0.1m using < comparison
+     Handles data quality issues and near-miss connections
 3. Connect intersecting edges - Adds junction nodes where edges cross but don't connect
 4. Connect disconnected components - Last resort: adds edges between nearest nodes
 
@@ -41,6 +45,7 @@ import math
 import networkx as nx
 from typing import Optional, Tuple, List, Set, Dict
 from scipy.spatial import KDTree
+import warnings
 
 from cea.constants import SHAPEFILE_TOLERANCE, SNAP_TOLERANCE
 
@@ -98,6 +103,17 @@ class GraphCorrector:
         # Normalize protected node coordinates for comparison-time lookups
         self.protected_nodes = self._normalize_node_coords(protected_nodes) if protected_nodes else set()
         self.corrections_log = []
+
+        # Double check if protected nodes exist in the graph
+        if self.protected_nodes:
+            # Normalize graph nodes to same precision as protected nodes for comparison
+            protected_set = set(self.protected_nodes)
+            normalized_result = set(self._normalize_node_coords(graph.nodes()))
+
+            found_protected_nodes = protected_set & normalized_result
+            if len(found_protected_nodes) < len(protected_set):
+                missing = protected_set - found_protected_nodes
+                warnings.warn(f"Some protected nodes were not found in the graph: {missing}", UserWarning)
 
     # ==================================================================================
     # MAIN CORRECTION PIPELINE
@@ -741,16 +757,28 @@ class GraphCorrector:
 
     def merge_close_nodes(self, distance_threshold: Optional[float] = None) -> nx.Graph:
         """
-        Merge nodes that are closer than a specified distance threshold.
+        Merge nodes that are closer than a specified distance threshold using a two-pass approach.
 
         This helps fix issues where multiple nodes exist at nearly the same location
         due to coordinate precision issues or data quality problems. When nodes are merged,
         all edges from the merged nodes are transferred to the kept node.
 
+        Two-pass merging strategy:
+        1. Micro-precision pass: Merges nodes within 10^-6m (1 micrometer) using <= comparison
+           - Catches nodes at exactly the coordinate precision threshold
+           - Handles floating-point rounding artifacts from geometric operations (interpolate, substring, etc.)
+           - Example: nodes at (463229.970972, y) and (463229.970973, y) differ by 0.000001m
+        2. Snap-tolerance pass: Merges nodes within SNAP_TOLERANCE (0.1m) using < comparison
+           - Handles data quality issues and near-miss connections
+           - Uses strict < to avoid over-merging at larger tolerances
+
+        Protected nodes (e.g., building terminals) are never merged in either pass,
+        preserving exact building connection coordinates.
+
         Uses KDTree spatial indexing for efficient O(N log N) nearest neighbor search instead
         of O(N²) brute force, making it suitable for city-scale graphs with thousands of nodes.
 
-        :param distance_threshold: Maximum distance for merging nodes (default: SNAP_TOLERANCE)
+        :param distance_threshold: Maximum distance for merging nodes in second pass (default: SNAP_TOLERANCE)
         :type distance_threshold: Optional[float]
         :return: Graph with close nodes merged
         :rtype: nx.Graph
@@ -758,14 +786,49 @@ class GraphCorrector:
         if distance_threshold is None:
             distance_threshold = SNAP_TOLERANCE
 
+        # Pass 1: Merge nodes within floating-point epsilon (handles coordinate rounding artifacts)
+        epsilon_threshold = 10 ** (-self.coord_precision)  # 1 micrometer for precision=6
+        print(f"  Pass 1: Micro-precision merge (threshold: {epsilon_threshold:.9f}m)")
+        micro_merged = self._merge_nodes_within_threshold(epsilon_threshold, label="micro-precision")
+
+        # Pass 2: Merge nodes within snap tolerance (handles data quality issues)
+        print(f"  Pass 2: Snap-tolerance merge (threshold: {distance_threshold}m)")
+        snap_merged = self._merge_nodes_within_threshold(distance_threshold, label="snap-tolerance")
+
+        total_merged = micro_merged + snap_merged
+        print(f"Total nodes merged: {total_merged} ({micro_merged} micro-precision + {snap_merged} snap-tolerance)")
+
+        return self.graph
+
+    def _merge_nodes_within_threshold(self, distance_threshold: float, label: str = "") -> int:
+        """
+        Helper method to merge nodes within a specific distance threshold.
+
+        This method uses KDTree spatial indexing for efficient neighbor search and implements
+        different comparison operators based on threshold size:
+        - For micro-precision (< 0.001m): Uses <= to catch nodes at exactly the threshold distance
+        - For larger tolerances: Uses < to avoid over-merging
+
+        The <= operator for micro-precision is critical because geometric operations like
+        interpolate() and substring() can produce coordinates that differ by exactly 10^-6m
+        (the coordinate precision threshold), resulting in isolated components.
+
+        Protected nodes (building terminals) are skipped and never merged.
+
+        :param distance_threshold: Maximum distance for merging nodes (meters)
+        :type distance_threshold: float
+        :param label: Label for logging purposes (e.g., "micro-precision" or "snap-tolerance")
+        :type label: str
+        :return: Number of nodes merged in this pass
+        :rtype: int
+        """
         nodes = list(self.graph.nodes())
         num_nodes_before = len(nodes)
         nodes_to_merge = {}  # Maps nodes to be removed -> node to keep
         merged_count = 0
 
-        print(f"Checking {num_nodes_before} nodes for merging (threshold: {distance_threshold}m)...")
         if self.protected_nodes:
-            print(f"  Protecting {len(self.protected_nodes)} terminal nodes from merging")
+            print(f"    Protecting {len(self.protected_nodes)} terminal nodes from merging")
 
         # Build KDTree once for efficient spatial queries (reuse helper method pattern)
         node_coords = [(node[0], node[1]) for node in nodes]
@@ -797,15 +860,19 @@ class GraphCorrector:
                     continue
 
                 distance = self._calculate_distance(node1, node2)
-                if distance < distance_threshold:
+                # Use <= for micro-precision to catch exactly-epsilon distances (e.g., 0.000001m)
+                # Use < for larger tolerances to avoid over-merging
+                comparison = distance <= distance_threshold if distance_threshold < 0.001 else distance < distance_threshold
+                if comparison:
                     # Mark node2 for merging into node1
                     nodes_to_merge[node2] = node1
                     merged_count += 1
-                    print(f"  Merging nodes {distance:.3f}m apart")
+                    if distance_threshold < 0.001:  # Only log micro-precision merges
+                        print(f"    Merging nodes {distance:.9f}m apart")
 
         if merged_count == 0:
-            print("No nodes close enough to merge")
-            return self.graph
+            print(f"    No nodes close enough to merge (checked {num_nodes_before} nodes)")
+            return 0
 
         # Perform the merge: transfer all edges from nodes_to_merge to their target nodes
         for node_to_remove, node_to_keep in nodes_to_merge.items():
@@ -841,16 +908,17 @@ class GraphCorrector:
             self.graph.remove_node(node_to_remove)
 
         num_nodes_after = self.graph.number_of_nodes()
-        print(f"Merged {merged_count} nodes. Graph now has {num_nodes_after} nodes (was {num_nodes_before})")
+        print(f"    Merged {merged_count} nodes. Graph now has {num_nodes_after} nodes (was {num_nodes_before})")
 
         self._log_correction('merge_close_nodes', {
+            'pass': label,  # micro-precision or snap-tolerance
             'distance_threshold': distance_threshold,
             'nodes_merged': merged_count,
             'nodes_before': num_nodes_before,
             'nodes_after': num_nodes_after
         })
 
-        return self.graph
+        return merged_count
 
     def remove_self_loops(self) -> nx.Graph:
         """
@@ -939,15 +1007,15 @@ class GraphCorrector:
             return False, f"Graph is not connected ({num_components} components). Steiner tree requires connected graph."
 
         # Check if terminal nodes list is valid
-        if not terminal_nodes or len(terminal_nodes) < 2:
-            return False, f"Need at least 2 terminal nodes for Steiner tree, got {len(terminal_nodes) if terminal_nodes else 0}"
+        # Allow 1 terminal node (single-building networks create no edges but are valid)
+        if not terminal_nodes or len(terminal_nodes) < 1:
+            return False, f"Need at least 1 terminal node, got {len(terminal_nodes) if terminal_nodes else 0}"
 
         # Check if all terminal nodes exist in graph
         graph_nodes = set(graph.nodes())
         missing_terminals = [node for node in terminal_nodes if node not in graph_nodes]
         if missing_terminals:
             return False, f"{len(missing_terminals)} terminal nodes not found in graph"
-
 
         return True, f"Graph is ready for Steiner tree with {len(terminal_nodes)} terminals"
 

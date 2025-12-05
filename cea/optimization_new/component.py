@@ -69,62 +69,21 @@ class Component(object):
         self.n_units = 1
         self.units = [self]
 
-    def _setup_multi_unit_aggregate(self, total_capacity):
+    def __eq__(self, other):
         """
-        Setup this component instance as a multi-unit aggregate by copying properties from first unit.
-        This should be called by concrete classes after creating units.
-
-        :param total_capacity: Total capacity of the multi-unit installation
+        Components are equal if they have the same code and capacity.
+        Subclasses may override to include additional attributes.
         """
-        first_unit = self.units[0]
-        self._model_data = first_unit._model_data
-        self._cost_params = first_unit._cost_params
-        self.code = first_unit.code
-        self.technology = first_unit.technology
-        self.type = first_unit.type
-        self.main_energy_carrier = first_unit.main_energy_carrier
-        self.input_energy_carriers = first_unit.input_energy_carriers
-        self.output_energy_carriers = first_unit.output_energy_carriers
-        self.capacity = total_capacity  # Total capacity
+        if not isinstance(other, Component):
+            return NotImplemented
+        return self.code == other.code and self.capacity == other.capacity
 
-        # Calculate aggregate costs
-        self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
-
-    @staticmethod
-    def _check_multi_unit_needed(component_class, model_code, capacity):
+    def __hash__(self):
         """
-        Check if multi-unit installation is needed for the given capacity.
-
-        :param component_class: The component class (e.g., VapourCompressionChiller)
-        :param model_code: Code of the component model
-        :param capacity: Requested capacity in kW
-        :return: (needs_multi_unit, n_units, unit_capacity) tuple
-        :rtype: (bool, int, float)
+        Hash based on code and capacity.
+        Subclasses that override __eq__ must also override __hash__.
         """
-        try:
-            # Try to extract model data for single unit
-            Component._extract_model_data(component_class._csv_name, model_code, capacity)
-            # Success - single unit is sufficient
-            return False, 1, capacity
-        except ValueError:
-            # Single unit not sufficient, check if multi-unit is possible
-            try:
-                max_capacity = Component.get_max_capacity_for_model(component_class, model_code)
-            except ValueError:
-                # Model doesn't exist in database
-                raise ValueError(f'Component model {model_code} not found in database {component_class._csv_name}')
-
-            if capacity > max_capacity:
-                # Multi-unit installation needed
-                n_units = math.ceil(capacity / max_capacity)
-                unit_capacity = capacity / n_units
-                return True, n_units, unit_capacity
-            else:
-                # Capacity doesn't exceed max but still failed - invalid capacity range
-                raise ValueError(f'The selected component specs: \n'
-                                f' - code: {model_code} \n'
-                                f' - capacity: {capacity * 1000}W \n'
-                                f'could not be found in the {component_class._csv_name} tab of the conversion systems database.')
+        return hash((self.code, self.capacity))
 
     @staticmethod
     def initialize_class_variables(domain):
@@ -207,6 +166,63 @@ class Component(object):
         max_model_capacity_W = max(model_data['cap_max'])
         max_model_capacity_kW = max_model_capacity_W / 1000
         return max_model_capacity_kW
+
+    def _setup_multi_unit_aggregate(self, total_capacity):
+        """
+        Setup this component instance as a multi-unit aggregate by copying properties from first unit.
+        This should be called by concrete classes after creating units.
+
+        :param total_capacity: Total capacity of the multi-unit installation
+        """
+        first_unit = self.units[0]
+        self._model_data = first_unit._model_data
+        self._cost_params = first_unit._cost_params
+        self.code = first_unit.code
+        self.technology = first_unit.technology
+        self.type = first_unit.type
+        self.main_energy_carrier = first_unit.main_energy_carrier
+        self.input_energy_carriers = first_unit.input_energy_carriers
+        self.output_energy_carriers = first_unit.output_energy_carriers
+        self.capacity = total_capacity  # Total capacity
+
+        # Calculate aggregate costs
+        self.inv_cost, self.inv_cost_annual, self.om_fix_cost_annual = self.calculate_cost()
+
+    @staticmethod
+    def _check_multi_unit_needed(component_class, model_code, capacity):
+        """
+        Check if multi-unit installation is needed for the given capacity.
+
+        :param component_class: The component class (e.g., VapourCompressionChiller)
+        :param model_code: Code of the component model
+        :param capacity: Requested capacity in kW
+        :return: (needs_multi_unit, n_units, unit_capacity) tuple
+        :rtype: (bool, int, float)
+        """
+        try:
+            # Try to extract model data for single unit
+            Component._extract_model_data(component_class._csv_name, model_code, capacity)
+            # Success - single unit is sufficient
+            return False, 1, capacity
+        except ValueError:
+            # Single unit not sufficient, check if multi-unit is possible
+            try:
+                max_capacity = Component.get_max_capacity_for_model(component_class, model_code)
+            except ValueError:
+                # Model doesn't exist in database
+                raise ValueError(f'Component model {model_code} not found in database {component_class._csv_name}')
+
+            if capacity > max_capacity:
+                # Multi-unit installation needed
+                n_units = math.ceil(capacity / max_capacity)
+                unit_capacity = capacity / n_units
+                return True, n_units, unit_capacity
+            else:
+                # Capacity doesn't exceed max but still failed - invalid capacity range
+                raise ValueError(f'The selected component specs: \n'
+                                 f' - code: {model_code} \n'
+                                 f' - capacity: {capacity * 1000}W \n'
+                                 f'could not be found in the {component_class._csv_name} tab of the conversion systems database.')
 
     @staticmethod
     def _extract_model_cost_parameters(model_data):
@@ -416,6 +432,22 @@ class ActiveComponent(Component):
         super().__init__(data_base_tab, model_code, capacity)
         self.placement = placement_in_supply_system
 
+    def __eq__(self, other):
+        """
+        Active components are equal if they have the same code, capacity, and placement.
+        """
+        if not isinstance(other, ActiveComponent):
+            return NotImplemented
+        return (self.code == other.code and
+                self.capacity == other.capacity and
+                self.placement == other.placement)
+
+    def __hash__(self):
+        """
+        Hash based on code, capacity, and placement.
+        """
+        return hash((self.code, self.capacity, self.placement))
+
     @staticmethod
     def get_types(component_tab):
         component_types = list(Component._components_database[component_tab]['code'].unique())
@@ -437,6 +469,24 @@ class PassiveComponent(Component):
         super().__init__(data_base_tab, model_code, capacity)
         self.placement = {'after': placed_after,
                           'before': placed_before}
+
+    def __eq__(self, other):
+        """
+        Passive components are equal if they have the same code, capacity, and placement.
+        """
+        if not isinstance(other, PassiveComponent):
+            return NotImplemented
+        return (self.code == other.code and
+                self.capacity == other.capacity and
+                self.placement == other.placement)
+
+    def __hash__(self):
+        """
+        Hash based on code, capacity, and placement.
+        Since placement is a dict, convert to a hashable tuple.
+        """
+        placement_tuple = (self.placement.get('after'), self.placement.get('before'))
+        return hash((self.code, self.capacity, placement_tuple))
 
 
 class AbsorptionChiller(ActiveComponent):
@@ -1251,9 +1301,9 @@ class PowerTransformer(PassiveComponent):
                                                       ec_out in pt_high_voltage_side_ecs[transformer])
                                                   or (ec_in in pt_high_voltage_side_ecs[transformer] and
                                                       ec_out in pt_low_voltage_side_ecs[transformer])]))
-                    PowerTransformer.conversion_matrix[ec_in][ec_out] = viable_components
+                    PowerTransformer.conversion_matrix.loc[ec_in, ec_out] = viable_components
                 else:
-                    PowerTransformer.conversion_matrix[ec_in][ec_out] = []
+                    PowerTransformer.conversion_matrix.loc[ec_in, ec_out] = []
 
         PowerTransformer.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
                                               for ec_code, component_models
@@ -1465,9 +1515,9 @@ class HeatExchanger(PassiveComponent):
                                                       ec_out in he_secondary_side_ecs[heat_exchanger])
                                                   or (ec_in in he_secondary_side_ecs[heat_exchanger] and
                                                       ec_out in he_primary_side_ecs[heat_exchanger])]))
-                    HeatExchanger.conversion_matrix[ec_in][ec_out] = viable_components
+                    HeatExchanger.conversion_matrix.loc[ec_in, ec_out] = viable_components
                 else:
-                    HeatExchanger.conversion_matrix[ec_in][ec_out] = []
+                    HeatExchanger.conversion_matrix.loc[ec_in, ec_out] = []
 
         HeatExchanger.possible_main_ecs = {ec_code: list(set(component_models.explode().dropna()))
                                            for ec_code, component_models in HeatExchanger.conversion_matrix.iterrows()}

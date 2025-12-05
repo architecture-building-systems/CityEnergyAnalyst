@@ -113,12 +113,20 @@ def check_void_deck_values(df):
     If void_deck exists, check if it's >= 0 and is a integer.
     """
 
+    # Check if void_deck contains integer-like values (handles both int and float dtypes from shapefiles)
     if not pd.api.types.is_integer_dtype(df['void_deck']):
-        raise ValueError('The void_deck column should be of integer type. Please check your zone geometry file.')
-    
+        # If it's float, check if all values are whole numbers
+        if pd.api.types.is_float_dtype(df['void_deck']):
+            if not (df['void_deck'] % 1 == 0).all():
+                raise ValueError('The void_deck column should contain only integer values (no decimals). Please check your zone geometry file.')
+            # Convert to integer type if all values are whole numbers
+            df['void_deck'] = df['void_deck'].astype(int)
+        else:
+            raise ValueError('The void_deck column should be of integer type. Please check your zone geometry file.')
+
     if (df['void_deck'] < 0).any():
         raise ValueError('The void_deck column should not contain negative values. Please check your zone geometry file.')
-    
+
     if (df['void_deck'] > df['floors_ag']).any():
         raise ValueError('The void_deck column should not contain values greater than the number of floors above ground. '
                          'Please check your zone geometry file.')
