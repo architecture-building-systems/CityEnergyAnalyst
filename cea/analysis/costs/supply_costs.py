@@ -334,6 +334,8 @@ def apply_dhw_component_fallback(locator, building, supply_system):
     if not component_code:
         return None
 
+    print(f"    DHW fallback for {building.identifier}: feedstock={feedstock}, component={component_code}")
+
     # Read DHW demand to size the system
     demand_df = pd.read_csv(locator.get_total_demand())
     building_demand = demand_df[demand_df['name'] == building.identifier]
@@ -357,6 +359,8 @@ def apply_dhw_component_fallback(locator, building, supply_system):
     if dhw_demand_profile.max() == 0:
         return None
 
+    print(f"    DHW fallback: peak demand = {dhw_demand_profile.max():.2f} kWh, attempting to create supply system...")
+
     # Create DHW demand flow
     # DHW typically requires medium temperature water (T60W, 60°C)
     # Boilers with T_water_out_rating=80°C will now produce T60W after energyCarrier.py fix
@@ -367,6 +371,8 @@ def apply_dhw_component_fallback(locator, building, supply_system):
         energy_carrier_code='T60W',  # Medium temperature for DHW (physically correct)
         energy_flow_profile=dhw_demand_profile
     )
+
+    print(f"    DHW fallback: EnergyFlow created with T60W carrier")
 
     # Initialize Component class if not already done
     # This is needed to map component codes to their energy carriers

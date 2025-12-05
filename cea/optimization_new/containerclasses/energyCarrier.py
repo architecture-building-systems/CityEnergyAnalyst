@@ -335,22 +335,36 @@ class EnergyCarrier:
         thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
         thermal_ec_mean_quals = pd.to_numeric(thermal_ecs_of_subtype['mean_qual'])
         if not np.isnan(temperature):
-            # Find closest temperature match
-            # When there's a tie (e.g., 80°C is equidistant from 60°C and 100°C),
-            # prefer the LOWER temperature to minimise energy waste
-            distances = (thermal_ec_mean_quals - temperature).abs()
-            min_distance = distances.min()
-
-            # Get all indices with minimum distance
-            tied_indices = distances[distances == min_distance].index
-
-            if len(tied_indices) > 1:
-                # Multiple carriers at same distance - choose the one with LOWER temperature
-                tied_temps = thermal_ec_mean_quals.loc[tied_indices]
-                index_closest_mean_temp = tied_temps.idxmin()
+            # Special case for T60W/T100W boundary decision
+            # Use 90°C threshold: ≤90°C → T60W, >90°C → T100W
+            # This ensures typical boilers (80-82°C) map to T60W (can supply DHW)
+            # while high-temp boilers (>90°C) map to T100W (industrial applications)
+            available_temps = sorted(thermal_ec_mean_quals.unique())
+            if energy_carrier_subtype == 'water' and 60 in available_temps and 100 in available_temps:
+                if temperature <= 90:
+                    # Map to T60W for temperatures up to 90°C
+                    target_temp = 60
+                else:
+                    # Map to T100W for temperatures above 90°C
+                    target_temp = 100
+                index_closest_mean_temp = thermal_ec_mean_quals[thermal_ec_mean_quals == target_temp].index[0]
             else:
-                # Single closest match
-                index_closest_mean_temp = tied_indices[0]
+                # Standard logic for other cases
+                # Find closest temperature match
+                # When there's a tie, prefer the LOWER temperature to minimise energy waste
+                distances = (thermal_ec_mean_quals - temperature).abs()
+                min_distance = distances.min()
+
+                # Get all indices with minimum distance
+                tied_indices = distances[distances == min_distance].index
+
+                if len(tied_indices) > 1:
+                    # Multiple carriers at same distance - choose the one with LOWER temperature
+                    tied_temps = thermal_ec_mean_quals.loc[tied_indices]
+                    index_closest_mean_temp = tied_temps.idxmin()
+                else:
+                    # Single closest match
+                    index_closest_mean_temp = tied_indices[0]
 
             energy_carrier_code = thermal_ecs_of_subtype['code'].loc[index_closest_mean_temp]
         else:
