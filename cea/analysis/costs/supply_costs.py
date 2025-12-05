@@ -83,7 +83,7 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
     :param supply_codes: Single code (str) or list of codes from multi-select parameter
     :param category: 'SUPPLY_COOLING', 'SUPPLY_HEATING', or 'SUPPLY_HOTWATER'
     :param is_standalone: True if building is standalone, False if connected to district network
-    :return: Single supply code (str) or None if no match
+    :return: Single supply code (str) or None if no scale match found (triggers Level 3 fallback)
     """
     # Helper to strip scale labels like '(building)' or '(district)'
     def strip_label(value):
@@ -96,15 +96,18 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
 
     # Handle single value (backward compatibility with non-multi-select configs)
     if isinstance(supply_codes, str):
-        return strip_label(supply_codes)
+        stripped = strip_label(supply_codes)
+        # Check if single code matches required scale, otherwise return None
+        return _verify_scale_match(locator, stripped, category, is_standalone)
 
     # Handle multi-select list
     if not isinstance(supply_codes, list) or len(supply_codes) == 0:
         return None
 
-    # If only one code selected, use it regardless of scale
+    # If only one code selected, verify scale match
     if len(supply_codes) == 1:
-        return strip_label(supply_codes[0])
+        stripped = strip_label(supply_codes[0])
+        return _verify_scale_match(locator, stripped, category, is_standalone)
 
     # Map category to locator method
     category_to_method = {
@@ -115,11 +118,11 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
 
     method = category_to_method.get(category)
     if not method:
-        return supply_codes[0]  # Fallback to first code
+        return None
 
     filepath = method()
     if not pd.io.common.file_exists(filepath):
-        return supply_codes[0]
+        return None
 
     df = pd.read_csv(filepath)
 
@@ -135,8 +138,47 @@ def filter_supply_code_by_scale(locator, supply_codes, category, is_standalone):
             if str(scale).upper() == target_scale:
                 return code  # Return bare code without label
 
-    # Fallback: return first code if no scale match found
-    return strip_label(supply_codes[0])
+    # No scale match found - return None to trigger Level 3 fallback (component-based)
+    return None
+
+
+def _verify_scale_match(locator, code, category, is_standalone):
+    """
+    Verify if a single supply code matches the required scale.
+    Returns code if match, None if mismatch (triggers Level 3 fallback).
+    """
+    if not code:
+        return None
+
+    # Map category to locator method
+    category_to_method = {
+        'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+        'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+        'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+    }
+
+    method = category_to_method.get(category)
+    if not method:
+        return None
+
+    filepath = method()
+    if not pd.io.common.file_exists(filepath):
+        return None
+
+    df = pd.read_csv(filepath)
+    row = df[df['code'] == code]
+
+    if row.empty or 'scale' not in row.columns:
+        return None
+
+    scale = row['scale'].iloc[0]
+    target_scale = 'BUILDING' if is_standalone else 'DISTRICT'
+
+    if str(scale).upper() == target_scale:
+        return code
+    else:
+        # Scale mismatch - return None to trigger Level 3 fallback
+        return None
 
 
 def get_component_codes_from_categories(locator, component_categories, network_type, peak_demand_kw=None):
@@ -1100,8 +1142,29 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             # Mode 1: Use SUPPLY assembly (may fail with capacity errors for large networks)
             supply_components = get_components_from_supply_assembly(locator, supply_code, 'SUPPLY_COOLING')
         else:
-            # Mode 2: Fallback to component category (RECOMMENDED for district networks)
-            print(f"      Using component settings: {config.system_costs.cooling_components}")
+            # Level 3: Fallback to component category (RECOMMENDED for district networks)
+            # This fallback triggers when:
+            # - No supply code configured, OR
+            # - Supply code scale doesn't match (building-scale for district network), OR
+            # - User explicitly selected "Custom (use component settings below)"
+
+            cooling_components = config.system_costs.cooling_components if config.system_costs.cooling_components else []
+            heat_rejection_components = config.system_costs.heat_rejection_components if config.system_costs.heat_rejection_components else []
+
+            if not cooling_components and not heat_rejection_components:
+                # No assembly, no components configured - MUST create assembly
+                raise ValueError(
+                    f"No DISTRICT-scale cooling assembly or component configuration found for DC network '{network_name}'.\n"
+                    f"Please either:\n"
+                    f"  1. Create a DISTRICT-scale SUPPLY_COOLING assembly in your database, OR\n"
+                    f"  2. Configure 'cooling-components' and 'heat-rejection-components' parameters\n"
+                    f"Current config:\n"
+                    f"  - supply-type-cs: {supply_code_raw}\n"
+                    f"  - cooling-components: {cooling_components}\n"
+                    f"  - heat-rejection-components: {heat_rejection_components}"
+                )
+
+            print(f"      Using component settings: cooling={cooling_components}, heat_rejection={heat_rejection_components}")
             use_fallback = True
 
     elif network_type == 'DH':
@@ -1122,8 +1185,27 @@ def calculate_district_network_costs(locator, config, network_type, network_name
             if supply_components.get('primary'):
                 print(f"        Primary components: {supply_components['primary']}")
         else:
-            # Mode 2: Fallback to component category
-            print(f"      Using component settings: {config.system_costs.heating_components}")
+            # Level 3: Fallback to component category
+            # This fallback triggers when:
+            # - No supply code configured, OR
+            # - Supply code scale doesn't match (building-scale for district network), OR
+            # - User explicitly selected "Custom (use component settings below)"
+
+            heating_components = config.system_costs.heating_components if config.system_costs.heating_components else []
+
+            if not heating_components:
+                # No assembly, no components configured - MUST create assembly
+                raise ValueError(
+                    f"No DISTRICT-scale heating assembly or component configuration found for DH network '{network_name}'.\n"
+                    f"Please either:\n"
+                    f"  1. Create a DISTRICT-scale SUPPLY_HEATING assembly in your database, OR\n"
+                    f"  2. Configure 'heating-components' parameter\n"
+                    f"Current config:\n"
+                    f"  - supply-type-hs: {supply_code_hs_raw}\n"
+                    f"  - heating-components: {heating_components}"
+                )
+
+            print(f"      Using component settings: {heating_components}")
             use_fallback = True
 
     # Calculate peak demand first to filter components by capacity

@@ -1369,8 +1369,15 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
     def _get_auto_default(self):
         """
-        Auto-select most prevalent building-scale and district-scale assemblies from supply.csv.
-        Returns list with up to 2 items: [most_common_building, most_common_district]
+        Auto-select most prevalent building-scale and district-scale assemblies.
+
+        Strategy:
+        1. Find most common building-scale assembly in supply.csv
+        2. Find most common district-scale assembly in supply.csv
+        3. If no district-scale found in supply.csv, auto-select first from database
+        4. If no building-scale found in supply.csv, auto-select first from database
+
+        Returns list with up to 2 items: [building, district] (one from each scale)
         """
         import pandas as pd
         locator = cea.inputlocator.InputLocator(self.config.scenario)
@@ -1415,6 +1422,18 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
             # Stop once we've found both
             if most_common_building and most_common_district:
                 break
+
+        # If no building-scale assembly found in supply.csv, auto-select first from database
+        if most_common_building is None:
+            building_options = [code for code, scale in all_options.items() if scale == 'BUILDING']
+            if building_options:
+                most_common_building = sorted(building_options)[0]  # First alphabetically
+
+        # If no district-scale assembly found in supply.csv, auto-select first from database
+        if most_common_district is None:
+            district_options = [code for code, scale in all_options.items() if scale == 'DISTRICT']
+            if district_options:
+                most_common_district = sorted(district_options)[0]  # First alphabetically
 
         # Return list with non-None values, WITH scale labels
         result = []
@@ -1496,18 +1515,44 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
         # Get the actual config value (stored without labels)
         config_value = super().get()
 
-        # If config has a value, add labels to it
+        # Get all available options with their scales
+        all_options = self._get_all_supply_options()
+
+        # If config has a value, add labels and check if we need to auto-add missing scale
         if config_value:
-            all_options = self._get_all_supply_options()
             labeled_values = []
+            has_district = False
+            has_building = False
+
             for code in config_value:
                 if code in all_options:
                     scale = all_options[code]
                     scale_label = '(building)' if scale == 'BUILDING' else '(district)'
                     labeled_values.append(f"{code} {scale_label}")
+
+                    if scale == 'DISTRICT':
+                        has_district = True
+                    elif scale == 'BUILDING':
+                        has_building = True
                 else:
                     # If code not in database, use it without label
                     labeled_values.append(code)
+
+            # Auto-add missing scale from database (bidirectional)
+            # If only building-scale configured, auto-add first district-scale
+            if has_building and not has_district:
+                district_options = [code for code, scale in all_options.items() if scale == 'DISTRICT']
+                if district_options:
+                    first_district = sorted(district_options)[0]
+                    labeled_values.append(f"{first_district} (district)")
+
+            # If only district-scale configured, auto-add first building-scale
+            elif has_district and not has_building:
+                building_options = [code for code, scale in all_options.items() if scale == 'BUILDING']
+                if building_options:
+                    first_building = sorted(building_options)[0]
+                    labeled_values.append(f"{first_building} (building)")
+
             return labeled_values
 
         # Otherwise, return auto-selected defaults from supply.csv (already labeled)

@@ -257,6 +257,61 @@ START: Calculate costs for building X
    └─ in_dc_network=False AND in_dh_network=False → CASE 3
 ```
 
+## Config Parameter Auto-Selection (Bidirectional)
+
+**Location**:
+- `config.py:1370-1445` (`DistrictSupplyTypeParameter._get_auto_default`)
+- `config.py:1513-1563` (`DistrictSupplyTypeParameter.get`)
+
+The system automatically ensures BOTH building-scale and district-scale assemblies are available, using a bidirectional auto-selection strategy:
+
+**Auto-selection strategy (when config is empty)**:
+1. Find most common **BUILDING-scale** assembly in `supply.csv`
+2. Find most common **DISTRICT-scale** assembly in `supply.csv`
+3. **If no BUILDING-scale found in supply.csv** → Auto-select first from database (alphabetically)
+4. **If no DISTRICT-scale found in supply.csv** → Auto-select first from database (alphabetically)
+
+**Auto-add strategy (when config has value)**:
+1. Check which scales are present in configured values
+2. **If only BUILDING-scale configured** → Auto-add first DISTRICT-scale from database
+3. **If only DISTRICT-scale configured** → Auto-add first BUILDING-scale from database
+
+**Example 1 - Building-only in supply.csv**:
+```python
+# supply.csv contains: SUPPLY_COOLING_AS1 (building scale only)
+# Database contains: AS1, AS2, AS5 (building), AS3, AS4 (district)
+# Config not set → Auto-default returns:
+['SUPPLY_COOLING_AS1 (building)', 'SUPPLY_COOLING_AS3 (district)']
+# AS3 auto-added from database
+```
+
+**Example 2 - District-only configured by user**:
+```python
+# User sets: supply-type-cs = SUPPLY_COOLING_AS4 (district scale only)
+# Database contains: AS1, AS2, AS5 (building), AS3, AS4 (district)
+# Config.get() returns:
+['SUPPLY_COOLING_AS4 (district)', 'SUPPLY_COOLING_AS1 (building)']
+# AS1 auto-added from database
+```
+
+**Example 3 - Building-only configured by user**:
+```python
+# User sets: supply-type-cs = SUPPLY_COOLING_AS1 (building scale only)
+# Database contains: AS1, AS2, AS5 (building), AS3, AS4 (district)
+# Config.get() returns:
+['SUPPLY_COOLING_AS1 (building)', 'SUPPLY_COOLING_AS3 (district)']
+# AS3 auto-added from database
+```
+
+**Why**:
+- District networks require **DISTRICT-scale** assemblies
+- Standalone buildings require **BUILDING-scale** assemblies
+- Ensures both use cases work regardless of what's in supply.csv or user config
+
+**When applied**:
+- When loading config via `parameter.get()` (`config.py:1513-1563`)
+- Works for both auto-default (empty config) and user-configured values
+
 ## Multi-Level Fallback Logic
 
 The system has **3 levels** of fallbacks when determining supply systems for buildings. These fallbacks cascade from config-level to assembly-level to component-level.
@@ -306,33 +361,75 @@ def apply_supply_code_fallback_for_standalone(building, is_in_dc, is_in_dh):
 
 ### Level 2: Multi-Select Scale Filtering
 
-**Location**: `supply_costs.py:73-140` (`filter_supply_code_by_scale`)
+**Location**: `supply_costs.py:73-181` (`filter_supply_code_by_scale`, `_verify_scale_match`)
 
-**Trigger**: Config parameter has **multiple codes** (multi-select)
+**Trigger**: Config parameter has supply codes (single or multi-select)
 
 **Process**:
-1. **1 code** → Use it directly (no filtering)
-2. **2 codes** → Filter by target scale:
-   - `is_standalone=True` → Select BUILDING-scale code
-   - `is_standalone=False` → Select DISTRICT-scale code
-3. **No scale match** → Return first code
+1. **Empty list** → Return `None` (proceed to Level 3)
+2. **1 code** → Verify scale match:
+   - Scale matches target → Return code
+   - Scale mismatch → Return `None` (proceed to Level 3)
+3. **2 codes** → Filter by target scale:
+   - `is_standalone=True` → Select BUILDING-scale code if exists
+   - `is_standalone=False` → Select DISTRICT-scale code if exists
+   - No scale match → Return `None` (proceed to Level 3)
 
 **Example**:
 ```python
 supply_codes = ["AS1 (building)", "AS4 (district)"]
 
-filter_supply_code_by_scale(supply_codes, is_standalone=True)
-# → Returns "AS1"
+# District network (is_standalone=False)
+filter_supply_code_by_scale(supply_codes, 'SUPPLY_COOLING', is_standalone=False)
+# → Returns "AS4" (DISTRICT scale matches)
 
-filter_supply_code_by_scale(supply_codes, is_standalone=False)
-# → Returns "AS4"
+# District network with only building-scale code
+supply_codes = ["AS1 (building)"]
+filter_supply_code_by_scale(supply_codes, 'SUPPLY_COOLING', is_standalone=False)
+# → Returns None (scale mismatch, triggers Level 3)
 ```
 
 **Used in**:
-- District network cost calculation (`supply_costs.py:823, 844-845`)
+- District network cost calculation (`supply_costs.py:1132, 1174-1175`)
 - Config fallback for standalone buildings (`supply_costs.py:514-516`)
 
-### Level 3: DHW Component Fallback
+### Level 3A: District Network Component Fallback
+
+**Location**: `supply_costs.py:1145-1168` (DC networks), `supply_costs.py:1188-1209` (DH networks)
+
+**Trigger**: Level 2 returns `None` (no matching scale assembly found) for district network
+
+**Process**:
+1. Check if component categories configured (`cooling-components`, `heating-components`, etc.)
+2. If components configured → Use component-based system (fallback succeeds)
+3. If NO components configured → **Raise error** asking user to create assembly
+
+**Example - DC network**:
+```python
+# Level 2 returned None (no DISTRICT-scale assembly)
+# Check component configuration
+cooling_components = config.system_costs.cooling_components  # ['VAPOR_COMPRESSION_CHILLERS']
+heat_rejection_components = config.system_costs.heat_rejection_components  # ['COOLING_TOWERS']
+
+if cooling_components:
+    # SUCCESS: Use component-based system
+    print("Using component settings: cooling=['VAPOR_COMPRESSION_CHILLERS']")
+else:
+    # ERROR: No assembly, no components
+    raise ValueError("No DISTRICT-scale cooling assembly or component configuration found...")
+```
+
+**When triggered**: District network cost calculation when no suitable assembly found (`supply_costs.py:1145-1168`, `1188-1209`)
+
+**Error message format**:
+```
+No DISTRICT-scale cooling assembly or component configuration found for DC network 'validation'.
+Please either:
+  1. Create a DISTRICT-scale SUPPLY_COOLING assembly in your database, OR
+  2. Configure 'cooling-components' and 'heat-rejection-components' parameters
+```
+
+### Level 3B: DHW Component Fallback
 
 **Location**: `supply_costs.py:183-384` (`apply_dhw_component_fallback`)
 
@@ -374,6 +471,7 @@ feedstock_to_fuel = {
 
 ## Fallback Priority Chain
 
+### For Standalone Buildings (Cases 1, 3, 5, 6)
 ```
 1. Check network connectivity (nodes.shp)
    ↓
@@ -381,19 +479,36 @@ feedstock_to_fuel = {
    ├─ Level 1: Check supply.csv scale
    │  └─ DISTRICT scale? → Use config (filtered to BUILDING)
    │
-   ├─ Level 2: Multi-select filtering
-   │  └─ Config has multiple codes? → Filter by is_standalone
+   ├─ Level 2: Multi-select filtering & scale verification
+   │  └─ Config code matches BUILDING scale? → Use it
+   │  └─ No match? → Return None (proceed to Level 3B)
    │
-   └─ Level 3: DHW component fallback
+   └─ Level 3B: DHW component fallback
       └─ Assembly missing components? → Map feedstock to boiler
+```
+
+### For District Networks (Cases 4, 5, 6)
+```
+1. Check network connectivity (nodes.shp)
+   ↓
+2. For district services:
+   ├─ Level 2: Multi-select filtering & scale verification
+   │  └─ Config code matches DISTRICT scale? → Use it
+   │  └─ No match? → Return None (proceed to Level 3A)
+   │
+   └─ Level 3A: Component category fallback
+      ├─ Component categories configured? → Use component-based system
+      └─ No components? → ERROR: Must create assembly or configure components
 ```
 
 **Decision flow**:
 ```
 Network layout (truth)
   → Config parameters (Level 1 & 2)
-    → Assembly components (Level 3)
-      → Feedstock-based components (last resort)
+    → Scale verification (Level 2)
+      → Assembly components OR component categories (Level 3A)
+        → Feedstock-based DHW components (Level 3B, buildings only)
+          → ERROR if nothing configured (district networks only)
 ```
 
 ### Output Files
