@@ -423,10 +423,25 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
         print(f"  ⚠ No buildings with demand found")
         return None
 
+    # Load potentials and initialize classes (same as cost module lines 1710-1720)
+    # Suppress optimization messages about missing potentials
+    import sys
+    import io
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        domain.load_potentials()
+        domain._initialize_energy_system_descriptor_classes()
+    finally:
+        sys.stdout = old_stdout
+
     # Collect building objects and potentials
+    from cea.optimization_new.building import Building
+    building_energy_potentials = Building.distribute_building_potentials(
+        domain.energy_potentials, domain.buildings
+    )
     network_buildings = domain.buildings
-    building_energy_potentials = {b.identifier: b.potentials for b in network_buildings if hasattr(b, 'potentials')}
-    domain_potentials = domain.potentials if hasattr(domain, 'potentials') else []
+    domain_potentials = domain.energy_potentials
 
     # REUSE calculate_district_network_costs from cost module
     print(f"  Calculating network supply system using cost module...")
