@@ -1,280 +1,339 @@
-# Anthropogenic Heat Assessment
+# Heat Rejection (Anthropogenic Heat)
 
 ## Main API
 
-**`anthropogenic_heat_main(locator, config) → None`** - Calculate heat rejection from energy systems
+**`anthropogenic_heat_main(locator, config) → None`** - Calculate heat rejection from building and district energy systems
 
-**`calculate_standalone_heat_rejection(locator, config, network_types) → dict`** - Building-level heat
+**`calculate_standalone_heat_rejection(locator, config, network_types) → dict`** - Calculate building-scale heat rejection for all buildings
 
-**`calculate_network_heat_rejection(locator, config, network_type, network_name, standalone_results) → dict`** - District plant heat
+**`calculate_network_heat_rejection(locator, config, network_type, network_name, standalone_results) → dict`** - Calculate district network plant heat rejection
 
-## Key Concepts
+**`merge_heat_rejection_results(locator, standalone_results, network_results, is_standalone_only) → dict`** - Merge building and network results using 4-case logic
 
-**Anthropogenic Heat** = Heat_Rejection + Electricity_for_Heat_Rejection
+## Architecture Overview
 
-- **Heat Rejection**: Waste heat from condenser, flue gas, etc. (kWh)
-- **Electricity for Heat Rejection**: Cooling tower fans, pumps (kWh)
-- **Total**: Both components added together
+Heat rejection module mirrors the cost feature's architecture:
+- **4-case building connectivity logic** for determining which services are standalone vs district
+- **3-level fallback system** for supply system selection
+- **Reuses cost module functions** for consistency (supply system creation, DHW fallback)
+- **Extracts heat_rejection** from SupplySystem objects instead of costs
 
-**Formula (from `cooling_tower.py:22-39`)**:
+## 4-Case Building Connectivity Logic
+
+Mirrors `cea/analysis/costs/AGENTS.md` with same connectivity rules:
+
+### Case 1: Standalone-only OR building not in any network
+**Triggers when**:
+- `network_name = "(none)"` OR
+- Building not found in any network nodes.shp
+
+**Service provision**: All services standalone (cooling, heating, DHW)
+
+**Heat rejection**: Include ALL heat rejection from building-scale systems
+
+**Example**:
 ```python
-# Chiller condenser heat
-q_condenser_kW = q_cooling_kW * (1 + 1/COP)
-
-# Cooling tower auxiliary power (fans, pumps)
-p_fan_kW = q_condenser_kW * aux_power_fraction  # ~2-5% typically
-
-# Total anthropogenic heat
-q_anthropogenic_kW = q_condenser_kW + p_fan_kW
+# Case 1: All buildings standalone
+if is_standalone_only or building_id not in (dc_connected | dh_connected):
+    filtered_heat = all_heat_rejection  # Include everything
 ```
 
-## Data Flow
+---
+
+### Case 2: Building in BOTH DC+DH networks
+**Triggers when**: Building found in both DC/nodes.shp AND DH/nodes.shp
+
+**Service provision**:
+- Cooling: District-scale (from DC network)
+- Heating: District-scale (from DH network)
+- DHW: District-scale (from DH network)
+
+**Heat rejection**: ZERO standalone heat (all services from district)
+
+**Example**:
+```python
+# Case 2: Both networks - skip building entirely
+if is_in_dc and is_in_dh:
+    continue  # No standalone services = no building-scale heat
+```
+
+**Use case**: Dense urban areas with full district energy coverage
+
+---
+
+### Case 3: Building in DC network only
+**Triggers when**: Building in DC/nodes.shp, NOT in DH/nodes.shp
+
+**Service provision**:
+- Cooling: District-scale (from DC network)
+- Heating: Building-scale (standalone)
+- DHW: Building-scale (standalone)
+
+**Heat rejection**: Include only heating/DHW heat (high-temperature services)
+
+**Example**:
+```python
+# Case 3: DC only - keep only high-temp heat (heating/DHW standalone)
+if is_in_dc and not is_in_dh:
+    filtered_heat = filter_by_service_temperature(
+        heat_data, temp_prefixes=['T100', 'T90', 'T80', 'T60']
+    )
+```
+
+**Use case**: Cooling-dominant climates, phased district network deployment
+
+---
+
+### Case 4: Building in DH network only
+**Triggers when**: Building in DH/nodes.shp, NOT in DC/nodes.shp
+
+**Service provision**:
+- Cooling: Building-scale (standalone)
+- Heating: District-scale (from DH network)
+- DHW: District-scale (from DH network)
+
+**Heat rejection**: Include only cooling heat (low-temperature service)
+
+**Example**:
+```python
+# Case 4: DH only - keep only low-temp heat (cooling standalone)
+if is_in_dh and not is_in_dc:
+    filtered_heat = filter_by_service_temperature(
+        heat_data, temp_prefixes=['T25', 'T20', 'T15']
+    )
+```
+
+**Use case**: Heating-dominant climates, existing DH infrastructure
+
+---
+
+## Decision Tree
 
 ```
-Building Demand (8760 hours)
-    ↓
-Domain.buildings[i].stand_alone_supply_system
-    ↓
-SupplySystem.heat_rejection → Dict[str, pd.Series]
-    ↓ (energy carrier → time series)
-    │
-    ├→ 'T_AIR_20C': [h1, h2, ..., h8760]  # Air-based rejection
-    ├→ 'T_AIR_ODB': [h1, h2, ..., h8760]  # Outdoor air rejection
-    └→ Total = sum(all carriers)
-         ↓
-    Annual_MWh = sum(8760 hours) / 1000
-    Peak_kW = max(8760 hours)
+START: Calculate heat rejection for building X
+
+├─ network_name = "(none)" or empty?
+│  └─ YES → CASE 1 (all buildings standalone)
+│
+└─ NO → Check building connectivity:
+   ├─ In DC/nodes.shp? → is_in_dc = True/False
+   └─ In DH/nodes.shp? → is_in_dh = True/False
+
+   Determine case:
+   ├─ is_in_dc=True AND is_in_dh=True → CASE 2
+   ├─ is_in_dc=True AND is_in_dh=False → CASE 3
+   ├─ is_in_dc=False AND is_in_dh=True → CASE 4
+   └─ is_in_dc=False AND is_in_dh=False → CASE 1
 ```
+
+## Heat Rejection Extraction
+
+### From SupplySystem Objects
+
+```python
+# SupplySystem.heat_rejection is a dict
+supply_system.heat_rejection = {
+    'T25A': pd.Series([0.0, 5.2, ...]),  # Cooling heat (chiller to cooling tower)
+    'T100A': pd.Series([10.2, 15.5, ...])  # DHW heat (boiler exhaust)
+}
+
+# Keys: Energy carrier codes (temperature + state)
+# Values: Hourly heat rejection in kWh (8760 or 8784 values)
+```
+
+### Service-Based Filtering
+
+**Current implementation** (transitional):
+- Uses temperature prefix matching to identify service type
+- `T100, T90, T80, T60` → Heating/DHW (high-temperature)
+- `T25, T20, T15` → Cooling (low-temperature)
+
+**Future enhancement**:
+- Extract explicit service metadata from SupplySystem
+- Add `service_mapping` dict to track carrier-to-service relationships
 
 ## Key Patterns
 
-### Building-Level Heat Rejection
+### ✅ DO: Use helper functions for case logic
 
 ```python
-# Extract from Domain (already calculated by optimization-new)
-domain = Domain(config, locator)
-for building in domain.buildings:
-    heat_rejection = building.stand_alone_supply_system.heat_rejection
-    # Dict[energy_carrier_code, pd.Series of 8760 hours]
+from cea.analysis.heat.heat_rejection_helpers import determine_building_case, filter_heat_by_case
 
-    annual_total = sum([series.sum() for series in heat_rejection.values()])
-    combined_hourly = pd.concat(list(heat_rejection.values()), axis=1).sum(axis=1)
-    peak_kw = combined_hourly.max()
+# Determine connectivity case
+case = determine_building_case(
+    building_id, dc_connected_buildings, dh_connected_buildings, is_standalone_only
+)
+
+# Filter heat based on case
+filtered_heat, filtered_systems = filter_heat_by_case(
+    heat_data, supply_systems, case
+)
 ```
 
-### District Network Heat Rejection
+### ✅ DO: Reuse cost module functions
 
 ```python
-# Create network supply system
-supply_system = create_network_supply_system(locator, config, network_type, ...)
-total_heat_rejection = supply_system.heat_rejection
+from cea.analysis.costs.supply_costs import (
+    calculate_all_buildings_as_standalone,
+    get_dhw_component_fallback,
+    filter_supply_code_by_scale
+)
 
-# Multiple plants - split equally
-num_plants = len(plant_nodes)
-plant_heat_annual = total_annual / num_plants
-plant_heat_hourly = total_hourly / num_plants
+# Calculate building-scale systems (reuses entire cost workflow)
+building_cost_results = calculate_all_buildings_as_standalone(locator, cost_config)
+
+# Extract heat_rejection instead of costs
+for building_id, cost_data in building_cost_results.items():
+    supply_system = cost_data.get('supply_system')
+    heat_rejection_data = supply_system.heat_rejection
 ```
 
-### Spatial Output (Coordinates)
+### ❌ DON'T: Infer service from temperature alone (fragile)
 
 ```python
-# Building coordinates from Domain
-building.geometry.centroid → (x, y)
+# Current (transitional) - works but fragile
+if 'T100' in carrier:
+    service = 'dhw'  # Assumes T100 is always DHW
 
-# Plant coordinates from network layout
-nodes_gdf = gpd.read_file(locator.get_network_layout_nodes_shapefile(...))
-plant_nodes = nodes_gdf[nodes_gdf['Type'].str.contains('PLANT')]
-x, y = plant_node.geometry.x, plant_node.geometry.y
+# Better (future) - explicit service mapping
+service = service_mapping.get(carrier, 'unknown')
+```
+
+### ❌ DON'T: Duplicate DHW fallback logic
+
+```python
+# ❌ DON'T reimplement feedstock-to-boiler mapping
+feedstock_to_boiler = {'GRID': 'BO5', 'NATURALGAS': 'BO1'}  # Duplicates cost logic
+
+# ✅ DO reuse helper from cost module
+from cea.analysis.costs.supply_costs import get_dhw_component_fallback
+component_code = get_dhw_component_fallback(locator, building_id, feedstock)
+```
+
+## 3-Level Fallback System
+
+Mirrors `cea/analysis/costs/AGENTS.md` fallback architecture:
+
+### Level 1: Config Fallback (Scale Mismatch)
+**When**: Building's supply.csv has DISTRICT-scale code but building is standalone for that service
+
+**Action**: Replace with BUILDING-scale from config
+
+**Example**:
+```python
+# supply.csv: type_cs = "AS4" (DISTRICT scale)
+# Building in Case 4 (DH only) - cooling is standalone
+# Config: supply_type_cs = ["AS1 (building)", "AS4 (district)"]
+# Result: Use AS1 (building-scale) for standalone cooling
+```
+
+**Implementation**: `heat_rejection_helpers.apply_heat_rejection_config_fallback()`
+
+---
+
+### Level 2: Scale Filtering
+**When**: Config has multi-select with both BUILDING and DISTRICT scales
+
+**Action**: Filter to appropriate scale based on `is_standalone`
+
+**Example**:
+```python
+from cea.analysis.costs.supply_costs import filter_supply_code_by_scale
+
+# For standalone cooling (Case 4)
+code = filter_supply_code_by_scale(
+    locator, config.supply_type_cs, 'SUPPLY_COOLING', is_standalone=True
+)  # Returns "AS1" (building-scale)
+
+# For district network
+code = filter_supply_code_by_scale(
+    locator, config.supply_type_cs, 'SUPPLY_COOLING', is_standalone=False
+)  # Returns "AS4" (district-scale)
+```
+
+---
+
+### Level 3: Component Fallback
+
+**Level 3A - District Networks**: Use component categories when no DISTRICT-scale assembly
+
+```python
+# No DISTRICT-scale cooling assembly found
+if not supply_code and config.cooling_components:
+    # Use component-based system
+    user_component_selection = {
+        'primary': ['CH1'],  # From cooling_components
+        'tertiary': ['CT1']  # From heat_rejection_components
+    }
+```
+
+**Level 3B - DHW**: Map feedstock to boiler when SUPPLY_HOTWATER has no components
+
+```python
+from cea.analysis.costs.supply_costs import get_dhw_component_fallback
+
+# Feedstock = 'GRID' → BO5 (electric boiler)
+# Feedstock = 'NATURALGAS' → BO1 (gas boiler)
+component_code = get_dhw_component_fallback(locator, building_id, feedstock)
 ```
 
 ## Output Files
 
-### 1. `heat_rejection_buildings.csv` (Summary)
+### heat_rejection_buildings.csv
+Summary by building/plant:
+
 ```csv
-name,type,x_coord,y_coord,heat_rejection_annual_MWh,peak_heat_rejection_kW,peak_datetime,scale
-B1001,building,374252.82,146016.62,0.47,0.14,2013-01-02 06:00:00,BUILDING
-crycry_DC_plant_001,plant,374305.97,146155.99,11537.03,2333.37,2011-05-08 16:00:00,DISTRICT
+name, type, GFA_m2, x_coord, y_coord, heat_rejection_annual_MWh,
+peak_heat_rejection_kW, peak_datetime, scale, case, case_description
 ```
 
-**Rows**:
-- Buildings: One row per building with `type='building'`, `scale='BUILDING'`
-- Plants: One row per plant node with `type='plant'`, `scale='DISTRICT'`
+- `case`: 1, 2, 3, or 4 (connectivity case)
+- `case_description`: Human-readable ("Standalone", "Both DC+DH", etc.)
+- `GFA_m2`: Building floor area (None for plants)
 
-**Key columns**:
-- `type`: 'building' or 'plant'
-- `scale`: 'BUILDING' or 'DISTRICT'
-- `x_coord, y_coord`: Spatial location for map layers
-- **No GFA column** - GFA calculated from zone geometry when needed
+### heat_rejection_components.csv
+Component-level breakdown:
 
-### 2. Individual Hourly Files: `{name}.csv`
-One file per building/plant in `/outputs/data/heat/`:
 ```csv
-DATE,heat_rejection_kW
-2020-01-01 00:00:00,1115.34
-2020-01-01 01:00:00,1082.71
-...
+name, type, component_code, component_type, placement,
+capacity_kW, heat_rejection_annual_MWh, peak_heat_rejection_kW, scale
 ```
 
-**Size**: 8760 rows per file (leap day removed)
+### heat_rejection_hourly_[building_name].csv
+Individual hourly profiles:
 
-**Usage**:
-- Time series plotting (district-level)
-- Map layer temporal animation
-- Building-specific analysis
-
-### 3. `heat_rejection_components.csv` (Component Breakdown)
 ```csv
-name,type,component_code,component_type,placement,capacity_kW,heat_rejection_annual_MWh,peak_heat_rejection_kW,scale
-B1014,building,CH2,VapourCompressionChiller,primary,650.398,,,BUILDING
-B1014,building,CT2,CoolingTower,tertiary,773.11,,,BUILDING
-B1014,building,T25A,energy_carrier,heat_rejection,0.0,3509.29,797.47,BUILDING
+date, heat_rejection_kW
 ```
 
-**Rows per building**:
-- Component rows: Equipment capacity (component_type = equipment class)
-- Energy carrier rows: Heat rejection by carrier (component_type = 'energy_carrier')
+One file per building/plant, 8760 hours (non-leap year)
 
-**Energy carrier codes**:
-- `T25A`: Cooling heat rejection (from chillers/cooling towers)
-- `T100A`: DHW heat rejection (from boilers/high-temp systems)
+## Common Pitfalls
 
-## 6-Case Building Connectivity Logic
-
-**Same as system-costs**:
-
-| Case | Network Status | Heat Rejection Calculated |
-|------|----------------|--------------------------|
-| 1 | Standalone (no network) | All services (building-scale) |
-| 2 | In network | From network (no building heat) |
-| 3 | Not in network | All services (fallback to standalone) |
-| 4 | Both DC & DH | None (all from networks) |
-| 5 | DC only | Heating & DHW (building-scale) |
-| 6 | DH only | Cooling (building-scale) |
-
-**Implementation**: Uses same `filter_supply_code_by_scale()` logic as system-costs
-
-## ✅ DO
-
-```python
-# Extract heat rejection from existing optimization-new objects
-heat_rejection = supply_system.heat_rejection  # Dict already populated
-
-# Combine all energy carriers for totals
-total_annual = sum([series.sum() for series in heat_rejection.values()])
-combined_hourly = pd.concat(list(heat_rejection.values()), axis=1).sum(axis=1)
-
-# Split multiple plants equally
-plant_heat = total_heat / len(plant_nodes)
-
-# Get coordinates from geometry
-x, y = geometry.centroid.x, geometry.centroid.y
-```
-
-## ❌ DON'T
-
-```python
-# Don't recalculate heat rejection - it's already in supply_system
-# Don't allocate plant heat to buildings - keep at plant location
-# Don't create new equations - reuse optimization-new calculations
-# Don't forget to divide by 1000 to convert kWh → MWh for output
-```
-
-## Multiple Plants Handling
-
-When a network has multiple PLANT nodes:
-
-1. **Detect plants**: Read `nodes.shp` and filter `Type == 'PLANT'`
-2. **Calculate total**: One supply system for entire network
-3. **Split equally**: `plant_heat = total_heat / num_plants`
-4. **Assign coordinates**: Each plant gets its own (x, y) from nodes.shp
-
-**Output example**:
-```csv
-validation_DC_plant_001, plant, 103.860, 1.295, 925.2, 310.2, DISTRICT
-validation_DC_plant_002, plant, 103.865, 1.298, 925.2, 310.2, DISTRICT
-```
-
-## Energy Carrier Classification
-
-**Releasable environmental carriers** (from `supplySystemStructure.py:282-297`):
-- Air-based thermal carriers: `T_AIR_20C`, `T_AIR_ODB`, etc.
-- These represent heat rejected to outdoor air
-- Automatically tracked by `SupplySystem._add_to_heat_rejection()`
-
-**Not included** (by design):
-- Grid exports: Electrical energy exported, not heat rejection
-- Infinite carriers: Fuel supplies, not environmental outputs
-
-## Visualisation Integration
-
-### Plot Configuration: `[plots-heat-rejection]`
-
-**Single metric only**: `heat_rejection`
-```ini
-y-metric-to-plot = heat_rejection
-y-metric-to-plot.type = ChoiceParameter  # Single choice
-y-metric-to-plot.choices = heat_rejection
-
-y-normalised-by = no_normalisation
-y-normalised-by.type = ChoiceParameter
-y-normalised-by.choices = no_normalisation, gross_floor_area, conditioned_floor_area
-```
-
-### Normalisation Logic
-
-**For buildings**:
-```python
-# GFA from zone geometry
-gfa_m2 = zone.loc[building_name].geometry.area * zone.loc[building_name].floors_ag
-normalised = heat_rejection_MWh / gfa_m2 * 1000  # kWh/m²
-```
-
-**For plants (district-scale)**:
-```python
-# Get all buildings connected to this network
-connected_buildings = network.get_consumer_buildings()
-total_gfa = sum(zone.loc[bid].geometry.area * zone.loc[bid].floors_ag for bid in connected_buildings)
-
-# Divide by number of plants
-plant_gfa = total_gfa / num_plants
-normalised = heat_rejection_MWh / plant_gfa * 1000  # kWh/m²
-```
-
-✅ **DO**: Treat plants as "buildings" with serviced GFA for normalisation
-❌ **DON'T**: Use plant footprint area - meaningless for district systems
-
-### Data Loader Integration
-
-Add to `cea/visualisation/a_data_loader.py`:
-```python
-dict_plot_metrics_cea_feature = {
-    'demand': demand_metrics,
-    'heat-rejection': ['heat_rejection'],  # Single metric
-    # ...
-}
-
-dict_plot_analytics_cea_feature = {
-    'demand': demand_analytics,
-    'heat-rejection': [],  # No analytics metrics
-    # ...
-}
-```
-
-### Map Layer Integration
-
-When user selects "Anthropogenic Heat Rejection" from map dropdown:
-1. Load `heat_rejection_buildings.csv`
-2. Display points colored by `heat_rejection_annual_MWh`
-3. Distinguish buildings (circles) from plants (stars/squares)
-4. Set plot context: `{"feature": "heat-rejection"}`
-5. Plot form automatically updates with heat rejection config options
+1. **Case 2 buildings**: Don't forget they have ZERO standalone heat (all from district)
+2. **Temperature heuristics**: Current implementation uses temp prefixes - not 100% reliable
+3. **DHW system**: Separate from main system, must be created and merged separately
+4. **GFA_m2**: Read from zone geometry, not from supply.csv
+5. **Leap year**: Always remove Feb 29 to ensure 8760 hours
 
 ## Related Files
 
-- `cea/optimization_new/supplySystem.py:58,398-409` - Heat rejection tracking
-- `cea/technologies/cooling_tower.py:22-39` - Anthropogenic heat calculation
-- `cea/analysis/costs/supply_costs.py` - Similar structure (costs vs. heat)
-- `cea/technologies/network_layout/` - Plant node operations
-- `cea/visualisation/a_data_loader.py` - Plot metrics registration
-- `cea/visualisation/plot_main.py` - Plot orchestration
-- `cea/default.config` - Plot configuration parameters
+**Main module**:
+- `heat_rejection.py:49-133` - Main orchestration (`anthropogenic_heat_main`)
+- `heat_rejection.py:136-226` - Building-scale calculation
+- `heat_rejection.py:350-551` - Network-scale calculation
+- `heat_rejection.py:627-714` - 4-case merging logic
+
+**Helpers**:
+- `heat_rejection_helpers.py` - Case determination and filtering functions
+
+**Reused from costs module**:
+- `supply_costs.py:calculate_all_buildings_as_standalone` - Building supply systems
+- `supply_costs.py:get_dhw_component_fallback` - DHW feedstock-to-boiler mapping
+- `supply_costs.py:filter_supply_code_by_scale` - Scale filtering
+
+**Configuration**:
+- `cea/default.config:[anthropogenic-heat]` - Parameters (mirrors system-costs)
+
+**Reference documentation**:
+- `cea/analysis/costs/AGENTS.md` - Cost feature architecture (reference for alignment)

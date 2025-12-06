@@ -228,47 +228,42 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
 
 def create_dhw_heat_rejection_system(locator, building, main_supply_system):
     """
-    Create DHW supply system to extract heat rejection (mirrors apply_dhw_component_fallback).
+    Create DHW supply system to extract heat rejection.
 
-    This is needed because DHW is a separate service with its own heat rejection.
-    The main building supply system only has cooling OR heating, not DHW.
+    Reuses helper functions from supply_costs module to ensure consistency.
+    DHW is a separate service with its own heat rejection that must be tracked.
 
     :param locator: InputLocator instance
     :param building: Building instance
     :param main_supply_system: Main supply system (heating or cooling)
     :return: DHW SupplySystem instance or None
     """
-    from cea.analysis.costs.supply_costs import apply_dhw_component_fallback
+    import pandas as pd
+    from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
+    from cea.optimization_new.supplySystem import SupplySystem
+    from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
+    from cea.optimization_new.domain import Domain
+    from cea.optimization_new.component import Component
+    from cea.analysis.costs.supply_costs import get_dhw_component_fallback
+    import cea.config
 
-    # Use the same DHW fallback logic from supply_costs
-    # This creates a complete DHW supply system with heat rejection tracking
     try:
-        dhw_system = apply_dhw_component_fallback(locator, building, main_supply_system)
-
-        # apply_dhw_component_fallback returns costs dict, not the supply system
-        # We need to recreate the DHW supply system to get heat rejection
-        # Actually, we need a different approach - let's directly call the DHW system creation
-
-        # Import the necessary modules
-        import pandas as pd
-        from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-        from cea.optimization_new.supplySystem import SupplySystem
-        from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-        from cea.optimization_new.domain import Domain
-        from cea.optimization_new.component import Component
-        from cea.analysis.costs.supply_costs import get_dhw_component_fallback
-        import cea.config
-
-        # Read building's DHW supply system code from supply.csv
+        # Read building's DHW supply code from supply.csv
         supply_systems_df = pd.read_csv(locator.get_building_supply())
         building_supply = supply_systems_df[supply_systems_df['name'] == building.identifier]
 
-        if building_supply.empty or 'supply_type_dhw' not in building_supply.columns:
+        if building_supply.empty:
             return None
 
-        dhw_supply_code = building_supply['supply_type_dhw'].values[0]
+        dhw_supply_code = building_supply.get('type_dhw') or building_supply.get('supply_type_dhw')
+        if dhw_supply_code is None or (hasattr(dhw_supply_code, 'empty') and dhw_supply_code.empty):
+            return None
 
-        # Read SUPPLY_HOTWATER.csv to get feedstock
+        # Extract value if Series
+        if hasattr(dhw_supply_code, 'values'):
+            dhw_supply_code = dhw_supply_code.values[0]
+
+        # Read SUPPLY_HOTWATER assembly to get feedstock
         dhw_assemblies_path = locator.get_database_assemblies_supply_hot_water()
         if not pd.io.common.file_exists(dhw_assemblies_path):
             return None
@@ -282,10 +277,10 @@ def create_dhw_heat_rejection_system(locator, building, main_supply_system):
         feedstock = dhw_assembly['feedstock'].values[0]
 
         # Skip if feedstock is NONE (no DHW system)
-        if not feedstock or feedstock == 'NONE':
+        if not feedstock or pd.isna(feedstock) or str(feedstock).upper() == 'NONE':
             return None
 
-        # Get fallback component code based on feedstock
+        # REUSE helper from supply_costs - get fallback component code based on feedstock
         component_code = get_dhw_component_fallback(locator, building.identifier, feedstock)
         if not component_code:
             return None
@@ -305,11 +300,11 @@ def create_dhw_heat_rejection_system(locator, building, main_supply_system):
         if dhw_demand_profile.max() == 0:
             return None
 
-        # Create DHW demand flow
+        # Create DHW demand flow (uses T60W energy carrier for medium-temperature DHW)
         dhw_demand_flow = EnergyFlow(
             input_category='primary',
             output_category='consumer',
-            energy_carrier_code='T60W',  # Medium temperature for DHW
+            energy_carrier_code='T60W',
             energy_flow_profile=dhw_demand_profile
         )
 
@@ -343,7 +338,6 @@ def create_dhw_heat_rejection_system(locator, building, main_supply_system):
             system_structure.capacity_indicators,
             dhw_demand_flow
         )
-
         dhw_supply_system.evaluate()
 
         return dhw_supply_system
@@ -626,13 +620,21 @@ def calculate_network_demand_profile(locator, connected_building_ids, network_ty
 
 def merge_heat_rejection_results(locator, standalone_results, network_results, is_standalone_only):
     """
-    Merge standalone and network heat rejection results.
+    Merge standalone and network heat rejection results using 4-case logic.
+
+    4-Case Building Connectivity Logic:
+    - Case 1: Standalone-only mode OR building not in any network → all services standalone
+    - Case 2: Building in BOTH DC+DH networks → all services from district, zero standalone
+    - Case 3: Building in DC only → cooling from district, heating/DHW standalone
+    - Case 4: Building in DH only → heating/DHW from district, cooling standalone
 
     :param standalone_results: dict from calculate_standalone_heat_rejection
     :param network_results: dict from calculate_network_heat_rejection
     :param is_standalone_only: bool, if True all buildings are standalone
     :return: dict with merged results
     """
+    from cea.analysis.heat.heat_rejection_helpers import determine_building_case, filter_heat_by_case, get_case_description
+
     merged = {
         'buildings': [],
         'components': []
@@ -650,61 +652,20 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
 
     # Process standalone buildings
     for building_id, data in standalone_results.items():
-        # Determine what services this building provides standalone
-        # - Buildings in DC network: Include only WW (DHW) heat rejection (cooling from district)
-        # - Buildings in DH network: Include only cooling heat rejection (heating/DHW from district)
-        # - Buildings in both networks: Skip completely (all services from district)
-        # - Standalone buildings: Include ALL heat rejection
+        # Determine connectivity case
+        case = determine_building_case(
+            building_id, dc_connected_buildings, dh_connected_buildings, is_standalone_only
+        )
 
-        is_in_dc = building_id in dc_connected_buildings
-        is_in_dh = building_id in dh_connected_buildings
+        # Filter heat rejection by case
+        supply_systems = data.get('supply_systems', [])
+        filtered_heat_rejection, filtered_supply_systems = filter_heat_by_case(
+            data['heat_rejection'], supply_systems, case
+        )
 
-        # Skip buildings in BOTH networks (all services from district)
-        if is_in_dc and is_in_dh:
+        # Case 2 (both networks): Skip building entirely - no standalone services
+        if case == 2:
             continue
-
-        # Filter heat rejection by service type
-        filtered_heat_rejection = {}
-        filtered_supply_systems = []
-
-        if data['heat_rejection']:
-            # Get the supply systems to filter by service type
-            supply_systems = data.get('supply_systems', [])
-
-            if is_in_dc and not is_in_dh:
-                # Building in DC network: Only include WW (DHW) heat rejection
-                # Identify WW supply systems (boilers with T100A heat rejection)
-                for system in supply_systems:
-                    if hasattr(system, 'heat_rejection') and system.heat_rejection:
-                        # Check if this system has high-temperature heat rejection (T100A from boilers = DHW)
-                        for carrier, heat_series in system.heat_rejection.items():
-                            if 'T100' in carrier or 'T90' in carrier or 'T80' in carrier:
-                                # This is DHW heat rejection (high temperature from boilers)
-                                if carrier in filtered_heat_rejection:
-                                    filtered_heat_rejection[carrier] = filtered_heat_rejection[carrier] + heat_series
-                                else:
-                                    filtered_heat_rejection[carrier] = heat_series
-                                if system not in filtered_supply_systems:
-                                    filtered_supply_systems.append(system)
-
-            elif is_in_dh and not is_in_dc:
-                # Building in DH network: Only include cooling heat rejection (T25A from chillers)
-                for system in supply_systems:
-                    if hasattr(system, 'heat_rejection') and system.heat_rejection:
-                        for carrier, heat_series in system.heat_rejection.items():
-                            if 'T25' in carrier or 'T20' in carrier or 'T15' in carrier:
-                                # This is cooling heat rejection (low temperature from chillers/cooling towers)
-                                if carrier in filtered_heat_rejection:
-                                    filtered_heat_rejection[carrier] = filtered_heat_rejection[carrier] + heat_series
-                                else:
-                                    filtered_heat_rejection[carrier] = heat_series
-                                if system not in filtered_supply_systems:
-                                    filtered_supply_systems.append(system)
-
-            else:
-                # Standalone building: Include ALL heat rejection
-                filtered_heat_rejection = data['heat_rejection']
-                filtered_supply_systems = supply_systems
 
         if filtered_heat_rejection:
             # Calculate totals from filtered heat rejection
@@ -731,9 +692,11 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
                 'peak_heat_rejection_kW': peak_kw,
                 'peak_datetime': peak_datetime,
                 'scale': 'BUILDING',
+                'case': case,  # NEW: Track which case applies
+                'case_description': get_case_description(case),  # NEW: Human-readable description
                 'hourly_profile': combined_hourly,
-                'heat_rejection_by_carrier': filtered_heat_rejection,  # Use filtered data
-                'supply_systems': filtered_supply_systems  # Include only filtered supply systems
+                'heat_rejection_by_carrier': filtered_heat_rejection,
+                'supply_systems': filtered_supply_systems
             })
 
     # Add network plants
@@ -835,12 +798,38 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only, network_na
     buildings_df = pd.DataFrame(results['buildings'])
 
     if not buildings_df.empty:
-        # Reorder columns
+        # Add GFA_m2 from building properties
+        try:
+            building_properties = pd.read_csv(locator.get_zone_geometry())
+            building_properties = building_properties.set_index('Name')
+
+            # Add GFA_m2 column (None for plants)
+            gfa_values = []
+            for _, row in buildings_df.iterrows():
+                if row['type'] == 'building' and row['name'] in building_properties.index:
+                    gfa_values.append(building_properties.loc[row['name'], 'GFA_m2'])
+                else:
+                    gfa_values.append(None)
+            buildings_df['GFA_m2'] = gfa_values
+        except Exception as e:
+            print(f"  Warning: Could not read GFA_m2 from building properties: {e}")
+            buildings_df['GFA_m2'] = None
+
+        # Reorder columns (include GFA_m2 and case if present)
         columns_order = [
-            'name', 'type', 'x_coord', 'y_coord',
+            'name', 'type', 'GFA_m2', 'x_coord', 'y_coord',
             'heat_rejection_annual_MWh', 'peak_heat_rejection_kW',
             'peak_datetime', 'scale'
         ]
+
+        # Add case and case_description if present (for debugging)
+        if 'case' in buildings_df.columns:
+            columns_order.append('case')
+        if 'case_description' in buildings_df.columns:
+            columns_order.append('case_description')
+
+        # Only include columns that exist
+        columns_order = [col for col in columns_order if col in buildings_df.columns]
         buildings_output = buildings_df[columns_order].copy()
 
         # Save
