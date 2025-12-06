@@ -56,6 +56,7 @@ def generate_energy_carrier_mismatch_error(
     medium_mismatches = []
     temp_too_low = []
     temp_too_high = []
+    unsupported_components = []
 
     from cea.optimization_new.component import ActiveComponent
 
@@ -102,6 +103,11 @@ def generate_energy_carrier_mismatch_error(
                     })
             else:
                 component_analysis.append(f"  - {comp_code}: outputs {comp_ec.code}")
+        except TypeError as e:
+            # Component has non-standard initialization (e.g., HeatExchanger requires temperature_before/after)
+            # This indicates the component type is not supported in this context
+            unsupported_components.append(comp_code)
+            component_analysis.append(f"  - {comp_code}: unsupported component type for this operation")
         except (ValueError, KeyError) as e:
             component_analysis.append(f"  - {comp_code}: failed to instantiate ({str(e)[:50]})")
 
@@ -210,6 +216,38 @@ def generate_energy_carrier_mismatch_error(
             "     - DHW (domestic hot water): typically requires 60°C",
             "     - Space heating: typically 30-40°C for low-temp systems",
             "     - District networks: may aggregate multiple demand types",
+        ])
+
+    elif unsupported_components:
+        # Component type not supported in this context (e.g., HeatExchanger with special initialization)
+        error_lines.extend([
+            "",
+            "Issue: UNSUPPORTED COMPONENT TYPE",
+            f"  Component(s) {', '.join(unsupported_components)} cannot be used in this context.",
+            "  These components require special initialisation parameters that are not available",
+            "  during automatic system generation.",
+            "",
+            "Explanation:",
+            "  - HeatExchanger (HEX) requires source and sink temperature specifications",
+            "  - These passive components need active components to drive them",
+            "  - They cannot be used as standalone primary/tertiary components",
+            "",
+            "Solutions:",
+            "  1. Replace unsupported components in SUPPLY assembly:",
+            "     - For heat rejection in cooling systems:",
+            "       * Use COOLING_TOWERS (CT1, CT2, CT3) instead of HEAT_EXCHANGERS",
+            "       * Cooling towers actively reject heat to the environment",
+            "     - For district cooling with lake/sea water:",
+            "       * Heat exchangers (HEX) are valid but require custom system design",
+            "       * Consider using component-based configuration instead of SUPPLY assemblies",
+            "",
+            "  2. Edit SUPPLY assembly:",
+            f"     - ASSEMBLIES/SUPPLY/SUPPLY_*",
+            f"     - Change tertiary_components from {unsupported_components[0]} to CT1 (or similar)",
+            "",
+            "  3. Alternative: Use component categories instead of SUPPLY assemblies:",
+            "     - Set heat-rejection-components parameter to: COOLING_TOWERS",
+            "     - Leave supply-type-cs parameter empty or set to 'Custom'",
         ])
 
     else:
