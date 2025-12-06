@@ -278,7 +278,7 @@ def calculate_building_solar_costs(config, locator, buildings):
     configured_techs = []
     for config_param in facade_mapping.keys():
         try:
-            tech_code = getattr(config.system_costs, config_param)
+            tech_code = getattr(config.system_costs_solar, config_param)
         except AttributeError:
             continue
 
@@ -355,7 +355,7 @@ def calculate_building_solar_costs(config, locator, buildings):
     for config_param, facade_suffix in facade_mapping.items():
         # Get selected technology from config
         try:
-            tech_code = getattr(config.system_costs, config_param)
+            tech_code = getattr(config.system_costs_solar, config_param)
         except AttributeError:
             print(f"  Warning: Configuration parameter '{config_param}' not found. Skipping.")
             continue

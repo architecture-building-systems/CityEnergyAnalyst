@@ -128,9 +128,9 @@ def baseline_costs_main(locator, config):
         zone_gdf = gpd.read_file(locator.get_zone_geometry())
         all_building_names = zone_gdf['name'].tolist()
 
-        # Filter by config.system_costs.buildings if specified
-        if config.system_costs.buildings:
-            all_building_names = [b for b in all_building_names if b in config.system_costs.buildings]
+        # Filter by config.system_costs_solar.buildings if specified
+        if config.system_costs_solar.buildings:
+            all_building_names = [b for b in all_building_names if b in config.system_costs_solar.buildings]
 
         solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
 
@@ -270,9 +270,9 @@ def baseline_costs_main(locator, config):
     zone_gdf = gpd.read_file(locator.get_zone_geometry())
     all_building_names = zone_gdf['name'].tolist()
 
-    # Filter by config.system_costs.buildings if specified
-    if config.system_costs.buildings:
-        all_building_names = [b for b in all_building_names if b in config.system_costs.buildings]
+    # Filter by config.system_costs_solar.buildings if specified
+    if config.system_costs_solar.buildings:
+        all_building_names = [b for b in all_building_names if b in config.system_costs_solar.buildings]
 
     solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
 

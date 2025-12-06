@@ -62,8 +62,8 @@ def anthropogenic_heat_main(locator, config):
     print("=" * 70)
 
     # Get network configuration
-    network_name = config.anthropogenic_heat.network_name
-    network_types = config.anthropogenic_heat.network_type
+    network_name = config.system_costs.network_name
+    network_types = config.system_costs.network_type
 
     # Validate network types
     if not network_types or len(network_types) == 0:
@@ -152,7 +152,7 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
     )
 
     # REUSE cost module's network detection (checks thermal-network outputs)
-    network_name = config.anthropogenic_heat.network_name
+    network_name = config.system_costs.network_name
     dh_network_buildings = get_network_buildings(locator, network_name, 'DH')
     dc_network_buildings = get_network_buildings(locator, network_name, 'DC')
 
@@ -170,13 +170,13 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
 
     # Filter supply codes to building-scale only for standalone calculations
     cost_config.system_costs.supply_type_cs = filter_supply_code_by_scale(
-        locator, config.anthropogenic_heat.supply_type_cs, 'SUPPLY_COOLING', is_standalone=True
+        locator, config.system_costs.supply_type_cs, 'SUPPLY_COOLING', is_standalone=True
     )
     cost_config.system_costs.supply_type_hs = filter_supply_code_by_scale(
-        locator, config.anthropogenic_heat.supply_type_hs, 'SUPPLY_HEATING', is_standalone=True
+        locator, config.system_costs.supply_type_hs, 'SUPPLY_HEATING', is_standalone=True
     )
     cost_config.system_costs.supply_type_dhw = filter_supply_code_by_scale(
-        locator, config.anthropogenic_heat.supply_type_dhw, 'SUPPLY_HOTWATER', is_standalone=True
+        locator, config.system_costs.supply_type_dhw, 'SUPPLY_HOTWATER', is_standalone=True
     )
 
     # REUSE supply_costs function to create supply systems with 4-case logic
@@ -407,12 +407,12 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
 
     # Set component priorities (same as cost module lines 1694-1703)
     if network_type == 'DC':
-        domain_config.optimization_new.cooling_components = config.anthropogenic_heat.cooling_components if config.anthropogenic_heat.cooling_components else []
+        domain_config.optimization_new.cooling_components = config.system_costs.cooling_components if config.system_costs.cooling_components else []
         domain_config.optimization_new.heating_components = []  # No heating for DC
-        domain_config.optimization_new.heat_rejection_components = config.anthropogenic_heat.heat_rejection_components if config.anthropogenic_heat.heat_rejection_components else []
+        domain_config.optimization_new.heat_rejection_components = config.system_costs.heat_rejection_components if config.system_costs.heat_rejection_components else []
     else:  # DH
         domain_config.optimization_new.cooling_components = []  # No cooling for DH
-        domain_config.optimization_new.heating_components = config.anthropogenic_heat.heating_components if config.anthropogenic_heat.heating_components else []
+        domain_config.optimization_new.heating_components = config.system_costs.heating_components if config.system_costs.heating_components else []
         domain_config.optimization_new.heat_rejection_components = []  # No heat rejection for DH
 
     domain = Domain(domain_config, locator)
@@ -454,12 +454,12 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
         cost_config_for_network.system_costs.network_type = [network_type]
 
         # Map anthropogenic_heat parameters to system_costs parameters
-        cost_config_for_network.system_costs.supply_type_cs = config.anthropogenic_heat.supply_type_cs
-        cost_config_for_network.system_costs.supply_type_hs = config.anthropogenic_heat.supply_type_hs
-        cost_config_for_network.system_costs.supply_type_dhw = config.anthropogenic_heat.supply_type_dhw
-        cost_config_for_network.system_costs.cooling_components = config.anthropogenic_heat.cooling_components
-        cost_config_for_network.system_costs.heating_components = config.anthropogenic_heat.heating_components
-        cost_config_for_network.system_costs.heat_rejection_components = config.anthropogenic_heat.heat_rejection_components
+        cost_config_for_network.system_costs.supply_type_cs = config.system_costs.supply_type_cs
+        cost_config_for_network.system_costs.supply_type_hs = config.system_costs.supply_type_hs
+        cost_config_for_network.system_costs.supply_type_dhw = config.system_costs.supply_type_dhw
+        cost_config_for_network.system_costs.cooling_components = config.system_costs.cooling_components
+        cost_config_for_network.system_costs.heating_components = config.system_costs.heating_components
+        cost_config_for_network.system_costs.heat_rejection_components = config.system_costs.heat_rejection_components
 
         network_costs = calculate_district_network_costs(
             locator, cost_config_for_network, network_type, network_name,

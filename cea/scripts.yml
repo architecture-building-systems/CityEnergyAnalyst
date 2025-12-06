@@ -339,7 +339,7 @@ Life Cycle Analysis:
       Uses the same calculation engine as optimisation for accuracy.
     interfaces: [cli, dashboard]
     module: cea.analysis.costs.main
-    parameters: ['general:scenario', system-costs]
+    parameters: ['general:scenario', system-costs, system-costs-solar]
     input-files:
       - [get_total_demand]
       - [get_building_supply]
@@ -369,7 +369,7 @@ Life Cycle Analysis:
       plants per network with equal heat distribution.
     interfaces: [cli, dashboard]
     module: cea.analysis.heat.main
-    parameters: ['general:scenario', anthropogenic-heat]
+    parameters: ['general:scenario', system-costs]
     input-files:
       - [get_total_demand]
       - [get_building_supply]
