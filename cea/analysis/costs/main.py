@@ -250,11 +250,11 @@ def baseline_costs_main(locator, config):
         for network_type, error in calculation_errors.items():
             print(f"\n{network_type} network:\n{error}\n")
         raise ValueError(
-            "No valid supply systems found for the selected network types.\n"
+            "No valid supply systems found for any of the selected network types.\n"
             f"Selected network types: {', '.join(network_types)}\n\n"
-            "Please check:\n"
-            "1. Settings for parameters in Energy Supply Configuration\n"
-            "2. If the selected network-type matches the building demands (DH for heating, DC for cooling)"
+            "Please check that:\n"
+            "1. Buildings have supply systems configured in Building Properties/Supply settings\n"
+            "2. The selected network type matches the building demands (DH for heating, DC for cooling)"
         )
 
     # Merge results from all network types (but don't format yet)
