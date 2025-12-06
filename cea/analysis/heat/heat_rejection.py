@@ -137,8 +137,8 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
     """
     Calculate heat rejection for all buildings using building-scale systems.
 
-    This is a twin of supply_costs.py - it reuses the same supply system calculation
-    but extracts heat_rejection instead of costs from the SupplySystem objects.
+    REUSES supply_costs.calculate_all_buildings_as_standalone() to ensure consistency,
+    then extracts heat_rejection from the resulting supply systems.
 
     :param locator: InputLocator instance
     :param config: Configuration instance
@@ -146,7 +146,18 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
     :return: dict of {building_id: heat_rejection_data}
     """
     import cea.config
-    from cea.analysis.costs.supply_costs import calculate_all_buildings_as_standalone
+    from cea.analysis.costs.supply_costs import (
+        calculate_standalone_building_costs,  # Use this instead of calculate_all_buildings_as_standalone
+        get_network_buildings  # REUSE same network detection as costs
+    )
+
+    # REUSE cost module's network detection (checks thermal-network outputs)
+    network_name = config.anthropogenic_heat.network_name
+    dh_network_buildings = get_network_buildings(locator, network_name, 'DH')
+    dc_network_buildings = get_network_buildings(locator, network_name, 'DC')
+
+    print(f"  Found {len(dh_network_buildings)} buildings in DH network")
+    print(f"  Found {len(dc_network_buildings)} buildings in DC network")
 
     # Create a config that maps anthropogenic_heat parameters to system_costs parameters
     # This allows us to reuse the supply_costs functions
@@ -154,7 +165,7 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
 
     cost_config = cea.config.Configuration()
     cost_config.scenario = config.scenario
-    cost_config.system_costs.network_name = None  # Force standalone mode
+    cost_config.system_costs.network_name = network_name  # Pass network name for network detection
     cost_config.system_costs.network_type = network_types
 
     # Filter supply codes to building-scale only for standalone calculations
@@ -168,15 +179,9 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
         locator, config.anthropogenic_heat.supply_type_dhw, 'SUPPLY_HOTWATER', is_standalone=True
     )
 
-    # Reuse supply_costs function to create supply systems
-    # This returns {network_type: {building_name: {supply_system, building, costs, ...}}}
-    # NOTE: calculate_all_buildings_as_standalone puts ALL buildings under 'DH' key (with complete systems)
-    # The 'DC' key is empty - this is expected behaviour from supply_costs
-    cost_results = calculate_all_buildings_as_standalone(locator, cost_config)
-
-    # Extract building data from 'DH' key (contains all buildings with all their supply systems)
-    # calculate_all_buildings_as_standalone already merged DH and DC domains internally
-    building_cost_results = cost_results.get('DH', {})
+    # REUSE supply_costs function to create supply systems with 4-case logic
+    # This function respects network connectivity and calculates only standalone services
+    building_cost_results = calculate_standalone_building_costs(locator, cost_config, network_name)
 
     # Convert to heat rejection results
     results = {}
@@ -351,7 +356,8 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     """
     Calculate heat rejection for district network central plant(s).
 
-    Handles multiple plants by splitting heat equally across all plant nodes.
+    REUSES supply_costs.calculate_district_network_costs() to ensure consistency,
+    then extracts heat_rejection from the resulting supply system.
 
     :param locator: InputLocator instance
     :param config: Configuration instance
@@ -360,6 +366,10 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     :param standalone_results: Results from standalone calculations
     :return: dict with network heat rejection data or None if validation fails
     """
+    from cea.analysis.costs.supply_costs import calculate_district_network_costs
+    from cea.optimization_new.domain import Domain
+    import cea.config
+
     # Validate network results exist
     nodes_file = locator.get_network_layout_nodes_shapefile(network_type, network_name)
 
@@ -368,7 +378,7 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
         print(f"    Missing: {nodes_file}")
         return None
 
-    # Read network nodes to find plants
+    # Read network nodes to find plants and connected buildings
     nodes_gdf = gpd.read_file(nodes_file)
     plant_nodes = nodes_gdf[nodes_gdf['type'].str.contains('PLANT', case=False, na=False)]
 
@@ -384,13 +394,79 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
 
     print(f"  Connected buildings: {len(connected_building_ids)}")
 
-    # Calculate central plant heat rejection using config supply types
-    # This creates a single supply system representing the entire network capacity
-    plant_supply_system = create_network_supply_system(
-        locator, config, network_type, network_name, connected_building_ids, standalone_results
-    )
+    if len(connected_building_ids) == 0:
+        print(f"  ⚠ Warning: No buildings connected to {network_type} network")
+        return None
 
-    if plant_supply_system is None:
+    # REUSE cost module's network calculation
+    # Load domain to get Building objects (required by calculate_district_network_costs)
+    # Must match cost module's Domain loading (supply_costs.py:1686-1708)
+    domain_config = cea.config.Configuration()
+    domain_config.scenario = config.scenario
+    domain_config.optimization_new.network_type = network_type
+
+    # Set component priorities (same as cost module lines 1694-1703)
+    if network_type == 'DC':
+        domain_config.optimization_new.cooling_components = config.anthropogenic_heat.cooling_components if config.anthropogenic_heat.cooling_components else []
+        domain_config.optimization_new.heating_components = []  # No heating for DC
+        domain_config.optimization_new.heat_rejection_components = config.anthropogenic_heat.heat_rejection_components if config.anthropogenic_heat.heat_rejection_components else []
+    else:  # DH
+        domain_config.optimization_new.cooling_components = []  # No cooling for DH
+        domain_config.optimization_new.heating_components = config.anthropogenic_heat.heating_components if config.anthropogenic_heat.heating_components else []
+        domain_config.optimization_new.heat_rejection_components = []  # No heat rejection for DH
+
+    domain = Domain(domain_config, locator)
+    # IMPORTANT: Only load network-connected buildings (same as cost module line 1708)
+    domain.load_buildings(buildings_in_domain=connected_building_ids)
+
+    if len(domain.buildings) == 0:
+        print(f"  ⚠ No buildings with demand found")
+        return None
+
+    # Collect building objects and potentials
+    network_buildings = domain.buildings
+    building_energy_potentials = {b.identifier: b.potentials for b in network_buildings if hasattr(b, 'potentials')}
+    domain_potentials = domain.potentials if hasattr(domain, 'potentials') else []
+
+    # REUSE calculate_district_network_costs from cost module
+    print(f"  Calculating network supply system using cost module...")
+    try:
+        # Create a new config for system-costs with our anthropogenic_heat parameters
+        # This avoids parameter access errors when calculate_district_network_costs reads config.system_costs.*
+        cost_config_for_network = cea.config.Configuration()
+        cost_config_for_network.scenario = config.scenario
+        cost_config_for_network.system_costs.network_name = network_name
+        cost_config_for_network.system_costs.network_type = [network_type]
+
+        # Map anthropogenic_heat parameters to system_costs parameters
+        cost_config_for_network.system_costs.supply_type_cs = config.anthropogenic_heat.supply_type_cs
+        cost_config_for_network.system_costs.supply_type_hs = config.anthropogenic_heat.supply_type_hs
+        cost_config_for_network.system_costs.supply_type_dhw = config.anthropogenic_heat.supply_type_dhw
+        cost_config_for_network.system_costs.cooling_components = config.anthropogenic_heat.cooling_components
+        cost_config_for_network.system_costs.heating_components = config.anthropogenic_heat.heating_components
+        cost_config_for_network.system_costs.heat_rejection_components = config.anthropogenic_heat.heat_rejection_components
+
+        network_costs = calculate_district_network_costs(
+            locator, cost_config_for_network, network_type, network_name,
+            network_buildings, building_energy_potentials, domain_potentials
+        )
+
+        if not network_costs:
+            print(f"  ⚠ Network cost calculation returned empty")
+            return None
+
+        # Extract supply system from cost results
+        network_id = f'{network_name}_{network_type}'
+        if network_id not in network_costs or 'supply_system' not in network_costs[network_id]:
+            print(f"  ⚠ No supply system in network costs")
+            return None
+
+        plant_supply_system = network_costs[network_id]['supply_system']
+
+    except Exception as e:
+        print(f"  ⚠ Error calculating network costs: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
     # Extract total heat rejection from network supply system
@@ -445,179 +521,6 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     }
 
 
-def create_network_supply_system(locator, config, network_type, network_name,
-                                 connected_building_ids, standalone_results):
-    """
-    Create supply system for district network central plant.
-
-    Reuses logic from supply_costs.py but focused on heat rejection extraction.
-
-    :param locator: InputLocator instance
-    :param config: Configuration instance
-    :param network_type: 'DH' or 'DC'
-    :param network_name: Network layout name
-    :param connected_building_ids: List of building IDs connected to network
-    :param standalone_results: Results from standalone calculations (for building potentials)
-    :return: SupplySystem instance or None
-    """
-    from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
-    from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
-    import cea.config
-
-    print(f"    Creating {network_type} network supply system...")
-    from cea.analysis.costs.supply_costs import filter_supply_code_by_scale
-    # Get supply type from config (reuse system-costs parameters)
-    if network_type == 'DC':
-        supply_code_raw = config.anthropogenic_heat.supply_type_cs
-        # Filter for district scale
-
-        supply_code = filter_supply_code_by_scale(
-            locator, supply_code_raw, 'SUPPLY_COOLING', is_standalone=False
-        )
-    else:  # DH
-        supply_code_raw = config.anthropogenic_heat.supply_type_hs
-        supply_code = filter_supply_code_by_scale(
-            locator, supply_code_raw, 'SUPPLY_HEATING', is_standalone=False
-        )
-
-    if not supply_code or supply_code == "Custom (use component settings below)":
-        # Use component selection from config parameters
-        print(f"      Using COMPONENT selection for {network_type} network")
-        user_components = get_user_component_selection(config, network_type)
-    else:
-        # Extract components from SUPPLY assembly
-        print(f"      Using SUPPLY assembly: {supply_code}")
-        from cea.analysis.costs.supply_costs import get_components_from_supply_assembly
-
-        if network_type == 'DC':
-            category = 'SUPPLY_COOLING'
-        else:
-            category = 'SUPPLY_HEATING'
-
-        user_components = get_components_from_supply_assembly(locator, supply_code, category)
-
-    # Calculate total network demand from connected buildings
-    total_demand_profile = calculate_network_demand_profile(
-        locator, connected_building_ids, network_type
-    )
-
-    if total_demand_profile is None or total_demand_profile.max() == 0:
-        print(f"      ⚠ Zero demand for {network_type} network")
-        return None
-
-    # Create demand flow
-    if network_type == 'DC':
-        energy_carrier = 'T10W'  # Chilled water (10°C)
-    else:  # DH
-        energy_carrier = 'T30W'  # Hot water (30°C)
-
-    demand_flow = EnergyFlow(
-        input_category='primary',
-        output_category='consumer',
-        energy_carrier_code=energy_carrier,
-        energy_flow_profile=total_demand_profile
-    )
-
-    # Get building potentials for network (solar, etc.)
-    building_potentials = {}
-    for building_id in connected_building_ids:
-        if building_id in standalone_results:
-            building = standalone_results[building_id]['building']
-            if building and hasattr(building, 'potentials'):
-                building_potentials[building_id] = building.potentials
-
-    # Create supply system structure
-    max_demand_flow = demand_flow.isolate_peak()
-
-    try:
-        system_structure = SupplySystemStructure(
-            max_supply_flow=max_demand_flow,
-            available_potentials=building_potentials,
-            user_component_selection=user_components,
-            target_building_or_network=f'{network_name}_{network_type}'
-        )
-        system_structure.build()
-
-        # Create and evaluate supply system
-        supply_system = SupplySystem(
-            system_structure,
-            system_structure.capacity_indicators,
-            demand_flow
-        )
-
-        supply_system.evaluate()
-
-        return supply_system
-
-    except Exception as e:
-        print(f"      ⚠ Error creating {network_type} network supply system: {e}")
-        return None
-
-
-def get_user_component_selection(config, network_type):
-    """
-    Get user component selection from config parameters.
-
-    :param config: Configuration instance
-    :param network_type: 'DH' or 'DC'
-    :return: dict with component categories
-    """
-    if network_type == 'DC':
-        return {
-            'primary': config.anthropogenic_heat.cooling_components,
-            'secondary': [],
-            'tertiary': config.anthropogenic_heat.heat_rejection_components
-        }
-    else:  # DH
-        return {
-            'primary': config.anthropogenic_heat.heating_components,
-            'secondary': [],
-            'tertiary': []
-        }
-
-
-def calculate_network_demand_profile(locator, connected_building_ids, network_type):
-    """
-    Calculate total demand profile for network from connected buildings.
-
-    :param locator: InputLocator instance
-    :param connected_building_ids: List of building IDs
-    :param network_type: 'DH' or 'DC'
-    :return: pd.Series with hourly demand (8760 values) or None
-    """
-    total_demand = None
-
-    for building_id in connected_building_ids:
-        demand_file = locator.get_demand_results_file(building_id)
-        if not os.path.exists(demand_file):
-            continue
-
-        demand_df = pd.read_csv(demand_file)
-
-        if network_type == 'DC':
-            column = 'Qcs_sys_kWh'
-        else:  # DH - include both heating and DHW
-            if 'Qhs_sys_kWh' in demand_df.columns and 'Qww_sys_kWh' in demand_df.columns:
-                building_demand = demand_df['Qhs_sys_kWh'] + demand_df['Qww_sys_kWh']
-            elif 'Qhs_sys_kWh' in demand_df.columns:
-                building_demand = demand_df['Qhs_sys_kWh']
-            else:
-                continue
-            column = None  # Already calculated above
-
-        if column:
-            if column not in demand_df.columns:
-                continue
-            building_demand = demand_df[column]
-
-        if total_demand is None:
-            total_demand = building_demand.copy()
-        else:
-            total_demand += building_demand
-
-    return total_demand
-
-
 def merge_heat_rejection_results(locator, standalone_results, network_results, is_standalone_only):
     """
     Merge standalone and network heat rejection results using 4-case logic.
@@ -628,9 +531,10 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
     - Case 3: Building in DC only → cooling from district, heating/DHW standalone
     - Case 4: Building in DH only → heating/DHW from district, cooling standalone
 
+    :param locator: InputLocator instance
     :param standalone_results: dict from calculate_standalone_heat_rejection
     :param network_results: dict from calculate_network_heat_rejection
-    :param is_standalone_only: bool, if True all buildings are standalone
+    :param is_standalone_only: bool, if True all buildings are standalone (not used currently)
     :return: dict with merged results
     """
     from cea.analysis.heat.heat_rejection_helpers import determine_building_case, filter_heat_by_case, get_case_description
@@ -647,8 +551,14 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
         for network_type, network_data in network_results.items():
             if network_type == 'DC':
                 dc_connected_buildings.update(network_data['connected_buildings'])
+                print(f"  DEBUG: DC connected buildings: {network_data['connected_buildings']}")
             elif network_type == 'DH':
                 dh_connected_buildings.update(network_data['connected_buildings'])
+                print(f"  DEBUG: DH connected buildings: {network_data['connected_buildings']}")
+
+    print(f"  DEBUG: Total buildings in standalone_results: {list(standalone_results.keys())[:5]}...")
+    print(f"  DEBUG: DC connected set: {dc_connected_buildings}")
+    print(f"  DEBUG: DH connected set: {dh_connected_buildings}")
 
     # Process standalone buildings
     for building_id, data in standalone_results.items():
