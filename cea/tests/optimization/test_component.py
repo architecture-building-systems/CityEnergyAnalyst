@@ -470,7 +470,7 @@ class TestAbsorptionChiller(unittest.TestCase):
 
         calculated_COP = cooling_demand_kW / heat_in_value
         self.assertAlmostEqual(calculated_COP, ach.minimum_COP, places=2,
-                              msg=f"COP should match minimum_COP from database")
+                              msg="COP should match minimum_COP from database")
 
 
     def test_operate_single_unit_behavior(self):
