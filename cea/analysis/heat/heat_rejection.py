@@ -552,8 +552,6 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
     :param is_standalone_only: bool, if True all buildings are standalone (not used currently)
     :return: dict with merged results
     """
-    from cea.analysis.heat.heat_rejection_helpers import determine_building_case, filter_heat_by_case, get_case_description
-
     merged = {
         'buildings': [],
         'components': []
@@ -566,14 +564,8 @@ def merge_heat_rejection_results(locator, standalone_results, network_results, i
         for network_type, network_data in network_results.items():
             if network_type == 'DC':
                 dc_connected_buildings.update(network_data['connected_buildings'])
-                print(f"  DEBUG: DC connected buildings: {network_data['connected_buildings']}")
             elif network_type == 'DH':
                 dh_connected_buildings.update(network_data['connected_buildings'])
-                print(f"  DEBUG: DH connected buildings: {network_data['connected_buildings']}")
-
-    print(f"  DEBUG: Total buildings in standalone_results: {list(standalone_results.keys())[:5]}...")
-    print(f"  DEBUG: DC connected set: {dc_connected_buildings}")
-    print(f"  DEBUG: DH connected set: {dh_connected_buildings}")
 
     # Process standalone buildings
     for building_id, data in standalone_results.items():
@@ -835,6 +827,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only, network_na
         components_df.to_csv(output_file, index=False)
         print(f"  ✓ Saved components (empty): {output_file}")
 
+
 def determine_building_case(building_id, dc_connected_buildings, dh_connected_buildings, is_standalone_only):
     """
     Determine which of the 4 connectivity cases applies to this building.
@@ -980,22 +973,44 @@ def apply_heat_rejection_config_fallback(locator, building_id, is_in_dc, is_in_d
 
     # Helper to get scale of a supply code
     def get_scale(supply_code):
-        """Extract scale from supply code (checks database)."""
+        """
+        Extract scale from supply code by reading the SUPPLY assembly database.
+
+        :param supply_code: Supply assembly code (e.g., 'SUPPLY_COOLING_AS1')
+        :return: 'BUILDING', 'DISTRICT', or None
+        """
         if not supply_code or pd.isna(supply_code):
             return None
 
-        # Read from SUPPLY assemblies to determine scale
+        # Determine assembly category from code
+        code_str = str(supply_code).upper()
+        if 'COOLING' in code_str:
+            assembly_file = 'SUPPLY_COOLING.csv'
+        elif 'HEATING' in code_str:
+            assembly_file = 'SUPPLY_HEATING.csv'
+        elif 'HOTWATER' in code_str or 'DHW' in code_str:
+            assembly_file = 'SUPPLY_HOTWATER.csv'
+        elif 'ELECTRICITY' in code_str:
+            assembly_file = 'SUPPLY_ELECTRICITY.csv'
+        else:
+            return None
+
+        # Read from database to get scale
         try:
-            # Try to read from database
-            from cea.databases.CH.ASSEMBLIES import SUPPLY
-            # Simplified: check if code contains 'AS3' or 'AS4' (district) vs 'AS1', 'AS2' (building)
-            # This is a heuristic - proper implementation should read from database
-            code_str = str(supply_code).upper()
-            if 'AS3' in code_str or 'AS4' in code_str:
-                return 'DISTRICT'
-            elif 'AS1' in code_str or 'AS2' in code_str or 'AS5' in code_str:
-                return 'BUILDING'
-        except:
+            import os
+            database_path = locator.get_databases_assemblies_folder()
+            supply_file = os.path.join(database_path, 'SUPPLY', assembly_file)
+
+            if os.path.exists(supply_file):
+                supply_db = pd.read_csv(supply_file)
+                # Match by code column (e.g., 'SUPPLY_COOLING_AS1')
+                match = supply_db[supply_db['code'] == supply_code]
+                if not match.empty:
+                    scale = match.iloc[0].get('scale', None)
+                    if scale:
+                        return scale.upper()
+        except (IOError, KeyError, pd.errors.EmptyDataError):
+            # Database file not found, missing columns, or empty file
             pass
 
         return None
@@ -1035,4 +1050,3 @@ def apply_heat_rejection_config_fallback(locator, building_id, is_in_dc, is_in_d
                 fallbacks['type_dhw'] = building_scale_code
 
     return fallbacks
-
