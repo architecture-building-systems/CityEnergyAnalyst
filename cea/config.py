@@ -1266,6 +1266,79 @@ class MultiChoiceParameter(ChoiceParameter):
         return [choice for choice in choices if choice in valid_choices]
 
 
+class MultiChoiceFeedstockParameter(MultiChoiceParameter):
+    """
+    Parameter for selecting feedstock options from available feedstock CSV files.
+
+    Dynamically reads feedstock files from:
+    {scenario}/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/*.csv
+
+    Returns a list of feedstock codes (e.g., ['GRID', 'NATURALGAS', 'SOLAR']).
+    """
+
+    def initialize(self, parser):
+        """Override to skip setting _choices from config file - we compute it dynamically"""
+        self.help = parser.get(self.section.name, f"{self.name}.help", fallback="")
+        self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable", fallback=False)
+        self.depends_on = parse_string_to_list(parser.get(self.section.name, f"{self.name}.depends-on", fallback=""))
+
+    @property
+    def _choices(self):
+        """
+        Dynamically scan feedstock directory for available feedstock CSV files.
+        Reads fresh from filesystem each time (no caching).
+
+        :return: List of feedstock codes (filenames without .csv extension)
+        """
+        import os
+        import glob
+
+        feedstock_dirs_to_try = []
+
+        try:
+            import cea.inputlocator
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+            # Current database structure: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY
+            scenario_feedstock_dir = os.path.join(
+                locator.scenario,
+                'inputs',
+                'database',
+                'COMPONENTS',
+                'FEEDSTOCKS',
+                'FEEDSTOCKS_LIBRARY'
+            )
+            feedstock_dirs_to_try.append(scenario_feedstock_dir)
+        except (AttributeError, Exception):
+            pass
+
+        # Fallback to default database
+        try:
+            import cea.databases
+            default_db_path = os.path.dirname(cea.databases.__file__)
+            default_feedstock_dir = os.path.join(
+                default_db_path,
+                'CH',
+                'COMPONENTS',
+                'FEEDSTOCKS',
+                'FEEDSTOCKS_LIBRARY'
+            )
+            feedstock_dirs_to_try.append(default_feedstock_dir)
+        except Exception:
+            pass
+
+        # Try each directory until we find one that exists
+        for feedstock_dir in feedstock_dirs_to_try:
+            if os.path.exists(feedstock_dir):
+                csv_files = glob.glob(os.path.join(feedstock_dir, '*.csv'))
+                if csv_files:
+                    # Extract filenames without .csv extension
+                    feedstocks = [os.path.splitext(os.path.basename(f))[0] for f in csv_files]
+                    return sorted(feedstocks)
+
+        return []
+
+
 class DistrictSupplyTypeParameter(MultiChoiceParameter):
     """
     Parameter for selecting supply system types for both building-scale and district-scale.
