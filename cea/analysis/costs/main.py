@@ -151,6 +151,17 @@ def baseline_costs_main(locator, config):
         # Save results
         print(f"\n{'-'*70}")
         print("Saving results...")
+
+        # Clean up existing results folder for standalone mode (if it exists)
+        import os
+        import shutil
+        output_file = locator.get_baseline_costs(network_name=None)
+        output_folder = os.path.dirname(output_file)
+
+        if os.path.exists(output_folder):
+            print(f"  Cleaning up existing results: {output_folder}")
+            shutil.rmtree(output_folder)
+
         locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=None))
         final_results.to_csv(locator.get_baseline_costs(network_name=None), index=False, float_format='%.2f', na_rep='nan')
         detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=None), index=False, float_format='%.2f', na_rep='nan')
@@ -331,6 +342,17 @@ def baseline_costs_main(locator, config):
     # Only save results if all networks succeeded
     print(f"\n{'-'*70}")
     print("Saving results...")
+
+    # Clean up existing results folder for this network (if it exists)
+    import os
+    import shutil
+    output_file = locator.get_baseline_costs(network_name=network_name)
+    output_folder = os.path.dirname(output_file)
+
+    if os.path.exists(output_folder):
+        print(f"  Cleaning up existing results: {output_folder}")
+        shutil.rmtree(output_folder)
+
     locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=network_name))
     final_results.to_csv(locator.get_baseline_costs(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
     detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')

@@ -712,6 +712,15 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only, network_na
     :param is_standalone_only: bool
     :param network_name: Network layout name for subfolder organization
     """
+    # Clean up existing results folder for this network (if it exists)
+    import shutil
+    output_file = locator.get_heat_rejection_buildings(network_name=network_name)
+    output_folder = os.path.dirname(output_file)
+
+    if os.path.exists(output_folder):
+        print(f"  Cleaning up existing results: {output_folder}")
+        shutil.rmtree(output_folder)
+
     # 1. Buildings summary file
     buildings_df = pd.DataFrame(results['buildings'])
 
