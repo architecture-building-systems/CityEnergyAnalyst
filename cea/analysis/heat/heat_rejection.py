@@ -460,6 +460,7 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
         cost_config_for_network.system_costs.cooling_components = config.system_costs.cooling_components
         cost_config_for_network.system_costs.heating_components = config.system_costs.heating_components
         cost_config_for_network.system_costs.heat_rejection_components = config.system_costs.heat_rejection_components
+        cost_config_for_network.system_costs.available_feedstocks = config.system_costs.available_feedstocks
 
         network_costs = calculate_district_network_costs(
             locator, cost_config_for_network, network_type, network_name,

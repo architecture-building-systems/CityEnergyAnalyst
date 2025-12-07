@@ -22,6 +22,127 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def build_feedstock_to_energy_carriers_map(locator, available_feedstocks):
+    """
+    Build mapping from feedstock names to energy carrier codes.
+
+    One feedstock can map to multiple energy carriers (e.g., GRID → E230AC, E22kAC, E66kAC).
+
+    :param locator: InputLocator instance
+    :param available_feedstocks: List of feedstock names (e.g., ['GRID', 'NATURALGAS', 'OIL'])
+    :return: Dictionary mapping feedstock to list of energy carrier codes
+             Example: {'GRID': ['E230AC', 'E22kAC', 'E66kAC'], 'NATURALGAS': ['Cgas'], ...}
+    """
+    energy_carriers_file = locator.get_database_components_feedstocks_energy_carriers()
+
+    if not pd.io.common.file_exists(energy_carriers_file):
+        return {}
+
+    df = pd.read_csv(energy_carriers_file)
+
+    feedstock_map = {}
+    for feedstock in available_feedstocks:
+        # Filter by feedstock_file column (one-to-many relationship)
+        matching_carriers = df[df['feedstock_file'] == feedstock]['code'].dropna().tolist()
+        if matching_carriers:
+            feedstock_map[feedstock] = matching_carriers
+
+    return feedstock_map
+
+
+def select_component_by_feedstock_priority(locator, component_category, available_feedstocks,
+                                           feedstock_map, peak_demand_kw=None):
+    """
+    Select first component matching feedstock priority order.
+
+    For each feedstock in priority order:
+    1. Get energy carrier codes (e.g., GRID → ['E230AC', 'E22kAC', 'E66kAC'])
+    2. Filter components where fuel_code matches ANY of those codes
+    3. Optionally filter by peak demand capacity
+    4. Sort alphabetically by 'code'
+    5. Return first match
+
+    If component CSV doesn't have 'fuel_code' column (e.g., COOLING_TOWERS):
+    - Defaults to GRID feedstock if available in feedstock_map
+    - Otherwise returns first component alphabetically
+
+    :param locator: InputLocator instance
+    :param component_category: Component category name (e.g., 'BOILERS', 'VAPOR_COMPRESSION_CHILLERS')
+    :param available_feedstocks: List of feedstock names in priority order
+    :param feedstock_map: Dictionary from build_feedstock_to_energy_carriers_map()
+    :param peak_demand_kw: Optional peak demand in kW for capacity filtering
+    :return: Component code (e.g., 'BO5') or None if no match found
+    """
+    component_file = locator.get_db4_components_conversion_conversion_technology_csv(component_category)
+
+    if not pd.io.common.file_exists(component_file):
+        return None
+
+    df = pd.read_csv(component_file)
+
+    # Check if component has fuel_code column
+    if 'fuel_code' not in df.columns:
+        # No fuel_code column - component doesn't consume feedstocks (e.g., cooling towers)
+        # Default to GRID if available, otherwise return first component alphabetically
+        print(f"      Note: {component_category} doesn't use feedstocks - defaulting to first component")
+
+        if peak_demand_kw is not None:
+            # Filter by peak demand capacity
+            peak_demand_w = peak_demand_kw * 1000
+            valid_codes = []
+            for code in df['code'].dropna().unique():
+                code_data = df[df['code'] == code]
+                if (code_data['cap_max'] >= peak_demand_w).any():
+                    valid_codes.append(code)
+
+            if valid_codes:
+                return sorted(valid_codes)[0]
+            return None
+        else:
+            # No capacity filtering - return first alphabetically
+            codes = df['code'].dropna().unique().tolist()
+            return sorted(codes)[0] if codes else None
+
+    # Component has fuel_code - use feedstock priority
+    for feedstock in available_feedstocks:
+        if feedstock not in feedstock_map:
+            continue
+
+        energy_carrier_codes = feedstock_map[feedstock]
+
+        # Filter components matching any of the energy carrier codes
+        matching_components = df[df['fuel_code'].isin(energy_carrier_codes)]
+
+        if matching_components.empty:
+            continue
+
+        # Apply peak demand filtering if specified
+        if peak_demand_kw is not None:
+            peak_demand_w = peak_demand_kw * 1000  # Convert to W
+
+            # Group by code and check if peak_demand_w can be covered
+            valid_codes = []
+            for code in matching_components['code'].dropna().unique():
+                code_data = matching_components[matching_components['code'] == code]
+                # Check if any row has a cap_max >= peak_demand_w
+                if (code_data['cap_max'] >= peak_demand_w).any():
+                    valid_codes.append(code)
+
+            if not valid_codes:
+                continue
+
+            # Sort alphabetically and return first
+            return sorted(valid_codes)[0]
+        else:
+            # No capacity filtering - sort all matching codes alphabetically
+            codes = matching_components['code'].dropna().unique().tolist()
+            if codes:
+                return sorted(codes)[0]
+
+    # No component found for any feedstock
+    return None
+
+
 def get_components_from_supply_assembly(locator, supply_code, category):
     """
     Extract component codes from SUPPLY assembly definition.
@@ -181,118 +302,151 @@ def _verify_scale_match(locator, code, category, is_standalone):
         return None
 
 
-def get_component_codes_from_categories(locator, component_categories, network_type, peak_demand_kw=None):
+def get_component_codes_from_categories(locator, component_categories, network_type, peak_demand_kw=None,
+                                        available_feedstocks=None):
     """
     Convert component category names to actual component codes from the database.
+
+    Uses feedstock priority order to select components:
+    1. For each feedstock in available_feedstocks (in order)
+    2. Find components matching that feedstock's energy carriers
+    3. Filter by peak demand if specified
+    4. Return first matching component (alphabetically by code)
 
     :param locator: InputLocator instance
     :param component_categories: List of category names like ['VAPOR_COMPRESSION_CHILLERS', 'BOILERS']
     :param network_type: 'DH' or 'DC'
     :param peak_demand_kw: Optional peak demand in kW - if provided, only return codes that can handle this capacity
-    :return: List of component codes like ['CH1', 'CH2', 'BO1', 'BO2']
+    :param available_feedstocks: Optional list of feedstock names in priority order (e.g., ['GRID', 'NATURALGAS'])
+                                  If None, returns all codes (legacy behavior)
+    :return: List of component codes like ['CH1', 'BO1'] (one per category, selected by feedstock priority)
     """
-    import pandas as pd
-
     component_codes = []
 
+    # Build feedstock mapping if feedstock priority is enabled
+    if available_feedstocks:
+        feedstock_map = build_feedstock_to_energy_carriers_map(locator, available_feedstocks)
+    else:
+        feedstock_map = None
+
     for category in component_categories:
-        # Read the appropriate conversion technology database using the correct method
-        db_path = locator.get_db4_components_conversion_conversion_technology_csv(category)
-        df = pd.read_csv(db_path)
+        if feedstock_map:
+            # Use feedstock priority selection
+            selected_code = select_component_by_feedstock_priority(
+                locator, category, available_feedstocks, feedstock_map, peak_demand_kw
+            )
 
-        if peak_demand_kw is not None:
-            # Filter to only codes that can handle the peak demand
-            # Check if the peak demand falls within any capacity range for this code
-            peak_demand_w = peak_demand_kw * 1000  # Convert to W
-
-            # Group by code and check if peak_demand_w can be covered
-            valid_codes = []
-            for code in df['code'].dropna().unique():
-                code_data = df[df['code'] == code]
-                # Check if any row has a cap_max >= peak_demand_w
-                if (code_data['cap_max'] >= peak_demand_w).any():
-                    valid_codes.append(code)
-
-            component_codes.extend(valid_codes)
+            if selected_code:
+                component_codes.append(selected_code)
+            else:
+                # No component found matching any feedstock - raise error
+                raise ValueError(
+                    f"No {category} components found matching selected feedstocks: {', '.join(available_feedstocks)}.\n"
+                    f"Please either:\n"
+                    f"  (1) Add a {category} component with one of these feedstocks to your database, OR\n"
+                    f"  (2) Add the required feedstock to the 'available-feedstocks' parameter"
+                )
         else:
-            # No filtering - get all codes
-            codes = df['code'].dropna().unique().tolist()
-            component_codes.extend(codes)
+            # Legacy behavior: return all codes (no feedstock filtering)
+            import pandas as pd
+            db_path = locator.get_db4_components_conversion_conversion_technology_csv(category)
+            df = pd.read_csv(db_path)
+
+            if peak_demand_kw is not None:
+                # Filter to only codes that can handle the peak demand
+                peak_demand_w = peak_demand_kw * 1000  # Convert to W
+
+                # Group by code and check if peak_demand_w can be covered
+                valid_codes = []
+                for code in df['code'].dropna().unique():
+                    code_data = df[df['code'] == code]
+                    # Check if any row has a cap_max >= peak_demand_w
+                    if (code_data['cap_max'] >= peak_demand_w).any():
+                        valid_codes.append(code)
+
+                component_codes.extend(valid_codes)
+            else:
+                # No filtering - get all codes
+                codes = df['code'].dropna().unique().tolist()
+                component_codes.extend(codes)
 
     return component_codes
 
 
-def get_dhw_component_fallback(locator, building_identifier, feedstock):
+def get_dhw_component_fallback(locator, building_identifier, feedstock, available_feedstocks=None):
     """
-    Get fallback DHW component code based on feedstock type.
+    Get fallback DHW component code based on feedstock priority.
 
     This is used when SUPPLY_HOTWATER assembly doesn't specify components.
-    The function matches the feedstock to appropriate boiler type from COMPONENTS database.
+    Uses feedstock priority from available_feedstocks to select appropriate boiler.
 
     :param locator: InputLocator instance
     :param building_identifier: Building name (for error messages)
     :param feedstock: Feedstock code from SUPPLY_HOTWATER assembly ('GRID', 'NATURALGAS', etc.)
+    :param available_feedstocks: Optional list of feedstock names in priority order
     :return: Component code string (e.g., 'BO5' for electrical boiler) or None if no match
     """
-    import pandas as pd
+    # If available_feedstocks is provided, use feedstock priority selection
+    if available_feedstocks:
+        # Check if assembly's feedstock is in available_feedstocks
+        if feedstock in available_feedstocks:
+            # Use feedstock priority (assembly feedstock first, then others)
+            feedstock_priority = [feedstock] + [f for f in available_feedstocks if f != feedstock]
+        else:
+            # Assembly feedstock not in available list - use available_feedstocks order
+            feedstock_priority = available_feedstocks
 
-    # Map feedstock to fuel_code in BOILERS.csv
-    # Based on databases/SG/COMPONENTS/CONVERSION/BOILERS.csv
-    feedstock_to_fuel = {
-        'GRID': 'E230AC',      # Electrical boiler (BO5)
-        'NATURALGAS': 'Cgas',  # Natural gas boiler (BO1/BO3)
-        'Cgas': 'Cgas',        # Direct fuel code
-        'OIL': 'Coil',         # Oil boiler (BO2)
-        'Coil': 'Coil',        # Direct fuel code
-        'COAL': 'Ccoa',        # Coal boiler (BO4)
-        'Ccoa': 'Ccoa',        # Direct fuel code
-        'WOOD': 'Cwod',        # Wood boiler (BO6)
-        'Cwod': 'Cwod',        # Direct fuel code
-    }
+        # Build feedstock mapping
+        feedstock_map = build_feedstock_to_energy_carriers_map(locator, feedstock_priority)
 
-    fuel_code = feedstock_to_fuel.get(feedstock)
-    if not fuel_code:
-        print(f"    ⚠ {building_identifier}: Cannot find DHW component for feedstock '{feedstock}'")
+        # Select boiler using feedstock priority
+        component_code = select_component_by_feedstock_priority(
+            locator, 'BOILERS', feedstock_priority, feedstock_map, peak_demand_kw=None
+        )
+
+        if not component_code:
+            print(f"    ⚠ {building_identifier}: No boiler found matching feedstocks: {', '.join(feedstock_priority)}")
+            return None
+
+        return component_code
+
+    # Legacy fallback: Direct feedstock-to-energy-carrier mapping (no priority)
+    # Build single-feedstock mapping
+    feedstock_map = build_feedstock_to_energy_carriers_map(locator, [feedstock])
+
+    if feedstock not in feedstock_map:
+        print(f"    ⚠ {building_identifier}: Feedstock '{feedstock}' not found in ENERGY_CARRIERS.csv")
         return None
 
-    # Read boilers database
-    boilers_path = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
-    if not pd.io.common.file_exists(boilers_path):
-        print(f"    ⚠ {building_identifier}: BOILERS database not found at {boilers_path}")
-        return None
+    # Get energy carrier codes for this feedstock
+    energy_carrier_codes = feedstock_map[feedstock]
 
-    boilers_df = pd.read_csv(boilers_path)
+    # Select first matching boiler (alphabetically by code)
+    component_code = select_component_by_feedstock_priority(
+        locator, 'BOILERS', [feedstock], feedstock_map, peak_demand_kw=None
+    )
 
-    # Find matching boiler by fuel_code
-    matching_boilers = boilers_df[boilers_df['fuel_code'] == fuel_code]
-
-    if matching_boilers.empty:
-        print(f"    ⚠ {building_identifier}: No boiler found for fuel '{fuel_code}'")
-        return None
-
-    # Get the first matching boiler code
-    # For electrical: BO5
-    # For natural gas: BO1 (conventional) or BO3 (condensing) - prefer BO1 for simplicity
-    # For oil: BO2
-    component_code = matching_boilers['code'].iloc[0]
+    if not component_code:
+        print(f"    ⚠ {building_identifier}: No boiler found for feedstock '{feedstock}' (energy carriers: {energy_carrier_codes})")
 
     return component_code
 
 
-def apply_dhw_component_fallback(locator, building, supply_system):
+def apply_dhw_component_fallback(locator, building, supply_system, available_feedstocks=None):
     """
     Apply DHW component fallback when SUPPLY_HOTWATER assembly has no components.
 
     This function:
     1. Reads the building's supply_type_dhw from supply.csv
     2. Gets the feedstock from SUPPLY_HOTWATER.csv
-    3. Matches feedstock to boiler component (e.g., GRID → BO5)
+    3. Matches feedstock to boiler component using feedstock priority
     4. Creates a synthetic DHW supply system with that component
     5. Calculates and returns costs for DHW service
 
     :param locator: InputLocator instance
     :param building: Building instance (or minimal building with just .identifier attribute)
     :param supply_system: Existing heating supply system (for reference, can be None)
+    :param available_feedstocks: Optional list of feedstock names in priority order
     :return: dict of DHW service costs or None if fallback fails
     """
     import pandas as pd
@@ -329,8 +483,8 @@ def apply_dhw_component_fallback(locator, building, supply_system):
     if not feedstock or feedstock == 'NONE':
         return None
 
-    # Get fallback component code based on feedstock
-    component_code = get_dhw_component_fallback(locator, building.identifier, feedstock)
+    # Get fallback component code based on feedstock (using feedstock priority if available)
+    component_code = get_dhw_component_fallback(locator, building.identifier, feedstock, available_feedstocks)
     if not component_code:
         return None
 
@@ -748,8 +902,9 @@ def calculate_standalone_building_costs(locator, config, network_name):
                     building_obj = heating_results[bid]['building']
                     supply_system = heating_results[bid].get('supply_system')
 
-                    # Apply DHW fallback
-                    dhw_costs = apply_dhw_component_fallback(locator, building_obj, supply_system)
+                    # Apply DHW fallback with feedstock priority
+                    available_feedstocks = config.system_costs.available_feedstocks if config.system_costs.available_feedstocks else None
+                    dhw_costs = apply_dhw_component_fallback(locator, building_obj, supply_system, available_feedstocks)
 
                     if dhw_costs:
                         # Add DHW costs to results
@@ -1240,8 +1395,10 @@ def calculate_district_network_costs(locator, config, network_type, network_name
 
             # Convert component categories to actual component codes from database
             # Filter by peak demand to only include codes that can handle the required capacity
-            cooling_codes = get_component_codes_from_categories(locator, cooling_cats_simple, network_type, peak_demand_kw)
-            heat_rejection_codes = get_component_codes_from_categories(locator, heat_rejection_cats, network_type, peak_demand_kw)
+            # Use feedstock priority from config to select components
+            available_feedstocks = config.system_costs.available_feedstocks if config.system_costs.available_feedstocks else None
+            cooling_codes = get_component_codes_from_categories(locator, cooling_cats_simple, network_type, peak_demand_kw, available_feedstocks)
+            heat_rejection_codes = get_component_codes_from_categories(locator, heat_rejection_cats, network_type, peak_demand_kw, available_feedstocks)
 
             # For baseline costs, use only the FIRST viable component per category
             # This gives a simple, conservative baseline estimate rather than an optimized mix
@@ -1260,7 +1417,9 @@ def calculate_district_network_costs(locator, config, network_type, network_name
 
             # Convert component categories to actual component codes
             # Filter by peak demand to only include codes that can handle the required capacity
-            heating_codes = get_component_codes_from_categories(locator, heating_cats, network_type, peak_demand_kw)
+            # Use feedstock priority from config to select components
+            available_feedstocks = config.system_costs.available_feedstocks if config.system_costs.available_feedstocks else None
+            heating_codes = get_component_codes_from_categories(locator, heating_cats, network_type, peak_demand_kw, available_feedstocks)
 
             # For baseline costs, use only the FIRST viable component
             # This gives a simple, conservative baseline estimate rather than an optimized mix
@@ -1642,8 +1801,9 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
                     # Try DHW fallback if DHW is missing
                     if qww > 0 and not any('_ww' in s for s in filtered_costs.keys()):
                         if services_filter in ['all', 'heating_dhw']:
-                            # Try to apply DHW component fallback
-                            dhw_costs = apply_dhw_component_fallback(locator, building_data['building'], building_data['supply_system'])
+                            # Try to apply DHW component fallback with feedstock priority
+                            available_feedstocks = config.system_costs.available_feedstocks if config.system_costs.available_feedstocks else None
+                            dhw_costs = apply_dhw_component_fallback(locator, building_data['building'], building_data['supply_system'], available_feedstocks)
                             if dhw_costs:
                                 # Merge DHW costs into filtered_costs
                                 filtered_costs.update(dhw_costs)
