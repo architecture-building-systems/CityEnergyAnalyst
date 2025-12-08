@@ -2780,7 +2780,12 @@ def copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=
         # Filter by selected buildings
         if list_buildings:
             df_costs_buildings = df_costs_buildings[df_costs_buildings['name'].isin(list_buildings)]
-            df_costs_components = df_costs_components[df_costs_components['name'].isin(list_buildings)]
+            # For components: include both selected buildings AND district plants
+            # District plants have names like "networkname_DC" or "networkname_DH"
+            # Components also include solar panels, so we need to keep both buildings and plants
+            plant_mask = df_costs_components['scale'] == 'DISTRICT'
+            building_mask = df_costs_components['name'].isin(list_buildings)
+            df_costs_components = df_costs_components[plant_mask | building_mask]
 
         # Get destination file paths using InputLocator
         costs_buildings_dst = locator.get_export_results_summary_costs_buildings_file(summary_folder)
