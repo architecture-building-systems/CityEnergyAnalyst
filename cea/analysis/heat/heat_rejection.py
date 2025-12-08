@@ -14,6 +14,7 @@ Pattern mirrors cea/analysis/costs/supply_costs.py but focuses on heat emissions
 """
 import pandas as pd
 import geopandas as gpd
+import os
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
