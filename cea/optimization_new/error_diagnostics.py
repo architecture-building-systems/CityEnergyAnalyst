@@ -103,7 +103,7 @@ def generate_energy_carrier_mismatch_error(
                     })
             else:
                 component_analysis.append(f"  - {comp_code}: outputs {comp_ec.code}")
-        except TypeError as e:
+        except TypeError:
             # Component has non-standard initialization (e.g., HeatExchanger requires temperature_before/after)
             # This indicates the component type is not supported in this context
             unsupported_components.append(comp_code)
@@ -242,7 +242,7 @@ def generate_energy_carrier_mismatch_error(
             "       * Consider using component-based configuration instead of SUPPLY assemblies",
             "",
             "  2. Edit SUPPLY assembly:",
-            f"     - ASSEMBLIES/SUPPLY/SUPPLY_*",
+            "     - ASSEMBLIES/SUPPLY/SUPPLY_*",
             f"     - Change tertiary_components from {unsupported_components[0]} to CT1 (or similar)",
             "",
             "  3. Alternative: Use component categories instead of SUPPLY assemblies:",

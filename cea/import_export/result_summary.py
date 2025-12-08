@@ -1381,7 +1381,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -1404,7 +1404,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -1453,7 +1453,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:

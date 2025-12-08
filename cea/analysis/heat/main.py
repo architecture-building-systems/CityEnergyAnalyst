@@ -4,7 +4,6 @@ Anthropogenic Heat Assessment - Main Entry Point
 Calculates heat rejection to environment from building energy systems.
 Similar structure to system-costs but focused on heat emissions.
 """
-import os
 import cea.config
 import cea.inputlocator
 from cea.analysis.heat.heat_rejection import anthropogenic_heat_main

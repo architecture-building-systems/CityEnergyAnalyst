@@ -12,11 +12,8 @@ Key concepts:
 
 Pattern mirrors cea/analysis/costs/supply_costs.py but focuses on heat emissions.
 """
-import os
 import pandas as pd
 import geopandas as gpd
-from cea.optimization_new.domain import Domain
-from cea.optimization_new.supplySystem import SupplySystem
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -78,7 +75,7 @@ def anthropogenic_heat_main(locator, config):
         print("District-scale supply systems will be treated as building-scale for heat calculations.")
         print(f"Network types (for supply system selection): {', '.join(network_types)}\n")
     else:
-        print(f"Mode: NETWORK + STANDALONE")
+        print("Mode: NETWORK + STANDALONE")
         print(f"Network layout: {network_name}")
         print(f"Network types: {', '.join(network_types)}\n")
 
@@ -98,7 +95,7 @@ def anthropogenic_heat_main(locator, config):
         # Step 2: Calculate district network heat rejection
         network_results = {}
         for network_type in network_types:
-            print(f"\n-" * 70)
+            print("\n" + "-" * 70)
             print(f"Calculating {network_type} district network heat rejection...")
 
             network_heat = calculate_network_heat_rejection(
@@ -207,7 +204,6 @@ def calculate_standalone_heat_rejection(locator, config, network_types):
 
             # Try DHW fallback if DHW demand exists
             if qww > 0:
-                from cea.analysis.costs.supply_costs import apply_dhw_component_fallback
                 dhw_system = create_dhw_heat_rejection_system(locator, building_obj, supply_system)
 
                 if dhw_system is not None:
@@ -244,13 +240,13 @@ def create_dhw_heat_rejection_system(locator, building, main_supply_system):
     :return: DHW SupplySystem instance or None
     """
     import pandas as pd
+    import cea.config
     from cea.optimization_new.containerclasses.supplySystemStructure import SupplySystemStructure
     from cea.optimization_new.supplySystem import SupplySystem
     from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
     from cea.optimization_new.domain import Domain
     from cea.optimization_new.component import Component
     from cea.analysis.costs.supply_costs import get_dhw_component_fallback
-    import cea.config
 
     try:
         # Read building's DHW supply code from supply.csv
@@ -366,9 +362,10 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     :param standalone_results: Results from standalone calculations
     :return: dict with network heat rejection data or None if validation fails
     """
+    import os
+    import cea.config
     from cea.analysis.costs.supply_costs import calculate_district_network_costs
     from cea.optimization_new.domain import Domain
-    import cea.config
 
     # Validate network results exist
     nodes_file = locator.get_network_layout_nodes_shapefile(network_type, network_name)
@@ -420,7 +417,7 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     domain.load_buildings(buildings_in_domain=connected_building_ids)
 
     if len(domain.buildings) == 0:
-        print(f"  ⚠ No buildings with demand found")
+        print("  ⚠ No buildings with demand found")
         return None
 
     # Load potentials and initialize classes (same as cost module lines 1710-1720)
@@ -444,7 +441,7 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
     domain_potentials = domain.energy_potentials
 
     # REUSE calculate_district_network_costs from cost module
-    print(f"  Calculating network supply system using cost module...")
+    print("  Calculating network supply system using cost module...")
     try:
         # Create a new config for system-costs with our anthropogenic_heat parameters
         # This avoids parameter access errors when calculate_district_network_costs reads config.system_costs.*
@@ -468,13 +465,13 @@ def calculate_network_heat_rejection(locator, config, network_type, network_name
         )
 
         if not network_costs:
-            print(f"  ⚠ Network cost calculation returned empty")
+            print("  ⚠ Network cost calculation returned empty")
             return None
 
         # Extract supply system from cost results
         network_id = f'{network_name}_{network_type}'
         if network_id not in network_costs or 'supply_system' not in network_costs[network_id]:
-            print(f"  ⚠ No supply system in network costs")
+            print("  ⚠ No supply system in network costs")
             return None
 
         plant_supply_system = network_costs[network_id]['supply_system']

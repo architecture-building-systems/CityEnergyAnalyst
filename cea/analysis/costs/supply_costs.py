@@ -829,8 +829,6 @@ def calculate_standalone_building_costs(locator, config, network_name):
     :param network_name: Network layout name
     :return: dict of {building_name: {cost_data}}
     """
-    import os
-
     print("  Loading buildings and demands...")
 
     # 0. Determine STANDALONE mode or NETWORK mode
