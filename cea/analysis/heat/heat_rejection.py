@@ -759,7 +759,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only, network_na
         # Save
         output_file = locator.get_heat_rejection_buildings(network_name=network_name)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        buildings_output.to_csv(output_file, index=False)
+        buildings_output.to_csv(output_file, index=False, float_format='%.2f')
         print(f"  ✓ Saved buildings summary: {output_file}")
 
     # 2. Individual hourly files per building/plant (similar to demand)
@@ -784,7 +784,7 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only, network_na
         # Save individual file
         output_file = locator.get_heat_rejection_hourly_building(building_name, network_name=network_name)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        entity_df.to_csv(output_file, index=False)
+        entity_df.to_csv(output_file, index=False, float_format='%.2f')
 
     print(f"  ✓ Saved {len(results['buildings'])} individual hourly files")
 
@@ -825,13 +825,13 @@ def save_heat_rejection_outputs(locator, results, is_standalone_only, network_na
         columns_order = [col for col in desired_order if col in components_df.columns]
         components_df = components_df[columns_order]
         output_file = locator.get_heat_rejection_components(network_name=network_name)
-        components_df.to_csv(output_file, index=False)
+        components_df.to_csv(output_file, index=False, float_format='%.2f')
         print(f"  ✓ Saved components breakdown ({len(component_rows)} rows): {output_file}")
     else:
         # Create empty placeholder
         components_df = pd.DataFrame()
         output_file = locator.get_heat_rejection_components(network_name=network_name)
-        components_df.to_csv(output_file, index=False)
+        components_df.to_csv(output_file, index=False, float_format='%.2f')
         print(f"  ✓ Saved components (empty): {output_file}")
 
 
