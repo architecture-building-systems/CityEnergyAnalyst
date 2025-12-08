@@ -1305,7 +1305,7 @@ def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, s
 
 
 
-def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
+def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False, network_name=''):
     """
     Aggregates building-level results based on the provided list of DataFrames.
 
@@ -1381,7 +1381,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -1404,7 +1404,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -1453,7 +1453,7 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
                 # For heat_rejection, use entity names from the data files instead of zone buildings
                 if appendix == 'heat_rejection':
                     # Get entity names from heat_rejection_buildings.csv
-                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings())
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
                     entity_names = heat_buildings_df['name'].tolist()
                     num_entities_per_period = len(entity_names)
                 else:
@@ -2970,7 +2970,7 @@ def process_building_summary(config, locator,
                 if list_appendix == ['lifecycle_emissions']:
                     exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
                 else:
-                    exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+                    exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot, network_name=network_name)
             except Exception as e:
                 error_msg = f"Step 8 (Aggregate by Building) - metrics {list_metrics}: {str(e)}"
                 errors_encountered.append(error_msg)
