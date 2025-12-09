@@ -1,13 +1,15 @@
 # Thermal Network Design
 
-Thermal network design features enable the planning and analysis of district heating and cooling systems. The process is divided into two parts: layout generation and thermal hydraulic analysis.
+Thermal network design features enable the planning and analysis of district heating and cooling systems. The process is divided into two parts: layout generation and thermal hydraulic analysis. CEA 4 now supports **multiple network layouts** per scenario, allowing you to compare different network designs and configurations.
 
 ---
 
 ## Thermal Network Part 1: Layout
 
 ### Overview
-Automatically generates thermal network piping layouts using minimum spanning tree algorithms that follow street geometries. This feature creates the spatial configuration of district heating (DH) or district cooling (DC) networks connecting buildings to central plants.
+Automatically generates thermal network piping layouts using minimum spanning tree algorithms that follow street geometries, or validates and processes user-provided network layouts (shapefiles or GeoJSON). This feature creates the spatial configuration of district heating (DH) or district cooling (DC) networks connecting buildings to central plants.
+
+**New in CEA 4**: You can now create and manage multiple network layouts with unique names, enabling easy comparison of different network design scenarios.
 
 ### When to Use
 - Designing new district heating or cooling networks
@@ -37,9 +39,11 @@ The algorithm:
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
+| **Network name** | Unique identifier for this network layout | e.g., "baseline", "optimised", "scenario-A" |
 | **Network type** | DH (heating) or DC (cooling) | DH or DC |
 | **Allow looped networks** | Create redundant paths | No (tree) |
 | **Consider all buildings** | Or select subset to connect | All with demand |
+| **User-provided layout** | Optional: Upload existing network shapefiles/GeoJSON | Leave empty for auto-generation |
 
 ### How to Use
 
@@ -50,23 +54,30 @@ The algorithm:
 2. **Run layout generation**:
    - Navigate to **Thermal Network Design**
    - Select **Thermal Network Part 1: Layout**
+   - **Give your network a unique name** (e.g., "baseline", "scenario1", "optimised")
+     - This allows you to create multiple network designs for comparison
+     - Names must be unique within your scenario
    - Choose network type (DH or DC)
-   - Configure options
+   - Configure options:
+     - **Auto-generation**: Leave user-provided layout empty to auto-generate using minimum spanning tree
+     - **User-provided**: Upload existing shapefiles or GeoJSON if you have a custom network design
    - Click **Run**
 
 3. **Processing time**: Usually < 1 minute for typical districts
 
 ### Output Files
 
-**Network edges**: `{scenario}/inputs/networks/DH/edges.shp` (or DC)
+**Network edges**: `{scenario}/inputs/networks/DH/{network_name}/edges.shp` (or DC)
 - Pipe segments along streets
 - Length of each segment
 - Start/end coordinates
 
-**Network nodes**: `{scenario}/inputs/networks/DH/nodes.shp` (or DC)
+**Network nodes**: `{scenario}/inputs/networks/DH/{network_name}/nodes.shp` (or DC)
 - Building connection points
 - Pipe junctions
 - Node coordinates and building references
+
+**Note**: Each network layout is stored in its own named subfolder (e.g., `DH/baseline/`, `DH/optimised/`), allowing you to maintain multiple network designs simultaneously.
 
 ### Understanding Layout Results
 
@@ -91,6 +102,8 @@ Typical network characteristics:
 - **Check connectivity**: Verify all desired buildings are connected
 - **Consider future expansion**: Leave capacity for additional connections
 - **Manual editing**: You can manually edit the generated shapefiles if needed
+- **Multiple scenarios**: Create several network layouts (e.g., "baseline", "low-temp", "high-density") to compare different design approaches
+- **Network naming**: Use descriptive names that help you remember the design strategy (e.g., "tree-80C", "loop-60C")
 
 ### Troubleshooting
 
@@ -155,7 +168,8 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 | Parameter | Description | Typical Value |
 |-----------|-------------|---------------|
-| **Network type** | DH or DC | DH or DC |
+| **Network name** | Select which network layout to simulate | Choose from dropdown (created in Part 1) |
+| **Network type** | DH or DC | Must match the network created in Part 1 |
 | **Supply temperature** | Network supply temp | 80°C (DH) / 6°C (DC) |
 | **Return temperature** | Network return temp | 50°C (DH) / 12°C (DC) |
 | **Pipe insulation** | Insulation standard | Standard / High performance |
@@ -169,7 +183,8 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 2. **Configure parameters**:
    - Navigate to **Thermal Network Design**
    - Select **Thermal Network Part 2: Flow & Sizing**
-   - Select network type (must match Part 1)
+   - **Select network name** from dropdown (must be created in Part 1)
+   - Select network type (must match the type used in Part 1)
    - Set supply/return temperatures:
      - **District heating**: 70-90°C supply, 40-50°C return
      - **District cooling**: 5-8°C supply, 12-15°C return
@@ -182,26 +197,28 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 ### Output Files
 
-**Pipe sizing results**: `{scenario}/outputs/data/thermal-network/DH/plant_building_names.csv`
+**Pipe sizing results**: `{scenario}/outputs/data/thermal-network/DH/{network_name}/plant_building_names.csv` (or DC)
 - Connected buildings and their loads
 
-**Edge results**: `{scenario}/outputs/data/thermal-network/DH/edges.csv`
+**Edge results**: `{scenario}/outputs/data/thermal-network/DH/{network_name}/edges.csv` (or DC)
 - Pipe diameters (mm)
 - Mass flow rates (kg/s)
 - Pressure drops (Pa)
 - Heat losses (W/m)
 - Temperature drops (K)
 
-**Node results**: `{scenario}/outputs/data/thermal-network/DH/nodes.csv`
+**Node results**: `{scenario}/outputs/data/thermal-network/DH/{network_name}/nodes.csv` (or DC)
 - Node pressures (Pa)
 - Temperatures (°C)
 - Building heat exchanger sizing
 
-**Network summary**: `{scenario}/outputs/data/thermal-network/DH/network_summary.csv`
+**Network summary**: `{scenario}/outputs/data/thermal-network/DH/{network_name}/network_summary.csv` (or DC)
 - Total pipe length and volume
 - Total heat losses (annual)
 - Pumping energy requirements
 - Cost estimates
+
+**Note**: Results are organised by network name, allowing you to compare performance across different network designs.
 
 ### Understanding Results
 
@@ -298,11 +315,13 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 
 2. **Network Layout**:
    - Run Thermal Network Part 1: Layout
+   - Give your network a name (e.g., "baseline")
    - Select DH (district heating)
    - Review generated layout in 3D viewer or GIS
 
 3. **Network Sizing**:
    - Run Thermal Network Part 2: Flow & Sizing
+   - Select the network name you created (e.g., "baseline")
    - Set appropriate supply/return temperatures (e.g., 80°C / 50°C)
    - Review results: pipe sizes, heat losses, pumping energy
 
