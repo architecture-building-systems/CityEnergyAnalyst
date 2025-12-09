@@ -21,6 +21,7 @@ class Configuration:
     general: GeneralSection
     database_helper: DatabaseHelperSection
     archetypes_mapper: ArchetypesMapperSection
+    building_data_helper: BuildingDataHelperSection
     streets_helper: StreetsHelperSection
     terrain_helper: TerrainHelperSection
     surroundings_helper: SurroundingsHelperSection
@@ -103,6 +104,8 @@ class Configuration:
     def __getattr__(self, item: Literal["database_helper"]) -> DatabaseHelperSection: ...
     @overload
     def __getattr__(self, item: Literal["archetypes_mapper"]) -> ArchetypesMapperSection: ...
+    @overload
+    def __getattr__(self, item: Literal["building_data_helper"]) -> BuildingDataHelperSection: ...
     @overload
     def __getattr__(self, item: Literal["streets_helper"]) -> StreetsHelperSection: ...
     @overload
@@ -302,6 +305,29 @@ class ArchetypesMapperSection(Section):
     def __getattr__(self, item: Literal["input_databases"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class BuildingDataHelperSection(Section):
+    """Typed section for building-data-helper configuration"""
+    google_api_key: Any
+    create_backup: bool
+    buildings: list[str]
+    enquire_floors_ag: bool
+    enquire_year_construction: bool
+    enquire_use_type: bool
+
+    @overload
+    def __getattr__(self, item: Literal["google_api_key"]) -> Any: ...
+    @overload
+    def __getattr__(self, item: Literal["create_backup"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["enquire_floors_ag"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["enquire_year_construction"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["enquire_use_type"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class StreetsHelperSection(Section):
