@@ -70,7 +70,7 @@ Solar Radiation Analysis:
       It employs the Polygon Clipping Shadow method combined with a "Neighbourhood Shading Building Surfaces" filtering criterion
       to fast assess building solar exposure in dense urban environments.
       
-      Reference: https://doi.org/10.1016/j.buildenv.2022.109937
+      Reference: https://doi.org/10.1016/j.buildenv.2022.109937 https://doi.org/10.1088/1742-6596/3140/4/042024
     interfaces: [cli, dashboard]
     module: cea.resources.radiationCRAX.main
     parameters: ['general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free', 'general:debug',
@@ -174,17 +174,17 @@ Renewable Energy Potential Assessment:
       - [get_demand_results_file, building_name]
 
 Energy Demand Forecasting:
-  - name: occupancy-helper
+  - name: occupancy
     label: "Energy Demand Part 1: building occupancy"
     short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
-    module: cea.demand.occupancy_helper
+    module: cea.demand.occupancy
     parameters: ['general:scenario',
                  'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free',
                  'general:debug',
-                 occupancy-helper]
+                 occupancy]
     input-files:
       - [get_building_internal]
       - [get_building_comfort]
@@ -194,8 +194,15 @@ Energy Demand Forecasting:
 
   - name: demand
     label: "Energy Demand Part 2: load modelling"
-    short_description: Forecast energy demand of buildings using CEA models
-    description: This Feature uses CEA models to forecast the energy demand of buildings.
+    short_description: Forecast end-use energy loads and final energy consumption by carrier
+    description: |
+      This Feature uses CEA models to forecast building energy demand at hourly resolution.
+
+      **End-use energy loads**: Heating, cooling, domestic hot water, electricity for appliances/lighting (by service)
+
+      **Final energy consumption**: Energy by carrier (GRID electricity, natural gas, district heating/cooling, etc.) delivered to the building boundary
+
+      Final energy represents what is delivered to and consumed at the building, before accounting for upstream generation/transmission losses (which are captured in Primary Energy calculations).
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
@@ -232,8 +239,10 @@ Thermal Network Design:
 
   - name: network-layout
     label: "Thermal Network Part 1: layout"
-    short_description: Create thermal network piping layout using minimum spanning tree
-    description: This Feature creates a thermal network's piping layout with the minimum spanning tree following the streets geometry.
+    short_description: Create or validate thermal network piping layout
+    description: |
+      This Feature creates a thermal network's piping layout using the minimum spanning tree algorithm following streets geometry, or validates and processes user-provided network layouts (shapefiles or GeoJSON). Auto-generated layouts all have a one-component layout with a single plant, while user-provided layouts can have a multi-component network with one plant for each component.
+
     interfaces: [cli, dashboard]
     module: cea.technologies.network_layout.main
     parameters: ['general:scenario', network-layout]
@@ -251,7 +260,6 @@ Thermal Network Design:
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
-      - [get_network_layout_nodes_shapefile, "thermal-network:network-type"]
       - [get_demand_results_file, building_name]
       - [get_db4_components_conversion_folder]
       - [get_database_components_distribution_thermal_grid]
@@ -262,12 +270,21 @@ Life Cycle Analysis:
 
   - name: emissions
     label: Emissions
-    short_description: Calculate embodied and operational emissions of buildings
+    short_description: Calculate embodied and operational GHG emissions from final energy
     description: |
-      This Feature calculates the aggregated embodied and operational emissions for each building, with an option for hourly (8,760 hours) operational emissions and projected annual embodied emissions until a given year.
+      This Feature calculates lifecycle GHG emissions for each building.
 
-      Embodied emissions: building's initial construction, including construction, renovation, deconstruction, biogenic carbon storage.
-      Operational emissions: supply systems operation.
+      **Embodied emissions** include construction materials and processes, building envelope, renovations, demolition, biogenic carbon storage (e.g. timber), and PV panel manufacturing.
+
+      **Operational emissions** are calculated from **final energy consumption** (energy delivered to building) using emission factors (gCO2e/kWh).
+
+      Includes energy supply system operation for space heating, space cooling, electricity, and domestic hot water (dhw).
+
+      Outputs include total annual emissions (kgCO2e/year), emissions intensity (kgCO2e/m2/year), hourly operational emissions (8,760 hours), and projected annual embodied emissions until a target year.
+
+      **[Optional]**: For location-specific grid emission data, download hourly carbon intensity datasets from [Electricity Maps](https://portal.electricitymaps.com/datasets),
+      and set column name to "Carbon intensity gCO2eq/kWh (direct)" in the parameters.
+      _Ensure proper citation and compliance with their terms of use._
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
@@ -309,7 +326,7 @@ Energy Supply System Optimisation:
                  thermal-network-optimization]
 
   - name: decentralized
-    label: "Suppy System Optimisation: building-scale"
+    label: "Supply System Optimisation: building-scale"
     short_description: Optimise decentralised energy supply systems
     description: This Feature optimises energy supply systems for decentralised operation.
     interfaces: [cli, dashboard]
@@ -319,13 +336,13 @@ Energy Supply System Optimisation:
       - [get_total_demand]
 
   - name: optimization-new
-    label: "Suppy System Optimisation: district-scale"
+    label: "Supply System Optimisation: district-scale"
     short_description: Optimise centralised energy supply systems
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]
     module: cea.optimization_new.domain
     parameters: ['general:debug', 'general:scenario', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free',
-                 optimization-new]
+               'optimization-new']
     input-files:
       - [get_street_network]
       - [get_total_demand]
@@ -726,7 +743,7 @@ Visualisation:
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
+
 
   - name: plot-operational-emissions
     label: Plot - Operational Emissions
@@ -769,6 +786,16 @@ Visualisation:
     description: This Feature plots the Pareto front for optimisation results
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.pareto_front
+    parameters: ['general:scenario']
+    input-files:
+      - [get_new_optimization_optimal_supply_systems_summary_file]
+
+  - name: plot-supply-system
+    label: Plot - Supply System
+    short_description: Plot components of energy supply systems
+    description: This Feature plots components of energy supply systems
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.supply_system
     parameters: ['general:scenario']
     input-files:
       - [get_new_optimization_optimal_supply_systems_summary_file]

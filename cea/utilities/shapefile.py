@@ -72,13 +72,13 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
         raise ValueError("The provided reference CRS appears to be in decimal degrees while the coordinates "
                          "in the CSV file are in metres. A projected CRS is required for converting metre-based coordinates.")
 
-    # Convert geometry based on type
+    # Convert geometry based on type (force 2D by dropping Z coordinate)
     if geometry_type == "polygon":
-        geometry = [shapely.Polygon(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Polygon([(coord[0], coord[1]) for coord in json.loads(g)]) for g in df.geometry]
     elif geometry_type == "polyline":
-        geometry = [shapely.LineString(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.LineString([(coord[0], coord[1]) for coord in json.loads(g)]) for g in df.geometry]
     elif geometry_type == "point":
-        geometry = [shapely.Point(json.loads(g)) for g in df.geometry]
+        geometry = [shapely.Point(json.loads(g)[0], json.loads(g)[1]) for g in df.geometry]
     else:
         raise ValueError("Invalid geometry type. Use 'polygon', 'polyline', or 'point'.")
 
@@ -92,9 +92,9 @@ def csv_xlsx_to_shapefile(input_file, shapefile_path, shapefile_name, reference_
 
 def serialize_geometry(geom):
     if geom.geom_type == 'Polygon':
-        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.exterior.coords for x, y, *z in [coord]]
+        return [[coord[0], coord[1], coord[2] if len(coord) == 3 else 0.0] for coord in geom.exterior.coords]
     elif geom.geom_type == 'LineString':
-        return [[x, y, z if len(coord) == 3 else 0.0] for coord in geom.coords for x, y, *z in [coord]]
+        return [[coord[0], coord[1], coord[2] if len(coord) == 3 else 0.0] for coord in geom.coords]
     elif geom.geom_type == 'Point':
         if geom.has_z:
             return [geom.x, geom.y, geom.z]
@@ -140,7 +140,7 @@ def shapefile_to_csv_xlsx(shapefile, output_path, new_crs=None):
 
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`shp-to-csv-to-shp` with the values from the configuration file, section ``[shapefile-tools]``.
 

@@ -112,9 +112,11 @@ cea = [
 
     # Web assets
     "interfaces/dashboard/plots/templates/*.html",
-    "plots/*.html",
 
     "plots/naming.csv",
+    "plots/*.html",
+    "plots/**/*.png",
+    "plots/**/*.yml",
 ]
 
 [tool.setuptools.dynamic]
@@ -122,6 +124,7 @@ version = { attr = "cea.__version__" }
 
 [tool.ruff]
 exclude = ["*.ipynb", "external/"]
+extend-exclude = ["*.pyi"]
 lint.ignore = [
     "E741", # ambiguous variable name (l, O, I)
 ]
@@ -135,7 +138,8 @@ platforms = [
 ]
 
 [tool.pixi.tasks]
-test = "cea test --type integration"
+unittest = "pytest cea/tests/"
+integration = "cea test --type integration"
 coverage = "pytest --cov=cea cea/tests/"
 
 # Development tasks
@@ -174,3 +178,4 @@ gdal = "*"
 notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
 uv = "*"
+timezonefinder = ">=8.1.0,<9" # to fix Windows installation due to pyepwmorpher

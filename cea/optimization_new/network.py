@@ -33,14 +33,21 @@ import cea.utilities
 import cea.technologies.substation as substation
 from cea.technologies.network_layout.steiner_spanning_tree import add_loops_to_network
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network
+from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.utility import from_numpy_matrix
+from cea.technologies.network_layout.graph_utils import (
+    nx_to_gdf,
+    normalize_coords,
+    normalize_geometry,
+    normalize_gdf_geometries
+)
 from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, \
     calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, SHAPEFILE_TOLERANCE
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization_new.building import Building
+from cea.datamanagement.graph_helper import GraphCorrector
 
 class Network(object):
     _coordinate_reference_system = None
@@ -88,11 +95,13 @@ class Network(object):
         else:
             raise ValueError("connected_buildings must be a list of building names or Building-objects")
 
-    @staticmethod
-    def build_network(network_id, building_ids, connectivity, generate_dataframes=False):
+    @classmethod
+    def build_network(cls, network_id, building_ids, connectivity, generate_dataframes=False):
         """
         Build a network for a given network_id and connectivity of the domain. This means creating a graph that connects
         all buildings in a designated network in the most efficient possible manner (i.e. Steiner tree).
+
+        Factory method that creates and returns an instance of the calling class (supports subclassing).
 
         :param network_id: ID of the network to be built
         :type network_id: int
@@ -118,7 +127,7 @@ class Network(object):
         full_network_identifier = 'N' + str(1000 + network_id)
 
         # create the network object
-        network = Network(connected_buildings, full_network_identifier)
+        network = cls(connected_buildings, full_network_identifier)
         network.run_steiner_tree_optimisation(generate_graph_dataframes=generate_dataframes)
 
         return network
@@ -226,20 +235,42 @@ class Network(object):
         connected_terminals = self._domain_potential_network_terminals_df[is_connected]
         connected_terminal_coord = connected_terminals['coordinates'].tolist()
 
+        # Validate graph is ready for Steiner tree with terminal nodes
+        is_ready, message = GraphCorrector.validate_steiner_tree_ready(self._domain_potential_network_graph,
+                                                                       connected_terminal_coord)
+        if not is_ready:
+            raise ValueError(f'Graph validation failed before Steiner tree: {message}. '
+                           f'This should not happen after corrections in _load_pot_network(). '
+                           f'Please report this issue.')
+
         # calculate steiner spanning tree of undirected potential_network_graph
         try:
             self.network_graph = nx.Graph(steiner_tree(self._domain_potential_network_graph, connected_terminal_coord))
-            self.network_edges = Gdf([[LineString([edge_start, edge_end]), data.get('weight')]
-                                      for edge_start, edge_end, data in self.network_graph.edges(data=True)],
-                                     columns=['geometry', 'length_m'], crs=Network._coordinate_reference_system)
-            self.network_nodes = Gdf([Point(node) for node in self.network_graph.nodes()],
-                                     columns=['geometry'], crs=Network._coordinate_reference_system)
-        except Exception:
-            raise ValueError('There was an error while creating the Steiner tree. '
-                             'Check the streets.shp for isolated/disconnected streets (lines) and erase them, '
-                             'the Steiner tree does not support disconnected graphs. '
-                             'If no disconnected streets can be found, try increasing the SHAPEFILE_TOLERANCE in cea.constants and run again. '
-                             'Otherwise, try using the Feature to Line tool of ArcMap with a tolerance of around 10m to solve the issue.')
+
+            # Convert graph to GeoDataFrame using utility function
+            # This ensures consistent coordinate precision (rounded to SHAPEFILE_TOLERANCE)
+            self.network_edges = nx_to_gdf(
+                self.network_graph,
+                crs=Network._coordinate_reference_system,
+                preserve_geometry=False  # Create straight lines from node coordinates
+            )
+            # Rename 'weight' column to 'length_m' for consistency
+            if 'weight' in self.network_edges.columns:
+                self.network_edges.rename(columns={'weight': 'length_m'}, inplace=True)
+            else:
+                # Fallback: calculate length from geometry if weight not present
+                self.network_edges['length_m'] = self.network_edges.geometry.length
+
+            # Create nodes GeoDataFrame with normalized coordinates
+            self.network_nodes = Gdf(
+                [Point(node) for node in self.network_graph.nodes()],
+                columns=['geometry'],
+                crs=Network._coordinate_reference_system
+            )
+            normalize_gdf_geometries(self.network_nodes, inplace=True)
+        except Exception as e:
+            raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
+                           'This is an unexpected error. Please report this issue.') from e
 
         # complete edge and node dataframes with connected terminals and domain buildings
         if generate_graph_dataframes:
@@ -385,16 +416,23 @@ class Network(object):
 
         return self.network_losses, self.network_piping
 
-    @staticmethod
-    def initialize_class_variables(domain):
-        Network._configure_network_defaults(domain)
-        Network._load_pot_network(domain)
-        Network._set_potential_network_terminals(domain)
-        Network._set_building_operation_parameters(domain)
-        Network._pipe_catalog = pd.read_csv(Network._domain_locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+    @classmethod
+    def initialize_class_variables(cls, domain):
+        # Clear class variables before reinitializing to prevent state persistence across runs
+        cls._domain_potential_network_graph = nx.Graph()
+        cls._domain_potential_network_terminals_df = pd.DataFrame()
+        cls._domain_buildings_flow_rate_m3pers = pd.DataFrame()
+        cls._domain_buildings_supply_temp_K = pd.DataFrame()
+        cls._domain_buildings_return_temp_K = pd.DataFrame()
 
-    @staticmethod
-    def _load_pot_network(domain):
+        cls._configure_network_defaults(domain)
+        cls._load_pot_network(domain)
+        cls._set_potential_network_terminals(domain)
+        cls._set_building_operation_parameters(domain)
+        cls._pipe_catalog = pd.read_csv(cls._domain_locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+
+    @classmethod
+    def _load_pot_network(cls, domain):
         """
         Create potential network graph based on streets network .shp-file and the location of the buildings in the
         domain.
@@ -411,21 +449,19 @@ class Network(object):
         buildings_df = Gdf(list(zip(building_locations, building_identifiers)), columns=['geometry', 'name'],
                            crs=domain.buildings[0].crs, geometry="geometry")
 
-        # create a potential network grid with orthogonal connections between buildings and their closest street
-        network_grid_shp = calc_connectivity_network(domain.locator.get_street_network(),
-                                                     buildings_df,
-                                                     optimisation_flag=True)
-        Network._coordinate_reference_system = network_grid_shp.crs
+        streets_network_df = Gdf.from_file(domain.locator.get_street_network())
 
-        # convert the GeoDataFrame network grid to a Graph
-        for (line_string, length) in network_grid_shp.itertuples(index=False):
-            line_start = line_string.coords[0]
-            line_end = line_string.coords[-1]
-            edge_start = (round(line_start[0], SHAPEFILE_TOLERANCE), round(line_start[1], SHAPEFILE_TOLERANCE))
-            edge_end = (round(line_end[0], SHAPEFILE_TOLERANCE), round(line_end[1], SHAPEFILE_TOLERANCE))
-            Network._domain_potential_network_graph.add_edge(edge_start, edge_end, weight=length)
+        # create a potential network graph with orthogonal connections between buildings and their closest street
+        # This returns a NetworkX graph with preserved geometries and building terminal metadata
+        # Default connection_candidates=1 for optimization (can be made configurable later if needed)
+        cls._domain_potential_network_graph = calc_connectivity_network_with_geometry(
+            streets_network_df, buildings_df, connection_candidates=1
+        )
 
-        return Network._domain_potential_network_graph
+        # store projected coordinate reference system of network
+        cls._coordinate_reference_system = cls._domain_potential_network_graph.graph['crs']
+
+        return cls._domain_potential_network_graph
 
     @staticmethod
     def identify_overlapping_networks(network_graphs):
@@ -531,16 +567,16 @@ class Network(object):
 
         return network_graphs
 
-    @staticmethod
-    def _configure_network_defaults(domain):
+    @classmethod
+    def _configure_network_defaults(cls, domain):
         """
         Gets the network related configurations from the domain's configs and stores them in class variables
         (accessible by all instances).
         """
-        if (domain is None) & (None in Network.configuration_defaults):
+        if (domain is None) & (None in cls.configuration_defaults):
             raise ValueError("The network calculation needs configuration before it can analyse any networks.")
         elif domain is not None:
-            Network._domain_locator = domain.locator
+            cls._domain_locator = domain.locator
             network_type = domain.config.optimization_new.network_type
             min_head_substation_kPa = domain.config.optimization_new.min_head_substation
             thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
@@ -549,42 +585,89 @@ class Network(object):
             equivalent_length_factor = domain.config.optimization_new.equivalent_length_factor
             peak_load_percentage = domain.config.optimization_new.peak_load_percentage
             network_lifetime = domain.config.optimization_new.network_lifetime
-            Network.configuration_defaults = {'network_type': network_type,
-                                              'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
-                                              'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
-                                              'peak_load_velocity_ms': peak_load_velocity_ms,
-                                              'equivalent_length_factor': equivalent_length_factor,
-                                              'peak_load_percentage': peak_load_percentage,
-                                              'network_lifetime_yrs': network_lifetime}
+            cls.configuration_defaults = {'network_type': network_type,
+                                          'thermal_transfer_unit_design_head_m': thermal_transfer_unit_design_head_m,
+                                          'hazen_williams_friction_coefficient': hazen_williams_friction_coefficient,
+                                          'peak_load_velocity_ms': peak_load_velocity_ms,
+                                          'equivalent_length_factor': equivalent_length_factor,
+                                          'peak_load_percentage': peak_load_percentage,
+                                          'network_lifetime_yrs': network_lifetime}
 
-    @staticmethod
-    def _set_potential_network_terminals(domain):
+    @classmethod
+    def _find_building_terminal_nodes_in_graph(cls, buildings):
+        """
+        Find the actual graph nodes corresponding to building terminal locations.
+
+        Uses building terminal metadata that is stored in the graph during network creation
+        by calc_connectivity_network_with_geometry(). This ensures exact coordinate matches
+        and eliminates floating-point precision issues.
+
+        :param buildings: List of building objects with location attributes
+        :type buildings: list
+        :return: List of terminal node coordinates (tuples) that exist in the graph
+        :rtype: list
+        :raises ValueError: If metadata is missing (indicates bug in network creation)
+        """
+        # Check that graph has building terminal metadata
+        if 'building_terminals' not in cls._domain_potential_network_graph.graph:
+            raise ValueError(
+                "Building terminal metadata not found in graph. This indicates a bug in network creation. "
+                "The graph should have been created by calc_connectivity_network_with_geometry() which "
+                "stores building terminal metadata. Please report this issue."
+            )
+
+        terminal_mapping = cls._domain_potential_network_graph.graph['building_terminals']
+
+        # Look up each building's terminal coordinates in the metadata
+        terminal_coordinates = []
+        for building in buildings:
+            if building.identifier in terminal_mapping:
+                terminal_coordinates.append(terminal_mapping[building.identifier])
+            else:
+                # Building not in mapping - this should not happen since we connect all components
+                available_buildings = list(terminal_mapping.keys())
+                raise ValueError(
+                    f"Building '{building.identifier}' not found in graph's building_terminals metadata. "
+                    f"This indicates the building was not connected during network creation, which should not happen "
+                    f"since disconnected components are automatically connected. This is likely a bug. "
+                    f"Available buildings in network: {available_buildings[:10]}... "
+                    f"Please report this issue."
+                )
+
+        return terminal_coordinates
+
+    @classmethod
+    def _set_potential_network_terminals(cls, domain):
         """
         Gets the potential network graph from domain and stores the important information in class variables
         (accessible by all instances).
         """
-        if (domain is None) & (nx.is_empty(Network._domain_potential_network_graph)):
+        if (domain is None) & (nx.is_empty(cls._domain_potential_network_graph)):
             raise ValueError("The network object requires a potential network graph for the domain to be set.")
         elif domain is not None:
-            network_terminal_coordinates = [building.location.coords[0] for building in domain.buildings]
-            network_terminal_coordinates = [(round(x, SHAPEFILE_TOLERANCE), round(y, SHAPEFILE_TOLERANCE))
-                                            for x, y in network_terminal_coordinates]
+            # Extract building terminal coordinates from ACTUAL GRAPH NODES (after all transformations and rounding)
+            # This is critical: the coordinates must match exactly with graph nodes for Steiner tree validation
+            # All buildings should be in the network (components are connected during network creation)
             network_terminal_identifier = [building.identifier for building in domain.buildings]
             network_terminal_demand = [building.demand_flow.profile.sum() for building in domain.buildings]
-            Network._domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
+
+            # Find the actual graph nodes corresponding to building terminals
+            network_terminal_coordinates = cls._find_building_terminal_nodes_in_graph(domain.buildings)
+
+            cls._domain_potential_network_terminals_df = pd.DataFrame(list(zip(network_terminal_identifier,
                                                                                    network_terminal_coordinates,
                                                                                    network_terminal_demand)),
                                                                           columns=['building', 'coordinates', 'demand'])
 
-    @staticmethod
-    def _set_building_operation_parameters(domain):
+    @classmethod
+    def _set_building_operation_parameters(cls, domain):
         """
         Calculates required mass flow rate and supply temperatures (+return temperature) for each building in the domain
         and stores this information in class variables (accessible by all instances).
         """
-        if (domain is None) and (any([Network._domain_buildings_flow_rate_m3pers.empty,
-                                      Network._domain_buildings_supply_temp_K.empty,
-                                      Network._domain_buildings_return_temp_K.empty])):
+        if (domain is None) and (any([cls._domain_buildings_flow_rate_m3pers.empty,
+                                      cls._domain_buildings_supply_temp_K.empty,
+                                      cls._domain_buildings_return_temp_K.empty])):
             raise ValueError("The supply and return temperatures as well as the mass flows required by each building "
                              "need to be calculates before analysing any possible network options.")
         elif domain is not None:
@@ -592,27 +675,29 @@ class Network(object):
             # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
             # calculate substations for all buildings
             # local variables
-            total_demand = pd.read_csv(Network._domain_locator.get_total_demand())
+            total_demand = pd.read_csv(cls._domain_locator.get_total_demand())
             network_type = domain.config.optimization_new.network_type
 
             if network_type == "DH":
                 buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
                 buildings_name_with_space_heating = get_building_names_with_load(total_demand,
                                                                                  load_name='Qhs_sys_MWhyr')
-                if buildings_name_with_heating and buildings_name_with_space_heating:
+                # Check if there's ANY heating demand (total or space heating)
+                # In tropical climates, there may be DHW heating (QH) but no space heating (Qhs)
+                if buildings_name_with_heating or buildings_name_with_space_heating:
                     building_names = [building for building in buildings_name_with_heating]
-                    substation.substation_main_heating(Network._domain_locator, total_demand, building_names,
+                    substation.substation_main_heating(cls._domain_locator, total_demand, building_names,
                                                        DHN_barcode="0")
                 else:
                     raise Exception('There is no heating demand from any building. Please check the input files.')
 
                 for building_name in building_names:
                     substation_results = pd.read_csv(
-                        Network._domain_locator.get_optimization_substations_results_file(building_name, "DH", "0"))
-                    Network._domain_buildings_flow_rate_m3pers[building_name] = \
+                        cls._domain_locator.get_optimization_substations_results_file(building_name, "DH", "0"))
+                    cls._domain_buildings_flow_rate_m3pers[building_name] = \
                         substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-                    Network._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_K"]
-                    Network._domain_buildings_return_temp_K[building_name] = \
+                    cls._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_K"]
+                    cls._domain_buildings_return_temp_K[building_name] = \
                         np.where(substation_results["T_return_DH_result_K"] > 273.15,
                                  substation_results["T_return_DH_result_K"], np.nan)
 
@@ -620,20 +705,20 @@ class Network(object):
                 buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
                 if buildings_name_with_cooling:
                     building_names = [building for building in buildings_name_with_cooling]
-                    substation.substation_main_cooling(Network._domain_locator, total_demand, building_names,
+                    substation.substation_main_cooling(cls._domain_locator, total_demand, building_names,
                                                        DCN_barcode="0")
                 else:
                     raise Exception('There is no cooling demand for any building. Please check the input files.')
 
                 for building_name in building_names:
                     substation_results = pd.read_csv(
-                        Network._domain_locator.get_optimization_substations_results_file(building_name, "DC", "0"))
-                    Network._domain_buildings_flow_rate_m3pers[building_name] = \
+                        cls._domain_locator.get_optimization_substations_results_file(building_name, "DC", "0"))
+                    cls._domain_buildings_flow_rate_m3pers[building_name] = \
                         substation_results[
                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
-                    Network._domain_buildings_supply_temp_K[building_name] = \
+                    cls._domain_buildings_supply_temp_K[building_name] = \
                         substation_results["T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"]
-                    Network._domain_buildings_return_temp_K[building_name] = \
+                    cls._domain_buildings_return_temp_K[building_name] = \
                         substation_results["T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
 
     def _complete_graph_dataframes(self, connected_buildings_coords_list, buildings_list, building_coordinates_list):
@@ -648,15 +733,16 @@ class Network(object):
                                     ['geometry', 'coordinates', 'building', 'type']
                                     index: NODEi
         """
-
         def populate_fields(coordinate):
             if coordinate in connected_buildings_coords_list:
                 return buildings_list[building_coordinates_list.index(coordinate)]
             else:
                 return "NONE"
 
+        # Extract normalized coordinates to ensure consistent precision (SHAPEFILE_TOLERANCE)
         self.network_nodes['coordinates'] = self.network_nodes['geometry'].apply(
-            lambda x: (x.coords[0][0], x.coords[0][1]))
+            lambda x: normalize_coords([x.coords[0]])[0]
+        )
         self.network_nodes['building'] = self.network_nodes['coordinates'].apply(lambda x: populate_fields(x))
         self.network_nodes['type'] = self.network_nodes['building'].apply(
             lambda x: 'CONSUMER' if x != "NONE" else "NONE")
@@ -678,9 +764,9 @@ class Network(object):
 
         for pipe, row in self.network_edges.iterrows():
             # get the length of the pipe and add to dataframe
+            # Normalize edge coordinates to ensure consistent precision (prevents floating-point matching issues)
             edge_coords = row['geometry'].coords
-            start_node = (round(edge_coords[0][0], SHAPEFILE_TOLERANCE), round(edge_coords[0][1], SHAPEFILE_TOLERANCE))
-            end_node = (round(edge_coords[1][0], SHAPEFILE_TOLERANCE), round(edge_coords[1][1], SHAPEFILE_TOLERANCE))
+            start_node, end_node = normalize_coords([edge_coords[0], edge_coords[1]])
             try:
                 self.network_edges.loc[pipe, 'start node'] = \
                     self.network_nodes[self.network_nodes['coordinates'] == start_node].index[0]
@@ -713,22 +799,27 @@ class Network(object):
         network_anchor = self.network_nodes[self.network_nodes.index == network_anchor_node]
         plant_terminal = network_anchor.copy()
         plant_terminal['geometry'] = network_anchor.translate(xoff=1, yoff=1)
-        plant_terminal['coordinates'][0] = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
+        # Normalize coordinates to ensure consistent precision (SHAPEFILE_TOLERANCE)
+        plant_terminal['coordinates'][0] = normalize_coords([(plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)])[0]
         plant_terminal_node = "NODE" + str(len(self.network_nodes.index))
         plant_terminal = plant_terminal.rename({plant_terminal.index[0]: plant_terminal_node})
         plant_terminal['type'][0] = "PLANT"
 
         self.network_nodes = pd.concat([self.network_nodes, plant_terminal])
 
-        # create new edge
-        point1 = (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y)
-        point2 = (network_anchor.geometry[0].x, network_anchor.geometry[0].y)
-        line = LineString((point1, point2))
+        # create new edge connecting plant to network
+        # Normalize coordinates to ensure consistent precision (prevents floating-point matching issues)
+        point1, point2 = normalize_coords([
+            (plant_terminal.geometry[0].x, plant_terminal.geometry[0].y),
+            (network_anchor.geometry[0].x, network_anchor.geometry[0].y)
+        ])
+        line = normalize_geometry(LineString([point1, point2]))
         plant_to_network = Gdf({'geometry': line, 'length_m': line.length, 'type_mat': TYPE_MAT_DEFAULT,
                                 'pipe_DN': PIPE_DIAMETER_DEFAULT, 'start node': network_anchor_node,
                                 'end node': plant_terminal_node},
                                index=['PIPE' + str(len(self.network_edges.index))],
                                crs=Network._coordinate_reference_system)
+        normalize_gdf_geometries(plant_to_network, inplace=True)
         self.network_edges = pd.concat([self.network_edges, plant_to_network])
 
     def _run_water_network_model(self, connectivity_string_for_files):

@@ -38,7 +38,7 @@ def emissions_detailed(config):
     total_yearly(config)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     print('Running emissions with scenario = %s' % config.scenario)
 
     # Calculate the hourly and timeline

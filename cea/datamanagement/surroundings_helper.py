@@ -184,7 +184,7 @@ def geometry_extractor_osm(locator, config):
     result.to_file(shapefile_out_path)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Create the surroundings.shp file
 

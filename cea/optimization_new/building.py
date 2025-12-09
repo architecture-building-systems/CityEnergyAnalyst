@@ -239,7 +239,9 @@ class Building(object):
                              f"compatible with one another. Please correct your system choice in the INPUT "
                              f"EDITOR accordingly.")
         elif len(set(main_energy_carriers)) == 0:
-            raise ValueError("Consider changing network_type. Maybe: either 'DH' is selected for a cooling case or 'DC' is selected for a heating case.")
+            raise ValueError("Network type mismatch: 'DH' (district heating) cannot be used for cooling loads, "
+                           "and 'DC' (district cooling) cannot be used for heating loads. "
+                           "Please verify that the network-type matches the building's demand.")
         else:
             self.demand_flow.energy_carrier = main_energy_carriers[0]
 
@@ -252,6 +254,13 @@ class Building(object):
         """
         # determine the required system capacity
         max_supply_flow = self.demand_flow.isolate_peak()
+
+        # If building has zero demand, skip building supply system (no components needed)
+        if max_supply_flow.profile.max() == 0.0:
+            print(f"  {self.identifier}: Zero demand - skipping supply system instantiation")
+            self.stand_alone_supply_system = None
+            return None
+
         user_component_selection = self._stand_alone_supply_system_composition
 
         # use the SupplySystemStructure methods to dimension each of the system's components

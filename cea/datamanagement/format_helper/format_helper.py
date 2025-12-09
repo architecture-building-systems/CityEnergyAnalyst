@@ -47,7 +47,7 @@ def exec_cea_format_helper(config, scenario):
 ## Main function
 ## --------------------------------------------------------------------------------------------------------------------
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Batch processing all selected scenarios under a project.
 

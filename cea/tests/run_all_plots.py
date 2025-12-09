@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     cache_folder = tempfile.mkdtemp()
     plot_cache = cea.plots.cache.MemoryPlotCache(cache_folder)
 

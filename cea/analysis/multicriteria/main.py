@@ -97,7 +97,7 @@ def normalize_compiled_data(compiled_data_df):
     return compiled_data_df
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     print("Running multicriteria with scenario = %s" % config.scenario)

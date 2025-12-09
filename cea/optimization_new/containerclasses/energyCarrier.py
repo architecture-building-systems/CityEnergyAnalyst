@@ -168,7 +168,7 @@ class EnergyCarrier:
                                                converters={'mean_qual': to_numeric})
 
         # Correct potential basic format errors if there are any
-        energy_carriers_overview['feedstock_file'].fillna('-', inplace=True)
+        energy_carriers_overview['feedstock_file'] = energy_carriers_overview['feedstock_file'].fillna('-')
         energy_carriers_overview['feedstock_file'] = \
             energy_carriers_overview['feedstock_file'].astype(str).str.strip().str.upper()
         EnergyCarrier._available_energy_carriers = energy_carriers_overview.fillna(0.0)
@@ -520,14 +520,14 @@ class EnergyCarrier:
         data_tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
         if data_tab_name == '-':
-            return (0.0 for _ in energy_flow_profile)
+            return [0.0 for _ in energy_flow_profile]
         elif data_tab_name not in EnergyCarrier._daily_ghg_profile.keys():
             raise ValueError(f'The data tab "{data_tab_name}" was not found in the feedstock data base. GHG emissions '
                              f'could not be fetched for the energy carrier "{energy_carrier_code}".')
         else:
             positive_flow_profile = energy_flow_profile.replace(list(energy_flow_profile[energy_flow_profile<0]), 0)
-            ghg_emissions_profile = (energy * EnergyCarrier._daily_ghg_profile[data_tab_name][timestep.hour]
-                                     for timestep, energy in positive_flow_profile.items())
+            ghg_emissions_profile = [energy * EnergyCarrier._daily_ghg_profile[data_tab_name][timestep.hour]
+                                     for timestep, energy in positive_flow_profile.items()]
             return ghg_emissions_profile
 
     @staticmethod
@@ -541,7 +541,7 @@ class EnergyCarrier:
         data_tab_name = EnergyCarrier._feedstock_tab[energy_carrier_code]
 
         if data_tab_name == '-':
-            return (0.0 for _ in energy_flow_profile)
+            return 0.0
         elif data_tab_name not in set(list(EnergyCarrier._daily_buy_price_profile.keys()) +
                                       list(EnergyCarrier._daily_sell_price_profile.keys())):
             raise ValueError(f'The data tab "{data_tab_name}" was not found in the feedstock data base. Costs could '

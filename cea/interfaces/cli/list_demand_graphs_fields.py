@@ -28,7 +28,7 @@ def demand_graph_fields(scenario):
     return list(fields)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     print the available fields for the demand graphs to STDOUT.
 

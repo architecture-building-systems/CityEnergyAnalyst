@@ -49,7 +49,7 @@ def database_helper(locator,
         copytree(complete_databases_path, complete_output_directory, dirs_exist_ok=True)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.

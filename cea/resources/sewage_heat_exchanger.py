@@ -187,7 +187,7 @@ def calc_sewageheat(mcp_kWC_zone, tin_C, w_HEX_m, Vf_ms, h0, min_lps, L_HEX_m, t
     return Q_source, t_source, tb2, ta1, ta2, mcp_kWC_total
 
 
-def main(config):
+def main(config: cea.config.Configuration):
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 
