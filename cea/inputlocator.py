@@ -754,6 +754,10 @@ class InputLocator(object):
         """scenario/inputs/database/ASSEMBLIES/ENVELOPE/ENVELOPE_WALL.csv"""
         return os.path.join(self.get_db4_assemblies_envelope_folder(), 'ENVELOPE_WALL.csv')
 
+    def get_database_assemblies_envelope_material_database(self):
+        """scenario/inputs/database/ASSEMBLIES/ENVELOPE/MATERIAL_DATABASE.csv"""
+        return os.path.join(self.get_db4_assemblies_envelope_folder(), 'MATERIAL_DATABASE.csv')
+
     def get_db4_assemblies_hvac_folder(self):
         """scenario/inputs/database/ASSEMBLIES/HVAC"""
         return os.path.join(self.get_db4_assemblies_folder(), 'HVAC')
