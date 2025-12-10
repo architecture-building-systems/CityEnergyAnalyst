@@ -21,7 +21,7 @@ class EnvelopeLookup:
     _FLOAT_FIELDS = {
         "U",
         "GHG_kgCO2m2",
-        # "GHG_production_kgCO2m2",
+        # "GHG_production_kgCO2m2", # needed in future for detailed LCA
         # "GHG_recycling_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
@@ -101,17 +101,19 @@ class EnvelopeLookup:
 
         col = self._col(db, field)
         if col not in df.columns:
-            return None
+            raise KeyError(
+                f"Column '{col}' not found in '{db}' for code '{code}'. "
+                f"Available: {', '.join(map(str, df.columns))}"
+            )
 
         val = df.loc[code, col]
-        val_py = val
         if pd.isna(val):
             return None
         if field in self._INT_FIELDS:
             try:
-                num = pd.to_numeric(val_py, errors="coerce")
+                num = pd.to_numeric(val, errors="coerce")
                 if pd.isna(num):
-                    raise ValueError(f"Non-numeric value '{val_py}'")
+                    raise ValueError(f"Non-numeric value '{val}'")
                 return int(float(num))
             except (ValueError, TypeError) as e:
                 raise ValueError(
@@ -120,9 +122,9 @@ class EnvelopeLookup:
                 )
         if field in self._FLOAT_FIELDS:
             try:
-                num = pd.to_numeric(val_py, errors="coerce")
+                num = pd.to_numeric(val, errors="coerce")
                 if pd.isna(num):
-                    raise ValueError(f"Non-numeric value '{val_py}'")
+                    raise ValueError(f"Non-numeric value '{val}'")
                 return float(num)
             except (ValueError, TypeError) as e:
                 raise ValueError(
@@ -131,14 +133,14 @@ class EnvelopeLookup:
                     f"database file for malformed numeric values. Original error: {e}"
                 )
         # For strings or other values, coerce to an allowed type
-        if isinstance(val_py, (int, float)):
-            return val_py
-        if isinstance(val_py, (bytes, bytearray)):
+        if isinstance(val, (int, float)):
+            return val
+        if isinstance(val, (bytes, bytearray)):
             try:
-                return val_py.decode("utf-8")  # type: ignore[attr-defined]
+                return val.decode("utf-8")  # type: ignore[attr-defined]
             except Exception:
-                return str(val_py)
-        return str(val_py)
+                return str(val)
+        return str(val)
 
     def _col(self, db: str, field: str) -> str:
         # Common envelope fields (dynamic per-component suffix)
@@ -146,7 +148,7 @@ class EnvelopeLookup:
             "U",
             "GHG_kgCO2m2",
             "GHG_biogenic_kgCO2m2",
-            # "GHG_production_kgCO2m2",
+            # "GHG_production_kgCO2m2", # needed in future for detailed LCA
             # "GHG_recycling_kgCO2m2",
             "Service_Life",
         }:
@@ -163,7 +165,7 @@ class EnvelopeLookup:
                 return f"GHG_{suf}_kgCO2m2"
             if field == "GHG_biogenic_kgCO2m2":
                 return f"GHG_biogenic_{suf}_kgCO2m2"
-            # if field == "GHG_production_kgCO2m2":
+            # if field == "GHG_production_kgCO2m2": # needed in future for detailed LCA
             #     return f"GHG_production_{suf}_kgCO2m2"
             # if field == "GHG_recycling_kgCO2m2":
             #     return f"GHG_recycling_{suf}_kgCO2m2"
