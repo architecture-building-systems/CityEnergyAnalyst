@@ -30,11 +30,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def occupancy_helper_main(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, building=None):
+def occupancy_main(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, building=None):
     migrate_void_deck_data(locator)
     # local variables
-    buildings: List[str] = config.occupancy_helper.buildings
-    occupancy_model: str = config.occupancy_helper.occupancy_model
+    buildings: List[str] = config.occupancy.buildings
+    occupancy_model: str = config.occupancy.occupancy_model
 
     if occupancy_model == 'deterministic':
         stochastic_schedule = False
@@ -468,12 +468,12 @@ def calc_hourly_value(date, array_week, array_sat, array_sun, norm_weekday_max, 
         return array_sun[hour_day] * month_year * norm_sun_max  # normalized dhw demand flow rates
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     print('Running occupancy model for scenario %s' % config.scenario)
-    print('Running occupancy model  with schedule model=%s' % config.occupancy_helper.occupancy_model)
+    print('Running occupancy model  with schedule model=%s' % config.occupancy.occupancy_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
-    occupancy_helper_main(locator, config)
+    occupancy_main(locator, config)
 
 
 if __name__ == '__main__':

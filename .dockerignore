@@ -10,21 +10,41 @@ __pycache__
 
 # Virtual environment
 .env
+.env.local
 .venv
 venv
 .pixi
 
-# PyCharm
+# IDE files
 .idea
+.vscode
+.DS_Store
 
+# Testing and coverage
+.pytest_cache
+.coverage
+.coverage.*
+htmlcov
+.ruff_cache
+.tox
+
+# Build artifacts
 bin
 dist
+build
+setup
+*.egg-info
+
+# Documentation
 docs
+*.md
 logo
 notebooks
-setup
 
-*.md
+# Misc
+euler
+*.bak
+*.prof
 
 # external
 external/.pixi

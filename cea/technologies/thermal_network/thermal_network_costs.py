@@ -549,7 +549,7 @@ def calc_network_size(network_info):
     return float(length_m), float(average_diameter_m)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     This function calculates the total costs of a network after running simulation from thermal_network_matrix.
     :param config:
@@ -579,7 +579,7 @@ def main(config):
     for building in disconnected_buildings_list:
         disconnected_buildings_index.append(int(np.where(network_info.building_names == building)[0]))
     network_info.disconnected_buildings_index = disconnected_buildings_index
-    if disconnected_buildings_index != []:
+    if disconnected_buildings_index:
         raise ValueError('Disconnected buildings are specified in cea.config, please remove it! (see NOTE above)')
 
     # calculate total network costs

@@ -31,7 +31,7 @@ def create_polygon(coordinate_tuple_list, output_path, filename):
     print('Polygon `{filename}` created in {output_path}'.format(filename=filename, output_path=output_path))
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     coordinate_tuple_list = config.create_polygon.coordinates
     filename = config.create_polygon.filename
 

@@ -38,8 +38,7 @@ def exec_export_csv_for_rhino(config, locator):
     bool_include_surroundings = config.to_rhino_gh.include_surroundings
     bool_include_streets = config.to_rhino_gh.include_streets
     bool_include_trees = config.to_rhino_gh.include_trees
-    bool_include_district_heating_network = config.to_rhino_gh.include_district_heating_network
-    bool_include_district_cooling_network = config.to_rhino_gh.include_district_cooling_network
+    network_name = config.to_rhino_gh.network_name
 
     # Create the folder to store all the exported files if it doesn't exist
     output_path = locator.get_export_to_rhino_from_cea_folder()
@@ -71,20 +70,28 @@ def exec_export_csv_for_rhino(config, locator):
     if bool_include_trees and os.path.isfile(locator.get_tree_geometry()):
         shapefile_to_csv_xlsx(locator.get_tree_geometry(), locator.get_export_to_rhino_from_cea_trees_to_csv(), new_crs)
 
-    if bool_include_district_heating_network and os.path.isfile(locator.get_network_layout_edges_shapefile('DH')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DH'), locator.get_export_to_rhino_from_cea_district_heating_network_edges_to_csv(), new_crs)
+    # Export network layouts if network_name is specified
+    if network_name:
+        # Check and export DH network (both edges and nodes)
+        dh_edges_path = locator.get_network_layout_edges_shapefile('DH', network_name)
+        if os.path.isfile(dh_edges_path):
+            shapefile_to_csv_xlsx(dh_edges_path, locator.get_export_to_rhino_from_cea_district_heating_network_edges_to_csv(), new_crs)
 
-    if bool_include_district_cooling_network and os.path.isfile(locator.get_network_layout_edges_shapefile('DC')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_edges_shapefile('DC'), locator.get_export_to_rhino_from_cea_district_cooling_network_edges_to_csv(), new_crs)
+        dh_nodes_path = locator.get_network_layout_nodes_shapefile('DH', network_name)
+        if os.path.isfile(dh_nodes_path):
+            shapefile_to_csv_xlsx(dh_nodes_path, locator.get_export_to_rhino_from_cea_district_heating_network_nodes_to_csv(), new_crs)
 
-    if bool_include_district_heating_network and os.path.isfile(locator.get_network_layout_nodes_shapefile('DH')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DH'), locator.get_export_to_rhino_from_cea_district_heating_network_nodes_to_csv(), new_crs)
+        # Check and export DC network (both edges and nodes)
+        dc_edges_path = locator.get_network_layout_edges_shapefile('DC', network_name)
+        if os.path.isfile(dc_edges_path):
+            shapefile_to_csv_xlsx(dc_edges_path, locator.get_export_to_rhino_from_cea_district_cooling_network_edges_to_csv(), new_crs)
 
-    if bool_include_district_cooling_network and os.path.isfile(locator.get_network_layout_nodes_shapefile('DC')):
-        shapefile_to_csv_xlsx(locator.get_network_layout_nodes_shapefile('DC'), locator.get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(), new_crs)
+        dc_nodes_path = locator.get_network_layout_nodes_shapefile('DC', network_name)
+        if os.path.isfile(dc_nodes_path):
+            shapefile_to_csv_xlsx(dc_nodes_path, locator.get_export_to_rhino_from_cea_district_cooling_network_nodes_to_csv(), new_crs)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
 
     # Start the timer
     t0 = time.perf_counter()

@@ -36,7 +36,7 @@ def verify_tree_properties(tree_df):
         raise ValueError(f"{diff} columns are missing for tree properties.")
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     trees_df = gpd.read_file(config.trees_helper.trees)

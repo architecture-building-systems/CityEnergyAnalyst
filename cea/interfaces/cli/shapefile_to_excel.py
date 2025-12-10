@@ -60,7 +60,7 @@ def serialize_geometry(geometry):
     return json.dumps(points)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     Run :py:func:`shapefile_to_excel` with the values from the configuration file, section `[shapefile-tools]`.
 

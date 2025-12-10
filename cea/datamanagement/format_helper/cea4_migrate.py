@@ -680,7 +680,7 @@ def migrate_cea3_to_cea4(scenario, verbose=False):
 ## --------------------------------------------------------------------------------------------------------------------
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     # Start the timer
     t0 = time.perf_counter()
     assert os.path.exists(config.general.project), 'input file not found: %s' % config.project

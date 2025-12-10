@@ -246,6 +246,9 @@ def filter_low_potential(radiation_sensor_path, metadata_csv_path, config):
     # remove window surfaces
     sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
 
+    # remove underside surfaces (PV panels should not be installed on building undersides)
+    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'undersides']
+
     # keep sensors if allow pv installation on walls or on roofs
     if config.solar.panel_on_roof is False:
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roofs']

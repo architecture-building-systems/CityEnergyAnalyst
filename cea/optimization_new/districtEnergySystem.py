@@ -634,19 +634,26 @@ class DistrictEnergySystem(object):
     def _calculate_stand_alone_building_fitness(self):
         """Calculate total fitness contribution from stand-alone buildings."""
         algorithm = SupplySystem.optimisation_algorithm
-        
+
         if not self.stand_alone_buildings:
             return (0,) * algorithm.nbr_objectives
-        
+
         fitnesses = [
             building.stand_alone_supply_system.overall_fitness
             for building in self.consumers
             if building.identifier in self.stand_alone_buildings
+            and building.stand_alone_supply_system is not None  # Skip buildings with zero demand
         ]
-        
+
+        # If no buildings have supply systems (all have zero demand), return zeros
+        if not fitnesses:
+            return (0,) * algorithm.nbr_objectives
+
+        # Sum fitness values for each objective across all buildings
+        # Use algorithm objectives to ensure we return the correct number of values
         return tuple(
-            sum(fitness[objective] for fitness in fitnesses)
-            for objective in fitnesses[0].keys()
+            sum(fitness.get(objective, 0) for fitness in fitnesses)
+            for objective in algorithm.objectives
         )
 
 
@@ -677,6 +684,9 @@ class DistrictEnergySystem(object):
     @staticmethod
     def initialize_class_variables(domain):
         """ Store maximum number of networks and optimisation algorithm parameters in class variables. """
+        # Reset counter to prevent state persistence across runs
+        DistrictEnergySystem._number_of_selected_DES = 0
+
         DistrictEnergySystem._max_nbr_networks = domain.config.optimization_new.maximum_number_of_networks
         DistrictEnergySystem._network_type = domain.config.optimization_new.network_type
 

@@ -17,7 +17,7 @@ import warnings
 
 import cea.inputlocator
 import cea.plugin
-from cea.utilities import unique
+from cea.utilities import unique, parse_string_to_list
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -58,7 +58,7 @@ class Configuration:
         if not os.path.exists(CEA_CONFIG):
             self.save(config_file)
 
-    def __getattr__(self, item: str) -> Union[Section, Parameter]:
+    def __getattr__(self, item: str) -> Union['Section', Any]:
         """Return either a Section object or the value of a Parameter from `general`"""
         cid = config_identifier(item)
         if cid in self.sections:
@@ -251,7 +251,7 @@ class Configuration:
         """
         if self.multiprocessing:
             import multiprocessing
-            number_of_processes = multiprocessing.cpu_count() - self.number_of_CPUs_to_keep_free
+            number_of_processes = multiprocessing.cpu_count() - self.number_of_cpus_to_keep_free
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
             return 1
@@ -309,7 +309,7 @@ def config_identifier(python_identifier: str) -> str:
 class Section:
     """Instances of ``Section`` describe a section in the configuration file."""
 
-    def __init__(self, name: str, config: Configuration) -> None:
+    def __init__(self, name: str, config: 'Configuration') -> None:
         """
         :param name: The name of the section (as it appears in the configuration file, all lowercase)
         :type name: str
@@ -321,7 +321,7 @@ class Section:
         self.config = config
         self.parameters = self._init_parameters()
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         """Return the value of the parameter with that name."""
         cid = config_identifier(item)
         if cid in self.parameters:
@@ -332,7 +332,7 @@ class Section:
         else:
             raise AttributeError(f"Parameter not found: {item}")
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any):
         """Set the value on a parameter"""
         if key in {'name', 'config', 'parameters'}:
             # make sure the __init__ method doesn't trigger this
@@ -427,15 +427,15 @@ class Parameter:
         the default.config
         """
 
-    def encode(self, value):
+    def encode(self, value) -> str:
         """Encode ``value`` to a string representation for writing to the configuration file"""
         return str(value)
 
-    def decode(self, value):
+    def decode(self, value) -> Any:
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
-    def get(self):
+    def get(self) -> Any:
         """Return the value from the config file"""
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
@@ -550,6 +550,9 @@ class ResumeFileParameter(FileParameter):
     def decode(self, value):
         return self._check_path(str(value))
 
+class InputFileParameter(FileParameter):
+    """A parameter that describes a user provided input file."""
+
 
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
@@ -647,7 +650,7 @@ class IntegerParameter(Parameter):
             return ""
         return str(int(value))
 
-    def decode(self, value):
+    def decode(self, value) -> int | None:
         try:
             return int(value)
         except ValueError:
@@ -679,7 +682,7 @@ class RealParameter(Parameter):
             return ''
         return format(float(value), ".%i" % self._decimal_places)
 
-    def decode(self, value):
+    def decode(self, value) -> float | None:
         try:
             return float(value)
         except ValueError:
@@ -715,9 +718,9 @@ class PluginListParameter(ListParameter):
         super().set(value)
         self.config.refresh_plugins()
 
-    def encode(self, list_of_plugins):
+    def encode(self, value):
         """Make sure we don't duplicate any of the plugins"""
-        unique_plugins = unique(list_of_plugins)
+        unique_plugins = unique(value)
         return super().encode(unique_plugins)
 
     def decode(self, value):
@@ -749,6 +752,69 @@ class SubfoldersParameter(ListParameter):
 
 class StringParameter(Parameter):
     """Default Parameter type"""""
+
+
+class NetworkLayoutNameParameter(StringParameter):
+    """
+    Parameter for network layout names with collision detection.
+    Validates in real-time to prevent overwriting existing network layouts.
+    """
+
+    def _validate_network_name(self, value) -> str:
+        """
+        Validate network name for invalid characters and collision with existing networks.
+        """
+        value = value.strip()
+
+        # Check for invalid filesystem characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Network name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing networks
+        scenario = self.config.scenario
+        locator = cea.inputlocator.InputLocator(scenario)
+
+        # Check network folder exists
+        network_folder = locator.get_thermal_network_folder_network_name_folder(value)
+        if os.path.exists(network_folder):
+            raise ValueError(
+                f"Network '{value}' already exists. "
+                f"Choose a different name or delete the existing network."
+            )
+
+        return value
+
+    def encode(self, value):
+        """
+        Validate and encode network name.
+        Raises ValueError if name contains invalid characters or collides with existing network.
+        """
+        if not str(value) or str(value).strip() == '':
+            raise ValueError("Network name is required. Please provide a valid name.")
+
+        return self._validate_network_name(str(value))
+
+    def decode(self, value):
+        """Parse and normalize network name from config file"""
+        if not value:
+            return ""
+
+        value = value.strip()
+
+        # Only validate filesystem characters (security concern)
+        # Don't check collision - that's encode's job when saving
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Network name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        return value
 
 
 class OptimizationIndividualListParameter(ListParameter):
@@ -798,6 +864,158 @@ class ChoiceParameter(Parameter):
             if not self._choices:
                 raise ValueError(f"No choices for {self.fqname} to decode {value}")
             return self._choices[0]
+
+
+class NetworkLayoutChoiceParameter(ChoiceParameter):
+    """
+    Parameter for selecting existing network layouts based on network type.
+    """
+
+    _network_types = {'DH', 'DC'}
+
+    def initialize(self, parser):
+        # Override to dynamically populate choices based on available networks
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
+
+        # Check if this parameter should default to (none) instead of most recent network
+        try:
+            self.default_to_none = parser.getboolean(self.section.name, f"{self.name}.default-to-none")
+        except configparser.NoOptionError:
+            self.default_to_none = False
+
+    @property
+    def _choices(self):
+        networks = self._get_available_networks()
+        sorted_networks = self._sort_networks_by_modification_time(networks)
+
+        # If nullable, add option to skip network selection
+        if self.nullable:
+            # Always provide skip option for nullable parameters
+            # This prevents "no valid choices" error when no networks exist
+            sorted_networks.insert(0, "(none)")
+
+        return sorted_networks
+    
+    def _get_available_networks(self) -> List[str]:
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        network_folder = locator.get_thermal_network_folder()
+        if not os.path.exists(network_folder):
+            return []
+        return [name for name in os.listdir(network_folder)
+                if os.path.isdir(os.path.join(network_folder, name)) and name not in self._network_types]
+    
+    def _get_network_file_paths(self, network_type: str, network_name: str) -> Tuple[str, str]:
+        """Get path for network node and edge files for the given network name"""
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        network_type_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
+        # Remove trailing slash/separator if present
+        network_type_folder = network_type_folder.rstrip(os.sep)
+
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
+        return edges_path, nodes_path
+
+    def _sort_networks_by_modification_time(self, network_names: List[str]) -> List[str]:
+        """Sort network layouts by modification time (most recent first)"""
+        modified_times = []
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+        for network_name in network_names:
+            # Only check for layout.shp (shared edges file)
+            layout_path = locator.get_network_layout_shapefile(network_name)
+            if os.path.exists(layout_path):
+                sort_time = os.path.getmtime(layout_path)
+                modified_times.append((network_name, sort_time))
+
+        # Sort by modification time, most recent first
+        modified_times.sort(key=lambda x: x[1], reverse=True)
+        sorted_networks = [network_name for network_name, _ in modified_times]
+        return sorted_networks
+    
+    def encode(self, value):
+        """
+        Validate and encode value.
+        Raises ValueError if the network layout doesn't exist (unless nullable).
+        """
+        # Handle (none) choice for nullable parameters - save special marker
+        if self.nullable and str(value) == "(none)":
+            return '(none)'
+
+        # Handle empty value based on nullable setting
+        if not value or str(value).strip() == '':
+            if self.nullable:
+                return '(none)'
+            else:
+                raise ValueError("Network layout is required. Please select a network layout.")
+
+        available_networks = self._get_available_networks()
+
+        # Validate that the network exists
+        if str(value) not in available_networks:
+            if self.nullable:
+                # If nullable and network doesn't exist, return (none)
+                return '(none)'
+            else:
+                raise ValueError(
+                    f"Network layout '{value}' not found. "
+                    f"Available layouts: {', '.join(available_networks)}"
+                )
+        return str(value)
+
+    def decode(self, value):
+        """
+        Decode and validate value exists in available networks.
+        Returns the selected value if valid, otherwise returns the most recent network as default.
+
+        If no value provided and no networks found for current network-type, try to find
+        the most recent network across ALL network types and switch network-type accordingly.
+        """
+        # Handle (none) marker - user explicitly chose no network
+        if value == '(none)':
+            return ''
+
+        # If empty value (from config file), default based on default_to_none setting
+        if not value or value == '':
+            available_networks = self._get_available_networks()
+            # If no networks, return empty
+            if not available_networks:
+                return ''
+
+            # If default_to_none is True (e.g., optimization-new), return empty
+            if self.default_to_none:
+                return ''
+
+            # Otherwise default to most recent network (e.g., export-to-rhino-gh)
+            sorted_networks = self._sort_networks_by_modification_time(available_networks)
+            if sorted_networks:
+                return sorted_networks[0]
+            else:
+                # No valid networks found (folders exist but missing files)
+                return ''
+
+        available_networks = self._get_available_networks()
+
+        # If value is provided and valid, return it
+        if value in available_networks:
+            return value
+
+        # If value is not found and no networks available, return empty
+        if not available_networks:
+            return ''
+
+        # Default to most recent network if value not found
+        sorted_networks = self._sort_networks_by_modification_time(available_networks)
+        if sorted_networks:
+            most_recent_network = sorted_networks[0]
+            return most_recent_network
+        else:
+            # No valid networks found (folders exist but missing files)
+            return ''
 
 
 class DatabasePathParameter(Parameter):
@@ -944,7 +1162,7 @@ class MultiChoiceParameter(ChoiceParameter):
             return []
         return self.decode(_default)
 
-    def get(self):
+    def get(self) -> list[str]:
         """Return the value from the config file"""
         encoded_value = self.get_raw()
         encoded_value = self.replace_references(encoded_value)
@@ -968,7 +1186,7 @@ class MultiChoiceParameter(ChoiceParameter):
 
         return ', '.join(map(str, value))
 
-    def decode(self, value):
+    def decode(self, value) -> list[str]:
         if value == '':
             return self._choices
         choices = parse_string_to_list(value)
@@ -986,7 +1204,10 @@ class SingleBuildingParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
-        pass
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
     @property
     def _choices(self):
@@ -996,8 +1217,15 @@ class SingleBuildingParameter(ChoiceParameter):
         if not building_names:
             raise cea.ConfigError("Either no buildings in zone or no zone geometry found.")
         return building_names
+    
+    def decode(self, value):
+        if self.nullable and (value is None or value == ''):
+            return None
+        return super().decode(value)
 
     def encode(self, value):
+        if self.nullable and (value is None or value == ''):
+            return ''
         if str(value) not in self._choices:
             return self._choices[0]
         return str(value)
@@ -1194,15 +1422,6 @@ def get_systems_list(scenario_path):
 
 class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
     pass
-
-
-def parse_string_to_list(line):
-    """Parse a line in the csv format into a list of strings"""
-    if line is None:
-        return []
-    line = line.replace('\n', ' ')
-    line = line.replace('\r', ' ')
-    return [str(field.strip()) for field in line.split(',') if field.strip()]
 
 
 def parse_string_coordinate_list(string_tuples):

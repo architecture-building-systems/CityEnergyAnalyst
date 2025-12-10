@@ -1,17 +1,20 @@
 import io
 import json
 import os
-import pathlib
 import shutil
+import sys
+import tempfile
 import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
 from typing import Dict, Any
+import zipfile
 
+from fastapi.responses import StreamingResponse
 import geopandas
 import pandas as pd
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fiona.errors import DriverError
 from pydantic import BaseModel, Field
@@ -25,7 +28,7 @@ from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAu
 from cea.interfaces.dashboard.utils import secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
-from cea.technologies.network_layout.main import layout_network, NetworkLayout
+from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
 from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, save_cea_schedules
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -322,7 +325,7 @@ def get_network(scenario: str, network_type):
             # Ignore demand and creating plants for layout in map
             config.network_layout.consider_only_buildings_with_demand = False
             network_layout = NetworkLayout(network_layout=config.network_layout)
-            layout_network(network_layout, locator, output_name_network=network_name)
+            auto_layout_network(network_layout, locator, output_name_network=network_name)
 
         edges = locator.get_network_layout_edges_shapefile(network_type, network_name)
         nodes = locator.get_network_layout_nodes_shapefile(network_type, network_name)
@@ -398,13 +401,20 @@ async def get_building_schedule(project_info: CEAProjectInfo, building: str):
 async def get_input_database_data(project_info: CEAProjectInfo):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
     try:
-        return await run_in_threadpool(lambda: CEADatabase.from_locator(locator).to_dict())
+        cea_db = await run_in_threadpool(lambda: CEADatabase.from_locator(locator))
     except CEADatabaseException as e:
         print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
+
+    if cea_db.is_empty():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Database not found',
+        )
+    return cea_db.to_dict()
 
 
 @router.put('/databases', dependencies=[CEASeverDemoAuthCheck])
@@ -424,24 +434,147 @@ async def put_input_database_data(project_info: CEAProjectInfo, payload: Dict[st
         )
 
 
-class DatabasePath(BaseModel):
-    path: pathlib.Path
-    name: str
-
-
-@router.put('/databases/copy', dependencies=[CEASeverDemoAuthCheck])
-async def copy_input_database(project_info: CEAProjectInfo, database_path: DatabasePath):
+@router.post('/databases/upload', dependencies=[CEASeverDemoAuthCheck])
+async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
     locator = cea.inputlocator.InputLocator(project_info.scenario)
 
-    copy_path = secure_path(os.path.join(database_path.path, database_path.name))
-    if os.path.exists(copy_path):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f'Copy path {copy_path} already exists. Choose a different path/name.',
+    # Create a lock file path specific to this scenario
+    lock_file_path = os.path.join(tempfile.gettempdir(), f'cea_db_upload_{hash(project_info.scenario)}.lock')
+
+    def do_upload():
+        """Perform the upload operation with file-based locking"""
+        with FileLock(lock_file_path):
+            contents_sync = file.file.read()
+            with zipfile.ZipFile(io.BytesIO(contents_sync)) as z:
+                # Only process CSV files
+                csv_files = [file_info for file_info in z.infolist()
+                             if not file_info.filename.startswith('__MACOSX/')
+                             and file_info.filename.endswith('.csv')
+                             and not file_info.is_dir()]
+                if not csv_files:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='Invalid ZIP file: No CSV files found.',
+                    )
+
+                # Extract all files to a temporary directory
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_scenario_path = os.path.join(temp_dir, 'temp_scenario')
+                    locator_temp = cea.inputlocator.InputLocator(temp_scenario_path)
+                    temp_db_folder = locator_temp.get_db4_folder()
+                    db_directory_name = os.path.basename(temp_db_folder)
+
+                    for file_info in csv_files:
+                        # Adjust the filename to remove any leading directory structure if user zipped the db4 folder
+                        adjusted_filename = file_info.filename
+                        if adjusted_filename.startswith(db_directory_name + '/'):
+                            adjusted_filename = os.path.relpath(adjusted_filename, db_directory_name)
+
+                        # Normalize and validate the path to prevent directory traversal attacks
+                        member_path = os.path.normpath(adjusted_filename)
+
+                        # Construct the full target path
+                        target_path = os.path.join(temp_db_folder, member_path)
+
+                        # Verify the resolved path is within the target directory
+                        target_path_resolved = os.path.realpath(target_path)
+                        db_folder_resolved = os.path.realpath(temp_db_folder)
+
+                        if os.path.isabs(member_path) or '..' in member_path.split(os.sep) or not target_path_resolved.startswith(db_folder_resolved + os.sep):
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f'Invalid ZIP file: {adjusted_filename}',
+                            )
+
+                        # Manually extract the file using copyfileobj for safety
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        with z.open(file_info) as source, open(target_path, 'wb') as target:
+                            shutil.copyfileobj(source, target)
+
+                    # Validate the extracted databases
+                    try:
+                        verify_database(temp_scenario_path)
+                    except CEADatabaseException as e:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f'Invalid database files: {str(e.message)}',
+                        )
+
+                    # Atomically replace the database folder to prevent data loss
+                    db_folder = locator.get_db4_folder()
+                    backup_folder = None
+
+                    try:
+                        # If the current database exists, create a backup
+                        if os.path.exists(db_folder):
+                            import time
+                            backup_folder = f"{db_folder}.bak.{int(time.time())}"
+                            os.rename(db_folder, backup_folder)
+
+                        # Move the new database into place
+                        shutil.move(locator_temp.get_db4_folder(), db_folder)
+
+                    except Exception as e:
+                        # If move failed and we have a backup, restore it
+                        if backup_folder and os.path.exists(backup_folder):
+                            # Remove partial new database if it exists
+                            if os.path.exists(db_folder):
+                                shutil.rmtree(db_folder)
+                            # Restore the backup
+                            os.rename(backup_folder, db_folder)
+
+                        # Re-raise the exception
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f'Failed to replace database folder: {str(e)}',
+                        )
+
+                    # Clean up backup outside critical section
+                    # If backup cleanup fails, log but don't fail the request
+                    if backup_folder and os.path.exists(backup_folder):
+                        try:
+                            shutil.rmtree(backup_folder)
+                        except Exception as e:
+                            # Log the error but don't fail the upload
+                            print(f"Warning: Failed to remove backup folder {backup_folder}: {str(e)}")
+
+        return {'message': 'Database uploaded successfully'}
+
+    return await run_in_threadpool(do_upload)
+
+@router.get('/databases/download', dependencies=[CEASeverDemoAuthCheck])
+async def download_input_database(project_info: CEAProjectInfo):
+    locator = cea.inputlocator.InputLocator(project_info.scenario)
+    filename = 'database.zip'
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_zip_path = os.path.join(temp_dir, filename)
+        with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as z:
+            db_folder = locator.get_db4_folder()
+            if not os.path.exists(db_folder):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Database folder not found.',
+                )
+            for root, _, files in os.walk(db_folder):
+                for file in files:
+                    if file.endswith('.csv'):
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, db_folder)
+                        z.write(file_path, arcname)
+
+        with open(temp_zip_path, 'rb') as f:
+            zip_contents = f.read()
+
+        return StreamingResponse(
+            io.BytesIO(zip_contents),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Length": str(os.path.getsize(temp_zip_path)),  # Add Content-Length header
+                "Access-Control-Expose-Headers": "Content-Disposition, Content-Length"
+            }
         )
-    locator.ensure_parent_folder_exists(copy_path)
-    shutil.copytree(locator.get_databases_folder(), copy_path)
-    return {'message': 'Database copied to {}'.format(copy_path)}
 
 
 # Move to database route
@@ -450,16 +583,11 @@ async def check_input_database(project_info: CEAProjectInfo):
     """Check if the databases are valid"""
     scenario = project_info.scenario
 
-    # Redirect stdout to variable to capture output
-    buf = io.StringIO()
     try:
-        with redirect_stdout(buf):
-            dict_missing_db = cea4_verify_db(scenario, verbose=True)
-        output = buf.getvalue()
-    finally:
-        buf.close()
-
-    if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
+        verify_database(scenario)
+        return {'status': 'success', 'message': True}
+    except CEADatabaseException as e:
+        output = str(e.message).strip()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -468,7 +596,6 @@ async def check_input_database(project_info: CEAProjectInfo):
             },
         )
 
-    return {'status': 'success', 'message': True}
 
 
 def database_dict_to_file(db_dict, csv_path):
@@ -548,3 +675,50 @@ def get_choices(choice_properties, path):
             label = 'none'
         out.append({'value': choice, 'label': label})
     return out
+
+
+class FileLock:
+    """Cross-process file-based lock using platform-specific file locking"""
+    def __init__(self, lock_file_path):
+        self.lock_file_path = lock_file_path
+        self.lock_file = None
+
+    def __enter__(self):
+        self.lock_file = open(self.lock_file_path, 'w')
+        if sys.platform == 'win32':
+            import msvcrt
+            # Lock the file on Windows
+            msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            # Lock the file on Unix-like systems
+            fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.lock_file:
+            if sys.platform == 'win32':
+                import msvcrt
+                # Unlock the file on Windows
+                msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                # Unlock the file on Unix-like systems
+                fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
+            self.lock_file.close()
+        return False
+
+
+def verify_database(scenario: str):
+    """Check if the databases are valid and raise CEADatabaseException with missing files if not"""
+    # Redirect stdout to variable to capture output
+    buf = io.StringIO()
+    try:
+        with redirect_stdout(buf):
+            dict_missing_db = cea4_verify_db(scenario, verbose=True)
+        output = buf.getvalue()
+    finally:
+        buf.close()
+
+    if any(len(missing_files) > 0 for missing_files in dict_missing_db.values()):
+        raise CEADatabaseException(output)

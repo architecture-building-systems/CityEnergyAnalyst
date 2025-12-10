@@ -1,5 +1,5 @@
 name: Bug Report
-description: Create a report to help us improve
+description: Report a problem to help us improve CEA
 title: "[Bug]: "
 labels: ["bug"]
 assignees: []
@@ -7,35 +7,27 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
-        
-  - type: textarea
-    id: bug-description
-    attributes:
-      label: Describe the bug
-      description: A clear and concise description of what the bug is
-      placeholder: Tell us what happened
-    validations:
-      required: true
+        Thanks for reporting this issue! Please fill in the sections below to help us fix it faster.
 
   - type: textarea
-    id: reproduction-steps
+    id: what-happened
     attributes:
-      label: Steps to reproduce
-      description: How do you trigger this bug?
+      label: What happened?
+      description: Describe the problem you encountered
       placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
+        Example: "I got an error when running the demand calculation"
     validations:
       required: true
 
   - type: textarea
-    id: expected-behavior
+    id: how-to-reproduce
     attributes:
-      label: Expected behavior
-      description: A clear and concise description of what you expected to happen
+      label: How can we reproduce this?
+      description: What steps did you take before seeing this problem?
+      placeholder: |
+        1. I opened CEA Dashboard
+        2. I ran the demand calculation for my scenario
+        3. I saw this error message: ...
     validations:
       required: true
 
@@ -43,7 +35,6 @@ body:
     id: os
     attributes:
       label: Operating System
-      description: What operating system are you using?
       options:
         - Windows
         - macOS
@@ -52,24 +43,16 @@ body:
       required: true
 
   - type: input
-    id: os-version
-    attributes:
-      label: OS Version
-      description: What version of your OS are you running?
-      placeholder: e.g., Windows 11, macOS 12.3
-
-  - type: input
     id: cea-version
     attributes:
       label: CEA Version
-      description: What version of CEA are you using?
       placeholder: e.g., 3.39.2
     validations:
       required: true
 
   - type: textarea
-    id: screenshots
+    id: additional-info
     attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem
-      placeholder: You can drag and drop images here
+      label: Additional information (optional)
+      description: Screenshots, error messages, or anything else that might help
+      placeholder: You can drag and drop images or paste error messages here

@@ -64,7 +64,7 @@ def fuel_imports(master_to_slave_vars, heating_dispatch,
     return naturalgas_dispatch
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
     generation = 2
     individual = 2

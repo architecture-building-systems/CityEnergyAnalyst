@@ -1,6 +1,7 @@
 """
 Substation Model
 """
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -821,7 +822,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
 
 
 def calc_dTm_HEX(thi, tho, tci, tco):
-    '''
+    """
     This function estimates the logarithmic temperature difference between two streams
 
     :param thi: in temperature hot stream
@@ -830,18 +831,36 @@ def calc_dTm_HEX(thi, tho, tci, tco):
     :param tco: out temperature cold stream
     :return:
         - dtm = logarithmic temperature difference
-
-    '''
+    """
     dT1 = thi - tco
-    dT2 = tho - tci if not isclose(tho, tci) else 0.0001  # to avoid errors with temperature changes < 0.001
+    dT2 = tho - tci
+    # dT2 = tho - tci if not isclose(tho, tci) else 0.0001  # to avoid errors with temperature changes < 0.001
 
-    try:
-        dTm = (dT1 - dT2) / np.log(dT1 / dT2)
-    except ZeroDivisionError:
-        raise Exception(thi, tco, tho, tci,
-                        "Check the emission_system database, there might be a problem with the selection of nominal temperatures")
+    # Check for physically impossible situations
+    if dT1 <= 0 or dT2 <= 0:
+        warnings.warn(
+            "Invalid temperature configuration detected!\n"
+            "Temperature differences must be > 0:\n"
+            f"Hot end (thi - tco): {dT1:.2f}\n"
+            f"Cold end (tho - tci): {dT2:.2f}"
+        )
+        # raise ValueError(
+        #     f"Invalid temperature configuration detected!\n"
+        #     f"Temperature differences:\n"
+        #     f"Hot end (thi - tco): {dT1:.2f}\n"
+        #     f"Cold end (tho - tci): {dT2:.2f}\n\n"
+        #     f"For valid heat transfer, differences must be > 0:\n"
+        #     f"- Hot inlet (thi) must be > Cold outlet (tco)\n"
+        #     f"- Hot outlet (tho) must be > Cold inlet (tci)"
+        # )
 
-    return abs(dTm.real)
+    # Check if temperature differences are equal (to avoid division by zero)
+    if abs(dT1 - dT2) < 0.001:  # Using small threshold to avoid floating point issues
+        return dT1  # If differences are equal, LMTD equals either difference
+
+    dTm = (dT1 - dT2) / np.log(dT1 / dT2)
+
+    return dTm
 
 
 def calc_area_HEX(Qnom, dTm_0, U):
@@ -937,7 +956,7 @@ def calc_DH_return(t_0, t_1):
 # Test
 # ============================
 
-def main(config):
+def main(config: cea.config.Configuration):
     """
     do some testing... (view this as a scratch-pad...
     """

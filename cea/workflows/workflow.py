@@ -55,7 +55,7 @@ def run_with_trace(config, script, **kwargs):
     meta_to_yaml(config, trace_data, config.trace_inputlocator.meta_output_file)
 
 
-def main(config):
+def main(config: cea.config.Configuration):
     workflow_yml = config.workflow.workflow
     resume_yml = config.workflow.resume_file
     resume_mode_on = config.workflow.resume
