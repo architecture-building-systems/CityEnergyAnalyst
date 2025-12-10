@@ -21,8 +21,8 @@ class EnvelopeLookup:
     _FLOAT_FIELDS = {
         "U",
         "GHG_kgCO2m2",
-        # "GHG_production_kgCO2m2", # needed in future for detailed LCA
-        # "GHG_recycling_kgCO2m2",
+        "GHG_production_kgCO2m2",
+        "GHG_recycling_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
         "e_win",
@@ -148,8 +148,8 @@ class EnvelopeLookup:
             "U",
             "GHG_kgCO2m2",
             "GHG_biogenic_kgCO2m2",
-            # "GHG_production_kgCO2m2", # needed in future for detailed LCA
-            # "GHG_recycling_kgCO2m2",
+            "GHG_production_kgCO2m2",
+            "GHG_recycling_kgCO2m2",
             "Service_Life",
         }:
             # Map explicitly per DB to avoid ambiguous suffix logic.
@@ -165,10 +165,10 @@ class EnvelopeLookup:
                 return f"GHG_{suf}_kgCO2m2"
             if field == "GHG_biogenic_kgCO2m2":
                 return f"GHG_biogenic_{suf}_kgCO2m2"
-            # if field == "GHG_production_kgCO2m2": # needed in future for detailed LCA
-            #     return f"GHG_production_{suf}_kgCO2m2"
-            # if field == "GHG_recycling_kgCO2m2":
-            #     return f"GHG_recycling_{suf}_kgCO2m2"
+            if field == "GHG_production_kgCO2m2":
+                return f"GHG_production_{suf}_kgCO2m2"
+            if field == "GHG_recycling_kgCO2m2":
+                return f"GHG_recycling_{suf}_kgCO2m2"
             # Service_Life
             return f"Service_Life_{suf}"
 
