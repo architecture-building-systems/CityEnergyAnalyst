@@ -123,44 +123,63 @@ class Envelope(BaseAssemblyDatabase):
 
         def _calc_ghg(
             materials: list[dict[str, Any]],
-        ) -> tuple[float | None, float | None]:
-            """Compute total and biogenic GHG per m² for kg-based entries.
+        ) -> tuple[float | None, float | None, float | None, float | None]:
+            """Compute GHG per m² for kg-based entries.
 
-            Uses mass_per_m2 = density * thickness. Raises if any unit is 'm2'.
-            Returns (total, biogenic) or (None, None) if data insufficient.
+            Uses mass_per_m2 = density * thickness (m, kg/m³ → kg/m²).
+            Disallows any material with unit 'm2'.
+            Returns tuple: (total, production, recycling, biogenic). Each may be None if insufficient data.
             """
             total_emissions = 0.0
+            production_emissions = 0.0
+            recycling_emissions = 0.0
             biogenic_emissions = 0.0
-            has_any_values = False
+
+            any_total = False
+            any_production = False
+            any_recycling = False
+            any_biogenic = False
+
             for m in materials:
                 unit = m.get("unit")
                 density_value = _to_float(m.get("density"))
                 ghg_total_value = _to_float(m.get("GHG_emission_total"))
-                bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product")) or 0.0
+                ghg_production_value = _to_float(m.get("GHG_emission_production"))
+                ghg_recycling_value = _to_float(m.get("GHG_emission_recycling"))
+                bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product"))
                 thickness_value = _to_float(m.get("thickness"))
 
                 if unit == "kg":
-                    if (
-                        density_value is not None
-                        and ghg_total_value is not None
-                        and thickness_value is not None
-                        and thickness_value > 0
-                    ):
-                        mass_per_m2 = density_value * thickness_value
+                    if density_value is None or thickness_value is None or thickness_value < 0:
+                        continue
+                    mass_per_m2 = density_value * thickness_value
+                    if ghg_total_value is not None:
                         total_emissions += ghg_total_value * mass_per_m2
+                        any_total = True
+                    if ghg_production_value is not None:
+                        production_emissions += ghg_production_value * mass_per_m2
+                        any_production = True
+                    if ghg_recycling_value is not None:
+                        recycling_emissions += ghg_recycling_value * mass_per_m2
+                        any_recycling = True
+                    if bio_carbon_value is not None:
                         biogenic_emissions += bio_carbon_value * mass_per_m2
-                        has_any_values = True
-                elif unit == "m2":
+                        any_biogenic = True
+                elif str(unit).lower() == "m2":
                     # Disallow m2 unit entries in material database
                     raise ValueError(
                         "Material unit 'm2' is not supported. Please provide entries with unit 'kg'."
                     )
                 else:
                     # Unknown unit: skip
-                    pass
-            if not has_any_values:
-                return (None, None)
-            return (total_emissions, biogenic_emissions)
+                    continue
+
+            return (
+                total_emissions if any_total else None,
+                production_emissions if any_production else None,
+                recycling_emissions if any_recycling else None,
+                biogenic_emissions if any_biogenic else None,
+            )
 
         def _transform(
             df: pd.DataFrame, kind: Literal["floor", "roof", "wall"]
@@ -212,6 +231,8 @@ class Envelope(BaseAssemblyDatabase):
                         "density": None,
                         "unit": None,
                         "GHG_emission_total": None,
+                        "GHG_emission_production": None,
+                        "GHG_emission_recycling": None,
                         "biogenic_carbon_in_product": None,
                     }
                     if not kb_match.empty:
@@ -220,6 +241,9 @@ class Envelope(BaseAssemblyDatabase):
                         mat["density"] = rec.get("density")
                         mat["unit"] = rec.get("unit")
                         mat["GHG_emission_total"] = rec.get("GHG_emission_total")
+                        # Optional fields for split GHGs, compute if available
+                        mat["GHG_emission_production"] = rec.get("GHG_emission_production")
+                        mat["GHG_emission_recycling"] = rec.get("GHG_emission_recycling")
                         mat["biogenic_carbon_in_product"] = rec.get(
                             "biogenic_carbon_in_product"
                         )
@@ -250,7 +274,7 @@ class Envelope(BaseAssemblyDatabase):
                     )
 
                 u_val = _calc_u(mats)
-                ghg_total, ghg_bio = _calc_ghg(mats)
+                ghg_total, ghg_prod, ghg_recyc, ghg_bio = _calc_ghg(mats)
 
                 # Map to legacy columns by kind
                 base: dict[str, Any] = {
@@ -262,6 +286,8 @@ class Envelope(BaseAssemblyDatabase):
                         {
                             "U_base": u_val,
                             "GHG_floor_kgCO2m2": ghg_total,
+                            "GHG_production_floor_kgCO2m2": ghg_prod,
+                            "GHG_recycling_floor_kgCO2m2": ghg_recyc,
                             "GHG_biogenic_floor_kgCO2m2": ghg_bio,
                             "Service_Life_floor": row.get("Service_Life_floor"),
                             "Reference": row.get("Reference"),
@@ -272,6 +298,8 @@ class Envelope(BaseAssemblyDatabase):
                         {
                             "U_roof": u_val,
                             "GHG_roof_kgCO2m2": ghg_total,
+                            "GHG_production_roof_kgCO2m2": ghg_prod,
+                            "GHG_recycling_roof_kgCO2m2": ghg_recyc,
                             "GHG_biogenic_roof_kgCO2m2": ghg_bio,
                             "Service_Life_roof": row.get("Service_Life_floor")
                             or row.get("Service_Life_roof"),
@@ -283,6 +311,8 @@ class Envelope(BaseAssemblyDatabase):
                         {
                             "U_wall": u_val,
                             "GHG_wall_kgCO2m2": ghg_total,
+                            "GHG_production_wall_kgCO2m2": ghg_prod,
+                            "GHG_recycling_wall_kgCO2m2": ghg_recyc,
                             "GHG_biogenic_wall_kgCO2m2": ghg_bio,
                             "Service_Life_wall": row.get("Service_Life_wall"),
                             "Reference": row.get("Reference"),
@@ -294,6 +324,8 @@ class Envelope(BaseAssemblyDatabase):
                         {
                             "U": u_val,
                             "GHG_kgCO2m2": ghg_total,
+                            "GHG_production_kgCO2m2": ghg_prod,
+                            "GHG_recycling_kgCO2m2": ghg_recyc,
                             "GHG_biogenic_kgCO2m2": ghg_bio,
                         }
                     )
