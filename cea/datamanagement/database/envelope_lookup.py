@@ -130,7 +130,8 @@ class EnvelopeLookup:
                 )
             suf = self._SUFFIX[db]
             if field == "U":
-                return f"U_{suf}"
+                # Special case: floor maps to U_base
+                return "U_base" if db == "floor" else f"U_{suf}"
             if field == "GHG_kgCO2m2":
                 return f"GHG_{suf}_kgCO2m2"
             if field == "GHG_biogenic_kgCO2m2":
