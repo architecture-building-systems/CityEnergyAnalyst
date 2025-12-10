@@ -11,11 +11,18 @@ if TYPE_CHECKING:
 class EnvelopeLookup:
     """DB-agnostic (code, field) lookup on top of Envelope dataclass."""
 
-    _SUFFIX = {"wall": "wall", "roof": "roof", "floor": "floor", "window": "win"}
+    _SUFFIX: dict[str, str] = {
+        "wall": "wall",
+        "roof": "roof",
+        "floor": "floor",
+        "window": "win",
+    }
     _INT_FIELDS = {"Service_Life"}
     _FLOAT_FIELDS = {
         "U",
         "GHG_kgCO2m2",
+        # "GHG_production_kgCO2m2",
+        # "GHG_recycling_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
         "e_win",
@@ -94,17 +101,18 @@ class EnvelopeLookup:
 
         col = self._col(db, field)
         if col not in df.columns:
-            raise KeyError(
-                f"Column '{col}' not found in '{db}' for code '{code}'. "
-                f"Available: {', '.join(map(str, df.columns))}"
-            )
+            return None
 
         val = df.loc[code, col]
+        val_py = val
         if pd.isna(val):
             return None
         if field in self._INT_FIELDS:
             try:
-                return int(float(val))
+                num = pd.to_numeric(val_py, errors="coerce")
+                if pd.isna(num):
+                    raise ValueError(f"Non-numeric value '{val_py}'")
+                return int(float(num))
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     f"Cannot convert value '{val}' to integer for field '{field}' "
@@ -112,29 +120,53 @@ class EnvelopeLookup:
                 )
         if field in self._FLOAT_FIELDS:
             try:
-                return float(val)
+                num = pd.to_numeric(val_py, errors="coerce")
+                if pd.isna(num):
+                    raise ValueError(f"Non-numeric value '{val_py}'")
+                return float(num)
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     f"Cannot convert value '{val}' to float for field '{field}' "
                     f"in database '{db}' for code '{code}'. Please check the envelope "
                     f"database file for malformed numeric values. Original error: {e}"
                 )
-        return val
+        # For strings or other values, coerce to an allowed type
+        if isinstance(val_py, (int, float)):
+            return val_py
+        if isinstance(val_py, (bytes, bytearray)):
+            try:
+                return val_py.decode("utf-8")  # type: ignore[attr-defined]
+            except Exception:
+                return str(val_py)
+        return str(val_py)
 
     def _col(self, db: str, field: str) -> str:
         # Common envelope fields (dynamic per-component suffix)
-        if field in {"U", "GHG_kgCO2m2", "GHG_biogenic_kgCO2m2", "Service_Life"}:
+        if field in {
+            "U",
+            "GHG_kgCO2m2",
+            "GHG_biogenic_kgCO2m2",
+            # "GHG_production_kgCO2m2",
+            # "GHG_recycling_kgCO2m2",
+            "Service_Life",
+        }:
+            # Map explicitly per DB to avoid ambiguous suffix logic.
             if db not in self._SUFFIX:
                 raise ValueError(
                     f"Field '{field}' valid only for wall/roof/floor/window; code is in '{db}'."
                 )
             suf = self._SUFFIX[db]
             if field == "U":
-                return f"U_{suf}"
+                # Special case: floor maps to U_base
+                return "U_base" if db == "floor" else f"U_{suf}"
             if field == "GHG_kgCO2m2":
                 return f"GHG_{suf}_kgCO2m2"
             if field == "GHG_biogenic_kgCO2m2":
                 return f"GHG_biogenic_{suf}_kgCO2m2"
+            # if field == "GHG_production_kgCO2m2":
+            #     return f"GHG_production_{suf}_kgCO2m2"
+            # if field == "GHG_recycling_kgCO2m2":
+            #     return f"GHG_recycling_{suf}_kgCO2m2"
             # Service_Life
             return f"Service_Life_{suf}"
 
