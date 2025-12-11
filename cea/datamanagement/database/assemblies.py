@@ -7,6 +7,14 @@ import pandas as pd
 
 from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
 
+# Surface heat transfer coefficients (internal/external) per element
+# Values in m²·K/W. Adjust as needed to match standards used.
+SURFACE_RESISTANCES: dict[str, dict[str, float]] = {
+    "wall": {"internal": 1.0 / 8.0, "external": 1.0 / 25.0},
+    "roof": {"internal": 1.0 / 10.0, "external": 1.0 / 25.0},
+    "floor": {"internal": 1.0 / 6.0, "external": 1.0 / 25.0},
+}
+
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
@@ -83,6 +91,7 @@ class Envelope(BaseAssemblyDatabase):
     def from_locator(cls, locator: InputLocator):
         frames = cls._read_mapping(locator, cls._locator_mapping())
 
+
         # Try to load material database (KBOB) via locator; if not available, skip transformation
         kbob_df = None
         try:
@@ -100,7 +109,7 @@ class Envelope(BaseAssemblyDatabase):
             except Exception:
                 return None
 
-        def _calc_u(materials: list[dict[str, Any]]) -> float | None:
+        def _calc_u(materials: list[dict[str, Any]], kind: Literal["floor", "roof", "wall"]) -> float | None:
             """Compute U-value as 1 / sum(thickness_i / conductivity_i).
 
             Returns None if any layer lacks required data or resistance is zero.
@@ -119,8 +128,9 @@ class Envelope(BaseAssemblyDatabase):
                 has_conductivity_values = True
             if not has_conductivity_values or total_thermal_resistance == 0:
                 return None
-            # add internal and external surface resistances (fixed values)
-            total_thermal_resistance += 1 / 8.0 + 1 / 25.0
+            # add internal and external surface resistances based on element type
+            coeffs = SURFACE_RESISTANCES.get(kind, {"internal": 0.0, "external": 0.0})
+            total_thermal_resistance += coeffs["internal"] + coeffs["external"]
             return 1.0 / total_thermal_resistance
 
         def _calc_ghg(
@@ -275,7 +285,7 @@ class Envelope(BaseAssemblyDatabase):
                         + ", ".join(errors)
                     )
 
-                u_val = _calc_u(mats)
+                u_val = _calc_u(mats, kind)
                 ghg_total, ghg_prod, ghg_recyc, ghg_bio = _calc_ghg(mats)
 
                 # Map to legacy columns by kind
@@ -332,15 +342,18 @@ class Envelope(BaseAssemblyDatabase):
                         }
                     )
 
-                # Pass-through only reference-related additional columns
+                # Pass-through all non-material definition columns except ones we explicitly compute/overwrite
                 material_cols_prefixes = {"material_name_", "thickness_"}
+                computed_cols = set(base.keys())
                 for col in df.columns:
                     # Skip material/thickness definition columns
                     if any(col.startswith(prefix) for prefix in material_cols_prefixes):
                         continue
-                    # Only include columns that look like references; keep description/code already set
-                    if "reference" in col.lower():
-                        base[col] = row.get(col)
+                    # Skip description/code (already set) and computed targets to avoid overwrite
+                    if col in computed_cols or col in {"description", "code"}:
+                        continue
+                    # Preserve all other columns (e.g., a_*, e_*, r_*, service-life refs, etc.)
+                    base[col] = row.get(col)
 
                 out_rows.append(base)
 
