@@ -119,6 +119,8 @@ class Envelope(BaseAssemblyDatabase):
                 has_conductivity_values = True
             if not has_conductivity_values or total_thermal_resistance == 0:
                 return None
+            # add internal and external surface resistances (fixed values)
+            total_thermal_resistance += 1 / 8.0 + 1 / 25.0
             return 1.0 / total_thermal_resistance
 
         def _calc_ghg(
