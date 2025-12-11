@@ -33,6 +33,7 @@ from cea.optimization_new.containerclasses.energyCarrier import EnergyCarrier
 from cea.optimization_new.containerclasses.energyFlow import EnergyFlow
 from cea.optimization_new.component import ActiveComponent, PassiveComponent
 from cea.optimization_new.helperclasses.optimization.capacityIndicator import CapacityIndicator, CapacityIndicatorVector
+from cea.optimization_new import error_diagnostics
 
 
 class SupplySystemStructure(object):
@@ -135,12 +136,12 @@ class SupplySystemStructure(object):
                                  f" and {SupplySystemStructure._MAX_NETWORK_TEMPERATURE}°C. Please adjust your "
                                  "configurations accordingly.")
         elif SupplySystemStructure._system_type == "cooling":
-            if not (SupplySystemStructure._MIN_NETWORK_TEMPERATURE <= new_network_temperature
-                    <= SupplySystemStructure._climatic_reference_temperature):
-                raise ValueError("For district cooling networks, the network temperature needs to fall between the"
-                                 f"{SupplySystemStructure._MIN_NETWORK_TEMPERATURE}°C and the average outdoor temperature "
-                                 f"{SupplySystemStructure._climatic_reference_temperature}°C. Please adjust your configurations "
-                                 "accordingly.")
+            # For DC networks, only validate minimum temperature (must be above freezing)
+            # Don't validate against annual average outdoor temp - summer cooling demand is valid even in cold climates
+            if new_network_temperature < SupplySystemStructure._MIN_NETWORK_TEMPERATURE:
+                raise ValueError("For district cooling networks, the network temperature needs to be above "
+                                 f"{SupplySystemStructure._MIN_NETWORK_TEMPERATURE}°C (freezing point). "
+                                 f"Current temperature: {new_network_temperature}°C. Please adjust your configurations accordingly.")
 
         return new_network_temperature
 
@@ -688,9 +689,16 @@ class SupplySystemStructure(object):
                 target_energy_carrier_code=demand_energy_carrier, demand_origin=demand_origin)
             return {'active': components_fitting_after_passive_conversion, 'passive': passive_components_dict}
         else:
-            raise ValueError(f"None of the components chosen for the {component_placement} category of the supply "
-                             f"system of {self.target} can generate/absorb the required energy carrier "
-                             f"{demand_energy_carrier}. Please change the component selection for your supply system.")
+            # Generate detailed diagnostic error message
+            error_msg = error_diagnostics.generate_energy_carrier_mismatch_error(
+                supply_system_target=self.target,
+                component_placement=component_placement,
+                demand_energy_carrier=demand_energy_carrier,
+                component_codes=component_codes,
+                component_capacity=component_capacity,
+                active_component_classes=SupplySystemStructure._active_component_classes
+            )
+            raise ValueError(error_msg)
 
     @staticmethod
     def _try_fitting_component_selection(component_codes, demand_energy_carrier, component_capacity,
