@@ -15,6 +15,11 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
 
     if isinstance(p, cea.config.ChoiceParameter):
         params['choices'] = p._choices
+        # For nullable choice parameters with no choices, don't show error
+        if params.get('nullable') and not p._choices:
+            params['suppress_empty_error'] = True
+        # Add flag for multi-select (GUI needs this to render correctly)
+        params['multiselect'] = isinstance(p, cea.config.MultiChoiceParameter)
 
     if isinstance(p, cea.config.WeatherPathParameter):
         locator = cea.inputlocator.InputLocator(config.scenario)
