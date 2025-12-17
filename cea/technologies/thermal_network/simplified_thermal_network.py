@@ -447,6 +447,16 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         DHN_barcode = "0"
         if buildings_name_with_heating:
+            # Read network temperature configuration
+            fixed_network_temp_C = config.thermal_network.network_temperature
+            if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
+                print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
+                print("    - Boosters will activate when building requirements exceed network temp")
+            else:
+                print("  ℹ Network temperature mode: VT (Variable Temperature)")
+                print("    - Network temp follows building requirements")
+                fixed_network_temp_C = None  # Explicitly set to None for VT mode
+
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
             buildings_with_heating_set = set(buildings_name_with_heating)
@@ -454,7 +464,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation.substation_main_heating(locator, total_demand, building_names,
                                                heating_configuration=7,
                                                DHN_barcode=DHN_barcode,
-                                               itemised_dh_services=itemised_dh_services)
+                                               itemised_dh_services=itemised_dh_services,
+                                               fixed_network_temp_C=fixed_network_temp_C)
         else:
             raise ValueError('No district heating network created as there is no heating demand from any building.')
 

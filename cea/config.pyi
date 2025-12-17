@@ -948,6 +948,7 @@ class ThermalNetworkSection(Section):
     diameter_iteration_limit: int
     substation_cooling_systems: list[str]
     substation_heating_systems: list[str]
+    network_temperature: float
     temperature_control: str
     plant_supply_temperature: float
 
@@ -987,6 +988,8 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["substation_cooling_systems"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["substation_heating_systems"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["network_temperature"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["temperature_control"]) -> str: ...
     @overload
@@ -1359,6 +1362,7 @@ class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
     network_name: str
     include_services: list[str]
+    itemised_dh_services: list[str]
     overwrite_supply_settings: bool
     connected_buildings: list[str]
     cooling_plant_building: Any
@@ -1376,6 +1380,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["itemised_dh_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
