@@ -12,7 +12,9 @@ import cea.inputlocator
 from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
-from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name
+from cea.technologies.network_layout.plant_node_operations import (
+    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services
+)
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
 from cea.optimization_new.user_network_loader import load_user_defined_network, validate_network_covers_district_buildings
@@ -216,7 +218,8 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
-def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator, expected_num_components=None, snap_tolerance=SNAP_TOLERANCE):
+def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator,
+                            expected_num_components=None, snap_tolerance=SNAP_TOLERANCE, itemised_dh_services=None):
     """
     Auto-create missing PLANT nodes in user-defined networks.
 
@@ -234,6 +237,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     :param locator: InputLocator instance
     :param expected_num_components: Expected number of disconnected components (optional, for validation)
     :param snap_tolerance: Maximum distance for snapping geometries (meters), defaults to SNAP_TOLERANCE
+    :param itemised_dh_services: List of services in priority order (for DH only)
     :return: Tuple of (updated nodes_gdf, updated edges_gdf, list of created plants)
     """
     # Check for existing plants based on network type
@@ -461,7 +465,9 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 nodes_gdf,
                 edges_gdf,
                 'T1',  # Default pipe material
-                150    # Default pipe diameter
+                150,   # Default pipe diameter
+                itemised_dh_services=itemised_dh_services,
+                network_type=network_type
             )
 
             # The newly created plant node is the last one
@@ -515,7 +521,9 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 nodes_gdf,
                 edges_gdf,
                 'T1',  # Default pipe material
-                150    # Default pipe diameter
+                150,   # Default pipe diameter
+                itemised_dh_services=itemised_dh_services,
+                network_type=network_type
             )
 
             # The newly created plant node is the last one
@@ -632,6 +640,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     connection_candidates = config.network_layout.connection_candidates
     snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
     steiner_algorithm = network_layout.algorithm
+    itemised_dh_services = config.network_layout.itemised_dh_services
 
     # Validate include_services is not empty
     if not list_include_services:
@@ -879,13 +888,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                         nodes_for_type,
                         edges_for_type,
                         'T1',  # Default pipe material
-                        150    # Default pipe diameter
+                        150,   # Default pipe diameter
+                        itemised_dh_services=itemised_dh_services,
+                        network_type=type_network
                     )
-                    # Mark the newly created plant node with network-specific type
-                    # The last node added is the plant node
+                    # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                     last_node_idx = nodes_for_type.index[-1]
-                    nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
-                    print(f"    ✓ Added PLANT_{type_network} node for building '{plant_building}'")
+                    plant_type = nodes_for_type.loc[last_node_idx, 'type']
+                    print(f"    ✓ Added {plant_type} node for building '{plant_building}'")
 
                     # Only remove the original building node if it was NOT a connected building
                     # If it's a connected building, we need to keep it to maintain network connectivity
@@ -929,12 +939,13 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     nodes_for_type,
                     edges_for_type,
                     'T1',  # Default pipe material
-                    150    # Default pipe diameter
+                    150,   # Default pipe diameter
+                    itemised_dh_services=itemised_dh_services,
+                    network_type=type_network
                 )
-                # Mark the newly created plant node with network-specific type
-                # The last node added is the plant node
+                # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                 last_node_idx = nodes_for_type.index[-1]
-                nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
+                plant_type = nodes_for_type.loc[last_node_idx, 'type']
                 print(f"    ✓ Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
 
         # Validation: Check for duplicate node names after plant creation
@@ -1099,6 +1110,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     overwrite_supply = config.network_layout.overwrite_supply_settings
     connected_buildings_config = config.network_layout.connected_buildings
     list_include_services = config.network_layout.include_services
+    itemised_dh_services = config.network_layout.itemised_dh_services
 
     # Validate include_services is not empty
     if not list_include_services:
@@ -1267,7 +1279,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             nodes_gdf_dc, edges_gdf_dc, zone_gdf,
             cooling_plant_buildings_list, 'DC', locator,
             expected_num_components,
-            snap_tolerance
+            snap_tolerance,
+            itemised_dh_services=None  # DC network doesn't use service config
         )
         
         # Collect edges (including plant connection edges)
@@ -1298,7 +1311,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             nodes_gdf_dh, edges_gdf_dh, zone_gdf,
             heating_plant_buildings_list, 'DH', locator,
             expected_num_components,
-            snap_tolerance
+            snap_tolerance,
+            itemised_dh_services=itemised_dh_services
         )
         
         # Collect edges (including plant connection edges)
@@ -1311,8 +1325,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
             print("  Note: Existing building nodes converted to PLANT type")
 
-        # Normalize plant types: PLANT and PLANT_DH both become PLANT for DH network
-        nodes_gdf_dh['type'] = nodes_gdf_dh['type'].replace({'PLANT_DH': 'PLANT'})
+        # Note: DH plant types preserve service configuration (e.g., PLANT_hs_ww, PLANT_ww_hs)
+        # No normalization needed for DH network
 
         os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
         nodes_gdf_dh.to_file(output_node_path_dh, driver='ESRI Shapefile')
@@ -1343,7 +1357,6 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         normalize_gdf_geometries(edges_gdf, precision=SHAPEFILE_TOLERANCE, inplace=True)
         edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
         print(f"\n  ✓ Saved layout.shp with {len(edges_gdf)} edges")
-
     print("  ✓ User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
     print("\n" + "=" * 80 + "\n")
