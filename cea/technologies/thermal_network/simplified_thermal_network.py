@@ -411,6 +411,25 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     # GET INFORMATION ABOUT THE NETWORK
     edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
 
+    # Extract service configuration from plant node type (DH only)
+    itemised_dh_services = None
+    is_legacy = False
+    if network_type == "DH":
+        from cea.technologies.network_layout.plant_node_operations import get_services_from_plant_type
+
+        # Find plant nodes
+        plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
+        if not plant_nodes.empty:
+            plant_type = plant_nodes.iloc[0]['type']
+            itemised_dh_services, is_legacy = get_services_from_plant_type(plant_type)
+
+            if is_legacy:
+                print("  ℹ Using legacy temperature control (max of space heating and DHW)")
+                print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
+            else:
+                service_names = ' → '.join(itemised_dh_services)
+                print(f"  ℹ DH service configuration: {service_names}")
+
     # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
     # calculate substations for all buildings
     # local variables
@@ -427,7 +446,10 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             node_buildings_set = set(node_df.building.values)
             buildings_with_heating_set = set(buildings_name_with_heating)
             building_names = list(buildings_with_heating_set & node_buildings_set)
-            substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
+            substation.substation_main_heating(locator, total_demand, building_names,
+                                               heating_configuration=7,
+                                               DHN_barcode=DHN_barcode,
+                                               itemised_dh_services=itemised_dh_services)
         else:
             raise ValueError('No district heating network created as there is no heating demand from any building.')
 
@@ -494,7 +516,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             wn.add_pattern(building, pattern_demand)
         
         # check that there is one plant node
-        plant_nodes = node_df[node_df['type'] == 'PLANT']
+        plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not len(plant_nodes) >= 1:
             raise ValueError("There should be at least one plant node in the network.")
 
@@ -521,7 +543,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                 demand_pattern=demand_pattern,
                                 elevation=thermal_transfer_unit_design_head_m,
                                 coordinates=node[1]["coordinates"])
-            elif node[1]["type"] == "PLANT":
+            elif 'PLANT' in str(node[1]["type"]):
                 base_head = int(thermal_transfer_unit_design_head_m*1.2)
                 start_node = node[0]
                 name_node_plant = start_node

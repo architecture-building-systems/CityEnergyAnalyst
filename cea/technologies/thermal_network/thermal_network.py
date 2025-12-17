@@ -96,6 +96,7 @@ class ThermalNetwork(object):
         self.substations_HEX_specs = None  # to be filled by substation_matrix.substation_HEX_design_main
         self.t_target_supply_C = None  # to be filled from buildings_demands properties
         self.t_target_supply_df = None  # target supply temperature of each node, to be filled from all_nodes_df
+        self.itemised_dh_services = None  # to be filled from plant node type in get_thermal_network_from_csv
 
         self.edge_mass_flow_df = None
         self.node_mass_flow_df = None
@@ -236,6 +237,25 @@ class ThermalNetwork(object):
         node_df.coordinates = pd.Series(node_df.coordinates)
         all_nodes_df = node_df[['type', 'building', 'coordinates']]
         all_nodes_df.to_csv(self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
+
+        # Extract service configuration from plant node type (DH only)
+        self.itemised_dh_services = None
+        if self.network_type == 'DH':
+            from cea.technologies.network_layout.plant_node_operations import get_services_from_plant_type
+
+            # Find plant nodes
+            plant_nodes = all_nodes_df[all_nodes_df['type'].str.contains('PLANT', na=False)]
+            if not plant_nodes.empty:
+                plant_type = plant_nodes.iloc[0]['type']
+                self.itemised_dh_services, is_legacy = get_services_from_plant_type(plant_type)
+
+                if is_legacy:
+                    print("  ℹ Using legacy temperature control (max of space heating and DHW)")
+                    print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
+                else:
+                    service_names = ' → '.join(self.itemised_dh_services)
+                    print(f"  ℹ DH service configuration: {service_names}")
+
         # extract the list of buildings in the current network
         building_names = all_nodes_df.building[all_nodes_df.type == 'CONSUMER'].reset_index(drop=True)
 
@@ -256,14 +276,14 @@ class ThermalNetwork(object):
         ## calculate mass flows in each edge (mass_flow_guess).
         node_mass_flows_df = pd.DataFrame(data=np.zeros([1, len(edge_node_df.index)]), columns=edge_node_df.index)
         total_flow = 0
-        number_of_plants = sum(all_nodes_df['type'] == 'PLANT')
+        number_of_plants = sum(all_nodes_df['type'].str.contains('PLANT', na=False))
 
         for node, row in all_nodes_df.iterrows():
             if row['type'] == 'CONSUMER':
                 node_mass_flows_df[node] = 1  # virtual consumer mass flow requirement
                 total_flow += 1
         for node, row in all_nodes_df.iterrows():
-            if row['type'] == 'PLANT':
+            if 'PLANT' in str(row['type']):
                 node_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
 
         # The direction of flow is then corrected
@@ -542,7 +562,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
     save_all_results_to_csv(csv_outputs, thermal_network)
 
     # identify all plants
-    plant_indexes = np.where(thermal_network.all_nodes_df['type'] == 'PLANT')[0]
+    plant_indexes = np.where(thermal_network.all_nodes_df['type'].str.contains('PLANT', na=False))[0]
     # read in all node df
     all_nodes_df_output = pd.read_csv(
         thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
@@ -581,7 +601,7 @@ def thermal_network_main(locator, thermal_network, processes=1):
 
 def calculate_pressure_loss_critical_path(dP_timestep, thermal_network):
     dP_all_edges = dP_timestep[0]
-    plant_node = thermal_network.all_nodes_df[thermal_network.all_nodes_df['type'] == 'PLANT'].index[0]
+    plant_node = thermal_network.all_nodes_df[thermal_network.all_nodes_df['type'].str.contains('PLANT', na=False)].index[0]
     if max(dP_all_edges) > 0.0:
         pressure_losses_in_critical_paths = np.zeros(len(dP_all_edges))  # initialize array
         G = nx.Graph()  # initial networkx
@@ -779,7 +799,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # plant heat requirements
         plant_heat_requirement_for_csv.columns = filter(None, thermal_network.all_nodes_df[
-            thermal_network.all_nodes_df.type == 'PLANT'].building.values)
+            thermal_network.all_nodes_df.type.str.contains('PLANT', na=False)].building.values)
         plant_heat_requirement_for_csv = add_date_to_dataframe(thermal_network.locator, plant_heat_requirement_for_csv)
         plant_heat_requirement_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
@@ -903,7 +923,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # plant heat requirements
         pd.DataFrame(csv_outputs['plant_heat_requirement'],
                      columns=list(filter(None, thermal_network.all_nodes_df[
-                         thermal_network.all_nodes_df.type == 'PLANT'].building.values))).to_csv(
+                         thermal_network.all_nodes_df.type.str.contains('PLANT', na=False)].building.values))).to_csv(
             thermal_network.locator.get_thermal_network_plant_heat_requirement_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
@@ -1142,14 +1162,14 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
 
     else:  # no loops
         # remove one equation (at plant node) to build a well-determined matrix, A.
-        plant_index = np.where(all_nodes_df['type'] == 'PLANT')[0][0]  # find index of the first plant node
+        plant_index = np.where(all_nodes_df['type'].str.contains('PLANT', na=False))[0][0]  # find index of the first plant node
         A = edge_node_df.drop(edge_node_df.index[plant_index])
         b = np.nan_to_num(mass_flow_substation_df.T)
         b = np.delete(b, plant_index)
         mass_flow_edge = np.linalg.solve(A.values, b)
 
     # verify calculated solution
-    plant_index = np.where(all_nodes_df['type'] == 'PLANT')[0][0]  # find index of the first plant node
+    plant_index = np.where(all_nodes_df['type'].str.contains('PLANT', na=False))[0][0]  # find index of the first plant node
     A = edge_node_df.drop(edge_node_df.index[plant_index])
     b_verification = A.dot(mass_flow_edge)
     b_original = np.nan_to_num(mass_flow_substation_df.T)
@@ -1364,7 +1384,7 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
 
     consumer_building_names = thermal_network.all_nodes_df.loc[
         thermal_network.all_nodes_df['type'] == 'CONSUMER', 'building'].values
-    plant_indexes = np.where(thermal_network.all_nodes_df['type'] == 'PLANT')[0]
+    plant_indexes = np.where(thermal_network.all_nodes_df['type'].str.contains('PLANT', na=False))[0]
     all_buildings = thermal_network.all_nodes_df['building'].values
     valve_losses = {}
     hex_losses = {}
@@ -2477,7 +2497,7 @@ def solve_network_temperatures(thermal_network, t):
     else:
         t_supply_nodes_2__k = np.full(thermal_network.edge_node_df.shape[0], np.nan)
         t_return_nodes_2__k = np.full(thermal_network.edge_node_df.shape[0], np.nan)
-        plant_heat_requirement_kw = np.full(sum(thermal_network.all_nodes_df['type'] == 'PLANT'), 0)
+        plant_heat_requirement_kw = np.full(sum(thermal_network.all_nodes_df['type'].str.contains('PLANT', na=False)), 0)
         edge_mass_flow_df_2_kgs = thermal_network.edge_mass_flow_df.iloc[t]
         mass_flow_substations_nodes_df_2_kgs = thermal_network.node_mass_flow_df.iloc[t]
         q_loss_edges_2_supply_kW = np.full(thermal_network.edge_node_df.shape[1], 0)
@@ -2496,7 +2516,7 @@ def solve_network_temperatures(thermal_network, t):
         velocities_in_supply_edges_mpers[ix] = edge_mass_flow_df_2_kgs[ix] * (1 / P_WATER_KGPERM3) * (1 / A)
 
     # plant supply and return temperatures
-    plant_node_index = np.where(thermal_network.all_nodes_df['type'] == 'PLANT')[0][0]
+    plant_node_index = np.where(thermal_network.all_nodes_df['type'].str.contains('PLANT', na=False))[0][0]
     T_supply_K = t_supply_nodes_2__k[plant_node_index]
     T_return_K = t_return_nodes_2__k[plant_node_index]
     temperatures_at_plant_K = [T_supply_K, T_return_K]
@@ -2654,7 +2674,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
 
             # # calculate the pipe outlet temperature from the plant node
             for i in range(z.shape[0]):
-                if all_nodes_df.iloc[i]['type'] == 'PLANT':  # find plant node
+                if 'PLANT' in str(all_nodes_df.iloc[i]['type']):  # find plant node
                     # write plant inlet temperature
                     t_node[i] = t_plant_sup  # assume plant inlet temperature
                     edge = np.where(t_e_in[i] != 0)[0]  # find edge index
@@ -3320,7 +3340,7 @@ def write_substation_values_to_nodes_df(all_nodes_df, df_value):
     nodes_df = pd.DataFrame(index=[0], columns=all_nodes_df.index)
     # it is assumed that if there is more than one plant, they all supply the same amount of heat at each time step
     # (i.e., the amount supplied by each plant is not optimized)
-    number_of_plants = sum(all_nodes_df['type'] == 'PLANT')
+    number_of_plants = sum(all_nodes_df['type'].str.contains('PLANT', na=False))
     consumer_list = all_nodes_df.loc[all_nodes_df['type'] == 'CONSUMER', 'building'].values
     plant_mass_flow = df_value[consumer_list].loc[0].sum() / number_of_plants
 
@@ -3349,7 +3369,7 @@ def write_substation_values_to_nodes_df(all_nodes_df, df_value):
             nodes_df[node] = df_value[row['building']]
             if df_value[row['building']].any() < 0:
                 print('Error, a Building is trying to be a plant!')
-        elif row['type'] == 'PLANT':
+        elif 'PLANT' in str(row['type']):
             nodes_df[node] = - plant_mass_flow
         else:
             nodes_df[node] = 0

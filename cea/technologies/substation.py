@@ -24,7 +24,7 @@ __status__ = "Production"
 
 # Substation model
 def substation_main_heating(locator, total_demand, buildings_name_with_heating, heating_configuration=7,
-                            DHN_barcode=""):
+                            DHN_barcode="", itemised_dh_services=None):
     if DHN_barcode.count("1") > 0:  # check if there are buildings connected
         # FIRST GET THE MAXIMUM TEMPERATURE NEEDED BY THE NETWORK AT EVERY TIME STEP
         buildings_dict = {}
@@ -34,7 +34,8 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
             # calculates the building side supply and return temperatures for each unit
             Ths_supply_C, Ths_re_C = calc_temp_hex_building_side_heating(buildings_dict[name],
-                                                                         heating_configuration)
+                                                                         heating_configuration,
+                                                                         itemised_dh_services)
 
             # compare and get the minimum hourly temperatures of the DH plant
             T_DH_supply = calc_temp_this_building_heating(Ths_supply_C)
@@ -63,7 +64,8 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         # CALCULATE SUBSTATIONS DURING DECENTRALIZED OPTIMIZATION
         for name in buildings_name_with_heating:
             substation_demand = pd.read_csv(locator.get_demand_results_file(name))
-            Ths_supply_C, Ths_return_C = calc_temp_hex_building_side_heating(substation_demand, heating_configuration)
+            Ths_supply_C, Ths_return_C = calc_temp_hex_building_side_heating(substation_demand, heating_configuration,
+                                                                              itemised_dh_services)
             T_heating_system_supply = calc_temp_this_building_heating(Ths_supply_C)
             substation_model_heating(name,
                                      substation_demand,
@@ -81,15 +83,39 @@ def calc_temp_this_building_heating(Tww_Ths_supply_C):
     return T_DH_supply
 
 
-def calc_temp_hex_building_side_heating(building_demand_df, heating_configuration):
-    # space heating
+def calc_temp_hex_building_side_heating(building_demand_df, heating_configuration, itemised_dh_services=None):
+    """
+    Calculate building-side supply/return temperatures for district heating.
 
+    :param building_demand_df: Building demand dataframe with temperature columns
+    :param heating_configuration: Heating system configuration (1-7)
+    :param itemised_dh_services: List of services in priority order, or None for legacy behavior
+                                  Examples: ['space_heating', 'domestic_hot_water'], ['domestic_hot_water'], etc.
+    :return: (Ths_supply_C, Ths_return) - Supply and return temperatures
+    """
+    # space heating
     Ths_return, Ths_supply = calc_compound_Ths(building_demand_df, heating_configuration)
     # domestic hot water
     Tww_supply = building_demand_df.Tww_sys_sup_C.values
 
-    # Supply space heating at the maximum temperature between hot water and space heating
-    Ths_supply_C = np.vectorize(calc_DH_supply)(Ths_supply, Tww_supply)
+    # Determine network supply temperature based on service configuration
+    if itemised_dh_services is None or len(itemised_dh_services) == 0:
+        # Legacy behavior: max of space heating and DHW
+        Ths_supply_C = np.vectorize(calc_DH_supply)(Ths_supply, Tww_supply)
+    elif len(itemised_dh_services) == 1:
+        # Single service only
+        if itemised_dh_services[0] == 'space_heating':
+            Ths_supply_C = Ths_supply
+        else:  # domestic_hot_water
+            Ths_supply_C = Tww_supply
+    else:
+        # Multiple services - order determines priority
+        if itemised_dh_services[0] == 'space_heating':
+            # LTDH mode: space heating drives network temp, DHW uses booster
+            Ths_supply_C = Ths_supply
+        else:  # domestic_hot_water first
+            # DHW priority: max(60°C, space heating temp)
+            Ths_supply_C = np.vectorize(calc_DH_supply)(Ths_supply, Tww_supply)
 
     return Ths_supply_C, Ths_return
 
