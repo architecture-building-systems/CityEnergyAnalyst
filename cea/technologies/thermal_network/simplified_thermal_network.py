@@ -421,12 +421,17 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not plant_nodes.empty:
             plant_type = plant_nodes.iloc[0]['type']
-            itemised_dh_services, is_legacy = get_services_from_plant_type(plant_type)
+            services, is_legacy = get_services_from_plant_type(plant_type)
 
             if is_legacy:
-                print("  ℹ Using legacy temperature control (max of space heating and DHW)")
+                print("  ℹ Using legacy temperature control:")
+                print("    - Services: space heating + domestic hot water")
+                print("    - Supply temperature: max(space heating temp, DHW temp)")
                 print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
+                # Pass None for legacy mode to trigger default behavior
+                itemised_dh_services = None
             else:
+                itemised_dh_services = services
                 service_names = ' → '.join(itemised_dh_services)
                 print(f"  ℹ DH service configuration: {service_names}")
 

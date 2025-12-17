@@ -247,12 +247,17 @@ class ThermalNetwork(object):
             plant_nodes = all_nodes_df[all_nodes_df['type'].str.contains('PLANT', na=False)]
             if not plant_nodes.empty:
                 plant_type = plant_nodes.iloc[0]['type']
-                self.itemised_dh_services, is_legacy = get_services_from_plant_type(plant_type)
+                services, is_legacy = get_services_from_plant_type(plant_type)
 
                 if is_legacy:
-                    print("  ℹ Using legacy temperature control (max of space heating and DHW)")
+                    print("  ℹ Using legacy temperature control:")
+                    print("    - Services: space heating + domestic hot water")
+                    print("    - Supply temperature: max(space heating temp, DHW temp)")
                     print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
+                    # Pass None for legacy mode to trigger default behavior
+                    self.itemised_dh_services = None
                 else:
+                    self.itemised_dh_services = services
                     service_names = ' → '.join(self.itemised_dh_services)
                     print(f"  ℹ DH service configuration: {service_names}")
 
