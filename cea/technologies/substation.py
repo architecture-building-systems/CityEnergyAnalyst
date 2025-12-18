@@ -656,11 +656,9 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         "Qhs_dh_W": Q_dh_to_hs_W,
         "Qww_dh_W": Q_dh_to_dhw_W,
 
-        # Booster tracking (always present, zeros if not applicable)
+        # Booster heat (always present, zeros if not applicable)
         "Qhs_booster_W": Q_booster_hs_W,
-        "Qww_booster_W": Q_booster_ww_W,
-        "booster_hs_active": booster_hs_active.astype(int),  # Convert bool to int for CSV
-        "booster_ww_active": booster_ww_active.astype(int)
+        "Qww_booster_W": Q_booster_ww_W
     })
 
     # Determine output file path based on context

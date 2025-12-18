@@ -14874,18 +14874,6 @@ get_optimization_substations_results_file:
         type: float
         unit: '[W]'
         min: 0.0
-      booster_hs_active:
-        description: Flag indicating when space heating booster is operating (1=active, 0=inactive)
-        type: int
-        unit: '[-]'
-        min: 0
-        max: 1
-      booster_ww_active:
-        description: Flag indicating when domestic hot water booster is operating (1=active, 0=inactive)
-        type: int
-        unit: '[-]'
-        min: 0
-        max: 1
   used_by:
   - optimization
 get_optimization_substations_total_file:
@@ -16866,18 +16854,6 @@ get_thermal_network_substation_results_file:
         type: float
         unit: '[W]'
         min: 0.0
-      booster_hs_active:
-        description: Flag indicating when space heating booster is operating (1=active, 0=inactive)
-        type: int
-        unit: '[-]'
-        min: 0
-        max: 1
-      booster_ww_active:
-        description: Flag indicating when domestic hot water booster is operating (1=active, 0=inactive)
-        type: int
-        unit: '[-]'
-        min: 0
-        max: 1
   used_by: []
 get_thermal_network_velocity_edges_file:
   created_by:
