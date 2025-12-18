@@ -200,10 +200,13 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
 
 def substation_main_cooling_thermal_network(locator, total_demand, buildings_name_with_cooling,
                                             cooling_configuration=['aru', 'ahu', 'scu'],
+                                            fixed_network_temp_C=None,
                                             network_type='DC', network_name=''):
     """
     Calculate DC substation results for simplified thermal network workflow.
     Creates clean per-building outputs matching DH format (Celsius temps, date column, itemized loads).
+
+    :param fixed_network_temp_C: Fixed supply temperature for CT mode (None for VT mode)
 
     This function is separate from substation_main_cooling() which serves optimization workflow.
     """
@@ -215,9 +218,15 @@ def substation_main_cooling_thermal_network(locator, total_demand, buildings_nam
         Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(building_demand_df,
                                                                          cooling_configuration)
 
-        # Calculate DC network supply temperatures for this building
-        T_DC_supply_to_cs_ref, T_DC_supply_to_cs_ref_data = calc_temp_this_building_cooling(T_supply_to_cs_ref,
-                                                                                            T_supply_to_cs_ref_data)
+        if fixed_network_temp_C is not None:
+            # CT mode: Use fixed supply temperature (create arrays with fixed value for all timesteps)
+            num_timesteps = len(building_demand_df)
+            T_DC_supply_to_cs_ref = np.full(num_timesteps, fixed_network_temp_C)
+            T_DC_supply_to_cs_ref_data = np.full(num_timesteps, fixed_network_temp_C)
+        else:
+            # VT mode: Calculate DC network supply temperatures based on building needs
+            T_DC_supply_to_cs_ref, T_DC_supply_to_cs_ref_data = calc_temp_this_building_cooling(T_supply_to_cs_ref,
+                                                                                                T_supply_to_cs_ref_data)
 
         # Calculate detailed substation parameters
         substation_model_cooling_thermal_network(building_name, building_demand_df,

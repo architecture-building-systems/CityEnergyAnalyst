@@ -439,6 +439,33 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
     return max(min_temps) if min_temps else 30
 
 
+def calculate_maximum_network_temperature_cooling(substation_results_dict, itemised_dc_services):
+    """
+    Calculate maximum allowable network temperature for district cooling.
+
+    In CT mode, the network supply temperature must be at least 5K lower than the minimum
+    building supply temperature to allow for heat transfer (approach temperature constraint).
+
+    :param substation_results_dict: Dictionary {building_name: substation_results_df}
+    :param itemised_dc_services: List of services (e.g., ['space_cooling', 'data_center', 'refrigeration'])
+    :return: Maximum allowable network temperature in °C
+    """
+    # Conservative maximum temps based on service type
+    if itemised_dc_services is None:
+        # Legacy mode - assume space cooling
+        return 7  # Safe for typical space cooling (building needs ~12°C supply, so network at 7°C allows 5K approach)
+
+    max_temps = []
+    if 'space_cooling' in itemised_dc_services:
+        max_temps.append(7)  # Space cooling needs ~12°C building supply, so network at 7°C allows 5K approach
+    if 'data_center' in itemised_dc_services:
+        max_temps.append(10)  # Data center can use warmer supply (~15°C building supply)
+    if 'refrigeration' in itemised_dc_services:
+        max_temps.append(5)  # Refrigeration needs colder (~10°C building supply)
+
+    return min(max_temps) if max_temps else 7
+
+
 def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_type, network_name):
     # local variables
     min_head_substation_kPa = config.thermal_network.min_head_substation
@@ -584,16 +611,30 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             buildings_with_cooling_set = set(buildings_name_with_cooling)
             building_names = list(buildings_with_cooling_set & node_buildings_set)
 
+            # Read network temperature configuration
+            fixed_network_temp_C = config.thermal_network.network_temperature
+            if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
+                print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
+            else:
+                print("  ℹ Network temperature mode: VT (Variable Temperature)")
+                print("    - Network temp follows building requirements")
+                fixed_network_temp_C = None  # Explicitly set to None for VT mode
+
             # Call new thermal network function (not optimization function)
             substation.substation_main_cooling_thermal_network(locator, total_demand, building_names,
+                                                              fixed_network_temp_C=fixed_network_temp_C,
                                                               network_type=network_type,
                                                               network_name=network_name)
         else:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
+        # Read substation results and build dictionary for validation
+        substation_results_dict = {}
         for building_name in building_names:
             substation_results = pd.read_csv(
                 locator.get_thermal_network_substation_results_file(building_name, network_type, network_name))
+            substation_results_dict[building_name] = substation_results
+
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DC_result_kgpers"] / P_WATER_KGPERM3
             T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + 273.15  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DC_result_C"] > 0,
@@ -602,6 +643,85 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]
             ) / 1000
+
+        # Validate network temperature is cold enough for buildings (CT mode only)
+        if fixed_network_temp_C is not None:
+            # Check if heat exchangers failed (NaN or zero flow when there's demand)
+            # This indicates network temperature is too warm to provide cooling
+            total_demand_kWh = 0
+            total_valid_flow = 0
+            hours_with_demand = 0
+
+            for b in building_names:
+                df = substation_results_dict[b]
+                demand_W = df["Qcs_dc_W"] + df["Qcdata_dc_W"] + df["Qcre_dc_W"]
+                flow_kgpers = df["mdot_DC_result_kgpers"].fillna(0)  # Treat NaN as zero
+
+                # Count hours with demand
+                hours_with_demand += (demand_W > 100).sum()  # 100W threshold to avoid numerical noise
+
+                # Count hours with valid flow when there's demand
+                total_valid_flow += ((flow_kgpers > 0) & (demand_W > 100)).sum()
+
+                total_demand_kWh += demand_W.sum() / 1000
+
+            # If most hours with demand have zero flow, network temp is too warm
+            if hours_with_demand > 0:
+                flow_coverage_ratio = total_valid_flow / hours_with_demand
+            else:
+                flow_coverage_ratio = 1.0  # No demand, so no problem
+
+            if flow_coverage_ratio < 0.01 and hours_with_demand > 0:
+                # Determine cooling services (itemised loads)
+                itemised_dc_services = []
+                has_space_cooling = any(substation_results_dict[b]["Qcs_dc_W"].sum() > 0 for b in building_names)
+                has_data_center = any(substation_results_dict[b]["Qcdata_dc_W"].sum() > 0 for b in building_names)
+                has_refrigeration = any(substation_results_dict[b]["Qcre_dc_W"].sum() > 0 for b in building_names)
+
+                if has_space_cooling:
+                    itemised_dc_services.append('space_cooling')
+                if has_data_center:
+                    itemised_dc_services.append('data_center')
+                if has_refrigeration:
+                    itemised_dc_services.append('refrigeration')
+
+                max_temp_allowed = calculate_maximum_network_temperature_cooling(substation_results_dict,
+                                                                                 itemised_dc_services)
+                service_names = ' + '.join(itemised_dc_services) if itemised_dc_services else 'space cooling'
+
+                # Build detailed error message
+                error_msg = (
+                    f"\n{'='*60}\n"
+                    f"⚠ WARNING: Network temperature too warm for cooling service\n"
+                    f"{'='*60}\n"
+                    f"  Network temperature (CT mode): {fixed_network_temp_C}°C\n"
+                    f"  Service configuration: {service_names}\n"
+                    f"  Total building demand: {total_demand_kWh:.1f} kWh/year\n"
+                    f"  Hours with cooling demand: {hours_with_demand}\n"
+                    f"  Hours with valid DC flow: {total_valid_flow} ({flow_coverage_ratio*100:.2f}%)\n"
+                    f"\n"
+                    f"  → Network supplies essentially zero cooling (<1% of hours)\n"
+                    f"  → Network temperature too warm for heat exchangers to operate\n"
+                    f"  → Hydraulic simulation cannot run with zero flow\n"
+                    f"\n"
+                    f"Physical constraint:\n"
+                    f"  - Heat exchangers require temperature difference to transfer heat\n"
+                    f"  - Network supply must be colder than building cooling coil temperature\n"
+                    f"  - Typical approach temperature: 5K (heat exchanger constraint)\n"
+                    f"  - Example: If building needs 12°C supply, network must be ≤7°C\n"
+                    f"\n"
+                    f"Recommended maximum temperature for {service_names}:\n"
+                    f"  - Maximum: {max_temp_allowed}°C (allows DC to provide cooling)\n"
+                    f"  - Typical VT range: 4-7°C for space cooling\n"
+                    f"  - Typical VT range: 5-10°C for data center cooling\n"
+                    f"\n"
+                    f"Resolution:\n"
+                    f"  1. Decrease network-temperature to <={max_temp_allowed}°C\n"
+                    f"  2. Use network-temperature=-1 for VT mode (variable temperature)\n"
+                    f"{'='*60}\n"
+                )
+
+                raise ValueError(error_msg)
 
     # Prepare the epanet simulation of the thermal network. To do so, as a first step, the epanet-library is loaded
     #   from within the set of utilities used by cea. In later steps, the contents of the nodes- and edges-shapefiles
