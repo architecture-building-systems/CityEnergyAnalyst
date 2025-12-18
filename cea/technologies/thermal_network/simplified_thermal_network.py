@@ -578,27 +578,30 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-        DCN_barcode = "0"
         if buildings_name_with_cooling:
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
             buildings_with_cooling_set = set(buildings_name_with_cooling)
             building_names = list(buildings_with_cooling_set & node_buildings_set)
-            substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
+
+            # Call new thermal network function (not optimization function)
+            substation.substation_main_cooling_thermal_network(locator, total_demand, building_names,
+                                                              network_type=network_type,
+                                                              network_name=network_name)
         else:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
-                locator.get_optimization_substations_results_file(building_name, "DC", DCN_barcode))
-            volume_flow_m3pers_building[building_name] = substation_results[
-                                                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results[
-                "T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"]
-            T_re_K_building[building_name] = substation_results[
-                "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
-            Q_demand_kWh_building[building_name] = substation_results[
-                                                       "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
+                locator.get_thermal_network_substation_results_file(building_name, network_type, network_name))
+            volume_flow_m3pers_building[building_name] = substation_results["mdot_DC_result_kgpers"] / P_WATER_KGPERM3
+            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + 273.15  # Convert C to K
+            T_re_K_building[building_name] = np.where(substation_results["T_return_DC_result_C"] > 0,
+                                                      substation_results["T_return_DC_result_C"] + 273.15, np.nan)
+            # Total demand = sum of all cooling types
+            Q_demand_kWh_building[building_name] = (
+                substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]
+            ) / 1000
 
     # Prepare the epanet simulation of the thermal network. To do so, as a first step, the epanet-library is loaded
     #   from within the set of utilities used by cea. In later steps, the contents of the nodes- and edges-shapefiles

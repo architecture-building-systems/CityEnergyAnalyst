@@ -16809,48 +16809,95 @@ get_thermal_network_substation_results_file:
       date:
         description: Date and time in hourly intervals
         type: datetime
+      # DH columns (when network_type=DH)
       HEX_ww_area_m2:
-        description: Heat exchanger area for domestic hot water
+        description: Heat exchanger area for domestic hot water (DH only)
         type: float
         unit: '[m2]'
         min: 0.0
       HEX_hs_area_m2:
-        description: Heat exchanger area for space heating
+        description: Heat exchanger area for space heating (DH only)
         type: float
         unit: '[m2]'
         min: 0.0
       T_return_DH_result_C:
-        description: Substation return temperature of the district heating network
+        description: Substation return temperature of the district heating network (DH only)
         type: float
         unit: '[C]'
         min: -273.15
       T_supply_DH_result_C:
-        description: Substation supply temperature of the district heating network
+        description: Substation supply temperature of the district heating network (DH only)
         type: float
         unit: '[C]'
         min: -273.15
       mdot_DH_result_kgpers:
-        description: Substation flow rate on the DH side
+        description: Substation flow rate on the DH side (DH only)
         type: float
         unit: '[kg/s]'
         min: 0.0
       Qhs_dh_W:
-        description: Heat from district heating for space heating (may be less than total if booster is used)
+        description: Heat from district heating for space heating (DH only, may be less than total if booster is used)
         type: float
         unit: '[W]'
         min: 0.0
       Qww_dh_W:
-        description: Heat from district heating for domestic hot water (may be less than total if booster is used)
+        description: Heat from district heating for domestic hot water (DH only, may be less than total if booster is used)
         type: float
         unit: '[W]'
         min: 0.0
       Qhs_booster_W:
-        description: Heat from local booster for space heating (zero when district heating temperature is sufficient)
+        description: Heat from local booster for space heating (DH only, zero when district heating temperature is sufficient)
         type: float
         unit: '[W]'
         min: 0.0
       Qww_booster_W:
-        description: Heat from local booster for domestic hot water (zero when district heating temperature is sufficient)
+        description: Heat from local booster for domestic hot water (DH only, zero when district heating temperature is sufficient)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      # DC columns (when network_type=DC)
+      HEX_cs_area_m2:
+        description: Heat exchanger area for space cooling (DC only)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      HEX_cdata_area_m2:
+        description: Heat exchanger area for data center cooling (DC only)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      HEX_cre_area_m2:
+        description: Heat exchanger area for refrigeration (DC only)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      T_return_DC_result_C:
+        description: Substation return temperature of the district cooling network (DC only)
+        type: float
+        unit: '[C]'
+        min: -273.15
+      T_supply_DC_result_C:
+        description: Substation supply temperature of the district cooling network (DC only)
+        type: float
+        unit: '[C]'
+        min: -273.15
+      mdot_DC_result_kgpers:
+        description: Substation flow rate on the DC side (DC only)
+        type: float
+        unit: '[kg/s]'
+        min: 0.0
+      Qcs_dc_W:
+        description: Cooling from district cooling for space cooling (DC only)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      Qcdata_dc_W:
+        description: Cooling from district cooling for data center (DC only)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      Qcre_dc_W:
+        description: Cooling from district cooling for refrigeration (DC only)
         type: float
         unit: '[W]'
         min: 0.0

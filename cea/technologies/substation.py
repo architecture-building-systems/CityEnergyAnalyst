@@ -198,6 +198,163 @@ def substation_main_cooling(locator, total_demand, buildings_name_with_cooling,
     return
 
 
+def substation_main_cooling_thermal_network(locator, total_demand, buildings_name_with_cooling,
+                                            cooling_configuration=['aru', 'ahu', 'scu'],
+                                            network_type='DC', network_name=''):
+    """
+    Calculate DC substation results for simplified thermal network workflow.
+    Creates clean per-building outputs matching DH format (Celsius temps, date column, itemized loads).
+
+    This function is separate from substation_main_cooling() which serves optimization workflow.
+    """
+    for building_name in buildings_name_with_cooling:
+        building_demand_df = pd.read_csv(locator.get_demand_results_file(building_name))
+
+        # Calculate building-side temperatures
+        T_supply_to_cs_ref, T_supply_to_cs_ref_data, \
+        Tcs_return_C, Tcs_supply_C = calc_temp_hex_building_side_cooling(building_demand_df,
+                                                                         cooling_configuration)
+
+        # Calculate DC network supply temperatures for this building
+        T_DC_supply_to_cs_ref, T_DC_supply_to_cs_ref_data = calc_temp_this_building_cooling(T_supply_to_cs_ref,
+                                                                                            T_supply_to_cs_ref_data)
+
+        # Calculate detailed substation parameters
+        substation_model_cooling_thermal_network(building_name, building_demand_df,
+                                                 T_DC_supply_to_cs_ref,
+                                                 T_DC_supply_to_cs_ref_data,
+                                                 Tcs_supply_C,
+                                                 Tcs_return_C,
+                                                 cooling_configuration,
+                                                 locator, network_type, network_name)
+
+    return
+
+
+def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC_supply_data_C, Tcs_supply_C,
+                                             Tcs_return_C, cs_configuration,
+                                             locator, network_type, network_name):
+    """
+    Calculate DC substation for thermal network with clean output format.
+    Output columns match DH format: date, mdot, T_return_C, T_supply_C, HEX areas, Q values.
+    """
+    # Extract cooling demands
+    Qcs_sys_kWh_dict = {'ahu': abs(building.Qcs_sys_ahu_kWh.values),
+                        'aru': abs(building.Qcs_sys_aru_kWh.values),
+                        'scu': abs(building.Qcs_sys_scu_kWh.values)}
+    mcpcs_sys_kWperC_dict = {'ahu': abs(building.mcpcs_sys_ahu_kWperC.values),
+                             'aru': abs(building.mcpcs_sys_aru_kWperC.values),
+                             'scu': abs(building.mcpcs_sys_scu_kWperC.values)}
+
+    # Space cooling HEX
+    if len(cs_configuration) == 0:
+        t_DC_return_cs = np.zeros(HOURS_IN_YEAR)
+        mcp_DC_cs = 0
+        A_hex_cs = 0
+        Qcs_sys_W = np.zeros(HOURS_IN_YEAR)
+    else:
+        tci = T_DC_supply_data_C + 273  # K
+        Qcs_sys_kWh = sum(Qcs_sys_kWh_dict[unit] for unit in cs_configuration)
+        Qcs_sys_W = abs(Qcs_sys_kWh) * 1000  # W
+        Qnom_W = max(Qcs_sys_W)
+
+        if Qnom_W > 0:
+            tho = Tcs_supply_C + 273  # K
+            thi = Tcs_return_C + 273  # K
+            mcpcs_sys_kWperC = sum(mcpcs_sys_kWperC_dict[unit] for unit in cs_configuration)
+            ch = mcpcs_sys_kWperC * 1000  # W/K
+            index = np.where(Qcs_sys_W == Qnom_W)[0][0]
+            t_DC_return_cs_C, mcp_DC_cs, A_hex_cs = \
+                calc_substation_cooling(Qcs_sys_W, thi, tho, tci, ch, ch[index], Qnom_W,
+                                       thi[index], tci[index], tho[index])
+            # calc_substation_cooling returns in Celsius - convert to Kelvin for mixing
+            t_DC_return_cs = t_DC_return_cs_C + 273.0
+        else:
+            t_DC_return_cs = np.zeros(HOURS_IN_YEAR)  # No demand
+            mcp_DC_cs = 0
+            A_hex_cs = 0
+
+    # Refrigeration HEX
+    Qcre_sys_W = abs(building.Qcre_sys_kWh.values) * 1000  # W
+    Qnom_W = max(Qcre_sys_W)
+    if len(cs_configuration) > 0 and Qnom_W > 0:
+        tci = T_DC_supply_data_C + 273
+        tho = building.Tcre_sys_sup_C + 273
+        thi = building.Tcre_sys_re_C + 273
+        ch = abs(building.mcpcre_sys_kWperC.values) * 1000
+        index = np.where(Qcre_sys_W == Qnom_W)[0][0]
+        t_DC_return_ref_C, mcp_DC_ref, A_hex_ref = \
+            calc_substation_cooling(Qcre_sys_W, thi, tho, tci, ch, ch[index], Qnom_W,
+                                   thi[index], tci[index], tho[index])
+        # calc_substation_cooling returns in Celsius - convert to Kelvin for mixing
+        t_DC_return_ref = t_DC_return_ref_C + 273.0
+    else:
+        t_DC_return_ref = np.zeros(HOURS_IN_YEAR)  # No demand
+        mcp_DC_ref = 0
+        A_hex_ref = 0
+
+    # Data center HEX
+    Qcdata_sys_W = abs(building.Qcdata_sys_kWh.values) * 1000  # W
+    Qnom_W = max(Qcdata_sys_W)
+    if len(cs_configuration) > 0 and Qnom_W > 0:
+        tci = T_DC_supply_data_C + 273
+        tho = building.Tcdata_sys_sup_C + 273
+        thi = building.Tcdata_sys_re_C + 273
+        ch = abs(building.mcpcdata_sys_kWperC.values) * 1000
+        index = np.where(Qcdata_sys_W == Qnom_W)[0][0]
+        t_DC_return_data_C, mcp_DC_data, A_hex_data = \
+            calc_substation_cooling(Qcdata_sys_W, thi, tho, tci, ch, ch[index], Qnom_W,
+                                   thi[index], tci[index], tho[index])
+        # calc_substation_cooling returns in Celsius - convert to Kelvin for mixing
+        t_DC_return_data = t_DC_return_data_C + 273.0
+    else:
+        t_DC_return_data = np.zeros(HOURS_IN_YEAR)  # No demand
+        mcp_DC_data = 0
+        A_hex_data = 0
+
+    # Calculate mixed return temperature (returns in Kelvin)
+    T_DC_return_K = np.vectorize(calc_HEX_mix_3_flows)(Qcs_sys_W, Qcre_sys_W, Qcdata_sys_W,
+                                                       mcp_DC_cs, mcp_DC_ref, mcp_DC_data,
+                                                       t_DC_return_cs, t_DC_return_ref, t_DC_return_data)
+
+    # Convert from K to C
+    # When return temp is 0 K (no demand), use supply temp; otherwise convert K to C
+    T_DC_return_C = np.where(T_DC_return_K > 0,
+                             T_DC_return_K - 273.0,  # With demand: convert K to C
+                             T_DC_supply_data_C)     # No demand: use supply temp (broadcast to array)
+
+    # Calculate total mass flow
+    mdot_DC_result_kgpers = (mcp_DC_cs + mcp_DC_ref + mcp_DC_data) / HEAT_CAPACITY_OF_WATER_JPERKGK
+
+    # Create output DataFrame matching DH format
+    substation_activation = pd.DataFrame({
+        # Timestamp
+        "date": building.date if 'date' in building.columns else pd.date_range(start='2011-01-01', periods=HOURS_IN_YEAR, freq='H'),
+
+        # DC network parameters
+        "mdot_DC_result_kgpers": mdot_DC_result_kgpers,
+        "T_return_DC_result_C": T_DC_return_C,
+        "T_supply_DC_result_C": T_DC_supply_data_C,  # Already in C
+
+        # HEX areas
+        "HEX_cs_area_m2": A_hex_cs,
+        "HEX_cdata_area_m2": A_hex_data,
+        "HEX_cre_area_m2": A_hex_ref,
+
+        # DC contributions (no boosters for cooling)
+        "Qcs_dc_W": Qcs_sys_W,
+        "Qcdata_dc_W": Qcdata_sys_W,
+        "Qcre_dc_W": Qcre_sys_W
+    })
+
+    # Save results
+    output_file = locator.get_thermal_network_substation_results_file(name, network_type, network_name)
+    locator.ensure_parent_folder_exists(output_file)
+    substation_activation.to_csv(output_file, sep=',', index=False, float_format='%.3f')
+
+    return substation_activation
+
+
 def calc_temp_hex_building_side_cooling(building_demand_df,
                                         cooling_configuration):
     # data center cooling
