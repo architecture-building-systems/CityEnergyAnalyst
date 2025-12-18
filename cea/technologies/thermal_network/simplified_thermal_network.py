@@ -465,19 +465,24 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                                heating_configuration=7,
                                                DHN_barcode=DHN_barcode,
                                                itemised_dh_services=itemised_dh_services,
-                                               fixed_network_temp_C=fixed_network_temp_C)
+                                               fixed_network_temp_C=fixed_network_temp_C,
+                                               network_type=network_type,
+                                               network_name=network_name)
         else:
             raise ValueError('No district heating network created as there is no heating demand from any building.')
 
         for building_name in building_names:
             substation_results = pd.read_csv(
-                locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
+                locator.get_thermal_network_substation_results_file(building_name, network_type, network_name))
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_K"]
-            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_K"] >273.15,
-                                                      substation_results["T_return_DH_result_K"], np.nan)
-            Q_demand_kWh_building[building_name] = (substation_results["Q_heating_W"] + substation_results[
-                "Q_dhw_W"]) / 1000
+            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + 273.15  # Convert C to K
+            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_C"] > 0,
+                                                      substation_results["T_return_DH_result_C"] + 273.15, np.nan)
+            # Total demand = DH contribution + booster for both space heating and DHW
+            Q_demand_kWh_building[building_name] = (
+                substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
+                substation_results["Qww_dh_W"] + substation_results["Qww_booster_W"]
+            ) / 1000
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')

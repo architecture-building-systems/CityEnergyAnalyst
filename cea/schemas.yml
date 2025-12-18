@@ -14826,36 +14826,29 @@ get_optimization_substations_results_file:
   file_type: csv
   schema:
     columns:
-      A_hex_dhw_design_m2:
-        description: Substation heat exchanger area to supply domestic hot water
+      date:
+        description: Date and time in hourly intervals
+        type: datetime
+      HEX_ww_area_m2:
+        description: Heat exchanger area for domestic hot water
         type: float
         unit: '[m2]'
         min: 0.0
-      A_hex_heating_design_m2:
-        description: Substation heat exchanger area to supply space heating
+      HEX_hs_area_m2:
+        description: Heat exchanger area for space heating
         type: float
         unit: '[m2]'
         min: 0.0
-      Q_dhw_W:
-        description: Substation heat requirement to supply domestic hot water
-        type: float
-        unit: '[Wh]'
-        min: 0.0
-      Q_heating_W:
-        description: Substation heat requirement to supply space heating
-        type: float
-        unit: '[Wh]'
-        min: 0.0
-      T_return_DH_result_K:
+      T_return_DH_result_C:
         description: Substation return temperature of the district heating network
         type: float
-        unit: '[K]'
-        min: 0.0
-      T_supply_DH_result_K:
-        description: Substation supply temperature of the district heating network.
+        unit: '[C]'
+        min: -273.15
+      T_supply_DH_result_C:
+        description: Substation supply temperature of the district heating network
         type: float
-        unit: '[K]'
-        min: 0.0
+        unit: '[C]'
+        min: -273.15
       mdot_DH_result_kgpers:
         description: Substation flow rate on the DH side.
         type: float
@@ -16817,6 +16810,74 @@ get_thermal_network_substation_ploss_file:
         type: float
         unit: '[kWh]'
         min: 0.0
+  used_by: []
+get_thermal_network_substation_results_file:
+  created_by:
+  - thermal_network
+  file_path: outputs/data/thermal-network/DH/ww_only/DH_ww_only_substation_B001.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Date and time in hourly intervals
+        type: datetime
+      HEX_ww_area_m2:
+        description: Heat exchanger area for domestic hot water
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      HEX_hs_area_m2:
+        description: Heat exchanger area for space heating
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      T_return_DH_result_C:
+        description: Substation return temperature of the district heating network
+        type: float
+        unit: '[C]'
+        min: -273.15
+      T_supply_DH_result_C:
+        description: Substation supply temperature of the district heating network
+        type: float
+        unit: '[C]'
+        min: -273.15
+      mdot_DH_result_kgpers:
+        description: Substation flow rate on the DH side
+        type: float
+        unit: '[kg/s]'
+        min: 0.0
+      Qhs_dh_W:
+        description: Heat from district heating for space heating (may be less than total if booster is used)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      Qww_dh_W:
+        description: Heat from district heating for domestic hot water (may be less than total if booster is used)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      Qhs_booster_W:
+        description: Heat from local booster for space heating (zero when district heating temperature is sufficient)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      Qww_booster_W:
+        description: Heat from local booster for domestic hot water (zero when district heating temperature is sufficient)
+        type: float
+        unit: '[W]'
+        min: 0.0
+      booster_hs_active:
+        description: Flag indicating when space heating booster is operating (1=active, 0=inactive)
+        type: int
+        unit: '[-]'
+        min: 0
+        max: 1
+      booster_ww_active:
+        description: Flag indicating when domestic hot water booster is operating (1=active, 0=inactive)
+        type: int
+        unit: '[-]'
+        min: 0
+        max: 1
   used_by: []
 get_thermal_network_velocity_edges_file:
   created_by:

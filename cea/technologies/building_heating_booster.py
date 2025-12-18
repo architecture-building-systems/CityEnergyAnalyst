@@ -100,23 +100,42 @@ def calc_dh_heating_with_booster_tracking(
     # Calculate DH-side parameters (what thermal network needs)
     # ========================================================================
 
-    # Temperature rise on load side (from return to preheat/target temp)
-    temp_rise_load_side = np.where(
-        Q_demand_W > 0,
-        np.minimum(T_dh_preheat_max_C, T_target_C) - T_return_C,
-        0
+    # Building-side outlet temperature (what temperature DH heats the water to)
+    T_building_outlet_C = np.where(
+        booster_needed,
+        T_dh_preheat_max_C,  # With booster: DH heats to preheat temp, booster adds rest
+        np.where(
+            dh_sufficient,
+            T_target_C,  # No booster: DH heats to target temp
+            T_return_C   # No demand: no temperature rise
+        )
     )
 
-    # DH mass flow rate: Q = mcp * dT => mcp = Q / dT
-    delta_T_dh = np.maximum(0.1, temp_rise_load_side)  # Avoid division by zero
-    mcp_dh_kWK = np.where(Q_demand_W > 0, Q_dh_W / (1000 * delta_T_dh), 0)
+    # Building-side temperature rise
+    delta_T_building = np.maximum(0, T_building_outlet_C - T_return_C)
+
+    # DH-side temperature drop (assume counter-flow HEX with ~90% effectiveness)
+    # For counter-flow HEX, if building side rises by dT, DH side drops by approximately dT
+    # (assuming similar heat capacity flow rates)
+    delta_T_dh_side = delta_T_building
 
     # DH return temperature
     T_dh_return_C = np.where(
-        mcp_dh_kWK > 0.001,
-        T_DH_supply_C - (Q_dh_W / (1000 * mcp_dh_kWK)),
-        T_DH_supply_C
+        Q_dh_W > 0,
+        T_DH_supply_C - delta_T_dh_side,
+        T_DH_supply_C  # No demand: return = supply
     )
+
+    # Ensure DH return respects approach temperature constraint
+    # DH return must be >= building inlet + approach temp
+    T_dh_return_min_C = T_return_C + MIN_APPROACH_TEMP_K
+    T_dh_return_C = np.maximum(T_dh_return_C, T_dh_return_min_C)
+
+    # Recalculate actual DH temperature drop
+    delta_T_dh_actual = np.maximum(0.1, T_DH_supply_C - T_dh_return_C)
+
+    # DH mass flow rate: Q = mcp * dT => mcp = Q / dT
+    mcp_dh_kWK = np.where(Q_dh_W > 0, Q_dh_W / (1000 * delta_T_dh_actual), 0)
 
     # HEX area calculation (simplified, using peak load)
     U_hex = 2000  # W/m²K (typical for plate HEX)
@@ -137,7 +156,11 @@ def calc_dh_heating_with_booster_tracking(
         dT1 = T_dh_in - T_load_out
         dT2 = T_dh_out - T_load_in
         if dT1 > 0.1 and dT2 > 0.1:
-            LMTD = (dT1 - dT2) / np.log(dT1 / dT2)
+            # When dT1 ≈ dT2 (parallel temperature profiles), LMTD ≈ dT1
+            if abs(dT1 - dT2) < 0.01:
+                LMTD = dT1  # Avoid log(1) = 0 division
+            else:
+                LMTD = (dT1 - dT2) / np.log(dT1 / dT2)
             A_hex_m2 = Q_peak / (U_hex * LMTD)
         else:
             A_hex_m2 = 0
