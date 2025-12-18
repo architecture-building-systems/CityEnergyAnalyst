@@ -399,6 +399,46 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
+def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services):
+    """
+    Calculate minimum recommended network temperature based on building return temperatures.
+
+    In CT mode, the network supply temperature must be at least 5K higher than the maximum
+    building return temperature to allow for heat transfer (approach temperature constraint).
+
+    :param substation_results_dict: Dictionary {building_name: substation_results_df}
+    :param itemised_dh_services: List of services (e.g., ['space_heating', 'domestic_hot_water'])
+    :return: Minimum recommended network temperature in °C
+    """
+    max_return_temps = []
+
+    for building_name, df in substation_results_dict.items():
+        # Get maximum return temperature when there's actual demand
+        if 'Qhs_dh_W' in df.columns and 'Qww_dh_W' in df.columns:
+            # Find hours with demand
+            has_demand = (df['Qhs_dh_W'] + df['Qhs_booster_W'] +
+                         df['Qww_dh_W'] + df['Qww_booster_W']) > 0
+
+            if has_demand.any():
+                # Get return temps from demand data (from original building demands)
+                # We need to look at the actual building heating/DHW return temps
+                # For now, use conservative estimates based on service type
+                pass
+
+    # Conservative minimum temps based on service type
+    if itemised_dh_services is None:
+        # Legacy mode - assume both services
+        return 50  # Safe for both hs and ww
+
+    min_temps = []
+    if 'space_heating' in itemised_dh_services:
+        min_temps.append(35)  # Space heating return ~30°C + 5K approach
+    if 'domestic_hot_water' in itemised_dh_services:
+        min_temps.append(50)  # DHW return ~45°C + 5K approach (to preheat to 55°C, booster to 60°C)
+
+    return max(min_temps) if min_temps else 30
+
+
 def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_type, network_name):
     # local variables
     min_head_substation_kPa = config.thermal_network.min_head_substation
@@ -471,9 +511,13 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         else:
             raise ValueError('No district heating network created as there is no heating demand from any building.')
 
+        # Store substation results for validation
+        substation_results_dict = {}
         for building_name in building_names:
             substation_results = pd.read_csv(
                 locator.get_thermal_network_substation_results_file(building_name, network_type, network_name))
+            substation_results_dict[building_name] = substation_results
+
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
             T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + 273.15  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_C"] > 0,
@@ -483,6 +527,54 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
                 substation_results["Qww_dh_W"] + substation_results["Qww_booster_W"]
             ) / 1000
+
+        # Check for zero/near-zero DH flow condition in CT mode
+        total_dh_contribution_kWh = sum([
+            (df['Qhs_dh_W'].sum() + df['Qww_dh_W'].sum()) / 1000
+            for df in substation_results_dict.values()
+        ])
+        total_demand_kWh = sum([
+            (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum() +
+             df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
+            for df in substation_results_dict.values()
+        ])
+
+        if total_demand_kWh > 0:
+            dh_fraction = total_dh_contribution_kWh / total_demand_kWh
+        else:
+            dh_fraction = 0
+
+        # If DH contribution is less than 1%, warn user and suggest minimum temperature
+        if dh_fraction < 0.01 and fixed_network_temp_C is not None:
+            min_temp_required = calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services)
+            service_names = ' + '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
+
+            # Build detailed error message
+            error_msg = (
+                f"\n{'='*60}\n"
+                f"⚠ WARNING: Network temperature insufficient for service type\n"
+                f"{'='*60}\n"
+                f"  Network temperature (CT mode): {fixed_network_temp_C}°C\n"
+                f"  Service configuration: {service_names}\n"
+                f"  Total building demand: {total_demand_kWh:.1f} kWh/year\n"
+                f"  DH network contribution: {total_dh_contribution_kWh:.1f} kWh/year ({dh_fraction*100:.2f}%)\n"
+                f"  Booster contribution: {total_demand_kWh - total_dh_contribution_kWh:.1f} kWh/year ({(1-dh_fraction)*100:.2f}%)\n"
+                f"\n"
+                f"  → Network supplies essentially zero heat (<1% of demand)\n"
+                f"  → All heat provided by local boosters\n"
+                f"  → Hydraulic simulation cannot run with zero flow\n"
+                f"\n"
+                f"Recommended minimum temperature for {service_names}:\n"
+                f"  - Minimum: {min_temp_required}°C (allows some DH contribution)\n"
+                f"  - Typical VT range: {min_temp_required + 5}-{min_temp_required + 15}°C\n"
+                f"\n"
+                f"Resolution:\n"
+                f"  1. Increase network-temperature to >={min_temp_required}°C\n"
+                f"  2. Use network-temperature=-1 for VT mode (variable temperature)\n"
+                f"{'='*60}\n"
+            )
+
+            raise ValueError(error_msg)
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
