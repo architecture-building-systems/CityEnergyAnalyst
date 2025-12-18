@@ -1139,6 +1139,10 @@ class InputLocator(object):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_pumping_load_due_to_substations_kW.csv"""
         return self._get_thermal_network_results_file_path(network_type, network_name, "pumping_load_due_to_substations_kW.csv")
 
+    def get_thermal_network_substation_results_file(self, building_name, network_type, network_name):
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_substation_{building_name}.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, f"substation_{building_name}.csv")
+
     def get_thermal_demand_csv_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_thermal_demand_per_building_W.csv"""
         return self._get_thermal_network_results_file_path(network_type, network_name, "thermal_demand_per_building_W.csv")

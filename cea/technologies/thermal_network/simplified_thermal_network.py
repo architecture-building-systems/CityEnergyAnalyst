@@ -399,6 +399,73 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
+def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services):
+    """
+    Calculate minimum recommended network temperature based on building return temperatures.
+
+    In CT mode, the network supply temperature must be at least 5K higher than the maximum
+    building return temperature to allow for heat transfer (approach temperature constraint).
+
+    :param substation_results_dict: Dictionary {building_name: substation_results_df}
+    :param itemised_dh_services: List of services (e.g., ['space_heating', 'domestic_hot_water'])
+    :return: Minimum recommended network temperature in °C
+    """
+    max_return_temps = []
+
+    for building_name, df in substation_results_dict.items():
+        # Get maximum return temperature when there's actual demand
+        if 'Qhs_dh_W' in df.columns and 'Qww_dh_W' in df.columns:
+            # Find hours with demand
+            has_demand = (df['Qhs_dh_W'] + df['Qhs_booster_W'] +
+                         df['Qww_dh_W'] + df['Qww_booster_W']) > 0
+
+            if has_demand.any():
+                # Get return temps from demand data (from original building demands)
+                # We need to look at the actual building heating/DHW return temps
+                # For now, use conservative estimates based on service type
+                pass
+
+    # Conservative minimum temps based on service type
+    if itemised_dh_services is None:
+        # Legacy mode - assume both services
+        return 50  # Safe for both hs and ww
+
+    min_temps = []
+    if 'space_heating' in itemised_dh_services:
+        min_temps.append(35)  # Space heating return ~30°C + 5K approach
+    if 'domestic_hot_water' in itemised_dh_services:
+        min_temps.append(50)  # DHW return ~45°C + 5K approach (to preheat to 55°C, booster to 60°C)
+
+    return max(min_temps) if min_temps else 30
+
+
+def calculate_maximum_network_temperature_cooling(substation_results_dict, itemised_dc_services):
+    """
+    Calculate maximum allowable network temperature for district cooling.
+
+    In CT mode, the network supply temperature must be at least 5K lower than the minimum
+    building supply temperature to allow for heat transfer (approach temperature constraint).
+
+    :param substation_results_dict: Dictionary {building_name: substation_results_df}
+    :param itemised_dc_services: List of services (e.g., ['space_cooling', 'data_center', 'refrigeration'])
+    :return: Maximum allowable network temperature in °C
+    """
+    # Conservative maximum temps based on service type
+    if itemised_dc_services is None:
+        # Legacy mode - assume space cooling
+        return 7  # Safe for typical space cooling (building needs ~12°C supply, so network at 7°C allows 5K approach)
+
+    max_temps = []
+    if 'space_cooling' in itemised_dc_services:
+        max_temps.append(7)  # Space cooling needs ~12°C building supply, so network at 7°C allows 5K approach
+    if 'data_center' in itemised_dc_services:
+        max_temps.append(10)  # Data center can use warmer supply (~15°C building supply)
+    if 'refrigeration' in itemised_dc_services:
+        max_temps.append(5)  # Refrigeration needs colder (~10°C building supply)
+
+    return min(max_temps) if max_temps else 7
+
+
 def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_type, network_name):
     # local variables
     min_head_substation_kPa = config.thermal_network.min_head_substation
@@ -410,6 +477,30 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     # GET INFORMATION ABOUT THE NETWORK
     edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
+
+    # Extract service configuration from plant node type (DH only)
+    itemised_dh_services = None
+    is_legacy = False
+    if network_type == "DH":
+        from cea.technologies.network_layout.plant_node_operations import get_services_from_plant_type
+
+        # Find plant nodes
+        plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
+        if not plant_nodes.empty:
+            plant_type = plant_nodes.iloc[0]['type']
+            services, is_legacy = get_services_from_plant_type(plant_type)
+
+            if is_legacy:
+                print("  ℹ Using legacy temperature control:")
+                print("    - Services: space heating + domestic hot water")
+                print("    - Supply temperature: max(space heating temp, DHW temp)")
+                print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
+                # Pass None for legacy mode to trigger default behavior
+                itemised_dh_services = None
+            else:
+                itemised_dh_services = services
+                service_names = ' → '.join(itemised_dh_services)
+                print(f"  ℹ DH service configuration: {service_names}")
 
     # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
     # calculate substations for all buildings
@@ -423,47 +514,214 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         DHN_barcode = "0"
         if buildings_name_with_heating:
+            # Read network temperature configuration
+            fixed_network_temp_C = config.thermal_network.network_temperature
+            if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
+                print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
+                print("    - Boosters will activate when building requirements exceed network temp")
+            else:
+                print("  ℹ Network temperature mode: VT (Variable Temperature)")
+                print("    - Network temp follows building requirements")
+                fixed_network_temp_C = None  # Explicitly set to None for VT mode
+
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
             buildings_with_heating_set = set(buildings_name_with_heating)
             building_names = list(buildings_with_heating_set & node_buildings_set)
-            substation.substation_main_heating(locator, total_demand, building_names, DHN_barcode=DHN_barcode)
+            substation.substation_main_heating(locator, total_demand, building_names,
+                                               heating_configuration=7,
+                                               DHN_barcode=DHN_barcode,
+                                               itemised_dh_services=itemised_dh_services,
+                                               fixed_network_temp_C=fixed_network_temp_C,
+                                               network_type=network_type,
+                                               network_name=network_name)
         else:
             raise ValueError('No district heating network created as there is no heating demand from any building.')
 
+        # Store substation results for validation
+        substation_results_dict = {}
         for building_name in building_names:
             substation_results = pd.read_csv(
-                locator.get_optimization_substations_results_file(building_name, "DH", DHN_barcode))
+                locator.get_thermal_network_substation_results_file(building_name, network_type, network_name))
+            substation_results_dict[building_name] = substation_results
+
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_K"]
-            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_K"] >273.15,
-                                                      substation_results["T_return_DH_result_K"], np.nan)
-            Q_demand_kWh_building[building_name] = (substation_results["Q_heating_W"] + substation_results[
-                "Q_dhw_W"]) / 1000
+            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + 273.15  # Convert C to K
+            T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_C"] > 0,
+                                                      substation_results["T_return_DH_result_C"] + 273.15, np.nan)
+            # Total demand = DH contribution + booster for both space heating and DHW
+            Q_demand_kWh_building[building_name] = (
+                substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
+                substation_results["Qww_dh_W"] + substation_results["Qww_booster_W"]
+            ) / 1000
+
+        # Check for zero/near-zero DH flow condition in CT mode
+        total_dh_contribution_kWh = sum([
+            (df['Qhs_dh_W'].sum() + df['Qww_dh_W'].sum()) / 1000
+            for df in substation_results_dict.values()
+        ])
+        total_demand_kWh = sum([
+            (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum() +
+             df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
+            for df in substation_results_dict.values()
+        ])
+
+        if total_demand_kWh > 0:
+            dh_fraction = total_dh_contribution_kWh / total_demand_kWh
+        else:
+            dh_fraction = 0
+
+        # If DH contribution is less than 1%, warn user and suggest minimum temperature
+        if dh_fraction < 0.01 and fixed_network_temp_C is not None:
+            min_temp_required = calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services)
+            service_names = ' + '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
+
+            # Build detailed error message
+            error_msg = (
+                f"\n{'='*60}\n"
+                f"⚠ WARNING: Network temperature insufficient for service type\n"
+                f"{'='*60}\n"
+                f"  Network temperature (CT mode): {fixed_network_temp_C}°C\n"
+                f"  Service configuration: {service_names}\n"
+                f"  Total building demand: {total_demand_kWh:.1f} kWh/year\n"
+                f"  DH network contribution: {total_dh_contribution_kWh:.1f} kWh/year ({dh_fraction*100:.2f}%)\n"
+                f"  Booster contribution: {total_demand_kWh - total_dh_contribution_kWh:.1f} kWh/year ({(1-dh_fraction)*100:.2f}%)\n"
+                f"\n"
+                f"  → Network supplies essentially zero heat (<1% of demand)\n"
+                f"  → All heat provided by local boosters\n"
+                f"  → Hydraulic simulation cannot run with zero flow\n"
+                f"\n"
+                f"Recommended minimum temperature for {service_names}:\n"
+                f"  - Minimum: {min_temp_required}°C (allows some DH contribution)\n"
+                f"  - Typical VT range: {min_temp_required + 5}-{min_temp_required + 15}°C\n"
+                f"\n"
+                f"Resolution:\n"
+                f"  1. Increase network-temperature to >={min_temp_required}°C\n"
+                f"  2. Use network-temperature=-1 for VT mode (variable temperature)\n"
+                f"{'='*60}\n"
+            )
+
+            raise ValueError(error_msg)
 
     if network_type == "DC":
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
-        DCN_barcode = "0"
         if buildings_name_with_cooling:
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
             buildings_with_cooling_set = set(buildings_name_with_cooling)
             building_names = list(buildings_with_cooling_set & node_buildings_set)
-            substation.substation_main_cooling(locator, total_demand, building_names, DCN_barcode=DCN_barcode)
+
+            # Read network temperature configuration
+            fixed_network_temp_C = config.thermal_network.network_temperature
+            if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
+                print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
+            else:
+                print("  ℹ Network temperature mode: VT (Variable Temperature)")
+                print("    - Network temp follows building requirements")
+                fixed_network_temp_C = None  # Explicitly set to None for VT mode
+
+            # Call new thermal network function (not optimization function)
+            substation.substation_main_cooling_thermal_network(locator, total_demand, building_names,
+                                                              fixed_network_temp_C=fixed_network_temp_C,
+                                                              network_type=network_type,
+                                                              network_name=network_name)
         else:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
+        # Read substation results and build dictionary for validation
+        substation_results_dict = {}
         for building_name in building_names:
             substation_results = pd.read_csv(
-                locator.get_optimization_substations_results_file(building_name, "DC", DCN_barcode))
-            volume_flow_m3pers_building[building_name] = substation_results[
-                                                             "mdot_space_cooling_data_center_and_refrigeration_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results[
-                "T_supply_DC_space_cooling_data_center_and_refrigeration_result_K"]
-            T_re_K_building[building_name] = substation_results[
-                "T_return_DC_space_cooling_data_center_and_refrigeration_result_K"]
-            Q_demand_kWh_building[building_name] = substation_results[
-                                                       "Q_space_cooling_data_center_and_refrigeration_W"] / 1000
+                locator.get_thermal_network_substation_results_file(building_name, network_type, network_name))
+            substation_results_dict[building_name] = substation_results
+
+            volume_flow_m3pers_building[building_name] = substation_results["mdot_DC_result_kgpers"] / P_WATER_KGPERM3
+            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + 273.15  # Convert C to K
+            T_re_K_building[building_name] = np.where(substation_results["T_return_DC_result_C"] > 0,
+                                                      substation_results["T_return_DC_result_C"] + 273.15, np.nan)
+            # Total demand = sum of all cooling types
+            Q_demand_kWh_building[building_name] = (
+                substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]
+            ) / 1000
+
+        # Validate network temperature is cold enough for buildings (CT mode only)
+        if fixed_network_temp_C is not None:
+            # Check if heat exchangers failed (NaN or zero flow when there's demand)
+            # This indicates network temperature is too warm to provide cooling
+            total_demand_kWh = 0
+            total_valid_flow = 0
+            hours_with_demand = 0
+
+            for b in building_names:
+                df = substation_results_dict[b]
+                demand_W = df["Qcs_dc_W"] + df["Qcdata_dc_W"] + df["Qcre_dc_W"]
+                flow_kgpers = df["mdot_DC_result_kgpers"].fillna(0)  # Treat NaN as zero
+
+                # Count hours with demand
+                hours_with_demand += (demand_W > 100).sum()  # 100W threshold to avoid numerical noise
+
+                # Count hours with valid flow when there's demand
+                total_valid_flow += ((flow_kgpers > 0) & (demand_W > 100)).sum()
+
+                total_demand_kWh += demand_W.sum() / 1000
+
+            # If most hours with demand have zero flow, network temp is too warm
+            if hours_with_demand > 0:
+                flow_coverage_ratio = total_valid_flow / hours_with_demand
+            else:
+                flow_coverage_ratio = 1.0  # No demand, so no problem
+
+            if flow_coverage_ratio < 0.01 and hours_with_demand > 0:
+                # Determine cooling services (itemised loads)
+                itemised_dc_services = []
+                has_space_cooling = any(substation_results_dict[b]["Qcs_dc_W"].sum() > 0 for b in building_names)
+                has_data_center = any(substation_results_dict[b]["Qcdata_dc_W"].sum() > 0 for b in building_names)
+                has_refrigeration = any(substation_results_dict[b]["Qcre_dc_W"].sum() > 0 for b in building_names)
+
+                if has_space_cooling:
+                    itemised_dc_services.append('space_cooling')
+                if has_data_center:
+                    itemised_dc_services.append('data_center')
+                if has_refrigeration:
+                    itemised_dc_services.append('refrigeration')
+
+                max_temp_allowed = calculate_maximum_network_temperature_cooling(substation_results_dict,
+                                                                                 itemised_dc_services)
+                service_names = ' + '.join(itemised_dc_services) if itemised_dc_services else 'space cooling'
+
+                # Build detailed error message
+                error_msg = (
+                    f"\n{'='*60}\n"
+                    f"⚠ WARNING: Network temperature too warm for cooling service\n"
+                    f"{'='*60}\n"
+                    f"  Network temperature (CT mode): {fixed_network_temp_C}°C\n"
+                    f"  Service configuration: {service_names}\n"
+                    f"  Total building demand: {total_demand_kWh:.1f} kWh/year\n"
+                    f"  Hours with cooling demand: {hours_with_demand}\n"
+                    f"  Hours with valid DC flow: {total_valid_flow} ({flow_coverage_ratio*100:.2f}%)\n"
+                    f"\n"
+                    f"  → Network supplies essentially zero cooling (<1% of hours)\n"
+                    f"  → Network temperature too warm for heat exchangers to operate\n"
+                    f"  → Hydraulic simulation cannot run with zero flow\n"
+                    f"\n"
+                    f"Physical constraint:\n"
+                    f"  - Heat exchangers require temperature difference to transfer heat\n"
+                    f"  - Network supply must be colder than building cooling coil temperature\n"
+                    f"  - Typical approach temperature: 5K (heat exchanger constraint)\n"
+                    f"  - Example: If building needs 12°C supply, network must be ≤7°C\n"
+                    f"\n"
+                    f"Recommended maximum temperature for {service_names}:\n"
+                    f"  - Maximum: {max_temp_allowed}°C (allows DC to provide cooling)\n"
+                    f"  - Typical VT range: 4-7°C for space cooling\n"
+                    f"  - Typical VT range: 5-10°C for data center cooling\n"
+                    f"\n"
+                    f"Resolution:\n"
+                    f"  1. Decrease network-temperature to <={max_temp_allowed}°C\n"
+                    f"  2. Use network-temperature=-1 for VT mode (variable temperature)\n"
+                    f"{'='*60}\n"
+                )
+
+                raise ValueError(error_msg)
 
     # Prepare the epanet simulation of the thermal network. To do so, as a first step, the epanet-library is loaded
     #   from within the set of utilities used by cea. In later steps, the contents of the nodes- and edges-shapefiles
@@ -494,7 +752,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             wn.add_pattern(building, pattern_demand)
         
         # check that there is one plant node
-        plant_nodes = node_df[node_df['type'] == 'PLANT']
+        plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not len(plant_nodes) >= 1:
             raise ValueError("There should be at least one plant node in the network.")
 
@@ -521,7 +779,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                 demand_pattern=demand_pattern,
                                 elevation=thermal_transfer_unit_design_head_m,
                                 coordinates=node[1]["coordinates"])
-            elif node[1]["type"] == "PLANT":
+            elif 'PLANT' in str(node[1]["type"]):
                 base_head = int(thermal_transfer_unit_design_head_m*1.2)
                 start_node = node[0]
                 name_node_plant = start_node
