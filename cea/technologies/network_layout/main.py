@@ -150,28 +150,146 @@ def get_buildings_from_supply_csv(locator, network_type):
     """
     Read supply.csv and return list of buildings configured for district heating/cooling.
 
+    DEPRECATED: Use get_buildings_and_services_from_supply_csv() for per-building service configuration.
+    This function is kept for backward compatibility.
+
     :param locator: InputLocator instance
     :param network_type: "DH" or "DC"
     :return: List of building names
     """
+    buildings, _ = get_buildings_and_services_from_supply_csv(locator, network_type)
+    return buildings
+
+
+def get_buildings_and_services_from_supply_csv(locator, network_type):
+    """
+    Read supply.csv and determine per-building service configuration.
+
+    For DH networks, checks both supply_type_hs and supply_type_dhw:
+    - If supply_type_hs maps to DISTRICT → building uses space_heating service
+    - If supply_type_dhw maps to DISTRICT → building uses domestic_hot_water service
+    - Building connects if either service is DISTRICT
+
+    For DC networks, checks supply_type_cs:
+    - If supply_type_cs maps to DISTRICT → building uses space_cooling service
+
+    :param locator: InputLocator instance
+    :param network_type: "DH" or "DC"
+    :return: Tuple of (buildings_list, per_building_services)
+             buildings_list: List of building names with at least one DISTRICT service
+             per_building_services: Dict mapping building → set of services
+                                   Example: {'B001': {'space_heating', 'domestic_hot_water'},
+                                            'B002': {'space_heating'},
+                                            'B003': {'domestic_hot_water'}}
+    """
     supply_df = pd.read_csv(locator.get_building_supply())
 
-    # Read assemblies database to map codes to scale (DISTRICT vs BUILDING)
+    # Read assemblies databases for code-to-scale mapping
+    scale_mapping = {}
+
     if network_type == "DH":
-        assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_heating())
-        system_type_col = 'supply_type_hs'
+        # For DH, need both heating and hotwater assemblies
+        heating_assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_heating())
+        hotwater_assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+
+        # Merge both mappings
+        scale_mapping.update(heating_assemblies_df.set_index('code')['scale'].to_dict())
+        scale_mapping.update(hotwater_assemblies_df.set_index('code')['scale'].to_dict())
     else:  # DC
-        assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_cooling())
-        system_type_col = 'supply_type_cs'
+        cooling_assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+        scale_mapping = cooling_assemblies_df.set_index('code')['scale'].to_dict()
 
-    # Create mapping: code -> scale (DISTRICT/BUILDING)
-    scale_mapping = assemblies_df.set_index('code')['scale'].to_dict()
+    per_building_services = {}
 
-    # Filter buildings with DISTRICT scale
-    supply_df['scale'] = supply_df[system_type_col].map(scale_mapping)
-    district_buildings = supply_df[supply_df['scale'] == 'DISTRICT']['name'].tolist()
+    for _, row in supply_df.iterrows():
+        building_name = row['name']
+        building_services = set()
 
-    return district_buildings
+        # Check space heating service (DH only)
+        if network_type == "DH" and 'supply_type_hs' in supply_df.columns:
+            hs_code = row.get('supply_type_hs', None)
+            if hs_code and not pd.isna(hs_code):
+                hs_scale = scale_mapping.get(hs_code, None)
+                if hs_scale == 'DISTRICT':
+                    building_services.add('space_heating')
+
+        # Check domestic hot water service (DH only)
+        if network_type == "DH" and 'supply_type_dhw' in supply_df.columns:
+            dhw_code = row.get('supply_type_dhw', None)
+            if dhw_code and not pd.isna(dhw_code):
+                dhw_scale = scale_mapping.get(dhw_code, None)
+                if dhw_scale == 'DISTRICT':
+                    building_services.add('domestic_hot_water')
+
+        # Check cooling service (DC only)
+        if network_type == "DC" and 'supply_type_cs' in supply_df.columns:
+            cs_code = row.get('supply_type_cs', None)
+            if cs_code and not pd.isna(cs_code):
+                cs_scale = scale_mapping.get(cs_code, None)
+                if cs_scale == 'DISTRICT':
+                    building_services.add('space_cooling')
+
+        # Store building if it uses at least one DISTRICT service
+        if building_services:
+            per_building_services[building_name] = building_services
+
+    buildings_list = list(per_building_services.keys())
+
+    return buildings_list, per_building_services
+
+
+def get_network_services_from_buildings(per_building_services):
+    """
+    Determine which services the network must provide (union of all building needs).
+
+    Args:
+        per_building_services: Dict {building_name: set of services}
+
+    Returns:
+        network_services: Set of services needed by at least one building
+                         Example: {'space_heating', 'domestic_hot_water'}
+    """
+    network_services = set()
+    for building_services in per_building_services.values():
+        network_services.update(building_services)
+
+    return network_services
+
+
+def apply_service_priority_order(services):
+    """
+    Apply service priority ordering for plant suffix generation.
+
+    Service Priority (NOT alphabetical):
+    1. space_heating (hs) - typically larger load, comes FIRST
+    2. domestic_hot_water (ww) - comes SECOND
+    3. space_cooling (cs) - for DC networks
+
+    This ensures plant suffix is _hs_ww (not _ww_hs) when both services present.
+
+    Args:
+        services: Set or list of service names
+
+    Returns:
+        List of services in priority order
+
+    Examples:
+        {'domestic_hot_water', 'space_heating'} → ['space_heating', 'domestic_hot_water']
+        {'domestic_hot_water'} → ['domestic_hot_water']
+        {'space_heating'} → ['space_heating']
+    """
+    # Define priority order (lower index = higher priority)
+    priority_order = ['space_heating', 'domestic_hot_water', 'space_cooling']
+
+    # Filter and sort services by priority
+    ordered_services = [svc for svc in priority_order if svc in services]
+
+    # Add any unrecognised services at the end (future-proofing)
+    for svc in services:
+        if svc not in ordered_services:
+            ordered_services.append(svc)
+
+    return ordered_services
 
 
 def get_buildings_with_demand(locator, network_type):
@@ -649,6 +767,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Get all zone buildings for validation
     all_zone_buildings = locator.get_zone_building_names()
 
+    # Initialize per-building services dict (will be populated in supply.csv mode)
+    per_building_services_dh = {}
+
     # Determine which buildings should be in the network
     if overwrite_supply:
         # Use connected-buildings parameter (what-if scenarios)
@@ -686,6 +807,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
+        # NEW: Per-building service configuration (for DH only - DC doesn't differentiate services)
+        per_building_services_dh = {}
+
         # Warn if connected-buildings parameter has values that will be ignored
         if connected_buildings_config:
             print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
@@ -693,7 +817,13 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
 
         for service in list_include_services:
-            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type=service)
+            if service == 'DH':
+                # NEW: Get per-building services from supply.csv for DH
+                buildings_to_validate, per_building_services_dh = get_buildings_and_services_from_supply_csv(locator, network_type=service)
+            else:
+                # DC: Use legacy function (no per-service differentiation)
+                buildings_to_validate = get_buildings_from_supply_csv(locator, network_type=service)
+
             buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
             buildings_without_demand = set(buildings_to_validate) - buildings_with_demand
 
@@ -811,6 +941,31 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         else:  # DH
             plant_buildings_for_type = heating_plant_buildings_list
             connected_buildings_for_type = buildings_for_dh
+
+            # NEW: Override itemised_dh_services when using supply.csv mode
+            if not overwrite_supply and per_building_services_dh:
+                # Determine network services from supply.csv (union of all building needs)
+                network_services_dh = get_network_services_from_buildings(per_building_services_dh)
+
+                # Apply service priority order (space_heating before domestic_hot_water)
+                itemised_dh_services_from_supply = apply_service_priority_order(network_services_dh)
+
+                # Override global itemised_dh_services for this DH network
+                itemised_dh_services = itemised_dh_services_from_supply
+
+                # Log service breakdown
+                hs_only = sum(1 for svcs in per_building_services_dh.values()
+                             if svcs == {'space_heating'})
+                ww_only = sum(1 for svcs in per_building_services_dh.values()
+                             if svcs == {'domestic_hot_water'})
+                both = sum(1 for svcs in per_building_services_dh.values()
+                          if {'space_heating', 'domestic_hot_water'}.issubset(svcs))
+
+                print(f"  ℹ Per-building services from supply.csv:")
+                print(f"    - Space heating only: {hs_only} building(s)")
+                print(f"    - DHW only: {ww_only} building(s)")
+                print(f"    - Both services: {both} building(s)")
+                print(f"    - Network services (union): {', '.join(itemised_dh_services)}")
 
         # Skip network generation if no buildings to connect
         if not connected_buildings_for_type:
@@ -965,6 +1120,38 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         os.makedirs(os.path.dirname(output_nodes_path), exist_ok=True)
         nodes_for_type.to_file(output_nodes_path, driver='ESRI Shapefile')
         print(f"  ✓ {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
+
+        # NEW: Save per-building service configuration metadata (DH only, supply.csv mode only)
+        if type_network == 'DH' and not overwrite_supply and per_building_services_dh:
+            import json
+
+            # Convert sets to lists for JSON serialization
+            per_building_services_serializable = {
+                building: list(services)
+                for building, services in per_building_services_dh.items()
+            }
+
+            # Get plant type from nodes
+            plant_nodes = nodes_for_type[nodes_for_type['type'].str.startswith('PLANT', na=False)]
+            plant_type = plant_nodes.iloc[0]['type'] if not plant_nodes.empty else 'PLANT'
+
+            # Prepare metadata
+            metadata = {
+                'network_type': type_network,
+                'network_name': network_layout.network_name,
+                'plant_type': plant_type,
+                'network_services': itemised_dh_services,
+                'per_building_services': per_building_services_serializable,
+                'overwrite_supply_settings': overwrite_supply,
+                'timestamp': pd.Timestamp.now().isoformat()
+            }
+
+            # Save to JSON file in same directory as nodes.shp
+            metadata_path = os.path.join(os.path.dirname(output_nodes_path), 'building_services.json')
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            print(f"  ✓ building_services.json saved with per-building service configuration")
 
         # Clean up temp files for this network
         import glob

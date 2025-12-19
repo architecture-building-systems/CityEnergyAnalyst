@@ -219,6 +219,31 @@ class ThermalNetwork(object):
         network_edges_df = gpd.read_file(edges_path)
         network_nodes_df = gpd.read_file(nodes_path)
 
+        # NEW: Read per-building service configuration metadata (if available)
+        import json
+        metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+        per_building_services = None
+
+        if os.path.exists(metadata_path):
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+
+            # Convert lists back to sets
+            per_building_services = {
+                building: set(services)
+                for building, services in metadata['per_building_services'].items()
+            }
+
+            print(f"  ℹ Loaded per-building service configuration from layout metadata")
+            print(f"    - Network services: {', '.join(metadata['network_services'])}")
+        else:
+            # Legacy mode: no metadata file
+            print(f"  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
+            print(f"    - Assuming all buildings use all services")
+
+        # Store for passing to simulation functions
+        self.per_building_services = per_building_services
+
         # check duplicated NODE/PIPE IDs
         duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
         duplicated_edges = network_edges_df[network_edges_df.name.duplicated(keep=False)]
@@ -3486,7 +3511,26 @@ def main(config: cea.config.Configuration):
 
         try:
             if network_model == 'simplified':
-                thermal_network_simplified(locator, config, network_type, network_name)
+                # Read per-building service configuration from network layout metadata
+                import json
+                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+                metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+                per_building_services = None
+
+                if os.path.exists(metadata_path):
+                    with open(metadata_path, 'r') as f:
+                        metadata = json.load(f)
+
+                    # Convert lists back to sets
+                    per_building_services = {
+                        building: set(services)
+                        for building, services in metadata['per_building_services'].items()
+                    }
+
+                    print(f"  ℹ Per-building service configuration loaded from metadata")
+
+                thermal_network_simplified(locator, config, network_type, network_name,
+                                          per_building_services=per_building_services)
             elif network_model == 'detailed':
                 check_heating_cooling_demand(locator, config)
                 # Create a per-network config section with the correct network_type

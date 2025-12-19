@@ -466,7 +466,20 @@ def calculate_maximum_network_temperature_cooling(substation_results_dict, itemi
     return min(max_temps) if max_temps else 7
 
 
-def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration, network_type, network_name):
+def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: cea.config.Configuration,
+                              network_type, network_name, per_building_services=None):
+    """
+    Simplified thermal network model.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :param network_type: 'DH' or 'DC'
+    :param network_name: Name of network layout
+    :param per_building_services: Dict mapping building → set of services
+                                  Example: {'B001': {'space_heating', 'domestic_hot_water'},
+                                           'B002': {'space_heating'}}
+                                  If None, all buildings use all services (legacy behavior)
+    """
     # local variables
     min_head_substation_kPa = config.thermal_network.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
@@ -532,6 +545,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                                heating_configuration=7,
                                                DHN_barcode=DHN_barcode,
                                                itemised_dh_services=itemised_dh_services,
+                                               per_building_services=per_building_services,  # NEW parameter
                                                fixed_network_temp_C=fixed_network_temp_C,
                                                network_type=network_type,
                                                network_name=network_name)
