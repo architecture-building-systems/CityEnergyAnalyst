@@ -531,8 +531,7 @@ def generate_summary_for_scenario(project_path: str, scenario_name: str):
 
         logger.info(f"Summary generated successfully for {scenario_name}")
     except Exception as e:
-        logger.error(f"Error generating summary for {scenario_name}: {e}")
-        logger.debug(f"Parameters, project_path: {project_path}, scenario_name: {scenario_name}")
+        logger.error(f"Error generating summary for {project_path} {scenario_name}: {e}")
         raise
 
 
