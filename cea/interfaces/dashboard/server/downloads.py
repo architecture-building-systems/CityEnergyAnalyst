@@ -519,17 +519,16 @@ def generate_summary_for_scenario(project_path: str, scenario_name: str):
         scenario_name: Name of the scenario
     """
     try:
-        logger.info(f"Generating summary for scenario: {scenario_name}")
-
         config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.project = project_path
         config.scenario_name = scenario_name
         config.result_summary.aggregate_by_building = True
 
         from cea.import_export.result_summary import main as result_summary_main
+        logger.info(f"Generating summary for scenario: {config.scenario}")
         result_summary_main(config)
 
-        logger.info(f"Summary generated successfully for {scenario_name}")
+        logger.info(f"Summary generated successfully for {config.scenario}")
     except Exception as e:
         logger.error(f"Error generating summary for {project_path} {scenario_name}: {e}")
         raise
