@@ -54,6 +54,8 @@ def demand_calculation(locator, config):
 
     # LOCAL VARIABLES
     building_names = config.demand.buildings
+    if len(building_names) == 0:
+        raise ValueError(f'List of building names is incorrect.')
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
     resolution_output = config.demand.resolution_output
     debug = config.debug
