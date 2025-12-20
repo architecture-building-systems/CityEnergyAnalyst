@@ -8,10 +8,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, status, Form, UploadFile
-from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
-from starlette.responses import FileResponse
-from starlette.background import BackgroundTask
 from typing_extensions import Annotated, Literal
 
 import cea.config
