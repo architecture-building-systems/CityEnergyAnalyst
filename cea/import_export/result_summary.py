@@ -2798,11 +2798,9 @@ def process_building_summary(config, locator,
     # Track errors for final summary
     errors_encountered = []
 
-    # Ensure emission context is initialised for downstream mappings
-    get_emission_context(locator)
-
-    # Get network name from config
+    # Get network name from config (convert None to empty string for consistency)
     network_name = config.result_summary.network_name if not plot else ''
+    network_name = network_name if network_name is not None else ''
 
     # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
 
