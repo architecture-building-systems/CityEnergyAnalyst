@@ -3,7 +3,7 @@ Base class for building properties with common database merge functionality
 """
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Optional
+from collections.abc import Mapping
 
 import pandas as pd
 
@@ -15,29 +15,33 @@ class BuildingPropertiesDatabase:
 
     @staticmethod
     def map_database_properties(
-            building_properties: pd.DataFrame,
-            db_mappings: Dict[str, Tuple[str, str, Optional[Dict[str, str]], List[str]]],
+        building_properties: pd.DataFrame,
+        db_mappings: Mapping[
+            str, tuple[pd.DataFrame | None, str, dict[str, str] | None, list[str]]
+        ],
     ) -> pd.DataFrame:
         """
         Common method to merge building properties with database properties.
         
         :param building_properties: DataFrame with building properties to merge
-        :param db_mappings: Dictionary mapping component types to (file_path, join_column, column_renames, fields_to_extract)
+        :param db_mappings: Dictionary mapping component types to (db_dataframe, join_column, column_renames, fields_to_extract)
         :return: Concatenated DataFrame with all merged properties
         """
         merged_dfs = [building_properties]
         errors = []
 
         for component_type, mapping in db_mappings.items():
-            file_path, join_column, column_renames, fields = mapping
+            prop_data, join_column, column_renames, fields = mapping
 
             # Read database and merge
-            prop_data = pd.read_csv(file_path)
+            if prop_data is None:
+                continue
 
+            # prop_data.reset_index(inplace=True)
             # Validate join_column values before merging
             print(f"Checking building {component_type} properties...")
             join_column_values = set(building_properties[join_column].unique())
-            code_column_values = set(prop_data['code'].unique())
+            code_column_values = set(prop_data.index.unique())
             invalid_values = list(join_column_values - code_column_values)
             if len(invalid_values) > 0:
                 errors.append({
