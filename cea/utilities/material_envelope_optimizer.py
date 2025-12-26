@@ -248,7 +248,7 @@ def write_material_based_csv(
             "material_name_2",
             "thickness_2_m",
             "material_name_3",
-            "thickness_3",
+            "thickness_3_m",
             "Service_Life_floor",
             "Reference",
             "Unnamed: 7",
@@ -262,7 +262,7 @@ def write_material_based_csv(
             "material_name_2",
             "thickness_2_m",
             "material_name_3",
-            "thickness_3",
+            "thickness_3_m",
             "a_roof",
             "e_roof",
             "r_roof",
@@ -278,7 +278,7 @@ def write_material_based_csv(
             "material_name_2",
             "thickness_2_m",
             "material_name_3",
-            "thickness_3",
+            "thickness_3_m",
             "a_wall",
             "e_wall",
             "r_wall",
@@ -299,7 +299,7 @@ def write_material_based_csv(
                 "material_name_2": m2.get("name"),
                 "thickness_2_m": round(ts[1], 3),
                 "material_name_3": m3.get("name"),
-                "thickness_3": round(ts[2], 3),
+                "thickness_3_m": round(ts[2], 3),
             }
             row["Reference"] = f"artificial construction with U value and GHG emission matched with original code {target['code']}. Material selection does not have any physical meaning. Original reference: {target.get('Reference')}"
             # Copy service life field depending on kind if present in target

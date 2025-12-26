@@ -95,7 +95,7 @@ class Envelope(BaseAssemblyDatabase):
         # Try to load material database (KBOB) via locator; if not available, skip transformation
         kbob_df = None
         try:
-            kbob_path = locator.get_database_assemblies_envelope_material_database()
+            kbob_path = locator.get_database_components_materials()
             kbob_df = pd.read_csv(kbob_path)
         except Exception:
             kbob_df = None
@@ -220,7 +220,7 @@ class Envelope(BaseAssemblyDatabase):
 
             # Build materials list per row
             out_rows: list[dict[str, Any]] = []
-            for _, row in df.iterrows():
+            for code, row in df.iterrows():
                 mats: list[dict[str, Any]] = []
                 errors: list[str] = []
                 for i in (1, 2, 3):
@@ -279,9 +279,8 @@ class Envelope(BaseAssemblyDatabase):
                     )
 
                 if errors:
-                    code_val = row.get("code")
                     raise ValueError(
-                        f"Envelope {kind} definition for code '{code_val}' invalid: "
+                        f"Envelope {kind} definition for code '{code}' invalid: "
                         + ", ".join(errors)
                     )
 
@@ -291,7 +290,7 @@ class Envelope(BaseAssemblyDatabase):
                 # Map to legacy columns by kind
                 base: dict[str, Any] = {
                     "description": row.get("description"),
-                    "code": row.get("code"),
+                    "code": code,
                 }
                 if kind == "floor":
                     base.update(
