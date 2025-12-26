@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
 
 from cea.datamanagement.database import BaseDatabase, BaseDatabaseCollection
+
+# Surface heat transfer coefficients (internal/external) per element
+# Values in m²·K/W. Adjust as needed to match standards used.
+SURFACE_RESISTANCES: dict[str, dict[str, float]] = {
+    "wall": {"internal": 1.0 / 8.0, "external": 1.0 / 25.0},
+    "roof": {"internal": 1.0 / 10.0, "external": 1.0 / 25.0},
+    "floor": {"internal": 1.0 / 6.0, "external": 1.0 / 25.0},
+}
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -19,10 +27,10 @@ class BaseAssemblyDatabase(BaseDatabase):
         return cls(**cls._read_mapping(locator, cls._locator_mapping()))
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def from_dict(cls, data: dict):
         init_args = dict()
         for field in fields(cls):
-            value = d.get(field.name, None)
+            value = data.get(field.name, None)
             if value is None:
                 init_args[field.name] = None
                 continue
@@ -78,6 +86,294 @@ class Envelope(BaseAssemblyDatabase):
             "wall": "get_database_assemblies_envelope_wall",
             "window": "get_database_assemblies_envelope_window",
         }
+
+    @classmethod
+    def from_locator(cls, locator: InputLocator):
+        frames = cls._read_mapping(locator, cls._locator_mapping())
+
+
+        # Try to load material database (KBOB) via locator; if not available, skip transformation
+        kbob_df = None
+        try:
+            kbob_path = locator.get_database_components_materials()
+            kbob_df = pd.read_csv(kbob_path)
+        except Exception:
+            kbob_df = None
+
+        def _to_float(value: Any) -> float | None:
+            """Safely parse numeric value to float or None when missing/NaN/invalid."""
+            if value is None or (isinstance(value, float) and pd.isna(value)):
+                return None
+            try:
+                return float(value)
+            except Exception:
+                return None
+
+        def _calc_u(materials: list[dict[str, Any]], kind: Literal["floor", "roof", "wall"]) -> float | None:
+            """Compute U-value as 1 / sum(thickness_i / conductivity_i).
+
+            Returns None if any layer lacks required data or resistance is zero.
+            """
+            total_thermal_resistance = 0.0
+            has_conductivity_values = False
+            for m in materials:
+                conductivity_value = _to_float(m.get("thermal_conductivity"))
+                thickness_value = _to_float(m.get("thickness"))
+                # Skip if missing; allow zero thickness (contributes zero resistance)
+                if conductivity_value is None or thickness_value is None:
+                    continue
+                if conductivity_value <= 0:
+                    continue
+                total_thermal_resistance += thickness_value / conductivity_value
+                has_conductivity_values = True
+            if not has_conductivity_values or total_thermal_resistance == 0:
+                return None
+            # add internal and external surface resistances based on element type
+            coeffs = SURFACE_RESISTANCES.get(kind, {"internal": 0.0, "external": 0.0})
+            total_thermal_resistance += coeffs["internal"] + coeffs["external"]
+            return 1.0 / total_thermal_resistance
+
+        def _calc_ghg(
+            materials: list[dict[str, Any]],
+        ) -> tuple[float | None, float | None, float | None, float | None]:
+            """Compute GHG per m² for kg-based entries.
+
+            Uses mass_per_m2 = density * thickness (m, kg/m³ → kg/m²).
+            Disallows any material with unit 'm2'.
+            Returns tuple: (total, production, recycling, biogenic). Each may be None if insufficient data.
+            """
+            total_emissions = 0.0
+            production_emissions = 0.0
+            recycling_emissions = 0.0
+            biogenic_emissions = 0.0
+
+            any_total = False
+            any_production = False
+            any_recycling = False
+            any_biogenic = False
+
+            for m in materials:
+                unit = m.get("unit")
+                density_value = _to_float(m.get("density"))
+                ghg_total_value = _to_float(m.get("GHG_emission_total"))
+                ghg_production_value = _to_float(m.get("GHG_emission_production"))
+                ghg_recycling_value = _to_float(m.get("GHG_emission_recycling"))
+                bio_carbon_value = _to_float(m.get("biogenic_carbon_in_product"))
+                thickness_value = _to_float(m.get("thickness"))
+
+                if unit == "kg":
+                    if density_value is None or thickness_value is None or thickness_value < 0:
+                        continue
+                    mass_per_m2 = density_value * thickness_value
+                    if ghg_total_value is not None:
+                        total_emissions += ghg_total_value * mass_per_m2
+                        any_total = True
+                    if ghg_production_value is not None:
+                        production_emissions += ghg_production_value * mass_per_m2
+                        any_production = True
+                    if ghg_recycling_value is not None:
+                        recycling_emissions += ghg_recycling_value * mass_per_m2
+                        any_recycling = True
+                    if bio_carbon_value is not None:
+                        biogenic_emissions += bio_carbon_value * mass_per_m2
+                        any_biogenic = True
+                elif str(unit).lower() == "m2":
+                    # Disallow m2 unit entries in material database
+                    raise ValueError(
+                        "Material unit 'm2' is not supported. Please provide entries with unit 'kg'."
+                    )
+                else:
+                    # Unknown unit: skip
+                    continue
+
+            return (
+                total_emissions if any_total else None,
+                production_emissions if any_production else None,
+                recycling_emissions if any_recycling else None,
+                biogenic_emissions if any_biogenic else None,
+            )
+
+        def _transform(
+            df: pd.DataFrame, kind: Literal["floor", "roof", "wall"]
+        ) -> pd.DataFrame:
+            """Transform material-defined constructions to legacy schema for kind.
+
+            Enforces required columns and units, aggregates validation errors per row,
+            and preserves description/code plus reference-like columns.
+            """
+            if kbob_df is None:
+                return df
+            # Detect material-based schema and enforce required columns
+            required_cols = {
+                "material_name_1",
+                "material_name_2",
+                "material_name_3",
+                "thickness_1_m",
+                "thickness_2_m",
+                "thickness_3_m",
+            }
+            if not required_cols.issubset(set(df.columns)):
+                missing = required_cols.difference(set(df.columns))
+                raise ValueError(
+                    f"Material-based envelope '{kind}' requires columns: {sorted(required_cols)}. Missing: {sorted(missing)}"
+                )
+
+            # Build materials list per row
+            out_rows: list[dict[str, Any]] = []
+            for code, row in df.iterrows():
+                mats: list[dict[str, Any]] = []
+                errors: list[str] = []
+                for i in (1, 2, 3):
+                    name_col = f"material_name_{i}"
+                    thick_col = f"thickness_{i}_m"
+                    name = row.get(name_col)
+                    thickness = row.get(thick_col)
+                    if pd.isna(name) or name is None:
+                        errors.append(f"Missing material_name_{i}")
+                        continue
+                    if thickness is None or pd.isna(thickness):
+                        errors.append(f"Missing thickness_{i}_m")
+                        continue
+                    # Lookup in KBOB by 'name'
+                    kb_match = kbob_df[kbob_df["name"] == name]
+                    mat: dict[str, Any] = {
+                        "name": name,
+                        "thickness": thickness,
+                        "thermal_conductivity": None,
+                        "density": None,
+                        "unit": None,
+                        "GHG_emission_total": None,
+                        "GHG_emission_production": None,
+                        "GHG_emission_recycling": None,
+                        "biogenic_carbon_in_product": None,
+                    }
+                    if not kb_match.empty:
+                        rec = kb_match.iloc[0]
+                        mat["thermal_conductivity"] = rec.get("thermal_conductivity")
+                        mat["density"] = rec.get("density")
+                        mat["unit"] = rec.get("unit")
+                        mat["GHG_emission_total"] = rec.get("GHG_emission_total")
+                        # Optional fields for split GHGs, compute if available
+                        mat["GHG_emission_production"] = rec.get("GHG_emission_production")
+                        mat["GHG_emission_recycling"] = rec.get("GHG_emission_recycling")
+                        mat["biogenic_carbon_in_product"] = rec.get(
+                            "biogenic_carbon_in_product"
+                        )
+                        if str(mat["unit"]).lower() == "m2":
+                            errors.append(
+                                f"Material '{name}' has unsupported unit 'm2'"
+                            )
+                    else:
+                        errors.append(f"Material '{name}' not found in KBOB database")
+                    mats.append(mat)
+
+                # Aggregate validation: must have exactly three layers with defined thickness (>= 0)
+                def _thickness_defined(m_: dict[str, Any]) -> bool:
+                    thickness_val = _to_float(m_.get("thickness"))
+                    return thickness_val is not None and thickness_val >= 0
+
+                valid_layers = [m for m in mats if _thickness_defined(m)]
+                if len(valid_layers) != 3:
+                    errors.append(
+                        "Exactly three layers with defined thickness (>= 0) are required"
+                    )
+
+                if errors:
+                    raise ValueError(
+                        f"Envelope {kind} definition for code '{code}' invalid: "
+                        + ", ".join(errors)
+                    )
+
+                u_val = _calc_u(mats, kind)
+                ghg_total, ghg_prod, ghg_recyc, ghg_bio = _calc_ghg(mats)
+
+                # Map to legacy columns by kind
+                base: dict[str, Any] = {
+                    "description": row.get("description"),
+                    "code": code,
+                }
+                if kind == "floor":
+                    base.update(
+                        {
+                            "U_base": u_val,
+                            "GHG_floor_kgCO2m2": ghg_total,
+                            "GHG_production_floor_kgCO2m2": ghg_prod,
+                            "GHG_recycling_floor_kgCO2m2": ghg_recyc,
+                            "GHG_biogenic_floor_kgCO2m2": ghg_bio,
+                            "Service_Life_floor": row.get("Service_Life_floor"),
+                            "Reference": row.get("Reference"),
+                        }
+                    )
+                elif kind == "roof":
+                    base.update(
+                        {
+                            "U_roof": u_val,
+                            "GHG_roof_kgCO2m2": ghg_total,
+                            "GHG_production_roof_kgCO2m2": ghg_prod,
+                            "GHG_recycling_roof_kgCO2m2": ghg_recyc,
+                            "GHG_biogenic_roof_kgCO2m2": ghg_bio,
+                            "Service_Life_roof": row.get("Service_Life_floor")
+                            or row.get("Service_Life_roof"),
+                            "Reference Service life": row.get("Reference"),
+                        }
+                    )
+                elif kind == "wall":
+                    base.update(
+                        {
+                            "U_wall": u_val,
+                            "GHG_wall_kgCO2m2": ghg_total,
+                            "GHG_production_wall_kgCO2m2": ghg_prod,
+                            "GHG_recycling_wall_kgCO2m2": ghg_recyc,
+                            "GHG_biogenic_wall_kgCO2m2": ghg_bio,
+                            "Service_Life_wall": row.get("Service_Life_wall"),
+                            "Reference": row.get("Reference"),
+                        }
+                    )
+                else:
+                    # default mapping uses a generic U value and GHG columns
+                    base.update(
+                        {
+                            "U": u_val,
+                            "GHG_kgCO2m2": ghg_total,
+                            "GHG_production_kgCO2m2": ghg_prod,
+                            "GHG_recycling_kgCO2m2": ghg_recyc,
+                            "GHG_biogenic_kgCO2m2": ghg_bio,
+                        }
+                    )
+
+                # Pass-through all non-material definition columns except ones we explicitly compute/overwrite
+                material_cols_prefixes = {"material_name_", "thickness_"}
+                computed_cols = set(base.keys())
+                for col in df.columns:
+                    # Skip material/thickness definition columns
+                    if any(col.startswith(prefix) for prefix in material_cols_prefixes):
+                        continue
+                    # Skip description/code (already set) and computed targets to avoid overwrite
+                    if col in computed_cols or col in {"description", "code"}:
+                        continue
+                    # Preserve all other columns (e.g., a_*, e_*, r_*, service-life refs, etc.)
+                    base[col] = row.get(col)
+
+                out_rows.append(base)
+
+            out_df = pd.DataFrame(out_rows)
+            out_df = out_df.set_index(cls._index)
+            return out_df
+
+        # Transform material-based sheets to legacy format for floor, roof, wall only
+        for kind, df in list(frames.items()):
+            if df is None:
+                continue
+            if kind not in {"floor", "roof", "wall"}:
+                # Skip mass, shading, tightness, window
+                continue
+            try:
+                frames[kind] = _transform(df, kind)  # type: ignore[arg-type]
+            except Exception:
+                # If transformation fails, keep original
+                frames[kind] = df
+
+        return cls(**frames)
 
 @dataclass
 class HVAC(BaseAssemblyDatabase):

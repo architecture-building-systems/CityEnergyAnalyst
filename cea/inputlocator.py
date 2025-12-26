@@ -845,6 +845,10 @@ class InputLocator(object):
     def get_database_components_feedstocks_energy_carriers(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
+    
+    def get_database_components_materials(self):
+        """scenario/inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv"""
+        return os.path.join(self.get_db4_components_folder(), 'MATERIALS', 'MATERIALS.csv')
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
