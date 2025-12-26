@@ -10,24 +10,20 @@ if TYPE_CHECKING:
 
 
 class EnvelopeLookup:
-    """Lookup helper over an :class:`Envelope` instance.
+    """DB-agnostic (code, field) lookup on top of Envelope dataclass."""
 
-    Instead of decomposing the envelope into an internal ``_dfs`` dict, this refactored version keeps a direct
-    reference to ``self.envelope`` and accesses the DataFrames via their attribute names (``envelope.wall``,
-    ``envelope.roof`` etc.). This reduces indirection and makes subsequent operations (updates, inspection)
-    simpler and more explicit.
-
-    A code ownership map (``_owner``) is constructed once at initialization by iterating over the dataclass
-    fields of :class:`Envelope` and collecting all codes (index values) from non-empty DataFrames. Duplicate
-    codes are rejected both within a DataFrame and across DataFrames to avoid ambiguous lookups.
-    """
-
-    # Mapping for dynamic column suffix resolution for shared envelope fields
-    _SUFFIX = {"wall": "wall", "roof": "roof", "floor": "floor", "window": "win", "base": "floor"}
+    _SUFFIX: dict[str, str] = {
+        "wall": "wall",
+        "roof": "roof",
+        "floor": "floor",
+        "window": "win",
+    }
     _INT_FIELDS = {"Service_Life"}
     _FLOAT_FIELDS = {
         "U",
         "GHG_kgCO2m2",
+        "GHG_production_kgCO2m2",
+        "GHG_recycling_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
         "e_win",
@@ -129,7 +125,10 @@ class EnvelopeLookup:
             return None
         if field in self._INT_FIELDS:
             try:
-                return int(float(cast(Any, val)))
+                num = pd.to_numeric(val, errors="coerce")
+                if pd.isna(num):
+                    raise ValueError(f"Non-numeric value '{val}'")
+                return int(float(num))
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     f"Cannot convert value '{val}' to integer for field '{field}' "
@@ -137,33 +136,53 @@ class EnvelopeLookup:
                 )
         if field in self._FLOAT_FIELDS:
             try:
-                return float(cast(Any, val))
+                num = pd.to_numeric(val, errors="coerce")
+                if pd.isna(num):
+                    raise ValueError(f"Non-numeric value '{val}'")
+                return float(num)
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     f"Cannot convert value '{val}' to float for field '{field}' "
                     f"in database '{db}' for code '{code}'. Please check the envelope "
                     f"database file for malformed numeric values. Original error: {e}"
                 )
-        # textual fields
-        if field in {"description", "Reference"}:
-            return str(val)
-        # fallback
-        return cast(int | float | str | None, val)
+        # For strings or other values, coerce to an allowed type
+        if isinstance(val, (int, float)):
+            return val
+        if isinstance(val, (bytes, bytearray)):
+            try:
+                return val.decode("utf-8")  # type: ignore[attr-defined]
+            except Exception:
+                return str(val)
+        return str(val)
 
     def _col(self, db: str, field: str) -> str:
         # Common envelope fields (dynamic per-component suffix)
-        if field in {"U", "GHG_kgCO2m2", "GHG_biogenic_kgCO2m2", "Service_Life"}:
+        if field in {
+            "U",
+            "GHG_kgCO2m2",
+            "GHG_biogenic_kgCO2m2",
+            "GHG_production_kgCO2m2",
+            "GHG_recycling_kgCO2m2",
+            "Service_Life",
+        }:
+            # Map explicitly per DB to avoid ambiguous suffix logic.
             if db not in self._SUFFIX:
                 raise ValueError(
                     f"Field '{field}' valid only for wall/roof/floor/window; code is in '{db}'."
                 )
             suf = self._SUFFIX[db]
             if field == "U":
-                return f"U_{suf}"
+                # Special case: floor maps to U_base
+                return "U_base" if db == "floor" else f"U_{suf}"
             if field == "GHG_kgCO2m2":
                 return f"GHG_{suf}_kgCO2m2"
             if field == "GHG_biogenic_kgCO2m2":
                 return f"GHG_biogenic_{suf}_kgCO2m2"
+            if field == "GHG_production_kgCO2m2":
+                return f"GHG_production_{suf}_kgCO2m2"
+            if field == "GHG_recycling_kgCO2m2":
+                return f"GHG_recycling_{suf}_kgCO2m2"
             # Service_Life
             return f"Service_Life_{suf}"
 

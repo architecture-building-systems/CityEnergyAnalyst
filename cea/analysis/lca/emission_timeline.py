@@ -189,30 +189,44 @@ class BuildingEmissionTimeline:
 
             if key == "technical_systems":
                 lifetime = SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
-                ghg = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
+                production = EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS
                 biogenic = 0.0
-                demolition = 0.0  # dummy value, not implemented yet
+                demolition = 0.0  # FIXME: assuming recycling of systems require generates emission, which is false
             else:
                 type_str = f"type_{value}"
                 lifetime_any = self.envelope_lookup.get_item_value(
                     code=self.envelope[type_str], field="Service_Life"
                 )
-                ghg_any = self.envelope_lookup.get_item_value(
-                    code=self.envelope[type_str], field="GHG_kgCO2m2"
-                )
+                try: # if detailed LCA data (production + recycling) available, use it
+                    ghg_production_any = self.envelope_lookup.get_item_value(
+                        code=self.envelope[type_str], field="GHG_production_kgCO2m2"
+                    )
+                    ghg_recycling_any = self.envelope_lookup.get_item_value(
+                        code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
+                    )
+                except KeyError: # else use simplified data (one value only)
+                    ghg_production_any = self.envelope_lookup.get_item_value(
+                        code=self.envelope[type_str], field="GHG_kgCO2m2"
+                    )
+                    ghg_recycling_any = 0.0
+
                 biogenic_any = self.envelope_lookup.get_item_value(
                     code=self.envelope[type_str], field="GHG_biogenic_kgCO2m2"
                 )
-                if lifetime_any is None or ghg_any is None or biogenic_any is None:
+                if (
+                    lifetime_any is None
+                    or ghg_production_any is None
+                    or ghg_recycling_any is None
+                    or biogenic_any is None
+                ):
                     raise ValueError(
                         f"Envelope database returned None for one of the required fields for item {self.envelope[type_str]}."
                     )
-                lifetime = int(float(lifetime_any))
-                ghg = float(ghg_any)
+                lifetime = int(lifetime_any)
+                production = float(ghg_production_any)
                 biogenic = float(biogenic_any)
-                demolition: float = 0.0  # dummy value, not implemented yet
-
-            self.log_emissions(area, ghg, biogenic, demolition, lifetime, key)
+                demolition = float(ghg_recycling_any)
+            self.log_emissions(area, production, biogenic, demolition, lifetime, key)
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
         """Initialize the PV system in the building emission timeline.
@@ -438,8 +452,22 @@ class BuildingEmissionTimeline:
         # Convert demolition_year to string format for comparison with timeline index
         demolition_year_str = f"Y_{demolition_year}"
         self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
-        for key, _ in _MAPPING_DICT.items():
-            demolition: float = 0.0  # dummy value, not implemented yet
+        for key, value in _MAPPING_DICT.items():
+            type_str = f"type_{value}"
+            try:
+                demolition_any = self.envelope_lookup.get_item_value(
+                    code=self.envelope[type_str], field="GHG_recycling_kgCO2m2"
+                )
+            except KeyError:  # if detailed LCA data not available, use simplified
+                demolition_any = 0.0
+
+            if demolition_any is not None:
+                demolition = float(demolition_any)
+            else:
+                raise ValueError(
+                    f"Recycling column exists but without meaningful data for item {self.envelope[type_str]}."
+                )
+            
             area: float = self.surface_area[f"A{key}"]
             # Convert max year to int for comparison
             max_year_str = self.timeline.index.max()
