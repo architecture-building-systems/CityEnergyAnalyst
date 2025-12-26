@@ -11,6 +11,7 @@ import time
 from datetime import datetime, UTC
 import cea.inputlocator
 import geopandas as gpd
+from cea.analysis.lca.emission_timeline import _MAPPING_DICT
 
 from cea.demand.building_properties.useful_areas import calc_useful_areas
 
@@ -66,66 +67,103 @@ dict_plot_metrics_cea_feature = {
     'dh': 'dh',
     'dc': 'dc',
 }
-emission_timeline_pv_types = ["PV1", "PV2", "PV3", "PV4"]
-emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
-emission_timeline_operational_feedstocks = [
-    "NATURALGAS",
-    "BIOGAS",
-    "SOLAR",
-    "DRYBIOMASS",
-    "WETBIOMASS",
-    "GRID",
-    "COAL",
-    "WOOD",
-    "OIL",
-    "HYDROGEN",
-    "NONE",
-]
-emission_timeline_pv_offset_columns_nounit = [
-    f"PV_{pv_type}_offset_{type_energy}"
-    for pv_type in emission_timeline_pv_types
-    for type_energy in emission_timeline_operational_types + ["total"]
-]
-emission_timeline_hourly_operational_colnames_nounit = [
-    f"{type_energy}_{feedstock}"
-    for type_energy in emission_timeline_operational_types
-    for feedstock in emission_timeline_operational_feedstocks
-] + emission_timeline_operational_types
 
-normalisation_name_mapping_emission_timeline_hourly_operational = {
-    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
-    for colname in emission_timeline_hourly_operational_colnames_nounit
+# TODO: Remove this from global state
+EMISSION_CONTEXT = None
+
+BASE_NORMALISATION_NAME_MAPPING = {
+    "grid_electricity_consumption[kWh]": "EUI_grid_electricity[kWh/m2]",
+    "enduse_electricity_demand[kWh]": "EUI_enduse_electricity[kWh/m2]",
+    "enduse_cooling_demand[kWh]": "EUI_enduse_cooling[kWh/m2]",
+    "enduse_space_cooling_demand[kWh]": "EUI_enduse_space_cooling[kWh/m2]",
+    "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
+    "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
+    "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
 }
 
-emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
-emission_timeline_embodied_parts = ["wall_ag", "wall_bg", "wall_part", "win_ag", "roof", "upperside", "underside", "floor", "base", "technical_systems"]
-emission_timeline_yearly_colnames_nounit = (
-    [
-        f"{type_emission}_{part}"
-        for type_emission in emission_timeline_embodied_types
-        for part in emission_timeline_embodied_parts
-    ]
-    + [
-        f"operation_{type_energy}"
-        for type_energy in emission_timeline_operational_types
-    ]
-    + [f"PV_{pv_type}_offset_total" for pv_type in emission_timeline_pv_types]
-)
 
-normalisation_name_mapping_emission_timeline_yearly = {
-    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
-    for colname in emission_timeline_yearly_colnames_nounit
-}
+def build_emission_context(locator: cea.inputlocator.InputLocator) -> dict:
+    """Build emission-related column lists and normalisation mappings from the locator."""
 
-normalisation_name_mapping = {
-        "grid_electricity_consumption[kWh]": "EUI_grid_electricity[kWh/m2]",
-        "enduse_electricity_demand[kWh]": "EUI_enduse_electricity[kWh/m2]",
-        "enduse_cooling_demand[kWh]": "EUI_enduse_cooling[kWh/m2]",
-        "enduse_space_cooling_demand[kWh]": "EUI_enduse_space_cooling[kWh/m2]",
-        "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
-        "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
-        "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
-    } | normalisation_name_mapping_emission_timeline_yearly | normalisation_name_mapping_emission_timeline_hourly_operational
+    emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
+    emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
+
+    df_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS"))
+    emission_timeline_pv_types = df_pv["code"].dropna().unique().tolist()
+
+    emission_timeline_operational_feedstocks = list(locator.get_db4_components_feedstocks_all().keys()) + ["NONE"]
+
+    emission_timeline_hourly_operational_colnames_nounit = (
+        [
+            f"{type_energy}_{feedstock}"
+            for type_energy in emission_timeline_operational_types
+            for feedstock in emission_timeline_operational_feedstocks
+        ]
+        + emission_timeline_operational_types
+        + emission_timeline_operational_feedstocks
+        + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
+        + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
+    )
+
+    normalisation_name_mapping_emission_timeline_hourly_operational = {
+        f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+        for colname in emission_timeline_hourly_operational_colnames_nounit
+    }
+
+    emission_timeline_embodied_parts = list(_MAPPING_DICT.keys())
+    emission_timeline_yearly_colnames_nounit = (
+        [
+            f"{type_emission}_{part}"
+            for type_emission in emission_timeline_embodied_types
+            for part in emission_timeline_embodied_parts
+        ]
+        + [f"operation_{type_energy}" for type_energy in emission_timeline_operational_types]
+        + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
+        + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
+        + [
+            f"{type_emission}_PV_{pv_type}"
+            for type_emission in emission_timeline_embodied_types
+            for pv_type in emission_timeline_pv_types
+        ]
+    )
+
+    normalisation_name_mapping_emission_timeline_yearly = {
+        f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+        for colname in emission_timeline_yearly_colnames_nounit
+    }
+
+    normalisation_name_mapping = (
+        BASE_NORMALISATION_NAME_MAPPING
+        | normalisation_name_mapping_emission_timeline_yearly
+        | normalisation_name_mapping_emission_timeline_hourly_operational
+    )
+
+    return {
+        "pv_types": emission_timeline_pv_types,
+        "operational_types": emission_timeline_operational_types,
+        "operational_feedstocks": emission_timeline_operational_feedstocks,
+        "hourly_colnames": emission_timeline_hourly_operational_colnames_nounit,
+        "yearly_colnames": emission_timeline_yearly_colnames_nounit,
+        "normalisation_map_hourly": normalisation_name_mapping_emission_timeline_hourly_operational,
+        "normalisation_map_yearly": normalisation_name_mapping_emission_timeline_yearly,
+        "normalisation_map": normalisation_name_mapping,
+        "list_metrics_lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
+        "list_metrics_operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
+    }
+
+
+def get_emission_context(locator: cea.inputlocator.InputLocator | None = None) -> dict:
+    """Return the cached emission context, building it with the provided locator when needed."""
+
+    global EMISSION_CONTEXT
+
+    if locator is not None:
+        EMISSION_CONTEXT = build_emission_context(locator)
+
+    if EMISSION_CONTEXT is None:
+        raise RuntimeError("Emission context is not initialised; call get_emission_context with a locator first.")
+
+    return EMISSION_CONTEXT
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Data preparation
@@ -233,7 +271,7 @@ def get_hours_start_end(config):
     return hour_start, hour_end
 
 
-def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list)-> tuple[list[str], list[str]]:
+def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, list_buildings: list, network_name: str = '')-> tuple[list[str], list[str]]:
 
     list_paths = []
     list_appendix = []
@@ -323,18 +361,22 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
         list_appendix.append(cea_feature)
 
     if cea_feature == 'dh':
-        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', '', representative_week=False)
-        path_pump = locator.get_network_energy_pumping_requirements_file('DH', '', representative_week=False)
+        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DH', network_name)
+        path_pump = locator.get_network_energy_pumping_requirements_file('DH', network_name)
         list_paths.append(path_thermal)
         list_paths.append(path_pump)
-        list_appendix.append(cea_feature)
+        # Include network name in appendix if provided
+        appendix = f"{cea_feature}_{network_name}" if network_name else cea_feature
+        list_appendix.append(appendix)
 
     if cea_feature == 'dc':
-        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', '', representative_week=False)
-        path_pump = locator.get_network_energy_pumping_requirements_file('DC', '', representative_week=False)
+        path_thermal = locator.get_thermal_network_plant_heat_requirement_file('DC', network_name)
+        path_pump = locator.get_network_energy_pumping_requirements_file('DC', network_name)
         list_paths.append(path_thermal)
         list_paths.append(path_pump)
-        list_appendix.append(cea_feature)
+        # Include network name in appendix if provided
+        appendix = f"{cea_feature}_{network_name}" if network_name else cea_feature
+        list_appendix.append(appendix)
 
     return list_paths, list_appendix
 
@@ -355,6 +397,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
     Raises:
     - ValueError: If the direction is invalid.
     """
+    emission_context = get_emission_context()
+
     mapping_dict = {
         "architecture": [
             "conditioned_floor_area[m2]",
@@ -371,8 +415,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
             "enduse_space_heating_demand[kWh]",
             "enduse_dhw_demand[kWh]",
         ],
-        "lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
-        "operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
+        "lifecycle_emissions": emission_context["list_metrics_lifecycle_emissions"],
+        "operational_emissions": emission_context["list_metrics_operational_emissions"],
         "solar_irradiation": [
             "irradiation_roof[kWh]",
             "irradiation_window_north[kWh]",
@@ -490,13 +534,36 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
     }
 
     if direction == "metrics_to_features":
-        # Find all matches
+        # Find all matches - features where there's overlap with input metrics
         matched_features = {feature for feature, metrics in mapping_dict.items() if set(list_metrics_or_features) & set(metrics)}
 
         if not matched_features:
             return None
-        else:
+        elif len(matched_features) == 1:
             return list(matched_features)[0]
+        else:
+            # Multiple features match - need to disambiguate
+            # This happens when metrics are shared between features (e.g., PV columns in both lifecycle and operational emissions)
+
+            # Strategy: Return the feature where ALL input metrics are present (perfect match)
+            # If no perfect match, return the feature with the most overlap
+            perfect_matches = [feature for feature in matched_features
+                             if set(list_metrics_or_features).issubset(set(mapping_dict[feature]))]
+
+            if perfect_matches:
+                # If multiple perfect matches, prefer more specific features
+                # operational_emissions is more specific than lifecycle_emissions for hourly data
+                priority_order = ['operational_emissions', 'lifecycle_emissions', 'architecture', 'demand']
+                for priority_feature in priority_order:
+                    if priority_feature in perfect_matches:
+                        return priority_feature
+                return perfect_matches[0]
+            else:
+                # No perfect match - return feature with most overlap
+                overlap_scores = {feature: len(set(list_metrics_or_features) & set(mapping_dict[feature]))
+                                for feature in matched_features}
+                best_match = max(overlap_scores, key=overlap_scores.get)
+                return best_match
 
     elif direction == "features_to_metrics":
         # Reverse the mapping dictionary
@@ -524,6 +591,8 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     Returns:
     - list: A list of mapped values (CEA column names or metrics).
     """
+    emission_context = get_emission_context()
+
     mapping_dict = {
         "conditioned_floor_area[m2]": ["Af_m2"],
         "roof_area[m2]": ["Aroof_m2"],
@@ -627,10 +696,10 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         "DC_electricity_consumption_for_pressure_loss[kWh]": ["pressure_loss_total_kW"],
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
-        for name in emission_timeline_hourly_operational_colnames_nounit
+        for name in emission_context["hourly_colnames"]
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
-        for name in emission_timeline_yearly_colnames_nounit
+        for name in emission_context["yearly_colnames"]
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -809,6 +878,28 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
+
+                # Validation: Check if this is timeline data (has 'period' column) when we expect operational data
+                # Timeline files are in .../emissions/timeline/ and operational files are in .../emissions/operational/
+                is_operational_path = '/emissions/operational/' in path or '_operational_hourly.csv' in path
+                is_timeline_path = '/emissions/timeline/' in path or '_timeline.csv' in path
+                has_period_column = 'period' in df.columns
+                has_date_column = bool(date_columns.intersection(df.columns))
+
+                # Validate data structure matches file path
+                if is_operational_path and has_period_column and not has_date_column:
+                    raise ValueError(
+                        f"Data structure mismatch: File '{path}' is an operational file but has 'period' column "
+                        f"instead of 'date' column. This suggests timeline data was incorrectly loaded. "
+                        f"Available columns: {df.columns.tolist()}"
+                    )
+                if is_timeline_path and has_date_column and not has_period_column:
+                    raise ValueError(
+                        f"Data structure mismatch: File '{path}' is a timeline file but has 'date' column "
+                        f"instead of 'period' column. This suggests operational data was incorrectly loaded. "
+                        f"Available columns: {df.columns.tolist()}"
+                    )
+
                 if date_columns.intersection(df.columns):
                     df = get_standardized_date_column(df)   # Change where ['DATE'] or ['Date'] to ['date']
 
@@ -824,9 +915,21 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
                     df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)   # Slice the custom period of time
                     list_dataframes.append(df)  # Add the DataFrame to the list
                 elif 'period' in df.columns:
+                    # Timeline data (lifecycle emissions) - has 'period' column with years
                     selected_columns = ['period'] + ['name'] + list_cea_column_names
                     available_columns = [col for col in selected_columns if col in df.columns]   # check what's available
                     df = df[available_columns]
+
+                    # Filter by year range (similar to how hourly data is filtered by hours)
+                    # For timeline data, hour_start/hour_end represent years, not hours
+                    # Extract year from period column (format: 'Y_2024' -> 2024)
+                    df['_year'] = df['period'].astype(str).str.replace('Y_', '', regex=False)
+                    df['_year'] = pd.to_numeric(df['_year'], errors='coerce')
+
+                    # Filter rows by year range
+                    df = df[(df['_year'] >= hour_start) & (df['_year'] <= hour_end)]
+                    df = df.drop(columns=['_year'])
+
                     list_dataframes.append(df)
                 else:
                     # Slice the useful columns
@@ -1023,13 +1126,13 @@ def slice_hourly_results_for_custom_time_period(hour_start, hour_end, df):
     return sliced_df
 
 
-def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False):
+def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, bool_analytics=False, network_name=''):
 
     # map the CEA Feature for the selected metrics
     cea_feature = map_metrics_cea_features(list_metrics)
 
     # locate the path(s) to the results of the CEA Feature
-    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings)
+    list_paths, list_appendix = get_results_path(locator, cea_feature, list_buildings, network_name)
 
     # get the relevant CEA column names based on selected metrics
     if not bool_analytics:
@@ -1051,7 +1154,16 @@ def exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildi
     # Special handling for architecture feature
     if cea_feature == 'architecture':
         # Load source data
-        zone_df = gpd.read_file(locator.get_zone_geometry()).set_index('name')
+        zone_raw = gpd.read_file(locator.get_zone_geometry())
+        # Handle both 'Name' and 'name' column naming conventions
+        if 'Name' in zone_raw.columns:
+            name_col = 'Name'
+        elif 'name' in zone_raw.columns:
+            name_col = 'name'
+        else:
+            raise KeyError(f"Zone geometry must have either 'Name' or 'name' column. Available columns: {zone_raw.columns.tolist()}")
+        zone_df = zone_raw.set_index(name_col)
+
         architecture_df = pd.read_csv(locator.get_building_architecture()).set_index('name')
 
         # Generate architecture data using calc_useful_areas
@@ -1437,8 +1549,30 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
 
         # Ensure the date column is in datetime format
         if date_column not in df.columns:
-            print(f"Available columns: {df.columns.tolist()}")
-            raise KeyError(f"The specified date_column '{date_column}' is not in the DataFrame.")
+            # Enhanced error message with validation for common data structure issues
+            has_period = 'period' in df.columns
+            error_msg = f"The specified date_column '{date_column}' is not in the DataFrame.\n"
+            error_msg += f"Available columns: {df.columns.tolist()}\n"
+
+            if has_period and date_column == 'date':
+                error_msg += (
+                    "\nDETECTED ISSUE: DataFrame has 'period' column but expected 'date' column.\n"
+                    "This indicates timeline data (lifecycle emissions) was loaded instead of operational hourly data.\n"
+                    "POSSIBLE CAUSES:\n"
+                    "  1. Wrong file was loaded from source (check file paths in get_results_path)\n"
+                    "  2. Cached summary file from previous emission-timeline plot is being reused\n"
+                    "  3. Race condition between concurrent plot generation jobs\n"
+                    "SOLUTION: Check that operational emissions files (not timeline files) are being loaded."
+                )
+            elif not has_period and date_column == 'period':
+                error_msg += (
+                    "\nDETECTED ISSUE: DataFrame has 'date' column but expected 'period' column.\n"
+                    "This indicates operational hourly data was loaded instead of timeline data (lifecycle emissions).\n"
+                    "SOLUTION: Check that timeline files (not operational files) are being loaded."
+                )
+
+            print(error_msg)
+            raise KeyError(error_msg)
         if not pd.api.types.is_datetime64_any_dtype(df[date_column]):
             df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
             if df[date_column].isnull().all():
@@ -1779,18 +1913,37 @@ def filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_resul
 
 def determine_building_main_use(df_typology):
 
+    # Handle both 'Name' and 'name' column naming conventions
+    if 'Name' in df_typology.columns:
+        name_col = 'Name'
+    elif 'name' in df_typology.columns:
+        name_col = 'name'
+    else:
+        raise KeyError(f"Typology data must have either 'Name' or 'name' column. Available columns: {df_typology.columns.tolist()}")
+
+    # Make a copy to avoid modifying the original DataFrame
+    df_work = df_typology.copy()
+
+    # Handle incomplete use type entries: fill empty/NaN use_type2 and use_type3 with 'NONE' and ratios with 0
+    # This ensures buildings with only one use type (e.g., "MULTI_RES, 1.0") are correctly identified
+    # instead of being filtered out due to NaN/empty values
+    df_work['use_type2'] = df_work['use_type2'].fillna('NONE').replace('', 'NONE')
+    df_work['use_type3'] = df_work['use_type3'].fillna('NONE').replace('', 'NONE')
+    df_work['use_type2r'] = pd.to_numeric(df_work['use_type2r'], errors='coerce').fillna(0)
+    df_work['use_type3r'] = pd.to_numeric(df_work['use_type3r'], errors='coerce').fillna(0)
+
     # Create a new DataFrame to store results
     result = pd.DataFrame()
-    result['name'] = df_typology['name']
+    result['name'] = df_work[name_col]
 
     # Determine the main use type and its ratio
-    result['main_use_type'] = df_typology.apply(
+    result['main_use_type'] = df_work.apply(
         lambda row: row['use_type1'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3'],
         axis=1
     )
-    result['main_use_type_ratio'] = df_typology.apply(
+    result['main_use_type_ratio'] = df_work.apply(
         lambda row: row['use_type1r'] if row['use_type1r'] >= max(row['use_type2r'], row['use_type3r']) else
                     row['use_type2r'] if row['use_type2r'] >= row['use_type3r'] else
                     row['use_type3r'],
@@ -2338,6 +2491,8 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
     """
     Normalizes UBEM analytics based on floor area and writes the results.
     """
+    emission_context = get_emission_context()
+
     appendix = cea_feature
     list_metrics = map_metrics_cea_features([cea_feature], direction="features_to_metrics")
     list_result_time_resolution = []
@@ -2363,7 +2518,10 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         if area_column not in df_architecture.columns:
             raise ValueError(f"Column '{area_column}' not found in architecture data.")
         total_area = df_architecture[area_column].sum()
-        df[list_metrics] = df[list_metrics].div(total_area)
+        # Only normalize columns that actually exist in the dataframe
+        existing_metrics = [col for col in list_metrics if col in df.columns]
+        if existing_metrics:
+            df[existing_metrics] = df[existing_metrics].div(total_area)
         return df
 
     for time_period in list_time_period:
@@ -2386,7 +2544,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         area_column = 'conditioned_floor_area[m2]' if bool_use_conditioned_floor_area_for_normalisation else 'gross_floor_area[m2]'
         df_time_resolution = normalize_dataframe(df_time_resolution, area_column)
 
-        result_time_resolution = df_time_resolution.rename(columns=normalisation_name_mapping)
+        result_time_resolution = df_time_resolution.rename(columns=emission_context["normalisation_map"])
         list_result_time_resolution.append(result_time_resolution)
 
         # Write to disk
@@ -2417,7 +2575,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                             result_buildings[col] = result_buildings[col] / result_buildings[area_column]
                     result_buildings.drop(columns=[area_column], inplace=True)
 
-                    result_buildings = result_buildings.rename(columns=normalisation_name_mapping)
+                    result_buildings = result_buildings.rename(columns=emission_context["normalisation_map"])
 
                     list_result_buildings.append(result_buildings)
 
@@ -2442,10 +2600,9 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
-list_metrics_lifecycle_emissions = list(normalisation_name_mapping_emission_timeline_yearly.keys())
-list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_hourly_operational.keys())
 
 def get_list_list_metrics_with_date(config):
+    emission_context = get_emission_context()
     list_list_metrics_with_date = []
     if config.result_summary.metrics_building_energy_demand:
         list_list_metrics_with_date.append(list_metrics_building_energy_demand)
@@ -2461,17 +2618,28 @@ def get_list_list_metrics_with_date(config):
         list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
     if config.result_summary.metrics_other_renewables:
         list_list_metrics_with_date.append(list_metrics_other_renewables)
-    if config.result_summary.metrics_district_heating:
-        list_list_metrics_with_date.append(list_metrics_district_heating)
-    if config.result_summary.metrics_district_cooling:
-        list_list_metrics_with_date.append(list_metrics_district_cooling)
+
+    # Check if network files exist for the specified network_name and add metrics accordingly
+    network_name = config.result_summary.network_name
+    if network_name:
+        locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+        # Check DH files
+        dh_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DH', network_name)
+        if os.path.exists(dh_thermal_path):
+            list_list_metrics_with_date.append(list_metrics_district_heating)
+        # Check DC files
+        dc_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DC', network_name)
+        if os.path.exists(dc_thermal_path):
+            list_list_metrics_with_date.append(list_metrics_district_cooling)
+
     if config.result_summary.metrics_emissions:
-        list_list_metrics_with_date.append(list_metrics_operational_emissions)
+        list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
 
     return list_list_metrics_with_date
 
 
 def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
+    emission_context = get_emission_context()
     list_list_metrics_with_date = []
     if 'demand' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_building_energy_demand)
@@ -2492,27 +2660,30 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
     if 'dc' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_district_cooling)
     if 'operational_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_with_date.append(list_metrics_operational_emissions)
+        list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
     return list_list_metrics_with_date
 
 
 def get_list_list_metrics_without_date(config):
+    emission_context = get_emission_context()
     list_list_metrics_without_date = []
     if config.result_summary.metrics_emissions:
-        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_without_date.append(emission_context["list_metrics_lifecycle_emissions"])
 
     return list_list_metrics_without_date
 
 
 def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
+    emission_context = get_emission_context()
     list_list_metrics_without_date = []
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_without_date.append(emission_context["list_metrics_lifecycle_emissions"])
 
     return list_list_metrics_without_date
 
 
 def get_list_list_metrics_building(config):
+    emission_context = get_emission_context()
     list_list_metrics_building = []
     if config.result_summary.metrics_building_energy_demand:
         list_list_metrics_building.append(list_metrics_building_energy_demand)
@@ -2527,13 +2698,14 @@ def get_list_list_metrics_building(config):
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
     if config.result_summary.metrics_emissions:
-        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
-        list_list_metrics_building.append(list_metrics_operational_emissions)
+        list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
+        list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
 
     return list_list_metrics_building
 
 
 def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
+    emission_context = get_emission_context()
     list_list_metrics_building = []
     if 'demand' in list_cea_feature_to_plot:
         list_list_metrics_building.append(list_metrics_building_energy_demand)
@@ -2548,9 +2720,9 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
     if 'operational_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_building.append(list_metrics_operational_emissions)
+        list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
 
     return list_list_metrics_building
 
@@ -2601,6 +2773,9 @@ def process_building_summary(config, locator,
     Args:
         config: Configuration object containing user inputs.
         locator: Locator object to find file paths.
+
+    Returns:
+        dict: Summary of processing results with status and any errors encountered
         hour_start (int): Start hour for analysis.
         hour_end (int): End hour for analysis.
         list_buildings (list): List of building names to process.
@@ -2617,8 +2792,15 @@ def process_building_summary(config, locator,
         plot (bool): Whether to plot the results.
 
     Returns:
-        None
+        dict: Summary of processing results including status and any errors
     """
+
+    # Track errors for final summary
+    errors_encountered = []
+
+    # Get network name from config (convert None to empty string for consistency)
+    network_name = config.result_summary.network_name if not plot else ''
+    network_name = network_name if network_name is not None else ''
 
     # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
 
@@ -2652,41 +2834,68 @@ def process_building_summary(config, locator,
                              list_main_use_type, ratio_main_use_type)
 
     # Step 4: Get Building GFA & Merge with df_buildings
-    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings)
+    list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics_architecture, list_buildings, network_name=network_name)
     list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
     df_buildings = pd.merge(df_buildings, list_list_useful_cea_results_buildings[0][0], on='name', how='inner')
 
     # Step 5: Save Building Summary to Disk
-    # Round all numeric columns to 2 decimal places
-    numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
-    df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
-    
-    if not plot:
-        buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
-    else:
-        buildings_path = locator.get_export_plots_selected_building_file()
-    df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    try:
+        # Round all numeric columns to 2 decimal places
+        numeric_columns = df_buildings.select_dtypes(include=[np.number]).columns
+        df_buildings[numeric_columns] = df_buildings[numeric_columns].round(2)
+
+        if not plot:
+            buildings_path = locator.get_export_results_summary_selected_building_file(summary_folder)
+        else:
+            buildings_path = locator.get_export_plots_selected_building_file()
+        df_buildings.to_csv(buildings_path, index=False, float_format="%.2f")
+    except Exception as e:
+        error_msg = f"Step 5 (Save Building Summary): {str(e)}"
+        errors_encountered.append(error_msg)
+        print(f"Warning: {error_msg}")
+        print("         Continuing with remaining steps...")
 
     # Step 6: Export Results Without Date (Non-8760 Hours, Aggregate by Building)
     for list_metrics in list_list_metrics_without_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
-        results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
+        try:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=network_name)
+            list_list_useful_cea_results_buildings = filter_cea_results_by_buildings(bool_use_acronym, list_list_useful_cea_results, list_buildings)
+            results_writer_time_period_building(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_useful_cea_results_buildings, list_appendix, list_time_resolution=None, bool_analytics=False, plot=plot, bool_use_acronym=bool_use_acronym)
+        except Exception as e:
+            error_msg = f"Step 6 (Export Results Without Date) - metrics {list_metrics}: {str(e)}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+            print("         Continuing with next metrics...")
+            continue
 
     # Step 7: Export Results With Date (8760 Hours, Aggregate by Time Period)
     for list_metrics in list_list_metrics_with_date:
-        list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-        list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
-        results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+        try:
+            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=network_name)
+            list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+            results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+        except Exception as e:
+            error_msg = f"Step 7 (Export Results With Date) - metrics {list_metrics}: {str(e)}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+            print("         Continuing with next metrics...")
+            continue
 
     # Step 8: Aggregate by Building (if Enabled)
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
-            list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings)
-            if list_appendix == ['lifecycle_emissions']:
-                exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
-            else:
-                exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            try:
+                list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=network_name)
+                if list_appendix == ['lifecycle_emissions']:
+                    exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+                else:
+                    exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+            except Exception as e:
+                error_msg = f"Step 8 (Aggregate by Building) - metrics {list_metrics}: {str(e)}"
+                errors_encountered.append(error_msg)
+                print(f"Warning: {error_msg}")
+                print("         Continuing with next metrics...")
+                continue
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
@@ -2695,30 +2904,74 @@ def process_building_summary(config, locator,
                 raise ValueError("Specify the list of CEA features to plot.")
 
             if any(item in list_cea_feature_to_plot for item in ['demand']):
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - demand): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
             if any(item in list_cea_feature_to_plot for item in ['pv']):
-                calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
-                                  list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                try:
+                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
+                                      list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - pv): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
             if any(item in list_cea_feature_to_plot for item in ['operational_emissions']):
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - operational_emissions): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
         else:
             if config.result_summary.metrics_building_energy_demand:
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - demand): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
 
             if config.result_summary.metrics_photovoltaic_panels:
-                calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
-                                  bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                try:
+                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
+                                      bool_aggregate_by_building, bool_use_acronym, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - pv): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
 
             if config.result_summary.metrics_emissions:
-                calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
-                                               list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
-                                               bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - operational_emissions): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
+
+    # Return summary
+    return {
+        'status': 'COMPLETED' if len(errors_encountered) == 0 else 'PARTIALLY COMPLETED',
+        'errors': errors_encountered,
+        'error_count': len(errors_encountered),
+        'summary_folder': summary_folder
+    }
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -2737,6 +2990,7 @@ def main(config: cea.config.Configuration):
     # Start the timer
     t0 = time.perf_counter()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    get_emission_context(locator)
 
     # Gather info from config file
     list_buildings = config.plots_building_filter.buildings
@@ -2753,18 +3007,39 @@ def main(config: cea.config.Configuration):
     bool_use_conditioned_floor_area_for_normalisation = config.result_summary.use_conditioned_floor_area_for_normalisation
 
     # Process building summary
-    process_building_summary(config, locator, hour_start, hour_end, list_buildings,
-                             integer_year_start, integer_year_end, list_standard,
-                             list_main_use_type, ratio_main_use_type,
-                             bool_use_acronym, bool_aggregate_by_building,
-                             bool_include_advanced_analytics, list_selected_time_period,
-                             bool_use_conditioned_floor_area_for_normalisation, plot=False)
+    summary = process_building_summary(config, locator, hour_start, hour_end, list_buildings,
+                                        integer_year_start, integer_year_end, list_standard,
+                                        list_main_use_type, ratio_main_use_type,
+                                        bool_use_acronym, bool_aggregate_by_building,
+                                        bool_include_advanced_analytics, list_selected_time_period,
+                                        bool_use_conditioned_floor_area_for_normalisation, plot=False)
 
     # Print the time used for the entire processing
     time_elapsed = time.perf_counter() - t0
-    print('The entire process of exporting and summarising the CEA simulated results is now completed - time elapsed: %d.2 seconds' % time_elapsed)
+
+    # Build summary text
+    summary_text = []
+    summary_text.append('=' * 70)
+    summary_text.append(f'STATUS: {summary["status"]}')
+    summary_text.append('=' * 70)
+    if summary['error_count'] > 0:
+        summary_text.append('')
+        summary_text.append(f'{summary["error_count"]} error(s) encountered during processing:')
+        for i, error in enumerate(summary['errors'], 1):
+            summary_text.append(f'  {i}. {error}')
+        summary_text.append('')
+    summary_text.append(f'Time elapsed: {time_elapsed:.1f} seconds')
+    summary_text.append('=' * 70)
+
+    # Display completion status and summary
+    print('\n' + '\n'.join(summary_text))
+
+    # Save log file to summary folder
+    log_path = os.path.join(summary['summary_folder'], 'log.txt')
+    with open(log_path, 'w') as f:
+        f.write('\n'.join(summary_text))
+    print(f'\nSummary log saved to: {log_path}')
 
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

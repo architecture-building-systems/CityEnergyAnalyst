@@ -18,10 +18,34 @@ from cea.constants import (
 )
 from cea.datamanagement.database.components import Feedstocks
 
+__author__ = "Yiqiao Wang, Zhongming Shi"
+__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Yiqiao Wang", "Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 if TYPE_CHECKING:
     from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
     from cea.demand.building_properties import BuildingProperties
     from cea.inputlocator import InputLocator
+
+
+_MAPPING_DICT = {
+    "wall_ag": "wall",
+    "wall_bg": "base",
+    "wall_part": "part",
+    "win_ag": "win",
+    "roof": "roof",
+    "upperside": "roof",
+    "underside": "base",
+    "floor": "floor",
+    "base": "base",
+    "technical_systems": "technical_systems", # not implemented in CEA, dummy value
+}
 
 
 class BuildingEmissionTimeline:
@@ -72,18 +96,6 @@ class BuildingEmissionTimeline:
     in the timeline.
     """
 
-    _MAPPING_DICT = {
-        "wall_ag": "wall",
-        "wall_bg": "base",
-        "wall_part": "part",
-        "win_ag": "win",
-        "roof": "roof",
-        "upperside": "roof",
-        "underside": "base",
-        "floor": "floor",
-        "base": "base",
-        "technical_systems": "technical_systems", # not implemented in CEA, dummy value
-    }
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
     _OPERATIONAL_COLS = list(_COLUMN_MAPPING.values())
     _EMISSION_TYPES = ["production", "biogenic", "demolition"]
@@ -172,7 +184,7 @@ class BuildingEmissionTimeline:
         """
         self.check_demolished()
         
-        for key, value in self._MAPPING_DICT.items():
+        for key, value in _MAPPING_DICT.items():
             area: float = self.surface_area[f"A{key}"]
 
             if key == "technical_systems":
@@ -204,17 +216,23 @@ class BuildingEmissionTimeline:
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
         """Initialize the PV system in the building emission timeline.
-        It reads the area of each PV type from the building properties, 
+        It reads the area of each PV type from the building properties,
         and adds the corresponding columns to the timeline DataFrame.
+
+        Note: PV file existence is already checked in total_yearly() before calling this method.
         """
         self.check_demolished()
         pv_db = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS"), index_col='code')
+
         for pv_code in pv_codes:
             if pv_code not in pv_db.index:
                 raise ValueError(f"PV type {pv_code} not found in the PV database.")
-            
+
             district_pv_area = pd.read_csv(self.locator.PV_total_buildings(pv_code), index_col='name') # indexed with building name
-            pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
+            try:
+                pv_area = cast(float, district_pv_area.at[self.name, 'area_PV_m2'])
+            except KeyError:
+                pv_area = 0.0
             lifetime = cast(int, pv_db.loc[pv_code, 'LT_yr'])
             pv_type_str = f"PV_{pv_code}"
             self.surface_area[f"APV_{pv_code}"] = pv_area
@@ -347,11 +365,12 @@ class BuildingEmissionTimeline:
         operational_multi_years: pd.DataFrame,
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
     ) -> list[str]:
-        """Apply GRID policy in-place (if any) to discounted total columns for PV systems, and return the name of total columns."""
+        """Apply GRID policy in-place (if any) to PV offset/export columns, and return the column names."""
         list_final_pv_cols: list[str] = []
         for col in operational_multi_years.columns:
-            if col.startswith("PV_") and col.endswith("_offset_total_kgCO2e"):
-                # column name looks like PV_{pv_code}_offset_total_kgCO2e
+            # Include PV offset and export columns
+            if col.startswith("PV_") and col.endswith("_kgCO2e"):
+                # Columns look like: PV_{pv_code}_GRID_offset_kgCO2e or PV_{pv_code}_GRID_export_kgCO2e
                 if feedstock_policies and "GRID" in feedstock_policies:
                     ref, tgt, frac = feedstock_policies["GRID"]
                     operational_multi_years[col] = self.discount_over_year(
@@ -419,7 +438,7 @@ class BuildingEmissionTimeline:
         # Convert demolition_year to string format for comparison with timeline index
         demolition_year_str = f"Y_{demolition_year}"
         self.timeline.loc[self.timeline.index >= demolition_year_str, :] = 0.0
-        for key, value in self._MAPPING_DICT.items():
+        for key, _ in _MAPPING_DICT.items():
             demolition: float = 0.0  # dummy value, not implemented yet
             area: float = self.surface_area[f"A{key}"]
             # Convert max year to int for comparison
@@ -454,7 +473,7 @@ class BuildingEmissionTimeline:
                 **{
                     f"{emission}_{component}_kgCO2e": 0.0
                     for emission in self._EMISSION_TYPES
-                    for component in list(self._MAPPING_DICT.keys())
+                    for component in list(_MAPPING_DICT.keys())
                     + ["technical_systems"]
                 },
                 **{col: 0.0 for col in self._OPERATIONAL_COLS},
@@ -591,3 +610,27 @@ class BuildingEmissionTimeline:
         surface_area["Abase"] = area_base
         surface_area["Atechnical_systems"] = rc_model_props["GFA_m2"]
         return surface_area
+
+
+def get_building_names_from_zone(locator):
+    """
+    Get building names from zone geometry.
+
+    Parameters
+    ----------
+    locator : InputLocator
+        File path resolver
+
+    Returns
+    -------
+    pd.DataFrame
+        Zone geometry with 'Name' or 'name' column (caller should check both)
+    """
+    import geopandas as gpd
+    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+
+    zone_path = locator.get_zone_geometry()
+    crs = get_geographic_coordinate_system()
+    zone_df = gpd.read_file(zone_path).to_crs(crs)
+
+    return zone_df

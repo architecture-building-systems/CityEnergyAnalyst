@@ -560,12 +560,10 @@ class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
     buildings: list[str]
-    consider_pv_contributions: bool
+    include_pv: bool
     pv_codes: list[str]
-    pv_offset_allowance: list[str]
-    pv_offset_priority: list[str]
     grid_carbon_intensity_dataset_csv: str | None
-    csv_carbon_intensity_column_name: str | None
+    csv_carbon_intensity_column_name: Any
     grid_decarbonise_reference_year: int | None
     grid_decarbonise_target_year: int | None
     grid_decarbonise_target_emission_factor: float | None
@@ -575,17 +573,13 @@ class EmissionsSection(Section):
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["consider_pv_contributions"]) -> bool: ...
+    def __getattr__(self, item: Literal["include_pv"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["pv_offset_allowance"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["pv_offset_priority"]) -> list[str]: ...
-    @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["csv_carbon_intensity_column_name"]) -> str | None: ...
+    def __getattr__(self, item: Literal["csv_carbon_intensity_column_name"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["grid_decarbonise_reference_year"]) -> int | None: ...
     @overload
@@ -696,13 +690,13 @@ class SolarSection(Section):
 class DbfToolsSection(Section):
     """Typed section for dbf-tools configuration"""
     input_file: str | None
-    output_file_name: str
+    output_file_name: Any
     output_path: str
 
     @overload
     def __getattr__(self, item: Literal["input_file"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["output_file_name"]) -> str: ...
+    def __getattr__(self, item: Literal["output_file_name"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["output_path"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -714,8 +708,7 @@ class ToRhinoGhSection(Section):
     include_surroundings: bool
     include_streets: bool
     include_trees: bool
-    include_district_heating_network: bool
-    include_district_cooling_network: bool
+    network_name: str | None
 
     @overload
     def __getattr__(self, item: Literal["include_zone"]) -> bool: ...
@@ -728,9 +721,7 @@ class ToRhinoGhSection(Section):
     @overload
     def __getattr__(self, item: Literal["include_trees"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["include_district_heating_network"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["include_district_cooling_network"]) -> bool: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class FromRhinoGhSection(Section):
@@ -753,7 +744,7 @@ class FromRhinoGhSection(Section):
 class ShapefileToolsSection(Section):
     """Typed section for shapefile-tools configuration"""
     input_file: str | None
-    output_file_name: str
+    output_file_name: Any
     output_path: str
     reference_crs_file: str | None
     polygon: bool
@@ -761,7 +752,7 @@ class ShapefileToolsSection(Section):
     @overload
     def __getattr__(self, item: Literal["input_file"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["output_file_name"]) -> str: ...
+    def __getattr__(self, item: Literal["output_file_name"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["output_path"]) -> str: ...
     @overload
@@ -913,7 +904,7 @@ class BatchProcessWorkflowSection(Section):
 
 class ResultSummarySection(Section):
     """Typed section for result-summary configuration"""
-    folder_name_to_save_exported_results: str | None
+    folder_name_to_save_exported_results: Any
     aggregate_by_building: bool
     aggregate_by_time_period: list[str]
     period_start_date: list[str]
@@ -925,14 +916,13 @@ class ResultSummarySection(Section):
     metrics_photovoltaic_thermal_panels: bool
     metrics_solar_collectors: bool
     metrics_other_renewables: bool
-    metrics_district_heating: bool
-    metrics_district_cooling: bool
+    network_name: str | None
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
     use_conditioned_floor_area_for_normalisation: bool
 
     @overload
-    def __getattr__(self, item: Literal["folder_name_to_save_exported_results"]) -> str | None: ...
+    def __getattr__(self, item: Literal["folder_name_to_save_exported_results"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["aggregate_by_building"]) -> bool: ...
     @overload
@@ -956,9 +946,7 @@ class ResultSummarySection(Section):
     @overload
     def __getattr__(self, item: Literal["metrics_other_renewables"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["metrics_district_heating"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["metrics_district_cooling"]) -> bool: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["include_advanced_analytics"]) -> bool: ...
     @overload
@@ -992,7 +980,8 @@ class TraceInputlocatorSection(Section):
 
 class ThermalNetworkSection(Section):
     """Typed section for thermal-network configuration"""
-    network_type: str
+    network_name: str
+    network_type: list[str]
     network_model: str
     min_head_substation: float
     hw_friction_coefficient: int
@@ -1013,7 +1002,9 @@ class ThermalNetworkSection(Section):
     plant_supply_temperature: float
 
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["network_model"]) -> str: ...
     @overload
@@ -1061,7 +1052,7 @@ class ThermalNetworkOptimizationSection(Section):
     load_max_edge_flowrate_from_previous_run: bool
     start_t: int
     stop_t: int
-    network_name: str
+    network_name: Any
     possible_plant_sites: List[str]
     min_number_of_plants: int
     max_number_of_plants: int
@@ -1097,7 +1088,7 @@ class ThermalNetworkOptimizationSection(Section):
     @overload
     def __getattr__(self, item: Literal["stop_t"]) -> int: ...
     @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    def __getattr__(self, item: Literal["network_name"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["possible_plant_sites"]) -> List[str]: ...
     @overload
@@ -1187,6 +1178,7 @@ class OptimizationSection(Section):
 
 class OptimizationNewSection(Section):
     """Typed section for optimization-new configuration"""
+    network_name: str | None
     network_type: str
     buildings: list[str]
     cooling_components: list[str]
@@ -1220,6 +1212,8 @@ class OptimizationNewSection(Section):
     peak_load_percentage: float
     network_lifetime: float
 
+    @overload
+    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
@@ -1289,10 +1283,10 @@ class OptimizationNewSection(Section):
 class PlotsSection(Section):
     """Typed section for plots configuration"""
     buildings: list[str]
-    building: str
+    building: Optional[str]
     categories: list[str]
     network_type: str
-    network_name: str
+    network_name: Any
     plant_node: str
     timeframe: str
     normalization: str
@@ -1300,13 +1294,13 @@ class PlotsSection(Section):
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["building"]) -> str: ...
+    def __getattr__(self, item: Literal["building"]) -> Optional[str]: ...
     @overload
     def __getattr__(self, item: Literal["categories"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    def __getattr__(self, item: Literal["network_name"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["plant_node"]) -> str: ...
     @overload
@@ -1380,8 +1374,8 @@ class ShallowGeothermalSection(Section):
 
 class CreateNewScenarioSection(Section):
     """Typed section for create-new-scenario configuration"""
-    project: str
-    scenario: str
+    project: Any
+    scenario: Any
     output_path: str
     zone: str
     terrain: str | None
@@ -1390,9 +1384,9 @@ class CreateNewScenarioSection(Section):
     typology: str | None
 
     @overload
-    def __getattr__(self, item: Literal["project"]) -> str: ...
+    def __getattr__(self, item: Literal["project"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["scenario"]) -> str: ...
+    def __getattr__(self, item: Literal["scenario"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["output_path"]) -> str: ...
     @overload
@@ -1413,25 +1407,49 @@ class DecentralizedSection(Section):
 
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
-    network_type: str
+    network_name: str
+    include_services: list[str]
+    overwrite_supply_settings: bool
     connected_buildings: list[str]
-    plant_buildings: List[str]
-    pipe_diameter: int
+    cooling_plant_building: Any
+    heating_plant_building: Any
+    number_of_components: int | None
+    edges_shp_path: str | None
+    nodes_shp_path: str | None
+    network_geojson_path: str | None
     consider_only_buildings_with_demand: bool
     algorithm: str
+    connection_candidates: int
+    snap_tolerance: float | None
 
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> str: ...
+    def __getattr__(self, item: Literal["network_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["plant_buildings"]) -> List[str]: ...
+    def __getattr__(self, item: Literal["cooling_plant_building"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["pipe_diameter"]) -> int: ...
+    def __getattr__(self, item: Literal["heating_plant_building"]) -> Any: ...
+    @overload
+    def __getattr__(self, item: Literal["number_of_components"]) -> int | None: ...
+    @overload
+    def __getattr__(self, item: Literal["edges_shp_path"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["nodes_shp_path"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["network_geojson_path"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["algorithm"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["connection_candidates"]) -> int: ...
+    @overload
+    def __getattr__(self, item: Literal["snap_tolerance"]) -> float | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class MultiCriteriaSection(Section):
@@ -1473,25 +1491,25 @@ class WorkflowSection(Section):
 
 class RenameBuildingSection(Section):
     """Typed section for rename-building configuration"""
-    old: str
-    new: str
+    old: Optional[str]
+    new: Any
 
     @overload
-    def __getattr__(self, item: Literal["old"]) -> str: ...
+    def __getattr__(self, item: Literal["old"]) -> Optional[str]: ...
     @overload
-    def __getattr__(self, item: Literal["new"]) -> str: ...
+    def __getattr__(self, item: Literal["new"]) -> Any: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class CreateMixedUseTypeSection(Section):
     """Typed section for create-mixed-use-type configuration"""
-    use_type: str
-    metadata: str
+    use_type: Any
+    metadata: Any
     ratios: List[str]
 
     @overload
-    def __getattr__(self, item: Literal["use_type"]) -> str: ...
+    def __getattr__(self, item: Literal["use_type"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["metadata"]) -> str: ...
+    def __getattr__(self, item: Literal["metadata"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["ratios"]) -> List[str]: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -1499,19 +1517,19 @@ class CreateMixedUseTypeSection(Section):
 class CreatePolygonSection(Section):
     """Typed section for create-polygon configuration"""
     coordinates: List[Tuple[float, float]]
-    filename: str
+    filename: Any
 
     @overload
     def __getattr__(self, item: Literal["coordinates"]) -> List[Tuple[float, float]]: ...
     @overload
-    def __getattr__(self, item: Literal["filename"]) -> str: ...
+    def __getattr__(self, item: Literal["filename"]) -> Any: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ServerSection(Section):
     """Typed section for server configuration"""
     project_root: str
     protocol: str
-    host: str
+    host: Any
     port: int
     dev: bool
 
@@ -1520,7 +1538,7 @@ class ServerSection(Section):
     @overload
     def __getattr__(self, item: Literal["protocol"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["host"]) -> str: ...
+    def __getattr__(self, item: Literal["host"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["port"]) -> int: ...
     @overload
@@ -1529,52 +1547,52 @@ class ServerSection(Section):
 
 class SchemasSection(Section):
     """Typed section for schemas configuration"""
-    locator_method: str
+    locator_method: Any
     args: Optional[Any]
 
     @overload
-    def __getattr__(self, item: Literal["locator_method"]) -> str: ...
+    def __getattr__(self, item: Literal["locator_method"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["args"]) -> Optional[Any]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DevelopmentSection(Section):
     """Typed section for development configuration"""
-    nsis: str
-    conda: str
-    gui: str
-    yarn: str
-    release_version: str
+    nsis: Any
+    conda: Any
+    gui: Any
+    yarn: Any
+    release_version: Any
 
     @overload
-    def __getattr__(self, item: Literal["nsis"]) -> str: ...
+    def __getattr__(self, item: Literal["nsis"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["conda"]) -> str: ...
+    def __getattr__(self, item: Literal["conda"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["gui"]) -> str: ...
+    def __getattr__(self, item: Literal["gui"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["yarn"]) -> str: ...
+    def __getattr__(self, item: Literal["yarn"]) -> Any: ...
     @overload
-    def __getattr__(self, item: Literal["release_version"]) -> str: ...
+    def __getattr__(self, item: Literal["release_version"]) -> Any: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsGeneralSection(Section):
     """Typed section for plots-general configuration"""
-    plot_title: str | None
+    plot_title: Any
     plot_type: str
     y_min: float | None
     y_max: float | None
     y_step: float | None
-    y_label: str | None
+    y_label: Any
     facet_by_numbers_wrapped: int | None
     facet_by_rows: bool
     x_sorted_by: str
     x_sorted_reversed: bool
-    x_label: str | None
+    x_label: Any
     context: dict[str, Any] | None
 
     @overload
-    def __getattr__(self, item: Literal["plot_title"]) -> str | None: ...
+    def __getattr__(self, item: Literal["plot_title"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
@@ -1584,7 +1602,7 @@ class PlotsGeneralSection(Section):
     @overload
     def __getattr__(self, item: Literal["y_step"]) -> float | None: ...
     @overload
-    def __getattr__(self, item: Literal["y_label"]) -> str | None: ...
+    def __getattr__(self, item: Literal["y_label"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["facet_by_numbers_wrapped"]) -> int | None: ...
     @overload
@@ -1594,7 +1612,7 @@ class PlotsGeneralSection(Section):
     @overload
     def __getattr__(self, item: Literal["x_sorted_reversed"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["x_label"]) -> str | None: ...
+    def __getattr__(self, item: Literal["x_label"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["context"]) -> dict[str, Any] | None: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -1641,13 +1659,22 @@ class PlotsDemandSection(Section):
 
 class PlotsLifecycleEmissionsSection(Section):
     """Typed section for plots-lifecycle-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
+    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1658,14 +1685,20 @@ class PlotsLifecycleEmissionsSection(Section):
 
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    energy_carriers: list[str]
     pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["energy_carriers"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
@@ -1679,7 +1712,9 @@ class PlotsOperationalEmissionsSection(Section):
 class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
     plot_type: str
-    y_metric_to_plot: list[str]
+    y_category_to_plot: list[str]
+    operation_services: list[str]
+    envelope_components: list[str]
     pv_code: str
     y_metric_unit: str
     y_normalised_by: str
@@ -1689,7 +1724,11 @@ class PlotsEmissionTimelineSection(Section):
     @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
-    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
@@ -1754,6 +1793,8 @@ class JsonParameter(Parameter): ...
 class ListParameter(Parameter): ...
 class MultiChoiceParameter(Parameter): ...
 class MultiSystemParameter(Parameter): ...
+class NetworkLayoutChoiceParameter(Parameter): ...
+class NetworkLayoutNameParameter(Parameter): ...
 class NullablePathParameter(Parameter): ...
 class OptimizationIndividualListParameter(Parameter): ...
 class OrderedMultiChoiceParameter(Parameter): ...

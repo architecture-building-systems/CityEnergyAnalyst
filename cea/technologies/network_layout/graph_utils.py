@@ -6,6 +6,7 @@ and other graph-related utilities for thermal network layout.
 """
 
 import networkx as nx
+from scipy.spatial import KDTree
 from shapely.geometry import Point, LineString, MultiLineString
 from geopandas import GeoDataFrame as gdf
 
@@ -73,6 +74,165 @@ def gdf_to_nx(network_gdf: gdf, coord_precision: int = SHAPEFILE_TOLERANCE, pres
         elif geom.geom_type == 'MultiLineString':
             for sub_line in geom.geoms:
                 _add_linestring_to_graph(G, sub_line, row, idx, coord_precision, preserve_geometry, **attrs)
+
+    return G
+
+
+def _merge_orphan_nodes_to_nearest(G, terminal_nodes, merge_threshold):
+    """
+    Merge small isolated street fragments to the main network component.
+
+    Strategy:
+    1. Discard isolated single nodes (no edges, no terminals)
+    2. Merge small orphan components (< 10 nodes) within merge_threshold distance
+    3. Skip components that contain building terminals (preserve for error reporting)
+    4. Prefer non-terminal nodes as bridge points
+
+    Large disconnected components and terminal-protected components are left disconnected
+    so they can be reported as errors by the validation function.
+
+    :param G: NetworkX graph
+    :param terminal_nodes: Set of (x, y) coordinates that are building terminals
+    :param merge_threshold: Maximum distance for merging (meters)
+    :return: Graph with small orphan components merged (may still be disconnected)
+    """
+    import numpy as np
+    import math
+
+    components_merged_total = 0
+    edges_added_total = 0
+    components_discarded = 0
+
+    MAX_ITERATIONS = 100  # Safety limit
+    MAX_ORPHAN_SIZE = 10  # Only merge components smaller than this
+
+    for iteration in range(MAX_ITERATIONS):
+        # Find connected components
+        components = list(nx.connected_components(G))
+
+        if len(components) <= 1:
+            break  # Fully connected!
+
+        # Identify main component (largest) first
+        component_sizes = [(len(comp), comp) for comp in components]
+        component_sizes.sort(key=lambda x: x[0], reverse=True)
+        main_component = component_sizes[0][1]
+
+        # First pass: Discard single-node orphans (isolated nodes with no edges)
+        for size, component in component_sizes[1:]:  # Skip main component
+            component_terminals = [n for n in component if n in terminal_nodes]
+            # Only discard truly isolated single nodes, not edges (2 nodes)
+            if size == 1 and len(component_terminals) == 0:
+                for node in component:
+                    G.remove_node(node)
+                components_discarded += 1
+
+        # Recompute components after discarding
+        components = list(nx.connected_components(G))
+        if len(components) <= 1:
+            break
+
+        # Re-identify main component (may have changed after discarding)
+        component_sizes = [(len(comp), comp) for comp in components]
+        component_sizes.sort(key=lambda x: x[0], reverse=True)
+        main_component = component_sizes[0][1]
+
+        # Find small orphan components to merge (< MAX_ORPHAN_SIZE nodes, no terminals)
+        orphan_components = []
+        for size, comp in component_sizes[1:]:  # Skip main component
+            if size >= MAX_ORPHAN_SIZE:
+                continue  # Too large, likely a real disconnection
+            component_terminals = [n for n in comp if n in terminal_nodes]
+            if len(component_terminals) > 0:
+                continue  # Has terminals, preserve for error reporting
+            orphan_components.append(comp)
+
+        if not orphan_components:
+            break  # No more small orphans to merge
+
+        # Try to merge one orphan component per iteration
+        merged_this_iteration = False
+        for orphan_comp in orphan_components:
+            # Find closest node pair between orphan and main component
+            best_node_A = None  # Node in main component
+            best_node_B = None  # Node in orphan component
+            best_distance = float('inf')
+
+            # Build KDTree for main component
+            main_nodes = list(main_component)
+            main_coords = np.array([(n[0], n[1]) for n in main_nodes])
+            tree_main = KDTree(main_coords)
+
+            # Find closest pair (prefer non-terminals)
+            for node_B in orphan_comp:
+                if node_B in terminal_nodes:
+                    continue  # Skip terminals in orphan
+
+                coords_B = [node_B[0], node_B[1]]
+                dist, nearest_idx = tree_main.query(coords_B, k=1)
+                node_A = main_nodes[nearest_idx]
+
+                # Prefer non-terminal bridge points
+                if dist < best_distance and node_A not in terminal_nodes:
+                    best_distance = dist
+                    best_node_A = node_A
+                    best_node_B = node_B
+
+            # If no non-terminal pairs found, allow terminal as bridge (rare)
+            if best_node_A is None:
+                for node_B in orphan_comp:
+                    coords_B = [node_B[0], node_B[1]]
+                    dist, nearest_idx = tree_main.query(coords_B, k=1)
+                    node_A = main_nodes[nearest_idx]
+
+                    if dist < best_distance:
+                        best_distance = dist
+                        best_node_A = node_A
+                        best_node_B = node_B
+
+            # Merge if within threshold
+            if best_distance <= merge_threshold and best_node_A is not None:
+                # Snap best_node_B to best_node_A by reconnecting all edges
+                orphan_edges = list(G.edges(best_node_B, data=True))
+
+                for u, v, data in orphan_edges:
+                    other_node = v if u == best_node_B else u
+
+                    if 'geometry' in data:
+                        old_geom = data['geometry']
+                        coords = list(old_geom.coords)
+
+                        # Replace the orphan endpoint
+                        if coords[0] == best_node_B or coords[0] == u:
+                            coords[0] = best_node_A
+                        else:
+                            coords[-1] = best_node_A
+
+                        new_geom = LineString(coords)
+                        data['geometry'] = new_geom
+                        data['weight'] = new_geom.length
+                    else:
+                        data['weight'] = math.sqrt(
+                            (best_node_A[0] - other_node[0])**2 +
+                            (best_node_A[1] - other_node[1])**2
+                        )
+
+                    if not G.has_edge(other_node, best_node_A):
+                        G.add_edge(other_node, best_node_A, **data)
+                        edges_added_total += 1
+
+                G.remove_node(best_node_B)
+                components_merged_total += 1
+                merged_this_iteration = True
+                break  # Process one orphan per iteration, then recompute components
+
+        if not merged_this_iteration:
+            break  # No more orphans within threshold
+
+    if components_merged_total > 0:
+        print(f"Merged {components_merged_total} orphan component(s) to main network (added {edges_added_total} bridging edge(s))")
+    if components_discarded > 0:
+        print(f"Discarded {components_discarded} isolated single-node component(s)")
 
     return G
 
@@ -159,7 +319,22 @@ def normalize_coords(coords, precision=SHAPEFILE_TOLERANCE):
         >>> normalize_coords(coords, precision=6)
         [(1.123457, 2.987654), (3.111111, 5.0)]
     """
-    return [(round(x, precision), round(y, precision)) for x, y in coords]
+    rounded = []
+    for c in coords:
+        # Accept (x, y) or (x, y, z/other); ignore extra dimensions
+        # Also tolerate sequences like numpy arrays
+        if isinstance(c, (list, tuple)) and len(c) >= 2:
+            x = float(c[0])
+            y = float(c[1])
+        else:
+            # Fallback: attempt attribute access (e.g., shapely Point)
+            try:
+                x = float(c[0])  # type: ignore[index]
+                y = float(c[1])  # type: ignore[index]
+            except Exception as e:
+                raise ValueError(f"Invalid coordinate element for normalization: {c!r}") from e
+        rounded.append((round(x, precision), round(y, precision)))
+    return rounded
 
 
 def normalize_geometry(geom, precision=SHAPEFILE_TOLERANCE):
@@ -285,7 +460,15 @@ def nx_to_gdf(graph, crs, preserve_geometry=True):
         edges_data.append(edge_dict)
 
     # Create GeoDataFrame
-    edges_gdf = gdf(edges_data, crs=crs)
+    if edges_data:
+        edges_gdf = gdf(edges_data, crs=crs)
+    else:
+        # Handle empty graph (no edges)
+        edges_gdf = gdf(
+            columns=['geometry'],
+            geometry='geometry',
+            crs=crs
+        )
 
     return edges_gdf
 

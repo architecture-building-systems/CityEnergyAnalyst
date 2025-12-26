@@ -8,9 +8,18 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.database.components import Feedstocks, Conversion
+from cea.datamanagement.database.components import Feedstocks
 from cea.demand.building_properties import BuildingProperties
 from cea.utilities import epwreader
+
+__author__      = "Yiqiao Wang, Zhongming Shi"
+__copyright__   = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__credits__     = ["Yiqiao Wang", "Zhongming Shi"]
+__license__     = "MIT"
+__version__     = "0.1"
+__maintainer__  = "Reynold Mok"
+__email__       = "cea@arch.ethz.ch"
+__status__      = "Production"
 
 if TYPE_CHECKING:
     from cea.demand.building_properties.building_properties_row import (
@@ -19,12 +28,27 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 _tech_name_mapping = {
-    # tech_name: (<demand_col_name>, <supply_type_name>)
     "Qhs_sys": "hs",
     "Qww_sys": "dhw",
     "Qcs_sys": "cs",
     "E_sys": "el",
 }
+
+# All GRID components for PV allocation
+_GRID_COMPONENTS = [
+    'GRID_a',      # Appliances
+    'GRID_l',      # Lighting
+    'GRID_v',      # Ventilation
+    'GRID_ve',     # Elevators
+    'GRID_data',   # Data centers
+    'GRID_pro',    # Industrial processes
+    'GRID_aux',    # Auxiliary
+    'GRID_cdata',  # Data center cooling
+    'GRID_cre',    # Refrigeration cooling
+    'GRID_hs',     # Heating
+    'GRID_cs',     # Cooling
+    'GRID_ww',     # Domestic hot water
+]
 class OperationalHourlyTimeline:
     def __init__(
         self,
@@ -35,11 +59,11 @@ class OperationalHourlyTimeline:
         self.locator = locator
         self.bpr = bpr
         self.feedstock_db = Feedstocks.from_locator(locator)
-        self.conversion_db = Conversion.from_locator(locator)
         # Track which per-tech PV allocation columns were added per PV code for traceability
         self._pv_allocation: dict[str, pd.DataFrame] = {}
         self.emission_intensity_timeline = self.expand_feedstock_emissions()
-        self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name))
+        self.demand_timeseries = pd.read_csv(locator.get_demand_results_file(self.bpr.name), index_col=None)
+        self.demand_timeseries.index.set_names(['hour'], inplace=True)
         self.operational_emission_timeline = self.create_operational_timeline(n_hours=HOURS_IN_YEAR)
 
     @classmethod
@@ -79,15 +103,13 @@ class OperationalHourlyTimeline:
             for key in _tech_name_mapping.keys()
             for feedstock in list(self.feedstock_db._library.keys()) + ["NONE"]
         ]
-        if self.conversion_db.photovoltaic_panels is not None:  # add PV total offset columns as well
-            base_cols += [
-                f"PV_{pv_code}_offset_{demand}_kgCO2e"
-                for pv_code in self.conversion_db.photovoltaic_panels.keys()
-                for demand in list(_tech_name_mapping.keys()) + ["total"]
-            ]
+
+        # PV emission offset columns are added dynamically in log_pv_contribution()
+        # only when consider-pv-contributions is True
+
         timeline = pd.DataFrame(index=range(n_hours), columns=base_cols)
         timeline.loc[:, :] = 0.0  # Initialize all values to zero
-        timeline.index.name = "hour"
+        timeline.index.set_names(['hour'], inplace=True)
 
         # Add the date column from demand_timeseries
         date_col = next((col for col in self.demand_timeseries.columns if col.lower() == 'date'), None)
@@ -138,84 +160,59 @@ class OperationalHourlyTimeline:
 
         return expanded_timeline
     
-    def log_pv_contribution(
-        self,
-        pv_codes: list[str],
-        allocation_priority: list[str] | None = None,
-        allowed_demands: list[str] | None = None,
-    ) -> None:
+    def apply_pv_offsetting(self, pv_codes: list[str]) -> None:
         """
-        Allocate on-site PV generation to offset hourly GRID electricity consumption across technologies,
-        without mutating the original demand timeseries. Supports one or multiple PV types as separate
-        scenarios; stores each allocation under its PV name in `self._pv_allocation`. Returns None.
+        Apply simple net metering PV offsetting to GRID emissions.
+        Each PV panel is considered as a separate scenario.
 
-        :param pv_codes: List of PV type names. Each is used with the locator
-            to find the PV hourly results for this building.
-        :type pv_codes: list[str]
-        :param allocation_priority: Explicit priority order for technologies (keys of _tech_name_mapping) that are eligible for
-            PV allocation. The first item gets PV first in each hour. If None, defaults to
-            `["E_sys", "Qhs_sys", "Qww_sys", "Qcs_sys"]`.
-            If the list contains less than 4 items, the remaining eligible technologies will still be appended.
-        :type allocation_priority: list[str] | None, optional
-        :param allowed_demands: Optional whitelist of technologies (`Qhs_sys`, `Qww_sys`, `Qcs_sys`, `E_sys`)
-            to which PV can be allocated.
-            If None, all technologies are allowed.
-        :type allowed_demands: list[str] | None, optional
-        
+        For each PV panel, calculates:
+        - PV_{code}_GRID_offset_kgCO2e: Avoided emissions from on-site use (negative)
+        - PV_{code}_GRID_export_kgCO2e: Avoided emissions from grid export (negative)
 
-        Notes
-        -----
-        - Surplus PV is assumed exported (not credited toward operational emission reduction here).
-        - PV offsets are calculated using the hourly GRID emission intensity timeline and are negative by convention.
+        Both columns are negative values representing emission reductions.
 
-        - For each PV type:  
-            - Power allocation (stored in `self._pv_allocation[pv_code]` only): `E_PV_gen_kWh`, `E_PV_gen_used_kWh`,  
-              `E_PV_gen_kWh_leftover`, and `PV_to_{demand}_kWh_input`.  
-            - Emission offsets (persisted in operational_emission_timeline): `PV_{pv_code}_offset_{demand}_kgCO2e`  
-              and `PV_{pv_code}_offset_total_kgCO2e` (negative). 
+        Parameters
+        ----------
+        pv_codes : list[str]
+            List of PV panel codes to include (e.g., ["PV1", "PV2"])
         """
-        if len(pv_codes) == 0:
-            raise ValueError("pv_codes must contain at least one PV type name.")
+        if not self._is_emission_calculated:
+            raise RuntimeError(
+                "Operational emissions have not been calculated yet. Please call calculate_operational_emission() first."
+            )
 
-        ordered_demands = self._order_demands(allocation_priority, allowed_demands)
+        # Get GRID electricity demand from demand file
+        if "GRID_kWh" not in self.demand_timeseries.columns:
+            raise ValueError(
+                f"GRID_kWh column not found in demand timeseries for building {self.bpr.name}"
+            )
+
+        grid_demand_hourly = self.demand_timeseries["GRID_kWh"].to_numpy(dtype=float)
 
         for pv_code in pv_codes:
-            pv_hourly_raw = self._load_pv_hourly(pv_code) # E_PV_gen_kWh, E_PV_gen_kWh_leftover
-            pv_hourly_allocated, added_cols = self._allocate_pv_to_techs(pv_hourly_raw, ordered_demands, self.grid_intensity)
+            pv_df = self._load_pv_hourly(pv_code)
+            pv_generation_hourly = pv_df["E_PV_gen_kWh"].to_numpy(dtype=float)
+            offset_hourly = np.minimum(pv_generation_hourly, grid_demand_hourly)
+            export_hourly = pv_generation_hourly - offset_hourly
 
-            self._warn_leftover(pv_hourly_allocated, pv_code)
-            pv_hourly_final = self._aggregate_pv_emissions(pv_hourly_allocated)
+            # Convert to emissions (both negative = emission reductions)
+            offset_emissions = -offset_hourly * self.grid_intensity
+            export_emissions = -export_hourly * self.grid_intensity
 
-            power_allo_cols = [
-                self._PV_GEN_COL, self._PV_USED_COL, self._PV_LEFTOVER_COL,
-            ] + [
-                f"PV_to_{t}_kWh_input"
-                for t in ordered_demands
-                if f"PV_to_{t}_kWh_input" in added_cols
-            ]
-            emission_offset_cols = [
-                f"PV_offset_{t}_kgCO2e"
-                for t in ordered_demands
-                if f"PV_offset_{t}_kgCO2e" in pv_hourly_final.columns
-            ] + [self._PV_OFFSET_TOTAL_COL]
-
-            suffixed_for_emission = pv_hourly_final[emission_offset_cols].rename(
-                columns={
-                    c: c.replace("PV_", f"PV_{pv_code}_") for c in emission_offset_cols
-                }
+            # Add columns to timeline
+            self.operational_emission_timeline[f"PV_{pv_code}_GRID_offset_kgCO2e"] = offset_emissions
+            self.operational_emission_timeline[f"PV_{pv_code}_GRID_export_kgCO2e"] = export_emissions
+            # Log summary for this panel
+            total_offset = offset_hourly.sum()
+            total_export = export_hourly.sum()
+            total_offset_emissions = offset_emissions.sum()
+            total_export_emissions = export_emissions.sum()
+            print(
+                f"  PV panel {pv_code}: {total_offset:.0f} kWh offset on-site ({total_offset_emissions:.0f} kgCO2e avoided), "
+                f"{total_export:.0f} kWh exported to grid ({total_export_emissions:.0f} kgCO2e avoided)"
             )
-
-            self.operational_emission_timeline.loc[:, suffixed_for_emission.columns] = (
-                suffixed_for_emission.to_numpy(dtype=float)
-            )
-            self._pv_allocation[pv_code] = pv_hourly_final[power_allo_cols]
-
+    
     # ---- PV helpers (internal) -----------------------------------------------------
-
-    _PV_GEN_COL = "E_PV_gen_kWh"
-    _PV_LEFTOVER_COL = "E_PV_gen_kWh_leftover"
-    _PV_USED_COL = "E_PV_gen_used_kWh"
-    _PV_OFFSET_TOTAL_COL = "PV_offset_total_kgCO2e"
 
     @property
     def grid_intensity(self) -> np.ndarray:
@@ -223,112 +220,25 @@ class OperationalHourlyTimeline:
             raise ValueError("'GRID' emission intensity timeline is missing.")
         return self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
 
-    def _order_demands(self, allocation_priority: list[str] | None, allow_demands: list[str] | None) -> list[str]:
-        all_demands = list(_tech_name_mapping.keys())
-        default_priority = ["E_sys", "Qcs_sys", "Qhs_sys", "Qww_sys"]
-        prioritized_demands = list(allocation_priority) if allocation_priority else default_priority
-        prioritized_demands = [demand for demand in prioritized_demands if demand in all_demands]
-        if not prioritized_demands:
-            prioritized_demands = default_priority
-        allowed_set = set(all_demands) if allow_demands is None else (set(allow_demands) & set(all_demands))
-        ordered = [t for t in prioritized_demands if t in allowed_set]
-        ordered += [t for t in all_demands if t in allowed_set and t not in ordered]
-        return ordered
-
     def _load_pv_hourly(self, pv_code: str) -> pd.DataFrame:
         pv_results_path = self.locator.PV_results(self.bpr.name, pv_code)
         if not os.path.exists(pv_results_path):
-            raise FileNotFoundError(f"PV results file not found for {pv_code} at {pv_results_path}.")
+            error_msg = (
+                f"PV electricity results missing for building {self.bpr.name}, panel type: {pv_code}. "
+                f"Please run the 'photovoltaic (PV) panels' script first to generate PV potential results. "
+                f"Expected file: {pv_results_path}"
+            )
+            print(f"ERROR: {error_msg}")
+            raise FileNotFoundError(error_msg)
         df = pd.read_csv(pv_results_path, index_col=None)
         if len(df) != HOURS_IN_YEAR:
             raise ValueError(
                 f"PV results for {pv_code} should have {HOURS_IN_YEAR} rows, but got {len(df)} rows."
             )
         df.index = self.demand_timeseries.index  # align to demand index
-        if self._PV_GEN_COL not in df.columns:
-            raise ValueError(f"Expected column '{self._PV_GEN_COL}' not found in PV results for {pv_code}.")
-        df[self._PV_LEFTOVER_COL] = df[self._PV_GEN_COL].astype(float)
+        if 'E_PV_gen_kWh' not in df.columns:
+            raise ValueError(f"Expected column 'E_PV_gen_kWh' not found in PV results for {pv_code}.")
         return df
-
-    def _allocate_pv_to_techs(
-        self,
-        pv_hourly_results: pd.DataFrame,
-        ordered_demands: list[str],
-        grid_intensity: np.ndarray,
-    ) -> tuple[pd.DataFrame, list[str]]:
-        """Allocate PV to GRID-supplied technologies in the given order, adding per-tech columns and offsets.
-
-        Returns
-        -------
-        (updated_df, added_cols)
-            updated_df: New DataFrame with E_PV_gen_kWh_leftover updated and per-tech columns (PV_to_*) and
-                per-demand offset columns (PV_offset_*) added.
-            added_cols: List of newly added per-tech PV_to_* column names (in demand priority order).
-        """
-        pv_df = pv_hourly_results.copy()
-        added_cols: list[str] = []
-        for demand_type in ordered_demands:
-            supply_type_name = _tech_name_mapping[demand_type]
-            demand_col = f"{demand_type}_kWh"
-
-            feedstock: str = self.bpr.supply[f"source_{supply_type_name}"]
-            if feedstock != 'GRID':
-                continue
-            if demand_col not in self.demand_timeseries.columns:
-                raise ValueError(f"Expected demand column '{demand_col}' not found in demand timeseries.")
-
-            eff: float = self.bpr.supply[f"eff_{supply_type_name}"]
-            eff = eff if eff > 0 else 1.0  # avoid division by zero
-
-            # Electricity input required to supply this end-use demand via GRID
-            elec_input_demand = self.demand_timeseries[demand_col].astype(float) / eff
-            pv_left = pv_df[self._PV_LEFTOVER_COL].to_numpy(dtype=float)
-            req = elec_input_demand.to_numpy(dtype=float)
-            pv_deduction = np.minimum(pv_left, req)
-
-            # Update leftover PV in the new copy
-            pv_df[self._PV_LEFTOVER_COL] = (
-                pv_df[self._PV_LEFTOVER_COL].astype(float) - pv_deduction
-            ).clip(lower=0)
-
-            col_name = f"PV_to_{demand_type}_kWh_input"
-            pv_df[col_name] = pd.Series(pv_deduction, index=self.demand_timeseries.index)
-            added_cols.append(col_name)
-            # Per-demand negative offsets directly from allocation
-            pv_df[f"PV_offset_{demand_type}_kgCO2e"] = -(
-                pv_df[col_name].to_numpy(dtype=float) * grid_intensity
-            ).astype(float)
-        return pv_df, added_cols
-
-    def _aggregate_pv_emissions(self, pv_hourly_results: pd.DataFrame) -> pd.DataFrame:
-        """Compute used PV and total offsets (sum of per-demand offsets), returning a new DataFrame.
-        """
-        pv_df = pv_hourly_results.copy()
-        pv_df[self._PV_USED_COL] = (
-            pv_df[self._PV_GEN_COL].astype(float)
-            - pv_df[self._PV_LEFTOVER_COL].astype(float)
-        )
-        # Total negative PV offset is the sum of per-demand offsets (already negative)
-        per_demand_cols = [
-            f"PV_offset_{d}_kgCO2e" for d in _tech_name_mapping.keys() if f"PV_offset_{d}_kgCO2e" in pv_df.columns
-        ]
-        if per_demand_cols:
-            pv_df[self._PV_OFFSET_TOTAL_COL] = pv_df[per_demand_cols].sum(axis=1).astype(float)
-        else:
-            pv_df[self._PV_OFFSET_TOTAL_COL] = 0.0
-        return pv_df
-
-    def _warn_leftover(self, pv_hourly_results: pd.DataFrame, pv_code: str) -> None:
-        total_leftover = float(pv_hourly_results[self._PV_LEFTOVER_COL].sum())
-        if total_leftover > 0:
-            warnings.warn(
-                f"There is leftover PV generation for {pv_code} in building {self.bpr.name} after covering all electricity demands from GRID. "
-                f"This is because in some hours, PV generation exceeds the total electricity demand from GRID and there's no battery to store excess generation. "
-                f"Leftover PV generation will not be accounted for in the current operational emission calculation, "
-                f"because it is assumed to be exported back to the grid. "
-                f"Total yearly leftover PV generation: {total_leftover:.2f} kWh.",
-                RuntimeWarning,
-            )
 
     def calculate_operational_emission(self) -> None:
         """
@@ -375,6 +285,7 @@ class OperationalHourlyTimeline:
     def emission_by_demand(self) -> pd.DataFrame:
         """
         Get a DataFrame summarizing total operational emissions by demand type.
+        PV-related columns are excluded.
 
         :return: A DataFrame with total emissions per demand type in kgCO2e.
         :rtype: pd.DataFrame
@@ -385,7 +296,9 @@ class OperationalHourlyTimeline:
         for demand_type in _tech_name_mapping.keys():
             demand_cols = [
                 col for col in self.operational_emission_timeline.columns
-                if col.startswith(f"{demand_type}_") and col.endswith("_kgCO2e") and col != f"{demand_type}_kgCO2e"
+                if col.startswith(f"{demand_type}_") and col.endswith("_kgCO2e")
+                and col != f"{demand_type}_kgCO2e"
+                and "_PV" not in col  # Exclude PV offset columns
             ]
             data[f"{demand_type}_kgCO2e"] = self.operational_emission_timeline[demand_cols].sum(axis=1)
         return pd.DataFrame(data)
@@ -394,6 +307,7 @@ class OperationalHourlyTimeline:
     def emission_by_feedstock(self) -> pd.DataFrame:
         """
         Get a DataFrame summarizing total operational emissions by feedstock type.
+        PV-related columns are excluded.
 
         :return: A DataFrame with total emissions per feedstock type in kgCO2e.
         :rtype: pd.DataFrame
@@ -410,12 +324,29 @@ class OperationalHourlyTimeline:
             data[f"{feedstock}_kgCO2e"] = self.operational_emission_timeline[feedstock_cols].sum(axis=1)
         return pd.DataFrame(data)
 
+    @property
+    def operational_emission_timeline_extended(self) -> pd.DataFrame:
+        """
+        Get the operational emission timeline extended with per-demand emissions and per-feedstock emissions.
+
+        :return: A DataFrame representing the extended operational emission timeline.
+        :rtype: pd.DataFrame
+        """
+        if not self._is_emission_calculated:
+            raise RuntimeError("Operational emissions have not been calculated yet. Please call calculate_operational_emission() first.")
+        df_extended = self.operational_emission_timeline.copy()
+        df_extended = pd.concat(
+            [df_extended, self.emission_by_demand, self.emission_by_feedstock],
+            axis=1
+        )
+        return df_extended
+
     def save_results(self) -> None:
         """
         Save the operational emission results to a CSV file.
         """
-        if not os.path.exists(self.locator.get_lca_timeline_folder()):
-            os.makedirs(self.locator.get_lca_timeline_folder())
+        if not os.path.exists(self.locator.get_lca_operational_folder()):
+            os.makedirs(self.locator.get_lca_operational_folder())
 
         # Reset index to convert hour index to a column, then reorder columns
         df_to_save = self.operational_emission_timeline
@@ -433,7 +364,7 @@ class OperationalHourlyTimeline:
 
         df_to_save.to_csv(
             self.locator.get_lca_operational_hourly_building(self.bpr.name),
-            index=False, float_format='%.3f')
+            index=False, float_format='%.2f')
 
 
 if __name__ == "__main__":

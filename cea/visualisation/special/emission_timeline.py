@@ -73,9 +73,78 @@ class EmissionTimelinePlot:
 
         self.plot_type = config.plots_emission_timeline.plot_type
 
+    def _aggregate_into_9_categories(self):
+        """
+        Aggregate emission columns into 9 main categories:
+        - space_heating (operation_Qhs_sys)
+        - space_cooling (operation_Qcs_sys)
+        - dhw (operation_Qww_sys)
+        - electricity (operation_E_sys)
+        - production (all production_*)
+        - demolition (all demolition_*)
+        - biogenic (all biogenic_*)
+        - pv_electricity_offset (PV_*_offset)
+        - pv_electricity_export (PV_*_export)
+
+        Returns:
+        --------
+        dict: Dictionary with category names as keys and metadata
+        """
+        categories = {
+            'space_heating': {'columns': [], 'positive': True, 'display_name': 'space_heating'},
+            'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
+            'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
+            'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
+            'production': {'columns': [], 'positive': True, 'display_name': 'production'},
+            'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
+            'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
+            'pv_electricity_offset': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_offset'},
+            'pv_electricity_export': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_export'}
+        }
+
+        # Categorize columns
+        for col in self.y_columns:
+            col_lower = col.lower()
+
+            # Check for specific operation services
+            if 'operation_qhs_sys' in col_lower or 'operation_space_heating' in col_lower:
+                categories['space_heating']['columns'].append(col)
+            elif 'operation_qcs_sys' in col_lower or 'operation_space_cooling' in col_lower:
+                categories['space_cooling']['columns'].append(col)
+            elif 'operation_qww_sys' in col_lower or 'operation_dhw' in col_lower:
+                categories['dhw']['columns'].append(col)
+            elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
+                categories['electricity']['columns'].append(col)
+            # Check for PV offset/export
+            elif 'pv_' in col_lower and '_offset' in col_lower:
+                categories['pv_electricity_offset']['columns'].append(col)
+            elif 'pv_' in col_lower and '_export' in col_lower:
+                categories['pv_electricity_export']['columns'].append(col)
+            # Check for lifecycle categories
+            elif col_lower.startswith('biogenic'):
+                categories['biogenic']['columns'].append(col)
+            elif col_lower.startswith('production'):
+                categories['production']['columns'].append(col)
+            elif col_lower.startswith('demolition'):
+                categories['demolition']['columns'].append(col)
+
+        # Aggregate columns within each category
+        aggregated_data = {}
+        for category, info in categories.items():
+            if info['columns']:
+                # Sum all columns in this category
+                aggregated_data[category] = {
+                    'data': self.df[info['columns']].sum(axis=1),
+                    'positive': info['positive'],
+                    'display_name': info['display_name']
+                }
+
+        return aggregated_data
+
     def categorize_and_aggregate_emissions(self):
         """
         Categorize emission columns and aggregate by category.
+        DEPRECATED: Use _aggregate_into_9_categories() instead.
 
         Returns:
         --------
@@ -86,8 +155,8 @@ class EmissionTimelinePlot:
             'operation': {'columns': [], 'positive': True},
             'production': {'columns': [], 'positive': True},
             'demolition': {'columns': [], 'positive': True},
-            'biogenic': {'columns': [], 'positive': True},
-            'pv': {'columns': [], 'positive': True}
+            'biogenic': {'columns': [], 'positive': False},  # Negative: carbon storage
+            'pv': {'columns': [], 'positive': False}  # Negative: PV offset/export
         }
 
         # Categorize columns
@@ -139,16 +208,21 @@ class EmissionTimelinePlot:
     def _create_line_plot(self):
         """
         Create line plot showing emissions over time.
+        Aggregates into 9 main categories with colors matching the bar plots.
         """
-        aggregated_data = self.categorize_and_aggregate_emissions()
+        aggregated_data = self._aggregate_into_9_categories()
 
-        # Define colors for each category
+        # Define colors matching the bar plot scheme
         category_colors = {
-            'operation': COLOURS_TO_RGB['red'],
-            'production': COLOURS_TO_RGB['orange'],
-            'demolition': COLOURS_TO_RGB['green'],
-            'biogenic': COLOURS_TO_RGB['blue'],
-            'pv': COLOURS_TO_RGB['yellow']
+            'space_heating': COLOURS_TO_RGB['red'],
+            'space_cooling': COLOURS_TO_RGB['blue'],
+            'dhw': COLOURS_TO_RGB['orange'],
+            'electricity': COLOURS_TO_RGB['green'],
+            'production': COLOURS_TO_RGB['purple'],
+            'demolition': COLOURS_TO_RGB['brown'],
+            'biogenic': COLOURS_TO_RGB['grey'],
+            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
+            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
         }
 
         fig = go.Figure()
@@ -156,7 +230,7 @@ class EmissionTimelinePlot:
         # Add traces for each category
         for category, info in aggregated_data.items():
             color = category_colors.get(category, COLOURS_TO_RGB['grey'])
-            display_name = 'PV' if category == 'pv' else category.capitalize()
+            display_name = info['display_name']
             is_positive = info['positive']
             data = info['data']
 
@@ -178,16 +252,14 @@ class EmissionTimelinePlot:
                     hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: %{{y:.2f}}<extra></extra>'
                 ))
             else:
-                # Negative emissions (below x-axis) - dashed line
+                # Negative emissions (below x-axis)
                 fig.add_trace(go.Scatter(
                     x=self.df['X'],
-                    y=-data,  # Negate to show below x-axis
+                    y=data,  # Use data as-is (already negative)
                     mode='lines',
                     name=display_name,
-                    line=dict(color=color, width=3,
-                              # dash='dash'
-                              ),
-                    hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: -%{{y:.2f}}<extra></extra>'
+                    line=dict(color=color, width=3),
+                    hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: %{{y:.2f}}<extra></extra>'
                 ))
 
         # Update layout
@@ -212,8 +284,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black',
-                rangemode='tozero'
+                zerolinecolor='black'
+                # Allow negative values to show below x-axis
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -252,8 +324,8 @@ class EmissionTimelinePlot:
             else:
                 negative_total += data
 
-        # Calculate net emissions (positive - negative)
-        net_emissions = positive_total - negative_total
+        # Calculate net emissions (positive + negative, where negative values are already negative)
+        net_emissions = positive_total + negative_total
 
         # Apply cumulative sum (line_net always shows cumulative)
         net_emissions_cumulative = net_emissions.cumsum()
@@ -321,8 +393,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black',
-                rangemode='tozero'
+                zerolinecolor='black'
+                # Allow negative values to show below x-axis for net emissions
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -342,26 +414,31 @@ class EmissionTimelinePlot:
     def _create_stacked_area_plot(self, percentage=False):
         """
         Create stacked area plot showing emissions over time.
+        Aggregates into 9 main categories with colors matching the bar plots.
 
         Parameters:
         -----------
         percentage : bool
             If True, show as percentage (0-100%). If False, show absolute values.
         """
-        aggregated_data = self.categorize_and_aggregate_emissions()
+        aggregated_data = self._aggregate_into_9_categories()
 
-        # Define colors for each category
+        # Define colors matching the bar plot scheme
         category_colors = {
-            'operation': COLOURS_TO_RGB['red'],
-            'production': COLOURS_TO_RGB['orange'],
-            'demolition': COLOURS_TO_RGB['green'],
-            'biogenic': COLOURS_TO_RGB['blue'],
-            'pv': COLOURS_TO_RGB['yellow']
+            'space_heating': COLOURS_TO_RGB['red'],
+            'space_cooling': COLOURS_TO_RGB['blue'],
+            'dhw': COLOURS_TO_RGB['orange'],
+            'electricity': COLOURS_TO_RGB['green'],
+            'production': COLOURS_TO_RGB['purple'],
+            'demolition': COLOURS_TO_RGB['brown'],
+            'biogenic': COLOURS_TO_RGB['grey'],
+            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
+            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
         }
 
         fig = go.Figure()
 
-        # Separate positive and negative emissions
+        # Separate positive and negative emissions by category
         positive_data = {}
         negative_data = {}
 
@@ -373,27 +450,32 @@ class EmissionTimelinePlot:
                 data = data.cumsum()
 
             if info['positive']:
-                positive_data[category] = data
+                positive_data[category] = {'data': data, 'display_name': info['display_name']}
             else:
-                negative_data[category] = data
+                negative_data[category] = {'data': data, 'display_name': info['display_name']}
 
         # Convert to percentage if requested
         if percentage:
-            # Calculate totals for each year
+            # Calculate positive total BEFORE converting to percentages (needed for negative scaling)
             if positive_data:
-                positive_total = pd.DataFrame(positive_data).sum(axis=1)
-                for category in positive_data:
-                    positive_data[category] = (positive_data[category] / positive_total * 100).fillna(0)
+                positive_total = pd.DataFrame({k: v['data'] for k, v in positive_data.items()}).sum(axis=1)
 
-            if negative_data:
-                negative_total = pd.DataFrame(negative_data).sum(axis=1)
+            # Convert positive data to percentages (0-100%)
+            if positive_data:
+                for category in positive_data:
+                    positive_data[category]['data'] = (positive_data[category]['data'] / positive_total * 100).fillna(0)
+
+            # Scale negative values proportionate to positive values (not 0 to -100%)
+            # E.g., if positive=100, negative=-30, then negative shows as -30% (30% of positive)
+            if negative_data and positive_data:
                 for category in negative_data:
-                    negative_data[category] = (negative_data[category] / negative_total * 100).fillna(0)
+                    negative_data[category]['data'] = (negative_data[category]['data'] / positive_total * 100).fillna(0)
 
         # Add positive emission traces (stacked)
-        for category, data in positive_data.items():
+        for category, info in positive_data.items():
             color = category_colors.get(category, COLOURS_TO_RGB['grey'])
-            display_name = 'PV' if category == 'pv' else category.capitalize()
+            display_name = info['display_name']
+            data = info['data']
 
             hover_label = "Percentage" if percentage else ("Cumulative Emission" if self.bool_accumulated else "Emission")
             hover_format = "%{y:.1f}%" if percentage else "%{y:.2f}"
@@ -411,19 +493,24 @@ class EmissionTimelinePlot:
             ))
 
         # Add negative emission traces (stacked below x-axis)
-        for category, data in negative_data.items():
+        for category, info in negative_data.items():
             color = category_colors.get(category, COLOURS_TO_RGB['grey'])
-            display_name = 'PV' if category == 'pv' else category.capitalize()
+            display_name = info['display_name']
+            data = info['data']
 
             hover_label = "Percentage" if percentage else ("Cumulative Emission" if self.bool_accumulated else "Emission")
-            hover_format = "-%{y:.1f}%" if percentage else "-%{y:.2f}"
+
+            # Data is already negative (either from source or from abs() division above)
+            # Use as-is to show below x-axis
+            y_data = data
+            hover_format = "%{y:.1f}%" if percentage else "%{y:.2f}"
 
             fig.add_trace(go.Scatter(
                 x=self.df['X'],
-                y=-data,  # Negate to show below x-axis
+                y=y_data,
                 mode='lines',
                 name=display_name,
-                line=dict(width=0, dash='dash'),
+                line=dict(width=0),
                 fillcolor=color,
                 fill='tonexty',
                 stackgroup='negative',
@@ -460,8 +547,8 @@ class EmissionTimelinePlot:
                 gridcolor='rgba(200,200,200,0.3)',
                 zeroline=True,
                 zerolinewidth=2,
-                zerolinecolor='black',
-                rangemode='tozero'
+                zerolinecolor='black'
+                # Allow negative values to show below x-axis with stackgroup='negative'
             ),
             hovermode='x unified',
             plot_bgcolor='white',
@@ -550,6 +637,10 @@ def plot_emission_timeline(config, context: dict):
     bool_include_advanced_analytics = False
     plot_config.x_to_plot = 'district_and_annually'
 
+    # Note: PV validation is deferred to after data loading
+    # We need to check if PV columns exist in the loaded emission data,
+    # not just if PV result files exist
+
     # FIXME: temporary fix for missing x_sorted_by and x_sorted_reversed in plot_config_general
     # use dummy config for plot_config_general
     class DummyConfig:
@@ -572,12 +663,26 @@ def plot_emission_timeline(config, context: dict):
                                                    df_architecture_data,
                                                    solar_panel_types_list)
 
+    # Validate PV columns exist in loaded data (column-level validation)
+    pv_code = getattr(plot_config, 'pv_code', None)
+    if pv_code:
+        # Check if expected PV columns exist in the data
+        expected_pv_patterns = [f'PV_{pv_code}_', f'_PV_{pv_code}']
+        pv_columns_found = any(
+            any(pattern in col for pattern in expected_pv_patterns)
+            for col in df_to_plotly.columns
+        )
+
+        if not pv_columns_found:
+            from cea.visualisation.a_data_loader import raise_missing_pv_error
+            raise_missing_pv_error(pv_code, context='emission')
+
     # # Add placeholder columns for biogenic and PV if their source columns exist (dummy values)
     # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
     #     df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
     #     list_y_columns.append('biogenic_underside_kgCO2e/m2')
-    # if 'operation_appliances_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_appliances_kgCO2e/m2']
+    # if 'operation_E_sys_kgCO2e/m2' in df_to_plotly.columns:
+    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_E_sys_kgCO2e/m2']
     #     list_y_columns.append('pv_kgCO2e/m2')
 
     # Create EmissionTimelinePlot instance
