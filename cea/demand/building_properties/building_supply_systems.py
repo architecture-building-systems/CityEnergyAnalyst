@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database.assemblies import Supply
 from cea.demand.building_properties.base import BuildingPropertiesDatabase
 
 if TYPE_CHECKING:
@@ -30,28 +31,29 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
 
     @staticmethod
     def get_properties_supply_systems(locator: InputLocator, properties_supply: pd.DataFrame):
-        # Supply system mappings: (locator_method, join_column, column_renames, fields_to_extract)
+        # Supply system mappings: (db dataframe, join_column, column_renames, fields_to_extract)
+        supply_database = Supply.from_locator(locator)
         supply_mappings = {
             'supply heating': (
-                locator.get_database_assemblies_supply_heating(),
+                supply_database.heating,
                 'supply_type_hs',
                 {"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
                 ['source_hs', 'scale_hs', 'eff_hs']
             ),
             'supply cooling': (
-                locator.get_database_assemblies_supply_cooling(),
+                supply_database.cooling,
                 'supply_type_cs',
                 {"feedstock": "source_cs", "scale": "scale_cs", "efficiency": "eff_cs"},
                 ['source_cs', 'scale_cs', 'eff_cs']
             ),
             'supply dhw': (
-                locator.get_database_assemblies_supply_hot_water(),
+                supply_database.hot_water,
                 'supply_type_dhw',
                 {"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"},
                 ['source_dhw', 'scale_dhw', 'eff_dhw']
             ),
             'supply electricity': (
-                locator.get_database_assemblies_supply_electricity(),
+                supply_database.electricity,
                 'supply_type_el',
                 {"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"},
                 ['source_el', 'scale_el', 'eff_el']
