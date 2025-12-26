@@ -1,12 +1,8 @@
 import csv
 import os
-import random
 from typing import Any
 from cea.datamanagement.database.assemblies import SURFACE_RESISTANCES
-try:
-    import pulp  # type: ignore
-except Exception:
-    pulp = None
+import pulp  # type: ignore
 
 
 def read_materials(materials_csv: str) -> list[dict[str, Any]]:
@@ -94,98 +90,6 @@ def compute_ghg_per_m2(
     return sum(rho * t * g for t, rho, g in zip(thicknesses, rhos, ghg_per_kg))
 
 
-def optimize_three_layer(
-    materials: list[dict[str, Any]],
-    U_target: float,
-    GHG_target: float,
-    kind: str,
-    samples_per_combo: int = 300,
-    max_materials: int = 40,
-    required_material_name: str | None = None,
-    weight_u: float = 0.8,
-    weight_ghg: float = 0.2,
-    min_required_thickness: float = 0.1,
-) -> tuple[list[dict[str, Any]], list[float], float, float]:
-    # Heuristic random search over material triples and thicknesses
-    # Choose candidate materials: lowest k (insulators) and highest k (structure) mix
-    mats_sorted_by_k = sorted(materials, key=lambda m: float(m["k"]))  # ascending
-    low_k = mats_sorted_by_k[: max_materials // 2]
-    high_k = list(reversed(mats_sorted_by_k))[: max_materials // 2]
-    candidates = (low_k + high_k)[:max_materials]
-
-    # If a required material name is specified, filter candidates to ensure at least one matches; if not found, keep all
-    def name_matches(m: dict[str, Any]) -> bool:
-        nm = (str(m.get("name") or "")).lower()
-        rq = (required_material_name or "").lower()
-        return bool(rq) and (rq in nm)
-
-    best_score = float("inf")
-    best_combo: list[dict[str, Any]] = []
-    best_t: list[float] = [0.0, 0.0, 0.0]
-    best_u, best_ghg = float("inf"), float("inf")
-
-    # Precompute plausible thickness bounds by target U
-    # If we assume a single effective k, required R = 1/U - Rsi - Rse
-    coeffs = SURFACE_RESISTANCES.get(kind, {"internal": 0.0, "external": 0.0})
-    Rsi, Rse = coeffs["internal"], coeffs["external"]
-    R_needed = max(0.01, 1.0 / max(U_target, 1e-6) - Rsi - Rse)
-    # Let total thickness range from 0.05 to 0.7 m depending on R_needed
-    min_total_th = 0.05 if R_needed < 1.0 else 0.1
-    max_total_th = 0.7 if R_needed > 2.0 else 0.5
-
-    for i in range(len(candidates)):
-        for j in range(i + 1, len(candidates)):
-            for k_idx in range(j + 1, len(candidates)):
-                combo = [candidates[i], candidates[j], candidates[k_idx]]
-                if required_material_name and not any(name_matches(m) for m in combo):
-                    continue
-                ks = [float(m["k"]) for m in combo]
-                rhos = [float(m["rho"]) for m in combo]
-                ghgs = [float(m["ghg_per_kg"]) for m in combo]
-
-                # Bias: make layer 2 the insulator (lowest k in combo)
-                ins_idx = ks.index(min(ks))
-
-                for _ in range(samples_per_combo):
-                    # Sample total thickness and split across layers
-                    total_th = random.uniform(min_total_th, max_total_th)
-                    # Insulation gets 40-90% of total thickness
-                    t_ins = total_th * random.uniform(0.4, 0.9)
-                    remaining = max(0.0, total_th - t_ins)
-                    # Split remaining between two structural/finish layers; allow one to be near zero
-                    frac = random.uniform(0.0, 1.0)
-                    t_other1 = remaining * frac
-                    t_other2 = remaining - t_other1
-                    ts = [0.0, 0.0, 0.0]
-                    ts[ins_idx] = t_ins
-                    other_idxs = [idx for idx in range(3) if idx != ins_idx]
-                    ts[other_idxs[0]] = t_other1
-                    ts[other_idxs[1]] = t_other2
-
-                    # Enforce minimum thickness for any required material present in combo
-                    if required_material_name:
-                        req_lower = required_material_name.lower()
-                        for idx, m in enumerate(combo):
-                            if req_lower in str(m.get("name") or "").lower():
-                                ts[idx] = max(ts[idx], min_required_thickness)
-
-                    U = compute_u(ts, ks, kind)
-                    GHG = compute_ghg_per_m2(ts, rhos, ghgs)
-                    # Weighted objective: prioritise U-value fit over GHG
-                    u_err = abs(U - U_target) / max(U_target, 1e-6)
-                    ghg_err = abs(GHG - GHG_target) / max(
-                        GHG_target if GHG_target > 0 else 1.0, 1e-6
-                    )
-                    score = weight_u * u_err + weight_ghg * ghg_err
-                    if score < best_score:
-                        best_score = score
-                        best_combo = combo
-                        best_t = ts
-                        best_u, best_ghg = U, GHG
-
-    return best_combo, best_t, best_u, best_ghg
-
-
 def optimize_three_layer_milp(
     materials: list[dict[str, Any]],
     U_target: float,
@@ -197,20 +101,13 @@ def optimize_three_layer_milp(
     weight_ghg: float = 0.2,
     min_required_thickness: float = 0.1,
 ) -> tuple[list[dict[str, Any]], list[float], float, float]:
-    """MILP variant: select exactly 3 materials and thicknesses to match U_target while minimising GHG deviation.
+    """select exactly 3 materials and thicknesses to match U_target while minimising GHG deviation.
 
     Linearization uses R_layers = sum(t_i / k_i) and constraint Rsi + R_layers + Rse = 1/U_target.
     """
-    if pulp is None:
-        return optimize_three_layer(
-            materials,
-            U_target,
-            GHG_target,
-            kind,
-            required_material_name=required_material_name,
-            weight_u=weight_u,
-            weight_ghg=weight_ghg,
-        )
+    # Require PuLP to be available
+    if not hasattr(pulp, "LpProblem"):
+        raise RuntimeError("PuLP is required for material envelope optimisation.")
 
     mats_sorted = sorted(materials, key=lambda m: float(m["k"]))
     low = mats_sorted[: max_materials // 2]
@@ -279,21 +176,60 @@ def optimize_three_layer_milp(
         if v > 0.5:
             sel.append(i)
     if len(sel) != 3:
-        return optimize_three_layer(
-            materials,
-            U_target,
-            GHG_target,
-            kind,
-            required_material_name=required_material_name,
-            weight_u=weight_u,
-            weight_ghg=weight_ghg,
+        # Fallback: pick top-3 by selection value to keep PuLP-only behaviour
+        scored = sorted(
+            [(i, float(getattr(y[i], "varValue", 0.0) or 0.0)) for i in range(n)],
+            key=lambda t: t[1],
+            reverse=True,
         )
+        sel = [i for i, _ in scored[:3]]
 
     combo = [candidates[i] for i in sel]
     ts = [float(t[i].value() or 0.0) for i in sel]
     U = compute_u(ts, [float(m["k"]) for m in combo], kind)
     GHG = sum(float(m["rho"]) * ts[idx] * float(m["ghg_per_kg"]) for idx, m in enumerate(combo))
     return combo, ts, U, GHG
+
+
+def _process_targets(
+    base_dir: str,
+    kind: str,
+    envelope_dir: str,
+    out_dir: str,
+    materials: list[dict[str, Any]],
+    u_key: str,
+    ghg_key: str,
+    extra_keys: list[str],
+    required_rule: Any,
+    weight_u: float,
+    weight_ghg: float,
+    min_required_thickness: float,
+) -> None:
+    targets = read_envelope_targets(
+        os.path.join(envelope_dir, f"ENVELOPE_{kind.upper()}.csv"), u_key, ghg_key, extra_keys=extra_keys
+    )
+    results = []
+    for tgt in targets:
+        req_name = required_rule(tgt)
+        combo, ts, u, ghg = optimize_three_layer_milp(
+            materials,
+            float(tgt["U"]),
+            float(tgt["GHG"]),
+            kind=kind,
+            required_material_name=req_name,
+            weight_u=weight_u,
+            weight_ghg=weight_ghg,
+            min_required_thickness=min_required_thickness,
+        )
+        try:
+            print(
+                f"[{kind}] {tgt['code']}: target U={float(tgt['U']):.3f}, GHG={float(tgt['GHG']):.2f}; "
+                f"achieved U={float(u):.3f}, GHG={float(ghg):.2f}"
+            )
+        except Exception:
+            pass
+        results.append((tgt, ts, {"materials": combo, "U": u, "GHG": ghg}))
+    write_material_based_csv(os.path.join(out_dir, f"ENVELOPE_{kind.upper()}.csv"), kind, results)
 
 
 def write_material_based_csv(
@@ -365,21 +301,18 @@ def write_material_based_csv(
                 "material_name_3": m3.get("name"),
                 "thickness_3": round(ts[2], 3),
             }
+            row["Reference"] = f"artificial construction with U value and GHG emission matched with original code {target['code']}. Material selection does not have any physical meaning. Original reference: {target.get('Reference')}"
             # Copy service life field depending on kind if present in target
             if kind == "floor":
                 row["Service_Life_floor"] = target.get("Service_Life_floor")
-                row["Reference"] = target.get("Reference") or meta.get("Reference", f"artificial construction with U value and GHG emission matched with original code {target['code']}. Original reference: {target.get('Reference')}")
                 row["Unnamed: 7"] = ""
             elif kind == "roof":
-                row["Service_Life_roof"] = target.get("Service_Life_roof")
-                row["Reference"] = target.get("Reference") or meta.get("Reference", f"artificial construction with U value and GHG emission matched with original code {target['code']}. Original reference: {target.get('Reference')}")
-                # pass through radiative properties
+                row["Service_Life_roof"] = target.get("Service_Life_roof")                # pass through radiative properties
                 row["a_roof"] = target.get("a_roof")
                 row["e_roof"] = target.get("e_roof")
                 row["r_roof"] = target.get("r_roof")
             else:
                 row["Service_Life_wall"] = target.get("Service_Life_wall")
-                row["Reference"] = target.get("Reference") or meta.get("Reference", f"artificial construction with U value and GHG emission matched with original code {target['code']}. Original reference: {target.get('Reference')}")
                 row["a_wall"] = target.get("a_wall")
                 row["e_wall"] = target.get("e_wall")
                 row["r_wall"] = target.get("r_wall")
@@ -391,7 +324,6 @@ def run(
     country: str = "CH",
     weight_u: float = 0.6,
     weight_ghg: float = 0.4,
-    samples_per_combo: int = 300,
     min_required_thickness: float = 0.1,
 ) -> None:
     # Paths
@@ -418,110 +350,61 @@ def run(
         )
 
     # Floor
-    floor_targets = read_envelope_targets(
-        os.path.join(envelope_dir, "ENVELOPE_FLOOR.csv"), "U_base", "GHG_floor_kgCO2m2", extra_keys=["Service_Life_floor", "Reference"]
-    )
-    floor_results = []
-    for tgt in floor_targets:
-        # Require concrete for floor if description hints at concrete
-        req_name = (
+    _process_targets(
+        base_dir,
+        kind="floor",
+        envelope_dir=envelope_dir,
+        out_dir=out_dir,
+        materials=materials,
+        u_key="U_base",
+        ghg_key="GHG_floor_kgCO2m2",
+        extra_keys=["Service_Life_floor", "Reference"],
+        required_rule=lambda tgt: (
             "concrete_1_percent_steel_reinforcement"
             if "concrete" in (str(tgt.get("description") or "")).lower()
             else None
-        )
-        combo, ts, u, ghg = optimize_three_layer_milp(
-            materials,
-            float(tgt["U"]),
-            float(tgt["GHG"]),
-            kind="floor",
-            required_material_name=req_name,
-            weight_u=weight_u,
-            weight_ghg=weight_ghg,
-            min_required_thickness=min_required_thickness,
-        )
-        # Report differences for visibility
-        try:
-            print(
-                f"[floor] {tgt['code']}: target U={float(tgt['U']):.3f}, GHG={float(tgt['GHG']):.2f}; "
-                f"achieved U={float(u):.3f}, GHG={float(ghg):.2f}"
-            )
-        except Exception:
-            pass
-        floor_results.append((tgt, ts, {"materials": combo, "U": u, "GHG": ghg}))
-    write_material_based_csv(
-        os.path.join(out_dir, "ENVELOPE_FLOOR.csv"), "floor", floor_results
+        ),
+        weight_u=weight_u,
+        weight_ghg=weight_ghg,
+        min_required_thickness=min_required_thickness,
     )
 
     # Roof
-    roof_targets = read_envelope_targets(
-        os.path.join(envelope_dir, "ENVELOPE_ROOF.csv"),
-        "U_roof",
-        "GHG_roof_kgCO2m2",
+    _process_targets(
+        base_dir,
+        kind="roof",
+        envelope_dir=envelope_dir,
+        out_dir=out_dir,
+        materials=materials,
+        u_key="U_roof",
+        ghg_key="GHG_roof_kgCO2m2",
         extra_keys=["a_roof", "e_roof", "r_roof", "Service_Life_roof", "Reference"],
-    )
-    roof_results = []
-    for tgt in roof_targets:
-        req_name = (
-            "concrete"
-            if "concrete" in (str(tgt.get("description") or "")).lower()
-            else None
-        )
-        combo, ts, u, ghg = optimize_three_layer_milp(
-            materials,
-            float(tgt["U"]),
-            float(tgt["GHG"]),
-            kind="roof",
-            required_material_name=req_name,
-            weight_u=weight_u,
-            weight_ghg=weight_ghg,
-            min_required_thickness=min_required_thickness,
-        )
-        try:
-            print(
-                f"[roof] {tgt['code']}: target U={float(tgt['U']):.3f}, GHG={float(tgt['GHG']):.2f}; "
-                f"achieved U={float(u):.3f}, GHG={float(ghg):.2f}"
-            )
-        except Exception:
-            pass
-        roof_results.append((tgt, ts, {"materials": combo, "U": u, "GHG": ghg}))
-    write_material_based_csv(
-        os.path.join(out_dir, "ENVELOPE_ROOF.csv"), "roof", roof_results
+        required_rule=lambda tgt: (
+            "concrete" if "concrete" in (str(tgt.get("description") or "")).lower() else None
+        ),
+        weight_u=weight_u,
+        weight_ghg=weight_ghg,
+        min_required_thickness=min_required_thickness,
     )
 
     # Wall
-    wall_targets = read_envelope_targets(
-        os.path.join(envelope_dir, "ENVELOPE_WALL.csv"),
-        "U_wall",
-        "GHG_wall_kgCO2m2",
+    _process_targets(
+        base_dir,
+        kind="wall",
+        envelope_dir=envelope_dir,
+        out_dir=out_dir,
+        materials=materials,
+        u_key="U_wall",
+        ghg_key="GHG_wall_kgCO2m2",
         extra_keys=["a_wall", "e_wall", "r_wall", "Service_Life_wall", "Reference"],
-    )
-    wall_results = []
-    for tgt in wall_targets:
-        # Require concrete or brick for walls based on description hint
-        desc = (str(tgt.get("description") or "")).lower()
-        req_name = (
-            "concrete" if "concrete" in desc else ("brick" if "brick" in desc else None)
-        )
-        combo, ts, u, ghg = optimize_three_layer_milp(
-            materials,
-            float(tgt["U"]),
-            float(tgt["GHG"]),
-            kind="wall",
-            required_material_name=req_name,
-            weight_u=weight_u,
-            weight_ghg=weight_ghg,
-            min_required_thickness=min_required_thickness,
-        )
-        try:
-            print(
-                f"[wall] {tgt['code']}: target U={float(tgt['U']):.3f}, GHG={float(tgt['GHG']):.2f}; "
-                f"achieved U={float(u):.3f}, GHG={float(ghg):.2f}"
-            )
-        except Exception:
-            pass
-        wall_results.append((tgt, ts, {"materials": combo, "U": u, "GHG": ghg}))
-    write_material_based_csv(
-        os.path.join(out_dir, "ENVELOPE_WALL.csv"), "wall", wall_results
+        required_rule=lambda tgt: (
+            "concrete"
+            if "concrete" in (str(tgt.get("description") or "")).lower()
+            else ("brick" if "brick" in (str(tgt.get("description") or "")).lower() else None)
+        ),
+        weight_u=weight_u,
+        weight_ghg=weight_ghg,
+        min_required_thickness=min_required_thickness,
     )
 
 
