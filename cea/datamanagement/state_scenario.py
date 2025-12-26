@@ -119,42 +119,54 @@ def delete_building_schedule(state_locator: InputLocator, building_name: str) ->
         os.remove(schedule_file_path)
     return None
 
-def modify_state_construction(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float | int]]]) -> None:
+def modify_state_construction(
+    config: Configuration,
+    year_of_state: int,
+    modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
+) -> None:
     """
     Modify the construction recipe of buildings in the event scenario based on the provided modification dictionary.
     Parameters:
         config (Configuration): The configuration object containing the current scenario settings.
         year_of_state (int): The year of the event scenario.
-        modify_recipe (dict): A dictionary specifying the modifications to be made to the construction recipes.
+        modify_recipe (dict): A dictionary specifying the material-based modifications to be made to the construction recipes.
             For example:
             ```
             {
                 "STANDARD1": {
                     "wall": {
-                        "U": 0.3,
-                        "GHG_kgCO2m2": 50,
-                        "GHG_biogenic_kgCO2m2": -10,
-                        "Service_Life": 50
+                        "material_name_1": "phenolic_resin_pf",
+                        "thickness_1_m": 0.08,
+                        "material_name_2": "steel_sheet_galvanised",
+                        "thickness_2_m": 0.002,
+                        "material_name_3": "concrete_1_percent_steel_reinforcement",
+                        "thickness_3_m": 0.10,
+                        "Service_Life": 30
                     },
                     "roof": {
-                        "U": 0.25,
-                        "GHG_kgCO2m2": None, # keep current value
-                        "GHG_biogenic_kgCO2m2": None, # keep current value
-                        "Service_Life": None # keep current value
-                    }
-                },
-                "STANDARD2": {
-                    "wall": {
-                        "U": None, # keep current value
-                        "GHG_kgCO2m2": 45,
-                        "GHG_biogenic_kgCO2m2": -8,
-                        "Service_Life": 60
+                        "material_name_1": "phenolic_resin_pf",
+                        "thickness_1_m": None,  # keep current value
+                        "material_name_2": None, # keep current value
+                        "thickness_2_m": None,   # keep current value
+                        "material_name_3": None, # keep current value
+                        "thickness_3_m": 0.12,
+                        "Service_Life": None     # keep current value
+                    },
+                    "base": {
+                        "material_name_1": "glass_wool_supafil",
+                        "thickness_1_m": 0.02,
+                        "material_name_2": "brass_bronze_sheet",
+                        "thickness_2_m": 0.0,
+                        "material_name_3": "stainless_steel_sheet_tinned",
+                        "thickness_3_m": 0.0
                     }
                 }
             }
             ```
-            Note that the outer dictionary keys are archetype names, the middle dictionary keys are component types. 
-            These fields are sensitive to capitalization and must match exactly the envelope database column names.
+            Note that the outer dictionary keys are archetype names, 
+            the middle dictionary keys are component types.
+            Field names must match the envelope database column keys 
+            (e.g., `material_name_1`, `thickness_1_m`, `Service_Life`).
     Returns:
         None
     """
@@ -173,8 +185,9 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
             db_modified = 0
             code_current = archetype_df.at[archetype, f"type_{component}"]
             # create a new component code by "(capitalized component)_(archetype)_YEAR_(event_year)"
-            component_db = envelope_lookup._df_for(component)
-            code_new = f"{component.capitalize()}_{archetype}_YEAR_{year_of_state}"
+            envelope_db_name = "floor" if component == "base" else component
+            component_db = envelope_lookup._df_for(envelope_db_name)
+            code_new = f"{envelope_db_name.capitalize()}_{archetype}_YEAR_{year_of_state}"
 
             if code_new in component_db.index:
                 code_new = shift_code_name_plus1(component_db, code_new)
@@ -183,7 +196,10 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
 
             for field, new_value in modifications.items():
                 if new_value is not None:
-                    component_field_name = envelope_lookup._col(component, field)
+                    if field.startswith("material_name_") or field.startswith("thickness_"):
+                        component_field_name = field
+                    else:
+                        component_field_name = envelope_lookup._col(envelope_db_name, field)
                     new_row[component_field_name] = new_value
                     db_modified += 1
 
@@ -202,10 +218,15 @@ def modify_state_construction(config: Configuration, year_of_state: int, modify_
     archetype_df.reset_index(inplace=True)
     archetype_df.to_csv(state_locator.get_database_archetypes_construction_type(), index=False)
     envelope_lookup.envelope.save(state_locator)
+    # Store only the changed fields (delta) for record-keeping.
     log_modifications(config, year_of_state, modify_recipe)
     return None
 
-def log_modifications(config: Configuration, year_of_state: int, modify_recipe: dict[str, dict[str, dict[str, float | int]]]) -> None:
+def log_modifications(
+    config: Configuration,
+    year_of_state: int,
+    modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
+) -> None:
     """
     Log the modifications made to the envelope database in a YAML file for record-keeping.
     Parameters:
@@ -232,7 +253,9 @@ def shift_code_name_plus1(db, code_prefix):
     n = db[db.index.str.startswith(code_prefix)].shape[0]
     return code_prefix + f"_{n + 1}"
 
-def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str, float | int]]]:
+def create_modify_recipe(
+    config: Configuration,
+) -> dict[str, dict[str, dict[str, float | int | str]]]:
     """
     Build modification recipe, pruning None-valued fields and empty components / archetypes.
     """
@@ -241,29 +264,56 @@ def create_modify_recipe(config: Configuration) -> dict[str, dict[str, dict[str,
     if not archetypes_to_modify:
         raise ValueError("No archetypes specified for modification in the event scenario.")
 
-    modify_recipe: dict[str, dict[str, dict[str, float | int]]] = {}
+    modify_recipe: dict[str, dict[str, dict[str, float | int | str]]] = {}
 
     for archetype in archetypes_to_modify:
         raw_components = {
             "wall": {
-                "U": config_section.wall_u_value,
-                "GHG_kgCO2m2": config_section.wall_ghg_emission,
-                "GHG_biogenic_kgCO2m2": config_section.wall_ghg_biogenic_emission,
+                "material_name_1": config_section.wall_material_name_1,
+                "thickness_1_m": config_section.wall_thickness_1_m,
+                "material_name_2": config_section.wall_material_name_2,
+                "thickness_2_m": config_section.wall_thickness_2_m,
+                "material_name_3": config_section.wall_material_name_3,
+                "thickness_3_m": config_section.wall_thickness_3_m,
                 "Service_Life": config_section.wall_lifetime,
             },
             "roof": {
-                "U": config_section.roof_u_value,
-                "GHG_kgCO2m2": config_section.roof_ghg_emission,
-                "GHG_biogenic_kgCO2m2": config_section.roof_ghg_biogenic_emission,
+                "material_name_1": config_section.roof_material_name_1,
+                "thickness_1_m": config_section.roof_thickness_1_m,
+                "material_name_2": config_section.roof_material_name_2,
+                "thickness_2_m": config_section.roof_thickness_2_m,
+                "material_name_3": config_section.roof_material_name_3,
+                "thickness_3_m": config_section.roof_thickness_3_m,
                 "Service_Life": config_section.roof_lifetime,
             },
             "base": {
-                "U": config_section.base_u_value,
-                "GHG_kgCO2m2": config_section.base_ghg_emission,
-                "GHG_biogenic_kgCO2m2": config_section.base_ghg_biogenic_emission,
+                "material_name_1": config_section.base_material_name_1,
+                "thickness_1_m": config_section.base_thickness_1_m,
+                "material_name_2": config_section.base_material_name_2,
+                "thickness_2_m": config_section.base_thickness_2_m,
+                "material_name_3": config_section.base_material_name_3,
+                "thickness_3_m": config_section.base_thickness_3_m,
                 "Service_Life": config_section.base_lifetime,
             },
         }
+
+        # Material edits are allowed per-layer.
+        # You may change only thickness (keep material) or only material (keep thickness);
+        # unspecified values are kept from the current envelope DB entry.
+        for component, fields in raw_components.items():
+            for i in (1, 2, 3):
+                mat = fields[f"material_name_{i}"]
+                thk = fields[f"thickness_{i}_m"]
+
+                if mat is not None and str(mat).strip() == "":
+                    raise ValueError(
+                        f"Invalid {component} material name for layer {i} in archetype '{archetype}': empty string."
+                    )
+                if thk is not None and thk < 0:
+                    raise ValueError(
+                        f"Invalid {component} thickness for layer {i} in archetype '{archetype}': {thk}. "
+                        "Thickness must be >= 0."
+                    )
 
         # Drop None-valued fields per component
         cleaned_components = {
