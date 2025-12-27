@@ -591,6 +591,7 @@ class EmissionsSection(Section):
 class DistrictEventsSection(Section):
     """Typed section for district-events configuration"""
     year_of_event: int | None
+    timeline_integrity_check: str
     archetypes: list[str]
     wall_material_name_1: str | None
     wall_thickness_1_m: float | None
@@ -616,6 +617,8 @@ class DistrictEventsSection(Section):
 
     @overload
     def __getattr__(self, item: Literal["year_of_event"]) -> int | None: ...
+    @overload
+    def __getattr__(self, item: Literal["timeline_integrity_check"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["archetypes"]) -> list[str]: ...
     @overload

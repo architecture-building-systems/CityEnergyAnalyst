@@ -5,7 +5,7 @@ from typing import Any
 import pandas as pd
 
 from cea.config import Configuration
-from cea.datamanagement.state_scenario import load_log_yaml, save_log_yaml
+from cea.datamanagement.timeline_log import load_log_yaml, save_log_yaml
 from cea.inputlocator import InputLocator
 from cea.workflows.workflow import do_config_step, do_script_step
 

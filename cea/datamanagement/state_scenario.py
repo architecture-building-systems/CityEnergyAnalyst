@@ -8,7 +8,10 @@ import yaml
 
 from cea.config import Configuration
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.datamanagement.timeline_integrity import check_district_timeline_log_yaml_integrity
+from cea.datamanagement.timeline_integrity import compute_state_year_missing_modifications, merge_modify_recipes
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
+from cea.datamanagement.timeline_log import add_year_in_yaml, del_year_in_yaml, load_log_yaml, save_log_yaml
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
@@ -328,93 +331,6 @@ def create_modify_recipe(
             modify_recipe[archetype] = cleaned_components
 
     return modify_recipe
-
-def check_district_timeline_log_yaml_integrity(config: Configuration):
-    """Basic check to see if all the existing state-in-time scenarios are logged in the district_timeline_log.yml.
-    It only checks if the year in `state_{year}` also exists in the yaml log file.
-
-    :param config: _description_
-    :type config: Configuration
-    """
-    main_locator = InputLocator(config.scenario)
-    dict_from_yaml = load_log_yaml(main_locator)
-    existing_years_in_yml = set(dict_from_yaml.keys())
-    # check all existing state-in-time folders
-    existing_years_in_folders = set()
-    district_timeline_folder = main_locator.get_district_timeline_states_folder()
-    if os.path.exists(district_timeline_folder):
-        for folder_name in os.listdir(district_timeline_folder):
-            if folder_name.startswith("state_"):
-                year_str = folder_name.replace("state_", "")
-                try:
-                    year = int(year_str)
-                    existing_years_in_folders.add(year)
-                except ValueError:
-                    print(f"Warning: Invalid state-in-time folder name '{folder_name}' in district timeline folder.")
-
-    # ideally the two sets should be equal
-    years_only_in_folders = existing_years_in_folders - existing_years_in_yml
-    years_only_in_yml = existing_years_in_yml - existing_years_in_folders
-    if years_only_in_folders:
-        raise ValueError(f"The following state-in-time years exist in folders but not in the district timeline log file: {sorted(years_only_in_folders)}")
-    
-    if years_only_in_yml:
-        raise ValueError(f"The following state-in-time years exist in the district timeline log file but not in folders: {sorted(years_only_in_yml)}")
-
-    return dict_from_yaml
-
-
-def load_log_yaml(locator: InputLocator) -> dict[int, dict[str, Any]]:
-    yml_path = locator.get_district_timeline_log_file()
-    if not os.path.exists(yml_path):
-        raise FileNotFoundError(
-            f"District timeline log file '{yml_path}' does not exist."
-        )
-    with open(yml_path, "r") as f:
-        existing_data_in_yml: dict[int, dict[str, Any]] = yaml.safe_load(f) or {}
-    if not existing_data_in_yml:
-        raise ValueError(f"District timeline log file '{yml_path}' is empty.")
-    return existing_data_in_yml
-
-
-def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) -> None:
-    yml_path = locator.get_district_timeline_log_file()
-    os.makedirs(os.path.dirname(yml_path), exist_ok=True)
-    with open(yml_path, "w") as f:
-        yaml.dump(log_data, f)
-
-
-def add_year_in_yaml(config: Configuration, year_of_state: int) -> None:
-    """Add a new year entry in the district timeline log yaml file if it does not exist.
-
-    :param config: _description_
-    :type config: Configuration
-    :param year_of_state: _description_
-    :type year_of_state: int
-    """
-    locator = InputLocator(config.scenario)
-    log_data = load_log_yaml(locator)
-    if year_of_state not in log_data:
-        log_data[year_of_state] = {
-            "created_at": str(pd.Timestamp.now()),
-            "modifications": {},
-        }
-        save_log_yaml(locator, log_data)
-
-
-def del_year_in_yaml(config: Configuration, year_of_state: int) -> None:
-    """Delete a year entry in the district timeline log yaml file.
-
-    :param config: _description_
-    :type config: Configuration
-    :param year_of_state: _description_
-    :type year_of_state: int
-    """
-    locator = InputLocator(config.scenario)
-    log_data = load_log_yaml(locator)
-    if year_of_state in log_data:
-        del log_data[year_of_state]
-        save_log_yaml(locator, log_data)
 
 
 def main(config: Configuration) -> None:
