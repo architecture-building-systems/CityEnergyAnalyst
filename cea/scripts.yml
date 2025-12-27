@@ -323,7 +323,7 @@ Life Cycle Analysis:
 
       **[Note]**: Only the input parameters will be updated. If you don't want certain parameters to be changed, keep the fields empty.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.state_scenario
+    module: cea.datamanagement.district_level_states.state_scenario
     parameters: ['general:scenario', district-events]
     input-files:
       - [get_input_folder]
@@ -345,8 +345,8 @@ Life Cycle Analysis:
       
       The parameters of these simulations must be saved in their respective dashboards before running this Feature.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.state_simulations
-    parameters: []
+    module: cea.datamanagement.district_level_states.state_simulations
+    parameters: ['general:scenario']
 
 
 Energy Supply System Optimisation:
