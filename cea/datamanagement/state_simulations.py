@@ -77,6 +77,10 @@ def simulate_all_states(config: Configuration) -> None:
     workflow = deepcopy(default_workflow)
     for year in state_years:
         print(f"Simulating state-in-time scenario for year {year}...")
+        if year not in log_data:
+            raise ValueError(
+                f"State year {year} exists in the district timeline folder, but it is missing from the district timeline log."
+            )
         state_config = generate_state_config(config, year)
         if (
             type(state_config.emissions.year_end) is int
