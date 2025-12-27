@@ -8,15 +8,22 @@ import yaml
 
 from cea.config import Configuration
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
+from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.timeline_integrity import check_district_timeline_log_yaml_integrity
 from cea.datamanagement.timeline_integrity import compute_state_year_missing_modifications, merge_modify_recipes
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.timeline_log import add_year_in_yaml, del_year_in_yaml, load_log_yaml, save_log_yaml
+from cea.datamanagement.state_transaction import FileSnapshot, snapshot_state_year_files
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
 
-def create_state_in_time_scenario(config: Configuration, year_of_state: int) -> None:
+def create_state_in_time_scenario(
+    config: Configuration,
+    year_of_state: int,
+    *,
+    update_yaml: bool = True,
+) -> None:
     """
     Create a new state-in-time scenario based on the current scenario.
     Parameters:
@@ -28,14 +35,35 @@ def create_state_in_time_scenario(config: Configuration, year_of_state: int) -> 
     Returns:
         None
     """
-    locator = InputLocator(config.scenario)
-    time_specific_scenario_folder = locator.get_state_in_time_scenario_folder(year_of_state)
-    input_folder_path = locator.get_input_folder()
-    state_locator = InputLocator(time_specific_scenario_folder)
+    main_locator = InputLocator(config.scenario)
+    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(year_of_state)
+    input_folder_path = main_locator.get_input_folder()
+    state_locator = InputLocator(state_scenario_folder)
     # copy all files from the input folder to the event scenario folder
     shutil.copytree(input_folder_path, state_locator.get_input_folder(), dirs_exist_ok=True) # make sure existing files are overwritten
-    add_year_in_yaml(config, year_of_state)
+    if update_yaml:
+        add_year_in_yaml(config, year_of_state)
     return None
+
+def _regenerate_building_properties_from_archetypes(locator: InputLocator) -> None:
+    """Regenerate building-properties inputs from archetypes.
+
+    This enforces the "archetypes are canonical" assumption: per-building inputs (envelope, hvac, internal loads,
+    comfort, supply and schedules) are derived from zone.shp + archetype databases for that state-year.
+    """
+    list_buildings = locator.get_zone_building_names()
+    if not list_buildings:
+        return
+    archetypes_mapper(
+        locator,
+        update_architecture_dbf=True,
+        update_air_conditioning_systems_dbf=True,
+        update_indoor_comfort_dbf=True,
+        update_internal_loads_dbf=True,
+        update_supply_systems_dbf=True,
+        update_schedule_operation_cea=True,
+        list_buildings=list_buildings,
+    )
 
 def remove_state_in_time_scenario(config: Configuration, year_of_state: int) -> None:
     """
@@ -126,6 +154,8 @@ def modify_state_construction(
     config: Configuration,
     year_of_state: int,
     modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
+    *,
+    log_data: dict[int, dict[str, Any]] | None = None,
 ) -> None:
     """
     Modify the construction recipe of buildings in the event scenario based on the provided modification dictionary.
@@ -173,17 +203,53 @@ def modify_state_construction(
     Returns:
         None
     """
+    modified = _apply_state_construction_changes(config, year_of_state, modify_recipe)
+    if not modified:
+        print(f"No modifications were made to the envelope database in year {year_of_state}.")
+        return
+    # Store only the changed fields (delta) for record-keeping.
+    if log_data is None:
+        log_modifications(config, year_of_state, modify_recipe)
+    else:
+        _log_modifications_in_memory(log_data, year_of_state, modify_recipe)
+    return None
+
+
+def _apply_state_construction_changes(
+    config: Configuration,
+    year_of_state: int,
+    modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
+    *,
+    trigger_year: int | None = None,
+) -> bool:
+    """Apply construction changes to the state scenario databases.
+
+    Returns True if any database values were modified.
+
+    NOTE: This does not write to the district timeline YAML. Callers must log appropriately.
+    """
     archetypes_to_modify = modify_recipe.keys()
     if not archetypes_to_modify:
         remove_state_in_time_scenario(config, year_of_state)
-        raise ValueError(f"No archetypes specified for modification in the event scenario. The state-in-time scenario for year {year_of_state} has been deleted.")
-    state_locator = InputLocator(InputLocator(config.scenario).get_state_in_time_scenario_folder(year_of_state))
-    archetype_df = pd.read_csv(state_locator.get_database_archetypes_construction_type(), index_col="const_type")
+        raise ValueError(
+            f"No archetypes specified for modification in the event scenario. The state-in-time scenario for year {year_of_state} has been deleted."
+        )
+
+    main_locator = InputLocator(config.scenario)
+    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(year_of_state)
+    state_locator = InputLocator(state_scenario_folder)
+
+    archetype_df = pd.read_csv(
+        state_locator.get_database_archetypes_construction_type(),
+        index_col="const_type",
+    )
     envelope_lookup = EnvelopeLookup.from_locator(state_locator)
     dbs_overall_modified = 0
     for archetype in archetypes_to_modify:
         if archetype not in archetype_df.index:
-            raise ValueError(f"Archetype '{archetype}' not found in construction type database.")
+            raise ValueError(
+                f"Archetype '{archetype}' not found in construction type database."
+            )
         for component, modifications in modify_recipe[archetype].items():
             db_modified = 0
             code_current = archetype_df.at[archetype, f"type_{component}"]
@@ -207,23 +273,157 @@ def modify_state_construction(
                     db_modified += 1
 
             if db_modified:
-                description_new = f"Modified {component} for archetype {archetype} in year {year_of_state}, based on {code_current}, fields modified: {', '.join(modifications.keys())}"
+                description_new = (
+                    f"Modified {component} for archetype {archetype} in year {year_of_state}, based on {code_current}, "
+                    f"fields modified: {', '.join(modifications.keys())}"
+                )
+                if trigger_year is not None:
+                    description_new += f" (reconciled due to year {trigger_year})"
                 new_row["description"] = description_new
                 component_db.loc[new_row.name, :] = new_row
                 archetype_df.at[archetype, f"type_{component}"] = code_new
-                
+
             dbs_overall_modified += db_modified
 
-    # save both the modified archetype df and the envelope database
     if not dbs_overall_modified:
-        print(f"No modifications were made to the envelope database in year {year_of_state}.")
-        return
+        return False
+
     archetype_df.reset_index(inplace=True)
     archetype_df.to_csv(state_locator.get_database_archetypes_construction_type(), index=False)
     envelope_lookup.envelope.save(state_locator)
-    # Store only the changed fields (delta) for record-keeping.
-    log_modifications(config, year_of_state, modify_recipe)
-    return None
+    return True
+
+
+def _append_future_year_reconciliation_in_memory(
+    trigger_year: int,
+    affected_year: int,
+    applied_recipe: dict[str, dict[str, dict[str, Any]]],
+    *,
+    log_data: dict[int, dict[str, Any]],
+) -> None:
+    entry = log_data.get(affected_year, {})
+    reconciliations = entry.get("reconciliations", []) or []
+    now = str(pd.Timestamp.now())
+    reconciliations.append(
+        {
+            "trigger_year": trigger_year,
+            "applied_at": now,
+            "modifications": applied_recipe,
+        }
+    )
+    entry["reconciliations"] = reconciliations
+    entry["latest_reconciled_at"] = now
+    log_data[affected_year] = entry
+
+
+def _list_existing_state_years(main_locator: InputLocator) -> list[int]:
+    years: list[int] = []
+    district_timeline_folder = main_locator.get_district_timeline_states_folder()
+    if not os.path.exists(district_timeline_folder):
+        return years
+
+    for folder_name in os.listdir(district_timeline_folder):
+        if not folder_name.startswith("state_"):
+            continue
+        year_str = folder_name.replace("state_", "")
+        try:
+            years.append(int(year_str))
+        except ValueError:
+            print(
+                f"Warning: Invalid state-in-time folder name '{folder_name}' in district timeline folder."
+            )
+    years.sort()
+    return years
+
+
+def _update_future_state_scenarios_after_year_event(
+    config: Configuration,
+    year_of_state: int,
+    *,
+    log_data: dict[int, dict[str, Any]],
+) -> None:
+    """Ensure future state scenarios reflect cumulative district evolution.
+
+    If a state year `Y` is created/modified after later years already exist, those later years may become stale.
+    This function updates each existing `state_{year}` for year > Y to include cumulative modifications
+    (all changes up to and including that year).
+
+    NOTE: The district timeline YAML is not modified for these future years.
+    """
+    main_locator = InputLocator(config.scenario)
+    existing_state_years = _list_existing_state_years(main_locator)
+    affected_years = [y for y in existing_state_years if y > year_of_state]
+    if not affected_years:
+        return
+
+    print(
+        "Warning: Creating or modifying an earlier state year updates already-created future years "
+        "(including years that may already have been modified before). "
+        f"Affected years: {affected_years}."
+    )
+
+    missing_in_yaml = [y for y in affected_years if y not in log_data]
+    if missing_in_yaml:
+        raise ValueError(
+            "The following future state years exist in folders but not in the district timeline log file: "
+            f"{sorted(missing_in_yaml)}"
+        )
+
+    cumulative_by_year: dict[int, dict[str, dict[str, dict[str, Any]]]] = {}
+    cumulative: dict[str, dict[str, dict[str, Any]]] = {}
+    for year in sorted(log_data.keys()):
+        year_entry = log_data.get(year, {}) or {}
+        year_modifications = (year_entry.get("modifications", {}) or {})
+        cumulative = merge_modify_recipes(cumulative, year_modifications)
+        cumulative_by_year[year] = cumulative
+
+    all_errors: list[str] = []
+    updated_years: list[int] = []
+    unchanged_years: list[int] = []
+
+    for future_year in affected_years:
+        expected = cumulative_by_year.get(future_year, {})
+        missing_recipe, errors = compute_state_year_missing_modifications(
+            config, future_year, expected
+        )
+        all_errors.extend(errors)
+
+        if missing_recipe:
+            modified = _apply_state_construction_changes(
+                config,
+                future_year,
+                missing_recipe,
+                trigger_year=year_of_state,
+            )
+            if modified:
+                _append_future_year_reconciliation_in_memory(
+                    trigger_year=year_of_state,
+                    affected_year=future_year,
+                    applied_recipe=missing_recipe,
+                    log_data=log_data,
+                )
+                updated_years.append(future_year)
+            else:
+                unchanged_years.append(future_year)
+        else:
+            unchanged_years.append(future_year)
+
+    if all_errors:
+        formatted = "\n".join(f"- {msg}" for msg in all_errors)
+        raise ValueError(
+            "Errors occurred while updating future state scenarios.\n" + formatted
+        )
+
+    if updated_years:
+        print(
+            "Updated future state scenario databases to include cumulative changes. "
+            f"Years updated: {updated_years}."
+        )
+    if unchanged_years:
+        print(
+            "No database changes were required for some future years. "
+            f"Years unchanged: {unchanged_years}."
+        )
 
 def log_modifications(
     config: Configuration,
@@ -251,6 +451,17 @@ def log_modifications(
     current_year_modifications["latest_modified_at"] = str(pd.Timestamp.now())
     existing_data[year_of_state] = current_year_modifications
     save_log_yaml(locator, existing_data)
+
+
+def _log_modifications_in_memory(
+    log_data: dict[int, dict[str, Any]],
+    year_of_state: int,
+    modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
+) -> None:
+    entry = log_data.get(year_of_state, {})
+    entry.setdefault("modifications", {}).update(modify_recipe)
+    entry["latest_modified_at"] = str(pd.Timestamp.now())
+    log_data[year_of_state] = entry
     
 def shift_code_name_plus1(db, code_prefix):
     n = db[db.index.str.startswith(code_prefix)].shape[0]
@@ -335,17 +546,82 @@ def create_modify_recipe(
 
 def main(config: Configuration) -> None:
     year_of_state = config.district_events.year_of_event
-    locator = InputLocator(config.scenario)
+    main_locator = InputLocator(config.scenario)
     if year_of_state is None:
         raise ValueError("Year of event must be specified in the configuration.")
-    event_scenario_folder = locator.get_state_in_time_scenario_folder(year_of_state)
-    if not os.path.exists(event_scenario_folder):
-        create_state_in_time_scenario(config, year_of_state)
-    modify_recipe = create_modify_recipe(config)
-    # delete_unexisting_buildings_from_event_scenario(config, year_of_state)
-    modify_state_construction(config, year_of_state, modify_recipe)
-    print(f"State-in-time scenario for year {year_of_state} created successfully. See folder: {event_scenario_folder}")
-    check_district_timeline_log_yaml_integrity(config)
+
+    yml_path = main_locator.get_district_timeline_log_file()
+    yml_snapshot = FileSnapshot()
+    yml_snapshot.capture([yml_path])
+
+    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(year_of_state)
+    state_existed_before = os.path.exists(state_scenario_folder)
+
+    existing_state_years = _list_existing_state_years(main_locator)
+    future_years = [y for y in existing_state_years if y > year_of_state]
+
+    file_snapshots_by_year: dict[int, FileSnapshot] = {}
+    for snap_year in [year_of_state] + future_years:
+        snap_folder = main_locator.get_state_in_time_scenario_folder(snap_year)
+        if not os.path.exists(snap_folder):
+            continue
+        snap_locator = InputLocator(snap_folder)
+        file_snapshots_by_year[snap_year] = snapshot_state_year_files(snap_locator)
+
+    log_data = load_log_yaml(main_locator, allow_missing=True, allow_empty=True)
+
+    try:
+        if not state_existed_before:
+            create_state_in_time_scenario(config, year_of_state, update_yaml=False)
+            log_data.setdefault(
+                year_of_state,
+                {"created_at": str(pd.Timestamp.now()), "modifications": {}},
+            )
+
+        try:
+            modify_recipe = create_modify_recipe(config)
+        except ValueError as e:
+            if "No archetypes specified" in str(e):
+                modify_recipe = {}
+            else:
+                raise
+
+        if modify_recipe:
+            # delete_unexisting_buildings_from_event_scenario(config, year_of_state)
+            modify_state_construction(
+                config,
+                year_of_state,
+                modify_recipe,
+                log_data=log_data,
+            )
+            _update_future_state_scenarios_after_year_event(
+                config,
+                year_of_state,
+                log_data=log_data,
+            )
+
+        # Keep building-properties files derived from archetypes for all impacted years.
+        for sync_year in [year_of_state] + future_years:
+            sync_folder = main_locator.get_state_in_time_scenario_folder(sync_year)
+            if not os.path.exists(sync_folder):
+                continue
+            _regenerate_building_properties_from_archetypes(InputLocator(sync_folder))
+
+        save_log_yaml(main_locator, log_data)
+        check_district_timeline_log_yaml_integrity(config)
+
+        print(
+            f"State-in-time scenario for year {year_of_state} created successfully. See folder: {state_scenario_folder}"
+        )
+    except Exception:
+        # rollback state folder(s)
+        for snap in file_snapshots_by_year.values():
+            snap.restore()
+        if not state_existed_before and os.path.exists(state_scenario_folder):
+            shutil.rmtree(state_scenario_folder, ignore_errors=True)
+        # rollback YAML log
+        yml_snapshot.restore()
+        raise
 
 if __name__ == "__main__":
     main(Configuration())
