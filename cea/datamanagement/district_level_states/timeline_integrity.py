@@ -6,7 +6,7 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
-from cea.datamanagement.timeline_log import load_log_yaml
+from cea.datamanagement.district_level_states.timeline_log import load_log_yaml
 
 
 ModifyRecipe = dict[str, dict[str, dict[str, Any]]]

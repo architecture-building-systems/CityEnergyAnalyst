@@ -9,11 +9,11 @@ import yaml
 from cea.config import Configuration
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
-from cea.datamanagement.timeline_integrity import check_district_timeline_log_yaml_integrity
-from cea.datamanagement.timeline_integrity import compute_state_year_missing_modifications, merge_modify_recipes
+from cea.datamanagement.district_level_states.timeline_integrity import check_district_timeline_log_yaml_integrity
+from cea.datamanagement.district_level_states.timeline_integrity import compute_state_year_missing_modifications, merge_modify_recipes
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
-from cea.datamanagement.timeline_log import add_year_in_yaml, del_year_in_yaml, load_log_yaml, save_log_yaml
-from cea.datamanagement.state_transaction import FileSnapshot, snapshot_state_year_files
+from cea.datamanagement.district_level_states.timeline_log import add_year_in_yaml, del_year_in_yaml, load_log_yaml, save_log_yaml
+from cea.datamanagement.district_level_states.state_transaction import FileSnapshot, snapshot_state_year_files
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
