@@ -12,7 +12,7 @@ from cea.workflows.workflow import do_config_step, do_script_step
 default_workflow = [
     {"config": "."},  # use state-in-time scenario as base config
     {"script": "radiation"},
-    {"script": "occupancy-helper"},
+    {"script": "occupancy"},
     {"script": "demand"},
     {"script": "photovoltaic"},
     {"script": "emissions"},
