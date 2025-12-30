@@ -1155,28 +1155,3 @@ class BuildingEmissionTimeline(BaseYearlyEmissionTimeline):
         surface_area["Abase"] = area_base
         surface_area["Atechnical_systems"] = rc_model_props["GFA_m2"]
         return surface_area
-
-
-def get_building_names_from_zone(locator):
-    """
-    Get building names from zone geometry.
-
-    Parameters
-    ----------
-    locator : InputLocator
-        File path resolver
-
-    Returns
-    -------
-    pd.DataFrame
-        Zone geometry with 'Name' or 'name' column (caller should check both)
-    """
-    import geopandas as gpd
-
-    from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
-
-    zone_path = locator.get_zone_geometry()
-    crs = get_geographic_coordinate_system()
-    zone_df = gpd.read_file(zone_path).to_crs(crs)
-
-    return zone_df
