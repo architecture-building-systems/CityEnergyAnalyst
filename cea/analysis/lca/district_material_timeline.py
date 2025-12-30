@@ -138,20 +138,17 @@ class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
                 feedstocks = _extract_feedstocks_from_columns(operational_multi_years.columns, demand_types=demand_types)
                 _apply_feedstock_policies_inplace(
                     operational_multi_years,
-                    index=operational_multi_years.index,
                     feedstock_policies=feedstock_policies,
                     feedstocks=feedstocks,
                     demand_types=demand_types,
                 )
                 _apply_pv_offset_decarbonisation_inplace(
                     operational_multi_years,
-                    index=operational_multi_years.index,
                     feedstock_policies=feedstock_policies,
                 )
 
             out = _aggregate_operational_by_demand(
                 operational_multi_years,
-                index=operational_multi_years.index,
                 demand_types=list(_tech_name_mapping.keys()),
             )
             for d in _tech_name_mapping.keys():

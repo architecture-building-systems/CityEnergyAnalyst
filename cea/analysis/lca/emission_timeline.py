@@ -110,10 +110,36 @@ def phase_component_col(phase: str, component: str) -> str:
     return f"{phase}_{component}_kgCO2e"
 
 
+def years_from_index(index: pd.Index) -> list[int]:
+    """Return integer years from an index.
+
+    Accepted formats:
+    - integer years (e.g., 2020)
+    - strings like 'Y_2020'
+
+    Raises:
+        ValueError if any label cannot be parsed as a year.
+    """
+    years: list[int] = []
+    for label in index:
+        if isinstance(label, (int, np.integer)):
+            years.append(int(label))
+            continue
+        s = str(label).strip()
+        if s.startswith("Y_"):
+            s = s[2:]
+        if not s or not s.lstrip("-").isdigit():
+            raise ValueError(
+                "Index must contain years only (int years or 'Y_YYYY' labels). "
+                f"Got invalid label: {label!r}"
+            )
+        years.append(int(s))
+    return years
+
+
 def discount_over_year_indexed(
     base: pd.Series,
     *,
-    index: pd.Index,
     ref_year: int,
     tar_year: int,
     tar_fraction: float,
@@ -128,17 +154,12 @@ def discount_over_year_indexed(
     if tar_fraction < 0:
         raise ValueError("Target fraction must be non-negative.")
 
-    series = base.reindex(index).astype(float)
-
-    years: list[int] = []
-    for label in index:
-        s = str(label)
-        if s.startswith("Y_"):
-            s = s[2:]
-        years.append(int(s))
+    # idx = index if index is not None else base.index
+    years = years_from_index(base.index)
+    series = base.reindex(base.index).astype(float)
 
     years_arr = np.array(years, dtype=int)
-    factors = np.ones(len(index), dtype=float)
+    factors = np.ones(len(base.index), dtype=float)
     mask_linear = (years_arr >= int(ref_year)) & (years_arr <= int(tar_year))
     if mask_linear.any():
         n = int(mask_linear.sum())
@@ -157,7 +178,7 @@ def read_operational_timeseries(locator: "InputLocator", building_name: str) -> 
     return df
 
 
-def tile_yearly_to_index(yearly: pd.Series, *, index: pd.Index) -> pd.DataFrame:
+def duplicate_yearly_to_index(yearly: pd.Series, *, index: pd.Index) -> pd.DataFrame:
     return pd.DataFrame(
         np.tile(yearly.to_numpy(dtype=float), (len(index), 1)), index=index, columns=yearly.index
     )
@@ -166,7 +187,6 @@ def tile_yearly_to_index(yearly: pd.Series, *, index: pd.Index) -> pd.DataFrame:
 def apply_feedstock_policies_inplace(
     operational_multi_years: pd.DataFrame,
     *,
-    index: pd.Index,
     feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
     feedstocks: list[str],
     demand_types: list[str],
@@ -203,7 +223,6 @@ def apply_feedstock_policies_inplace(
                 if col in operational_multi_years.columns:
                     operational_multi_years[col] = discount_over_year_indexed(
                         operational_multi_years[col],
-                        index=index,
                         ref_year=ref,
                         tar_year=tgt,
                         tar_fraction=frac,
@@ -213,7 +232,6 @@ def apply_feedstock_policies_inplace(
 def apply_pv_offset_decarbonisation_inplace(
     operational_multi_years: pd.DataFrame,
     *,
-    index: pd.Index,
     feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
 ) -> list[str]:
     """Apply GRID policy in-place (if any) to PV offset/export columns, and return those column names."""
@@ -224,7 +242,6 @@ def apply_pv_offset_decarbonisation_inplace(
                 ref, tgt, frac = feedstock_policies["GRID"]
                 operational_multi_years[col] = discount_over_year_indexed(
                     operational_multi_years[col],
-                    index=index,
                     ref_year=int(ref),
                     tar_year=int(tgt),
                     tar_fraction=float(frac),
@@ -236,10 +253,9 @@ def apply_pv_offset_decarbonisation_inplace(
 def aggregate_operational_by_demand(
     operational_multi_years: pd.DataFrame,
     *,
-    index: pd.Index,
     demand_types: list[str],
 ) -> pd.DataFrame:
-    out = pd.DataFrame(index=index)
+    out = pd.DataFrame(index=operational_multi_years.index)
     for d in demand_types:
         cols_d = [c for c in operational_multi_years.columns if c.startswith(f"{d}_") and c.endswith("_kgCO2e")]
         out[f"operation_{d}_kgCO2e"] = operational_multi_years[cols_d].sum(axis=1) if cols_d else 0.0
@@ -269,12 +285,14 @@ def fill_operational_emissions_inplace(
 
     operational_timeseries = read_operational_timeseries(locator, building_name)
     yearly_sum = operational_timeseries.sum(axis=0)
-    operational_multi_years = tile_yearly_to_index(yearly_sum, index=df_timeline.index)
+    operational_multi_years = duplicate_yearly_to_index(yearly_sum, index=df_timeline.index)
+
+    # Validate timeline index once (keeps later helpers simpler).
+    years_from_index(df_timeline.index)
 
     if apply_decarbonisation:
         apply_feedstock_policies_inplace(
             operational_multi_years,
-            index=df_timeline.index,
             feedstock_policies=feedstock_policies,
             feedstocks=feedstocks,
             demand_types=demand_types,
@@ -282,7 +300,6 @@ def fill_operational_emissions_inplace(
 
     out = aggregate_operational_by_demand(
         operational_multi_years,
-        index=df_timeline.index,
         demand_types=demand_types,
     )
     for col in [f"operation_{d}_kgCO2e" for d in demand_types]:
@@ -297,7 +314,6 @@ def fill_operational_emissions_inplace(
     if apply_decarbonisation:
         pv_cols = apply_pv_offset_decarbonisation_inplace(
             operational_multi_years,
-            index=df_timeline.index,
             feedstock_policies=feedstock_policies,
         )
     else:
