@@ -105,11 +105,6 @@ def log_emission_in_timeline_df(
         df.loc[years_list, col] = float(emission)
 
 
-def phase_component_col(phase: str, component: str) -> str:
-    """Return the standard emission column name `{phase}_{component}_kgCO2e`."""
-    return f"{phase}_{component}_kgCO2e"
-
-
 def years_from_index(index: pd.Index) -> list[int]:
     """Return integer years from an index.
 
@@ -350,7 +345,7 @@ class EmissionTimelineFrame:
         self.log(
             emission=float(value_kgco2e),
             year=year_label(year),
-            col=phase_component_col(phase, component),
+            col=f"{phase}_{component}_kgCO2e",
             additive=True,
         )
 

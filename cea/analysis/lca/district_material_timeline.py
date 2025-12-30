@@ -16,7 +16,6 @@ from cea.analysis.lca.hourly_operational_emission import _tech_name_mapping
 from cea.analysis.lca.emission_timeline import (
     TIMELINE_COMPONENTS as _TIMELINE_COMPONENTS,
     BaseEmissionTimeline as _BaseEmissionTimeline,
-    phase_component_col as _phase_component_col,
     aggregate_operational_by_demand as _aggregate_operational_by_demand,
     apply_feedstock_policies_inplace as _apply_feedstock_policies_inplace,
 )
@@ -735,7 +734,7 @@ def create_district_material_timeline(
     base_cols: list[str] = []
     for phase in ("production", "biogenic", "demolition"):
         for comp in _TIMELINE_COMPONENTS:
-            base_cols.append(_phase_component_col(phase, comp))
+            base_cols.append(f"{phase}_{comp}_kgCO2e")
     base_cols.extend(["production_kgCO2e", "demolition_kgCO2e", "biogenic_kgCO2e"])
     base_cols.extend([f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()])
 
