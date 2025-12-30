@@ -15,10 +15,10 @@ def main(s1, s2):
     print("FILE, FIELD, RMSE, ERROR")
     after_root = pathlib.Path(s2)
     for before in pathlib.Path(s1).rglob("*.csv"):
-        if r"building-properties\schedules" in str(before):
+        if r"building-properties\\schedules" in str(before):
             # exclude these as they're not really .csv files
             continue
-        if r"technology\archetypes\use_types" in str(before):
+        if r"technology\\archetypes\\use_types" in str(before):
             # exclude these as they're not really .csv files
             continue
 
@@ -29,11 +29,23 @@ def main(s1, s2):
         except pd.errors.EmptyDataError:
             # No columns to parse from file
             continue
+        except FileNotFoundError:
+            print(f"Error: The specified input file '{before}' was not found. Please check the file path and try again.", file=sys.stderr)
+            sys.exit(1)
 
         diff_df = before_df.copy()
 
         after = after_root.joinpath(rel_path)
-        after_df = pd.read_csv(after) if after.exists() else None
+        if after.exists():
+            try:
+                after_df = pd.read_csv(after)
+            except FileNotFoundError:
+                # file disappeared after existence check
+                after_df = None
+            except pd.errors.EmptyDataError:
+                after_df = None
+        else:
+            after_df = None
 
         # save after_df back to .csv with same ordering of fields (makes it easier to debug the files manually)
         if after_df is not None:
