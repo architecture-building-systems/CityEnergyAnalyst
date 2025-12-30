@@ -424,7 +424,7 @@ class YearlyEmissionTimelineFrame:
         end_year: int,
         columns: list[str],
         index_name: str = "period",
-    ) -> "EmissionTimelineFrame":
+    ) -> "YearlyEmissionTimelineFrame":
         idx = [year_label(y) for y in range(int(start_year), int(end_year) + 1)]
         df = pd.DataFrame(index=idx)
         df.index.name = index_name
@@ -473,7 +473,7 @@ class YearlyEmissionTimelineFrame:
         component: str,
         value_kgco2e: float,
     ) -> None:
-        EmissionTimelineFrame(df).add_phase_component(
+        YearlyEmissionTimelineFrame(df).add_phase_component(
             year=year,
             phase=phase,
             component=component,
@@ -481,7 +481,7 @@ class YearlyEmissionTimelineFrame:
         )
 
 
-class BaseEmissionTimeline:
+class BaseYearlyEmissionTimeline:
     """Base class for *yearly* emissions timelines.
 
     Owns only:
@@ -494,7 +494,7 @@ class BaseEmissionTimeline:
 
     def __init__(self, timeline: pd.DataFrame):
         self.timeline = timeline
-        self._frame = EmissionTimelineFrame(self.timeline)
+        self._frame = YearlyEmissionTimelineFrame(self.timeline)
 
     @classmethod
     def empty(
@@ -504,8 +504,8 @@ class BaseEmissionTimeline:
         end_year: int,
         columns: list[str],
         index_name: str = "period",
-    ) -> "BaseEmissionTimeline":
-        frame = EmissionTimelineFrame.empty(
+    ) -> "BaseYearlyEmissionTimeline":
+        frame = YearlyEmissionTimelineFrame.empty(
             start_year=start_year,
             end_year=end_year,
             columns=columns,
@@ -546,7 +546,7 @@ class BaseEmissionTimeline:
         )
 
 
-class OperationalEmissionTimeline(BaseEmissionTimeline):
+class OperationalEmissionTimeline(BaseYearlyEmissionTimeline):
     """Operational-only yearly timeline that shares decarbonisation + PV-offset logic."""
 
     def __init__(
@@ -562,7 +562,7 @@ class OperationalEmissionTimeline(BaseEmissionTimeline):
         self.name = building_name
         self.feedstock_db = feedstock_db
         cols = [f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()]
-        super().__init__(EmissionTimelineFrame.empty(start_year=start_year, end_year=end_year, columns=cols).df)
+        super().__init__(YearlyEmissionTimelineFrame.empty(start_year=start_year, end_year=end_year, columns=cols).df)
 
     def fill(
         self,
@@ -581,7 +581,7 @@ class OperationalEmissionTimeline(BaseEmissionTimeline):
         )
 
 
-class BuildingEmissionTimeline(BaseEmissionTimeline):
+class BuildingEmissionTimeline(BaseYearlyEmissionTimeline):
     """
     A class to manage the emission timeline for a building.
     The core attribute of this class is the timeline DataFrame indexed by year,

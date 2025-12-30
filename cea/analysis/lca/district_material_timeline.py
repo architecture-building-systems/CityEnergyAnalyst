@@ -15,7 +15,7 @@ from cea.inputlocator import InputLocator
 from cea.analysis.lca.hourly_operational_emission import _tech_name_mapping
 from cea.analysis.lca.emission_timeline import (
     TIMELINE_COMPONENTS as _TIMELINE_COMPONENTS,
-    BaseEmissionTimeline as _BaseEmissionTimeline,
+    BaseYearlyEmissionTimeline as _BaseEmissionTimeline,
     aggregate_operational_by_demand as _aggregate_operational_by_demand,
     apply_feedstock_policies_inplace as _apply_feedstock_policies_inplace,
 )
