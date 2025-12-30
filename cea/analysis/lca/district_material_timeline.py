@@ -137,7 +137,7 @@ class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
                 _apply_feedstock_policies_inplace(
                     operational_multi_years,
                     feedstock_policies=feedstock_policies,
-                    feedstocks=feedstocks,
+                    available_feedstocks=feedstocks,
                     demand_types=demand_types,
                 )
 

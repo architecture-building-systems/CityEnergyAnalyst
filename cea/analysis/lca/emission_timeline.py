@@ -183,7 +183,7 @@ def apply_feedstock_policies_inplace(
     operational_multi_years: pd.DataFrame,
     *,
     feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
-    feedstocks: list[str],
+    available_feedstocks: list[str],
     demand_types: list[str],
 ) -> None:
     """Apply per-feedstock policies in-place (if any) to per-feedstock operational columns."""
@@ -209,7 +209,7 @@ def apply_feedstock_policies_inplace(
                 f"Policy for '{raw_key}' target fraction must be non-negative."
             )
         fs_key_upper = str(raw_key).strip().upper()
-        matching_fs = [fs for fs in feedstocks if str(fs).strip().upper() == fs_key_upper]
+        matching_fs = [fs for fs in available_feedstocks if str(fs).strip().upper() == fs_key_upper]
         if not matching_fs:
             matching_fs = []
         for fs in matching_fs:
@@ -254,8 +254,8 @@ def fill_operational_emissions_inplace(
     *,
     locator: "InputLocator",
     building_name: str,
-    feedstock_db: Feedstocks,
-    feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+    feedstocks: list[str],
+    feedstock_decarbonization_policies: Mapping[str, tuple[int, int, float]] | None = None,
     apply_decarbonisation: bool = True,
     include_pv_offset: bool = True,
 ) -> None:
@@ -268,7 +268,6 @@ def fill_operational_emissions_inplace(
     - `include_pv_offset`: if False, PV offset/export columns are not written to the timeline.
     """
     demand_types = list(_tech_name_mapping.keys())
-    feedstocks = list(feedstock_db._library.keys()) + ["NONE"]
 
     operational_timeseries = read_operational_timeseries(locator, building_name)
     yearly_sum = operational_timeseries.sum(axis=0)
@@ -280,8 +279,8 @@ def fill_operational_emissions_inplace(
     if apply_decarbonisation:
         apply_feedstock_policies_inplace(
             operational_multi_years,
-            feedstock_policies=feedstock_policies,
-            feedstocks=feedstocks,
+            feedstock_policies=feedstock_decarbonization_policies,
+            available_feedstocks=feedstocks,
             demand_types=demand_types,
         )
 
@@ -359,12 +358,13 @@ class EmissionTimelineFrame:
         apply_decarbonisation: bool = True,
         include_pv_offset: bool = True,
     ) -> None:
+        feedstock_list = list(feedstock_db._library.keys()) + ["NONE"]
         fill_operational_emissions_inplace(
             self.df,
             locator=locator,
             building_name=building_name,
-            feedstock_db=feedstock_db,
-            feedstock_policies=feedstock_policies,
+            feedstocks=feedstock_list,
+            feedstock_decarbonization_policies=feedstock_policies,
             apply_decarbonisation=apply_decarbonisation,
             include_pv_offset=include_pv_offset,
         )
