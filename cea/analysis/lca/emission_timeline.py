@@ -216,7 +216,7 @@ def apply_feedstock_policies_inplace(
         fs_key_upper = str(raw_key).strip().upper()
         matching_fs = [fs for fs in feedstocks if str(fs).strip().upper() == fs_key_upper]
         if not matching_fs:
-            continue
+            matching_fs = []
         for fs in matching_fs:
             for d in demand_types:
                 col = f"{d}_{fs}_kgCO2e"
@@ -228,26 +228,18 @@ def apply_feedstock_policies_inplace(
                         tar_fraction=frac,
                     )
 
-
-def apply_pv_offset_decarbonisation_inplace(
-    operational_multi_years: pd.DataFrame,
-    *,
-    feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
-) -> list[str]:
-    """Apply GRID policy in-place (if any) to PV offset/export columns, and return those column names."""
-    list_final_pv_cols: list[str] = []
-    for col in operational_multi_years.columns:
-        if col.startswith("PV_") and col.endswith("_kgCO2e"):
-            if feedstock_policies and "GRID" in feedstock_policies:
-                ref, tgt, frac = feedstock_policies["GRID"]
-                operational_multi_years[col] = discount_over_year_indexed(
-                    operational_multi_years[col],
-                    ref_year=int(ref),
-                    tar_year=int(tgt),
-                    tar_fraction=float(frac),
-                )
-            list_final_pv_cols.append(col)
-    return list_final_pv_cols
+        # PV offset/export emissions are always tied to GRID electricity intensity.
+        # if the feedstock being discounted is GRID, apply to PV columns too.
+        # Columns look like: PV_{pv_code}_GRID_offset_kgCO2e or PV_{pv_code}_GRID_export_kgCO2e
+        if fs_key_upper == "GRID":
+            for col in operational_multi_years.columns:
+                if isinstance(col, str) and col.startswith("PV_") and col.endswith("_kgCO2e"):
+                    operational_multi_years[col] = discount_over_year_indexed(
+                        operational_multi_years[col],
+                        ref_year=ref,
+                        tar_year=tgt,
+                        tar_fraction=frac,
+                    )
 
 
 def aggregate_operational_by_demand(
@@ -311,13 +303,11 @@ def fill_operational_emissions_inplace(
     if not include_pv_offset:
         return
 
-    if apply_decarbonisation:
-        pv_cols = apply_pv_offset_decarbonisation_inplace(
-            operational_multi_years,
-            feedstock_policies=feedstock_policies,
-        )
-    else:
-        pv_cols = [c for c in operational_multi_years.columns if c.startswith("PV_") and c.endswith("_kgCO2e")]
+    pv_cols = [
+        c
+        for c in operational_multi_years.columns
+        if isinstance(c, str) and c.startswith("PV_") and c.endswith("_kgCO2e")
+    ]
     for c in pv_cols:
         df_timeline[c] = operational_multi_years[c].to_numpy(dtype=float)
 

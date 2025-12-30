@@ -19,7 +19,6 @@ from cea.analysis.lca.emission_timeline import (
     phase_component_col as _phase_component_col,
     aggregate_operational_by_demand as _aggregate_operational_by_demand,
     apply_feedstock_policies_inplace as _apply_feedstock_policies_inplace,
-    apply_pv_offset_decarbonisation_inplace as _apply_pv_offset_decarbonisation_inplace,
 )
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.demand.building_properties import BuildingProperties
@@ -141,10 +140,6 @@ class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
                     feedstock_policies=feedstock_policies,
                     feedstocks=feedstocks,
                     demand_types=demand_types,
-                )
-                _apply_pv_offset_decarbonisation_inplace(
-                    operational_multi_years,
-                    feedstock_policies=feedstock_policies,
                 )
 
             out = _aggregate_operational_by_demand(
