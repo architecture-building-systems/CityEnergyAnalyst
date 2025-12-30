@@ -93,6 +93,15 @@ def log_emission_in_timeline_df(
 
     This mirrors the behaviour of `BuildingEmissionTimeline._log_emission_in_timeline`,
     but is reusable by other timeline generators (e.g., district event timelines).
+
+    Args:
+        df (pd.DataFrame): The timeline DataFrame to log into. Must be indexed by year labels (`Y_{year}`).
+        emission (float): The emission value to log.
+        year (int | list[int] | str | list[str]): The year(s) to log the emission for.
+            Accepted formats: int (e.g., 2020), list[int], str (e.g., 'Y_2020'), list[str].
+        col (str): The column name in the DataFrame to log the emission into.
+        additive (bool, optional): If True, add to existing value; if False, overwrite. Defaults to True.
+
     """
     years_list = normalise_years(year)
     if not years_list:
@@ -139,10 +148,53 @@ def discount_over_year_indexed(
     tar_year: int,
     tar_fraction: float,
 ) -> pd.Series:
-    """Apply the same discounting rule as `BuildingEmissionTimeline.discount_over_year`.
+    """
+    The discount follows a linear interpolation from 1.0 at `ref_year` to `tar_fraction` at `tar_year`,
+    and remains constant at `tar_fraction` thereafter.
 
-    This helper is intentionally index-driven, so other timeline generators can reuse the
-    decarbonisation behaviour without subclassing `BuildingEmissionTimeline`.
+    It identifies the years that needs to be discounted and generates a discount series, 
+    then do elementwise multiplication with the base series to get the discounted series.
+
+    For example:
+        base: 
+            ```
+            Y_2020    100
+            Y_2021    100
+            Y_2022    100
+            Y_2023    100
+            Y_2024    100
+            ```
+        ref_year: 
+            `2021`
+        tar_year: 
+            `2023`
+        tar_fraction: 
+            `0.5`
+        calculated factor:
+            ```
+            Y_2020    1.0
+            Y_2021    1.0
+            Y_2022    0.75
+            Y_2023    0.5
+            Y_2024    0.5
+            ```
+        result:
+            ```
+            Y_2020    100.0
+            Y_2021    100.0
+            Y_2022     75.0
+            Y_2023     50.0
+            Y_2024     50.0
+            ```
+
+    Args:
+        base (pd.Series): The base series to discount. Typically yearly operational emissions. 
+            Indexed by years (e.g., `Y_2020`, `Y_2021`, ...).
+        ref_year (int): The reference year where discounting starts.
+        tar_year (int): The target year where the target fraction is reached.
+        tar_fraction (float): The target fraction of the base value at the target year.
+    Returns:
+        pd.Series: The discounted series.
     """
     if tar_year <= ref_year:
         raise ValueError("Target year must be greater than reference year.")
@@ -164,7 +216,7 @@ def discount_over_year_indexed(
     return series * factors
 
 
-def read_operational_timeseries(locator: "InputLocator", building_name: str) -> pd.DataFrame:
+def read_operational_timeseries(locator: InputLocator, building_name: str) -> pd.DataFrame:
     """Load the hourly operational emissions table for a building, dropping non-emission columns."""
     operational = OperationalHourlyTimeline.from_result(locator, building_name)
     df = operational.operational_emission_timeline.copy()
@@ -174,6 +226,41 @@ def read_operational_timeseries(locator: "InputLocator", building_name: str) -> 
 
 
 def duplicate_yearly_to_index(yearly: pd.Series, *, index: pd.Index) -> pd.DataFrame:
+    """
+    Duplicate the yearly row to match the given index.
+    Example:
+    yearly:
+        ```
+        heating     100
+        cooling     200
+        lighting    300
+        ```
+
+    index:
+        ```
+        Y_2020
+        Y_2021
+        Y_2022
+        Y_2023
+        Y_2024
+        ```
+        
+    return:
+        ```
+        index       heating     cooling     lighting
+        Y_2020      100         200         300
+        Y_2021      100         200         300
+        Y_2022      100         200         300
+        Y_2023      100         200         300
+        Y_2024      100         200         300
+        ```
+    Args:
+        yearly (pd.Series): The yearly row series to duplicate.
+        index (pd.Index): The index to duplicate to. Typically the timeline index 
+            (e.g., `Y_2020`, `Y_2021`, ...).
+    Returns:
+        pd.DataFrame: The duplicated DataFrame matching the given index.
+        """
     return pd.DataFrame(
         np.tile(yearly.to_numpy(dtype=float), (len(index), 1)), index=index, columns=yearly.index
     )
@@ -186,7 +273,23 @@ def apply_feedstock_policies_inplace(
     available_feedstocks: list[str],
     demand_types: list[str],
 ) -> None:
-    """Apply per-feedstock policies in-place (if any) to per-feedstock operational columns."""
+    """
+    Apply per-feedstock policies in-place (if any) to per-feedstock operational columns.
+    Args:
+        operational_multi_years (pd.DataFrame): The multi-year operational emissions DataFrame.
+        feedstock_policies (Mapping[str, tuple[int, int, float]] | None): 
+            The feedstock policies to apply. Keys are feedstock names, values are tuples of
+            (reference_year, target_year, target_fraction). Example:
+                ```
+                {
+                "GRID":         (2020, 2030, 0.2),
+                "NATURALGAS":   (2020, 2025, 0.5)
+                }
+                ```
+            If the feedstock here is not available in the DataFrame columns, it is ignored.
+        available_feedstocks (list[str]): The list of feedstocks present in the DataFrame.
+        demand_types (list[str]): The list of demand types present in the DataFrame.
+    """
     for raw_key, raw_policy in (feedstock_policies or {}).items():
         if not (isinstance(raw_policy, tuple) and len(raw_policy) == 3):
             raise ValueError(
@@ -306,16 +409,8 @@ def fill_operational_emissions_inplace(
         df_timeline[c] = operational_multi_years[c].to_numpy(dtype=float)
 
 
-class EmissionTimelineFrame:
-    """Small helper that owns *how* we write into timeline DataFrames.
-
-    Design choice: composition over inheritance.
-
-    - `BuildingEmissionTimeline` has domain-specific state (geometry, typology, envelope lookup,
-      feedstocks, etc.). Subclassing it for every new timeline “flavour” (lifetime vs events)
-      tends to couple constructors and makes future refactors harder.
-    - A thin wrapper around `pd.DataFrame` lets multiple generators share the same logging
-      semantics (index labels, column naming, additive vs overwrite) without sharing unrelated state.
+class YearlyEmissionTimelineFrame:
+    """Small helper around `pd.DataFrame` that owns *how* we write into timeline DataFrames.
     """
 
     def __init__(self, df: pd.DataFrame):
