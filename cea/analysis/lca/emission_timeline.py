@@ -48,7 +48,444 @@ _MAPPING_DICT = {
 }
 
 
-class BuildingEmissionTimeline:
+# Mirror the per-component naming used by the existing CEA emissions timelines.
+# Kept as a separate constant so other modules can reuse the canonical order.
+TIMELINE_COMPONENTS: tuple[str, ...] = tuple(_MAPPING_DICT.keys())
+
+
+def year_label(year: int) -> str:
+    """Convert an integer year to the standard timeline index label `Y_YYYY`."""
+    return f"Y_{int(year)}"
+
+
+def normalise_years(year: int | list[int] | str | list[str]) -> list[str]:
+    """Normalise year inputs to a list of timeline index labels (`Y_YYYY`).
+
+    Accepted inputs:
+    - `int` (e.g., 2020)
+    - `list[int]`
+    - `str` (already formatted label, e.g., `Y_2020`)
+    - `list[str]`
+    """
+    if isinstance(year, int):
+        return [year_label(year)]
+    if isinstance(year, str):
+        return [year]
+    if isinstance(year, list):
+        if len(year) == 0:
+            return []
+        if isinstance(year[0], int):
+            return [year_label(y) for y in cast(list[int], year)]
+        if isinstance(year[0], str):
+            return list(cast(list[str], year))
+    return []
+
+
+def log_emission_in_timeline_df(
+    df: pd.DataFrame,
+    *,
+    emission: float,
+    year: int | list[int] | str | list[str],
+    col: str,
+    additive: bool = True,
+) -> None:
+    """Log emissions into an existing timeline DataFrame.
+
+    This mirrors the behaviour of `BuildingEmissionTimeline._log_emission_in_timeline`,
+    but is reusable by other timeline generators (e.g., district event timelines).
+    """
+    years_list = normalise_years(year)
+    if not years_list:
+        return
+
+    if additive:
+        current = df.loc[years_list, col]
+        df.loc[years_list, col] = current.astype(float).add(float(emission))
+    else:
+        df.loc[years_list, col] = float(emission)
+
+
+def phase_component_col(phase: str, component: str) -> str:
+    """Return the standard emission column name `{phase}_{component}_kgCO2e`."""
+    return f"{phase}_{component}_kgCO2e"
+
+
+def discount_over_year_indexed(
+    base: pd.Series,
+    *,
+    index: pd.Index,
+    ref_year: int,
+    tar_year: int,
+    tar_fraction: float,
+) -> pd.Series:
+    """Apply the same discounting rule as `BuildingEmissionTimeline.discount_over_year`.
+
+    This helper is intentionally index-driven, so other timeline generators can reuse the
+    decarbonisation behaviour without subclassing `BuildingEmissionTimeline`.
+    """
+    if tar_year <= ref_year:
+        raise ValueError("Target year must be greater than reference year.")
+    if tar_fraction < 0:
+        raise ValueError("Target fraction must be non-negative.")
+
+    series = base.reindex(index).astype(float)
+
+    years: list[int] = []
+    for label in index:
+        s = str(label)
+        if s.startswith("Y_"):
+            s = s[2:]
+        years.append(int(s))
+
+    years_arr = np.array(years, dtype=int)
+    factors = np.ones(len(index), dtype=float)
+    mask_linear = (years_arr >= int(ref_year)) & (years_arr <= int(tar_year))
+    if mask_linear.any():
+        n = int(mask_linear.sum())
+        factors[mask_linear] = np.linspace(1.0, float(tar_fraction), n)
+    factors[years_arr > int(tar_year)] = float(tar_fraction)
+
+    return series * factors
+
+
+def read_operational_timeseries(locator: "InputLocator", building_name: str) -> pd.DataFrame:
+    """Load the hourly operational emissions table for a building, dropping non-emission columns."""
+    operational = OperationalHourlyTimeline.from_result(locator, building_name)
+    df = operational.operational_emission_timeline.copy()
+    if "date" in df.columns:
+        df = df.drop(columns=["date"])
+    return df
+
+
+def tile_yearly_to_index(yearly: pd.Series, *, index: pd.Index) -> pd.DataFrame:
+    return pd.DataFrame(
+        np.tile(yearly.to_numpy(dtype=float), (len(index), 1)), index=index, columns=yearly.index
+    )
+
+
+def apply_feedstock_policies_inplace(
+    operational_multi_years: pd.DataFrame,
+    *,
+    index: pd.Index,
+    feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
+    feedstocks: list[str],
+    demand_types: list[str],
+) -> None:
+    """Apply per-feedstock policies in-place (if any) to per-feedstock operational columns."""
+    for raw_key, raw_policy in (feedstock_policies or {}).items():
+        if not (isinstance(raw_policy, tuple) and len(raw_policy) == 3):
+            raise ValueError(
+                f"Policy for '{raw_key}' must be a tuple (reference_year, target_year, target_fraction)."
+            )
+        try:
+            ref = int(raw_policy[0])
+            tgt = int(raw_policy[1])
+            frac = float(raw_policy[2])
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"Policy for '{raw_key}' must contain (int, int, float): got {raw_policy}."
+            )
+        if not tgt > ref:
+            raise ValueError(
+                f"Policy for '{raw_key}' target year must be greater than reference year."
+            )
+        if frac < 0:
+            raise ValueError(
+                f"Policy for '{raw_key}' target fraction must be non-negative."
+            )
+        fs_key_upper = str(raw_key).strip().upper()
+        matching_fs = [fs for fs in feedstocks if str(fs).strip().upper() == fs_key_upper]
+        if not matching_fs:
+            continue
+        for fs in matching_fs:
+            for d in demand_types:
+                col = f"{d}_{fs}_kgCO2e"
+                if col in operational_multi_years.columns:
+                    operational_multi_years[col] = discount_over_year_indexed(
+                        operational_multi_years[col],
+                        index=index,
+                        ref_year=ref,
+                        tar_year=tgt,
+                        tar_fraction=frac,
+                    )
+
+
+def apply_pv_offset_decarbonisation_inplace(
+    operational_multi_years: pd.DataFrame,
+    *,
+    index: pd.Index,
+    feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
+) -> list[str]:
+    """Apply GRID policy in-place (if any) to PV offset/export columns, and return those column names."""
+    list_final_pv_cols: list[str] = []
+    for col in operational_multi_years.columns:
+        if col.startswith("PV_") and col.endswith("_kgCO2e"):
+            if feedstock_policies and "GRID" in feedstock_policies:
+                ref, tgt, frac = feedstock_policies["GRID"]
+                operational_multi_years[col] = discount_over_year_indexed(
+                    operational_multi_years[col],
+                    index=index,
+                    ref_year=int(ref),
+                    tar_year=int(tgt),
+                    tar_fraction=float(frac),
+                )
+            list_final_pv_cols.append(col)
+    return list_final_pv_cols
+
+
+def aggregate_operational_by_demand(
+    operational_multi_years: pd.DataFrame,
+    *,
+    index: pd.Index,
+    demand_types: list[str],
+) -> pd.DataFrame:
+    out = pd.DataFrame(index=index)
+    for d in demand_types:
+        cols_d = [c for c in operational_multi_years.columns if c.startswith(f"{d}_") and c.endswith("_kgCO2e")]
+        out[f"operation_{d}_kgCO2e"] = operational_multi_years[cols_d].sum(axis=1) if cols_d else 0.0
+    return out
+
+
+def fill_operational_emissions_inplace(
+    df_timeline: pd.DataFrame,
+    *,
+    locator: "InputLocator",
+    building_name: str,
+    feedstock_db: Feedstocks,
+    feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+    apply_decarbonisation: bool = True,
+    include_pv_offset: bool = True,
+) -> None:
+    """Fill operational emissions into an existing timeline DataFrame.
+
+    This is the reusable counterpart of `BuildingEmissionTimeline.fill_operational_emissions`.
+
+    Options:
+    - `apply_decarbonisation`: if False, ignores `feedstock_policies` (no discounting applied).
+    - `include_pv_offset`: if False, PV offset/export columns are not written to the timeline.
+    """
+    demand_types = list(_tech_name_mapping.keys())
+    feedstocks = list(feedstock_db._library.keys()) + ["NONE"]
+
+    operational_timeseries = read_operational_timeseries(locator, building_name)
+    yearly_sum = operational_timeseries.sum(axis=0)
+    operational_multi_years = tile_yearly_to_index(yearly_sum, index=df_timeline.index)
+
+    if apply_decarbonisation:
+        apply_feedstock_policies_inplace(
+            operational_multi_years,
+            index=df_timeline.index,
+            feedstock_policies=feedstock_policies,
+            feedstocks=feedstocks,
+            demand_types=demand_types,
+        )
+
+    out = aggregate_operational_by_demand(
+        operational_multi_years,
+        index=df_timeline.index,
+        demand_types=demand_types,
+    )
+    for col in [f"operation_{d}_kgCO2e" for d in demand_types]:
+        if col in df_timeline.columns:
+            df_timeline.loc[:, col] = out[col].to_numpy(dtype=float)
+        else:
+            df_timeline[col] = out[col].to_numpy(dtype=float)
+
+    if not include_pv_offset:
+        return
+
+    if apply_decarbonisation:
+        pv_cols = apply_pv_offset_decarbonisation_inplace(
+            operational_multi_years,
+            index=df_timeline.index,
+            feedstock_policies=feedstock_policies,
+        )
+    else:
+        pv_cols = [c for c in operational_multi_years.columns if c.startswith("PV_") and c.endswith("_kgCO2e")]
+    for c in pv_cols:
+        df_timeline[c] = operational_multi_years[c].to_numpy(dtype=float)
+
+
+class EmissionTimelineFrame:
+    """Small helper that owns *how* we write into timeline DataFrames.
+
+    Design choice: composition over inheritance.
+
+    - `BuildingEmissionTimeline` has domain-specific state (geometry, typology, envelope lookup,
+      feedstocks, etc.). Subclassing it for every new timeline “flavour” (lifetime vs events)
+      tends to couple constructors and makes future refactors harder.
+    - A thin wrapper around `pd.DataFrame` lets multiple generators share the same logging
+      semantics (index labels, column naming, additive vs overwrite) without sharing unrelated state.
+    """
+
+    def __init__(self, df: pd.DataFrame):
+        self.df = df
+
+    @classmethod
+    def empty(
+        cls,
+        *,
+        start_year: int,
+        end_year: int,
+        columns: list[str],
+        index_name: str = "period",
+    ) -> "EmissionTimelineFrame":
+        idx = [year_label(y) for y in range(int(start_year), int(end_year) + 1)]
+        df = pd.DataFrame(index=idx)
+        df.index.name = index_name
+        for c in columns:
+            df[c] = 0.0
+        return cls(df)
+
+    def log(self, *, emission: float, year: int | list[int] | str | list[str], col: str, additive: bool = True) -> None:
+        log_emission_in_timeline_df(self.df, emission=emission, year=year, col=col, additive=additive)
+
+    def add_phase_component(self, *, year: int, phase: str, component: str, value_kgco2e: float) -> None:
+        self.log(
+            emission=float(value_kgco2e),
+            year=year_label(year),
+            col=phase_component_col(phase, component),
+            additive=True,
+        )
+
+    def fill_operational_emissions(
+        self,
+        *,
+        locator: "InputLocator",
+        building_name: str,
+        feedstock_db: Feedstocks,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+        apply_decarbonisation: bool = True,
+        include_pv_offset: bool = True,
+    ) -> None:
+        fill_operational_emissions_inplace(
+            self.df,
+            locator=locator,
+            building_name=building_name,
+            feedstock_db=feedstock_db,
+            feedstock_policies=feedstock_policies,
+            apply_decarbonisation=apply_decarbonisation,
+            include_pv_offset=include_pv_offset,
+        )
+
+    @staticmethod
+    def add_phase_component_df(
+        df: pd.DataFrame,
+        *,
+        year: int,
+        phase: str,
+        component: str,
+        value_kgco2e: float,
+    ) -> None:
+        EmissionTimelineFrame(df).add_phase_component(
+            year=year,
+            phase=phase,
+            component=component,
+            value_kgco2e=value_kgco2e,
+        )
+
+
+class BaseEmissionTimeline:
+    """Base class for *yearly* emissions timelines.
+
+    Owns only:
+    - the timeline DataFrame indexed by `Y_YYYY`
+    - consistent logging semantics (add vs overwrite)
+    - optional operational filling (including decarbonisation + PV offset)
+
+    Subclasses provide domain-specific behaviour (lifetime scheduling, event/material deltas, etc.).
+    """
+
+    def __init__(self, timeline: pd.DataFrame):
+        self.timeline = timeline
+        self._frame = EmissionTimelineFrame(self.timeline)
+
+    @classmethod
+    def empty(
+        cls,
+        *,
+        start_year: int,
+        end_year: int,
+        columns: list[str],
+        index_name: str = "period",
+    ) -> "BaseEmissionTimeline":
+        frame = EmissionTimelineFrame.empty(
+            start_year=start_year,
+            end_year=end_year,
+            columns=columns,
+            index_name=index_name,
+        )
+        return cls(frame.df)
+
+    def log(
+        self,
+        *,
+        emission: float,
+        year: int | list[int] | str | list[str],
+        col: str,
+        additive: bool = True,
+    ) -> None:
+        self._frame.log(emission=emission, year=year, col=col, additive=additive)
+
+    def add_phase_component(self, *, year: int, phase: str, component: str, value_kgco2e: float) -> None:
+        self._frame.add_phase_component(year=year, phase=phase, component=component, value_kgco2e=value_kgco2e)
+
+    def fill_operational_emissions_for_building(
+        self,
+        *,
+        locator: "InputLocator",
+        building_name: str,
+        feedstock_db: Feedstocks,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+        apply_decarbonisation: bool = True,
+        include_pv_offset: bool = True,
+    ) -> None:
+        self._frame.fill_operational_emissions(
+            locator=locator,
+            building_name=building_name,
+            feedstock_db=feedstock_db,
+            feedstock_policies=feedstock_policies,
+            apply_decarbonisation=apply_decarbonisation,
+            include_pv_offset=include_pv_offset,
+        )
+
+
+class OperationalEmissionTimeline(BaseEmissionTimeline):
+    """Operational-only yearly timeline that shares decarbonisation + PV-offset logic."""
+
+    def __init__(
+        self,
+        *,
+        locator: "InputLocator",
+        building_name: str,
+        feedstock_db: Feedstocks,
+        start_year: int,
+        end_year: int,
+    ):
+        self.locator = locator
+        self.name = building_name
+        self.feedstock_db = feedstock_db
+        cols = [f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()]
+        super().__init__(EmissionTimelineFrame.empty(start_year=start_year, end_year=end_year, columns=cols).df)
+
+    def fill(
+        self,
+        *,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+        apply_decarbonisation: bool = True,
+        include_pv_offset: bool = True,
+    ) -> None:
+        self.fill_operational_emissions_for_building(
+            locator=self.locator,
+            building_name=self.name,
+            feedstock_db=self.feedstock_db,
+            feedstock_policies=feedstock_policies,
+            apply_decarbonisation=apply_decarbonisation,
+            include_pv_offset=include_pv_offset,
+        )
+
+
+class BuildingEmissionTimeline(BaseEmissionTimeline):
     """
     A class to manage the emission timeline for a building.
     The core attribute of this class is the timeline DataFrame indexed by year,
@@ -90,10 +527,15 @@ class BuildingEmissionTimeline:
         heating, cooling, ventilation, domestic hot water, electrical systems,
 
     Therefore, the column name is `{type}_{component}`, e.g., `production_wall_ag`,
-    `biogenic_roof`.
+        `biogenic_roof`.
 
-    Finally, the yearly operational emission `operational` is also tracked
-    in the timeline.
+        Notes on units / naming:
+        - All *emission* columns in the timeline end with `_kgCO2e`.
+            For example: `production_wall_ag_kgCO2e`, `biogenic_roof_kgCO2e`.
+        - Non-emission metadata columns (e.g., `name`) do not follow this suffix.
+
+    Finally, yearly operational emissions are also tracked in the timeline as
+    `operation_{demand}_kgCO2e` (see `_COLUMN_MAPPING`).
     """
 
     _COLUMN_MAPPING = {f"{d}_kgCO2e": f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()}
@@ -131,7 +573,8 @@ class BuildingEmissionTimeline:
         self.envelope = building_properties.envelope[self.name]
         self.feedstock_db = Feedstocks.from_locator(self.locator)
         self.surface_area = self.get_component_quantity(building_properties)
-        self.timeline = self.initialize_timeline(end_year)
+        timeline = self.initialize_timeline(end_year)
+        super().__init__(timeline)
 
     def check_demolished(self):
         if self._is_demolished:
@@ -407,6 +850,9 @@ class BuildingEmissionTimeline:
     def fill_operational_emissions(
         self,
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+        *,
+        apply_decarbonisation: bool = True,
+        include_pv_offset: bool = True,
     ) -> None:
         """Fill operational emissions into the timeline, with optional per-feedstock discounting.
 
@@ -420,19 +866,14 @@ class BuildingEmissionTimeline:
         {Qhs_sys, Qww_sys, Qcs_sys, E_sys} and feedstock is in the feedstock database (plus 'NONE').
         """
         self.check_demolished()
-        demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
-        feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
-
-        _, operational_timeseries = self._read_operational_timeseries()
-        yearly_sum = operational_timeseries.sum(axis=0)
-        operational_multiyrs = self._tile_yearly(yearly_sum)
-        self._apply_feedstock_policies(operational_multiyrs, feedstock_policies, feedstocks, demand_types)
-        out = self._aggregate_by_demand(operational_multiyrs, demand_types)
-        self.timeline.loc[:, self._OPERATIONAL_COLS] = out[self._OPERATIONAL_COLS].to_numpy(dtype=float)
-
-        pv_total_cols = self._apply_pv_offset_decarbonization(operational_multiyrs, feedstock_policies)
-        if pv_total_cols:
-            self.timeline.loc[:, pv_total_cols] = operational_multiyrs[pv_total_cols].to_numpy(dtype=float)
+        self.fill_operational_emissions_for_building(
+            locator=self.locator,
+            building_name=self.name,
+            feedstock_db=self.feedstock_db,
+            feedstock_policies=feedstock_policies,
+            apply_decarbonisation=apply_decarbonisation,
+            include_pv_offset=include_pv_offset,
+        )
 
     def demolish(self, demolition_year: int) -> None:
         """
@@ -540,27 +981,7 @@ class BuildingEmissionTimeline:
     def _log_emission_in_timeline(
         self, emission: float, year: int | list[int] | str | list[str], col: str, additive: bool = True
     ) -> None:
-        # Normalize to list[str] in Y_XXXX format for consistent indexing behavior
-        if isinstance(year, int):
-            years_list: list[str] = [f"Y_{year}"]
-        elif isinstance(year, str):
-            years_list = [year]
-        elif isinstance(year, list) and len(year) > 0 and isinstance(year[0], int):
-            years_list = [f"Y_{y}" for y in year]
-        else:
-            # If it's a list[str], keep; if empty or unknown, set empty list
-            if isinstance(year, list) and (len(year) == 0 or isinstance(year[0], str)):
-                years_list = list(year)  # type: ignore[arg-type]
-            else:
-                years_list = []
-
-        if additive:
-            # Add emission to all selected years (vectorized)
-            current = self.timeline.loc[years_list, col]
-            self.timeline.loc[years_list, col] = current.astype(float).add(float(emission))
-        else:
-            # Set emission for all selected years
-            self.timeline.loc[years_list, col] = float(emission)
+        self.log(emission=emission, year=year, col=col, additive=additive)
 
     def get_component_quantity(self, building_properties: BuildingProperties) -> dict[str, float]:
         """
@@ -655,6 +1076,7 @@ def get_building_names_from_zone(locator):
         Zone geometry with 'Name' or 'name' column (caller should check both)
     """
     import geopandas as gpd
+
     from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
     zone_path = locator.get_zone_geometry()
