@@ -458,8 +458,6 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         :param building_properties: the BuildingProperties object containing the geometric,
             envelope and database data for all buildings in the district.
         :type building_properties: BuildingProperties
-        :param envelope_lookup: the EnvelopeLookup object to access the envelope database.
-        :type envelope_lookup: EnvelopeLookup
         :param building_name: the name of the building.
         :type building_name: str
         :param locator: the InputLocator object to locate input files.
@@ -470,13 +468,29 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         super().__init__(name=building_name, locator=locator)
 
         self._is_demolished = False
-        self.envelope_lookup = envelope_lookup
         self.geometry = building_properties.geometry[self.name]
         self.typology = building_properties.typology[self.name]
         self.envelope = building_properties.envelope[self.name]
-        self.feedstock_db = Feedstocks.from_locator(self.locator)
         self.surface_area = self.get_component_quantity(building_properties)
         self.timeline = self.initialize_timeline(end_year)
+        self._append_note(year=int(self.typology["year"]), message="Constructed")
+
+    def _append_note(self, *, year: int, message: str) -> None:
+        """Append a note message for a specific year to the `Note` column."""
+        label = f"Y_{int(year)}"
+        if "Note" not in self.timeline.columns:
+            # Defensive: should always exist from initialize_timeline.
+            self.timeline["Note"] = ""
+        if label not in self.timeline.index:
+            return
+        current = str(self.timeline.at[label, "Note"] or "").strip()
+        msg = str(message).strip()
+        if not msg:
+            return
+        if not current:
+            self.timeline.at[label, "Note"] = msg
+        elif msg not in current:
+            self.timeline.at[label, "Note"] = f"{current} | {msg}"
 
     def check_demolished(self):
         if self._is_demolished:
@@ -500,6 +514,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         demolition_per_area: float,
         lifetime: int,
         key: str,
+        note_detail: str | None = None,
     ):
         self._log_emission_with_lifetime(
             emission=production_per_area * area, lifetime=lifetime, col=f"production_{key}_kgCO2e"
@@ -521,6 +536,16 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             additive=False,
         )
 
+        # Notes: avoid listing details in the construction year (use the generic 'Constructed' message).
+        start_year = int(self.typology["year"])
+        max_year = max(years_from_index(self.timeline.index))
+        if lifetime > 0 and max_year >= start_year + lifetime:
+            renovation_years = list(range(start_year + int(lifetime), int(max_year) + 1, int(lifetime)))
+            if renovation_years:
+                detail = f" ({note_detail})" if note_detail else ""
+                for y in renovation_years:
+                    self._append_note(year=int(y), message=f"Service life reached: {key}{detail}")
+
     def fill_embodied_emissions(self) -> None:
         """
         Log the embodied emissions for the building components for
@@ -531,6 +556,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         
         for key, value in _MAPPING_DICT.items():
             area: float = self.surface_area[f"A{key}"]
+            code_for_note: str | None = None
 
             if key == "technical_systems":
                 lifetime = SERVICE_LIFE_OF_TECHNICAL_SYSTEMS
@@ -542,6 +568,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                 lifetime_any = self.envelope_lookup.get_item_value(
                     code=self.envelope[type_str], field="Service_Life"
                 )
+                code_for_note = str(self.envelope[type_str])
                 try: # if detailed LCA data (production + recycling) available, use it
                     ghg_production_any = self.envelope_lookup.get_item_value(
                         code=self.envelope[type_str], field="GHG_production_kgCO2m2"
@@ -571,7 +598,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                 production = float(ghg_production_any)
                 biogenic = float(biogenic_any)
                 demolition = float(ghg_recycling_any)
-            self.log_emissions(area, production, biogenic, demolition, lifetime, key)
+            self.log_emissions(area, production, biogenic, demolition, lifetime, key, note_detail=code_for_note)
 
     def fill_pv_embodied_emissions(self, pv_codes: list[str]) -> None:
         """Initialize the PV system in the building emission timeline.
@@ -603,7 +630,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                     raise ValueError(f"Column {col_name} already exists in the timeline, check for duplicate PV codes.")
             # Log embodied emissions for PV system
             embodied_intensity = cast(float, pv_db.loc[pv_code, 'module_embodied_kgco2m2'])
-            self.log_emissions(pv_area, embodied_intensity, 0.0, 0.0, lifetime, pv_type_str)
+            self.log_emissions(pv_area, embodied_intensity, 0.0, 0.0, lifetime, pv_type_str, note_detail=pv_code)
 
     def fill_operational_emissions(
         self,
@@ -678,6 +705,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                     year=demolition_year,
                     col=f"demolition_{key}_kgCO2e",
                 )
+            self._append_note(year=int(demolition_year), message="Demolished")
         self._is_demolished = True
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:
@@ -708,6 +736,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             index_name="period",
         )
         timeline["name"] = self.name  # add building name column for easier identification
+        timeline["Note"] = ""
         self._is_demolished = False
         return timeline
 

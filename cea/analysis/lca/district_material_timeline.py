@@ -58,9 +58,29 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
         self._notes_by_year: dict[str, list[str]] = {}
         super().__init__(name=name, locator=locator)
 
+    def add_note(self, *, year: int, message: str) -> None:
+        label = f"Y_{int(year)}"
+        if label not in self.timeline.index:
+            return
+        msg = str(message).strip()
+        if not msg:
+            return
+        self._notes_by_year.setdefault(label, [])
+        if msg not in self._notes_by_year[label]:
+            self._notes_by_year[label].append(msg)
+
+    def notes_series(self) -> pd.Series:
+        """Return a year-indexed Series of notes, aligned to the timeline index."""
+        out = pd.Series(index=self.timeline.index, dtype=object)
+        for label in self.timeline.index:
+            msgs = self._notes_by_year.get(str(label), [])
+            out.at[label] = " | ".join(msgs) if msgs else ""
+        return out
+
     def set_existence(self, *, construction_year: int, demolition_year: int | None) -> None:
         self.construction_year = int(construction_year)
         self.demolition_year = int(demolition_year) if demolition_year is not None else None
+        self.add_note(year=int(construction_year), message="Constructed")
 
     def exists_at(self, year: int) -> bool:
         if self.construction_year is None:
@@ -284,6 +304,13 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
             if next_mod_year == year:
                 year_mods = mod_by_year.get(year, {})
                 for src_component, events in year_mods.items():
+                    if events:
+                        removed = [f"-{layer.name} {layer.thickness_m:.3f}m" for action, layer in events if action == "remove"]
+                        added = [f"+{layer.name} {layer.thickness_m:.3f}m" for action, layer in events if action == "add"]
+                        parts = [p for p in (removed + added) if p]
+                        detail = ", ".join(parts) if parts else ""
+                        msg = f"Modified {src_component}" + (f": {detail}" if detail else "")
+                        self.add_note(year=int(year), message=msg)
                     self.add_modification_events(
                         year=year,
                         events=events,
@@ -305,6 +332,11 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
                     for src_component in due_components:
                         layers = current_layers.get(src_component)
                         if layers:
+                            layer_desc = ", ".join([f"{ly.name} {ly.thickness_m:.3f}m" for ly in layers])
+                            self.add_note(
+                                year=int(year),
+                                message=f"Service life reached: {src_component} (replace {layer_desc})",
+                            )
                             self.add_full_replacement(
                                 year=year,
                                 src_component=src_component,
@@ -329,6 +361,7 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
                 layers_snapshot=layers_snapshot,
                 comp_area_map=_COMP_AREA_MAP,
             )
+            self.add_note(year=int(self.demolition_year), message="Demolished")
 
     def add_full_replacement(
         self,
