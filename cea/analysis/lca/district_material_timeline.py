@@ -15,8 +15,7 @@ from cea.inputlocator import InputLocator
 from cea.analysis.lca.hourly_operational_emission import _tech_name_mapping
 from cea.analysis.lca.emission_timeline import (
     TIMELINE_COMPONENTS as _TIMELINE_COMPONENTS,
-    BaseYearlyEmissionTimeline as _BaseEmissionTimeline,
-    aggregate_operational_by_demand as _aggregate_operational_by_demand,
+    BaseYearlyEmissionTimeline as _BuildingContextTimeline,
     apply_feedstock_policies_inplace as _apply_feedstock_policies_inplace,
 )
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
@@ -45,14 +44,19 @@ class MaterialLayer:
     thickness_m: float
 
 
-class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
+class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
     """Building-level *event* timeline driven by the district YAML log."""
 
-    def __init__(self, *, name: str, timeline: pd.DataFrame):
-        self.name = name
+    def __init__(
+        self,
+        *,
+        name: str,
+        locator: InputLocator,
+    ):
         self.construction_year: int | None = None
         self.demolition_year: int | None = None
-        super().__init__(timeline)
+        self._notes_by_year: dict[str, list[str]] = {}
+        super().__init__(name=name, locator=locator)
 
     def set_existence(self, *, construction_year: int, demolition_year: int | None) -> None:
         self.construction_year = int(construction_year)
@@ -92,10 +96,12 @@ class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
         """Fill `operation_*_kgCO2e` between available state years.
 
         Source of truth is the per-state-year operational-by-building output (from the `emissions` script).
-        This method:
-        - selects the latest known per-building *per-demand/per-feedstock* emissions for each state year
-        - carries them forward until the next state year (step function on demand / technology)
-        - applies any configured `feedstock_policies` (e.g., GRID decarbonisation) per timeline year
+                This method:
+                - selects the latest known per-building *per-demand/per-feedstock* emissions for each state year
+                - carries them forward until the next state year (step function on demand / technology)
+                - builds a continuous per-year operational timeline for the building
+                - applies any configured `feedstock_policies` (e.g., GRID decarbonisation) **after** the
+                    continuous timeline is assembled
 
         Operational is set to 0 for years before construction, and for years >= demolition (if any).
         """
@@ -104,11 +110,38 @@ class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
         construction_year = self.construction_year
         demolition_year = self.demolition_year
 
+        active_years = [
+            y
+            for y in range(construction_year, end_year + 1)
+            if demolition_year is None or y < demolition_year
+        ]
+        if not active_years:
+            return
+
+        idx_active = [f"Y_{y}" for y in active_years]
+        operational_multi_years = pd.DataFrame(index=idx_active)
+
         last_known: pd.Series | None = None
         for i, state_year in enumerate(years_sorted):
+            if state_year > end_year:
+                break
             df_op = operational_by_state_year.get(state_year)
             if df_op is not None and self.name in df_op.index:
-                cols_in = _operational_factor_columns(df_op)
+                demand_types = list(_tech_name_mapping.keys())
+                feedstocks = self.get_available_feedstocks()
+
+                cols_in: list[str] = []
+                for d in demand_types:
+                    for fs in feedstocks:
+                        c = f"{d}_{fs}_kgCO2e"
+                        if c in df_op.columns:
+                            cols_in.append(c)
+                # Keep PV offset/export emissions columns if present
+                for c in df_op.columns:
+                    if isinstance(c, str) and c.startswith("PV_") and c.endswith("_kgCO2e"):
+                        cols_in.append(c)
+                cols_in = list(dict.fromkeys(cols_in))
+
                 series = df_op.loc[[self.name], cols_in].iloc[0] if cols_in else pd.Series(dtype=float)
                 last_known = series
             else:
@@ -127,27 +160,39 @@ class MaterialChangeEmissionTimeline(_BaseEmissionTimeline):
                 continue
 
             idx_interval = [f"Y_{y}" for y in interval_years]
-            operational_multi_years = pd.DataFrame(index=idx_interval)
+            if series.empty:
+                continue
+
+            # Ensure we have columns available before assignment.
             for c in series.index:
-                operational_multi_years[c] = float(series.get(c, 0.0))
+                if c not in operational_multi_years.columns:
+                    operational_multi_years[c] = np.nan
 
-            if feedstock_policies:
-                demand_types = list(_tech_name_mapping.keys())
-                feedstocks = _extract_feedstocks_from_columns(operational_multi_years.columns, demand_types=demand_types)
-                _apply_feedstock_policies_inplace(
-                    operational_multi_years,
-                    feedstock_policies=feedstock_policies,
-                    available_feedstocks=feedstocks,
-                    demand_types=demand_types,
-                )
+            values = series.astype(float).to_numpy(dtype=float)
+            operational_multi_years.loc[idx_interval, series.index] = np.tile(values, (len(idx_interval), 1))
 
-            out = _aggregate_operational_by_demand(
+        # Years with no state (and no carry-forward) default to 0.0
+        operational_multi_years = operational_multi_years.fillna(0.0).astype(float)
+
+        if feedstock_policies:
+            demand_types = list(_tech_name_mapping.keys())
+            _apply_feedstock_policies_inplace(
                 operational_multi_years,
-                demand_types=list(_tech_name_mapping.keys()),
+                feedstock_policies=feedstock_policies,
+                available_feedstocks=self.get_available_feedstocks(),
+                demand_types=demand_types,
             )
-            for d in _tech_name_mapping.keys():
-                col = f"operation_{d}_kgCO2e"
-                self.timeline.loc[idx_interval, col] = out[col].to_numpy(dtype=float)
+
+        # Aggregate per-demand totals back into the timeline.
+        for d in _tech_name_mapping.keys():
+            col = f"operation_{d}_kgCO2e"
+            cols_d = [
+                c
+                for c in operational_multi_years.columns
+                if isinstance(c, str) and c.startswith(f"{d}_") and c.endswith("_kgCO2e")
+            ]
+            values = operational_multi_years[cols_d].sum(axis=1).to_numpy(dtype=float) if cols_d else 0.0
+            self.timeline.loc[idx_active, col] = values
 
     def build_embodied_from_log(
         self,
@@ -633,50 +678,6 @@ def _load_state_building_properties(locator: InputLocator, buildings: list[str])
     return BuildingProperties(locator, weather_data, buildings)
 
 
-def _operational_factor_columns(df: pd.DataFrame) -> list[str]:
-    """Return per-demand/per-feedstock and PV offset columns suitable for policy scaling.
-
-    These columns are treated as emissions already attributed to a feedstock (e.g., `E_sys_GRID_kgCO2e`).
-    If decarbonisation policies are configured, these are scaled per timeline year.
-    """
-    demand_types = list(_tech_name_mapping.keys())
-    cols: list[str] = []
-    for c in df.columns:
-        if not (isinstance(c, str) and c.endswith("_kgCO2e")):
-            continue
-        # Keep per-demand/per-feedstock columns like `Qhs_sys_GRID_kgCO2e`
-        if any(c.startswith(f"{d}_") for d in demand_types) and c.count("_") >= 3:
-            cols.append(c)
-            continue
-        # Keep PV emission offset columns if present (these are also scaled if GRID is decarbonised)
-        if c.startswith("PV_"):
-            cols.append(c)
-            continue
-    return cols
-
-
-def _extract_feedstocks_from_columns(columns: pd.Index, *, demand_types: list[str]) -> list[str]:
-    """Extract feedstock tokens from per-demand/per-feedstock emission columns."""
-    feedstocks: set[str] = set()
-    for c in columns:
-        if not isinstance(c, str):
-            continue
-        if not c.endswith("_kgCO2e"):
-            continue
-        for d in demand_types:
-            prefix = f"{d}_"
-            if not c.startswith(prefix):
-                continue
-            # expect `{demand}_{feedstock}_kgCO2e`
-            tail = c[len(prefix) :]
-            if tail.endswith("_kgCO2e"):
-                feedstock = tail[: -len("_kgCO2e")]
-                if feedstock:
-                    feedstocks.add(feedstock)
-    feedstocks.add("NONE")
-    return sorted(feedstocks)
-
-
 def _feedstock_policies_from_config(config: Configuration) -> Mapping[str, tuple[int, int, float]] | None:
     emissions_cfg = config.emissions
     ref_yr = getattr(emissions_cfg, "grid_decarbonise_reference_year", None)
@@ -714,6 +715,10 @@ def create_district_material_timeline(
         - Index is 'Y_YYYY'.
         - Columns include per-component/per-phase embodied columns (matching emissions timelines),
             plus `production_kgCO2e`, `demolition_kgCO2e`, `biogenic_kgCO2e`, and per-demand operational columns.
+
+        Files:
+        - District aggregate (exposed): `district_timeline_states/district_material_timeline.csv`
+        - Per-building timelines (for inspection): `district_timeline_states/district_material_timelines_buildings/*.csv`
 
         Naming convention:
         - This function only outputs emission columns; all columns end with `_kgCO2e`.
@@ -889,7 +894,8 @@ def create_district_material_timeline(
     all_buildings = sorted(set(building_const_types.keys()) | set(building_construction_years.keys()))
 
     for b in all_buildings:
-        tl_b = MaterialChangeEmissionTimeline(name=b, timeline=_empty_timeline())
+        tl_b = MaterialChangeEmissionTimeline(name=b, locator=main_locator)
+        tl_b.timeline = _empty_timeline()
         building_timelines[b] = tl_b
 
         c_year = building_construction_years.get(b)
@@ -931,6 +937,30 @@ def create_district_material_timeline(
             archetype_events_by_year=archetype_events_by_year,
             service_life_by_src_component=archetype_service_life.get(const_type, {}),
         )
+
+    # Persist per-building timelines under the district timeline folder.
+    # This keeps the district-level output as the primary result while still exposing detailed per-building files.
+    per_building_folder = os.path.join(
+        main_locator.get_district_timeline_states_folder(),
+        "district_material_timelines_buildings",
+    )
+    os.makedirs(per_building_folder, exist_ok=True)
+    for b, tl_b in building_timelines.items():
+        # Only write timelines for buildings that actually exist in the timeline horizon.
+        if tl_b.construction_year is None:
+            continue
+        file_name = f"{b}_material_timeline.csv"
+        save_b_path = os.path.join(per_building_folder, file_name)
+        try:
+            df_save = tl_b.timeline.copy()
+            df_save["Note"] = tl_b.notes_series()
+            df_save.to_csv(save_b_path, float_format="%.2f")
+        except PermissionError as e:
+            raise PermissionError(
+                "Permission denied writing a per-building material timeline CSV. "
+                "This often happens on Windows when the CSV is open in Excel or locked by OneDrive sync. "
+                f"Close '{save_b_path}' and rerun."
+            ) from e
 
     # Aggregate by summing all building timelines.
     for tl_b in building_timelines.values():
