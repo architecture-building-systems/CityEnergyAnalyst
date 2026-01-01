@@ -8,6 +8,11 @@ from cea.config import Configuration
 from cea.inputlocator import InputLocator
 
 
+class _NoAliasSafeDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data: Any) -> bool:  # noqa: ANN401
+        return True
+
+
 def load_log_yaml(
     locator: InputLocator,
     *,
@@ -63,8 +68,17 @@ def load_log_yaml(
 def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) -> None:
     yml_path = locator.get_district_timeline_log_file()
     os.makedirs(os.path.dirname(yml_path), exist_ok=True)
+    ordered_log_data: dict[int, dict[str, Any]] = {
+        year: log_data[year] for year in sorted(log_data)
+    }
     with open(yml_path, "w") as f:
-        yaml.dump(log_data, f)
+        yaml.dump(
+            ordered_log_data,
+            f,
+            Dumper=_NoAliasSafeDumper,
+            sort_keys=False,
+            default_flow_style=False,
+        )
 
 
 def add_year_in_yaml(config: Configuration, year_of_state: int) -> None:
