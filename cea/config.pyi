@@ -35,6 +35,8 @@ class Configuration:
     costs: CostsSection
     emissions: EmissionsSection
     district_events: DistrictEventsSection
+    district_events_build: DistrictEventsBuildSection
+    state_simulations: StateSimulationsSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
     dbf_tools: DbfToolsSection
@@ -132,6 +134,10 @@ class Configuration:
     def __getattr__(self, item: Literal["emissions"]) -> EmissionsSection: ...
     @overload
     def __getattr__(self, item: Literal["district_events"]) -> DistrictEventsSection: ...
+    @overload
+    def __getattr__(self, item: Literal["district_events_build"]) -> DistrictEventsBuildSection: ...
+    @overload
+    def __getattr__(self, item: Literal["state_simulations"]) -> StateSimulationsSection: ...
     @overload
     def __getattr__(self, item: Literal["extract_reference_case"]) -> ExtractReferenceCaseSection: ...
     @overload
@@ -663,6 +669,23 @@ class DistrictEventsSection(Section):
     def __getattr__(self, item: Literal["base_thickness_3_m"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["base_lifetime"]) -> int | None: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class DistrictEventsBuildSection(Section):
+    """Typed section for district-events-build configuration"""
+    build_mode: str
+    regenerate_building_properties: bool
+
+    @overload
+    def __getattr__(self, item: Literal["build_mode"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["regenerate_building_properties"]) -> bool: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class StateSimulationsSection(Section):
+    """Typed section for state-simulations configuration"""
+    simulation_mode: str
+
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):

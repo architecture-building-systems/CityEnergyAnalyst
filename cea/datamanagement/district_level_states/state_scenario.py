@@ -1,21 +1,571 @@
+import hashlib
+import json
 import os
 import shutil
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Literal
 
 import geopandas as gpd
 import pandas as pd
 import yaml
 
 from cea.config import Configuration
-from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
-from cea.datamanagement.district_level_states.timeline_integrity import check_district_timeline_log_yaml_integrity
-from cea.datamanagement.district_level_states.timeline_integrity import compute_state_year_missing_modifications, merge_modify_recipes
+from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
-from cea.datamanagement.district_level_states.timeline_log import add_year_in_yaml, del_year_in_yaml, load_log_yaml, save_log_yaml
-from cea.datamanagement.district_level_states.state_transaction import FileSnapshot, snapshot_state_year_files
+from cea.datamanagement.district_level_states.state_transaction import (
+    snapshot_state_year_files,
+)
+from cea.datamanagement.district_level_states.timeline_integrity import (
+    check_district_timeline_log_yaml_integrity,
+    compute_state_year_missing_modifications,
+    merge_modify_recipes,
+)
+from cea.datamanagement.district_level_states.timeline_log import (
+    add_year_in_yaml,
+    del_year_in_yaml,
+    load_log_yaml,
+    save_log_yaml,
+)
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
+
+ModifyRecipe = dict[str, dict[str, dict[str, Any]]]
+
+
+def _canonical_json(obj: Any) -> str:
+    """Create a stable JSON representation for hashing / signatures."""
+
+    def _normalise(v: Any) -> Any:
+        if isinstance(v, dict):
+            return {
+                str(k): _normalise(v[k]) for k in sorted(v.keys(), key=lambda x: str(x))
+            }
+        if isinstance(v, list):
+            return [_normalise(x) for x in v]
+        if isinstance(v, float):
+            # Keep signatures stable across JSON float formatting.
+            return float(v)
+        return v
+
+    return json.dumps(
+        _normalise(obj), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+
+
+def _recipe_signature(recipe: ModifyRecipe) -> str:
+    payload = _canonical_json(recipe).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+@dataclass
+class DistrictStateYear:
+    """Represents a single state year definition and its on-disk realisation (if any)."""
+
+    year: int
+    modifications: ModifyRecipe
+
+    def state_folder(self, main_locator: InputLocator) -> str:
+        return main_locator.get_state_in_time_scenario_folder(int(self.year))
+
+    def signature_path(self, main_locator: InputLocator) -> str:
+        return os.path.join(
+            self.state_folder(main_locator), ".district_timeline_signature.json"
+        )
+
+    def exists_on_disk(self, main_locator: InputLocator) -> bool:
+        return os.path.exists(self.state_folder(main_locator))
+
+    def read_applied_signature(self, main_locator: InputLocator) -> str | None:
+        path = self.signature_path(main_locator)
+        if not os.path.exists(path):
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                rec = json.load(f) or {}
+            sig = rec.get("applied_signature")
+            return str(sig) if sig else None
+        except Exception:
+            return None
+
+    def read_signature_record(self, main_locator: InputLocator) -> dict[str, Any] | None:
+        path = self.signature_path(main_locator)
+        if not os.path.exists(path):
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                rec = json.load(f) or {}
+            return rec if isinstance(rec, dict) else None
+        except Exception:
+            return None
+
+    def write_signature_record(self, main_locator: InputLocator, rec: dict[str, Any]) -> None:
+        path = self.signature_path(main_locator)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(rec, f, indent=2)
+
+    def needs_simulation(self, main_locator: InputLocator) -> bool:
+        rec = self.read_signature_record(main_locator)
+        if not rec:
+            return True
+        applied = rec.get("applied_signature")
+        simulated = rec.get("simulated_signature")
+        if not applied:
+            return True
+        return simulated != applied
+
+    def mark_simulated(
+        self,
+        main_locator: InputLocator,
+        *,
+        workflow: list[dict[str, Any]] | None = None,
+    ) -> None:
+        rec = self.read_signature_record(main_locator) or {"year": int(self.year)}
+        now = str(pd.Timestamp.now())
+        rec["simulated_at"] = now
+        rec["simulated_signature"] = rec.get("applied_signature")
+        rec["simulation_status"] = "simulated"
+        if workflow is not None:
+            rec["simulated_workflow"] = workflow
+        self.write_signature_record(main_locator, rec)
+
+    def simulate(
+        self,
+        main_config: Configuration,
+        *,
+        workflow: list[dict[str, Any]],
+    ) -> None:
+        """Run the standard simulation workflow for this state year.
+
+        This is a state-level operation: it executes the workflow in the `state_{year}` scenario and then
+        updates the signature file to mark the state as simulated.
+        """
+        from copy import deepcopy
+
+        from cea.workflows.workflow import do_config_step, do_script_step
+
+        main_locator = InputLocator(main_config.scenario)
+        state_folder = main_locator.get_state_in_time_scenario_folder(int(self.year))
+        if not os.path.exists(state_folder):
+            raise FileNotFoundError(
+                f"State folder for year {self.year} does not exist: {state_folder}"
+            )
+
+        scenario_config = deepcopy(main_config)
+        scenario_config.scenario = state_folder
+        if (
+            type(scenario_config.emissions.year_end) is int
+            and int(self.year) > scenario_config.emissions.year_end
+        ):
+            scenario_config.emissions.year_end = int(self.year)
+
+        for i, step in enumerate(workflow):
+            if "script" in step:
+                do_script_step(scenario_config, i, step, trace_input=False)
+            elif "config" in step:
+                do_config_step(scenario_config, step)
+            else:
+                raise ValueError(
+                    "Invalid step configuration: {i} - {step}".format(i=i, step=step)
+                )
+
+        self.mark_simulated(main_locator, workflow=workflow)
+
+    def write_applied_signature(
+        self, main_locator: InputLocator, *, signature: str
+    ) -> None:
+        path = self.signature_path(main_locator)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        rec = {
+            "year": int(self.year),
+            "applied_signature": str(signature),
+            "built_at": str(pd.Timestamp.now()),
+            # A rebuilt / newly built state needs simulation.
+            "simulation_status": "needs_simulation",
+            "simulated_at": None,
+            "simulated_signature": None,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(rec, f, indent=2)
+
+
+class DistrictEventTimeline:
+    """Manage district timeline definitions (YAML) and materialise state scenarios from them."""
+
+    def __init__(self, config: Configuration):
+        self.config = config
+        self.main_locator = InputLocator(config.scenario)
+        # Ensure the district timeline folder exists for first-time runs.
+        os.makedirs(self.main_locator.get_district_timeline_states_folder(), exist_ok=True)
+        self.log_data: dict[int, dict[str, Any]] = load_log_yaml(
+            self.main_locator, allow_missing=True, allow_empty=True
+        )
+
+    def list_state_years_on_disk(self) -> list[int]:
+        """Return sorted list of state years present under `district_timeline_states/state_YYYY/`."""
+        years: list[int] = []
+        timeline_folder = self.main_locator.get_district_timeline_states_folder()
+        if not os.path.exists(timeline_folder):
+            return years
+        for name in os.listdir(timeline_folder):
+            if not name.startswith("state_"):
+                continue
+            try:
+                years.append(int(name.replace("state_", "")))
+            except ValueError:
+                continue
+        years.sort()
+        return years
+
+    def get_building_construction_years(self) -> dict[str, int]:
+        """Return {building_name: construction_year} from `zone.shp`.
+
+        Requires a `year` attribute in the geometry.
+        """
+        zone = gpd.read_file(self.main_locator.get_zone_geometry())
+        if "name" not in zone.columns:
+            raise ValueError("Zone geometry is missing required 'name' column.")
+        if "year" not in zone.columns:
+            raise ValueError("Zone geometry is missing required 'year' column.")
+
+        out: dict[str, int] = {}
+        for _, row in zone.iterrows():
+            name = str(row["name"])
+            y = row["year"]
+            if y is None:
+                continue
+            try:
+                out[name] = int(y)
+            except Exception as e:
+                raise ValueError(
+                    f"Invalid construction year for building '{name}': {y}"
+                ) from e
+        return out
+
+    def required_state_years(self) -> list[int]:
+        """Compute which years should have a `state_{year}` folder.
+
+        Rules:
+        - Always include all years present in YAML log.
+        - Always include all distinct building construction years from `zone.shp`.
+
+        This ensures operational timelines capture both policy/standard changes and building births.
+        """
+        years_from_log = set(int(y) for y in self.log_data.keys())
+        years_from_buildings = set(self.get_building_construction_years().values())
+        return sorted(years_from_log | years_from_buildings)
+
+    def ensure_state_years_exist(
+        self,
+        years: list[int],
+        *,
+        update_yaml: bool = True,
+        regenerate_building_properties: bool = True,
+        update_building_events: bool = True,
+    ) -> dict[int, dict[str, Any]]:
+        """Ensure `state_{year}` folders exist for all requested years.
+
+        - Creates missing `state_{year}` folders by copying inputs.
+        - Removes buildings not yet built in that year.
+        - Ensures YAML entries exist (empty modifications by default).
+        - Optionally logs `building_events` (derived from `zone.shp` construction years).
+
+        Returns the (possibly updated) YAML log data in memory.
+        """
+        construction_years = self.get_building_construction_years()
+        existing_years = set(self.list_state_years_on_disk())
+        years_sorted = sorted(set(int(y) for y in years))
+
+        prev_buildings: set[str] | None = None
+        for year in years_sorted:
+            if year not in existing_years:
+                create_state_in_time_scenario(self.config, year, update_yaml=False)
+                if update_yaml:
+                    self.log_data.setdefault(
+                        year, {"created_at": None, "modifications": {}}
+                    )
+
+            if update_yaml:
+                entry = self.log_data.get(year, {}) or {}
+                # Don't leave created_at empty (e.g., legacy year 2000 entries)
+                if entry.get("created_at") in (None, "", "null"):
+                    entry["created_at"] = str(pd.Timestamp.now())
+                entry.setdefault("modifications", {})
+                self.log_data[year] = entry
+
+            delete_unexisting_buildings_from_event_scenario(self.config, year)
+            state_locator = InputLocator(
+                self.main_locator.get_state_in_time_scenario_folder(year)
+            )
+            if regenerate_building_properties:
+                _regenerate_building_properties_from_archetypes(state_locator)
+
+            current_buildings = set(state_locator.get_zone_building_names())
+            born = sorted(b for b in current_buildings if construction_years.get(b) == year)
+            if prev_buildings is not None:
+                demolished = sorted(prev_buildings - current_buildings)
+            else:
+                demolished = []
+
+            if update_yaml and update_building_events:
+                entry = self.log_data.get(year, {}) or {}
+                building_events = entry.get("building_events", {}) or {}
+
+                building_events.setdefault("new_buildings", [])
+                existing_born = set(
+                    str(x) for x in building_events.get("new_buildings", []) or []
+                )
+                for b in born:
+                    if b not in existing_born:
+                        building_events["new_buildings"].append(b)
+
+                building_events.setdefault("demolished_buildings", [])
+                existing_demolished = set(
+                    str(x)
+                    for x in building_events.get("demolished_buildings", []) or []
+                )
+                for b in demolished:
+                    if b not in existing_demolished:
+                        building_events["demolished_buildings"].append(b)
+
+                entry["building_events"] = building_events
+                self.log_data[year] = entry
+
+            prev_buildings = current_buildings
+
+        if update_yaml:
+            self.save()
+
+        return self.log_data
+
+    def ensure_year(self, year: int) -> None:
+        if year not in self.log_data:
+            self.log_data[year] = {
+                "created_at": str(pd.Timestamp.now()),
+                "modifications": {},
+            }
+
+    def apply_year_modifications(self, year: int, modify_recipe: ModifyRecipe) -> None:
+        self.ensure_year(year)
+        entry = self.log_data.get(year, {}) or {}
+        current = entry.get("modifications", {}) or {}
+        entry["modifications"] = merge_modify_recipes(current, modify_recipe)
+        entry["latest_modified_at"] = str(pd.Timestamp.now())
+        self.log_data[year] = entry
+
+    def save(self) -> None:
+        save_log_yaml(self.main_locator, self.log_data)
+
+    def state_years(self) -> list[DistrictStateYear]:
+        years = sorted(self.log_data.keys())
+        out: list[DistrictStateYear] = []
+        for y in years:
+            entry = self.log_data.get(y, {}) or {}
+            mods = entry.get("modifications", {}) or {}
+            out.append(DistrictStateYear(year=int(y), modifications=mods))
+        return out
+
+    def cumulative_by_year(self) -> dict[int, ModifyRecipe]:
+        cumulative: ModifyRecipe = {}
+        out: dict[int, ModifyRecipe] = {}
+        for y in sorted(self.log_data.keys()):
+            entry = self.log_data.get(y, {}) or {}
+            year_modifications = entry.get("modifications", {}) or {}
+            cumulative = merge_modify_recipes(cumulative, year_modifications)
+            out[int(y)] = cumulative
+        return out
+
+    def materialise_states(
+        self,
+        *,
+        mode: Literal["missing", "reconcile", "rebuild"],
+        regenerate_building_properties: bool = True,
+    ) -> None:
+        years = sorted(self.log_data.keys())
+        if not years:
+            raise ValueError(
+                "No district event years defined in the district timeline log."
+            )
+
+        print("Materialising district state scenarios from the district timeline log...")
+        print(f"Mode: {mode}")
+        print(f"Years in log: {years}")
+
+        cumulative = self.cumulative_by_year()
+
+        built_years: list[int] = []
+        skipped_years: list[int] = []
+        reasons: dict[int, str] = {}
+
+        for year in years:
+            year_recipe = cumulative.get(int(year), {})
+            expected_sig = _recipe_signature(year_recipe)
+            state = DistrictStateYear(
+                year=int(year),
+                modifications=self.log_data.get(int(year), {}).get("modifications", {})
+                or {},
+            )
+
+            state_folder = state.state_folder(self.main_locator)
+            should_build = False
+            reason = ""
+
+            if mode == "missing":
+                should_build = not state.exists_on_disk(self.main_locator)
+                if should_build:
+                    reason = "missing"
+            elif mode == "rebuild":
+                should_build = True
+                reason = "rebuild"
+            else:
+                # reconcile
+                applied = state.read_applied_signature(self.main_locator)
+                if not state.exists_on_disk(self.main_locator):
+                    should_build = True
+                    reason = "missing"
+                elif applied != expected_sig:
+                    should_build = True
+                    reason = "signature changed"
+
+            if not should_build:
+                skipped_years.append(int(year))
+                continue
+
+            print(f"- Building state_{int(year)} ({reason})")
+            reasons[int(year)] = reason
+
+            # Rebuild the state folder deterministically to avoid code drift in envelope codes.
+            if os.path.exists(state_folder):
+                shutil.rmtree(state_folder, ignore_errors=True)
+
+            create_state_in_time_scenario(self.config, int(year), update_yaml=False)
+
+            # Make the state-year reflect building existence (birth years) before generating properties.
+            delete_unexisting_buildings_from_event_scenario(self.config, int(year))
+
+            if year_recipe:
+                _apply_state_construction_changes(
+                    self.config,
+                    int(year),
+                    year_recipe,
+                    use_transaction=False,
+                )
+
+            if regenerate_building_properties:
+                _regenerate_building_properties_from_archetypes(
+                    InputLocator(state_folder)
+                )
+
+            state.write_applied_signature(self.main_locator, signature=expected_sig)
+            built_years.append(int(year))
+
+        print("District state materialisation finished.")
+        print(f"Created/updated: {len(built_years)} years")
+        if built_years:
+            print(f"Years created/updated: {built_years}")
+        print(f"Unchanged (skipped): {len(skipped_years)} years")
+        if skipped_years:
+            print(f"Years unchanged: {skipped_years}")
+
+        if mode == "reconcile":
+            signature_changed = sorted(
+                y for y, r in reasons.items() if r == "signature changed"
+            )
+            if signature_changed:
+                print(f"Years updated due to signature changes: {signature_changed}")
+
+        print(f"Timeline folder: {self.main_locator.get_district_timeline_states_folder()}")
+        print(f"Log file: {self.main_locator.get_district_timeline_log_file()}")
+        print(
+            "Each built state folder contains an applied signature in '.district_timeline_signature.json'."
+        )
+
+        # After building, the existing integrity check becomes meaningful again.
+        check_district_timeline_log_yaml_integrity(self.config)
+
+    def simulate_states(
+        self,
+        *,
+        simulation_mode: Literal["pending", "all"],
+        workflow: list[dict[str, Any]],
+    ) -> None:
+        """Simulate state-in-time scenarios.
+
+        - `pending`: simulate only states that have not been simulated yet, or whose construction changes
+          mean results are out of date.
+        - `all`: simulate every `state_{year}` folder present in `district_timeline_states`.
+
+        This updates both:
+        - per-state signature files (`.district_timeline_signature.json`)
+        - the district timeline log (`district_timeline_log.yml`) with timestamps / workflow metadata.
+        """
+        if simulation_mode not in {"pending", "all"}:
+            raise ValueError(
+                f"Invalid simulation mode: {simulation_mode}. Expected one of: pending, all"
+            )
+
+        state_years = self.list_state_years_on_disk()
+        if not state_years:
+            raise ValueError(
+                "No state-in-time scenarios found in the district timeline folder."
+            )
+        state_years.sort()
+
+        if simulation_mode == "pending":
+            years_to_simulate = [
+                y
+                for y in state_years
+                if DistrictStateYear(year=int(y), modifications={}).needs_simulation(
+                    self.main_locator
+                )
+            ]
+        else:
+            years_to_simulate = list(state_years)
+
+        print("State-in-time simulations started.")
+        print(f"Mode: {simulation_mode}")
+        print(f"Found state years: {state_years}")
+        print(f"Years to simulate: {years_to_simulate}")
+
+        if not years_to_simulate:
+            print("Nothing to simulate: all state years are up to date.")
+            return
+
+        simulated_years: list[int] = []
+        skipped_years = [y for y in state_years if y not in set(years_to_simulate)]
+
+        for year in years_to_simulate:
+            if year not in self.log_data:
+                raise ValueError(
+                    "State year {year} exists in the district timeline folder, but it is missing from the district timeline log.".format(
+                        year=year
+                    )
+                )
+
+            print(f"Simulating state-in-time scenario for year {year}...")
+            DistrictStateYear(year=int(year), modifications={}).simulate(
+                self.config, workflow=workflow
+            )
+
+            # Log metadata in the YAML log.
+            entry = self.log_data.get(int(year), {}) or {}
+            entry["simulation_workflow"] = workflow
+            entry["latest_simulated_at"] = str(pd.Timestamp.now())
+            self.log_data[int(year)] = entry
+
+            simulated_years.append(int(year))
+            print(f"Simulation for state-in-time scenario year {year} completed.")
+
+        self.save()
+
+        print("State-in-time simulations finished.")
+        print(f"Simulated: {len(simulated_years)} years")
+        if simulated_years:
+            print(f"Years simulated: {simulated_years}")
+        print(f"Skipped: {len(skipped_years)} years")
+        if skipped_years:
+            print(f"Years skipped: {skipped_years}")
 
 
 def create_state_in_time_scenario(
@@ -36,14 +586,19 @@ def create_state_in_time_scenario(
         None
     """
     main_locator = InputLocator(config.scenario)
-    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(year_of_state)
+    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(
+        year_of_state
+    )
     input_folder_path = main_locator.get_input_folder()
     state_locator = InputLocator(state_scenario_folder)
     # copy all files from the input folder to the event scenario folder
-    shutil.copytree(input_folder_path, state_locator.get_input_folder(), dirs_exist_ok=True) # make sure existing files are overwritten
+    shutil.copytree(
+        input_folder_path, state_locator.get_input_folder(), dirs_exist_ok=True
+    )  # make sure existing files are overwritten
     if update_yaml:
         add_year_in_yaml(config, year_of_state)
     return None
+
 
 def _regenerate_building_properties_from_archetypes(locator: InputLocator) -> None:
     """Regenerate building-properties inputs from archetypes.
@@ -65,6 +620,7 @@ def _regenerate_building_properties_from_archetypes(locator: InputLocator) -> No
         list_buildings=list_buildings,
     )
 
+
 def remove_state_in_time_scenario(config: Configuration, year_of_state: int) -> None:
     """
     Delete an existing event scenario.
@@ -80,7 +636,10 @@ def remove_state_in_time_scenario(config: Configuration, year_of_state: int) -> 
     del_year_in_yaml(config, year_of_state)
     return None
 
-def delete_unexisting_buildings_from_event_scenario(config: Configuration, year_of_state: int) -> list[str]:
+
+def delete_unexisting_buildings_from_event_scenario(
+    config: Configuration, year_of_state: int
+) -> list[str]:
     """
     Delete buildings from the event scenario that do not yet exist in the specified event year.
     Parameters:
@@ -94,15 +653,17 @@ def delete_unexisting_buildings_from_event_scenario(config: Configuration, year_
     # ensure the event scenario folder exists
     state_locator = InputLocator(event_scenario_folder)
     if not os.path.exists(state_locator.get_zone_geometry()):
-        raise FileNotFoundError(f"Event scenario folder for year {year_of_state} does not exist.")
-    
+        raise FileNotFoundError(
+            f"Event scenario folder for year {year_of_state} does not exist."
+        )
+
     builings_to_delete = []
     buildings_gdf_current = gpd.read_file(locator.get_zone_geometry())
     for _, building in buildings_gdf_current.iterrows():
-        building_year = building.get('year', None)
+        building_year = building.get("year", None)
 
         if building_year is not None and building_year > year_of_state:
-            builings_to_delete.append(building['name'])
+            builings_to_delete.append(building["name"])
 
     # delete all files related to the buildings to delete
     for building_name in builings_to_delete:
@@ -110,7 +671,7 @@ def delete_unexisting_buildings_from_event_scenario(config: Configuration, year_
 
     # delete buildings from geometry file
     geometry_gdf, _, _ = shapefile_to_WSG_and_UTM(state_locator.get_zone_geometry())
-    geometry_gdf.set_index('name', inplace=True)
+    geometry_gdf.set_index("name", inplace=True)
     geometry_gdf = geometry_gdf.drop(builings_to_delete)
     verify_input_geometry_zone(geometry_gdf.reset_index())
     geometry_gdf.to_file(state_locator.get_zone_geometry())
@@ -139,6 +700,7 @@ def delete_unexisting_buildings_from_event_scenario(config: Configuration, year_
 
     return builings_to_delete
 
+
 def delete_building_schedule(state_locator: InputLocator, building_name: str) -> None:
     """
     Delete the schedule file related to a specific building in the event scenario.
@@ -149,6 +711,7 @@ def delete_building_schedule(state_locator: InputLocator, building_name: str) ->
     if os.path.exists(schedule_file_path):
         os.remove(schedule_file_path)
     return None
+
 
 def modify_state_construction(
     config: Configuration,
@@ -196,16 +759,18 @@ def modify_state_construction(
                 }
             }
             ```
-            Note that the outer dictionary keys are archetype names, 
+            Note that the outer dictionary keys are archetype names,
             the middle dictionary keys are component types.
-            Field names must match the envelope database column keys 
+            Field names must match the envelope database column keys
             (e.g., `material_name_1`, `thickness_1_m`, `Service_Life`).
     Returns:
         None
     """
     modified = _apply_state_construction_changes(config, year_of_state, modify_recipe)
     if not modified:
-        print(f"No modifications were made to the envelope database in year {year_of_state}.")
+        print(
+            f"No modifications were made to the envelope database in year {year_of_state}."
+        )
         return
     # Store only the changed fields (delta) for record-keeping.
     if log_data is None:
@@ -221,6 +786,7 @@ def _apply_state_construction_changes(
     modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
     *,
     trigger_year: int | None = None,
+    use_transaction: bool = True,
 ) -> bool:
     """Apply construction changes to the state scenario databases.
 
@@ -236,62 +802,79 @@ def _apply_state_construction_changes(
         )
 
     main_locator = InputLocator(config.scenario)
-    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(year_of_state)
+    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(
+        year_of_state
+    )
     state_locator = InputLocator(state_scenario_folder)
 
-    archetype_df = pd.read_csv(
-        state_locator.get_database_archetypes_construction_type(),
-        index_col="const_type",
-    )
-    envelope_lookup = EnvelopeLookup.from_locator(state_locator)
-    dbs_overall_modified = 0
-    for archetype in archetypes_to_modify:
-        if archetype not in archetype_df.index:
-            raise ValueError(
-                f"Archetype '{archetype}' not found in construction type database."
-            )
-        for component, modifications in modify_recipe[archetype].items():
-            db_modified = 0
-            code_current = archetype_df.at[archetype, f"type_{component}"]
-            # create a new component code by "(capitalized component)_(archetype)_YEAR_(event_year)"
-            envelope_db_name = "floor" if component == "base" else component
-            component_db = envelope_lookup._df_for(envelope_db_name)
-            code_new = f"{envelope_db_name.capitalize()}_{archetype}_YEAR_{year_of_state}"
+    snapshot = snapshot_state_year_files(state_locator) if use_transaction else None
 
-            if code_new in component_db.index:
-                code_new = shift_code_name_plus1(component_db, code_new)
-            new_row = component_db.loc[code_current].copy()
-            new_row.name = code_new
-
-            for field, new_value in modifications.items():
-                if new_value is not None:
-                    if field.startswith("material_name_") or field.startswith("thickness_"):
-                        component_field_name = field
-                    else:
-                        component_field_name = envelope_lookup._col(envelope_db_name, field)
-                    new_row[component_field_name] = new_value
-                    db_modified += 1
-
-            if db_modified:
-                description_new = (
-                    f"Modified {component} for archetype {archetype} in year {year_of_state}, based on {code_current}, "
-                    f"fields modified: {', '.join(modifications.keys())}"
+    try:
+        archetype_df = pd.read_csv(
+            state_locator.get_database_archetypes_construction_type(),
+            index_col="const_type",
+        )
+        envelope_lookup = EnvelopeLookup.from_locator(state_locator)
+        dbs_overall_modified = 0
+        for archetype in archetypes_to_modify:
+            if archetype not in archetype_df.index:
+                raise ValueError(
+                    f"Archetype '{archetype}' not found in construction type database."
                 )
-                if trigger_year is not None:
-                    description_new += f" (reconciled due to year {trigger_year})"
-                new_row["description"] = description_new
-                component_db.loc[new_row.name, :] = new_row
-                archetype_df.at[archetype, f"type_{component}"] = code_new
+            for component, modifications in modify_recipe[archetype].items():
+                db_modified = 0
+                code_current = archetype_df.at[archetype, f"type_{component}"]
+                # create a new component code by "(capitalized component)_(archetype)_YEAR_(event_year)"
+                envelope_db_name = "floor" if component == "base" else component
+                component_db = envelope_lookup._df_for(envelope_db_name)
+                code_new = (
+                    f"{envelope_db_name.capitalize()}_{archetype}_YEAR_{year_of_state}"
+                )
 
-            dbs_overall_modified += db_modified
+                if code_new in component_db.index:
+                    code_new = shift_code_name_plus1(component_db, code_new)
+                new_row = component_db.loc[code_current].copy()
+                new_row.name = code_new
 
-    if not dbs_overall_modified:
-        return False
+                for field, new_value in modifications.items():
+                    if new_value is not None:
+                        if field.startswith("material_name_") or field.startswith(
+                            "thickness_"
+                        ):
+                            component_field_name = field
+                        else:
+                            component_field_name = envelope_lookup._col(
+                                envelope_db_name, field
+                            )
+                        new_row[component_field_name] = new_value
+                        db_modified += 1
 
-    archetype_df.reset_index(inplace=True)
-    archetype_df.to_csv(state_locator.get_database_archetypes_construction_type(), index=False)
-    envelope_lookup.envelope.save(state_locator)
-    return True
+                if db_modified:
+                    description_new = (
+                        f"Modified {component} for archetype {archetype} in year {year_of_state}, based on {code_current}, "
+                        f"fields modified: {', '.join(modifications.keys())}"
+                    )
+                    if trigger_year is not None:
+                        description_new += f" (reconciled due to year {trigger_year})"
+                    new_row["description"] = description_new
+                    component_db.loc[new_row.name, :] = new_row
+                    archetype_df.at[archetype, f"type_{component}"] = code_new
+
+                dbs_overall_modified += db_modified
+
+        if not dbs_overall_modified:
+            return False
+
+        archetype_df.reset_index(inplace=True)
+        archetype_df.to_csv(
+            state_locator.get_database_archetypes_construction_type(), index=False
+        )
+        envelope_lookup.envelope.save(state_locator)
+        return True
+    except Exception:
+        if snapshot is not None:
+            snapshot.restore()
+        raise
 
 
 def _append_future_year_reconciliation_in_memory(
@@ -373,7 +956,7 @@ def _update_future_state_scenarios_after_year_event(
     cumulative: dict[str, dict[str, dict[str, Any]]] = {}
     for year in sorted(log_data.keys()):
         year_entry = log_data.get(year, {}) or {}
-        year_modifications = (year_entry.get("modifications", {}) or {})
+        year_modifications = year_entry.get("modifications", {}) or {}
         cumulative = merge_modify_recipes(cumulative, year_modifications)
         cumulative_by_year[year] = cumulative
 
@@ -425,6 +1008,7 @@ def _update_future_state_scenarios_after_year_event(
             f"Years unchanged: {unchanged_years}."
         )
 
+
 def log_modifications(
     config: Configuration,
     year_of_state: int,
@@ -462,10 +1046,12 @@ def _log_modifications_in_memory(
     entry.setdefault("modifications", {}).update(modify_recipe)
     entry["latest_modified_at"] = str(pd.Timestamp.now())
     log_data[year_of_state] = entry
-    
+
+
 def shift_code_name_plus1(db, code_prefix):
     n = db[db.index.str.startswith(code_prefix)].shape[0]
     return code_prefix + f"_{n + 1}"
+
 
 def create_modify_recipe(
     config: Configuration,
@@ -476,7 +1062,9 @@ def create_modify_recipe(
     config_section = config.district_events
     archetypes_to_modify = config_section.archetypes
     if not archetypes_to_modify:
-        raise ValueError("No archetypes specified for modification in the event scenario.")
+        raise ValueError(
+            "No archetypes specified for modification in the event scenario."
+        )
 
     modify_recipe: dict[str, dict[str, dict[str, float | int | str]]] = {}
 
@@ -545,83 +1133,37 @@ def create_modify_recipe(
 
 
 def main(config: Configuration) -> None:
+    """Define a district event in the YAML log (does not create state folders).
+
+    This tool is intentionally log-only to avoid expensive rewriting of existing state scenarios while users are still
+    iterating on the event definitions.
+    """
+
     year_of_state = config.district_events.year_of_event
-    main_locator = InputLocator(config.scenario)
     if year_of_state is None:
         raise ValueError("Year of event must be specified in the configuration.")
 
-    yml_path = main_locator.get_district_timeline_log_file()
-    yml_snapshot = FileSnapshot()
-    yml_snapshot.capture([yml_path])
-
-    state_scenario_folder = main_locator.get_state_in_time_scenario_folder(year_of_state)
-    state_existed_before = os.path.exists(state_scenario_folder)
-
-    existing_state_years = _list_existing_state_years(main_locator)
-    future_years = [y for y in existing_state_years if y > year_of_state]
-
-    file_snapshots_by_year: dict[int, FileSnapshot] = {}
-    for snap_year in [year_of_state] + future_years:
-        snap_folder = main_locator.get_state_in_time_scenario_folder(snap_year)
-        if not os.path.exists(snap_folder):
-            continue
-        snap_locator = InputLocator(snap_folder)
-        file_snapshots_by_year[snap_year] = snapshot_state_year_files(snap_locator)
-
-    log_data = load_log_yaml(main_locator, allow_missing=True, allow_empty=True)
+    timeline = DistrictEventTimeline(config)
+    timeline.ensure_year(int(year_of_state))
 
     try:
-        if not state_existed_before:
-            create_state_in_time_scenario(config, year_of_state, update_yaml=False)
-            log_data.setdefault(
-                year_of_state,
-                {"created_at": str(pd.Timestamp.now()), "modifications": {}},
-            )
+        modify_recipe = create_modify_recipe(config)
+    except ValueError as e:
+        if "No archetypes specified" in str(e):
+            modify_recipe = {}
+        else:
+            raise
 
-        try:
-            modify_recipe = create_modify_recipe(config)
-        except ValueError as e:
-            if "No archetypes specified" in str(e):
-                modify_recipe = {}
-            else:
-                raise
+    if modify_recipe:
+        timeline.apply_year_modifications(int(year_of_state), modify_recipe)
+    timeline.save()
 
-        if modify_recipe:
-            # delete_unexisting_buildings_from_event_scenario(config, year_of_state)
-            modify_state_construction(
-                config,
-                year_of_state,
-                modify_recipe,
-                log_data=log_data,
-            )
-            _update_future_state_scenarios_after_year_event(
-                config,
-                year_of_state,
-                log_data=log_data,
-            )
+    print(
+        "District event saved to district timeline log. "
+        "State-in-time scenarios are not created by this tool. "
+        "Run 'District States From Log' when you are ready to materialise the state scenarios."
+    )
 
-        # Keep building-properties files derived from archetypes for all impacted years.
-        for sync_year in [year_of_state] + future_years:
-            sync_folder = main_locator.get_state_in_time_scenario_folder(sync_year)
-            if not os.path.exists(sync_folder):
-                continue
-            _regenerate_building_properties_from_archetypes(InputLocator(sync_folder))
-
-        save_log_yaml(main_locator, log_data)
-        check_district_timeline_log_yaml_integrity(config)
-
-        print(
-            f"State-in-time scenario for year {year_of_state} created successfully. See folder: {state_scenario_folder}"
-        )
-    except Exception:
-        # rollback state folder(s)
-        for snap in file_snapshots_by_year.values():
-            snap.restore()
-        if not state_existed_before and os.path.exists(state_scenario_folder):
-            shutil.rmtree(state_scenario_folder, ignore_errors=True)
-        # rollback YAML log
-        yml_snapshot.restore()
-        raise
 
 if __name__ == "__main__":
     main(Configuration())

@@ -317,14 +317,32 @@ Life Cycle Analysis:
     label: District Event Setup
     short_description: Setup district-level construction renovation district-events
     description: |
-      This Feature sets up district-level construction and renovation events, which overwrites envelope database properties for affected archetypes in specified years.
+      This Feature defines district-level construction and renovation events by updating the district timeline log file.
       A event is when a set of buildings (categorized by archetype) changes its construction properties. After the event year, 
       all buildings of the affected archetypes will have their construction properties updated in the scenario for all subsequent years, until the next event (if any).
+
+      This Feature does **not** create or update `state_{year}` scenario folders. Use the "District States From Log" Feature to materialise state scenarios.
 
       **[Note]**: Only the input parameters will be updated. If you don't want certain parameters to be changed, keep the fields empty.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_scenario
     parameters: ['general:scenario', district-events]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: district-events-build
+    label: District States From Log
+    short_description: Create or update state-in-time scenarios from the district timeline log.
+    description: |
+      This Feature materialises state-in-time scenarios (`state_{year}` folders) based on the `district_timeline_log.yml`.
+
+      Use this after you have finished defining district events. It can create missing state folders or reconcile existing ones.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.build_states_from_log
+    parameters: ['general:scenario', district-events-build]
     input-files:
       - [get_input_folder]
       - [get_zone_geometry]
@@ -346,7 +364,7 @@ Life Cycle Analysis:
       The parameters of these simulations must be saved in their respective dashboards before running this Feature.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_simulations
-    parameters: ['general:scenario']
+    parameters: ['general:scenario', state-simulations]
 
 
 Energy Supply System Optimisation:
