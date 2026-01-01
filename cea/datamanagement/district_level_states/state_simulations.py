@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
-
+from typing import Literal
 from cea.config import Configuration
 from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
 
@@ -22,9 +21,11 @@ def simulate_all_states(config: Configuration) -> None:
         config (Configuration): The original configuration.
     """
     timeline = DistrictEventTimeline(config)
-    try:
-        simulation_mode = str(config.state_simulations.simulation_mode)
-    except Exception:
+    # Ensure simulation_mode is one of the supported literals ('pending' or 'all')
+    simulation_mode: Literal["pending", "all"]
+    if getattr(config.state_simulations, "simulation_mode", "all") == "pending":
+        simulation_mode = "pending"
+    else:
         simulation_mode = "all"
     timeline.simulate_states(
         simulation_mode=simulation_mode, workflow=list(default_workflow)
