@@ -1049,6 +1049,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Collect all edges from both networks
     all_edges_list = []
     networks_generated = []  # Track which networks were actually generated
+    network_errors = {}  # Track errors per network type
 
     # Generate Steiner tree for each network type separately
     for type_network in network_types_to_generate:
@@ -1076,14 +1077,12 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     )
 
                 if validation_level == 'error':
-                    # Fail fast - don't continue with invalid configuration
-                    raise ValueError(
-                        f"\n{'='*80}\n"
-                        f"NETWORK CONFIGURATION ERROR\n"
-                        f"{'='*80}\n\n"
-                        f"{message}\n\n"
-                        f"{'='*80}"
-                    )
+                    # Store error and skip this network (allow other networks to continue)
+                    network_errors[type_network] = message
+                    print(f"\n  ✗ Configuration error - skipping {type_network} network")
+                    print(f"    {message.split(chr(10))[0]}")  # Show first line of error
+                    print(f"    (See full error details at end of script)")
+                    continue
 
                 # Validation passed - log configuration
                 hs_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {'space_heating'})
@@ -1326,18 +1325,50 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             for skipped in sorted(skipped_networks):
                 demand_type = "cooling" if skipped == "DC" else "heating"
                 print(f"    ⚠ {skipped} network was skipped (no buildings with {demand_type} demand)")
+
+        # Report configuration errors that prevented network generation
+        if network_errors:
+            print(f"\n  ✗ Configuration errors prevented generation of {len(network_errors)} network(s):")
+            for network_type, error_msg in sorted(network_errors.items()):
+                print(f"\n  {network_type} Network Error:")
+                # Indent error message lines
+                for line in error_msg.split('\n'):
+                    print(f"    {line}")
+
+            # Raise error at end so script exits with error code
+            failed_networks = ', '.join(sorted(network_errors.keys()))
+            raise ValueError(
+                f"Network generation failed for: {failed_networks}\n"
+                f"See error details above. Successfully generated: {', '.join(sorted(networks_generated))}"
+            )
     else:
-        # All networks were skipped - this is an error
-        skipped_info = []
-        for nt in sorted(network_types_to_generate):
-            demand_type = "cooling" if nt == "DC" else "heating"
-            skipped_info.append(f"{nt} (no {demand_type} demand)")
-        raise ValueError(
-            f"No networks were generated - all requested network types were skipped:\n"
-            f"  {', '.join(skipped_info)}\n"
-            f"Please check that your buildings have the required demand, or adjust the "
-            f"'consider-only-buildings-with-demand' setting in Network Layout configuration."
-        )
+        # All networks were skipped - check if it's configuration errors or demand issues
+        if network_errors:
+            # Configuration errors prevented generation
+            print(f"\n  ✗ Configuration errors prevented generation of all requested networks:")
+            for network_type, error_msg in sorted(network_errors.items()):
+                print(f"\n  {network_type} Network Error:")
+                # Indent error message lines
+                for line in error_msg.split('\n'):
+                    print(f"    {line}")
+
+            failed_networks = ', '.join(sorted(network_errors.keys()))
+            raise ValueError(
+                f"Network generation failed for all requested networks: {failed_networks}\n"
+                f"See error details above."
+            )
+        else:
+            # No configuration errors - must be demand issues
+            skipped_info = []
+            for nt in sorted(network_types_to_generate):
+                demand_type = "cooling" if nt == "DC" else "heating"
+                skipped_info.append(f"{nt} (no {demand_type} demand)")
+            raise ValueError(
+                f"No networks were generated - all requested network types were skipped:\n"
+                f"  {', '.join(skipped_info)}\n"
+                f"Please check that your buildings have the required demand, or adjust the "
+                f"'consider-only-buildings-with-demand' setting in Network Layout configuration."
+            )
 
 
 @dataclass
