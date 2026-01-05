@@ -292,6 +292,128 @@ def apply_service_priority_order(services):
     return ordered_services
 
 
+def validate_itemised_dh_services_against_building_properties(itemised_dh_services, per_building_services):
+    """
+    Validate itemised-dh-services against Building Properties/Supply settings.
+
+    Enforces STRICT validation: itemised-dh-services must match exactly the services
+    that buildings are configured to receive from the district network.
+    - ERROR if network is missing services buildings need (subset)
+    - ERROR if network provides services no building uses (superset)
+
+    Args:
+        itemised_dh_services: List of services network will provide (from config)
+        per_building_services: Dict mapping building → set of DISTRICT services
+                              (from Building Properties/Supply)
+
+    Returns:
+        Tuple of (validation_level, message, buildings_by_service)
+        - validation_level: 'ok' or 'error'
+        - message: Human-readable validation message
+        - buildings_by_service: Dict mapping service → list of buildings using that service
+
+    Examples:
+        # Valid - exact match
+        itemised_dh_services = ['space_heating', 'domestic_hot_water']
+        per_building_services = {'B1': {'space_heating'}, 'B2': {'domestic_hot_water'}}
+        → ('ok', 'Network service priority: space heating → domestic hot water (low-temperature)', {...})
+
+        # Error - subset (missing DHW)
+        itemised_dh_services = ['space_heating']
+        per_building_services = {'B1': {'space_heating', 'domestic_hot_water'}}
+        → ('error', 'Network configuration error: itemised-dh-services excludes...', {...})
+
+        # Error - superset (unused DHW)
+        itemised_dh_services = ['space_heating', 'domestic_hot_water']
+        per_building_services = {'B1': {'space_heating'}}
+        → ('error', 'Network configuration error: itemised-dh-services includes...', {...})
+    """
+    # Union of all DISTRICT services buildings expect from network
+    district_services_needed = set()
+    for building_services in per_building_services.values():
+        district_services_needed.update(building_services)
+
+    user_services = set(itemised_dh_services)
+
+    # Count buildings by service type (for detailed error messages)
+    buildings_by_service = {}
+    for service in ['space_heating', 'domestic_hot_water']:
+        buildings_by_service[service] = [
+            b for b, svcs in per_building_services.items()
+            if service in svcs
+        ]
+
+    # Human-readable service names
+    service_names = {
+        'space_heating': 'space heating',
+        'domestic_hot_water': 'domestic hot water'
+    }
+
+    # STRICT VALIDATION: Must match exactly (no subset, no superset)
+
+    # Check 1: Network missing services that buildings need (SUBSET ERROR)
+    missing_services = district_services_needed - user_services
+    if missing_services:
+        buildings_affected = []
+        for service in missing_services:
+            buildings_affected.extend(buildings_by_service.get(service, []))
+        buildings_affected = list(set(buildings_affected))  # deduplicate
+
+        missing_names = [service_names.get(s, s) for s in sorted(missing_services)]
+
+        error_msg = (
+            f"Network configuration error: itemised-dh-services excludes {', '.join(missing_names)} "
+            f"but {len(buildings_affected)} building(s) in Building Properties/Supply "
+            f"are configured to receive these services from the district network.\n\n"
+            f"Buildings affected: {', '.join(sorted(buildings_affected[:10]))}"
+            f"{'...' if len(buildings_affected) > 10 else ''}\n\n"
+            f"Please either:\n"
+            f"  1. Add {', '.join(missing_names)} to itemised-dh-services, OR\n"
+            f"  2. Update Building Properties/Supply to use BUILDING-scale for these services, OR\n"
+            f"  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+        )
+
+        return ('error', error_msg, buildings_by_service)
+
+    # Check 2: Network provides services no building needs (SUPERSET ERROR)
+    unused_services = user_services - district_services_needed
+    if unused_services:
+        unused_names = [service_names.get(s, s) for s in sorted(unused_services)]
+
+        # Count building types for informative message
+        hs_only = sum(1 for svcs in per_building_services.values() if svcs == {'space_heating'})
+        ww_only = sum(1 for svcs in per_building_services.values() if svcs == {'domestic_hot_water'})
+        both = sum(1 for svcs in per_building_services.values()
+                  if svcs == {'space_heating', 'domestic_hot_water'})
+
+        error_msg = (
+            f"Network configuration error: itemised-dh-services includes {', '.join(unused_names)} "
+            f"but no buildings in Building Properties/Supply use these services from the district network.\n\n"
+            f"Building service breakdown:\n"
+            f"  - Space heating only: {hs_only} building(s)\n"
+            f"  - Domestic hot water only: {ww_only} building(s)\n"
+            f"  - Both services: {both} building(s)\n\n"
+            f"Please either:\n"
+            f"  1. Remove {', '.join(unused_names)} from itemised-dh-services, OR\n"
+            f"  2. Update Building Properties/Supply to add DISTRICT-scale for these services, OR\n"
+            f"  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+        )
+
+        return ('error', error_msg, buildings_by_service)
+
+    # Services match exactly - generate success message with priority info
+    services_display = [service_names.get(s, s) for s in itemised_dh_services]
+
+    if itemised_dh_services[0] == 'space_heating':
+        temp_info = "low-temperature network (e.g., 35-55°C)"
+    else:
+        temp_info = "high-temperature network (60°C+)"
+
+    success_msg = f"Network service priority: {' → '.join(services_display)} ({temp_info})"
+
+    return ('ok', success_msg, buildings_by_service)
+
+
 def get_buildings_with_demand(locator, network_type):
     """
     Read total_demand.csv and return list of buildings with heating/cooling demand.
@@ -942,30 +1064,41 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             plant_buildings_for_type = heating_plant_buildings_list
             connected_buildings_for_type = buildings_for_dh
 
-            # NEW: Override itemised_dh_services when using supply.csv mode
+            # Validate itemised-dh-services when using Building Properties/Supply
             if not overwrite_supply and per_building_services_dh:
-                # Determine network services from supply.csv (union of all building needs)
-                network_services_dh = get_network_services_from_buildings(per_building_services_dh)
+                # itemised-dh-services is ALWAYS the authority for network service configuration
+                # Validate it against Building Properties/Supply (strict validation)
 
-                # Apply service priority order (space_heating before domestic_hot_water)
-                itemised_dh_services_from_supply = apply_service_priority_order(network_services_dh)
+                validation_level, message, buildings_by_service = \
+                    validate_itemised_dh_services_against_building_properties(
+                        itemised_dh_services,
+                        per_building_services_dh
+                    )
 
-                # Override global itemised_dh_services for this DH network
-                itemised_dh_services = itemised_dh_services_from_supply
+                if validation_level == 'error':
+                    # Fail fast - don't continue with invalid configuration
+                    raise ValueError(
+                        f"\n{'='*80}\n"
+                        f"NETWORK CONFIGURATION ERROR\n"
+                        f"{'='*80}\n\n"
+                        f"{message}\n\n"
+                        f"{'='*80}"
+                    )
 
-                # Log service breakdown
-                hs_only = sum(1 for svcs in per_building_services_dh.values()
-                             if svcs == {'space_heating'})
-                ww_only = sum(1 for svcs in per_building_services_dh.values()
-                             if svcs == {'domestic_hot_water'})
+                # Validation passed - log configuration
+                hs_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {'space_heating'})
+                ww_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {'domestic_hot_water'})
                 both = sum(1 for svcs in per_building_services_dh.values()
-                          if {'space_heating', 'domestic_hot_water'}.issubset(svcs))
+                          if svcs == {'space_heating', 'domestic_hot_water'})
 
-                print(f"  ℹ Per-building services from supply.csv:")
+                print(f"  ℹ Network configuration:")
+                print(f"    - Building selection: From Building Properties/Supply")
+                print(f"    - Service configuration: From itemised-dh-services")
+                print(f"    - {message}")  # e.g., "Network service priority: space heating → domestic hot water (low-temperature)"
+                print(f"  ℹ Building service breakdown:")
                 print(f"    - Space heating only: {hs_only} building(s)")
-                print(f"    - DHW only: {ww_only} building(s)")
+                print(f"    - Domestic hot water only: {ww_only} building(s)")
                 print(f"    - Both services: {both} building(s)")
-                print(f"    - Network services (union): {', '.join(itemised_dh_services)}")
 
         # Skip network generation if no buildings to connect
         if not connected_buildings_for_type:
