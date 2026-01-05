@@ -79,8 +79,11 @@ class ThermalNetwork(object):
         self.diameter_iteration_limit = 10
         self.substation_cooling_systems = ["ahu", "aru", "scu"]
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
-        self.temperature_control = "VT"  # the control strategy of supply temperatures at plants (constant temperature "CT" or variable temperature "VT")
-        self.plant_supply_temperature = 80
+        self.network_temperature_dh = -1  # -1 for VT mode, positive value for CT mode
+        self.network_temperature_dc = -1  # -1 for VT mode, positive value for CT mode
+        # Deprecated parameters (kept for backward compatibility)
+        self.temperature_control = "VT"  # DEPRECATED: use network_temperature_dh/dc instead
+        self.plant_supply_temperature = 80  # DEPRECATED: use network_temperature_dh/dc instead
         self.equivalent_length_factor = 0.2
 
         # replace default values with those in the config file section
@@ -130,10 +133,177 @@ class ThermalNetwork(object):
                                           "use_representative_week_per_month", "minimum_mass_flow_iteration_limit",
                                           "minimum_edge_mass_flow", "diameter_iteration_limit",
                                           "substation_cooling_systems", "substation_heating_systems",
+                                          "network_temperature_dh", "network_temperature_dc",
                                           "temperature_control", "plant_supply_temperature", "equivalent_length_factor"]
         for field in thermal_network_section_fields:
             if hasattr(thermal_network_section, field):
                 setattr(self, field, getattr(thermal_network_section, field))
+
+        # Backward compatibility: auto-convert old parameters
+        if hasattr(thermal_network_section, 'temperature_control'):
+            temp_control = getattr(thermal_network_section, 'temperature_control')
+            plant_temp = getattr(thermal_network_section, 'plant_supply_temperature', 80)
+
+            # Check if user is still using old parameters
+            using_old_params = (
+                hasattr(thermal_network_section, 'temperature_control') and
+                not hasattr(thermal_network_section, 'network_temperature_dh') and
+                not hasattr(thermal_network_section, 'network_temperature_dc')
+            )
+
+            if using_old_params:
+                print("  ⚠ DEPRECATION WARNING:")
+                print("    'temperature-control' and 'plant-supply-temperature' are deprecated.")
+                print(f"    Please use 'network-temperature-{self.network_type.lower()}' instead.")
+
+                # Auto-convert
+                if temp_control == 'VT':
+                    converted_temp = -1
+                else:  # CT
+                    converted_temp = plant_temp
+
+                print(f"    Auto-converting: temperature-control={temp_control}, ")
+                print(f"                     plant-supply-temperature={plant_temp}")
+                print(f"                  → network-temperature-{self.network_type.lower()}={converted_temp}")
+
+                # Apply conversion
+                if self.network_type == 'DH':
+                    self.network_temperature_dh = converted_temp
+                elif self.network_type == 'DC':
+                    self.network_temperature_dc = converted_temp
+
+    def get_network_temperature(self):
+        """Get the configured network temperature based on network type."""
+        if self.network_type == 'DH':
+            return self.network_temperature_dh
+        else:  # DC
+            return self.network_temperature_dc
+
+    def get_temperature_control_mode(self):
+        """
+        Returns 'VT' or 'CT' based on network temperature setting.
+
+        VT (Variable Temperature): network_temp < 0
+        CT (Constant Temperature): network_temp >= 0
+        """
+        network_temp = self.get_network_temperature()
+        return 'VT' if network_temp < 0 else 'CT'
+
+    def get_plant_supply_temperature(self):
+        """
+        Returns fixed plant temperature (CT mode only).
+        Should only be called when get_temperature_control_mode() == 'CT'.
+        """
+        network_temp = self.get_network_temperature()
+        if network_temp < 0:
+            raise ValueError("Cannot get plant supply temperature in VT mode")
+        return network_temp
+
+    def get_service_minimum_temperature(self):
+        """
+        Calculate minimum network temperature based on PRIMARY service.
+
+        This matches the substation temperature calculation logic in substation.py,
+        which uses itemised_dh_services[0] to determine network temperature strategy.
+
+        Returns:
+            float: Minimum temperature in °C based on primary service
+
+        Service-specific minimums (based on FIRST service):
+            - PLANT_hs: 35°C (space heating only)
+            - PLANT_ww: 50°C (DHW only)
+            - PLANT_hs_ww: 35°C (space heating priority, DHW uses boosters)
+            - PLANT_ww_hs: 50°C (DHW priority, network serves DHW directly)
+            - Legacy (None): 50°C (conservative, assumes DHW may be priority)
+
+        For DC networks: returns None (not applicable)
+        """
+        if self.network_type == 'DC':
+            return None  # No minimum for cooling
+
+        # Legacy mode or no service info - assume DHW priority (conservative)
+        if self.itemised_dh_services is None or len(self.itemised_dh_services) == 0:
+            return 50
+
+        # Priority-based logic: FIRST service determines network temp strategy
+        primary_service = self.itemised_dh_services[0]
+
+        if primary_service == 'space_heating':
+            return 35  # Low-temp network
+        elif primary_service == 'domestic_hot_water':
+            return 50  # High-temp network
+        else:
+            return 30  # Unknown service, conservative minimum
+
+    def get_service_maximum_temperature(self):
+        """
+        Calculate maximum practical network temperature based on PRIMARY service.
+
+        Returns:
+            float: Maximum recommended temperature in °C based on primary service
+
+        Service-specific maximums (based on FIRST service):
+            - PLANT_hs: 55°C (low-temp DH, 4th generation)
+            - PLANT_ww: 80°C (high-temp DH for DHW, 3rd generation)
+            - PLANT_hs_ww: 55°C (space heating network with DHW boosters)
+            - PLANT_ww_hs: 80°C (DHW network that also serves space heating)
+            - Legacy (None): 80°C (conservative)
+
+        For DC networks: returns typical maximum
+        """
+        if self.network_type == 'DC':
+            return 15  # Typical max for cooling networks
+
+        # Legacy mode or no service info
+        if self.itemised_dh_services is None or len(self.itemised_dh_services) == 0:
+            return 80  # Conservative default
+
+        # Priority-based logic: FIRST service determines network temp strategy
+        primary_service = self.itemised_dh_services[0]
+
+        if primary_service == 'space_heating':
+            return 55  # Low-temp network (4th gen DH)
+        elif primary_service == 'domestic_hot_water':
+            return 80  # High-temp network (3rd gen DH)
+        else:
+            return 80  # Unknown service, conservative maximum
+
+    def get_recommended_temperature_range_info(self):
+        """
+        Get recommended temperature range as a user-friendly string.
+
+        Returns:
+            tuple: (min_temp, max_temp, description_string)
+        """
+        if self.network_type == 'DC':
+            return (5, 15, "5-15°C for district cooling")
+
+        if self.itemised_dh_services is None or len(self.itemised_dh_services) == 0:
+            return (50, 80, "50-80°C (legacy: assumes mixed services)")
+
+        primary_service = self.itemised_dh_services[0]
+        service_names = ' → '.join(self.itemised_dh_services)
+
+        if primary_service == 'space_heating':
+            min_temp = 35
+            max_temp = 55
+            if len(self.itemised_dh_services) == 1:
+                desc = f"35-55°C for low-temp DH ({service_names} only)"
+            else:
+                desc = f"35-55°C for low-temp DH ({service_names}, DHW uses boosters)"
+        elif primary_service == 'domestic_hot_water':
+            min_temp = 50
+            max_temp = 80
+            if len(self.itemised_dh_services) == 1:
+                desc = f"50-80°C for high-temp DH ({service_names} only)"
+            else:
+                desc = f"60-80°C for high-temp DH ({service_names} priority)"
+        else:
+            min_temp = 30
+            max_temp = 80
+            desc = f"Typical range for {service_names}"
+
+        return (min_temp, max_temp, desc)
 
     def clone(self):
         """Create a copy of the thermal network. Assumes the fields have all been set."""
@@ -428,6 +598,106 @@ HourlyThermalResults = collections.namedtuple('HourlyThermalResults',
                                                'pressure_loss_supply_edge_kW'])
 
 
+def validate_network_temperature(thermal_network):
+    """
+    Validate network temperature configuration against:
+    1. Building temperature requirements
+    2. Service-specific constraints (PRIMARY service)
+    3. Physical feasibility
+    """
+    control_mode = thermal_network.get_temperature_control_mode()
+    network_type = thermal_network.network_type
+
+    # Get service info
+    services = thermal_network.itemised_dh_services
+    if services:
+        service_names = ' → '.join(services)
+        primary_service = services[0]
+    else:
+        service_names = 'space heating + DHW'
+        primary_service = None
+
+    if control_mode == 'VT':
+        # VT mode - just inform user
+        print(f"  ℹ Temperature control: Variable (VT mode)")
+        print(f"    Plant temperature will vary to meet building requirements")
+        if services:
+            print(f"    Service configuration: {service_names}")
+        return  # No validation needed for VT
+
+    # CT mode validation
+    t_plant_C = thermal_network.get_plant_supply_temperature()
+    print(f"  ℹ Temperature control: Constant (CT mode)")
+    print(f"    Fixed plant supply temperature: {t_plant_C}°C")
+    if services:
+        print(f"    Service configuration: {service_names}")
+
+    # Get service-specific temperature requirements
+    service_min_temp = thermal_network.get_service_minimum_temperature()
+    min_rec, max_rec, rec_desc = thermal_network.get_recommended_temperature_range_info()
+
+    # Get building temperature requirements
+    t_target_supply = thermal_network.t_target_supply_df.values
+
+    if network_type == 'DH':
+        # Heating: plant temp must be >= max building requirement
+        t_max_required = np.nanmax(t_target_supply)
+
+        # Check 1: Can meet building requirements?
+        if t_plant_C < t_max_required:
+            raise ValueError(
+                f"\n{'='*70}\n"
+                f"❌ TEMPERATURE CONFIGURATION ERROR (District Heating)\n"
+                f"{'='*70}\n"
+                f"Plant supply temperature is too low!\n\n"
+                f"  Service configuration: {service_names}\n"
+                f"  Plant supply temp:     {t_plant_C}°C\n"
+                f"  Highest required:      {t_max_required:.1f}°C\n\n"
+                f"The plant cannot supply enough heat to meet building requirements.\n\n"
+                f"Solutions:\n"
+                f"  1. Increase network-temperature-dh to at least {t_max_required:.1f}°C\n"
+                f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
+                f"  3. Separate DHW and space heating into different networks\n"
+                f"{'='*70}"
+            )
+
+        # Check 2: Is it below service-specific minimum?
+        if service_min_temp and t_plant_C < service_min_temp:
+            print(f"  ⚠ WARNING: Network temperature ({t_plant_C}°C) is below")
+            print(f"    recommended minimum for primary service '{primary_service}' ({service_min_temp}°C)")
+            print(f"    Heat exchangers may have reduced efficiency.")
+            if primary_service == 'space_heating':
+                print(f"    For low-temp network (space heating priority), consider {min_rec}-{max_rec}°C")
+            elif primary_service == 'domestic_hot_water':
+                print(f"    For DHW priority network, consider {min_rec}-{max_rec}°C")
+
+        # Check 3: Guidance for temperature range
+        print(f"  ℹ Recommended range for '{primary_service}' priority: {rec_desc}")
+
+        if primary_service == 'space_heating' and t_plant_C > max_rec:
+            print(f"  ℹ Note: {t_plant_C}°C is higher than typical for space heating priority ({max_rec}°C)")
+            print(f"    This may indicate over-design. If DHW is priority, consider PLANT_ww_hs.")
+
+    elif network_type == 'DC':
+        # Cooling: plant temp must be <= min building requirement
+        t_min_required = np.nanmin(t_target_supply)
+
+        if t_plant_C > t_min_required:
+            raise ValueError(
+                f"\n{'='*70}\n"
+                f"❌ TEMPERATURE CONFIGURATION ERROR (District Cooling)\n"
+                f"{'='*70}\n"
+                f"Plant supply temperature is too high!\n\n"
+                f"  Plant supply temp:   {t_plant_C}°C\n"
+                f"  Lowest required:     {t_min_required:.1f}°C\n\n"
+                f"The plant cannot supply cold enough water to meet building requirements.\n\n"
+                f"Solutions:\n"
+                f"  1. Decrease network-temperature-dc to at most {t_min_required:.1f}°C\n"
+                f"  2. Use Variable Temperature (VT) mode: network-temperature-dc = -1\n"
+                f"{'='*70}"
+            )
+
+
 def thermal_network_main(locator, thermal_network, processes=1):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
@@ -496,21 +766,8 @@ def thermal_network_main(locator, thermal_network, processes=1):
     thermal_network.t_target_supply_df = write_substation_temperatures_to_nodes_df(thermal_network.all_nodes_df,
                                                                                    thermal_network.t_target_supply_C)  # (1 x n)
 
-    # check if the plant supply temperature is feasible
-    if thermal_network.temperature_control == 'CT':
-        t_plant_sup_constant_C = thermal_network.plant_supply_temperature
-        if (thermal_network.network_type == 'DH' and t_plant_sup_constant_C < np.nanmax(
-                thermal_network.t_target_supply_df.values)):
-            t_max = np.nanmax(thermal_network.t_target_supply_df.values)
-            raise ValueError('\n The highest temperature required in network is : %s C, '
-                             'the plant supply temperature set in config should be higher than this number.' % str(
-                t_max))
-        elif (thermal_network.network_type == 'DC' and t_plant_sup_constant_C > np.nanmin(
-                thermal_network.t_target_supply_df.values)):
-            t_min = np.nanmin(thermal_network.t_target_supply_df.values)
-            raise ValueError('\n The lowest temperature required in network is : %s C, '
-                             'the plant supply temperature set in config should be lower than this number.' % str(
-                t_min))
+    # Validate network temperature configuration
+    validate_network_temperature(thermal_network)
 
     if thermal_network.use_representative_week_per_month:
         # we run the predefined schedule of the first week of each month for the year
@@ -2347,10 +2604,18 @@ def solve_network_temperatures(thermal_network, t):
         plant_node, q_loss_edges_kw, switch_control = calc_supply_temperatures(t, edge_node_df.copy(),
                                                                                edge_mass_flow_df, k, thermal_network)
         if switch_control:
-            thermal_network.temperature_control = 'CT'
-            print(
-                'temperature not reached in timestep %s, control strategy is switched to: CT(Constant Temperature)' % str(
-                    t))
+            # Switch from VT to CT by setting a fixed temperature
+            t_target_supply__c = thermal_network.t_target_supply_df.loc[t]
+            fixed_temp = t_target_supply__c.max() if thermal_network.network_type == 'DH' \
+                         else t_target_supply__c.min()
+
+            if thermal_network.network_type == 'DH':
+                thermal_network.network_temperature_dh = fixed_temp
+            else:
+                thermal_network.network_temperature_dc = fixed_temp
+
+            print(f'  ⚠ Temperature not reached in timestep {t}')
+            print(f'    Switching from VT to CT mode with fixed temp = {fixed_temp:.1f}°C')
 
         # write supply temperatures to substation nodes
         t_substation_supply__k = write_nodes_values_to_substations(t_supply_nodes__k, thermal_network.all_nodes_df)
@@ -2405,12 +2670,12 @@ def solve_network_temperatures(thermal_network, t):
                                                                 thermal_network.network_type)  # [kW/K]
 
             # calculate updated node temperatures on the supply network with updated edge mass flow
-            if thermal_network.temperature_control == 'VT':
+            if thermal_network.get_temperature_control_mode() == 'VT':
                 # increase temperature (and change flows accordingly) to meet substation requirement
                 t_supply_nodes_2__k, plant_node, \
                 q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(), edge_mass_flow_df_2_kgs,
                                                                        k, thermal_network)
-            elif thermal_network.temperature_control == 'CT':
+            elif thermal_network.get_temperature_control_mode() == 'CT':
                 # increase flow to meet substation requirement with fixed plant supply temperature
                 VF_flag = True
                 VF_iter = 0
@@ -2456,7 +2721,7 @@ def solve_network_temperatures(thermal_network, t):
                         VF_flag = False
             else:
                 raise ValueError(
-                    'control strategy not specified: {control}'.format(control=thermal_network.temperature_control))
+                    'control strategy not specified: {control}'.format(control=thermal_network.get_temperature_control_mode()))
 
             # calculate edge temperature for heat transfer coefficient within iteration
             t_edge__k = calc_edge_temperatures(t_supply_nodes_2__k, edge_node_df.copy())
@@ -2675,10 +2940,16 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
     # start node temperature calculation
     flag = 0
     # set initial supply temperature guess to the target substation supply temperature
-    if thermal_network.temperature_control == 'VT':  # VT_VF
-        t_plant_sup_0 = 273.15 + t_target_supply__c.max() if network_type == 'DH' else 273.15 + t_target_supply__c.min()
-    elif thermal_network.temperature_control == 'CT':  # CT_VF
-        t_plant_sup_0 = 273.15 + thermal_network.plant_supply_temperature
+    control_mode = thermal_network.get_temperature_control_mode()
+    if control_mode == 'VT':  # VT_VF
+        if thermal_network.network_type == 'DH':
+            t_plant_sup_0 = 273.15 + t_target_supply__c.max()
+        else:  # DC
+            t_plant_sup_0 = 273.15 + t_target_supply__c.min()
+    elif control_mode == 'CT':  # CT_VF
+        t_plant_sup_0 = 273.15 + thermal_network.get_plant_supply_temperature()
+    else:
+        raise ValueError(f"Unknown temperature control mode: {control_mode}")
 
     t_plant_sup = t_plant_sup_0
     iteration = 0
@@ -2779,7 +3050,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
         t_plant_sup_max = max(t_boiling_K, t_max_dT_K)  # 98 C or
         t_plant_sup_min = 1 + 273.15  # 1 C #TODO: move to settings
 
-        if (thermal_network.temperature_control == 'VT' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max):
+        if (thermal_network.get_temperature_control_mode() == 'VT' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max):
             # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
             if network_type == 'DH':
                 # calculate the difference between node temperature and the target supply temperature at substations
@@ -2848,12 +3119,12 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     switch_control = False
         else:
             flag = 1
-            if thermal_network.temperature_control == 'CT':
+            if thermal_network.get_temperature_control_mode() == 'CT':
                 # no need to meet target temperature, no iteration
                 switch_control = False
             else:
                 switch_control = True
-                print('switched control: ', thermal_network.temperature_control, ' temperature:', t_plant_sup)
+                print('switched control: ', thermal_network.get_temperature_control_mode(), ' temperature:', t_plant_sup)
 
     # calculate pipe heat losses
     q_loss_edges_kw = np.zeros(z_note.shape[1])
