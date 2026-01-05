@@ -32,6 +32,7 @@ from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_ST
     MAX_NODE_FLOW
 from cea.utilities import epwreader
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
+from cea.technologies.heat_exchangers import get_heat_exchanger_by_description
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh, Lennart Rogenhofer"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -824,15 +825,10 @@ def thermal_network_main(locator, thermal_network, processes=1):
         thermal_network.locator.get_thermal_network_edge_list_file(thermal_network.network_type,
                                                                    thermal_network.network_name))
 
-    # read in HEX pressure loss values from database
-    HEX_prices = pd.read_csv(thermal_network.locator.get_db4_components_conversion_conversion_technology_csv('HEAT_EXCHANGERS'), index_col=0)
-    a_p = HEX_prices['a']['District substation heat exchanger']
-    b_p = HEX_prices['b']['District substation heat exchanger']
-    c_p = HEX_prices['c']['District substation heat exchanger']
-    d_p = HEX_prices['d']['District substation heat exchanger']
-    e_p = HEX_prices['e'][
-        'District substation heat exchanger']  # make this into list, add readout in pressure loss calc
-    thermal_network.pressure_loss_coeff = [a_p, b_p, c_p, d_p, e_p]
+    # Read HEX pressure loss values from database using backward-compatible helper
+    hex_params = get_heat_exchanger_by_description(thermal_network.locator, 'District substation heat exchanger')
+    thermal_network.pressure_loss_coeff = [hex_params['a'], hex_params['b'], hex_params['c'],
+                                           hex_params['d'], hex_params['e']]
 
     print('Solving hydraulic and thermal network')
     ## Start solving hydraulic and thermal equations at each time-step
@@ -2686,7 +2682,7 @@ def solve_network_temperatures(thermal_network, t):
                                                                            edge_mass_flow_df_2_kgs, k, thermal_network)
                     # check if all substation temperatures are satisfied
                     dt_nodes = t_supply_nodes_2__k - 273.15 - thermal_network.t_target_supply_df.loc[t]
-                    dt_nodes_max = dt_nodes.max().copy()
+                    dt_nodes_max = dt_nodes.max()  # .max() returns a scalar, no need to copy
                     dt_tolerance = 0.00001  # TODO: defined by users
                     # identify the nodes
                     nodes_insufficient = dt_nodes[dt_nodes > dt_tolerance].index
