@@ -107,7 +107,7 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
     def fill_operational_step_function(
         self,
         *,
-        years_sorted: list[int],
+        state_years_sorted: list[int],
         end_year: int,
         operational_by_state_year: Mapping[int, pd.DataFrame | None],
         allow_missing_operational: bool,
@@ -124,6 +124,16 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
                     continuous timeline is assembled
 
         Operational is set to 0 for years before construction, and for years >= demolition (if any).
+        Args:
+            years_sorted: Sorted list of state years available in the log 
+                (some years are missing because of no construction change or no new building).
+            end_year: Last year to fill in the timeline.
+            operational_by_state_year: Mapping of state year -> district operational emissions DataFrame.
+                Each dataframe constains yearly operational emission of all buildings for that state year.
+                Each row is indexed by the name of a building, each column is in format of 
+                `{demand_type}_{feedstock}_kgCO2e`.
+            allow_missing_operational: If True, carry forward last known operational data when missing for a state year.
+            feedstock_policies: Optional feedstock policies to apply after building the continuous timeline.
         """
         if self.construction_year is None:
             return
@@ -141,36 +151,44 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
         idx_active = [f"Y_{y}" for y in active_years]
         operational_multi_years = pd.DataFrame(index=idx_active)
 
-        last_known: pd.Series | None = None
-        for i, state_year in enumerate(years_sorted):
+        last_known: pd.Series[float] | None = None
+        for i, state_year in enumerate(state_years_sorted):
             if state_year > end_year:
                 break
-            df_op = operational_by_state_year.get(state_year)
-            if df_op is not None and self.name in df_op.index:
-                demand_types = list(_tech_name_mapping.keys())
-                feedstocks = self.get_available_feedstocks()
+            df_op_buildings_yearly = operational_by_state_year.get(state_year)
+            if df_op_buildings_yearly is not None and self.name in df_op_buildings_yearly.index:
+                demand_types = list(_tech_name_mapping.keys())  # Qhs_sys, Qww_sys, Qcs_sys, E_sys
+                feedstocks = self.get_available_feedstocks() # capitalized feedstock names + NONE
 
-                cols_in: list[str] = []
-                for d in demand_types:
+                op_cols_in_df: list[str] = []
+                for demand in demand_types:
                     for fs in feedstocks:
-                        c = f"{d}_{fs}_kgCO2e"
-                        if c in df_op.columns:
-                            cols_in.append(c)
+                        c = f"{demand}_{fs}_kgCO2e"
+                        if c in df_op_buildings_yearly.columns:
+                            op_cols_in_df.append(c)
                 # Keep PV offset/export emissions columns if present
-                for c in df_op.columns:
+                for c in df_op_buildings_yearly.columns:
                     if isinstance(c, str) and c.startswith("PV_") and c.endswith("_kgCO2e"):
-                        cols_in.append(c)
-                cols_in = list(dict.fromkeys(cols_in))
+                        op_cols_in_df.append(c)
+                op_cols_in_df = list(dict.fromkeys(op_cols_in_df))  # deduplicate while preserving order
 
-                series = df_op.loc[[self.name], cols_in].iloc[0] if cols_in else pd.Series(dtype=float)
-                last_known = series
+                op_state_year: pd.Series[float] = (
+                    df_op_buildings_yearly.loc[[self.name], op_cols_in_df].iloc[0]
+                    if op_cols_in_df
+                    else pd.Series(dtype=float)
+                )
+                last_known = op_state_year
             else:
                 if allow_missing_operational and last_known is not None:
-                    series = last_known
+                    op_state_year = last_known
                 else:
-                    series = pd.Series(dtype=float)
+                    op_state_year = pd.Series(dtype=float)
 
-            next_state_year = years_sorted[i + 1] if i + 1 < len(years_sorted) else (end_year + 1)
+            next_state_year = (
+                state_years_sorted[i + 1]
+                if i + 1 < len(state_years_sorted)
+                else (end_year + 1)
+            )
             interval_years = [
                 y
                 for y in range(state_year, min(next_state_year, end_year + 1))
@@ -180,18 +198,18 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
                 continue
 
             idx_interval = [f"Y_{y}" for y in interval_years]
-            if series.empty:
+            if op_state_year.empty:
                 continue
 
             # Ensure we have columns available before assignment.
-            for c in series.index:
+            for c in op_state_year.index:
                 if c not in operational_multi_years.columns:
                     operational_multi_years[c] = np.nan
 
-            values = series.astype(float).to_numpy(dtype=float)
-            operational_multi_years.loc[idx_interval, series.index] = np.tile(values, (len(idx_interval), 1))
+            values = op_state_year.astype(float).to_numpy(dtype=float)
+            operational_multi_years.loc[idx_interval, op_state_year.index] = np.tile(values, (len(idx_interval), 1))
 
-        # Years with no state (and no carry-forward) default to 0.0
+        # Years with no state before default to 0.0
         operational_multi_years = operational_multi_years.fillna(0.0).astype(float)
 
         if feedstock_policies:
@@ -204,14 +222,18 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
             )
 
         # Aggregate per-demand totals back into the timeline.
-        for d in _tech_name_mapping.keys():
-            col = f"operation_{d}_kgCO2e"
-            cols_d = [
+        for demand in _tech_name_mapping.keys():
+            col = f"operation_{demand}_kgCO2e"
+            cols_demand = [
                 c
                 for c in operational_multi_years.columns
-                if isinstance(c, str) and c.startswith(f"{d}_") and c.endswith("_kgCO2e")
+                if isinstance(c, str) and c.startswith(f"{demand}_") and c.endswith("_kgCO2e")
             ]
-            values = operational_multi_years[cols_d].sum(axis=1).to_numpy(dtype=float) if cols_d else 0.0
+            values = (
+                operational_multi_years[cols_demand].sum(axis=1).to_numpy(dtype=float)
+                if cols_demand
+                else 0.0
+            )
             self.timeline.loc[idx_active, col] = values
 
     def build_embodied_from_log(
@@ -227,6 +249,43 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
         archetype_events_by_year: Mapping[int, dict[str, dict[str, list[tuple[str, MaterialLayer]]]]],
         service_life_by_src_component: Mapping[str, int | None],
     ) -> None:
+        """Populate embodied (production / demolition / biogenic) emissions for this building.
+
+        This method interprets the district timeline log as the source of truth for envelope layer changes
+        (per archetype / construction standard) and turns those changes into *building-level* emission events.
+        The resulting events are written directly into `self.timeline`.
+
+        Behaviour (high level):
+        - **Initial construction**: at `construction_year` we add production (+ biogenic uptake) for the
+            archetype's layer snapshot effective at/before construction.
+        - **Modification events**: in any year where the log defines layer edits for this building's
+            `const_type`, we apply deltas (add = production, remove = demolition) for the affected component.
+        - **Service-life replacements (mandatory)**: for each envelope component with non-zero area, a full
+            replacement is scheduled every `Service_Life` years, starting from construction.
+            If a modification affects a component, the replacement "clock" for that component resets to
+            `year + Service_Life`.
+        - **Demolition**: if `demolition_year` lies within `[start_year, end_year]`, demolition impacts are
+            applied in that year.
+
+        Notes:
+        - Service life values are taken from `service_life_by_src_component` and are required (missing or
+            non-positive values raise).
+        - The layer snapshots are sourced from `archetype_layers_at_year` and are assumed to already reflect
+            the cumulative log edits up to that year.
+        - Years outside the building's existence window (before construction, or from demolition onward) are
+            not populated.
+
+        Args:
+            const_type: Construction standard / archetype key for this building (e.g., `STANDARD1`).
+            areas: Building surface areas used to scale per-m2 material intensities.
+            materials: Materials database (indexed by material name) providing emission factors and density.
+            years_sorted: Sorted list of state years present in the district log.
+            start_year: First year in the district timeline horizon.
+            end_year: Last year in the district timeline horizon.
+            archetype_layers_at_year: Mapping `year -> const_type -> src_component -> layers`.
+            archetype_events_by_year: Mapping `year -> const_type -> src_component -> [(add/remove, layer)]`.
+            service_life_by_src_component: Mapping `src_component -> Service_Life (years)`.
+        """
         if self.construction_year is None:
             return
         construction_year = self.construction_year
@@ -943,7 +1002,7 @@ def create_district_material_timeline(
 
         # Operational emissions: only for years the building exists
         tl_b.fill_operational_step_function(
-            years_sorted=years_sorted,
+            state_years_sorted=years_sorted,
             end_year=end_year,
             operational_by_state_year=operational_by_state_year,
             allow_missing_operational=allow_missing_operational,
