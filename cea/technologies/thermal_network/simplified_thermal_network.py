@@ -401,13 +401,23 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
 def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services):
     """
-    Calculate minimum recommended network temperature based on building return temperatures.
+    Calculate minimum recommended network temperature based on PRIMARY service.
 
-    In CT mode, the network supply temperature must be at least 5K higher than the maximum
+    The network temperature strategy is determined by the FIRST service in the list,
+    which must match the logic in calc_DH_supply_temp_hvac() in substation.py.
+
+    Service priority logic (based on first service in list):
+    - space_heating first (PLANT_hs_ww): Network follows space heating temp (35°C min)
+                                         DHW served by building boosters
+    - domestic_hot_water first (PLANT_ww_hs): Network follows DHW temp (50°C min)
+                                              DHW served directly from network
+
+    In CT mode, the network supply temperature must be at least 5K higher than the
     building return temperature to allow for heat transfer (approach temperature constraint).
 
     :param substation_results_dict: Dictionary {building_name: substation_results_df}
-    :param itemised_dh_services: List of services (e.g., ['space_heating', 'domestic_hot_water'])
+    :param itemised_dh_services: List of services in priority order
+                                 (e.g., ['space_heating', 'domestic_hot_water'])
     :return: Minimum recommended network temperature in °C
     """
     max_return_temps = []
@@ -425,18 +435,25 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
                 # For now, use conservative estimates based on service type
                 pass
 
-    # Conservative minimum temps based on service type
-    if itemised_dh_services is None:
-        # Legacy mode - assume both services
-        return 50  # Safe for both hs and ww
+    # Minimum temperature based on PRIMARY service (first in list)
+    if itemised_dh_services is None or len(itemised_dh_services) == 0:
+        # Legacy mode - assume DHW priority (conservative)
+        return 50
 
-    min_temps = []
-    if 'space_heating' in itemised_dh_services:
-        min_temps.append(35)  # Space heating return ~30°C + 5K approach
-    if 'domestic_hot_water' in itemised_dh_services:
-        min_temps.append(50)  # DHW return ~45°C + 5K approach (to preheat to 55°C, booster to 60°C)
+    # Determine minimum based on PRIMARY service
+    primary_service = itemised_dh_services[0]
 
-    return max(min_temps) if min_temps else 30
+    if primary_service == 'space_heating':
+        # PLANT_hs or PLANT_hs_ww: Low-temp network
+        # Space heating return ~30°C + 5K approach = 35°C min
+        return 35
+    elif primary_service == 'domestic_hot_water':
+        # PLANT_ww or PLANT_ww_hs: High-temp network
+        # DHW return ~45°C + 5K approach = 50°C min (allows preheat to 55°C, booster to 60°C)
+        return 50
+    else:
+        # Unknown service, conservative minimum
+        return 30
 
 
 def calculate_maximum_network_temperature_cooling(substation_results_dict, itemised_dc_services):
