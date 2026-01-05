@@ -1140,8 +1140,17 @@ class InputLocator(object):
         return self._get_thermal_network_results_file_path(network_type, network_name, "pumping_load_due_to_substations_kW.csv")
 
     def get_thermal_network_substation_results_file(self, building_name, network_type, network_name):
-        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_substation_{building_name}.csv"""
-        return self._get_thermal_network_results_file_path(network_type, network_name, f"substation_{building_name}.csv")
+        """scenario/outputs/data/thermal-network/{network_type}/{network_name}/substation/{network_type}_{network_name}_substation_{building_name}.csv"""
+        if network_name:
+            # Named networks: thermal-network/{network_name}/{network_type}/substation/
+            folder = self.get_output_thermal_network_type_folder(network_type, network_name)
+        else:
+            # Default/unnamed networks: thermal-network/substation/
+            folder = self.get_thermal_network_folder()
+
+        substation_folder = os.path.join(folder, "substation")
+        filename = f"{network_type}_{network_name}_substation_{building_name}.csv"
+        return os.path.join(substation_folder, filename)
 
     def get_thermal_demand_csv_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_thermal_demand_per_building_W.csv"""
