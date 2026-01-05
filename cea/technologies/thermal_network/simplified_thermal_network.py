@@ -527,8 +527,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         DHN_barcode = "0"
         if buildings_name_with_heating:
-            # Read network temperature configuration
-            fixed_network_temp_C = config.thermal_network.network_temperature
+            # Read network temperature configuration for DH
+            fixed_network_temp_C = config.thermal_network.network_temperature_dh
             if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
                 print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
                 print("    - Boosters will activate when building requirements exceed network temp")
@@ -625,8 +625,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             buildings_with_cooling_set = set(buildings_name_with_cooling)
             building_names = list(buildings_with_cooling_set & node_buildings_set)
 
-            # Read network temperature configuration
-            fixed_network_temp_C = config.thermal_network.network_temperature
+            # Read network temperature configuration for DC
+            fixed_network_temp_C = config.thermal_network.network_temperature_dc
             if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
                 print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
             else:
