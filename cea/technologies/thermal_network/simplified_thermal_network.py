@@ -540,6 +540,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     T_sup_K_building = pd.DataFrame()
     T_re_K_building = pd.DataFrame()
     Q_demand_kWh_building = pd.DataFrame()
+    Q_demand_DH_kWh_building = pd.DataFrame()  # DH contribution only (excludes booster) - for plant load calculation
     if network_type == "DH":
         buildings_name_with_heating = get_building_names_with_load(total_demand, load_name='QH_sys_MWhyr')
         DHN_barcode = "0"
@@ -614,6 +615,11 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
                 substation_results["Qww_dh_W"] + substation_results["Qww_booster_W"]
+            ) / 1000
+
+            # DH contribution only (excludes booster heat from local equipment) - for plant load calculation
+            Q_demand_DH_kWh_building[building_name] = (
+                substation_results["Qhs_dh_W"] + substation_results["Qww_dh_W"]
             ) / 1000
 
         # Check for zero/near-zero DH flow condition in CT mode
@@ -704,6 +710,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]
             ) / 1000
+
+            # DC contribution (for DC networks, no boosters, so same as total demand)
+            Q_demand_DH_kWh_building[building_name] = Q_demand_kWh_building[building_name]
 
         # Validate network temperature is cold enough for buildings (CT mode only)
         if fixed_network_temp_C is not None:
@@ -1156,12 +1165,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     head_loss_system_Pa.to_csv(locator.get_network_total_pressure_drop_file(network_type, network_name),
                                index=False)
 
-    # $ POSTPROCESSING - PLANT HEAT REQUIREMENT
-    plant_load_kWh = thermal_losses_supply_kWh.sum(axis=1) * 2 + Q_demand_kWh_building.sum(
-        axis=1) - accumulated_head_loss_total_kW.values
-    plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
-    plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
-    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))
+    # $ POSTPROCESSING - PLANT HEAT REQUIREMENT moved to after thermal losses calculation (line ~1218)
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
@@ -1202,6 +1206,14 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                              "thermal_loss_total_kW": accumulated_thermal_loss_total_kWh})
     thermal_losses_total_kWh.to_csv(locator.get_network_total_thermal_loss_file(network_type, network_name),
                                     index=False)
+
+    # PLANT THERMAL LOAD REQUIREMENT
+    # Plant thermal load = DH delivered to buildings + network thermal losses
+    # (Use DH-only demand, excludes booster heat from local equipment at buildings)
+    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh
+    plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
+    plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
+    plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))
 
     # return average temperature of supply at the substations
     T_sup_K_nodes = T_sup_K_building.rename(columns=building_nodes_pairs_inversed)
