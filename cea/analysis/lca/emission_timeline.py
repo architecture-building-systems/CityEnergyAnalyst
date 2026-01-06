@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
 
 
-_MAPPING_DICT = {
+COMPONENT_TO_SRC_COMPONENT: dict[str, str] = {
     "wall_ag": "wall",
     "wall_bg": "base",
     "wall_part": "part",
@@ -47,10 +47,83 @@ _MAPPING_DICT = {
     "technical_systems": "technical_systems", # not implemented in CEA, dummy value
 }
 
+# Backwards-compatible alias (internal name used throughout this module).
+_MAPPING_DICT = COMPONENT_TO_SRC_COMPONENT
+
 
 # Mirror the per-component naming used by the existing CEA emissions timelines.
 # Kept as a separate constant so other modules can reuse the canonical order.
 TIMELINE_COMPONENTS: tuple[str, ...] = tuple(_MAPPING_DICT.keys())
+
+
+def get_component_quantities(
+    building_properties: BuildingProperties, building_name: str
+) -> dict[str, float]:
+    """
+    Return the area/quantity mapping used by emissions timelines.
+    to extract surface area information, as done in demand calculation as well.
+    The radiation results are stored in `building_properties.rc_model._rc_model_props`.
+    A lot of fields exist, but the useful ones are:
+    - `GFA_m2`: total floor area of building
+    - `Awall_ag`: total area of external walls above ground
+    - `Awin_ag`: total area of windows
+    - `Aroof`: total area of roof
+    - `Aunderside`: total area of bottom surface, if the bottom surface is above ground level.
+        In case where building touches the ground, this value is zero.
+    - `footprint`: the area of the building footprint, equivalent to `Abase`.
+
+    Calculated area:
+    - `Awall_bg`: total area of below-ground walls
+    - `Awall_part`: total area of partition walls. Currently dummy value 0.0
+    - `Aupperside`: total area of upper side. Currently not available in Daysim
+        radiation results, so this value is set to `0.0`.
+    - `Afloor`: total area of internal floors.
+        If the floor area is neither touching the ground nor the outside air,
+        it should be internal. Therefore, the calculation formula thus is:
+        `Afloor = GFA_m2 - Aunderside - footprint`
+    - `Atechnical_systems`: total area of technical systems. Same as GFA.
+
+    :param building_properties: The building properties object containing results
+        for all buildings in the district. Two attributes are relevant
+        for the surface area calculation: the `rc_model` and `geometry` attributes.
+
+        The `geometry` attribute simply returns what's inside the `zone.shp` file,
+        along with the footprint and perimeter;
+        The `rc_model` attribute contains the areas along with other parameters.
+        Whole list of parameters (details see `BuildingRCModel.calc_prop_rc_model`)
+    :type building_properties: BuildingProperties
+
+    :return: A dictionary with the area of each building component.
+    :rtype: dict[str, float]
+        
+    """
+    name = str(building_name)
+    rc_model_props = building_properties.rc_model[name]
+    envelope_props = building_properties.envelope[name]
+    geometry_props = building_properties.geometry[name]
+
+    surface_area: dict[str, float] = {}
+    surface_area["Awall_ag"] = float(envelope_props["Awall_ag"])
+    surface_area["Awall_bg"] = float(geometry_props["perimeter"]) * float(geometry_props["height_bg"])
+    surface_area["Awall_part"] = float(rc_model_props["GFA_m2"]) * float(CONVERSION_AREA_TO_FLOOR_AREA_RATIO)
+    surface_area["Awin_ag"] = float(envelope_props.get("Awin_ag", 0.0))
+
+    surface_area["Aroof"] = float(envelope_props["Aroof"])
+    surface_area["Aupperside"] = 0.0
+    surface_area["Aunderside"] = float(envelope_props.get("Aunderside", 0.0))
+
+    if float(geometry_props["floors_bg"]) == 0 and float(geometry_props.get("void_deck", 0)) > 0:
+        area_base = 0.0
+    else:
+        area_base = float(rc_model_props["footprint"])
+
+    surface_area["Abase"] = float(area_base)
+    surface_area["Afloor"] = max(
+        0.0,
+        float(rc_model_props["GFA_m2"]) - float(surface_area["Aunderside"]) - float(surface_area["Abase"]),
+    )
+    surface_area["Atechnical_systems"] = float(rc_model_props["GFA_m2"])
+    return surface_area
 
 
 def normalise_years(year: int | list[int] | str | list[str]) -> list[str]:
@@ -471,7 +544,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         self.geometry = building_properties.geometry[self.name]
         self.typology = building_properties.typology[self.name]
         self.envelope = building_properties.envelope[self.name]
-        self.surface_area = self.get_component_quantity(building_properties)
+        self.surface_area = get_component_quantities(building_properties, self.name)
         self.timeline = self.initialize_timeline(end_year)
         self._append_note(year=int(self.typology["year"]), message="Constructed")
 
@@ -764,80 +837,3 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         numeric_years = list(range(int(start_year), int(max_year) + 1, int(lifetime)))
         years = [f"Y_{int(year)}" for year in numeric_years]
         self.log(emission=emission, year=years, col=col)
-
-    def get_component_quantity(self, building_properties: BuildingProperties) -> dict[str, float]:
-        """
-        Get the area for each building component.
-        During Daysim simulation, the types of surfaces are categorized in detail,
-        so we need the radiation results
-        to extract surface area information, as done in demand calculation as well.
-        The radiation results are stored in `building_properties.rc_model._rc_model_props`.
-        A lot of fields exist, but the useful ones are:
-        - `GFA_m2`: total floor area of building
-        - `Awall_ag`: total area of external walls above ground
-        - `Awin_ag`: total area of windows
-        - `Aroof`: total area of roof
-        - `Aunderside`: total area of bottom surface, if the bottom surface is above ground level.
-            In case where building touches the ground, this value is zero.
-        - `footprint`: the area of the building footprint, equivalent to `Abase`.
-
-        Calculated area:
-        - `Awall_bg`: total area of below-ground walls
-        - `Awall_part`: total area of partition walls. Currently dummy value 0.0
-        - `Aupperside`: total area of upper side. Currently not available in Daysim
-            radiation results, so this value is set to `0.0`.
-        - `Afloor`: total area of internal floors.
-            If the floor area is neither touching the ground nor the outside air,
-            it should be internal. Therefore, the calculation formula thus is:
-            `Afloor = GFA_m2 - Aunderside - footprint`
-        - `Atechnical_systems`: total area of technical systems. Same as GFA.
-
-        :param building_properties: The building properties object containing results
-            for all buildings in the district. Two attributes are relevant
-            for the surface area calculation: the `rc_model` and `geometry` attributes.
-
-            The `geometry` attribute simply returns what's inside the `zone.shp` file,
-            along with the footprint and perimeter;
-            The `rc_model` attribute contains the areas along with other parameters.
-            Whole list of parameters (details see `BuildingRCModel.calc_prop_rc_model`)
-        :type building_properties: BuildingProperties
-
-        :return: A dictionary with the area of each building component.
-        :rtype: dict[str, float]
-        """
-        rc_model_props = building_properties.rc_model[self.name]
-        envelope_props = building_properties.envelope[self.name]
-
-        surface_area = {}
-        surface_area["Awall_ag"] = envelope_props["Awall_ag"]
-        surface_area["Awall_bg"] = (
-            self.geometry["perimeter"] * self.geometry["height_bg"]
-        )
-        surface_area["Awall_part"] = rc_model_props["GFA_m2"] * CONVERSION_AREA_TO_FLOOR_AREA_RATIO
-        surface_area["Awin_ag"] = envelope_props["Awin_ag"]
-
-        # calculate the area of each component
-        # horizontal: roof, floor, underside, upperside (not implemented), base
-        # vertical: wall_ag, wall_bg, wall_part (not implemented), win_ag
-        surface_area["Aroof"] = envelope_props["Aroof"]
-        surface_area["Aupperside"] = 0.0  # not implemented
-        surface_area["Aunderside"] = envelope_props["Aunderside"]
-        # internal floors that are not base, not upperside and not underside
-
-        # check if building ever have base
-        if self.geometry["floors_bg"] == 0 and self.geometry["void_deck"] > 0:
-            # building is completely floating and does not have a base
-            area_base = 0.0
-        else:
-            area_base = float(rc_model_props["footprint"])
-        surface_area["Afloor"] = max(
-            0.0,
-            rc_model_props[
-                "GFA_m2"
-            ]  # GFA = footprint * (floor_ag + floor_bg - void_deck)
-            - surface_area["Aunderside"]
-            - area_base,
-        )
-        surface_area["Abase"] = area_base
-        surface_area["Atechnical_systems"] = rc_model_props["GFA_m2"]
-        return surface_area
