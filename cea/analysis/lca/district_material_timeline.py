@@ -434,7 +434,9 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
     ) -> None:
         """Log a full replacement of the given component (demolish old + rebuild same).
 
-        Biogenic uptake/release is logged in the same year (net may be ~0 if identical materials).
+        Biogenic carbon is treated as stored in materials (negative at production) and no end-of-life release
+        is assumed (no positive biogenic term at demolition/removal), consistent with existing CEA net-emissions
+        plotting assumptions.
         """
         for comp, comp_src, area_key in comp_area_map:
             if comp_src != src_component:
@@ -446,7 +448,6 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
                 prod, demo, bio = _material_intensity_per_m2(materials, layer)
                 # Demolish old
                 self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
-                self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(+bio) * area)
                 # Build new
                 self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
                 self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
@@ -494,7 +495,6 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
                     self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
                 else:
                     self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
-                    self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(+bio) * area)
 
     def add_demolition(
         self,
@@ -515,7 +515,6 @@ class MaterialChangeEmissionTimeline(_BuildingContextTimeline):
             for _, layer in _diff_layers(None, layers):
                 _, demo, bio = _material_intensity_per_m2(materials, layer)
                 self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
-                self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(+bio) * area)
 
 
 def _load_building_const_types(locator: InputLocator) -> dict[str, str]:
