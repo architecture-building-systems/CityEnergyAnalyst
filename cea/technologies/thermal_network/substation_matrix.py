@@ -340,13 +340,46 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
     # Heating ahu
     if 'UA_heating_hs_ahu' in substation_HEX_specs.HEX_UA:
-        Qhs_sys_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu, ch_value = calc_HEX_heating(building, 'hs_sys', 'ahu_',
-                                                                                    T_DH_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_ahu,
-                                                                                    thermal_network.ch_old['hs_ahu'][t][
-                                                                                        name],
-                                                                                    thermal_network.delta_cap_mass_flow[
-                                                                                        t])
+        # Check if network temperature is sufficient for space heating
+        T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
+        T_hs_target_C = building['Ths_sys_sup_ahu_C'].values if 'Ths_sys_sup_ahu_C' in building.columns else np.array([40.0])
+
+        MIN_APPROACH_TEMP_K = 5
+
+        # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
+        if T_DH_supply_C < (T_hs_target_C[0] + MIN_APPROACH_TEMP_K):
+            # Use booster-aware calculation
+            from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
+
+            Qhs_demand_W = building['Qhs_sys_ahu_kWh'].values * 1000  # kWh to W
+            T_hs_return_C = building['Ths_sys_re_ahu_C'].values if 'Ths_sys_re_ahu_C' in building.columns else np.array([25.0])
+
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+                calc_dh_heating_with_booster_tracking(
+                    Q_demand_W=Qhs_demand_W,
+                    T_DH_supply_C=T_DH_supply_C,
+                    T_target_C=T_hs_target_C,
+                    T_return_C=T_hs_return_C,
+                    load_type='space_heating'
+                )
+
+            # Extract scalar values from arrays
+            t_DH_return_hs_ahu = T_dh_return_C_arr[0] + 273.15  # C to K
+            mcp_DH_hs_ahu = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            Qhs_sys_ahu = Q_dh_W  # Array with single element
+
+            # For compatibility with ch_value storage
+            ch_value = mcp_DH_hs_ahu / 1000  # W/K to kW/K
+        else:
+            # Network temp sufficient - use existing HEX calculation
+            Qhs_sys_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu, ch_value = calc_HEX_heating(building, 'hs_sys', 'ahu_',
+                                                                                        T_DH_supply_K,
+                                                                                        substation_HEX_specs.HEX_UA.UA_heating_hs_ahu,
+                                                                                        thermal_network.ch_old['hs_ahu'][t][
+                                                                                            name],
+                                                                                        thermal_network.delta_cap_mass_flow[
+                                                                                            t])
+
         temperatures.append(t_DH_return_hs_ahu)
         mass_flows.append(mcp_DH_hs_ahu)
         heat.append(Qhs_sys_ahu[0])
@@ -356,13 +389,46 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
     # Heating aru
     if 'UA_heating_hs_aru' in substation_HEX_specs.HEX_UA:
-        Qhs_sys_aru, t_DH_return_hs_aru, mcp_DH_hs_aru, ch_value = calc_HEX_heating(building, 'hs_sys', 'aru_',
-                                                                                    T_DH_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_aru,
-                                                                                    thermal_network.ch_old['hs_aru'][t][
-                                                                                        name],
-                                                                                    thermal_network.delta_cap_mass_flow[
-                                                                                        t])
+        # Check if network temperature is sufficient for space heating
+        T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
+        T_hs_target_C = building['Ths_sys_sup_aru_C'].values if 'Ths_sys_sup_aru_C' in building.columns else np.array([40.0])
+
+        MIN_APPROACH_TEMP_K = 5
+
+        # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
+        if T_DH_supply_C < (T_hs_target_C[0] + MIN_APPROACH_TEMP_K):
+            # Use booster-aware calculation
+            from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
+
+            Qhs_demand_W = building['Qhs_sys_aru_kWh'].values * 1000  # kWh to W
+            T_hs_return_C = building['Ths_sys_re_aru_C'].values if 'Ths_sys_re_aru_C' in building.columns else np.array([25.0])
+
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+                calc_dh_heating_with_booster_tracking(
+                    Q_demand_W=Qhs_demand_W,
+                    T_DH_supply_C=T_DH_supply_C,
+                    T_target_C=T_hs_target_C,
+                    T_return_C=T_hs_return_C,
+                    load_type='space_heating'
+                )
+
+            # Extract scalar values from arrays
+            t_DH_return_hs_aru = T_dh_return_C_arr[0] + 273.15  # C to K
+            mcp_DH_hs_aru = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            Qhs_sys_aru = Q_dh_W  # Array with single element
+
+            # For compatibility with ch_value storage
+            ch_value = mcp_DH_hs_aru / 1000  # W/K to kW/K
+        else:
+            # Network temp sufficient - use existing HEX calculation
+            Qhs_sys_aru, t_DH_return_hs_aru, mcp_DH_hs_aru, ch_value = calc_HEX_heating(building, 'hs_sys', 'aru_',
+                                                                                        T_DH_supply_K,
+                                                                                        substation_HEX_specs.HEX_UA.UA_heating_hs_aru,
+                                                                                        thermal_network.ch_old['hs_aru'][t][
+                                                                                            name],
+                                                                                        thermal_network.delta_cap_mass_flow[
+                                                                                            t])
+
         temperatures.append(t_DH_return_hs_aru)
         mass_flows.append(mcp_DH_hs_aru)
         heat.append(Qhs_sys_aru[0])
@@ -372,13 +438,46 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
     # Heating shu
     if 'UA_heating_hs_shu' in substation_HEX_specs.HEX_UA:
-        Qhs_sys_shu, t_DH_return_hs_shu, mcp_DH_hs_shu, ch_value = calc_HEX_heating(building, 'hs_sys', 'shu_',
-                                                                                    T_DH_supply_K,
-                                                                                    substation_HEX_specs.HEX_UA.UA_heating_hs_shu,
-                                                                                    thermal_network.ch_old['hs_shu'][t][
-                                                                                        name],
-                                                                                    thermal_network.delta_cap_mass_flow[
-                                                                                        t])
+        # Check if network temperature is sufficient for space heating
+        T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
+        T_hs_target_C = building['Ths_sys_sup_shu_C'].values if 'Ths_sys_sup_shu_C' in building.columns else np.array([40.0])
+
+        MIN_APPROACH_TEMP_K = 5
+
+        # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
+        if T_DH_supply_C < (T_hs_target_C[0] + MIN_APPROACH_TEMP_K):
+            # Use booster-aware calculation
+            from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
+
+            Qhs_demand_W = building['Qhs_sys_shu_kWh'].values * 1000  # kWh to W
+            T_hs_return_C = building['Ths_sys_re_shu_C'].values if 'Ths_sys_re_shu_C' in building.columns else np.array([25.0])
+
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+                calc_dh_heating_with_booster_tracking(
+                    Q_demand_W=Qhs_demand_W,
+                    T_DH_supply_C=T_DH_supply_C,
+                    T_target_C=T_hs_target_C,
+                    T_return_C=T_hs_return_C,
+                    load_type='space_heating'
+                )
+
+            # Extract scalar values from arrays
+            t_DH_return_hs_shu = T_dh_return_C_arr[0] + 273.15  # C to K
+            mcp_DH_hs_shu = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            Qhs_sys_shu = Q_dh_W  # Array with single element
+
+            # For compatibility with ch_value storage
+            ch_value = mcp_DH_hs_shu / 1000  # W/K to kW/K
+        else:
+            # Network temp sufficient - use existing HEX calculation
+            Qhs_sys_shu, t_DH_return_hs_shu, mcp_DH_hs_shu, ch_value = calc_HEX_heating(building, 'hs_sys', 'shu_',
+                                                                                        T_DH_supply_K,
+                                                                                        substation_HEX_specs.HEX_UA.UA_heating_hs_shu,
+                                                                                        thermal_network.ch_old['hs_shu'][t][
+                                                                                            name],
+                                                                                        thermal_network.delta_cap_mass_flow[
+                                                                                            t])
+
         temperatures.append(t_DH_return_hs_shu)
         mass_flows.append(mcp_DH_hs_shu)
         heat.append(Qhs_sys_shu[0])
@@ -387,10 +486,43 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         thermal_network.ch_old['hs_shu'][t][name] = float(ch_value)
 
     if 'UA_heating_hs_ww' in substation_HEX_specs.HEX_UA:
-        Qww_sys, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'ww_sys', '', T_DH_supply_K,
-                                                                        substation_HEX_specs.HEX_UA.UA_heating_hs_ww,
-                                                                        thermal_network.ch_old['hs_ww'][t][name],
-                                                                        thermal_network.delta_cap_mass_flow[t])
+        # DHW service - check if network temperature is sufficient
+        T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
+        T_ww_target_C = building['Tww_sys_sup_C'].values if 'Tww_sys_sup_C' in building.columns else np.array([60.0])
+
+        MIN_APPROACH_TEMP_K = 5
+
+        # Check if booster needed (network temp insufficient for DHW)
+        if T_DH_supply_C < (T_ww_target_C[0] + MIN_APPROACH_TEMP_K):
+            # Use booster-aware calculation
+            from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
+
+            Qww_demand_W = building['Qww_sys_kWh'].values * 1000  # kWh to W
+            T_ww_return_C = building['Tww_sys_re_C'].values if 'Tww_sys_re_C' in building.columns else np.array([10.0])
+
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+                calc_dh_heating_with_booster_tracking(
+                    Q_demand_W=Qww_demand_W,
+                    T_DH_supply_C=T_DH_supply_C,
+                    T_target_C=T_ww_target_C,
+                    T_return_C=T_ww_return_C,
+                    load_type='dhw'
+                )
+
+            # Extract scalar values from arrays
+            t_DH_return_ww = T_dh_return_C_arr[0] + 273.15  # C to K
+            mcp_DH_ww = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            Qww_sys = Q_dh_W  # Array with single element
+
+            # For compatibility with ch_value storage (not used in booster mode, but keep structure)
+            ch_value = mcp_DH_ww / 1000  # W/K to kW/K
+        else:
+            # Network temp sufficient - use existing HEX calculation
+            Qww_sys, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'ww_sys', '', T_DH_supply_K,
+                                                                            substation_HEX_specs.HEX_UA.UA_heating_hs_ww,
+                                                                            thermal_network.ch_old['hs_ww'][t][name],
+                                                                            thermal_network.delta_cap_mass_flow[t])
+
         temperatures.append(t_DH_return_ww)
         mass_flows.append(mcp_DH_ww)
         heat.append(Qww_sys[0])
