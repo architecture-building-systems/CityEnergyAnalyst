@@ -1030,18 +1030,22 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # Output values
         # Edge Mass Flows
+        # Replace NaN with 0 (zero flow when network idle)
+        edge_mass_flows_for_csv = edge_mass_flows_for_csv.fillna(0)
         edge_mass_flows_for_csv.columns = thermal_network.edge_node_df.columns
         edge_mass_flows_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_edges_file(thermal_network.network_type,
                                                                                    thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         # Node Mass Flows
+        # Replace NaN with 0 (zero flow when network idle)
+        node_mass_flows_for_csv = node_mass_flows_for_csv.fillna(0)
         node_mass_flows_for_csv.columns = thermal_network.edge_node_df.index
         node_mass_flows_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_nodes_file(thermal_network.network_type,
                                                                                    thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         # velocities in supply edges
         velocities_in_supply_edges_mpers_for_csv.columns = thermal_network.edge_node_df.columns
@@ -1068,6 +1072,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             index=False, float_format='%.3f')
 
         # pressure losses over substations of network
+        # Replace NaN/empty with 0 (zero pumping load when network idle)
+        pressure_loss_substations_kW_for_csv = pressure_loss_substations_kW_for_csv.fillna(0)
         pressure_loss_substations_kW_for_csv.columns = thermal_network.building_names
         pressure_loss_substations_kW_for_csv.to_csv(
             thermal_network.locator.get_thermal_network_substation_ploss_file(thermal_network.network_type,
@@ -1136,21 +1142,27 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # node temperatures
+        # Replace NaN with 273.15K (0°C) as sentinel value for "network idle" (consistent with simplified model)
+        T_supply_nodes_for_csv = T_supply_nodes_for_csv.fillna(273.15)
+        T_return_nodes_for_csv = T_return_nodes_for_csv.fillna(273.15)
+
         T_supply_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_supply_nodes_for_csv.to_csv(
             thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         T_return_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_return_nodes_for_csv.to_csv(
             thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         # plant supply and return temperatures
+        # Replace NaN with 273.15K (0°C) as sentinel value for "network idle"
+        temperatures_at_plants_K_for_csv = temperatures_at_plants_K_for_csv.fillna(273.15)
         temperatures_at_plants_K_for_csv.columns = ['temperature_supply_K', 'temperature_return_K']
         temperatures_at_plants_K_for_csv.to_csv(
             thermal_network.locator.get_network_temperature_plant(
@@ -1158,16 +1170,20 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
     else:
         # Edge Mass Flows
-        pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).to_csv(
+        # Replace NaN with 0 (zero flow when network idle)
+        edge_mass_flows_df = pd.DataFrame(csv_outputs['edge_mass_flows'], columns=thermal_network.edge_node_df.columns).fillna(0)
+        edge_mass_flows_df.to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_edges_file(thermal_network.network_type,
                                                                                    thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         # Node Mass Flows
-        pd.DataFrame(csv_outputs['node_mass_flows'], columns=thermal_network.edge_node_df.index).to_csv(
+        # Replace NaN with 0 (zero flow when network idle)
+        node_mass_flows_df = pd.DataFrame(csv_outputs['node_mass_flows'], columns=thermal_network.edge_node_df.index).fillna(0)
+        node_mass_flows_df.to_csv(
             thermal_network.locator.get_thermal_network_layout_massflow_nodes_file(thermal_network.network_type,
                                                                                    thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         # velocities in supply edges
         pd.DataFrame(csv_outputs['velocities_in_supply_edges_mpers'],
@@ -1201,7 +1217,9 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # pressure losses over substations of network
-        pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns=thermal_network.building_names).to_csv(
+        # Replace NaN/empty with 0 (zero pumping load when network idle)
+        pressure_loss_substations_df = pd.DataFrame(csv_outputs['pressure_loss_substations_kW'], columns=thermal_network.building_names).fillna(0)
+        pressure_loss_substations_df.to_csv(
             thermal_network.locator.get_thermal_network_substation_ploss_file(thermal_network.network_type,
                                                                               thermal_network.network_name),
             index=False,
@@ -1260,20 +1278,25 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
             float_format='%.3f')
 
         # node temperatures
-        pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
+        # Replace NaN with 273.15K (0°C) as sentinel value for "network idle" (consistent with simplified model)
+        T_supply_nodes_df = pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).fillna(273.15)
+        T_supply_nodes_df.to_csv(
             thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
-        pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).to_csv(
+            index=False, float_format='%.3f')
+        T_return_nodes_df = pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).fillna(273.15)
+        T_return_nodes_df.to_csv(
             thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
-            na_rep='NaN', index=False, float_format='%.3f')
+            index=False, float_format='%.3f')
 
         # plant supply and return temperatures
-        pd.DataFrame(csv_outputs['temperatures_at_plant_K'],
-                     columns=['temperature_supply_K', 'temperature_return_K']).to_csv(
+        # Replace NaN with 273.15K (0°C) as sentinel value for "network idle"
+        temperatures_at_plant_df = pd.DataFrame(csv_outputs['temperatures_at_plant_K'],
+                     columns=['temperature_supply_K', 'temperature_return_K']).fillna(273.15)
+        temperatures_at_plant_df.to_csv(
             thermal_network.locator.get_network_temperature_plant(
                 thermal_network.network_type, thermal_network.network_name), index=False, float_format='%.3f')
 
@@ -2133,7 +2156,9 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
         # To do this, the initial dataset is repeated 4 times, the remaining values are filled with the average values of all above.
 
         # Nominal node mass flow
+        # Replace NaN with 0 (zero flow when network idle)
         node_mass_flow_for_csv = extrapolate_datapoints_for_representative_weeks(thermal_network.node_mass_flow_df)
+        node_mass_flow_for_csv = node_mass_flow_for_csv.fillna(0)
         node_mass_flow_for_csv.to_csv(
             thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type,
                                                                         thermal_network.network_name),
@@ -2148,7 +2173,9 @@ def calc_max_edge_flowrate(thermal_network, processes=1):
 
     else:
         # Nominal node mass flow
-        thermal_network.node_mass_flow_df.to_csv(
+        # Replace NaN with 0 (zero flow when network idle)
+        node_mass_flow_df = thermal_network.node_mass_flow_df.fillna(0)
+        node_mass_flow_df.to_csv(
             thermal_network.locator.get_nominal_node_mass_flow_csv_file(thermal_network.network_type,
                                                                         thermal_network.network_name),
             index=False)
