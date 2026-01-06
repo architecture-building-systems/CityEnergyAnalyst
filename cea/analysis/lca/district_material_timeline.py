@@ -247,7 +247,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     ):
         self.construction_year: int | None = None
         self.demolition_year: int | None = None
-        self.window_code: str | None = None
+        self.window_code: str = ""
         self._notes_by_year: dict[str, list[str]] = {}
         super().__init__(name=name, locator=locator)
 
@@ -659,9 +659,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 continue
 
             if comp_src == "win":
-                if not self.window_code:
-                    continue
-                prod, demo, bio = _envelope_intensities_per_m2(self.envelope_lookup, code=str(self.window_code))
+                prod, demo, bio = _envelope_intensities_per_m2(self.envelope_lookup, code=self.window_code)
                 self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
                 self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
                 self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
@@ -698,9 +696,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 continue
 
             if src_component == "win":
-                if not self.window_code:
-                    continue
-                prod, _, bio = _envelope_intensities_per_m2(self.envelope_lookup, code=str(self.window_code))
+                prod, _, bio = _envelope_intensities_per_m2(self.envelope_lookup, code=self.window_code)
                 self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
                 self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
                 continue
@@ -761,9 +757,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 continue
 
             if src_component == "win":
-                if not self.window_code:
-                    continue
-                _, demo, _ = _envelope_intensities_per_m2(self.envelope_lookup, code=str(self.window_code))
+                _, demo, _ = _envelope_intensities_per_m2(self.envelope_lookup, code=self.window_code)
                 self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
                 continue
 
@@ -1181,7 +1175,7 @@ def create_district_material_timeline(
     archetypes_needed = sorted({v for v in building_const_types.values()})
     archetype_layers: dict[str, dict[str, list[MaterialLayer] | None]] = {}
     archetype_service_life: dict[str, dict[str, int | None]] = {}
-    archetype_window_code: dict[str, str | None] = {}
+    archetype_window_code: dict[str, str] = {}
     for archetype in archetypes_needed:
         if archetype not in archetype_df.index:
             raise ValueError(f"Archetype '{archetype}' not found in construction types database.")
@@ -1191,10 +1185,7 @@ def create_district_material_timeline(
         code_base = str(row.get("type_base"))
         code_floor = str(row.get("type_floor"))
         code_part = str(row.get("type_part"))
-        code_win_raw = row.get("type_win")
-        code_win = None
-        if code_win_raw is not None and not (isinstance(code_win_raw, float) and np.isnan(code_win_raw)):
-            code_win = str(code_win_raw)
+        code_win = str(row.get("type_win"))
         archetype_layers[archetype] = {
             "wall": _get_component_layers(env_lookup, db_name="wall", code=code_wall),
             "roof": _get_component_layers(env_lookup, db_name="roof", code=code_roof),
@@ -1208,7 +1199,7 @@ def create_district_material_timeline(
             "base": cast(int | None, env_lookup.get_item_value(code_base, "Service_Life")),
             "floor": cast(int | None, env_lookup.get_item_value(code_floor, "Service_Life")),
             "part": cast(int | None, env_lookup.get_item_value(code_part, "Service_Life")),
-            "win": cast(int | None, env_lookup.get_item_value(code_win, "Service_Life")) if code_win else None,
+            "win": cast(int | None, env_lookup.get_item_value(code_win, "Service_Life")),
             "technical_systems": int(SERVICE_LIFE_OF_TECHNICAL_SYSTEMS),
         }
         archetype_window_code[archetype] = code_win
@@ -1252,7 +1243,7 @@ def create_district_material_timeline(
         if const_type is None:
             continue
 
-        building_timeline.window_code = archetype_window_code.get(const_type)
+        building_timeline.window_code = archetype_window_code[const_type]
 
         areas = areas_by_building.get(b)
         if areas is None:
