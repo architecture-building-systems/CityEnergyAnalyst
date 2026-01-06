@@ -622,7 +622,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 substation_results["Qhs_dh_W"] + substation_results["Qww_dh_W"]
             ) / 1000
 
-        # Check for zero/near-zero DH flow condition in CT mode
+        # Check for zero/near-zero DH flow condition
         total_dh_contribution_kWh = sum([
             (df['Qhs_dh_W'].sum() + df['Qww_dh_W'].sum()) / 1000
             for df in substation_results_dict.values()
@@ -633,12 +633,49 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             for df in substation_results_dict.values()
         ])
 
+        # Calculate space heating vs DHW contributions
+        total_hs_dh_kWh = sum([df['Qhs_dh_W'].sum() / 1000 for df in substation_results_dict.values()])
+        total_ww_dh_kWh = sum([df['Qww_dh_W'].sum() / 1000 for df in substation_results_dict.values()])
+        total_hs_demand_kWh = sum([
+            (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
+            for df in substation_results_dict.values()
+        ])
+        total_ww_demand_kWh = sum([
+            (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
+            for df in substation_results_dict.values()
+        ])
+
         if total_demand_kWh > 0:
             dh_fraction = total_dh_contribution_kWh / total_demand_kWh
         else:
             dh_fraction = 0
 
-        # If DH contribution is less than 1%, warn user and suggest minimum temperature
+        # Special validation for PLANT_hs_ww with no space heating demand
+        if itemised_dh_services == ['space_heating', 'domestic_hot_water']:
+            # This is a PLANT_hs_ww network (space heating priority)
+            if total_hs_demand_kWh < 1.0:  # Less than 1 kWh/year of space heating
+                raise ValueError(
+                    f"\n{'='*70}\n"
+                    f"❌ ERROR: PLANT_hs_ww network has zero space heating demand\n"
+                    f"{'='*70}\n"
+                    f"  Plant type: PLANT_hs_ww (space heating → DHW priority)\n"
+                    f"  Space heating demand: {total_hs_demand_kWh:.2f} kWh/year\n"
+                    f"  DHW demand: {total_ww_demand_kWh:.2f} kWh/year\n"
+                    f"\n"
+                    f"PLANT_hs_ww networks are designed for buildings with space heating needs.\n"
+                    f"The network temperature is controlled by space heating requirements (35-45°C).\n"
+                    f"\n"
+                    f"Solutions:\n"
+                    f"  1. Use PLANT_ww network type for DHW-only buildings\n"
+                    f"     - Run network layout with 'itemised-dh-services' = ['domestic_hot_water']\n"
+                    f"     - Network designed for higher temperatures (50-80°C)\n"
+                    f"  2. Check if space heating demand exists in total-demand files\n"
+                    f"     - Verify QH_sys_MWhyr > 0 for connected buildings\n"
+                    f"  3. Remove buildings from network if they truly have no heating demand\n"
+                    f"{'='*70}\n"
+                )
+
+        # If DH contribution is less than 1%, warn user and suggest minimum temperature (CT mode only)
         if dh_fraction < 0.01 and fixed_network_temp_C is not None:
             min_temp_required = calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services)
             service_names = ' + '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
@@ -1030,9 +1067,42 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         
         # Final validation of complete results
         if results.link['flowrate'].isna().all().all():
+            # Calculate total demand for diagnostic
+            total_flow_m3s = sum([
+                volume_flow_m3pers_building[bldg].sum()
+                for bldg in building_names
+            ])
+
             raise ValueError(
-                "WNTR final simulation produced all NaN flowrate results. "
-                "Network simulation completely failed. Check all previous warnings."
+                f"\n{'='*70}\n"
+                f"❌ ERROR: WNTR hydraulic simulation failed completely\n"
+                f"{'='*70}\n"
+                f"Network type: {network_type}\n"
+                f"Network name: {network_name}\n"
+                f"Total demand flow: {total_flow_m3s:.6f} m³/s\n"
+                f"\n"
+                f"All flowrate results are NaN - hydraulic simulation could not converge.\n"
+                f"\n"
+                f"Common causes:\n"
+                f"  1. Near-zero flow due to insufficient network temperature\n"
+                f"     - Network temp too low → all heat from boosters → zero DH flow\n"
+                f"     - Check previous warnings about DH contribution <1%\n"
+                f"  2. Extreme pressure losses\n"
+                f"     - Very small pipes with high flow rates\n"
+                f"     - Check pipe diameter calculations\n"
+                f"  3. Network topology issues\n"
+                f"     - Disconnected segments (should be caught earlier)\n"
+                f"     - Invalid boundary conditions\n"
+                f"  4. Plant type mismatch with building demands\n"
+                f"     - PLANT_hs_ww with zero space heating → use PLANT_ww\n"
+                f"     - PLANT_ww_hs with zero DHW → use PLANT_hs_ww\n"
+                f"\n"
+                f"Resolution:\n"
+                f"  - Review all warnings and errors printed above\n"
+                f"  - Check total demand is >0 and DH contribution is significant\n"
+                f"  - Verify network temperature is appropriate for service type\n"
+                f"  - Use Variable Temperature mode (network-temperature=-1) if unsure\n"
+                f"{'='*70}\n"
             )
         
         print("All WNTR simulations completed successfully.")
