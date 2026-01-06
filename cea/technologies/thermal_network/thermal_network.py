@@ -18,6 +18,7 @@ import re
 
 import cea.config
 import cea.inputlocator
+import cea.technologies.substation as substation
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
@@ -865,6 +866,39 @@ def thermal_network_main(locator, thermal_network, processes=1):
     all_nodes_df_output.to_csv(
         thermal_network.locator.get_thermal_network_node_types_csv_file(thermal_network.network_type,
                                                                         thermal_network.network_name), index=False)
+
+    # Write individual substation results (for compatibility with simplified model outputs)
+    print('Writing substation results for each building...')
+
+    # Read total demand (same as simplified model does)
+    total_demand = pd.read_csv(thermal_network.locator.get_total_demand())
+
+    if thermal_network.network_type == 'DC':
+        # Get network temperature (CT mode) or None (VT mode)
+        fixed_network_temp_C = thermal_network.get_plant_supply_temperature() if thermal_network.network_temperature_dc >= 0 else None
+
+        # Call substation calculation to write per-building CSV files
+        substation.substation_main_cooling_thermal_network(
+            thermal_network.locator,
+            total_demand,
+            thermal_network.building_names,
+            fixed_network_temp_C=fixed_network_temp_C,
+            network_type=thermal_network.network_type,
+            network_name=thermal_network.network_name
+        )
+    elif thermal_network.network_type == 'DH':
+        # Get network temperature (CT mode) or None (VT mode)
+        fixed_network_temp_C = thermal_network.get_plant_supply_temperature() if thermal_network.network_temperature_dh >= 0 else None
+
+        # Call substation calculation to write per-building CSV files
+        substation.substation_main_heating(
+            thermal_network.locator,
+            total_demand,
+            thermal_network.building_names,
+            fixed_network_temp_C=fixed_network_temp_C,
+            network_type=thermal_network.network_type,
+            network_name=thermal_network.network_name
+        )
 
     print("Completed thermal-hydraulic calculation.\n")
 
