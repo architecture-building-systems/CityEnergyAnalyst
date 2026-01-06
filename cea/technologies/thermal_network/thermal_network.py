@@ -755,7 +755,8 @@ def thermal_network_main(locator, thermal_network, processes=1):
     print('Running substation design')
     # substation HEX design
     thermal_network.buildings_demands = substation_matrix.determine_building_supply_temperatures(
-        thermal_network.building_names, locator, thermal_network.substation_systems)
+        thermal_network.building_names, locator, thermal_network.substation_systems,
+        itemised_dh_services=thermal_network.itemised_dh_services)
     thermal_network.substations_HEX_specs, substation_HEX_Q = substation_matrix.substation_HEX_design_main(
         thermal_network.buildings_demands, thermal_network.substation_systems, thermal_network)
 
@@ -890,11 +891,21 @@ def thermal_network_main(locator, thermal_network, processes=1):
         # Get network temperature (CT mode) or None (VT mode)
         fixed_network_temp_C = thermal_network.get_plant_supply_temperature() if thermal_network.network_temperature_dh >= 0 else None
 
-        # Call substation calculation to write per-building CSV files
+        # Prepare per-building services (all buildings use same services from plant type)
+        per_building_services = None
+        if thermal_network.itemised_dh_services is not None:
+            per_building_services = {
+                building: thermal_network.itemised_dh_services
+                for building in thermal_network.building_names
+            }
+
+        # Call substation calculation to write per-building CSV files with booster support
         substation.substation_main_heating(
             thermal_network.locator,
             total_demand,
             thermal_network.building_names,
+            itemised_dh_services=thermal_network.itemised_dh_services,
+            per_building_services=per_building_services,
             fixed_network_temp_C=fixed_network_temp_C,
             network_type=thermal_network.network_type,
             network_name=thermal_network.network_name

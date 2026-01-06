@@ -73,13 +73,26 @@ def substation_HEX_design_main(buildings_demands, substation_systems, thermal_ne
     return substations_HEX_specs, substations_Q
 
 
-def determine_building_supply_temperatures(building_names, locator, substation_systems, delta_T_supply_return = 20):
+def determine_building_supply_temperatures(building_names, locator, substation_systems,
+                                         itemised_dh_services=None, delta_T_supply_return = 20):
     """
     determines thermal network target temperatures (T_supply_DH_C,T_supply_DC) on the network side at each substation.
-    :param building_names:
-    :param locator:
-    :return:
+
+    :param building_names: List of building names
+    :param locator: InputLocator instance
+    :param substation_systems: Dict with 'heating' and 'cooling' system lists
+    :param itemised_dh_services: DH service priority list (DH only), or None for legacy behavior
+    :param delta_T_supply_return: Temperature difference between supply and return
+    :return: Dictionary of building demands with target temperatures
     """
+    from cea.technologies.thermal_network.network_service_priority import get_heating_systems_for_network_temp
+
+    # Determine which heating systems to use for network temp calculation
+    heating_systems_for_network_temp = get_heating_systems_for_network_temp(
+        itemised_dh_services,
+        substation_systems['heating']
+    )
+
     buildings_demands = {}
     for name in building_names:
         name = str(name)
@@ -87,7 +100,7 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
                                 usecols=(BUILDINGS_DEMANDS_COLUMNS))
         Q_substation_heating = 0
         T_supply_heating_C = np.nan
-        for system in substation_systems['heating']:
+        for system in heating_systems_for_network_temp:
             if system == 'ww':
                 Q_substation_heating = Q_substation_heating + demand_df.Qww_sys_kWh
                 T_supply_heating_C = np.vectorize(calc_DH_supply)(T_supply_heating_C,
