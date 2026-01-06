@@ -365,11 +365,11 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
             # Extract scalar values from arrays
             t_DH_return_hs_ahu = T_dh_return_C_arr[0] + 273.15  # C to K
-            mcp_DH_hs_ahu = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            mcp_DH_hs_ahu = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qhs_sys_ahu = Q_dh_W  # Array with single element
 
-            # For compatibility with ch_value storage
-            ch_value = mcp_DH_hs_ahu / 1000  # W/K to kW/K
+            # For compatibility with ch_value storage (needs W/K)
+            ch_value = mcp_DH_hs_ahu * 1000  # kW/K to W/K
         else:
             # Network temp sufficient - use existing HEX calculation
             Qhs_sys_ahu, t_DH_return_hs_ahu, mcp_DH_hs_ahu, ch_value = calc_HEX_heating(building, 'hs_sys', 'ahu_',
@@ -414,11 +414,11 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
             # Extract scalar values from arrays
             t_DH_return_hs_aru = T_dh_return_C_arr[0] + 273.15  # C to K
-            mcp_DH_hs_aru = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            mcp_DH_hs_aru = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qhs_sys_aru = Q_dh_W  # Array with single element
 
-            # For compatibility with ch_value storage
-            ch_value = mcp_DH_hs_aru / 1000  # W/K to kW/K
+            # For compatibility with ch_value storage (needs W/K)
+            ch_value = mcp_DH_hs_aru * 1000  # kW/K to W/K
         else:
             # Network temp sufficient - use existing HEX calculation
             Qhs_sys_aru, t_DH_return_hs_aru, mcp_DH_hs_aru, ch_value = calc_HEX_heating(building, 'hs_sys', 'aru_',
@@ -463,11 +463,11 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
             # Extract scalar values from arrays
             t_DH_return_hs_shu = T_dh_return_C_arr[0] + 273.15  # C to K
-            mcp_DH_hs_shu = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            mcp_DH_hs_shu = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qhs_sys_shu = Q_dh_W  # Array with single element
 
-            # For compatibility with ch_value storage
-            ch_value = mcp_DH_hs_shu / 1000  # W/K to kW/K
+            # For compatibility with ch_value storage (needs W/K)
+            ch_value = mcp_DH_hs_shu * 1000  # kW/K to W/K
         else:
             # Network temp sufficient - use existing HEX calculation
             Qhs_sys_shu, t_DH_return_hs_shu, mcp_DH_hs_shu, ch_value = calc_HEX_heating(building, 'hs_sys', 'shu_',
@@ -511,11 +511,11 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
             # Extract scalar values from arrays
             t_DH_return_ww = T_dh_return_C_arr[0] + 273.15  # C to K
-            mcp_DH_ww = mcp_dh_kWK_arr[0] * 1000  # kW/K to W/K
+            mcp_DH_ww = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qww_sys = Q_dh_W  # Array with single element
 
-            # For compatibility with ch_value storage (not used in booster mode, but keep structure)
-            ch_value = mcp_DH_ww / 1000  # W/K to kW/K
+            # For compatibility with ch_value storage (needs W/K)
+            ch_value = mcp_DH_ww * 1000  # kW/K to W/K
         else:
             # Network temp sufficient - use existing HEX calculation
             Qww_sys, t_DH_return_ww, mcp_DH_ww, ch_value = calc_HEX_heating(building, 'ww_sys', '', T_DH_supply_K,
