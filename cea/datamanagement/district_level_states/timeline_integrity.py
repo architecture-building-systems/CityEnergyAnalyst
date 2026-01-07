@@ -158,6 +158,22 @@ def compute_state_year_missing_modifications(
             continue
 
         for component, fields in (components or {}).items():
+            if component == "construction_type":
+                for field, expected_value in (fields or {}).items():
+                    if expected_value is None:
+                        continue
+                    if field not in archetype_df.columns:
+                        errors.append(
+                            f"year {year_of_state}, archetype '{archetype}', component '{component}', field '{field}': column missing from construction types database"
+                        )
+                        continue
+                    actual_value = archetype_df.at[archetype, field]
+                    if not _values_match(actual_value, expected_value):
+                        missing_recipe.setdefault(archetype, {}).setdefault(component, {})[
+                            field
+                        ] = expected_value
+                continue
+
             envelope_component = _resolve_envelope_component(component)
 
             try:
@@ -266,6 +282,22 @@ def check_state_year_comprehensive_integrity(
             continue
 
         for component, fields in (components or {}).items():
+            if component == "construction_type":
+                for field, expected_value in (fields or {}).items():
+                    if expected_value is None:
+                        continue
+                    if field not in archetype_df.columns:
+                        errors.append(
+                            f"year {year_of_state}, archetype '{archetype}', component '{component}', field '{field}': column missing from construction types database"
+                        )
+                        continue
+                    actual_value = archetype_df.at[archetype, field]
+                    if not _values_match(actual_value, expected_value):
+                        errors.append(
+                            f"year {year_of_state}, archetype '{archetype}', component '{component}', field '{field}': expected {expected_value}, got {actual_value}"
+                        )
+                continue
+
             envelope_component = _resolve_envelope_component(component)
 
             try:

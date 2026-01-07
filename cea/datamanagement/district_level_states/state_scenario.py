@@ -823,6 +823,20 @@ def _apply_state_construction_changes(
                 )
             for component, modifications in modify_recipe[archetype].items():
                 db_modified = 0
+                if component == "construction_type":
+                    # These fields live directly on the construction types database.
+                    for field, new_value in (modifications or {}).items():
+                        if new_value is None:
+                            continue
+                        if field not in archetype_df.columns:
+                            raise ValueError(
+                                f"Construction types database has no column '{field}' (archetype '{archetype}')."
+                            )
+                        archetype_df.at[archetype, field] = str(new_value)
+                        db_modified += 1
+                    dbs_overall_modified += db_modified
+                    continue
+
                 code_current = archetype_df.at[archetype, f"type_{component}"]
                 # create a new component code by "(capitalized component)_(archetype)_YEAR_(event_year)"
                 envelope_db_name = "floor" if component == "base" else component
@@ -1070,6 +1084,13 @@ def create_modify_recipe(
 
     for archetype in archetypes_to_modify:
         raw_components = {
+            "construction_type": {
+                "type_win": config_section.window_code,
+                "supply_type_hs": config_section.supply_heating_code,
+                "supply_type_cs": config_section.supply_cooling_code,
+                "supply_type_dhw": config_section.supply_hotwater_code,
+                "supply_type_el": config_section.supply_electricity_code,
+            },
             "wall": {
                 "material_name_1": config_section.wall_material_name_1,
                 "thickness_1_m": config_section.wall_thickness_1_m,
@@ -1099,10 +1120,20 @@ def create_modify_recipe(
             },
         }
 
+        # Construction type edits are code swaps; empty strings are not allowed.
+        ct_fields = raw_components.get("construction_type", {})
+        for field, value in (ct_fields or {}).items():
+            if value is not None and str(value).strip() == "":
+                raise ValueError(
+                    f"Invalid construction type value for '{field}' in archetype '{archetype}': empty string."
+                )
+
         # Material edits are allowed per-layer.
         # You may change only thickness (keep material) or only material (keep thickness);
         # unspecified values are kept from the current envelope DB entry.
         for component, fields in raw_components.items():
+            if component == "construction_type":
+                continue
             for i in (1, 2, 3):
                 mat = fields[f"material_name_{i}"]
                 thk = fields[f"thickness_{i}_m"]

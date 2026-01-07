@@ -47,6 +47,181 @@ _COMP_AREA_MAP: list[tuple[str, str, str]] = [
     or src_component == "technical_systems"
 ]
 
+_CONSTRUCTION_TYPE_WIN_FIELD = "type_win"
+_SUPPLY_TYPE_FIELDS: tuple[str, ...] = (
+    "supply_type_hs",
+    "supply_type_cs",
+    "supply_type_dhw",
+    "supply_type_el",
+)
+_TECH_SYSTEM_COMPONENT_BY_SUPPLY_FIELD: dict[str, str] = {
+    "supply_type_hs": "technical_system_hs",
+    "supply_type_cs": "technical_system_cs",
+    "supply_type_dhw": "technical_system_dhw",
+    "supply_type_el": "technical_system_el",
+}
+
+
+def _parse_code_change(value: Any) -> tuple[str, str] | None:
+    """Return (old, new) if value is a 2-tuple, else None."""
+    if isinstance(value, tuple) and len(value) == 2:
+        old_val, new_val = value
+        return str(old_val), str(new_val)
+    return None
+
+
+def _min_or_none(values: Mapping[Any, int] | None) -> int | None:
+    if not values:
+        return None
+    return min(values.values())
+
+
+@dataclass
+class _BuildingEventCursor:
+    """Per-building cursor that iterates through the next event year.
+
+    This helper exists purely to simplify control flow in
+    `MaterialChangeEmissionTimeline.build_embodied_from_log(...)`.
+
+    Important distinction:
+    - `ArchetypeTimeline` describes *district/archetype* facts (snapshots + authored deltas) and is reusable
+      across buildings.
+    - `_BuildingEventCursor` holds *per-building mutable iteration state* (indices + due-year clocks) while we
+      assemble a single building's embodied timeline.
+
+    Fields:
+    - `modification_years`: sorted years where layer-based modifications exist for this building's `const_type`.
+    - `code_change_years`: sorted years where construction-type code changes exist for this building's `const_type`.
+    - `next_due`: mapping `src_component -> next_due_year` for layer-based envelope components.
+    - `window_next_due`: next due year for window service-life replacement, or None.
+    - `tech_next_due`: mapping `technical_system_* -> next_due_year` for technical quarters.
+    - `end_active_year`: last year the building exists (typically `demolition_year - 1` if demolished).
+
+    Method overview:
+    - `next_year()` selects the next year to process as the minimum over:
+      (next modification year, next code-change year, earliest `next_due`, `window_next_due`, earliest `tech_next_due`).
+    - `consume_mod_if(year)` / `consume_code_if(year)` advance internal indices when the year is processed.
+    - `due_envelope_components(year)` / `due_tech_components(year)` list components due exactly in that year.
+    - `is_window_due(year)` checks whether window replacement is due.
+
+    Example:
+        schedule = _BuildingEventCursor(
+            modification_years=[2005, 2010],
+            code_change_years=[2005],
+            next_due={"wall": 2030, "roof": 2040},
+            window_next_due=2025,
+            tech_next_due={"technical_system_hs": 2035},
+            end_active_year=2050,
+        )
+
+        while (year := schedule.next_year()) is not None:
+            if schedule.consume_mod_if(year):
+                ...
+            if schedule.consume_code_if(year):
+                ...
+            for src in schedule.due_envelope_components(year):
+                ...
+            if schedule.is_window_due(year):
+                ...
+            for sys in schedule.due_tech_components(year):
+                ...
+    """
+
+    modification_years: list[int]
+    code_change_years: list[int]
+    next_due: dict[str, int]
+    window_next_due: int | None
+    tech_next_due: dict[str, int]
+    end_active_year: int
+    _mod_idx: int = 0
+    _code_idx: int = 0
+
+    def peek_mod_year(self) -> int | None:
+        """Return the next pending layer-modification year without consuming it."""
+        return (
+            self.modification_years[self._mod_idx]
+            if self._mod_idx < len(self.modification_years)
+            else None
+        )
+
+    def peek_code_year(self) -> int | None:
+        """Return the next pending construction-type code-change year without consuming it."""
+        return (
+            self.code_change_years[self._code_idx]
+            if self._code_idx < len(self.code_change_years)
+            else None
+        )
+
+    def next_year(self) -> int | None:
+        """Return the next year to process across all pending event sources.
+
+        Candidates are:
+        - next pending modification year
+        - next pending code-change year
+        - earliest due year among `next_due`
+        - `window_next_due`
+        - earliest due year among `tech_next_due`
+
+        Returns None if there are no candidates left or the earliest candidate exceeds `end_active_year`.
+        """
+        next_mod_year = self.peek_mod_year()
+        next_code_year = self.peek_code_year()
+        next_rep_year = _min_or_none(self.next_due)
+        next_tech_year = _min_or_none(self.tech_next_due)
+        candidates = [
+            y
+            for y in (
+                next_mod_year,
+                next_code_year,
+                next_rep_year,
+                self.window_next_due,
+                next_tech_year,
+            )
+            if y is not None
+        ]
+        if not candidates:
+            return None
+        year = min(candidates)
+        if year > int(self.end_active_year):
+            return None
+        return int(year)
+
+    def consume_mod_if(self, year: int) -> bool:
+        """Consume the next modification year if it matches `year`.
+
+        Returns True if an item was consumed (internal index advanced), otherwise False.
+        """
+        if self.peek_mod_year() == int(year):
+            self._mod_idx += 1
+            return True
+        return False
+
+    def consume_code_if(self, year: int) -> bool:
+        """Consume the next code-change year if it matches `year`.
+
+        Returns True if an item was consumed (internal index advanced), otherwise False.
+        """
+        if self.peek_code_year() == int(year):
+            self._code_idx += 1
+            return True
+        return False
+
+    def due_envelope_components(self, year: int) -> list[str]:
+        """Return envelope `src_component` keys with a service-life replacement due in `year`."""
+        y = int(year)
+        return [src for src, due in self.next_due.items() if int(due) == y]
+
+    def due_tech_components(self, year: int) -> list[str]:
+        """Return technical quarter component names with a service-life replacement due in `year`."""
+        y = int(year)
+        return [sys for sys, due in self.tech_next_due.items() if int(due) == y]
+
+    def is_window_due(self, year: int) -> bool:
+        """Return True if windows are due for service-life replacement in `year`."""
+        return self.window_next_due is not None and int(self.window_next_due) == int(
+            year
+        )
+
 
 def _envelope_intensities_per_m2(
     env_lookup: EnvelopeLookup, *, code: str
@@ -80,67 +255,69 @@ class MaterialLayer:
 
 
 @dataclass(frozen=True)
-class ArchetypeLayerTimeline:
-    """Layer snapshots + diff events per state year for all archetypes.
+class ArchetypeTimeline:
+    """Archetype snapshots + delta events per state year.
 
-    This is computed once for the district timeline horizon and then reused across all
-    building timelines.
+    Computed once for the district horizon and reused across all building timelines.
+
+    Covers two distinct families of archetype information:
+    1) **Layer-based envelope definitions** (walls/roofs/floors/base/partitions)
+       - snapshots: `layers_at_year`
+       - events: `layer_events_by_year`
+    2) **Code-based construction types** (window + supply system codes)
+       - snapshots: `construction_types_at_year`
+       - events: `construction_type_events_by_year`
     """
 
     years_sorted: list[int]
     layers_at_year: dict[int, dict[str, dict[str, list[MaterialLayer] | None]]]
-    events_by_year: dict[int, dict[str, dict[str, list[tuple[str, MaterialLayer]]]]]
+    layer_events_by_year: dict[int, dict[str, dict[str, list[tuple[str, MaterialLayer]]]]]
+    construction_types_at_year: dict[int, dict[str, dict[str, str]]]
+    construction_type_events_by_year: dict[int, dict[str, dict[str, tuple[str, str]]]]
 
     def layers_snapshot_at_or_before(self, year: int) -> dict[str, dict[str, list[MaterialLayer] | None]] | None:
-        """Return the cumulative layer snapshot effective at (or immediately before) a year.
+        """Return the cumulative layer snapshot effective at (or before) a year.
 
-        Conceptually, `layers_at_year` stores a *full* `const_type -> src_component -> layers` mapping for each
-        state year, after applying that year's modifications cumulatively.
+        This snapshot contains **layer/material-based** envelope definitions only.
+        For **code-based** construction types (windows + supply system codes), use
+        `construction_types_snapshot_at_or_before`.
 
-        This accessor answers: "What layers should a building see in year X?" by selecting:
-        - the snapshot at `year` if present, else
-        - the latest snapshot with `snapshot_year <= year`, else
-        - `None` if there is no earlier snapshot.
+        Selection logic:
+        - If a snapshot exists exactly at `year`, return it.
+        - Otherwise return the latest snapshot with `snapshot_year <= year` (carry-forward).
+        - If no earlier snapshot exists, return None.
 
-        Examples:
-            Suppose the district log defines state years `[2000, 2005]`:
+        Example:
+            Suppose the district log defines state years `[2000, 2005]`.
 
-            - `layers_snapshot_at_or_before(2000)` returns the baseline snapshot for 2000.
-            - `layers_snapshot_at_or_before(2003)` returns the 2000 snapshot (carry-forward behaviour).
-            - `layers_snapshot_at_or_before(2005)` returns the modified 2005 snapshot.
-            - `layers_snapshot_at_or_before(1990)` returns `None` (no state year exists yet).
+            - `layers_snapshot_at_or_before(2000)` returns the baseline snapshot.
+            - `layers_snapshot_at_or_before(2003)` returns the 2000 snapshot (carry-forward).
+            - `layers_snapshot_at_or_before(2005)` returns the modified snapshot (after 2005 edits).
+            - `layers_snapshot_at_or_before(1990)` returns None.
 
             Shape of a snapshot:
-            ```
             {
                 "STANDARD1": {
-                    "wall": [
-                        MaterialLayer(name="brick", thickness_m=0.20),
-                        MaterialLayer(name="mineral_wool", thickness_m=0.10),
-                    ],
+                    "wall": [MaterialLayer(name="Brick", thickness_m=0.20)],
                     "roof": None,
-                    "base": [
-                        MaterialLayer(name="concrete", thickness_m=0.30),
-                    ],
+                    "base": [MaterialLayer(name="Concrete", thickness_m=0.30)],
+                    "floor": [...],
+                    "part": [...],
                 },
-                "STANDARD2": {
-                    "wall": [...],
-                    "roof": [...],
-                    "base": [...],
-                },
+                "STANDARD2": {...},
             }
+
+            To get the **full** archetype state (layers + codes) for a year, read both snapshots:
+
+            ```python
+            layers = timeline.layers_snapshot_at_or_before(2005) or {}
+            codes = timeline.construction_types_snapshot_at_or_before(2005) or {}
+
+            layers_std1 = layers.get("STANDARD1", {})
+            codes_std1 = codes.get("STANDARD1", {})
+            win_code = codes_std1.get("type_win")
+            hs_code = codes_std1.get("supply_type_hs")
             ```
-
-            Notes:
-            - `const_type` keys come from `zone.shp` (`const_type`) / the archetypes database.
-            - `src_component` keys in this workflow are: `wall`, `roof`, `base`.
-            - Values are `list[MaterialLayer]` (1..3 slots) or `None` if the envelope code cannot be
-                resolved to layered materials.
-
-        Returns: (dict[str, dict[str, list[MaterialLayer] | None]] | None)
-
-            A nested mapping `{const_type: {src_component: layers_or_none}}` where `src_component` is one of
-            the supported keys (e.g., `wall`, `roof`, `base`). Layers are `MaterialLayer` objects.
         """
         year_int = int(year)
         if year_int in self.layers_at_year:
@@ -151,59 +328,90 @@ class ArchetypeLayerTimeline:
         return self.layers_at_year.get(prior_years[-1])
 
     def events_for_year(self, year: int) -> dict[str, dict[str, list[tuple[str, MaterialLayer]]]]:
-        """Return the *delta events* that occur in a specific state year.
+        """Return layer delta events authored in the YAML log for a specific year.
 
-        In contrast to `layers_snapshot_at_or_before`, which returns a full cumulative snapshot,
-        `events_for_year` returns only the changes authored in the YAML log for that year.
+        Returns only the changes authored *in that year*, not the full cumulative snapshot.
 
-        The event list uses slot-based diffs (see `_diff_layers`): changing thickness or material in
-        a slot yields a `remove` for the old layer and an `add` for the new layer.
+        Slot-based example:
+            If in 2005 the log changes `STANDARD1.wall` slot 1 from `Brick 0.20m` to `Brick 0.25m`, then:
 
-        Examples:
-            If in year 2005 the log changes archetype `STANDARD1` wall slot 1 from
-            `Brick 0.20m` to `Brick 0.25m`, then:
-
-            - `events_for_year(2005)` may include:
-              ```
-              {
+            {
                 "STANDARD1": {
-                  "wall": [
-                    ("remove", MaterialLayer(name="Brick", thickness_m=0.20)),
-                    ("add",    MaterialLayer(name="Brick", thickness_m=0.25)),
-                  ]
+                    "wall": [
+                        ("remove", MaterialLayer(name="Brick", thickness_m=0.20)),
+                        ("add",    MaterialLayer(name="Brick", thickness_m=0.25)),
+                    ]
                 }
-              }
-              ```
-
-            - `events_for_year(2003)` returns `{}` (no events authored in that year).
-
-        Returns:
-            A nested mapping `{const_type: {src_component: [(action, layer), ...]}}`.
-            `action` is `'add'` or `'remove'`.
+            }
         """
-        return dict(self.events_by_year.get(int(year), {}) or {})
+        return dict(self.layer_events_by_year.get(int(year), {}) or {})
+
+    def construction_types_snapshot_at_or_before(self, year: int) -> dict[str, dict[str, str]] | None:
+        """Return cumulative construction-type codes effective at (or before) a year.
+
+        This is the code-based analogue of `layers_snapshot_at_or_before`.
+        To retrieve both code-based and layer-based snapshots, call both accessors.
+
+        Example:
+            {
+                "STANDARD1": {
+                    "type_win": "WIN_CODE_A",
+                    "supply_type_hs": "HS_CODE_1",
+                    "supply_type_cs": "CS_CODE_2",
+                    "supply_type_dhw": "DHW_CODE_3",
+                    "supply_type_el": "EL_CODE_4",
+                },
+                ...
+            }
+        """
+        year_int = int(year)
+        if year_int in self.construction_types_at_year:
+            return self.construction_types_at_year.get(year_int)
+        prior_years = [y for y in self.years_sorted if y <= year_int]
+        if not prior_years:
+            return None
+        return self.construction_types_at_year.get(prior_years[-1])
+
+    def construction_type_events_for_year(self, year: int) -> dict[str, dict[str, tuple[str, str]]]:
+        """Return delta construction-type changes authored in a specific state year.
+
+        Entries are stored as `(old_code, new_code)` tuples.
+
+        Example:
+            {
+                "STANDARD1": {
+                    "type_win": ("WIN_CODE_A", "WIN_CODE_B"),
+                    "supply_type_hs": ("HS_CODE_1", "HS_CODE_9"),
+                }
+            }
+        """
+        return dict(self.construction_type_events_by_year.get(int(year), {}) or {})
 
 
-def _prepare_archetype_layer_timeline(
+def _prepare_archetype_timeline(
     *,
     years_sorted: list[int],
     log_data: Mapping[int, dict[str, Any]],
     archetype_layers: dict[str, dict[str, list[MaterialLayer] | None]],
+    archetype_construction_types: dict[str, dict[str, str]],
     supported_components: Mapping[str, str],
-) -> ArchetypeLayerTimeline:
-    """Prepare per-year archetype layer snapshots + diff events from the district YAML log.
+) -> ArchetypeTimeline:
+    """Prepare per-year archetype snapshots + delta events from the district YAML log.
 
     Notes:
     - Mutates `archetype_layers` in-place as it applies cumulative modifications.
     - Returned snapshots (`layers_at_year`) are copies and safe to reuse.
     """
-    archetype_events_by_year: dict[int, dict[str, dict[str, list[tuple[str, MaterialLayer]]]]] = {}
+    archetype_layer_events_by_year: dict[int, dict[str, dict[str, list[tuple[str, MaterialLayer]]]]] = {}
     archetype_layers_at_year: dict[int, dict[str, dict[str, list[MaterialLayer] | None]]] = {}
+    archetype_construction_at_year: dict[int, dict[str, dict[str, str]]] = {}
+    archetype_construction_events_by_year: dict[int, dict[str, dict[str, tuple[str, str]]]] = {}
 
     for year in years_sorted:
         entry = log_data.get(year, {}) or {}
         year_mods = entry.get("modifications", {}) or {}
         year_events: dict[str, dict[str, list[tuple[str, MaterialLayer]]]] = {}
+        year_construction_events: dict[str, dict[str, tuple[str, str]]] = {}
 
         for archetype, components in year_mods.items():
             archetype = str(archetype)
@@ -211,6 +419,23 @@ def _prepare_archetype_layer_timeline(
                 continue
             for component, patch in (components or {}).items():
                 component = str(component)
+                if component == "construction_type":
+                    patch_dict = dict(patch or {})
+                    current = archetype_construction_types.setdefault(archetype, {})
+                    for k, v in patch_dict.items():
+                        if v is None:
+                            continue
+                        key = str(k)
+                        new_val = str(v)
+                        old_val = str(current.get(key, ""))
+                        if new_val and new_val != old_val:
+                            year_construction_events.setdefault(archetype, {})[key] = (old_val, new_val)
+                            current[key] = new_val
+                    continue
+
+                if component == "supply_systems":
+                    # Operational supply system configuration is handled by the state simulations.
+                    continue
                 if component not in supported_components:
                     raise ValueError(
                         f"Unsupported modified component '{component}' in district timeline log. "
@@ -223,16 +448,22 @@ def _prepare_archetype_layer_timeline(
                     year_events.setdefault(archetype, {})[component] = events
                 archetype_layers[archetype][component] = new_layers
 
-        archetype_events_by_year[year] = year_events
+        archetype_layer_events_by_year[year] = year_events
         archetype_layers_at_year[year] = {
             a: {c: (layers[:] if isinstance(layers, list) else layers) for c, layers in comps.items()}
             for a, comps in archetype_layers.items()
         }
+        archetype_construction_events_by_year[year] = year_construction_events
+        archetype_construction_at_year[year] = {
+            a: dict(codes) for a, codes in archetype_construction_types.items()
+        }
 
-    return ArchetypeLayerTimeline(
+    return ArchetypeTimeline(
         years_sorted=list(years_sorted),
         layers_at_year=archetype_layers_at_year,
-        events_by_year=archetype_events_by_year,
+        layer_events_by_year=archetype_layer_events_by_year,
+        construction_types_at_year=archetype_construction_at_year,
+        construction_type_events_by_year=archetype_construction_events_by_year,
     )
 
 
@@ -248,6 +479,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         self.construction_year: int | None = None
         self.demolition_year: int | None = None
         self.window_code: str = ""
+        self.supply_codes: dict[str, str] = {}
         self._notes_by_year: dict[str, list[str]] = {}
         super().__init__(name=name, locator=locator)
 
@@ -438,7 +670,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         years_sorted: list[int],
         start_year: int,
         end_year: int,
-        archetype_timeline: ArchetypeLayerTimeline,
+        archetype_timeline: ArchetypeTimeline,
         service_life_by_src_component: Mapping[str, int | None],
     ) -> None:
         """Populate embodied (production / demolition / biogenic) emissions for this building.
@@ -474,12 +706,20 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             years_sorted: Sorted list of state years present in the district log.
             start_year: First year in the district timeline horizon.
             end_year: Last year in the district timeline horizon.
-            archetype_timeline: Precomputed archetype layer snapshots + diff events for all state years.
+            archetype_timeline: Precomputed archetype snapshots + delta events (layers + construction types).
             service_life_by_src_component: Mapping `src_component -> Service_Life (years)`.
         """
         if self.construction_year is None:
             return
         construction_year = self.construction_year
+
+        # Initialise code-based construction types (windows + supply systems) from the archetype snapshot.
+        ct_snapshot = archetype_timeline.construction_types_snapshot_at_or_before(construction_year) or {}
+        ct_codes = ct_snapshot.get(str(const_type), {}) or {}
+        win_code = str(ct_codes.get(_CONSTRUCTION_TYPE_WIN_FIELD, ""))
+        if win_code:
+            self.window_code = win_code
+        self.supply_codes = {k: str(ct_codes.get(k, "")) for k in _SUPPLY_TYPE_FIELDS}
 
         layers_snapshot = archetype_timeline.layers_snapshot_at_or_before(construction_year)
         if layers_snapshot is None:
@@ -492,6 +732,19 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             layers_snapshot=layers_snapshot,
             comp_area_map=_COMP_AREA_MAP,
         )
+
+        # Technical systems are modelled as 4 independent quarters (hs/cs/dhw/el).
+        tech_quarter_prod = float(EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / 4.0
+        tech_system_keys = dict(_TECH_SYSTEM_COMPONENT_BY_SUPPLY_FIELD)
+        area_tech = float(areas.get("Atechnical_systems", 0.0))
+        if area_tech > 0:
+            for sys_component in tech_system_keys.values():
+                self.add_phase_component(
+                    year=construction_year,
+                    phase="production",
+                    component=sys_component,
+                    value_kgco2e=tech_quarter_prod * area_tech,
+                )
 
         # --- Mandatory service-life replacements ---------------------------------
         # Behaviour:
@@ -509,9 +762,12 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         for _, comp_src, area_key in _COMP_AREA_MAP:
             areas_by_src_component[comp_src] = areas_by_src_component.get(comp_src, 0.0) + float(areas.get(area_key, 0.0))
 
+        # Envelope components (layered materials).
         lifetimes: dict[str, int] = {}
         for src_component, total_area in areas_by_src_component.items():
             if total_area <= 0:
+                continue
+            if src_component in ("technical_systems", "win"):
                 continue
             lifetime_any = service_life_by_src_component.get(src_component)
             if lifetime_any is None:
@@ -526,32 +782,70 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 )
             lifetimes[src_component] = lifetime
 
+        # Technical system service life (common across quarters).
+        tech_lifetime_any = service_life_by_src_component.get("technical_systems")
+        tech_lifetime = int(tech_lifetime_any) if tech_lifetime_any is not None else int(SERVICE_LIFE_OF_TECHNICAL_SYSTEMS)
+        if tech_lifetime <= 0:
+            raise ValueError(
+                f"Invalid Service_Life={tech_lifetime} for component 'technical_systems' (const_type={const_type})."
+            )
+
+        # Windows: use the envelope window assembly Service_Life, falling back to construction-type service life.
+        win_lifetime_default_any = service_life_by_src_component.get("win")
+        if win_lifetime_default_any is None:
+            raise ValueError(
+                f"Missing Service_Life for component 'win' (const_type={const_type}). "
+                "Service life is mandatory for window replacement scheduling."
+            )
+        win_lifetime_default = int(win_lifetime_default_any)
+        if win_lifetime_default <= 0:
+            raise ValueError(
+                f"Invalid Service_Life={win_lifetime_default} for component 'win' (const_type={const_type})."
+            )
+
         modification_years: list[int] = [
             y
             for y in years_sorted
             if self.exists_at(y)
             and const_type in (archetype_timeline.events_for_year(y) or {})
         ]
+        code_change_years: list[int] = [
+            y
+            for y in years_sorted
+            if self.exists_at(y)
+            and const_type in (archetype_timeline.construction_type_events_for_year(y) or {})
+        ]
         mod_by_year: dict[int, dict[str, list[tuple[str, MaterialLayer]]]] = {}
         for y in modification_years:
             year_events = archetype_timeline.events_for_year(y)
             mod_by_year[y] = dict((year_events.get(const_type, {}) or {}))
 
-        # Track the next replacement year per component.
+        # Track per-system next replacement years (independent clocks).
+        tech_next_due: dict[str, int] = {
+            sys_comp: construction_year + tech_lifetime for sys_comp in tech_system_keys.values()
+        }
+
+        # Track window replacement based on its code-dependent service life.
+        win_lt_any = self.envelope_lookup.get_item_value(str(self.window_code), "Service_Life")
+        window_lifetime = int(win_lt_any) if win_lt_any is not None else win_lifetime_default
+        window_next_due = construction_year + window_lifetime if window_lifetime > 0 else None
+
+        # Track the next replacement year per (non-window) envelope component.
         next_due: dict[str, int] = {src: construction_year + lt for src, lt in lifetimes.items()}
-        mod_idx = 0
-        while True:
-            next_mod_year = modification_years[mod_idx] if mod_idx < len(modification_years) else None
-            next_rep_year = min(next_due.values()) if next_due else None
-            if next_mod_year is None and next_rep_year is None:
-                break
-            candidates = [y for y in (next_mod_year, next_rep_year) if y is not None]
-            year = min(candidates) if candidates else None
-            if year is None or year > end_active_year:
-                break
+
+        schedule = _BuildingEventCursor(
+            modification_years=modification_years,
+            code_change_years=code_change_years,
+            next_due=next_due,
+            window_next_due=window_next_due,
+            tech_next_due=tech_next_due,
+            end_active_year=end_active_year,
+        )
+
+        while (year := schedule.next_year()) is not None:
 
             # Apply any modifications first (they reset the clock).
-            if next_mod_year == year:
+            if schedule.consume_mod_if(year):
                 year_mods = mod_by_year.get(year, {})
                 for src_component, events in year_mods.items():
                     if events:
@@ -570,28 +864,61 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                         comp_area_map=_COMP_AREA_MAP,
                     )
                     if src_component in lifetimes:
-                        next_due[src_component] = year + lifetimes[src_component]
-                mod_idx += 1
+                        schedule.next_due[src_component] = year + lifetimes[src_component]
 
-            # Apply any replacements due this year (after modifications, so same-year mods supersede them).
-            due_components = [src for src, due in next_due.items() if due == year]
+            # Apply any window / supply code changes.
+            if schedule.consume_code_if(year):
+                patch = (
+                    archetype_timeline.construction_type_events_for_year(int(year)).get(str(const_type), {})
+                    or {}
+                )
+
+                # Window code change triggers a full window replacement old->new.
+                if _CONSTRUCTION_TYPE_WIN_FIELD in patch:
+                    change = _parse_code_change(patch.get(_CONSTRUCTION_TYPE_WIN_FIELD))
+                    if change is not None:
+                        old_code, new_code = change
+                        if new_code and new_code != old_code:
+                            area_win = float(areas.get("Awin_ag", 0.0))
+                            if area_win > 0:
+                                prod_new, _, bio_new = _envelope_intensities_per_m2(self.envelope_lookup, code=new_code)
+                                _, demo_old, _ = _envelope_intensities_per_m2(self.envelope_lookup, code=old_code)
+                                # Component key for windows in this timeline is win_ag.
+                                self.add_phase_component(year=year, phase="demolition", component="win_ag", value_kgco2e=demo_old * area_win)
+                                self.add_phase_component(year=year, phase="production", component="win_ag", value_kgco2e=prod_new * area_win)
+                                self.add_phase_component(year=year, phase="biogenic", component="win_ag", value_kgco2e=(-bio_new) * area_win)
+                            self.add_note(year=int(year), message=f"Window code changed: {old_code} -> {new_code}")
+                            self.window_code = new_code
+                            win_lt_any = self.envelope_lookup.get_item_value(str(self.window_code), "Service_Life")
+                            win_lifetime_new = int(win_lt_any) if win_lt_any is not None else win_lifetime_default
+                            schedule.window_next_due = int(year) + win_lifetime_new if win_lifetime_new > 0 else None
+
+                # Supply code changes trigger a replacement of the corresponding technical quarter.
+                area_tech = float(areas.get("Atechnical_systems", 0.0))
+                for supply_field, sys_component in tech_system_keys.items():
+                    if supply_field not in patch:
+                        continue
+                    change = _parse_code_change(patch.get(supply_field))
+                    if change is None:
+                        continue
+                    old_code, new_code = change
+                    if new_code and new_code != old_code:
+                        if area_tech > 0:
+                            self.add_phase_component(year=year, phase="production", component=sys_component, value_kgco2e=tech_quarter_prod * area_tech)
+                        label = supply_field.replace("supply_type_", "")
+                        self.add_note(year=int(year), message=f"Supply system changed ({label}): {old_code} -> {new_code}")
+                        self.supply_codes[supply_field] = new_code
+                        schedule.tech_next_due[sys_component] = int(year) + tech_lifetime
+
+            # Apply any envelope replacements due this year (after modifications, so same-year mods supersede them).
+            due_components = schedule.due_envelope_components(year)
             if due_components:
                 layers_snapshot = archetype_timeline.layers_snapshot_at_or_before(year)
                 if layers_snapshot is not None:
                     current_layers = layers_snapshot.get(const_type, {})
                     for src_component in due_components:
                         layers = current_layers.get(src_component)
-                        if src_component == "technical_systems":
-                            self.add_note(year=int(year), message="Service life reached: technical_systems")
-                            self.add_full_replacement(
-                                year=year,
-                                src_component=src_component,
-                                areas=areas,
-                                materials=materials,
-                                layers=[],
-                                comp_area_map=_COMP_AREA_MAP,
-                            )
-                        elif layers:
+                        if layers:
                             layer_desc = ", ".join([f"{ly.name} {ly.thickness_m:.3f}m" for ly in layers])
                             self.add_note(
                                 year=int(year),
@@ -615,7 +942,32 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                                 layers=[],
                                 comp_area_map=_COMP_AREA_MAP,
                             )
-                        next_due[src_component] = year + lifetimes[src_component]
+                        schedule.next_due[src_component] = year + lifetimes[src_component]
+
+            # Window service-life replacement (code-dependent).
+            if schedule.is_window_due(year):
+                self.add_note(year=int(year), message="Service life reached: windows")
+                self.add_full_replacement(
+                    year=year,
+                    src_component="win",
+                    areas=areas,
+                    materials=materials,
+                    layers=[],
+                    comp_area_map=_COMP_AREA_MAP,
+                )
+                win_lt_any = self.envelope_lookup.get_item_value(str(self.window_code), "Service_Life")
+                win_lifetime_new = int(win_lt_any) if win_lt_any is not None else win_lifetime_default
+                schedule.window_next_due = int(year) + win_lifetime_new if win_lifetime_new > 0 else None
+
+            # Per-system technical service-life replacements.
+            due_sys = schedule.due_tech_components(year)
+            if due_sys:
+                area_tech = float(areas.get("Atechnical_systems", 0.0))
+                if area_tech > 0:
+                    for sys_component in due_sys:
+                        self.add_note(year=int(year), message=f"Service life reached: {sys_component}")
+                        self.add_phase_component(year=year, phase="production", component=sys_component, value_kgco2e=tech_quarter_prod * area_tech)
+                        schedule.tech_next_due[sys_component] = int(year) + tech_lifetime
 
         if self.demolition_year is not None and start_year <= self.demolition_year <= end_year:
             layers_snapshot = archetype_timeline.layers_snapshot_at_or_before(self.demolition_year)
@@ -691,8 +1043,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             if area <= 0:
                 continue
             if src_component == "technical_systems":
-                prod = float(EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS)
-                self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
+                # Technical systems are handled separately as 4 quarters in `build_embodied_from_log`.
                 continue
 
             if src_component == "win":
@@ -783,7 +1134,6 @@ def _load_building_const_types(locator: InputLocator) -> dict[str, str]:
         raise ValueError("Zone geometry is missing required 'name' column.")
     if "const_type" not in zone.columns:
         raise ValueError("Zone geometry is missing required 'const_type' column.")
-
     out: dict[str, str] = {}
     for _, row in zone.iterrows():
         name = str(row["name"])
@@ -1073,6 +1423,17 @@ def create_district_material_timeline(
     for phase in ("production", "biogenic", "demolition"):
         for comp in TIMELINE_COMPONENTS:
             base_cols.append(f"{phase}_{comp}_kgCO2e")
+
+    # Technical systems are additionally exposed as 4 independent quarters.
+    tech_components = (
+        "technical_system_hs",
+        "technical_system_cs",
+        "technical_system_dhw",
+        "technical_system_el",
+    )
+    for phase in ("production", "biogenic", "demolition"):
+        for comp in tech_components:
+            base_cols.append(f"{phase}_{comp}_kgCO2e")
     base_cols.extend(["production_kgCO2e", "demolition_kgCO2e", "biogenic_kgCO2e"])
     base_cols.extend([f"operation_{d}_kgCO2e" for d in _tech_name_mapping.keys()])
 
@@ -1175,7 +1536,7 @@ def create_district_material_timeline(
     archetypes_needed = sorted({v for v in building_const_types.values()})
     archetype_layers: dict[str, dict[str, list[MaterialLayer] | None]] = {}
     archetype_service_life: dict[str, dict[str, int | None]] = {}
-    archetype_window_code: dict[str, str] = {}
+    archetype_construction_types: dict[str, dict[str, str]] = {}
     for archetype in archetypes_needed:
         if archetype not in archetype_df.index:
             raise ValueError(f"Archetype '{archetype}' not found in construction types database.")
@@ -1186,6 +1547,10 @@ def create_district_material_timeline(
         code_floor = str(row.get("type_floor"))
         code_part = str(row.get("type_part"))
         code_win = str(row.get("type_win"))
+        archetype_construction_types[archetype] = {
+            _CONSTRUCTION_TYPE_WIN_FIELD: code_win,
+            **{k: str(row.get(k)) for k in _SUPPLY_TYPE_FIELDS},
+        }
         archetype_layers[archetype] = {
             "wall": _get_component_layers(env_lookup, db_name="wall", code=code_wall),
             "roof": _get_component_layers(env_lookup, db_name="roof", code=code_roof),
@@ -1202,12 +1567,12 @@ def create_district_material_timeline(
             "win": cast(int | None, env_lookup.get_item_value(code_win, "Service_Life")),
             "technical_systems": int(SERVICE_LIFE_OF_TECHNICAL_SYSTEMS),
         }
-        archetype_window_code[archetype] = code_win
 
-    archetype_timeline = _prepare_archetype_layer_timeline(
+    archetype_timeline = _prepare_archetype_timeline(
         years_sorted=years_sorted,
         log_data=log_data,
         archetype_layers=archetype_layers,
+        archetype_construction_types=archetype_construction_types,
         supported_components=supported_components,
     )
 
@@ -1243,11 +1608,8 @@ def create_district_material_timeline(
         if const_type is None:
             continue
 
-        building_timeline.window_code = archetype_window_code[const_type]
-
         areas = areas_by_building.get(b)
         if areas is None:
-            # If the building never appears in any state year, we cannot compute its areas.
             continue
 
         building_timeline.build_embodied_from_log(
@@ -1258,7 +1620,7 @@ def create_district_material_timeline(
             start_year=start_year,
             end_year=end_year,
             archetype_timeline=archetype_timeline,
-            service_life_by_src_component=archetype_service_life.get(const_type, {}),
+            service_life_by_src_component=archetype_service_life[const_type],
         )
 
     # Persist per-building timelines under the district timeline folder.
@@ -1294,6 +1656,17 @@ def create_district_material_timeline(
         out.at[label, "production_kgCO2e"] = float(out.filter(like="production_").loc[label].sum())
         out.at[label, "demolition_kgCO2e"] = float(out.filter(like="demolition_").loc[label].sum())
         out.at[label, "biogenic_kgCO2e"] = float(out.filter(like="biogenic_").loc[label].sum())
+
+        # Maintain backwards-compatible `*_technical_systems_*` columns as sum of the 4 quarters.
+        tech_cols = [
+            "production_technical_system_hs_kgCO2e",
+            "production_technical_system_cs_kgCO2e",
+            "production_technical_system_dhw_kgCO2e",
+            "production_technical_system_el_kgCO2e",
+        ]
+        out.at[label, "production_technical_systems_kgCO2e"] = float(
+            out.loc[label, tech_cols].to_numpy(dtype=float).sum()
+        )
 
     # Persist under district timeline folder to avoid mixing with lifetime-based timelines.
     save_path = os.path.join(main_locator.get_district_timeline_states_folder(), "district_material_timeline.csv")
