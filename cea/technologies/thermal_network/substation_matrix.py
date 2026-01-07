@@ -148,6 +148,21 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
         T_supply_DH_C = np.where(Q_substation_heating > 0, T_supply_heating_C + DT_HEAT, np.nan)
         T_supply_DC_C = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling_C - DT_COOL, np.nan)
 
+        # DHW pre-heating fallback: When space heating = 0 but DHW > 0, set minimum network temp
+        # This enables DH network to provide base-load pre-heating for DHW during off-peak hours
+        if itemised_dh_services == ['space_heating', 'domestic_hot_water']:
+            # Check if we have DHW demand when space heating is zero
+            has_dhw = demand_df['Qww_sys_kWh'] > 0
+            has_space_heating = (demand_df.get('Qhs_sys_aru_kWh', 0) +
+                                demand_df.get('Qhs_sys_ahu_kWh', 0) +
+                                demand_df.get('Qhs_sys_shu_kWh', 0)) > 0
+            needs_dhw_fallback = (~has_space_heating) & has_dhw
+
+            # Set minimum network temperature for DHW pre-heating (network side, so add DT_HEAT)
+            T_supply_DH_C = np.where(needs_dhw_fallback,
+                                    MIN_NETWORK_TEMP_FOR_PREHEATING_C + DT_HEAT,  # 35°C building + 5°C approach = 40°C network
+                                    T_supply_DH_C)
+
         demand_df['Q_substation_heating'] = Q_substation_heating
         demand_df['Q_substation_cooling'] = abs(Q_substation_cooling)
         demand_df['T_sup_target_DH'] = T_supply_DH_C
