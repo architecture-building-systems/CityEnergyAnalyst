@@ -22,6 +22,54 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+# Helper function for backward compatibility with database schema changes
+def get_heat_exchanger_by_description(locator, description_name):
+    """
+    Read HEAT_EXCHANGERS database and return row by description name.
+    Handles both old schema (description,code,...) and new schema (code,description,...).
+
+    The database schema evolved over time:
+    - Old schema: description,code,... (used in built-in CH/DE/SG databases)
+    - New schema: code,description,... (used in newer scenario databases)
+
+    Args:
+        locator: InputLocator instance
+        description_name: e.g., 'District substation heat exchanger'
+
+    Returns:
+        pd.Series with heat exchanger parameters (a, b, c, d, e, IR_%, LT_yr, O&M_%, etc.)
+
+    Raises:
+        ValueError: If heat exchanger not found or schema is unrecognised
+    """
+    df = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('HEAT_EXCHANGERS'))
+
+    # Detect schema by first column name
+    first_col = df.columns[0]
+
+    if first_col == 'description':
+        # Old schema: description is first column, use as index
+        df = df.set_index('description')
+        if description_name not in df.index:
+            raise ValueError(f"Heat exchanger '{description_name}' not found in database")
+        return df.loc[description_name]
+
+    elif first_col == 'code':
+        # New schema: code is first column, filter by description
+        matching = df[df['description'] == description_name]
+        if matching.empty:
+            raise ValueError(f"Heat exchanger '{description_name}' not found in database")
+        if len(matching) > 1:
+            raise ValueError(f"Multiple heat exchangers found with description '{description_name}'")
+        return matching.iloc[0]
+
+    else:
+        raise ValueError(
+            f"Unrecognised HEAT_EXCHANGERS database schema: first column is '{first_col}', "
+            f"expected 'description' or 'code'"
+        )
+
+
 # investment and maintenance costs
 
 def calc_Cinv_HEX(Q_design_W, locator, config, technology_type):
@@ -75,16 +123,16 @@ def calc_Cinv_HEX_hisaka(network_info):
     Calculates costs of all substation heat exchangers in a network.
     Used in thermal_network_optimization.
     """
-    ## read in cost values from database
-    HEX_prices = pd.read_csv(network_info.locator.get_db4_components_conversion_conversion_technology_csv('HEAT_EXCHANGERS'), index_col=0)
-    a = HEX_prices['a']['District substation heat exchanger']
-    b = HEX_prices['b']['District substation heat exchanger']
-    c = HEX_prices['c']['District substation heat exchanger']
-    d = HEX_prices['d']['District substation heat exchanger']
-    e = HEX_prices['e']['District substation heat exchanger']
-    Inv_IR = HEX_prices['IR_%']['District substation heat exchanger']
-    Inv_LT = HEX_prices['LT_yr']['District substation heat exchanger']
-    Inv_OM = HEX_prices['O&M_%']['District substation heat exchanger'] / 100
+    # Read cost values from database using backward-compatible helper
+    hex_params = get_heat_exchanger_by_description(network_info.locator, 'District substation heat exchanger')
+    a = hex_params['a']
+    b = hex_params['b']
+    c = hex_params['c']
+    d = hex_params['d']
+    e = hex_params['e']
+    Inv_IR = hex_params['IR_%']
+    Inv_LT = hex_params['LT_yr']
+    Inv_OM = hex_params['O&M_%'] / 100
 
     ## list node id of all substations
     # read in nodes list

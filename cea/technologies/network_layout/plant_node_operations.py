@@ -26,6 +26,83 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def get_services_from_plant_type(plant_type):
+    """
+    Extract service configuration from plant node type (reverse of get_plant_type_from_services).
+
+    :param plant_type: Plant type string from nodes.shp (e.g., 'PLANT_hs_ww', 'PLANT_ww_hs', 'PLANT')
+    :return: Tuple of (services_list, is_legacy)
+             services_list: List of services in priority order (e.g., ['space_heating', 'domestic_hot_water'])
+             is_legacy: True if plant_type is just 'PLANT' (backwards compatibility mode)
+
+    Examples:
+        'PLANT_hs_ww' → (['space_heating', 'domestic_hot_water'], False)
+        'PLANT_ww_hs' → (['domestic_hot_water', 'space_heating'], False)
+        'PLANT_hs' → (['space_heating'], False)
+        'PLANT_ww' → (['domestic_hot_water'], False)
+        'PLANT' → (['space_heating', 'domestic_hot_water'], True)  # legacy default
+        'PLANT_DC' → (['space_heating', 'domestic_hot_water'], True)  # DC network, legacy
+    """
+    # Abbreviation to full service name mapping
+    abbrev_to_service = {
+        'hs': 'space_heating',
+        'ww': 'domestic_hot_water'
+    }
+
+    # Check for legacy plant types (no suffix or DC suffix)
+    if plant_type == 'PLANT' or plant_type == 'PLANT_DC':
+        # Legacy mode: default to both services in default order
+        return (['space_heating', 'domestic_hot_water'], True)
+
+    # Extract suffix after 'PLANT_'
+    if not plant_type.startswith('PLANT_'):
+        # Unexpected format, treat as legacy
+        return (['space_heating', 'domestic_hot_water'], True)
+
+    suffix = plant_type[6:]  # Remove 'PLANT_' prefix
+
+    # Parse suffix (e.g., 'hs_ww' → ['hs', 'ww'])
+    abbrevs = suffix.split('_')
+
+    # Convert abbreviations to full service names
+    services = [abbrev_to_service.get(abbrev, abbrev) for abbrev in abbrevs if abbrev in abbrev_to_service]
+
+    if not services:
+        # No valid services found, treat as legacy
+        return (['space_heating', 'domestic_hot_water'], True)
+
+    return (services, False)
+
+
+def get_plant_type_from_services(itemised_dh_services, network_type='DH'):
+    """
+    Generate plant type name based on service configuration.
+
+    :param itemised_dh_services: List of services in priority order
+                                 (e.g., ['space_heating', 'domestic_hot_water'])
+    :param network_type: 'DH' or 'DC' (only DH uses service-specific types)
+    :return: Plant type string (e.g., 'PLANT_hs_ww', 'PLANT_ww_hs', 'PLANT')
+    """
+    if network_type == 'DC':
+        return 'PLANT'  # DC always uses generic PLANT type
+
+    if not itemised_dh_services or len(itemised_dh_services) == 0:
+        # Default: both services in default order
+        return 'PLANT_hs_ww'
+
+    # Service abbreviations
+    service_abbrev = {
+        'space_heating': 'hs',
+        'domestic_hot_water': 'ww'
+    }
+
+    # Build suffix from service order
+    suffix_parts = [service_abbrev.get(svc, svc) for svc in itemised_dh_services]
+    suffix = '_'.join(suffix_parts)
+
+    return f'PLANT_{suffix}'
+
+
 def get_next_node_name(nodes_gdf):
     """
     Generate the next unique node name by finding the maximum existing node number.
@@ -64,18 +141,21 @@ def get_next_pipe_name(edges_gdf):
     return f'PIPE{next_pipe_num}'
 
 
-def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn):
+def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn,
+                              itemised_dh_services=None, network_type='DH'):
     """
     Add a PLANT node near the anchor building by creating an offset node.
-    
+
     All coordinates are normalized to SHAPEFILE_TOLERANCE precision to ensure
     proper connectivity with the rest of the network.
-    
+
     :param building_anchor: GeoDataFrame row containing the anchor building node
     :param new_mst_nodes: GeoDataFrame of network nodes
     :param mst_edges: GeoDataFrame of network edges
     :param type_mat: Pipe material type (e.g., 'T1')
     :param pipe_dn: Pipe diameter (e.g., 150)
+    :param itemised_dh_services: List of services in priority order (for DH only)
+    :param network_type: 'DH' or 'DC'
     :return: Tuple of (updated nodes_gdf, updated edges_gdf)
     """
     # Find closest NONE node
@@ -113,12 +193,15 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     
     # Generate unique node name
     plant_node_name = get_next_node_name(new_mst_nodes)
-    
+
+    # Determine plant type based on service configuration
+    plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
+
     # Create plant node with normalized geometry
     plant_node = gdf(
         pd.DataFrame([{
             "name": plant_node_name,
-            "type": "PLANT",
+            "type": plant_type,
             "building": "NONE",
             "geometry": plant_geom
         }]),
