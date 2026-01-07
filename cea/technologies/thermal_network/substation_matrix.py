@@ -24,6 +24,11 @@ BUILDINGS_DEMANDS_COLUMNS = ['Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_
                              'mcphs_sys_ahu_kWperC', 'mcphs_sys_shu_kWperC', 'mcpcs_sys_ahu_kWperC',
                              'mcpcs_sys_aru_kWperC', 'mcpcs_sys_scu_kWperC', 'E_sys_kWh']
 
+# Minimum network temperature for DHW pre-heating when primary service (space heating) has zero demand
+# This enables DH to provide base-load pre-heating for DHW even during off-peak hours
+# Typical value: 35-40°C allows ~50% pre-heating from DH, rest from booster
+MIN_NETWORK_TEMP_FOR_PREHEATING_C = 35.0
+
 __author__ = "Jimeno A. Fonseca, Shanshan Hsieh"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Tim Vollrath", "Thuy-An Nguyen", "Lennart Rogenhofer"]
