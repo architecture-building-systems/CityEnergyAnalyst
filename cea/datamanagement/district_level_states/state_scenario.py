@@ -21,6 +21,9 @@ from cea.datamanagement.district_level_states.timeline_integrity import (
     compute_state_year_missing_modifications,
     merge_modify_recipes,
 )
+from cea.datamanagement.district_level_states.envelope_topology import (
+    validate_three_layer_topology,
+)
 from cea.datamanagement.district_level_states.timeline_log import (
     add_year_in_yaml,
     del_year_in_yaml,
@@ -42,65 +45,15 @@ def _validate_three_layer_topology_row(
     envelope_db_name: str,
     code: str,
 ) -> None:
-    """Validate the fixed 3-layer envelope schema for a single DB row.
-
-    Invariant:
-    - There are always 3 layer slots (`material_name_1..3`, `thickness_1_m..3`).
-    - At least one slot must have `thickness_i_m > 0` (i.e., at most two zeros).
-    - If `thickness_i_m > 0`, `material_name_i` must be non-empty.
-    """
-
-    required_cols = [
-        "material_name_1",
-        "thickness_1_m",
-        "material_name_2",
-        "thickness_2_m",
-        "material_name_3",
-        "thickness_3_m",
-    ]
-    missing = [c for c in required_cols if c not in row.index]
-    if missing:
-        raise ValueError(
-            f"year {year_of_state}, archetype '{archetype}', component '{component}': "
-            f"envelope DB '{envelope_db_name}' row '{code}' missing required layer columns {missing}."
-        )
-
-    thicknesses: list[float] = []
-    for idx in (1, 2, 3):
-        t_raw = row[f"thickness_{idx}_m"]
-        if pd.isna(t_raw):
-            raise ValueError(
-                f"year {year_of_state}, archetype '{archetype}', component '{component}': "
-                f"thickness_{idx}_m is NaN for envelope DB '{envelope_db_name}' row '{code}'."
-            )
-        try:
-            t = float(t_raw)
-        except (TypeError, ValueError):
-            raise ValueError(
-                f"year {year_of_state}, archetype '{archetype}', component '{component}': "
-                f"thickness_{idx}_m='{t_raw}' is not a number for envelope DB '{envelope_db_name}' row '{code}'."
-            )
-        if t < 0.0:
-            raise ValueError(
-                f"year {year_of_state}, archetype '{archetype}', component '{component}': "
-                f"thickness_{idx}_m={t} must be >= 0 for envelope DB '{envelope_db_name}' row '{code}'."
-            )
-        thicknesses.append(t)
-
-        if t > 0.0:
-            name = str(row.get(f"material_name_{idx}", "")).strip()
-            if not name:
-                raise ValueError(
-                    f"year {year_of_state}, archetype '{archetype}', component '{component}': "
-                    f"material_name_{idx} is empty but thickness_{idx}_m={t} for envelope DB '{envelope_db_name}' row '{code}'."
-                )
-
-    if sum(1 for t in thicknesses if t > 0.0) < 1:
-        raise ValueError(
-            f"year {year_of_state}, archetype '{archetype}', component '{component}': "
-            f"expected at least one non-zero layer thickness (at most two zeros) for envelope DB '{envelope_db_name}' row '{code}', "
-            f"got thicknesses={thicknesses}."
-        )
+    errors = validate_three_layer_topology(
+        row,
+        year_of_state=year_of_state,
+        archetype=archetype,
+        component=component,
+        envelope_ref=f"envelope DB '{envelope_db_name}' row '{code}'",
+    )
+    if errors:
+        raise ValueError(errors[0])
 
 
 def _canonical_json(obj: Any) -> str:

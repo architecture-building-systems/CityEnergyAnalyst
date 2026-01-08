@@ -44,6 +44,7 @@ class FileSnapshot:
                         try:
                             os.rmdir(path)
                         except OSError:
+                            # If the directory is not empty or cannot be removed, ignore and leave it as-is.
                             pass
                     else:
                         os.remove(path)
