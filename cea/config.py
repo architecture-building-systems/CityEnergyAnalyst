@@ -1476,6 +1476,11 @@ class ColumnChoiceParameter(ChoiceParameter):
         self.column_name = parser.get(self.section.name, f"{self.name}.column")
         self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
 
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
+
     @property
     def _choices(self):
         # set the `._choices` attribute to PV codes
@@ -1499,12 +1504,51 @@ class ColumnChoiceParameter(ChoiceParameter):
                 raise ValueError(f'Column {self.column_name} not found in source file')
 
             codes = df[self.column_name].unique()
-            return list(codes)
+            choices = list(codes)
+
+            if self.nullable:
+                # Use empty-string as the on-disk representation of None.
+                # Put it first so it's easy to find in UIs.
+                if '' not in choices:
+                    choices.insert(0, '')
+                else:
+                    choices = [''] + [c for c in choices if c != '']
+
+            return choices
         except FileNotFoundError as e:
             # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
             raise FileNotFoundError(f'Could not find source file at {location} to generate choices for {self.name}') from e
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
+
+    def encode(self, value):
+        if value is None or value == '':
+            if self.nullable:
+                return ''
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return str(value)
+
+    def decode(self, value):
+        # If nullable, default empty values to None (instead of silently selecting the first database entry).
+        if self.nullable and (value is None or str(value) == ''):
+            return None
+
+        if str(value) in self._choices:
+            if self.nullable and str(value) == '':
+                return None
+            return str(value)
+
+        if self.nullable:
+            return None
+
+        if not self._choices:
+            raise ValueError(f"No choices for {self.fqname} to decode {value}")
+        return self._choices[0]
 
 
 class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):

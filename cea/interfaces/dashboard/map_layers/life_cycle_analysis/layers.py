@@ -9,7 +9,7 @@ from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, Par
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
 from cea.plots.colors import color_to_hex
 
-IGNORE_COLUMNS = {"name", "GFA_m2", "period", "date", "hour", "month", "day"}
+IGNORE_COLUMNS = {"name", "GFA_m2", "period", "date", "hour", "month", "day", "Note"}
 
 def period_to_year(period: pd.Series) -> pd.Series:
     """Convert a period string of the form 'Y_XXXX' to an integer year XXXX"""

@@ -1,16 +1,20 @@
 """
-InputProcessor – Determines the correct CSV file in the summary folder and triggers the summary feature to generate this file.
+InputProcessor - Determines the correct CSV file in the summary folder and triggers the summary feature to generate this file.
 Ensure this file exists or break the script.
 
 """
-
-import cea.inputlocator
 import os
-from cea.analysis.lca.emission_timeline import get_building_names_from_zone
-from cea.import_export.result_summary import process_building_summary, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
+
+import geopandas as gpd
 import pandas as pd
 
-
+from cea.config import Configuration
+from cea.import_export.result_summary import (
+    build_emission_context,
+    process_building_summary,
+)
+from cea.inputlocator import InputLocator
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -20,6 +24,28 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def get_building_names_from_zone(locator):
+    """
+    Get building names from zone geometry.
+
+    Parameters
+    ----------
+    locator : InputLocator
+        File path resolver
+
+    Returns
+    -------
+    pd.DataFrame
+        Zone geometry with 'Name' or 'name' column (caller should check both)
+    """
+
+    zone_path = locator.get_zone_geometry()
+    crs = get_geographic_coordinate_system()
+    zone_df = gpd.read_file(zone_path).to_crs(crs)
+
+    return zone_df
 
 
 def raise_missing_pv_error(pv_codes, context='file'):
@@ -71,10 +97,9 @@ demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_endus
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
-lifecycle_emission_metrics = emission_timeline_yearly_colnames_nounit
-operational_emission_metrics = emission_timeline_hourly_operational_colnames_nounit
-
-
+emission_context = build_emission_context(InputLocator(Configuration().scenario))
+lifecycle_emission_metrics = emission_context["yearly_colnames"]
+operational_emission_metrics = emission_context["hourly_colnames"]
 
 dict_plot_metrics_cea_feature = {
     'demand': demand_metrics,
@@ -111,7 +136,7 @@ class csv_pointer:
         x, x_facet = get_x_and_x_facet(plot_config.x_to_plot)
         self.config = plot_config
         self.scenario = scenario
-        self.locator = cea.inputlocator.InputLocator(scenario=scenario)
+        self.locator = InputLocator(scenario=scenario)
         self.plot_cea_feature = plot_cea_feature
         self.period_start = period_start
         self.period_end = period_end
@@ -318,7 +343,6 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
         pv_code = getattr(plot_config, 'pv_code', None)
         if pv_code:
             # Check if any building has PV data for this panel type
-            from cea.inputlocator import InputLocator
             locator = InputLocator(scenario)
 
             # Get list of buildings to check
