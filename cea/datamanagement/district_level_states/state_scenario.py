@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import geopandas as gpd
 import pandas as pd
@@ -31,6 +31,76 @@ from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
 ModifyRecipe = dict[str, dict[str, dict[str, Any]]]
+
+
+def _validate_three_layer_topology_row(
+    row: pd.Series,
+    *,
+    year_of_state: int,
+    archetype: str,
+    component: str,
+    envelope_db_name: str,
+    code: str,
+) -> None:
+    """Validate the fixed 3-layer envelope schema for a single DB row.
+
+    Invariant:
+    - There are always 3 layer slots (`material_name_1..3`, `thickness_1_m..3`).
+    - At least one slot must have `thickness_i_m > 0` (i.e., at most two zeros).
+    - If `thickness_i_m > 0`, `material_name_i` must be non-empty.
+    """
+
+    required_cols = [
+        "material_name_1",
+        "thickness_1_m",
+        "material_name_2",
+        "thickness_2_m",
+        "material_name_3",
+        "thickness_3_m",
+    ]
+    missing = [c for c in required_cols if c not in row.index]
+    if missing:
+        raise ValueError(
+            f"year {year_of_state}, archetype '{archetype}', component '{component}': "
+            f"envelope DB '{envelope_db_name}' row '{code}' missing required layer columns {missing}."
+        )
+
+    thicknesses: list[float] = []
+    for idx in (1, 2, 3):
+        t_raw = row[f"thickness_{idx}_m"]
+        if pd.isna(t_raw):
+            raise ValueError(
+                f"year {year_of_state}, archetype '{archetype}', component '{component}': "
+                f"thickness_{idx}_m is NaN for envelope DB '{envelope_db_name}' row '{code}'."
+            )
+        try:
+            t = float(t_raw)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"year {year_of_state}, archetype '{archetype}', component '{component}': "
+                f"thickness_{idx}_m='{t_raw}' is not a number for envelope DB '{envelope_db_name}' row '{code}'."
+            )
+        if t < 0.0:
+            raise ValueError(
+                f"year {year_of_state}, archetype '{archetype}', component '{component}': "
+                f"thickness_{idx}_m={t} must be >= 0 for envelope DB '{envelope_db_name}' row '{code}'."
+            )
+        thicknesses.append(t)
+
+        if t > 0.0:
+            name = str(row.get(f"material_name_{idx}", "")).strip()
+            if not name:
+                raise ValueError(
+                    f"year {year_of_state}, archetype '{archetype}', component '{component}': "
+                    f"material_name_{idx} is empty but thickness_{idx}_m={t} for envelope DB '{envelope_db_name}' row '{code}'."
+                )
+
+    if sum(1 for t in thicknesses if t > 0.0) < 1:
+        raise ValueError(
+            f"year {year_of_state}, archetype '{archetype}', component '{component}': "
+            f"expected at least one non-zero layer thickness (at most two zeros) for envelope DB '{envelope_db_name}' row '{code}', "
+            f"got thicknesses={thicknesses}."
+        )
 
 
 def _canonical_json(obj: Any) -> str:
@@ -847,7 +917,7 @@ def _apply_state_construction_changes(
 
                 if code_new in component_db.index:
                     code_new = shift_code_name_plus1(component_db, code_new)
-                new_row = component_db.loc[code_current].copy()
+                new_row = cast(pd.Series, component_db.loc[code_current].copy())
                 new_row.name = code_new
 
                 for field, new_value in modifications.items():
@@ -864,6 +934,14 @@ def _apply_state_construction_changes(
                         db_modified += 1
 
                 if db_modified:
+                    _validate_three_layer_topology_row(
+                        new_row,
+                        year_of_state=year_of_state,
+                        archetype=archetype,
+                        component=component,
+                        envelope_db_name=envelope_db_name,
+                        code=code_new,
+                    )
                     description_new = (
                         f"Modified {component} for archetype {archetype} in year {year_of_state}, based on {code_current}, "
                         f"fields modified: {', '.join(modifications.keys())}"

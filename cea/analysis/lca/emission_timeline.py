@@ -146,7 +146,7 @@ def normalise_years(year: int | list[int] | str | list[str]) -> list[str]:
             return [f"Y_{int(y)}" for y in cast(list[int], year)]
         if isinstance(year[0], str):
             return list(cast(list[str], year))
-    return []
+    raise ValueError(f"Year must be int, str, list[int], or list[str]; got {type(year)}.")
 
 
 def years_from_index(index: pd.Index) -> list[int]:

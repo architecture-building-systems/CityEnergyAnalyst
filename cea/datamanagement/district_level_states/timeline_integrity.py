@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -214,7 +214,16 @@ def compute_state_year_missing_modifications(
                 )
                 continue
 
-            row = envelope_df.loc[code_current]
+            row = cast(pd.Series, envelope_df.loc[code_current])
+            errors.extend(
+                _validate_three_layer_topology_in_envelope_row(
+                    row,
+                    year_of_state=year_of_state,
+                    archetype=archetype,
+                    component=component,
+                    envelope_db_path=envelope_db_path,
+                )
+            )
             for field, expected_value in (fields or {}).items():
                 if expected_value is None:
                     continue
@@ -338,7 +347,16 @@ def check_state_year_comprehensive_integrity(
                 )
                 continue
 
-            row = envelope_df.loc[code_current]
+            row = cast(pd.Series, envelope_df.loc[code_current])
+            errors.extend(
+                _validate_three_layer_topology_in_envelope_row(
+                    row,
+                    year_of_state=year_of_state,
+                    archetype=archetype,
+                    component=component,
+                    envelope_db_path=envelope_db_path,
+                )
+            )
             for field, expected_value in (fields or {}).items():
                 if expected_value is None:
                     continue
@@ -377,10 +395,80 @@ def _values_match(actual_value: Any, expected_value: Any) -> bool:
     return str(actual_value) == str(expected_value)
 
 
+def _validate_three_layer_topology_in_envelope_row(
+    row: pd.Series,
+    *,
+    year_of_state: int,
+    archetype: str,
+    component: str,
+    envelope_db_path: str,
+) -> list[str]:
+    """Validate the fixed 3-slot layer topology in an envelope DB row.
+
+    This enforces the same invariants as state materialisation:
+    - 3 thickness slots exist.
+    - At least one thickness is > 0 (i.e., at most two zeros).
+    - If thickness_i_m > 0, material_name_i must be non-empty.
+    """
+
+    errors: list[str] = []
+    required_cols = [
+        "material_name_1",
+        "thickness_1_m",
+        "material_name_2",
+        "thickness_2_m",
+        "material_name_3",
+        "thickness_3_m",
+    ]
+    missing = [c for c in required_cols if c not in row.index]
+    if missing:
+        errors.append(
+            f"year {year_of_state}, archetype '{archetype}', component '{component}': missing required layer columns {missing} in {envelope_db_path}"
+        )
+        return errors
+
+    thicknesses: list[float] = []
+    for idx in (1, 2, 3):
+        t_raw = row.get(f"thickness_{idx}_m")
+        if pd.isna(t_raw):
+            errors.append(
+                f"year {year_of_state}, archetype '{archetype}', component '{component}': thickness_{idx}_m is NaN in {envelope_db_path}"
+            )
+            continue
+        try:
+            t = float(t_raw)
+        except (TypeError, ValueError):
+            errors.append(
+                f"year {year_of_state}, archetype '{archetype}', component '{component}': thickness_{idx}_m='{t_raw}' is not numeric in {envelope_db_path}"
+            )
+            continue
+        if t < 0.0:
+            errors.append(
+                f"year {year_of_state}, archetype '{archetype}', component '{component}': thickness_{idx}_m={t} must be >= 0 in {envelope_db_path}"
+            )
+        thicknesses.append(t)
+
+        if t > 0.0:
+            name = str(row.get(f"material_name_{idx}", "")).strip()
+            if not name:
+                errors.append(
+                    f"year {year_of_state}, archetype '{archetype}', component '{component}': material_name_{idx} is empty but thickness_{idx}_m={t} in {envelope_db_path}"
+                )
+
+    if thicknesses and sum(1 for t in thicknesses if t > 0.0) < 1:
+        errors.append(
+            f"year {year_of_state}, archetype '{archetype}', component '{component}': expected at least one non-zero thickness (at most two zeros), got thicknesses={thicknesses} in {envelope_db_path}"
+        )
+    return errors
+
+
 def _resolve_envelope_component(component: str) -> str:
     # Envelope DB uses "floor" while archetypes / logs may use "base".
     if component in {"base", "floor"}:
         return "floor"
+    # Partitions share the wall envelope database.
+    if component == "part":
+        return "wall"
     return component
 
 
@@ -417,7 +505,7 @@ def _resolve_envelope_column_name(envelope_component: str, field: str, columns: 
 
 
 def _get_envelope_db_path(locator: InputLocator, envelope_component: str) -> str:
-    if envelope_component == "wall":
+    if envelope_component in {"wall", "part"}:
         return locator.get_database_assemblies_envelope_wall()
     if envelope_component == "roof":
         return locator.get_database_assemblies_envelope_roof()
