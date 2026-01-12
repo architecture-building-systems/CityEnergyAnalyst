@@ -23,6 +23,18 @@ Unicode true
 
 Var LauncherExtension
 
+; Macro to run a command, capture output, and abort on failure
+!macro RunCommand CommandStr DescriptionStr ErrorMsg
+    nsExec::ExecToStack '${CommandStr} 2>&1'
+    Pop $1  # capture output
+    Pop $0  # capture exit code
+    DetailPrint '${DescriptionStr} returned $0'
+    ${If} "$0" != "0"
+        DetailPrint "Error output: $1"
+        Abort "${ErrorMsg}"
+    ${EndIf}
+!macroend
+
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 SetCompressor /FINAL lzma
@@ -132,35 +144,14 @@ Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     # create hook for cmd shell
-    nsExec::ExecToStack '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba" 2>&1'
-    Pop $1  # capture output
-    Pop $0  # capture exit code
-    DetailPrint '"micromamba shell hook" returned $0'
-    ${If} "$0" != "0"
-        DetailPrint "Error output: $1"
-        Abort "Installation failed - see Details"
-    ${EndIf}
+    !insertmacro RunCommand "\"$INSTDIR\dependencies\micromamba.exe\" shell hook -s cmd.exe \"$INSTDIR\dependencies\micromamba\"" "micromamba shell hook" "Installation failed - see Details"
 
     # fix pip due to change in python path
-    nsExec::ExecToStack '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall 2>&1'
-    Pop $1  # capture output
-    Pop $0  # capture exit code
-    DetailPrint '"pip reinstall" returned $0'
-    ${If} "$0" != "0"
-        DetailPrint "Error output: $1"
-        Abort "Installation failed - see Details"
-    ${EndIf}
+    !insertmacro RunCommand "\"$INSTDIR\dependencies\micromamba.exe\" run -r \"$INSTDIR\dependencies\micromamba\" -n cea python -m pip install --upgrade pip --force-reinstall" "pip reinstall" "Installation failed - see Details"
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToStack '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}" 2>&1'
-    Pop $1  # capture output
-    Pop $0  # capture exit code
-    DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
-    ${If} "$0" != "0"
-        DetailPrint "Error output: $1"
-        Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
-    ${EndIf}
+    !insertmacro RunCommand "\"$INSTDIR\dependencies\micromamba.exe\" run -r \"$INSTDIR\dependencies\micromamba\" -n cea pip install \"$INSTDIR\${WHEEL_FILE}\"" "pip install cityenergyanalyst==${VER}" "Could not install CityEnergyAnalyst ${VER} - see Details"
     Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
