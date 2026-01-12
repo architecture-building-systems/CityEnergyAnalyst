@@ -132,13 +132,24 @@ Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     # create hook for cmd shell
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"'
+    nsExec::ExecToLog 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba" 2>&1"'
+    Pop $0
+    DetailPrint '"micromamba shell hook" returned $0'
+    ${If} "$0" != "0"
+        Abort "Installation failed - see Details"
+    ${EndIf}
+
     # fix pip due to change in python path
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall'
+    nsExec::ExecToLog 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall 2>&1"'
+    Pop $0
+    DetailPrint '"pip reinstall" returned $0'
+    ${If} "$0" != "0"
+        Abort "Installation failed - see Details"
+    ${EndIf}
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"'
+    nsExec::ExecToLog 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}" 2>&1"'
     Pop $0 # make sure cea was installed
     DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
     ${If} "$0" != "0"
