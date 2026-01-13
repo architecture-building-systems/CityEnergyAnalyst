@@ -8,7 +8,7 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.import_export.result_summary import (
-    build_emission_context,
+    get_emission_context,
     month_hours,
     month_names,
     season_mapping,
@@ -25,9 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type', 'building_faceted_by_decades']
-emission_context = build_emission_context(InputLocator(Configuration().scenario))
-lifecycle_emission_metrics = emission_context["yearly_colnames"]
-operational_emission_metrics = emission_context["hourly_colnames"]
+
 
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
@@ -36,6 +34,8 @@ class data_processor:
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
+        # Store locator for lazy emission context initialisation
+        self.locator = plot_instance.locator
 
         # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
         if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
@@ -253,6 +253,12 @@ class data_processor:
 
 
     def process_data(self, plot_cea_feature):
+        # Lazy initialisation for emission-related plots
+        if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
+            emission_context = get_emission_context(self.locator)
+            lifecycle_emission_metrics = emission_context["yearly_colnames"]
+            operational_emission_metrics = emission_context["hourly_colnames"]
+
         if plot_cea_feature == 'demand':
             y_cea_metric_map = {
                 'grid_electricity_consumption': 'GRID_kWh',

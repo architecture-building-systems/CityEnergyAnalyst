@@ -10,7 +10,7 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.import_export.result_summary import (
-    build_emission_context,
+    get_emission_context,
     process_building_summary,
 )
 from cea.inputlocator import InputLocator
@@ -97,28 +97,35 @@ demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_endus
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
-emission_context = build_emission_context(InputLocator(Configuration().scenario))
-lifecycle_emission_metrics = emission_context["yearly_colnames"]
-operational_emission_metrics = emission_context["hourly_colnames"]
 
-dict_plot_metrics_cea_feature = {
-    'demand': demand_metrics,
-    'pv': solar_metrics,
-    'pvt': solar_metrics,
-    'sc': solar_metrics,
-    'lifecycle-emissions': lifecycle_emission_metrics,
-    'operational-emissions': operational_emission_metrics,
-    'emission-timeline': lifecycle_emission_metrics
-}
+def get_plot_metrics_dict(locator):
+    """Get dictionary of plot metrics for each CEA feature, with lazy emission context initialisation."""
+    emission_context = get_emission_context(locator)
+    lifecycle_emission_metrics = emission_context["yearly_colnames"]
+    operational_emission_metrics = emission_context["hourly_colnames"]
 
-dict_plot_analytics_cea_feature = {
-    'demand': demand_analytics,
-    'pv': solar_analytics,
-    'pvt': [],
-    'sc': [],
-    'lifecycle-emissions': [],
-    'operational-emissions': []
-}
+    return {
+        'demand': demand_metrics,
+        'pv': solar_metrics,
+        'pvt': solar_metrics,
+        'sc': solar_metrics,
+        'lifecycle-emissions': lifecycle_emission_metrics,
+        'operational-emissions': operational_emission_metrics,
+        'emission-timeline': lifecycle_emission_metrics
+    }
+
+
+def get_plot_analytics_dict(locator):
+    """Get dictionary of plot analytics for each CEA feature."""
+    # This doesn't need emission context, but kept for consistency
+    return {
+        'demand': demand_analytics,
+        'pv': solar_analytics,
+        'pvt': [],
+        'sc': [],
+        'lifecycle-emissions': [],
+        'operational-emissions': []
+    }
 
 # Trigger the summary feature and point to the csv results file
 class csv_pointer:
@@ -202,7 +209,7 @@ class csv_pointer:
 
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
-        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.plot_cea_feature, [])
+        list_metrics_analytics = get_plot_analytics_dict(self.locator).get(self.plot_cea_feature, [])
         if any(item in list_metrics_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = True
 
@@ -225,8 +232,8 @@ class csv_pointer:
     def get_summary_results_csv_path(self):
         """Returns the correct path for the summary results CSV file based on user inputs."""
         summary_folder = self.locator.get_export_plots_folder()
-        list_metrics_non_analytics = dict_plot_metrics_cea_feature.get(self.plot_cea_feature, [])
-        list_metrics_analytics = dict_plot_analytics_cea_feature.get(self.plot_cea_feature, [])
+        list_metrics_non_analytics = get_plot_metrics_dict(self.locator).get(self.plot_cea_feature, [])
+        list_metrics_analytics = get_plot_analytics_dict(self.locator).get(self.plot_cea_feature, [])
 
         if all(item in list_metrics_non_analytics for item in self.y_metric_to_plot):
             return self._get_non_analytics_summary_path(summary_folder)
