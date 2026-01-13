@@ -527,6 +527,9 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     # Step 1: Prepare normaliser and raw Y-axis metrics
     if plot_instance.y_normalised_by in ('no_normalisation', 'gross_floor_area', 'conditioned_floor_area'):
         normaliser_m2 = plot_instance.process_architecture_data()
+    elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+        # For solar-specific normalisation, area data is in the metrics themselves
+        normaliser_m2 = None  # Not needed
     else:
         raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
     df_y_metrics, list_y_columns = plot_instance.process_data(plot_cea_feature)
