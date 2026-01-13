@@ -23,14 +23,12 @@ Unicode true
 
 Var LauncherExtension
 
-; Macro to run a command, capture output, and abort on failure
+; Macro to run a command and abort on failure
 !macro RunCommand CommandStr DescriptionStr ErrorMsg
-    nsExec::ExecToStack '${CommandStr}'
-    Pop $1  # capture output
+    nsExec::ExecToLog 'cmd /c "${CommandStr} 2>&1"'
     Pop $0  # capture exit code
     DetailPrint '${DescriptionStr} returned $0'
     ${If} "$0" != "0"
-        DetailPrint "Error output: $1"
         Abort "${ErrorMsg}"
     ${EndIf}
 !macroend
@@ -144,14 +142,14 @@ Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     # create hook for cmd shell
-    !insertmacro RunCommand 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba" 2>&1"' "run micromamba command" "Installation failed - see Details"
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "run micromamba command" "Installation failed - see Details"
 
     # fix pip due to change in python path
-    !insertmacro RunCommand 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall 2>&1"' "run micromamba command" "Installation failed - see Details"
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall' "run micromamba command" "Installation failed - see Details"
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    !insertmacro RunCommand 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}" 2>&1"' "run micromamba command" "Could not install CityEnergyAnalyst ${VER} - see Details"
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"' "run micromamba command" "Could not install CityEnergyAnalyst ${VER} - see Details"
     Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
