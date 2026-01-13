@@ -25,7 +25,7 @@ Var LauncherExtension
 
 ; Macro to run a command, capture output, and abort on failure
 !macro RunCommand CommandStr DescriptionStr ErrorMsg
-    nsExec::ExecToStack '${CommandStr} 2>&1'
+    nsExec::ExecToStack '${CommandStr}'
     Pop $1  # capture output
     Pop $0  # capture exit code
     DetailPrint '${DescriptionStr} returned $0'
@@ -144,14 +144,14 @@ Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     # create hook for cmd shell
-    !insertmacro RunCommand "\"$INSTDIR\dependencies\micromamba.exe\" shell hook -s cmd.exe \"$INSTDIR\dependencies\micromamba\"" "micromamba shell hook" "Installation failed - see Details"
+    !insertmacro RunCommand 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba" 2>&1"' "run micromamba command" "Installation failed - see Details"
 
     # fix pip due to change in python path
-    !insertmacro RunCommand "\"$INSTDIR\dependencies\micromamba.exe\" run -r \"$INSTDIR\dependencies\micromamba\" -n cea python -m pip install --upgrade pip --force-reinstall" "pip reinstall" "Installation failed - see Details"
+    !insertmacro RunCommand 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall 2>&1"' "run micromamba command" "Installation failed - see Details"
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    !insertmacro RunCommand "\"$INSTDIR\dependencies\micromamba.exe\" run -r \"$INSTDIR\dependencies\micromamba\" -n cea pip install \"$INSTDIR\${WHEEL_FILE}\"" "pip install cityenergyanalyst==${VER}" "Could not install CityEnergyAnalyst ${VER} - see Details"
+    !insertmacro RunCommand 'cmd /c ""$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}" 2>&1"' "run micromamba command" "Could not install CityEnergyAnalyst ${VER} - see Details"
     Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
