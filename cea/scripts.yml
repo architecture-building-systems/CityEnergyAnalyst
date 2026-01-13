@@ -350,6 +350,22 @@ Energy Supply System Optimisation:
 
 Data Management:
 
+  - name: building-data-helper
+    label: Building Data Helper [BETA]
+    short_description: Enhance and overwrite building properties using AI and Google Street View imagery
+    description: |
+      This Feature uses AI and Google Street View imagery to automatically determine accurate building properties and overwrite the respective existing values:
+      - Building floors (floors_ag)
+      - Building use types and ratios
+      - Year of construction
+
+      **Note**: This is a BETA feature. Results may be less accurate for urban areas that differ significantly from Zurich. Always review AI-generated data before running analyses.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.building_data_helper
+    parameters: ['general:scenario', building-data-helper]
+    input-files:
+      - [get_zone_geometry]
+
   - name: database-helper
     label: Database Helper
     short_description: Load CEA Database into current scenario
