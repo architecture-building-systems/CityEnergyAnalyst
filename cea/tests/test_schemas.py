@@ -2,7 +2,6 @@
 Tests to make sure the schemas.yml file is structurally sound.
 """
 
-import re
 import unittest
 
 import os
@@ -12,7 +11,6 @@ import inspect
 
 import cea.config
 import cea.inputlocator
-import cea.scripts
 import cea.schemas
 
 __author__ = "Daren Thomas"
@@ -108,9 +106,8 @@ class TestSchemas(unittest.TestCase):
                             missing_docs[col_path].append("description")
                         if ws_schema[col]["unit"].strip() == "TODO":
                             missing_docs[col_path].append("unit")
-                        if ws_schema[col]["values"].strip() == "TODO":
-                            missing_docs[col_path].append("values")
-                            
+                        # Note: 'values' is now auto-generated from type/min/max in glossary
+
             elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     col_path = f"{lm}/{col}"
@@ -119,8 +116,7 @@ class TestSchemas(unittest.TestCase):
                             missing_docs[col_path].append("description")
                         if schema["columns"][col].get("unit", "TODO").strip() == "TODO":
                             missing_docs[col_path].append("unit")
-                        if schema["columns"][col].get("values", "TODO").strip() == "TODO":
-                            missing_docs[col_path].append("values")
+                        # Note: 'values' is now auto-generated from type/min/max in glossary
                     except BaseException as e:
                         missing_docs[col_path] = [f"error: {str(e)}"]
 
@@ -184,7 +180,7 @@ class TestSchemas(unittest.TestCase):
                 method = getattr(locator, attrib)
                 parameters = {
                     "network_type": "DC",
-                    "network_name": "",
+                    "network_name": "baseline",
                     "gen_num": 1,
                     "category": "demand",
                     "type_of_district_network": "space-heating",
@@ -208,8 +204,13 @@ class TestSchemas(unittest.TestCase):
                     warnings.warn(f"{attrib} returned None, skipping...")
                     continue
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
-                self.assertNotIn(folder, folders,
-                                 f"{attrib} duplicates the result of {folders.get(folder, None)}")
+                if folder in folders:
+                    self.fail(
+                        f"Duplicate folder detected:\n"
+                        f"  Folder: {folder}\n"
+                        f"  First defined by: {folders[folder]}\n"
+                        f"  Also defined by: {attrib}"
+                    )
                 folders[folder] = attrib
 
     def test_scripts_use_underscores_not_hyphen(self):
@@ -225,43 +226,6 @@ class TestSchemas(unittest.TestCase):
     def test_read_glossary_df(self):
         import cea.glossary
         cea.glossary.read_glossary_df(plugins=[])
-
-    def test_numerical_ranges(self):
-        def check_range(schema):
-            if 'type' in schema and schema['type'] in ['float', 'int']:
-                if "values" in schema:
-                    values = schema['values']
-
-                    values_min, values_max = parse_numerical_range_value(values, schema['type'])
-                    schema_min = schema.get('min')
-                    schema_max = schema.get('max')
-
-                    if values_min != schema_min or values_max != schema_max:
-                        raise ValueError(
-                            'values property do not match range properties. '
-                            'values: {values}, min: {schema_min}, max: {schema_max}'.format(
-                                values=values, schema_min=schema_min, schema_max=schema_max))
-
-        schemas = cea.schemas.schemas(plugins=[])
-        for lm in schemas:
-            if lm == "get_database_standard_schedules_use" or lm in SKIP_LMS:
-                # the schema for schedules is non-standard
-                continue
-            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
-                for ws in schemas[lm]["schema"]:
-                    for col, col_schema in schemas[lm]["schema"][ws]["columns"].items():
-                        try:
-                            check_range(col_schema)
-                        except ValueError as e:
-                            col_label = ":".join([lm, ws, col])
-                            print(f"Error in column {col_label}:\n{e}\n")
-            else:
-                for col, col_schema in schemas[lm]["schema"]["columns"].items():
-                    try:
-                        check_range(col_schema)
-                    except ValueError as e:
-                        col_label = ":".join([lm, col])
-                        print(f"Error in column {col_label}:\n{e}\n")
 
 
 def extract_locator_methods(locator):
@@ -294,29 +258,6 @@ def extract_locator_methods(locator):
             # not interested in folders
             continue
         yield m
-
-
-def parse_numerical_range_value(value, num_type):
-    def parse_string_num(string_num):
-        if string_num == 'n':
-            return None
-        elif num_type == 'float':
-            return float(string_num)
-        elif num_type == 'int':
-            return int(string_num)
-        else:
-            raise TypeError(f"Unable to cast type `{num_type}`")
-
-    num = r'-?\d+(?:.\d+)?'
-    num_or_n = r'{num}|n'.format(num=num)
-
-    # match {1...n}-style values
-    regex = r'{{(?P<first>{num_or_n})(...|,)(?P<second>{num_or_n})}}'.format(num_or_n=num_or_n)
-    match = re.match(regex, value)
-
-    if match is None:
-        raise ValueError(f"values property not in '{{n...n}}' format. Got: '{value}'")
-    return parse_string_num(match.group("first")), parse_string_num(match.group("second"))
 
 
 if __name__ == '__main__':

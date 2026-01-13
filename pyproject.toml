@@ -112,9 +112,11 @@ cea = [
 
     # Web assets
     "interfaces/dashboard/plots/templates/*.html",
-    "plots/*.html",
 
     "plots/naming.csv",
+    "plots/*.html",
+    "plots/**/*.png",
+    "plots/**/*.yml",
 ]
 
 [tool.setuptools.dynamic]
@@ -136,12 +138,13 @@ platforms = [
 ]
 
 [tool.pixi.tasks]
-test = "cea test --type integration"
+unittest = "pytest cea/tests/"
+integration = "cea test --type integration"
 coverage = "pytest --cov=cea cea/tests/"
 
 # Development tasks
 lint = {cmd = "ruff check --fix ."}
-setup-dev = {cmd = "uv pip install -e . --group dev"}
+setup-dev = {cmd = "pip install -e . --group dev"}
 build-wheel = {cmd = "uv build"}
 export-spec = {cmd = "pixi workspace export conda-explicit-spec --ignore-pypi-errors conda-spec"}
 export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}

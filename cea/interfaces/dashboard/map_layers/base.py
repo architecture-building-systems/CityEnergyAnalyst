@@ -39,6 +39,7 @@ class FileRequirement:
     """
     description: str
     file_locator: str
+    optional: bool = False
     depends_on: Optional[List[str]] = None
     """A list of parameter names that this file requirement depends on."""
 
@@ -216,33 +217,53 @@ class MapLayer(abc.ABC):
         range_values = parameter_def.generate_range(self, parameters)
         return range_values
 
-    def get_required_files(self, parameters) -> List[str]:
-        """Returns the list of required files for this layer"""
-        required_files = set()
+    def get_required_files_with_metadata(self, parameters) -> Dict[str, bool]:
+        """Returns a dict mapping file paths to whether they are optional (True=optional, False=required)"""
+        file_metadata = {}
         for file_requirement in self.file_requirements():
             files = file_requirement.get_required_files(self, parameters)
-
+            
             if isinstance(files, list):
-                required_files.update(files)
+                for file_path in files:
+                    file_metadata[file_path] = file_requirement.optional
             else:
-                required_files.add(files)
-
-        return list(required_files)
+                file_metadata[files] = file_requirement.optional
+        
+        return file_metadata
+    
+    def get_required_files(self, parameters) -> List[str]:
+        """Returns the list of required files for this layer (both required and optional)"""
+        return list(self.get_required_files_with_metadata(parameters).keys())
 
     def check_for_missing_input_files(self, parameters: dict) -> None:
-        """Checks if all input files are present"""
-        missing_input_files = set()
-        required_files = self.get_required_files(parameters)
+        """Checks if all required input files are present, logs warnings for missing optional files"""        
+        file_metadata = self.get_required_files_with_metadata(parameters)
+        missing_required_files = []
+        missing_optional_files = []
 
-        def add_missing_input_file(path):
+        def check_file(path_and_optional):
+            path, is_optional = path_and_optional
             if not os.path.isfile(path):
-                missing_input_files.add(path)
+                return (path, is_optional)
+            return None
 
         with ThreadPoolExecutor(max_workers=10) as executor:
-            executor.map(add_missing_input_file, required_files)
+            results = executor.map(check_file, file_metadata.items())
+            
+        for result in results:
+            if result is not None:
+                path, is_optional = result
+                if is_optional:
+                    missing_optional_files.append(path)
+                else:
+                    missing_required_files.append(path)
 
-        if missing_input_files:
-            raise MissingInputDataException(f"Following input files are missing: {missing_input_files}")
+        # Only log if there are actually missing optional files and we haven't logged this exact set before
+        if missing_optional_files:
+            logger.debug(f"Optional input files not found (this is expected): {set(missing_optional_files)}")
+        
+        if missing_required_files:
+            raise MissingInputDataException(f"Following input files are missing: {set(missing_required_files)}")
 
     def generate_output(self, parameters) -> dict:
         """Generates the output for this layer"""
@@ -269,8 +290,8 @@ def cache_output(method):
     @wraps(method)
     def wrapper(self: MapLayer, *args, **kwargs):
         # Ensure the object has the required attributes
-        if not hasattr(self, 'get_required_files'):
-            raise AttributeError("Object must have 'get_required_files' method returning a list of file paths.")
+        if not hasattr(self, 'get_required_files_with_metadata'):
+            raise AttributeError("Object must have 'get_required_files_with_metadata' method.")
         if not hasattr(self, 'project') or not isinstance(self.project, str):
             raise AttributeError("Object must have a 'project' attribute specifying the cache directory.")
 
@@ -278,15 +299,23 @@ def cache_output(method):
         if not parameters:
             raise ValueError("Missing 'parameters' argument")
 
+        # Get file metadata to know which files are optional
+        file_metadata = self.get_required_files_with_metadata(parameters)
+
         # Function to check file existence and modification time
-        def get_file_state(file_path):
+        def get_file_state(file_path_and_optional):
+            file_path, is_optional = file_path_and_optional
             if not os.path.exists(file_path):
-                raise FileNotFoundError(f"Input file {file_path} does not exist.")
+                if is_optional:
+                    # Skip optional files that don't exist
+                    return None
+                else:
+                    raise FileNotFoundError(f"Input file {file_path} does not exist.")
             return file_path, os.path.getmtime(file_path)
 
         # Use ThreadPoolExecutor for parallel file state retrieval
         with ThreadPoolExecutor() as executor:
-            file_states = list(executor.map(get_file_state, self.get_required_files(parameters)))
+            file_states = [state for state in executor.map(get_file_state, file_metadata.items()) if state is not None]
 
         # Combine file states and parameters into a single cache key
         cache_key_data = {

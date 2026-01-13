@@ -15,7 +15,7 @@ class DatabaseMapping:
     Configuration for mapping database properties to building properties.
 
     Attributes:
-        file_path: Path to the database CSV file
+        data: DataFrame containing the database properties
         join_column: Column name in building properties to join on (matches 'code' in database)
         fields: List of field names to extract from the database
         column_renames: Optional mapping to rename columns from database (e.g., {"feedstock": "source_hs"})
@@ -28,7 +28,7 @@ class DatabaseMapping:
     Raises:
         ValueError: If column_renames targets are not in fields, or field_defaults keys are not in fields
     """
-    file_path: str
+    data: pd.DataFrame | None
     join_column: str
     fields: List[str]
     column_renames: Optional[Dict[str, str]] = None
@@ -86,14 +86,16 @@ class BuildingPropertiesDatabase:
         errors = []
 
         for component_type, mapping in db_mappings.items():
-            file_path = mapping.file_path
+            prop_data = mapping.data
             join_column = mapping.join_column
             column_renames = mapping.column_renames
             fields = mapping.fields
 
             # Read database and merge
-            prop_data = pd.read_csv(file_path)
+            if prop_data is None:
+                continue
 
+            prop_data.reset_index(inplace=True) # Ensure 'code' is a column for merging
             # Validate join_column values before merging
             print(f"Checking building {component_type} properties...")
             join_column_values = set(building_properties[join_column].unique())
@@ -135,7 +137,7 @@ class BuildingPropertiesDatabase:
                 )
 
                 error_message = (
-                    f"Missing required fields in database '{file_path}' for component '{component_type}':\n"
+                    f"Missing required fields in database for component '{component_type}':\n"
                     f"  Missing fields: {sorted(missing_fields)}\n"
                     f"  Required fields: {sorted(fields)}\n"
                     f"  Available columns in database: {available_columns}\n\n"

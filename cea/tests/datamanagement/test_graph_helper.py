@@ -496,13 +496,13 @@ class TestGraphCorrector(unittest.TestCase):
     def test_validate_steiner_tree_ready_insufficient_terminals(self):
         """Test Steiner tree validation with insufficient terminal nodes."""
         simple_connected_graph = self.create_simple_connected_graph()
-        # Test with only one terminal
+        # Test with empty terminal list
         is_ready, message = GraphCorrector.validate_steiner_tree_ready(
-            simple_connected_graph, [list(simple_connected_graph.nodes())[0]]
+            simple_connected_graph, []
         )
 
         self.assertFalse(is_ready)
-        self.assertIn("at least 2 terminal nodes", message.lower())
+        self.assertIn("at least 1 terminal node", message.lower())
 
     def test_validate_steiner_tree_ready_missing_terminals(self):
         """Test Steiner tree validation with terminals not in graph."""

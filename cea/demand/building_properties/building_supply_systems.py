@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database.assemblies import Supply
 from cea.demand.building_properties.base import BuildingPropertiesDatabase, DatabaseMapping
 
 if TYPE_CHECKING:
@@ -30,27 +31,29 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
 
     @staticmethod
     def get_properties_supply_systems(locator: InputLocator, properties_supply: pd.DataFrame):
+        supply_database = Supply.from_locator(locator)
+
         supply_mappings = {
             'supply heating': DatabaseMapping(
-                file_path=locator.get_database_assemblies_supply_heating(),
+                data=supply_database.heating,
                 join_column='supply_type_hs',
                 fields=['source_hs', 'scale_hs', 'eff_hs'],
                 column_renames={"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"}
             ),
             'supply cooling': DatabaseMapping(
-                file_path=locator.get_database_assemblies_supply_cooling(),
+                data=supply_database.cooling,
                 join_column='supply_type_cs',
                 fields=['source_cs', 'scale_cs', 'eff_cs'],
                 column_renames={"feedstock": "source_cs", "scale": "scale_cs", "efficiency": "eff_cs"}
             ),
             'supply dhw': DatabaseMapping(
-                file_path=locator.get_database_assemblies_supply_hot_water(),
+                data=supply_database.hot_water,
                 join_column='supply_type_dhw',
                 fields=['source_dhw', 'scale_dhw', 'eff_dhw'],
                 column_renames={"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"}
             ),
             'supply electricity': DatabaseMapping(
-                file_path=locator.get_database_assemblies_supply_electricity(),
+                data=supply_database.electricity,
                 join_column='supply_type_el',
                 fields=['source_el', 'scale_el', 'eff_el'],
                 column_renames={"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"}

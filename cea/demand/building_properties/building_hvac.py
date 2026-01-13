@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database.assemblies import HVAC
 from cea.demand.building_properties.base import BuildingPropertiesDatabase, DatabaseMapping
 
 if TYPE_CHECKING:
@@ -91,34 +92,34 @@ class BuildingHVAC(BuildingPropertiesDatabase):
         ``db/Systems/emission_systems.csv``)
 
         """
-
+        hvac_database = HVAC.from_locator(locator)
         hvac_mappings = {
             'hvac heating': DatabaseMapping(
-                file_path=locator.get_database_assemblies_hvac_heating(),
+                data=hvac_database.heating,
                 join_column='hvac_type_hs',
                 # TODO: Remove columns from building hvac properties from database filter
                 fields=['class_hs', 'convection_hs', 'Qhsmax_Wm2', 'dThs_C', 'Tshs0_ahu_C', 'dThs0_ahu_C', 'Th_sup_air_ahu_C',
                         'Tshs0_aru_C', 'dThs0_aru_C', 'Th_sup_air_aru_C', 'Tshs0_shu_C', 'dThs0_shu_C']
             ),
             'hvac cooling': DatabaseMapping(
-                file_path=locator.get_database_assemblies_hvac_cooling(),
+                data=hvac_database.cooling,
                 join_column='hvac_type_cs',
                 fields=['Qcsmax_Wm2', 'dTcs_C', 'Tscs0_ahu_C', 'dTcs0_ahu_C', 'Tc_sup_air_ahu_C',
                         'Tscs0_aru_C', 'dTcs0_aru_C', 'Tc_sup_air_aru_C', 'Tscs0_scu_C', 'dTcs0_scu_C',
                         'class_cs', 'convection_cs']
             ),
             'hvac control': DatabaseMapping(
-                file_path=locator.get_database_assemblies_hvac_controller(),
+                data=hvac_database.controller,
                 join_column='hvac_type_ctrl',
                 fields=['dT_Qhs', 'dT_Qcs']
             ),
             'hvac dhw': DatabaseMapping(
-                file_path=locator.get_database_assemblies_hvac_hot_water(),
+                data=hvac_database.hot_water,
                 join_column='hvac_type_dhw',
                 fields=['class_dhw', 'Tsww0_C', 'Qwwmax_Wm2']
             ),
             'hvac ventilation': DatabaseMapping(
-                file_path=locator.get_database_assemblies_hvac_ventilation(),
+                data=hvac_database.ventilation,
                 join_column='hvac_type_vent',
                 fields=['MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
             )
