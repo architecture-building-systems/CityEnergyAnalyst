@@ -2198,13 +2198,37 @@ get_database_assemblies_envelope_shading:
         description: Type of shading
         primary: true
         type: string
-        unit: NA
+        unit: 'NA'
+        values: alphanumeric
+      shading_location:
+        description: Location of shading device ('interior' or 'exterior' only)
+        type: string
+        unit: '[-]'
+        choice:
+          values:
+            - interior
+            - exterior
+        values: alphanumeric
       rf_sh:
-        description: Shading coefficient when shading device is active. Defined according to ISO 13790.
+        description: Shading coefficient when shading device is active. A value of 
+          1 means that all solar heat is gained. Defined according to ISO 13790. 
+          If exterior blinds incident window radiation will be multiplied by this 
+          factor. If interior blinds the window G-value will be multiplied by 
+          this factor and the incident radiation on the window will be multiplied 
+          by the resulting product.
         type: float
         unit: '[-]'
         min: 0.0
         max: 1.0
+      shading_setpoint_Wm2:
+        description: Activation setpoint for shading in [W/m2]. When the direct
+          solar radiation on a surface exceeds this value, the shading device
+          is activated. Defaults to 300 W/m2.
+        type: float
+        unit: '[W/m2]'
+        values: '{1.0...3500.0}'
+        min: 1.0
+        max: 3500.0
   used_by:
   - demand
   - radiation
@@ -2318,7 +2342,8 @@ get_database_assemblies_envelope_window:
         unit: '[kg CO2-eq/m2]'
         max: 0.0
       G_win:
-        description: Solar heat gain coefficient. Defined according to ISO 13790.
+        description: Solar heat gain coefficient. A value of 1 means all solar heat is 
+          gained. Defined according to ISO 13790.
         type: float
         unit: '[-]'
         min: 0.0

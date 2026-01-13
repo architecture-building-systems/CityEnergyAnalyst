@@ -1,14 +1,14 @@
-description,code,rf_sh
-none,SHADING_AS0,1.0
-rollo,SHADING_AS1,0.08
-venetian blinds,SHADING_AS2,0.15
-average in Germany,SHADING_DE1,0.6
-outside shutters closed,SHADING_DE2,0.1
-outside shutter 75% closed,SHADING_DE3,0.3
-outside blinds 45°,SHADING_DE4,0.25
-outside blinds 10°,SHADING_DE5,0.15
-outside awning parallel,SHADING_DE6,0.25
-outside acanopies/awning,SHADING_DE7,0.5
-inside shading dark colours or high transparency,SHADING_DE8,0.7
-inside shading white ,SHADING_DE9,0.8
-inside shading white low transparency,SHADING_DE10,0.9
+description,code,shading_location,rf_sh,shading_setpoint_Wm2
+none,SHADING_AS0,interior,1.0,300
+rollo,SHADING_AS1,interior,0.08,300
+venetian blinds,SHADING_AS2,interior,0.15,300
+average in Germany,SHADING_DE1,exterior,0.6,300
+outside shutters closed,SHADING_DE2,exterior,0.1,300
+outside shutter 75% closed,SHADING_DE3,exterior,0.3,300
+outside blinds 45°,SHADING_DE4,exterior,0.25,300
+outside blinds 10°,SHADING_DE5,exterior,0.15,300
+outside awning parallel,SHADING_DE6,exterior,0.25,300
+outside acanopies/awning,SHADING_DE7,exterior,0.5,300
+inside shading dark colours or high transparency,SHADING_DE8,interior,0.7,300
+inside shading white ,SHADING_DE9,interior,0.8,300
+inside shading white low transparency,SHADING_DE10,interior,0.9,300
