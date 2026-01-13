@@ -22,7 +22,9 @@ import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
+import cea.utilities.workerstream
+from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
+                           THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
@@ -1592,8 +1594,23 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
             darcy[rey] = 0.316 * reynolds[rey] ** -0.25
         else:
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=10E-6 - 0.05
-            darcy[rey] = 1.325 * np.log(
-                pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
+            # Validate logarithm argument
+            log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9
+            if log_arg <= 0:
+                raise ValueError(
+                    f"Invalid argument for logarithm in Swamee-Jain friction factor calculation!\n"
+                    f"Logarithm argument: {log_arg:.6e}\n"
+                    f"Pipe roughness: {pipe_roughness_m:.6e} m\n"
+                    f"Pipe diameter: {pipe_diameter_m[rey]:.6f} m\n"
+                    f"Reynolds number: {reynolds[rey]:.2f}\n\n"
+                    f"For valid Swamee-Jain calculation:\n"
+                    f"- Pipe roughness must be > 0 (typical: 1e-6 to 0.05 m)\n"
+                    f"- Pipe diameter must be > 0\n"
+                    f"- Reynolds number should be 5000 - 1e8\n\n"
+                    f"**Check the pipe properties and flow conditions."
+                )
+
+            darcy[rey] = 1.325 * np.log(log_arg) ** (-2)
 
     return darcy
 
@@ -1611,8 +1628,27 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     """
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
 
+    # Validate denominator for Reynolds number calculation
+    denominator = math.pi * kinematic_viscosity_m2s * pipe_diameter_m
+
+    # Check for invalid denominator values
+    if np.any(np.abs(denominator) < 1e-15):
+        min_denominator = np.min(np.abs(denominator))
+        raise ValueError(
+            f"Invalid configuration for Reynolds number calculation!\n"
+            f"Denominator (π * ν * D): minimum absolute value = {min_denominator:.6e}\n"
+            f"Kinematic viscosity (ν): {np.mean(kinematic_viscosity_m2s):.6e} m²/s (mean)\n"
+            f"Pipe diameter (D): {np.mean(pipe_diameter_m):.6f} m (mean)\n\n"
+            f"For valid Reynolds calculation:\n"
+            f"- Kinematic viscosity must be > 0 (typical: 1e-6 m²/s for water)\n"
+            f"- Pipe diameter must be > 0 (typical: 0.01-1.0 m)\n\n"
+            f"**Check:\n"
+            f"  - Temperature values (used for viscosity calculation)\n"
+            f"  - Pipe diameter values in the thermal network"
+        )
+
     reynolds = np.nan_to_num(
-        4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
+        4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / denominator)
     # necessary if statement to make sure output is an array type, as input formats of files can vary
     if hasattr(reynolds[0], '__len__'):
         reynolds = reynolds[0]
@@ -2422,12 +2458,12 @@ def solve_network_temperatures(thermal_network, t):
                 max_node_dt = max(abs(node_dt).dropna(axis=1).values[0])
                 # max supply node temperature difference
 
-            if max_node_dt > 1 and iteration < 10:
+            if max_node_dt > THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K and iteration < 10:
                 # update the substation supply temperature and re-enter the iteration
                 t_substation_supply__k = t_substation_supply_2
                 # print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
-            elif max_node_dt > 10 and 20 > iteration >= 10:
+            elif max_node_dt > 10 * THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K and 20 > iteration >= 10:
                 # FIXME: This is to avoid endless iteration, other design strategies should be implemented.
                 # update the substation supply temperature and re-enter the iteration
                 t_substation_supply__k = t_substation_supply_2
@@ -2450,7 +2486,7 @@ def solve_network_temperatures(thermal_network, t):
 
                 # exit iteration
                 flag = 1
-                if not max_node_dt < 1:
+                if not max_node_dt < THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K:
                     # print('supply temperature converged after', iteration, 'iterations.', 'dT:', max_node_dT)
                     # else:
                     print('Warning: supply temperature did not converge after', iteration, 'iterations at timestep', t,
@@ -3215,18 +3251,78 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     k_all = []
     for pipe_number, pipe in enumerate(L_pipe.index):
         # calculate heat resistances, equation (3) in Wang et al., 2016
-        R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe] / pipe_properties_df.loc['D_int_m', pipe]) / (
-                2 * math.pi * conductivity_pipe)  # [m*K/W]
+        D_ext = pipe_properties_df.loc['D_ext_m', pipe]
+        D_int = pipe_properties_df.loc['D_int_m', pipe]
+
+        # Validate pipe dimensions for logarithm calculation
+        if D_int <= 0 or D_ext <= 0:
+            raise ValueError(
+                f"Invalid pipe dimensions for thermal resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"Internal diameter (D_int): {D_int:.6f} m\n"
+                f"External diameter (D_ext): {D_ext:.6f} m\n\n"
+                f"All pipe diameters must be > 0.\n"
+                f"**Check the pipe properties in the thermal network."
+            )
+
+        if D_ext <= D_int:
+            raise ValueError(
+                f"Invalid pipe dimensions - external diameter must be > internal diameter!\n"
+                f"Pipe: {pipe}\n"
+                f"Internal diameter (D_int): {D_int:.6f} m\n"
+                f"External diameter (D_ext): {D_ext:.6f} m\n\n"
+                f"**Check the pipe properties in the thermal network."
+            )
+
+        R_pipe = np.log(D_ext / D_int) / (2 * math.pi * conductivity_pipe)  # [m*K/W]
+
         if network_type == 'DC':
             D_ins = 0.25 * pipe_properties_df.loc[
                 'D_ins_m', pipe]  # approximation based on COOLMANT CLM 2.0 Pipe catalogue
         else:
             D_ins = pipe_properties_df.loc['D_ins_m', pipe]
-        R_insulation = np.log(
-            (D_ins + pipe_properties_df.loc['D_ext_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
+
+        # Validate insulation dimensions for logarithm calculation
+        D_outer_with_ins = D_ins + D_ext
+        if D_outer_with_ins <= D_ext:
+            raise ValueError(
+                f"Invalid insulation configuration!\n"
+                f"Pipe: {pipe}\n"
+                f"External diameter (D_ext): {D_ext:.6f} m\n"
+                f"Insulation thickness (D_ins): {D_ins:.6f} m\n"
+                f"Outer diameter with insulation: {D_outer_with_ins:.6f} m\n\n"
+                f"Insulation thickness must be > 0.\n"
+                f"**Check the pipe insulation properties in the thermal network."
+            )
+
+        R_insulation = np.log(D_outer_with_ins / D_ext) / (
                                2 * math.pi * conductivity_insulation)  # [m*K/W]
-        a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
-        R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
+
+        # Validate ground resistance calculation
+        D_ins_full = pipe_properties_df.loc['D_ins_m', pipe]
+        if D_ins_full <= 0:
+            raise ValueError(
+                f"Invalid insulation diameter for ground resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"Insulation diameter (D_ins_m): {D_ins_full:.6f} m\n\n"
+                f"Insulation diameter must be > 0.\n"
+                f"**Check the pipe insulation properties in the thermal network."
+            )
+
+        a = 2 * network_depth / D_ins_full
+        log_arg_ground = a + (a ** 2 - 1) ** 0.5
+        if log_arg_ground <= 0:
+            raise ValueError(
+                f"Invalid argument for logarithm in ground resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"Network depth: {network_depth:.2f} m\n"
+                f"Insulation diameter: {D_ins_full:.6f} m\n"
+                f"a parameter: {a:.6f}\n"
+                f"Logarithm argument: {log_arg_ground:.6e}\n\n"
+                f"**Check network depth and insulation diameter values."
+            )
+
+        R_ground = np.log(log_arg_ground) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance
         if np.isclose(alpha_th[pipe_number], 0):
             R_conv = 0.2  # case with no massflow, avoids divide by 0 error

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_MASS_FLOW_K
 from cea.constants import HOURS_IN_YEAR, P_WATER_KGPERM3
 from cea.demand import control_heating_cooling_systems, constants
 from cea.utilities import physics
@@ -295,8 +295,16 @@ def calc_Eauxf_hs_dis(Qhs_sys, Qhs_sys0, deltaP_kPa, b, ts, tr):
 
     # the power of the pump in Watts
     Cpump = 0.97
-    if Qhs_sys > 0 and (ts - tr) != 0.0:
-        m_kgs = (Qhs_sys / ((ts - tr) * HEAT_CAPACITY_OF_WATER_JPERKGK))
+    if Qhs_sys > 0:
+        # Validate temperature difference for mass flow calculation
+        temp_diff = ts - tr
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+            # When temperature difference is negligible, no water flow is needed
+            # This can occur with very small heating loads where heat exchanger operates with minimal temperature drop
+            # Physically correct behavior: no flow = no pump energy
+            return 0.0
+
+        m_kgs = (Qhs_sys / (temp_diff * HEAT_CAPACITY_OF_WATER_JPERKGK))
         Phydr_kW = deltaP_kPa * (m_kgs / P_WATER_KGPERM3)
         feff = (1.5 * b) / (0.015 * (Phydr_kW) ** 0.74 + 0.4)
         epmp_eff = feff * Cpump * 1 ** -0.94
@@ -313,8 +321,16 @@ def calc_Eauxf_cs_dis(Qcs_sys, Qcs_sys0, deltaP_kPa, b, ts, tr):
     # for Cooling system
     # the power of the pump in Watts
     Cpump = 0.97
-    if Qcs_sys < 0 and (ts - tr) != 0:
-        m_kgs = (Qcs_sys / ((ts - tr) * HEAT_CAPACITY_OF_WATER_JPERKGK))
+    if Qcs_sys < 0:
+        # Validate temperature difference for mass flow calculation
+        temp_diff = ts - tr
+        if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
+            # When temperature difference is negligible, no water flow is needed
+            # This can occur with very small cooling loads where heat exchanger operates with minimal temperature drop
+            # Physically correct behavior: no flow = no pump energy
+            return 0.0
+
+        m_kgs = (Qcs_sys / (temp_diff * HEAT_CAPACITY_OF_WATER_JPERKGK))
         Phydr_kW = deltaP_kPa * (m_kgs / P_WATER_KGPERM3)
         feff = (1.5 * b) / (0.015 * (Phydr_kW) ** 0.74 + 0.4)
         epmp_eff = feff * Cpump * 1 ** -0.94
