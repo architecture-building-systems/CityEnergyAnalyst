@@ -8,7 +8,6 @@ import os
 import geopandas as gpd
 import pandas as pd
 
-from cea.config import Configuration
 from cea.import_export.result_summary import (
     get_emission_context,
     process_building_summary,

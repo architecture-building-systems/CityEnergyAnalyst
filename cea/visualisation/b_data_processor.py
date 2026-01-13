@@ -6,14 +6,12 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 import numpy as np
 import pandas as pd
 
-from cea.config import Configuration
 from cea.import_export.result_summary import (
     get_emission_context,
     month_hours,
     month_names,
     season_mapping,
 )
-from cea.inputlocator import InputLocator
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
