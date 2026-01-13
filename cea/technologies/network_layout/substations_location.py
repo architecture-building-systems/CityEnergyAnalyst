@@ -3,10 +3,6 @@ This script calculates the location of substations in case we do not have it.
 it is estimated as the centroid of buildings.
 """
 
-
-
-
-
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
 from shapely import Point
@@ -22,21 +18,19 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_building_centroids(input_buildings_shp,
-                            temp_path_building_centroids_shp,
-                            list_district_scale_buildings,
-                            plant_buildings,
-                            consider_only_buildings_with_demand=False,
-                            type_network="DH",
-                            total_demand=False):
+def calc_building_centroids(zone_df: gdf,
+                            list_district_scale_buildings: list[str],
+                            plant_buildings: list[str],
+                            consider_only_buildings_with_demand: bool,
+                            type_network: str,
+                            total_demand_path: str):
     # # get coordinate system and project to WSG 84
-    zone_df = gdf.from_file(input_buildings_shp)
     zone_df = zone_df.loc[zone_df['name'].isin(list_district_scale_buildings + plant_buildings)]
     zone_df = zone_df.reset_index(drop=True)
 
     # get only buildings with a demand, send out a message if there are less than 2 buildings.
     if consider_only_buildings_with_demand:
-        total_demand = pd.read_csv(total_demand)
+        total_demand = pd.read_csv(total_demand_path)
         if type_network == "DH":
             field = "QH_sys_MWhyr"
         elif type_network == "DC":
@@ -60,9 +54,6 @@ def calc_building_centroids(input_buildings_shp,
 
     # # decrease the number of units of the points
     building_centroids_df = simplify_points_accurracy(points, SHAPEFILE_TOLERANCE, points.crs)
-
-    # saving result
-    building_centroids_df.to_file(temp_path_building_centroids_shp, driver='ESRI Shapefile')
 
     return building_centroids_df
 

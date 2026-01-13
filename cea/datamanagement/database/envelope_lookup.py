@@ -103,12 +103,22 @@ class EnvelopeLookup:
         if pd.isna(val):
             return None
         if field in self._INT_FIELDS:
-            return int(val)
+            try:
+                return int(float(val))
+            except (ValueError, TypeError) as e:
+                raise ValueError(
+                    f"Cannot convert value '{val}' to integer for field '{field}' "
+                    f"in database '{db}' for code '{code}'. Original error: {e}"
+                )
         if field in self._FLOAT_FIELDS:
             try:
                 return float(val)
-            except Exception:
-                pass
+            except (ValueError, TypeError) as e:
+                raise ValueError(
+                    f"Cannot convert value '{val}' to float for field '{field}' "
+                    f"in database '{db}' for code '{code}'. Please check the envelope "
+                    f"database file for malformed numeric values. Original error: {e}"
+                )
         return val
 
     def _col(self, db: str, field: str) -> str:

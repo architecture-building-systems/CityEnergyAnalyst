@@ -156,11 +156,12 @@ class BaseDatabase(Base):
                 config = {}
 
                 # Get columns from schema if available
-                columns = self.schema().get(field.name, {}).get('columns', None)
+                columns = self.schema().get(field.name, {}).get('schema', {}).get('columns', None)
                 if columns and isinstance(columns, dict):
                     config['columns'] = list(columns.keys())
                 
-                os.makedirs(os.path.dirname(path), exist_ok=True)
+                if value.index.name in config.get('columns', []):
+                    config['columns'].remove(value.index.name)
                 value.to_csv(path, **config)
             elif isinstance(value, dict):
                 # Assume is _library with special index handling
