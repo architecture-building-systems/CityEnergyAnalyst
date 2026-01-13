@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from cea.datamanagement.database.assemblies import Envelope
 from cea.demand.building_properties.base import BuildingPropertiesDatabase
 
 if TYPE_CHECKING:
@@ -50,46 +51,47 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
 
         """
         # TODO: Get mappings from schema or similar to avoid hardcoding
-        # Database mappings: (locator_method, join_column_name, columns_to_extract)
+        # Database mappings: (db_dataframe, join_column_name, columns_to_extract)
+        envelope_database = Envelope.from_locator(locator)
         db_mappings = {
             'envelope construction': (
-                locator.get_database_assemblies_envelope_mass(),
+                envelope_database.mass,
                 'type_mass',
                 None,
                 ['Cm_Af']
             ),
             'envelope leakage': (
-                locator.get_database_assemblies_envelope_tightness(),
+                envelope_database.tightness,
                 'type_leak',
                 None,
                 ['n50']
             ),
             'envelope roof': (
-                locator.get_database_assemblies_envelope_roof(),
+                envelope_database.roof,
                 'type_roof',
                 None,
                 ['e_roof', 'a_roof', 'U_roof']
             ),
             'envelope wall': (
-                locator.get_database_assemblies_envelope_wall(),
+                envelope_database.wall,
                 'type_wall',
                 None,
                 ['e_wall', 'a_wall', 'U_wall']
             ),
             'envelope window': (
-                locator.get_database_assemblies_envelope_window(),
+                envelope_database.window,
                 'type_win',
                 None,
                 ['e_win', 'G_win', 'U_win', 'F_F']
             ),
             'envelope shading': (
-                locator.get_database_assemblies_envelope_shading(),
+                envelope_database.shading,
                 'type_shade',
                 None,
                 ['rf_sh']
             ),
             'envelope floor': (
-                locator.get_database_assemblies_envelope_floor(),
+                envelope_database.floor,
                 'type_base',
                 None,
                 ['U_base'])
