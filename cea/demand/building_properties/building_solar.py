@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from cea.constants import HOURS_IN_YEAR
+from cea.demand.constants import FLOAT_TOLERANCE
 from cea.demand.sensible_loads import calc_hr, calc_hc
 from cea.technologies import blinds
 from cea.technologies.blinds import ShadingLocation
@@ -155,10 +156,11 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         
         # subtract frame area
         actual_window_area_m2 = window_area_m2 * (1 - frame_factor)
-        
-        if actual_window_area_m2 == 0:
+
+        # use tolerance to avoid division by near-zero values
+        if actual_window_area_m2 <= FLOAT_TOLERANCE:
             continue  # skip to next direction if no window area
-        
+
         # convert radiation data to irradiance intensity on window [W/m2]
         I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / actual_window_area_m2
         
