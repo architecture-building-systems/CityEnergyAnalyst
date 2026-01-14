@@ -31,7 +31,10 @@ Var LauncherExtension
     DetailPrint '${DescriptionStr} returned $0'
     ${If} "$0" != "0"
         ${If} "$0" == "-1073741515"
-            Abort "Missing Visual C++ Redistributable (error 0xC0000135). Please install it from ${VC_REDIST_URL} and try again."
+            Abort "Missing Visual C++ Redistributable (error 0xC0000135).$\r$\n$\r$\n\
+Please install it from:$\r$\n\
+${VC_REDIST_URL}$\r$\n$\r$\n\
+Then try the installation again."
         ${Else}
             Abort "${ErrorMsg}"
         ${EndIf}
@@ -122,6 +125,12 @@ Function BaseInstallationSection
         StrCpy $LauncherExtension "bat"  # Fallback to batch
     ${EndIf}
 
+    # check if micromamba works first before proceeding
+    DetailPrint "Checking requirements"
+    File "dependencies\micromamba.exe"
+    # create hook for cmd shell
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "run micromamba command" "Installation failed - see Details"
+
     # Install GUI first so that rollback would not be as painful in case of failure
     # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
     File "gui_setup.exe"
@@ -145,9 +154,6 @@ Function BaseInstallationSection
     Nsis7z::ExtractWithDetails "$INSTDIR\dependencies\cea-env.7z" "Installing CEA dependencies %s..."
     Delete "$INSTDIR\dependencies\cea-env.7z"
     SetOutPath "$INSTDIR"
-
-    # create hook for cmd shell
-    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "run micromamba command" "Installation failed - see Details"
 
     # fix pip due to change in python path
     !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall' "run micromamba command" "Installation failed - see Details"
