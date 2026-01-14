@@ -112,7 +112,10 @@ Function .onInstFailed
         Delete /REBOOTOK "$INSTDIR\gui_setup.exe"
     ${EndIf}
 
-
+    # remove partially installed CEA Desktop
+    ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        RMDir /r /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+    ${EndIf}
 FunctionEnd
 
 Function BaseInstallationSection
