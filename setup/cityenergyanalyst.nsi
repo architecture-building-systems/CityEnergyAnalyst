@@ -41,6 +41,23 @@ Then try the installation again."
     ${EndIf}
 !macroend
 
+; Macro to uninstall CEA Desktop, with forced removal as fallback
+!macro UninstallCEADesktop
+    ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe"
+            DetailPrint "Uninstalling ${CEA_GUI_NAME}"
+            nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
+            Pop $0
+            DetailPrint "Uninstaller returned: $0"
+            Sleep 1000
+        ${EndIf}
+        ; Force remove folder if uninstaller failed or did not exist
+        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+            RMDir /r /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ${EndIf}
+    ${EndIf}
+!macroend
+
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 SetCompressor /FINAL lzma
@@ -113,19 +130,7 @@ Function .onInstFailed
     ${EndIf}
 
     # remove partially installed CEA Desktop
-    ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
-        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe"
-            DetailPrint "Uninstalling partially installed CEA Desktop"
-            nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
-            Pop $0
-            DetailPrint "Uninstaller returned: $0"
-            Sleep 1000
-        ${EndIf}
-        # remove folder if uninstaller failed or did not exist
-        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
-            RMDir /r /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
-        ${EndIf}
-    ${EndIf}
+    !insertmacro UninstallCEADesktop
 FunctionEnd
 
 Function BaseInstallationSection
@@ -250,20 +255,13 @@ Function un.UninstallSection
     Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
     Delete /REBOOTOK "$DESKTOP\CEA Desktop.lnk"
 
-    ; Uninstall CEA Desktop silently
-    DetailPrint 'Uninstalling ${CEA_GUI_NAME}'
-    nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
-    Pop $0
-    DetailPrint "Uninstaller returned: $0"
-    
-    ; Optional: Add a small delay to ensure all processes are terminated
-    Sleep 1000
+    ; Uninstall CEA Desktop
+    !insertmacro UninstallCEADesktop
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
     Delete /REBOOTOK "$INSTDIR\CEA Desktop.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
-    RMDir /R /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
     Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"
