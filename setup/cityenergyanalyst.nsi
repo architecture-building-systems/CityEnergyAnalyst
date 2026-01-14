@@ -29,7 +29,11 @@ Var LauncherExtension
     Pop $0  # capture exit code
     DetailPrint '${DescriptionStr} returned $0'
     ${If} "$0" != "0"
-        Abort "${ErrorMsg}"
+        ${If} "$0" == "-1073741515"
+            Abort "Missing Visual C++ Redistributable (error 0xC0000135). Please install it from https://aka.ms/vs/17/release/vc_redist.x64.exe and try again."
+        ${Else}
+            Abort "${ErrorMsg}"
+        ${EndIf}
     ${EndIf}
 !macroend
 
