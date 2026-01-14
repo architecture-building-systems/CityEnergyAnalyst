@@ -31,10 +31,8 @@ Var LauncherExtension
     DetailPrint '${DescriptionStr} returned $0'
     ${If} "$0" != "0"
         ${If} "$0" == "-1073741515"
-            Abort "Missing Visual C++ Redistributable (error 0xC0000135).$\r$\n$\r$\n\
-Please install it from:$\r$\n\
-${VC_REDIST_URL}$\r$\n$\r$\n\
-Then try the installation again."
+            DetailPrint "Install using ${VC_REDIST_URL} and retry."
+            Abort "Missing Visual C++ Redistributable (error 0xC0000135)."
         ${Else}
             Abort "${ErrorMsg}"
         ${EndIf}
