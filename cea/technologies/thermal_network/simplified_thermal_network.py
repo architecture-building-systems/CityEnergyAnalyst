@@ -143,7 +143,33 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, 
         raise ValueError("Pipe catalog is empty. Please check the thermal grid database.")
 
     volume_flow_m3s_corrected_to_design = volume_flow_m3s * peak_load_percentage / 100
-    diameter_m = math.sqrt((volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi))
+
+    # Validate parameters for diameter calculation
+    if velocity_ms <= 0:
+        raise ValueError(
+            f"Invalid velocity for pipe diameter calculation!\n"
+            f"Velocity: {velocity_ms:.6f} m/s\n\n"
+            f"Velocity must be > 0.\n"
+            f"Typical values: 0.5-3.0 m/s for district networks\n\n"
+            f"**Check the peak_load_velocity parameter in the thermal network configuration."
+        )
+
+    sqrt_arg = (volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi)
+    if sqrt_arg < 0:
+        raise ValueError(
+            f"Invalid argument for square root in pipe diameter calculation!\n"
+            f"Volume flow rate (corrected): {volume_flow_m3s_corrected_to_design:.6e} m³/s\n"
+            f"Velocity: {velocity_ms:.6f} m/s\n"
+            f"Square root argument: {sqrt_arg:.6e}\n\n"
+            f"For valid diameter calculation:\n"
+            f"- Volume flow rate must be >= 0\n"
+            f"- Velocity must be > 0\n\n"
+            f"**Check:\n"
+            f"  - Original volume flow: {volume_flow_m3s:.6e} m³/s\n"
+            f"  - Peak load percentage: {peak_load_percentage:.2f}%"
+        )
+
+    diameter_m = math.sqrt(sqrt_arg)
 
     # Calculate differences and find the index of the minimum difference
     differences = (pipe_catalog['D_int_m'] - diameter_m).abs()
@@ -388,6 +414,41 @@ def calc_linear_thermal_loss_coefficient(diameter_ext_m, diameter_int_m, diamete
     r_s_m = diameter_insulation_m / 2
     k_pipe_WpermK = 58.7  # steel pipe
     k_ins_WpermK = 0.059  # calcium silicate insulation
+
+    # Validate radii for logarithm calculations
+    if r_in_m <= 0 or r_out_m <= 0 or r_s_m <= 0:
+        raise ValueError(
+            f"Invalid pipe dimensions for thermal loss calculation!\n"
+            f"Inner radius (r_in): {r_in_m:.6f} m\n"
+            f"Outer radius (r_out): {r_out_m:.6f} m\n"
+            f"Insulation radius (r_s): {r_s_m:.6f} m\n\n"
+            f"All radii must be > 0.\n\n"
+            f"**Check pipe diameter values:\n"
+            f"  - Internal diameter: {diameter_int_m:.6f} m\n"
+            f"  - External diameter: {diameter_ext_m:.6f} m\n"
+            f"  - Insulation diameter: {diameter_insulation_m:.6f} m"
+        )
+
+    if r_out_m <= r_in_m:
+        raise ValueError(
+            f"Invalid pipe dimensions - outer radius must be > inner radius!\n"
+            f"Inner radius (r_in): {r_in_m:.6f} m\n"
+            f"Outer radius (r_out): {r_out_m:.6f} m\n\n"
+            f"**Check pipe diameter values:\n"
+            f"  - Internal diameter: {diameter_int_m:.6f} m\n"
+            f"  - External diameter: {diameter_ext_m:.6f} m"
+        )
+
+    if r_s_m <= r_out_m:
+        raise ValueError(
+            f"Invalid pipe dimensions - insulation radius must be > outer radius!\n"
+            f"Outer radius (r_out): {r_out_m:.6f} m\n"
+            f"Insulation radius (r_s): {r_s_m:.6f} m\n\n"
+            f"**Check pipe diameter values:\n"
+            f"  - External diameter: {diameter_ext_m:.6f} m\n"
+            f"  - Insulation diameter: {diameter_insulation_m:.6f} m"
+        )
+
     resistance_mKperW = ((math.log(r_out_m / r_in_m) / k_pipe_WpermK) + (math.log(r_s_m / r_out_m) / k_ins_WpermK))
     K_WperKm = 2 * math.pi / resistance_mKperW
     return K_WperKm
