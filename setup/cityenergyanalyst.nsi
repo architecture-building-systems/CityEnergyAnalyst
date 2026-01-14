@@ -4,6 +4,7 @@ Unicode true
 !define VER $%CEA_VERSION%
 !define CEA_GUI_NAME "CEA-4 Desktop"  # references productName from GUI package.json. ensure it is the same
 !define CEA_GUI_INSTALL_FOLDER "app"
+!define VC_REDIST_URL "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
@@ -30,7 +31,7 @@ Var LauncherExtension
     DetailPrint '${DescriptionStr} returned $0'
     ${If} "$0" != "0"
         ${If} "$0" == "-1073741515"
-            Abort "Missing Visual C++ Redistributable (error 0xC0000135). Please install it from https://aka.ms/vs/17/release/vc_redist.x64.exe and try again."
+            Abort "Missing Visual C++ Redistributable (error 0xC0000135). Please install it from ${VC_REDIST_URL} and try again."
         ${Else}
             Abort "${ErrorMsg}"
         ${EndIf}
