@@ -145,7 +145,10 @@ Function BaseInstallationSection
 
     # check if micromamba works first before proceeding
     DetailPrint "Checking requirements"
+    CreateDirectory "$INSTDIR\dependencies"
+    SetOutPath "$INSTDIR\dependencies"
     File "dependencies\micromamba.exe"
+    SetOutPath "$INSTDIR"
     # create hook for cmd shell
     !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "run micromamba command" "Installation failed - see Details"
 
@@ -166,6 +169,7 @@ Function BaseInstallationSection
     Delete "$INSTDIR\gui_setup.exe"
 
     File "${WHEEL_FILE}"
+    # Note: overwrites micromamba.exe extracted earlier for requirements check
     File /r "dependencies"
 
     SetOutPath "$INSTDIR\dependencies"
