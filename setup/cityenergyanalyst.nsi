@@ -148,7 +148,7 @@ Function BaseInstallationSection
     File "dependencies\micromamba.exe"
     SetOutPath "$INSTDIR"
     # create hook for cmd shell
-    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "run micromamba command" "Installation failed - see Details"
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "Setup micromamba" "Error setting up micromamba"
 
     # Install GUI first so that rollback would not be as painful in case of failure
     # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
@@ -176,11 +176,11 @@ Function BaseInstallationSection
     SetOutPath "$INSTDIR"
 
     # fix pip due to change in python path
-    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall' "run micromamba command" "Installation failed - see Details"
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall' "Checking pip" "Could not setup pip - see Details"
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"' "run micromamba command" "Could not install CityEnergyAnalyst ${VER} - see Details"
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"' "Installing CityEnergyAnalyst" "Could not install CityEnergyAnalyst ${VER} - see Details"
     Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
