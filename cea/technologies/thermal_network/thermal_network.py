@@ -3511,10 +3511,6 @@ def check_heating_cooling_demand(locator, config):
         if not buildings_name_with_cooling:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
-# ============================
-# test
-# ============================
-
 
 def main(config: cea.config.Configuration):
     """

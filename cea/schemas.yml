@@ -2198,17 +2198,17 @@ get_database_assemblies_envelope_shading:
         description: Type of shading
         primary: true
         type: string
-        unit: 'NA'
+        unit: NA
         values: alphanumeric
       shading_location:
         description: Location of shading device ('interior' or 'exterior' only)
         type: string
         unit: '[-]'
+        nullable: true
         choice:
           values:
             - interior
             - exterior
-        values: alphanumeric
       rf_sh:
         description: Shading coefficient when shading device is active. A value of 
           1 means that all solar heat is gained. Defined according to ISO 13790. 
@@ -2229,6 +2229,7 @@ get_database_assemblies_envelope_shading:
         values: '{1.0...3500.0}'
         min: 1.0
         max: 3500.0
+        default: 300.0
   used_by:
   - demand
   - radiation

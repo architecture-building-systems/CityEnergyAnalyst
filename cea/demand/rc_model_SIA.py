@@ -753,7 +753,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, 
     Ea = tsd.electrical_loads.Ea[t] * min(bpr.rc_model.Af / bpr.rc_model.Aef, 1.0)  # account for a proportion of internal gains
     Epro = tsd.electrical_loads.Epro[t]
     # account for a proportion of solar gains. This is very simplified for now.
-    I_sol = tsd.solar.I_sol_and_I_rad[t] * np.sqrt(bpr.rc_model.Hs_ag)
+    I_sol = tsd.solar.I_sol_and_I_rad[t] * bpr.rc_model.Hs_ag
     T_ext = tsd.weather.T_ext[t]
     theta_ve_mech = tsd.rc_model_temperatures.theta_ve_mech[t]
 
