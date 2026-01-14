@@ -114,7 +114,17 @@ Function .onInstFailed
 
     # remove partially installed CEA Desktop
     ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
-        RMDir /r /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe"
+            DetailPrint "Uninstalling partially installed CEA Desktop"
+            nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
+            Pop $0
+            DetailPrint "Uninstaller returned: $0"
+            Sleep 1000
+        ${EndIf}
+        # remove folder if uninstaller failed or did not exist
+        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+            RMDir /r /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ${EndIf}
     ${EndIf}
 FunctionEnd
 
