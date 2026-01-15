@@ -175,7 +175,7 @@ Renewable Energy Potential Assessment:
 
 Energy Demand Forecasting:
   - name: occupancy
-    label: "Energy Demand Part 1: building occupancy"
+    label: "Energy Demand Part 1: Building Occupancy"
     short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
@@ -193,7 +193,7 @@ Energy Demand Forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: "Energy Demand Part 2: load modelling"
+    label: "Energy Demand Part 2: Load Modelling"
     short_description: Forecast end-use energy loads and final energy consumption by carrier
     description: |
       This Feature uses CEA models to forecast building energy demand at hourly resolution.
@@ -265,6 +265,59 @@ Thermal Network Design:
       - [get_database_components_distribution_thermal_grid]
       - [get_weather_file]
 
+Scenario Evolution Planning:
+  - name: district-events
+    label: "Part 1: Create Event"
+    short_description: Setup district-level construction renovation district-events
+    description: |
+      This Feature defines district-level construction and renovation events by updating the district timeline log file.
+      An event is when a set of buildings (categorized by archetype) changes its construction properties. After the event year, 
+      all buildings of the affected archetypes will have their construction properties updated in the scenario for all subsequent years, until the next event (if any).
+
+      This Feature does **not** create or update `state_{year}` scenario folders. Use the "District States From Log" Feature to materialise state scenarios.
+
+      **[Note]**: Only the input parameters will be updated. If you don't want certain parameters to be changed, keep the fields empty.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.state_scenario
+    parameters: ['general:scenario', district-events]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: district-events-build
+    label: "Part 2: Bake Scenario Evolution States"
+    short_description: Create or update state-in-time scenarios from the district timeline log.
+    description: |
+      This Feature materialises state-in-time scenarios (`state_{year}` folders) based on the `district_timeline_log.yml`.
+
+      Use this after you have finished defining district events. It can create missing state folders or reconcile existing ones.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.build_states_from_log
+    parameters: ['general:scenario', district-events-build]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: state-simulations
+    label: "Part 3: Simulate"
+    short_description: Run simulations for all state-in-time years defined in the district_timeline_states folder.
+    description: |
+      This Feature runs simulations for all state-in-time years defined in the `district_timeline_states` folder.
+      It runs:
+      - Radiation
+      - Occupancy-helper
+      - Demand
+      - Photovoltaic
+      - Emissions
+      
+      The parameters of these simulations must be saved in their respective dashboards before running this Feature.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.state_simulations
+    parameters: ['general:scenario', state-simulations]
 
 Life Cycle Analysis:
 
@@ -312,59 +365,6 @@ Life Cycle Analysis:
     input-files:
       - [get_total_demand]
       - [get_building_supply]
-
-  - name: district-events
-    label: District Event Setup
-    short_description: Setup district-level construction renovation district-events
-    description: |
-      This Feature defines district-level construction and renovation events by updating the district timeline log file.
-      A event is when a set of buildings (categorized by archetype) changes its construction properties. After the event year, 
-      all buildings of the affected archetypes will have their construction properties updated in the scenario for all subsequent years, until the next event (if any).
-
-      This Feature does **not** create or update `state_{year}` scenario folders. Use the "District States From Log" Feature to materialise state scenarios.
-
-      **[Note]**: Only the input parameters will be updated. If you don't want certain parameters to be changed, keep the fields empty.
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.state_scenario
-    parameters: ['general:scenario', district-events]
-    input-files:
-      - [get_input_folder]
-      - [get_zone_geometry]
-      - [get_db4_folder]
-      - [get_building_properties_folder]
-
-  - name: district-events-build
-    label: District States From Log
-    short_description: Create or update state-in-time scenarios from the district timeline log.
-    description: |
-      This Feature materialises state-in-time scenarios (`state_{year}` folders) based on the `district_timeline_log.yml`.
-
-      Use this after you have finished defining district events. It can create missing state folders or reconcile existing ones.
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.build_states_from_log
-    parameters: ['general:scenario', district-events-build]
-    input-files:
-      - [get_input_folder]
-      - [get_zone_geometry]
-      - [get_db4_folder]
-      - [get_building_properties_folder]
-
-  - name: state-simulations
-    label: State-in-Time Simulations
-    short_description: Run simulations for all state-in-time years defined in the district_timeline_states folder.
-    description: |
-      This Feature runs simulations for all state-in-time years defined in the `district_timeline_states` folder.
-      It runs:
-      - Radiation
-      - Occupancy-helper
-      - Demand
-      - Photovoltaic
-      - Emissions
-      
-      The parameters of these simulations must be saved in their respective dashboards before running this Feature.
-    interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.state_simulations
-    parameters: ['general:scenario', state-simulations]
 
 
 Energy Supply System Optimisation:
@@ -489,7 +489,7 @@ Utilities:
     short_description: Verify and migrate inputs to CEA-4 format
     description: |
       This Feature verifies the inputs are in the correct format for CEA-4.
-      It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      It also migrates Late-CEA-3 inputs data - Note the process of migration is not reversible.
 
     interfaces: [cli, dashboard]
     module: cea.datamanagement.format_helper.format_helper
