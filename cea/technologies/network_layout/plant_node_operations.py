@@ -5,6 +5,7 @@ Utilities for creating and managing plant nodes in thermal networks.
 Handles both auto-generated and user-defined network layouts.
 """
 
+from enum import StrEnum
 import math
 import pandas as pd
 from geopandas import GeoDataFrame as gdf
@@ -26,60 +27,67 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_services_from_plant_type(plant_type):
+class PlantServices(StrEnum):
+    SPACE_HEATING = 'space_heating'
+    DOMESTIC_HOT_WATER = 'domestic_hot_water'
+    SPACE_COOLING = 'space_cooling'
+
+
+DEFAULT_SERVICES = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+
+
+def get_services_from_plant_type(plant_type: str) -> tuple[list[PlantServices], bool]:
     """
     Extract service configuration from plant node type (reverse of get_plant_type_from_services).
 
     :param plant_type: Plant type string from nodes.shp (e.g., 'PLANT_hs_ww', 'PLANT_ww_hs', 'PLANT')
     :return: Tuple of (services_list, is_legacy)
-             services_list: List of services in priority order (e.g., ['space_heating', 'domestic_hot_water'])
+             services_list: List of services in priority order (e.g., [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER])
              is_legacy: True if plant_type is just 'PLANT' (backwards compatibility mode)
 
     Examples:
-        'PLANT_hs_ww' → (['space_heating', 'domestic_hot_water'], False)
-        'PLANT_ww_hs' → (['domestic_hot_water', 'space_heating'], False)
-        'PLANT_hs' → (['space_heating'], False)
-        'PLANT_ww' → (['domestic_hot_water'], False)
-        'PLANT' → (['space_heating', 'domestic_hot_water'], True)  # legacy default
-        'PLANT_DC' → (['space_heating', 'domestic_hot_water'], True)  # DC network, legacy
+        'PLANT_hs_ww' → ([PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER], False)
+        'PLANT_ww_hs' → ([PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING], False)
+        'PLANT_hs' → ([PlantServices.SPACE_HEATING], False)
+        'PLANT_ww' → ([PlantServices.DOMESTIC_HOT_WATER], False)
+        'PLANT' → ([PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER], True)  # legacy default
+        'PLANT_DH' → ([PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER], True)  # DH network, legacy
     """
+    prefix = 'PLANT_'
+
     # Abbreviation to full service name mapping
     abbrev_to_service = {
-        'hs': 'space_heating',
-        'ww': 'domestic_hot_water'
+        'hs': PlantServices.SPACE_HEATING,
+        'ww': PlantServices.DOMESTIC_HOT_WATER
     }
 
-    # Check for legacy plant types (no suffix or DC suffix)
-    if plant_type == 'PLANT' or plant_type == 'PLANT_DC':
-        # Legacy mode: default to both services in default order
-        return (['space_heating', 'domestic_hot_water'], True)
+    # Check for unknown or legacy plant types (no prefix or DH suffix)
+    if not plant_type.startswith(prefix) or plant_type == 'PLANT_DH':
+        # Default to both services in default order
+        return (DEFAULT_SERVICES, True)
 
     # Extract suffix after 'PLANT_'
-    if not plant_type.startswith('PLANT_'):
-        # Unexpected format, treat as legacy
-        return (['space_heating', 'domestic_hot_water'], True)
-
-    suffix = plant_type[6:]  # Remove 'PLANT_' prefix
+    suffix = plant_type.split(prefix)[1]
 
     # Parse suffix (e.g., 'hs_ww' → ['hs', 'ww'])
     abbrevs = suffix.split('_')
 
     # Convert abbreviations to full service names
-    services = [abbrev_to_service.get(abbrev, abbrev) for abbrev in abbrevs if abbrev in abbrev_to_service]
+    services = [abbrev_to_service[abbrev] for abbrev in abbrevs if abbrev in abbrev_to_service]
 
     if not services:
         # No valid services found, treat as legacy
-        return (['space_heating', 'domestic_hot_water'], True)
+        return (DEFAULT_SERVICES, True)
 
     return (services, False)
 
 
-def get_plant_type_from_services(itemised_dh_services, network_type='DH'):
+def get_plant_type_from_services(itemised_dh_services: list[PlantServices], network_type='DH') -> str:
     """
     Generate plant type name based on service configuration.
 
     :param itemised_dh_services: List of services in priority order
-                                 (e.g., ['space_heating', 'domestic_hot_water'])
+                                 (e.g., [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER])
     :param network_type: 'DH' or 'DC' (only DH uses service-specific types)
     :return: Plant type string (e.g., 'PLANT_hs_ww', 'PLANT_ww_hs', 'PLANT')
     """
@@ -92,8 +100,8 @@ def get_plant_type_from_services(itemised_dh_services, network_type='DH'):
 
     # Service abbreviations
     service_abbrev = {
-        'space_heating': 'hs',
-        'domestic_hot_water': 'ww'
+        PlantServices.SPACE_HEATING: 'hs',
+        PlantServices.DOMESTIC_HOT_WATER: 'ww'
     }
 
     # Build suffix from service order
