@@ -150,7 +150,7 @@ def get_next_pipe_name(edges_gdf):
 
 
 def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gdf, type_mat, pipe_dn,
-                              itemised_dh_services=None, network_type='DH'):
+                              plant_type: str = 'PLANT'):
     """
     Add a PLANT node near the anchor building by creating an offset node.
 
@@ -162,8 +162,7 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     :param mst_edges: GeoDataFrame of network edges
     :param type_mat: Pipe material type (e.g., 'T1')
     :param pipe_dn: Pipe diameter (e.g., 150)
-    :param itemised_dh_services: List of services in priority order (for DH only)
-    :param network_type: 'DH' or 'DC'
+    :param plant_type: Plant type string (e.g., 'PLANT_hs_ww'). Caller is responsible for determining this.
     :return: Tuple of (updated nodes_gdf, updated edges_gdf)
     """
     # Find closest NONE node
@@ -201,9 +200,6 @@ def add_plant_close_to_anchor(building_anchor, new_mst_nodes: gdf, mst_edges: gd
     
     # Generate unique node name
     plant_node_name = get_next_node_name(new_mst_nodes)
-
-    # Determine plant type based on service configuration
-    plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
 
     # Create plant node with normalized geometry
     plant_node = gdf(
