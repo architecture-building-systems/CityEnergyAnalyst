@@ -11,6 +11,7 @@ import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.constants import HOURS_IN_YEAR
 from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
+from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -140,20 +141,20 @@ def calc_temp_hex_building_side_heating(building_demand_df, heating_configuratio
         Ths_supply_C = np.vectorize(calc_DH_supply)(Ths_supply, Tww_supply)
     elif len(itemised_dh_services) == 1:
         # Single service only
-        if itemised_dh_services[0] == 'space_heating':
+        if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
             Ths_supply_C = Ths_supply
         else:  # domestic_hot_water
             Ths_supply_C = Tww_supply
     else:
         # Multiple services - order determines priority
-        if itemised_dh_services[0] == 'space_heating':
+        if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
             # LTDH mode: space heating drives network temp, DHW uses booster
             # FALLBACK: When space heating = 0 but DHW > 0, use minimum temp for DHW pre-heating
             from cea.technologies.thermal_network.substation_matrix import MIN_NETWORK_TEMP_FOR_PREHEATING_C
 
             # Check if we have DHW demand when space heating is zero
             has_space_heating = (Ths_supply > 0.1)  # Space heating temp > 0
-            has_dhw = (Tww_supply > 0.1) if 'domestic_hot_water' in itemised_dh_services else np.zeros(len(Ths_supply), dtype=bool)
+            has_dhw = (Tww_supply > 0.1) if PlantServices.DOMESTIC_HOT_WATER in itemised_dh_services else np.zeros(len(Ths_supply), dtype=bool)
             use_fallback = (~has_space_heating) & has_dhw
 
             # Use fallback temp (35°C) when HS=0 and DHW>0, otherwise use space heating temp
@@ -720,8 +721,8 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     dhw_connected = True
 
     if services_for_this_building:
-        space_heating_connected = 'space_heating' in services_for_this_building
-        dhw_connected = 'domestic_hot_water' in services_for_this_building
+        space_heating_connected = PlantServices.SPACE_HEATING in services_for_this_building
+        dhw_connected = PlantServices.DOMESTIC_HOT_WATER in services_for_this_building
 
         # Log per-building service configuration
         if building_services is not None:
@@ -763,7 +764,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         if Qnom_W > 0:
             # Check if booster may be needed (CT mode or Case 1 LTDH)
             needs_booster_check = (temp_mode == 'CT') or \
-                                (itemised_dh_services and itemised_dh_services[0] == 'space_heating')
+                                (itemised_dh_services and itemised_dh_services[0] == PlantServices.SPACE_HEATING)
 
             if needs_booster_check:
                 # Use booster-aware calculation

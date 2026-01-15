@@ -11,6 +11,7 @@ import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
+from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 BUILDINGS_DEMANDS_COLUMNS = ['Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
@@ -150,7 +151,7 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
 
         # DHW pre-heating fallback: When space heating = 0 but DHW > 0, set minimum network temp
         # This enables DH network to provide base-load pre-heating for DHW during off-peak hours
-        if itemised_dh_services == ['space_heating', 'domestic_hot_water']:
+        if itemised_dh_services == [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]:
             # Check if we have DHW demand when space heating is zero
             has_dhw = demand_df['Qww_sys_kWh'] > 0
             has_space_heating = (demand_df.get('Qhs_sys_aru_kWh', 0) +

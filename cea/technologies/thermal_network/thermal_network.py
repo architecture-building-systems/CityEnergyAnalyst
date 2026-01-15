@@ -34,6 +34,7 @@ from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_ST
 from cea.utilities import epwreader
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 from cea.technologies.heat_exchangers import get_heat_exchanger_by_description
+from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh, Lennart Rogenhofer"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -230,9 +231,9 @@ class ThermalNetwork(object):
         # Priority-based logic: FIRST service determines network temp strategy
         primary_service = self.itemised_dh_services[0]
 
-        if primary_service == 'space_heating':
+        if primary_service == PlantServices.SPACE_HEATING:
             return 35  # Low-temp network
-        elif primary_service == 'domestic_hot_water':
+        elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
             return 50  # High-temp network
         else:
             return 30  # Unknown service, conservative minimum
@@ -263,9 +264,9 @@ class ThermalNetwork(object):
         # Priority-based logic: FIRST service determines network temp strategy
         primary_service = self.itemised_dh_services[0]
 
-        if primary_service == 'space_heating':
+        if primary_service == PlantServices.SPACE_HEATING:
             return 55  # Low-temp network (4th gen DH)
-        elif primary_service == 'domestic_hot_water':
+        elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
             return 80  # High-temp network (3rd gen DH)
         else:
             return 80  # Unknown service, conservative maximum
@@ -286,14 +287,14 @@ class ThermalNetwork(object):
         primary_service = self.itemised_dh_services[0]
         service_names = ' → '.join(self.itemised_dh_services)
 
-        if primary_service == 'space_heating':
+        if primary_service == PlantServices.SPACE_HEATING:
             min_temp = 35
             max_temp = 55
             if len(self.itemised_dh_services) == 1:
                 desc = f"35-55°C for low-temp DH ({service_names} only)"
             else:
                 desc = f"35-55°C for low-temp DH ({service_names}, DHW uses boosters)"
-        elif primary_service == 'domestic_hot_water':
+        elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
             min_temp = 50
             max_temp = 80
             if len(self.itemised_dh_services) == 1:
@@ -668,15 +669,15 @@ def validate_network_temperature(thermal_network):
             print(f"  ⚠ WARNING: Network temperature ({t_plant_C}°C) is below")
             print(f"    recommended minimum for primary service '{primary_service}' ({service_min_temp}°C)")
             print("    Heat exchangers may have reduced efficiency.")
-            if primary_service == 'space_heating':
+            if primary_service == PlantServices.SPACE_HEATING:
                 print(f"    For low-temp network (space heating priority), consider {min_rec}-{max_rec}°C")
-            elif primary_service == 'domestic_hot_water':
+            elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
                 print(f"    For DHW priority network, consider {min_rec}-{max_rec}°C")
 
         # Check 3: Guidance for temperature range
         print(f"  ℹ Recommended range for '{primary_service}' priority: {rec_desc}")
 
-        if primary_service == 'space_heating' and t_plant_C > max_rec:
+        if primary_service == PlantServices.SPACE_HEATING and t_plant_C > max_rec:
             print(f"  ℹ Note: {t_plant_C}°C is higher than typical for space heating priority ({max_rec}°C)")
             print("    This may indicate over-design. If DHW is priority, consider PLANT_ww_hs.")
 

@@ -13,7 +13,7 @@ from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.plant_node_operations import (
-    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name
+    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
@@ -211,7 +211,7 @@ def get_buildings_and_services_from_supply_csv(locator, network_type):
             if hs_code and not pd.isna(hs_code):
                 hs_scale = scale_mapping.get(hs_code, None)
                 if hs_scale == 'DISTRICT':
-                    building_services.add('space_heating')
+                    building_services.add(PlantServices.SPACE_HEATING)
 
         # Check domestic hot water service (DH only)
         if network_type == "DH" and 'supply_type_dhw' in supply_df.columns:
@@ -219,7 +219,7 @@ def get_buildings_and_services_from_supply_csv(locator, network_type):
             if dhw_code and not pd.isna(dhw_code):
                 dhw_scale = scale_mapping.get(dhw_code, None)
                 if dhw_scale == 'DISTRICT':
-                    building_services.add('domestic_hot_water')
+                    building_services.add(PlantServices.DOMESTIC_HOT_WATER)
 
         # Check cooling service (DC only)
         if network_type == "DC" and 'supply_type_cs' in supply_df.columns:
@@ -227,7 +227,7 @@ def get_buildings_and_services_from_supply_csv(locator, network_type):
             if cs_code and not pd.isna(cs_code):
                 cs_scale = scale_mapping.get(cs_code, None)
                 if cs_scale == 'DISTRICT':
-                    building_services.add('space_cooling')
+                    building_services.add(PlantServices.SPACE_COOLING)
 
         # Store building if it uses at least one DISTRICT service
         if building_services:
@@ -279,7 +279,7 @@ def apply_service_priority_order(services):
         {'space_heating'} → ['space_heating']
     """
     # Define priority order (lower index = higher priority)
-    priority_order = ['space_heating', 'domestic_hot_water', 'space_cooling']
+    priority_order = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_COOLING]
 
     # Filter and sort services by priority
     ordered_services = [svc for svc in priority_order if svc in services]
@@ -337,7 +337,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
 
     # Count buildings by service type (for detailed error messages)
     buildings_by_service = {}
-    for service in ['space_heating', 'domestic_hot_water']:
+    for service in [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]:
         buildings_by_service[service] = [
             b for b, svcs in per_building_services.items()
             if service in svcs
@@ -345,8 +345,8 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
 
     # Human-readable service names
     service_names = {
-        'space_heating': 'space heating',
-        'domestic_hot_water': 'domestic hot water'
+        PlantServices.SPACE_HEATING: 'space heating',
+        PlantServices.DOMESTIC_HOT_WATER: 'domestic hot water'
     }
 
     # STRICT VALIDATION: Must match exactly (no subset, no superset)
@@ -381,10 +381,10 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
         unused_names = [service_names.get(s, s) for s in sorted(unused_services)]
 
         # Count building types for informative message
-        hs_only = sum(1 for svcs in per_building_services.values() if svcs == {'space_heating'})
-        ww_only = sum(1 for svcs in per_building_services.values() if svcs == {'domestic_hot_water'})
+        hs_only = sum(1 for svcs in per_building_services.values() if svcs == {PlantServices.SPACE_HEATING})
+        ww_only = sum(1 for svcs in per_building_services.values() if svcs == {PlantServices.DOMESTIC_HOT_WATER})
         both = sum(1 for svcs in per_building_services.values()
-                  if svcs == {'space_heating', 'domestic_hot_water'})
+                  if svcs == {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER})
 
         error_msg = (
             f"Network configuration error: itemised-dh-services includes {', '.join(unused_names)} "
@@ -404,7 +404,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
     # Services match exactly - generate success message with priority info
     services_display = [service_names.get(s, s) for s in itemised_dh_services]
 
-    if itemised_dh_services[0] == 'space_heating':
+    if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
         temp_info = "low-temperature network (e.g., 35-55°C)"
     else:
         temp_info = "high-temperature network (60°C+)"
@@ -700,14 +700,14 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
             # Create a new PLANT node near this building
             building_anchor = plant_node
+            plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
             nodes_gdf, edges_gdf = add_plant_close_to_anchor(
                 building_anchor,
                 nodes_gdf,
                 edges_gdf,
                 'T1',  # Default pipe material
                 150,   # Default pipe diameter
-                itemised_dh_services=itemised_dh_services,
-                network_type=network_type
+                plant_type=plant_type
             )
 
             # The newly created plant node is the last one
@@ -756,14 +756,14 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
             # Create a new PLANT node near this building (separate from building node)
             building_anchor = anchor_node
+            plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
             nodes_gdf, edges_gdf = add_plant_close_to_anchor(
                 building_anchor,
                 nodes_gdf,
                 edges_gdf,
                 'T1',  # Default pipe material
                 150,   # Default pipe diameter
-                itemised_dh_services=itemised_dh_services,
-                network_type=network_type
+                plant_type=plant_type
             )
 
             # The newly created plant node is the last one
@@ -1085,10 +1085,10 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     continue
 
                 # Validation passed - log configuration
-                hs_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {'space_heating'})
-                ww_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {'domestic_hot_water'})
+                hs_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {PlantServices.SPACE_HEATING})
+                ww_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {PlantServices.DOMESTIC_HOT_WATER})
                 both = sum(1 for svcs in per_building_services_dh.values()
-                          if svcs == {'space_heating', 'domestic_hot_water'})
+                          if svcs == {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER})
 
                 print("  ℹ Network configuration:")
                 print("    - Building selection: From Building Properties/Supply")
@@ -1170,14 +1170,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # Find the building node for this plant
                 building_anchor = nodes_for_type[nodes_for_type['building'] == plant_building]
                 if not building_anchor.empty:
+                    plant_type = get_plant_type_from_services(itemised_dh_services, type_network)
                     nodes_for_type, edges_for_type = add_plant_close_to_anchor(
                         building_anchor,
                         nodes_for_type,
                         edges_for_type,
                         'T1',  # Default pipe material
                         150,   # Default pipe diameter
-                        itemised_dh_services=itemised_dh_services,
-                        network_type=type_network
+                        plant_type=plant_type
                     )
                     # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                     last_node_idx = nodes_for_type.index[-1]
@@ -1221,14 +1221,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # Create a separate plant node near the anchor building
                 # Building node remains as CONSUMER, plant is a separate node
                 building_anchor = building_nodes[building_nodes['building'] == anchor_building]
+                plant_type = get_plant_type_from_services(itemised_dh_services, type_network)
                 nodes_for_type, edges_for_type = add_plant_close_to_anchor(
                     building_anchor,
                     nodes_for_type,
                     edges_for_type,
                     'T1',  # Default pipe material
                     150,   # Default pipe diameter
-                    itemised_dh_services=itemised_dh_services,
-                    network_type=type_network
+                    plant_type=plant_type
                 )
                 # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                 last_node_idx = nodes_for_type.index[-1]

@@ -11,6 +11,8 @@ Example:
 - PLANT_ww_hs: DHW priority → high-temp network (65°C), direct DHW supply
 """
 
+from cea.technologies.network_layout.plant_node_operations import PlantServices
+
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
@@ -32,9 +34,9 @@ def get_itemised_dh_services_from_plant_type(plant_type):
     :rtype: list or None
 
     Examples:
-        'PLANT_hs_ww' → ['space_heating', 'dhw'] (space heating priority)
-        'PLANT_ww_hs' → ['dhw', 'space_heating'] (DHW priority)
-        'PLANT_ww' → ['dhw']
+        'PLANT_hs_ww' → [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER] (space heating priority)
+        'PLANT_ww_hs' → [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING] (DHW priority)
+        'PLANT_ww' → [PlantServices.DOMESTIC_HOT_WATER]
         'PLANT' → None (legacy: max of all temps)
     """
     from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
@@ -62,19 +64,19 @@ def get_heating_systems_for_network_temp(itemised_dh_services, all_heating_syste
     :rtype: list
 
     Examples:
-        itemised_dh_services=['space_heating', 'dhw'] → ['aru', 'ahu', 'shu'] (only space heating)
-        itemised_dh_services=['dhw'] → ['ww'] (only DHW)
+        itemised_dh_services=[PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER] → ['aru', 'ahu', 'shu'] (only space heating)
+        itemised_dh_services=[PlantServices.DOMESTIC_HOT_WATER] → ['ww'] (only DHW)
         itemised_dh_services=None → ['aru', 'ahu', 'shu', 'ww'] (legacy: all systems)
     """
     if itemised_dh_services is not None and len(itemised_dh_services) > 0:
         # Use only PRIMARY service for network temp calculation
         primary_service = itemised_dh_services[0]
 
-        if primary_service == 'space_heating':
+        if primary_service == PlantServices.SPACE_HEATING:
             # Network temp based on space heating only
             # DHW will use boosters to reach 60°C
             return ['aru', 'ahu', 'shu']
-        elif primary_service == 'dhw':
+        elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
             # Network temp based on DHW only (65°C)
             # Space heating served directly (network hotter than needed)
             return ['ww']

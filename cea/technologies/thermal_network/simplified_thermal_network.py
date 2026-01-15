@@ -19,6 +19,7 @@ from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
+from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -442,11 +443,11 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
     # Determine minimum based on PRIMARY service
     primary_service = itemised_dh_services[0]
 
-    if primary_service == 'space_heating':
+    if primary_service == PlantServices.SPACE_HEATING:
         # PLANT_hs or PLANT_hs_ww: Low-temp network
         # Space heating return ~30°C + 5K approach = 35°C min
         return 35
-    elif primary_service == 'domestic_hot_water':
+    elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
         # PLANT_ww or PLANT_ww_hs: High-temp network
         # DHW return ~45°C + 5K approach = 50°C min (allows preheat to 55°C, booster to 60°C)
         return 50
@@ -472,7 +473,7 @@ def calculate_maximum_network_temperature_cooling(substation_results_dict, itemi
         return 7  # Safe for typical space cooling (building needs ~12°C supply, so network at 7°C allows 5K approach)
 
     max_temps = []
-    if 'space_cooling' in itemised_dc_services:
+    if PlantServices.SPACE_COOLING in itemised_dc_services:
         max_temps.append(7)  # Space cooling needs ~12°C building supply, so network at 7°C allows 5K approach
     if 'data_center' in itemised_dc_services:
         max_temps.append(10)  # Data center can use warmer supply (~15°C building supply)
@@ -783,7 +784,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 has_refrigeration = any(substation_results_dict[b]["Qcre_dc_W"].sum() > 0 for b in building_names)
 
                 if has_space_cooling:
-                    itemised_dc_services.append('space_cooling')
+                    itemised_dc_services.append(PlantServices.SPACE_COOLING)
                 if has_data_center:
                     itemised_dc_services.append('data_center')
                 if has_refrigeration:
