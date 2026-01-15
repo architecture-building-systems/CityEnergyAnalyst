@@ -22,6 +22,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 MIN_APPROACH_TEMP_K = 5  # Minimum temperature difference for heat exchanger
+MIN_TEMP_RISE_FOR_FRACTION_K = 1  # Minimum temperature rise for stable heat distribution fraction calculation
+MIN_TEMP_DIFF_FOR_MASS_FLOW_K = 0.1  # Minimum temperature difference to prevent division by zero in mass flow calculation
 
 
 def calc_dh_heating_with_booster_tracking(
@@ -92,7 +94,8 @@ def calc_dh_heating_with_booster_tracking(
         T_return_subset = T_return_C[booster_needed]
 
         temp_rise_dh = np.maximum(0, T_preheat_subset - T_return_subset)
-        temp_rise_total = np.maximum(1, T_target_subset - T_return_subset)
+        # Use minimum threshold for numerical stability in fraction calculation
+        temp_rise_total = np.maximum(MIN_TEMP_RISE_FOR_FRACTION_K, T_target_subset - T_return_subset)
 
         # Fraction of heat from DH vs booster (based on temperature rise)
         fraction_dh = temp_rise_dh / temp_rise_total
@@ -144,7 +147,8 @@ def calc_dh_heating_with_booster_tracking(
     T_dh_return_C = np.maximum(T_dh_return_C, T_dh_return_min_C)
 
     # Recalculate actual DH temperature drop
-    delta_T_dh_actual = np.maximum(0.1, T_DH_supply_broadcast - T_dh_return_C)
+    # Use minimum threshold to prevent division by zero in mass flow calculation below
+    delta_T_dh_actual = np.maximum(MIN_TEMP_DIFF_FOR_MASS_FLOW_K, T_DH_supply_broadcast - T_dh_return_C)
 
     # DH mass flow rate: Q = mcp * dT => mcp = Q / dT
     mcp_dh_kWK = np.where(Q_dh_W > 0, Q_dh_W / (1000 * delta_T_dh_actual), 0)
