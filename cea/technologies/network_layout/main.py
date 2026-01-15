@@ -292,7 +292,7 @@ def apply_service_priority_order(services):
     return ordered_services
 
 
-def validate_itemised_dh_services_against_building_properties(itemised_dh_services, per_building_services):
+def validate_itemised_dh_services_against_building_properties(itemised_dh_services: list[str], per_building_services):
     """
     Validate itemised-dh-services against Building Properties/Supply settings.
 
@@ -328,6 +328,10 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
         per_building_services = {'B1': {'space_heating'}}
         → ('error', 'Network configuration error: itemised-dh-services includes...', {...})
     """
+    # Normalize itemised_dh_services: treat None as empty list
+    if itemised_dh_services is None:
+        itemised_dh_services = []
+
     # Union of all DISTRICT services buildings expect from network
     district_services_needed = set()
     for building_services in per_building_services.values():
@@ -404,7 +408,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
     # Services match exactly - generate success message with priority info
     services_display = [service_names.get(s, s) for s in itemised_dh_services]
 
-    if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
+    if len(itemised_dh_services) and itemised_dh_services[0] == PlantServices.SPACE_HEATING:
         temp_info = "low-temperature network (e.g., 35-55°C)"
     else:
         temp_info = "high-temperature network (60°C+)"
@@ -1070,7 +1074,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # itemised-dh-services is ALWAYS the authority for network service configuration
                 # Validate it against Building Properties/Supply (strict validation)
 
-                validation_level, message, buildings_by_service = \
+                validation_level, message, _ = \
                     validate_itemised_dh_services_against_building_properties(
                         itemised_dh_services,
                         per_building_services_dh
@@ -1452,6 +1456,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print(f"\n✗ Error loading user-defined network: {e}\n")
         print("=" * 80 + "\n")
         raise
+
+    if result is None:
+        print("\nNo valid network data found in user-defined input. Skipping user-defined network processing.\n")
+        return
 
     nodes_gdf, edges_gdf = result
 
