@@ -420,7 +420,6 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
                                  (e.g., ['space_heating', 'domestic_hot_water'])
     :return: Minimum recommended network temperature in °C
     """
-    max_return_temps = []
 
     for building_name, df in substation_results_dict.items():
         # Get maximum return temperature when there's actual demand
@@ -634,8 +633,6 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         ])
 
         # Calculate space heating vs DHW contributions
-        total_hs_dh_kWh = sum([df['Qhs_dh_W'].sum() / 1000 for df in substation_results_dict.values()])
-        total_ww_dh_kWh = sum([df['Qww_dh_W'].sum() / 1000 for df in substation_results_dict.values()])
         total_hs_demand_kWh = sum([
             (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
             for df in substation_results_dict.values()

@@ -756,7 +756,6 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         Qhs_sys_W = np.zeros(HOURS_IN_YEAR)
         Q_dh_to_hs_W = np.zeros(HOURS_IN_YEAR)
         Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
-        booster_hs_active = np.zeros(HOURS_IN_YEAR, dtype=int)
     else:
         Qhs_sys_W = Qhs_sys_kWh_dict[hs_configuration] * 1000  # in W
         Qnom_W = max(Qhs_sys_W)
@@ -798,14 +797,12 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
                 Q_dh_to_hs_W = Qhs_sys_W
                 Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
-                booster_hs_active = np.zeros(HOURS_IN_YEAR, dtype=int)
         else:
             t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + 273  # in K
             mcp_DH_hs = np.zeros(HOURS_IN_YEAR)
             A_hex_hs = 0
             Q_dh_to_hs_W = np.zeros(HOURS_IN_YEAR)
             Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
-            booster_hs_active = np.zeros(HOURS_IN_YEAR, dtype=int)
 
     # ============================================================================
     # DHW HEX
@@ -819,7 +816,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         # Booster may be needed in CT mode or any case where network temp < 60°C
         from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
 
-        Q_dh_to_dhw_W, t_DH_return_ww_C, mcp_DH_ww_kWK, Q_booster_ww_W, A_hex_ww, booster_ww_active = \
+        Q_dh_to_dhw_W, t_DH_return_ww_C, mcp_DH_ww_kWK, Q_booster_ww_W, A_hex_ww, _ = \
             calc_dh_heating_with_booster_tracking(
                 Q_demand_W=Qww_sys_W,
                 T_DH_supply_C=T_DH_supply_C,
@@ -838,7 +835,6 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         mcp_DH_ww = np.zeros(HOURS_IN_YEAR)
         Q_dh_to_dhw_W = np.zeros(HOURS_IN_YEAR)
         Q_booster_ww_W = np.zeros(HOURS_IN_YEAR)
-        booster_ww_active = np.zeros(HOURS_IN_YEAR, dtype=int)
 
     # CALCULATE MIX IN HEAT EXCHANGERS AND RETURN TEMPERATURE
     T_DH_return_K = np.vectorize(calc_HEX_mix_2_flows)(Qhs_sys_W, Qww_sys_W, mcp_DH_hs, mcp_DH_ww, t_DH_return_hs,
