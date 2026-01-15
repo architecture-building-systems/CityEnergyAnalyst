@@ -406,12 +406,12 @@ class ThermalNetwork(object):
                 for building, services in metadata['per_building_services'].items()
             }
 
-            print(f"  ℹ Loaded per-building service configuration from layout metadata")
+            print("  ℹ Loaded per-building service configuration from layout metadata")
             print(f"    - Network services: {', '.join(metadata['network_services'])}")
         else:
             # Legacy mode: no metadata file
-            print(f"  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
-            print(f"    - Assuming all buildings use all services")
+            print("  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
+            print("    - Assuming all buildings use all services")
 
         # Store for passing to simulation functions
         self.per_building_services = per_building_services
@@ -621,15 +621,15 @@ def validate_network_temperature(thermal_network):
 
     if control_mode == 'VT':
         # VT mode - just inform user
-        print(f"  ℹ Temperature control: Variable (VT mode)")
-        print(f"    Plant temperature will vary to meet building requirements")
+        print("  ℹ Temperature control: Variable (VT mode)")
+        print("    Plant temperature will vary to meet building requirements")
         if services:
             print(f"    Service configuration: {service_names}")
         return  # No validation needed for VT
 
     # CT mode validation
     t_plant_C = thermal_network.get_plant_supply_temperature()
-    print(f"  ℹ Temperature control: Constant (CT mode)")
+    print("  ℹ Temperature control: Constant (CT mode)")
     print(f"    Fixed plant supply temperature: {t_plant_C}°C")
     if services:
         print(f"    Service configuration: {service_names}")
@@ -667,7 +667,7 @@ def validate_network_temperature(thermal_network):
         if service_min_temp and t_plant_C < service_min_temp:
             print(f"  ⚠ WARNING: Network temperature ({t_plant_C}°C) is below")
             print(f"    recommended minimum for primary service '{primary_service}' ({service_min_temp}°C)")
-            print(f"    Heat exchangers may have reduced efficiency.")
+            print("    Heat exchangers may have reduced efficiency.")
             if primary_service == 'space_heating':
                 print(f"    For low-temp network (space heating priority), consider {min_rec}-{max_rec}°C")
             elif primary_service == 'domestic_hot_water':
@@ -678,7 +678,7 @@ def validate_network_temperature(thermal_network):
 
         if primary_service == 'space_heating' and t_plant_C > max_rec:
             print(f"  ℹ Note: {t_plant_C}°C is higher than typical for space heating priority ({max_rec}°C)")
-            print(f"    This may indicate over-design. If DHW is priority, consider PLANT_ww_hs.")
+            print("    This may indicate over-design. If DHW is priority, consider PLANT_ww_hs.")
 
     elif network_type == 'DC':
         # Cooling: plant temp must be <= min building requirement
@@ -3866,7 +3866,7 @@ def main(config: cea.config.Configuration):
                         for building, services in metadata['per_building_services'].items()
                     }
 
-                    print(f"  ℹ Per-building service configuration loaded from metadata")
+                    print("  ℹ Per-building service configuration loaded from metadata")
 
                 thermal_network_simplified(locator, config, network_type, network_name,
                                           per_building_services=per_building_services)

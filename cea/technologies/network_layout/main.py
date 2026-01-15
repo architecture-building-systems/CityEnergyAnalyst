@@ -13,7 +13,7 @@ from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.plant_node_operations import (
-    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services
+    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
@@ -1081,7 +1081,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     network_errors[type_network] = message
                     print(f"\n  ✗ Configuration error - skipping {type_network} network")
                     print(f"    {message.split(chr(10))[0]}")  # Show first line of error
-                    print(f"    (See full error details at end of script)")
+                    print("    (See full error details at end of script)")
                     continue
 
                 # Validation passed - log configuration
@@ -1090,11 +1090,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 both = sum(1 for svcs in per_building_services_dh.values()
                           if svcs == {'space_heating', 'domestic_hot_water'})
 
-                print(f"  ℹ Network configuration:")
-                print(f"    - Building selection: From Building Properties/Supply")
-                print(f"    - Service configuration: From itemised-dh-services")
+                print("  ℹ Network configuration:")
+                print("    - Building selection: From Building Properties/Supply")
+                print("    - Service configuration: From itemised-dh-services")
                 print(f"    - {message}")  # e.g., "Network service priority: space heating → domestic hot water (low-temperature)"
-                print(f"  ℹ Building service breakdown:")
+                print("  ℹ Building service breakdown:")
                 print(f"    - Space heating only: {hs_only} building(s)")
                 print(f"    - Domestic hot water only: {ww_only} building(s)")
                 print(f"    - Both services: {both} building(s)")
@@ -1283,7 +1283,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
 
-            print(f"  ✓ building_services.json saved with per-building service configuration")
+            print("  ✓ building_services.json saved with per-building service configuration")
 
         # Clean up temp files for this network
         import glob
@@ -1345,7 +1345,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # All networks were skipped - check if it's configuration errors or demand issues
         if network_errors:
             # Configuration errors prevented generation
-            print(f"\n  ✗ Configuration errors prevented generation of all requested networks:")
+            print("\n  ✗ Configuration errors prevented generation of all requested networks:")
             for network_type, error_msg in sorted(network_errors.items()):
                 print(f"\n  {network_type} Network Error:")
                 # Indent error message lines
