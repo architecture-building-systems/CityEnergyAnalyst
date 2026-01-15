@@ -589,6 +589,12 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             node_buildings_set = set(node_df.building.values)
             buildings_with_heating_set = set(buildings_name_with_heating)
             building_names = list(buildings_with_heating_set & node_buildings_set)
+            
+            # Guard against empty building list
+            if not building_names:
+                raise ValueError('No buildings with heating demand are connected to the DH network.'
+                                 ' Please check network layout and building demands.')
+            
             substation.substation_main_heating(locator, total_demand, building_names,
                                                heating_configuration=7,
                                                DHN_barcode=DHN_barcode,

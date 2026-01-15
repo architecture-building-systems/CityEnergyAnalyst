@@ -732,7 +732,8 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     # Determine network temperature mode
     if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
         # CT mode: Use fixed network temperature
-        T_DH_supply_C = fixed_network_temp_C
+        # Create array of fixed temperature with length HOURS_IN_YEAR for downstream operations
+        T_DH_supply_C = np.full(HOURS_IN_YEAR, fixed_network_temp_C)
         temp_mode = 'CT'
     else:
         # VT mode: Use variable temperature (already calculated)
