@@ -61,11 +61,14 @@ def calc_dh_heating_with_booster_tracking(
         - booster_active: Boolean array indicating when booster operates
     """
 
-    # Convert to numpy arrays
-    T_DH_supply_C = np.atleast_1d(T_DH_supply_C)
-    T_target_C = np.atleast_1d(T_target_C)
-    T_return_C = np.atleast_1d(T_return_C)
+    # Ensure Q_demand_W is array first (determines shape for broadcasting)
     Q_demand_W = np.atleast_1d(Q_demand_W)
+
+    # Broadcast all temperature inputs to match Q_demand_W shape
+    # .copy() needed because np.broadcast_to returns read-only views
+    T_DH_supply_C = np.broadcast_to(np.atleast_1d(T_DH_supply_C), Q_demand_W.shape).copy()
+    T_target_C = np.broadcast_to(np.atleast_1d(T_target_C), Q_demand_W.shape).copy()
+    T_return_C = np.broadcast_to(np.atleast_1d(T_return_C), Q_demand_W.shape).copy()
 
     # Initialize outputs
     Q_dh_W = np.zeros_like(Q_demand_W, dtype=float)
@@ -88,9 +91,8 @@ def calc_dh_heating_with_booster_tracking(
     # Case B: DH pre-heats, booster tops up
     if booster_needed.any():
         # DH contributes heating from return temp to preheat temp
-        # Handle scalar and array cases for temperatures
-        T_preheat_subset = T_dh_preheat_max_C[booster_needed] if T_dh_preheat_max_C.size > 1 else T_dh_preheat_max_C
-        T_target_subset = T_target_C[booster_needed] if T_target_C.size > 1 else T_target_C
+        T_preheat_subset = T_dh_preheat_max_C[booster_needed]
+        T_target_subset = T_target_C[booster_needed]
         T_return_subset = T_return_C[booster_needed]
 
         temp_rise_dh = np.maximum(0, T_preheat_subset - T_return_subset)
@@ -109,16 +111,12 @@ def calc_dh_heating_with_booster_tracking(
     # ========================================================================
 
     # Building-side outlet temperature (what temperature DH heats the water to)
-    # Broadcast scalars to match array shape if needed
-    T_preheat_broadcast = np.full_like(Q_demand_W, T_dh_preheat_max_C, dtype=float) if np.isscalar(T_dh_preheat_max_C) or T_dh_preheat_max_C.size == 1 else T_dh_preheat_max_C
-    T_target_broadcast = np.full_like(Q_demand_W, T_target_C, dtype=float) if np.isscalar(T_target_C) or T_target_C.size == 1 else T_target_C
-
     T_building_outlet_C = np.where(
         booster_needed,
-        T_preheat_broadcast,  # With booster: DH heats to preheat temp, booster adds rest
+        T_dh_preheat_max_C,  # With booster: DH heats to preheat temp, booster adds rest
         np.where(
             dh_sufficient,
-            T_target_broadcast,  # No booster: DH heats to target temp
+            T_target_C,  # No booster: DH heats to target temp
             T_return_C   # No demand: no temperature rise
         )
     )
@@ -131,14 +129,11 @@ def calc_dh_heating_with_booster_tracking(
     # (assuming similar heat capacity flow rates)
     delta_T_dh_side = delta_T_building
 
-    # Broadcast T_DH_supply_C if scalar
-    T_DH_supply_broadcast = np.full_like(Q_demand_W, T_DH_supply_C, dtype=float) if np.isscalar(T_DH_supply_C) or T_DH_supply_C.size == 1 else T_DH_supply_C
-
     # DH return temperature
     T_dh_return_C = np.where(
         Q_dh_W > 0,
-        T_DH_supply_broadcast - delta_T_dh_side,
-        T_DH_supply_broadcast  # No demand: return = supply
+        T_DH_supply_C - delta_T_dh_side,
+        T_DH_supply_C  # No demand: return = supply
     )
 
     # Ensure DH return respects approach temperature constraint
@@ -148,7 +143,7 @@ def calc_dh_heating_with_booster_tracking(
 
     # Recalculate actual DH temperature drop
     # Use minimum threshold to prevent division by zero in mass flow calculation below
-    delta_T_dh_actual = np.maximum(MIN_TEMP_DIFF_FOR_MASS_FLOW_K, T_DH_supply_broadcast - T_dh_return_C)
+    delta_T_dh_actual = np.maximum(MIN_TEMP_DIFF_FOR_MASS_FLOW_K, T_DH_supply_C - T_dh_return_C)
 
     # DH mass flow rate: Q = mcp * dT => mcp = Q / dT
     mcp_dh_kWK = np.where(Q_dh_W > 0, Q_dh_W / (1000 * delta_T_dh_actual), 0)
@@ -160,13 +155,10 @@ def calc_dh_heating_with_booster_tracking(
     if Q_peak > 0:
         # Calculate LMTD at peak condition
         idx_peak = np.argmax(Q_dh_W)
-        T_dh_in = T_DH_supply_C[idx_peak] if (not np.isscalar(T_DH_supply_C) and T_DH_supply_C.size > 1) else float(T_DH_supply_C)
+        T_dh_in = T_DH_supply_C[idx_peak]
         T_dh_out = T_dh_return_C[idx_peak]
         T_load_in = T_return_C[idx_peak]
-        T_load_out = min(
-            T_dh_preheat_max_C[idx_peak] if (not np.isscalar(T_dh_preheat_max_C) and T_dh_preheat_max_C.size > 1) else float(T_dh_preheat_max_C),
-            T_target_C[idx_peak] if (not np.isscalar(T_target_C) and T_target_C.size > 1) else float(T_target_C)
-        )
+        T_load_out = min(T_dh_preheat_max_C[idx_peak], T_target_C[idx_peak])
 
         # LMTD for counter-flow HEX
         dT1 = T_dh_in - T_load_out
