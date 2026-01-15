@@ -511,13 +511,13 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     itemised_dh_services = None
     is_legacy = False
     if network_type == "DH":
-        from cea.technologies.network_layout.plant_node_operations import get_services_from_plant_type
+        from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
 
         # Find plant nodes
         plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not plant_nodes.empty:
             plant_type = plant_nodes.iloc[0]['type']
-            services, is_legacy = get_services_from_plant_type(plant_type)
+            services, is_legacy = get_dh_services_from_plant_type(plant_type)
 
             if is_legacy:
                 print("  ℹ Using legacy temperature control:")

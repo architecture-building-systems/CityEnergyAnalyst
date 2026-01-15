@@ -438,13 +438,13 @@ class ThermalNetwork(object):
         # Extract service configuration from plant node type (DH only)
         self.itemised_dh_services = None
         if self.network_type == 'DH':
-            from cea.technologies.network_layout.plant_node_operations import get_services_from_plant_type
+            from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
 
             # Find plant nodes
             plant_nodes = all_nodes_df[all_nodes_df['type'].str.contains('PLANT', na=False)]
             if not plant_nodes.empty:
                 plant_type = plant_nodes.iloc[0]['type']
-                services, is_legacy = get_services_from_plant_type(plant_type)
+                services, is_legacy = get_dh_services_from_plant_type(plant_type)
 
                 if is_legacy:
                     print("  ℹ Using legacy temperature control:")

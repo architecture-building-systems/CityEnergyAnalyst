@@ -36,7 +36,7 @@ class PlantServices(StrEnum):
 DEFAULT_SERVICES = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
 
 
-def get_services_from_plant_type(plant_type: str) -> tuple[list[PlantServices], bool]:
+def get_dh_services_from_plant_type(plant_type: str) -> tuple[list[PlantServices], bool]:
     """
     Extract service configuration from plant node type (reverse of get_plant_type_from_services).
 

@@ -37,9 +37,9 @@ def get_itemised_dh_services_from_plant_type(plant_type):
         'PLANT_ww' → ['dhw']
         'PLANT' → None (legacy: max of all temps)
     """
-    from cea.technologies.network_layout.plant_node_operations import get_services_from_plant_type
+    from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
 
-    services, is_legacy = get_services_from_plant_type(plant_type)
+    services, is_legacy = get_dh_services_from_plant_type(plant_type)
 
     if is_legacy:
         # Legacy plant type (e.g., 'PLANT') - trigger max temperature behavior
