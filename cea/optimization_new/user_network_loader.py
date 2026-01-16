@@ -1130,13 +1130,38 @@ def _merge_augmented_network(
     from cea.technologies.network_layout.graph_utils import normalize_coords, SHAPEFILE_TOLERANCE
 
     # 1. Merge edges - keep all user edges, add new Steiner edges
-    # For simplicity, we add all Steiner edges (user edges already existed in potential graph)
-    # Steiner tree will only include edges needed to connect missing buildings
+    # Steiner tree output may include edges from the user's original network
+    # We need to filter those out to avoid duplicates
 
-    augmented_edges_gdf = gpd.GeoDataFrame(
-        pd.concat([user_edges_gdf, steiner_edges_gdf], ignore_index=True),
-        crs=user_edges_gdf.crs
-    )
+    # Get user edge coordinates (start-end pairs) for deduplication
+    user_edge_coords = set()
+    for idx, row in user_edges_gdf.iterrows():
+        geom = row.geometry
+        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+        # Store as sorted tuple so (A,B) == (B,A)
+        edge_coords = tuple(sorted([start, end]))
+        user_edge_coords.add(edge_coords)
+
+    # Filter Steiner edges - only add new ones
+    new_steiner_edges = []
+    for idx, row in steiner_edges_gdf.iterrows():
+        geom = row.geometry
+        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+        edge_coords = tuple(sorted([start, end]))
+
+        if edge_coords not in user_edge_coords:
+            new_steiner_edges.append(row)
+
+    # Combine user edges + new Steiner edges
+    if new_steiner_edges:
+        augmented_edges_gdf = gpd.GeoDataFrame(
+            pd.concat([user_edges_gdf, gpd.GeoDataFrame(new_steiner_edges, crs=user_edges_gdf.crs)], ignore_index=True),
+            crs=user_edges_gdf.crs
+        )
+    else:
+        augmented_edges_gdf = user_edges_gdf.copy()
 
     # 2. Merge nodes - keep all user nodes, add new building nodes for missing buildings
 
