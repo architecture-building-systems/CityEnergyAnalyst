@@ -493,8 +493,12 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     plants_dc = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DC']
     plants_dh_legacy = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
 
-    # Detect DH service-specific plants (e.g., PLANT_hs_ww, PLANT_ww_hs, PLANT_hs, PLANT_ww)
-    plants_dh_service = nodes_gdf[nodes_gdf['type'].fillna('').str.upper().str.match(r'^PLANT_(hs|ww)(_hs|_ww)?$')]
+    # Detect DH service-specific plants (e.g., PLANT_hs_ww, PLANT_ww_hs, PLANT_HS_WW, etc - case insensitive)
+    plants_dh_service = nodes_gdf[nodes_gdf['type'].fillna('').str.upper().str.match(r'PLANT_(HS|WW)(_HS|_WW)?$')]
+
+    # DEBUG: Show what types exist in the network
+    unique_types = nodes_gdf['type'].fillna('').str.upper().unique()
+    print(f"  DEBUG: Unique node types in network: {sorted([t for t in unique_types if t])}")
 
     # Determine which plants apply to this network type
     if network_type == 'DC':

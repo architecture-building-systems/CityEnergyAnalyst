@@ -35,14 +35,19 @@ supply.csv: B1001, B1002, B1003, B1004, B1005
 
 **Algorithm (3 steps):**
 1. Create potential network: user edges + street network
-2. Run Steiner tree optimisation (Kou algorithm) on missing buildings only
+2. Run Steiner tree optimisation (Kou algorithm) with **existing + new buildings as terminals**
+   - Treats all existing user building nodes as terminals
+   - Guarantees new buildings connect to existing network (not separate component)
+   - Finds optimal entry point(s) to minimize added infrastructure
 3. Merge augmented subnetwork with user's original network (additive-only)
 
 **Key properties:**
+- **User network is immutable**: Existing edges/nodes are never modified
+- New buildings connect at optimal entry points (existing nodes)
 - Uses `connection_candidates` parameter (default: 3)
 - Combines user edges + streets as routing options
-- Deduplicates junction nodes via coordinate matching (SHAPEFILE_TOLERANCE precision)
-- Preserves all user network geometry exactly
+- Deduplicates edges via coordinate matching (SHAPEFILE_TOLERANCE precision)
+- Only adds new edges not already in user network
 
 ### Validation Modes: Missing vs Extra Buildings
 

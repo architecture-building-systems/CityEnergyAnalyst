@@ -979,8 +979,9 @@ def augment_user_network_with_buildings(
         connection_candidates=connection_candidates
     )
 
-    # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings
+    # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings to existing network
     print("  Step 2/3: Optimising network layout using Steiner tree algorithm...")
+    print("    - Ensuring new buildings connect to existing user network (user edges will not be modified)")
 
     # Import Steiner tree function
     from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
@@ -993,6 +994,34 @@ def augment_user_network_with_buildings(
     missing_buildings_centroids = missing_buildings_gdf.copy()
     missing_buildings_centroids['geometry'] = missing_buildings_gdf.geometry.centroid
 
+    # CRITICAL: Add existing user network building nodes as terminals
+    # This forces Steiner tree to connect new buildings to existing network
+    existing_building_nodes = user_nodes_gdf[
+        user_nodes_gdf['building'].notna() &
+        (user_nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    ].copy()
+
+    # Convert existing building nodes to centroids format (Point geometries at node location)
+    # Use building name as 'name' column for Steiner tree
+    existing_terminals = gpd.GeoDataFrame(
+        {
+            'name': existing_building_nodes['building'].values,
+            'geometry': existing_building_nodes['geometry'].values
+        },
+        crs=existing_building_nodes.crs
+    )
+
+    # Combine missing buildings + existing user buildings as terminals
+    # Steiner tree will find optimal path connecting ALL terminals
+    all_terminals = gpd.GeoDataFrame(
+        pd.concat([missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
+                   existing_terminals[['name', 'geometry']].reset_index(drop=True)],
+                  ignore_index=True),
+        crs=missing_buildings_centroids.crs
+    )
+
+    print(f"    - Terminals: {len(missing_buildings_centroids)} new + {len(existing_terminals)} existing = {len(all_terminals)} total")
+
     # Create temporary output paths for Steiner tree results
     temp_dir = tempfile.mkdtemp()
     temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
@@ -1001,11 +1030,12 @@ def augment_user_network_with_buildings(
     # Get CRS string
     crs_projected = zone_gdf.crs.to_string()
 
-    # Run Steiner tree optimisation
+    # Run Steiner tree optimisation with ALL buildings as terminals
+    # This guarantees new buildings connect to existing network
     # Note: This writes directly to shapefiles
     calc_steiner_spanning_tree(
         crs_projected=crs_projected,
-        building_centroids_df=missing_buildings_centroids,
+        building_centroids_df=all_terminals,  # Include existing + new buildings
         potential_network_graph=potential_graph,
         path_output_edges_shp=temp_edges_path,
         path_output_nodes_shp=temp_nodes_path,
