@@ -982,19 +982,47 @@ def augment_user_network_with_buildings(
     # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings
     print("  Step 2/3: Optimising network layout using Steiner tree algorithm...")
 
-    # Convert potential graph to GeoDataFrame for Steiner tree input
-    potential_edges_gdf = nx_to_gdf(potential_graph, crs=zone_gdf.crs, preserve_geometry=True)
+    # Import Steiner tree function
+    from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+    import tempfile
+    import os
+    import shutil
 
-    # Create dummy buildings GeoDataFrame for missing buildings only
+    # Get building geometries and convert to centroids
     missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
+    missing_buildings_centroids = missing_buildings_gdf.copy()
+    missing_buildings_centroids['geometry'] = missing_buildings_gdf.geometry.centroid
+
+    # Create temporary output paths for Steiner tree results
+    temp_dir = tempfile.mkdtemp()
+    temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
+    temp_nodes_path = os.path.join(temp_dir, 'steiner_nodes.shp')
+
+    # Get CRS string
+    crs_projected = zone_gdf.crs.to_string()
 
     # Run Steiner tree optimisation
-    steiner_nodes_gdf, steiner_edges_gdf = calc_steiner_spanning_tree(
-        streets_gdf=potential_edges_gdf,  # Use potential network as "streets"
-        buildings_gdf=missing_buildings_gdf,
+    # Note: This writes directly to shapefiles
+    calc_steiner_spanning_tree(
+        crs_projected=crs_projected,
+        building_centroids_df=missing_buildings_centroids,
+        potential_network_graph=potential_graph,
+        path_output_edges_shp=temp_edges_path,
+        path_output_nodes_shp=temp_nodes_path,
+        type_network='DH',  # Doesn't matter for pure topology
+        total_demand_location=locator.get_total_demand(),
+        plant_building_names=[],  # No plants needed for augmentation
+        disconnected_building_names=[],
         method='kou',  # High-quality algorithm
         connection_candidates=connection_candidates
     )
+
+    # Read back the optimised network
+    steiner_nodes_gdf = gpd.read_file(temp_nodes_path)
+    steiner_edges_gdf = gpd.read_file(temp_edges_path)
+
+    # Clean up temp files
+    shutil.rmtree(temp_dir)
 
     # Step 3: Merge optimised subnetwork with user's original network
     print("  Step 3/3: Merging augmented edges/nodes with user network...")
@@ -1037,6 +1065,10 @@ def _create_terminal_connections_for_buildings(
     # Get building geometries for missing buildings
     missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
 
+    # Convert building polygons to centroids (create_terminals expects Point geometries)
+    missing_buildings_centroids_gdf = missing_buildings_gdf.copy()
+    missing_buildings_centroids_gdf['geometry'] = missing_buildings_gdf.geometry.centroid
+
     # Combine user edges + street network (both are potential routing options)
     combined_network_gdf = gpd.GeoDataFrame(
         pd.concat([user_edges_gdf, street_network_gdf], ignore_index=True),
@@ -1046,8 +1078,8 @@ def _create_terminal_connections_for_buildings(
     # Create terminal connections for missing buildings to combined network
     # This connects each building to k-nearest street/edge points
     network_with_terminals_gdf = create_terminals(
-        buildings=missing_buildings_gdf,
-        streets=combined_network_gdf,
+        building_centroids=missing_buildings_centroids_gdf,
+        street_network=combined_network_gdf,
         connection_candidates=connection_candidates
     )
 
@@ -1061,11 +1093,11 @@ def _create_terminal_connections_for_buildings(
     # Extract building terminal coordinates (normalized to SHAPEFILE_TOLERANCE precision)
     building_terminals = {}
     for building_name in missing_building_names:
-        building_row = missing_buildings_gdf[missing_buildings_gdf['name'] == building_name]
+        building_row = missing_buildings_centroids_gdf[missing_buildings_centroids_gdf['name'] == building_name]
         if len(building_row) > 0:
-            building_geom = building_row.iloc[0].geometry
-            # Use centroid as terminal point, normalized
-            coord = normalize_coords([building_geom.centroid.coords[0]], SHAPEFILE_TOLERANCE)[0]
+            building_geom = building_row.iloc[0].geometry  # Already a Point (centroid)
+            # Normalize terminal point coordinates
+            coord = normalize_coords([building_geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
             building_terminals[building_name] = coord
 
     # Store terminal mapping in graph metadata
@@ -1108,10 +1140,33 @@ def _merge_augmented_network(
 
     # 2. Merge nodes - keep all user nodes, add new building nodes for missing buildings
 
-    # Extract building nodes from Steiner result for missing buildings
+    # Get existing node names and coordinates to avoid conflicts
+    existing_node_names = set(user_nodes_gdf['name'].tolist())
+    user_node_coords = set()
+    for idx, row in user_nodes_gdf.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        user_node_coords.add(coord)
+
+    # Extract building nodes from Steiner result for missing buildings ONLY
     new_building_nodes = steiner_nodes_gdf[
         steiner_nodes_gdf['building'].isin(missing_building_names)
     ].copy()
+
+    # Rename building nodes if they conflict with existing names
+    node_rename_counter = 1
+    for idx, row in new_building_nodes.iterrows():
+        old_name = row['name']
+        if old_name in existing_node_names:
+            # Rename to avoid conflict
+            while True:
+                new_name = f"{old_name}_n{node_rename_counter}"
+                if new_name not in existing_node_names:
+                    new_building_nodes.at[idx, 'name'] = new_name
+                    existing_node_names.add(new_name)
+                    break
+                node_rename_counter += 1
+        else:
+            existing_node_names.add(old_name)
 
     # Extract junction nodes from Steiner result (nodes with building='NONE' and type='NONE')
     # These are intermediate routing points that may be needed
@@ -1120,13 +1175,21 @@ def _merge_augmented_network(
         (steiner_nodes_gdf['type'].fillna('').str.upper() == 'NONE')
     ].copy()
 
-    # Deduplicate junction nodes - avoid duplicates with existing user nodes
-    # Use coordinate matching (normalized to SHAPEFILE_TOLERANCE)
-    user_node_coords = set()
-    for idx, row in user_nodes_gdf.iterrows():
-        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        user_node_coords.add(coord)
+    # Rename new junction nodes to avoid conflicts by adding '_n' suffix
+    # This makes it clear which nodes were added during augmentation
+    for idx, row in new_junction_nodes.iterrows():
+        old_name = row['name']
+        # Keep trying suffixes until we find a unique name
+        while True:
+            new_name = f"{old_name}_n{node_rename_counter}"
+            if new_name not in existing_node_names:
+                new_junction_nodes.at[idx, 'name'] = new_name
+                existing_node_names.add(new_name)
+                break
+            node_rename_counter += 1
 
+    # Deduplicate junction nodes - avoid duplicates with existing user nodes by coordinate
+    # The Steiner tree may include nodes from the user's original network that we don't want to duplicate
     unique_junction_nodes = []
     for idx, row in new_junction_nodes.iterrows():
         coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
