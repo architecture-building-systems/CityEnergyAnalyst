@@ -496,10 +496,6 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     # Detect DH service-specific plants (e.g., PLANT_hs_ww, PLANT_ww_hs, PLANT_HS_WW, etc - case insensitive)
     plants_dh_service = nodes_gdf[nodes_gdf['type'].fillna('').str.upper().str.match(r'PLANT_(HS|WW)(_HS|_WW)?$')]
 
-    # DEBUG: Show what types exist in the network
-    unique_types = nodes_gdf['type'].fillna('').str.upper().unique()
-    print(f"  DEBUG: Unique node types in network: {sorted([t for t in unique_types if t])}")
-
     # Determine which plants apply to this network type
     if network_type == 'DC':
         existing_plants = pd.concat([plants_shared, plants_dc]).drop_duplicates()
@@ -1672,8 +1668,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         else:
             # Should not reach here - validation should have raised error
             raise ValueError(
-                f"Internal error: validate_network_covers_district_buildings returned missing buildings "
-                f"when allow_augmentation=False. Please report this issue."
+                "Internal error: validate_network_covers_district_buildings returned missing buildings "
+                "when allow_augmentation=False. Please report this issue."
             )
     else:
         print("  ✓ All specified buildings have valid nodes in network")

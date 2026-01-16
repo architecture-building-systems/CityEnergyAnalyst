@@ -983,8 +983,6 @@ def augment_user_network_with_buildings(
     print("  Step 2/3: Optimising network layout using Steiner tree algorithm...")
     print("    - Ensuring new buildings connect to existing user network (user edges will not be modified)")
 
-    # Import Steiner tree function
-    from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
     import tempfile
     import os
     import shutil
@@ -1064,7 +1062,7 @@ def augment_user_network_with_buildings(
         missing_building_names=missing_building_names
     )
 
-    print(f"  ✓ Augmentation complete:")
+    print("  ✓ Augmentation complete:")
     print(f"    - Added {len(augmented_nodes_gdf) - len(user_nodes_gdf)} new node(s)")
     print(f"    - Added {len(augmented_edges_gdf) - len(user_edges_gdf)} new edge(s)")
     print(f"    - Total network: {len(augmented_nodes_gdf)} nodes, {len(augmented_edges_gdf)} edges\n")
