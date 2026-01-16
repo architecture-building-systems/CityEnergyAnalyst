@@ -488,15 +488,19 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     # PLANT = shared (both DC and DH)
     # PLANT_DC = DC only
     # PLANT_DH = DH only
+    # PLANT_hs_ww, PLANT_ww_hs, etc = DH with service configuration
     plants_shared = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
     plants_dc = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DC']
-    plants_dh = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+    plants_dh_legacy = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+
+    # Detect DH service-specific plants (e.g., PLANT_hs_ww, PLANT_ww_hs, PLANT_hs, PLANT_ww)
+    plants_dh_service = nodes_gdf[nodes_gdf['type'].fillna('').str.upper().str.match(r'^PLANT_(hs|ww)(_hs|_ww)?$')]
 
     # Determine which plants apply to this network type
     if network_type == 'DC':
         existing_plants = pd.concat([plants_shared, plants_dc]).drop_duplicates()
     elif network_type == 'DH':
-        existing_plants = pd.concat([plants_shared, plants_dh]).drop_duplicates()
+        existing_plants = pd.concat([plants_shared, plants_dh_legacy, plants_dh_service]).drop_duplicates()
     else:
         existing_plants = plants_shared
 
@@ -506,8 +510,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             print(f"    - Shared plants (PLANT): {len(plants_shared)}")
         if network_type == 'DC' and len(plants_dc) > 0:
             print(f"    - DC-only plants (PLANT_DC): {len(plants_dc)}")
-        if network_type == 'DH' and len(plants_dh) > 0:
-            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh)}")
+        if network_type == 'DH' and len(plants_dh_legacy) > 0:
+            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh_legacy)}")
+        if network_type == 'DH' and len(plants_dh_service) > 0:
+            print(f"    - DH service-specific plants (PLANT_hs_ww, etc): {len(plants_dh_service)}")
 
     # Build graph to detect components (need to do this even if plants exist, for validation)
     # Note: User-defined networks may not have start_node/end_node columns yet
@@ -1706,11 +1712,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         all_edges_with_plants.append(edges_gdf_dc)
 
         if created_plants_dc:
-            print(f"\n Auto-assigned {len(created_plants_dc)} building node(s) as PLANT (DC):")
+            print(f"\n✓ Created {len(created_plants_dc)} PLANT node(s) for DC network:")
             for plant_info in created_plants_dc:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-            print("  Note: Existing building nodes converted to PLANT type")
+                print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
 
         # Normalize plant types: PLANT and PLANT_DC both become PLANT for DC network
         nodes_gdf_dc['type'] = nodes_gdf_dc['type'].replace({'PLANT_DC': 'PLANT'})
@@ -1738,11 +1743,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         all_edges_with_plants.append(edges_gdf_dh)
 
         if created_plants_dh:
-            print(f"\n Auto-assigned {len(created_plants_dh)} building node(s) as PLANT (DH):")
+            print(f"\n✓ Created {len(created_plants_dh)} PLANT node(s) for DH network:")
             for plant_info in created_plants_dh:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-            print("  Note: Existing building nodes converted to PLANT type")
+                print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
 
         # Note: DH plant types preserve service configuration (e.g., PLANT_hs_ww, PLANT_ww_hs)
         # No normalization needed for DH network
