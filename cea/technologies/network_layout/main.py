@@ -1598,15 +1598,75 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Validate network covers all specified buildings
-    nodes_gdf, _ = validate_network_covers_district_buildings(
+    auto_augment_enabled = config.network_layout.auto_augment_missing_buildings
+
+    # Determine strictness for extra buildings check based on overwrite toggle
+    # - overwrite=False (supply.csv mode): Strict - extra buildings are errors
+    # - overwrite=True (what-if mode): Lenient - extra buildings get warnings only
+    strict_extra_buildings = not overwrite_supply
+
+    nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
         nodes_gdf,
         zone_gdf,  # Already loaded above for validation
         buildings_to_validate,
         list(network_types_to_generate),
-        edges_gdf
+        edges_gdf,
+        allow_augmentation=auto_augment_enabled,
+        strict_extra_buildings=strict_extra_buildings
     )
 
-    print("  ✓ All specified buildings have valid nodes in network")
+    # Handle missing buildings with augmentation if enabled
+    if missing_buildings:
+        if auto_augment_enabled:
+            print(f"\n  ⓘ Network is missing {len(missing_buildings)} building(s), auto-augmentation enabled...")
+            print("    Extending network using Steiner tree optimisation...")
+
+            # Import augmentation function
+            from cea.optimization_new.user_network_loader import augment_user_network_with_buildings
+
+            # Get street network for routing
+            street_network_gdf = gpd.read_file(locator.get_street_network())
+
+            # Augment network with missing buildings
+            nodes_gdf, edges_gdf = augment_user_network_with_buildings(
+                user_nodes_gdf=nodes_gdf,
+                user_edges_gdf=edges_gdf,
+                zone_gdf=zone_gdf,
+                missing_building_names=missing_buildings,
+                street_network_gdf=street_network_gdf,
+                locator=locator,
+                snap_tolerance=snap_tolerance,
+                connection_candidates=config.network_layout.connection_candidates
+            )
+
+            # Re-validate after augmentation (strict mode for missing, same mode for extra)
+            print("  Validating augmented network...")
+            nodes_gdf, remaining_missing = validate_network_covers_district_buildings(
+                nodes_gdf,
+                zone_gdf,
+                buildings_to_validate,
+                list(network_types_to_generate),
+                edges_gdf,
+                allow_augmentation=False,  # Strict validation after augmentation
+                strict_extra_buildings=strict_extra_buildings  # Keep same strictness for extra buildings
+            )
+
+            if remaining_missing:
+                raise ValueError(
+                    f"Internal error: Augmentation failed to add all buildings.\n"
+                    f"  Still missing: {remaining_missing}\n"
+                    "Please report this issue."
+                )
+
+            print("  ✓ Augmentation successful - all buildings now have nodes in network")
+        else:
+            # Should not reach here - validation should have raised error
+            raise ValueError(
+                f"Internal error: validate_network_covers_district_buildings returned missing buildings "
+                f"when allow_augmentation=False. Please report this issue."
+            )
+    else:
+        print("  ✓ All specified buildings have valid nodes in network")
 
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
