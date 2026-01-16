@@ -959,9 +959,7 @@ def augment_user_network_with_buildings(
     :param connection_candidates: Number of nearest streets to consider per building (1-5)
     :return: Tuple of (augmented_nodes_gdf, augmented_edges_gdf) with new buildings added
     """
-    from cea.technologies.network_layout.connectivity_potential import create_terminals
-    from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree, get_next_node_name
-    from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf, normalize_coords, SHAPEFILE_TOLERANCE
+    from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 
     print(f"\n  Augmenting user network with {len(missing_building_names)} missing building(s)...")
     print(f"    - Buildings to add: {', '.join(sorted(missing_building_names)[:10])}" +
