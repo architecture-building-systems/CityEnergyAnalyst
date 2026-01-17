@@ -41,6 +41,7 @@
 - script: network-layout
   parameters:
     network-name: baseline
+    itemised-dh-services: [domestic_hot_water]
     consider-only-buildings-with-demand: off
 - script: thermal-network
   parameters:

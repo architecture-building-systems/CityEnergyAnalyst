@@ -643,12 +643,32 @@ class IntegerParameter(Parameter):
         except configparser.NoOptionError:
             self.nullable = False
 
+        # Read min/max bounds if specified
+        try:
+            self._min = int(parser.get(self.section.name, f"{self.name}.min"))
+        except (configparser.NoOptionError, ValueError):
+            self._min = None
+
+        try:
+            self._max = int(parser.get(self.section.name, f"{self.name}.max"))
+        except (configparser.NoOptionError, ValueError):
+            self._max = None
+
     def encode(self, value):
         if value is None or value == "":
             if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable IntegerParameter.")
             return ""
-        return str(int(value))
+
+        int_value = int(value)
+
+        # Validate bounds
+        if self._min is not None and int_value < self._min:
+            raise ValueError(f"{self.fqname} must be >= {self._min}, got {int_value}")
+        if self._max is not None and int_value > self._max:
+            raise ValueError(f"{self.fqname} must be <= {self._max}, got {int_value}")
+
+        return str(int_value)
 
     def decode(self, value) -> int | None:
         try:
@@ -675,12 +695,32 @@ class RealParameter(Parameter):
         except configparser.NoOptionError:
             self.nullable = False
 
+        # Read min/max bounds if specified
+        try:
+            self._min = float(parser.get(self.section.name, f"{self.name}.min"))
+        except (configparser.NoOptionError, ValueError):
+            self._min = None
+
+        try:
+            self._max = float(parser.get(self.section.name, f"{self.name}.max"))
+        except (configparser.NoOptionError, ValueError):
+            self._max = None
+
     def encode(self, value):
         if value is None or value == "":
             if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable RealParameter.")
             return ''
-        return format(float(value), ".%i" % self._decimal_places)
+
+        float_value = float(value)
+
+        # Validate bounds
+        if self._min is not None and float_value < self._min:
+            raise ValueError(f"{self.fqname} must be >= {self._min}, got {float_value}")
+        if self._max is not None and float_value > self._max:
+            raise ValueError(f"{self.fqname} must be <= {self._max}, got {float_value}")
+
+        return format(float_value, ".%i" % self._decimal_places)
 
     def decode(self, value) -> float | None:
         try:
