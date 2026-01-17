@@ -140,7 +140,25 @@ class InputLocator(object):
     def get_export_folder(self):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
+    
+    def get_district_timeline_states_folder(self):
+        """Returns the folder as a representation of district timeline, containing state-in-time scenarios:
 
+        `scenario/district_timeline_states`"""
+        return os.path.join(self.scenario, "district_timeline_states")
+
+    def get_state_in_time_scenario_folder(self, year_of_state: int):
+        """Returns the folder containing a specific state-in-time scenario:
+
+        `scenario/district_timeline_states/state_{year_of_state}`"""
+        return os.path.join(self.get_district_timeline_states_folder(), f'state_{year_of_state}')
+
+    def get_district_timeline_log_file(self):
+        """Returns the log file for the district timeline scenarios:
+        
+        `scenario/district_timeline_states/district_timeline_log.yml`"""
+        return os.path.join(self.get_district_timeline_states_folder(), 'district_timeline_log.yml')
+    
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
         """scenario/export/results"""
@@ -845,6 +863,10 @@ class InputLocator(object):
     def get_database_components_feedstocks_energy_carriers(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
+    
+    def get_database_components_materials(self):
+        """scenario/inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv"""
+        return os.path.join(self.get_db4_components_folder(), 'MATERIALS', 'MATERIALS.csv')
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
