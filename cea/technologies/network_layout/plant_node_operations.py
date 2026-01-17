@@ -118,14 +118,24 @@ def get_next_node_name(nodes_gdf):
     This prevents duplicate node names when nodes are removed from the network during
     plant creation or other operations.
 
+    Handles node names with suffixes (e.g., NODE3_n1) by extracting only the base number.
+
     :param nodes_gdf: GeoDataFrame containing existing nodes with 'name' column
     :return: Unique node name in format 'NODE{n}' where n is max existing number + 1
     """
-    existing_node_numbers = [
-        int(name.replace('NODE', ''))
-        for name in nodes_gdf['name']
-        if isinstance(name, str) and name.startswith('NODE')
-    ]
+    existing_node_numbers = []
+    for name in nodes_gdf['name']:
+        if isinstance(name, str) and name.startswith('NODE'):
+            # Extract base number (handles suffixes like NODE3_n1)
+            try:
+                # Split by underscore and take the first part after 'NODE'
+                base_name = name.split('_')[0]  # 'NODE3_n1' -> 'NODE3'
+                num = int(base_name.replace('NODE', ''))  # 'NODE3' -> 3
+                existing_node_numbers.append(num)
+            except ValueError:
+                # Skip names that don't have a valid number
+                continue
+
     next_node_num = max(existing_node_numbers) + 1 if existing_node_numbers else 0
     return f'NODE{next_node_num}'
 
