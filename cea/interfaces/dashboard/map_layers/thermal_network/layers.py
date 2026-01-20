@@ -332,7 +332,7 @@ class ThermalNetworkMapLayer(MapLayer):
             elif node_type.startswith('PLANT'):
                 # Plant node - add plant performance metrics
                 # Node type can be 'PLANT_hs_ww', 'PLANT_cs', etc.
-                metrics = self._calculate_plant_metrics(network_type, network_name)
+                metrics = self._calculate_plant_metrics(network_type, network_name, node_id)
 
                 # Add all metrics to the dataframe
                 for key, value in metrics.items():
@@ -439,7 +439,7 @@ class ThermalNetworkMapLayer(MapLayer):
             logger.error(f"Error calculating substation metrics for {building_name}: {e}")
             return {}
 
-    def _calculate_plant_metrics(self, network_type, network_name):
+    def _calculate_plant_metrics(self, network_type, network_name, plant_id):
         """
         Calculate plant performance metrics.
 
@@ -493,16 +493,11 @@ class ThermalNetworkMapLayer(MapLayer):
 
             if os.path.exists(temp_supply_file):
                 temp_df = pd.read_csv(temp_supply_file)
-                # Plant node is typically the first node - get first column
-                # (assuming first column is the plant node)
-                numeric_cols = [col for col in temp_df.columns if col not in ['Date', 'date', 'TIME']]
-                if numeric_cols:
-                    plant_col = numeric_cols[0]
-
+                if plant_id in temp_df.columns:
                     # Convert K to C
-                    avg_supply_temp_C = temp_df[plant_col].mean() - 273.15
-                    min_supply_temp_C = temp_df[plant_col].min() - 273.15
-                    max_supply_temp_C = temp_df[plant_col].max() - 273.15
+                    avg_supply_temp_C = temp_df[plant_id].mean() - 273.15
+                    min_supply_temp_C = temp_df[plant_id].min() - 273.15
+                    max_supply_temp_C = temp_df[plant_id].max() - 273.15
                 else:
                     avg_supply_temp_C = 0
                     min_supply_temp_C = 0
@@ -517,10 +512,8 @@ class ThermalNetworkMapLayer(MapLayer):
 
             if os.path.exists(temp_return_file):
                 temp_df = pd.read_csv(temp_return_file)
-                numeric_cols = [col for col in temp_df.columns if col not in ['Date', 'date', 'TIME']]
-                if numeric_cols:
-                    plant_col = numeric_cols[0]
-                    avg_return_temp_C = temp_df[plant_col].mean() - 273.15
+                if plant_id in temp_df.columns:
+                    avg_return_temp_C = temp_df[plant_id].mean() - 273.15
                 else:
                     avg_return_temp_C = 0
             else:
