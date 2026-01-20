@@ -13,7 +13,8 @@ from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.plant_node_operations import (
-    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices
+    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices,
+    DEFAULT_SERVICES
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
@@ -328,9 +329,10 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
         per_building_services = {'B1': {'space_heating'}}
         → ('error', 'Network configuration error: itemised-dh-services includes...', {...})
     """
-    # Normalize itemised_dh_services: treat None as empty list
-    if itemised_dh_services is None:
-        itemised_dh_services = []
+    # Use default services if itemised_dh_services is None or empty
+    # Default: [SPACE_HEATING, DOMESTIC_HOT_WATER] (low-temp priority)
+    if not itemised_dh_services:
+        itemised_dh_services = list(DEFAULT_SERVICES)
 
     # Union of all DISTRICT services buildings expect from network
     district_services_needed = set()
@@ -408,7 +410,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
     # Services match exactly - generate success message with priority info
     services_display = [service_names.get(s, s) for s in itemised_dh_services]
 
-    if len(itemised_dh_services) and itemised_dh_services[0] == PlantServices.SPACE_HEATING:
+    if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
         temp_info = "low-temperature network (e.g., 35-55°C)"
     else:
         temp_info = "high-temperature network (60°C+)"
