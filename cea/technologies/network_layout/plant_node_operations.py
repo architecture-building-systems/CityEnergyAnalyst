@@ -62,7 +62,7 @@ def get_dh_services_from_plant_type(plant_type: str) -> tuple[list[PlantServices
     }
 
     # Check for unknown or legacy plant types (no prefix or DH suffix)
-    if not plant_type.startswith(prefix) or plant_type == 'PLANT_DH':
+    if not plant_type or not plant_type.startswith(prefix) or plant_type == 'PLANT_DH':
         # Default to both services in default order
         return (DEFAULT_SERVICES, True)
 
