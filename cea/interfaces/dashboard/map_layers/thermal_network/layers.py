@@ -376,33 +376,42 @@ class ThermalNetworkMapLayer(MapLayer):
 
                 annual_energy_MWh = (Q_dh_W.sum() / 1000) / 1000  # W to kW to MWh
                 annual_booster_MWh = (Q_booster_W.sum() / 1000) / 1000
-            else:
+
+                peak_load_kW = (Q_dh_W.max() / 1000)  # W to kW
+
+            elif network_type == 'DC':
                 # For DC: cooling energy
                 Q_dc_W = df.get('Qcs_W', pd.Series([0])).fillna(0)
                 annual_energy_MWh = (Q_dc_W.sum() / 1000) / 1000
                 annual_booster_MWh = 0  # No boosters in cooling
 
-            # Peak load
-            if network_type == 'DH':
-                peak_load_kW = (Q_dh_W.max() / 1000)  # W to kW
-            else:
                 peak_load_kW = (Q_dc_W.max() / 1000)
 
-            # Average temperatures during active hours
-            mdot_col = 'mdot_DH_result_kgpers'
-            active_hours = df.get(mdot_col, pd.Series([0])) > 0.01
-
-            if active_hours.sum() > 0:
-                T_supply_col = 'T_supply_DH_result_C'
-                T_return_col = 'T_return_DH_result_C'
-
-                avg_supply_temp = df.loc[active_hours, T_supply_col].mean()
-                avg_return_temp = df.loc[active_hours, T_return_col].mean()
-                avg_delta_t = abs(avg_supply_temp - avg_return_temp)
             else:
+                raise ValueError(f"Invalid network type: {network_type}")
+
+            # Average temperatures during active hours
+            mdot_col = f'mdot_{network_type}_result_kgpers'
+            T_supply_col = f'T_supply_{network_type}_result_C'
+            T_return_col = f'T_return_{network_type}_result_C'
+
+            required_cols = {mdot_col, T_supply_col, T_return_col}
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            if missing_cols:
                 avg_supply_temp = 0
                 avg_return_temp = 0
                 avg_delta_t = 0
+            else:
+                active_hours = df[mdot_col] > 0.01
+
+                if active_hours.sum() > 0:
+                    avg_supply_temp = df.loc[active_hours, T_supply_col].mean()
+                    avg_return_temp = df.loc[active_hours, T_return_col].mean()
+                    avg_delta_t = abs(avg_supply_temp - avg_return_temp)
+                else:
+                    avg_supply_temp = 0
+                    avg_return_temp = 0
+                    avg_delta_t = 0
 
             # Heat exchanger area (total for heating and DHW)
             if network_type == 'DH':
