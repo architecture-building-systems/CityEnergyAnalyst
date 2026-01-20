@@ -1368,7 +1368,8 @@ class NetworkLayoutSection(Section):
     edges_shp_path: str | None
     nodes_shp_path: str | None
     network_geojson_path: str | None
-    auto_augment_missing_buildings: bool
+    network_layout_mode: str
+    auto_modify_network: bool
     consider_only_buildings_with_demand: bool
     algorithm: str
     connection_candidates: int
@@ -1397,7 +1398,9 @@ class NetworkLayoutSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_geojson_path"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["auto_augment_missing_buildings"]) -> bool: ...
+    def __getattr__(self, item: Literal["network_layout_mode"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["auto_modify_network"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
     @overload
