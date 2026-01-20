@@ -300,7 +300,7 @@ class ThermalNetwork(object):
             if len(self.itemised_dh_services) == 1:
                 desc = f"50-80°C for high-temp DH ({service_names} only)"
             else:
-                desc = f"60-80°C for high-temp DH ({service_names} priority)"
+                desc = f"50-80°C for high-temp DH ({service_names} priority)"
         else:
             min_temp = 30
             max_temp = 80
