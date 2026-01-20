@@ -13,7 +13,8 @@ from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.plant_node_operations import (
-    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices
+    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices,
+    DEFAULT_SERVICES
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
@@ -328,9 +329,10 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
         per_building_services = {'B1': {'space_heating'}}
         → ('error', 'Network configuration error: itemised-dh-services includes...', {...})
     """
-    # Normalize itemised_dh_services: treat None as empty list
-    if itemised_dh_services is None:
-        itemised_dh_services = []
+    # Use default services if itemised_dh_services is None or empty
+    # Default: [SPACE_HEATING, DOMESTIC_HOT_WATER] (low-temp priority)
+    if not itemised_dh_services:
+        itemised_dh_services = list(DEFAULT_SERVICES)
 
     # Union of all DISTRICT services buildings expect from network
     district_services_needed = set()
@@ -408,7 +410,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
     # Services match exactly - generate success message with priority info
     services_display = [service_names.get(s, s) for s in itemised_dh_services]
 
-    if len(itemised_dh_services) and itemised_dh_services[0] == PlantServices.SPACE_HEATING:
+    if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
         temp_info = "low-temperature network (e.g., 35-55°C)"
     else:
         temp_info = "high-temperature network (60°C+)"
@@ -488,15 +490,19 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     # PLANT = shared (both DC and DH)
     # PLANT_DC = DC only
     # PLANT_DH = DH only
+    # PLANT_hs_ww, PLANT_ww_hs, etc = DH with service configuration
     plants_shared = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
     plants_dc = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DC']
-    plants_dh = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+    plants_dh_legacy = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+
+    # Detect DH service-specific plants (e.g., PLANT_hs_ww, PLANT_ww_hs, PLANT_HS_WW, etc - case insensitive)
+    plants_dh_service = nodes_gdf[nodes_gdf['type'].fillna('').str.upper().str.match(r'PLANT_(HS|WW)(_HS|_WW)?$')]
 
     # Determine which plants apply to this network type
     if network_type == 'DC':
         existing_plants = pd.concat([plants_shared, plants_dc]).drop_duplicates()
     elif network_type == 'DH':
-        existing_plants = pd.concat([plants_shared, plants_dh]).drop_duplicates()
+        existing_plants = pd.concat([plants_shared, plants_dh_legacy, plants_dh_service]).drop_duplicates()
     else:
         existing_plants = plants_shared
 
@@ -506,8 +512,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             print(f"    - Shared plants (PLANT): {len(plants_shared)}")
         if network_type == 'DC' and len(plants_dc) > 0:
             print(f"    - DC-only plants (PLANT_DC): {len(plants_dc)}")
-        if network_type == 'DH' and len(plants_dh) > 0:
-            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh)}")
+        if network_type == 'DH' and len(plants_dh_legacy) > 0:
+            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh_legacy)}")
+        if network_type == 'DH' and len(plants_dh_service) > 0:
+            print(f"    - DH service-specific plants (PLANT_hs_ww, etc): {len(plants_dh_service)}")
 
     # Build graph to detect components (need to do this even if plants exist, for validation)
     # Note: User-defined networks may not have start_node/end_node columns yet
@@ -1598,15 +1606,75 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Validate network covers all specified buildings
-    nodes_gdf, _ = validate_network_covers_district_buildings(
+    auto_augment_enabled = config.network_layout.auto_augment_missing_buildings
+
+    # Determine strictness for extra buildings check based on overwrite toggle
+    # - overwrite=False (supply.csv mode): Strict - extra buildings are errors
+    # - overwrite=True (what-if mode): Lenient - extra buildings get warnings only
+    strict_extra_buildings = not overwrite_supply
+
+    nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
         nodes_gdf,
         zone_gdf,  # Already loaded above for validation
         buildings_to_validate,
         list(network_types_to_generate),
-        edges_gdf
+        edges_gdf,
+        allow_augmentation=auto_augment_enabled,
+        strict_extra_buildings=strict_extra_buildings
     )
 
-    print("  ✓ All specified buildings have valid nodes in network")
+    # Handle missing buildings with augmentation if enabled
+    if missing_buildings:
+        if auto_augment_enabled:
+            print(f"\n  ⓘ Network is missing {len(missing_buildings)} building(s), auto-augmentation enabled...")
+            print("    Extending network using Steiner tree optimisation...")
+
+            # Import augmentation function
+            from cea.optimization_new.user_network_loader import augment_user_network_with_buildings
+
+            # Get street network for routing
+            street_network_gdf = gpd.read_file(locator.get_street_network())
+
+            # Augment network with missing buildings
+            nodes_gdf, edges_gdf = augment_user_network_with_buildings(
+                user_nodes_gdf=nodes_gdf,
+                user_edges_gdf=edges_gdf,
+                zone_gdf=zone_gdf,
+                missing_building_names=missing_buildings,
+                street_network_gdf=street_network_gdf,
+                locator=locator,
+                snap_tolerance=snap_tolerance,
+                connection_candidates=config.network_layout.connection_candidates
+            )
+
+            # Re-validate after augmentation (strict mode for missing, same mode for extra)
+            print("  Validating augmented network...")
+            nodes_gdf, remaining_missing = validate_network_covers_district_buildings(
+                nodes_gdf,
+                zone_gdf,
+                buildings_to_validate,
+                list(network_types_to_generate),
+                edges_gdf,
+                allow_augmentation=False,  # Strict validation after augmentation
+                strict_extra_buildings=strict_extra_buildings  # Keep same strictness for extra buildings
+            )
+
+            if remaining_missing:
+                raise ValueError(
+                    f"Internal error: Augmentation failed to add all buildings.\n"
+                    f"  Still missing: {remaining_missing}\n"
+                    "Please report this issue."
+                )
+
+            print("  ✓ Augmentation successful - all buildings now have nodes in network")
+        else:
+            # Should not reach here - validation should have raised error
+            raise ValueError(
+                "Internal error: validate_network_covers_district_buildings returned missing buildings "
+                "when allow_augmentation=False. Please report this issue."
+            )
+    else:
+        print("  ✓ All specified buildings have valid nodes in network")
 
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
@@ -1646,11 +1714,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         all_edges_with_plants.append(edges_gdf_dc)
 
         if created_plants_dc:
-            print(f"\n Auto-assigned {len(created_plants_dc)} building node(s) as PLANT (DC):")
+            print(f"\n✓ Created {len(created_plants_dc)} PLANT node(s) for DC network:")
             for plant_info in created_plants_dc:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-            print("  Note: Existing building nodes converted to PLANT type")
+                print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
 
         # Normalize plant types: PLANT and PLANT_DC both become PLANT for DC network
         nodes_gdf_dc['type'] = nodes_gdf_dc['type'].replace({'PLANT_DC': 'PLANT'})
@@ -1678,11 +1745,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         all_edges_with_plants.append(edges_gdf_dh)
 
         if created_plants_dh:
-            print(f"\n Auto-assigned {len(created_plants_dh)} building node(s) as PLANT (DH):")
+            print(f"\n✓ Created {len(created_plants_dh)} PLANT node(s) for DH network:")
             for plant_info in created_plants_dh:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-            print("  Note: Existing building nodes converted to PLANT type")
+                print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
 
         # Note: DH plant types preserve service configuration (e.g., PLANT_hs_ww, PLANT_ww_hs)
         # No normalization needed for DH network

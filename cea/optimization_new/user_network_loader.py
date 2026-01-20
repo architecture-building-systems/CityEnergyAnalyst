@@ -24,6 +24,7 @@ __status__ = "Production"
 
 import os
 import itertools
+import pandas as pd
 import geopandas as gpd
 import networkx as nx
 from shapely.geometry import Point
@@ -407,7 +408,9 @@ def validate_network_covers_district_buildings(
     buildings_gdf: gpd.GeoDataFrame,
     district_building_names: List[str],
     network_types: List[str],
-    edges_gdf: gpd.GeoDataFrame
+    edges_gdf: gpd.GeoDataFrame,
+    allow_augmentation: bool = False,
+    strict_extra_buildings: bool = True
 ) -> Tuple[gpd.GeoDataFrame, List[str]]:
     """
     Validate that all buildings designated as 'district' in Building Properties/Supply settings have exactly one node
@@ -415,7 +418,7 @@ def validate_network_covers_district_buildings(
 
     Validation checks:
     - All district buildings have exactly one node (by exact name match)
-    - No extra buildings in network that aren't designated for district
+    - No extra buildings in network that aren't designated for district (strict mode) OR warn only (lenient mode)
     - Each building has exactly one node (no duplicates)
 
     NOTE: This does NOT validate that nodes are within building footprints geometrically.
@@ -427,8 +430,13 @@ def validate_network_covers_district_buildings(
     :param district_building_names: List of building names that should be on district network
     :param network_types: List of network types (e.g., ['DH', 'DC']) for error messaging
     :param edges_gdf: GeoDataFrame of network edges (unused - no auto-creation occurs)
-    :return: Tuple of (nodes_gdf, empty list - no auto-creation occurs)
-    :raises UserNetworkLoaderError: If validation fails with detailed diagnostics
+    :param allow_augmentation: If True, return missing buildings list instead of raising error
+    :param strict_extra_buildings: If True (default), raise error when network has extra buildings.
+                                   If False, only print warning. Use False when overwrite-supply-settings=True.
+    :return: Tuple of (nodes_gdf, missing_buildings_list)
+             - If allow_augmentation=False: raises error if buildings missing, returns (nodes_gdf, [])
+             - If allow_augmentation=True: returns (nodes_gdf, missing_buildings_list) if buildings missing
+    :raises UserNetworkLoaderError: If validation fails
     """
 
     # Get building nodes (exclude NONE, PLANT, etc.)
@@ -443,21 +451,26 @@ def validate_network_covers_district_buildings(
     missing_buildings = district_building_set - network_building_names
 
     if missing_buildings:
-        # Raise error - do NOT auto-create nodes
-        missing_list = sorted(list(missing_buildings))[:20]
-        missing_details = "\n  ".join(missing_list)
-        if len(missing_buildings) > 20:
-            missing_details += f"\n  ... and {len(missing_buildings) - 20} more"
+        if allow_augmentation:
+            # Return missing buildings for augmentation (caller will handle)
+            return nodes_gdf, sorted(list(missing_buildings))
+        else:
+            # Raise error - strict validation mode
+            missing_list = sorted(list(missing_buildings))[:20]
+            missing_details = "\n  ".join(missing_list)
+            if len(missing_buildings) > 20:
+                missing_details += f"\n  ... and {len(missing_buildings) - 20} more"
 
-        raise UserNetworkLoaderError(
-            f"User-defined network is missing nodes for {len(missing_buildings)} building(s):\n\n"
-            f"  {missing_details}\n\n"
-            "These buildings are designated for district connection but have no nodes in the network.\n\n"
-            "Resolution:\n"
-            "  1. Add nodes for these buildings in your network layout (with 'type' = 'CONSUMER' or 'NONE')\n"
-            "  2. Ensure node 'building' attribute exactly matches building names (case-sensitive)\n"
-            "  3. Remove these buildings from the connected-buildings parameter if they shouldn't be in the network"
-        )
+            raise UserNetworkLoaderError(
+                f"User-defined network is missing nodes for {len(missing_buildings)} building(s):\n\n"
+                f"  {missing_details}\n\n"
+                "These buildings are designated for district connection but have no nodes in the network.\n\n"
+                "Resolution:\n"
+                "  1. Add nodes for these buildings in your network layout (with 'type' = 'CONSUMER' or 'NONE')\n"
+                "  2. Ensure node 'building' attribute exactly matches building names (case-sensitive)\n"
+                "  3. Remove these buildings from the connected-buildings parameter if they shouldn't be in the network\n"
+                "  4. Enable 'auto-augment-missing-buildings' parameter to automatically extend the network"
+            )
 
     # Check 2: Are there extra buildings in the network that shouldn't be there?
     extra_buildings = network_building_names - district_building_set
@@ -465,19 +478,33 @@ def validate_network_covers_district_buildings(
     if extra_buildings:
         extra_list = sorted(list(extra_buildings))
         network_type_label = '/'.join(sorted(network_types))
-        raise UserNetworkLoaderError(
-            f"User-defined network includes buildings NOT designated for district {network_type_label}:\n\n"
-            f"  - Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
-            f"  - Buildings found in network nodes: {len(network_building_names)}\n"
-            f"  - Extra buildings: {len(extra_buildings)}\n\n"
-            "  - Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
-            (f"\n  ... and {len(extra_list) - 20} more" if len(extra_list) > 20 else "") +
-            "\n\n"
-            "Resolution options:\n"
-            "  1. Remove these building nodes from your network layout\n"
-            "  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
-            "  3. Leave network layout parameters (i.e. edges-shp-path, nodes-shp-path, network-geojson-path) blank to let CEA generate the network automatically"
-        )
+
+        if strict_extra_buildings:
+            # Strict mode (overwrite-supply-settings=False): Raise error
+            # supply.csv is authoritative - extra buildings likely indicate mistake
+            raise UserNetworkLoaderError(
+                f"User-defined network includes buildings NOT designated for district {network_type_label}:\n\n"
+                f"  - Buildings designated for district (from Building Properties/Supply): {len(district_building_set)}\n"
+                f"  - Buildings found in network nodes: {len(network_building_names)}\n"
+                f"  - Extra buildings: {len(extra_buildings)}\n\n"
+                "  - Extra building(s) in network:\n  " + "\n  ".join(extra_list[:20]) +
+                (f"\n  ... and {len(extra_list) - 20} more" if len(extra_list) > 20 else "") +
+                "\n\n"
+                "Resolution options:\n"
+                "  1. Remove these building nodes from your network layout\n"
+                "  2. Update Building Properties/Supply to set these buildings to district-scale systems\n"
+                "  3. Set 'overwrite-supply-settings' to True if you want to intentionally include extra buildings\n"
+                "  4. Leave network layout parameters blank to let CEA generate the network automatically"
+            )
+        else:
+            # Lenient mode (overwrite-supply-settings=True): Just warn
+            # User is experimenting with what-if scenarios - respect their network layout
+            print(f"\n  ⚠ Warning: Network includes {len(extra_buildings)} building(s) NOT in 'connected-buildings' parameter:")
+            print("    " + ", ".join(extra_list[:10]) +
+                  (f" and {len(extra_buildings) - 10} more" if len(extra_buildings) > 10 else ""))
+            print("\n    Your network layout will be used as-is (all buildings included).")
+            print("    If this is intentional, you can ignore this warning.")
+            print("    If you want to exclude them, remove their nodes from your network layout.\n")
 
     # Check 3: Validate one node per building
     # NOTE: We do NOT validate that nodes are within building footprints because:
@@ -898,3 +925,337 @@ def map_buildings_to_networks(
         )
 
     return building_to_network, snapped_nodes, edge_snaps
+
+
+def augment_user_network_with_buildings(
+    user_nodes_gdf: gpd.GeoDataFrame,
+    user_edges_gdf: gpd.GeoDataFrame,
+    zone_gdf: gpd.GeoDataFrame,
+    missing_building_names: List[str],
+    street_network_gdf: gpd.GeoDataFrame,
+    locator,
+    snap_tolerance: float = 0.5,
+    connection_candidates: int = 3
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """
+    Augment user-provided network with additional buildings using Steiner tree optimisation.
+
+    This function extends the user's existing network (edges.shp + nodes.shp) by connecting
+    additional buildings that are required by supply.csv or connected-buildings parameter
+    but are missing from the user-provided network.
+
+    Algorithm:
+    1. Create potential network graph combining user edges + street network
+    2. Use Steiner tree optimisation to find optimal paths connecting missing buildings
+    3. Merge new edges/nodes with user network (additive-only, never modifies existing)
+
+    :param user_nodes_gdf: User-provided nodes (full format: building, name, type, geometry)
+    :param user_edges_gdf: User-provided edges (type_mat, geometry)
+    :param zone_gdf: Building footprints from zone geometry
+    :param missing_building_names: List of building names to add to network
+    :param street_network_gdf: Street network for routing (from locator.get_street_network())
+    :param locator: InputLocator for file paths
+    :param snap_tolerance: Tolerance for snapping terminal connections (metres)
+    :param connection_candidates: Number of nearest streets to consider per building (1-5)
+    :return: Tuple of (augmented_nodes_gdf, augmented_edges_gdf) with new buildings added
+    """
+    from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
+
+    print(f"\n  Augmenting user network with {len(missing_building_names)} missing building(s)...")
+    print(f"    - Buildings to add: {', '.join(sorted(missing_building_names)[:10])}" +
+          (f" and {len(missing_building_names) - 10} more" if len(missing_building_names) > 10 else ""))
+
+    # Step 1: Create potential network combining user network + streets for routing
+    print("  Step 1/3: Creating potential network graph...")
+    potential_graph, building_terminals = _create_terminal_connections_for_buildings(
+        user_nodes_gdf=user_nodes_gdf,
+        user_edges_gdf=user_edges_gdf,
+        zone_gdf=zone_gdf,
+        missing_building_names=missing_building_names,
+        street_network_gdf=street_network_gdf,
+        snap_tolerance=snap_tolerance,
+        connection_candidates=connection_candidates
+    )
+
+    # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings to existing network
+    print("  Step 2/3: Optimising network layout using Steiner tree algorithm...")
+    print("    - Ensuring new buildings connect to existing user network (user edges will not be modified)")
+
+    import tempfile
+    import os
+    import shutil
+
+    # Get building geometries and convert to centroids
+    missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
+    missing_buildings_centroids = missing_buildings_gdf.copy()
+    missing_buildings_centroids['geometry'] = missing_buildings_gdf.geometry.centroid
+
+    # CRITICAL: Add existing user network building nodes as terminals
+    # This forces Steiner tree to connect new buildings to existing network
+    existing_building_nodes = user_nodes_gdf[
+        user_nodes_gdf['building'].notna() &
+        (user_nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    ].copy()
+
+    # Convert existing building nodes to centroids format (Point geometries at node location)
+    # Use building name as 'name' column for Steiner tree
+    existing_terminals = gpd.GeoDataFrame(
+        {
+            'name': existing_building_nodes['building'].values,
+            'geometry': existing_building_nodes['geometry'].values
+        },
+        crs=existing_building_nodes.crs
+    )
+
+    # Combine missing buildings + existing user buildings as terminals
+    # Steiner tree will find optimal path connecting ALL terminals
+    all_terminals = gpd.GeoDataFrame(
+        pd.concat([missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
+                   existing_terminals[['name', 'geometry']].reset_index(drop=True)],
+                  ignore_index=True),
+        crs=missing_buildings_centroids.crs
+    )
+
+    print(f"    - Terminals: {len(missing_buildings_centroids)} new + {len(existing_terminals)} existing = {len(all_terminals)} total")
+
+    # Create temporary output paths for Steiner tree results
+    temp_dir = tempfile.mkdtemp()
+    temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
+    temp_nodes_path = os.path.join(temp_dir, 'steiner_nodes.shp')
+
+    # Get CRS string
+    crs_projected = zone_gdf.crs.to_string()
+
+    # Run Steiner tree optimisation with ALL buildings as terminals
+    # This guarantees new buildings connect to existing network
+    # Note: This writes directly to shapefiles
+    calc_steiner_spanning_tree(
+        crs_projected=crs_projected,
+        building_centroids_df=all_terminals,  # Include existing + new buildings
+        potential_network_graph=potential_graph,
+        path_output_edges_shp=temp_edges_path,
+        path_output_nodes_shp=temp_nodes_path,
+        type_network='DH',  # Doesn't matter for pure topology
+        total_demand_location=locator.get_total_demand(),
+        plant_building_names=[],  # No plants needed for augmentation
+        disconnected_building_names=[],
+        method='kou',  # High-quality algorithm
+        connection_candidates=connection_candidates
+    )
+
+    # Read back the optimised network
+    steiner_nodes_gdf = gpd.read_file(temp_nodes_path)
+    steiner_edges_gdf = gpd.read_file(temp_edges_path)
+
+    # Clean up temp files
+    shutil.rmtree(temp_dir)
+
+    # Step 3: Merge optimised subnetwork with user's original network
+    print("  Step 3/3: Merging augmented edges/nodes with user network...")
+    augmented_nodes_gdf, augmented_edges_gdf = _merge_augmented_network(
+        user_nodes_gdf=user_nodes_gdf,
+        user_edges_gdf=user_edges_gdf,
+        steiner_nodes_gdf=steiner_nodes_gdf,
+        steiner_edges_gdf=steiner_edges_gdf,
+        missing_building_names=missing_building_names
+    )
+
+    print("  ✓ Augmentation complete:")
+    print(f"    - Added {len(augmented_nodes_gdf) - len(user_nodes_gdf)} new node(s)")
+    print(f"    - Added {len(augmented_edges_gdf) - len(user_edges_gdf)} new edge(s)")
+    print(f"    - Total network: {len(augmented_nodes_gdf)} nodes, {len(augmented_edges_gdf)} edges\n")
+
+    return augmented_nodes_gdf, augmented_edges_gdf
+
+
+def _create_terminal_connections_for_buildings(
+    user_nodes_gdf: gpd.GeoDataFrame,
+    user_edges_gdf: gpd.GeoDataFrame,
+    zone_gdf: gpd.GeoDataFrame,
+    missing_building_names: List[str],
+    street_network_gdf: gpd.GeoDataFrame,
+    snap_tolerance: float,
+    connection_candidates: int
+) -> Tuple[nx.Graph, dict]:
+    """
+    Create potential network graph combining user edges + street network with terminal connections
+    to missing buildings.
+
+    Returns:
+    - NetworkX graph with all potential edges (user + streets + terminals)
+    - Building terminals dict mapping building_name -> (x, y) node coordinate
+    """
+    from cea.technologies.network_layout.connectivity_potential import create_terminals
+    from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords, SHAPEFILE_TOLERANCE
+
+    # Get building geometries for missing buildings
+    missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
+
+    # Convert building polygons to centroids (create_terminals expects Point geometries)
+    missing_buildings_centroids_gdf = missing_buildings_gdf.copy()
+    missing_buildings_centroids_gdf['geometry'] = missing_buildings_gdf.geometry.centroid
+
+    # Combine user edges + street network (both are potential routing options)
+    combined_network_gdf = gpd.GeoDataFrame(
+        pd.concat([user_edges_gdf, street_network_gdf], ignore_index=True),
+        crs=user_edges_gdf.crs
+    )
+
+    # Create terminal connections for missing buildings to combined network
+    # This connects each building to k-nearest street/edge points
+    network_with_terminals_gdf = create_terminals(
+        building_centroids=missing_buildings_centroids_gdf,
+        street_network=combined_network_gdf,
+        connection_candidates=connection_candidates
+    )
+
+    # Convert to NetworkX graph
+    potential_graph = gdf_to_nx(
+        network_with_terminals_gdf,
+        coord_precision=SHAPEFILE_TOLERANCE,
+        preserve_geometry=True
+    )
+
+    # Extract building terminal coordinates (normalized to SHAPEFILE_TOLERANCE precision)
+    building_terminals = {}
+    for building_name in missing_building_names:
+        building_row = missing_buildings_centroids_gdf[missing_buildings_centroids_gdf['name'] == building_name]
+        if len(building_row) > 0:
+            building_geom = building_row.iloc[0].geometry  # Already a Point (centroid)
+            # Normalize terminal point coordinates
+            coord = normalize_coords([building_geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+            building_terminals[building_name] = coord
+
+    # Store terminal mapping in graph metadata
+    potential_graph.graph['building_terminals'] = building_terminals
+    potential_graph.graph['crs'] = user_edges_gdf.crs
+
+    return potential_graph, building_terminals
+
+
+def _merge_augmented_network(
+    user_nodes_gdf: gpd.GeoDataFrame,
+    user_edges_gdf: gpd.GeoDataFrame,
+    steiner_nodes_gdf: gpd.GeoDataFrame,
+    steiner_edges_gdf: gpd.GeoDataFrame,
+    missing_building_names: List[str]
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """
+    Merge user's original network with Steiner tree subnetwork for missing buildings.
+
+    Strategy:
+    - User edges: Keep all (never modify existing)
+    - User nodes: Keep all (never modify existing)
+    - Steiner edges: Add only new edges not already in user network
+    - Steiner nodes: Add only new nodes for missing buildings + junction nodes
+
+    Returns:
+    - Augmented nodes GeoDataFrame
+    - Augmented edges GeoDataFrame
+    """
+    from cea.technologies.network_layout.graph_utils import normalize_coords, SHAPEFILE_TOLERANCE
+
+    # 1. Merge edges - keep all user edges, add new Steiner edges
+    # Steiner tree output may include edges from the user's original network
+    # We need to filter those out to avoid duplicates
+
+    # Get user edge coordinates (start-end pairs) for deduplication
+    user_edge_coords = set()
+    for idx, row in user_edges_gdf.iterrows():
+        geom = row.geometry
+        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+        # Store as sorted tuple so (A,B) == (B,A)
+        edge_coords = tuple(sorted([start, end]))
+        user_edge_coords.add(edge_coords)
+
+    # Filter Steiner edges - only add new ones
+    new_steiner_edges = []
+    for idx, row in steiner_edges_gdf.iterrows():
+        geom = row.geometry
+        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+        edge_coords = tuple(sorted([start, end]))
+
+        if edge_coords not in user_edge_coords:
+            new_steiner_edges.append(row)
+
+    # Combine user edges + new Steiner edges
+    if new_steiner_edges:
+        augmented_edges_gdf = gpd.GeoDataFrame(
+            pd.concat([user_edges_gdf, gpd.GeoDataFrame(new_steiner_edges, crs=user_edges_gdf.crs)], ignore_index=True),
+            crs=user_edges_gdf.crs
+        )
+    else:
+        augmented_edges_gdf = user_edges_gdf.copy()
+
+    # 2. Merge nodes - keep all user nodes, add new building nodes for missing buildings
+
+    # Get existing node names and coordinates to avoid conflicts
+    existing_node_names = set(user_nodes_gdf['name'].tolist())
+    user_node_coords = set()
+    for idx, row in user_nodes_gdf.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        user_node_coords.add(coord)
+
+    # Extract building nodes from Steiner result for missing buildings ONLY
+    new_building_nodes = steiner_nodes_gdf[
+        steiner_nodes_gdf['building'].isin(missing_building_names)
+    ].copy()
+
+    # Rename building nodes if they conflict with existing names
+    node_rename_counter = 1
+    for idx, row in new_building_nodes.iterrows():
+        old_name = row['name']
+        if old_name in existing_node_names:
+            # Rename to avoid conflict
+            while True:
+                new_name = f"{old_name}_n{node_rename_counter}"
+                if new_name not in existing_node_names:
+                    new_building_nodes.at[idx, 'name'] = new_name
+                    existing_node_names.add(new_name)
+                    break
+                node_rename_counter += 1
+        else:
+            existing_node_names.add(old_name)
+
+    # Extract junction nodes from Steiner result (nodes with building='NONE' and type='NONE')
+    # These are intermediate routing points that may be needed
+    new_junction_nodes = steiner_nodes_gdf[
+        (steiner_nodes_gdf['building'].fillna('').str.upper() == 'NONE') &
+        (steiner_nodes_gdf['type'].fillna('').str.upper() == 'NONE')
+    ].copy()
+
+    # Rename new junction nodes to avoid conflicts by adding '_n' suffix
+    # This makes it clear which nodes were added during augmentation
+    for idx, row in new_junction_nodes.iterrows():
+        old_name = row['name']
+        # Keep trying suffixes until we find a unique name
+        while True:
+            new_name = f"{old_name}_n{node_rename_counter}"
+            if new_name not in existing_node_names:
+                new_junction_nodes.at[idx, 'name'] = new_name
+                existing_node_names.add(new_name)
+                break
+            node_rename_counter += 1
+
+    # Deduplicate junction nodes - avoid duplicates with existing user nodes by coordinate
+    # The Steiner tree may include nodes from the user's original network that we don't want to duplicate
+    unique_junction_nodes = []
+    for idx, row in new_junction_nodes.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        if coord not in user_node_coords:
+            unique_junction_nodes.append(row)
+            user_node_coords.add(coord)  # Track to avoid duplicates within new nodes
+
+    # Combine: user nodes + new building nodes + unique junction nodes
+    augmented_nodes_gdf = gpd.GeoDataFrame(
+        pd.concat([
+            user_nodes_gdf,
+            new_building_nodes,
+            gpd.GeoDataFrame(unique_junction_nodes, crs=user_nodes_gdf.crs) if unique_junction_nodes else gpd.GeoDataFrame(columns=user_nodes_gdf.columns, crs=user_nodes_gdf.crs)
+        ], ignore_index=True),
+        crs=user_nodes_gdf.crs
+    )
+
+    return augmented_nodes_gdf, augmented_edges_gdf

@@ -3,6 +3,114 @@
 ## Purpose
 Build thermal network connectivity graphs by connecting buildings to street networks while preserving curved geometries and maintaining coordinate precision.
 
+## User-Defined Network Augmentation
+
+### Overview
+When users provide their own network layout (via `edges-shp-path`/`nodes-shp-path` or `network-geojson-path`), CEA can automatically extend it to include missing buildings required by `supply.csv` or `connected-buildings` parameter.
+
+### Configuration Parameter
+
+**`auto-augment-missing-buildings = true`** (default: enabled)
+
+When enabled, CEA uses Steiner tree optimisation to automatically add missing buildings to user-provided networks via optimal street paths. The user's existing network is **never modified** - only extended.
+
+### How It Works
+
+```python
+# User provides network with 3 buildings
+user.shp: B1001, B1002, B1003
+
+# But supply.csv requires 5 buildings
+supply.csv: B1001, B1002, B1003, B1004, B1005
+
+# With auto-augment enabled (default):
+# → CEA automatically adds B1004, B1005 using Steiner tree
+# → User's original edges/nodes for B1001-B1003 unchanged
+# → New optimal paths added for B1004-B1005
+```
+
+### Implementation Details
+
+**Main function:** `augment_user_network_with_buildings()` in `user_network_loader.py`
+
+**Algorithm (3 steps):**
+1. Create potential network: user edges + street network
+2. Run Steiner tree optimisation (Kou algorithm) with **existing + new buildings as terminals**
+   - Treats all existing user building nodes as terminals
+   - Guarantees new buildings connect to existing network (not separate component)
+   - Finds optimal entry point(s) to minimize added infrastructure
+3. Merge augmented subnetwork with user's original network (additive-only)
+
+**Key properties:**
+- **User network is immutable**: Existing edges/nodes are never modified
+- New buildings connect at optimal entry points (existing nodes)
+- Uses `connection_candidates` parameter (default: 3)
+- Combines user edges + streets as routing options
+- Deduplicates edges via coordinate matching (SHAPEFILE_TOLERANCE precision)
+- Only adds new edges not already in user network
+
+### Validation Modes: Missing vs Extra Buildings
+
+**Missing Buildings** (buildings in supply.csv/connected-buildings but NOT in user .shp):
+- `auto-augment-missing-buildings=true` (default): Automatically add via Steiner tree
+- `auto-augment-missing-buildings=false`: Raise error with suggestion to enable augmentation
+
+**Extra Buildings** (buildings in user .shp but NOT in supply.csv/connected-buildings):
+- Strictness depends on `overwrite-supply-settings` toggle:
+
+| `overwrite-supply-settings` | Extra Buildings Behavior | Rationale |
+|---------------------------|-------------------------|-----------|
+| **False** (production) | ❌ **ERROR** (strict) | supply.csv is authoritative - extras likely indicate wrong network file |
+| **True** (what-if mode) | ⚠️ **WARNING** (lenient) | User experimenting - respect their network design |
+
+**Important:** In what-if mode (lenient), ALL buildings in the user .shp are included in thermal simulation, even if not in `connected-buildings`. The warning is informational only.
+
+### Input Format Support
+
+Both input formats are fully supported:
+- **Shapefiles:** `edges-shp-path` + `nodes-shp-path`
+- **GeoJSON:** `network-geojson-path` (Point + LineString features)
+
+Augmentation works identically for both - `load_user_defined_network()` normalizes to GeoDataFrames before augmentation.
+
+### Example Outputs
+
+**Auto-augmentation success:**
+```
+ⓘ Network is missing 3 building(s), auto-augmentation enabled...
+  Augmenting user network with 3 missing building(s)...
+    - Buildings to add: B1004, B1005, B1006
+  Step 1/3: Creating potential network graph...
+  Step 2/3: Optimising network layout using Steiner tree algorithm...
+  Step 3/3: Merging augmented edges/nodes with user network...
+  ✓ Augmentation complete:
+    - Added 3 new node(s)
+    - Added 7 new edge(s)
+    - Total network: 18 nodes, 25 edges
+```
+
+**Extra buildings warning (what-if mode):**
+```
+⚠ Warning: Network includes 2 building(s) NOT in 'connected-buildings' parameter:
+  B1007, B1008
+
+  Your network layout will be used as-is (all buildings included).
+  If this is intentional, you can ignore this warning.
+  If you want to exclude them, remove their nodes from your network layout.
+```
+
+**Extra buildings error (production mode):**
+```
+❌ Error: User-defined network includes buildings NOT designated for district DH:
+  - Extra buildings: B1007, B1008
+
+Resolution options:
+  1. Remove these building nodes from your network layout
+  2. Update Building Properties/Supply to set these to district
+  3. Set 'overwrite-supply-settings' to True for intentional extras
+  4. Leave network layout parameters blank for auto-generation
+```
+
 ## Main API
 
 ### `calc_connectivity_network_with_geometry(streets_gdf, buildings_gdf, connection_candidates=1) → nx.Graph`
@@ -399,8 +507,12 @@ def terminal_weighted_mst(graph, terminals):
 Tests are in `cea/tests/test_network_layout_integration.py`
 
 ## Related Files
-- `connectivity_potential.py` - Main network creation
+- `connectivity_potential.py` - Main network creation, `create_terminals()` for building connections
 - `graph_utils.py` - Conversion utilities (gdf_to_nx, nx_to_gdf, normalize_*)
+- `optimization_new/user_network_loader.py` - User network loading, validation, and augmentation
+  - `augment_user_network_with_buildings()` - Main augmentation function
+  - `validate_network_covers_district_buildings()` - Validation with strict/lenient modes
+  - `load_user_defined_network()` - Handles shapefiles and GeoJSON
 - `optimization_new/network.py` - Uses graph with building terminal metadata
-- `main.py` - Converts graph to GeoDataFrame for Steiner tree
-- `steiner_spanning_tree.py` - Contains `add_plant_close_to_anchor()` for plant creation
+- `main.py` - Orchestrates workflow, integrates augmentation logic
+- `steiner_spanning_tree.py` - Contains `add_plant_close_to_anchor()` for plant creation, `calc_steiner_spanning_tree()` used by augmentation

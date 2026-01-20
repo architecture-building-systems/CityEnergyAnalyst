@@ -80,6 +80,13 @@ def get_heating_systems_for_network_temp(itemised_dh_services, all_heating_syste
             # Network temp based on DHW only (65°C)
             # Space heating served directly (network hotter than needed)
             return ['ww']
+        elif primary_service == PlantServices.SPACE_COOLING:
+            # Cooling services are invalid for district heating networks
+            raise ValueError(
+                f"Invalid DH service in itemised_dh_services: {primary_service}. "
+                "District heating networks cannot use SPACE_COOLING as a service. "
+                "Valid services are SPACE_HEATING and DOMESTIC_HOT_WATER."
+            )
         else:
             # Unknown primary service, use all (conservative)
             return all_heating_systems

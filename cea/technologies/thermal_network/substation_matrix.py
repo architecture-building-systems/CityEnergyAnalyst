@@ -12,6 +12,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 from cea.technologies.network_layout.plant_node_operations import PlantServices
+from cea.technologies.building_heating_booster import MIN_APPROACH_TEMP_K
 
 BUILDINGS_DEMANDS_COLUMNS = ['Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
@@ -365,8 +366,6 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
         T_hs_target_C = building['Ths_sys_sup_ahu_C'].values if 'Ths_sys_sup_ahu_C' in building.columns else np.array([40.0])
 
-        MIN_APPROACH_TEMP_K = 5
-
         # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
         if T_DH_supply_C < (T_hs_target_C[0] + MIN_APPROACH_TEMP_K):
             # Use booster-aware calculation
@@ -413,8 +412,6 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         # Check if network temperature is sufficient for space heating
         T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
         T_hs_target_C = building['Ths_sys_sup_aru_C'].values if 'Ths_sys_sup_aru_C' in building.columns else np.array([40.0])
-
-        MIN_APPROACH_TEMP_K = 5
 
         # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
         if T_DH_supply_C < (T_hs_target_C[0] + MIN_APPROACH_TEMP_K):
@@ -463,8 +460,6 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
         T_hs_target_C = building['Ths_sys_sup_shu_C'].values if 'Ths_sys_sup_shu_C' in building.columns else np.array([40.0])
 
-        MIN_APPROACH_TEMP_K = 5
-
         # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
         if T_DH_supply_C < (T_hs_target_C[0] + MIN_APPROACH_TEMP_K):
             # Use booster-aware calculation
@@ -510,8 +505,6 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
         # DHW service - check if network temperature is sufficient
         T_DH_supply_C = T_DH_supply_K - 273.15  # Convert K to C
         T_ww_target_C = building['Tww_sys_sup_C'].values if 'Tww_sys_sup_C' in building.columns else np.array([60.0])
-
-        MIN_APPROACH_TEMP_K = 5
 
         # Check if booster needed (network temp insufficient for DHW)
         if T_DH_supply_C < (T_ww_target_C[0] + MIN_APPROACH_TEMP_K):
