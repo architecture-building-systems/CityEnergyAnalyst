@@ -1024,35 +1024,36 @@ def augment_user_network_with_buildings(
 
     # Create temporary output paths for Steiner tree results
     temp_dir = tempfile.mkdtemp()
-    temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
-    temp_nodes_path = os.path.join(temp_dir, 'steiner_nodes.shp')
+    try:
+        temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
+        temp_nodes_path = os.path.join(temp_dir, 'steiner_nodes.shp')
 
-    # Get CRS string
-    crs_projected = zone_gdf.crs.to_string()
+        # Get CRS string
+        crs_projected = zone_gdf.crs.to_string()
 
-    # Run Steiner tree optimisation with ALL buildings as terminals
-    # This guarantees new buildings connect to existing network
-    # Note: This writes directly to shapefiles
-    calc_steiner_spanning_tree(
-        crs_projected=crs_projected,
-        building_centroids_df=all_terminals,  # Include existing + new buildings
-        potential_network_graph=potential_graph,
-        path_output_edges_shp=temp_edges_path,
-        path_output_nodes_shp=temp_nodes_path,
-        type_network='DH',  # Doesn't matter for pure topology
-        total_demand_location=locator.get_total_demand(),
-        plant_building_names=[],  # No plants needed for augmentation
-        disconnected_building_names=[],
-        method='kou',  # High-quality algorithm
-        connection_candidates=connection_candidates
-    )
+        # Run Steiner tree optimisation with ALL buildings as terminals
+        # This guarantees new buildings connect to existing network
+        # Note: This writes directly to shapefiles
+        calc_steiner_spanning_tree(
+            crs_projected=crs_projected,
+            building_centroids_df=all_terminals,  # Include existing + new buildings
+            potential_network_graph=potential_graph,
+            path_output_edges_shp=temp_edges_path,
+            path_output_nodes_shp=temp_nodes_path,
+            type_network='DH',  # Doesn't matter for pure topology
+            total_demand_location=locator.get_total_demand(),
+            plant_building_names=[],  # No plants needed for augmentation
+            disconnected_building_names=[],
+            method='kou',  # High-quality algorithm
+            connection_candidates=connection_candidates
+        )
 
-    # Read back the optimised network
-    steiner_nodes_gdf = gpd.read_file(temp_nodes_path)
-    steiner_edges_gdf = gpd.read_file(temp_edges_path)
-
-    # Clean up temp files
-    shutil.rmtree(temp_dir)
+        # Read back the optimised network
+        steiner_nodes_gdf = gpd.read_file(temp_nodes_path)
+        steiner_edges_gdf = gpd.read_file(temp_edges_path)
+    finally:
+        # Clean up temp files regardless of success or failure
+        shutil.rmtree(temp_dir)
 
     # Step 3: Merge optimised subnetwork with user's original network
     print("  Step 3/3: Merging augmented edges/nodes with user network...")
