@@ -3,11 +3,15 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
-import os
-import pandas as pd
 import numpy as np
-from cea.import_export.result_summary import month_names, month_hours, season_mapping, emission_timeline_hourly_operational_colnames_nounit, emission_timeline_yearly_colnames_nounit
+import pandas as pd
 
+from cea.import_export.result_summary import (
+    get_emission_context,
+    month_hours,
+    month_names,
+    season_mapping,
+)
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -20,6 +24,7 @@ __status__ = "Production"
 
 x_to_plot_building = ['building', 'building_faceted_by_months', 'building_faceted_by_seasons', 'building_faceted_by_construction_type', 'building_faceted_by_main_use_type', 'building_faceted_by_decades']
 
+
 class data_processor:
     """Cleans and processes the CSV data for visualization."""
 
@@ -27,7 +32,8 @@ class data_processor:
         self.df_summary_data = df_summary_data
         self.df_architecture_data = df_architecture_data
         self.buildings = plots_building_filter.buildings
-        self.scenario_path = scenario
+        # Store locator for lazy emission context initialisation
+        self.locator = plot_instance.locator
 
         # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
         if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
@@ -370,6 +376,12 @@ class data_processor:
 
 
     def process_data(self, plot_cea_feature):
+        # Lazy initialisation for emission-related plots
+        if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
+            emission_context = get_emission_context(self.locator)
+            lifecycle_emission_metrics = emission_context["yearly_colnames"]
+            operational_emission_metrics = emission_context["hourly_colnames"]
+
         if plot_cea_feature == 'demand':
             y_cea_metric_map = {
                 'grid_electricity_consumption': 'GRID_kWh',
@@ -436,11 +448,11 @@ class data_processor:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
             y_cea_metric_map = {
-                key: [key+"_kgCO2e"] for key in emission_timeline_hourly_operational_colnames_nounit
+                key: [key+"_kgCO2e"] for key in operational_emission_metrics
             }
         elif plot_cea_feature == 'lifecycle-emissions':
             y_cea_metric_map = {
-                key: [key+"_kgCO2e"] for key in emission_timeline_yearly_colnames_nounit
+                key: [key+"_kgCO2e"] for key in lifecycle_emission_metrics
             }
         elif plot_cea_feature == 'heat-rejection':
             y_cea_metric_map = {
@@ -645,7 +657,12 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     """
     # Step 1: Prepare normaliser and raw Y-axis metrics
     if plot_instance.y_normalised_by in ('no_normalisation', 'gross_floor_area', 'conditioned_floor_area'):
-        normaliser_m2 = plot_instance.process_architecture_data(plot_cea_feature)
+        normaliser_m2 = plot_instance.process_architecture_data()
+    elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
+        # For solar-specific normalisation, area data is in the metrics themselves
+        normaliser_m2 = None  # Not needed
+    else:
+        raise ValueError(f"Invalid y_normalised_by: {plot_instance.y_normalised_by}")
     df_y_metrics, list_y_columns = plot_instance.process_data(plot_cea_feature)
 
     # Step 2: Handle "by_building" mode

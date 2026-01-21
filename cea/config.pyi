@@ -991,6 +991,8 @@ class ThermalNetworkSection(Section):
     """Typed section for thermal-network configuration"""
     network_name: str
     network_type: list[str]
+    network_temperature_dh: float
+    network_temperature_dc: float
     network_model: str
     min_head_substation: float
     hw_friction_coefficient: int
@@ -1007,13 +1009,15 @@ class ThermalNetworkSection(Section):
     diameter_iteration_limit: int
     substation_cooling_systems: list[str]
     substation_heating_systems: list[str]
-    temperature_control: str
-    plant_supply_temperature: float
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["network_temperature_dh"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["network_temperature_dc"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["network_model"]) -> str: ...
     @overload
@@ -1046,10 +1050,6 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["substation_cooling_systems"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["substation_heating_systems"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["temperature_control"]) -> str: ...
-    @overload
-    def __getattr__(self, item: Literal["plant_supply_temperature"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ThermalNetworkOptimizationSection(Section):
@@ -1419,6 +1419,7 @@ class NetworkLayoutSection(Section):
     network_name: str
     include_services: list[str]
     overwrite_supply_settings: bool
+    itemised_dh_services: list[str]
     connected_buildings: list[str]
     cooling_plant_building: Any
     heating_plant_building: Any
@@ -1426,6 +1427,8 @@ class NetworkLayoutSection(Section):
     edges_shp_path: str | None
     nodes_shp_path: str | None
     network_geojson_path: str | None
+    network_layout_mode: str
+    auto_modify_network: bool
     consider_only_buildings_with_demand: bool
     algorithm: str
     connection_candidates: int
@@ -1437,6 +1440,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["itemised_dh_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
     @overload
@@ -1451,6 +1456,10 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["nodes_shp_path"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["network_geojson_path"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["network_layout_mode"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["auto_modify_network"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["consider_only_buildings_with_demand"]) -> bool: ...
     @overload

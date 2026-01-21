@@ -391,14 +391,14 @@ Energy Supply System Optimisation:
     label: "Supply System Optimisation: building-scale"
     short_description: Optimise decentralised energy supply systems
     description: This Feature optimises energy supply systems for decentralised operation.
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.optimization.preprocessing.decentralized_building_main
     parameters: ['general:scenario', 'decentralized', 'general:multiprocessing', 'general:number-of-cpus-to-keep-free']
     input-files:
       - [get_total_demand]
 
   - name: optimization-new
-    label: "Supply System Optimisation: district-scale"
+    label: "District Supply System Optimisation"
     short_description: Optimise centralised energy supply systems
     description: This Feature optimises energy supply systems for centralised operation.
     interfaces: [cli, dashboard]

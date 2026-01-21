@@ -67,7 +67,6 @@ def calc_steiner_spanning_tree(crs_projected,
                                path_output_edges_shp,
                                path_output_nodes_shp,
 
-                               type_network,
                                total_demand_location,
                                plant_building_names,
                                disconnected_building_names,
@@ -84,13 +83,11 @@ def calc_steiner_spanning_tree(crs_projected,
     :param nx.Graph potential_network_graph: potential network as NetworkX graph with metadata
     :param str path_output_edges_shp: "{general:scenario}/inputs/networks/DC/edges.shp"
     :param str path_output_nodes_shp: "{general:scenario}/inputs/networks/DC/nodes.shp"
+    :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
+    :param List[str] | None plant_building_names: List of building names for plants, or None to skip
+    :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
     :param str type_mat_default: e.g. "T1"
     :param float pipe_diameter_default: e.g. 150
-    :param str type_network: "DC" or "DH"
-    :param str total_demand_location: "{general:scenario}/outputs/data/demand/Total_demand.csv"
-    :param bool create_plant: e.g. True
-    :param List[str] plant_building_names: e.g. ``['B001']``
-    :param List[str] disconnected_building_names: e.g. ``['B002', 'B010', 'B004', 'B005', 'B009']``
     :param method: The algorithm to use for calculating the Steiner tree. Default is Kou.
     :param int connection_candidates: Number of nearest street connection points to consider per building.
         Default is 3 (balanced quality/speed). Values of 1 (fastest greedy) to 5 (best quality) are supported.
@@ -153,7 +150,6 @@ def calc_steiner_spanning_tree(crs_projected,
             # Note: steiner_tree() already returns a tree (both Kou and Mehlhorn algorithms)
             # No need for additional MST computation
             mst_non_directed = steiner_tree(G, terminal_nodes_coordinates, method=steiner_algorithm)
-            print(f"  DEBUG: After steiner_tree: {nx.number_connected_components(mst_non_directed)} components")
         except Exception as e:
             raise ValueError('There was an error while creating the Steiner tree despite graph corrections. '
                             'This is an unexpected error. Please report this issue with your streets.shp file.') from e
@@ -280,7 +276,6 @@ def calc_steiner_spanning_tree(crs_projected,
     # Apply enforcement using the full potential graph (G) and terminal set
     terminals_set = set(terminal_nodes_coordinates)
     mst_non_directed = _enforce_terminal_leafs_and_no_b2b(G, mst_non_directed, terminals_set)
-    print(f"  DEBUG: After _enforce_terminal_leafs_and_no_b2b: {nx.number_connected_components(mst_non_directed)} components")
 
     # Post-Steiner cleanup: remove non-terminal leaf stubs, then contract street chains
     def _prune_nonterminal_leaves(steiner_graph: nx.Graph, terminals: set[tuple]) -> nx.Graph:
@@ -391,10 +386,8 @@ def calc_steiner_spanning_tree(crs_projected,
 
     # 1) prune dangling non-terminal leaves
     mst_non_directed = _prune_nonterminal_leaves(mst_non_directed, terminals_set)
-    print(f"  DEBUG: After _prune_nonterminal_leaves: {nx.number_connected_components(mst_non_directed)} components")
     # 2) contract degree-2 street chains (while preserving original junctions)
     mst_non_directed = _contract_degree2_street_nodes(G, mst_non_directed, terminals_set, original_junctions)
-    print(f"  DEBUG: After _contract_degree2_street_nodes: {nx.number_connected_components(mst_non_directed)} components")
 
     # Reporting helper: print network stats and total length
     def _report_network_stats(graph: nx.Graph, terminals: set[tuple], label: str = "Final"):
@@ -512,25 +505,16 @@ def calc_steiner_spanning_tree(crs_projected,
     mst_edges.loc[:, 'pipe_DN'] = pipe_diameter_default
     mst_edges.loc[:, 'name'] = ["PIPE" + str(x) for x in mst_edges.index]
 
-    # Create plant nodes if demand data exists
-    if os.path.exists(total_demand_location):
-        # Check if we should skip plant creation (indicated by None)
-        if plant_building_names is not None and len(plant_building_names) > 0:
-            # Create a PLANT node for each specified plant building
-            for plant_building_name in plant_building_names:
-                building_anchor = mst_nodes[mst_nodes['building'] == plant_building_name]
-                if not building_anchor.empty:
-                    mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                                     type_mat_default, pipe_diameter_default)
-                else:
-                    print(f"  WARNING: Plant building '{plant_building_name}' not found in network, skipping")
-        elif plant_building_names is not None and type_network in ['DC', 'DH']:
-            # Only create anchor-based plant for single network types (not DC+DH)
-            # If plant_building_names is None, skip plant creation (caller will add plants)
-            # If plant_building_names is [], create anchor-based plant
-            building_anchor = calc_coord_anchor(total_demand_location, mst_nodes, type_network)
-            mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
-                                                             type_mat_default, pipe_diameter_default)
+    # Create plant nodes if demand data exists and plant_building_names is specified
+    if os.path.exists(total_demand_location) and plant_building_names:
+        # Create a PLANT node for each specified plant building
+        for plant_building_name in plant_building_names:
+            building_anchor = mst_nodes[mst_nodes['building'] == plant_building_name]
+            if not building_anchor.empty:
+                mst_nodes, mst_edges = add_plant_close_to_anchor(building_anchor, mst_nodes, mst_edges,
+                                                                 type_mat_default, pipe_diameter_default)
+            else:
+                print(f"  WARNING: Plant building '{plant_building_name}' not found in network, skipping")
 
     # Validate Steiner tree properties before saving
     _validate_steiner_tree(mst_non_directed, mst_nodes, mst_edges, terminal_nodes_coordinates)

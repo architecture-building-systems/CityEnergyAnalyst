@@ -1050,56 +1050,78 @@ class InputLocator(object):
         """scenario/outputs/data/thermal-network"""
         return os.path.join(self.scenario, 'outputs', 'data', 'thermal-network')
 
+    def _get_thermal_network_results_folder(self, network_type, network_name):
+        """
+        Helper method to resolve the base folder for thermal network results.
+
+        Returns:
+            For named networks: thermal-network/{network_name}/{network_type}/
+            For unnamed networks: thermal-network/
+        """
+        if network_name:
+            return self.get_output_thermal_network_type_folder(network_type, network_name)
+        else:
+            return self.get_thermal_network_folder()
+
     def _get_thermal_network_results_file_path(self, network_type, network_name, file_suffix):
         """
         Helper method to resolve the path to thermal network results files.
+
+        The file_suffix parameter should be just the descriptive part (e.g., "metadata_nodes.csv").
+        This method prepends "{network_type}_{network_name}_" to create the full filename.
         """
+        folder = self._get_thermal_network_results_folder(network_type, network_name)
+        filename = f"{network_type}_{network_name}_{file_suffix}"
+        return os.path.join(folder, filename)
+
+    def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name=""):
+        """scenario/outputs/data/thermal-network/{network_name}/{network_type}/Nominal_EdgeMassFlow_at_design_{network_type}_{network_name}_kgpers.csv
+        Nominal edge mass flow rates at design conditions for district heating or cooling networks
+        """
+        file_name = f'Nominal_EdgeMassFlow_at_design_{network_type}_{network_name}_kgpers.csv'
+
         if network_name:
             # Named networks: thermal-network/{network_name}/{network_type}/
             folder = self.get_output_thermal_network_type_folder(network_type, network_name)
         else:
             # Default/unnamed networks: thermal-network/
             folder = self.get_thermal_network_folder()
-        
-        filename = f"{network_type}_{network_name}_{file_suffix}"
-        return os.path.join(folder, filename)
 
-    def get_nominal_edge_mass_flow_csv_file(self, network_type, network_name=""):
-        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
-        """
-        if not network_name:
-            file_name = 'Nominal_EdgeMassFlow_at_design_' + network_type + '_' + '_kgpers.csv'
-        else:
-            file_name = 'Nominal_EdgeMassFlow_at_design_' + network_type + '_' + network_name + '_kgpers.csv'
-
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+        return os.path.join(folder, file_name)
 
     def get_nominal_node_mass_flow_csv_file(self, network_type, network_name=""):
-        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
+        """scenario/outputs/data/thermal-network/{network_name}/{network_type}/Nominal_NodeMassFlow_at_design_{network_type}_{network_name}_kgpers.csv
+        Nominal node mass flow rates at design conditions for district heating or cooling networks
         """
-        if not network_name:
-            file_name = 'Nominal_NodeMassFlow_at_design_' + network_type + '_' + '_kgpers.csv'
-        else:
-            file_name = 'Nominal_NodeMassFlow_at_design_' + network_type + '_' + network_name + '_kgpers.csv'
+        file_name = f'Nominal_NodeMassFlow_at_design_{network_type}_{network_name}_kgpers.csv'
 
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+        if network_name:
+            # Named networks: thermal-network/{network_name}/{network_type}/
+            folder = self.get_output_thermal_network_type_folder(network_type, network_name)
+        else:
+            # Default/unnamed networks: thermal-network/
+            folder = self.get_thermal_network_folder()
+
+        return os.path.join(folder, file_name)
 
     def get_thermal_network_edge_node_matrix_file(self, network_type, network_name=""):
-        """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv or DC_EdgeNode.csv
+        """scenario/outputs/data/thermal-network/{network_name}/{network_type}/{network_type}_{network_name}_EdgeNode.csv
         Edge-node matrix for a heating or cooling network
         """
+        file_name = f'{network_type}_{network_name}_EdgeNode.csv'
+
         if network_name:
-            file_name = network_type + "_" + network_name + "_EdgeNode.csv"
+            # Named networks: thermal-network/{network_name}/{network_type}/
+            folder = self.get_output_thermal_network_type_folder(network_type, network_name)
         else:
-            file_name = network_type + "_" + "_EdgeNode.csv"
-        return os.path.join(self.get_thermal_network_folder(), file_name)
+            # Default/unnamed networks: thermal-network/
+            folder = self.get_thermal_network_folder()
+
+        return os.path.join(folder, file_name)
 
     def get_thermal_network_node_types_csv_file(self, network_type, network_name):
-        """scenario/outputs/data/thermal-network/{network_name}/{network_type}/{network_type}_{network_name}_{network_type}_{network_name}_metadata_nodes.csv"""
-        file_suffix = f"{network_type}_{network_name}_metadata_nodes.csv"
-        return self._get_thermal_network_results_file_path(network_type, network_name, file_suffix)
+        """scenario/outputs/data/thermal-network/{network_name}/{network_type}/{network_type}_{network_name}_metadata_nodes.csv"""
+        return self._get_thermal_network_results_file_path(network_type, network_name, "metadata_nodes.csv")
 
     def get_plant_nodes(self, network_type, network_name):
         """Return the list of "PLANT" nodes in a thermal network"""
@@ -1111,9 +1133,9 @@ class InputLocator(object):
             return nodes_df[is_plant]['name'].to_list()
         return []
 
-    def get_thermal_network_edge_list_file(self, network_type, network_name):
+    def get_thermal_network_edge_list_file(self, network_type, network_name=''):
         """scenario/outputs/data/thermal-network/{network_name}/{network_type}/{network_type}_{network_name}_metadata_edges.csv"""
-        return self._get_thermal_network_results_file_path(network_type, network_name, 'metadata_edges.csv')
+        return self._get_thermal_network_results_file_path(network_type, network_name, "metadata_edges.csv")
 
     def get_thermal_network_layout_massflow_edges_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_massflow_edges_kgs.csv"""
@@ -1142,6 +1164,16 @@ class InputLocator(object):
     def get_thermal_network_substation_ploss_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_pumping_load_due_to_substations_kW.csv"""
         return self._get_thermal_network_results_file_path(network_type, network_name, "pumping_load_due_to_substations_kW.csv")
+
+    def get_thermal_network_substation_results_file(self, building_name, network_type, network_name):
+        """
+        For named networks: scenario/outputs/data/thermal-network/{network_name}/{network_type}/substation/{network_type}_{network_name}_substation_{building_name}.csv
+        For unnamed networks: scenario/outputs/data/thermal-network/substation/{network_type}__substation_{building_name}.csv
+        """
+        folder = self._get_thermal_network_results_folder(network_type, network_name)
+        substation_folder = os.path.join(folder, "substation")
+        filename = f"{network_type}_{network_name}_substation_{building_name}.csv"
+        return os.path.join(substation_folder, filename)
 
     def get_thermal_demand_csv_file(self, network_type, network_name):
         """scenario/outputs/data/thermal-network/{network_type}/{network_name}/{network_type}_{network_name}_thermal_demand_per_building_W.csv"""

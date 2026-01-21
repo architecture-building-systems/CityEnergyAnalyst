@@ -75,7 +75,7 @@ worked on that release. Update the "How to Cite" section with the Zenodo link to
 Update CHANGELOG
 ----------------
 
-- Run ``create-changelog.py`` in ``CityEnergyAnalyst\bin``.
+- Run ``python cea/dev/create_changelog.py`` from the repository root.
 - Update ``CHANGELOG.md`` with the latest changes from the outputs.
 
 

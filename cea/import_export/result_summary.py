@@ -68,71 +68,104 @@ dict_plot_metrics_cea_feature = {
     'dc': 'dc',
     'heat_rejection': 'heat-rejection',
 }
-locator = cea.inputlocator.InputLocator(cea.config.Configuration().scenario)
-df_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
-emission_timeline_pv_types = df_pv['code'].dropna().unique().tolist()
-emission_timeline_operational_feedstocks = list(locator.get_db4_components_feedstocks_all().keys()) + ['NONE']
-emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
-emission_timeline_pv_offset_columns_nounit = [
-    f"PV_{pv_type}_offset_{type_energy}"
-    for pv_type in emission_timeline_pv_types
-    for type_energy in emission_timeline_operational_types + ["total"]
-]
-emission_timeline_hourly_operational_colnames_nounit = [
-    f"{type_energy}_{feedstock}"
-    for type_energy in emission_timeline_operational_types
-    for feedstock in emission_timeline_operational_feedstocks
-] + emission_timeline_operational_types + emission_timeline_operational_feedstocks + [
-    f"PV_{pv_type}_GRID_offset"
-    for pv_type in emission_timeline_pv_types
-] + [
-    f"PV_{pv_type}_GRID_export"
-    for pv_type in emission_timeline_pv_types
-]
 
-normalisation_name_mapping_emission_timeline_hourly_operational = {
-    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
-    for colname in emission_timeline_hourly_operational_colnames_nounit
+# TODO: Remove this from global state
+EMISSION_CONTEXT = None
+
+BASE_NORMALISATION_NAME_MAPPING = {
+    "grid_electricity_consumption[kWh]": "EUI_grid_electricity[kWh/m2]",
+    "enduse_electricity_demand[kWh]": "EUI_enduse_electricity[kWh/m2]",
+    "enduse_cooling_demand[kWh]": "EUI_enduse_cooling[kWh/m2]",
+    "enduse_space_cooling_demand[kWh]": "EUI_enduse_space_cooling[kWh/m2]",
+    "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
+    "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
+    "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
+    "heat_rejection[kWh]": "heat_rejection[kWh/m2]",
 }
 
-emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
-emission_timeline_embodied_parts = list(_MAPPING_DICT.keys())
-emission_timeline_yearly_colnames_nounit = (
-    [
-        f"{type_emission}_{part}"
-        for type_emission in emission_timeline_embodied_types
-        for part in emission_timeline_embodied_parts
-    ]
-    + [
-        f"operation_{type_energy}"
-        for type_energy in emission_timeline_operational_types
-    ]
-    # PV operational columns (offset and export)
-    + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
-    + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
-    # PV embodied columns
-    + [
-        f"{type_emission}_PV_{pv_type}"
-        for type_emission in emission_timeline_embodied_types
-        for pv_type in emission_timeline_pv_types
-    ]
-)
 
-normalisation_name_mapping_emission_timeline_yearly = {
-    f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
-    for colname in emission_timeline_yearly_colnames_nounit
-}
+def build_emission_context(locator: cea.inputlocator.InputLocator) -> dict:
+    """Build emission-related column lists and normalisation mappings from the locator."""
 
-normalisation_name_mapping = {
-        "grid_electricity_consumption[kWh]": "EUI_grid_electricity[kWh/m2]",
-        "enduse_electricity_demand[kWh]": "EUI_enduse_electricity[kWh/m2]",
-        "enduse_cooling_demand[kWh]": "EUI_enduse_cooling[kWh/m2]",
-        "enduse_space_cooling_demand[kWh]": "EUI_enduse_space_cooling[kWh/m2]",
-        "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
-        "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
-        "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
-        "heat_rejection[kWh]": "heat_rejection[kWh/m2]",
-    } | normalisation_name_mapping_emission_timeline_yearly | normalisation_name_mapping_emission_timeline_hourly_operational
+    emission_timeline_operational_types = ["Qhs_sys", "Qww_sys", "Qcs_sys", "E_sys"]
+    emission_timeline_embodied_types = ["production", "biogenic", "demolition"]
+
+    df_pv = pd.read_csv(locator.get_db4_components_conversion_conversion_technology_csv("PHOTOVOLTAIC_PANELS"))
+    emission_timeline_pv_types = df_pv["code"].dropna().unique().tolist()
+
+    emission_timeline_operational_feedstocks = list(locator.get_db4_components_feedstocks_all().keys()) + ["NONE"]
+
+    emission_timeline_hourly_operational_colnames_nounit = (
+        [
+            f"{type_energy}_{feedstock}"
+            for type_energy in emission_timeline_operational_types
+            for feedstock in emission_timeline_operational_feedstocks
+        ]
+        + emission_timeline_operational_types
+        + emission_timeline_operational_feedstocks
+        + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
+        + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
+    )
+
+    normalisation_name_mapping_emission_timeline_hourly_operational = {
+        f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+        for colname in emission_timeline_hourly_operational_colnames_nounit
+    }
+
+    emission_timeline_embodied_parts = list(_MAPPING_DICT.keys())
+    emission_timeline_yearly_colnames_nounit = (
+        [
+            f"{type_emission}_{part}"
+            for type_emission in emission_timeline_embodied_types
+            for part in emission_timeline_embodied_parts
+        ]
+        + [f"operation_{type_energy}" for type_energy in emission_timeline_operational_types]
+        + [f"PV_{pv_type}_GRID_offset" for pv_type in emission_timeline_pv_types]
+        + [f"PV_{pv_type}_GRID_export" for pv_type in emission_timeline_pv_types]
+        + [
+            f"{type_emission}_PV_{pv_type}"
+            for type_emission in emission_timeline_embodied_types
+            for pv_type in emission_timeline_pv_types
+        ]
+    )
+
+    normalisation_name_mapping_emission_timeline_yearly = {
+        f"{colname}[kgCO2e]": f"{colname}[kgCO2e/m2]"
+        for colname in emission_timeline_yearly_colnames_nounit
+    }
+
+    normalisation_name_mapping = (
+        BASE_NORMALISATION_NAME_MAPPING
+        | normalisation_name_mapping_emission_timeline_yearly
+        | normalisation_name_mapping_emission_timeline_hourly_operational
+    )
+
+    return {
+        "pv_types": emission_timeline_pv_types,
+        "operational_types": emission_timeline_operational_types,
+        "operational_feedstocks": emission_timeline_operational_feedstocks,
+        "hourly_colnames": emission_timeline_hourly_operational_colnames_nounit,
+        "yearly_colnames": emission_timeline_yearly_colnames_nounit,
+        "normalisation_map_hourly": normalisation_name_mapping_emission_timeline_hourly_operational,
+        "normalisation_map_yearly": normalisation_name_mapping_emission_timeline_yearly,
+        "normalisation_map": normalisation_name_mapping,
+        "list_metrics_lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
+        "list_metrics_operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
+    }
+
+
+def get_emission_context(locator: cea.inputlocator.InputLocator | None = None) -> dict:
+    """Return the cached emission context, building it with the provided locator when needed."""
+
+    global EMISSION_CONTEXT
+
+    if locator is not None:
+        EMISSION_CONTEXT = build_emission_context(locator)
+
+    if EMISSION_CONTEXT is None:
+        raise RuntimeError("Emission context is not initialised; call get_emission_context with a locator first.")
+
+    return EMISSION_CONTEXT
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Data preparation
@@ -376,6 +409,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
     Raises:
     - ValueError: If the direction is invalid.
     """
+    emission_context = get_emission_context()
+
     mapping_dict = {
         "architecture": [
             "conditioned_floor_area[m2]",
@@ -392,8 +427,8 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
             "enduse_space_heating_demand[kWh]",
             "enduse_dhw_demand[kWh]",
         ],
-        "lifecycle_emissions": list(normalisation_name_mapping_emission_timeline_yearly.keys()),
-        "operational_emissions": list(normalisation_name_mapping_emission_timeline_hourly_operational.keys()),
+        "lifecycle_emissions": emission_context["list_metrics_lifecycle_emissions"],
+        "operational_emissions": emission_context["list_metrics_operational_emissions"],
         "heat_rejection": [
             "heat_rejection[kWh]",
         ],
@@ -571,6 +606,8 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
     Returns:
     - list: A list of mapped values (CEA column names or metrics).
     """
+    emission_context = get_emission_context()
+
     mapping_dict = {
         "conditioned_floor_area[m2]": ["Af_m2"],
         "roof_area[m2]": ["Aroof_m2"],
@@ -674,12 +711,13 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         "DC_electricity_consumption_for_pressure_loss[kWh]": ["pressure_loss_total_kW"],
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
-        for name in emission_timeline_hourly_operational_colnames_nounit
+        for name in emission_context["hourly_colnames"]
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
         for name in emission_timeline_yearly_colnames_nounit
     } | {
         "heat_rejection[kWh]": ["heat_rejection_kWh"]
+        for name in emission_context["yearly_colnames"]
     }
 
     # Reverse the mapping if direction is "columns_to_metrics"
@@ -2507,6 +2545,8 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
     """
     Normalizes UBEM analytics based on floor area and writes the results.
     """
+    emission_context = get_emission_context()
+
     appendix = cea_feature
     list_metrics = map_metrics_cea_features([cea_feature], direction="features_to_metrics")
     list_result_time_resolution = []
@@ -2558,7 +2598,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
         area_column = 'conditioned_floor_area[m2]' if bool_use_conditioned_floor_area_for_normalisation else 'gross_floor_area[m2]'
         df_time_resolution = normalize_dataframe(df_time_resolution, area_column)
 
-        result_time_resolution = df_time_resolution.rename(columns=normalisation_name_mapping)
+        result_time_resolution = df_time_resolution.rename(columns=emission_context["normalisation_map"])
         list_result_time_resolution.append(result_time_resolution)
 
         # Write to disk
@@ -2589,7 +2629,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
                             result_buildings[col] = result_buildings[col] / result_buildings[area_column]
                     result_buildings.drop(columns=[area_column], inplace=True)
 
-                    result_buildings = result_buildings.rename(columns=normalisation_name_mapping)
+                    result_buildings = result_buildings.rename(columns=emission_context["normalisation_map"])
 
                     list_result_buildings.append(result_buildings)
 
@@ -2619,6 +2659,7 @@ list_metrics_operational_emissions = list(normalisation_name_mapping_emission_ti
 list_metrics_heat_rejection = ['heat_rejection[kWh]']
 
 def get_list_list_metrics_with_date(config):
+    emission_context = get_emission_context()
     list_list_metrics_with_date = []
     if config.result_summary.metrics_building_energy_demand:
         list_list_metrics_with_date.append(list_metrics_building_energy_demand)
@@ -2649,7 +2690,7 @@ def get_list_list_metrics_with_date(config):
             list_list_metrics_with_date.append(list_metrics_district_cooling)
 
     if config.result_summary.metrics_emissions:
-        list_list_metrics_with_date.append(list_metrics_operational_emissions)
+        list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
 
     if config.result_summary.metrics_heat_rejection:
         list_list_metrics_with_date.append(list_metrics_heat_rejection)
@@ -2658,6 +2699,7 @@ def get_list_list_metrics_with_date(config):
 
 
 def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
+    emission_context = get_emission_context()
     list_list_metrics_with_date = []
     if 'demand' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_building_energy_demand)
@@ -2678,29 +2720,32 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
     if 'dc' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_district_cooling)
     if 'operational_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_with_date.append(list_metrics_operational_emissions)
+        list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
     if 'heat_rejection' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(list_metrics_heat_rejection)
     return list_list_metrics_with_date
 
 
 def get_list_list_metrics_without_date(config):
+    emission_context = get_emission_context()
     list_list_metrics_without_date = []
     if config.result_summary.metrics_emissions:
-        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_without_date.append(emission_context["list_metrics_lifecycle_emissions"])
 
     return list_list_metrics_without_date
 
 
 def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
+    emission_context = get_emission_context()
     list_list_metrics_without_date = []
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_without_date.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_without_date.append(emission_context["list_metrics_lifecycle_emissions"])
 
     return list_list_metrics_without_date
 
 
 def get_list_list_metrics_building(config):
+    emission_context = get_emission_context()
     list_list_metrics_building = []
     if config.result_summary.metrics_building_energy_demand:
         list_list_metrics_building.append(list_metrics_building_energy_demand)
@@ -2715,8 +2760,8 @@ def get_list_list_metrics_building(config):
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
     if config.result_summary.metrics_emissions:
-        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
-        list_list_metrics_building.append(list_metrics_operational_emissions)
+        list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
+        list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
 
     if config.result_summary.metrics_heat_rejection:
         list_list_metrics_building.append(list_metrics_heat_rejection)
@@ -2725,6 +2770,7 @@ def get_list_list_metrics_building(config):
 
 
 def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
+    emission_context = get_emission_context()
     list_list_metrics_building = []
     if 'demand' in list_cea_feature_to_plot:
         list_list_metrics_building.append(list_metrics_building_energy_demand)
@@ -2739,9 +2785,9 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
     if 'operational_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_building.append(list_metrics_operational_emissions)
+        list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
-        list_list_metrics_building.append(list_metrics_lifecycle_emissions)
+        list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
     if 'heat_rejection' in list_cea_feature_to_plot:
         list_list_metrics_building.append(list_metrics_heat_rejection)
 
@@ -2880,8 +2926,9 @@ def process_building_summary(config, locator,
     # Track errors for final summary
     errors_encountered = []
 
-    # Get network name from config
+    # Get network name from config (convert None to empty string for consistency)
     network_name = config.result_summary.network_name if not plot else ''
+    network_name = network_name if network_name is not None else ''
 
     # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
 
@@ -3098,6 +3145,7 @@ def main(config: cea.config.Configuration):
     # Start the timer
     t0 = time.perf_counter()
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    get_emission_context(locator)
 
     # Gather info from config file
     list_buildings = config.plots_building_filter.buildings
