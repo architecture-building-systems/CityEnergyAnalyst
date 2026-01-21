@@ -31,6 +31,7 @@ from shapely.geometry import Point
 from typing import Tuple, Dict, List, Set
 
 from cea import CEAException
+from cea.constants import SHAPEFILE_TOLERANCE
 
 # Tolerance for network topology validation (meters)
 # This is much tighter than CEA's general SHAPEFILE_TOLERANCE (6m)
@@ -1086,7 +1087,7 @@ def filter_network_to_buildings(
     :param buildings_to_keep: List of building names to retain in network
     :return: Tuple of (filtered_nodes_gdf, filtered_edges_gdf)
     """
-    from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf, normalize_coords, SHAPEFILE_TOLERANCE
+    from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf, normalize_coords
     import networkx as nx
 
     print(f"  Filtering network to {len(buildings_to_keep)} buildings...")
@@ -1223,7 +1224,7 @@ def _create_terminal_connections_for_buildings(
     - Building terminals dict mapping building_name -> (x, y) node coordinate
     """
     from cea.technologies.network_layout.connectivity_potential import create_terminals
-    from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords, SHAPEFILE_TOLERANCE
+    from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
 
     # Get building geometries for missing buildings
     missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
@@ -1290,7 +1291,7 @@ def _merge_augmented_network(
     - Augmented nodes GeoDataFrame
     - Augmented edges GeoDataFrame
     """
-    from cea.technologies.network_layout.graph_utils import normalize_coords, SHAPEFILE_TOLERANCE
+    from cea.technologies.network_layout.graph_utils import normalize_coords
 
     # 1. Merge edges - keep all user edges, add new Steiner edges
     # Steiner tree output may include edges from the user's original network
