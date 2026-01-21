@@ -1151,17 +1151,18 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         temp_edges_path = output_layout_path.replace('layout.shp', f'_temp_edges_{type_network}.shp')
 
         disconnected_building_names = []
-        calc_steiner_spanning_tree(crs_projected,
-                                   building_centroids_df,
-                                   potential_network_graph,
-                                   temp_edges_path,
-                                   temp_nodes_path,
-                                   type_network,
-                                   total_demand_location,
-                                   None,  # None = skip plant creation (caller will add plants manually)
-                                   disconnected_building_names,
-                                   method=steiner_algorithm,
-                                   connection_candidates=connection_candidates)
+        calc_steiner_spanning_tree(
+            crs_projected=crs_projected,
+            building_centroids_df=building_centroids_df,
+            potential_network_graph=potential_network_graph,
+            path_output_edges_shp=temp_edges_path,
+            path_output_nodes_shp=temp_nodes_path,
+            total_demand_location=total_demand_location,
+            plant_building_names=None,  # Skip plant creation (caller will add plants manually)
+            disconnected_building_names=disconnected_building_names,
+            method=steiner_algorithm,
+            connection_candidates=connection_candidates
+        )
 
         # Read generated nodes and edges
         nodes_for_type = gpd.read_file(temp_nodes_path)

@@ -1042,7 +1042,6 @@ def augment_user_network_with_buildings(
             path_output_nodes_shp=temp_nodes_path,
             total_demand_location=locator.get_total_demand(),
             plant_building_names=None,  # Explicitly disable plant creation for augmentation
-            type_network='',  # Only used if plant_building_names not None
             disconnected_building_names=[],
             method='kou',  # High-quality algorithm
             connection_candidates=connection_candidates
