@@ -1,6 +1,7 @@
 import os
 import shutil
 from dataclasses import dataclass, field
+from enum import StrEnum
 
 import geopandas as gpd
 import networkx as nx
@@ -27,6 +28,19 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class NetworkLayoutMode(StrEnum):
+    """Mode for handling mismatches between user-defined network and connected buildings."""
+
+    VALIDATE = 'validate'
+    """Strict validation - error if network doesn't match parameter exactly."""
+
+    AUGMENT = 'augment'
+    """Add missing buildings to network (union/additive)."""
+
+    FILTER = 'filter'
+    """Add missing AND remove extra buildings (exact match to parameter)."""
 
 
 def convert_simplified_nodes_to_full_format(nodes_gdf):
@@ -1605,7 +1619,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Get network layout mode and modification settings
-    network_mode = config.network_layout.network_layout_mode
+    try:
+        network_mode = NetworkLayoutMode(config.network_layout.network_layout_mode)
+    except ValueError:
+        raise ValueError(
+            f"Unsupported network-layout-mode: {config.network_layout.network_layout_mode!r}. "
+            f"Expected one of: {', '.join(m.value for m in NetworkLayoutMode)}."
+        )
     auto_modify = config.network_layout.auto_modify_network
 
     # Check for extra buildings in network (buildings not in parameter)
@@ -1617,7 +1637,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Validate network covers all specified buildings
     # Behavior depends on mode: validate = strict, augment/filter = lenient
-    if network_mode == 'validate':
+    if network_mode == NetworkLayoutMode.VALIDATE:
         # Validate mode: Strict validation - errors for any mismatch
         nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
             nodes_gdf,
@@ -1644,11 +1664,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         )
 
     # Apply mode-specific behavior
-    if network_mode == 'validate':
+    if network_mode == NetworkLayoutMode.VALIDATE:
         # Already validated above with strict mode
         pass
 
-    elif network_mode == 'augment':
+    elif network_mode == NetworkLayoutMode.AUGMENT:
         # Augment mode: Add missing buildings (union)
         if missing_buildings:
             if not auto_modify:
@@ -1680,7 +1700,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         else:
             print("  ✓ All specified buildings have valid nodes in network")
 
-    elif network_mode == 'filter':
+    elif network_mode == NetworkLayoutMode.FILTER:
         # Filter mode: Remove extra buildings AND add missing buildings (exact match)
         from cea.optimization_new.user_network_loader import filter_network_to_buildings
 
