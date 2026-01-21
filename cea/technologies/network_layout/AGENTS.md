@@ -3,112 +3,158 @@
 ## Purpose
 Build thermal network connectivity graphs by connecting buildings to street networks while preserving curved geometries and maintaining coordinate precision.
 
-## User-Defined Network Augmentation
+## User-Defined Network Layout Modes
 
 ### Overview
-When users provide their own network layout (via `edges-shp-path`/`nodes-shp-path` or `network-geojson-path`), CEA can automatically extend it to include missing buildings required by `supply.csv` or `connected-buildings` parameter.
+When users provide their own network layout (via `edges-shp-path`/`nodes-shp-path` or `network-geojson-path`), CEA offers three modes for handling mismatches between the network and the `connected-buildings` parameter.
 
-### Configuration Parameter
+### Configuration Parameters
 
-**`auto-augment-missing-buildings = true`** (default: enabled)
+**`network-layout-mode`** (default: `validate`)
+- **`validate`**: Strict validation - error if network doesn't match parameter exactly
+- **`augment`**: Add missing buildings to network (union/additive)
+- **`filter`**: Add missing AND remove extra buildings (exact match)
 
-When enabled, CEA uses Steiner tree optimisation to automatically add missing buildings to user-provided networks via optimal street paths. The user's existing network is **never modified** - only extended.
+**`auto-modify-network`** (default: `true`)
+- Enables network modifications for `augment`/`filter` modes
+- When `false`: augment/filter modes will error if modifications are needed
+- Ignored in `validate` mode (always non-destructive)
+- User's original network files on disk are **never changed**
 
-### How It Works
+### Mode Behaviors
 
+| Mode | Missing Buildings | Extra Buildings | Use Case |
+|------|------------------|----------------|----------|
+| **validate** | ❌ Error | ❌ Error | Strict validation - ensure network matches parameter exactly |
+| **augment** | ➕ Add (if auto-modify=true) | ✓ Keep | Bottom-up expansion - start with core, grow to full district |
+| **filter** | ➕ Add (if auto-modify=true) | ➖ Remove (if auto-modify=true) | Top-down/selective - prune network to specific buildings |
+
+### Examples
+
+#### Example 1: Validate Mode (Default) - Strict Validation
 ```python
 # User provides network with 3 buildings
 user.shp: B1001, B1002, B1003
 
-# But supply.csv requires 5 buildings
-supply.csv: B1001, B1002, B1003, B1004, B1005
+# But connected-buildings requires 5 buildings
+connected-buildings: B1001, B1002, B1003, B1004, B1005
 
-# With auto-augment enabled (default):
-# → CEA automatically adds B1004, B1005 using Steiner tree
+# network-layout-mode = validate (default)
+# → ❌ ERROR raised immediately
+# → Error message: "Network missing 2 buildings: B1004, B1005"
+# → Suggests using augment or filter mode
+# → Script stops (no output files created)
+```
+
+#### Example 2: Augment Mode
+```python
+# User provides network with 3 buildings
+user.shp: B1001, B1002, B1003
+
+# connected-buildings requires 5 buildings
+connected-buildings: B1001, B1002, B1003, B1004, B1005
+
+# network-layout-mode = augment
+# auto-modify-network = true
+# → CEA adds B1004, B1005 using Steiner tree optimisation
 # → User's original edges/nodes for B1001-B1003 unchanged
 # → New optimal paths added for B1004-B1005
+# → Result: Network with all 5 buildings
+```
+
+#### Example 3: Filter Mode
+```python
+# User provides network with 5 buildings
+user.shp: B1001, B1002, B1003, B1004, B1005
+
+# But only want 3 buildings connected
+connected-buildings: B1001, B1002, B1003
+
+# network-layout-mode = filter
+# auto-modify-network = true
+# → CEA removes B1004, B1005 nodes and orphaned edges
+# → Result: Network with only B1001-B1003
 ```
 
 ### Implementation Details
 
-**Main function:** `augment_user_network_with_buildings()` in `user_network_loader.py`
+**Augmentation function:** `augment_user_network_with_buildings()` in `user_network_loader.py`
 
-**Algorithm (3 steps):**
+**Augmentation algorithm (3 steps):**
 1. Create potential network: user edges + street network
 2. Run Steiner tree optimisation (Kou algorithm) with **existing + new buildings as terminals**
    - Treats all existing user building nodes as terminals
    - Guarantees new buildings connect to existing network (not separate component)
-   - Finds optimal entry point(s) to minimize added infrastructure
+   - Finds optimal entry point(s) to minimise added infrastructure
 3. Merge augmented subnetwork with user's original network (additive-only)
 
+**Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
+
+**Filtering algorithm (3 steps):**
+1. Remove building nodes not in `buildings_to_keep` list
+2. Convert to graph and find connected components containing kept buildings
+3. Remove orphaned edges and junction nodes using graph cleanup
+
 **Key properties:**
-- **User network is immutable**: Existing edges/nodes are never modified
-- New buildings connect at optimal entry points (existing nodes)
-- Uses `connection_candidates` parameter (default: 3)
-- Combines user edges + streets as routing options
-- Deduplicates edges via coordinate matching (SHAPEFILE_TOLERANCE precision)
-- Only adds new edges not already in user network
-
-### Validation Modes: Missing vs Extra Buildings
-
-**Missing Buildings** (buildings in supply.csv/connected-buildings but NOT in user .shp):
-- `auto-augment-missing-buildings=true` (default): Automatically add via Steiner tree
-- `auto-augment-missing-buildings=false`: Raise error with suggestion to enable augmentation
-
-**Extra Buildings** (buildings in user .shp but NOT in supply.csv/connected-buildings):
-- Strictness depends on `overwrite-supply-settings` toggle:
-
-| `overwrite-supply-settings` | Extra Buildings Behavior | Rationale |
-|---------------------------|-------------------------|-----------|
-| **False** (production) | ❌ **ERROR** (strict) | supply.csv is authoritative - extras likely indicate wrong network file |
-| **True** (what-if mode) | ⚠️ **WARNING** (lenient) | User experimenting - respect their network design |
-
-**Important:** In what-if mode (lenient), ALL buildings in the user .shp are included in thermal simulation, even if not in `connected-buildings`. The warning is informational only.
+- **User's disk files never modified**: Only in-memory GeoDataFrames are changed
+- Augmentation: New buildings connect at optimal entry points (existing nodes)
+- Filtering: Uses graph-based cleanup to remove orphaned infrastructure
+- Both use `connection_candidates` parameter (default: 3) for Steiner optimisation
+- Coordinate precision: SHAPEFILE_TOLERANCE (6 decimal places)
 
 ### Input Format Support
 
-Both input formats are fully supported:
+Both input formats fully supported:
 - **Shapefiles:** `edges-shp-path` + `nodes-shp-path`
 - **GeoJSON:** `network-geojson-path` (Point + LineString features)
 
-Augmentation works identically for both - `load_user_defined_network()` normalizes to GeoDataFrames before augmentation.
+All modes work identically for both - `load_user_defined_network()` normalises to GeoDataFrames.
 
-### Example Outputs
+### Example Console Outputs
 
-**Auto-augmentation success:**
+**Validate mode (missing buildings - ERROR):**
 ```
-ⓘ Network is missing 3 building(s), auto-augmentation enabled...
-  Augmenting user network with 3 missing building(s)...
-    - Buildings to add: B1004, B1005, B1006
+❌ Error: User-defined network is missing nodes for 2 building(s):
+
+  B1004
+  B1005
+
+Resolution options:
+  1. Add these building nodes to your network layout
+  2. Use 'augment' mode to automatically add missing buildings
+  3. Use 'filter' mode for exact match (add missing + remove extras)
+  4. Update connected-buildings parameter to match your network
+```
+
+**Augment mode (adding buildings):**
+```
+  ⓘ Augment mode: Adding 2 missing building(s)...
+  Augmenting user network with 2 missing building(s)...
+    - Buildings to add: B1004, B1005
   Step 1/3: Creating potential network graph...
   Step 2/3: Optimising network layout using Steiner tree algorithm...
   Step 3/3: Merging augmented edges/nodes with user network...
   ✓ Augmentation complete:
-    - Added 3 new node(s)
-    - Added 7 new edge(s)
-    - Total network: 18 nodes, 25 edges
+    - Added 2 new node(s)
+    - Added 5 new edge(s)
+    - Total network: 15 nodes, 20 edges
 ```
 
-**Extra buildings warning (what-if mode):**
+**Filter mode (removing buildings):**
 ```
-⚠ Warning: Network includes 2 building(s) NOT in 'connected-buildings' parameter:
-  B1007, B1008
+  ⚠️  WARNING: FILTER MODE - Network will be modified!
+  Network has 2 extra building(s) that will be REMOVED: B1004, B1005
 
-  Your network layout will be used as-is (all buildings included).
-  If this is intentional, you can ignore this warning.
-  If you want to exclude them, remove their nodes from your network layout.
+  Filtering network to 3 building(s)...
+    ✓ Removed 2 node(s) and 5 edge(s)
+    ✓ Final network: 10 nodes, 15 edges
 ```
 
-**Extra buildings error (production mode):**
+**Augment mode without auto-modify:**
 ```
-❌ Error: User-defined network includes buildings NOT designated for district DH:
-  - Extra buildings: B1007, B1008
-
-Resolution options:
-  1. Remove these building nodes from your network layout
-  2. Update Building Properties/Supply to set these to district
-  3. Set 'overwrite-supply-settings' to True for intentional extras
-  4. Leave network layout parameters blank for auto-generation
+  ❌ Error: Augment mode requires auto-modify-network=true to add missing buildings.
+    Missing buildings: B1004, B1005
+  Resolution: Set auto-modify-network=true or use validate mode.
 ```
 
 ## Main API

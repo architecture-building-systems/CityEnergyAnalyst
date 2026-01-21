@@ -31,6 +31,7 @@ from shapely.geometry import Point
 from typing import Tuple, Dict, List, Set
 
 from cea import CEAException
+from cea.constants import SHAPEFILE_TOLERANCE
 
 # Tolerance for network topology validation (meters)
 # This is much tighter than CEA's general SHAPEFILE_TOLERANCE (6m)
@@ -453,10 +454,11 @@ def validate_network_covers_district_buildings(
     if missing_buildings:
         if allow_augmentation:
             # Return missing buildings for augmentation (caller will handle)
-            return nodes_gdf, sorted(list(missing_buildings))
+            # Ensure building names are strings (may be floats in DataFrame)
+            return nodes_gdf, sorted([str(b) for b in missing_buildings])
         else:
             # Raise error - strict validation mode
-            missing_list = sorted(list(missing_buildings))[:20]
+            missing_list = sorted([str(b) for b in missing_buildings])[:20]
             missing_details = "\n  ".join(missing_list)
             if len(missing_buildings) > 20:
                 missing_details += f"\n  ... and {len(missing_buildings) - 20} more"
@@ -469,7 +471,7 @@ def validate_network_covers_district_buildings(
                 "  1. Add nodes for these buildings in your network layout (with 'type' = 'CONSUMER' or 'NONE')\n"
                 "  2. Ensure node 'building' attribute exactly matches building names (case-sensitive)\n"
                 "  3. Remove these buildings from the connected-buildings parameter if they shouldn't be in the network\n"
-                "  4. Enable 'auto-augment-missing-buildings' parameter to automatically extend the network"
+                "  4. Select 'augment or filter' for 'network-layout-mode' parameter, and enable 'auto-modify-network' parameter to automatically extend the network"
             )
 
     # Check 2: Are there extra buildings in the network that shouldn't be there?
@@ -961,6 +963,9 @@ def augment_user_network_with_buildings(
     """
     from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 
+    # Ensure building names are strings (may be floats from validation)
+    missing_building_names = [str(name) for name in missing_building_names]
+
     print(f"\n  Augmenting user network with {len(missing_building_names)} missing building(s)...")
     print(f"    - Buildings to add: {', '.join(sorted(missing_building_names)[:10])}" +
           (f" and {len(missing_building_names) - 10} more" if len(missing_building_names) > 10 else ""))
@@ -1020,35 +1025,35 @@ def augment_user_network_with_buildings(
 
     # Create temporary output paths for Steiner tree results
     temp_dir = tempfile.mkdtemp()
-    temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
-    temp_nodes_path = os.path.join(temp_dir, 'steiner_nodes.shp')
+    try:
+        temp_edges_path = os.path.join(temp_dir, 'steiner_edges.shp')
+        temp_nodes_path = os.path.join(temp_dir, 'steiner_nodes.shp')
 
-    # Get CRS string
-    crs_projected = zone_gdf.crs.to_string()
+        # Get CRS string
+        crs_projected = zone_gdf.crs.to_string()
 
-    # Run Steiner tree optimisation with ALL buildings as terminals
-    # This guarantees new buildings connect to existing network
-    # Note: This writes directly to shapefiles
-    calc_steiner_spanning_tree(
-        crs_projected=crs_projected,
-        building_centroids_df=all_terminals,  # Include existing + new buildings
-        potential_network_graph=potential_graph,
-        path_output_edges_shp=temp_edges_path,
-        path_output_nodes_shp=temp_nodes_path,
-        type_network='DH',  # Doesn't matter for pure topology
-        total_demand_location=locator.get_total_demand(),
-        plant_building_names=[],  # No plants needed for augmentation
-        disconnected_building_names=[],
-        method='kou',  # High-quality algorithm
-        connection_candidates=connection_candidates
-    )
+        # Run Steiner tree optimisation with ALL buildings as terminals
+        # This guarantees new buildings connect to existing network
+        # Note: This writes directly to shapefiles
+        calc_steiner_spanning_tree(
+            crs_projected=crs_projected,
+            building_centroids_df=all_terminals,  # Include existing + new buildings
+            potential_network_graph=potential_graph,
+            path_output_edges_shp=temp_edges_path,
+            path_output_nodes_shp=temp_nodes_path,
+            total_demand_location=locator.get_total_demand(),
+            plant_building_names=None,  # Explicitly disable plant creation for augmentation
+            disconnected_building_names=[],
+            method='kou',  # High-quality algorithm
+            connection_candidates=connection_candidates
+        )
 
-    # Read back the optimised network
-    steiner_nodes_gdf = gpd.read_file(temp_nodes_path)
-    steiner_edges_gdf = gpd.read_file(temp_edges_path)
-
-    # Clean up temp files
-    shutil.rmtree(temp_dir)
+        # Read back the optimised network
+        steiner_nodes_gdf = gpd.read_file(temp_nodes_path)
+        steiner_edges_gdf = gpd.read_file(temp_edges_path)
+    finally:
+        # Clean up temp files regardless of success or failure
+        shutil.rmtree(temp_dir)
 
     # Step 3: Merge optimised subnetwork with user's original network
     print("  Step 3/3: Merging augmented edges/nodes with user network...")
@@ -1066,6 +1071,139 @@ def augment_user_network_with_buildings(
     print(f"    - Total network: {len(augmented_nodes_gdf)} nodes, {len(augmented_edges_gdf)} edges\n")
 
     return augmented_nodes_gdf, augmented_edges_gdf
+
+
+def filter_network_to_buildings(
+    nodes_gdf: gpd.GeoDataFrame,
+    edges_gdf: gpd.GeoDataFrame,
+    buildings_to_keep: List[str]
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """
+    Remove buildings from network that aren't in buildings_to_keep list.
+    Also removes orphaned edges and junction nodes using graph cleanup.
+
+    :param nodes_gdf: GeoDataFrame of network nodes
+    :param edges_gdf: GeoDataFrame of network edges
+    :param buildings_to_keep: List of building names to retain in network
+    :return: Tuple of (filtered_nodes_gdf, filtered_edges_gdf)
+    """
+    from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf, normalize_coords
+    import networkx as nx
+
+    print(f"  Filtering network to {len(buildings_to_keep)} buildings...")
+
+    # Step 1: Remove building nodes not in list
+    building_nodes = nodes_gdf[
+        nodes_gdf['building'].notna() &
+        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    ]
+
+    buildings_in_network = set(building_nodes['building'])
+    buildings_to_remove = buildings_in_network - set(buildings_to_keep)
+
+    if not buildings_to_remove:
+        # Nothing to remove
+        return nodes_gdf.copy(), edges_gdf.copy()
+
+    print(f"    - Removing {len(buildings_to_remove)} building node(s): {', '.join(list(buildings_to_remove)[:5])}")
+    if len(buildings_to_remove) > 5:
+        print(f"      ... and {len(buildings_to_remove) - 5} more")
+
+    # Remove building nodes
+    nodes_gdf_filtered = nodes_gdf[
+        ~nodes_gdf['building'].isin(buildings_to_remove)
+    ].copy()
+
+    # Get coordinates of removed building nodes to filter edges
+    removed_node_coords = set()
+    removed_building_nodes = nodes_gdf[nodes_gdf['building'].isin(buildings_to_remove)]
+    for idx, row in removed_building_nodes.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        removed_node_coords.add(coord)
+
+    # Filter edges - remove any edge connected to a removed building node
+    edges_to_keep = []
+    for idx, row in edges_gdf.iterrows():
+        geom = row.geometry
+        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+
+        # Keep edge only if neither endpoint is a removed building node
+        if start not in removed_node_coords and end not in removed_node_coords:
+            edges_to_keep.append(row)
+
+    if not edges_to_keep:
+        raise ValueError("Filter mode would remove all edges!")
+
+    edges_gdf_filtered = gpd.GeoDataFrame(edges_to_keep, crs=edges_gdf.crs)
+
+    # Step 2: Build graph and find connected components
+    # Preserve all edge attributes (name, type_mat, pipe_DN, etc.)
+    edge_attrs = {col: col for col in edges_gdf_filtered.columns if col not in ['geometry', 'weight']}
+    graph = gdf_to_nx(edges_gdf_filtered, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True, **edge_attrs)
+
+    # Get building terminal coordinates (nodes we must keep)
+    terminal_coords = set()
+    building_nodes_kept = nodes_gdf_filtered[
+        nodes_gdf_filtered['building'].isin(buildings_to_keep)
+    ]
+
+    for idx, row in building_nodes_kept.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        terminal_coords.add(coord)
+
+    if not terminal_coords:
+        raise ValueError("Filter removed all building nodes - no terminals left!")
+
+    # Find connected component(s) containing terminals
+    components = list(nx.connected_components(graph))
+
+    components_to_keep = []
+    for component in components:
+        if any(node in terminal_coords for node in component):
+            components_to_keep.append(component)
+
+    if len(components_to_keep) == 0:
+        raise ValueError("Filter mode removed all network components!")
+
+    # Create subgraph with kept components
+    nodes_to_keep = set()
+    for component in components_to_keep:
+        nodes_to_keep.update(component)
+
+    filtered_graph = graph.subgraph(nodes_to_keep).copy()
+
+    # Convert back to GeoDataFrame
+    filtered_edges_gdf = nx_to_gdf(filtered_graph, crs=edges_gdf.crs, preserve_geometry=True)
+
+    # Update nodes_gdf to only include nodes connected to kept edges
+    edge_nodes = set()
+    for idx, row in filtered_edges_gdf.iterrows():
+        geom = row.geometry
+        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+        edge_nodes.add(start)
+        edge_nodes.add(end)
+
+    # Filter nodes - keep only those that are endpoints of kept edges
+    filtered_nodes = []
+    for idx, row in nodes_gdf_filtered.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        if coord in edge_nodes:
+            filtered_nodes.append(row)
+
+    if not filtered_nodes:
+        raise ValueError("Filter mode removed all nodes!")
+
+    filtered_nodes_gdf = gpd.GeoDataFrame(filtered_nodes, crs=nodes_gdf.crs)
+
+    removed_edges = len(edges_gdf) - len(filtered_edges_gdf)
+    removed_nodes = len(nodes_gdf) - len(filtered_nodes_gdf)
+
+    print(f"    ✓ Removed {removed_nodes} node(s) and {removed_edges} edge(s)")
+    print(f"    ✓ Final network: {len(filtered_nodes_gdf)} nodes, {len(filtered_edges_gdf)} edges")
+
+    return filtered_nodes_gdf, filtered_edges_gdf
 
 
 def _create_terminal_connections_for_buildings(
@@ -1086,7 +1224,7 @@ def _create_terminal_connections_for_buildings(
     - Building terminals dict mapping building_name -> (x, y) node coordinate
     """
     from cea.technologies.network_layout.connectivity_potential import create_terminals
-    from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords, SHAPEFILE_TOLERANCE
+    from cea.technologies.network_layout.graph_utils import gdf_to_nx, normalize_coords
 
     # Get building geometries for missing buildings
     missing_buildings_gdf = zone_gdf[zone_gdf['name'].isin(missing_building_names)].copy()
@@ -1153,7 +1291,7 @@ def _merge_augmented_network(
     - Augmented nodes GeoDataFrame
     - Augmented edges GeoDataFrame
     """
-    from cea.technologies.network_layout.graph_utils import normalize_coords, SHAPEFILE_TOLERANCE
+    from cea.technologies.network_layout.graph_utils import normalize_coords
 
     # 1. Merge edges - keep all user edges, add new Steiner edges
     # Steiner tree output may include edges from the user's original network
