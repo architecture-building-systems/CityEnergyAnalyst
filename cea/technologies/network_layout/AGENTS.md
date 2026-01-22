@@ -3,6 +3,160 @@
 ## Purpose
 Build thermal network connectivity graphs by connecting buildings to street networks while preserving curved geometries and maintaining coordinate precision.
 
+## User-Defined Network Layout Modes
+
+### Overview
+When users provide their own network layout (via `edges-shp-path`/`nodes-shp-path` or `network-geojson-path`), CEA offers three modes for handling mismatches between the network and the `connected-buildings` parameter.
+
+### Configuration Parameters
+
+**`network-layout-mode`** (default: `validate`)
+- **`validate`**: Strict validation - error if network doesn't match parameter exactly
+- **`augment`**: Add missing buildings to network (union/additive)
+- **`filter`**: Add missing AND remove extra buildings (exact match)
+
+**`auto-modify-network`** (default: `true`)
+- Enables network modifications for `augment`/`filter` modes
+- When `false`: augment/filter modes will error if modifications are needed
+- Ignored in `validate` mode (always non-destructive)
+- User's original network files on disk are **never changed**
+
+### Mode Behaviors
+
+| Mode | Missing Buildings | Extra Buildings | Use Case |
+|------|------------------|----------------|----------|
+| **validate** | ❌ Error | ❌ Error | Strict validation - ensure network matches parameter exactly |
+| **augment** | ➕ Add (if auto-modify=true) | ✓ Keep | Bottom-up expansion - start with core, grow to full district |
+| **filter** | ➕ Add (if auto-modify=true) | ➖ Remove (if auto-modify=true) | Top-down/selective - prune network to specific buildings |
+
+### Examples
+
+#### Example 1: Validate Mode (Default) - Strict Validation
+```python
+# User provides network with 3 buildings
+user.shp: B1001, B1002, B1003
+
+# But connected-buildings requires 5 buildings
+connected-buildings: B1001, B1002, B1003, B1004, B1005
+
+# network-layout-mode = validate (default)
+# → ❌ ERROR raised immediately
+# → Error message: "Network missing 2 buildings: B1004, B1005"
+# → Suggests using augment or filter mode
+# → Script stops (no output files created)
+```
+
+#### Example 2: Augment Mode
+```python
+# User provides network with 3 buildings
+user.shp: B1001, B1002, B1003
+
+# connected-buildings requires 5 buildings
+connected-buildings: B1001, B1002, B1003, B1004, B1005
+
+# network-layout-mode = augment
+# auto-modify-network = true
+# → CEA adds B1004, B1005 using Steiner tree optimisation
+# → User's original edges/nodes for B1001-B1003 unchanged
+# → New optimal paths added for B1004-B1005
+# → Result: Network with all 5 buildings
+```
+
+#### Example 3: Filter Mode
+```python
+# User provides network with 5 buildings
+user.shp: B1001, B1002, B1003, B1004, B1005
+
+# But only want 3 buildings connected
+connected-buildings: B1001, B1002, B1003
+
+# network-layout-mode = filter
+# auto-modify-network = true
+# → CEA removes B1004, B1005 nodes and orphaned edges
+# → Result: Network with only B1001-B1003
+```
+
+### Implementation Details
+
+**Augmentation function:** `augment_user_network_with_buildings()` in `user_network_loader.py`
+
+**Augmentation algorithm (3 steps):**
+1. Create potential network: user edges + street network
+2. Run Steiner tree optimisation (Kou algorithm) with **existing + new buildings as terminals**
+   - Treats all existing user building nodes as terminals
+   - Guarantees new buildings connect to existing network (not separate component)
+   - Finds optimal entry point(s) to minimise added infrastructure
+3. Merge augmented subnetwork with user's original network (additive-only)
+
+**Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
+
+**Filtering algorithm (3 steps):**
+1. Remove building nodes not in `buildings_to_keep` list
+2. Convert to graph and find connected components containing kept buildings
+3. Remove orphaned edges and junction nodes using graph cleanup
+
+**Key properties:**
+- **User's disk files never modified**: Only in-memory GeoDataFrames are changed
+- Augmentation: New buildings connect at optimal entry points (existing nodes)
+- Filtering: Uses graph-based cleanup to remove orphaned infrastructure
+- Both use `connection_candidates` parameter (default: 3) for Steiner optimisation
+- Coordinate precision: SHAPEFILE_TOLERANCE (6 decimal places)
+
+### Input Format Support
+
+Both input formats fully supported:
+- **Shapefiles:** `edges-shp-path` + `nodes-shp-path`
+- **GeoJSON:** `network-geojson-path` (Point + LineString features)
+
+All modes work identically for both - `load_user_defined_network()` normalises to GeoDataFrames.
+
+### Example Console Outputs
+
+**Validate mode (missing buildings - ERROR):**
+```
+❌ Error: User-defined network is missing nodes for 2 building(s):
+
+  B1004
+  B1005
+
+Resolution options:
+  1. Add these building nodes to your network layout
+  2. Use 'augment' mode to automatically add missing buildings
+  3. Use 'filter' mode for exact match (add missing + remove extras)
+  4. Update connected-buildings parameter to match your network
+```
+
+**Augment mode (adding buildings):**
+```
+  ⓘ Augment mode: Adding 2 missing building(s)...
+  Augmenting user network with 2 missing building(s)...
+    - Buildings to add: B1004, B1005
+  Step 1/3: Creating potential network graph...
+  Step 2/3: Optimising network layout using Steiner tree algorithm...
+  Step 3/3: Merging augmented edges/nodes with user network...
+  ✓ Augmentation complete:
+    - Added 2 new node(s)
+    - Added 5 new edge(s)
+    - Total network: 15 nodes, 20 edges
+```
+
+**Filter mode (removing buildings):**
+```
+  ⚠️  WARNING: FILTER MODE - Network will be modified!
+  Network has 2 extra building(s) that will be REMOVED: B1004, B1005
+
+  Filtering network to 3 building(s)...
+    ✓ Removed 2 node(s) and 5 edge(s)
+    ✓ Final network: 10 nodes, 15 edges
+```
+
+**Augment mode without auto-modify:**
+```
+  ❌ Error: Augment mode requires auto-modify-network=true to add missing buildings.
+    Missing buildings: B1004, B1005
+  Resolution: Set auto-modify-network=true or use validate mode.
+```
+
 ## Main API
 
 ### `calc_connectivity_network_with_geometry(streets_gdf, buildings_gdf, connection_candidates=1) → nx.Graph`
@@ -399,8 +553,12 @@ def terminal_weighted_mst(graph, terminals):
 Tests are in `cea/tests/test_network_layout_integration.py`
 
 ## Related Files
-- `connectivity_potential.py` - Main network creation
+- `connectivity_potential.py` - Main network creation, `create_terminals()` for building connections
 - `graph_utils.py` - Conversion utilities (gdf_to_nx, nx_to_gdf, normalize_*)
+- `optimization_new/user_network_loader.py` - User network loading, validation, and augmentation
+  - `augment_user_network_with_buildings()` - Main augmentation function
+  - `validate_network_covers_district_buildings()` - Validation with strict/lenient modes
+  - `load_user_defined_network()` - Handles shapefiles and GeoJSON
 - `optimization_new/network.py` - Uses graph with building terminal metadata
-- `main.py` - Converts graph to GeoDataFrame for Steiner tree
-- `steiner_spanning_tree.py` - Contains `add_plant_close_to_anchor()` for plant creation
+- `main.py` - Orchestrates workflow, integrates augmentation logic
+- `steiner_spanning_tree.py` - Contains `add_plant_close_to_anchor()` for plant creation, `calc_steiner_spanning_tree()` used by augmentation
