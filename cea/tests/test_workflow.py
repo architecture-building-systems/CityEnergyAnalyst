@@ -1,4 +1,3 @@
-import codecs
 import glob
 import multiprocessing.pool
 import os
