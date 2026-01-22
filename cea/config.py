@@ -1058,6 +1058,79 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             return ''
 
 
+class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
+    """
+    Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
+    Inherits network discovery logic from NetworkLayoutChoiceParameter.
+    """
+
+    @property
+    def default(self):
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return []
+        return self.decode(_default)
+
+    def get(self) -> list[str]:
+        """Return the value from the config file as a list"""
+        encoded_value = self.get_raw()
+        encoded_value = self.replace_references(encoded_value)
+
+        try:
+            return self.decode(encoded_value)
+        except ValueError as ex:
+            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
+
+    def set(self, value):
+        encoded_value = self.encode(value)
+        self.config.user_config.set(self.section.name, self.name, encoded_value)
+
+    def encode(self, value: list):
+        """
+        Validate and encode a list of network layout names.
+        Raises ValueError if any network layout doesn't exist.
+        """
+        if not isinstance(value, list):
+            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list, got {type(value)}.")
+
+        # Handle empty list
+        if len(value) == 0:
+            if self.nullable:
+                return ''
+            else:
+                raise ValueError("At least one network layout is required.")
+
+        available_networks = self._get_available_networks()
+
+        # Validate that all networks exist
+        invalid_networks = set(value) - set(available_networks)
+        if len(invalid_networks) > 0:
+            raise ValueError(
+                f"Invalid network layouts {invalid_networks} for {self.name}. "
+                f"Available layouts: {', '.join(available_networks)}"
+            )
+
+        return ', '.join(map(str, value))
+
+    def decode(self, value) -> list[str]:
+        """
+        Decode comma-separated network names into a list.
+        Returns empty list if value is empty.
+        """
+        if value == '' or not value:
+            return []
+
+        # Parse comma-separated values
+        from cea.utilities.standardize_coordinates import parse_string_to_list
+        choices = parse_string_to_list(value)
+
+        # Filter to only valid networks (lenient - ignore invalid ones)
+        available_networks = self._get_available_networks()
+        valid_choices = [choice for choice in choices if choice in available_networks]
+
+        return valid_choices
+
+
 class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
