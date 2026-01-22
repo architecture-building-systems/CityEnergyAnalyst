@@ -1120,8 +1120,7 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
         if value == '' or not value:
             return []
 
-        # Parse comma-separated values
-        from cea.utilities.standardize_coordinates import parse_string_to_list
+        # Parse comma-separated values (function imported at top of file)
         choices = parse_string_to_list(value)
 
         # Filter to only valid networks (lenient - ignore invalid ones)

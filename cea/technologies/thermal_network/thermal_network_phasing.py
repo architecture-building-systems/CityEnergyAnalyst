@@ -149,21 +149,28 @@ def load_network_layout(locator, network_name: str, network_type: str) -> Tuple[
     """
     Load network nodes and edges shapefiles.
 
+    New file structure:
+    - Edges: thermal-network/{network-name}/layout.shp
+    - Nodes: thermal-network/{network-name}/{network-type}/layout/nodes.shp
+
     :param locator: InputLocator object
     :param network_name: Name of network layout
     :param network_type: DH or DC
     :return: Tuple of (nodes_gdf, edges_gdf)
     """
-    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-    edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+    # Edges are now at network level (not under network_type subfolder)
+    edges_path = locator.get_network_layout_shapefile(network_name)
 
-    if not os.path.exists(nodes_path):
-        raise FileNotFoundError(f"Network nodes not found: {nodes_path}")
+    # Nodes are still under network_type/layout/ subfolder
+    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
     if not os.path.exists(edges_path):
         raise FileNotFoundError(f"Network edges not found: {edges_path}")
+    if not os.path.exists(nodes_path):
+        raise FileNotFoundError(f"Network nodes not found: {nodes_path}")
 
-    nodes_gdf = gpd.read_file(nodes_path)
     edges_gdf = gpd.read_file(edges_path)
+    nodes_gdf = gpd.read_file(nodes_path)
 
     return nodes_gdf, edges_gdf
 
@@ -298,9 +305,9 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
     # Load pipe costs from database
     pipe_costs = load_pipe_costs(locator)
 
-    # Get financial parameters
-    discount_rate = 0.03  # Default 3%
-    replacement_multiplier = 1.5  # Replacement costs 50% more than new install
+    # Get financial parameters from config
+    discount_rate = config.thermal_network_phasing.discount_rate
+    replacement_multiplier = config.thermal_network_phasing.replacement_cost_multiplier
 
     # Get all unique edges across all phases
     all_edges = get_all_edges_across_phases(phase_results)
@@ -330,7 +337,7 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
             )
         elif strategy == 'size-per-phase':
             decision = size_per_phase_strategy(
-                edge_id, dn_per_phase, phases, length, pipe_costs, discount_rate
+                edge_id, dn_per_phase, phases, length, pipe_costs, discount_rate, replacement_multiplier
             )
         elif strategy == 'pre-size-all':
             decision = pre_size_all_strategy(
@@ -438,13 +445,12 @@ def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
 
 def size_per_phase_strategy(edge_id: str, dn_per_phase: List[Optional[int]],
                             phases: List[Dict], length: float, pipe_costs: pd.DataFrame,
-                            discount_rate: float) -> Dict:
+                            discount_rate: float, replacement_multiplier: float) -> Dict:
     """
     Size-per-phase strategy: Always size for current phase demand.
 
     :return: Decision dictionary with DN per phase and costs
     """
-    replacement_multiplier = 1.5  # Default
     return calculate_size_per_phase_cost(
         edge_id, dn_per_phase, phases, length, pipe_costs, discount_rate, replacement_multiplier
     )

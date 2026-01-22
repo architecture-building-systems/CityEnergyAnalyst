@@ -1002,6 +1002,8 @@ class ThermalNetworkPhasingSection(Section):
     phasing_plan_name: str | None
     phase_completion_year: List[str]
     sizing_strategy: str
+    discount_rate: float
+    replacement_cost_multiplier: float
 
     @overload
     def __getattr__(self, item: Literal["multi_phase_mode"]) -> bool: ...
@@ -1011,6 +1013,10 @@ class ThermalNetworkPhasingSection(Section):
     def __getattr__(self, item: Literal["phase_completion_year"]) -> List[str]: ...
     @overload
     def __getattr__(self, item: Literal["sizing_strategy"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["discount_rate"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["replacement_cost_multiplier"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ThermalNetworkOptimizationSection(Section):
