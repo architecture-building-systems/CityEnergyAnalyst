@@ -834,8 +834,10 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                 tci_0 = tci[index]
                 tco_0 = tco[index]
                 cc_0 = cc[index]
-                t_DH_return_hs, mcp_DH_hs, A_hex_hs = \
+                t_DH_return_hs_C, mcp_DH_hs, A_hex_hs = \
                     calc_substation_heating(Qhs_sys_W, thi, tco, tci, cc, cc_0, Qnom_W, thi_0, tci_0, tco_0)
+                # Convert units
+                t_DH_return_hs = t_DH_return_hs_C + 273  # C to K
 
                 Q_dh_to_hs_W = Qhs_sys_W
                 Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
