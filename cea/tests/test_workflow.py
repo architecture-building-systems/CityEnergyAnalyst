@@ -9,6 +9,21 @@ import cea.config
 from cea.workflows.workflow import main
 
 
+def _ensure_utf8_streams():
+    """Ensure stdout/stderr use UTF-8 encoding on Windows."""
+    import io
+    try:
+        if sys.stdout.encoding != 'utf-8':
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    except (AttributeError, TypeError):
+        pass
+    try:
+        if sys.stderr.encoding != 'utf-8':
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except (AttributeError, TypeError):
+        pass
+
+
 class PrefixedWriter:
     """Wraps a stream and prefixes each line with a label."""
 
@@ -43,6 +58,9 @@ class PrefixedWriter:
 
 def _run_workflow_with_prefix(config: cea.config.Configuration):
     """Run a workflow with prefixed stdout/stderr output."""
+    # Ensure UTF-8 encoding before wrapping streams (fixes Windows cp1252 issues)
+    _ensure_utf8_streams()
+
     workflow_path = config.workflow.workflow
     workflow_name = os.path.splitext(os.path.basename(workflow_path))[0]
     prefix = f"{workflow_name[:12]:<12} | "
