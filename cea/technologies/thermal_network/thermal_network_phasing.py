@@ -60,9 +60,15 @@ def run_multi_phase(config, locator, network_names: List[str]):
         config, locator, phases, phase_results, sizing_strategy
     )
 
+    # Step 3.5: Re-run simulation with optimized DN to get accurate pressure drops and pumping energy
+    print("\nStep 3.5: Re-running simulation with optimised pipe sizes...")
+    phase_results_optimized = resimulate_with_optimized_dn(
+        config, locator, phases, phase_results, sizing_decisions
+    )
+
     # Step 4: Save results
     print("\nStep 4: Saving phasing results...")
-    save_phasing_results(config, locator, phases, phase_results, sizing_decisions)
+    save_phasing_results(config, locator, phases, phase_results_optimized, sizing_decisions)
 
     # Get phasing plan name for final message
     phasing_plan_name = config.thermal_network_phasing.phasing_plan_name
@@ -244,6 +250,65 @@ def simulate_all_phases(config, locator, phases: List[Dict]) -> List[Dict]:
         print(f"    Peak demand: {phase_result['total_demand_kw']:.0f} kW")
 
     return phase_results
+
+
+def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
+                                  phase_results: List[Dict], sizing_decisions: Dict) -> List[Dict]:
+    """
+    Re-run thermal network simulation for each phase using optimised pipe diameters.
+
+    This updates pressure drops and pumping energy based on optimised DN values,
+    ensuring that CSV outputs reflect the actual optimised network performance.
+
+    :param config: Configuration object
+    :param locator: InputLocator object
+    :param phases: List of phase dictionaries
+    :param phase_results: Original simulation results (will be updated)
+    :param sizing_decisions: Optimisation decisions with DN per phase
+    :return: Updated phase_results with accurate pressure drops and pumping energy
+    """
+    optimized_phase_results = []
+
+    for phase, phase_result in zip(phases, phase_results):
+        print(f"\n  Re-simulating Phase {phase['index']}: {phase['name']}...")
+
+        # Update edges shapefile with optimised DN values
+        network_name = phase['network_name']
+        network_type = config.thermal_network.network_type
+        if isinstance(network_type, list):
+            network_type = network_type[0] if len(network_type) > 0 else 'DH'
+
+        # Create temporary shapefile with optimised DN
+        edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        edges_gdf = gpd.read_file(edges_path)
+
+        # Apply optimised DN from sizing decisions
+        phase_key = f"phase{phase['index']}"
+        for edge_id in edges_gdf['name']:
+            decision = sizing_decisions.get(edge_id, {})
+            phase_decision = decision.get(phase_key, {})
+            optimized_dn = phase_decision.get('DN')
+
+            if optimized_dn is not None:
+                edges_gdf.loc[edges_gdf['name'] == edge_id, 'pipe_DN'] = optimized_dn
+
+        # Save updated shapefile (overwrite original temporarily)
+        edges_gdf.to_file(edges_path)
+
+        # Re-run simulation with optimised DN
+        try:
+            optimized_result = simulate_single_phase(config, locator, phase)
+            optimized_phase_results.append(optimized_result)
+
+            print(f"    ✓ Re-simulation complete with optimised DN")
+            print(f"      Peak pumping: {optimized_result.get('plant_peak_pumping_kw', 0):.1f} kW")
+
+        except Exception as e:
+            print(f"    ⚠ Warning: Re-simulation failed: {e}")
+            print(f"      Using original simulation results")
+            optimized_phase_results.append(phase_result)
+
+    return optimized_phase_results
 
 
 def simulate_single_phase(config, locator, phase: Dict) -> Dict:
