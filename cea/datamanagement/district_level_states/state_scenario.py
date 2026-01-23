@@ -1116,11 +1116,11 @@ def create_modify_recipe(
     for archetype in archetypes_to_modify:
         raw_components = {
             "construction_type": {
-                "type_win": config_section.window_code,
-                "supply_type_hs": config_section.supply_heating_code,
-                "supply_type_cs": config_section.supply_cooling_code,
-                "supply_type_dhw": config_section.supply_hotwater_code,
-                "supply_type_el": config_section.supply_electricity_code,
+                "type_win": config_section.type_win,
+                "supply_type_hs": config_section.supply_type_hs,
+                "supply_type_cs": config_section.supply_type_cs,
+                "supply_type_dhw": config_section.supply_type_dhw,
+                "supply_type_el": config_section.supply_type_el,
             },
             "wall": {
                 "material_name_1": config_section.wall_material_name_1,
