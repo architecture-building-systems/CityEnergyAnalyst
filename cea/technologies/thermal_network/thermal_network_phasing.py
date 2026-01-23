@@ -639,57 +639,65 @@ def save_phasing_results(config, locator, phases: List[Dict],
     phasing_folder = locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
     os.makedirs(phasing_folder, exist_ok=True)
 
-    # Save summary
-    save_phasing_summary(phasing_folder, phases, phase_results, sizing_decisions)
+    # Save consolidated phasing summary (combines metrics and costs)
+    save_phasing_summary(phasing_folder, phases, phase_results, sizing_decisions, config)
 
     # Save pipe sizing decisions
     save_pipe_sizing_decisions(phasing_folder, phases, sizing_decisions)
 
-    # Save cost breakdown by phase
-    save_cost_breakdown(phasing_folder, phases, sizing_decisions)
+    # Save timeline CSVs
+    save_edges_timeline_csv(phasing_folder, phases, phase_results, sizing_decisions)
+    save_nodes_timeline_csv(phasing_folder, phases)
 
-    # Save NPV analysis
-    save_npv_analysis(phasing_folder, phases, sizing_decisions, config)
+    # Save phase-specific shapefiles
+    save_phase_network_shapefiles(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
 
-    # Save sized networks per phase
-    phase_sizing_folder = os.path.join(phasing_folder, 'phase_sizing')
-    os.makedirs(phase_sizing_folder, exist_ok=True)
+    # Save final network shapefiles
+    save_final_network_shapefiles(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
 
-    for phase, phase_result in zip(phases, phase_results):
-        save_phase_sized_network(
-            phase_sizing_folder, phase, phase_result, sizing_decisions
-        )
+    # Save substation results per phase
+    save_phase_substation_results(locator, phases, phase_results, network_type, phasing_plan_name)
 
     print(f"\n  ✓ Results saved to: {phasing_folder}/")
     print(f"    - phasing_summary.csv")
     print(f"    - pipe_sizing_decisions.csv")
-    print(f"    - cost_breakdown_by_phase.csv")
-    print(f"    - npv_analysis.csv")
-    print(f"    - phase_sizing/ ({len(phases)} phase files)")
+    print(f"    - edges_timeline.csv")
+    print(f"    - nodes_timeline.csv")
+    print(f"    - layout/edges_final.shp")
+    print(f"    - layout/nodes_final.shp")
 
 
 def save_phasing_summary(folder: str, phases: List[Dict],
-                        phase_results: List[Dict], sizing_decisions: Dict):
-    """Save summary CSV with key metrics per phase."""
+                        phase_results: List[Dict], sizing_decisions: Dict, config):
+    """
+    Save consolidated phasing summary CSV with metrics, costs, and NPV analysis.
+    Combines what was previously in phasing_summary, cost_breakdown, and npv_analysis.
+    """
     summary_data = []
 
     for phase, phase_result in zip(phases, phase_results):
-        # Calculate phase costs
-        phase_capex = sum(
-            sizing_decisions[edge_id].get(f"phase{phase['index']}", {}).get('cost', 0)
-            for edge_id in sizing_decisions.keys()
-        )
+        # Calculate costs broken down by action type
+        install_cost = 0
+        replace_cost = 0
+        install_npv = 0
+        replace_npv = 0
+        num_installs = 0
+        num_replacements = 0
 
-        phase_capex_npv = sum(
-            sizing_decisions[edge_id].get(f"phase{phase['index']}", {}).get('cost_npv', 0)
-            for edge_id in sizing_decisions.keys()
-        )
+        for edge_id, decision in sizing_decisions.items():
+            phase_key = f"phase{phase['index']}"
+            if phase_key not in decision:
+                continue
 
-        # Count replacements
-        num_replacements = sum(
-            1 for edge_id in sizing_decisions.keys()
-            if sizing_decisions[edge_id].get(f"phase{phase['index']}", {}).get('action') == 'replace'
-        )
+            phase_decision = decision[phase_key]
+            if phase_decision['action'] == 'install':
+                install_cost += phase_decision['cost']
+                install_npv += phase_decision['cost_npv']
+                num_installs += 1
+            elif phase_decision['action'] == 'replace':
+                replace_cost += phase_decision['cost']
+                replace_npv += phase_decision['cost_npv']
+                num_replacements += 1
 
         summary_data.append({
             'Phase': phase['index'],
@@ -698,10 +706,15 @@ def save_phasing_summary(folder: str, phases: List[Dict],
             'Network': phase['network_name'],
             'Buildings': len(phase['buildings']),
             'Edges': len(phase_result['edge_diameters']),
-            'Total_Demand_kW': phase_result['total_demand_kw'],
-            'Phase_Capex_EUR': phase_capex,
-            'Phase_Capex_NPV_EUR': phase_capex_npv,
-            'Replacements': num_replacements
+            'Peak_Demand_kW': phase_result['total_demand_kw'],
+            'Install_Cost_USD2015': install_cost,
+            'Replace_Cost_USD2015': replace_cost,
+            'Total_Cost_USD2015': install_cost + replace_cost,
+            'Install_NPV_USD2015': install_npv,
+            'Replace_NPV_USD2015': replace_npv,
+            'Total_NPV_USD2015': install_npv + replace_npv,
+            'Num_Installs': num_installs,
+            'Num_Replacements': num_replacements
         })
 
     df = pd.DataFrame(summary_data)
@@ -726,8 +739,8 @@ def save_pipe_sizing_decisions(folder: str, phases: List[Dict], sizing_decisions
                 'Action': phase_decision['action'],
                 'DN': phase_decision['DN'],
                 'Old_DN': phase_decision.get('old_dn', 'n/a'),
-                'Cost_EUR': phase_decision['cost'],
-                'Cost_NPV_EUR': phase_decision['cost_npv'],
+                'Cost_USD2015': phase_decision['cost'],
+                'Cost_NPV_USD2015': phase_decision['cost_npv'],
                 'Strategy': decision.get('strategy', 'n/a')
             })
 
@@ -736,111 +749,364 @@ def save_pipe_sizing_decisions(folder: str, phases: List[Dict], sizing_decisions
     df.to_csv(os.path.join(folder, 'pipe_sizing_decisions.csv'), index=False)
 
 
-def save_cost_breakdown(folder: str, phases: List[Dict], sizing_decisions: Dict):
-    """Save cost breakdown by phase showing capital expenditure and NPV."""
-    breakdown_data = []
-
-    for phase in phases:
-        # Calculate costs for this phase
-        install_cost = 0
-        replace_cost = 0
-        install_npv = 0
-        replace_npv = 0
-        num_installs = 0
-        num_replacements = 0
-
-        for edge_id, decision in sizing_decisions.items():
-            phase_key = f"phase{phase['index']}"
-            if phase_key not in decision:
-                continue
-
-            phase_decision = decision[phase_key]
-            if phase_decision['action'] == 'install':
-                install_cost += phase_decision['cost']
-                install_npv += phase_decision['cost_npv']
-                num_installs += 1
-            elif phase_decision['action'] == 'replace':
-                replace_cost += phase_decision['cost']
-                replace_npv += phase_decision['cost_npv']
-                num_replacements += 1
-
-        breakdown_data.append({
-            'Phase': phase['index'],
-            'Year': phase['year'],
-            'Install_Cost_EUR': install_cost,
-            'Replace_Cost_EUR': replace_cost,
-            'Total_Cost_EUR': install_cost + replace_cost,
-            'Install_NPV_EUR': install_npv,
-            'Replace_NPV_EUR': replace_npv,
-            'Total_NPV_EUR': install_npv + replace_npv,
-            'Num_Installs': num_installs,
-            'Num_Replacements': num_replacements
-        })
-
-    df = pd.DataFrame(breakdown_data)
-    df.to_csv(os.path.join(folder, 'cost_breakdown_by_phase.csv'), index=False)
+# Removed: save_cost_breakdown, save_npv_analysis, save_phase_sized_network
+# These have been consolidated into save_phasing_summary and phase-specific shapefiles
 
 
-def save_npv_analysis(folder: str, phases: List[Dict], sizing_decisions: Dict, config):
-    """Save NPV analysis comparing total costs across different assumptions."""
-    # Get discount rate from config
-    discount_rate = config.thermal_network_phasing.discount_rate
+def save_phase_network_shapefiles(locator, phases: List[Dict], phase_results: List[Dict],
+                                   sizing_decisions: Dict, network_type: str, phasing_plan_name: str):
+    """
+    Save phase-specific network shapefiles showing spatial evolution.
 
-    # Calculate total NPV
-    total_npv = 0
-    total_undiscounted = 0
+    Creates for each phase:
+    - edges_phaseN_YYYY.shp - All edges existing in that phase with sizing info
+    - nodes_phaseN_YYYY.shp - All nodes existing in that phase (cumulative)
 
-    for edge_id, decision in sizing_decisions.items():
-        for phase in phases:
-            phase_key = f"phase{phase['index']}"
-            if phase_key in decision:
-                phase_decision = decision[phase_key]
-                total_npv += phase_decision['cost_npv']
-                total_undiscounted += phase_decision['cost']
+    :param locator: InputLocator object
+    :param phases: List of phase dictionaries
+    :param phase_results: List of phase result dictionaries
+    :param sizing_decisions: Dictionary of sizing decisions per edge
+    :param network_type: DH or DC
+    :param phasing_plan_name: Name of phasing plan
+    """
+    layout_folder = os.path.join(
+        locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name),
+        'layout'
+    )
+    os.makedirs(layout_folder, exist_ok=True)
 
-    analysis_data = [{
-        'Metric': 'Total NPV (EUR)',
-        'Value': total_npv
-    }, {
-        'Metric': 'Total Undiscounted Cost (EUR)',
-        'Value': total_undiscounted
-    }, {
-        'Metric': 'Discount Rate',
-        'Value': discount_rate
-    }, {
-        'Metric': 'Planning Horizon (Years)',
-        'Value': phases[-1]['year'] - phases[0]['year']
-    }, {
-        'Metric': 'Number of Phases',
-        'Value': len(phases)
-    }, {
-        'Metric': 'Sizing Strategy',
-        'Value': config.thermal_network_phasing.sizing_strategy
-    }]
+    # Track all nodes seen so far (cumulative)
+    cumulative_nodes = gpd.GeoDataFrame()
 
-    df = pd.DataFrame(analysis_data)
-    df.to_csv(os.path.join(folder, 'npv_analysis.csv'), index=False)
+    for phase, phase_result in zip(phases, phase_results):
+        phase_num = phase['index']
+        year = phase['year']
+
+        # Create edges shapefile for this phase
+        edges_gdf = create_phase_edges_gdf(phase, phase_result, sizing_decisions)
+        edges_filename = f"edges_phase{phase_num}_{year}.shp"
+        edges_path = os.path.join(layout_folder, edges_filename)
+        edges_gdf.to_file(edges_path)
+
+        # Create nodes shapefile for this phase (cumulative)
+        nodes_gdf = create_phase_nodes_gdf(phase, phase_result, cumulative_nodes)
+        cumulative_nodes = nodes_gdf.copy()  # Update for next phase
+        nodes_filename = f"nodes_phase{phase_num}_{year}.shp"
+        nodes_path = os.path.join(layout_folder, nodes_filename)
+        nodes_gdf.to_file(nodes_path)
+
+    print(f"    - layout/ ({len(phases)} phase shapefiles)")
 
 
-def save_phase_sized_network(folder: str, phase: Dict, phase_result: Dict, sizing_decisions: Dict):
-    """Save sized network for a single phase as CSV."""
-    sizing_data = []
+def create_phase_edges_gdf(phase: Dict, phase_result: Dict, sizing_decisions: Dict) -> gpd.GeoDataFrame:
+    """
+    Create GeoDataFrame for edges in a specific phase.
+
+    :param phase: Phase dictionary
+    :param phase_result: Phase result dictionary
+    :param sizing_decisions: Sizing decisions dictionary
+    :return: GeoDataFrame with edge geometries and attributes
+    """
+    edges_data = []
+    phase_key = f"phase{phase['index']}"
+
+    # Get original edges GeoDataFrame from phase
+    original_edges = phase['edges_gdf'].copy()
 
     for edge_id in phase_result['edge_diameters'].keys():
+        # Get decision for this edge in this phase
         decision = sizing_decisions.get(edge_id, {})
-        phase_key = f"phase{phase['index']}"
         phase_decision = decision.get(phase_key, {})
 
-        sizing_data.append({
-            'Edge': edge_id,
+        # Get geometry from original edges
+        edge_row = original_edges[original_edges['name'] == edge_id]
+        if len(edge_row) == 0:
+            continue
+
+        geometry = edge_row.iloc[0].geometry
+        type_mat = edge_row.iloc[0].get('type_mat', '')
+
+        edges_data.append({
+            'name': edge_id,
+            'type_mat': type_mat,
+            'length_m': phase_result['edge_lengths'][edge_id],
             'DN': phase_decision.get('DN', phase_result['edge_diameters'][edge_id]),
-            'Length_m': phase_result['edge_lengths'][edge_id],
-            'Mass_Flow_kg_s': phase_result['edge_mass_flows'].get(edge_id, 0),
-            'Action': phase_decision.get('action', 'n/a'),
-            'Cost_EUR': phase_decision.get('cost', 0),
-            'Strategy': decision.get('strategy', 'n/a')
+            'phase_num': phase['index'],
+            'year': phase['year'],
+            'action': phase_decision.get('action', 'existing'),
+            'cost_USD': phase_decision.get('cost', 0),
+            'is_new': phase_decision.get('action') == 'install',
+            'geometry': geometry
         })
 
-    df = pd.DataFrame(sizing_data)
-    filename = f"{phase['name']}_sized.csv"
-    df.to_csv(os.path.join(folder, filename), index=False)
+    gdf = gpd.GeoDataFrame(edges_data, crs=original_edges.crs)
+    return gdf
+
+
+def create_phase_nodes_gdf(phase: Dict, phase_result: Dict, cumulative_nodes: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """
+    Create GeoDataFrame for nodes in a specific phase (cumulative).
+
+    :param phase: Phase dictionary
+    :param phase_result: Phase result dictionary
+    :param cumulative_nodes: GeoDataFrame of nodes from previous phases
+    :return: GeoDataFrame with node geometries and attributes
+    """
+    # Get original nodes from this phase
+    original_nodes = phase['nodes_gdf'].copy()
+
+    # Determine which nodes are new in this phase
+    if len(cumulative_nodes) == 0:
+        # First phase - all nodes are new
+        original_nodes['phase_intro'] = phase['index']
+        original_nodes['year_intro'] = phase['year']
+        original_nodes['is_new'] = True
+    else:
+        # Find nodes that didn't exist before
+        existing_node_names = set(cumulative_nodes['name'].values) if 'name' in cumulative_nodes.columns else set()
+        original_nodes['is_new'] = ~original_nodes['name'].isin(existing_node_names)
+        original_nodes['phase_intro'] = phase['index']
+        original_nodes['year_intro'] = phase['year']
+
+        # Merge with previous nodes (keep historical phase_intro for old nodes)
+        for idx, row in original_nodes.iterrows():
+            if not row['is_new']:
+                old_node = cumulative_nodes[cumulative_nodes['name'] == row['name']]
+                if len(old_node) > 0:
+                    original_nodes.at[idx, 'phase_intro'] = old_node.iloc[0]['phase_intro']
+                    original_nodes.at[idx, 'year_intro'] = old_node.iloc[0]['year_intro']
+
+    return original_nodes
+
+
+def save_edges_timeline_csv(folder: str, phases: List[Dict], phase_results: List[Dict], sizing_decisions: Dict):
+    """
+    Save complete temporal evolution of edges as CSV.
+
+    :param folder: Output folder
+    :param phases: List of phase dictionaries
+    :param phase_results: List of phase result dictionaries
+    :param sizing_decisions: Sizing decisions dictionary
+    """
+    timeline_data = []
+
+    for phase, phase_result in zip(phases, phase_results):
+        phase_key = f"phase{phase['index']}"
+
+        for edge_id in phase_result['edge_diameters'].keys():
+            decision = sizing_decisions.get(edge_id, {})
+            phase_decision = decision.get(phase_key, {})
+
+            timeline_data.append({
+                'edge_id': edge_id,
+                'phase': phase['index'],
+                'year': phase['year'],
+                'action': phase_decision.get('action', 'existing'),
+                'DN': phase_decision.get('DN', phase_result['edge_diameters'][edge_id]),
+                'length_m': phase_result['edge_lengths'][edge_id],
+                'cost_USD2015': phase_decision.get('cost', 0),
+                'cost_npv_USD2015': phase_decision.get('cost_npv', 0),
+                'strategy': decision.get('strategy', 'n/a')
+            })
+
+    df = pd.DataFrame(timeline_data)
+    df.to_csv(os.path.join(folder, 'edges_timeline.csv'), index=False)
+
+
+def save_nodes_timeline_csv(folder: str, phases: List[Dict]):
+    """
+    Save complete temporal evolution of nodes as CSV.
+
+    :param folder: Output folder
+    :param phases: List of phase dictionaries
+    """
+    timeline_data = []
+    seen_nodes = set()
+
+    for phase in phases:
+        nodes_gdf = phase['nodes_gdf']
+
+        for _, node in nodes_gdf.iterrows():
+            node_id = node['name']
+
+            # Only record when node is first introduced
+            if node_id not in seen_nodes:
+                timeline_data.append({
+                    'node_id': node_id,
+                    'building': node.get('building', 'NONE'),
+                    'type': node.get('type', 'NONE'),
+                    'phase_introduced': phase['index'],
+                    'year_introduced': phase['year'],
+                    'geometry_wkt': node.geometry.wkt
+                })
+                seen_nodes.add(node_id)
+
+    df = pd.DataFrame(timeline_data)
+    df.to_csv(os.path.join(folder, 'nodes_timeline.csv'), index=False)
+
+
+def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: List[Dict],
+                                   sizing_decisions: Dict, network_type: str, phasing_plan_name: str):
+    """
+    Save final network state as shapefiles (edges_final.shp, nodes_final.shp).
+
+    :param locator: InputLocator object
+    :param phases: List of phase dictionaries
+    :param phase_results: List of phase result dictionaries
+    :param sizing_decisions: Sizing decisions dictionary
+    :param network_type: DH or DC
+    :param phasing_plan_name: Name of phasing plan
+    """
+    layout_folder = os.path.join(
+        locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name),
+        'layout'
+    )
+
+    # Final phase is last phase
+    final_phase = phases[-1]
+    final_result = phase_results[-1]
+
+    # Create edges_final.shp
+    edges_data = []
+    final_edges_gdf = final_phase['edges_gdf'].copy()
+
+    for edge_id in final_result['edge_diameters'].keys():
+        decision = sizing_decisions.get(edge_id, {})
+
+        # Find when edge was introduced
+        phase_intro = None
+        year_intro = None
+        for p in phases:
+            if edge_id in p['edges_gdf']['name'].values:
+                phase_intro = p['index']
+                year_intro = p['year']
+                break
+
+        # Count replacements
+        num_replacements = sum(
+            1 for key in decision.keys()
+            if isinstance(decision.get(key), dict) and decision[key].get('action') == 'replace'
+        )
+
+        # Calculate total cost
+        total_cost = sum(
+            decision[f"phase{p['index']}"].get('cost', 0)
+            for p in phases
+            if f"phase{p['index']}" in decision
+        )
+
+        # Get geometry
+        edge_row = final_edges_gdf[final_edges_gdf['name'] == edge_id]
+        if len(edge_row) == 0:
+            continue
+
+        geometry = edge_row.iloc[0].geometry
+        type_mat = edge_row.iloc[0].get('type_mat', '')
+
+        edges_data.append({
+            'name': edge_id,
+            'type_mat': type_mat,
+            'length_m': final_result['edge_lengths'][edge_id],
+            'DN_final': final_result['edge_diameters'][edge_id],
+            'phase_intro': phase_intro,
+            'year_intro': year_intro,
+            'num_repl': num_replacements,
+            'cost_USD': total_cost,
+            'strategy': decision.get('strategy', 'n/a'),
+            'geometry': geometry
+        })
+
+    edges_final_gdf = gpd.GeoDataFrame(edges_data, crs=final_edges_gdf.crs)
+    edges_final_gdf.to_file(os.path.join(layout_folder, 'edges_final.shp'))
+
+    # Create nodes_final.shp (all nodes from final phase)
+    nodes_final_gdf = final_phase['nodes_gdf'].copy()
+
+    # Add phase_introduced info
+    nodes_final_gdf['phase_intro'] = 0
+    nodes_final_gdf['year_intro'] = 0
+
+    for _, node in nodes_final_gdf.iterrows():
+        node_id = node['name']
+        # Find when node was introduced
+        for p in phases:
+            if node_id in p['nodes_gdf']['name'].values:
+                nodes_final_gdf.loc[nodes_final_gdf['name'] == node_id, 'phase_intro'] = p['index']
+                nodes_final_gdf.loc[nodes_final_gdf['name'] == node_id, 'year_intro'] = p['year']
+                break
+
+    nodes_final_gdf.to_file(os.path.join(layout_folder, 'nodes_final.shp'))
+
+
+def save_phase_substation_results(locator, phases: List[Dict], phase_results: List[Dict],
+                                   network_type: str, phasing_plan_name: str):
+    """
+    Save substation results for each phase.
+
+    Creates folder structure:
+    phasing-plans/{plan-name}/{network-type}/substation/
+        ├── phase1_2030/
+        │   ├── {network-type}_{network-name}_substation_{building}.csv
+        │   └── ...
+        ├── phase2_2050/
+        │   └── ...
+        └── ...
+
+    :param locator: InputLocator object
+    :param phases: List of phase dictionaries
+    :param phase_results: List of phase result dictionaries
+    :param network_type: DH or DC
+    :param phasing_plan_name: Name of phasing plan
+    """
+    base_substation_folder = os.path.join(
+        locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name),
+        'substation'
+    )
+    os.makedirs(base_substation_folder, exist_ok=True)
+
+    for phase, phase_result in zip(phases, phase_results):
+        phase_num = phase['index']
+        year = phase['year']
+        network_name = phase['network_name']
+
+        # Create substation folder for this phase
+        phase_substation_folder = os.path.join(
+            base_substation_folder,
+            f"phase{phase_num}_{year}"
+        )
+        os.makedirs(phase_substation_folder, exist_ok=True)
+
+        # Get substation results from phase_result
+        # TODO: When actual thermal network simulation is integrated,
+        # this will contain real hourly data from ThermalNetwork class
+        substation_results = phase_result.get('substation_results', {})
+
+        if substation_results:
+            # Save per-building substation results
+            for building, data in substation_results.items():
+                filename = f"{network_type}_{network_name}_substation_{building}.csv"
+                filepath = os.path.join(phase_substation_folder, filename)
+                data.to_csv(filepath, index=False)
+        else:
+            # Create placeholder CSV files with expected structure
+            # When thermal simulation is integrated, these will be replaced with real data
+            for building in phase['buildings']:
+                filename = f"{network_type}_{network_name}_substation_{building}.csv"
+                filepath = os.path.join(phase_substation_folder, filename)
+
+                # Create empty DataFrame with expected columns (matching single-phase output)
+                placeholder_df = pd.DataFrame({
+                    'date': [],
+                    'mdot_DH_result_kgpers': [],
+                    'T_return_DH_result_C': [],
+                    'T_supply_DH_result_C': [],
+                    'HEX_hs_area_m2': [],
+                    'HEX_ww_area_m2': [],
+                    'Qhs_dh_W': [],
+                    'Qww_dh_W': [],
+                    'Qhs_booster_W': [],
+                    'Qww_booster_W': []
+                })
+                placeholder_df.to_csv(filepath, index=False)
+
+    print(f"    - substation/ ({len(phases)} phase folders)")
