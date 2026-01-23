@@ -399,7 +399,7 @@ class DistrictEventTimeline:
             out[int(y)] = cumulative
         return out
 
-    def build_states_to_file(
+    def bake_states(
         self,
         *,
         mode: Literal["missing", "reconcile", "rebuild"],

@@ -15,4 +15,4 @@ def main(config: Configuration) -> None:
     regenerate = bool(getattr(config.district_events_build, "regenerate_building_properties"))
 
     timeline = DistrictEventTimeline(config)
-    timeline.build_states_to_file(mode=mode, regenerate_building_properties=regenerate)
+    timeline.bake_states(mode=mode, regenerate_building_properties=regenerate)

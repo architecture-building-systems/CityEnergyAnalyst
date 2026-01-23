@@ -294,7 +294,7 @@ Scenario Evolution Planning:
 
       Use this after you have finished defining district events. It can create missing state folders or reconcile existing ones.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.build_states_from_log
+    module: cea.datamanagement.district_level_states.bake_states
     parameters: ['general:scenario', district-events-build]
     input-files:
       - [get_input_folder]
