@@ -399,12 +399,7 @@ class DistrictEventTimeline:
             out[int(y)] = cumulative
         return out
 
-    def bake_states(
-        self,
-        *,
-        mode: Literal["missing", "reconcile", "rebuild"],
-        regenerate_building_properties: bool = True,
-    ) -> None:
+    def bake_states_from_log(self) -> None:
         years = sorted(self.log_data.keys())
         if not years:
             raise ValueError(
@@ -412,14 +407,11 @@ class DistrictEventTimeline:
             )
 
         print("Building district state scenarios from the district timeline log...")
-        print(f"Mode: {mode}")
         print(f"Years in log: {years}")
 
         cumulative = self.cumulative_by_year()
 
         built_years: list[int] = []
-        skipped_years: list[int] = []
-        reasons: dict[int, str] = {}
 
         for year in years:
             year_recipe = cumulative.get(int(year), {})
@@ -431,32 +423,7 @@ class DistrictEventTimeline:
             )
 
             state_folder = state.state_folder(self.main_locator)
-            should_build = False
-            reason = ""
-
-            if mode == "missing":
-                should_build = not state.exists_on_disk(self.main_locator)
-                if should_build:
-                    reason = "missing"
-            elif mode == "rebuild":
-                should_build = True
-                reason = "rebuild"
-            else:
-                # reconcile
-                applied = state.read_applied_signature(self.main_locator)
-                if not state.exists_on_disk(self.main_locator):
-                    should_build = True
-                    reason = "missing"
-                elif applied != expected_sig:
-                    should_build = True
-                    reason = "signature changed"
-
-            if not should_build:
-                skipped_years.append(int(year))
-                continue
-
-            print(f"- Building state_{int(year)} ({reason})")
-            reasons[int(year)] = reason
+            print(f"- Building state_{int(year)}... ")
 
             # Rebuild the state folder deterministically to avoid code drift in envelope codes.
             if os.path.exists(state_folder):
@@ -475,11 +442,6 @@ class DistrictEventTimeline:
                     use_transaction=False,
                 )
 
-            if regenerate_building_properties:
-                _regenerate_building_properties_from_archetypes(
-                    InputLocator(state_folder)
-                )
-
             state.write_applied_signature(self.main_locator, signature=expected_sig)
             built_years.append(int(year))
 
@@ -487,16 +449,6 @@ class DistrictEventTimeline:
         print(f"Created/updated: {len(built_years)} years")
         if built_years:
             print(f"Years created/updated: {built_years}")
-        print(f"Unchanged (skipped): {len(skipped_years)} years")
-        if skipped_years:
-            print(f"Years unchanged: {skipped_years}")
-
-        if mode == "reconcile":
-            signature_changed = sorted(
-                y for y, r in reasons.items() if r == "signature changed"
-            )
-            if signature_changed:
-                print(f"Years updated due to signature changes: {signature_changed}")
 
         print(f"Timeline folder: {self.main_locator.get_district_timeline_states_folder()}")
         print(f"Log file: {self.main_locator.get_district_timeline_log_file()}")

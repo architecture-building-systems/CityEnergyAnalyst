@@ -11,8 +11,6 @@ from cea.datamanagement.district_level_states.state_scenario import DistrictEven
 
 
 def main(config: Configuration) -> None:
-    mode = getattr(config.district_events_build, "build_mode")
-    regenerate = bool(getattr(config.district_events_build, "regenerate_building_properties"))
 
     timeline = DistrictEventTimeline(config)
-    timeline.bake_states(mode=mode, regenerate_building_properties=regenerate)
+    timeline.bake_states_from_log()
