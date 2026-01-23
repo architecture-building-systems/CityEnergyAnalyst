@@ -780,14 +780,14 @@ def save_phasing_results(config, locator, phases: List[Dict],
     os.makedirs(phasing_folder, exist_ok=True)
 
     # Save consolidated phasing summary (combines metrics and costs)
-    save_phasing_summary(phasing_folder, phases, phase_results, sizing_decisions, config)
+    save_phasing_summary(locator, phases, phase_results, sizing_decisions, config, network_type, phasing_plan_name)
 
     # Save pipe sizing decisions
-    save_pipe_sizing_decisions(phasing_folder, phases, sizing_decisions)
+    save_pipe_sizing_decisions(locator, phases, sizing_decisions, network_type, phasing_plan_name)
 
     # Save timeline CSVs
-    save_edges_timeline_csv(phasing_folder, phases, phase_results, sizing_decisions)
-    save_nodes_timeline_csv(phasing_folder, phases)
+    save_edges_timeline_csv(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
+    save_nodes_timeline_csv(locator, phases, network_type, phasing_plan_name)
 
     # Save timeline network shapefiles (top-level layout/ with optimization metadata)
     save_final_network_shapefiles(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
@@ -810,8 +810,9 @@ def save_phasing_results(config, locator, phases: List[Dict],
     print(f"    - phase1_{phases[0]['year']}/...phase{len(phases)}_{phases[-1]['year']}/ (single-phase structure)")
 
 
-def save_phasing_summary(folder: str, phases: List[Dict],
-                        phase_results: List[Dict], sizing_decisions: Dict, config):
+def save_phasing_summary(locator, phases: List[Dict],
+                        phase_results: List[Dict], sizing_decisions: Dict, config,
+                        network_type: str, phasing_plan_name: str):
     """
     Save consolidated phasing summary CSV with metrics, costs, and NPV analysis.
     Combines what was previously in phasing_summary, cost_breakdown, and npv_analysis.
@@ -873,10 +874,11 @@ def save_phasing_summary(folder: str, phases: List[Dict],
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
-    df.to_csv(os.path.join(folder, 'phasing_summary.csv'), index=False)
+    df.to_csv(locator.get_thermal_network_phasing_summary_file(network_type, phasing_plan_name), index=False)
 
 
-def save_pipe_sizing_decisions(folder: str, phases: List[Dict], sizing_decisions: Dict):
+def save_pipe_sizing_decisions(locator, phases: List[Dict], sizing_decisions: Dict,
+                              network_type: str, phasing_plan_name: str):
     """Save pipe sizing decisions CSV with all pipe actions across phases."""
     decisions_data = []
 
@@ -906,14 +908,15 @@ def save_pipe_sizing_decisions(folder: str, phases: List[Dict], sizing_decisions
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
-    df.to_csv(os.path.join(folder, 'pipe_sizing_decisions.csv'), index=False)
+    df.to_csv(locator.get_thermal_network_pipe_sizing_decisions_file(network_type, phasing_plan_name), index=False)
 
 
 # Removed: save_cost_breakdown, save_npv_analysis, save_phase_sized_network
 # These have been consolidated into save_phasing_summary and phase-specific shapefiles
 
 
-def save_edges_timeline_csv(folder: str, phases: List[Dict], phase_results: List[Dict], sizing_decisions: Dict):
+def save_edges_timeline_csv(locator, phases: List[Dict], phase_results: List[Dict], sizing_decisions: Dict,
+                           network_type: str, phasing_plan_name: str):
     """
     Save complete temporal evolution of edges as CSV.
 
@@ -949,10 +952,10 @@ def save_edges_timeline_csv(folder: str, phases: List[Dict], phase_results: List
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
-    df.to_csv(os.path.join(folder, 'edges_timeline.csv'), index=False)
+    df.to_csv(locator.get_thermal_network_edges_timeline_file(network_type, phasing_plan_name), index=False)
 
 
-def save_nodes_timeline_csv(folder: str, phases: List[Dict]):
+def save_nodes_timeline_csv(locator, phases: List[Dict], network_type: str, phasing_plan_name: str):
     """
     Save complete temporal evolution of nodes as CSV.
 
@@ -981,7 +984,7 @@ def save_nodes_timeline_csv(folder: str, phases: List[Dict]):
                 seen_nodes.add(node_id)
 
     df = pd.DataFrame(timeline_data)
-    df.to_csv(os.path.join(folder, 'nodes_timeline.csv'), index=False)
+    df.to_csv(locator.get_thermal_network_nodes_timeline_file(network_type, phasing_plan_name), index=False)
 
 
 def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: List[Dict],
@@ -1002,10 +1005,7 @@ def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: Li
     :param network_type: DH or DC
     :param phasing_plan_name: Name of phasing plan
     """
-    layout_folder = os.path.join(
-        locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name),
-        'layout'
-    )
+    layout_folder = locator.get_thermal_network_phasing_plan_layout_folder(network_type, phasing_plan_name)
     os.makedirs(layout_folder, exist_ok=True)
 
     # Final phase is last phase
@@ -1063,7 +1063,7 @@ def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: Li
         })
 
     edges_timeline_gdf = gpd.GeoDataFrame(edges_data, crs=final_edges_gdf.crs)
-    edges_timeline_gdf.to_file(os.path.join(layout_folder, 'edges.shp'))
+    edges_timeline_gdf.to_file(locator.get_thermal_network_phase_edges_shapefile(network_type, phasing_plan_name, 'timeline'))
 
     # Create nodes.shp with timeline metadata (all nodes from final phase)
     nodes_timeline_gdf = final_phase['nodes_gdf'].copy()
@@ -1081,7 +1081,7 @@ def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: Li
                 nodes_timeline_gdf.loc[nodes_timeline_gdf['name'] == node_id, 'year_intro'] = p['year']
                 break
 
-    nodes_timeline_gdf.to_file(os.path.join(layout_folder, 'nodes.shp'))
+    nodes_timeline_gdf.to_file(locator.get_thermal_network_phase_nodes_shapefile(network_type, phasing_plan_name, 'timeline'))
 
 
 def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: List[Dict],
@@ -1103,17 +1103,14 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
     :param network_type: DH or DC
     :param phasing_plan_name: Name of phasing plan
     """
-    base_folder = locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
-
     for phase, phase_result in zip(phases, phase_results):
         phase_num = phase['index']
         year = phase['year']
 
         # Create layout folder inside phase folder (matching single-phase structure)
-        phase_layout_folder = os.path.join(
-            base_folder,
-            f"phase{phase_num}_{year}",
-            'layout'
+        phase_folder_name = f"phase{phase_num}_{year}"
+        phase_layout_folder = locator.get_thermal_network_phasing_plan_phase_layout_folder(
+            network_type, phasing_plan_name, phase_folder_name
         )
         os.makedirs(phase_layout_folder, exist_ok=True)
 
@@ -1124,11 +1121,11 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
         if 'edge_diameters' in phase_result:
             edges_gdf['pipe_DN'] = edges_gdf['name'].map(phase_result['edge_diameters'])
 
-        edges_gdf.to_file(os.path.join(phase_layout_folder, 'edges.shp'))
+        edges_gdf.to_file(locator.get_thermal_network_phase_edges_shapefile(network_type, phasing_plan_name, phase_folder_name))
 
         # Save nodes.shp for this phase
         nodes_gdf = phase['nodes_gdf'].copy()
-        nodes_gdf.to_file(os.path.join(phase_layout_folder, 'nodes.shp'))
+        nodes_gdf.to_file(locator.get_thermal_network_phase_nodes_shapefile(network_type, phasing_plan_name, phase_folder_name))
 
     print(f"    - phase1_{phases[0]['year']}/layout/...phase{len(phases)}_{phases[-1]['year']}/layout/ (edges.shp, nodes.shp)")
 
@@ -1193,18 +1190,15 @@ def save_phase_substation_results(locator, phases: List[Dict], phase_results: Li
     :param network_type: DH or DC
     :param phasing_plan_name: Name of phasing plan
     """
-    base_folder = locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
-
     for phase, phase_result in zip(phases, phase_results):
         phase_num = phase['index']
         year = phase['year']
         network_name = phase['network_name']
 
         # Create substation folder inside phase folder (matching single-phase structure)
-        phase_substation_folder = os.path.join(
-            base_folder,
-            f"phase{phase_num}_{year}",
-            'substation'
+        phase_folder_name = f"phase{phase_num}_{year}"
+        phase_substation_folder = locator.get_thermal_network_phasing_plan_phase_substation_folder(
+            network_type, phasing_plan_name, phase_folder_name
         )
         os.makedirs(phase_substation_folder, exist_ok=True)
 
@@ -1219,7 +1213,7 @@ def save_phase_substation_results(locator, phases: List[Dict], phase_results: Li
             import shutil
             import glob
 
-            substation_files = glob.glob(os.path.join(source_substation_folder, f"{network_type}_{network_name}_substation_*.csv"))
+            substation_files = glob.glob(f"{source_substation_folder}/{network_type}_{network_name}_substation_*.csv")
 
             if substation_files:
                 for source_file in substation_files:
@@ -1251,15 +1245,16 @@ def copy_phase_simulation_results(locator, phases: List[Dict], network_type: str
     import shutil
     import glob
 
-    base_folder = locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
-
     for phase in phases:
         phase_num = phase['index']
         year = phase['year']
         network_name = phase['network_name']
 
         # Create phase results folder
-        phase_results_folder = os.path.join(base_folder, f"phase{phase_num}_{year}")
+        phase_folder_name = f"phase{phase_num}_{year}"
+        phase_results_folder = locator.get_thermal_network_phasing_plan_phase_folder(
+            network_type, phasing_plan_name, phase_folder_name
+        )
         os.makedirs(phase_results_folder, exist_ok=True)
 
         # Source folder: where single-phase simulation wrote results
@@ -1270,18 +1265,18 @@ def copy_phase_simulation_results(locator, phases: List[Dict], network_type: str
             continue
 
         # Copy all CSV files (except substation files - those are handled separately)
-        csv_files = glob.glob(os.path.join(source_folder, f"{network_type}_{network_name}_*.csv"))
+        csv_files = glob.glob(f"{source_folder}/{network_type}_{network_name}_*.csv")
 
         for source_file in csv_files:
             filename = os.path.basename(source_file)
             # Skip substation files (handled by save_phase_substation_results)
             if 'substation' not in filename:
-                dest_file = os.path.join(phase_results_folder, filename)
+                dest_file = f"{phase_results_folder}/{filename}"
                 shutil.copy2(source_file, dest_file)
 
         # Also copy EPANET files if they exist
         for ext in ['.inp', '.rpt', '.bin']:
-            source_file = os.path.join(source_folder, f"temp{ext}")
+            source_file = f"{source_folder}/temp{ext}"
             if os.path.exists(source_file):
-                dest_file = os.path.join(phase_results_folder, f"{network_name}{ext}")
+                dest_file = f"{phase_results_folder}/{network_name}{ext}"
                 shutil.copy2(source_file, dest_file)

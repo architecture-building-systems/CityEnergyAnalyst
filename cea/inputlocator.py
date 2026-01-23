@@ -1228,6 +1228,129 @@ class InputLocator(object):
         folder = self.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
         return os.path.join(folder, 'npv_analysis.csv')
 
+    def get_thermal_network_phasing_plans_folder(self):
+        """scenario/outputs/data/thermal-network/phasing-plans/"""
+        return os.path.join(self.get_thermal_network_folder(), 'phasing-plans')
+
+    def get_thermal_network_phasing_plan_phases(self, network_type, plan_name):
+        """Get list of phase folders for a phasing plan"""
+        plan_folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
+        phases = []
+        if os.path.exists(plan_folder):
+            for item in os.listdir(plan_folder):
+                if item.startswith('phase') and '_' in item and os.path.isdir(os.path.join(plan_folder, item)):
+                    phases.append(item)
+        return sorted(phases)
+
+    def get_thermal_network_phase_edges_shapefile(self, network_type, plan_name, phase):
+        """Get edges shapefile for specific phase or timeline view
+
+        :param phase: Phase folder name (e.g., 'phase1_2030') or 'timeline' for timeline view
+        """
+        plan_folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
+        if phase == 'timeline':
+            # Timeline view uses top-level layout/edges.shp
+            return os.path.join(plan_folder, 'layout', 'edges.shp')
+        else:
+            # Individual phase uses phase-specific layout
+            return os.path.join(plan_folder, phase, 'layout', 'edges.shp')
+
+    def get_thermal_network_phase_nodes_shapefile(self, network_type, plan_name, phase):
+        """Get nodes shapefile for specific phase or timeline view
+
+        :param phase: Phase folder name (e.g., 'phase1_2030') or 'timeline' for timeline view
+        """
+        plan_folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
+        if phase == 'timeline':
+            # Timeline view uses top-level layout/nodes.shp
+            return os.path.join(plan_folder, 'layout', 'nodes.shp')
+        else:
+            # Individual phase uses phase-specific layout
+            return os.path.join(plan_folder, phase, 'layout', 'nodes.shp')
+
+    def get_thermal_network_phasing_plan_layout_folder(self, network_type, plan_name):
+        """Get layout folder for phasing plan timeline view
+
+        Returns: phasing-plans/{plan-name}/{network-type}/layout/
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_folder(network_type, plan_name),
+            'layout'
+        )
+
+    def get_thermal_network_phasing_plan_phase_folder(self, network_type, plan_name, phase):
+        """Get folder for specific phase
+
+        :param phase: Phase folder name (e.g., 'phase1_2030')
+        Returns: phasing-plans/{plan-name}/{network-type}/phase1_2030/
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_folder(network_type, plan_name),
+            phase
+        )
+
+    def get_thermal_network_phasing_plan_phase_layout_folder(self, network_type, plan_name, phase):
+        """Get layout folder for specific phase
+
+        :param phase: Phase folder name (e.g., 'phase1_2030')
+        Returns: phasing-plans/{plan-name}/{network-type}/phase1_2030/layout/
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
+            'layout'
+        )
+
+    def get_thermal_network_phasing_plan_phase_substation_folder(self, network_type, plan_name, phase):
+        """Get substation folder for specific phase
+
+        :param phase: Phase folder name (e.g., 'phase1_2030')
+        Returns: phasing-plans/{plan-name}/{network-type}/phase1_2030/substation/
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
+            'substation'
+        )
+
+    def get_thermal_network_phasing_summary_file(self, network_type, plan_name):
+        """Get phasing summary CSV file
+
+        Returns: phasing-plans/{plan-name}/{network-type}/phasing_summary.csv
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_folder(network_type, plan_name),
+            'phasing_summary.csv'
+        )
+
+    def get_thermal_network_pipe_sizing_decisions_file(self, network_type, plan_name):
+        """Get pipe sizing decisions CSV file
+
+        Returns: phasing-plans/{plan-name}/{network-type}/pipe_sizing_decisions.csv
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_folder(network_type, plan_name),
+            'pipe_sizing_decisions.csv'
+        )
+
+    def get_thermal_network_edges_timeline_file(self, network_type, plan_name):
+        """Get edges timeline CSV file
+
+        Returns: phasing-plans/{plan-name}/{network-type}/edges_timeline.csv
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_folder(network_type, plan_name),
+            'edges_timeline.csv'
+        )
+
+    def get_thermal_network_nodes_timeline_file(self, network_type, plan_name):
+        """Get nodes timeline CSV file
+
+        Returns: phasing-plans/{plan-name}/{network-type}/nodes_timeline.csv
+        """
+        return os.path.join(
+            self.get_thermal_network_phasing_folder(network_type, plan_name),
+            'nodes_timeline.csv'
+        )
+
     def get_networks_folder(self):
         return os.path.join(self.scenario, 'inputs', 'networks')
 
