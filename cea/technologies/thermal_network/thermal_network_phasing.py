@@ -763,7 +763,7 @@ def save_phasing_results(config, locator, phases: List[Dict],
     save_final_network_shapefiles(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
 
     # Save individual phase layout shapefiles (matching single-phase structure)
-    save_phase_layout_shapefiles(locator, phases, phase_results, network_type, phasing_plan_name)
+    save_phase_layout_shapefiles(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
 
     # Save substation results per phase (inside each phase folder)
     save_phase_substation_results(locator, phases, phase_results, network_type, phasing_plan_name)
@@ -1001,6 +1001,10 @@ def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: Li
             if f"phase{p['index']}" in decision
         )
 
+        # Get optimised final DN (from last phase decision)
+        final_phase_key = f"phase{phases[-1]['index']}"
+        final_dn_optimised = decision.get(final_phase_key, {}).get('DN', final_result['edge_diameters'][edge_id])
+
         # Get geometry
         edge_row = final_edges_gdf[final_edges_gdf['name'] == edge_id]
         if len(edge_row) == 0:
@@ -1013,7 +1017,7 @@ def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: Li
             'name': edge_id,
             'type_mat': type_mat,
             'length_m': final_result['edge_lengths'][edge_id],
-            'DN_final': final_result['edge_diameters'][edge_id],
+            'DN_final': final_dn_optimised,
             'phase_intro': phase_intro,
             'year_intro': year_intro,
             'num_repl': num_replacements,
@@ -1045,21 +1049,22 @@ def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: Li
 
 
 def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: List[Dict],
-                                  network_type: str, phasing_plan_name: str):
+                                  sizing_decisions: Dict, network_type: str, phasing_plan_name: str):
     """
-    Save layout shapefiles for each individual phase.
+    Save layout shapefiles for each individual phase with optimised DN values.
 
     Creates folder structure matching single-phase layout:
     phasing-plans/{plan-name}/{network-type}/
         ├── phase1_2030/
         │   └── layout/
-        │       ├── edges.shp
+        │       ├── edges.shp (with optimised pipe_DN, action, cost)
         │       └── nodes.shp
         └── ...
 
     :param locator: InputLocator object
     :param phases: List of phase dictionaries
     :param phase_results: List of phase result dictionaries
+    :param sizing_decisions: Optimisation decisions dictionary
     :param network_type: DH or DC
     :param phasing_plan_name: Name of phasing plan
     """
@@ -1077,9 +1082,27 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
         # Save edges.shp for this phase
         edges_gdf = phase['edges_gdf'].copy()
 
-        # Add DN values from simulation results
-        if 'edge_diameters' in phase_result:
-            edges_gdf['pipe_DN'] = edges_gdf['name'].map(phase_result['edge_diameters'])
+        # Add optimised DN values and actions from sizing decisions
+        phase_key = f"phase{phase_num}"
+
+        def get_optimised_dn(edge_name):
+            decision = sizing_decisions.get(edge_name, {})
+            phase_decision = decision.get(phase_key, {})
+            return phase_decision.get('DN', phase_result['edge_diameters'].get(edge_name))
+
+        def get_action(edge_name):
+            decision = sizing_decisions.get(edge_name, {})
+            phase_decision = decision.get(phase_key, {})
+            return phase_decision.get('action', 'none')
+
+        def get_cost(edge_name):
+            decision = sizing_decisions.get(edge_name, {})
+            phase_decision = decision.get(phase_key, {})
+            return phase_decision.get('cost', 0)
+
+        edges_gdf['pipe_DN'] = edges_gdf['name'].map(get_optimised_dn)
+        edges_gdf['action'] = edges_gdf['name'].map(get_action)
+        edges_gdf['cost_USD'] = edges_gdf['name'].map(get_cost)
 
         edges_gdf.to_file(locator.get_thermal_network_phase_edges_shapefile(network_type, phasing_plan_name, phase_folder_name))
 
@@ -1087,7 +1110,7 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
         nodes_gdf = phase['nodes_gdf'].copy()
         nodes_gdf.to_file(locator.get_thermal_network_phase_nodes_shapefile(network_type, phasing_plan_name, phase_folder_name))
 
-    print(f"    - phase1_{phases[0]['year']}/layout/...phase{len(phases)}_{phases[-1]['year']}/layout/ (edges.shp, nodes.shp)")
+    print(f"    - phase1_{phases[0]['year']}/layout/...phase{len(phases)}_{phases[-1]['year']}/layout/ (edges.shp with optimised DN)")
 
 
 def create_placeholder_substation_files(phase: Dict, phase_substation_folder: str,
