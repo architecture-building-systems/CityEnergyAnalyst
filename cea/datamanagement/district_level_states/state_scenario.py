@@ -399,7 +399,7 @@ class DistrictEventTimeline:
             out[int(y)] = cumulative
         return out
 
-    def materialise_states(
+    def build_states_to_file(
         self,
         *,
         mode: Literal["missing", "reconcile", "rebuild"],
@@ -411,7 +411,7 @@ class DistrictEventTimeline:
                 "No district event years defined in the district timeline log."
             )
 
-        print("Materialising district state scenarios from the district timeline log...")
+        print("Building district state scenarios from the district timeline log...")
         print(f"Mode: {mode}")
         print(f"Years in log: {years}")
 
