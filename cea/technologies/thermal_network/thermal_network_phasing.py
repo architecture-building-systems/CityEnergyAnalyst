@@ -1108,6 +1108,35 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
 
         # Save nodes.shp for this phase
         nodes_gdf = phase['nodes_gdf'].copy()
+
+        # Add phase introduction metadata
+        def get_node_phase_intro(node_name):
+            """Find which phase this node was first introduced"""
+            for p in phases:
+                if node_name in p['nodes_gdf']['name'].values:
+                    return p['index']
+            return phase_num
+
+        def get_node_year_intro(node_name):
+            """Find which year this node was first introduced"""
+            for p in phases:
+                if node_name in p['nodes_gdf']['name'].values:
+                    return p['year']
+            return year
+
+        def get_node_status(node_name):
+            """Determine if node is new in this phase or existing"""
+            for p in phases:
+                if p['index'] >= phase_num:
+                    continue
+                if node_name in p['nodes_gdf']['name'].values:
+                    return 'existing'
+            return 'new'
+
+        nodes_gdf['phase_intro'] = nodes_gdf['name'].map(get_node_phase_intro)
+        nodes_gdf['year_intro'] = nodes_gdf['name'].map(get_node_year_intro)
+        nodes_gdf['status'] = nodes_gdf['name'].map(get_node_status)
+
         nodes_gdf.to_file(locator.get_thermal_network_phase_nodes_shapefile(network_type, phasing_plan_name, phase_folder_name))
 
     print(f"    - phase1_{phases[0]['year']}/layout/...phase{len(phases)}_{phases[-1]['year']}/layout/ (edges.shp with optimised DN)")
