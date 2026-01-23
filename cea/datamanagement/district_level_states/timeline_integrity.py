@@ -59,19 +59,6 @@ def check_district_timeline_log_yaml_integrity(main_config: Configuration) -> di
             f"{sorted(years_only_in_yml)}"
         )
 
-    try:
-        check_mode = main_config.district_events.timeline_integrity_check
-    except AttributeError:
-        check_mode = "basic"
-
-    if check_mode == "basic":
-        return dict_from_yaml
-    if check_mode != "comprehensive":
-        raise ValueError(
-            f"Invalid district timeline integrity check mode: {check_mode}. "
-            "Expected one of: basic, comprehensive"
-        )
-
     cumulative_modifications: ModifyRecipe = {}
     errors: list[str] = []
     for year_of_state in sorted(existing_years_in_yml):
