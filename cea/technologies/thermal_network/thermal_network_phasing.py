@@ -441,7 +441,6 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
     pipe_costs = load_pipe_costs(locator)
 
     # Get financial parameters from config
-    discount_rate = config.thermal_network_phasing.discount_rate
     replacement_multiplier = config.thermal_network_phasing.replacement_cost_multiplier
 
     # Get all unique edges across all phases
@@ -467,12 +466,11 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
         # Apply sizing strategy
         if strategy == 'optimise':
             decision = optimize_single_edge(
-                edge_id, dn_per_phase, phases, length, pipe_costs,
-                discount_rate, replacement_multiplier
+                edge_id, dn_per_phase, phases, length, pipe_costs, replacement_multiplier
             )
         elif strategy == 'size-per-phase':
             decision = size_per_phase_strategy(
-                edge_id, dn_per_phase, phases, length, pipe_costs, discount_rate, replacement_multiplier
+                edge_id, dn_per_phase, phases, length, pipe_costs, replacement_multiplier
             )
         elif strategy == 'pre-size-all':
             decision = pre_size_all_strategy(
@@ -484,7 +482,7 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
         sizing_decisions[edge_id] = decision
 
     # Calculate summary statistics
-    total_npv = sum(d['total_npv'] for d in sizing_decisions.values())
+    total_cost = sum(d['total_cost'] for d in sizing_decisions.values())
     total_replacements = sum(
         sum(1 for phase_key in d.keys()
             if phase_key.startswith('phase') and d[phase_key].get('action') == 'replace')
@@ -492,7 +490,7 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
     )
 
     print(f"\n  ✓ Optimization complete:")
-    print(f"    Total NPV: ${total_npv:,.0f} USD2015")
+    print(f"    Total Cost: ${total_cost:,.0f} USD2015")
     print(f"    Pipes requiring replacement: {total_replacements}")
 
     return sizing_decisions
@@ -539,9 +537,9 @@ def get_all_edges_across_phases(phase_results: List[Dict]) -> List[str]:
 
 def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
                         phases: List[Dict], length: float, pipe_costs: pd.DataFrame,
-                        discount_rate: float, replacement_multiplier: float) -> Dict:
+                        replacement_multiplier: float) -> Dict:
     """
-    Minimize NPV for a single edge by choosing optimal sizing path.
+    Minimize cost for a single edge by choosing optimal sizing path (in constant USD2015).
 
     Compares:
     - Option A: Size per phase (replace as needed)
@@ -553,22 +551,22 @@ def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
     dn_values = [dn for dn in dn_per_phase if dn is not None]
     if not dn_values:
         # Edge never exists
-        return {'strategy': 'n/a', 'total_npv': 0}
+        return {'strategy': 'n/a', 'total_cost': 0}
 
     final_dn = max(dn_values)
 
     # Option A: Size per phase (replace when needed)
     cost_a = calculate_size_per_phase_cost(
-        edge_id, dn_per_phase, phases, length, pipe_costs, discount_rate, replacement_multiplier
+        edge_id, dn_per_phase, phases, length, pipe_costs, replacement_multiplier
     )
 
     # Option B: Pre-size for final
     cost_b = calculate_pre_size_cost(
-        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs, discount_rate
+        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs
     )
 
     # Choose cheaper option
-    if cost_a['total_npv'] < cost_b['total_npv']:
+    if cost_a['total_cost'] < cost_b['total_cost']:
         result = cost_a
         result['strategy'] = 'size-per-phase (optimized)'
     else:
@@ -580,14 +578,14 @@ def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
 
 def size_per_phase_strategy(edge_id: str, dn_per_phase: List[Optional[int]],
                             phases: List[Dict], length: float, pipe_costs: pd.DataFrame,
-                            discount_rate: float, replacement_multiplier: float) -> Dict:
+                            replacement_multiplier: float) -> Dict:
     """
-    Size-per-phase strategy: Always size for current phase demand.
+    Size-per-phase strategy: Always size for current phase demand (in constant USD2015).
 
     :return: Decision dictionary with DN per phase and costs
     """
     return calculate_size_per_phase_cost(
-        edge_id, dn_per_phase, phases, length, pipe_costs, discount_rate, replacement_multiplier
+        edge_id, dn_per_phase, phases, length, pipe_costs, replacement_multiplier
     )
 
 
@@ -601,24 +599,24 @@ def pre_size_all_strategy(edge_id: str, dn_per_phase: List[Optional[int]],
     # Get final DN (maximum across all phases)
     dn_values = [dn for dn in dn_per_phase if dn is not None]
     if not dn_values:
-        return {'strategy': 'n/a', 'total_npv': 0}
+        return {'strategy': 'n/a', 'total_cost': 0}
 
     final_dn = max(dn_values)
 
     return calculate_pre_size_cost(
-        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs, 0.05
+        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs
     )
 
 
 def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]],
                                   phases: List[Dict], length: float, pipe_costs: pd.DataFrame,
-                                  discount_rate: float, replacement_multiplier: float) -> Dict:
+                                  replacement_multiplier: float) -> Dict:
     """
-    Calculate cost for size-per-phase approach.
+    Calculate cost for size-per-phase approach (in constant USD2015).
 
-    :return: Dictionary with per-phase decisions and total NPV
+    :return: Dictionary with per-phase decisions and total cost
     """
-    result = {'strategy': 'size-per-phase', 'total_npv': 0}
+    result = {'strategy': 'size-per-phase', 'total_cost': 0}
 
     current_dn = None
     for i, (phase, dn) in enumerate(zip(phases, dn_per_phase)):
@@ -626,42 +624,35 @@ def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]
 
         if dn is None:
             # Edge doesn't exist in this phase
-            result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0, 'cost_npv': 0}
+            result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0}
             continue
 
         if current_dn is None:
             # Initial install
             cost = get_pipe_cost(dn, length, pipe_costs)
-            years_from_start = phase['year'] - phases[0]['year']
-            cost_npv = npv_discount(cost, years_from_start, discount_rate)
             result[phase_key] = {
                 'DN': dn,
                 'action': 'install',
-                'cost': cost,
-                'cost_npv': cost_npv
+                'cost': cost
             }
-            result['total_npv'] += cost_npv
+            result['total_cost'] += cost
             current_dn = dn
         elif dn > current_dn:
             # Need to replace with larger pipe
             cost = get_pipe_cost(dn, length, pipe_costs) * replacement_multiplier
-            years_from_start = phase['year'] - phases[0]['year']
-            cost_npv = npv_discount(cost, years_from_start, discount_rate)
             result[phase_key] = {
                 'DN': dn,
                 'action': 'replace',
-                'cost': cost,
-                'cost_npv': cost_npv
+                'cost': cost
             }
-            result['total_npv'] += cost_npv
+            result['total_cost'] += cost
             current_dn = dn
         else:
             # Keep existing pipe
             result[phase_key] = {
                 'DN': current_dn,
                 'action': 'keep',
-                'cost': 0,
-                'cost_npv': 0
+                'cost': 0
             }
 
     return result
@@ -669,14 +660,13 @@ def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]
 
 def calculate_pre_size_cost(edge_id: str, dn_per_phase: List[Optional[int]],
                             phases: List[Dict], final_dn: int, length: float,
-                            pipe_costs: pd.DataFrame, discount_rate: float = 0.05) -> Dict:
+                            pipe_costs: pd.DataFrame) -> Dict:
     """
-    Calculate cost for pre-size-all approach.
+    Calculate cost for pre-size-all approach (in constant USD2015).
 
-    :param discount_rate: Annual discount rate for NPV calculation
-    :return: Dictionary with per-phase decisions and total NPV
+    :return: Dictionary with per-phase decisions and total cost
     """
-    result = {'strategy': 'pre-size-all', 'total_npv': 0}
+    result = {'strategy': 'pre-size-all', 'total_cost': 0}
 
     installed = False
     for i, (phase, dn) in enumerate(zip(phases, dn_per_phase)):
@@ -684,29 +674,25 @@ def calculate_pre_size_cost(edge_id: str, dn_per_phase: List[Optional[int]],
 
         if dn is None:
             # Edge doesn't exist in this phase
-            result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0, 'cost_npv': 0}
+            result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0}
             continue
 
         if not installed:
             # Install at final DN when edge first appears
             cost = get_pipe_cost(final_dn, length, pipe_costs)
-            years_from_start = phase['year'] - phases[0]['year']
-            cost_npv = npv_discount(cost, years_from_start, discount_rate)
             result[phase_key] = {
                 'DN': final_dn,
                 'action': 'install',
-                'cost': cost,
-                'cost_npv': cost_npv
+                'cost': cost
             }
-            result['total_npv'] += cost_npv
+            result['total_cost'] += cost
             installed = True
         else:
             # Keep existing pre-sized pipe
             result[phase_key] = {
                 'DN': final_dn,
                 'action': 'keep',
-                'cost': 0,
-                'cost_npv': 0
+                'cost': 0
             }
 
     return result
@@ -729,22 +715,6 @@ def get_pipe_cost(dn: int, length: float, pipe_costs: pd.DataFrame) -> float:
 
     cost_per_m = closest_dn.iloc[0]['cost_per_m_eur']
     return cost_per_m * length
-
-
-def npv_discount(cost: float, years_from_now: float, discount_rate: float) -> float:
-    """
-    Calculate NPV of a future cost.
-
-    NPV = cost / (1 + rate)^years
-
-    :param cost: Future cost (USD2015)
-    :param years_from_now: Years from present
-    :param discount_rate: Annual discount rate (e.g., 0.03 for 3%)
-    :return: Present value (USD2015)
-    """
-    if years_from_now <= 0:
-        return cost
-    return cost / ((1 + discount_rate) ** years_from_now)
 
 
 def save_phasing_results(config, locator, phases: List[Dict],
@@ -823,8 +793,6 @@ def save_phasing_summary(locator, phases: List[Dict],
         # Calculate costs broken down by action type
         install_cost = 0
         replace_cost = 0
-        install_npv = 0
-        replace_npv = 0
         num_installs = 0
         num_replacements = 0
 
@@ -836,11 +804,9 @@ def save_phasing_summary(locator, phases: List[Dict],
             phase_decision = decision[phase_key]
             if phase_decision['action'] == 'install':
                 install_cost += phase_decision['cost']
-                install_npv += phase_decision['cost_npv']
                 num_installs += 1
             elif phase_decision['action'] == 'replace':
                 replace_cost += phase_decision['cost']
-                replace_npv += phase_decision['cost_npv']
                 num_replacements += 1
 
         summary_data.append({
@@ -858,9 +824,6 @@ def save_phasing_summary(locator, phases: List[Dict],
             'Install_Cost_USD2015': install_cost,
             'Replace_Cost_USD2015': replace_cost,
             'Total_Cost_USD2015': install_cost + replace_cost,
-            'Install_NPV_USD2015': install_npv,
-            'Replace_NPV_USD2015': replace_npv,
-            'Total_NPV_USD2015': install_npv + replace_npv,
             'Num_Installs': num_installs,
             'Num_Replacements': num_replacements
         })
@@ -869,8 +832,7 @@ def save_phasing_summary(locator, phases: List[Dict],
     # Round numeric columns to 2 decimal places
     numeric_cols = ['Peak_Demand_kW', 'Plant_Peak_Thermal_kW', 'Plant_Peak_Pumping_kW',
                     'Plant_Annual_Thermal_MWh', 'Plant_Annual_Pumping_MWh',
-                    'Install_Cost_USD2015', 'Replace_Cost_USD2015', 'Total_Cost_USD2015',
-                    'Install_NPV_USD2015', 'Replace_NPV_USD2015', 'Total_NPV_USD2015']
+                    'Install_Cost_USD2015', 'Replace_Cost_USD2015', 'Total_Cost_USD2015']
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
@@ -897,14 +859,13 @@ def save_pipe_sizing_decisions(locator, phases: List[Dict], sizing_decisions: Di
                 'DN': phase_decision['DN'],
                 'Old_DN': phase_decision.get('old_dn', 'n/a'),
                 'Cost_USD2015': phase_decision['cost'],
-                'Cost_NPV_USD2015': phase_decision['cost_npv'],
                 'Strategy': decision.get('strategy', 'n/a')
             })
 
     df = pd.DataFrame(decisions_data)
     df = df.sort_values(['Edge', 'Phase'])
     # Round numeric columns to 2 decimal places
-    numeric_cols = ['DN', 'Cost_USD2015', 'Cost_NPV_USD2015']
+    numeric_cols = ['DN', 'Cost_USD2015']
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
@@ -942,13 +903,12 @@ def save_edges_timeline_csv(locator, phases: List[Dict], phase_results: List[Dic
                 'DN': phase_decision.get('DN', phase_result['edge_diameters'][edge_id]),
                 'length_m': phase_result['edge_lengths'][edge_id],
                 'cost_USD2015': phase_decision.get('cost', 0),
-                'cost_npv_USD2015': phase_decision.get('cost_npv', 0),
                 'strategy': decision.get('strategy', 'n/a')
             })
 
     df = pd.DataFrame(timeline_data)
     # Round numeric columns to 2 decimal places
-    numeric_cols = ['DN', 'length_m', 'cost_USD2015', 'cost_npv_USD2015']
+    numeric_cols = ['DN', 'length_m', 'cost_USD2015']
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
