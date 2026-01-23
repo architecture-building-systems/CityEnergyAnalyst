@@ -564,7 +564,7 @@ def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
 
     # Option B: Pre-size for final
     cost_b = calculate_pre_size_cost(
-        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs
+        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs, discount_rate
     )
 
     # Choose cheaper option
@@ -606,7 +606,7 @@ def pre_size_all_strategy(edge_id: str, dn_per_phase: List[Optional[int]],
     final_dn = max(dn_values)
 
     return calculate_pre_size_cost(
-        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs
+        edge_id, dn_per_phase, phases, final_dn, length, pipe_costs, 0.05
     )
 
 
@@ -632,13 +632,15 @@ def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]
         if current_dn is None:
             # Initial install
             cost = get_pipe_cost(dn, length, pipe_costs)
+            years_from_start = phase['year'] - phases[0]['year']
+            cost_npv = npv_discount(cost, years_from_start, discount_rate)
             result[phase_key] = {
                 'DN': dn,
                 'action': 'install',
                 'cost': cost,
-                'cost_npv': cost  # Year 0, no discounting for first phase
+                'cost_npv': cost_npv
             }
-            result['total_npv'] += cost
+            result['total_npv'] += cost_npv
             current_dn = dn
         elif dn > current_dn:
             # Need to replace with larger pipe
@@ -667,10 +669,11 @@ def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]
 
 def calculate_pre_size_cost(edge_id: str, dn_per_phase: List[Optional[int]],
                             phases: List[Dict], final_dn: int, length: float,
-                            pipe_costs: pd.DataFrame) -> Dict:
+                            pipe_costs: pd.DataFrame, discount_rate: float = 0.05) -> Dict:
     """
     Calculate cost for pre-size-all approach.
 
+    :param discount_rate: Annual discount rate for NPV calculation
     :return: Dictionary with per-phase decisions and total NPV
     """
     result = {'strategy': 'pre-size-all', 'total_npv': 0}
@@ -685,15 +688,17 @@ def calculate_pre_size_cost(edge_id: str, dn_per_phase: List[Optional[int]],
             continue
 
         if not installed:
-            # Install at final DN from the start
+            # Install at final DN when edge first appears
             cost = get_pipe_cost(final_dn, length, pipe_costs)
+            years_from_start = phase['year'] - phases[0]['year']
+            cost_npv = npv_discount(cost, years_from_start, discount_rate)
             result[phase_key] = {
                 'DN': final_dn,
                 'action': 'install',
                 'cost': cost,
-                'cost_npv': cost  # Year 0, no discounting
+                'cost_npv': cost_npv
             }
-            result['total_npv'] += cost
+            result['total_npv'] += cost_npv
             installed = True
         else:
             # Keep existing pre-sized pipe
@@ -860,6 +865,14 @@ def save_phasing_summary(folder: str, phases: List[Dict],
         })
 
     df = pd.DataFrame(summary_data)
+    # Round numeric columns to 2 decimal places
+    numeric_cols = ['Peak_Demand_kW', 'Plant_Peak_Thermal_kW', 'Plant_Peak_Pumping_kW',
+                    'Plant_Annual_Thermal_MWh', 'Plant_Annual_Pumping_MWh',
+                    'Install_Cost_USD2015', 'Replace_Cost_USD2015', 'Total_Cost_USD2015',
+                    'Install_NPV_USD2015', 'Replace_NPV_USD2015', 'Total_NPV_USD2015']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = df[col].round(2)
     df.to_csv(os.path.join(folder, 'phasing_summary.csv'), index=False)
 
 
@@ -888,6 +901,11 @@ def save_pipe_sizing_decisions(folder: str, phases: List[Dict], sizing_decisions
 
     df = pd.DataFrame(decisions_data)
     df = df.sort_values(['Edge', 'Phase'])
+    # Round numeric columns to 2 decimal places
+    numeric_cols = ['DN', 'Cost_USD2015', 'Cost_NPV_USD2015']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = df[col].round(2)
     df.to_csv(os.path.join(folder, 'pipe_sizing_decisions.csv'), index=False)
 
 
@@ -926,6 +944,11 @@ def save_edges_timeline_csv(folder: str, phases: List[Dict], phase_results: List
             })
 
     df = pd.DataFrame(timeline_data)
+    # Round numeric columns to 2 decimal places
+    numeric_cols = ['DN', 'length_m', 'cost_USD2015', 'cost_npv_USD2015']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = df[col].round(2)
     df.to_csv(os.path.join(folder, 'edges_timeline.csv'), index=False)
 
 
