@@ -554,6 +554,22 @@ class InputFileParameter(FileParameter):
     """A parameter that describes a user provided input file."""
 
 
+class UserNetworkInputFileParameter(InputFileParameter):
+    """
+    Special InputFileParameter for user-defined network inputs (edges-shp-path, nodes-shp-path, network-geojson-path).
+    Validates mutual exclusivity with existing-network parameter.
+    """
+
+    def encode(self, value):
+        # Validate mutual exclusivity before calling parent encode
+        # Determine which parameter this is based on self.name
+        param_name = self.name.replace('-', '_')  # Convert from config format to attribute format
+        _validate_user_network_input_exclusivity(self.config, param_name, value)
+
+        # Call parent encode
+        return super().encode(value)
+
+
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
 
@@ -906,6 +922,57 @@ class ChoiceParameter(Parameter):
             return self._choices[0]
 
 
+def _validate_user_network_input_exclusivity(config, param_being_set, value_being_set):
+    """
+    Validate that only ONE user-defined network input method is being used.
+
+    Three mutually exclusive methods:
+    1. existing-network (NetworkLayoutChoiceParameter)
+    2. edges-shp-path + nodes-shp-path (InputFileParameter)
+    3. network-geojson-path (InputFileParameter)
+
+    Args:
+        config: Configuration object
+        param_being_set: Name of parameter being validated ('existing_network', 'edges_shp_path', etc.)
+        value_being_set: Value being set for the parameter
+
+    Raises:
+        ValueError: If more than one input method would be active after setting this value
+    """
+    # Get current values (before the new value is set) - these are in network-layout section
+    existing_net = getattr(config.network_layout, 'existing_network', None)
+    edges_shp = getattr(config.network_layout, 'edges_shp_path', None)
+    nodes_shp = getattr(config.network_layout, 'nodes_shp_path', None)
+    geojson_path = getattr(config.network_layout, 'network_geojson_path', None)
+
+    # Simulate setting the new value
+    if param_being_set == 'existing_network':
+        existing_net = value_being_set
+    elif param_being_set == 'edges_shp_path':
+        edges_shp = value_being_set
+    elif param_being_set == 'nodes_shp_path':
+        nodes_shp = value_being_set
+    elif param_being_set == 'network_geojson_path':
+        geojson_path = value_being_set
+
+    # Count how many input methods would be active
+    methods_used = []
+    if existing_net and str(existing_net).strip() and str(existing_net) not in ['', '(none)']:
+        methods_used.append("existing-network")
+    if edges_shp or nodes_shp:
+        methods_used.append("edges-shp-path/nodes-shp-path")
+    if geojson_path:
+        methods_used.append("network-geojson-path")
+
+    # Enforce mutual exclusivity
+    if len(methods_used) > 1:
+        raise ValueError(
+            f"Only ONE user-defined network input method can be used at a time. "
+            f"Currently using: {', '.join(methods_used)}. "
+            f"Please choose either: (1) existing-network, (2) edges-shp-path + nodes-shp-path, or (3) network-geojson-path."
+        )
+
+
 class NetworkLayoutChoiceParameter(ChoiceParameter):
     """
     Parameter for selecting existing network layouts based on network type.
@@ -981,7 +1048,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         """
         Validate and encode value.
         Raises ValueError if the network layout doesn't exist (unless nullable).
+        Also validates mutual exclusivity with edges-shp-path, nodes-shp-path, and network-geojson-path.
         """
+        # Check mutual exclusivity with other user-defined network input methods
+        _validate_user_network_input_exclusivity(self.config, 'existing_network', value)
+
         # Handle (none) choice for nullable parameters - save special marker
         if self.nullable and str(value) == "(none)":
             return '(none)'
