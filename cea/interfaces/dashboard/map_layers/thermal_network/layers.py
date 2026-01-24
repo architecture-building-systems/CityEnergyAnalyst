@@ -203,9 +203,9 @@ class ThermalNetworkMapLayer(MapLayer):
     def _get_network_layout_files(self, parameters):
         network_name = parameters.get('network-name')
 
-        # Handle None, undefined, or empty string
-        if network_name is None or network_name == 'undefined':
-            network_name = ''
+        # Handle None, undefined, empty string, or placeholder text
+        if network_name is None or network_name == 'undefined' or network_name == '' or network_name == 'No network available':
+            return []
 
         # Multi-phase plans don't have layout shapefiles (optional)
         if network_name.endswith('(Multi-Phase)'):
@@ -220,8 +220,10 @@ class ThermalNetworkMapLayer(MapLayer):
         network_name = parameters.get('network-name')
 
         # Handle None, undefined, or empty string
-        if network_name is None or network_name == 'undefined':
-            network_name = ''
+        if network_type is None or network_type == 'undefined':
+            return []
+        if network_name is None or network_name == 'undefined' or network_name == '' or network_name == 'No network available':
+            return []
 
         # Multi-phase plans don't have massflow files (optional)
         if network_name.endswith('(Multi-Phase)'):
@@ -237,8 +239,10 @@ class ThermalNetworkMapLayer(MapLayer):
         phase = parameters.get('phase', '')
 
         # Handle None, undefined, or empty string
-        if network_name is None or network_name == 'undefined':
-            network_name = ''
+        if network_type is None or network_type == 'undefined':
+            return []
+        if network_name is None or network_name == 'undefined' or network_name == '' or network_name == 'No network available':
+            return []
 
         # Check if multi-phase plan
         if network_name.endswith('(Multi-Phase)'):
@@ -260,8 +264,10 @@ class ThermalNetworkMapLayer(MapLayer):
         phase = parameters.get('phase', '')
 
         # Handle None, undefined, or empty string
-        if network_name is None or network_name == 'undefined':
-            network_name = ''
+        if network_type is None or network_type == 'undefined':
+            return []
+        if network_name is None or network_name == 'undefined' or network_name == '' or network_name == 'No network available':
+            return []
 
         # Check if multi-phase plan
         if network_name.endswith('(Multi-Phase)'):
