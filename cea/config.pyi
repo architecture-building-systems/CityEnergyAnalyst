@@ -37,6 +37,7 @@ class Configuration:
     district_events: DistrictEventsSection
     bake_states: BakeStatesSection
     state_simulations: StateSimulationsSection
+    component_change_emission_timeline: ComponentChangeEmissionTimelineSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
     dbf_tools: DbfToolsSection
@@ -138,6 +139,8 @@ class Configuration:
     def __getattr__(self, item: Literal["bake_states"]) -> BakeStatesSection: ...
     @overload
     def __getattr__(self, item: Literal["state_simulations"]) -> StateSimulationsSection: ...
+    @overload
+    def __getattr__(self, item: Literal["component_change_emission_timeline"]) -> ComponentChangeEmissionTimelineSection: ...
     @overload
     def __getattr__(self, item: Literal["extract_reference_case"]) -> ExtractReferenceCaseSection: ...
     @overload
@@ -704,6 +707,12 @@ class StateSimulationsSection(Section):
     def __getattr__(self, item: Literal["existing_timeline_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["simulation_mode"]) -> str: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class ComponentChangeEmissionTimelineSection(Section):
+    """Typed section for component-change-emission-timeline configuration"""
+    existing_timeline_name: str
+
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):

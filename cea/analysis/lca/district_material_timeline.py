@@ -2214,7 +2214,7 @@ def create_district_material_timeline(
 
 
 def main(config: Configuration) -> None:
-    timeline_variant_name = config.district_events.existing_timeline_name
+    timeline_variant_name = config.component_change_emission_timeline.existing_timeline_name
     if not timeline_variant_name:
         raise ValueError(
             "No existing timeline name provided. "

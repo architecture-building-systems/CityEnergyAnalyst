@@ -295,7 +295,7 @@ Scenario Evolution Planning:
       Use this after you have finished defining district events. It can create missing state folders or reconcile existing ones.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.bake_states_from_log
-    parameters: ['general:scenario']
+    parameters: ['general:scenario', bake-states]
     input-files:
       - [get_input_folder]
       - [get_zone_geometry]
@@ -318,6 +318,17 @@ Scenario Evolution Planning:
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_simulations
     parameters: ['general:scenario', state-simulations]
+
+  - name: component-change-emission-timeline
+    label: "Part 4: Build Emission Timeline"
+    short_description: Create an emission timeline for the selected state evolution Scenario.
+    description: |
+      This feature reads the component changes across the states of the selected scenario, 
+      as well as the simulation result in each state, to create an emission timeline, including 
+      embodied (component change + lifetime-based renovation) and operational emissions. 
+    interfaces: [cli, dashboard]
+    module: cea.analysis.lca.district_material_timeline
+    parameters: ['general:scenario', component-change-emission-timeline]
 
 Life Cycle Analysis:
 
