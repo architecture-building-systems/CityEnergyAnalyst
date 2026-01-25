@@ -1446,35 +1446,35 @@ def parse_string_coordinate_list(string_tuples):
     return coordinates_list
 
 
+def parse_locator_kwargs(value: str) -> Dict[str, str]:
+    """
+    Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary.
+    Used by ChoiceParameter subclasses that need to pass kwargs to InputLocator methods.
+    """
+    kwargs = dict()
+    if value is None:
+        return kwargs
+
+    try:
+        value = value.strip()
+
+        if value:
+            for kwarg in value.split(','):
+                key, val = kwarg.strip().split('=')
+                kwargs[key] = val
+
+        return kwargs
+    except Exception as e:
+        raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
+
+
 class ColumnChoiceParameter(ChoiceParameter):
     _supported_extensions = ['.csv']
-
-    @staticmethod
-    def _parse_kwargs(value: str) -> Dict[str, str]:
-        """
-        Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary
-        """
-        kwargs = dict()
-        if value is None:
-            return kwargs
-
-        try:
-            value = value.strip()
-
-            if value:
-                for kwarg in value.split(','):
-                    key, value = kwarg.strip().split('=')
-                    kwargs[key] = value
-
-            return kwargs
-        except Exception as e:
-            raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
-
 
     def initialize(self, parser):
         self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
         self.column_name = parser.get(self.section.name, f"{self.name}.column")
-        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+        self.kwargs = parse_locator_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
 
         try:
             self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
@@ -1560,7 +1560,7 @@ class SubfolderChoiceParameter(ChoiceParameter):
 
     def initialize(self, parser):
         self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
-        self.kwargs = ColumnChoiceParameter._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+        self.kwargs = parse_locator_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
         
         try:
             self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
@@ -1590,8 +1590,10 @@ class SubfolderChoiceParameter(ChoiceParameter):
                     choices = [''] + [c for c in choices if c != '']
             
             return choices
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f'Could not find folder at {location} to generate subfolder choices for {self.name}') from e
+        except FileNotFoundError:
+            # Directory doesn't exist yet - return appropriate empty choices based on nullable
+            # (may happen during initial scenario setup)
+            return [''] if self.nullable else []
         except OSError as e:
             raise ValueError(f'There was an error reading subfolders for {self.name} from {location}') from e
 
@@ -1611,7 +1613,7 @@ class SubfolderChoiceParameter(ChoiceParameter):
     def decode(self, value):
         # If no subfolders exist yet, allow empty values regardless of nullable
         if not self._choices:
-            return None if self.nullable or value == '' else ''
+            return None if self.nullable else ''
 
         # If nullable, default empty values to None (instead of silently selecting the first subfolder).
         if self.nullable and (value is None or str(value) == ''):
@@ -1625,7 +1627,11 @@ class SubfolderChoiceParameter(ChoiceParameter):
         if self.nullable:
             return None
 
-        return self._choices[0]
+        # Non-nullable: return first choice if available
+        if self._choices:
+            return self._choices[0]
+        else:
+            return ''
 
 
 class PlotContextParameter(Parameter):
