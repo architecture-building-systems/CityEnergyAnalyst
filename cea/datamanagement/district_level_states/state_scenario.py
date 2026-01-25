@@ -1102,6 +1102,11 @@ def create_modify_recipe(
                 "supply_type_cs": config_section.supply_type_cs,
                 "supply_type_dhw": config_section.supply_type_dhw,
                 "supply_type_el": config_section.supply_type_el,
+                "hvac_type_hs": config_section.hvac_type_hs,
+                "hvac_type_cs": config_section.hvac_type_cs,
+                "hvac_type_dhw": config_section.hvac_type_dhw,
+                "hvac_type_ctrl": config_section.hvac_type_ctrl,
+                "hvac_type_vent": config_section.hvac_type_vent,
             },
             "wall": {
                 "material_name_1": config_section.wall_material_name_1,
