@@ -4,6 +4,13 @@ from typing import Any
 from cea.datamanagement.database.assemblies import SURFACE_RESISTANCES
 import pulp  # type: ignore
 
+def _safe_float(x: Any) -> float:  
+    """Parse value to float, returning NaN on failure."""  
+    try:  
+        return float(x)  
+    except (TypeError, ValueError):  
+        return float("nan")
+    
 
 def read_materials(materials_csv: str) -> list[dict[str, Any]]:
     materials: list[dict[str, Any]] = []
@@ -13,16 +20,9 @@ def read_materials(materials_csv: str) -> list[dict[str, Any]]:
             # Keep only rows with numeric thermal conductivity and density and unit=kg
             unit = (row.get("unit") or "").strip()
 
-            # Safely parse floats; skip if missing
-            def _f(x: Any) -> float:
-                try:
-                    return float(x)
-                except (TypeError, ValueError):
-                    return float("nan")
-
-            k = _f(row.get("thermal_conductivity"))
-            rho = _f(row.get("density"))
-            ghg_per_unit = _f(row.get("GHG_emission_total"))
+            k = _safe_float(row.get("thermal_conductivity"))
+            rho = _safe_float(row.get("density"))
+            ghg_per_unit = _safe_float(row.get("GHG_emission_total"))
             if any(map(lambda v: v != v, [k, rho, ghg_per_unit])):  # check NaN
                 continue
             if unit != "kg":
@@ -50,14 +50,8 @@ def read_envelope_targets(
             if not code:
                 continue
 
-            def _f(x: Any) -> float:
-                try:
-                    return float(x)
-                except (TypeError, ValueError):
-                    return float("nan")
-
-            u_target = _f(row.get(u_key))
-            ghg_target = _f(row.get(ghg_key))
+            u_target = _safe_float(row.get(u_key))
+            ghg_target = _safe_float(row.get(ghg_key))
             if any(map(lambda v: v != v, [u_target, ghg_target])):
                 continue
             entry: dict[str, Any] = {

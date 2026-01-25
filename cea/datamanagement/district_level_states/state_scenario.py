@@ -62,7 +62,7 @@ def _canonical_json(obj: Any) -> str:
     def _normalise(v: Any) -> Any:
         if isinstance(v, dict):
             return {
-                str(k): _normalise(v[k]) for k in sorted(v.keys(), key=lambda x: str(x))
+                str(k): _normalise(v[k]) for k in sorted(v.keys(), key=str)
             }
         if isinstance(v, list):
             return [_normalise(x) for x in v]
@@ -651,22 +651,22 @@ def delete_unexisting_buildings_from_event_scenario(
             f"Event scenario folder for year {year_of_state} does not exist."
         )
 
-    builings_to_delete = []
+    buildings_to_delete = []
     buildings_gdf_current = gpd.read_file(locator.get_zone_geometry())
     for _, building in buildings_gdf_current.iterrows():
         building_year = building.get("year", None)
 
         if building_year is not None and building_year > year_of_state:
-            builings_to_delete.append(building["name"])
+            buildings_to_delete.append(building["name"])
 
     # delete all files related to the buildings to delete
-    for building_name in builings_to_delete:
+    for building_name in buildings_to_delete:
         delete_building_schedule(state_locator, building_name)
 
     # delete buildings from geometry file
     geometry_gdf, _, _ = shapefile_to_WSG_and_UTM(state_locator.get_zone_geometry())
     geometry_gdf.set_index("name", inplace=True)
-    geometry_gdf = geometry_gdf.drop(builings_to_delete)
+    geometry_gdf = geometry_gdf.drop(buildings_to_delete)
     verify_input_geometry_zone(geometry_gdf.reset_index())
     geometry_gdf.to_file(state_locator.get_zone_geometry())
 
@@ -689,10 +689,10 @@ def delete_unexisting_buildings_from_event_scenario(
     ]:
         if os.path.exists(df_path):
             df = pd.read_csv(df_path, index_col="name")
-            df = df.drop(builings_to_delete, errors="ignore")
+            df = df.drop(buildings_to_delete, errors="ignore")
             df.to_csv(df_path)
 
-    return builings_to_delete
+    return buildings_to_delete
 
 
 def delete_building_schedule(state_locator: InputLocator, building_name: str) -> None:

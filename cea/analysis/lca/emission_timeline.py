@@ -778,7 +778,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                     year=demolition_year,
                     col=f"demolition_{key}_kgCO2e",
                 )
-            self._append_note(year=int(demolition_year), message="Demolished")
+        self._append_note(year=int(demolition_year), message="Demolished")
         self._is_demolished = True
 
     def initialize_timeline(self, end_year: int) -> pd.DataFrame:

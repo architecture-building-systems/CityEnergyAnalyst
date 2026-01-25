@@ -77,7 +77,8 @@ def validate_three_layer_topology(
         thicknesses.append(t)
 
         if t > 0.0:
-            name = str(row.get(f"material_name_{idx}", "")).strip()
+            name_raw = row[f"material_name_{idx}"]  
+            name = "" if pd.isna(name_raw) else str(name_raw).strip() 
             if not name:
                 errors.append(
                     f"year {year_of_state}, archetype '{archetype}', component '{component}': "

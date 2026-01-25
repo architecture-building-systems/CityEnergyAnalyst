@@ -33,7 +33,7 @@ def simulate_all_states(config: Configuration, timeline_name: str) -> None:
 
 
 def main(config: Configuration) -> None:
-    timeline_name = config.district_events.existing_timeline_name
+    timeline_name = config.state_simulations.existing_timeline_name
     if not timeline_name:
         raise ValueError(
             "No existing timeline name provided. "
