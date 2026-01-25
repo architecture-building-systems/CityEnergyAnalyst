@@ -1555,6 +1555,79 @@ class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
 
 
+class SubfolderChoiceParameter(ChoiceParameter):
+    """Select a single subfolder from a folder returned by a locator method."""
+
+    def initialize(self, parser):
+        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
+        self.kwargs = ColumnChoiceParameter._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+        
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        
+        try:
+            location = getattr(locator, self.locator_method)(**self.kwargs)
+        except AttributeError as e:
+            raise AttributeError(f'Invalid locator method {self.locator_method} given in config file, '
+                                 f'check value under {self.section.name}.{self.name} in default.config') from e
+        
+        try:
+            subfolders = [folder for folder in os.listdir(location) if os.path.isdir(os.path.join(location, folder))]
+            choices = sorted(subfolders)
+            
+            if self.nullable:
+                # Use empty-string as the on-disk representation of None.
+                # Put it first so it's easy to find in UIs.
+                if '' not in choices:
+                    choices.insert(0, '')
+                else:
+                    choices = [''] + [c for c in choices if c != '']
+            
+            return choices
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f'Could not find folder at {location} to generate subfolder choices for {self.name}') from e
+        except OSError as e:
+            raise ValueError(f'There was an error reading subfolders for {self.name} from {location}') from e
+
+    def encode(self, value):
+        if value is None or value == '':
+            if self.nullable or not self._choices:
+                # Allow empty string if nullable or if no subfolders exist yet
+                return ''
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return str(value)
+
+    def decode(self, value):
+        # If no subfolders exist yet, allow empty values regardless of nullable
+        if not self._choices:
+            return None if self.nullable or value == '' else ''
+
+        # If nullable, default empty values to None (instead of silently selecting the first subfolder).
+        if self.nullable and (value is None or str(value) == ''):
+            return None
+
+        if str(value) in self._choices:
+            if self.nullable and str(value) == '':
+                return None
+            return str(value)
+
+        if self.nullable:
+            return None
+
+        return self._choices[0]
+
+
 class PlotContextParameter(Parameter):
     """A parameter that accepts a dict containing plot context information."""
     

@@ -11,6 +11,11 @@ from cea.datamanagement.district_level_states.state_scenario import DistrictEven
 
 
 def main(config: Configuration) -> None:
-
-    timeline = DistrictEventTimeline(config)
+    timeline_name = config.district_events.existing_timeline_name
+    if not timeline_name:
+        raise ValueError(
+            "No existing timeline name provided. "
+            "Please provide an existing timeline name to bake states from."
+        )
+    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
     timeline.bake_states_from_log()

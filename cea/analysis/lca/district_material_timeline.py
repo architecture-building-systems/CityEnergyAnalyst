@@ -708,7 +708,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     def __init__(
         self,
         *,
-        name: str,
+        timeline_variant_name: str,
+        building_name: str,
         locator: InputLocator,
     ):
         self.construction_year: int | None = None
@@ -716,7 +717,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         self.window_code: str = ""
         self.supply_codes: dict[str, str] = {}
         self._notes_by_year: dict[str, list[str]] = {}
-        super().__init__(name=name, locator=locator)
+        super().__init__(name=building_name, locator=locator)
+        self.timeline_variant_name = str(timeline_variant_name)
 
     def add_note(self, *, year: int, message: str) -> None:
         label = f"Y_{int(year)}"
@@ -1893,6 +1895,7 @@ def _feedstock_policies_from_config(config: Configuration) -> Mapping[str, tuple
 def create_district_material_timeline(
     config: Configuration,
     *,
+    timeline_variant_name: str,
     allow_missing_operational: bool = False,
 ) -> pd.DataFrame:
     """Create a district-level *event* emissions timeline driven by the YAML log.
@@ -1928,9 +1931,9 @@ def create_district_material_timeline(
 
     main_locator = InputLocator(config.scenario)
 
-    years = get_required_state_years(config)
-    log_data = ensure_state_years_exist(config, years, update_yaml=True)
-    reconcile_states_to_cumulative_modifications(config, years, log_data=log_data)
+    years = get_required_state_years(config, timeline_variant_name)
+    log_data = ensure_state_years_exist(config, years=years, update_yaml=True, timeline_name=timeline_variant_name)
+    reconcile_states_to_cumulative_modifications(config, timeline_variant_name, years, log_data=log_data)
 
     # Determine overall year range
     start_year = min(years)
@@ -1975,7 +1978,9 @@ def create_district_material_timeline(
     missing_operational_years: list[int] = []
 
     for year in years_sorted:
-        state_locator = InputLocator(main_locator.get_state_in_time_scenario_folder(year))
+        state_locator = InputLocator(
+            main_locator.get_state_in_time_scenario_folder(timeline_variant_name, year)
+        )
         buildings = list(state_locator.get_zone_building_names())
         if buildings:
             for b in buildings:
@@ -2018,7 +2023,9 @@ def create_district_material_timeline(
     operational_by_state_year: dict[int, pd.DataFrame] = {}
 
     for year in years_sorted:
-        state_locator = InputLocator(main_locator.get_state_in_time_scenario_folder(year))
+        state_locator = InputLocator(
+            main_locator.get_state_in_time_scenario_folder(timeline_variant_name, year)
+        )
         buildings_in_state = list(state_locator.get_zone_building_names())
         if not buildings_in_state:
             continue
@@ -2097,7 +2104,11 @@ def create_district_material_timeline(
     all_buildings = sorted(set(building_const_types.keys()) | set(building_construction_years.keys()))
 
     for b in all_buildings:
-        building_timeline = MaterialChangeEmissionTimeline(name=b, locator=main_locator)
+        building_timeline = MaterialChangeEmissionTimeline(
+            timeline_variant_name=timeline_variant_name,
+            building_name=b,
+            locator=main_locator,
+        )
         building_timeline.timeline = _empty_timeline()
         building_timelines[b] = building_timeline
 
@@ -2142,7 +2153,7 @@ def create_district_material_timeline(
     # Persist per-building timelines under the district timeline folder.
     # This keeps the district-level output as the primary result while still exposing detailed per-building files.
     per_building_folder = os.path.join(
-        main_locator.get_district_timeline_states_folder(),
+        main_locator.get_district_timeline_folder(timeline_variant_name),
         "district_material_timelines_buildings",
     )
     os.makedirs(per_building_folder, exist_ok=True)
@@ -2185,7 +2196,10 @@ def create_district_material_timeline(
         )
 
     # Persist under district timeline folder to avoid mixing with lifetime-based timelines.
-    save_path = os.path.join(main_locator.get_district_timeline_states_folder(), "district_material_timeline.csv")
+    save_path = os.path.join(
+        main_locator.get_district_timeline_folder(timeline_variant_name),
+        "district_material_timeline.csv",
+    )
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     try:
         out.to_csv(save_path, float_format="%.2f")
@@ -2200,7 +2214,13 @@ def create_district_material_timeline(
 
 
 def main(config: Configuration) -> None:
-    df = create_district_material_timeline(config)
+    timeline_variant_name = config.district_events.existing_timeline_name
+    if not timeline_variant_name:
+        raise ValueError(
+            "No existing timeline name provided. "
+            "Please provide an existing timeline name to create the district material timeline."
+        )
+    df = create_district_material_timeline(config, timeline_variant_name=timeline_variant_name)
     print(f"District material timeline saved with {len(df)} years.")
 
 

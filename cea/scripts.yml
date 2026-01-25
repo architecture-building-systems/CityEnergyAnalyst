@@ -267,8 +267,8 @@ Thermal Network Design:
 
 Scenario Evolution Planning:
   - name: district-events
-    label: "Part 1: Create Event"
-    short_description: Setup district-level construction renovation district-events
+    label: "Part 1: Create Event in Timeline"
+    short_description: Setup district-level construction renovation district-events in timeline
     description: |
       This Feature defines district-level construction and renovation events by updating the district timeline log file.
       An event is when a set of buildings (categorized by archetype) changes its construction properties. After the event year, 
@@ -288,7 +288,7 @@ Scenario Evolution Planning:
 
   - name: district-events-build
     label: "Part 2: Bake Scenario Evolution States"
-    short_description: Create or update state-in-time scenarios from the district timeline log.
+    short_description: Create or update state-in-time state scenarios from the district timeline log.
     description: |
       This Feature materialises state-in-time scenarios (`state_{year}` folders) based on the `district_timeline_log.yml`.
 

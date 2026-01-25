@@ -21,10 +21,10 @@ from cea.datamanagement.district_level_states.state_scenario import (
 )
 
 
-def list_state_years(main_locator: InputLocator) -> list[int]:
+def list_state_years(main_locator: InputLocator, timeline_name: str) -> list[int]:
     """Return sorted list of state years present under `district_timeline_states/state_YYYY/`."""
     years: list[int] = []
-    timeline_folder = main_locator.get_district_timeline_states_folder()
+    timeline_folder = main_locator.get_district_timeline_folder(timeline_name)
     if not os.path.exists(timeline_folder):
         return years
     for name in os.listdir(timeline_folder):
@@ -62,7 +62,7 @@ def get_building_construction_years(locator: InputLocator) -> dict[str, int]:
     return out
 
 
-def get_required_state_years(config: Configuration) -> list[int]:
+def get_required_state_years(config: Configuration, timeline_name: str) -> list[int]:
     """Compute which years should have a `state_{year}` folder.
 
     Rules:
@@ -71,12 +71,13 @@ def get_required_state_years(config: Configuration) -> list[int]:
 
     This ensures operational timelines capture both policy/standard changes and building births.
     """
-    timeline = DistrictEventTimeline(config)
+    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
     return timeline.required_state_years()
 
 
 def ensure_state_years_exist(
     config: Configuration,
+    timeline_name: str,
     years: Iterable[int],
     *,
     update_yaml: bool = True,
@@ -90,7 +91,7 @@ def ensure_state_years_exist(
 
     Returns the (possibly updated) YAML log data in memory.
     """
-    timeline = DistrictEventTimeline(config)
+    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
     return timeline.ensure_state_years_exist(
         [int(y) for y in years],
         update_yaml=update_yaml,
@@ -101,6 +102,7 @@ def ensure_state_years_exist(
 
 def reconcile_states_to_cumulative_modifications(
     config: Configuration,
+    timeline_name: str,
     years: Iterable[int],
     *,
     log_data: dict[int, dict[str, Any]] | None = None,
@@ -114,7 +116,7 @@ def reconcile_states_to_cumulative_modifications(
     """
     main_locator = InputLocator(config.scenario)
     if log_data is None:
-        log_data = load_log_yaml(main_locator, allow_missing=True, allow_empty=True)
+        log_data = load_log_yaml(main_locator, allow_missing=True, allow_empty=True, timeline_name=timeline_name)
 
     cumulative: dict[str, dict[str, dict[str, Any]]] = {}
     years_sorted = sorted(set(int(y) for y in years))
@@ -124,7 +126,7 @@ def reconcile_states_to_cumulative_modifications(
         delta = (year_entry.get("modifications", {}) or {})
         cumulative = merge_modify_recipes(cumulative, delta)
 
-        missing_recipe, errors = compute_state_year_missing_modifications(config, year, cumulative)
+        missing_recipe, errors = compute_state_year_missing_modifications(config, timeline_name, year, cumulative)
         if errors:
             formatted = "\n".join(f"- {e}" for e in errors)
             raise ValueError(f"Errors while reconciling state_{year}:\n" + formatted)
@@ -132,10 +134,13 @@ def reconcile_states_to_cumulative_modifications(
         if missing_recipe:
             modified = _apply_state_construction_changes(
                 config,
+                timeline_name,
                 year,
                 missing_recipe,
                 trigger_year=None,
             )
             if modified:
-                state_locator = InputLocator(main_locator.get_state_in_time_scenario_folder(year))
+                state_locator = InputLocator(
+                    main_locator.get_state_in_time_scenario_folder(timeline_name, year)
+                )
                 _regenerate_building_properties_from_archetypes(state_locator)

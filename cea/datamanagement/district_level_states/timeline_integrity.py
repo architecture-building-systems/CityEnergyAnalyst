@@ -15,24 +15,19 @@ from cea.datamanagement.district_level_states.timeline_log import load_log_yaml
 ModifyRecipe = dict[str, dict[str, dict[str, Any]]]
 
 
-def check_district_timeline_log_yaml_integrity(main_config: Configuration) -> dict[int, dict[str, Any]]:
+def check_district_timeline_log_yaml_integrity(main_config: Configuration, timeline_name: str) -> dict[int, dict[str, Any]]:
     """Check that the district timeline log is consistent with existing state-in-time scenarios.
 
     NOTE: `main_config` must point to the *main* scenario (the one containing the district timeline folder).
     Do not pass a state scenario config here.
-
-    Modes:
-    - basic: only checks that years in `state_{year}` folders match years in the YAML log
-    - comprehensive: also checks that every logged modification is reflected in the state scenario databases
-
-    The check mode is controlled via `district-events:timeline-integrity-check`.
+    Checks that every logged modification is reflected in the state scenario databases
     """
     main_locator = InputLocator(main_config.scenario)
-    dict_from_yaml = load_log_yaml(main_locator)
+    dict_from_yaml = load_log_yaml(main_locator, timeline_name=timeline_name)
     existing_years_in_yml = set(dict_from_yaml.keys())
 
     existing_years_in_folders = set()
-    district_timeline_folder = main_locator.get_district_timeline_states_folder()
+    district_timeline_folder = main_locator.get_district_timeline_folder(timeline_name)
     if os.path.exists(district_timeline_folder):
         for folder_name in os.listdir(district_timeline_folder):
             if folder_name.startswith("state_"):
@@ -69,6 +64,7 @@ def check_district_timeline_log_yaml_integrity(main_config: Configuration) -> di
         errors.extend(
             check_state_year_comprehensive_integrity(
             main_config,
+            timeline_name,
             year_of_state,
             cumulative_modifications,
             )
@@ -103,6 +99,7 @@ def merge_modify_recipes(base: ModifyRecipe, delta: ModifyRecipe) -> ModifyRecip
 
 def compute_state_year_missing_modifications(
     main_config: Configuration,
+    timeline_name: str,
     year_of_state: int,
     expected_modifications: ModifyRecipe,
 ) -> tuple[ModifyRecipe, list[str]]:
@@ -119,7 +116,7 @@ def compute_state_year_missing_modifications(
 
     try:
         state_locator = InputLocator(
-            InputLocator(main_config.scenario).get_state_in_time_scenario_folder(year_of_state)
+            InputLocator(main_config.scenario).get_state_in_time_scenario_folder(timeline_name, year_of_state)
         )
     except Exception as e:
         return {}, [
@@ -238,6 +235,7 @@ def compute_state_year_missing_modifications(
 
 def check_state_year_comprehensive_integrity(
     main_config: Configuration,
+    timeline_name: str,
     year_of_state: int,
     expected_modifications: ModifyRecipe,
 ) -> list[str]:
@@ -252,7 +250,7 @@ def check_state_year_comprehensive_integrity(
     errors: list[str] = []
     try:
         state_locator = InputLocator(
-            InputLocator(main_config.scenario).get_state_in_time_scenario_folder(year_of_state)
+            InputLocator(main_config.scenario).get_state_in_time_scenario_folder(timeline_name, year_of_state)
         )
     except Exception as e:
         return [

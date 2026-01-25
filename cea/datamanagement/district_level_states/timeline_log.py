@@ -16,10 +16,11 @@ class _NoAliasSafeDumper(yaml.SafeDumper):
 def load_log_yaml(
     locator: InputLocator,
     *,
+    timeline_name: str,
     allow_missing: bool = False,
     allow_empty: bool = False,
 ) -> dict[int, dict[str, Any]]:
-    yml_path = locator.get_district_timeline_log_file()
+    yml_path = locator.get_district_timeline_log_file(timeline_name)
     if not os.path.exists(yml_path):
         if allow_missing:
             return {}
@@ -65,8 +66,8 @@ def load_log_yaml(
     return normalised
 
 
-def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) -> None:
-    yml_path = locator.get_district_timeline_log_file()
+def save_log_yaml(main_locator: InputLocator, log_data: dict[int, dict[str, Any]], *, timeline_name: str) -> None:
+    yml_path = main_locator.get_district_timeline_log_file(timeline_name)
     os.makedirs(os.path.dirname(yml_path), exist_ok=True)
     ordered_log_data: dict[int, dict[str, Any]] = {
         year: log_data[year] for year in sorted(log_data)
@@ -81,24 +82,23 @@ def save_log_yaml(locator: InputLocator, log_data: dict[int, dict[str, Any]]) ->
         )
 
 
-def add_year_in_yaml(config: Configuration, year_of_state: int) -> None:
+def add_year_in_yaml(config: Configuration, year_of_state: int, *, timeline_name: str) -> None:
     """Add a new year entry in the district timeline log yaml file if it does not exist."""
     locator = InputLocator(config.scenario)
-    log_data = load_log_yaml(locator, allow_missing=True, allow_empty=True)
+    log_data = load_log_yaml(locator, allow_missing=True, allow_empty=True, timeline_name=timeline_name)
     if year_of_state not in log_data:
         log_data[year_of_state] = {
             "created_at": str(pd.Timestamp.now()),
             "modifications": {},
         }
-        save_log_yaml(locator, log_data)
+        save_log_yaml(locator, log_data, timeline_name=timeline_name)
 
-
-def del_year_in_yaml(config: Configuration, year_of_state: int) -> None:
+def del_year_in_yaml(config: Configuration, year_of_state: int, *, timeline_name: str) -> None:
     """Delete a year entry in the district timeline log yaml file."""
     locator = InputLocator(config.scenario)
-    log_data = load_log_yaml(locator, allow_missing=True, allow_empty=True)
+    log_data = load_log_yaml(locator, allow_missing=True, allow_empty=True, timeline_name=timeline_name)
     if not log_data:
         return
     if year_of_state in log_data:
         del log_data[year_of_state]
-        save_log_yaml(locator, log_data)
+        save_log_yaml(locator, log_data, timeline_name=timeline_name)

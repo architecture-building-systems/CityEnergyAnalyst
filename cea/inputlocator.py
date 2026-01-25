@@ -141,23 +141,28 @@ class InputLocator(object):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
     
-    def get_district_timeline_states_folder(self):
+    def get_district_timeline_container_folder(self):
+        """Returns the folder as a representation of district timeline, containing all district timeline data:
+
+        `scenario/district_timelines`"""
+        return os.path.join(self.scenario, "district_timelines")
+    
+    def get_district_timeline_folder(self, timeline_name: str):
         """Returns the folder as a representation of district timeline, containing state-in-time scenarios:
 
-        `scenario/district_timeline_states`"""
-        return os.path.join(self.scenario, "district_timeline_states")
+        `scenario/district_timelines/{timeline_name}`"""
+        return os.path.join(self.get_district_timeline_container_folder(), timeline_name)
 
-    def get_state_in_time_scenario_folder(self, year_of_state: int):
+    def get_state_in_time_scenario_folder(self, timeline_name: str, year_of_state: int):
         """Returns the folder containing a specific state-in-time scenario:
 
-        `scenario/district_timeline_states/state_{year_of_state}`"""
-        return os.path.join(self.get_district_timeline_states_folder(), f'state_{year_of_state}')
-
-    def get_district_timeline_log_file(self):
+        `scenario/district_timelines/{timeline_name}/state_{year_of_state}`"""
+        return os.path.join(self.get_district_timeline_folder(timeline_name), f'state_{year_of_state}')
+    def get_district_timeline_log_file(self, timeline_name: str):
         """Returns the log file for the district timeline scenarios:
         
-        `scenario/district_timeline_states/district_timeline_log.yml`"""
-        return os.path.join(self.get_district_timeline_states_folder(), 'district_timeline_log.yml')
+        `scenario/district_timelines/{timeline_name}/district_timeline_log.yml`"""
+        return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_timeline_log.yml')
     
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""

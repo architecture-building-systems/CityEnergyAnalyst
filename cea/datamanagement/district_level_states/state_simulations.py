@@ -14,13 +14,13 @@ default_workflow = [
 ]
 
 
-def simulate_all_states(config: Configuration) -> None:
+def simulate_all_states(config: Configuration, timeline_name: str) -> None:
     """Simulate all state-in-time scenarios as per the district timeline log YAML file.
 
     Args:
         config (Configuration): The original configuration.
     """
-    timeline = DistrictEventTimeline(config)
+    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
     # Ensure simulation_mode is one of the supported literals ('pending' or 'all')
     simulation_mode: Literal["pending", "all"]
     if getattr(config.state_simulations, "simulation_mode", "all") == "pending":
@@ -33,7 +33,13 @@ def simulate_all_states(config: Configuration) -> None:
 
 
 def main(config: Configuration) -> None:
-    simulate_all_states(config)
+    timeline_name = config.district_events.existing_timeline_name
+    if not timeline_name:
+        raise ValueError(
+            "No existing timeline name provided. "
+            "Please provide an existing timeline name to simulate all states from."
+        )
+    simulate_all_states(config, timeline_name=timeline_name)
 
 
 if __name__ == "__main__":
