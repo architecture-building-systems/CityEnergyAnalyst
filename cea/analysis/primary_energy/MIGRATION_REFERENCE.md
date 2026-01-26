@@ -3,10 +3,11 @@
 **Purpose:** This document captures the logic from the old demand module's primary energy calculations before deletion. Use this as a reference when implementing the new primary-energy module.
 
 **Date Created:** 2026-01-26
-**Date Updated:** 2026-01-26 (added calc_Qwwf)
+**Date Updated:** 2026-01-26 (added calc_Qwwf, calc_Ef)
 **Original Locations:**
 - `cea/demand/thermal_loads.py` (lines 214-319) - calc_Qcs_sys(), calc_Qhs_sys()
 - `cea/demand/hotwater_loads.py` (lines 156-234) - calc_Qwwf()
+- `cea/demand/electrical_loads.py` (lines 75-127) - calc_Ef()
 **Status:** All primary energy calculation functions deleted from demand module
 
 ---
@@ -54,7 +55,7 @@ Primary energy must be calculated separately for each service:
 | Heating | `hs` | `Qhs_sys_kWh` | `supply_type_hs` | `calc_Qhs_sys()` |
 | Cooling | `cs` | `Qcs_sys_kWh` | `supply_type_cs` | `calc_Qcs_sys()` |
 | Hot Water | `dhw` or `ww` | `Qww_sys_kWh` | `supply_type_dhw` | `calc_Qwwf()` |
-| Electricity | `el` | `E_sys_kWh` | `supply_type_el` | (none - end-use only) |
+| Electricity | `el` | `E_sys_kWh` | `supply_type_el` | `calc_Ef()` |
 
 ---
 
@@ -298,6 +299,48 @@ def calc_Qwwf(bpr, tsd):
 ```
 
 **Key insight:** Identical logic to heating/cooling - simple division by efficiency factor. Note SOLAR energy source is supported for DHW (unlike heating/cooling).
+
+---
+
+### `calc_Ef()` - Electricity Primary Energy
+
+**Original location:** `cea/demand/electrical_loads.py:75-127`
+
+**Logic:**
+```python
+def calc_Ef(bpr, tsd):
+    energy_source = bpr.supply['source_el']
+    scale_technology = bpr.supply['scale_el']
+
+    # Sum all end-use electricity demands
+    total_el_demand = sum([Eve, Ea, El, Edata, Epro, Eaux, Ev,
+                           E_ww, E_cs, E_hs, E_cdata, E_cre])
+
+    if scale_technology == "CITY":
+        if energy_source == "GRID":
+            # Copy each end-use component to GRID_* equivalent
+            GRID = total_el_demand
+            GRID_a = Ea
+            GRID_l = El
+            GRID_v = Ev
+            GRID_ve = Eve
+            GRID_data = Edata
+            GRID_pro = Epro
+            GRID_aux = Eaux
+            GRID_ww = E_ww
+            GRID_cs = E_cs
+            GRID_hs = E_hs
+            GRID_cdata = E_cdata
+            GRID_cre = E_cre
+
+    elif scale_technology == "NONE":
+        # All GRID_* fields set to zero
+        GRID = GRID_a = GRID_l = ... = 0
+```
+
+**Key insight:** Unlike heating/cooling/DHW, electricity has NO efficiency factor - it's a simple 1:1 copy from end-use (E_*) to primary energy (GRID_*). This was just mapping end-use electricity to grid electricity.
+
+**Note:** References to E_ww, E_cs, E_hs, E_cdata, E_cre no longer exist after removal of primary energy fields.
 
 ---
 

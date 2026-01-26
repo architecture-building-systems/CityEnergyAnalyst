@@ -173,7 +173,7 @@ def calc_thermal_loads(building_name: str,
     # CALCULATE ELECTRICITY LOADS PART 2/2 AUXILIARY LOADS + ENERGY GENERATION
     tsd = electrical_loads.calc_Eaux(tsd)  # auxiliary totals
     tsd = electrical_loads.calc_E_sys(tsd)  # system (incl. losses)
-    tsd = electrical_loads.calc_Ef(bpr, tsd)  # final (incl. self. generated)
+    # NOTE: calc_Ef() call removed - primary energy calculation moved to primary-energy module
 
     # WRITE SOLAR RESULTS
     write_results(bpr, building_name, date_range, locator, resolution_outputs, tsd, debug)
