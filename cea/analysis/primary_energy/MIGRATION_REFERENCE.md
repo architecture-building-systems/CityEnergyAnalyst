@@ -3,8 +3,11 @@
 **Purpose:** This document captures the logic from the old demand module's primary energy calculations before deletion. Use this as a reference when implementing the new primary-energy module.
 
 **Date Created:** 2026-01-26
-**Original Location:** `cea/demand/thermal_loads.py` (lines 214-319)
-**Status:** Functions `calc_Qcs_sys()` and `calc_Qhs_sys()` deleted from demand module
+**Date Updated:** 2026-01-26 (added calc_Qwwf)
+**Original Locations:**
+- `cea/demand/thermal_loads.py` (lines 214-319) - calc_Qcs_sys(), calc_Qhs_sys()
+- `cea/demand/hotwater_loads.py` (lines 156-234) - calc_Qwwf()
+**Status:** All primary energy calculation functions deleted from demand module
 
 ---
 
@@ -46,14 +49,12 @@ elif scale_technology == "NONE":
 
 Primary energy must be calculated separately for each service:
 
-| Service | Column Prefix | End-Use Demand | Supply Config |
-|---------|---------------|----------------|---------------|
-| Heating | `hs` | `Qhs_sys_kWh` | `supply_type_hs` |
-| Cooling | `cs` | `Qcs_sys_kWh` | `supply_type_cs` |
-| Hot Water | `dhw` or `ww` | `Qww_sys_kWh` | `supply_type_dhw` |
-| Electricity | `el` | `E_sys_kWh` | `supply_type_el` |
-
-**Note:** Hot water primary energy was NOT calculated in the old code (always zeros).
+| Service | Column Prefix | End-Use Demand | Supply Config | Old Function |
+|---------|---------------|----------------|---------------|--------------|
+| Heating | `hs` | `Qhs_sys_kWh` | `supply_type_hs` | `calc_Qhs_sys()` |
+| Cooling | `cs` | `Qcs_sys_kWh` | `supply_type_cs` | `calc_Qcs_sys()` |
+| Hot Water | `dhw` or `ww` | `Qww_sys_kWh` | `supply_type_dhw` | `calc_Qwwf()` |
+| Electricity | `el` | `E_sys_kWh` | `supply_type_el` | (none - end-use only) |
 
 ---
 
@@ -252,6 +253,51 @@ def calc_Qhs_sys(bpr, tsd):
 ```
 
 **Key insight:** Only ONE fuel type is active at a time; all others set to zero.
+
+---
+
+### `calc_Qwwf()` - Hot Water Primary Energy
+
+**Original location:** `cea/demand/hotwater_loads.py:156-234`
+
+**Logic:**
+```python
+def calc_Qwwf(bpr, tsd):
+    energy_source = bpr.supply['source_dhw']
+    scale_technology = bpr.supply['scale_dhw']
+    efficiency_average_year = bpr.supply['eff_dhw']
+
+    if scale_technology == "BUILDING":
+        if energy_source == "GRID":
+            E_ww = Qww_sys / efficiency
+            DH_ww = NG_ww = COAL_ww = OIL_ww = WOOD_ww = 0
+        elif energy_source == "NATURALGAS":
+            NG_ww = Qww_sys / efficiency
+            E_ww = DH_ww = COAL_ww = OIL_ww = WOOD_ww = 0
+        elif energy_source == "OIL":
+            OIL_ww = Qww_sys / efficiency
+            E_ww = DH_ww = NG_ww = COAL_ww = WOOD_ww = 0
+        elif energy_source == "COAL":
+            COAL_ww = Qww_sys / efficiency
+            E_ww = DH_ww = NG_ww = OIL_ww = WOOD_ww = 0
+        elif energy_source == "WOOD":
+            WOOD_ww = Qww_sys / efficiency
+            E_ww = DH_ww = NG_ww = COAL_ww = OIL_ww = 0
+        elif energy_source == "SOLAR":
+            SOLAR_ww = Qww_sys / efficiency
+            E_ww = DH_ww = NG_ww = COAL_ww = OIL_ww = WOOD_ww = 0
+        elif energy_source == "NONE":
+            E_ww = DH_ww = NG_ww = COAL_ww = OIL_ww = WOOD_ww = 0
+
+    elif scale_technology == "DISTRICT":
+        DH_ww = Qww_sys / efficiency
+        E_ww = NG_ww = COAL_ww = OIL_ww = WOOD_ww = 0
+
+    elif scale_technology == "NONE":
+        E_ww = DH_ww = NG_ww = COAL_ww = OIL_ww = WOOD_ww = 0
+```
+
+**Key insight:** Identical logic to heating/cooling - simple division by efficiency factor. Note SOLAR energy source is supported for DHW (unlike heating/cooling).
 
 ---
 

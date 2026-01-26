@@ -160,7 +160,7 @@ def calc_thermal_loads(building_name: str,
         tsd = hotwater_loads.calc_Qww(bpr, tsd, schedules)  # end-use
         tsd = hotwater_loads.calc_Qww_sys(bpr, tsd)  # system (incl. losses)
         tsd = electrical_loads.calc_Eaux_ww(tsd, bpr)  # calc auxiliary loads
-        tsd = hotwater_loads.calc_Qwwf(bpr, tsd)  # final
+        # NOTE: calc_Qwwf() call removed - primary energy calculation moved to primary-energy module
     else:
         tsd = electrical_loads.calc_Eaux_fw(tsd, bpr, schedules)
         tsd.heating_loads.Qww = tsd.heating_loads.Qww_sys = np.zeros(HOURS_IN_YEAR)
