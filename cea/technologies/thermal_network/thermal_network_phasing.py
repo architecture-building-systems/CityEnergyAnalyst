@@ -8,12 +8,9 @@ pipe sizing decisions to minimize total NPV of capital and replacement costs.
 import os
 import json
 import pandas as pd
-import numpy as np
 from typing import List, Dict, Tuple, Optional
 import geopandas as gpd
 
-import cea.inputlocator
-from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 
 __author__ = "Zhongming Shi"
@@ -300,12 +297,12 @@ def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
             optimized_result = simulate_single_phase(config, locator, phase)
             optimized_phase_results.append(optimized_result)
 
-            print(f"    ✓ Re-simulation complete with optimised DN")
+            print("    ✓ Re-simulation complete with optimised DN")
             print(f"      Peak pumping: {optimized_result.get('plant_peak_pumping_kw', 0):.1f} kW")
 
         except Exception as e:
             print(f"    ⚠ Warning: Re-simulation failed: {e}")
-            print(f"      Using original simulation results")
+            print("      Using original simulation results")
             optimized_phase_results.append(phase_result)
 
     return optimized_phase_results
@@ -324,7 +321,6 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
         thermal_network_simplified, check_heating_cooling_demand,
         ThermalNetwork, thermal_network_main
     )
-    import json
 
     network_name = phase['network_name']
     network_model = config.thermal_network.network_model
@@ -554,7 +550,7 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
         for d in sizing_decisions.values()
     )
 
-    print(f"\n  ✓ Optimization complete:")
+    print("\n  ✓ Optimization complete:")
     print(f"    Total Cost: ${total_cost:,.0f} USD2015")
     print(f"    Pipes requiring replacement: {total_replacements}")
 
@@ -837,11 +833,11 @@ def save_phasing_results(config, locator, phases: List[Dict],
     copy_phase_simulation_results(locator, phases, network_type, phasing_plan_name)
 
     print(f"\n  ✓ Results saved to: {phasing_folder}/")
-    print(f"    - phasing_summary.csv")
-    print(f"    - pipe_sizing_decisions.csv")
-    print(f"    - edges_timeline.csv")
-    print(f"    - nodes_timeline.csv")
-    print(f"    - layout/edges.shp, nodes.shp (timeline with optimization metadata)")
+    print("    - phasing_summary.csv")
+    print("    - pipe_sizing_decisions.csv")
+    print("    - edges_timeline.csv")
+    print("    - nodes_timeline.csv")
+    print("    - layout/edges.shp, nodes.shp (timeline with optimization metadata)")
     print(f"    - phase1_{phases[0]['year']}/...phase{len(phases)}_{phases[-1]['year']}/ (single-phase structure)")
 
 

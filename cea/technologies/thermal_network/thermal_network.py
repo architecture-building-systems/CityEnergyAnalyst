@@ -3870,9 +3870,9 @@ def main(config: cea.config.Configuration):
     elif num_networks == 1 and multi_phase_mode:
         # ❌ ERROR: Single network but multi-phase enabled
         raise ValueError(
-            f"Multi-phase mode enabled but only 1 network selected.\n"
-            f"Resolution: Select MULTIPLE networks (e.g., phase1, phase2, phase3)\n"
-            f"           or set thermal-network-phasing:multi-phase-mode = false"
+            "Multi-phase mode enabled but only 1 network selected.\n"
+            "Resolution: Select MULTIPLE networks (e.g., phase1, phase2, phase3)\n"
+            "           or set thermal-network-phasing:multi-phase-mode = false"
         )
 
     elif num_networks > 1 and multi_phase_mode:
