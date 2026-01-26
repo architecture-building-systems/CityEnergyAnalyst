@@ -21,14 +21,6 @@ natural gas-fired boiler  - Brennwertgerät -  100 kW,SUPPLY_HOTWATER_AS18,BO1,-
 biomass boiler - 10 kW,SUPPLY_HOTWATER_AS19,BO7,-,-,BUILDING,KEA Technikatalog
 biomass boiler - 50 kW,SUPPLY_HOTWATER_AS20,BO7,-,-,BUILDING,KEA Technikatalog
 biomass boiler - 100 kW,SUPPLY_HOTWATER_AS21,BO7,-,-,BUILDING,KEA Technikatalog
-heatpump  soil/water - 10 kW,SUPPLY_HOTWATER_AS22,HP1,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  soil/water - 50 kW,SUPPLY_HOTWATER_AS23,HP1,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  soil/water - 100 kW,SUPPLY_HOTWATER_AS24,HP1,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  air/water -  10 kW,SUPPLY_HOTWATER_AS25,HP3,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  air/water -  50 kW,SUPPLY_HOTWATER_AS26,HP3,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  air/water -  100 kW,SUPPLY_HOTWATER_AS27,HP3,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump - air/air,SUPPLY_HOTWATER_AS28,HP4,-,-,BUILDING,"from CEA Switzerland, adjustments required, educated guess"
-heatpump - water/water,SUPPLY_HOTWATER_AS29,HP2,-,-,BUILDING,"from CEA Switzerland, adjustments required, educated guess"
 electrical boiler,SUPPLY_HOTWATER_AS31,BO5,-,-,BUILDING,"from CEA Switzerland, adjustments required"
 wood-furnace,SUPPLY_HOTWATER_AS32,BO6,-,-,BUILDING,"from CEA Switzerland, adjustments required"
 district heating - natural gas-fired boiler,SUPPLY_HOTWATER_AS33,BO1,-,-,DISTRICT,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and

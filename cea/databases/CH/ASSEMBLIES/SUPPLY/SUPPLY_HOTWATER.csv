@@ -5,9 +5,6 @@ coal-fired furnace,SUPPLY_HOTWATER_AS2,BO4,-,-,BUILDING,Connolly et al. (2013). 
 natural gas-fired boiler,SUPPLY_HOTWATER_AS3,BO1,-,-,BUILDING,Connolly et al. (2013). Costs in the EU boiler <25 kW)
 electrical boiler,SUPPLY_HOTWATER_AS4,BO5,-,-,BUILDING,Asuming 2000 USD for a 12kW boiler
 wood-furnace,SUPPLY_HOTWATER_AS5,BO6,-,-,BUILDING,educated guess
-heatpump - soil/water,SUPPLY_HOTWATER_AS6,HP1,-,-,BUILDING,educated guess
-heatpump - air/water,SUPPLY_HOTWATER_AS7,HP3,-,-,BUILDING,educated guess
-heatpump - water/water,SUPPLY_HOTWATER_AS8,HP2,-,-,BUILDING,educated guess
 district heating - natural gas-fired boiler,SUPPLY_HOTWATER_AS9,BO1,-,-,DISTRICT,educated guess
 district heating - heatpump - soil/water,SUPPLY_HOTWATER_AS10,HP1,-,-,DISTRICT,educated guess
 district heating - heat pump - water/water,SUPPLY_HOTWATER_AS11,HP2,-,-,DISTRICT,educated guess
