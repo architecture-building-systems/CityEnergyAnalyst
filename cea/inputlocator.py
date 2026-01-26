@@ -1311,16 +1311,6 @@ class InputLocator(object):
             'substation'
         )
 
-    def get_thermal_network_phasing_summary_file(self, network_type, plan_name):
-        """Get phasing summary CSV file
-
-        Returns: phasing-plans/{plan-name}/{network-type}/phasing_summary.csv
-        """
-        return os.path.join(
-            self.get_thermal_network_phasing_folder(network_type, plan_name),
-            'phasing_summary.csv'
-        )
-
     def get_thermal_network_pipe_sizing_decisions_file(self, network_type, plan_name):
         """Get pipe sizing decisions CSV file
 
