@@ -491,14 +491,15 @@ async def upload_input_database(project_info: CEAProjectInfo, file: UploadFile):
                         with z.open(file_info) as source, open(target_path, 'wb') as target:
                             shutil.copyfileobj(source, target)
 
+                    # FIXME: Validation disabled for now, rethink validation strategy
                     # Validate the extracted databases
-                    try:
-                        verify_database(temp_scenario_path)
-                    except CEADatabaseException as e:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f'Invalid database files: {str(e.message)}',
-                        )
+                    # try:
+                    #     verify_database(temp_scenario_path)
+                    # except CEADatabaseException as e:
+                    #     raise HTTPException(
+                    #         status_code=status.HTTP_400_BAD_REQUEST,
+                    #         detail=f'Invalid database files: {str(e.message)}',
+                    #     )
 
                     # Atomically replace the database folder to prevent data loss
                     db_folder = locator.get_db4_folder()

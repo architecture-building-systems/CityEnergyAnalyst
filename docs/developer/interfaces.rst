@@ -6,7 +6,7 @@ The CEA code exposes multiple interfaces as an API:
 -  CLI (Command Line Interface) - each module in the CEA implements a
    CLI for calling it from the command line.
 -  euler - a set of scripts for running the CEA sensitivity analysis on
-   the ETH Euler cluster is provided in the folder ``euler`` and can be
+   the ETH Euler cluster is provided in the folder ``scripts/euler`` and can be
    used as a starting point for running the analysis on similar clusters
    and / or linux machines.
 

@@ -1,6 +1,5 @@
 """
 Create the CHANGELOG.md file using git and the GitHub REST api.
-This script assumes it is being run from the root of the CEA repository, as ``python bin\create-changelog.py``
 
 Output format (example)::
 
