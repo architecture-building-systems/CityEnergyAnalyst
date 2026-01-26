@@ -8,9 +8,12 @@ pipe sizing decisions to minimise total NPV of capital and replacement costs.
 import os
 import json
 import pandas as pd
-from typing import List, Dict, Tuple, Optional
+from typing import TYPE_CHECKING, List, Dict, Tuple, Optional
 import geopandas as gpd
 
+if TYPE_CHECKING:
+    from cea.config import Configuration
+    from cea.inputlocator import InputLocator
 
 
 __author__ = "Zhongming Shi"
@@ -23,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def run_multi_phase(config, locator, network_names: List[str]):
+def run_multi_phase(config: "Configuration", locator: "InputLocator", network_names: List[str]):
     """
     Main entry point for multi-phase thermal network simulation and optimisation.
 
@@ -72,9 +75,7 @@ def run_multi_phase(config, locator, network_names: List[str]):
     if not phasing_plan_name:
         phasing_plan_name = network_names[0]
 
-    network_type = config.thermal_network.network_type
-    if isinstance(network_type, list):
-        network_type = network_type[0] if len(network_type) > 0 else 'DH'
+    network_type = config.thermal_network_phasing.network_type
 
     print("\n" + "="*80)
     print("✅ MULTI-PHASE OPTIMISATION COMPLETE")

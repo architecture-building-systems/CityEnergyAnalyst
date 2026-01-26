@@ -998,12 +998,15 @@ class ThermalNetworkSection(Section):
 
 class ThermalNetworkPhasingSection(Section):
     """Typed section for thermal-network-phasing configuration"""
+    network_type: str
     multi_phase_mode: bool
     phasing_plan_name: str | None
     phase_completion_year: List[str]
     sizing_strategy: str
     replacement_cost_multiplier: float
 
+    @overload
+    def __getattr__(self, item: Literal["network_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["multi_phase_mode"]) -> bool: ...
     @overload
