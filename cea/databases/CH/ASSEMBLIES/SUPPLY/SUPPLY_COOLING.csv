@@ -1,6 +1,6 @@
-description,code,primary_components,secondary_components,tertiary_components,system,scale,reference
-none,SUPPLY_COOLING_AS0,-,-,-,NONE,NONE,educated guess
-heatpump - air/air,SUPPLY_COOLING_AS1,CH2,-,CT1,COOLING,BUILDING,educated guess
-heatpump - water/water,SUPPLY_COOLING_AS2,CH2,-,CT1,COOLING,BUILDING,educated guess
-district cooling  - Lakewater/water,SUPPLY_COOLING_AS3,CH2,-,CT1,COOLING,DISTRICT,educated guess
-district cooling  - air/air,SUPPLY_COOLING_AS4,CH2,-,CT1,COOLING,DISTRICT,educated guess
+description,code,primary_components,secondary_components,tertiary_components,scale,reference
+none,SUPPLY_COOLING_AS0,-,-,-,NONE,educated guess
+heatpump - air/air,SUPPLY_COOLING_AS1,CH2,-,CT1,BUILDING,educated guess
+heatpump - water/water,SUPPLY_COOLING_AS2,CH2,-,CT1,BUILDING,educated guess
+district cooling  - Lakewater/water,SUPPLY_COOLING_AS3,CH2,-,CT1,DISTRICT,educated guess
+district cooling  - air/air,SUPPLY_COOLING_AS4,CH2,-,CT1,DISTRICT,educated guess
