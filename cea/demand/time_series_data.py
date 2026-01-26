@@ -140,20 +140,7 @@ class ElectricalLoads:
     E_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """End-use total electricity consumption [Wh]"""
 
-    E_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """End-use electricity consumption of domestic hot water [Wh]"""
-
-    E_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """End-use electricity consumption of space heating [Wh]"""
-
-    E_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """End-use electricity consumption of space cooling [Wh]"""
-
-    E_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """End-use electricity consumption of refrigeration [Wh]"""
-
-    E_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """End-use electricity consumption of data center cooling [Wh]"""
+    # NOTE: Primary energy fields (E_ww, E_hs, E_cs, E_cre, E_cdata) removed - moved to primary-energy module
 
     Ea: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """End-use electricity consumption of appliances [Wh]"""
@@ -188,20 +175,7 @@ class ElectricalLoads:
     GRID_aux: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Grid electricity consumption for auxiliary loads [Wh]"""
 
-    GRID_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for domestic hot water [Wh]"""
-
-    GRID_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for space heating [Wh]"""
-
-    GRID_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for space cooling [Wh]"""
-
-    GRID_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for data center cooling [Wh]"""
-
-    GRID_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for refrigeration [Wh]"""
+    # NOTE: Primary energy GRID fields (GRID_ww, GRID_hs, GRID_cs, GRID_cdata, GRID_cre) removed - moved to primary-energy module
 
     PV: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Photovoltaic electricity consumption [Wh]"""
@@ -271,11 +245,7 @@ class HeatingLoads:
     QH_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Total heating demand (including space heating, domestic hot water and process heating) [Wh]"""
 
-    DH_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District heating demand for space heating [Wh]"""
-
-    DH_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District heating demand for domestic hot water [Wh]"""
+    # NOTE: Primary energy DH fields (DH_hs, DH_ww) removed - moved to primary-energy module
 
 
 @dataclass
@@ -338,14 +308,7 @@ class CoolingLoads:
     Qcre: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """Cooling demand for refrigeration [Wh]"""
 
-    DC_cs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District cooling demand for space cooling [Wh]"""
-
-    DC_cre: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District cooling demand for refrigeration [Wh]"""
-
-    DC_cdata: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """District cooling demand for data centers [Wh]"""
+    # NOTE: Primary energy DC fields (DC_cs, DC_cre, DC_cdata) removed - moved to primary-energy module
 
     Qcdata_sys: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """End-use data center cooling demand [Wh]"""
@@ -685,41 +648,7 @@ class ThermalResistance:
     """Thermal resistance of the underside [m2K/W]"""
 
 
-@dataclass
-class FuelSource:
-    """
-    Data related to fuel sources.
-    """
-
-    SOLAR_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Solar thermal energy use for domestic hot water [Wh]"""
-
-    SOLAR_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Solar thermal energy use for space heating [Wh]"""
-
-    NG_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Natural gas use for space heating [Wh]"""
-
-    COAL_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Coal use for space heating [Wh]"""
-
-    OIL_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Oil use for space heating [Wh]"""
-
-    WOOD_hs: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Wood use for space heating [Wh]"""
-
-    NG_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Natural gas use for domestic hot water [Wh]"""
-
-    COAL_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Coal use for domestic hot water [Wh]"""
-
-    OIL_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Oil use for domestic hot water [Wh]"""
-
-    WOOD_ww: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Wood use for domestic hot water [Wh]"""
+# NOTE: FuelSource class removed entirely - all fuel consumption (NG, COAL, OIL, WOOD, SOLAR) moved to primary-energy module
 
 
 @dataclass
@@ -771,7 +700,7 @@ class TimeSeriesData:
     ventilation_mass_flows: VentilationMassFlows = field(default_factory=VentilationMassFlows)
     energy_balance_dashboard: EnergyBalanceDashboard = field(default_factory=EnergyBalanceDashboard)
     solar: Solar = field(default_factory=Solar)
-    fuel_source: FuelSource = field(default_factory=FuelSource)
+    # NOTE: fuel_source field removed - moved to primary-energy module
     water: Water = field(default_factory=Water)
     thermal_resistance: ThermalResistance = field(default_factory=ThermalResistance)
 
@@ -792,7 +721,7 @@ class TimeSeriesData:
             self.heating_loads,
             self.cooling_loads,
 
-            self.fuel_source,
+            # NOTE: fuel_source removed - moved to primary-energy module
 
             # Load plotting variables
             self.energy_balance_dashboard,
