@@ -11,10 +11,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads, 
-                                       CoolingLoads, FuelSource, HeatingSystemMassFlows, 
-                                       CoolingSystemMassFlows, HeatingSystemTemperatures, 
+from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads,
+                                       CoolingLoads, HeatingSystemMassFlows,
+                                       CoolingSystemMassFlows, HeatingSystemTemperatures,
                                        CoolingSystemTemperatures, RCModelTemperatures)
+# NOTE: FuelSource removed - moved to primary-energy module
 
 from cea.utilities.reporting import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
@@ -28,7 +29,8 @@ FLOAT_FORMAT = '%.3f'
 def get_all_load_keys():
     """Get all available load keys from time series data classes."""
     load_keys = []
-    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelSource]
+    # NOTE: FuelSource removed from load_classes - moved to primary-energy module
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads]
     for cls in load_classes:
         load_keys.extend(list(cls.__dataclass_fields__.keys()))
     return load_keys
