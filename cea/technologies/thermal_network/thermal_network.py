@@ -27,7 +27,7 @@ from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
-from cea.technologies.thermal_network.utility import extract_network_from_shapefile
+from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
@@ -367,30 +367,12 @@ class ThermalNetwork(object):
 
         t0 = time.perf_counter()
 
-        # import shapefiles containing the network's edges and nodes
-        edges_path = self.locator.get_network_layout_shapefile(self.network_name)
+        network_nodes_df, network_edges_df = load_network_shapefiles(
+            self.locator, self.network_type, self.network_name
+        )
+
+        # Get nodes path for metadata file location
         nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
-
-        # Check if network layout files exist with helpful error messages
-        if not os.path.exists(edges_path):
-            raise FileNotFoundError(
-                f"{self.network_type} network layout is missing: {edges_path}\n"
-                f"Please run 'Network Layout' (Part 1) first to create the network layout."
-            )
-
-        if not os.path.exists(nodes_path):
-            demand_type = "cooling" if self.network_type == "DC" else "heating"
-            raise FileNotFoundError(
-                f"{self.network_type} network nodes file is missing: {nodes_path}\n"
-                f"This can happen if:\n"
-                f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
-                f"  2. The {self.network_type} network was skipped because no buildings have {demand_type} demand.\n"
-                f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
-                f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
-            )
-
-        network_edges_df = gpd.read_file(edges_path)
-        network_nodes_df = gpd.read_file(nodes_path)
 
         # NEW: Read per-building service configuration metadata (if available)
         import json
@@ -416,14 +398,6 @@ class ThermalNetwork(object):
 
         # Store for passing to simulation functions
         self.per_building_services = per_building_services
-
-        # check duplicated NODE/PIPE IDs
-        duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
-        duplicated_edges = network_edges_df[network_edges_df.name.duplicated(keep=False)]
-        if duplicated_nodes.size > 0:
-            raise ValueError('There are duplicated NODE IDs:', duplicated_nodes)
-        if duplicated_edges.size > 0:
-            raise ValueError('There are duplicated PIPE IDs:', duplicated_nodes)
 
         # get node and pipe information
         # filter_edges=True because layout.shp contains edges for all network types (DC+DH combined),

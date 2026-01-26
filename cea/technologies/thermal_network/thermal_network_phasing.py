@@ -8,8 +8,10 @@ pipe sizing decisions to minimise total NPV of capital and replacement costs.
 import os
 import json
 import pandas as pd
-from typing import TYPE_CHECKING, List, Dict, Tuple, Optional
 import geopandas as gpd
+from typing import TYPE_CHECKING, List, Dict, Optional
+
+from cea.technologies.thermal_network.utility import load_network_shapefiles
 
 if TYPE_CHECKING:
     from cea.config import Configuration
@@ -124,7 +126,7 @@ def load_phases(config, locator, network_names: List[str]) -> List[Dict]:
         print(f"  Loading phase {i+1}: {network_name} (Year {year})...")
 
         # Load network layout
-        nodes_gdf, edges_gdf = load_network_layout(locator, network_name, network_type)
+        nodes_gdf, edges_gdf = load_network_shapefiles(locator, network_type, network_name)
 
         # Extract building list from nodes
         building_nodes = nodes_gdf[
@@ -147,36 +149,6 @@ def load_phases(config, locator, network_names: List[str]) -> List[Dict]:
         print(f"    ✓ {len(buildings)} buildings, {len(edges_gdf)} edges")
 
     return phases
-
-
-def load_network_layout(locator, network_name: str, network_type: str) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
-    """
-    Load network nodes and edges shapefiles.
-
-    New file structure:
-    - Edges: thermal-network/{network-name}/layout.shp
-    - Nodes: thermal-network/{network-name}/{network-type}/layout/nodes.shp
-
-    :param locator: InputLocator object
-    :param network_name: Name of network layout
-    :param network_type: DH or DC
-    :return: Tuple of (nodes_gdf, edges_gdf)
-    """
-    # Edges are now at network level (not under network_type subfolder)
-    edges_path = locator.get_network_layout_shapefile(network_name)
-
-    # Nodes are still under network_type/layout/ subfolder
-    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-
-    if not os.path.exists(edges_path):
-        raise FileNotFoundError(f"Network edges not found: {edges_path}")
-    if not os.path.exists(nodes_path):
-        raise FileNotFoundError(f"Network nodes not found: {nodes_path}")
-
-    edges_gdf = gpd.read_file(edges_path)
-    nodes_gdf = gpd.read_file(nodes_path)
-
-    return nodes_gdf, edges_gdf
 
 
 def validate_phases(phases: List[Dict]):

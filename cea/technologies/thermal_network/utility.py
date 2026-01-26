@@ -1,10 +1,58 @@
+import os
+from typing import Tuple
+
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-from scipy.spatial import cKDTree
 
+import cea.inputlocator
 from cea.constants import SHAPEFILE_TOLERANCE
 from cea.utilities.standardize_coordinates import validate_crs_uses_meters
+
+
+def load_network_shapefiles(
+    locator: cea.inputlocator.InputLocator,
+    network_type: str,
+    network_name: str
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """
+    Load network nodes and edges shapefiles with helpful error messages.
+
+    File structure:
+    - Edges: thermal-network/{network-name}/layout.shp
+    - Nodes: thermal-network/{network-name}/{network-type}/layout/nodes.shp
+
+    :param locator: InputLocator object
+    :param network_type: DH or DC
+    :param network_name: Name of network layout
+    :return: Tuple of (nodes_gdf, edges_gdf)
+    :raises FileNotFoundError: If network layout files do not exist
+    """
+    edges_path = locator.get_network_layout_shapefile(network_name)
+    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+
+    # Check if network layout files exist with helpful error messages
+    if not os.path.exists(edges_path):
+        raise FileNotFoundError(
+            f"{network_type} network layout is missing: {edges_path}\n"
+            f"Please run 'Network Layout' (Part 1) first to create the network layout."
+        )
+
+    if not os.path.exists(nodes_path):
+        demand_type = "cooling" if network_type == "DC" else "heating"
+        raise FileNotFoundError(
+            f"{network_type} network nodes file is missing: {nodes_path}\n"
+            f"This can happen if:\n"
+            f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
+            f"  2. The {network_type} network was skipped because no buildings have {demand_type} demand.\n"
+            f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
+            f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
+        )
+
+    nodes_gdf = gpd.read_file(nodes_path)
+    edges_gdf = gpd.read_file(edges_path)
+
+    return nodes_gdf, edges_gdf
 
 
 def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_shapefile_df: gpd.GeoDataFrame,
@@ -24,8 +72,17 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
     :return edge_df: list of edges and their corresponding lengths and start and end nodes
     :rtype node_df: DataFrame
     :rtype edge_df: DataFrame
+    :raises ValueError: If there are duplicated NODE/PIPE IDs or CRS mismatch
 
     """
+    # Check for duplicated NODE/PIPE IDs
+    duplicated_nodes = node_shapefile_df[node_shapefile_df.name.duplicated(keep=False)]
+    duplicated_edges = edge_shapefile_df[edge_shapefile_df.name.duplicated(keep=False)]
+    if duplicated_nodes.size > 0:
+        raise ValueError('There are duplicated NODE IDs:', duplicated_nodes.name.values)
+    if duplicated_edges.size > 0:
+        raise ValueError('There are duplicated PIPE IDs:', duplicated_edges.name.values)
+
     if edge_shapefile_df.crs != node_shapefile_df.crs:
         raise ValueError('The coordinate reference systems (CRS) of the edge and node shapefiles do not match. '
                          'Please reproject them to the same CRS before proceeding.')
@@ -43,6 +100,8 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
         key=lambda x: x.str.extract(r"PIPE(\d+)", expand=False).astype(int)
     )
     edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+
+    from scipy.spatial import cKDTree
 
     # Build KDTree from node coordinates for efficient nearest-neighbor queries
     node_coords = np.array(node_shapefile_df['coordinates'].tolist())
