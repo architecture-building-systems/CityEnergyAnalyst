@@ -190,7 +190,7 @@ class TestSchemas(unittest.TestCase):
                     "hour_end": 24,
                     "folder_name": "test",
                     "plot_cea_feature": "demand",
-                    "phasing_plan_name": "default",
+                    "plan_name": "default",
                 }
                 # Get actual parameter names from function signature
                 sig = inspect.signature(method)

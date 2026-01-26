@@ -1204,28 +1204,28 @@ class InputLocator(object):
         return self._get_thermal_network_results_file_path(network_type, network_name, "plant_thermal_load_kW.csv")
 
     # THERMAL NETWORK PHASING
-    def get_thermal_network_phasing_folder(self, network_type, phasing_plan_name):
-        """scenario/outputs/data/thermal-network/phasing-plans/{phasing_plan_name}/{network_type}/"""
-        return os.path.join(self.get_thermal_network_folder(), 'phasing-plans', phasing_plan_name, network_type)
+    def get_thermal_network_phasing_folder(self, network_type, plan_name):
+        """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/"""
+        return os.path.join(self.get_thermal_network_folder(), 'phasing-plans', plan_name, network_type)
 
-    def get_thermal_network_phasing_summary_file(self, network_type, phasing_plan_name):
-        """scenario/outputs/data/thermal-network/phasing-plans/{phasing_plan_name}/{network_type}/phasing_summary.csv"""
-        folder = self.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
+    def get_thermal_network_phasing_summary_file(self, network_type, plan_name):
+        """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/phasing_summary.csv"""
+        folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
         return os.path.join(folder, 'phasing_summary.csv')
 
-    def get_thermal_network_phasing_pipe_decisions_file(self, network_type, phasing_plan_name):
-        """scenario/outputs/data/thermal-network/phasing-plans/{phasing_plan_name}/{network_type}/pipe_sizing_decisions.csv"""
-        folder = self.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
+    def get_thermal_network_phasing_pipe_decisions_file(self, network_type, plan_name):
+        """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/pipe_sizing_decisions.csv"""
+        folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
         return os.path.join(folder, 'pipe_sizing_decisions.csv')
 
-    def get_thermal_network_phasing_cost_breakdown_file(self, network_type, phasing_plan_name):
-        """scenario/outputs/data/thermal-network/phasing-plans/{phasing_plan_name}/{network_type}/cost_breakdown_by_phase.csv"""
-        folder = self.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
+    def get_thermal_network_phasing_cost_breakdown_file(self, network_type, plan_name):
+        """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/cost_breakdown_by_phase.csv"""
+        folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
         return os.path.join(folder, 'cost_breakdown_by_phase.csv')
 
-    def get_thermal_network_phasing_npv_file(self, network_type, phasing_plan_name):
-        """scenario/outputs/data/thermal-network/phasing-plans/{phasing_plan_name}/{network_type}/npv_analysis.csv"""
-        folder = self.get_thermal_network_phasing_folder(network_type, phasing_plan_name)
+    def get_thermal_network_phasing_npv_file(self, network_type, plan_name):
+        """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/npv_analysis.csv"""
+        folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
         return os.path.join(folder, 'npv_analysis.csv')
 
     def get_thermal_network_phasing_plans_folder(self):
