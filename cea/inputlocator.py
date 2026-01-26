@@ -164,6 +164,12 @@ class InputLocator(object):
         `scenario/district_timelines/{timeline_name}/district_timeline_log.yml`"""
         return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_timeline_log.yml')
     
+    def get_district_timeline_atomic_changes_file(self, timeline_name: str):
+        """Returns the atomic changes file for the district timeline:
+        
+        `scenario/district_timelines/{timeline_name}/atomic_changes.yml`"""
+        return os.path.join(self.get_district_timeline_folder(timeline_name), 'atomic_changes.yml')
+    
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
         """scenario/export/results"""

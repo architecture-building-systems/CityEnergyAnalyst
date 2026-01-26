@@ -1634,6 +1634,68 @@ class SubfolderChoiceParameter(ChoiceParameter):
             return ''
 
 
+class AtomicChangeMultiChoiceParameter(MultiChoiceParameter):
+    """Select multiple atomic changes from a district timeline's atomic_changes.yml file."""
+
+    def initialize(self, parser):
+        # Don't call super().initialize() - we don't need .choices from config file
+        # Choices are dynamically loaded from atomic_changes.yml via _choices property
+        pass
+
+    @property
+    def _choices(self):
+        from cea.datamanagement.district_level_states.atomic_changes import load_atomic_changes
+        
+        # Load atomic changes for this timeline
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        timeline_name = self.config.district_timeline_select.existing_timeline_name
+        if not timeline_name:
+            timeline_name = self.config.district_timeline_select.new_timeline_name
+        
+        print(f"[AtomicChangeMultiChoiceParameter._choices] timeline_name: |{timeline_name}|")
+        
+        if not timeline_name:
+            return []
+        
+        try:
+            changes = load_atomic_changes(locator, timeline_name=str(timeline_name))
+            result = sorted(changes.keys())
+            print(f"[AtomicChangeMultiChoiceParameter._choices] Found {len(result)} atomic changes")
+            return result
+        except (FileNotFoundError, ValueError) as e:
+            print(f"[AtomicChangeMultiChoiceParameter._choices] Error loading atomic changes: {e}")
+            return []
+
+    def encode(self, value):
+        if not value:
+            return ''
+        
+        if isinstance(value, str):
+            # Parse comma-separated string
+            value = [v.strip() for v in value.split(',') if v.strip()]
+        
+        # Validate all choices exist
+        available = self._choices
+        if available:  # Only validate if choices are available
+            invalid = [v for v in value if v not in available]
+            if invalid:
+                raise ValueError(
+                    f"Invalid atomic change names for {self.fqname}: {', '.join(invalid)}. "
+                    f"Available: {', '.join(available)}")
+        
+        return ', '.join(value)
+
+    def decode(self, value):
+        if not value:
+            return []
+        
+        if isinstance(value, str):
+            # Parse comma-separated string
+            return [v.strip() for v in value.split(',') if v.strip()]
+        
+        return list(value)
+
+
 class PlotContextParameter(Parameter):
     """A parameter that accepts a dict containing plot context information."""
     

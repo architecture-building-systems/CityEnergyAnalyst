@@ -1081,11 +1081,16 @@ def shift_code_name_plus1(db, code_prefix):
 
 def create_modify_recipe(
     config: Configuration,
+    config_section_name: str = 'district_atomic_changes_define',
 ) -> dict[str, dict[str, dict[str, float | int | str]]]:
     """
     Build modification recipe, pruning None-valued fields and empty components / archetypes.
+    
+    Args:
+        config: Configuration object
+        config_section_name: Name of the config section to read from (default: 'district_atomic_changes_define')
     """
-    config_section = config.district_events
+    config_section = getattr(config, config_section_name)
     archetypes_to_modify = config_section.archetypes
     if not archetypes_to_modify:
         raise ValueError(
@@ -1228,41 +1233,47 @@ def validate_timeline_name(timeline_name: str) -> str:
     return timeline_name
 
 
-def main(config: Configuration) -> None:
-    """Define a district event in the YAML log (does not create state folders).
+# NOTE: This old main function is no longer used.
+# The district-events script has been replaced by:
+# - district_atomic_changes_define.py (Part 1: Define Atomic Change)
+# - district_events_apply_changes.py (Part 2: Apply Changes to Years)
+# This code is kept for reference but should not be called.
+#
+# def main(config: Configuration) -> None:
+#     """Define a district event in the YAML log (does not create state folders).
+#
+#     This tool is intentionally log-only to avoid expensive rewriting of existing state scenarios while users are still
+#     iterating on the event definitions.
+#     """
+#
+#     year_of_state = config.district_events.year_of_event
+#     if year_of_state is None:
+#         raise ValueError("Year of event must be specified in the configuration.")
+#     timeline_name = config.district_events.existing_timeline_name
+#     if not timeline_name:
+#         timeline_name = config.district_events.new_timeline_name
+#         timeline_name = validate_timeline_name(timeline_name)
+#     timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
+#     timeline.ensure_year(int(year_of_state))
+#
+#     try:
+#         modify_recipe = create_modify_recipe(config)
+#     except ValueError as e:
+#         if "No archetypes specified" in str(e):
+#             modify_recipe = {}
+#         else:
+#             raise
+#
+#     if modify_recipe:
+#         timeline.apply_year_modifications(int(year_of_state), modify_recipe)
+#     timeline.save()
+#
+#     print(
+#         "District event saved to district timeline log. "
+#         "State-in-time scenarios are not created by this tool. "
+#         "Run 'District States From Log' when you are ready to materialise the state scenarios."
+#     )
 
-    This tool is intentionally log-only to avoid expensive rewriting of existing state scenarios while users are still
-    iterating on the event definitions.
-    """
 
-    year_of_state = config.district_events.year_of_event
-    if year_of_state is None:
-        raise ValueError("Year of event must be specified in the configuration.")
-    timeline_name = config.district_events.existing_timeline_name
-    if not timeline_name:
-        timeline_name = config.district_events.new_timeline_name
-        timeline_name = validate_timeline_name(timeline_name)
-    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
-    timeline.ensure_year(int(year_of_state))
-
-    try:
-        modify_recipe = create_modify_recipe(config)
-    except ValueError as e:
-        if "No archetypes specified" in str(e):
-            modify_recipe = {}
-        else:
-            raise
-
-    if modify_recipe:
-        timeline.apply_year_modifications(int(year_of_state), modify_recipe)
-    timeline.save()
-
-    print(
-        "District event saved to district timeline log. "
-        "State-in-time scenarios are not created by this tool. "
-        "Run 'District States From Log' when you are ready to materialise the state scenarios."
-    )
-
-
-if __name__ == "__main__":
-    main(Configuration())
+# if __name__ == "__main__":
+#     main(Configuration())
