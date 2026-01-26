@@ -30,6 +30,8 @@ dependencies = [
     "libpysal",
     "osmnx>=2.0.0",
     "pvlib",
+    "compas",
+    "compas-libigl>=0.7.6,<0.8",
     # Does not exist in pypi
     # "pythonocc-core",
 
@@ -165,6 +167,7 @@ psutil = "*"
 pyarrow = "*"
 pythonocc-core = "==7.8.1" # Due to #3867
 pvlib = "*" # has optional C extensions for solar calculations
+compas = ">=2.14.1,<3"
 
 # Pure Python packages (conda-forge for unified dependency resolution)
 libpysal = "*"
