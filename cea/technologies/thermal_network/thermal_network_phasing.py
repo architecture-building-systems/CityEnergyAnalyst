@@ -1,8 +1,8 @@
 """
-Multi-phase thermal network expansion planning and optimization.
+Multi-phase thermal network expansion planning and optimisation.
 
-Orchestrates thermal network simulation across multiple phases and optimizes
-pipe sizing decisions to minimize total NPV of capital and replacement costs.
+Orchestrates thermal network simulation across multiple phases and optimises
+pipe sizing decisions to minimise total NPV of capital and replacement costs.
 """
 
 import os
@@ -25,12 +25,12 @@ __status__ = "Production"
 
 def run_multi_phase(config, locator, network_names: List[str]):
     """
-    Main entry point for multi-phase thermal network simulation and optimization.
+    Main entry point for multi-phase thermal network simulation and optimisation.
 
     Steps:
     1. Load and validate phases
     2. Simulate each phase independently (thermal-hydraulic + sizing)
-    3. Optimize pipe sizing across phases (NPV minimization)
+    3. Optimise pipe sizing across phases (NPV minimisation)
     4. Save phasing results (timeline, schedules, sized networks)
 
     :param config: Configuration object
@@ -38,7 +38,7 @@ def run_multi_phase(config, locator, network_names: List[str]):
     :param network_names: List of network layout names (one per phase)
     """
     print("\n" + "="*80)
-    print("MULTI-PHASE THERMAL NETWORK OPTIMIZATION")
+    print("MULTI-PHASE THERMAL NETWORK OPTIMISATION")
     print("="*80)
 
     # Step 1: Load and validate phases
@@ -50,8 +50,8 @@ def run_multi_phase(config, locator, network_names: List[str]):
     print("\nStep 2: Simulating thermal-hydraulic performance for each phase...")
     phase_results = simulate_all_phases(config, locator, phases)
 
-    # Step 3: Optimize pipe sizing
-    print("\nStep 3: Optimizing pipe sizing across phases...")
+    # Step 3: Optimise pipe sizing
+    print("\nStep 3: Optimising pipe sizing across phases...")
     sizing_strategy = config.thermal_network_phasing.sizing_strategy
     sizing_decisions = optimize_pipe_sizing(
         config, locator, phases, phase_results, sizing_strategy
@@ -77,7 +77,7 @@ def run_multi_phase(config, locator, network_names: List[str]):
         network_type = network_type[0] if len(network_type) > 0 else 'DH'
 
     print("\n" + "="*80)
-    print("✅ MULTI-PHASE OPTIMIZATION COMPLETE")
+    print("✅ MULTI-PHASE OPTIMISATION COMPLETE")
     print("="*80)
     print(f"Results saved to: {locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name)}")
 
@@ -482,10 +482,10 @@ def read_phase_simulation_results(locator, phase: Dict, network_type: str, netwo
 def optimize_pipe_sizing(config, locator, phases: List[Dict],
                         phase_results: List[Dict], strategy: str) -> Dict:
     """
-    Optimize pipe sizing decisions across all phases.
+    Optimise pipe sizing decisions across all phases.
 
     For each edge, decide optimal DN for each phase based on strategy:
-    - 'optimise': Minimize NPV (per-edge decision: size now vs replace later)
+    - 'optimise': Minimise NPV (per-edge decision: size now vs replace later)
     - 'size-per-phase': Always size for current phase demand
     - 'pre-size-all': Always size for final phase demand
 
@@ -550,7 +550,7 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
         for d in sizing_decisions.values()
     )
 
-    print("\n  ✓ Optimization complete:")
+    print("\n  ✓ Optimisation complete:")
     print(f"    Total Cost: ${total_cost:,.0f} USD2015")
     print(f"    Pipes requiring replacement: {total_replacements}")
 
@@ -600,7 +600,7 @@ def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
                         phases: List[Dict], length: float, pipe_costs: pd.DataFrame,
                         replacement_multiplier: float) -> Dict:
     """
-    Minimize cost for a single edge by choosing optimal sizing path (in constant USD2015).
+    Minimise cost for a single edge by choosing optimal sizing path (in constant USD2015).
 
     Compares:
     - Option A: Size per phase (replace as needed)
@@ -629,10 +629,10 @@ def optimize_single_edge(edge_id: str, dn_per_phase: List[Optional[int]],
     # Choose cheaper option
     if cost_a['total_cost'] < cost_b['total_cost']:
         result = cost_a
-        result['strategy'] = 'size-per-phase (optimized)'
+        result['strategy'] = 'size-per-phase (optimised)'
     else:
         result = cost_b
-        result['strategy'] = 'pre-size (optimized)'
+        result['strategy'] = 'pre-size (optimised)'
 
     return result
 
@@ -820,7 +820,7 @@ def save_phasing_results(config, locator, phases: List[Dict],
     save_edges_timeline_csv(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
     save_nodes_timeline_csv(locator, phases, network_type, phasing_plan_name)
 
-    # Save timeline network shapefiles (top-level layout/ with optimization metadata)
+    # Save timeline network shapefiles (top-level layout/ with optimisation metadata)
     save_final_network_shapefiles(locator, phases, phase_results, sizing_decisions, network_type, phasing_plan_name)
 
     # Save individual phase layout shapefiles (matching single-phase structure)
@@ -837,7 +837,7 @@ def save_phasing_results(config, locator, phases: List[Dict],
     print("    - pipe_sizing_decisions.csv")
     print("    - edges_timeline.csv")
     print("    - nodes_timeline.csv")
-    print("    - layout/edges.shp, nodes.shp (timeline with optimization metadata)")
+    print("    - layout/edges.shp, nodes.shp (timeline with optimisation metadata)")
     print(f"    - phase1_{phases[0]['year']}/...phase{len(phases)}_{phases[-1]['year']}/ (single-phase structure)")
 
 
@@ -1011,13 +1011,13 @@ def save_nodes_timeline_csv(locator, phases: List[Dict], network_type: str, phas
 def save_final_network_shapefiles(locator, phases: List[Dict], phase_results: List[Dict],
                                    sizing_decisions: Dict, network_type: str, phasing_plan_name: str):
     """
-    Save timeline network shapefiles with multi-phase optimization metadata.
+    Save timeline network shapefiles with multi-phase optimisation metadata.
 
     Creates layout/edges.shp and layout/nodes.shp with:
     - phase_intro, year_intro: When each edge/node was first installed
     - num_repl: Number of replacements
     - cost_USD: Total cost across all phases
-    - strategy: Optimization strategy (pre-size vs size-per-phase)
+    - strategy: Optimisation strategy (pre-size vs size-per-phase)
 
     :param locator: InputLocator object
     :param phases: List of phase dictionaries
