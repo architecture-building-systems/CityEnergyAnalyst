@@ -200,6 +200,7 @@ class TestSchemas(unittest.TestCase):
                     folder = method(**parameters)
                 except TypeError as e:
                     raise ValueError(f"Parameters found for {attrib}: {param_names}."
+                                     f"Missing {', '.join(set(param_names) - set(parameters.keys()))}."
                                      f"Add them to the test.") from e
                 if folder is None:
                     warnings.warn(f"{attrib} returned None, skipping...")
