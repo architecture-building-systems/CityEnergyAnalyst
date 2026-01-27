@@ -395,7 +395,6 @@ class RadiationCraxSection(Section):
     surrounding_geometry: float
     neglect_adjacent_buildings: bool
     neighbor_filter_altitude_angle: float
-    crax_bin_directory: str
     update_shadow_day: float
 
     @overload
@@ -420,8 +419,6 @@ class RadiationCraxSection(Section):
     def __getattr__(self, item: Literal["neglect_adjacent_buildings"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["neighbor_filter_altitude_angle"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["crax_bin_directory"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["update_shadow_day"]) -> float: ...
     def __getattr__(self, item: str) -> Any: ...
@@ -449,7 +446,6 @@ class RadiationSection(Section):
     rad_ds: float
     rad_dr: int
     rad_dp: int
-    daysim_bin_directory: str
     n_buildings_in_chunk: int
     write_sensor_data: bool
 
@@ -495,8 +491,6 @@ class RadiationSection(Section):
     def __getattr__(self, item: Literal["rad_dr"]) -> int: ...
     @overload
     def __getattr__(self, item: Literal["rad_dp"]) -> int: ...
-    @overload
-    def __getattr__(self, item: Literal["daysim_bin_directory"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["n_buildings_in_chunk"]) -> int: ...
     @overload
