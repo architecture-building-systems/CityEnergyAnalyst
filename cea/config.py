@@ -1156,20 +1156,23 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
-    def encode(self, value: list):
+    def encode(self, value: list[str] | str):
         """
         Validate and encode a list of network layout names.
         Raises ValueError if any network layout doesn't exist.
         """
-        if not isinstance(value, list):
-            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list, got {type(value)}.")
-
-        # Handle empty list
-        if len(value) == 0:
-            if self.nullable:
-                return ''
-            else:
+        if not len(value) and self.nullable:
+            return ''
+            
+        if isinstance(value, list):
+            # Handle empty list
+            if not len(value) and not self.nullable:
                 raise ValueError("At least one network layout is required.")
+        elif isinstance(value, str):
+            # Parse comma-separated string into list
+            value = parse_string_to_list(value)
+        else:
+            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list or str, got {type(value)}.")
 
         available_networks = self._get_available_networks()
 

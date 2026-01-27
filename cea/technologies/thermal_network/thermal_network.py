@@ -3796,12 +3796,6 @@ def main(config: cea.config.Configuration):
     network_names = config.thermal_network.network_name  # List (NetworkLayoutMultiChoiceParameter)
     multi_phase_mode = config.thermal_network_phasing.multi_phase_mode  # Boolean
 
-    # Normalize network_names to list
-    if isinstance(network_names, str):
-        network_names = [network_names] if network_names else []
-    elif not isinstance(network_names, list):
-        network_names = []
-
     num_networks = len(network_names)
 
     # Validate configuration and determine mode
