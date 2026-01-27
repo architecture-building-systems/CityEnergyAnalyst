@@ -5,8 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from cea.technologies import heatpumps
-from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_REF_SUP_0, T_C_REF_RE_0
 
 if TYPE_CHECKING:
