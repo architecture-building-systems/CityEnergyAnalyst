@@ -35,11 +35,10 @@ class CEADaySim:
     :param str daysim_dir: Directory where Daysim binaries are found
     """
 
-    def __init__(self, staging_path, daysim_dir, daysim_lib):
+    def __init__(self, staging_path, daysim_dir):
         self.common_inputs = os.path.join(staging_path, 'common_inputs')
         self.projects_dir = os.path.join(staging_path, 'projects')
         self.daysim_dir = daysim_dir
-        self.daysim_lib = daysim_lib
         self._create_folders()
 
         # Raw input files (radiance material and geometry)
@@ -66,7 +65,7 @@ class CEADaySim:
         :param str project_name: Name of Daysim project
         :return DaySimProject:
         """
-        return DaySimProject(project_name, self.projects_dir, self.daysim_dir, self.daysim_lib,
+        return DaySimProject(project_name, self.projects_dir, self.daysim_dir,
                              self.daysim_material_path, self.daysim_geometry_path, self.wea_weather_path,
                              self.site_info, self.daysim_shading_path)
 
@@ -100,13 +99,12 @@ class CEADaySim:
                     rad_file.write(tree_surface_rad.rad())
 
     @staticmethod
-    def run_cmd(cmd, daysim_dir, daysim_lib):
+    def run_cmd(cmd, daysim_dir):
         print(f'Running command `{cmd}`')
 
         # Add daysim directory to path
         env = {
             "PATH": f'{daysim_dir}{os.pathsep}{os.environ["PATH"]}',
-            "RAYPATH": daysim_lib
         }
 
         _cmd = shlex.split(cmd)
@@ -151,7 +149,7 @@ class CEADaySim:
         command = f'epw2wea "{epw_weather_path}" "{self.wea_weather_path}"'
 
         # get site information from stdout of epw2wea
-        epw2wea_result = self.run_cmd(command, self.daysim_dir, self.daysim_lib)
+        epw2wea_result = self.run_cmd(command, self.daysim_dir)
         site_headers = epw2wea_result
 
         epw2wea_output = site_headers.replace('\r', '')
@@ -180,11 +178,11 @@ class CEADaySim:
             hea_file.write(building_info)
 
         command1 = f'radfiles2daysim "{hea_path}" -g -m -d'
-        self.run_cmd(command1, self.daysim_dir, self.daysim_lib)
+        self.run_cmd(command1, self.daysim_dir)
 
 
 class DaySimProject(object):
-    def __init__(self, project_name, project_directory, daysim_bin_directory, daysim_lib_directory,
+    def __init__(self, project_name, project_directory, daysim_bin_directory,
                  daysim_material_path, daysim_geometry_path, wea_weather_path,
                  site_info, daysim_shading_path):
 
@@ -195,7 +193,6 @@ class DaySimProject(object):
         self.project_path = os.path.join(project_directory, project_name, "")
         self.tmp_directory = os.path.join(self.project_path, "tmp", "")
         self.daysim_bin_directory = os.path.join(daysim_bin_directory, "")
-        self.daysim_lib_directory = os.path.join(daysim_lib_directory)
 
         # Input files
         self.daysim_material_path = daysim_material_path
@@ -427,13 +424,13 @@ class DaySimProject(object):
         command2 = f'gen_dc "{self.hea_path}" -dif'
         command3 = f'gen_dc "{self.hea_path}" -paste'
 
-        CEADaySim.run_cmd(command1, self.daysim_bin_directory, self.daysim_lib_directory)
-        CEADaySim.run_cmd(command2, self.daysim_bin_directory, self.daysim_lib_directory)
-        CEADaySim.run_cmd(command3, self.daysim_bin_directory, self.daysim_lib_directory)
+        CEADaySim.run_cmd(command1, self.daysim_bin_directory)
+        CEADaySim.run_cmd(command2, self.daysim_bin_directory)
+        CEADaySim.run_cmd(command3, self.daysim_bin_directory)
 
     def execute_ds_illum(self):
         command1 = f'ds_illum "{self.hea_path}"'
-        CEADaySim.run_cmd(command1, self.daysim_bin_directory, self.daysim_lib_directory)
+        CEADaySim.run_cmd(command1, self.daysim_bin_directory)
 
     def eval_ill(self):
         """

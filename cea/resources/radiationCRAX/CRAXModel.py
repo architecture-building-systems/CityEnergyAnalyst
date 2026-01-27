@@ -2,7 +2,7 @@ import os
 import sys
 import shlex
 import subprocess
-from typing import Optional, Tuple
+from typing import Optional
 
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
@@ -139,10 +139,17 @@ class CRAX:
             raise RuntimeError(f"Error running radiation (exited with code {e.returncode}):\n{e.stderr}")
 
 
-def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
+def check_crax_exe_directory(path_hint: Optional[str] = None) -> str:
     """
-    Check the directory for required CRAX executables and return the path to the binaries (and optionally the libraries).
+    Check the directory for required CRAX executables and return the path to the binaries.
     If the required executables are not found, a ValueError is raised.
+
+    Checks locations in this order:
+    1. User-provided path hint (from config)
+    2. External tools package (cea_external_tools)
+
+    :param path_hint: Optional path to check first.
+    :return: Path to the directory containing CRAX executables.
     """
     print("Platform:", sys.platform)
 
@@ -156,40 +163,21 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
         for binary in REQUIRED_CRAX_BINARIES:
             expected = binary + (".exe" if sys.platform == "win32" else "")
             if expected not in files:
-                # print(f"Expected binary '{expected}' not found in {path}. Found: {files}")
                 return False
         return True
-
-    def contains_libs(path: str) -> bool:
-        """Check if the required library files exist in the given path."""
-        try:
-            libs = set(os.listdir(path))
-        except OSError:
-            return False
-        REQUIRED_LIBS = []  # Add necessary library files if required
-        return all(lib in libs for lib in REQUIRED_LIBS)
 
     # List of directories to check
     folders_to_check = []
     if path_hint:
         folders_to_check.append(path_hint)
 
-    # Check site-packages location first (where binaries are actually installed)
-    site_package_daysim = get_radiation_bin_path()
-    if site_package_daysim:
-        folders_to_check.append(site_package_daysim)
-
-    # Add predefined binary directories
-    base_path = os.path.join(os.path.dirname(__file__), "bin")
-    win32_path = os.path.join(base_path, "win32")
-    linux_path = os.path.join(base_path, "linux")
-    mac_path = os.path.join(base_path, "darwin")
-
-    folders_to_check.extend([win32_path, linux_path, mac_path])
+    # Check external tools package location (where binaries are installed)
+    external_tools_path = get_radiation_bin_path()
+    if external_tools_path:
+        folders_to_check.append(external_tools_path)
 
     # Normalize paths
     folders_to_check = [os.path.abspath(os.path.normpath(p)) for p in folders_to_check]
-    lib_path = None
 
     for possible_path in folders_to_check:
         if not os.path.isdir(possible_path):
@@ -197,25 +185,13 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> Tuple[str, Opti
             continue
 
         if contains_binaries(possible_path):
-            if sys.platform == "win32":
-                _lib_path = os.path.abspath(os.path.normpath(os.path.join(possible_path, "..", "lib")))
-                if contains_libs(_lib_path):
-                    lib_path = _lib_path
-                elif contains_libs(possible_path):
-                    lib_path = possible_path
             print(f"Found CRAX executables in: {possible_path}")
-            return possible_path, lib_path
+            return possible_path
         else:
             # Check 'bin' subdirectory if the main directory doesn't contain the binaries
             sub_bin = os.path.join(possible_path, "bin")
             if os.path.isdir(sub_bin) and contains_binaries(sub_bin):
-                if sys.platform == "win32":
-                    _lib_path = os.path.abspath(os.path.normpath(os.path.join(sub_bin, "..", "lib")))
-                    if contains_libs(_lib_path):
-                        lib_path = _lib_path
-                    elif contains_libs(sub_bin):
-                        lib_path = sub_bin
                 print(f"Found CRAX executables in subfolder: {sub_bin}")
-                return sub_bin, lib_path
+                return sub_bin
 
     raise ValueError("Could not find CRAX executables - checked these paths: {}".format(", ".join(folders_to_check)))

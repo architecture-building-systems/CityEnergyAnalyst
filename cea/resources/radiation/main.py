@@ -136,9 +136,8 @@ def main(config: cea.config.Configuration):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
-    daysim_bin_path, daysim_lib_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory)
+    daysim_bin_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory)
     print(f'Using Daysim binaries from path: {daysim_bin_path}')
-    print(f'Using Daysim data from path: {daysim_lib_path}')
 
     print("verifying geometry files")
     zone_path = locator.get_zone_geometry()
@@ -188,7 +187,7 @@ def main(config: cea.config.Configuration):
                                                        geometry_staging_location)
 
     daysim_staging_location = os.path.join(locator.get_temporary_folder(), 'cea_radiation')
-    cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path, daysim_lib_path)
+    cea_daysim = CEADaySim(daysim_staging_location, daysim_bin_path)
 
     # create radiance input files
     print("Creating radiance material file")

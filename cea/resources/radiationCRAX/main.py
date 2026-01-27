@@ -516,9 +516,9 @@ def main(config):
     calculate_sensor_data = content["calculate-sensor-data"]
     using_cea_sensor = content["using-cea-sensor"]
 
-    CRAX_bin_path, CRAX_lib_path = CRAXModel.check_crax_exe_directory(crax_bin_directory)
+    CRAX_bin_path = CRAXModel.check_crax_exe_directory(crax_bin_directory)
     # Create an instance of CRAXModel
-    CRAX_model = CRAXModel.CRAX(CRAX_bin_path, CRAX_lib_path)
+    CRAX_model = CRAXModel.CRAX(CRAX_bin_path)
 
     # FIXME: temp solution to get building surface area using cea method
     # if calculate_sensor_data or using_cea_sensor:
