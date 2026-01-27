@@ -141,7 +141,7 @@ def load_phases(config, locator, network_names: List[str]) -> List[Dict]:
 
         phases.append({
             'index': i + 1,
-            'name': f"phase{i+1}_{year}",
+            'name': f"phase{i+1}",
             'year': year,
             'network_name': network_name,
             'network_type': network_type,
@@ -815,7 +815,7 @@ def save_phasing_results(config, locator, phases: List[Dict],
     print("    - edges_timeline.csv")
     print("    - nodes_timeline.csv")
     print("    - layout/edges.shp, nodes.shp (timeline with optimisation metadata)")
-    print(f"    - phase1_{phases[0]['year']}/...phase{len(phases)}_{phases[-1]['year']}/ (single-phase structure)")
+    print(f"    - {phases[0]['network_name']}/...{phases[-1]['network_name']}/ (single-phase structure)")
 
 
 def save_phasing_summary(locator, phases: List[Dict],
@@ -1093,7 +1093,7 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
 
     Creates folder structure matching single-phase layout:
     phasing-plans/{plan-name}/{network-type}/
-        ├── phase1_2030/
+        ├── {network-name-1}/
         │   └── layout/
         │       ├── edges.shp (with optimised pipe_DN, action, cost)
         │       └── nodes.shp
@@ -1109,9 +1109,10 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
     for phase, phase_result in zip(phases, phase_results):
         phase_num = phase['index']
         year = phase['year']
+        network_name = phase['network_name']
 
         # Create layout folder inside phase folder (matching single-phase structure)
-        phase_folder_name = f"phase{phase_num}_{year}"
+        phase_folder_name = network_name
         phase_layout_folder = locator.get_thermal_network_phasing_plan_phase_layout_folder(
             network_type, phasing_plan_name, phase_folder_name
         )
@@ -1177,7 +1178,7 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
 
         nodes_gdf.to_file(locator.get_thermal_network_phase_nodes_shapefile(network_type, phasing_plan_name, phase_folder_name))
 
-    print(f"    - phase1_{phases[0]['year']}/layout/...phase{len(phases)}_{phases[-1]['year']}/layout/ (edges.shp with optimised DN)")
+    print(f"    - {phases[0]['network_name']}/layout/...{phases[-1]['network_name']}/layout/ (edges.shp with optimised DN)")
 
 
 def create_placeholder_substation_files(phase: Dict, phase_substation_folder: str,
@@ -1226,11 +1227,11 @@ def save_phase_substation_results(locator, phases: List[Dict], phase_results: Li
 
     Creates folder structure matching single-phase layout:
     phasing-plans/{plan-name}/{network-type}/
-        ├── phase1_2030/
+        ├── {network-name-1}/
         │   └── substation/
         │       ├── {network-type}_{network-name}_substation_{building}.csv
         │       └── ...
-        ├── phase2_2050/
+        ├── {network-name-2}/
         │   └── substation/
         └── ...
 
@@ -1241,12 +1242,10 @@ def save_phase_substation_results(locator, phases: List[Dict], phase_results: Li
     :param phasing_plan_name: Name of phasing plan
     """
     for phase, phase_result in zip(phases, phase_results):
-        phase_num = phase['index']
-        year = phase['year']
         network_name = phase['network_name']
 
         # Create substation folder inside phase folder (matching single-phase structure)
-        phase_folder_name = f"phase{phase_num}_{year}"
+        phase_folder_name = network_name
         phase_substation_folder = locator.get_thermal_network_phasing_plan_phase_substation_folder(
             network_type, phasing_plan_name, phase_folder_name
         )
@@ -1285,7 +1284,7 @@ def copy_phase_simulation_results(locator, phases: List[Dict], network_type: str
     Copy all simulation result files from single-phase outputs to phase-specific folders.
 
     Creates folder structure matching single-phase outputs:
-    phasing-plans/{plan-name}/{network-type}/phase1_2030/*.csv
+    phasing-plans/{plan-name}/{network-type}/{network-name}/*.csv
 
     :param locator: InputLocator object
     :param phases: List of phase dictionaries
@@ -1296,12 +1295,10 @@ def copy_phase_simulation_results(locator, phases: List[Dict], network_type: str
     import glob
 
     for phase in phases:
-        phase_num = phase['index']
-        year = phase['year']
         network_name = phase['network_name']
 
         # Create phase results folder
-        phase_folder_name = f"phase{phase_num}_{year}"
+        phase_folder_name = network_name
         phase_results_folder = locator.get_thermal_network_phasing_plan_phase_folder(
             network_type, phasing_plan_name, phase_folder_name
         )
