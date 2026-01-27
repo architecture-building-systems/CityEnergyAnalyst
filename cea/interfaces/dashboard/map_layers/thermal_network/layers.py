@@ -208,9 +208,6 @@ class ThermalNetworkMapLayer(MapLayer):
                     # Fallback if naming doesn't match expected pattern
                     phase_choices.append((phase, phase))
 
-            # Add timeline view option
-            phase_choices.append(('timeline', 'Timeline View (All Phases)'))
-
             logger.debug(f"Found {len(phase_choices)} phase choices for {plan_name}: {phase_choices}")
 
             # Return choices (values) and default (first phase)
@@ -437,7 +434,6 @@ class ThermalNetworkMapLayer(MapLayer):
 
             layout_path = None  # No potential layout for phasing plans
             massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
-            print(massflow_edges_path)
         else:
             # Regular single-phase network
             layout_path = self.locator.get_network_layout_shapefile(network_name)
