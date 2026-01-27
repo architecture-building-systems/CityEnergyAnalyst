@@ -571,9 +571,9 @@ def convert_code_to_name(list_codes):
     list_codes_alpha = [re.sub(r'\d+', '', item) for item in list_codes]
 
     # Map the cleaned codes to names using the dictionary
-    # If a code doesn't exist in the dictionary, keep the original code with digits
-    list_names = [dict_code_to_name[alpha] if alpha in dict_code_to_name else orig
-                  for alpha, orig in zip(list_codes_alpha, list_codes)]
+    # If a code doesn't exist in the dictionary, return 'UNKNOWN'
+    list_names = [dict_code_to_name[alpha] if alpha in dict_code_to_name else 'UNKNOWN'
+                  for alpha in list_codes_alpha]
 
     return list_names
 
