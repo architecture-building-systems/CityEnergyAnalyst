@@ -531,6 +531,7 @@ class DemandSection(Section):
     resolution_output: str
     use_dynamic_infiltration_calculation: bool
     overheating_warning: bool
+    retain_technical_results: bool
 
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
@@ -540,6 +541,8 @@ class DemandSection(Section):
     def __getattr__(self, item: Literal["use_dynamic_infiltration_calculation"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["overheating_warning"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["retain_technical_results"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class CostsSection(Section):

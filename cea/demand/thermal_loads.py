@@ -175,7 +175,7 @@ def calc_thermal_loads(building_name: str,
     # NOTE: calc_Ef() call removed - primary energy calculation moved to primary-energy module
 
     # WRITE SOLAR RESULTS
-    write_results(bpr, building_name, date_range, locator, resolution_outputs, tsd, debug)
+    write_results(bpr, building_name, date_range, locator, resolution_outputs, tsd, debug, config)
 
     return
 
@@ -187,11 +187,11 @@ def calc_QH_sys_QC_sys(tsd: TimeSeriesData) -> TimeSeriesData:
     return tsd
 
 
-def write_results(bpr: BuildingPropertiesRow, building_name, date, locator, resolution_outputs, tsd: TimeSeriesData, debug):
+def write_results(bpr: BuildingPropertiesRow, building_name, date, locator, resolution_outputs, tsd: TimeSeriesData, debug, config: Configuration):
     if resolution_outputs == 'hourly':
-        writer = demand_writers.HourlyDemandWriter()
+        writer = demand_writers.HourlyDemandWriter(retain_technical_results=config.demand.retain_technical_results)
     elif resolution_outputs == 'monthly':
-        writer = demand_writers.MonthlyDemandWriter()
+        writer = demand_writers.MonthlyDemandWriter(retain_technical_results=config.demand.retain_technical_results)
     else:
         raise Exception('error')
 
