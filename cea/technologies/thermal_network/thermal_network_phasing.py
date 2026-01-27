@@ -848,29 +848,28 @@ def save_phasing_summary(locator, phases: List[Dict],
                 num_replacements += 1
 
         summary_data.append({
-            'Phase': phase['index'],
-            'Name': phase['name'],
-            'Year': phase['year'],
-            'Network': phase['network_name'],
-            'Buildings': len(phase['buildings']),
-            'Edges': len(phase_result['edge_diameters']),
-            'Peak_Demand_kW': phase_result['total_demand_kw'],
-            'Plant_Peak_Thermal_kW': phase_result.get('plant_peak_thermal_kw', 0),
-            'Plant_Peak_Pumping_kW': phase_result.get('plant_peak_pumping_kw', 0),
-            'Plant_Annual_Thermal_MWh': phase_result.get('plant_annual_thermal_mwh', 0),
-            'Plant_Annual_Pumping_MWh': phase_result.get('plant_annual_pumping_mwh', 0),
-            'Install_Cost_USD2015': install_cost,
-            'Replace_Cost_USD2015': replace_cost,
-            'Total_Cost_USD2015': install_cost + replace_cost,
-            'Num_Installs': num_installs,
-            'Num_Replacements': num_replacements
+            'phase': phase['index'],
+            'year': phase['year'],
+            'network': phase['network_name'],
+            'buildings': len(phase['buildings']),
+            'edges': len(phase_result['edge_diameters']),
+            'peak_demand_kW': phase_result['total_demand_kw'],
+            'plant_peak_thermal_kW': phase_result.get('plant_peak_thermal_kw', 0),
+            'plant_peak_pumping_kW': phase_result.get('plant_peak_pumping_kw', 0),
+            'plant_annual_thermal_MWh': phase_result.get('plant_annual_thermal_mwh', 0),
+            'plant_annual_pumping_MWh': phase_result.get('plant_annual_pumping_mwh', 0),
+            'install_cost_USD2015': install_cost,
+            'replace_cost_USD2015': replace_cost,
+            'total_cost_USD2015': install_cost + replace_cost,
+            'num_installs': num_installs,
+            'num_replacements': num_replacements
         })
 
     df = pd.DataFrame(summary_data)
     # Round numeric columns to 2 decimal places
-    numeric_cols = ['Peak_Demand_kW', 'Plant_Peak_Thermal_kW', 'Plant_Peak_Pumping_kW',
-                    'Plant_Annual_Thermal_MWh', 'Plant_Annual_Pumping_MWh',
-                    'Install_Cost_USD2015', 'Replace_Cost_USD2015', 'Total_Cost_USD2015']
+    numeric_cols = ['peak_demand_kW', 'plant_peak_thermal_kW', 'plant_peak_pumping_kW',
+                    'plant_annual_thermal_MWh', 'plant_annual_pumping_MWh',
+                    'install_cost_USD2015', 'replace_cost_USD2015', 'total_cost_USD2015']
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
@@ -890,20 +889,20 @@ def save_pipe_sizing_decisions(locator, phases: List[Dict], sizing_decisions: Di
 
             phase_decision = decision[phase_key]
             decisions_data.append({
-                'Edge': edge_id,
-                'Phase': phase['index'],
-                'Year': phase['year'],
-                'Action': phase_decision['action'],
+                'edge': edge_id,
+                'phase': phase['index'],
+                'year': phase['year'],
+                'action': phase_decision['action'],
                 'DN': phase_decision['DN'],
-                'Old_DN': phase_decision.get('old_dn', 'n/a'),
-                'Cost_USD2015': phase_decision['cost'],
-                'Strategy': decision.get('strategy', 'n/a')
+                'old_DN': phase_decision.get('old_dn', 'n/a'),
+                'cost_USD2015': phase_decision['cost'],
+                'strategy': decision.get('strategy', 'n/a')
             })
 
     df = pd.DataFrame(decisions_data)
-    df = df.sort_values(['Edge', 'Phase'])
+    df = df.sort_values(['edge', 'phase'])
     # Round numeric columns to 2 decimal places
-    numeric_cols = ['DN', 'Cost_USD2015']
+    numeric_cols = ['DN', 'cost_USD2015']
     for col in numeric_cols:
         if col in df.columns:
             df[col] = df[col].round(2)
