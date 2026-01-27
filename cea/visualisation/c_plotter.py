@@ -42,6 +42,21 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     if column_name.endswith('_m2'):
         return f"{column_name} (Area)"
     
+    # Demand metric display names (check base column name for normalized versions)
+    demand_display_names = {
+        'E_sys_kWh': 'Electricity',
+        'Qcs_sys_kWh': 'Space Cooling',
+        'Qhs_sys_kWh': 'Space Heating',
+        'Qww_sys_kWh': 'Domestic Hot Water',
+        'QC_sys_kWh': 'Total Cooling',
+        'QH_sys_kWh': 'Total Heating',
+    }
+
+    # Check if this is a demand column (including normalized versions like E_sys_kWh/m2)
+    for cea_col, display_name in demand_display_names.items():
+        if column_name.startswith(cea_col):
+            return display_name
+
     # Solar surface mapping
     surface_mappings = {
         'roofs_top': 'roofs_top',
@@ -51,7 +66,7 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         'walls_west': 'walls_west',
         'total': 'total'
     }
-    
+
     # Check each surface mapping
     for col_pattern, user_name in surface_mappings.items():
         if col_pattern in column_name and user_name in y_metric_to_plot:
