@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from typing import Optional, NamedTuple, TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -36,18 +36,14 @@ class GridSize(NamedTuple):
     walls: int
 
 
-def check_daysim_bin_directory(path_hint: Optional[str] = None) -> str:
+def check_daysim_bin_directory() -> str:
     """
-    Check for the Daysim bin directory based on ``path_hint`` and return it on success.
+    Check for the Daysim bin directory and return it on success.
 
-    Checks locations in this order:
-    1. User-provided path hint (from config)
-    2. External tools package (cea_external_tools)
-    3. System paths (C:\\Daysim\\bin on Windows, /Daysim/bin on Linux for Docker)
+    Checks the external tools package (cea_external_tools) for binaries.
 
-    If the binaries can't be found anywhere, raise an exception.
+    If the binaries can't be found, raise an exception.
 
-    :param str path_hint: The path to check first, according to the `cea.config` file.
     :return: bin_path containing the Daysim binaries - otherwise an exception occurs.
     """
 
@@ -60,33 +56,22 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None) -> str:
             return False
         return all(binary in found_binaries for binary in REQUIRED_BINARIES)
 
-    folders_to_check = []
-    if path_hint is not None:
-        folders_to_check.append(path_hint)
-
     # Check external tools package location (where binaries are installed)
     external_tools_path = get_radiation_bin_path()
-    if external_tools_path:
-        folders_to_check.append(external_tools_path)
-
-    # Expand paths
-    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
-
-    for possible_path in folders_to_check:
-        if not contains_binaries(possible_path):
-            continue
+    if external_tools_path and contains_binaries(external_tools_path):
+        bin_path = os.path.abspath(os.path.normpath(os.path.normcase(external_tools_path)))
 
         if sys.platform == "darwin":
             # Remove unidentified developer warning when running binaries on mac
             for binary in REQUIRED_BINARIES:
-                binary_path = os.path.join(possible_path, binary)
+                binary_path = os.path.join(bin_path, binary)
                 result = subprocess.run(["xattr", "-l", binary_path], capture_output=True)
                 if "com.apple.quarantine" in result.stdout.decode('utf-8'):
                     subprocess.run(["xattr", "-d", "com.apple.quarantine", binary_path])
 
-        return str(possible_path)
+        return str(bin_path)
 
-    raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
+    raise ValueError("Could not find Daysim binaries. Please install cea-external-tools package.")
 
 
 def create_sensor_input_file(rad, chunk_n):

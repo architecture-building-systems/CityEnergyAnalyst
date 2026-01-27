@@ -1,8 +1,6 @@
 import os
 import sys
-import shlex
 import subprocess
-from typing import Optional
 
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
@@ -32,47 +30,14 @@ class CRAX:
     The outputs are handled internally by the executables.
     """
 
-    def __init__(self, crax_exe_dir: str, crax_lib_dir: Optional[str] = None):
+    def __init__(self, crax_exe_dir: str):
         """
         Initialize the CRAXModel.
         :param crax_exe_dir: Directory where the CRAX executables are located.
-        :param crax_lib_dir: Optional directory for CRAX libraries (if needed by the executables).
         """
         self.crax_exe_dir = crax_exe_dir
-        self.crax_lib_dir = crax_lib_dir
         self.is_windows = sys.platform == "win32"
         self.is_mac = sys.platform == "darwin"
-
-    @staticmethod
-    def run_cmd(cmd: str, exe_dir: str, lib_dir: Optional[str] = None) -> str:
-        """
-        Run a command using subprocess with the given executable directory and environment settings.
-
-        :param cmd: Command string to execute.
-        :param exe_dir: Directory where the executable is located.
-        :param lib_dir: Optional directory for libraries.
-        :return: The standard output of the command.
-        """
-        print(f"Running command: {cmd}")
-        # Set up environment variables
-        env = os.environ.copy()
-        if lib_dir:
-            env["CRAX_LIB"] = lib_dir
-
-        # Split the command into arguments
-        parts = shlex.split(cmd)
-        # On Windows, prepend the executable directory to the executable name
-        if sys.platform == "win32":
-            parts[0] = os.path.join(exe_dir, parts[0])
-        process = subprocess.run(parts, capture_output=True, env=env)
-        output = process.stdout.decode("utf-8")
-        print(output)
-
-        if process.returncode != 0:
-            error_output = process.stderr.decode("utf-8")
-            print(error_output)
-            raise subprocess.CalledProcessError(process.returncode, cmd)
-        return output
 
     def run_mesh_generation(self, json_file: str):
         """
@@ -139,16 +104,13 @@ class CRAX:
             raise RuntimeError(f"Error running radiation (exited with code {e.returncode}):\n{e.stderr}")
 
 
-def check_crax_exe_directory(path_hint: Optional[str] = None) -> str:
+def check_crax_exe_directory() -> str:
     """
     Check the directory for required CRAX executables and return the path to the binaries.
     If the required executables are not found, a ValueError is raised.
 
-    Checks locations in this order:
-    1. User-provided path hint (from config)
-    2. External tools package (cea_external_tools)
+    Checks the external tools package (cea_external_tools) for binaries.
 
-    :param path_hint: Optional path to check first.
     :return: Path to the directory containing CRAX executables.
     """
     print("Platform:", sys.platform)
@@ -166,32 +128,19 @@ def check_crax_exe_directory(path_hint: Optional[str] = None) -> str:
                 return False
         return True
 
-    # List of directories to check
-    folders_to_check = []
-    if path_hint:
-        folders_to_check.append(path_hint)
-
     # Check external tools package location (where binaries are installed)
     external_tools_path = get_radiation_bin_path()
     if external_tools_path:
-        folders_to_check.append(external_tools_path)
+        bin_path = os.path.abspath(os.path.normpath(external_tools_path))
 
-    # Normalize paths
-    folders_to_check = [os.path.abspath(os.path.normpath(p)) for p in folders_to_check]
+        if os.path.isdir(bin_path) and contains_binaries(bin_path):
+            print(f"Found CRAX executables in: {bin_path}")
+            return bin_path
 
-    for possible_path in folders_to_check:
-        if not os.path.isdir(possible_path):
-            print(f"{possible_path} is not a directory.")
-            continue
+        # Check 'bin' subdirectory if the main directory doesn't contain the binaries
+        sub_bin = os.path.join(bin_path, "bin")
+        if os.path.isdir(sub_bin) and contains_binaries(sub_bin):
+            print(f"Found CRAX executables in subfolder: {sub_bin}")
+            return sub_bin
 
-        if contains_binaries(possible_path):
-            print(f"Found CRAX executables in: {possible_path}")
-            return possible_path
-        else:
-            # Check 'bin' subdirectory if the main directory doesn't contain the binaries
-            sub_bin = os.path.join(possible_path, "bin")
-            if os.path.isdir(sub_bin) and contains_binaries(sub_bin):
-                print(f"Found CRAX executables in subfolder: {sub_bin}")
-                return sub_bin
-
-    raise ValueError("Could not find CRAX executables - checked these paths: {}".format(", ".join(folders_to_check)))
+    raise ValueError("Could not find CRAX executables. Please install cea-external-tools package.")

@@ -136,7 +136,7 @@ def main(config: cea.config.Configuration):
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
 
-    daysim_bin_path = daysim.check_daysim_bin_directory(config.radiation.daysim_bin_directory)
+    daysim_bin_path = daysim.check_daysim_bin_directory()
     print(f'Using Daysim binaries from path: {daysim_bin_path}')
 
     print("verifying geometry files")
