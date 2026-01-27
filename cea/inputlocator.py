@@ -1233,14 +1233,24 @@ class InputLocator(object):
         return os.path.join(self.get_thermal_network_folder(), 'phasing-plans')
 
     def get_thermal_network_phasing_plan_phases(self, network_type, plan_name):
-        """Get list of phase folders for a phasing plan"""
+        """Get list of phase folders for a phasing plan, sorted by phase index"""
         plan_folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
         phases = []
         if os.path.exists(plan_folder):
             for item in os.listdir(plan_folder):
                 if item.startswith('phase') and '_' in item and os.path.isdir(os.path.join(plan_folder, item)):
                     phases.append(item)
-        return sorted(phases)
+
+        def get_phase_index(phase_name):
+            """Extract numeric index from phase folder name (e.g., 'phase10_2030' -> 10)"""
+            try:
+                # Extract the part between 'phase' and '_'
+                index_str = phase_name[5:phase_name.index('_')]
+                return int(index_str)
+            except (ValueError, IndexError):
+                return 0
+
+        return sorted(phases, key=get_phase_index)
 
     def get_thermal_network_phase_edges_shapefile(self, network_type, plan_name, phase):
         """Get edges shapefile for specific phase or timeline view
