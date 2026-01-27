@@ -81,6 +81,27 @@ class ThermalNetworkMapLayer(MapLayer):
         layout_path = self.locator.get_network_layout_shapefile(network_name)
         nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
         return os.path.exists(layout_path) and os.path.exists(nodes_path)
+    
+    def _get_thermal_network_phasing_plan_phases(self, network_type, plan_name):
+        """Get list of phase folders for a phasing plan, sorted by phase index"""
+        plan_folder = self.locator.get_thermal_network_phasing_folder(network_type, plan_name)
+        phases = []
+        if os.path.exists(plan_folder):
+            for item in os.listdir(plan_folder):
+                # FIXME: Read phase names from phasing_summary.csv instead
+                if os.path.isdir(os.path.join(plan_folder, item)) and item != "layout":
+                    phases.append(item)
+
+        def get_phase_index(phase_name):
+            """Extract numeric index from phase folder name (e.g., 'phase10_2030' -> 10)"""
+            try:
+                # Extract the part between 'phase' and '_'
+                index_str = phase_name[5:phase_name.index('_')]
+                return int(index_str)
+            except (ValueError, IndexError):
+                return 0
+
+        return sorted(phases, key=get_phase_index)
 
     def _get_network_names(self, parameters):
         """Get list of available network layouts for the selected network type"""
@@ -125,7 +146,7 @@ class ThermalNetworkMapLayer(MapLayer):
                         continue
 
                     # Check if it has valid phases
-                    phases = self.locator.get_thermal_network_phasing_plan_phases(network_type, plan_name)
+                    phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
                     if phases:
                         # Add with (Multi-Phase) suffix to distinguish from regular networks
                         display_name = f"{plan_name} (Multi-Phase)"
@@ -167,7 +188,7 @@ class ThermalNetworkMapLayer(MapLayer):
             plan_name = network_name.replace(' (Multi-Phase)', '')
 
             # Get available phases
-            phases = self.locator.get_thermal_network_phasing_plan_phases(network_type, plan_name)
+            phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
 
             if not phases:
                 logger.debug(f"No phases found for plan {plan_name}")
@@ -393,7 +414,7 @@ class ThermalNetworkMapLayer(MapLayer):
             # For enrichment data, use the phase-specific folder (or last phase for timeline)
             if phase == 'timeline':
                 # Get the last phase for enrichment data in timeline view
-                phases = self.locator.get_thermal_network_phasing_plan_phases(network_type, plan_name)
+                phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
                 enrichment_network_name = phases[-1] if phases else None
                 # Need to construct path to last phase folder
                 if enrichment_network_name:
@@ -415,7 +436,8 @@ class ThermalNetworkMapLayer(MapLayer):
                 )
 
             layout_path = None  # No potential layout for phasing plans
-            massflow_edges_path = None  # Will be constructed later if needed
+            massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
+            print(massflow_edges_path)
         else:
             # Regular single-phase network
             layout_path = self.locator.get_network_layout_shapefile(network_name)
@@ -465,7 +487,7 @@ class ThermalNetworkMapLayer(MapLayer):
         nodes_df = gpd.read_file(nodes_path).to_crs(crs).set_index("name")
 
         # Only load massflow data if it exists
-        if not is_phasing_plan and massflow_edges_path and os.path.exists(massflow_edges_path):
+        if massflow_edges_path and os.path.exists(massflow_edges_path):
             logger.debug(f"Loading massflow from {massflow_edges_path}")
             massflow_edges_df = pd.read_csv(massflow_edges_path)
             edges_df["peak_mass_flow"] = massflow_edges_df.max().round(1)

@@ -1232,26 +1232,6 @@ class InputLocator(object):
         """scenario/outputs/data/thermal-network/phasing-plans/"""
         return os.path.join(self.get_thermal_network_folder(), 'phasing-plans')
 
-    def get_thermal_network_phasing_plan_phases(self, network_type, plan_name):
-        """Get list of phase folders for a phasing plan, sorted by phase index"""
-        plan_folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
-        phases = []
-        if os.path.exists(plan_folder):
-            for item in os.listdir(plan_folder):
-                if item.startswith('phase') and '_' in item and os.path.isdir(os.path.join(plan_folder, item)):
-                    phases.append(item)
-
-        def get_phase_index(phase_name):
-            """Extract numeric index from phase folder name (e.g., 'phase10_2030' -> 10)"""
-            try:
-                # Extract the part between 'phase' and '_'
-                index_str = phase_name[5:phase_name.index('_')]
-                return int(index_str)
-            except (ValueError, IndexError):
-                return 0
-
-        return sorted(phases, key=get_phase_index)
-
     def get_thermal_network_phase_edges_shapefile(self, network_type, plan_name, phase):
         """Get edges shapefile for specific phase or timeline view
 
@@ -1288,11 +1268,11 @@ class InputLocator(object):
             'layout'
         )
 
-    def get_thermal_network_phasing_plan_phase_folder(self, network_type, plan_name, phase):
+    def get_thermal_network_phasing_plan_phase_folder(self, network_type, plan_name, phase) -> str:
         """Get folder for specific phase
 
         :param phase: Phase folder name (e.g., 'phase1_2030')
-        Returns: phasing-plans/{plan-name}/{network-type}/phase1_2030/
+        Returns: phasing-plans/{plan-name}/{network-type}/{phase}/
         """
         return os.path.join(
             self.get_thermal_network_phasing_folder(network_type, plan_name),
@@ -1349,6 +1329,13 @@ class InputLocator(object):
         return os.path.join(
             self.get_thermal_network_phasing_folder(network_type, plan_name),
             'nodes_timeline.csv'
+        )
+
+    def get_thermal_network_phasing_massflow_edges_file(self, network_type, phase, plan_name):
+        """phasing-plans/{plan-name}/{network_type}/{phase}/{network_type}_{phase}_massflow_edges_kgs.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
+            f"{network_type}_{phase}_massflow_edges_kgs.csv"
         )
 
     def get_networks_folder(self):
