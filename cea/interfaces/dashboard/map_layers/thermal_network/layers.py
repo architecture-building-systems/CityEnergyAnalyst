@@ -189,30 +189,27 @@ class ThermalNetworkMapLayer(MapLayer):
 
             # Get available phases
             phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
+            phase_summary = pd.read_csv(self.locator.get_thermal_network_phasing_summary_file(network_type, plan_name))
+
+            if "network" not in phase_summary.columns or "year" not in phase_summary.columns:
+                raise ValueError(f"Phase summary is missing required columns ('network', 'year') for plan {plan_name}")
+            
+            phase_summary = phase_summary.set_index('network')
 
             if not phases:
                 logger.debug(f"No phases found for plan {plan_name}")
                 return {"choices": [], "default": ""}
 
             # Create human-readable labels
-            phase_choices = []
+            choices = []
             for phase in phases:
-                # Extract year from phase folder name (e.g., "phase1_2030" → "Phase 1 - 2030")
-                parts = phase.split('_')
-                if len(parts) == 2:
-                    phase_num = parts[0].replace('phase', '')
-                    year = parts[1]
-                    label = f"Phase {phase_num} - {year}"
-                    phase_choices.append((phase, label))
-                else:
-                    # Fallback if naming doesn't match expected pattern
-                    phase_choices.append((phase, phase))
+                # Extract year from phase to construct label (e.g., "2030 - phase name")
+                year = phase_summary.loc[phase, 'year'] if phase in phase_summary.index else ''
+                choices.append({"value": phase, "label": f"{year} - {phase}" })
 
-            logger.debug(f"Found {len(phase_choices)} phase choices for {plan_name}: {phase_choices}")
+            logger.debug(f"Found {len(choices)} phase choices for {plan_name}: {choices}")
 
-            # Return choices (values) and default (first phase)
-            choices = [value for value, label in phase_choices]
-            return {"choices": choices, "default": phases[0] if phases else "timeline"}
+            return {"choices": sorted(choices, key=lambda x: x["label"]), "default": phases[0] if phases else ""}
 
         except Exception as e:
             logger.error(f"Error in _get_phase_choices: {e}")
