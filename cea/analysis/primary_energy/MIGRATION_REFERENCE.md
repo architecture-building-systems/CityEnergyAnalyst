@@ -3,7 +3,7 @@
 **Purpose:** This document captures the logic from the old demand module's primary energy calculations before deletion. Use this as a reference when implementing the new primary-energy module.
 
 **Date Created:** 2026-01-26
-**Date Updated:** 2026-01-26 (added calc_Qwwf, calc_Ef)
+**Date Updated:** 2026-01-27 (added backward compatibility validation strategy)
 **Original Locations:**
 - `cea/demand/thermal_loads.py` (lines 214-319) - calc_Qcs_sys(), calc_Qhs_sys()
 - `cea/demand/hotwater_loads.py` (lines 156-234) - calc_Qwwf()
@@ -567,6 +567,163 @@ When implementing primary-energy module:
 - [ ] Update schema in `schemas.yml`
 - [ ] Add InputLocator methods
 - [ ] Register in `scripts.yml`
+
+---
+
+## Backward Compatibility: Database Validation
+
+### Problem
+
+Primary energy calculation requires `primary_components`, `secondary_components`, and `tertiary_components` columns in SUPPLY assemblies (added in v4.0). Users with older databases or custom databases may be missing these columns.
+
+### Strategy: Lazy Validation with Auto-Repair
+
+**Design principles:**
+1. **Demand calculation continues working** - Only needs `scale` (already exists)
+2. **Primary energy validates on first use** - Check when user runs primary energy feature
+3. **Auto-repair + helpful guidance** - Add empty placeholder columns, show clear error
+
+### Implementation Reference
+
+Add this validation function to the primary energy module:
+
+```python
+def validate_supply_database_for_primary_energy(locator):
+    """
+    Validate that SUPPLY assemblies have required columns for primary energy calculation.
+    Auto-repairs missing columns with placeholders and provides helpful error messages.
+
+    Called at the start of primary energy calculation to ensure database is ready.
+
+    :param locator: InputLocator object
+    :raises ValueError: If required columns are missing (after auto-repair)
+    """
+    import pandas as pd
+
+    supply_files = {
+        'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating(),
+        'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling(),
+        'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water(),
+        'SUPPLY_ELECTRICITY': locator.get_database_assemblies_supply_electricity(),
+    }
+
+    required_columns = ['primary_components', 'secondary_components', 'tertiary_components']
+    issues = {}
+
+    # Check each supply file for missing columns
+    for name, filepath in supply_files.items():
+        df = pd.read_csv(filepath)
+        missing = [col for col in required_columns if col not in df.columns]
+
+        if missing:
+            # Auto-repair: Add empty columns with '-' placeholder (CEA convention for "none")
+            for col in missing:
+                df[col] = '-'
+            df.to_csv(filepath, index=False)
+            issues[name] = (filepath, missing)
+
+    if issues:
+        # Format helpful error message with two solution paths
+        error_msg = (
+            "⚠️  Primary energy calculation requires component information in SUPPLY assemblies.\n\n"
+            "The following files were missing required columns and have been updated with placeholders:\n\n"
+        )
+
+        for name, (filepath, missing) in issues.items():
+            error_msg += f"  ❌ {name}\n"
+            error_msg += f"     File: {filepath}\n"
+            error_msg += f"     Missing: {', '.join(missing)}\n"
+            error_msg += f"     Status: Empty columns added (values set to '-')\n\n"
+
+        error_msg += (
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "To fix this properly, choose one option:\n\n"
+            "  Option 1: Using default CEA database (Recommended)\n"
+            "  ─────────────────────────────────────────────────\n"
+            "  Run Database Helper to reload the default database:\n"
+            "    $ cea database-helper --save\n\n"
+            "  This will restore the complete database with all component information.\n\n"
+
+            "  Option 2: Using custom database\n"
+            "  ────────────────────────────────\n"
+            "  Manually fill in the component columns for each supply assembly.\n\n"
+            "  Column meanings:\n"
+            "    - primary_components:   Main equipment (e.g., 'BO5' for boiler, 'CH2' for chiller)\n"
+            "    - secondary_components: Supporting equipment (e.g., pumps, heat exchangers)\n"
+            "    - tertiary_components:  Additional equipment (e.g., cooling towers)\n"
+            "    - Use '-' for no component\n\n"
+
+            "  Example from default database:\n"
+            "    SUPPLY_HOTWATER_AS1: primary='BO2', secondary='-', tertiary='-'\n"
+            "    SUPPLY_COOLING_AS2:  primary='CH2', secondary='-', tertiary='CT1'\n\n"
+
+            "  Component codes reference:\n"
+            "    - Boilers:       databases/CH/COMPONENTS/CONVERSION/BOILERS.csv\n"
+            "    - Chillers:      databases/CH/COMPONENTS/CONVERSION/CHILLERS.csv\n"
+            "    - Heat Pumps:    databases/CH/COMPONENTS/CONVERSION/HEATPUMPS.csv\n"
+            "    - Cooling Towers: databases/CH/COMPONENTS/CONVERSION/COOLING_TOWERS.csv\n\n"
+
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "After fixing, re-run the primary energy calculation.\n"
+        )
+
+        raise ValueError(error_msg)
+
+
+def main(config):
+    """Primary energy calculation entry point."""
+    locator = InputLocator(config.scenario)
+
+    # Validate database before any calculations
+    # This will auto-repair and raise helpful error if components are missing
+    validate_supply_database_for_primary_energy(locator)
+
+    # Proceed with primary energy calculations
+    # ...
+```
+
+### Why This Approach Works
+
+✅ **Non-breaking for demand users** - Validation only triggers when using primary energy feature
+✅ **Auto-repair safety net** - Adds placeholder columns to prevent hard crashes
+✅ **Clear user guidance** - Two distinct paths based on database origin
+✅ **Lazy validation** - Only checks when feature is actually used
+✅ **Maintains integrity** - Forces users to provide proper values before calculations run
+
+### Testing
+
+Create test case to verify validation:
+
+```python
+def test_validate_supply_database_missing_components(locator, monkeypatch):
+    """Test that validation detects and repairs missing component columns."""
+    # Remove primary_components column from SUPPLY_HOTWATER.csv
+    supply_file = locator.get_database_assemblies_supply_hot_water()
+    df = pd.read_csv(supply_file)
+    df = df.drop(columns=['primary_components'])
+    df.to_csv(supply_file, index=False)
+
+    # Validation should auto-repair and raise informative error
+    with pytest.raises(ValueError, match="SUPPLY_HOTWATER.*missing required columns"):
+        validate_supply_database_for_primary_energy(locator)
+
+    # Verify column was added with placeholder
+    df_repaired = pd.read_csv(supply_file)
+    assert 'primary_components' in df_repaired.columns
+    assert (df_repaired['primary_components'] == '-').all()
+```
+
+### Migration Timeline
+
+**v4.0-beta.6 (Current):**
+- Primary energy removed from demand module ✅
+- SUPPLY assemblies updated with component columns ✅
+- Documentation added ✅
+
+**v4.0-beta.7+ (When primary energy feature is implemented):**
+- Add `validate_supply_database_for_primary_energy()` function
+- Call validation at start of primary energy calculation
+- Add test cases for validation logic
 
 ---
 
