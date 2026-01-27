@@ -407,6 +407,11 @@ def verify_components_exist(scenario, assemblies_item, list_assemblies_subset_it
     for subset_item in list_assemblies_subset_items:
         if subset_item not in verify_file_exists_4_db(scenario, [assemblies_item], dict_ASSEMBLIES_COMPONENTS[assemblies_item]):
             required_df = pd.read_csv(path_to_db_file_4(scenario, assemblies_item, subset_item))
+            # Check if all required columns exist (backward compatibility for old database formats)
+            missing_cols = [col for col in list_assemblies_identifier_column_names if col not in required_df.columns]
+            if missing_cols:
+                # Skip validation if columns don't exist (old database format)
+                continue
             required_codes.extend(np.unique(required_df[list_assemblies_identifier_column_names].values).tolist())
 
     # Identify missing components
@@ -566,8 +571,9 @@ def convert_code_to_name(list_codes):
     list_codes_alpha = [re.sub(r'\d+', '', item) for item in list_codes]
 
     # Map the cleaned codes to names using the dictionary
-    # If a code doesn't exist in the dictionary, keep the original code
-    list_names = [dict_code_to_name[item] if item in dict_code_to_name else item for item in list_codes_alpha]
+    # If a code doesn't exist in the dictionary, keep the original code with digits
+    list_names = [dict_code_to_name[alpha] if alpha in dict_code_to_name else orig
+                  for alpha, orig in zip(list_codes_alpha, list_codes)]
 
     return list_names
 
@@ -773,7 +779,8 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_files_csv_feedstocks_components)
 
         list_feedstocks_db = get_csv_filenames(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'))
-        dict_missing_feedstocks = verify_components_exist(scenario, 'SUPPLY', SUPPLY_ASSEMBLIES, ['feedstock'], 'FEEDSTOCKS_LIBRARY')
+        # Only SUPPLY_ELECTRICITY uses feedstock column; others use component references
+        dict_missing_feedstocks = verify_components_exist(scenario, 'SUPPLY', ['SUPPLY_ELECTRICITY'], ['feedstock'], 'FEEDSTOCKS_LIBRARY')
         if dict_missing_feedstocks:
             list_missing_names_feedstocks = list(dict_missing_feedstocks.keys())
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_names_feedstocks)

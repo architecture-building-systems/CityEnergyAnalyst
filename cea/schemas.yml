@@ -2646,11 +2646,6 @@ get_database_assemblies_supply_cooling:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: description
         type: string
@@ -2698,11 +2693,6 @@ get_database_assemblies_supply_electricity:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: Description of Type of all in one system
         type: string
@@ -2760,11 +2750,6 @@ get_database_assemblies_supply_heating:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: Description of Type of all in one system
         type: string
@@ -2812,11 +2797,6 @@ get_database_assemblies_supply_hot_water:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: Description of Type of all in one system
         type: string
@@ -2838,11 +2818,6 @@ get_database_assemblies_supply_hot_water:
         description: codes of components installed in the tertiary supply system category (i.e. rejection components)
         type: string
         unit: NA
-      efficiency:
-        description: efficiency of the all in one system
-        type: float
-        unit: '[-]'
-        min: 0.0
       reference:
         description: Reference of the data
         nullable: true
