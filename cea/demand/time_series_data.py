@@ -151,34 +151,8 @@ class ElectricalLoads:
     Ev: npt.NDArray[np.float64] = field(default_factory=empty_array)
     """End-use electricity consumption of electric vehicles [Wh]"""
 
-    GRID: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption [Wh]"""
-
-    GRID_a: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for appliances [Wh]"""
-
-    GRID_l: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for lighting [Wh]"""
-
-    GRID_v: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for electric vehicles [Wh]"""
-
-    GRID_ve: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for ventilation systems [Wh]"""
-
-    GRID_data: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for data centers [Wh]"""
-
-    GRID_pro: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for industrial processes [Wh]"""
-
-    GRID_aux: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Grid electricity consumption for auxiliary loads [Wh]"""
-
-    # NOTE: Primary energy GRID fields (GRID_ww, GRID_hs, GRID_cs, GRID_cdata, GRID_cre) removed - moved to primary-energy module
-
-    PV: npt.NDArray[np.float64] = field(default_factory=empty_array)
-    """Photovoltaic electricity consumption [Wh]"""
+    # NOTE: GRID_* fields removed - primary energy mapping (end-use to grid) moved to primary-energy module
+    # NOTE: PV field removed - electricity generation is not end-use demand
 
 
 

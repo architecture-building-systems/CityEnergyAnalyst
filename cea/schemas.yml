@@ -10982,41 +10982,6 @@ get_demand_results_file:
         type: float
         unit: '[kWh]'
         min: 0.0
-      GRID_a_kWh:
-        description: Grid electricity consumption for appliances
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_aux_kWh:
-        description: Grid electricity consumption for auxiliary loads
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_data_kWh:
-        description: Grid electricity consumption for servers
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_kWh:
-        description: Grid total electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_l_kWh:
-        description: Grid electricity consumption for lighting
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_ve_kWh:
-        description: Grid electricity consumption for ventilation
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_pro_kWh:
-        description: Grid electricity consumption for industrial processes
-        type: float
-        unit: '[kWh]'
-        min: 0.0
       I_rad_kWh:
         description: Radiative heat loss
         type: float
@@ -11036,11 +11001,6 @@ get_demand_results_file:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: NA
-      PV_kWh:
-        description: PV electricity consumption
-        type: float
-        unit: '[kWh]'
-        min: 0.0
       QC_sys_kWh:
         description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
         type: float
@@ -14870,100 +14830,10 @@ get_optimization_substations_total_file:
         type: float
         unit: '[m2]'
         min: 0.0
-      GRID0_kW:
-        description: Nominal Grid electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_MWhyr:
-        description: Grid electricity consumption, GRID = GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_a0_kW:
-        description: Nominal grid electricity requirements for appliances
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_a_MWhyr:
-        description: Grid electricity requirements for appliances
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_aux0_kW:
-        description: Nominal grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_aux_MWhyr:
-        description: Grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_data0_kW:
-        description: Nominal grid electricity requirements for servers
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_data_MWhyr:
-        description: Grid electricity requirements for servers
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_l0_kW:
-        description: Nominal grid electricity consumption for lights
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_l_MWhyr:
-        description: Grid electricity requirements for lights
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_ve0_kW:
-        description: Nominal grid electricity consumption for ventilatioon
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_ve_MWhyr:
-        description: Grid electricity requirements for ventilatioon
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_v0_kW:
-        description: Nominal grid electricity consumption for electric vehicles
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_v_MWhyr:
-        description: Grid electricity requirements for electric vehicles
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_pro0_kW:
-        description: Nominal grid electricity requirements for industrial processes
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_pro_MWhyr:
-        description: Grid electricity requirements for industrial processes
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: NA
-      PV0_kW:
-        description: Nominal PV electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      PV_MWhyr:
-        description: PV electricity consumption
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       QC_sys0_kW:
         description: Nominal Total system cooling demand.
         type: float
@@ -16698,100 +16568,10 @@ get_total_demand:
         type: float
         unit: '[m2]'
         min: 0.0
-      GRID0_kW:
-        description: Nominal Grid electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_MWhyr:
-        description: Grid electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_a0_kW:
-        description: Nominal grid electricity requirements for appliances
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_a_MWhyr:
-        description: Grid electricity requirements for appliances
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_aux0_kW:
-        description: Nominal grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_aux_MWhyr:
-        description: Grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_data0_kW:
-        description: Nominal grid electricity requirements for servers
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_data_MWhyr:
-        description: Grid electricity requirements for servers
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_l0_kW:
-        description: Nominal grid electricity consumption for lights
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_l_MWhyr:
-        description: Grid electricity requirements for lights
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_v0_kW:
-        description: Nominal grid electricity consumption for electric vehicles
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_v_MWhyr:
-        description: Grid electricity requirements for electric vehicles
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_ve0_kW:
-        description: Nominal grid electricity consumption for ventilation
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_ve_MWhyr:
-        description: Grid electricity requirements for ventilation
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_pro0_kW:
-        description: Nominal grid electricity requirements for industrial processes
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_pro_MWhyr:
-        description: Grid electricity requirements for industrial processes
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: NA
-      PV0_kW:
-        description: Nominal PV electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      PV_MWhyr:
-        description: PV electricity consumption
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       QC_sys0_kW:
         description: Nominal Total system cooling demand.
         type: float
