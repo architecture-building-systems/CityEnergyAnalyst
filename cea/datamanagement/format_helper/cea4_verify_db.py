@@ -729,7 +729,7 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
     #5. verify columns and values in .csv files for components - conversion
     if not dict_missing_db['CONVERSION']:
         list_conversion_db = get_csv_filenames(path_to_db_file_4(scenario, 'CONVERSION'))
-        dict_missing_conversion = verify_components_exist(scenario, 'SUPPLY', ['SUPPLY_HEATING', 'SUPPLY_COOLING'], ['primary_components', 'secondary_components', 'tertiary_components'], 'CONVERSION', code_to_name=True)
+        dict_missing_conversion = verify_components_exist(scenario, 'SUPPLY', ['SUPPLY_HEATING', 'SUPPLY_COOLING', 'SUPPLY_HOTWATER'], ['primary_components', 'secondary_components', 'tertiary_components'], 'CONVERSION', code_to_name=True)
         if dict_missing_conversion:
             list_missing_names_conversion = list(dict_missing_conversion.keys())
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_names_conversion)
