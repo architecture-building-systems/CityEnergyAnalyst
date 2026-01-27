@@ -2655,23 +2655,6 @@ get_database_assemblies_supply_cooling:
         description: description
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Code of cooling supply assembly
         primary: true
@@ -2687,28 +2670,6 @@ get_database_assemblies_supply_cooling:
         unit: NA
       tertiary_components:
         description: codes of components installed in the tertiary supply system category (i.e. rejection components)
-        type: string
-        unit: NA
-      efficiency:
-        description: efficiency of the all in one system
-        type: float
-        unit: '[-]'
-        min: 0.0
-      feedstock:
-        choice:
-          values:
-          - NONE
-          - NATURALGAS
-          - BIOGAS
-          - GRID
-          - SOLAR
-          - OIL
-          - COAL
-          - WOOD
-          - WETBIOMASS
-          - DRYBIOMASS
-          - HYDROGEN
-        description: feedstock used by the the all in one system (refers to the FEEDSTOCK database)
         type: string
         unit: NA
       reference:
@@ -2746,23 +2707,6 @@ get_database_assemblies_supply_electricity:
         description: Description of Type of all in one system
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Type of all in one system
         primary: true
@@ -2825,23 +2769,6 @@ get_database_assemblies_supply_heating:
         description: Description of Type of all in one system
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Type of all in one system
         primary: true
@@ -2857,28 +2784,6 @@ get_database_assemblies_supply_heating:
         unit: NA
       tertiary_components:
         description: codes of components installed in the tertiary supply system category (i.e. rejection components)
-        type: string
-        unit: NA
-      efficiency:
-        description: efficiency of the all in one system
-        type: float
-        unit: '[-]'
-        min: 0.0
-      feedstock:
-        choice:
-          values:
-          - NONE
-          - NATURALGAS
-          - BIOGAS
-          - GRID
-          - SOLAR
-          - OIL
-          - COAL
-          - WOOD
-          - WETBIOMASS
-          - DRYBIOMASS
-          - HYDROGEN
-        description: feedstock used by the the all in one system (refers to the FEEDSTOCK database)
         type: string
         unit: NA
       reference:
@@ -2916,26 +2821,21 @@ get_database_assemblies_supply_hot_water:
         description: Description of Type of all in one system
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Type of all in one system
         primary: true
+        type: string
+        unit: NA
+      primary_components:
+        description: codes of components installed in the primary supply system category (i.e. main components)
+        type: string
+        unit: NA
+      secondary_components:
+        description: codes of components installed in the secondary supply system category (i.e. supply components)
+        type: string
+        unit: NA
+      tertiary_components:
+        description: codes of components installed in the tertiary supply system category (i.e. rejection components)
         type: string
         unit: NA
       efficiency:
@@ -2943,23 +2843,6 @@ get_database_assemblies_supply_hot_water:
         type: float
         unit: '[-]'
         min: 0.0
-      feedstock:
-        choice:
-          values:
-          - NONE
-          - NATURALGAS
-          - BIOGAS
-          - GRID
-          - SOLAR
-          - OIL
-          - COAL
-          - WOOD
-          - WETBIOMASS
-          - DRYBIOMASS
-          - HYDROGEN
-        description: feedstock used by the the all in one system (refers to the FEEDSTOCK database)
-        type: string
-        unit: NA
       reference:
         description: Reference of the data
         nullable: true
