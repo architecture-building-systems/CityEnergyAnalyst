@@ -77,7 +77,11 @@ def run_multi_phase(config: "Configuration", locator: "InputLocator", network_na
     if not phasing_plan_name:
         phasing_plan_name = network_names[0]
 
-    network_type = config.thermal_network_phasing.network_type
+    network_type = config.thermal_network.network_type
+    if len(network_type):
+        network_type = network_type[0]
+    else:
+        raise ValueError("Network type must be specified.")
 
     print("\n" + "="*80)
     print("✅ MULTI-PHASE OPTIMISATION COMPLETE")
