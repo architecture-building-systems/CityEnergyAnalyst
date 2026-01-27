@@ -76,35 +76,5 @@ def calc_refrigeration_temperature_and_massflow(Qcre_sys):
     return mcpcre_sys, Tcre_sys_re, Tcre_sys_sup
 
 
-def calc_Qref(locator, bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
-    """
-    it calculates final loads
-    """
-    # GET SYSTEMS EFFICIENCIES
-    energy_source = bpr.supply["source_cs"]
-    scale_technology = bpr.supply["scale_cs"]
-    efficiency_average_year = bpr.supply["eff_cs"]
-    if scale_technology == "BUILDING":
-        if energy_source == "GRID":
-            t_source = (tsd.weather.T_ext + 273)
-            # heat pump energy
-            tsd.electrical_loads.E_cre = np.vectorize(heatpumps.HP_air_air)(tsd.cooling_system_mass_flows.mcpcre_sys, (tsd.cooling_system_temperatures.Tcre_sys_sup + 273),
-                                                                (tsd.cooling_system_temperatures.Tcre_sys_re + 273), t_source)
-            # final to district is zero
-            tsd.cooling_loads.DC_cre = np.zeros(HOURS_IN_YEAR)
-        elif energy_source == "NONE":
-            tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
-            tsd.cooling_loads.DC_cre = np.zeros(HOURS_IN_YEAR)
-        else:
-            raise Exception('check potential error in input database of LCA infrastructure / COOLING')
-
-    elif scale_technology == "DISTRICT":
-        tsd.cooling_loads.DC_cre = tsd.cooling_loads.Qcs_sys / efficiency_average_year
-        tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
-    elif scale_technology == "NONE":
-        tsd.cooling_loads.DC_cre = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
-    else:
-        raise Exception('check potential error in input database of LCA infrastructure / COOLING')
-    return tsd
+# NOTE: calc_Qref() function removed - primary energy calculation for refrigeration cooling moved to primary-energy module
 

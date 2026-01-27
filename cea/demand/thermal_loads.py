@@ -100,11 +100,10 @@ def calc_thermal_loads(building_name: str,
     # CALCULATE REFRIGERATION LOADS
     if refrigeration_loads.has_refrigeration_load(bpr):
         tsd = refrigeration_loads.calc_Qcre_sys(bpr, tsd, schedules)
-        tsd = refrigeration_loads.calc_Qref(locator, bpr, tsd)
+        # NOTE: calc_Qref() call removed - primary energy calculation moved to primary-energy module
     else:
-        tsd.cooling_loads.DC_cre = tsd.cooling_loads.Qcre_sys = tsd.cooling_loads.Qcre = np.zeros(HOURS_IN_YEAR)
+        tsd.cooling_loads.Qcre_sys = tsd.cooling_loads.Qcre = np.zeros(HOURS_IN_YEAR)
         tsd.cooling_system_mass_flows.mcpcre_sys = tsd.cooling_system_temperatures.Tcre_sys_re = tsd.cooling_system_temperatures.Tcre_sys_sup = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.E_cre = np.zeros(HOURS_IN_YEAR)
 
     # CALCULATE PROCESS HEATING
     tsd.heating_loads.Qhpro_sys = schedules['Qhpro_W'].to_numpy()  # in Wh
@@ -116,17 +115,17 @@ def calc_thermal_loads(building_name: str,
     if datacenter_loads.has_data_load(bpr):
         tsd = datacenter_loads.calc_Edata(tsd, schedules)  # end-use electricity
         tsd = datacenter_loads.calc_Qcdata_sys(bpr, tsd)  # system need for cooling
-        tsd = datacenter_loads.calc_Qcdataf(locator, bpr, tsd)  # final need for cooling
+        # NOTE: calc_Qcdataf() call removed - primary energy calculation moved to primary-energy module
     else:
-        tsd.cooling_loads.DC_cdata = tsd.cooling_loads.Qcdata_sys = tsd.cooling_loads.Qcdata = np.zeros(HOURS_IN_YEAR)
+        tsd.cooling_loads.Qcdata_sys = tsd.cooling_loads.Qcdata = np.zeros(HOURS_IN_YEAR)
         tsd.cooling_system_mass_flows.mcpcdata_sys = tsd.cooling_system_temperatures.Tcdata_sys_re = tsd.cooling_system_temperatures.Tcdata_sys_sup = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.Edata = tsd.electrical_loads.E_cdata = np.zeros(HOURS_IN_YEAR)
+        tsd.electrical_loads.Edata = np.zeros(HOURS_IN_YEAR)
 
     # CALCULATE SPACE CONDITIONING DEMANDS
     if np.isclose(bpr.rc_model.Af, 0.0):  # if building does not have conditioned area
         tsd.rc_model_temperatures.T_int = tsd.weather.T_ext
         tsd.moisture.x_int = np.vectorize(convert_rh_to_moisture_content)(tsd.weather.rh_ext, tsd.rc_model_temperatures.T_int)
-        tsd.electrical_loads.E_cs = tsd.electrical_loads.E_hs = np.zeros(HOURS_IN_YEAR)
+        # NOTE: E_cs, E_hs fields removed - primary energy fields moved to primary-energy module
         tsd.electrical_loads.Eaux_cs = tsd.electrical_loads.Eaux_hs = tsd.electrical_loads.Ehs_lat_aux = np.zeros(HOURS_IN_YEAR)
         print(f"building {bpr.name} does not have an air-conditioned area")
     else:
