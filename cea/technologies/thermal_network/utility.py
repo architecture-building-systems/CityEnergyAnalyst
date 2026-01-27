@@ -79,9 +79,11 @@ def extract_network_from_shapefile(edge_shapefile_df: gpd.GeoDataFrame, node_sha
     duplicated_nodes = node_shapefile_df[node_shapefile_df.name.duplicated(keep=False)]
     duplicated_edges = edge_shapefile_df[edge_shapefile_df.name.duplicated(keep=False)]
     if duplicated_nodes.size > 0:
-        raise ValueError('There are duplicated NODE IDs:', duplicated_nodes.name.values)
+        duplicated_ids = ', '.join(duplicated_nodes.name.unique())
+        raise ValueError(f"There are duplicated NODE IDs: {duplicated_ids}")
     if duplicated_edges.size > 0:
-        raise ValueError('There are duplicated PIPE IDs:', duplicated_edges.name.values)
+        duplicated_ids = ', '.join(duplicated_edges.name.unique())
+        raise ValueError(f"There are duplicated PIPE IDs: {duplicated_ids}")
 
     if edge_shapefile_df.crs != node_shapefile_df.crs:
         raise ValueError('The coordinate reference systems (CRS) of the edge and node shapefiles do not match. '
