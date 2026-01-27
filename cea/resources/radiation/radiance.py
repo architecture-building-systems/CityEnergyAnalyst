@@ -102,10 +102,11 @@ class CEADaySim:
     def run_cmd(cmd, daysim_dir):
         print(f'Running command `{cmd}`')
 
-        # Add daysim directory to path
-        env = {
-            "PATH": f'{daysim_dir}{os.pathsep}{os.environ["PATH"]}',
-        }
+        # Start from a copy of the current environment to preserve platform-specific variables
+        # (e.g., SystemRoot on Windows, LD_LIBRARY_PATH on Linux)
+        env = os.environ.copy()
+        # Prepend daysim directory to PATH
+        env["PATH"] = f'{daysim_dir}{os.pathsep}{env.get("PATH", "")}'
 
         _cmd = shlex.split(cmd)
         if sys.platform == "win32":
