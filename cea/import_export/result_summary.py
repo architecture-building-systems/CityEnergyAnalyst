@@ -66,6 +66,7 @@ dict_plot_metrics_cea_feature = {
     'other_renewables': 'other-renewables',
     'dh': 'dh',
     'dc': 'dc',
+    'heat_rejection': 'heat-rejection',
 }
 
 # TODO: Remove this from global state
@@ -79,6 +80,7 @@ BASE_NORMALISATION_NAME_MAPPING = {
     "enduse_heating_demand[kWh]": "EUI_enduse_heating[kWh/m2]",
     "enduse_space_heating_demand[kWh]": "EUI_enduse_space_heating[kWh/m2]",
     "enduse_dhw_demand[kWh]": "EUI_enduse_dhw[kWh/m2]",
+    "heat_rejection[kWh]": "heat_rejection[kWh/m2]",
 }
 
 
@@ -294,6 +296,16 @@ def get_results_path(locator: cea.inputlocator.InputLocator, cea_feature: str, l
             list_paths.append(path)
         list_appendix.append(cea_feature)
 
+    if cea_feature == 'heat_rejection':
+        # Heat rejection includes both buildings and plants
+        # Read from heat_rejection_buildings.csv to get all entities
+        heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+        entity_names = heat_buildings_df['name'].tolist()
+        for entity_name in entity_names:
+            path = locator.get_heat_rejection_hourly_building(entity_name, network_name=network_name)
+            list_paths.append(path)
+        list_appendix.append(cea_feature)
+
     if cea_feature == 'solar_irradiation':
         for building in list_buildings:
             path = locator.get_radiation_building(building)
@@ -417,6 +429,9 @@ def map_metrics_cea_features(list_metrics_or_features, direction="metrics_to_fea
         ],
         "lifecycle_emissions": emission_context["list_metrics_lifecycle_emissions"],
         "operational_emissions": emission_context["list_metrics_operational_emissions"],
+        "heat_rejection": [
+            "heat_rejection[kWh]",
+        ],
         "solar_irradiation": [
             "irradiation_roof[kWh]",
             "irradiation_window_north[kWh]",
@@ -699,6 +714,9 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         for name in emission_context["hourly_colnames"]
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
+        for name in emission_timeline_yearly_colnames_nounit
+    } | {
+        "heat_rejection[kWh]": ["heat_rejection_kWh"]
         for name in emission_context["yearly_colnames"]
     }
 
@@ -878,6 +896,10 @@ def load_cea_results_from_csv_files(hour_start, hour_end, list_paths, list_cea_c
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)  # Load the CSV file into a DataFrame
+
+                # Rename heat_rejection_kW to heat_rejection_kWh for consistency with energy units
+                if 'heat_rejection_kW' in df.columns:
+                    df = df.rename(columns={'heat_rejection_kW': 'heat_rejection_kWh'})
 
                 # Validation: Check if this is timeline data (has 'period' column) when we expect operational data
                 # Timeline files are in .../emissions/timeline/ and operational files are in .../emissions/operational/
@@ -1321,7 +1343,7 @@ def exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, s
 
 
 
-def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False):
+def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, date_column='date', plot=False, network_name=''):
     """
     Aggregates building-level results based on the provided list of DataFrames.
 
@@ -1393,8 +1415,19 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if not hourly_annually_df.empty:
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 hourly_annually_df = add_nominal_actual_and_coverage(hourly_annually_df)
-                if len(hourly_annually_df) / len(hourly_annually_df['period'].unique().tolist()) == len(list_buildings):
-                    hourly_annually_df.insert(0, 'name', list_buildings)
+
+                # For heat_rejection, use entity names from the data files instead of zone buildings
+                if appendix == 'heat_rejection':
+                    # Get entity names from heat_rejection_buildings.csv
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+                    entity_names = heat_buildings_df['name'].tolist()
+                    num_entities_per_period = len(entity_names)
+                else:
+                    entity_names = list_buildings
+                    num_entities_per_period = len(list_buildings)
+
+                if len(hourly_annually_df) / len(hourly_annually_df['period'].unique().tolist()) == num_entities_per_period:
+                    hourly_annually_df.insert(0, 'name', entity_names)
                     if not bool_use_acronym:
                         hourly_annually_df.columns = map_metrics_and_cea_columns(
                             hourly_annually_df.columns, direction="columns_to_metrics"
@@ -1406,11 +1439,21 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
         if monthly_rows:
             monthly_df = pd.DataFrame(monthly_rows)
             if not monthly_df.empty:
-                if len(monthly_df) / len(monthly_df['period'].unique().tolist()) == len(list_buildings):
+                # For heat_rejection, use entity names from the data files instead of zone buildings
+                if appendix == 'heat_rejection':
+                    # Get entity names from heat_rejection_buildings.csv
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+                    entity_names = heat_buildings_df['name'].tolist()
+                    num_entities_per_period = len(entity_names)
+                else:
+                    entity_names = list_buildings
+                    num_entities_per_period = len(list_buildings)
+
+                if len(monthly_df) / len(monthly_df['period'].unique().tolist()) == num_entities_per_period:
                     monthly_df = monthly_df[~(monthly_df['hour_start'].isnull() & monthly_df['hour_end'].isnull())]  # Remove rows with both hour_start and hour_end empty
                     # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                     monthly_df = add_nominal_actual_and_coverage(monthly_df)
-                    list_buildings_repeated = [item for item in list_buildings for _ in range(len(monthly_df['period'].unique()))]
+                    list_buildings_repeated = [item for item in entity_names for _ in range(len(monthly_df['period'].unique()))]
                     list_buildings_series = pd.Series(list_buildings_repeated, index=monthly_df.index)
                     monthly_df.insert(0, 'name', list_buildings_series)
                     if not bool_use_acronym:
@@ -1444,8 +1487,19 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
 
                 # Add coverage ratios, hours fall into the selected hours divided by the nominal hours of the period
                 seasonally_df = add_nominal_actual_and_coverage(seasonally_df)
-                list_buildings_repeated = [item for item in list_buildings for _ in range(len(seasonally_df['period'].unique()))]
-                if len(seasonally_df) / len(seasonally_df['period'].unique().tolist()) == len(list_buildings):
+
+                # For heat_rejection, use entity names from the data files instead of zone buildings
+                if appendix == 'heat_rejection':
+                    # Get entity names from heat_rejection_buildings.csv
+                    heat_buildings_df = pd.read_csv(locator.get_heat_rejection_buildings(network_name=network_name))
+                    entity_names = heat_buildings_df['name'].tolist()
+                    num_entities_per_period = len(entity_names)
+                else:
+                    entity_names = list_buildings
+                    num_entities_per_period = len(list_buildings)
+
+                list_buildings_repeated = [item for item in entity_names for _ in range(len(seasonally_df['period'].unique()))]
+                if len(seasonally_df) / len(seasonally_df['period'].unique().tolist()) == num_entities_per_period:
                     list_buildings_series = pd.Series(list_buildings_repeated, index=seasonally_df.index)
                     seasonally_df.insert(0, 'name', list_buildings_series)
                     if not bool_use_acronym:
@@ -2600,6 +2654,9 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
+list_metrics_lifecycle_emissions = list(normalisation_name_mapping_emission_timeline_yearly.keys())
+list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_hourly_operational.keys())
+list_metrics_heat_rejection = ['heat_rejection[kWh]']
 
 def get_list_list_metrics_with_date(config):
     emission_context = get_emission_context()
@@ -2635,6 +2692,9 @@ def get_list_list_metrics_with_date(config):
     if config.result_summary.metrics_emissions:
         list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
 
+    if config.result_summary.metrics_heat_rejection:
+        list_list_metrics_with_date.append(list_metrics_heat_rejection)
+
     return list_list_metrics_with_date
 
 
@@ -2661,6 +2721,8 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
         list_list_metrics_with_date.append(list_metrics_district_cooling)
     if 'operational_emissions' in list_cea_feature_to_plot:
         list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
+    if 'heat_rejection' in list_cea_feature_to_plot:
+        list_list_metrics_with_date.append(list_metrics_heat_rejection)
     return list_list_metrics_with_date
 
 
@@ -2701,6 +2763,9 @@ def get_list_list_metrics_building(config):
         list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
         list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
 
+    if config.result_summary.metrics_heat_rejection:
+        list_list_metrics_building.append(list_metrics_heat_rejection)
+
     return list_list_metrics_building
 
 
@@ -2723,8 +2788,71 @@ def get_list_list_metrics_building_plot(list_cea_feature_to_plot):
         list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
     if 'lifecycle_emissions' in list_cea_feature_to_plot:
         list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
+    if 'heat_rejection' in list_cea_feature_to_plot:
+        list_list_metrics_building.append(list_metrics_heat_rejection)
 
     return list_list_metrics_building
+
+
+def copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=None):
+    """
+    Filter and copy cost calculation results to summary folder.
+
+    Filters cost data to include only the selected buildings.
+
+    :param locator: InputLocator instance
+    :param summary_folder: Path to summary folder
+    :param list_buildings: List of building names to include
+    :param network_name: Network layout name for subfolder organization
+    :return: tuple (success: bool, error_message: str or None)
+    """
+    import pandas as pd
+
+    try:
+        # Get source file paths
+        costs_buildings_src = locator.get_baseline_costs(network_name=network_name)
+        costs_components_src = locator.get_baseline_costs_detailed(network_name=network_name)
+
+        # Check if cost files exist
+        if not os.path.exists(costs_buildings_src):
+            return False, "costs_buildings.csv not found. Please run 'system-costs' first."
+        if not os.path.exists(costs_components_src):
+            return False, "costs_components.csv not found. Please run 'system-costs' first."
+
+        # Read cost files
+        df_costs_buildings = pd.read_csv(costs_buildings_src)
+        df_costs_components = pd.read_csv(costs_components_src)
+
+        # Filter by selected buildings
+        if list_buildings:
+            df_costs_buildings = df_costs_buildings[df_costs_buildings['name'].isin(list_buildings)]
+            # For components: include both selected buildings AND district plants
+            # District plants have names like "networkname_DC" or "networkname_DH"
+            # Components also include solar panels, so we need to keep both buildings and plants
+            plant_mask = df_costs_components['scale'] == 'DISTRICT'
+            building_mask = df_costs_components['name'].isin(list_buildings)
+            df_costs_components = df_costs_components[plant_mask | building_mask]
+
+        # Get destination file paths using InputLocator
+        costs_buildings_dst = locator.get_export_results_summary_costs_buildings_file(summary_folder)
+        costs_components_dst = locator.get_export_results_summary_costs_components_file(summary_folder)
+
+        # Create costs subfolder
+        costs_folder = locator.get_export_results_summary_costs_folder(summary_folder)
+        os.makedirs(costs_folder, exist_ok=True)
+
+        # Write filtered files to summary folder
+        df_costs_buildings.to_csv(costs_buildings_dst, index=False)
+        df_costs_components.to_csv(costs_components_dst, index=False)
+
+        print(f"  ✓ Filtered and saved costs_buildings.csv ({len(df_costs_buildings)} buildings)")
+        print(f"  ✓ Filtered and saved costs_components.csv ({len(df_costs_components)} rows)")
+
+        return True, None
+
+    except Exception as e:
+        return False, f"Error copying cost files: {str(e)}"
+
 
 def filter_buildings(locator, list_buildings,
                      integer_year_start, integer_year_end, list_standard,
@@ -2889,13 +3017,29 @@ def process_building_summary(config, locator,
                 if list_appendix == ['lifecycle_emissions']:
                     exec_aggregate_building_lifecycle_emissions(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
                 else:
-                    exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot)
+                    exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_metrics, bool_use_acronym, list_list_useful_cea_results, list_buildings, list_appendix, list_selected_time_period, plot=plot, network_name=network_name)
             except Exception as e:
                 error_msg = f"Step 8 (Aggregate by Building) - metrics {list_metrics}: {str(e)}"
                 errors_encountered.append(error_msg)
                 print(f"Warning: {error_msg}")
                 print("         Continuing with next metrics...")
                 continue
+
+    # Step 8.5: Filter and Copy Cost Files (if Enabled)
+    if not plot and config.result_summary.metrics_costs:
+        try:
+            print("\nFiltering cost calculation results...")
+            success, error_msg = copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=network_name)
+            if not success:
+                error_msg = f"Step 8 - metrics costs: {error_msg}"
+                errors_encountered.append(error_msg)
+                print(f"Warning: {error_msg}")
+                print("         Continuing with remaining steps...")
+        except Exception as e:
+            error_msg = f"Step 8 - metrics costs: {str(e)}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+            print("         Continuing with remaining steps...")
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
@@ -2961,6 +3105,17 @@ def process_building_summary(config, locator,
                                                    bool_use_conditioned_floor_area_for_normalisation, plot=plot)
                 except Exception as e:
                     error_msg = f"Step 9 (Advanced Analytics - operational_emissions): {str(e)}"
+                    errors_encountered.append(error_msg)
+                    print(f"Warning: {error_msg}")
+                    print("         Continuing with remaining analytics...")
+
+            if config.result_summary.metrics_heat_rejection:
+                try:
+                    calc_ubem_analytics_normalised(locator, hour_start, hour_end, "heat-rejection", summary_folder,
+                                                   list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
+                                                   bool_use_conditioned_floor_area_for_normalisation, plot=plot)
+                except Exception as e:
+                    error_msg = f"Step 9 (Advanced Analytics - heat-rejection): {str(e)}"
                     errors_encountered.append(error_msg)
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")

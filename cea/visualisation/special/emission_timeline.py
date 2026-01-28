@@ -661,7 +661,7 @@ def plot_emission_timeline(config, context: dict):
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter,
                                                    plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,
-                                                   solar_panel_types_list)
+                                                   solar_panel_types_list, scenario)
 
     # Validate PV columns exist in loaded data (column-level validation)
     pv_code = getattr(plot_config, 'pv_code', None)

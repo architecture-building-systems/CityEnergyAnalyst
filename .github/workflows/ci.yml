@@ -48,3 +48,22 @@ jobs:
       - name: Run integration tests
         if: github.event.pull_request.draft == false
         run: pixi run integration
+
+      - name: List test scenario locations (on failure)
+        if: failure()
+        shell: bash
+        run: |
+          echo "Searching for test scenario outputs..."
+          ls -la ~ || true
+          find ~ -maxdepth 2 -type d -name "zug_heating" -o -name "sg_cooling" 2>/dev/null || echo "No test scenarios found"
+
+      - name: Upload test scenario artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-scenarios-${{ matrix.os }}
+          path: |
+            ~/zug_heating/
+            ~/sg_cooling/
+          retention-days: 3
+          if-no-files-found: warn

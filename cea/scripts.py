@@ -119,7 +119,7 @@ def list_scripts(plugins):
     """List all scripts in scripts.yml and those defined in configured plugins
     :parameter List[CeaPlugin] plugins: the list of plugins to include in the search for scripts.
     """
-    with open(SCRIPTS_YML, "r") as fp:
+    with open(SCRIPTS_YML, "r", encoding="utf-8") as fp:
         scripts_by_category = yaml.load(fp, Loader=yaml.CLoader)
     for plugin in plugins:
         scripts_by_category.update(plugin.scripts)
