@@ -496,7 +496,10 @@ class ThermalNetworkMapLayer(MapLayer):
             if node_type == 'CONSUMER':
                 # Building node - add substation metrics
                 building_name = nodes_df.loc[node_id, 'building']
-                metrics = self._calculate_substation_metrics(building_name, network_type, network_name)
+                substation_file = self.locator.get_thermal_network_substation_results_file(
+                    building_name, network_type, network_name
+                )
+                metrics = self._calculate_substation_metrics(substation_file, network_type)
 
                 # Add all metrics to the dataframe
                 for key, value in metrics.items():
@@ -505,7 +508,10 @@ class ThermalNetworkMapLayer(MapLayer):
             elif node_type.startswith('PLANT'):
                 # Plant node - add plant performance metrics
                 # Node type can be 'PLANT_hs_ww', 'PLANT_cs', etc.
-                metrics = self._calculate_plant_metrics(network_type, network_name, node_id)
+                plant_file = self.locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name)
+                temp_supply_file = self.locator.get_network_temperature_supply_nodes_file(network_type, network_name)
+                temp_return_file = self.locator.get_network_temperature_return_nodes_file(network_type, network_name)
+                metrics = self._calculate_plant_metrics(plant_file, temp_supply_file, temp_return_file, node_id)
 
                 # Add all metrics to the dataframe
                 for key, value in metrics.items():
@@ -534,7 +540,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 # Building node - add substation metrics
                 building_name = nodes_df.loc[node_id, 'building']
                 substation_file = os.path.join(enrichment_base, 'substation', f'{building_name}.csv')
-                metrics = self._calculate_substation_metrics_from_file(substation_file, network_type)
+                metrics = self._calculate_substation_metrics(substation_file, network_type)
 
                 # Add all metrics to the dataframe
                 for key, value in metrics.items():
@@ -545,7 +551,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 plant_file = os.path.join(enrichment_base, f'{network_type}_Plant_thermal_load_kW.csv')
                 temp_supply_file = os.path.join(enrichment_base, f'T_supply_{network_type}_nodes_K.csv')
                 temp_return_file = os.path.join(enrichment_base, f'T_return_{network_type}_nodes_K.csv')
-                metrics = self._calculate_plant_metrics_from_files(plant_file, temp_supply_file, temp_return_file, node_id)
+                metrics = self._calculate_plant_metrics(plant_file, temp_supply_file, temp_return_file, node_id)
 
                 # Add all metrics to the dataframe
                 for key, value in metrics.items():
@@ -553,8 +559,22 @@ class ThermalNetworkMapLayer(MapLayer):
 
         return nodes_df
 
-    def _calculate_substation_metrics_from_file(self, substation_file, network_type):
-        """Calculate substation metrics from a direct file path (for phasing plans)"""
+    def _calculate_substation_metrics(self, substation_file, network_type):
+        """
+        Calculate substation performance metrics from a substation file.
+
+        :param substation_file: Path to the substation CSV file
+        :param network_type: Network type ('DH' or 'DC')
+
+        Returns dict with:
+        - annual_energy_MWh: Total annual energy from DH/DC
+        - annual_booster_MWh: Annual booster energy (DH networks only)
+        - peak_load_kW: Peak thermal load
+        - avg_supply_temp_C: Average supply temperature during operation
+        - avg_return_temp_C: Average return temperature during operation
+        - avg_delta_t_C: Average temperature difference
+        - hex_area_m2: Heat exchanger area
+        """
         try:
             if not os.path.exists(substation_file):
                 logger.debug(f"Substation file doesn't exist: {substation_file}")
@@ -630,8 +650,26 @@ class ThermalNetworkMapLayer(MapLayer):
             logger.error(f"Error calculating substation metrics from {substation_file}: {e}")
             return {}
 
-    def _calculate_plant_metrics_from_files(self, plant_file, temp_supply_file, temp_return_file, plant_id):
-        """Calculate plant metrics from direct file paths (for phasing plans)"""
+    def _calculate_plant_metrics(self, plant_file, temp_supply_file, temp_return_file, plant_id):
+        """
+        Calculate plant performance metrics from plant files.
+
+        :param plant_file: Path to the plant thermal load CSV file
+        :param temp_supply_file: Path to the supply temperature CSV file
+        :param temp_return_file: Path to the return temperature CSV file
+        :param plant_id: Plant node ID
+
+        Returns dict with:
+        - annual_output_MWh: Total annual thermal output
+        - peak_load_kW: Peak thermal load
+        - capacity_factor_pct: Capacity factor (actual / potential at peak)
+        - operating_hours: Hours with load > 1% of peak
+        - operating_hours_pct: Percentage of year operating
+        - avg_supply_temp_C: Average supply temperature
+        - avg_return_temp_C: Average return temperature
+        - min_supply_temp_C: Minimum supply temperature
+        - max_supply_temp_C: Maximum supply temperature
+        """
         try:
             if not os.path.exists(plant_file):
                 logger.debug(f"Plant file doesn't exist: {plant_file}")
@@ -709,210 +747,4 @@ class ThermalNetworkMapLayer(MapLayer):
                 'max_supply_temp_C': 0,
             }
 
-    def _calculate_substation_metrics(self, building_name, network_type, network_name):
-        """
-        Calculate substation performance metrics for a building node.
 
-        Returns dict with:
-        - annual_energy_MWh: Total annual energy from DH/DC
-        - annual_booster_MWh: Annual booster energy (DH networks only)
-        - peak_load_kW: Peak thermal load
-        - avg_supply_temp_C: Average supply temperature during operation
-        - avg_return_temp_C: Average return temperature during operation
-        - avg_delta_t_C: Average temperature difference
-        - hex_area_m2: Heat exchanger area
-        """
-        try:
-            # Load substation results file for this specific building
-            substation_file = self.locator.get_thermal_network_substation_results_file(
-                building_name, network_type, network_name
-            )
-
-            if not os.path.exists(substation_file):
-                logger.debug(f"Substation file doesn't exist: {substation_file}")
-                return {}
-
-            # Read the building's hourly data
-            df = pd.read_csv(substation_file)
-
-            # Calculate annual energy from DH/DC network
-            if network_type == 'DH':
-                # For DH: sum of space heating and DHW from network (excluding booster)
-                Q_dh_W = df.get('Qhs_dh_W', pd.Series([0])).fillna(0) + \
-                         df.get('Qww_dh_W', pd.Series([0])).fillna(0)
-                Q_booster_W = df.get('Qhs_booster_W', pd.Series([0])).fillna(0) + \
-                              df.get('Qww_booster_W', pd.Series([0])).fillna(0)
-
-                annual_energy_MWh = (Q_dh_W.sum() / 1000) / 1000  # W to kW to MWh
-                annual_booster_MWh = (Q_booster_W.sum() / 1000) / 1000
-
-                peak_load_kW = (Q_dh_W.max() / 1000)  # W to kW
-
-            elif network_type == 'DC':
-                # For DC: cooling energy
-                Q_dc_W = df.get('Qcs_W', pd.Series([0])).fillna(0)
-                annual_energy_MWh = (Q_dc_W.sum() / 1000) / 1000
-                annual_booster_MWh = 0  # No boosters in cooling
-
-                peak_load_kW = (Q_dc_W.max() / 1000)
-
-            else:
-                raise ValueError(f"Invalid network type: {network_type}")
-
-            # Average temperatures during active hours
-            mdot_col = f'mdot_{network_type}_result_kgpers'
-            T_supply_col = f'T_supply_{network_type}_result_C'
-            T_return_col = f'T_return_{network_type}_result_C'
-
-            required_cols = {mdot_col, T_supply_col, T_return_col}
-            missing_cols = [col for col in required_cols if col not in df.columns]
-            if missing_cols:
-                avg_supply_temp = 0
-                avg_return_temp = 0
-                avg_delta_t = 0
-            else:
-                active_hours = df[mdot_col] > 0.01
-
-                if active_hours.sum() > 0:
-                    avg_supply_temp = df.loc[active_hours, T_supply_col].mean()
-                    avg_return_temp = df.loc[active_hours, T_return_col].mean()
-                    avg_delta_t = abs(avg_supply_temp - avg_return_temp)
-                else:
-                    avg_supply_temp = 0
-                    avg_return_temp = 0
-                    avg_delta_t = 0
-
-            # Heat exchanger area (total for heating and DHW)
-            if network_type == 'DH':
-                hex_area_m2 = df.get('HEX_hs_area_m2', pd.Series([0])).max() + \
-                              df.get('HEX_ww_area_m2', pd.Series([0])).max()
-            else:
-                hex_area_m2 = df.get('HEX_cs_area_m2', pd.Series([0])).max()
-
-            metrics = {
-                'annual_energy_MWh': round(annual_energy_MWh, 2),
-                'peak_load_kW': round(peak_load_kW, 1),
-                'avg_supply_temp_C': round(avg_supply_temp, 1),
-                'avg_return_temp_C': round(avg_return_temp, 1),
-                'avg_delta_t_C': round(avg_delta_t, 1),
-                'hex_area_m2': round(hex_area_m2, 1),
-            }
-
-            # Add booster metrics for DH only
-            if network_type == 'DH':
-                metrics['annual_booster_MWh'] = round(annual_booster_MWh, 2)
-
-            return metrics
-
-        except Exception as e:
-            logger.error(f"Error calculating substation metrics for {building_name}: {e}")
-            return {}
-
-    def _calculate_plant_metrics(self, network_type, network_name, plant_id):
-        """
-        Calculate plant performance metrics.
-
-        Returns dict with:
-        - annual_output_MWh: Total annual thermal output
-        - peak_load_kW: Peak thermal load
-        - capacity_factor_pct: Capacity factor (actual / potential at peak)
-        - operating_hours: Hours with load > 1% of peak
-        - operating_hours_pct: Percentage of year operating
-        - avg_supply_temp_C: Average supply temperature
-        - avg_return_temp_C: Average return temperature
-        - min_supply_temp_C: Minimum supply temperature
-        - max_supply_temp_C: Maximum supply temperature
-        """
-        try:
-            # Load plant thermal load file
-            plant_file = self.locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name)
-
-            if not os.path.exists(plant_file):
-                logger.debug(f"Plant file doesn't exist: {plant_file}")
-                return {}
-
-            # Read hourly plant load
-            plant_df = pd.read_csv(plant_file)
-
-            # Annual output
-            annual_output_MWh = plant_df['thermal_load_kW'].sum() / 1000
-
-            # Peak load
-            peak_load_kW = plant_df['thermal_load_kW'].max()
-
-            # Capacity factor and operating hours
-            capacity_factor_pct = 0
-            operating_hours = 0
-            operating_hours_pct = 0
-
-            if peak_load_kW > 0:
-                # Potential output if running at peak 24/7
-                potential_output_MWh = peak_load_kW * 8760 / 1000
-
-                # Actual capacity factor
-                capacity_factor_pct = (annual_output_MWh / potential_output_MWh) * 100
-
-                # Operating hours (hours with load > 1% of peak)
-                operating_threshold = peak_load_kW * 0.01
-                operating_hours = (plant_df['thermal_load_kW'] > operating_threshold).sum()
-                operating_hours_pct = (operating_hours / 8760) * 100
-
-            # Temperature statistics from supply temperature file
-            temp_supply_file = self.locator.get_network_temperature_supply_nodes_file(network_type, network_name)
-
-            if os.path.exists(temp_supply_file):
-                temp_df = pd.read_csv(temp_supply_file)
-                if plant_id in temp_df.columns:
-                    # Convert K to C
-                    avg_supply_temp_C = temp_df[plant_id].mean() - 273.15
-                    min_supply_temp_C = temp_df[plant_id].min() - 273.15
-                    max_supply_temp_C = temp_df[plant_id].max() - 273.15
-                else:
-                    avg_supply_temp_C = 0
-                    min_supply_temp_C = 0
-                    max_supply_temp_C = 0
-            else:
-                avg_supply_temp_C = 0
-                min_supply_temp_C = 0
-                max_supply_temp_C = 0
-
-            # Return temperature statistics
-            temp_return_file = self.locator.get_network_temperature_return_nodes_file(network_type, network_name)
-
-            if os.path.exists(temp_return_file):
-                temp_df = pd.read_csv(temp_return_file)
-                if plant_id in temp_df.columns:
-                    avg_return_temp_C = temp_df[plant_id].mean() - 273.15
-                else:
-                    avg_return_temp_C = 0
-            else:
-                avg_return_temp_C = 0
-
-            return {
-                'annual_output_MWh': round(annual_output_MWh, 2),
-                'peak_load_kW': round(peak_load_kW, 1),
-                'capacity_factor_pct': round(capacity_factor_pct, 1),
-                'operating_hours': int(operating_hours),
-                'operating_hours_pct': round(operating_hours_pct, 1),
-                'avg_supply_temp_C': round(avg_supply_temp_C, 1),
-                'avg_return_temp_C': round(avg_return_temp_C, 1),
-                'min_supply_temp_C': round(min_supply_temp_C, 1),
-                'max_supply_temp_C': round(max_supply_temp_C, 1),
-            }
-
-        except Exception as e:
-            import traceback
-            logger.error(f"Error calculating plant metrics: {e}")
-            logger.error(traceback.format_exc())
-            # Return empty values instead of empty dict to maintain consistency
-            return {
-                'annual_output_MWh': 0,
-                'peak_load_kW': 0,
-                'capacity_factor_pct': 0,
-                'operating_hours': 0,
-                'operating_hours_pct': 0,
-                'avg_supply_temp_C': 0,
-                'avg_return_temp_C': 0,
-                'min_supply_temp_C': 0,
-                'max_supply_temp_C': 0,
-            }
