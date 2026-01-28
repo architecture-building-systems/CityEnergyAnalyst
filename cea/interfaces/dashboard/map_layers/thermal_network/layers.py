@@ -491,7 +491,7 @@ class ThermalNetworkMapLayer(MapLayer):
 
             edges_path = self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase)
             nodes_path = self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase)
-            massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
+            massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, plan_name, phase)
 
             def get_substation_file(building):
                 return self.locator.get_thermal_network_phasing_substation_results_file(

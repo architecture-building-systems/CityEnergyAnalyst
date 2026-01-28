@@ -1326,7 +1326,7 @@ class InputLocator(object):
             'nodes_timeline.csv'
         )
 
-    def get_thermal_network_phasing_massflow_edges_file(self, network_type, phase, plan_name):
+    def get_thermal_network_phasing_massflow_edges_file(self, network_type, plan_name, phase):
         """phasing-plans/{plan-name}/{network_type}/{phase}/{network_type}_{phase}_massflow_edges_kgs.csv"""
         return os.path.join(
             self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
