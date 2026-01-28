@@ -1338,6 +1338,34 @@ class InputLocator(object):
             f"{network_type}_{phase}_massflow_edges_kgs.csv"
         )
 
+    def get_thermal_network_phasing_substation_results_file(self, building_name, network_type, plan_name, phase):
+        """phasing-plans/{plan-name}/{network-type}/{phase}/substation/{network_type}_{phase}_substation_{building_name}.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_substation_folder(network_type, plan_name, phase),
+            f'{network_type}_{phase}_substation_{building_name}.csv'
+        )
+
+    def get_thermal_network_phasing_plant_heat_requirement_file(self, network_type, plan_name, phase):
+        """phasing-plans/{plan-name}/{network-type}/{phase}/{network_type}_{phase}_plant_thermal_load_kW.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
+            f'{network_type}_{phase}_plant_thermal_load_kW.csv'
+        )
+
+    def get_thermal_network_phasing_temperature_supply_nodes_file(self, network_type, plan_name, phase):
+        """phasing-plans/{plan-name}/{network-type}/{phase}/{network_type}_{phase}_temperature_supply_nodes_K.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
+            f'{network_type}_{phase}_temperature_supply_nodes_K.csv'
+        )
+
+    def get_thermal_network_phasing_temperature_return_nodes_file(self, network_type, plan_name, phase):
+        """phasing-plans/{plan-name}/{network-type}/{phase}/{network_type}_{phase}_temperature_return_nodes_K.csv"""
+        return os.path.join(
+            self.get_thermal_network_phasing_plan_phase_folder(network_type, plan_name, phase),
+            f'{network_type}_{phase}_temperature_return_nodes_K.csv'
+        )
+
     def get_networks_folder(self):
         return os.path.join(self.scenario, 'inputs', 'networks')
 

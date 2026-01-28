@@ -393,35 +393,6 @@ class ThermalNetworkMapLayer(MapLayer):
         if network_type not in self._network_types:
             raise ValueError(f"Invalid network type: {network_type}")
 
-        # Check if this is a multi-phase plan
-        is_phasing_plan = self._is_multiphase(network_name)
-
-        # Determine file paths based on whether it's a phasing plan
-        if is_phasing_plan:
-            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
-
-            # Get phase-specific paths
-            edges_path = self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase)
-            nodes_path = self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase)
-
-            # Use phase-specific folder for enrichment
-            enrichment_base = os.path.join(
-                self.locator.get_thermal_network_phasing_plans_folder(),
-                plan_name,
-                network_type,
-                phase
-            )
-
-            layout_path = None  # No potential layout for phasing plans
-            massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
-        else:
-            # Regular single-phase network
-            layout_path = self.locator.get_network_layout_shapefile(network_name)
-            edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
-            nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
-            massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name)
-            enrichment_base = None
-
         primary_colour = color_to_hex("blue") if network_type == "DC" else color_to_hex("red")
 
         output = {
@@ -441,13 +412,47 @@ class ThermalNetworkMapLayer(MapLayer):
             }
         }
 
+        # Determine file paths based on whether it's a phasing plan
+        is_phasing_plan: bool = self._is_multiphase(network_name)
+        if is_phasing_plan:
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
+
+            edges_path = self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase)
+            nodes_path = self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase)
+            massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
+
+            get_substation_file = lambda building: self.locator.get_thermal_network_phasing_substation_results_file(
+                building, network_type, plan_name, phase
+            )
+            plant_file = self.locator.get_thermal_network_phasing_plant_heat_requirement_file(
+                network_type, plan_name, phase
+            )
+            temp_supply_file = self.locator.get_thermal_network_phasing_temperature_supply_nodes_file(
+                network_type, plan_name, phase
+            )
+            temp_return_file = self.locator.get_thermal_network_phasing_temperature_return_nodes_file(
+                network_type, plan_name, phase
+            )
+        else:
+            edges_path = self.locator.get_network_layout_edges_shapefile(network_type, network_name)
+            nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
+            massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name)
+
+            get_substation_file = lambda building: self.locator.get_thermal_network_substation_results_file(
+                building, network_type, network_name
+            )
+            plant_file = self.locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name)
+            temp_supply_file = self.locator.get_network_temperature_supply_nodes_file(network_type, network_name)
+            temp_return_file = self.locator.get_network_temperature_return_nodes_file(network_type, network_name)
+
         # Decide which files to load: either the full network (edges + nodes) or potential layout + nodes
         _edges_path = edges_path
         if not is_phasing_plan:
             if not self._check_valid_network(network_name, network_type):
                 if self._check_potential_network(network_name, network_type):
                     logger.debug(f"Valid network files don't exist for {network_name} ({network_type}), loading potential layout instead.")
-                    _edges_path = layout_path
+                    _edges_path = self.locator.get_network_layout_shapefile(network_name)
+
                 else:
                     logger.debug(f"Network files don't exist at {edges_path}.")
                     return output
@@ -471,93 +476,28 @@ class ThermalNetworkMapLayer(MapLayer):
             logger.debug("Massflow file doesn't exist or not applicable, skipping")
 
         # Enrich nodes with substation and plant performance data
-        if is_phasing_plan:
-            # Individual phase: use phase folder for enrichment
-            nodes_df = self._enrich_nodes_with_data_phasing(nodes_df, network_type, enrichment_base)
-        else:
-            nodes_df = self._enrich_nodes_with_data(nodes_df, network_type, network_name)
+        for node_id in nodes_df.index:
+            node_type = nodes_df.loc[node_id, 'type']
+
+            print(plant_file)
+
+            if node_type == 'CONSUMER':
+                building_name = nodes_df.loc[node_id, 'building']
+                substation_file = get_substation_file(building_name)
+                metrics = self._calculate_substation_metrics(substation_file, network_type)
+                for key, value in metrics.items():
+                    nodes_df.loc[node_id, key] = value
+
+            elif node_type.startswith('PLANT'):
+                metrics = self._calculate_plant_metrics(plant_file, temp_supply_file, temp_return_file, node_id)
+                for key, value in metrics.items():
+                    nodes_df.loc[node_id, key] = value
 
         output['nodes'] = json.loads(nodes_df.to_json())
         output['edges'] = json.loads(edges_df.to_json())
 
         return output
 
-    def _enrich_nodes_with_data(self, nodes_df, network_type, network_name):
-        """
-        Enrich nodes dataframe with substation and plant performance metrics.
-
-        For building nodes: Add annual energy, peak loads, temperatures, HEX area
-        For plant nodes: Add annual output, capacity factor, operating hours, temperature ranges
-        """
-        # Iterate through nodes and add metrics based on type
-        for node_id in nodes_df.index:
-            node_type = nodes_df.loc[node_id, 'type']
-
-            if node_type == 'CONSUMER':
-                # Building node - add substation metrics
-                building_name = nodes_df.loc[node_id, 'building']
-                substation_file = self.locator.get_thermal_network_substation_results_file(
-                    building_name, network_type, network_name
-                )
-                metrics = self._calculate_substation_metrics(substation_file, network_type)
-
-                # Add all metrics to the dataframe
-                for key, value in metrics.items():
-                    nodes_df.loc[node_id, key] = value
-
-            elif node_type.startswith('PLANT'):
-                # Plant node - add plant performance metrics
-                # Node type can be 'PLANT_hs_ww', 'PLANT_cs', etc.
-                plant_file = self.locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name)
-                temp_supply_file = self.locator.get_network_temperature_supply_nodes_file(network_type, network_name)
-                temp_return_file = self.locator.get_network_temperature_return_nodes_file(network_type, network_name)
-                metrics = self._calculate_plant_metrics(plant_file, temp_supply_file, temp_return_file, node_id)
-
-                # Add all metrics to the dataframe
-                for key, value in metrics.items():
-                    nodes_df.loc[node_id, key] = value
-
-        return nodes_df
-
-    def _enrich_nodes_with_data_phasing(self, nodes_df, network_type, enrichment_base):
-        """
-        Enrich nodes dataframe with substation and plant performance metrics for phasing plans.
-
-        For building nodes: Add annual energy, peak loads, temperatures, HEX area
-        For plant nodes: Add annual output, capacity factor, operating hours, temperature ranges
-
-        :param enrichment_base: Base path to phase folder (e.g., .../three-phased-2/DH/phase1_2030/)
-        """
-        if not enrichment_base or not os.path.exists(enrichment_base):
-            logger.debug(f"Enrichment base path doesn't exist: {enrichment_base}")
-            return nodes_df
-
-        # Iterate through nodes and add metrics based on type
-        for node_id in nodes_df.index:
-            node_type = nodes_df.loc[node_id, 'type']
-
-            if node_type == 'CONSUMER':
-                # Building node - add substation metrics
-                building_name = nodes_df.loc[node_id, 'building']
-                substation_file = os.path.join(enrichment_base, 'substation', f'{building_name}.csv')
-                metrics = self._calculate_substation_metrics(substation_file, network_type)
-
-                # Add all metrics to the dataframe
-                for key, value in metrics.items():
-                    nodes_df.loc[node_id, key] = value
-
-            elif node_type.startswith('PLANT'):
-                # Plant node - add plant performance metrics
-                plant_file = os.path.join(enrichment_base, f'{network_type}_Plant_thermal_load_kW.csv')
-                temp_supply_file = os.path.join(enrichment_base, f'T_supply_{network_type}_nodes_K.csv')
-                temp_return_file = os.path.join(enrichment_base, f'T_return_{network_type}_nodes_K.csv')
-                metrics = self._calculate_plant_metrics(plant_file, temp_supply_file, temp_return_file, node_id)
-
-                # Add all metrics to the dataframe
-                for key, value in metrics.items():
-                    nodes_df.loc[node_id, key] = value
-
-        return nodes_df
 
     def _calculate_substation_metrics(self, substation_file, network_type):
         """
