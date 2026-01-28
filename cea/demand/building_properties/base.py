@@ -22,9 +22,6 @@ class DatabaseMapping:
         field_defaults: Optional mapping of field names to default values for missing/legacy fields
                        (e.g., {"shading_location": "interior", "shading_setpoint_Wm2": 300})
 
-                       NOTE: This is a temporary solution. Long-term, defaults should be defined
-                       in schemas.yml as the single source of truth. See migration plan in docs.
-
     Raises:
         ValueError: If column_renames targets are not in fields, or field_defaults keys are not in fields
     """
