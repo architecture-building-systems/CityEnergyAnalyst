@@ -1968,17 +1968,19 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=10E-6 - 0.05
             # Validate logarithm argument
             log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9
-            if log_arg <= 0:
+            if not np.isfinite(log_arg) or log_arg <= 0:
                 raise ValueError(
                     f"Invalid argument for logarithm in Swamee-Jain friction factor calculation!\n"
-                    f"Logarithm argument: {log_arg:.6e}\n"
+                    f"Logarithm argument: {log_arg}\n"
                     f"Pipe roughness: {pipe_roughness_m:.6e} m\n"
                     f"Pipe diameter: {pipe_diameter_m[rey]:.6f} m\n"
-                    f"Reynolds number: {reynolds[rey]:.2f}\n\n"
+                    f"Reynolds number: {reynolds[rey]:.2f}\n"
+                    f"Darcy friction factor: {darcy[rey] if rey < len(darcy) else 'N/A'}\n\n"
                     f"For valid Swamee-Jain calculation:\n"
                     f"- Pipe roughness must be > 0 (typical: 1e-6 to 0.05 m)\n"
                     f"- Pipe diameter must be > 0\n"
-                    f"- Reynolds number should be 5000 - 1e8\n\n"
+                    f"- Reynolds number should be 5000 - 1e8\n"
+                    f"- Values must be finite (not NaN or inf)\n\n"
                     f"**Check the pipe properties and flow conditions."
                 )
 
@@ -1999,6 +2001,25 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     :type temperature__k: list
     """
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
+
+    # Validate inputs before calculation
+    if np.any(pipe_diameter_m <= 0):
+        min_diameter = np.min(pipe_diameter_m)
+        raise ValueError(
+            f"Invalid pipe diameter for Reynolds number calculation!\n"
+            f"Minimum pipe diameter: {min_diameter:.6e} m\n\n"
+            f"Pipe diameter must be > 0 (typical: 0.01-1.0 m)\n\n"
+            f"**Check pipe diameter values in the thermal network."
+        )
+
+    if np.any(kinematic_viscosity_m2s <= 0):
+        min_viscosity = np.min(kinematic_viscosity_m2s)
+        raise ValueError(
+            f"Invalid kinematic viscosity for Reynolds number calculation!\n"
+            f"Minimum kinematic viscosity: {min_viscosity:.6e} m²/s\n\n"
+            f"Kinematic viscosity must be > 0 (typical: 1e-6 m²/s for water)\n\n"
+            f"**Check temperature values (used for viscosity calculation)."
+        )
 
     # Validate denominator for Reynolds number calculation
     denominator = math.pi * kinematic_viscosity_m2s * pipe_diameter_m
@@ -3700,15 +3721,30 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
             )
 
         a = 2 * network_depth / D_ins_full
+
+        # Guard against invalid a parameter (a < 1 produces complex/NaN results)
+        if a < 1:
+            raise ValueError(
+                f"Invalid 'a' parameter for ground resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"a parameter: {a:.6f} (must be >= 1)\n"
+                f"Network depth: {network_depth:.2f} m\n"
+                f"Insulation diameter (D_ins_m): {D_ins_full:.6f} m\n\n"
+                f"For valid calculation: 2 * network_depth / D_ins_m >= 1\n"
+                f"Either increase network depth or reduce insulation diameter."
+            )
+
         log_arg_ground = a + (a ** 2 - 1) ** 0.5
-        if log_arg_ground <= 0:
+
+        # Guard against NaN/non-finite or non-positive log argument
+        if not np.isfinite(log_arg_ground) or log_arg_ground <= 0:
             raise ValueError(
                 f"Invalid argument for logarithm in ground resistance calculation!\n"
                 f"Pipe: {pipe}\n"
                 f"Network depth: {network_depth:.2f} m\n"
                 f"Insulation diameter: {D_ins_full:.6f} m\n"
                 f"a parameter: {a:.6f}\n"
-                f"Logarithm argument: {log_arg_ground:.6e}\n\n"
+                f"Logarithm argument: {log_arg_ground}\n\n"
                 f"**Check network depth and insulation diameter values."
             )
 

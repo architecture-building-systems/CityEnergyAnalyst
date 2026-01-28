@@ -156,18 +156,20 @@ def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, 
         )
 
     sqrt_arg = (volume_flow_m3s_corrected_to_design / velocity_ms) * (4 / math.pi)
-    if sqrt_arg < 0:
+    if sqrt_arg <= 0:
+        diameter_m = 0 if sqrt_arg == 0 else math.nan  # For error message
         raise ValueError(
             f"Invalid argument for square root in pipe diameter calculation!\n"
+            f"Square root argument: {sqrt_arg:.6e}\n"
             f"Volume flow rate (corrected): {volume_flow_m3s_corrected_to_design:.6e} m³/s\n"
             f"Velocity: {velocity_ms:.6f} m/s\n"
-            f"Square root argument: {sqrt_arg:.6e}\n\n"
+            f"Original volume flow: {volume_flow_m3s:.6e} m³/s\n"
+            f"Peak load percentage: {peak_load_percentage:.2f}%\n"
+            f"Computed diameter: {diameter_m:.6e} m\n\n"
             f"For valid diameter calculation:\n"
-            f"- Volume flow rate must be >= 0\n"
+            f"- Volume flow rate must be > 0 (zero flow is invalid for pipe sizing)\n"
             f"- Velocity must be > 0\n\n"
-            f"**Check:\n"
-            f"  - Original volume flow: {volume_flow_m3s:.6e} m³/s\n"
-            f"  - Peak load percentage: {peak_load_percentage:.2f}%"
+            f"**Check the network configuration and ensure non-zero flow."
         )
 
     diameter_m = math.sqrt(sqrt_arg)
