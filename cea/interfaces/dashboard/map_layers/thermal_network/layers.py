@@ -262,9 +262,6 @@ class ThermalNetworkMapLayer(MapLayer):
         # Check if multi-phase plan
         if network_name.endswith('(Multi-Phase)'):
             plan_name = network_name.replace(' (Multi-Phase)', '')
-            # Use timeline view by default if no phase specified
-            if not phase:
-                phase = 'timeline'
             return [
                 self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase),
             ]
@@ -287,9 +284,6 @@ class ThermalNetworkMapLayer(MapLayer):
         # Check if multi-phase plan
         if network_name.endswith('(Multi-Phase)'):
             plan_name = network_name.replace(' (Multi-Phase)', '')
-            # Use timeline view by default if no phase specified
-            if not phase:
-                phase = 'timeline'
             return [
                 self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase),
             ]
@@ -325,7 +319,7 @@ class ThermalNetworkMapLayer(MapLayer):
                     "Phase",
                     "string",
                     default="",
-                    description="Select phase for multi-phase plans (Timeline View shows all phases)",
+                    description="Select phase for multi-phase plans",
                     selector="choice",
                     depends_on=["network-name", "network-type"],
                     options_generator="_get_phase_choices",
@@ -397,37 +391,17 @@ class ThermalNetworkMapLayer(MapLayer):
         if is_phasing_plan:
             plan_name = network_name.replace(' (Multi-Phase)', '')
 
-            # Use timeline view by default if no phase specified
-            if not phase:
-                phase = 'timeline'
-
-            # Get phase-specific or timeline paths
+            # Get phase-specific paths
             edges_path = self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase)
             nodes_path = self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase)
 
-            # For enrichment data, use the phase-specific folder (or last phase for timeline)
-            if phase == 'timeline':
-                # Get the last phase for enrichment data in timeline view
-                phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
-                enrichment_network_name = phases[-1] if phases else None
-                # Need to construct path to last phase folder
-                if enrichment_network_name:
-                    enrichment_base = os.path.join(
-                        self.locator.get_thermal_network_phasing_plans_folder(),
-                        plan_name,
-                        network_type,
-                        enrichment_network_name
-                    )
-                else:
-                    enrichment_base = None
-            else:
-                # Use phase-specific folder for enrichment
-                enrichment_base = os.path.join(
-                    self.locator.get_thermal_network_phasing_plans_folder(),
-                    plan_name,
-                    network_type,
-                    phase
-                )
+            # Use phase-specific folder for enrichment
+            enrichment_base = os.path.join(
+                self.locator.get_thermal_network_phasing_plans_folder(),
+                plan_name,
+                network_type,
+                phase
+            )
 
             layout_path = None  # No potential layout for phasing plans
             massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
@@ -489,25 +463,10 @@ class ThermalNetworkMapLayer(MapLayer):
 
         # Enrich nodes with substation and plant performance data
         if is_phasing_plan:
-            # For phasing plans, pass the phase-specific network name for enrichment
-            if phase == 'timeline':
-                # Timeline view: don't enrich (would need per-phase data)
-                logger.debug("Timeline view: skipping node enrichment")
-            else:
-                # Individual phase: use phase folder for enrichment
-                nodes_df = self._enrich_nodes_with_data_phasing(nodes_df, network_type, enrichment_base)
+            # Individual phase: use phase folder for enrichment
+            nodes_df = self._enrich_nodes_with_data_phasing(nodes_df, network_type, enrichment_base)
         else:
             nodes_df = self._enrich_nodes_with_data(nodes_df, network_type, network_name)
-
-        # Add timeline-specific color coding if applicable
-        if is_phasing_plan and phase == 'timeline':
-            output['properties']['timeline'] = True
-            output['properties']['colours']['edges_by_phase'] = {
-                1: color_to_hex('blue'),
-                2: color_to_hex('green'),
-                3: color_to_hex('red'),
-                # Add more colors if needed for more phases
-            }
 
         output['nodes'] = json.loads(nodes_df.to_json())
         output['edges'] = json.loads(edges_df.to_json())
