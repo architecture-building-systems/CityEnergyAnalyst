@@ -84,7 +84,7 @@ def run_multi_phase(config: "Configuration", locator: "InputLocator", network_na
         raise ValueError("Network type must be specified.")
 
     print("\n" + "="*80)
-    print("✅ MULTI-PHASE OPTIMISATION COMPLETE")
+    print("MULTI-PHASE OPTIMISATION COMPLETE")
     print("="*80)
     print(f"Results saved to: {locator.get_thermal_network_phasing_folder(network_type, phasing_plan_name)}")
 
@@ -150,7 +150,7 @@ def load_phases(config, locator, network_names: List[str]) -> List[Dict]:
             'edges_gdf': edges_gdf
         })
 
-        print(f"    ✓ {len(buildings)} buildings, {len(edges_gdf)} edges")
+        print(f"    {len(buildings)} buildings, {len(edges_gdf)} edges")
 
     return phases
 
@@ -188,7 +188,7 @@ def validate_phases(phases: List[Dict]):
                 f"Multi-phase expansion must be additive only (each phase ⊇ previous phase)."
             )
 
-    print(f"  ✓ Phase validation passed: {len(phases)} phases in chronological order")
+    print(f"  Phase validation passed: {len(phases)} phases in chronological order")
 
 
 def simulate_all_phases(config, locator, phases: List[Dict]) -> List[Dict]:
@@ -219,7 +219,7 @@ def simulate_all_phases(config, locator, phases: List[Dict]) -> List[Dict]:
         phase_result = simulate_single_phase(config, locator, phase)
         phase_results.append(phase_result)
 
-        print(f"  ✓ Phase {phase['index']} simulation complete")
+        print(f"  Phase {phase['index']} simulation complete")
         print(f"    Edges: {len(phase_result['edge_mass_flows'])}")
         print(f"    Peak demand: {phase_result['total_demand_kw']:.0f} kW")
 
@@ -274,11 +274,11 @@ def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
             optimized_result = simulate_single_phase(config, locator, phase)
             optimized_phase_results.append(optimized_result)
 
-            print("    ✓ Re-simulation complete with optimised DN")
+            print("    Re-simulation complete with optimised DN")
             print(f"      Peak pumping: {optimized_result.get('plant_peak_pumping_kw', 0):.1f} kW")
 
         except Exception as e:
-            print(f"    ⚠ Warning: Re-simulation failed: {e}")
+            print(f"    Warning: Re-simulation failed: {e}")
             print("      Using original simulation results")
             optimized_phase_results.append(phase_result)
 
@@ -354,7 +354,7 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
             raise RuntimeError(f"Unknown network model: {network_model}")
 
     except Exception as e:
-        print(f"  ⚠ Warning: Simulation failed: {e}")
+        print(f"  Warning: Simulation failed: {e}")
         print(f"  Using placeholder data for phase {phase['index']}")
         # Fall back to placeholder data if simulation fails
         return create_placeholder_phase_result(phase)
@@ -527,7 +527,7 @@ def optimize_pipe_sizing(config, locator, phases: List[Dict],
         for d in sizing_decisions.values()
     )
 
-    print("\n  ✓ Optimisation complete:")
+    print("\n  Optimisation complete:")
     print(f"    Total Cost: ${total_cost:,.0f} USD2015")
     print(f"    Pipes requiring replacement: {total_replacements}")
 
@@ -553,7 +553,7 @@ def load_pipe_costs(locator) -> pd.DataFrame:
         return pipe_costs
     else:
         # Fallback: create simple cost lookup
-        print("  ⚠ Warning: Using default pipe costs (database columns not found)")
+        print("  Warning: Using default pipe costs (database columns not found)")
         return pd.DataFrame({
             'DN': [50, 80, 100, 125, 150, 200, 250, 300],
             'cost_per_m_eur': [100, 120, 150, 180, 220, 280, 350, 450]
@@ -809,7 +809,7 @@ def save_phasing_results(config, locator, phases: List[Dict],
     # Copy all simulation results to phase-specific folders
     copy_phase_simulation_results(locator, phases, network_type, phasing_plan_name)
 
-    print(f"\n  ✓ Results saved to: {phasing_folder}/")
+    print(f"\n  Results saved to: {phasing_folder}/")
     print("    - phasing_summary.csv")
     print("    - pipe_sizing_decisions.csv")
     print("    - edges_timeline.csv")
@@ -1270,11 +1270,11 @@ def save_phase_substation_results(locator, phases: List[Dict], phase_results: Li
                     shutil.copy2(source_file, dest_file)
             else:
                 # No substation files found - create placeholders
-                print(f"    ⚠ Warning: No substation results for {network_name}")
+                print(f"    Warning: No substation results for {network_name}")
                 create_placeholder_substation_files(phase, phase_substation_folder, network_type, network_name)
         else:
             # Simulation output doesn't have substation folder - create placeholders
-            print(f"    ⚠ Warning: Substation folder not found for {network_name}")
+            print(f"    Warning: Substation folder not found for {network_name}")
             create_placeholder_substation_files(phase, phase_substation_folder, network_type, network_name)
 
 
@@ -1307,7 +1307,7 @@ def copy_phase_simulation_results(locator, phases: List[Dict], network_type: str
         source_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
 
         if not os.path.exists(source_folder):
-            print(f"    ⚠ Warning: Results not found for {network_name}, skipping copy")
+            print(f"    Warning: Results not found for {network_name}, skipping copy")
             continue
 
         # Copy all CSV files (except substation files - those are handled separately)
