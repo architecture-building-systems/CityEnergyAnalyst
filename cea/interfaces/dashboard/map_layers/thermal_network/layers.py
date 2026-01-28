@@ -301,6 +301,58 @@ class ThermalNetworkMapLayer(MapLayer):
             self.locator.get_network_layout_edges_shapefile(network_type, network_name),
         ]
 
+    def _get_plant_files(self, parameters):
+        """Get plant heat requirement file path for regular or phasing networks"""
+        network_type = parameters.get('network-type')
+        network_name = parameters.get('network-name')
+        phase = parameters.get('phase', '')
+
+        if not network_type or not network_name or network_name == 'No network available':
+            return []
+
+        if self._is_multiphase(network_name):
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
+            return [self.locator.get_thermal_network_phasing_plant_heat_requirement_file(
+                network_type, plan_name, phase
+            )]
+
+        return [self.locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name)]
+
+    def _get_temperature_files(self, parameters):
+        """Get temperature supply and return file paths for regular or phasing networks"""
+        network_type = parameters.get('network-type')
+        network_name = parameters.get('network-name')
+        phase = parameters.get('phase', '')
+
+        if not network_type or not network_name or network_name == 'No network available':
+            return []
+
+        if self._is_multiphase(network_name):
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
+            return [
+                self.locator.get_thermal_network_phasing_temperature_supply_nodes_file(network_type, plan_name, phase),
+                self.locator.get_thermal_network_phasing_temperature_return_nodes_file(network_type, plan_name, phase),
+            ]
+
+        return [
+            self.locator.get_network_temperature_supply_nodes_file(network_type, network_name),
+            self.locator.get_network_temperature_return_nodes_file(network_type, network_name),
+        ]
+
+    def _get_phasing_summary_file(self, parameters):
+        """Get phasing summary file for multi-phase plans"""
+        network_type = parameters.get('network-type')
+        network_name = parameters.get('network-name')
+
+        if not network_type or not network_name or network_name == 'No network available':
+            return []
+
+        if not self._is_multiphase(network_name):
+            return []
+
+        plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
+        return [self.locator.get_thermal_network_phasing_summary_file(network_type, plan_name)]
+
     # TODO: Add width parameter
     @classmethod
     def expected_parameters(cls):
@@ -361,19 +413,39 @@ class ThermalNetworkMapLayer(MapLayer):
             FileRequirement(
                 "Network Nodes",
                 file_locator="layer:_get_network_nodes_files",
-                depends_on=["network-name", "network-type"],
+                depends_on=["network-name", "network-type", "phase"],
             ),
             # Edges files are optional, we can still show potential layout
             FileRequirement(
                 "Network Edges",
                 file_locator="layer:_get_network_edges_files",
-                depends_on=["network-name", "network-type"],
+                depends_on=["network-name", "network-type", "phase"],
                 optional=True,
             ),
             # Results files are optional, we can still show layout without mass flow data
             FileRequirement(
                 "Network Results",
                 file_locator="layer:_get_network_results_files",
+                depends_on=["network-name", "network-type"],
+                optional=True,
+            ),
+            # Plant and temperature files for cache invalidation (results data)
+            FileRequirement(
+                "Plant Heat Requirement",
+                file_locator="layer:_get_plant_files",
+                depends_on=["network-name", "network-type", "phase"],
+                optional=True,
+            ),
+            FileRequirement(
+                "Temperature Files",
+                file_locator="layer:_get_temperature_files",
+                depends_on=["network-name", "network-type", "phase"],
+                optional=True,
+            ),
+            # Phasing summary file (for multi-phase plans only)
+            FileRequirement(
+                "Phasing Summary",
+                file_locator="layer:_get_phasing_summary_file",
                 depends_on=["network-name", "network-type"],
                 optional=True,
             ),
@@ -421,9 +493,11 @@ class ThermalNetworkMapLayer(MapLayer):
             nodes_path = self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase)
             massflow_edges_path = self.locator.get_thermal_network_phasing_massflow_edges_file(network_type, phase, plan_name)
 
-            get_substation_file = lambda building: self.locator.get_thermal_network_phasing_substation_results_file(
-                building, network_type, plan_name, phase
-            )
+            def get_substation_file(building):
+                return self.locator.get_thermal_network_phasing_substation_results_file(
+                    building, network_type, plan_name, phase
+                )
+
             plant_file = self.locator.get_thermal_network_phasing_plant_heat_requirement_file(
                 network_type, plan_name, phase
             )
@@ -438,9 +512,11 @@ class ThermalNetworkMapLayer(MapLayer):
             nodes_path = self.locator.get_network_layout_nodes_shapefile(network_type, network_name)
             massflow_edges_path = self.locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name)
 
-            get_substation_file = lambda building: self.locator.get_thermal_network_substation_results_file(
-                building, network_type, network_name
-            )
+            def get_substation_file(building):
+                return self.locator.get_thermal_network_substation_results_file(
+                    building, network_type, network_name
+                )
+
             plant_file = self.locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name)
             temp_supply_file = self.locator.get_network_temperature_supply_nodes_file(network_type, network_name)
             temp_return_file = self.locator.get_network_temperature_return_nodes_file(network_type, network_name)
@@ -477,9 +553,7 @@ class ThermalNetworkMapLayer(MapLayer):
 
         # Enrich nodes with substation and plant performance data
         for node_id in nodes_df.index:
-            node_type = nodes_df.loc[node_id, 'type']
-
-            print(plant_file)
+            node_type = str(nodes_df.loc[node_id, 'type'])
 
             if node_type == 'CONSUMER':
                 building_name = nodes_df.loc[node_id, 'building']
