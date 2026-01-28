@@ -1880,9 +1880,46 @@ def main(config: cea.config.Configuration):
     print(f"Network name: {network_layout.network_name}")
 
     # Check if user provided custom network layout
+    existing_network = config.network_layout.existing_network
     edges_shp = config.network_layout.edges_shp_path
     nodes_shp = config.network_layout.nodes_shp_path
     geojson_path = config.network_layout.network_geojson_path
+
+    # If existing-network is specified, load edges/nodes from that network
+    if existing_network and existing_network not in ['', '(none)']:
+        print(f"\n  Loading existing network: {existing_network}")
+        # Edges are in layout.shp at the network-name level
+        existing_edges_path = locator.get_network_layout_shapefile(existing_network)
+
+        # Nodes are in {network_type}/layout/nodes.shp
+        # Try to find nodes from either DC or DH network (priority: DC first)
+        existing_nodes_path = None
+        for network_type in ['DC', 'DH']:
+            candidate_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, existing_network)
+            if os.path.exists(candidate_nodes_path):
+                existing_nodes_path = candidate_nodes_path
+                print(f"    Found {network_type} network nodes at: {existing_nodes_path}")
+                break
+
+        if not os.path.exists(existing_edges_path):
+            raise ValueError(
+                f"Could not find edges for existing network '{existing_network}'.\n"
+                f"Expected to find: {existing_edges_path}"
+            )
+
+        if not existing_nodes_path or not os.path.exists(existing_nodes_path):
+            raise ValueError(
+                f"Could not find nodes for existing network '{existing_network}'.\n"
+                f"Searched paths:\n"
+                f"  - {locator.get_network_layout_nodes_shapefile('DC', existing_network)}\n"
+                f"  - {locator.get_network_layout_nodes_shapefile('DH', existing_network)}"
+            )
+
+        # Set these as the input paths for user-defined network processing
+        edges_shp = existing_edges_path
+        nodes_shp = existing_nodes_path
+        print(f"    ✓ Loaded existing network edges: {edges_shp}")
+        print(f"    ✓ Loaded existing network nodes: {nodes_shp}")
 
     try:
         # Generate network layout from user-defined files if provided
