@@ -15,6 +15,9 @@ from cea.utilities.standardize_coordinates import get_geographic_coordinate_syst
 
 logger = getCEAServerLogger("ThermalNetworkMapLayer")
 
+# Multi-phase plan suffix
+MULTI_PHASE_SUFFIX = " (Multi-Phase)"
+
 
 class ThermalNetworkMapLayer(MapLayer):
     category = ThermalNetworkCategory
@@ -27,6 +30,12 @@ class ThermalNetworkMapLayer(MapLayer):
     def _get_network_types(self):
         # Return both choices and default (DC is default)
         return {"choices": self._network_types, "default": self._network_types[0]}
+
+    def _is_multiphase(self, network_name: str) -> bool:
+        """Check if a network name represents a multi-phase plan"""
+        if not network_name:
+            return False
+        return network_name.endswith(MULTI_PHASE_SUFFIX)
 
     def _migrate_old_format(self, network_folder):
         # Check if the old format exists
@@ -149,7 +158,7 @@ class ThermalNetworkMapLayer(MapLayer):
                     phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
                     if phases:
                         # Add with (Multi-Phase) suffix to distinguish from regular networks
-                        display_name = f"{plan_name} (Multi-Phase)"
+                        display_name = f"{plan_name}{MULTI_PHASE_SUFFIX}"
                         # Use modification time of the first phase for sorting
                         first_phase_path = os.path.join(plan_type_path, phases[0], 'layout', 'nodes.shp')
                         if os.path.exists(first_phase_path):
@@ -181,11 +190,11 @@ class ThermalNetworkMapLayer(MapLayer):
             network_type = parameters.get('network-type', '')
 
             # Only show phase selector for multi-phase plans
-            if not network_name or not network_name.endswith('(Multi-Phase)'):
+            if not self._is_multiphase(network_name):
                 return {"choices": [], "default": ""}
 
             # Extract plan name (remove suffix)
-            plan_name = network_name.replace(' (Multi-Phase)', '')
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
 
             # Get available phases
             phases = self._get_thermal_network_phasing_plan_phases(network_type, plan_name)
@@ -223,7 +232,7 @@ class ThermalNetworkMapLayer(MapLayer):
             return []
 
         # Multi-phase plans don't have layout shapefiles (optional)
-        if network_name.endswith('(Multi-Phase)'):
+        if self._is_multiphase(network_name):
             return []
 
         return [
@@ -241,7 +250,7 @@ class ThermalNetworkMapLayer(MapLayer):
             return []
 
         # Multi-phase plans don't have massflow files (optional)
-        if network_name.endswith('(Multi-Phase)'):
+        if self._is_multiphase(network_name):
             return []
 
         return [
@@ -260,8 +269,8 @@ class ThermalNetworkMapLayer(MapLayer):
             return []
 
         # Check if multi-phase plan
-        if network_name.endswith('(Multi-Phase)'):
-            plan_name = network_name.replace(' (Multi-Phase)', '')
+        if self._is_multiphase(network_name):
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
             return [
                 self.locator.get_thermal_network_phase_nodes_shapefile(network_type, plan_name, phase),
             ]
@@ -282,8 +291,8 @@ class ThermalNetworkMapLayer(MapLayer):
             return []
 
         # Check if multi-phase plan
-        if network_name.endswith('(Multi-Phase)'):
-            plan_name = network_name.replace(' (Multi-Phase)', '')
+        if self._is_multiphase(network_name):
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
             return [
                 self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase),
             ]
@@ -385,11 +394,11 @@ class ThermalNetworkMapLayer(MapLayer):
             raise ValueError(f"Invalid network type: {network_type}")
 
         # Check if this is a multi-phase plan
-        is_phasing_plan = network_name.endswith('(Multi-Phase)')
+        is_phasing_plan = self._is_multiphase(network_name)
 
         # Determine file paths based on whether it's a phasing plan
         if is_phasing_plan:
-            plan_name = network_name.replace(' (Multi-Phase)', '')
+            plan_name = network_name.replace(MULTI_PHASE_SUFFIX, '')
 
             # Get phase-specific paths
             edges_path = self.locator.get_thermal_network_phase_edges_shapefile(network_type, plan_name, phase)
