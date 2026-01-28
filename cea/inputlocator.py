@@ -1213,11 +1213,6 @@ class InputLocator(object):
         folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
         return os.path.join(folder, 'phasing_summary.csv')
 
-    def get_thermal_network_phasing_pipe_decisions_file(self, network_type, plan_name):
-        """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/pipe_sizing_decisions.csv"""
-        folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
-        return os.path.join(folder, 'pipe_sizing_decisions.csv')
-
     def get_thermal_network_phasing_cost_breakdown_file(self, network_type, plan_name):
         """scenario/outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/cost_breakdown_by_phase.csv"""
         folder = self.get_thermal_network_phasing_folder(network_type, plan_name)
