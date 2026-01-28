@@ -63,6 +63,9 @@ H_WE = 2466e3  # (J/kg) Latent heat of vaporization of water [section 6.3.6 in I
 C_A = 1006  # (J/(kg*K)) Specific heat of air at constant pressure [section 6.3.6 in ISO 52016-1:2007]
 GR = 9.81  # m/s2 gravity
 
+# NUMERICAL
+FLOAT_TOLERANCE = 1e-10  # tolerance for floating-point comparisons (e.g., area near zero)
+
 # RC-MODEL
 B_F = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
 H_IS = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
