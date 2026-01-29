@@ -7,11 +7,12 @@ from typing import List
 
 import cea.config
 from cea.workflows.workflow import main as workflow_main
+import io
+import threading
 
 
 def _ensure_utf8_streams():
     """Ensure stdout/stderr use UTF-8 encoding on Windows."""
-    import io
     try:
         if sys.stdout.encoding != 'utf-8':
             sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -25,35 +26,45 @@ def _ensure_utf8_streams():
 
 
 class PrefixedWriter:
-    """Wraps a stream and prefixes each line with a label."""
+    """Wraps a stream and prefixes each line with a label, using locks for thread safety."""
 
     def __init__(self, stream, prefix: str):
         self._stream = stream
         self._prefix = prefix
         self._at_line_start = True
+        self._lock = threading.Lock()
 
     def write(self, text: str):
         if not text:
             return
 
-        lines = text.split('\n')
-        for i, line in enumerate(lines):
-            # Add prefix at the start of each new line
-            if self._at_line_start and line:
-                self._stream.write(f"{self._prefix} ")
+        with self._lock:
+            lines = text.split('\n')
 
-            self._stream.write(line)
+            for i, line in enumerate(lines):
+                is_last_segment = (i == len(lines) - 1)
 
-            # Add newline between lines (but not after the last segment)
-            if i < len(lines) - 1:
-                self._stream.write('\n')
-                self._at_line_start = True
-            else:
-                # If the text ended with content (no trailing newline), we're mid-line
-                self._at_line_start = text.endswith('\n')
+                # Skip empty trailing segment (from text ending with \n)
+                if is_last_segment and line == '' and text.endswith('\n'):
+                    self._at_line_start = True
+                    break
+
+                # Add prefix at the start of each new line (including empty lines)
+                if self._at_line_start:
+                    self._stream.write(f"{self._prefix} ")
+
+                self._stream.write(line)
+
+                # Add newline between lines (but not after the last segment)
+                if not is_last_segment:
+                    self._stream.write('\n')
+                    self._at_line_start = True
+                else:
+                    self._at_line_start = False
 
     def flush(self):
-        self._stream.flush()
+        with self._lock:
+            self._stream.flush()
 
 
 def _run_workflow_with_prefix(config: cea.config.Configuration):
