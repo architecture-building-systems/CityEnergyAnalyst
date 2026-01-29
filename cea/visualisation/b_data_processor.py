@@ -386,11 +386,15 @@ class data_processor:
             y_cea_metric_map = {
                 'grid_electricity_consumption': 'GRID_kWh',
                 'enduse_electricity_demand': 'E_sys_kWh',
+                'enduse_electricity': 'E_sys_kWh',
                 'enduse_cooling_demand': 'QC_sys_kWh',
                 'enduse_space_cooling_demand': 'Qcs_sys_kWh',
+                'enduse_space_cooling': 'Qcs_sys_kWh',
                 'enduse_heating_demand': 'QH_sys_kWh',
                 'enduse_space_heating_demand': 'Qhs_sys_kWh',
-                'enduse_dhw_demand': 'Qww_kWh',
+                'enduse_space_heating': 'Qhs_sys_kWh',
+                'enduse_dhw_demand': 'Qww_sys_kWh',
+                'enduse_dhw': 'Qww_sys_kWh',
             }
 
         elif plot_cea_feature == 'pv':

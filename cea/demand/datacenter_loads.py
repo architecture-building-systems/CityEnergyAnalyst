@@ -5,8 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from cea.technologies import heatpumps
-from cea.constants import HOURS_IN_YEAR
 from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 if TYPE_CHECKING:
@@ -72,36 +70,5 @@ def calc_Qcdata_sys(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeri
     return tsd
 
 
-def calc_Qcdataf(locator, bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
-    """
-    it calculates final loads
-    """
-    # GET SYSTEMS EFFICIENCIES
-    energy_source = bpr.supply["source_cs"]
-    scale_technology = bpr.supply["scale_cs"]
-    efficiency_average_year = bpr.supply["eff_cs"]
-    if scale_technology == "BUILDING":
-        if energy_source == "GRID":
-            t_source = (tsd.weather.T_ext + 273)
-
-            # heat pump energy
-            tsd.electrical_loads.E_cdata = np.vectorize(heatpumps.HP_air_air)(tsd.cooling_system_mass_flows.mcpcdata_sys, (tsd.cooling_system_temperatures.Tcdata_sys_sup + 273),
-                                                                (tsd.cooling_system_temperatures.Tcdata_sys_re + 273), t_source)
-            # final to district is zero
-            tsd.cooling_loads.DC_cdata = np.zeros(HOURS_IN_YEAR)
-        elif energy_source == "NONE":
-            tsd.cooling_loads.DC_cdata = np.zeros(HOURS_IN_YEAR)
-            tsd.electrical_loads.E_cdata = np.zeros(HOURS_IN_YEAR)
-        else:
-            raise Exception('check potential error in input database of ALL IN ONE SYSTEMS / COOLING')
-
-    elif scale_technology == "DISTRICT":
-        tsd.cooling_loads.DC_cdata = tsd.cooling_loads.Qcdata_sys / efficiency_average_year
-        tsd.electrical_loads.E_cdata = np.zeros(HOURS_IN_YEAR)
-    elif scale_technology == "NONE":
-        tsd.cooling_loads.DC_cdata = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.E_cdata = np.zeros(HOURS_IN_YEAR)
-    else:
-        raise Exception('check potential error in input database of ALL IN ONE SYSTEMS / COOLING')
-    return tsd
+# NOTE: calc_Qcdataf() function removed - primary energy calculation for data center cooling moved to primary-energy module
 

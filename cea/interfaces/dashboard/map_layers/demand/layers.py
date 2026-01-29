@@ -39,40 +39,33 @@ def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
 class DemandMapLayer(MapLayer):
     category = DemandCategory
     name = "demand"
-    label = "Grid Electricity Consumption [kWh]"
+    label = "End-use Electricity [kWh]"
     description = "Energy Demand of buildings"
 
     _data_columns = {
-        "GRID_kWh": {
-            "label": "Grid Electricity Final-Use [kWh]",
-            "colours": {
-                "colour_array": [color_to_hex("brown_lighter"), color_to_hex("brown")],
-                "points": 12
-            }
-        },
         "E_sys_kWh": {
-            "label": "Electricity End-Use [kWh]",
+            "label": "End-use Electricity [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("green_lighter"), color_to_hex("green")],
                 "points": 12
             }
         },
         "Qcs_sys_kWh": {
-            "label": "Space Cooling End-Use [kWh]",
+            "label": "End-use Space Cooling [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("blue_lighter"), color_to_hex("blue")],
                 "points": 12
             }
         },
         "Qhs_sys_kWh": {
-            "label": "Space Heating End-Use [kWh]",
+            "label": "End-use Space Heating [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("red_lighter"), color_to_hex("red")],
                 "points": 12
             }
         },
         "Qww_sys_kWh": {
-            "label": "Domestic Hot Water End-Use [kWh]",
+            "label": "End-use Domestic Hot Water [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("orange_lighter"), color_to_hex("orange")],
                 "points": 12

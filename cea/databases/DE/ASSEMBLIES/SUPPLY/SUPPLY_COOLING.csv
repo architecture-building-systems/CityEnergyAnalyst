@@ -1,6 +1,6 @@
-description,code,primary_components,secondary_components,tertiary_components,system,feedstock,scale,efficiency,CAPEX_USD2015kW,LT_yr,O&M_%,IR_%,reference
-none,SUPPLY_COOLING_AS0,-,-,-,NONE,NONE,NONE,0.0,0,20,1,5,educated guess
-heatpump - air/air,SUPPLY_COOLING_AS1,CH2,-,CT1,COOLING,GRID,BUILDING,2.7,200,20,1,5,educated guess
-heatpump - water/water,SUPPLY_COOLING_AS2,CH2,-,CT1,COOLING,GRID,BUILDING,3.0,200,20,1,5,educated guess
-district cooling  - Lakewater/water,SUPPLY_COOLING_AS3,CH2,-,CT1,COOLING,GRID,DISTRICT,3.2,200,20,1,5,educated guess
-district cooling  - air/air,SUPPLY_COOLING_AS4,CH2,-,CT1,COOLING,GRID,DISTRICT,2.8,200,20,1,5,educated guess
+description,code,primary_components,secondary_components,tertiary_components,scale,reference
+none,SUPPLY_COOLING_AS0,-,-,-,NONE,educated guess
+heatpump - air/air,SUPPLY_COOLING_AS1,CH2,-,CT1,BUILDING,educated guess
+heatpump - water/water,SUPPLY_COOLING_AS2,CH2,-,CT1,BUILDING,educated guess
+district cooling  - Lakewater/water,SUPPLY_COOLING_AS3,CH2,-,CT1,DISTRICT,educated guess
+district cooling  - air/air,SUPPLY_COOLING_AS4,CH2,-,CT1,DISTRICT,educated guess

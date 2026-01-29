@@ -196,13 +196,13 @@ Energy Demand Forecasting:
     label: "Energy Demand Part 2: load modelling"
     short_description: Forecast end-use energy loads and final energy consumption by carrier
     description: |
-      This Feature uses CEA models to forecast building energy demand at hourly resolution.
+      This Feature forecasts building energy demand at hourly resolution.
 
-      **End-use energy loads**: Heating, cooling, domestic hot water, electricity for appliances/lighting (by service)
+      **Useful energy**: Pure thermal demand for heating, cooling, and domestic hot water (heat in rooms, hot water at taps)
 
-      **Final energy consumption**: Energy by carrier (GRID electricity, natural gas, district heating/cooling, etc.) delivered to the building boundary
+      **End-use energy loads**: System-level energy demand including HVAC distribution and emission losses (Qhs_sys, Qcs_sys, Qww_sys, E_sys)
 
-      Final energy represents what is delivered to and consumed at the building, before accounting for upstream generation/transmission losses (which are captured in Primary Energy calculations).
+      Note: Final energy by carrier (GRID electricity, natural gas, district heating/cooling) and primary energy calculations are performed in separate supply and emissions modules.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
