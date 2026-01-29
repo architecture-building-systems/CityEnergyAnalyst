@@ -10799,7 +10799,7 @@ get_demand_results_file:
         unit: NA
         values: YYYY-MM-DD hh:mm:ss
       E_sys_kWh:
-        description: End-use total electricity consumption  = Ea + El + Edata + Epro + Eaux + Ev + Eve
+        description: End-use total electricity consumption (system-level demand) = Ea + El + Edata + Epro + Eaux + Ev + Eve
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -10863,12 +10863,12 @@ get_demand_results_file:
         type: string
         unit: NA
       QC_sys_kWh:
-        description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
+        description: Total end-use cooling demand (system-level), QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
         type: float
         unit: '[kWh]'
         min: 0.0
       QH_sys_kWh:
-        description: Total energy demand for heating, QH_sys = Qww_sys + Qhs_sys + Qhpro_sys
+        description: Total end-use heating demand (system-level), QH_sys = Qww_sys + Qhs_sys + Qhpro_sys
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -10968,7 +10968,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qcs_kWh:
-        description: Specific cooling demand
+        description: Useful energy for space cooling (thermal demand at point of use)
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11018,7 +11018,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qcs_sys_kWh:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: End-use space cooling demand (system-level including HVAC losses), Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11043,7 +11043,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qhs_kWh:
-        description: Sensible heating system demand
+        description: Useful energy for space heating (thermal demand at point of use)
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11093,7 +11093,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qhs_sys_kWh:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: End-use space heating demand (system-level including HVAC losses), Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11103,12 +11103,12 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qww_kWh:
-        description: DHW specific heating demand
+        description: Useful energy for domestic hot water (thermal demand at taps)
         type: float
         unit: '[kWh]'
         min: 0.0
       Qww_sys_kWh:
-        description: End-use hotwater demand
+        description: End-use domestic hot water demand (system-level including distribution losses)
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -14602,7 +14602,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
+        description: End-use total electricity consumption (system-level demand), E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -14771,7 +14771,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qcs_MWhyr:
-        description: Total cooling demand
+        description: Useful energy for space cooling (thermal demand at point of use)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -14871,7 +14871,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: End-use space cooling demand (system-level including HVAC losses), Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15021,7 +15021,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: End-use space heating demand (system-level including HVAC losses), Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15061,7 +15061,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qww_MWhyr:
-        description: DHW heating demand
+        description: Useful energy for domestic hot water (thermal demand at taps)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15071,7 +15071,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qww_sys_MWhyr:
-        description: End-use hotwater demand
+        description: End-use domestic hot water demand (system-level including distribution losses)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16343,7 +16343,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
+        description: End-use total electricity consumption (system-level demand), E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16442,7 +16442,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       QC_sys_MWhyr:
-        description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
+        description: Total end-use cooling demand (system-level), QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16452,7 +16452,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       QH_sys_MWhyr:
-        description: Total energy demand for heating
+        description: Total end-use heating demand (system-level)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16512,7 +16512,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qcs_MWhyr:
-        description: Total cooling demand
+        description: Useful energy for space cooling (thermal demand at point of use)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16612,7 +16612,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: End-use space cooling demand (system-level including HVAC losses), Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16662,7 +16662,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qhs_MWhyr:
-        description: Total heating demand
+        description: Useful energy for space heating (thermal demand at point of use)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16762,7 +16762,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: End-use space heating demand (system-level including HVAC losses), Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16802,7 +16802,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qww_MWhyr:
-        description: DHW heating demand
+        description: Useful energy for domestic hot water (thermal demand at taps)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16812,7 +16812,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qww_sys_MWhyr:
-        description: End-use hotwater demand
+        description: End-use domestic hot water demand (system-level including distribution losses)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
