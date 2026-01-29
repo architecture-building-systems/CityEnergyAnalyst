@@ -64,10 +64,9 @@ class CeaScript(object):
         was responsible for printing their own parameters, but that requires manually keeping track of these
         parameters.
         """
-        print('City Energy Analyst version %s' % cea.__version__)
-        script_name = self.name
-        print(f"{verb} `cea {script_name}` with the following parameters:")
-        parameters_string = ""
+        print(f'City Energy Analyst version {cea.__version__}')
+        print(f"{verb} `cea {self.name}` with the following parameters:")
+        parameters_string = []
         errors = []
         for section, parameter in config.matching_parameters(self.parameters):
             section_name = section.name
@@ -75,17 +74,16 @@ class CeaScript(object):
             try:
                 parameter_value = parameter.get()
 
-                parameters_string += f"- {section_name}:{parameter_name} = {parameter_value}\n"
-                parameters_string += f"  (default: {parameter.default})\n"
+                parameters_string.append(f"- {section_name}:{parameter_name} = {parameter_value}")
+                parameters_string.append(f"  (default: {parameter.default})")
             except cea.ConfigError as config_error:
                 errors.append(f"  - {section_name}:{parameter_name} -> {config_error}")
 
-        print(parameters_string)
+        print("\n".join(parameters_string))
 
         if errors:
             print("Errors in configuration:")
-            for error in errors:
-                print(error)
+            print("\n".join(errors))
             raise cea.ConfigError("Errors in configuration detected. See above.")
 
     def print_missing_input_files(self, config: "Configuration"):
