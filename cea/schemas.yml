@@ -10789,7 +10789,10 @@ get_demand_results_file:
   file_type: csv
   schema:
     columns:
-      # NOTE: Primary energy columns (COAL_*, DC_*, DH_*, E_hs, E_cs, E_ww, E_cdata, E_cre, GRID_*, NG_*, OIL_*, WOOD_*, SOLAR_*) removed - moved to primary-energy module
+      # NOTE: Final energy columns by carrier (COAL_*, DC_*, DH_*, GRID_*, NG_*, OIL_*, WOOD_*, SOLAR_*, PV_*)
+      # and HVAC electricity breakdown (E_hs, E_cs, E_ww, E_cdata, E_cre) removed from demand outputs.
+      # Final energy calculations will be performed in a separate supply/primary-energy module.
+      # Demand module now outputs: Useful energy (Qhs, Qcs, Qww) and End-use energy (E_sys, Qhs_sys, Qcs_sys, Qww_sys)
       date:
         description: Time stamp for each day of the year ascending in hour intervals.
         type: date
@@ -16315,7 +16318,10 @@ get_total_demand:
   float_format: '%.3f'
   schema:
     columns:
-      # NOTE: Primary energy columns (COAL_*, DC_*, DH_*, E_hs, E_cs, E_ww, E_cdata, E_cre, GRID_*, NG_*, OIL_*, WOOD_*, SOLAR_*) removed - moved to primary-energy module
+      # NOTE: Final energy columns by carrier (COAL_*, DC_*, DH_*, GRID_*, NG_*, OIL_*, WOOD_*, SOLAR_*, PV_*)
+      # and HVAC electricity breakdown (E_hs, E_cs, E_ww, E_cdata, E_cre) removed from demand outputs.
+      # Final energy calculations will be performed in a separate supply/primary-energy module.
+      # Demand module now outputs: Useful energy (Qhs, Qcs, Qww) and End-use energy (E_sys, Qhs_sys, Qcs_sys, Qww_sys)
       Af_m2:
         description: Conditioned floor area (heated/cooled)
         type: float
