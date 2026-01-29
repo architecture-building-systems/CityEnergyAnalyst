@@ -6,7 +6,7 @@ import unittest
 from typing import List
 
 import cea.config
-from cea.workflows.workflow import main
+from cea.workflows.workflow import main as workflow_main
 
 
 def _ensure_utf8_streams():
@@ -71,7 +71,7 @@ def _run_workflow_with_prefix(config: cea.config.Configuration):
     try:
         sys.stdout = PrefixedWriter(original_stdout, prefix)
         sys.stderr = PrefixedWriter(original_stderr, prefix)
-        main(config)
+        workflow_main(config)
     finally:
         sys.stdout = original_stdout
         sys.stderr = original_stderr
