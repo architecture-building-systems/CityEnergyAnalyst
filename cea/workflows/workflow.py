@@ -79,7 +79,11 @@ def main(config: cea.config.Configuration):
                 print("Skipping workflow step {i}: script={script}".format(i=i, script=step["script"]))
                 write_resume_info(resume_yml, resume_dict, workflow_yml, i)
                 continue
-            do_script_step(config, i, step, trace_input)
+            try:
+                do_script_step(config, i, step, trace_input)
+            except Exception as e:
+                print("Error in workflow step {i}: script={script}".format(i=i, script=step["script"]))
+                raise e
         elif "config" in step:
             config = do_config_step(config, step)
         else:

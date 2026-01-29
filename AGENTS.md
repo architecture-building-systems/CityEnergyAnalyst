@@ -27,7 +27,6 @@
 - **Focus on patterns, not details** - What to do, not why it exists
 - **Scannable structure** - Use headers, bullets, and short paragraphs
 - **Reference, don't explain** - Link to related files instead of duplicating information
-- **No emoticons in code** - Never add emoji or emoticons to code files, comments, or print statements
 
 **Good example structure**:
 ```markdown
@@ -143,6 +142,8 @@ cea.api.demand(scenario='/path/to/scenario')
 - Config: `cea/tests/cea.config`
 
 ## Writing Conventions
+
+**No emoticons in code**: Never add emoji or emoticons to code files, comments, or print statements.
 
 **British English**: All user-facing text MUST use British English spelling and terminology:
 - ✅ "normalised" (not "normalized")

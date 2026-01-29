@@ -1,5 +1,7 @@
 # C/C++ Binary Compilation Guide for CEA
 
+> **Note**: Binary management for DAYSIM and CRAX is now handled by the `cea-external-tools` package. The source code for building these binaries can be found in the `external/` directory. This document is kept as a historical reference for the compilation strategies.
+
 This document outlines strategies for integrating DAYSIM and CRAX C++ binaries into CEA's Python wheel distribution.
 
 ## Current CEA Integration Status

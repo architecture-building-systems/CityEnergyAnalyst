@@ -13,7 +13,7 @@ import cea.technologies.substation as substation
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.utility import extract_network_from_shapefile
+from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
@@ -95,48 +95,6 @@ def calculate_ground_temperature(locator):
     network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
     return T_ground_K
-
-
-def get_thermal_network_from_shapefile(locator: cea.inputlocator.InputLocator, network_type: gpd.GeoDataFrame, network_name: str):
-    # import shapefiles containing the network's edges and nodes
-    import os
-
-    edges_path = locator.get_network_layout_shapefile(network_name)
-    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-
-    # Check if network layout files exist with helpful error messages
-    if not os.path.exists(edges_path):
-        raise FileNotFoundError(
-            f"{network_type} network layout is missing: {edges_path}\n"
-            f"Please run 'Network Layout' (Part 1) first to create the network layout."
-        )
-
-    if not os.path.exists(nodes_path):
-        demand_type = "cooling" if network_type == "DC" else "heating"
-        raise FileNotFoundError(
-            f"{network_type} network nodes file is missing: {nodes_path}\n"
-            f"This can happen if:\n"
-            f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
-            f"  2. The {network_type} network was skipped because no buildings have {demand_type} demand.\n"
-            f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
-            f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
-        )
-
-    network_edges_df = gpd.read_file(edges_path)
-    network_nodes_df = gpd.read_file(nodes_path)
-
-    # check duplicated NODE/PIPE IDs
-    duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
-    duplicated_edges = network_edges_df[network_edges_df.name.duplicated(keep=False)]
-    if duplicated_nodes.size > 0:
-        raise ValueError('There are duplicated NODE IDs:', duplicated_nodes.name.values)
-    if duplicated_edges.size > 0:
-        raise ValueError('There are duplicated PIPE IDs:', duplicated_edges.name.values)
-
-    # get node and pipe information
-    node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
-
-    return edge_df, node_df
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
@@ -569,7 +527,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     peak_load_percentage = config.thermal_network.peak_load_percentage
 
     # GET INFORMATION ABOUT THE NETWORK
-    edge_df, node_df = get_thermal_network_from_shapefile(locator, network_type, network_name)
+    network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
+    node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
 
     # Extract service configuration from plant node type (DH only)
     itemised_dh_services = None

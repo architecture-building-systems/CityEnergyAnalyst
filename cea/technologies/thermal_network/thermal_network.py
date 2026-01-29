@@ -29,7 +29,7 @@ from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOUR
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
-from cea.technologies.thermal_network.utility import extract_network_from_shapefile
+from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
@@ -369,30 +369,12 @@ class ThermalNetwork(object):
 
         t0 = time.perf_counter()
 
-        # import shapefiles containing the network's edges and nodes
-        edges_path = self.locator.get_network_layout_shapefile(self.network_name)
+        network_nodes_df, network_edges_df = load_network_shapefiles(
+            self.locator, self.network_type, self.network_name
+        )
+
+        # Get nodes path for metadata file location
         nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
-
-        # Check if network layout files exist with helpful error messages
-        if not os.path.exists(edges_path):
-            raise FileNotFoundError(
-                f"{self.network_type} network layout is missing: {edges_path}\n"
-                f"Please run 'Network Layout' (Part 1) first to create the network layout."
-            )
-
-        if not os.path.exists(nodes_path):
-            demand_type = "cooling" if self.network_type == "DC" else "heating"
-            raise FileNotFoundError(
-                f"{self.network_type} network nodes file is missing: {nodes_path}\n"
-                f"This can happen if:\n"
-                f"  1. 'Network Layout' (Part 1) was not run yet, OR\n"
-                f"  2. The {self.network_type} network was skipped because no buildings have {demand_type} demand.\n"
-                f"     (Check the 'consider-only-buildings-with-demand' setting in Network Layout)\n"
-                f"Please verify your buildings have {demand_type} demand and re-run 'Network Layout' (Part 1)."
-            )
-
-        network_edges_df = gpd.read_file(edges_path)
-        network_nodes_df = gpd.read_file(nodes_path)
 
         # NEW: Read per-building service configuration metadata (if available)
         import json
@@ -418,14 +400,6 @@ class ThermalNetwork(object):
 
         # Store for passing to simulation functions
         self.per_building_services = per_building_services
-
-        # check duplicated NODE/PIPE IDs
-        duplicated_nodes = network_nodes_df[network_nodes_df.name.duplicated(keep=False)]
-        duplicated_edges = network_edges_df[network_edges_df.name.duplicated(keep=False)]
-        if duplicated_nodes.size > 0:
-            raise ValueError('There are duplicated NODE IDs:', duplicated_nodes)
-        if duplicated_edges.size > 0:
-            raise ValueError('There are duplicated PIPE IDs:', duplicated_nodes)
 
         # get node and pipe information
         # filter_edges=True because layout.shp contains edges for all network types (DC+DH combined),
@@ -3940,15 +3914,75 @@ def check_heating_cooling_demand(locator, config):
 
 def main(config: cea.config.Configuration):
     """
-    run the whole network summary routine
+    Run thermal network Part 2: Flow & Sizing
+
+    Supports both single-phase and multi-phase modes based on configuration.
     """
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
+    # MODE DETECTION & VALIDATION
+    network_names = config.thermal_network.network_name  # List (NetworkLayoutMultiChoiceParameter)
+    multi_phase_mode = config.thermal_network_phasing.multi_phase_mode  # Boolean
+
+    num_networks = len(network_names)
+
+    # Validate configuration and determine mode
+    if num_networks == 0:
+        # Get available network layouts to provide helpful error message
+        try:
+            network_folder = locator.get_thermal_network_folder()
+            available_layouts = [name for name in os.listdir(network_folder)
+                                if os.path.isdir(os.path.join(network_folder, name))
+                                and name not in {'DH', 'DC'}]
+            if available_layouts:
+                raise ValueError(
+                    f"Network name is required. Please select a network layout.\n"
+                    f"Available layouts: {', '.join(available_layouts)}"
+                )
+            else:
+                raise ValueError(
+                    "Network name is required, but no network layouts found.\n"
+                    "Please create or import a network layout using 'network-layout' script."
+                )
+        except FileNotFoundError:
+            raise ValueError("Network name is required. Please select a network layout.")
+
+    elif num_networks == 1 and not multi_phase_mode:
+        # ✅ SINGLE-PHASE MODE
+        print("\n" + "="*80)
+        print("SINGLE-PHASE THERMAL NETWORK SIMULATION")
+        print("="*80)
+        # Continue with existing single-phase logic below
+        network_name = network_names[0]
+
+    elif num_networks > 1 and not multi_phase_mode:
+        # ❌ ERROR: Multiple networks but multi-phase disabled
+        raise ValueError(
+            f"Multiple networks selected ({num_networks}) but multi-phase-mode is False.\n"
+            f"Resolution: Set thermal-network-phasing:multi-phase-mode = true\n"
+            f"           or select only ONE network for single-phase simulation."
+        )
+
+    elif num_networks == 1 and multi_phase_mode:
+        # ❌ ERROR: Single network but multi-phase enabled
+        raise ValueError(
+            "Multi-phase mode enabled but only 1 network selected.\n"
+            "Resolution: Select MULTIPLE networks (e.g., phase1, phase2, phase3)\n"
+            "           or set thermal-network-phasing:multi-phase-mode = false"
+        )
+
+    elif num_networks > 1 and multi_phase_mode:
+        # ✅ MULTI-PHASE MODE - Delegate to phasing module
+        print("\n" + "="*80)
+        print("MULTI-PHASE THERMAL NETWORK SIMULATION")
+        print("="*80)
+        from cea.technologies.thermal_network.thermal_network_phasing import run_multi_phase
+        return run_multi_phase(config, locator, network_names)
+
+    # Continue with existing single-phase logic
     network_model = config.thermal_network.network_model
 
-    # Get network name from config
-    # Future enhancement: Support multiple network layouts
-    network_name = config.thermal_network.network_name
+    # Legacy compatibility check
     if not network_name:
         # Get available network layouts to provide helpful error message
         try:
