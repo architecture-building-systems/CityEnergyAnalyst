@@ -120,7 +120,7 @@ class BuildingPropertiesDatabase:
             if mapping.field_defaults:
                 for field_name, default_value in mapping.field_defaults.items():
                     if field_name not in merged_df.columns:
-                        print(f"  → Adding missing field '{field_name}' with default value: {default_value}")
+                        print(f"  Adding missing field '{field_name}' with default value: {default_value}")
                         merged_df[field_name] = default_value
 
             # Validate that all required fields exist before slicing
@@ -148,7 +148,15 @@ class BuildingPropertiesDatabase:
                     f"{suggested_defaults}\n"
                     f"  }}\n\n"
                     f"Replace <default_value> with appropriate defaults for each field.\n"
-                    f"See MIGRATION_PLAN_SCHEMA_DEFAULTS.md for more information."
+                    f"**Example:**\n"
+                    f"```\n"
+                    f"    DatabaseMapping(\n"
+                    f"        field_defaults={{\n"
+                    f"            'shading_location': 'interior',\n"
+                    f"            'shading_setpoint_wm2': 300\n"
+                    f"        }}\n"
+                    f"    )\n"
+                    f"```\n"
                 )
 
                 raise ValueError(error_message)

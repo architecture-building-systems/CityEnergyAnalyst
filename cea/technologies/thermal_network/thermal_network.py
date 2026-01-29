@@ -23,7 +23,6 @@ import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
-import cea.utilities.workerstream
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
