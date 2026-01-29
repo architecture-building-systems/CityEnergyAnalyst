@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from typing import Optional, Tuple, NamedTuple, TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -28,9 +28,7 @@ if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
     from cea.resources.radiation.radiance import CEADaySim
 
-BUILT_IN_BINARIES_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bin")
 REQUIRED_BINARIES = {"ds_illum", "epw2wea", "gen_dc", "oconv", "radfiles2daysim", "rtrace_dc"}
-REQUIRED_LIBS = {"rayinit.cal", "isotrop_sky.cal"}
 
 
 class GridSize(NamedTuple):
@@ -38,21 +36,15 @@ class GridSize(NamedTuple):
     walls: int
 
 
-def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
+def check_daysim_bin_directory() -> str:
     """
-    Check for the Daysim bin directory based on ``path_hint`` and return it on success.
+    Check for the Daysim bin directory and return it on success.
 
-    If the binaries could not be found there, check in a folder `Depencencies/Daysim` of the installation - this will
-    catch installations on Windows that used the official CEA installer.
+    Checks the external tools package (cea_external_tools) for binaries.
 
-    Check the RAYPATH environment variable. Return that.
+    If the binaries can't be found, raise an exception.
 
-    Check for ``C:\\Daysim\\bin`` - it might be there?
-
-    If the binaries can't be found anywhere, raise an exception.
-
-    :param str path_hint: The path to check first, according to the `cea.config` file.
-    :return: bin_path, lib_path: contains the Daysim binaries - otherwise an exception occurs.
+    :return: bin_path containing the Daysim binaries - otherwise an exception occurs.
     """
 
     def contains_binaries(path):
@@ -64,69 +56,22 @@ def check_daysim_bin_directory(path_hint: Optional[str] = None) -> Tuple[str, Op
             return False
         return all(binary in found_binaries for binary in REQUIRED_BINARIES)
 
-    def contains_libs(path):
-        try:
-            found_libs = set(os.listdir(path))
-        except OSError:
-            # could not find the libs, bogus path
-            return False
-        return all(lib in found_libs for lib in REQUIRED_LIBS)
+    # Check external tools package location (where binaries are installed)
+    external_tools_path = get_radiation_bin_path()
+    if external_tools_path and contains_binaries(external_tools_path):
+        bin_path = os.path.abspath(os.path.normpath(os.path.normcase(external_tools_path)))
 
-    def contains_whitespace(path):
-        """True if path contains whitespace"""
-        return len(path.split()) > 1
-
-    folders_to_check = []
-    if path_hint is not None:
-        folders_to_check.append(path_hint)
-
-    # Check site-packages location first (where binaries are actually installed)
-    site_package_daysim = get_radiation_bin_path()
-    if site_package_daysim:
-        folders_to_check.append(site_package_daysim)
-
-    # Fallback: Path relative to this script (for development or custom setups)
-    shipped_daysim = os.path.join(os.path.dirname(__file__), "bin", sys.platform)
-    folders_to_check.append(shipped_daysim)
-
-    # Additional paths
-    if sys.platform == "win32":
-        folders_to_check.append(os.path.join(shipped_daysim, "bin64"))
-        # User might have a default DAYSIM installation
-        folders_to_check.append(r"C:\Daysim\bin")
-
-    elif sys.platform == "linux":
-        # For docker
-        folders_to_check.append(os.path.normcase(r"/Daysim/bin"))
-
-    elif sys.platform == "darwin":
-        pass
-
-    # Expand paths
-    folders_to_check = [os.path.abspath(os.path.normpath(os.path.normcase(p))) for p in folders_to_check]
-    lib_path = os.path.join(os.path.dirname(__file__), "lib")
-
-    for possible_path in folders_to_check:
-        if not contains_binaries(possible_path):
-            continue
-
-        # If path to binaries contains whitespace, provide a warning
-        # if contains_whitespace(possible_path):
-        #     warnings.warn(f"ATTENTION: Daysim binaries found in '{possible_path}', but its path contains whitespaces. "
-        #                   "Consider moving the binaries to another path to use them.")
-        #     continue
-
-        elif sys.platform == "darwin":
+        if sys.platform == "darwin":
             # Remove unidentified developer warning when running binaries on mac
             for binary in REQUIRED_BINARIES:
-                binary_path = os.path.join(possible_path, binary)
-                result = subprocess.run(["xattr", "−l", binary_path], capture_output=True)
+                binary_path = os.path.join(bin_path, binary)
+                result = subprocess.run(["xattr", "-l", binary_path], capture_output=True)
                 if "com.apple.quarantine" in result.stdout.decode('utf-8'):
                     subprocess.run(["xattr", "-d", "com.apple.quarantine", binary_path])
 
-        return str(possible_path), str(lib_path)
+        return str(bin_path)
 
-    raise ValueError("Could not find Daysim binaries - checked these paths: {}".format(", ".join(folders_to_check)))
+    raise ValueError("Could not find Daysim binaries. Please install cea-external-tools package.")
 
 
 def create_sensor_input_file(rad, chunk_n):
