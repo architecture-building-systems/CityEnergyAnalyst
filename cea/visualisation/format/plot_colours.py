@@ -100,6 +100,7 @@ _BASE_COLUMN_COLORS = {
     "QH_sys": "red_lighter",
     "Qhs_sys": "red",
     "Qww": "orange",
+    "heat_rejection": "red",
 
     # ===== Total Generation =====
     "E_PV_gen": "yellow",
@@ -333,7 +334,7 @@ def get_column_color(column_name):
 COLUMNS_TO_COLOURS = {}
 for base_name, color in _BASE_COLUMN_COLORS.items():
     # Generate all unit variations
-    if any(x in base_name for x in ['_E', '_Q', 'PV', 'PVT', 'SC', 'sys', 'GRID']):
+    if any(x in base_name for x in ['_E', '_Q', 'PV', 'PVT', 'SC', 'sys', 'GRID', 'heat_rejection']):
         # Energy metrics
         for unit in ['Wh', 'kWh', 'MWh']:
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color

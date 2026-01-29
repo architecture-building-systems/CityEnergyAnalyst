@@ -219,6 +219,18 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/{cea_feature}/analytics"""
         return os.path.join(summary_folder, CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature), 'analytics')
 
+    def get_export_results_summary_costs_folder(self, summary_folder):
+        """scenario/export/results/{folder_name}/costs"""
+        return os.path.join(summary_folder, 'costs')
+
+    def get_export_results_summary_costs_buildings_file(self, summary_folder):
+        """scenario/export/results/{folder_name}/costs/costs_buildings.csv"""
+        return os.path.join(self.get_export_results_summary_costs_folder(summary_folder), 'costs_buildings.csv')
+
+    def get_export_results_summary_costs_components_file(self, summary_folder):
+        """scenario/export/results/{folder_name}/costs/costs_components.csv"""
+        return os.path.join(self.get_export_results_summary_costs_folder(summary_folder), 'costs_components.csv')
+
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):
@@ -1392,8 +1404,9 @@ class InputLocator(object):
         """scenario/outputs/data/solar-radiation/{building}_geometry.csv"""
         return os.path.join(self.get_solar_radiation_folder(), 'buidling_materials.csv')
 
-    def solar_potential_folder(self):
-        return os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
+    def get_potentials_solar_folder(self):
+        """scenario/outputs/data/potentials/solar"""
+        return os.path.join(self.get_potentials_folder(), 'solar')
 
     def solar_potential_folder_PV(self):
         """scenario/outputs/data/potentials/solar/PV"""
@@ -1417,11 +1430,11 @@ class InputLocator(object):
 
     def PV_totals(self, panel_type):
         """scenario/outputs/data/potentials/solar/{building}_PV_{panel_type}_total.csv.csv"""
-        return os.path.join(self.solar_potential_folder(), "PV_{panel_type}_total.csv".format(panel_type=panel_type))
+        return os.path.join(self.get_potentials_solar_folder(), "PV_{panel_type}_total.csv".format(panel_type=panel_type))
 
     def PV_total_buildings(self, panel_type):
         """scenario/outputs/data/potentials/solar/PV_{panel_type}_total_buildings.csv"""
-        return os.path.join(self.solar_potential_folder(), 'PV_%s_total_buildings.csv' % panel_type)
+        return os.path.join(self.get_potentials_solar_folder(), 'PV_%s_total_buildings.csv' % panel_type)
 
     def PV_metadata_results(self, building):
         """scenario/outputs/data/potentials/solar/{building}_PV_sensors.csv"""
@@ -1434,11 +1447,11 @@ class InputLocator(object):
 
     def SC_totals(self, panel_type):
         """scenario/outputs/data/potentials/solar/SC_{panel_type}_total.csv"""
-        return os.path.join(self.solar_potential_folder(), "SC_{panel_type}_total.csv".format(panel_type=panel_type))
+        return os.path.join(self.get_potentials_solar_folder(), "SC_{panel_type}_total.csv".format(panel_type=panel_type))
 
     def SC_total_buildings(self, panel_type):
         """scenario/outputs/data/potentials/solar/SC_{panel_type}_total_buildings.csv"""
-        return os.path.join(self.solar_potential_folder(), 'SC_%s_total_buildings.csv' % panel_type)
+        return os.path.join(self.get_potentials_solar_folder(), 'SC_%s_total_buildings.csv' % panel_type)
 
     def SC_metadata_results(self, building, panel_type):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
@@ -1448,10 +1461,10 @@ class InputLocator(object):
         return os.path.join(self.solar_potential_folder_PVT(), f"{building}_{pv_panel_type}_{sc_panel_type}.csv")
 
     def PVT_totals(self, pv_panel_type, sc_panel_type):
-        return os.path.join(self.solar_potential_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total.csv')
+        return os.path.join(self.get_potentials_solar_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total.csv')
 
     def PVT_total_buildings(self, pv_panel_type, sc_panel_type):
-        return os.path.join(self.solar_potential_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total_buildings.csv')
+        return os.path.join(self.get_potentials_solar_folder(), f'PVT_{pv_panel_type}_{sc_panel_type}_total_buildings.csv')
 
     def PVT_metadata_results(self, building):
         """scenario/outputs/data/potentials/solar/{building}_SC_sensors.csv"""
@@ -1543,6 +1556,74 @@ class InputLocator(object):
     def get_costs_operation_file(self):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
         return os.path.join(self.get_costs_folder(), 'supply_system_costs_today.csv')
+
+    def get_baseline_costs(self, network_name=None):
+        """
+        scenario/outputs/data/costs/{network_name}/costs_buildings.csv
+
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_costs_folder(), network_name)
+        return os.path.join(folder, 'costs_buildings.csv')
+
+    def get_baseline_costs_detailed(self, network_name=None):
+        """
+        scenario/outputs/data/costs/{network_name}/costs_components.csv
+
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_costs_folder(), network_name)
+        return os.path.join(folder, 'costs_components.csv')
+
+    # HEAT REJECTION
+    def get_heat_folder(self):
+        """scenario/outputs/data/heat"""
+        return os.path.join(self.scenario, 'outputs', 'data', 'heat')
+
+    def get_heat_rejection_buildings(self, network_name=None):
+        """
+        scenario/outputs/data/heat/{network_name}/heat_rejection_buildings.csv
+
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_heat_folder(), network_name)
+        return os.path.join(folder, 'heat_rejection_buildings.csv')
+
+    def get_heat_rejection_components(self, network_name=None):
+        """
+        scenario/outputs/data/heat/{network_name}/heat_rejection_components.csv
+
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_heat_folder(), network_name)
+        return os.path.join(folder, 'heat_rejection_components.csv')
+
+    def get_heat_rejection_hourly_building(self, building_name, network_name=None):
+        """
+        scenario/outputs/data/heat/{network_name}/{building_name}.csv
+
+        :param building_name: Name of the building
+        :param network_name: Network layout name. If None, empty, or "(none)", uses "no-network" folder.
+        """
+        if not network_name or network_name.strip() in ["", "(none)"]:
+            network_name = "no-network"
+        folder = os.path.join(self.get_heat_folder(), network_name)
+        return os.path.join(folder, f'{building_name}.csv')
+
+    def get_heat_rejection_hourly_spatial(self):
+        """
+        DEPRECATED: Use get_heat_rejection_hourly_building() instead.
+        scenario/outputs/data/heat/heat_rejection_hourly_spatial.csv
+        """
+        return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
 
     # GRAPHS
     def get_plots_folder(self, category):

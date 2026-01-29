@@ -109,7 +109,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     # Activate b_data_processor
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,
-                                                   solar_panel_types_list)
+                                                   solar_panel_types_list, scenario)
     
     # Activate c_plotter
     fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
