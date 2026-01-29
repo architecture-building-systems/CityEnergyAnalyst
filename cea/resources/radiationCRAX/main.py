@@ -512,13 +512,12 @@ def main(config):
     with open(os.path.join(input_folder, "radiation_crax_config.json"), "r", encoding="utf-8") as f:
         content = json.load(f)
 
-    crax_bin_directory = content["crax-bin-directory"]
     calculate_sensor_data = content["calculate-sensor-data"]
     using_cea_sensor = content["using-cea-sensor"]
 
-    CRAX_bin_path, CRAX_lib_path = CRAXModel.check_crax_exe_directory(crax_bin_directory)
+    CRAX_bin_path = CRAXModel.check_crax_exe_directory()
     # Create an instance of CRAXModel
-    CRAX_model = CRAXModel.CRAX(CRAX_bin_path, CRAX_lib_path)
+    CRAX_model = CRAXModel.CRAX(CRAX_bin_path)
 
     # FIXME: temp solution to get building surface area using cea method
     # if calculate_sensor_data or using_cea_sensor:

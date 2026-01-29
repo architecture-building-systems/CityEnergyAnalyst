@@ -2,6 +2,7 @@
 name = "cea-external-tools"
 description = "External tools for City Energy Analyst, mainly containing C++ components e.g. DAYSIM and CRAX"
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = "<3.13,>=3.8"
 authors = [
     { name = "Reynold Mok", email = "reynold.mok@arch.ethz.ch" }
@@ -21,6 +22,8 @@ build-backend = "scikit_build_core.build"
 # Only install the cea_targets component (manually defined in our CMakeLists.txt)
 install.components = ["cea_targets", "crax_targets"]
 wheel.packages = ["cea_external_tools"]
+# Include license files in the wheel
+wheel.license-files = ["LICENSE", "vendored/licenses/*"]
 # Set persistent build directory for caching
 build-dir = "build"
 
