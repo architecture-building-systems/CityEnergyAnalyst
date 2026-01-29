@@ -4,12 +4,15 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 
 
 import os
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import yaml
 import cea
 import cea.inputlocator
 from cea.schemas import schemas
+
+if TYPE_CHECKING:
+    from cea.config import Configuration
 
 SCRIPTS_YML = os.path.abspath(os.path.join(os.path.dirname(cea.__file__), 'scripts.yml'))
 
@@ -55,23 +58,35 @@ class CeaScript(object):
         return parameters
 
 
-    def print_script_configuration(self, config, verb='Running'):
+    def print_script_configuration(self, config: "Configuration", verb='Running'):
         """
         Print a list of script parameters being used for this run of the tool. Historically, each tool
         was responsible for printing their own parameters, but that requires manually keeping track of these
         parameters.
         """
-        print('City Energy Analyst version %s' % cea.__version__)
-        script_name = self.name
-        print("%(verb)s `cea %(script_name)s` with the following parameters:" % locals())
+        print(f'City Energy Analyst version {cea.__version__}')
+        print(f"{verb} `cea {self.name}` with the following parameters:")
+        parameters_string = []
+        errors = []
         for section, parameter in config.matching_parameters(self.parameters):
             section_name = section.name
             parameter_name = parameter.name
-            parameter_value = parameter.get()
-            print("- %(section_name)s:%(parameter_name)s = %(parameter_value)s" % locals())
-            print("  (default: %s)" % parameter.default)
+            try:
+                parameter_value = parameter.get()
 
-    def print_missing_input_files(self, config):
+                parameters_string.append(f"- {section_name}:{parameter_name} = {parameter_value}")
+                parameters_string.append(f"  (default: {parameter.default})")
+            except cea.ConfigError as config_error:
+                errors.append(f"  - {section_name}:{parameter_name} -> {config_error}")
+
+        print("\n".join(parameters_string))
+
+        if errors:
+            print("Errors in configuration:")
+            print("\n".join(errors))
+            raise cea.ConfigError("Errors in configuration detected. See above.")
+
+    def print_missing_input_files(self, config: "Configuration"):
         schema_data = schemas(config.plugins)
         print()
         print("---------------------------")
@@ -80,11 +95,11 @@ class CeaScript(object):
             script_suggestions = (schema_data[method_name]['created_by']
                                   if 'created_by' in schema_data[method_name]
                                   else None)
-            print('- {path}'.format(path=path))
+            print(f'- {path}')
             if script_suggestions:
-                print('  (HINT: try running {scripts})'.format(scripts=', '.join(script_suggestions)))
+                print(f'  (HINT: try running {", ".join(script_suggestions)})')
 
-    def missing_input_files(self, config):
+    def missing_input_files(self, config: "Configuration"):
         """
         Return a list of bound :py:class:`cea.inputlocator.InputLocator` method names, one for each file required as
         input for this script that is not present yet as well as the applied path searched for.
@@ -103,7 +118,7 @@ class CeaScript(object):
             if not os.path.exists(os.path.abspath(os.path.normpath(os.path.expanduser(path)))):
                 yield [method_name, path]
 
-    def _lookup_args(self, config, locator, args):
+    def _lookup_args(self, config: "Configuration", locator, args):
         """returns a list of arguments to a locator method"""
         result = []
         for arg in args:
