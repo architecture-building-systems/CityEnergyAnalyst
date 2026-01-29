@@ -153,17 +153,18 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
         # access area of windows
         # area stored in the first row of the radiation data because it's constant over time
         window_area_m2 = radiation_data[f'windows_{direction}_m2'][0]
-        
-        # subtract frame area
-        actual_window_area_m2 = window_area_m2 * (1 - frame_factor)
 
         # use tolerance to avoid division by near-zero values
-        if actual_window_area_m2 <= FLOAT_TOLERANCE:
+        if window_area_m2 <= FLOAT_TOLERANCE:
             continue  # skip to next direction if no window area
 
         # convert radiation data to irradiance intensity on window [W/m2]
-        I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / actual_window_area_m2
-        
+        # Note: Radiation data windows_{direction}_kW is total radiation hitting the full window area (including frame)
+        # Therefore, use full window_area_m2 to calculate correct irradiance intensity
+        I_sol_win_wm2_direction = (radiation_data[f'windows_{direction}_kW'] * 1000) / window_area_m2
+
+        # subtract frame area for actual glazing area used in final calculation
+        actual_window_area_m2 = window_area_m2 * (1 - frame_factor)
         
         # reduce solar radiation by shading and shading location (interior or exterior)
         if shading_location == ShadingLocation.EXTERIOR:
@@ -183,8 +184,8 @@ def calc_Isol_daysim(building_name, locator: InputLocator, prop_envelope, prop_r
             shading_setpoint_Wm2=shading_setpoint_Wm2
         )
             
-        # then reduce value as usual after radiation has entered the window
-        # and multiply by window area
+        # Calculate solar heat gain per ISO 52016-1 Section 6.5.13.2 / EN ISO 13790 Section 11.3.2
+        # Q_sol = I_sol × F_sh × A_win × (1 - F_F), where F_F is frame area fraction
         I_sol_win_w_direction = (I_sol_win_wm2_direction * Fsh_win_direction) * actual_window_area_m2
 
         # add direction solar heat gain to total window solar gain
