@@ -349,7 +349,7 @@ def _active_layers(layers: list[MaterialLayer]) -> list[MaterialLayer]:
 
 
 @dataclass(frozen=True)
-class ArchetypeTimeline:
+class ArchetypeChangesTimeline:
     """Archetype snapshots + delta events per state year.
 
     Computed once for the district horizon and reused across all building timelines.
@@ -605,7 +605,7 @@ def _prepare_archetype_timeline(
     log_data: Mapping[int, dict[str, Any]],
     archetype_layers: dict[str, dict[str, list[MaterialLayer]]],
     archetype_construction_types: dict[str, dict[str, str]],
-) -> ArchetypeTimeline:
+) -> ArchetypeChangesTimeline:
     """Prepare per-year archetype snapshots + delta events from the district YAML log.
 
         Notes:
@@ -621,7 +621,7 @@ def _prepare_archetype_timeline(
     archetype_construction_events_by_year: dict[int, dict[str, dict[str, tuple[str, str]]]] = {}
 
     if not years_sorted:
-        return ArchetypeTimeline(
+        return ArchetypeChangesTimeline(
             years_sorted=[],
             layers_at_year={},
             layer_events_by_year={},
@@ -693,7 +693,7 @@ def _prepare_archetype_timeline(
             a: dict(codes) for a, codes in archetype_construction_types.items()
         }
 
-    return ArchetypeTimeline(
+    return ArchetypeChangesTimeline(
         years_sorted=list(effective_years),
         layers_at_year=archetype_layers_at_year,
         layer_events_by_year=archetype_layer_events_by_year,
@@ -907,7 +907,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         years_sorted: list[int],
         start_year: int,
         end_year: int,
-        archetype_timeline: ArchetypeTimeline,
+        archetype_timeline: ArchetypeChangesTimeline,
         service_life_by_src_component: Mapping[str, int | None],
     ) -> None:
         """Populate embodied (production / demolition / biogenic) emissions for this building.
@@ -1059,7 +1059,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         area_dict: dict[str, float],
         materials: pd.DataFrame,
         construction_year: int,
-        archetype_timeline: ArchetypeTimeline,
+        archetype_timeline: ArchetypeChangesTimeline,
     ) -> tuple[dict[str, str], float, bool]:
         """Initialise code-based state and write initial embodied events.
 
@@ -1247,7 +1247,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         *,
         years_sorted: list[int],
         const_type: str,
-        archetype_timeline: ArchetypeTimeline,
+        archetype_timeline: ArchetypeChangesTimeline,
     ) -> tuple[list[int], list[int], dict[int, dict[str, list[tuple[str, MaterialLayer]]]]]:
         """Collect authored modification and code-change years for this building.
 
@@ -1359,7 +1359,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         *,
         year: int,
         const_type: str,
-        archetype_timeline: ArchetypeTimeline,
+        archetype_timeline: ArchetypeChangesTimeline,
         area_dict: Mapping[str, float],
         tech_system_keys: Mapping[str, str],
         emission_per_tech: float,
@@ -1428,7 +1428,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         *,
         year: int,
         const_type: str,
-        archetype_timeline: ArchetypeTimeline,
+        archetype_timeline: ArchetypeChangesTimeline,
         area_dict: Mapping[str, float],
         materials: pd.DataFrame,
         lifetimes: Mapping[str, int],
@@ -2231,7 +2231,7 @@ def create_district_material_timeline(
 
 
 def main(config: Configuration) -> None:
-    timeline_variant_name = config.component_change_emission_timeline.existing_timeline_name
+    timeline_variant_name = config.state_simulations.existing_timeline_name
     if not timeline_variant_name:
         raise ValueError(
             "No existing timeline name provided. "

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal
 from cea.config import Configuration
 from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
+from cea.datamanagement.district_level_states.district_emission_timeline import create_district_material_timeline
 
 default_workflow = [
     {"config": "."},  # use state-in-time scenario as base config
@@ -10,7 +11,14 @@ default_workflow = [
     {"script": "occupancy"},
     {"script": "demand"},
     {"script": "photovoltaic"},
-    {"script": "emissions"},
+    {
+        "script": "emissions",
+        "parameters": {
+            "grid-decarbonise-reference-year": None, # apply decarbonization after timline being assembled
+            "grid-decarbonise-target-year": None,
+            "grid-decarbonise-target-emission-factor": 1.0,
+        },
+    },
 ]
 
 
@@ -40,7 +48,9 @@ def main(config: Configuration) -> None:
             "Please provide an existing timeline name to simulate all states from."
         )
     simulate_all_states(config, timeline_name=timeline_name)
-
+    print("All state-in-time scenarios have been simulated.")
+    df = create_district_material_timeline(config, timeline_variant_name=timeline_name)
+    print(f"District material timeline saved with {len(df)} years.")
 
 if __name__ == "__main__":
     main(Configuration())
