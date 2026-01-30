@@ -1,15 +1,17 @@
 """
 Apply atomic changes to a specific year in a district timeline.
+
+This tool updates the YAML log file only - it does NOT materialise state folders.
+Use Step 3 (Bake Scenario Evolution States) to create state folders from the log.
 """
 from cea.config import Configuration
 from cea.datamanagement.district_level_states.atomic_changes import resolve_atomic_changes_to_recipe
-from cea.datamanagement.district_level_states.state_scenario import modify_state_construction
-from cea.inputlocator import InputLocator
+from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
 
 
 def main(config: Configuration) -> None:
     """
-    Apply selected atomic changes to a specific year.
+    Apply selected atomic changes to a specific year (updates YAML log only).
     """
     # Get timeline name from Step 0
     timeline_name = config.district_events_apply_changes.existing_timeline_name
@@ -35,10 +37,10 @@ def main(config: Configuration) -> None:
     print(f"Applying {len(atomic_changes)} atomic change(s) to year {year_of_state} in timeline '{timeline_name}'...")
     
     # Resolve atomic changes to a single merged recipe
-    locator = InputLocator(config.scenario)
+    timeline = DistrictEventTimeline(config, timeline_name)
     try:
         merged_recipe = resolve_atomic_changes_to_recipe(
-            locator=locator,
+            locator=timeline.main_locator,
             timeline_name=timeline_name,
             change_names=atomic_changes,
         )
@@ -46,16 +48,14 @@ def main(config: Configuration) -> None:
         print(f"Error: {e}")
         raise
     
-    # Apply the merged recipe to the year
-    modify_state_construction(
-        config=config,
-        timeline_name=timeline_name,
-        year_of_state=year_of_state,
-        modify_recipe=merged_recipe,
-    )
+    # Update the YAML log file only (does not materialise state folders)
+    timeline.apply_year_modifications(year_of_state, merged_recipe)
+    timeline.save()
     
-    print(f"Successfully applied atomic changes to year {year_of_state}")
+    print(f"Successfully updated timeline log for year {year_of_state}")
     print(f"Applied changes: {', '.join(atomic_changes)}")
+    print(f"Log file: {timeline.main_locator.get_district_timeline_log_file(timeline_name)}")
+    print("\nNext step: Use Step 3 (Bake Scenario Evolution States) to materialise state folders from the log.")
 
 
 if __name__ == '__main__':

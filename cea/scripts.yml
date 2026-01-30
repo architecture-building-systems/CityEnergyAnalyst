@@ -279,7 +279,7 @@ Scenario Evolution Planning:
       3. **Proceed to Step 1** - Define atomic changes for this timeline
       4. If you want to switch timelines later, return to this step, select a different timeline, and save again
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.create_new_timeline
+    module: cea.datamanagement.district_level_states.create_new_timeline
     parameters: ['general:scenario', create-new-timeline]
 
   - name: district-atomic-changes-define
@@ -299,7 +299,7 @@ Scenario Evolution Planning:
       
       **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_atomic_changes_define
+    module: cea.datamanagement.district_level_states.district_atomic_changes_define
     parameters: ['general:scenario', district-atomic-changes-define]
     input-files:
       - [get_input_folder]
@@ -329,7 +329,7 @@ Scenario Evolution Planning:
       If selected atomic changes have conflicting modifications (modifying the same field on the same building),
       the tool will fail with a clear error message listing the conflicts.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_events_apply_changes
+    module: cea.datamanagement.district_level_states.district_events_apply_changes
     parameters: ['general:scenario', district-events-apply-changes]
     input-files:
       - [get_input_folder]
