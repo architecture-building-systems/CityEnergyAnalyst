@@ -1648,11 +1648,7 @@ class AtomicChangeMultiChoiceParameter(MultiChoiceParameter):
         
         # Load atomic changes for this timeline
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        timeline_name = self.config.district_timeline_select.existing_timeline_name
-        if not timeline_name:
-            timeline_name = self.config.district_timeline_select.new_timeline_name
-        
-        print(f"[AtomicChangeMultiChoiceParameter._choices] timeline_name: |{timeline_name}|")
+        timeline_name = self.config.district_events_apply_changes.existing_timeline_name
         
         if not timeline_name:
             return []
@@ -1660,10 +1656,8 @@ class AtomicChangeMultiChoiceParameter(MultiChoiceParameter):
         try:
             changes = load_atomic_changes(locator, timeline_name=str(timeline_name))
             result = sorted(changes.keys())
-            print(f"[AtomicChangeMultiChoiceParameter._choices] Found {len(result)} atomic changes")
             return result
-        except (FileNotFoundError, ValueError) as e:
-            print(f"[AtomicChangeMultiChoiceParameter._choices] Error loading atomic changes: {e}")
+        except (FileNotFoundError, ValueError):
             return []
 
     def encode(self, value):

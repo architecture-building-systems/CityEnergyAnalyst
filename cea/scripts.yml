@@ -266,23 +266,21 @@ Thermal Network Design:
       - [get_weather_file]
 
 Scenario Evolution Planning:
-  - name: district-timeline-select
-    label: "Step 0: Select/Create Timeline"
-    short_description: Select or create a district timeline (SAVE SETTINGS after this step!)
+  - name: create-new-timeline
+    label: "Step 0: Create New Timeline"
+    short_description: Create a new district timeline (SAVE SETTINGS after this step!)
     description: |
-      This Feature allows you to select an existing timeline or create a new one.
-      
-      **IMPORTANT**: After selecting or creating a timeline, you MUST click "Save Settings" 
-      before proceeding to other steps. This ensures that Steps 1-4 reference the correct timeline.
+      This Feature allows you to create a new timeline. 
+      If you only want to work on existing timeline, you can ignore this step.
       
       **Workflow**:
-      1. **Complete this step first** - Select existing or enter new timeline name
+      1. **Complete this step first** - Enter new timeline name
       2. **Click "Save Settings"** - This saves your timeline selection
       3. **Proceed to Step 1** - Define atomic changes for this timeline
       4. If you want to switch timelines later, return to this step, select a different timeline, and save again
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_timeline_select
-    parameters: ['general:scenario', district-timeline-select]
+    module: cea.datamanagement.create_new_timeline
+    parameters: ['general:scenario', create-new-timeline]
 
   - name: district-atomic-changes-define
     label: "Step 1: Define Atomic Change"
@@ -318,6 +316,9 @@ Scenario Evolution Planning:
       (e.g. if two changes try to modify the same field on the same building).
       
       **Prerequisites**: Complete Step 0 (Select Timeline) and Step 1 (Define Changes) first!
+
+      **Important**: When you select a non-default timeline, make sure to **save settings**, 
+      leave this page and return to refresh the list of available atomic changes!
 
       **Workflow**:
       1. Define atomic changes using Step 1
@@ -355,10 +356,13 @@ Scenario Evolution Planning:
       - [get_building_properties_folder]
 
   - name: state-simulations
-    label: "Step 4: Run Simulations"
+    label: "Step 4: Simulate & Build Timeline"
     short_description: Run simulations for all state-in-time years
     description: |
-      This Feature runs simulations for all state-in-time years in the selected timeline.
+      This Feature runs simulations for all state-in-time years in the selected timeline. 
+      Afterwards, it reads component changes and simulation results across all states in the timeline 
+      to create a comprehensive emission timeline, including embodied emissions (component changes + 
+      lifetime-based renovation) and operational emissions.
       
       **Prerequisites**: Complete Steps 0-3 (Select Timeline, Define Changes, Apply Changes, Bake States) first!
       
@@ -368,26 +372,13 @@ Scenario Evolution Planning:
       - Demand
       - Photovoltaic
       - Emissions
+
+      And builds the district material timeline.
       
       The parameters of these simulations must be saved in their respective dashboards before running this Feature.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_simulations
     parameters: ['general:scenario', state-simulations]
-
-  - name: component-change-emission-timeline
-    label: "Step 5: Build Emission Timeline"
-    short_description: Create emission timeline for the selected state evolution scenario
-    description: |
-      This Feature reads component changes and simulation results across all states in the timeline 
-      to create a comprehensive emission timeline, including embodied emissions (component changes + 
-      lifetime-based renovation) and operational emissions.
-      
-      **Prerequisites**: Complete Steps 0-4 (all previous steps including simulations) first!
-      
-      This is the final step that produces the complete lifecycle emissions analysis for your district evolution scenario. 
-    interfaces: [cli, dashboard]
-    module: cea.analysis.lca.district_material_timeline
-    parameters: ['general:scenario', component-change-emission-timeline]
 
 Life Cycle Analysis:
 

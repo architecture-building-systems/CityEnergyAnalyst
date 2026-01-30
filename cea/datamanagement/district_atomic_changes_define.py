@@ -10,12 +10,9 @@ from cea.datamanagement.district_level_states.state_scenario import create_modif
 def main(config: Configuration) -> None:
     """
     Define or update an atomic change.
-    Uses the timeline name saved in Step 0 (district-timeline-select).
     """
     # Get timeline name from Step 0
-    timeline_name = config.district_timeline_select.existing_timeline_name
-    if not timeline_name:
-        timeline_name = config.district_timeline_select.new_timeline_name
+    timeline_name = config.district_atomic_changes_define.existing_timeline_name
     
     if not timeline_name:
         raise ValueError(

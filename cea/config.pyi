@@ -34,12 +34,11 @@ class Configuration:
     demand: DemandSection
     costs: CostsSection
     emissions: EmissionsSection
-    district_timeline_select: DistrictTimelineSelectSection
+    create_new_timeline: CreateNewTimelineSection
     district_atomic_changes_define: DistrictAtomicChangesDefineSection
     district_events_apply_changes: DistrictEventsApplyChangesSection
     bake_states: BakeStatesSection
     state_simulations: StateSimulationsSection
-    component_change_emission_timeline: ComponentChangeEmissionTimelineSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
     dbf_tools: DbfToolsSection
@@ -136,7 +135,7 @@ class Configuration:
     @overload
     def __getattr__(self, item: Literal["emissions"]) -> EmissionsSection: ...
     @overload
-    def __getattr__(self, item: Literal["district_timeline_select"]) -> DistrictTimelineSelectSection: ...
+    def __getattr__(self, item: Literal["create_new_timeline"]) -> CreateNewTimelineSection: ...
     @overload
     def __getattr__(self, item: Literal["district_atomic_changes_define"]) -> DistrictAtomicChangesDefineSection: ...
     @overload
@@ -145,8 +144,6 @@ class Configuration:
     def __getattr__(self, item: Literal["bake_states"]) -> BakeStatesSection: ...
     @overload
     def __getattr__(self, item: Literal["state_simulations"]) -> StateSimulationsSection: ...
-    @overload
-    def __getattr__(self, item: Literal["component_change_emission_timeline"]) -> ComponentChangeEmissionTimelineSection: ...
     @overload
     def __getattr__(self, item: Literal["extract_reference_case"]) -> ExtractReferenceCaseSection: ...
     @overload
@@ -603,19 +600,15 @@ class EmissionsSection(Section):
     def __getattr__(self, item: Literal["grid_decarbonise_target_emission_factor"]) -> float | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
-class DistrictTimelineSelectSection(Section):
-    """Typed section for district-timeline-select configuration"""
-    existing_timeline_name: str | None
+class CreateNewTimelineSection(Section):
+    """Typed section for create-new-timeline configuration"""
     new_timeline_name: Any
 
-    @overload
-    def __getattr__(self, item: Literal["existing_timeline_name"]) -> str | None: ...
-    @overload
-    def __getattr__(self, item: Literal["new_timeline_name"]) -> Any: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class DistrictAtomicChangesDefineSection(Section):
     """Typed section for district-atomic-changes-define configuration"""
+    existing_timeline_name: str
     atomic_change_name: Any
     atomic_change_description: Any
     archetypes: list[str]
@@ -658,6 +651,8 @@ class DistrictAtomicChangesDefineSection(Section):
     hvac_type_ctrl: str | None
     hvac_type_vent: str | None
 
+    @overload
+    def __getattr__(self, item: Literal["existing_timeline_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["atomic_change_name"]) -> Any: ...
     @overload
@@ -744,12 +739,12 @@ class DistrictAtomicChangesDefineSection(Section):
 
 class DistrictEventsApplyChangesSection(Section):
     """Typed section for district-events-apply-changes configuration"""
-    info_message: Any
+    existing_timeline_name: str
     year_of_state: int
     atomic_changes: List[str]
 
     @overload
-    def __getattr__(self, item: Literal["info_message"]) -> Any: ...
+    def __getattr__(self, item: Literal["existing_timeline_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["year_of_state"]) -> int: ...
     @overload
@@ -771,12 +766,6 @@ class StateSimulationsSection(Section):
     def __getattr__(self, item: Literal["existing_timeline_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["simulation_mode"]) -> str: ...
-    def __getattr__(self, item: str) -> Any: ...
-
-class ComponentChangeEmissionTimelineSection(Section):
-    """Typed section for component-change-emission-timeline configuration"""
-    existing_timeline_name: str
-
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):

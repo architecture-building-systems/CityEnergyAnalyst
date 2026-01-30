@@ -10,12 +10,9 @@ from cea.inputlocator import InputLocator
 def main(config: Configuration) -> None:
     """
     Apply selected atomic changes to a specific year.
-    Uses the timeline name saved in Step 0 (district-timeline-select).
     """
     # Get timeline name from Step 0
-    timeline_name = config.district_timeline_select.existing_timeline_name
-    if not timeline_name:
-        timeline_name = config.district_timeline_select.new_timeline_name
+    timeline_name = config.district_events_apply_changes.existing_timeline_name
     
     if not timeline_name:
         raise ValueError(
