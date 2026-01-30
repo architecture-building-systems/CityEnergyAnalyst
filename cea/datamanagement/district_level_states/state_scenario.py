@@ -406,7 +406,7 @@ class DistrictEventTimeline:
     def cumulative_by_year(self) -> dict[int, ModifyRecipe]:
         cumulative: ModifyRecipe = {}
         out: dict[int, ModifyRecipe] = {}
-        for y in sorted(self.log_data.keys()):
+        for y in self.required_state_years():
             entry = self.log_data.get(y, {}) or {}
             year_modifications = entry.get("modifications", {}) or {}
             cumulative = merge_modify_recipes(cumulative, year_modifications)
@@ -414,14 +414,18 @@ class DistrictEventTimeline:
         return out
 
     def bake_states_from_log(self) -> None:
-        years = sorted(self.log_data.keys())
+        years = self.required_state_years()
         if not years:
             raise ValueError(
-                "No district event years defined in the district timeline log."
+                "No district event years or building construction years found."
             )
 
+        # Ensure YAML entries exist for all required years (including construction-only years)
+        for year in years:
+            self.ensure_year(year)
+
         print("Building district state scenarios from the district timeline log...")
-        print(f"Years in log: {years}")
+        print(f"Years to build: {years}")
 
         cumulative = self.cumulative_by_year()
 
@@ -1057,7 +1061,8 @@ def log_modifications(
     else:
         existing_data: dict[int, dict[str, Any]] = {}
     current_year_modifications = existing_data.get(year_of_state, {})
-    current_year_modifications.setdefault("modifications", {}).update(modify_recipe)
+    current_modifications = current_year_modifications.setdefault("modifications", {})
+    current_year_modifications["modifications"] = merge_modify_recipes(current_modifications, modify_recipe)
     current_year_modifications["latest_modified_at"] = str(pd.Timestamp.now())
     existing_data[year_of_state] = current_year_modifications
     save_log_yaml(locator, existing_data, timeline_name=timeline_name)
@@ -1069,7 +1074,8 @@ def _log_modifications_in_memory(
     modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
 ) -> None:
     entry = log_data.get(year_of_state, {})
-    entry.setdefault("modifications", {}).update(modify_recipe)
+    current_modifications = entry.setdefault("modifications", {})
+    entry["modifications"] = merge_modify_recipes(current_modifications, modify_recipe)
     entry["latest_modified_at"] = str(pd.Timestamp.now())
     log_data[year_of_state] = entry
 

@@ -13,7 +13,7 @@ For each building, there are four changes worth noticing along its timeline:
 - component's lifetime reached (for all envelope, windows and supply systems).
 - building's demolition at the end of its lifetime.
 
-Each change result in a demolition of an old component, and a production (+biognic) of a new component.
+Each change result in a demolition of an old component, and a production (+biogenic) of a new component.
 Specifically, the supply systems are assumed to have fixed lifetime (`SERVICE_LIFE_OF_TECHNICAL_SYSTEMS`)
 and embodied emissions (`EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS`). 
 There are in total 4 supplies: heating, cooling, hotwater and electrical. Each system is assumed to consume
@@ -162,9 +162,9 @@ class _BuildingEventCursor:
         )
 
         while (year := schedule.next_year()) is not None:
-            if schedule.consume_mod_if(year):
+            if schedule.advance_envelope_mod_if(year):
                 ...
-            if schedule.consume_code_if(year):
+            if schedule.advance_code_if(year):
                 ...
             for src in schedule.due_envelope_components(year):
                 ...
@@ -288,7 +288,7 @@ def _envelope_intensities_per_m2(
         production_any = env_lookup.get_item_value(code_str, "GHG_kgCO2m2")
         demolition_any = 0.0
 
-    biogenic_any = env_lookup.get_item_value(code_str, "GHG_biogenic_kgCO2m2")
+    biogenic_any = env_lookup.get_item_value(code_str, "GHG_biogenic_kgCO2m2") # wins and materials all have biogenic carbon field
     if production_any is None or demolition_any is None or biogenic_any is None:
         raise ValueError(
             f"Envelope database returned None for one of the required fields for item {code_str}."
@@ -787,7 +787,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
 
         Operational is set to 0 for years before construction, and for years >= demolition (if any).
         Args:
-            years_sorted: Sorted list of state years available in the log 
+            state_years_sorted: Sorted list of state years available in the log 
                 (some years are missing because of no construction change or no new building).
             end_year: Last year to fill in the timeline.
             operational_by_state_year: Mapping of state year -> district operational emissions DataFrame.
@@ -950,7 +950,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             return
         construction_year = self.construction_year
 
-        tech_system_keys, tech_quarter_prod, has_layer_snapshot_at_construction = (
+        tech_system_keys, emission_per_tech, has_layer_snapshot_at_construction = (
             self._init_codes_and_initial_construction(
                 const_type=const_type,
                 area_dict=area_dict,
@@ -1021,7 +1021,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 archetype_timeline=archetype_timeline,
                 area_dict=area_dict,
                 tech_system_keys=tech_system_keys,
-                tech_quarter_prod=tech_quarter_prod,
+                emission_per_tech=emission_per_tech,
                 tech_lifetime=tech_lifetime,
                 win_lifetime_default=win_lifetime_default,
                 schedule=schedule,
@@ -1035,6 +1035,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 materials=materials,
                 lifetimes=lifetimes,
                 win_lifetime_default=win_lifetime_default,
+                emission_per_tech=emission_per_tech,
+                tech_lifetime=tech_lifetime,
                 schedule=schedule,
             )
 
@@ -1070,7 +1072,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         - Technical systems as 4 independent quarters (production only) scaled by `Atechnical_systems`
 
         Returns:
-            (tech_system_keys, tech_quarter_prod, has_layer_snapshot_at_construction)
+            (tech_system_keys, emission_per_tech, has_layer_snapshot_at_construction)
 
         Notes:
                 - `has_layer_snapshot_at_construction=False` indicates there is no layer snapshot at/before
@@ -1104,7 +1106,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             comp_area_map=_COMP_AREA_MAP,
         )
 
-        tech_quarter_prod = float(EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / 4.0
+        emission_per_tech = float(EMISSIONS_EMBODIED_TECHNICAL_SYSTEMS) / 4.0
         tech_system_keys = dict(_TECH_SYSTEM_COMPONENT_BY_SUPPLY_FIELD)
         area_tech = float(area_dict.get("Atechnical_systems", 0.0))
         if area_tech > 0:
@@ -1113,9 +1115,9 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                     year=construction_year,
                     phase="production",
                     component=sys_component,
-                    value_kgco2e=tech_quarter_prod * area_tech,
+                    value_kgco2e=emission_per_tech * area_tech,
                 )
-        return tech_system_keys, tech_quarter_prod, True
+        return tech_system_keys, emission_per_tech, True
 
     def _compute_end_active_year(self, end_year: int) -> int:
         """Return the last year in which the building is active.
@@ -1360,7 +1362,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         archetype_timeline: ArchetypeTimeline,
         area_dict: Mapping[str, float],
         tech_system_keys: Mapping[str, str],
-        tech_quarter_prod: float,
+        emission_per_tech: float,
         tech_lifetime: int,
         win_lifetime_default: int,
         schedule: _BuildingEventCursor,
@@ -1415,7 +1417,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             old_code, new_code = change
             if new_code and new_code != old_code:
                 if area_tech > 0:
-                    self.add_phase_component(year=year, phase="production", component=sys_component, value_kgco2e=tech_quarter_prod * area_tech)
+                    self.add_phase_component(year=year, phase="production", component=sys_component, value_kgco2e=emission_per_tech * area_tech)
                 label = supply_field.replace("supply_type_", "")
                 self.add_note(year=int(year), message=f"Supply system changed ({label}): {old_code} -> {new_code}")
                 self.supply_codes[supply_field] = new_code
@@ -1431,6 +1433,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         materials: pd.DataFrame,
         lifetimes: Mapping[str, int],
         win_lifetime_default: int,
+        emission_per_tech: float,
+        tech_lifetime: int,
         schedule: _BuildingEventCursor,
     ) -> None:
         """Apply any service-life replacements due in `year`.
@@ -1479,6 +1483,19 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             win_lifetime_new = int(win_lt_any) if win_lt_any is not None else win_lifetime_default
             if win_lifetime_new > 0:
                 schedule.window_next_due = int(year) + win_lifetime_new
+
+        due_tech = schedule.due_tech_components(year)
+        if due_tech:
+            area_tech = float(area_dict.get("Atechnical_systems", 0.0))
+            for sys_component in due_tech:
+                if area_tech > 0:
+                    self.add_phase_component(
+                        year=year,
+                        phase="production",
+                        component=sys_component,
+                        value_kgco2e=emission_per_tech * area_tech,
+                    )
+                schedule.tech_next_due[sys_component] = int(year) + int(tech_lifetime)
 
     def add_full_replacement(
         self,
