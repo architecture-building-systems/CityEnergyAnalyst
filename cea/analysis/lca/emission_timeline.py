@@ -109,7 +109,7 @@ def get_component_quantities(
     surface_area["Awin_ag"] = float(envelope_props.get("Awin_ag", 0.0))
 
     surface_area["Aroof"] = float(envelope_props["Aroof"])
-    surface_area["Aupperside"] = 0.0
+    surface_area["Aupperside"] = float(envelope_props.get("Aupperside", 0.0))  # Currently not available in Daysim radiation results, defaults to 0
     surface_area["Aunderside"] = float(envelope_props.get("Aunderside", 0.0))
 
     if float(geometry_props["floors_bg"]) == 0 and float(geometry_props.get("void_deck", 0)) > 0:
