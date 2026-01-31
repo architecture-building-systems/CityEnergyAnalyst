@@ -422,6 +422,7 @@ class DistrictEventTimeline:
         # Ensure YAML entries exist for all required years (including construction-only years)
         for year in years:
             self.ensure_year(year)
+        self.save()
 
         print("Building district state scenarios from the district timeline log...")
         print(f"Years to build: {years}")
@@ -576,7 +577,7 @@ def create_state_in_time_scenario(
     Create a new state-in-time scenario based on the current scenario.
     Parameters:
         config (Configuration): The configuration object containing the current scenario settings.
-        locator (InputLocator): The input locator object for file paths.
+        timeline_name (str): The name of the timeline.
         year_of_state (int): The year of the event scenario. If a building year is larger than
         this year, it will not be included in the event scenario.
         event_content (dict): A dictionary containing the content of the event scenario.

@@ -1042,7 +1042,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
 
         if self.demolition_year is not None and start_year <= self.demolition_year <= end_year:
             layers_snapshot = archetype_timeline.layers_snapshot_at_or_before(self.demolition_year)
-            self.add_demolition(
+            self.demolish(
                 year=self.demolition_year,
                 const_type=const_type,
                 area_dict=area_dict,
@@ -1619,6 +1619,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             if comp_src == "technical_systems":
                 continue
             for action, layer in events:
+                if not layer.name:  # Skip empty slots
+                    continue
                 prod, demo, bio = _material_intensity_per_m2(materials, layer)
                 if action == "add":
                     self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
@@ -1626,7 +1628,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
                 else:
                     self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
 
-    def add_demolition(
+    def demolish(
         self,
         *,
         year: int,
@@ -1660,7 +1662,10 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             layers = current_layers.get(src_component, _empty_layers())
             events = _diff_layers(_empty_layers(), layers)
             if events:
-                for _, layer in events:
+                for action, layer in events:
+                    if action == "remove" or not _is_layer_active(layer):
+                        # Skip remove events (empty slots) at demolition
+                        continue
                     _, demo, _ = _material_intensity_per_m2(materials, layer)
                     self.add_phase_component(year=year, phase="demolition", component=comp, value_kgco2e=demo * area)
                 continue
