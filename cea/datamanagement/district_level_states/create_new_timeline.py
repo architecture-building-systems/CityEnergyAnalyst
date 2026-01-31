@@ -29,7 +29,7 @@ def main(config: Configuration) -> None:
             "Please select it as an existing timeline in other steps."
         )
     
-    print(f"\n✓ Timeline '{timeline_name}' is ready.")
+    print(f"\nTimeline '{timeline_name}' is ready.")
     print("IMPORTANT: Click 'Save Settings' now before proceeding to:")
     print("  - Step 1: Define Atomic Changes")
     print("  - Step 2: Apply Changes to Years")
