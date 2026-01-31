@@ -16,7 +16,7 @@ default_workflow = [
         "parameters": {
             "grid-decarbonise-reference-year": None, # apply decarbonization after timline being assembled
             "grid-decarbonise-target-year": None,
-            "grid-decarbonise-target-emission-factor": 1.0,
+            "grid-decarbonise-target-emission-factor": None,
         },
     },
 ]
