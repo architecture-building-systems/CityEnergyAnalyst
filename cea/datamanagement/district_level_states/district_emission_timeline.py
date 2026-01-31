@@ -1326,7 +1326,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         """Apply authored layer modifications for `year` (if any).
 
         Iteration semantics:
-        - Only runs when `schedule.consume_mod_if(year)` is true.
+        - Only runs when `schedule.advance_envelope_mod_if(year)` is true.
         - Writes emission deltas (add = production + biogenic, remove = demolition).
         - Resets the service-life replacement clock for any modified component.
 
@@ -1369,7 +1369,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     ) -> None:
         """Apply code-based changes (windows + supply systems) for `year` (if any).
 
-        Runs only when `schedule.consume_code_if(year)` is true.
+        Runs only when `schedule.advance_envelope_mod_if(year)` is true.
 
         Window code changes:
         - A change in `type_win` triggers a full window replacement old -> new.
@@ -1578,7 +1578,10 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             layers = current_layers.get(src_component, _empty_layers())
             events = _diff_layers(_empty_layers(), layers)
             if events:
-                for _, layer in events:
+                for action, layer in events:
+                    if action == "remove" or not _is_layer_active(layer):
+                        # Skip remove events at initial construction (nothing to remove)
+                        continue
                     prod, _, bio = _material_intensity_per_m2(materials, layer)
                     self.add_phase_component(year=year, phase="production", component=comp, value_kgco2e=prod * area)
                     self.add_phase_component(year=year, phase="biogenic", component=comp, value_kgco2e=(-bio) * area)
@@ -1839,6 +1842,8 @@ def _get_component_layers(
 
 
 def _material_intensity_per_m2(materials: pd.DataFrame, layer: MaterialLayer) -> tuple[float, float, float]:
+    """
+    Return (production_kgCO2e, demolition_kgCO2e, biogenic_kgCO2e) per m2 for the given material layer."""
     if layer.name not in materials.index:
         raise ValueError(f"Material '{layer.name}' not found in MATERIALS.csv")
     rec = materials.loc[layer.name]
