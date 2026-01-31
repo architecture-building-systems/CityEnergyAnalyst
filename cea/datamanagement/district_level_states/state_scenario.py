@@ -1146,6 +1146,15 @@ def create_modify_recipe(
                 "thickness_3_m": config_section.base_thickness_3_m,
                 "Service_Life": config_section.base_lifetime,
             },
+            "floor": {
+                "material_name_1": config_section.floor_material_name_1,
+                "thickness_1_m": config_section.floor_thickness_1_m,
+                "material_name_2": config_section.floor_material_name_2,
+                "thickness_2_m": config_section.floor_thickness_2_m,
+                "material_name_3": config_section.floor_material_name_3,
+                "thickness_3_m": config_section.floor_thickness_3_m,
+                "Service_Life": config_section.floor_lifetime,
+            },
         }
 
         # Construction type edits are code swaps; empty strings are not allowed.
