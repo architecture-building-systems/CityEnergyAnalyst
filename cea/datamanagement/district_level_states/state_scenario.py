@@ -87,20 +87,21 @@ class DistrictStateYear:
     timeline_name: str
     year: int
     modifications: ModifyRecipe
+    main_locator: InputLocator
 
-    def state_folder(self, main_locator: InputLocator) -> str:
-        return main_locator.get_state_in_time_scenario_folder(self.timeline_name, int(self.year))
+    def state_folder(self) -> str:
+        return self.main_locator.get_state_in_time_scenario_folder(self.timeline_name, int(self.year))
 
-    def signature_path(self, main_locator: InputLocator) -> str:
+    def signature_path(self) -> str:
         return os.path.join(
-            self.state_folder(main_locator), ".district_timeline_signature.json"
+            self.state_folder(), ".district_timeline_signature.json"
         )
 
-    def exists_on_disk(self, main_locator: InputLocator) -> bool:
-        return os.path.exists(self.state_folder(main_locator))
+    def exists_on_disk(self) -> bool:
+        return os.path.exists(self.state_folder())
 
-    def read_applied_signature(self, main_locator: InputLocator) -> str | None:
-        path = self.signature_path(main_locator)
+    def read_applied_signature(self) -> str | None:
+        path = self.signature_path()
         if not os.path.exists(path):
             return None
         try:
@@ -111,8 +112,8 @@ class DistrictStateYear:
         except Exception:
             return None
 
-    def read_signature_record(self, main_locator: InputLocator) -> dict[str, Any] | None:
-        path = self.signature_path(main_locator)
+    def read_signature_record(self) -> dict[str, Any] | None:
+        path = self.signature_path()
         if not os.path.exists(path):
             return None
         try:
@@ -122,14 +123,14 @@ class DistrictStateYear:
         except Exception:
             return None
 
-    def write_signature_record(self, main_locator: InputLocator, rec: dict[str, Any]) -> None:
-        path = self.signature_path(main_locator)
+    def write_signature_record(self, rec: dict[str, Any]) -> None:
+        path = self.signature_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(rec, f, indent=2)
 
-    def needs_simulation(self, main_locator: InputLocator) -> bool:
-        rec = self.read_signature_record(main_locator)
+    def needs_simulation(self) -> bool:
+        rec = self.read_signature_record()
         if not rec:
             return True
         applied = rec.get("applied_signature")
@@ -140,18 +141,17 @@ class DistrictStateYear:
 
     def mark_simulated(
         self,
-        main_locator: InputLocator,
         *,
         workflow: list[dict[str, Any]] | None = None,
     ) -> None:
-        rec = self.read_signature_record(main_locator) or {"year": int(self.year)}
+        rec = self.read_signature_record() or {"year": int(self.year)}
         now = str(pd.Timestamp.now())
         rec["simulated_at"] = now
         rec["simulated_signature"] = rec.get("applied_signature")
         rec["simulation_status"] = "simulated"
         if workflow is not None:
             rec["simulated_workflow"] = workflow
-        self.write_signature_record(main_locator, rec)
+        self.write_signature_record(rec)
 
     def simulate(
         self,
@@ -168,8 +168,7 @@ class DistrictStateYear:
 
         from cea.workflows.workflow import do_config_step, do_script_step
 
-        main_locator = InputLocator(main_config.scenario)
-        state_folder = main_locator.get_state_in_time_scenario_folder(self.timeline_name, int(self.year))
+        state_folder = self.state_folder()
         if not os.path.exists(state_folder):
             raise FileNotFoundError(
                 f"State folder for year {self.year} does not exist: {state_folder}"
@@ -193,12 +192,12 @@ class DistrictStateYear:
                     "Invalid step configuration: {i} - {step}".format(i=i, step=step)
                 )
 
-        self.mark_simulated(main_locator, workflow=workflow)
+        self.mark_simulated(workflow=workflow)
 
     def write_applied_signature(
-        self, main_locator: InputLocator, *, signature: str
+        self, *, signature: str
     ) -> None:
-        path = self.signature_path(main_locator)
+        path = self.signature_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         rec = {
             "year": int(self.year),
@@ -220,7 +219,7 @@ class DistrictEventTimeline:
     def __init__(self, config: Configuration, timeline_name: str):
         self.config = config
         self.main_locator = InputLocator(config.scenario)
-        self.timeline_name = timeline_name
+        self.timeline_name = validate_timeline_name(timeline_name)
         # Ensure the district timeline folder exists for first-time runs.
         os.makedirs(self.main_locator.get_district_timeline_folder(self.timeline_name), exist_ok=True)
         self.log_data: dict[int, dict[str, Any]] = load_log_yaml(
@@ -398,7 +397,7 @@ class DistrictEventTimeline:
             mods = entry.get("modifications", {}) or {}
             out.append(
                 DistrictStateYear(
-                    timeline_name=self.timeline_name, year=int(y), modifications=mods
+                    timeline_name=self.timeline_name, year=int(y), modifications=mods, main_locator=self.main_locator
                 )
             )
         return out
@@ -439,9 +438,10 @@ class DistrictEventTimeline:
                 year=int(year),
                 modifications=self.log_data.get(int(year), {}).get("modifications", {})
                 or {},
+                main_locator=self.main_locator,
             )
 
-            state_folder = state.state_folder(self.main_locator)
+            state_folder = state.state_folder()
             print(f"- Building state_{int(year)}... ")
 
             # Rebuild the state folder deterministically to avoid code drift in envelope codes.
@@ -464,7 +464,7 @@ class DistrictEventTimeline:
                     use_transaction=False,
                 )
 
-            state.write_applied_signature(self.main_locator, signature=expected_sig)
+            state.write_applied_signature(signature=expected_sig)
             built_years.append(int(year))
 
         print("District state materialisation finished.")
@@ -514,8 +514,8 @@ class DistrictEventTimeline:
                 y
                 for y in state_years
                 if DistrictStateYear(
-                    timeline_name=self.timeline_name, year=int(y), modifications={}
-                ).needs_simulation(self.main_locator)
+                    timeline_name=self.timeline_name, year=int(y), modifications={}, main_locator=self.main_locator
+                ).needs_simulation()
             ]
         else:
             years_to_simulate = list(state_years)
@@ -542,7 +542,7 @@ class DistrictEventTimeline:
 
             print(f"Simulating state-in-time scenario for year {year}...")
             DistrictStateYear(
-                timeline_name=self.timeline_name, year=int(year), modifications={}
+                timeline_name=self.timeline_name, year=int(year), modifications={}, main_locator=self.main_locator
             ).simulate(self.config, workflow=workflow)
 
             # Log metadata in the YAML log.
@@ -670,7 +670,7 @@ def delete_unexisting_buildings_from_event_scenario(
     # delete buildings from geometry file
     geometry_gdf, _, _ = shapefile_to_WSG_and_UTM(state_locator.get_zone_geometry())
     geometry_gdf.set_index("name", inplace=True)
-    geometry_gdf = geometry_gdf.drop(buildings_to_delete)
+    geometry_gdf = geometry_gdf.drop(buildings_to_delete, errors="ignore")
     verify_input_geometry_zone(geometry_gdf.reset_index())
     geometry_gdf.to_file(state_locator.get_zone_geometry())
 
@@ -1081,8 +1081,13 @@ def _log_modifications_in_memory(
 
 
 def shift_code_name_plus1(db, code_prefix):
-    n = db[db.index.str.startswith(code_prefix)].shape[0]
-    return code_prefix + f"_{n + 1}"
+    existing = set(db.index.astype(str))
+    suffix = 1
+    candidate = f"{code_prefix}_{suffix}"
+    while candidate in existing:
+        suffix += 1
+        candidate = f"{code_prefix}_{suffix}"
+    return candidate
 
 
 def create_modify_recipe(
