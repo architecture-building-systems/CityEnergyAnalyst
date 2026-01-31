@@ -368,7 +368,7 @@ Scenario Evolution Planning:
       
       It runs:
       - Radiation
-      - Occupancy-helper
+      - Occupancy
       - Demand
       - Photovoltaic
       - Emissions
