@@ -70,6 +70,67 @@ def read_network_config_parameters(config):
     }
 
 
+def initialize_building_lists(heating_connected_buildings_config, cooling_connected_buildings_config,
+                              all_zone_buildings, network_building_names=None):
+    """
+    Initialize heating and cooling building lists based on parameters.
+
+    When overwrite_supply is True, this determines which buildings connect to each service
+    based on the heating/cooling-connected-buildings parameters.
+
+    Args:
+        heating_connected_buildings_config: List from heating-connected-buildings parameter
+        cooling_connected_buildings_config: List from cooling-connected-buildings parameter
+        all_zone_buildings: List of all buildings in the zone
+        network_building_names: Optional list of buildings from user-defined network
+
+    Returns:
+        Tuple of (list_heating_buildings, list_cooling_buildings, list_district_scale_buildings)
+        where list_district_scale_buildings is the union of heating and cooling buildings
+    """
+    is_heating_explicitly_set = bool(heating_connected_buildings_config)
+    is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
+
+    # For user-defined networks: if both parameters are blank, use network buildings
+    if network_building_names and not is_heating_explicitly_set and not is_cooling_explicitly_set:
+        print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
+        for building_name in network_building_names[:10]:
+            print(f"      - {building_name}")
+        if len(network_building_names) > 10:
+            print(f"      ... and {len(network_building_names) - 10} more")
+
+        list_heating_buildings = network_building_names.copy()
+        list_cooling_buildings = network_building_names.copy()
+        list_district_scale_buildings = network_building_names
+    else:
+        # Standard initialization: use parameters or all buildings
+        if is_heating_explicitly_set:
+            list_heating_buildings = heating_connected_buildings_config
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (user-defined)")
+        else:
+            list_heating_buildings = all_zone_buildings.copy()
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (all buildings)")
+
+        if is_cooling_explicitly_set:
+            list_cooling_buildings = cooling_connected_buildings_config
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (user-defined)")
+        else:
+            list_cooling_buildings = all_zone_buildings.copy()
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (all buildings)")
+
+        # Create union for universal layout
+        list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
+
+        # Print union info (different messages for user-defined vs auto-layout)
+        if network_building_names:
+            print(f"  - Union (for universal layout validation): {len(list_district_scale_buildings)}")
+            print(f"  - Buildings in user layout: {len(network_building_names)}")
+        else:
+            print(f"  - Universal layout will cover: {len(list_district_scale_buildings)} building(s) (union)")
+
+    return list_heating_buildings, list_cooling_buildings, list_district_scale_buildings
+
+
 def apply_network_mode_to_existing_buildings(existing_buildings, parameter_buildings, network_mode, service_name):
     """
     Apply network-layout-mode (validate/augment/filter) to reconcile existing network buildings with parameter.
@@ -1185,29 +1246,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Use heating/cooling-connected-buildings parameters (what-if scenarios)
         print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
 
-        # HEATING buildings
-        is_heating_explicitly_set = bool(heating_connected_buildings_config)
-        if is_heating_explicitly_set:
-            list_heating_buildings = heating_connected_buildings_config
-            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (user-defined)")
-        else:
-            # Blank parameter: use all zone buildings for heating
-            list_heating_buildings = all_zone_buildings.copy()
-            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (all buildings)")
-
-        # COOLING buildings
-        is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
-        if is_cooling_explicitly_set:
-            list_cooling_buildings = cooling_connected_buildings_config
-            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (user-defined)")
-        else:
-            # Blank parameter: use all zone buildings for cooling
-            list_cooling_buildings = all_zone_buildings.copy()
-            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (all buildings)")
-
-        # Create union for universal layout validation/augmentation
-        list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
-        print(f"  - Universal layout will cover: {len(list_district_scale_buildings)} building(s) (union)")
+        list_heating_buildings, list_cooling_buildings, list_district_scale_buildings = initialize_building_lists(
+            heating_connected_buildings_config=heating_connected_buildings_config,
+            cooling_connected_buildings_config=cooling_connected_buildings_config,
+            all_zone_buildings=all_zone_buildings
+        )
 
         # Check demand separately for DC and DH
         buildings_without_demand_dc = []
@@ -1821,35 +1864,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         # Use heating/cooling-connected-buildings parameters (what-if scenarios)
         print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
 
-        # Determine heating and cooling buildings
-        is_heating_explicitly_set = bool(heating_connected_buildings_config)
-        is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
-
-        if is_heating_explicitly_set or is_cooling_explicitly_set:
-            # User explicitly specified buildings (at least one parameter is set)
-            list_heating_buildings = heating_connected_buildings_config if is_heating_explicitly_set else all_zone_buildings.copy()
-            list_cooling_buildings = cooling_connected_buildings_config if is_cooling_explicitly_set else all_zone_buildings.copy()
-
-            # Create union for universal layout validation (user network is universal pipe trench)
-            buildings_to_validate = list(set(list_heating_buildings) | set(list_cooling_buildings))
-
-            print(f"  - Heating connected buildings: {len(list_heating_buildings)} {'(user-defined)' if is_heating_explicitly_set else '(all buildings)'}")
-            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} {'(user-defined)' if is_cooling_explicitly_set else '(all buildings)'}")
-            print(f"  - Union (for universal layout validation): {len(buildings_to_validate)}")
-            print(f"  - Buildings in user layout: {len(network_building_names)}")
-        else:
-            # Both parameters blank: accept whatever is in user layout
-            # BUT we already validated building names exist in zone geometry above
-            print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
-            for building_name in network_building_names[:10]:
-                print(f"      - {building_name}")
-            if len(network_building_names) > 10:
-                print(f"      ... and {len(network_building_names) - 10} more")
-
-            # Use network buildings for both heating and cooling
-            buildings_to_validate = network_building_names
-            list_heating_buildings = network_building_names.copy()
-            list_cooling_buildings = network_building_names.copy()
+        list_heating_buildings, list_cooling_buildings, buildings_to_validate = initialize_building_lists(
+            heating_connected_buildings_config=heating_connected_buildings_config,
+            cooling_connected_buildings_config=cooling_connected_buildings_config,
+            all_zone_buildings=all_zone_buildings,
+            network_building_names=network_building_names
+        )
 
         # Check demand separately for DC and DH
         buildings_without_demand_dc = []
