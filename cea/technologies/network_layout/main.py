@@ -44,6 +44,32 @@ class NetworkLayoutMode(StrEnum):
     """Add missing AND remove extra buildings (exact match to parameter)."""
 
 
+def read_network_config_parameters(config):
+    """
+    Extract common network configuration parameters.
+
+    Centralizes config reading to avoid duplication across multiple functions.
+
+    Args:
+        config: Configuration instance
+
+    Returns:
+        dict: Dictionary with common network configuration parameters:
+            - overwrite_supply: bool
+            - heating_connected_buildings: list[str]
+            - cooling_connected_buildings: list[str]
+            - include_services: list[str]
+            - itemised_dh_services: list[str]
+    """
+    return {
+        'overwrite_supply': config.network_layout.overwrite_supply_settings,
+        'heating_connected_buildings': config.network_layout.heating_connected_buildings,
+        'cooling_connected_buildings': config.network_layout.cooling_connected_buildings,
+        'include_services': config.network_layout.include_services,
+        'itemised_dh_services': config.network_layout.itemised_dh_services,
+    }
+
+
 def apply_network_mode_to_existing_buildings(existing_buildings, parameter_buildings, network_mode, service_name):
     """
     Apply network-layout-mode (validate/augment/filter) to reconcile existing network buildings with parameter.
@@ -981,15 +1007,18 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     total_demand_location = locator.get_total_demand()
 
     # Read config parameters
-    overwrite_supply = config.network_layout.overwrite_supply_settings
-    heating_connected_buildings_config = config.network_layout.heating_connected_buildings
-    cooling_connected_buildings_config = config.network_layout.cooling_connected_buildings
-    list_include_services = config.network_layout.include_services
+    params = read_network_config_parameters(config)
+    overwrite_supply = params['overwrite_supply']
+    heating_connected_buildings_config = params['heating_connected_buildings']
+    cooling_connected_buildings_config = params['cooling_connected_buildings']
+    list_include_services = params['include_services']
+    itemised_dh_services = params['itemised_dh_services']
+
+    # Function-specific parameters
     consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
     connection_candidates = config.network_layout.connection_candidates
     snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
     steiner_algorithm = network_layout.algorithm
-    itemised_dh_services = config.network_layout.itemised_dh_services
 
     # Validate include_services is not empty
     if not list_include_services:
@@ -1596,11 +1625,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print(f"  - Nodes: {len(nodes_gdf)}")
     print(f"  - Edges: {len(edges_gdf)}")
 
-    overwrite_supply = config.network_layout.overwrite_supply_settings
-    heating_connected_buildings_config = config.network_layout.heating_connected_buildings
-    cooling_connected_buildings_config = config.network_layout.cooling_connected_buildings
-    list_include_services = config.network_layout.include_services
-    itemised_dh_services = config.network_layout.itemised_dh_services
+    params = read_network_config_parameters(config)
+    overwrite_supply = params['overwrite_supply']
+    heating_connected_buildings_config = params['heating_connected_buildings']
+    cooling_connected_buildings_config = params['cooling_connected_buildings']
+    list_include_services = params['include_services']
+    itemised_dh_services = params['itemised_dh_services']
 
     # Validate include_services is not empty
     if not list_include_services:
@@ -2000,9 +2030,10 @@ def main(config: cea.config.Configuration):
     print(f"Network name: {network_layout.network_name}")
 
     # Read config parameters needed for existing network processing
-    heating_connected_buildings_config = config.network_layout.heating_connected_buildings
-    cooling_connected_buildings_config = config.network_layout.cooling_connected_buildings
-    list_include_services = config.network_layout.include_services
+    params = read_network_config_parameters(config)
+    heating_connected_buildings_config = params['heating_connected_buildings']
+    cooling_connected_buildings_config = params['cooling_connected_buildings']
+    list_include_services = params['include_services']
 
     # Initialize building lists (may be overridden by existing network loading)
     list_heating_buildings = []
