@@ -170,6 +170,27 @@ class InputLocator(object):
         `scenario/district_timelines/{timeline_name}/atomic_changes.yml`"""
         return os.path.join(self.get_district_timeline_folder(timeline_name), 'atomic_changes.yml')
     
+    def get_district_material_timeline_path(self, timeline_name: str):
+        """Returns the district-level material timeline CSV file:
+        
+        `scenario/district_timelines/{timeline_name}/district_material_timeline.csv`"""
+        return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_material_timeline.csv')
+    
+    def get_district_material_timelines_buildings_folder(self, timeline_name: str):
+        """Returns the folder containing per-building material timeline CSV files:
+        
+        `scenario/district_timelines/{timeline_name}/district_material_timelines_buildings`"""
+        return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_material_timelines_buildings')
+
+    def get_district_material_timeline_building_file(self, timeline_name: str, building_name: str):
+        """Returns the per-building material timeline CSV file for a specific building:
+        
+        `scenario/district_timelines/{timeline_name}/district_material_timelines_buildings/{building_name}_material_timeline.csv`"""
+        return os.path.join(
+            self.get_district_material_timelines_buildings_folder(timeline_name),
+            f'{building_name}_material_timeline.csv'
+        )
+    
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
         """scenario/export/results"""

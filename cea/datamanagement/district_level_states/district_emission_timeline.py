@@ -2179,17 +2179,17 @@ def create_district_material_timeline(
 
     # Persist per-building timelines under the district timeline folder.
     # This keeps the district-level output as the primary result while still exposing detailed per-building files.
-    per_building_folder = os.path.join(
-        main_locator.get_district_timeline_folder(timeline_variant_name),
-        "district_material_timelines_buildings",
+    per_building_folder = main_locator.get_district_material_timelines_buildings_folder(
+        timeline_variant_name
     )
     os.makedirs(per_building_folder, exist_ok=True)
     for b, building_timeline in building_timelines.items():
         # Only write timelines for buildings that actually exist in the timeline horizon.
         if building_timeline.construction_year is None:
             continue
-        file_name = f"{b}_material_timeline.csv"
-        save_b_path = os.path.join(per_building_folder, file_name)
+        save_b_path = main_locator.get_district_material_timeline_building_file(
+            timeline_variant_name, building_name=b
+        )
         try:
             df_save = building_timeline.timeline.copy()
             df_save["Note"] = building_timeline.notes_series()
@@ -2223,9 +2223,8 @@ def create_district_material_timeline(
         )
 
     # Persist under district timeline folder to avoid mixing with lifetime-based timelines.
-    save_path = os.path.join(
-        main_locator.get_district_timeline_folder(timeline_variant_name),
-        "district_material_timeline.csv",
+    save_path = main_locator.get_district_material_timeline_path(
+        timeline_variant_name
     )
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     try:
