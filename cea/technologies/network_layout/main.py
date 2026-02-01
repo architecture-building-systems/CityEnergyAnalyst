@@ -1,6 +1,6 @@
 import os
 import shutil
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
 import geopandas as gpd
@@ -71,7 +71,7 @@ def read_network_config_parameters(config):
 
 
 def initialize_building_lists(heating_connected_buildings_config, cooling_connected_buildings_config,
-                              all_zone_buildings, network_building_names=None):
+                              all_zone_buildings, network_building_names=None, include_services=None):
     """
     Initialize heating and cooling building lists based on parameters.
 
@@ -83,10 +83,12 @@ def initialize_building_lists(heating_connected_buildings_config, cooling_connec
         cooling_connected_buildings_config: List from cooling-connected-buildings parameter
         all_zone_buildings: List of all buildings in the zone
         network_building_names: Optional list of buildings from user-defined network
+        include_services: List of services to include (['DC'], ['DH'], or ['DC', 'DH'])
 
     Returns:
         Tuple of (list_heating_buildings, list_cooling_buildings, list_district_scale_buildings)
         where list_district_scale_buildings is the union of heating and cooling buildings
+        for ONLY the services in include_services
     """
     is_heating_explicitly_set = bool(heating_connected_buildings_config)
     is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
@@ -118,15 +120,34 @@ def initialize_building_lists(heating_connected_buildings_config, cooling_connec
             list_cooling_buildings = all_zone_buildings.copy()
             print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (all buildings)")
 
-        # Create union for universal layout
-        list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
+        # Create union for universal layout - ONLY include services that are selected
+        buildings_to_include = []
+        if include_services:
+            if 'DH' in include_services:
+                buildings_to_include.append(set(list_heating_buildings))
+            if 'DC' in include_services:
+                buildings_to_include.append(set(list_cooling_buildings))
+
+        # Union of selected services only
+        if buildings_to_include:
+            list_district_scale_buildings = list(set.union(*buildings_to_include))
+        else:
+            # Fallback if no include_services provided (backward compatibility)
+            list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
 
         # Print union info (different messages for user-defined vs auto-layout)
         if network_building_names:
             print(f"  - Union (for universal layout validation): {len(list_district_scale_buildings)}")
             print(f"  - Buildings in user layout: {len(network_building_names)}")
         else:
-            print(f"  - Universal layout will cover: {len(list_district_scale_buildings)} building(s) (union)")
+            services_included = []
+            if include_services:
+                if 'DH' in include_services:
+                    services_included.append('heating')
+                if 'DC' in include_services:
+                    services_included.append('cooling')
+            services_str = ' + '.join(services_included) if services_included else 'all services'
+            print(f"  - Universal layout will cover: {len(list_district_scale_buildings)} building(s) ({services_str})")
 
     return list_heating_buildings, list_cooling_buildings, list_district_scale_buildings
 
@@ -1310,7 +1331,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         list_heating_buildings, list_cooling_buildings, list_district_scale_buildings = initialize_building_lists(
             heating_connected_buildings_config=heating_connected_buildings_config,
             cooling_connected_buildings_config=cooling_connected_buildings_config,
-            all_zone_buildings=all_zone_buildings
+            all_zone_buildings=all_zone_buildings,
+            include_services=list_include_services
         )
 
         # Check demand separately for DC and DH
@@ -1804,18 +1826,15 @@ class NetworkLayout:
 
     Attributes:
         network_name: Unique identifier for this network layout variant
-        connected_buildings: List of building IDs to include in the network
         algorithm: Steiner tree algorithm to use ('kou' or 'mehlhorn')
-        disconnected_buildings: Buildings that could not be connected (populated during generation)
 
     Note:
+        - Connected buildings are now specified separately for heating and cooling via config parameters
         - pipe_diameter and type_mat are set as defaults in steiner_spanning_tree.py, not here
         - consider_only_buildings_with_demand is read from config.network_layout, not this dataclass
     """
     network_name: str
-    connected_buildings: list[str]
     algorithm: str = ""
-    disconnected_buildings: list[str] = field(default_factory=list)
 
     @classmethod
     def from_config(cls, network_layout, locator: cea.inputlocator.InputLocator) -> 'NetworkLayout':
@@ -1824,7 +1843,6 @@ class NetworkLayout:
                                                   locator)
 
         return cls(network_name=network_name,
-                   connected_buildings=network_layout.connected_buildings,
                    algorithm=network_layout.algorithm)
 
     @staticmethod
@@ -1936,7 +1954,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             heating_connected_buildings_config=heating_connected_buildings_config,
             cooling_connected_buildings_config=cooling_connected_buildings_config,
             all_zone_buildings=all_zone_buildings,
-            network_building_names=network_building_names
+            network_building_names=network_building_names,
+            include_services=list_include_services
         )
 
         # Check demand separately for DC and DH
