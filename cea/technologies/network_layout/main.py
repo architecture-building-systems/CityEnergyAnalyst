@@ -19,7 +19,7 @@ from cea.technologies.network_layout.plant_node_operations import (
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
-from cea.optimization_new.user_network_loader import load_user_defined_network, validate_network_covers_district_buildings
+from cea.optimization_new.user_network_loader import load_user_defined_network
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -2265,7 +2265,7 @@ def main(config: cea.config.Configuration):
                     list_cooling_buildings = result_dc
                 else:
                     # Blank parameter - keep existing
-                    print(f"    DC: Using existing network buildings (parameter blank)")
+                    print("    DC: Using existing network buildings (parameter blank)")
                     list_cooling_buildings = existing_dc_buildings.copy()
             else:
                 # No DC nodes in existing network - must use parameter
@@ -2273,7 +2273,7 @@ def main(config: cea.config.Configuration):
                     print(f"    DC: No existing nodes found, using parameter ({len(cooling_connected_buildings_config)} buildings)")
                     list_cooling_buildings = cooling_connected_buildings_config
                 else:
-                    print(f"    ⚠ Warning: DC selected but no existing nodes and parameter is blank")
+                    print("    ⚠ Warning: DC selected but no existing nodes and parameter is blank")
                     list_cooling_buildings = []
 
         # Process DH buildings (heating)
@@ -2291,7 +2291,7 @@ def main(config: cea.config.Configuration):
                     list_heating_buildings = result_dh
                 else:
                     # Blank parameter - keep existing
-                    print(f"    DH: Using existing network buildings (parameter blank)")
+                    print("    DH: Using existing network buildings (parameter blank)")
                     list_heating_buildings = existing_dh_buildings.copy()
             else:
                 # No DH nodes in existing network - must use parameter
@@ -2299,7 +2299,7 @@ def main(config: cea.config.Configuration):
                     print(f"    DH: No existing nodes found, using parameter ({len(heating_connected_buildings_config)} buildings)")
                     list_heating_buildings = heating_connected_buildings_config
                 else:
-                    print(f"    ⚠ Warning: DH selected but no existing nodes and parameter is blank")
+                    print("    ⚠ Warning: DH selected but no existing nodes and parameter is blank")
                     list_heating_buildings = []
 
         # Update union for universal layout
