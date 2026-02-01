@@ -131,6 +131,43 @@ def initialize_building_lists(heating_connected_buildings_config, cooling_connec
     return list_heating_buildings, list_cooling_buildings, list_district_scale_buildings
 
 
+def process_service_buildings(service, input_buildings, locator, filter_by_demand=False, print_filtering_message=True):
+    """
+    Process building list for a single service (DC or DH).
+
+    Args:
+        service: 'DC' or 'DH'
+        input_buildings: List of buildings for this service (from parameters or supply.csv)
+        locator: InputLocator instance
+        filter_by_demand: If True, filter buildings by demand (intersection). If False, use all input buildings.
+        print_filtering_message: If True, print message when buildings are filtered out
+
+    Returns:
+        Tuple of (buildings_for_service, buildings_without_demand)
+        - buildings_for_service: List of buildings to include in network
+        - buildings_without_demand: List of buildings without demand (empty if filter_by_demand=False)
+    """
+    service_label = "cooling" if service == 'DC' else "heating"
+    buildings_set = set(input_buildings)
+    buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+    buildings_without_demand = list(buildings_set - buildings_with_demand)
+
+    if filter_by_demand:
+        # Filter by demand (intersection)
+        buildings_for_service = list(buildings_set & buildings_with_demand)
+
+        # Print filtering message if requested
+        if print_filtering_message:
+            buildings_filtered = buildings_set - buildings_with_demand
+            if buildings_filtered:
+                print(f"    - {service}: Filtered out {len(buildings_filtered)} building(s) without {service_label} demand")
+    else:
+        # Don't filter - use all input buildings
+        buildings_for_service = input_buildings.copy()
+
+    return buildings_for_service, buildings_without_demand
+
+
 def extract_building_nodes(nodes_gdf, exclude_plant_nodes=True):
     """
     Extract building nodes from a nodes GeoDataFrame.
@@ -1282,13 +1319,21 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         for service in list_include_services:
             if service == 'DC':
-                buildings_set = set(list_cooling_buildings)
-                buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DC'))
-                buildings_without_demand_dc = list(buildings_set - buildings_with_demand)
+                _, buildings_without_demand_dc = process_service_buildings(
+                    service='DC',
+                    input_buildings=list_cooling_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
             elif service == 'DH':
-                buildings_set = set(list_heating_buildings)
-                buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DH'))
-                buildings_without_demand_dh = list(buildings_set - buildings_with_demand)
+                _, buildings_without_demand_dh = process_service_buildings(
+                    service='DH',
+                    input_buildings=list_heating_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
     else:
         # Use supply.csv to determine district buildings
         buildings_to_validate_dc = []
@@ -1357,22 +1402,23 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Process each service (use service-specific list if in overwrite mode)
         for service in list_include_services:
             if service == 'DC':
-                buildings_set = set(list_cooling_buildings) if overwrite_supply else set(buildings_to_validate_dc)
-                buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DC'))
-                buildings_for_dc = list(buildings_set & buildings_with_demand)
-
-                buildings_filtered = buildings_set - buildings_with_demand
-                if buildings_filtered:
-                    print(f"    - DC: Filtered out {len(buildings_filtered)} building(s) without cooling demand")
-
+                input_buildings = list_cooling_buildings if overwrite_supply else buildings_to_validate_dc
+                buildings_for_dc, _ = process_service_buildings(
+                    service='DC',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=True,
+                    print_filtering_message=True
+                )
             elif service == 'DH':
-                buildings_set = set(list_heating_buildings) if overwrite_supply else set(buildings_to_validate_dh)
-                buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DH'))
-                buildings_for_dh = list(buildings_set & buildings_with_demand)
-
-                buildings_filtered = buildings_set - buildings_with_demand
-                if buildings_filtered:
-                    print(f"    - DH: Filtered out {len(buildings_filtered)} building(s) without heating demand")
+                input_buildings = list_heating_buildings if overwrite_supply else buildings_to_validate_dh
+                buildings_for_dh, _ = process_service_buildings(
+                    service='DH',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=True,
+                    print_filtering_message=True
+                )
 
         # Update union to reflect filtered buildings
         list_district_scale_buildings = list(set(buildings_for_dc) | set(buildings_for_dh))
@@ -1383,9 +1429,23 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Only assign for services in list_include_services (others stay as empty [])
         for service in list_include_services:
             if service == 'DC':
-                buildings_for_dc = list_cooling_buildings.copy() if overwrite_supply else buildings_to_validate_dc.copy()
+                input_buildings = list_cooling_buildings if overwrite_supply else buildings_to_validate_dc
+                buildings_for_dc, _ = process_service_buildings(
+                    service='DC',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
             elif service == 'DH':
-                buildings_for_dh = list_heating_buildings.copy() if overwrite_supply else buildings_to_validate_dh.copy()
+                input_buildings = list_heating_buildings if overwrite_supply else buildings_to_validate_dh
+                buildings_for_dh, _ = process_service_buildings(
+                    service='DH',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
 
         # Print demand warnings when not filtering
         print_demand_warning(buildings_without_demand_dc, "cooling")
@@ -1885,13 +1945,21 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
         for service in list_include_services:
             if service == 'DC':
-                buildings_set = set(list_cooling_buildings)
-                buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DC'))
-                buildings_without_demand_dc = list(buildings_set - buildings_with_demand)
+                _, buildings_without_demand_dc = process_service_buildings(
+                    service='DC',
+                    input_buildings=list_cooling_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
             elif service == 'DH':
-                buildings_set = set(list_heating_buildings)
-                buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DH'))
-                buildings_without_demand_dh = list(buildings_set - buildings_with_demand)
+                _, buildings_without_demand_dh = process_service_buildings(
+                    service='DH',
+                    input_buildings=list_heating_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
 
     else:
         # Use supply.csv to determine district buildings
