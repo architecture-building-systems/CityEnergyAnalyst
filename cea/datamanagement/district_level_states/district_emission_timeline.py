@@ -1369,7 +1369,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     ) -> None:
         """Apply code-based changes (windows + supply systems) for `year` (if any).
 
-        Runs only when `schedule.advance_envelope_mod_if(year)` is true.
+        Runs only when `schedule.advance_code_if(year)` is true.
 
         Window code changes:
         - A change in `type_win` triggers a full window replacement old -> new.

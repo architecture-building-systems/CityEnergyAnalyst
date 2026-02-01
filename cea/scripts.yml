@@ -373,7 +373,7 @@ Scenario Evolution Planning:
       - Photovoltaic
       - Emissions
 
-      And builds the district material timeline.
+      And builds the district emission timeline.
       
       The parameters of these simulations must be saved in their respective dashboards before running this Feature.
     interfaces: [cli, dashboard]
