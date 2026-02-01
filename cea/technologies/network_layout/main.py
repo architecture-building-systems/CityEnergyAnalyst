@@ -44,6 +44,88 @@ class NetworkLayoutMode(StrEnum):
     """Add missing AND remove extra buildings (exact match to parameter)."""
 
 
+def apply_network_mode_to_existing_buildings(existing_buildings, parameter_buildings, network_mode, service_name):
+    """
+    Apply network-layout-mode (validate/augment/filter) to reconcile existing network buildings with parameter.
+
+    Args:
+        existing_buildings: List of buildings in existing network nodes
+        parameter_buildings: List of buildings from heating/cooling-connected-buildings parameter
+        network_mode: Network layout mode ('validate', 'augment', or 'filter')
+        service_name: Name of service for error messages (e.g., 'DC (cooling)', 'DH (heating)')
+
+    Returns:
+        List of buildings after applying mode
+
+    Raises:
+        ValueError: If validate mode and buildings don't match
+    """
+    existing_set = set(existing_buildings)
+    parameter_set = set(parameter_buildings)
+
+    missing_buildings = parameter_set - existing_set  # In parameter but not in existing
+    extra_buildings = existing_set - parameter_set    # In existing but not in parameter
+
+    if network_mode == 'validate':
+        # Strict validation - must match exactly
+        if missing_buildings or extra_buildings:
+            error_msg = [f"❌ Validation failed for {service_name}:"]
+            error_msg.append(f"   Existing network has: {len(existing_buildings)} buildings")
+            error_msg.append(f"   Parameter specifies: {len(parameter_buildings)} buildings")
+
+            if missing_buildings:
+                error_msg.append(f"\n   Missing in existing network ({len(missing_buildings)} buildings):")
+                for b in sorted(missing_buildings)[:10]:
+                    error_msg.append(f"     - {b}")
+                if len(missing_buildings) > 10:
+                    error_msg.append(f"     ... and {len(missing_buildings) - 10} more")
+
+            if extra_buildings:
+                error_msg.append(f"\n   Extra in existing network ({len(extra_buildings)} buildings):")
+                for b in sorted(extra_buildings)[:10]:
+                    error_msg.append(f"     - {b}")
+                if len(extra_buildings) > 10:
+                    error_msg.append(f"     ... and {len(extra_buildings) - 10} more")
+
+            error_msg.append("\nResolution options:")
+            error_msg.append("  1. Use 'augment' mode to add missing buildings")
+            error_msg.append("  2. Use 'filter' mode to match parameter exactly")
+            error_msg.append(f"  3. Update {service_name.split()[0].lower()}-connected-buildings parameter to match network")
+
+            raise ValueError('\n'.join(error_msg))
+
+        # Exact match - return parameter buildings
+        print(f"    {service_name}: ✓ Validation passed ({len(parameter_buildings)} buildings)")
+        return parameter_buildings
+
+    elif network_mode == 'augment':
+        # Union - keep existing + add missing
+        result = list(existing_set | parameter_set)
+        if missing_buildings:
+            print(f"    {service_name}: Augment mode - adding {len(missing_buildings)} building(s)")
+        else:
+            print(f"    {service_name}: Augment mode - no buildings to add ({len(result)} buildings)")
+        return result
+
+    elif network_mode == 'filter':
+        # Exact match to parameter - add missing AND remove extra
+        result = parameter_buildings
+        changes = []
+        if missing_buildings:
+            changes.append(f"add {len(missing_buildings)}")
+        if extra_buildings:
+            changes.append(f"remove {len(extra_buildings)}")
+
+        if changes:
+            print(f"    {service_name}: Filter mode - {' and '.join(changes)} building(s) → {len(result)} total")
+        else:
+            print(f"    {service_name}: Filter mode - exact match ({len(result)} buildings)")
+        return result
+
+    else:
+        raise ValueError(f"Unsupported network-layout-mode: {network_mode!r}")
+
+
 def convert_simplified_nodes_to_full_format(nodes_gdf):
     """
     Convert simplified user-provided nodes format to full CEA format.
@@ -1917,6 +1999,15 @@ def main(config: cea.config.Configuration):
 
     print(f"Network name: {network_layout.network_name}")
 
+    # Read config parameters needed for existing network processing
+    heating_connected_buildings_config = config.network_layout.heating_connected_buildings
+    cooling_connected_buildings_config = config.network_layout.cooling_connected_buildings
+    list_include_services = config.network_layout.include_services
+
+    # Initialize building lists (may be overridden by existing network loading)
+    list_heating_buildings = []
+    list_cooling_buildings = []
+
     # Check if user provided custom network layout
     existing_network = config.network_layout.existing_network
     edges_shp = config.network_layout.edges_shp_path
@@ -1926,18 +2017,8 @@ def main(config: cea.config.Configuration):
     # If existing-network is specified, load edges/nodes from that network
     if existing_network and existing_network not in ['', '(none)']:
         print(f"\n  Loading existing network: {existing_network}")
-        # Edges are in layout.shp at the network-name level
+        # Edges are in layout.shp at the network-name level (universal pipe trench)
         existing_edges_path = locator.get_network_layout_shapefile(existing_network)
-
-        # Nodes are in {network_type}/layout/nodes.shp
-        # Try to find nodes from either DC or DH network (priority: DC first)
-        existing_nodes_path = None
-        for network_type in ['DC', 'DH']:
-            candidate_nodes_path = locator.get_network_layout_nodes_shapefile(network_type, existing_network)
-            if os.path.exists(candidate_nodes_path):
-                existing_nodes_path = candidate_nodes_path
-                print(f"    Found {network_type} network nodes at: {existing_nodes_path}")
-                break
 
         if not os.path.exists(existing_edges_path):
             raise ValueError(
@@ -1945,17 +2026,113 @@ def main(config: cea.config.Configuration):
                 f"Expected to find: {existing_edges_path}"
             )
 
-        if not existing_nodes_path or not os.path.exists(existing_nodes_path):
+        # Load BOTH DC and DH nodes to preserve service-specific building assignments
+        existing_dc_nodes_path = locator.get_network_layout_nodes_shapefile('DC', existing_network)
+        existing_dh_nodes_path = locator.get_network_layout_nodes_shapefile('DH', existing_network)
+
+        existing_dc_buildings = []
+        existing_dh_buildings = []
+
+        # Extract buildings from DC nodes
+        if os.path.exists(existing_dc_nodes_path):
+            import geopandas as gpd
+            dc_nodes_gdf = gpd.read_file(existing_dc_nodes_path)
+            # Get building nodes (exclude PLANT and NONE nodes)
+            building_nodes = dc_nodes_gdf[
+                dc_nodes_gdf['building'].notna() &
+                (dc_nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                (dc_nodes_gdf['type'].fillna('').str.upper() != 'PLANT')
+            ]
+            existing_dc_buildings = sorted(building_nodes['building'].unique().tolist())
+            print(f"    Found DC nodes: {len(existing_dc_buildings)} buildings")
+
+        # Extract buildings from DH nodes
+        if os.path.exists(existing_dh_nodes_path):
+            import geopandas as gpd
+            dh_nodes_gdf = gpd.read_file(existing_dh_nodes_path)
+            # Get building nodes (exclude PLANT and NONE nodes)
+            building_nodes = dh_nodes_gdf[
+                dh_nodes_gdf['building'].notna() &
+                (dh_nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
+                (dh_nodes_gdf['type'].fillna('').str.upper() != 'PLANT')
+            ]
+            existing_dh_buildings = sorted(building_nodes['building'].unique().tolist())
+            print(f"    Found DH nodes: {len(existing_dh_buildings)} buildings")
+
+        # Validate at least one service's nodes were found
+        if not existing_dc_buildings and not existing_dh_buildings:
             raise ValueError(
-                f"Could not find nodes for existing network '{existing_network}'.\n"
+                f"Could not find any building nodes in existing network '{existing_network}'.\n"
                 f"Searched paths:\n"
-                f"  - {locator.get_network_layout_nodes_shapefile('DC', existing_network)}\n"
-                f"  - {locator.get_network_layout_nodes_shapefile('DH', existing_network)}"
+                f"  - {existing_dc_nodes_path}\n"
+                f"  - {existing_dh_nodes_path}\n\n"
+                f"At least one service (DC or DH) must have nodes."
             )
+
+        # Apply network-layout-mode to reconcile existing nodes with parameters
+        network_mode_str = config.network_layout.network_layout_mode
+        print(f"    Network layout mode: {network_mode_str}")
+
+        # Process DC buildings (cooling)
+        if 'DC' in list_include_services:
+            if existing_dc_buildings:
+                # Existing network has DC nodes - reconcile with parameter
+                if cooling_connected_buildings_config:
+                    # User specified cooling buildings - apply mode
+                    result_dc = apply_network_mode_to_existing_buildings(
+                        existing_buildings=existing_dc_buildings,
+                        parameter_buildings=cooling_connected_buildings_config,
+                        network_mode=network_mode_str,
+                        service_name='DC (cooling)'
+                    )
+                    list_cooling_buildings = result_dc
+                else:
+                    # Blank parameter - keep existing
+                    print(f"    DC: Using existing network buildings (parameter blank)")
+                    list_cooling_buildings = existing_dc_buildings.copy()
+            else:
+                # No DC nodes in existing network - must use parameter
+                if cooling_connected_buildings_config:
+                    print(f"    DC: No existing nodes found, using parameter ({len(cooling_connected_buildings_config)} buildings)")
+                    list_cooling_buildings = cooling_connected_buildings_config
+                else:
+                    print(f"    ⚠ Warning: DC selected but no existing nodes and parameter is blank")
+                    list_cooling_buildings = []
+
+        # Process DH buildings (heating)
+        if 'DH' in list_include_services:
+            if existing_dh_buildings:
+                # Existing network has DH nodes - reconcile with parameter
+                if heating_connected_buildings_config:
+                    # User specified heating buildings - apply mode
+                    result_dh = apply_network_mode_to_existing_buildings(
+                        existing_buildings=existing_dh_buildings,
+                        parameter_buildings=heating_connected_buildings_config,
+                        network_mode=network_mode_str,
+                        service_name='DH (heating)'
+                    )
+                    list_heating_buildings = result_dh
+                else:
+                    # Blank parameter - keep existing
+                    print(f"    DH: Using existing network buildings (parameter blank)")
+                    list_heating_buildings = existing_dh_buildings.copy()
+            else:
+                # No DH nodes in existing network - must use parameter
+                if heating_connected_buildings_config:
+                    print(f"    DH: No existing nodes found, using parameter ({len(heating_connected_buildings_config)} buildings)")
+                    list_heating_buildings = heating_connected_buildings_config
+                else:
+                    print(f"    ⚠ Warning: DH selected but no existing nodes and parameter is blank")
+                    list_heating_buildings = []
+
+        # Update union for universal layout
+        list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
+        print(f"    Universal layout will cover: {len(list_district_scale_buildings)} building(s) (union)")
 
         # Set these as the input paths for user-defined network processing
         edges_shp = existing_edges_path
-        nodes_shp = existing_nodes_path
+        # Use DC nodes as primary (user-defined network loader will handle both services)
+        nodes_shp = existing_dc_nodes_path if existing_dc_buildings else existing_dh_nodes_path
         print(f"    ✓ Loaded existing network edges: {edges_shp}")
         print(f"    ✓ Loaded existing network nodes: {nodes_shp}")
 
