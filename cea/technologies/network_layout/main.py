@@ -2070,9 +2070,17 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("  DC NETWORK")
         print(f"{'='*60}")
 
-        # Create copy of nodes for DC network
-        nodes_gdf_dc = nodes_gdf.copy()
+        # Filter nodes to only include DC (cooling) buildings + PLANT/NONE nodes
+        # Exclude buildings that are only in heating list
+        dc_building_filter = (
+            (nodes_gdf['building'].isin(list_cooling_buildings)) |  # DC buildings
+            (nodes_gdf['building'].fillna('').str.upper() == 'NONE') |  # Junction nodes
+            (nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT'))  # Plant nodes
+        )
+        nodes_gdf_dc = nodes_gdf[dc_building_filter].copy()
         edges_gdf_dc = edges_gdf.copy()
+        print(f"  - Filtered to {len(nodes_gdf_dc)} nodes for DC network ({len([b for b in nodes_gdf_dc['building'] if b in list_cooling_buildings])} cooling buildings)")
+
         nodes_gdf_dc, edges_gdf_dc, created_plants_dc = auto_create_plant_nodes(
             nodes_gdf_dc, edges_gdf_dc, zone_gdf,
             cooling_plant_buildings_list, 'DC', locator,
@@ -2101,9 +2109,17 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("  DH NETWORK")
         print(f"{'='*60}")
 
-        # Create copy of nodes for DH network
-        nodes_gdf_dh = nodes_gdf.copy()
+        # Filter nodes to only include DH (heating) buildings + PLANT/NONE nodes
+        # Exclude buildings that are only in cooling list
+        dh_building_filter = (
+            (nodes_gdf['building'].isin(list_heating_buildings)) |  # DH buildings
+            (nodes_gdf['building'].fillna('').str.upper() == 'NONE') |  # Junction nodes
+            (nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT'))  # Plant nodes
+        )
+        nodes_gdf_dh = nodes_gdf[dh_building_filter].copy()
         edges_gdf_dh = edges_gdf.copy()
+        print(f"  - Filtered to {len(nodes_gdf_dh)} nodes for DH network ({len([b for b in nodes_gdf_dh['building'] if b in list_heating_buildings])} heating buildings)")
+
         nodes_gdf_dh, edges_gdf_dh, created_plants_dh = auto_create_plant_nodes(
             nodes_gdf_dh, edges_gdf_dh, zone_gdf,
             heating_plant_buildings_list, 'DH', locator,
