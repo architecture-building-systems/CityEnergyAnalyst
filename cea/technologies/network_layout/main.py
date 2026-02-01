@@ -269,21 +269,6 @@ def print_demand_warning(buildings_without_demand, service_name):
         print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
 
 
-def get_buildings_from_supply_csv(locator, network_type):
-    """
-    Read supply.csv and return list of buildings configured for district heating/cooling.
-
-    DEPRECATED: Use get_buildings_and_services_from_supply_csv() for per-building service configuration.
-    This function is kept for backward compatibility.
-
-    :param locator: InputLocator instance
-    :param network_type: "DH" or "DC"
-    :return: List of building names
-    """
-    buildings, _ = get_buildings_and_services_from_supply_csv(locator, network_type)
-    return buildings
-
-
 def get_buildings_and_services_from_supply_csv(locator, network_type):
     """
     Read supply.csv and determine per-building service configuration.
@@ -1090,11 +1075,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         for service in list_include_services:
             if service == 'DH':
-                # NEW: Get per-building services from supply.csv for DH
+                # Get per-building services from supply.csv for DH (needed for itemised services validation)
                 buildings_to_validate, per_building_services_dh = get_buildings_and_services_from_supply_csv(locator, network_type=service)
             else:
-                # DC: Use legacy function (no per-service differentiation)
-                buildings_to_validate = get_buildings_from_supply_csv(locator, network_type=service)
+                # DC: Get buildings from supply.csv (per-service differentiation not needed for DC)
+                buildings_to_validate, _ = get_buildings_and_services_from_supply_csv(locator, network_type=service)
 
             buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
             buildings_without_demand = set(buildings_to_validate) - buildings_with_demand
@@ -1729,7 +1714,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
             print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
         for service in list_include_services:
-            buildings_to_validate_service = get_buildings_from_supply_csv(locator, network_type=service)
+            buildings_to_validate_service, _ = get_buildings_and_services_from_supply_csv(locator, network_type=service)
             buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
             buildings_without_demand = set(buildings_to_validate_service) - buildings_with_demand
 
