@@ -3,6 +3,62 @@
 ## Purpose
 Build thermal network connectivity graphs by connecting buildings to street networks while preserving curved geometries and maintaining coordinate precision.
 
+## Connected Buildings Configuration
+
+### Separate Parameters for Heating and Cooling
+
+**Network Part 1** (this script) uses separate parameters for district heating and cooling services:
+- `heating-connected-buildings`: Buildings to connect to district heating network
+- `cooling-connected-buildings`: Buildings to connect to district cooling network
+
+**Key Concept**: User-provided networks represent a **universal pipe trench** (physical infrastructure corridor) that can contain both heating and cooling pipes.
+
+### Workflow: Universal Layout → Service-Specific Nodes
+
+**Step 1: Create Universal Layout (Pipe Trench)**
+- Covers **union** of heating + cooling buildings
+- Represents physical infrastructure corridor
+- Output: `thermal-network/{network_name}/layout.shp`
+
+**Step 2: Generate Service-Specific Nodes (Part 1)**
+- Extract heating buildings → `thermal-network/{network_name}/dh/layout/nodes.shp`
+- Extract cooling buildings → `thermal-network/{network_name}/dc/layout/nodes.shp`
+- Nodes files store which buildings connect to which service
+
+**Step 3: Generate Service-Specific Edges (Part 2)**
+- Part 2 script reads universal layout + service-specific nodes
+- Generates `dc/layout/edges.shp` and `dh/layout/edges.shp`
+
+### Example Usage
+
+```python
+# Different buildings for heating vs cooling
+heating-connected-buildings: B1001, B1002, B1003
+cooling-connected-buildings: B1003, B1004, B1005
+
+# Result:
+# - Universal layout.shp covers: B1001, B1002, B1003, B1004, B1005 (union of 5 buildings)
+# - dh/layout/nodes.shp contains: B1001, B1002, B1003 (3 heating nodes)
+# - dc/layout/nodes.shp contains: B1003, B1004, B1005 (3 cooling nodes)
+# - Part 2 generates separate edges for each service
+```
+
+### Parameter Behavior
+
+**When blank (empty list):**
+- `heating-connected-buildings = ` → All buildings with heating demand
+- `cooling-connected-buildings = ` → All buildings with cooling demand
+
+**When explicitly set:**
+- Only specified buildings are connected to that service
+- Universal layout still covers the union of both lists
+
+**With `consider-only-buildings-with-demand = true`:**
+- Filters each service's buildings by demand type
+- DC buildings filtered by cooling demand
+- DH buildings filtered by heating demand
+- Universal layout covers filtered union
+
 ## User-Defined Network Layout Modes
 
 ### Overview

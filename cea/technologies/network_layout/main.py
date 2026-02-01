@@ -900,7 +900,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Read config parameters
     overwrite_supply = config.network_layout.overwrite_supply_settings
-    connected_buildings_config = config.network_layout.connected_buildings
+    heating_connected_buildings_config = config.network_layout.heating_connected_buildings
+    cooling_connected_buildings_config = config.network_layout.cooling_connected_buildings
     list_include_services = config.network_layout.include_services
     consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
     connection_candidates = config.network_layout.connection_candidates
@@ -920,34 +921,46 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Determine which buildings should be in the network
     if overwrite_supply:
-        # Use connected-buildings parameter (what-if scenarios)
-        # Check if connected-buildings was explicitly set (non-empty list)
-        is_explicitly_set = bool(connected_buildings_config)
+        # Use heating/cooling-connected-buildings parameters (what-if scenarios)
+        print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
 
-        if is_explicitly_set:
-            # User explicitly specified buildings
-            list_district_scale_buildings = connected_buildings_config
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - User-defined connected buildings: {len(list_district_scale_buildings)}")
+        # HEATING buildings
+        is_heating_explicitly_set = bool(heating_connected_buildings_config)
+        if is_heating_explicitly_set:
+            list_heating_buildings = heating_connected_buildings_config
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (user-defined)")
         else:
-            # Blank connected-buildings (auto-populated): use all zone buildings
-            list_district_scale_buildings = all_zone_buildings
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - Using all buildings from zone geometry: {len(list_district_scale_buildings)}")
+            # Blank parameter: use all zone buildings for heating
+            list_heating_buildings = all_zone_buildings.copy()
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (all buildings)")
+
+        # COOLING buildings
+        is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
+        if is_cooling_explicitly_set:
+            list_cooling_buildings = cooling_connected_buildings_config
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (user-defined)")
+        else:
+            # Blank parameter: use all zone buildings for cooling
+            list_cooling_buildings = all_zone_buildings.copy()
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (all buildings)")
+
+        # Create union for universal layout validation/augmentation
+        list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
+        print(f"  - Universal layout will cover: {len(list_district_scale_buildings)} building(s) (union)")
 
         # Check demand separately for DC and DH
-        district_buildings_set = set(list_district_scale_buildings)
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        for service in list_include_services:
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
-            buildings_without_demand = district_buildings_set - buildings_with_demand
+        if 'DC' in list_include_services:
+            cooling_buildings_set = set(list_cooling_buildings)
+            buildings_with_cooling_demand = set(get_buildings_with_demand(locator, network_type='DC'))
+            buildings_without_demand_dc = list(cooling_buildings_set - buildings_with_cooling_demand)
 
-            if service == 'DC':
-                buildings_without_demand_dc = list(buildings_without_demand)
-            elif service == 'DH':
-                buildings_without_demand_dh = list(buildings_without_demand)
+        if 'DH' in list_include_services:
+            heating_buildings_set = set(list_heating_buildings)
+            buildings_with_heating_demand = set(get_buildings_with_demand(locator, network_type='DH'))
+            buildings_without_demand_dh = list(heating_buildings_set - buildings_with_heating_demand)
     else:
         # Use supply.csv to determine district buildings
         buildings_to_validate_dc = []
@@ -958,11 +971,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # NEW: Per-building service configuration (for DH only - DC doesn't differentiate services)
         per_building_services_dh = {}
 
-        # Warn if connected-buildings parameter has values that will be ignored
-        if connected_buildings_config:
-            print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
+        # Warn if connected-buildings parameters have values that will be ignored
+        if heating_connected_buildings_config or cooling_connected_buildings_config:
+            print("  ⚠ Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
             print("    Reason: 'overwrite-supply-settings' is False")
-            print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+            print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
         for service in list_include_services:
             if service == 'DH':
@@ -1010,41 +1023,53 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Apply consider_only_buildings_with_demand filter if enabled
     if consider_only_buildings_with_demand:
-        buildings_before_filter = len(list_district_scale_buildings)
-        district_buildings_set = set(list_district_scale_buildings)
-        buildings_with_any_demand = set()
+        print("  - Filtering buildings by demand requirement...")
 
-        # Process each service type
-        for service in list_include_services:
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
-
-            # Assign buildings to service-specific list
-            if service == 'DC':
-                buildings_for_dc = list(district_buildings_set & buildings_with_demand)
-            elif service == 'DH':
-                buildings_for_dh = list(district_buildings_set & buildings_with_demand)
-
-            # Track filtered buildings and print message
-            buildings_filtered = district_buildings_set - buildings_with_demand
-            if buildings_filtered:
-                demand_type = 'cooling' if service == 'DC' else 'heating'
-                print(f"  - consider-only-buildings-with-demand ({service}): Filtered out {len(buildings_filtered)} building(s) without {demand_type} demand")
-
-            # Accumulate buildings with demand for any service
-            buildings_with_any_demand.update(buildings_with_demand)
-
-        # Keep only buildings with demand for at least one service
-        list_district_scale_buildings = list(district_buildings_set & buildings_with_any_demand)
-        buildings_after_filter = len(list_district_scale_buildings)
-
-        if buildings_before_filter != buildings_after_filter:
-            print(f"  - Total buildings after filtering: {buildings_after_filter} (was {buildings_before_filter})")
-    else:
-        # When not filtering by demand, all buildings go to both networks
+        # Process DC buildings (use service-specific list if in overwrite mode)
         if 'DC' in list_include_services:
-            buildings_for_dc = list_district_scale_buildings.copy()
+            if overwrite_supply:
+                cooling_buildings_set = set(list_cooling_buildings)
+            else:
+                cooling_buildings_set = set(buildings_to_validate_dc)
+
+            buildings_with_cooling_demand = set(get_buildings_with_demand(locator, network_type='DC'))
+            buildings_for_dc = list(cooling_buildings_set & buildings_with_cooling_demand)
+
+            buildings_filtered = cooling_buildings_set - buildings_with_cooling_demand
+            if buildings_filtered:
+                print(f"    - DC: Filtered out {len(buildings_filtered)} building(s) without cooling demand")
+
+        # Process DH buildings (use service-specific list if in overwrite mode)
         if 'DH' in list_include_services:
-            buildings_for_dh = list_district_scale_buildings.copy()
+            if overwrite_supply:
+                heating_buildings_set = set(list_heating_buildings)
+            else:
+                heating_buildings_set = set(buildings_to_validate_dh)
+
+            buildings_with_heating_demand = set(get_buildings_with_demand(locator, network_type='DH'))
+            buildings_for_dh = list(heating_buildings_set & buildings_with_heating_demand)
+
+            buildings_filtered = heating_buildings_set - buildings_with_heating_demand
+            if buildings_filtered:
+                print(f"    - DH: Filtered out {len(buildings_filtered)} building(s) without heating demand")
+
+        # Update union to reflect filtered buildings
+        list_district_scale_buildings = list(set(buildings_for_dc) | set(buildings_for_dh))
+        print(f"  - Buildings after demand filtering: {len(list_district_scale_buildings)}")
+
+    else:
+        # When not filtering by demand, use full lists for each service
+        if 'DC' in list_include_services:
+            if overwrite_supply:
+                buildings_for_dc = list_cooling_buildings.copy()
+            else:
+                buildings_for_dc = buildings_to_validate_dc.copy()
+
+        if 'DH' in list_include_services:
+            if overwrite_supply:
+                buildings_for_dh = list_heating_buildings.copy()
+            else:
+                buildings_for_dh = buildings_to_validate_dh.copy()
         # Print demand warnings when not filtering
         print_demand_warning(buildings_without_demand_dc, "cooling")
         print_demand_warning(buildings_without_demand_dh, "heating")
@@ -1490,7 +1515,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print(f"  - Edges: {len(edges_gdf)}")
 
     overwrite_supply = config.network_layout.overwrite_supply_settings
-    connected_buildings_config = config.network_layout.connected_buildings
+    heating_connected_buildings_config = config.network_layout.heating_connected_buildings
+    cooling_connected_buildings_config = config.network_layout.cooling_connected_buildings
     list_include_services = config.network_layout.include_services
     itemised_dh_services = config.network_layout.itemised_dh_services
 
@@ -1530,40 +1556,52 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Determine which buildings should be in the network
     if overwrite_supply:
-        # Use connected-buildings parameter (what-if scenarios)
-        # Check if connected-buildings was explicitly set (non-empty list)
-        is_explicitly_set = bool(connected_buildings_config)
+        # Use heating/cooling-connected-buildings parameters (what-if scenarios)
+        print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
 
-        if is_explicitly_set:
-            # User explicitly specified buildings
-            buildings_to_validate = connected_buildings_config
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - User-defined connected buildings: {len(buildings_to_validate)}")
+        # Determine heating and cooling buildings
+        is_heating_explicitly_set = bool(heating_connected_buildings_config)
+        is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
+
+        if is_heating_explicitly_set or is_cooling_explicitly_set:
+            # User explicitly specified buildings (at least one parameter is set)
+            list_heating_buildings = heating_connected_buildings_config if is_heating_explicitly_set else all_zone_buildings.copy()
+            list_cooling_buildings = cooling_connected_buildings_config if is_cooling_explicitly_set else all_zone_buildings.copy()
+
+            # Create union for universal layout validation (user network is universal pipe trench)
+            buildings_to_validate = list(set(list_heating_buildings) | set(list_cooling_buildings))
+
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} {'(user-defined)' if is_heating_explicitly_set else '(all buildings)'}")
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} {'(user-defined)' if is_cooling_explicitly_set else '(all buildings)'}")
+            print(f"  - Union (for universal layout validation): {len(buildings_to_validate)}")
             print(f"  - Buildings in user layout: {len(network_building_names)}")
         else:
-            # Blank connected-buildings (auto-populated): accept whatever is in user layout
+            # Both parameters blank: accept whatever is in user layout
             # BUT we already validated building names exist in zone geometry above
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
             print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
             for building_name in network_building_names[:10]:
                 print(f"      - {building_name}")
             if len(network_building_names) > 10:
                 print(f"      ... and {len(network_building_names) - 10} more")
-            buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
+
+            # Use network buildings for both heating and cooling
+            buildings_to_validate = network_building_names
+            list_heating_buildings = network_building_names.copy()
+            list_cooling_buildings = network_building_names.copy()
 
         # Check demand separately for DC and DH
-        buildings_to_validate_set = set(buildings_to_validate)
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        for service in list_include_services:
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
-            buildings_without_demand = buildings_to_validate_set - buildings_with_demand
+        if 'DC' in list_include_services:
+            cooling_buildings_set = set(list_cooling_buildings)
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DC'))
+            buildings_without_demand_dc = list(cooling_buildings_set - buildings_with_demand)
 
-            if service == 'DC':
-                buildings_without_demand_dc = list(buildings_without_demand)
-            elif service == 'DH':
-                buildings_without_demand_dh = list(buildings_without_demand)
+        if 'DH' in list_include_services:
+            heating_buildings_set = set(list_heating_buildings)
+            buildings_with_demand = set(get_buildings_with_demand(locator, network_type='DH'))
+            buildings_without_demand_dh = list(heating_buildings_set - buildings_with_demand)
 
     else:
         # Use supply.csv to determine district buildings
@@ -1572,11 +1610,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        # Warn if connected-buildings parameter has values that will be ignored
-        if connected_buildings_config:
-            print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
+        # Warn if connected-buildings parameters have values that will be ignored
+        if heating_connected_buildings_config or cooling_connected_buildings_config:
+            print("  ⚠ Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
             print("    Reason: 'overwrite-supply-settings' is False")
-            print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+            print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
         for service in list_include_services:
             buildings_to_validate_service = get_buildings_from_supply_csv(locator, network_type=service)
