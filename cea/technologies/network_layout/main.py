@@ -152,6 +152,171 @@ def apply_network_mode_to_existing_buildings(existing_buildings, parameter_build
         raise ValueError(f"Unsupported network-layout-mode: {network_mode!r}")
 
 
+def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_validate, zone_gdf,
+                                       network_types_to_generate, config, locator, snap_tolerance):
+    """
+    Apply network-layout-mode (validate/augment/filter) to user-defined network.
+
+    This function validates and optionally modifies the user-provided network to match
+    the specified buildings_to_validate list according to the network-layout-mode.
+
+    Args:
+        nodes_gdf: GeoDataFrame of network nodes
+        edges_gdf: GeoDataFrame of network edges
+        buildings_to_validate: List of building names that should be in network
+        zone_gdf: GeoDataFrame of zone geometry
+        network_types_to_generate: Set of network types ('DC', 'DH')
+        config: Configuration instance
+        locator: InputLocator instance
+        snap_tolerance: Snap tolerance for geometry operations
+
+    Returns:
+        Tuple of (nodes_gdf, edges_gdf) after applying mode
+
+    Raises:
+        ValueError: If validation fails or auto_modify is False when modifications needed
+    """
+    from cea.optimization_new.user_network_loader import (
+        validate_network_covers_district_buildings,
+        augment_user_network_with_buildings,
+        filter_network_to_buildings
+    )
+
+    # Get network layout mode and modification settings
+    try:
+        network_mode = NetworkLayoutMode(config.network_layout.network_layout_mode)
+    except ValueError:
+        raise ValueError(
+            f"Unsupported network-layout-mode: {config.network_layout.network_layout_mode!r}. "
+            f"Expected one of: {', '.join(m.value for m in NetworkLayoutMode)}."
+        )
+    auto_modify = config.network_layout.auto_modify_network
+
+    # Check for extra buildings in network (buildings not in parameter)
+    network_buildings = set(nodes_gdf[
+        nodes_gdf['building'].notna() &
+        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    ]['building'].unique())
+    extra_buildings = network_buildings - set(buildings_to_validate)
+
+    # Validate network covers all specified buildings
+    # Behavior depends on mode: validate = strict, augment/filter = lenient
+    if network_mode == NetworkLayoutMode.VALIDATE:
+        # Validate mode: Strict validation - errors for any mismatch
+        nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
+            nodes_gdf,
+            zone_gdf,
+            buildings_to_validate,
+            list(network_types_to_generate),
+            edges_gdf,
+            allow_augmentation=False,  # Strict - raise error if missing
+            strict_extra_buildings=True  # Strict - raise error if extras
+        )
+        # If we get here, network matches exactly
+        print("  ✓ All specified buildings have valid nodes in network")
+        print("  ✓ No extra buildings in network")
+    else:
+        # Augment/Filter modes: Lenient validation - return missing list
+        nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
+            nodes_gdf,
+            zone_gdf,
+            buildings_to_validate,
+            list(network_types_to_generate),
+            edges_gdf,
+            allow_augmentation=True,  # Return missing list (no errors)
+            strict_extra_buildings=False  # Lenient - warnings only for extras
+        )
+
+    # Apply mode-specific behavior
+    if network_mode == NetworkLayoutMode.VALIDATE:
+        # Already validated above with strict mode
+        pass
+
+    elif network_mode == NetworkLayoutMode.AUGMENT:
+        # Augment mode: Add missing buildings (union)
+        if missing_buildings:
+            if not auto_modify:
+                raise ValueError(
+                    f"Augment mode requires auto-modify-network=true to add missing buildings.\n"
+                    f"  Missing buildings: {', '.join(missing_buildings[:10])}\n"
+                    f"Resolution: Set auto-modify-network=true or use validate mode."
+                )
+
+            print(f"\n  ⓘ Augment mode: Adding {len(missing_buildings)} missing building(s)...")
+            print("    Extending network using Steiner tree optimisation...")
+
+            street_network_gdf = gpd.read_file(locator.get_street_network())
+
+            nodes_gdf, edges_gdf = augment_user_network_with_buildings(
+                user_nodes_gdf=nodes_gdf,
+                user_edges_gdf=edges_gdf,
+                zone_gdf=zone_gdf,
+                missing_building_names=missing_buildings,
+                street_network_gdf=street_network_gdf,
+                locator=locator,
+                snap_tolerance=snap_tolerance,
+                connection_candidates=config.network_layout.connection_candidates
+            )
+
+            print("  ✓ Augmentation successful - all buildings now in network")
+        else:
+            print("  ✓ All specified buildings have valid nodes in network")
+
+    elif network_mode == NetworkLayoutMode.FILTER:
+        # Filter mode: Remove extra buildings AND add missing buildings (exact match)
+        if extra_buildings or missing_buildings:
+            if not auto_modify:
+                msg = "Filter mode requires auto-modify-network=true for modifications.\n"
+                if extra_buildings:
+                    msg += f"  Extra buildings to remove: {', '.join(list(extra_buildings)[:10])}\n"
+                if missing_buildings:
+                    msg += f"  Missing buildings to add: {', '.join(missing_buildings[:10])}\n"
+                msg += "Resolution: Set auto-modify-network=true or use validate mode."
+                raise ValueError(msg)
+
+            # Warning for filter mode
+            print("\n" + "="*60)
+            print("⚠️  WARNING: FILTER MODE - Network will be modified!")
+            print("="*60)
+            if extra_buildings:
+                print(f"  Removing {len(extra_buildings)} building(s): {', '.join(list(extra_buildings)[:5])}")
+                if len(extra_buildings) > 5:
+                    print(f"    ... and {len(extra_buildings) - 5} more")
+            if missing_buildings:
+                print(f"  Adding {len(missing_buildings)} building(s): {', '.join(missing_buildings[:5])}")
+                if len(missing_buildings) > 5:
+                    print(f"    ... and {len(missing_buildings) - 5} more")
+            print("  Original network files on disk will NOT be changed.")
+            print("="*60 + "\n")
+
+            # Step 1: Remove extra buildings
+            if extra_buildings:
+                nodes_gdf, edges_gdf = filter_network_to_buildings(
+                    nodes_gdf, edges_gdf, buildings_to_validate
+                )
+
+            # Step 2: Add missing buildings
+            if missing_buildings:
+                street_network_gdf = gpd.read_file(locator.get_street_network())
+
+                nodes_gdf, edges_gdf = augment_user_network_with_buildings(
+                    user_nodes_gdf=nodes_gdf,
+                    user_edges_gdf=edges_gdf,
+                    zone_gdf=zone_gdf,
+                    missing_building_names=missing_buildings,
+                    street_network_gdf=street_network_gdf,
+                    locator=locator,
+                    snap_tolerance=snap_tolerance,
+                    connection_candidates=config.network_layout.connection_candidates
+                )
+
+            print("  ✓ Filter complete - network now matches parameter exactly")
+        else:
+            print("  ✓ All specified buildings have valid nodes in network")
+
+    return nodes_gdf, edges_gdf
+
+
 def convert_simplified_nodes_to_full_format(nodes_gdf):
     """
     Convert simplified user-provided nodes format to full CEA format.
@@ -1755,144 +1920,17 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dc, "cooling")
     print_demand_warning(buildings_without_demand_dh, "heating")
 
-    # Get network layout mode and modification settings
-    try:
-        network_mode = NetworkLayoutMode(config.network_layout.network_layout_mode)
-    except ValueError:
-        raise ValueError(
-            f"Unsupported network-layout-mode: {config.network_layout.network_layout_mode!r}. "
-            f"Expected one of: {', '.join(m.value for m in NetworkLayoutMode)}."
-        )
-    auto_modify = config.network_layout.auto_modify_network
-
-    # Check for extra buildings in network (buildings not in parameter)
-    network_buildings = set(nodes_gdf[
-        nodes_gdf['building'].notna() &
-        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
-    ]['building'].unique())
-    extra_buildings = network_buildings - set(buildings_to_validate)
-
-    # Validate network covers all specified buildings
-    # Behavior depends on mode: validate = strict, augment/filter = lenient
-    if network_mode == NetworkLayoutMode.VALIDATE:
-        # Validate mode: Strict validation - errors for any mismatch
-        nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
-            nodes_gdf,
-            zone_gdf,
-            buildings_to_validate,
-            list(network_types_to_generate),
-            edges_gdf,
-            allow_augmentation=False,  # Strict - raise error if missing
-            strict_extra_buildings=True  # Strict - raise error if extras
-        )
-        # If we get here, network matches exactly
-        print("  ✓ All specified buildings have valid nodes in network")
-        print("  ✓ No extra buildings in network")
-    else:
-        # Augment/Filter modes: Lenient validation - return missing list
-        nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
-            nodes_gdf,
-            zone_gdf,
-            buildings_to_validate,
-            list(network_types_to_generate),
-            edges_gdf,
-            allow_augmentation=True,  # Return missing list (no errors)
-            strict_extra_buildings=False  # Lenient - warnings only for extras
-        )
-
-    # Apply mode-specific behavior
-    if network_mode == NetworkLayoutMode.VALIDATE:
-        # Already validated above with strict mode
-        pass
-
-    elif network_mode == NetworkLayoutMode.AUGMENT:
-        # Augment mode: Add missing buildings (union)
-        if missing_buildings:
-            if not auto_modify:
-                raise ValueError(
-                    f"Augment mode requires auto-modify-network=true to add missing buildings.\n"
-                    f"  Missing buildings: {', '.join(missing_buildings[:10])}\n"
-                    f"Resolution: Set auto-modify-network=true or use validate mode."
-                )
-
-            print(f"\n  ⓘ Augment mode: Adding {len(missing_buildings)} missing building(s)...")
-            print("    Extending network using Steiner tree optimisation...")
-
-            from cea.optimization_new.user_network_loader import augment_user_network_with_buildings
-
-            street_network_gdf = gpd.read_file(locator.get_street_network())
-
-            nodes_gdf, edges_gdf = augment_user_network_with_buildings(
-                user_nodes_gdf=nodes_gdf,
-                user_edges_gdf=edges_gdf,
-                zone_gdf=zone_gdf,
-                missing_building_names=missing_buildings,
-                street_network_gdf=street_network_gdf,
-                locator=locator,
-                snap_tolerance=snap_tolerance,
-                connection_candidates=config.network_layout.connection_candidates
-            )
-
-            print("  ✓ Augmentation successful - all buildings now in network")
-        else:
-            print("  ✓ All specified buildings have valid nodes in network")
-
-    elif network_mode == NetworkLayoutMode.FILTER:
-        # Filter mode: Remove extra buildings AND add missing buildings (exact match)
-        from cea.optimization_new.user_network_loader import filter_network_to_buildings
-
-        # extra_buildings already calculated above
-        if extra_buildings or missing_buildings:
-            if not auto_modify:
-                msg = "Filter mode requires auto-modify-network=true for modifications.\n"
-                if extra_buildings:
-                    msg += f"  Extra buildings to remove: {', '.join(list(extra_buildings)[:10])}\n"
-                if missing_buildings:
-                    msg += f"  Missing buildings to add: {', '.join(missing_buildings[:10])}\n"
-                msg += "Resolution: Set auto-modify-network=true or use validate mode."
-                raise ValueError(msg)
-
-            # Warning for filter mode
-            print("\n" + "="*60)
-            print("⚠️  WARNING: FILTER MODE - Network will be modified!")
-            print("="*60)
-            if extra_buildings:
-                print(f"  Removing {len(extra_buildings)} building(s): {', '.join(list(extra_buildings)[:5])}")
-                if len(extra_buildings) > 5:
-                    print(f"    ... and {len(extra_buildings) - 5} more")
-            if missing_buildings:
-                print(f"  Adding {len(missing_buildings)} building(s): {', '.join(missing_buildings[:5])}")
-                if len(missing_buildings) > 5:
-                    print(f"    ... and {len(missing_buildings) - 5} more")
-            print("  Original network files on disk will NOT be changed.")
-            print("="*60 + "\n")
-
-            # Step 1: Remove extra buildings
-            if extra_buildings:
-                nodes_gdf, edges_gdf = filter_network_to_buildings(
-                    nodes_gdf, edges_gdf, buildings_to_validate
-                )
-
-            # Step 2: Add missing buildings
-            if missing_buildings:
-                from cea.optimization_new.user_network_loader import augment_user_network_with_buildings
-
-                street_network_gdf = gpd.read_file(locator.get_street_network())
-
-                nodes_gdf, edges_gdf = augment_user_network_with_buildings(
-                    user_nodes_gdf=nodes_gdf,
-                    user_edges_gdf=edges_gdf,
-                    zone_gdf=zone_gdf,
-                    missing_building_names=missing_buildings,
-                    street_network_gdf=street_network_gdf,
-                    locator=locator,
-                    snap_tolerance=snap_tolerance,
-                    connection_candidates=config.network_layout.connection_candidates
-                )
-
-            print("  ✓ Filter complete - network now matches parameter exactly")
-        else:
-            print("  ✓ All specified buildings have valid nodes in network")
+    # Apply network layout mode (validate/augment/filter)
+    nodes_gdf, edges_gdf = apply_network_mode_to_user_network(
+        nodes_gdf=nodes_gdf,
+        edges_gdf=edges_gdf,
+        buildings_to_validate=buildings_to_validate,
+        zone_gdf=zone_gdf,
+        network_types_to_generate=network_types_to_generate,
+        config=config,
+        locator=locator,
+        snap_tolerance=snap_tolerance
+    )
 
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
