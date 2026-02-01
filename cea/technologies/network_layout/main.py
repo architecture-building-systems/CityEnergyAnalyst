@@ -131,6 +131,32 @@ def initialize_building_lists(heating_connected_buildings_config, cooling_connec
     return list_heating_buildings, list_cooling_buildings, list_district_scale_buildings
 
 
+def extract_building_nodes(nodes_gdf, exclude_plant_nodes=True):
+    """
+    Extract building nodes from a nodes GeoDataFrame.
+
+    Filters out nodes that are not buildings (NONE) and optionally plant nodes.
+
+    Args:
+        nodes_gdf: GeoDataFrame with 'building' and optionally 'type' columns
+        exclude_plant_nodes: If True, exclude nodes where type='PLANT' (default True)
+
+    Returns:
+        GeoDataFrame with only building nodes (copy of filtered data)
+    """
+    # Filter: building column has a value and is not 'NONE'
+    mask = (
+        nodes_gdf['building'].notna() &
+        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    )
+
+    # Optionally exclude plant nodes
+    if exclude_plant_nodes and 'type' in nodes_gdf.columns:
+        mask = mask & (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')
+
+    return nodes_gdf[mask].copy()
+
+
 def apply_network_mode_to_existing_buildings(existing_buildings, parameter_buildings, network_mode, service_name):
     """
     Apply network-layout-mode (validate/augment/filter) to reconcile existing network buildings with parameter.
@@ -999,10 +1025,8 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             f"  3. Connect all components into a single network"
         )
 
-    # Get building nodes for analysis
-    building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                                (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                                (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+    # Get building nodes for analysis (exclude PLANT nodes)
+    building_nodes = extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)
 
     # Load demand data to find anchor building
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -1313,15 +1337,16 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         elif buildings_to_validate_dc:
             print(f"  - District buildings (DC): {len(list_district_scale_buildings)}")
             if 'DH' in list_include_services:
-                print("  - District buildings (DH): 0")
-                list_include_services.remove('DH')
+                print("  - District buildings (DH): 0 (no buildings found in supply.csv)")
+                print("  ⓘ DH service will be skipped")
         elif buildings_to_validate_dh:
             print(f"  - District buildings (DH): {len(list_district_scale_buildings)}")
             if 'DC' in list_include_services:
-                print("  - District buildings (DC): 0")
-                list_include_services.remove('DC')
+                print("  - District buildings (DC): 0 (no buildings found in supply.csv)")
+                print("  ⓘ DC service will be skipped")
 
     # Track which buildings belong to DC and DH networks separately
+    # Initialize as empty - will be populated based on list_include_services
     buildings_for_dc = []
     buildings_for_dh = []
 
@@ -1355,6 +1380,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     else:
         # When not filtering by demand, use full lists for each service
+        # Only assign for services in list_include_services (others stay as empty [])
         for service in list_include_services:
             if service == 'DC':
                 buildings_for_dc = list_cooling_buildings.copy() if overwrite_supply else buildings_to_validate_dc.copy()
@@ -1543,11 +1569,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             total_demand = pd.read_csv(total_demand_location)
             demand_field = "QH_sys_MWhyr" if type_network == "DH" else "QC_sys_MWhyr"
             
-            # Get building nodes
-            building_nodes = nodes_for_type[
-                nodes_for_type['building'].notna() &
-                (nodes_for_type['building'].fillna('').str.upper() != 'NONE')
-            ].copy()
+            # Get building nodes (exclude NONE, but include PLANT if present)
+            building_nodes = extract_building_nodes(nodes_for_type, exclude_plant_nodes=False)
             
             if not building_nodes.empty:
                 # Find building with highest demand in this network
@@ -1816,10 +1839,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     if not list_include_services:
         raise ValueError("No thermal services selected. Please specify at least one service in 'include-services' (DC and/or DH).")
 
-    # Get building nodes from user-provided network
-    building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                               (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                               (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+    # Get building nodes from user-provided network (exclude PLANT nodes)
+    building_nodes = extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)
     network_building_names = sorted(building_nodes['building'].unique())
 
     # ALWAYS validate that network building names exist in zone geometry
@@ -2099,11 +2120,7 @@ def main(config: cea.config.Configuration):
             import geopandas as gpd
             dc_nodes_gdf = gpd.read_file(existing_dc_nodes_path)
             # Get building nodes (exclude PLANT and NONE nodes)
-            building_nodes = dc_nodes_gdf[
-                dc_nodes_gdf['building'].notna() &
-                (dc_nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                (dc_nodes_gdf['type'].fillna('').str.upper() != 'PLANT')
-            ]
+            building_nodes = extract_building_nodes(dc_nodes_gdf, exclude_plant_nodes=True)
             existing_dc_buildings = sorted(building_nodes['building'].unique().tolist())
             print(f"    Found DC nodes: {len(existing_dc_buildings)} buildings")
 
@@ -2112,11 +2129,7 @@ def main(config: cea.config.Configuration):
             import geopandas as gpd
             dh_nodes_gdf = gpd.read_file(existing_dh_nodes_path)
             # Get building nodes (exclude PLANT and NONE nodes)
-            building_nodes = dh_nodes_gdf[
-                dh_nodes_gdf['building'].notna() &
-                (dh_nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                (dh_nodes_gdf['type'].fillna('').str.upper() != 'PLANT')
-            ]
+            building_nodes = extract_building_nodes(dh_nodes_gdf, exclude_plant_nodes=True)
             existing_dh_buildings = sorted(building_nodes['building'].unique().tolist())
             print(f"    Found DH nodes: {len(existing_dh_buildings)} buildings")
 
