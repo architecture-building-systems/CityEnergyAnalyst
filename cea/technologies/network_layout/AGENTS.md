@@ -59,6 +59,65 @@ cooling-connected-buildings: B1003, B1004, B1005
 - DH buildings filtered by heating demand
 - Universal layout covers filtered union
 
+### Loading Existing Networks
+
+**When using `existing-network` parameter**, CEA loads service-specific nodes and applies network-layout-mode separately for each service:
+
+**Files Loaded:**
+- Universal layout: `thermal-network/{existing_network}/layout.shp`
+- DC nodes: `thermal-network/{existing_network}/dc/layout/nodes.shp`
+- DH nodes: `thermal-network/{existing_network}/dh/layout/nodes.shp`
+
+**Network-Layout-Mode Applied Per Service:**
+
+| Mode | Behavior with Existing Network |
+|------|-------------------------------|
+| **validate** | Error if existing DC nodes ≠ cooling-connected-buildings OR existing DH nodes ≠ heating-connected-buildings |
+| **augment** | DC: Union(existing DC nodes, cooling-connected-buildings)<br>DH: Union(existing DH nodes, heating-connected-buildings) |
+| **filter** | DC: Use cooling-connected-buildings exactly<br>DH: Use heating-connected-buildings exactly |
+
+**Example - Augment Mode:**
+```
+Existing network "my-network":
+  - dc/layout/nodes.shp: B1003, B1004, B1005
+  - dh/layout/nodes.shp: B1001, B1002, B1003
+
+Parameters:
+  existing-network: my-network
+  cooling-connected-buildings: B1003, B1004, B1005, B1006  # Add B1006
+  heating-connected-buildings: B1001, B1002, B1003, B1004  # Add B1004
+  network-layout-mode: augment
+
+Result:
+  - DC augmented: B1003, B1004, B1005, B1006 (added B1006)
+  - DH augmented: B1001, B1002, B1003, B1004 (added B1004)
+  - Universal layout augmented with Steiner tree for new buildings
+  - New network saved with updated service-specific nodes
+```
+
+**Example - Validate Mode:**
+```
+Existing network "my-network":
+  - dc/layout/nodes.shp: B1003, B1004, B1005
+  - dh/layout/nodes.shp: B1001, B1002, B1003
+
+Parameters:
+  existing-network: my-network
+  cooling-connected-buildings: B1003, B1004, B1005  # Matches ✓
+  heating-connected-buildings: B1001, B1002, B1003, B1004  # Missing B1004 ✗
+  network-layout-mode: validate
+
+Result:
+  ❌ ERROR - DH validation failed
+  Missing in existing network: B1004
+  Resolution: Use augment/filter mode or update parameter
+```
+
+**Edge Cases:**
+- **Blank parameter + existing nodes**: Keep existing service buildings
+- **Blank parameter + no existing nodes**: Empty list (warning issued)
+- **Parameter set + no existing nodes**: Use parameter buildings (new service added)
+
 ## User-Defined Network Layout Modes
 
 ### Overview
