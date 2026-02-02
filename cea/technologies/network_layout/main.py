@@ -48,7 +48,7 @@ def read_network_config_parameters(config):
     """
     Extract common network configuration parameters.
 
-    Centralizes config reading to avoid duplication across multiple functions.
+    Centralises config reading to avoid duplication across multiple functions.
 
     Args:
         config: Configuration instance
@@ -73,7 +73,7 @@ def read_network_config_parameters(config):
 def initialize_building_lists(heating_connected_buildings_config, cooling_connected_buildings_config,
                               all_zone_buildings, network_building_names=None, include_services=None):
     """
-    Initialize heating and cooling building lists based on parameters.
+    Initialise heating and cooling building lists based on parameters.
 
     When overwrite_supply is True, this determines which buildings connect to each service
     based on the heating/cooling-connected-buildings parameters.
