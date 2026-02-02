@@ -789,13 +789,13 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
         error_msg = (
             f"Network configuration error: itemised-dh-services excludes {', '.join(missing_names)} "
             f"but {len(buildings_affected)} building(s) in Building Properties/Supply "
-            f"are configured to receive these services from the district network.\n\n"
+            "are configured to receive these services from the district network.\n\n"
             f"Buildings affected: {', '.join(sorted(buildings_affected[:10]))}"
             f"{'...' if len(buildings_affected) > 10 else ''}\n\n"
-            f"Please either:\n"
+            "Please either:\n"
             f"  1. Add {', '.join(missing_names)} to itemised-dh-services, OR\n"
-            f"  2. Update Building Properties/Supply to use BUILDING-scale for these services, OR\n"
-            f"  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+            "  2. Update Building Properties/Supply to use BUILDING-scale for these services, OR\n"
+            "  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
         )
 
         return ('error', error_msg, buildings_by_service)
@@ -813,15 +813,15 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
 
         error_msg = (
             f"Network configuration error: itemised-dh-services includes {', '.join(unused_names)} "
-            f"but no buildings in Building Properties/Supply use these services from the district network.\n\n"
-            f"Building service breakdown:\n"
+            "but no buildings in Building Properties/Supply use these services from the district network.\n\n"
+            "Building service breakdown:\n"
             f"  - Space heating only: {hs_only} building(s)\n"
             f"  - Domestic hot water only: {ww_only} building(s)\n"
             f"  - Both services: {both} building(s)\n\n"
             f"Please either:\n"
             f"  1. Remove {', '.join(unused_names)} from itemised-dh-services, OR\n"
-            f"  2. Update Building Properties/Supply to add DISTRICT-scale for these services, OR\n"
-            f"  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+            "  2. Update Building Properties/Supply to add DISTRICT-scale for these services, OR\n"
+            "  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
         )
 
         return ('error', error_msg, buildings_by_service)
@@ -854,7 +854,7 @@ def get_buildings_with_demand(locator, network_type):
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Total demand file not found: {demand_path}\n"
-            f"Please run the 'demand' tool first to generate building demand data."
+            "Please run the 'demand' tool first to generate building demand data."
         )
 
     # Determine demand field based on network type
@@ -875,7 +875,7 @@ def get_buildings_with_demand(locator, network_type):
         raise ValueError(
             f"Required column '{field}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
             f"Available columns: {list(total_demand.columns)}\n"
-            f"Please ensure the 'demand' tool was run successfully."
+            "Please ensure the 'demand' tool was run successfully."
         )
 
     # Filter buildings with demand
@@ -1038,24 +1038,24 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             if actual_num_components == 1:
                 context_msg = (
                     f"  - Your network has only 1 connected component but you expected {expected_num_components}.\n"
-                    f"    → This means your network is fully connected (no gaps).\n"
-                    f"    → Update 'number-of-components' to 1, or leave it blank to skip validation.\n"
+                    "    → This means your network is fully connected (no gaps).\n"
+                    "    → Update 'number-of-components' to 1, or leave it blank to skip validation.\n"
                 )
             elif actual_num_components < expected_num_components:
                 context_msg = (
                     f"  - Your network has fewer components ({actual_num_components}) than expected ({expected_num_components}).\n"
-                    f"    → Some components may be unintentionally connected.\n"
+                    "    → Some components may be unintentionally connected.\n"
                     f"    → Update 'number-of-components' to {actual_num_components}, or leave it blank to skip validation.\n"
                 )
             else:  # actual > expected
                 context_msg = (
                     f"  - Your network has more components ({actual_num_components}) than expected ({expected_num_components}).\n"
-                    f"    → Your network has unintentional gaps/disconnections.\n"
+                    "    → Your network has unintentional gaps/disconnections.\n"
                     f"    → Check edges.shp for missing connections, or update 'number-of-components' to {actual_num_components}.\n"
                 )
 
             raise ValueError(
-                f"Network component mismatch:\n"
+                "Network component mismatch:\n"
                 f"  Expected: {expected_num_components} component(s)\n"
                 f"  Found: {actual_num_components} disconnected component(s) in provided network\n\n"
                 f"{context_msg}"
@@ -1066,10 +1066,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
         if plant_building_names:
             raise ValueError(
                 f"User-defined network already contains {len(existing_plants)} PLANT node(s), but plant buildings are also specified.\n"
-                f"CEA cannot determine which plants to use.\n\n"
-                f"Resolution:\n"
-                f"  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
-                f"  2. Remove PLANT nodes from your network layout shapefile"
+                "CEA cannot determine which plants to use.\n\n"
+                "Resolution:\n"
+                "  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
+                "  2. Remove PLANT nodes from your network layout shapefile"
             )
         print("  Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
@@ -1078,11 +1078,11 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     if len(components) > 1 and plant_building_names:
         raise ValueError(
             f"User-defined network has {len(components)} disconnected components and plant buildings are specified.\n"
-            f"CEA cannot determine which plant should be placed in which component.\n\n"
-            f"Resolution:\n"
-            f"  1. Remove plant building specifications and CEA will automatically place one plant per component (anchor load), OR\n"
-            f"  2. Add PLANT nodes directly to your network layout shapefile, OR\n"
-            f"  3. Connect all components into a single network"
+            "CEA cannot determine which plant should be placed in which component.\n\n"
+            "Resolution:\n"
+            "  1. Remove plant building specifications and CEA will automatically place one plant per component (anchor load), OR\n"
+            "  2. Add PLANT nodes directly to your network layout shapefile, OR\n"
+            "  3. Connect all components into a single network"
         )
 
     # Get building nodes for analysis (exclude PLANT nodes)
