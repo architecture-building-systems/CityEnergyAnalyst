@@ -261,7 +261,9 @@ def apply_network_mode_to_existing_buildings(existing_buildings, parameter_build
             error_msg.append("\nResolution options:")
             error_msg.append("  1. Use 'augment' mode to add missing buildings")
             error_msg.append("  2. Use 'filter' mode to match parameter exactly")
-            error_msg.append(f"  3. Update {service_name.split()[0].lower()}-connected-buildings parameter to match network")
+            # Generate correct parameter name based on service type
+            param_name = "cooling-connected-buildings" if "cooling" in service_name.lower() else "heating-connected-buildings"
+            error_msg.append(f"  3. Update {param_name} parameter to match network")
 
             raise ValueError('\n'.join(error_msg))
 
