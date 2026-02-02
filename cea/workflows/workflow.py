@@ -27,7 +27,6 @@ def run(config, script, **kwargs):
     f = getattr(cea.api, script)
     f(config=config, **kwargs)
     config.restricted_to = None
-    print('-' * 80)
 
 
 def run_with_trace(config, script, **kwargs):
@@ -162,10 +161,11 @@ def set_parameter(config, parameter, value):
 def do_script_step(config, i, step, trace_input):
     """Run a script based on the step's "script" and "parameters" (optional) keys."""
     script = cea.scripts.by_name(step["script"], plugins=config.plugins)
-    print("")
-    print("=" * 80)
-    print("Workflow step {i}: script={script}".format(i=i, script=script.name))
-    print("=" * 80)
+    section_length = 80
+
+    print(f"{'=' * section_length}\n"
+          f"Workflow step {i}: script={script}\n"
+          f"{'=' * section_length}")
     # with config.ignore_restrictions():
     #     parameters = {p.name: p.get() for s, p in config.matching_parameters(script.parameters)}
 
@@ -179,6 +179,8 @@ def do_script_step(config, i, step, trace_input):
         run_with_trace(config, py_script, **py_parameters)
     else:
         run(config, py_script, **py_parameters)
+    
+    print(f"{'-' * section_length}\n")
 
 
 if __name__ == '__main__':
