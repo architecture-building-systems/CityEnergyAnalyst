@@ -559,6 +559,7 @@ class FinalEnergySection(Section):
     supply_type_cs: list | None
     supply_type_hs: list | None
     supply_type_dhw: list | None
+    hs_booster_type: list | None
     dhw_booster_type: list | None
     buildings: list[str]
     panels_on_roof: str
@@ -579,6 +580,8 @@ class FinalEnergySection(Section):
     def __getattr__(self, item: Literal["supply_type_hs"]) -> list | None: ...
     @overload
     def __getattr__(self, item: Literal["supply_type_dhw"]) -> list | None: ...
+    @overload
+    def __getattr__(self, item: Literal["hs_booster_type"]) -> list | None: ...
     @overload
     def __getattr__(self, item: Literal["dhw_booster_type"]) -> list | None: ...
     @overload

@@ -1476,12 +1476,14 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
             raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (e.g., SUPPLY_COOLING, SUPPLY_HEATING, SUPPLY_HOTWATER)")
 
         # Optional scale filter: 'BUILDING', 'DISTRICT', or None (show both)
+        from configparser import NoOptionError
         try:
             self.scale_filter = parser.get(self.section.name, f"{self.name}.scale")
             if self.scale_filter not in ['BUILDING', 'DISTRICT']:
                 raise ValueError(f"Parameter {self.name} scale attribute must be 'BUILDING' or 'DISTRICT', got '{self.scale_filter}'")
-        except Exception:
-            self.scale_filter = None  # No filter, show both scales
+        except NoOptionError:
+            # Scale attribute not specified - show both scales
+            self.scale_filter = None
 
     @property
     def _choices(self):
@@ -1516,17 +1518,6 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
         except Exception:
             # Fallback to empty list if there's any issue
             return []
-
-    def decode(self, value) -> list[str]:
-        """Override parent decode to make blank = empty list (nullable) instead of select all"""
-        if value == '':
-            return []  # Blank means no selection (nullable)
-
-        # Parse and validate choices
-        from cea.utilities.standardize_coordinates import parse_string_to_list
-        choices = parse_string_to_list(value)
-        valid_choices = set(self._choices)
-        return [choice for choice in choices if choice in valid_choices]
 
     def _get_all_supply_options(self):
         """Get all supply codes from database with their scale (BUILDING or DISTRICT)"""
@@ -1669,16 +1660,16 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
     def encode(self, value: list):
         """Validate multi-select: max 1 building-scale + max 1 district-scale"""
-        # Handle "Custom (use component settings below)" as empty
-        if not value or (isinstance(value, str) and (value.strip() == '' or value == "Custom (use component settings below)")):
+        # Handle empty values
+        if not value or (isinstance(value, str) and value.strip() == ''):
             return ''
 
         # Convert single value to list for consistent handling
         if not isinstance(value, list):
             value = [value]
 
-        # Strip scale labels from display values and filter out "Custom (use component settings below)"
-        value = [self._strip_scale_label(v) for v in value if v and v != "Custom (use component settings below)"]
+        # Strip scale labels from display values
+        value = [self._strip_scale_label(v) for v in value if v]
 
         if not value:
             return ''
@@ -1714,14 +1705,17 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
     def decode(self, value) -> list:
         """Decode comma-separated values into list (without scale labels for internal storage)"""
-        if not value or value == '' or value == "Custom (use component settings below)":
+        if not value or value == '':
             return []
 
         choices = parse_string_to_list(value)
-        all_options = self._get_all_supply_options()
 
-        # Strip labels and filter to valid choices only
-        return [self._strip_scale_label(choice) for choice in choices if self._strip_scale_label(choice) in all_options]
+        # Get valid choices from filtered _choices (respects scale_filter)
+        # Strip labels from _choices to get base codes for comparison
+        valid_codes = set(self._strip_scale_label(c) for c in self._choices)
+
+        # Strip labels and filter to valid choices only (based on scale_filter)
+        return [self._strip_scale_label(choice) for choice in choices if self._strip_scale_label(choice) in valid_codes]
 
     def get(self):
         """Get parameter value, always returning values with scale labels"""
@@ -1752,19 +1746,21 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
                     labeled_values.append(code)
 
             # Auto-add missing scale from database (bidirectional)
-            # If only building-scale configured, auto-add first district-scale
-            if has_building and not has_district:
-                district_options = [code for code, scale in all_options.items() if scale == 'DISTRICT']
-                if district_options:
-                    first_district = sorted(district_options)[0]
-                    labeled_values.append(f"{first_district} (district)")
+            # ONLY if no scale filter is set (for booster parameters with scale filter, don't auto-add)
+            if not self.scale_filter:
+                # If only building-scale configured, auto-add first district-scale
+                if has_building and not has_district:
+                    district_options = [code for code, scale in all_options.items() if scale == 'DISTRICT']
+                    if district_options:
+                        first_district = sorted(district_options)[0]
+                        labeled_values.append(f"{first_district} (district)")
 
-            # If only district-scale configured, auto-add first building-scale
-            elif has_district and not has_building:
-                building_options = [code for code, scale in all_options.items() if scale == 'BUILDING']
-                if building_options:
-                    first_building = sorted(building_options)[0]
-                    labeled_values.append(f"{first_building} (building)")
+                # If only district-scale configured, auto-add first building-scale
+                elif has_district and not has_building:
+                    building_options = [code for code, scale in all_options.items() if scale == 'BUILDING']
+                    if building_options:
+                        first_building = sorted(building_options)[0]
+                        labeled_values.append(f"{first_building} (building)")
 
             return labeled_values
 
