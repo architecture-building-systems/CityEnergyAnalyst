@@ -1406,12 +1406,12 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         elif buildings_to_validate_dc:
             print(f"  - District buildings (DC): {len(list_district_scale_buildings)}")
             if 'DH' in list_include_services:
-                print("  - District buildings (DH): 0 (no buildings found in supply.csv)")
+                print("  - District buildings (DH): 0 (no buildings found in Building Properties/Supply)")
                 print("  DH service will be skipped")
         elif buildings_to_validate_dh:
             print(f"  - District buildings (DH): {len(list_district_scale_buildings)}")
             if 'DC' in list_include_services:
-                print("  - District buildings (DC): 0 (no buildings found in supply.csv)")
+                print("  - District buildings (DC): 0 (no buildings found in Building Properties/Supply)")
                 print("  DC service will be skipped")
 
     # Track which buildings belong to DC and DH networks separately
@@ -2219,10 +2219,11 @@ def main(config: cea.config.Configuration):
 
         existing_dc_buildings = []
         existing_dh_buildings = []
+        dc_nodes_gdf = None
+        dh_nodes_gdf = None
 
         # Extract buildings from DC nodes
         if os.path.exists(existing_dc_nodes_path):
-            import geopandas as gpd
             dc_nodes_gdf = gpd.read_file(existing_dc_nodes_path)
             # Get building nodes (exclude PLANT and NONE nodes)
             building_nodes = extract_building_nodes(dc_nodes_gdf, exclude_plant_nodes=True)
@@ -2231,7 +2232,6 @@ def main(config: cea.config.Configuration):
 
         # Extract buildings from DH nodes
         if os.path.exists(existing_dh_nodes_path):
-            import geopandas as gpd
             dh_nodes_gdf = gpd.read_file(existing_dh_nodes_path)
             # Get building nodes (exclude PLANT and NONE nodes)
             building_nodes = extract_building_nodes(dh_nodes_gdf, exclude_plant_nodes=True)
@@ -2247,6 +2247,35 @@ def main(config: cea.config.Configuration):
                 f"  - {existing_dh_nodes_path}\n\n"
                 f"At least one service (DC or DH) must have nodes."
             )
+
+        # Merge DC and DH nodes for complete universal layout
+        # Only include nodes from services specified in include_services
+        import tempfile
+
+        nodes_gdfs_to_merge = []
+        if 'DC' in list_include_services and dc_nodes_gdf is not None:
+            nodes_gdfs_to_merge.append(dc_nodes_gdf)
+        if 'DH' in list_include_services and dh_nodes_gdf is not None:
+            nodes_gdfs_to_merge.append(dh_nodes_gdf)
+
+        if len(nodes_gdfs_to_merge) > 1:
+            # Both DC and DH exist - merge them
+            merged_nodes_gdf = gpd.GeoDataFrame(
+                pd.concat(nodes_gdfs_to_merge, ignore_index=True),
+                crs=nodes_gdfs_to_merge[0].crs
+            )
+            # Remove duplicate nodes (same building may appear in both services)
+            merged_nodes_gdf = merged_nodes_gdf.drop_duplicates(subset=['building', 'geometry'], keep='first')
+            print(f"    Merged DC and DH nodes: {len(merged_nodes_gdf)} total nodes (union of both services)")
+
+            # Write merged nodes to temporary file
+            temp_nodes_file = tempfile.NamedTemporaryFile(suffix='.shp', delete=False, dir=os.path.dirname(existing_edges_path))
+            merged_nodes_path = temp_nodes_file.name
+            temp_nodes_file.close()
+            merged_nodes_gdf.to_file(merged_nodes_path, driver='ESRI Shapefile')
+        else:
+            # Only one service exists - use that service's nodes directly
+            merged_nodes_path = existing_dc_nodes_path if dc_nodes_gdf is not None else existing_dh_nodes_path
 
         # Apply network-layout-mode to reconcile existing nodes with parameters
         network_mode_str = config.network_layout.network_layout_mode
