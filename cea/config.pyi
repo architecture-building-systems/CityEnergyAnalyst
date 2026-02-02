@@ -1378,7 +1378,8 @@ class NetworkLayoutSection(Section):
     include_services: list[str]
     overwrite_supply_settings: bool
     itemised_dh_services: list[str]
-    connected_buildings: list[str]
+    cooling_connected_buildings: list[str]
+    heating_connected_buildings: list[str]
     cooling_plant_building: Any
     heating_plant_building: Any
     number_of_components: int | None
@@ -1402,7 +1403,9 @@ class NetworkLayoutSection(Section):
     @overload
     def __getattr__(self, item: Literal["itemised_dh_services"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["connected_buildings"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["cooling_connected_buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["heating_connected_buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["cooling_plant_building"]) -> Any: ...
     @overload
