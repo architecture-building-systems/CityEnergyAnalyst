@@ -398,6 +398,66 @@ def delete_files(path, verbose=False):
     except Exception as e:
         print(f"Warning: Failed to delete {path}: {e}")
 
+
+def add_component_columns_to_supply(scenario):
+    """
+    Migrate SUPPLY assemblies from CEA-3 to CEA-4 format:
+    - Remove old columns: feedstock, efficiency, system, CAPEX_USD2015kW, LT_yr, O&M_%, IR_%
+    - Add component columns to HOTWATER (HEATING/COOLING already have them in CEA-3)
+    - Keep only: description, code, [component columns], scale, reference
+
+    Parameters:
+    - scenario: The scenario path
+    """
+    # Columns to remove (primary energy related and cost columns moved to other modules)
+    columns_to_remove = ['feedstock', 'efficiency', 'system', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']
+
+    # CEA-4 expected column order
+    base_columns = ['description', 'code']
+    component_columns = ['primary_components', 'secondary_components', 'tertiary_components']
+    end_columns = ['scale', 'reference']
+
+    # HEATING and COOLING: Have component columns, need to remove old columns
+    for supply_file in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
+        file_path = path_to_db_file_4(scenario, 'SUPPLY', supply_file)
+        if os.path.isfile(file_path):
+            df = pd.read_csv(file_path)
+            # Remove unwanted columns
+            df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
+            # Reorder to CEA-4 format
+            expected_columns = base_columns + component_columns + end_columns
+            df = df[[col for col in expected_columns if col in df.columns]]
+            df.to_csv(file_path, index=False)
+
+    # HOTWATER: Doesn't have component columns, need to add them and remove old columns
+    hotwater_path = path_to_db_file_4(scenario, 'SUPPLY', 'SUPPLY_HOTWATER')
+    if os.path.isfile(hotwater_path):
+        df = pd.read_csv(hotwater_path)
+        # Remove unwanted columns
+        df = df.drop(columns=[col for col in columns_to_remove if col in df.columns], errors='ignore')
+        # Add component columns after 'code'
+        code_idx = df.columns.get_loc('code') if 'code' in df.columns else 1
+        for i, col in enumerate(component_columns):
+            if col not in df.columns:
+                df.insert(code_idx + 1 + i, col, '-')
+        # Reorder to CEA-4 format
+        expected_columns = base_columns + component_columns + end_columns
+        df = df[[col for col in expected_columns if col in df.columns]]
+        df.to_csv(hotwater_path, index=False)
+
+    # ELECTRICITY: Keep feedstock and efficiency, remove cost columns only
+    electricity_path = path_to_db_file_4(scenario, 'SUPPLY', 'SUPPLY_ELECTRICITY')
+    if os.path.isfile(electricity_path):
+        df = pd.read_csv(electricity_path)
+        # Remove only cost columns, keep feedstock and efficiency
+        cost_columns = ['CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']
+        df = df.drop(columns=[col for col in cost_columns if col in df.columns], errors='ignore')
+        # Reorder to CEA-4 format
+        expected_columns = base_columns + ['feedstock', 'scale', 'efficiency'] + ['reference']
+        df = df[[col for col in expected_columns if col in df.columns]]
+        df.to_csv(electricity_path, index=False)
+
+
 ## --------------------------------------------------------------------------------------------------------------------
 ## Migrate to CEA-4 format from CEA-3 format
 ## --------------------------------------------------------------------------------------------------------------------
@@ -450,6 +510,8 @@ def migrate_cea3_to_cea4_db(scenario):
         path_3 = path_to_db_file_3(scenario, 'SUPPLY')
         if list_problems_supply and os.path.isfile(path_3):
             excel_tab_to_csv(path_3, path_to_db_file_4(scenario, 'SUPPLY'), rename_dict=rename_dict)
+            # Migrate SUPPLY format: remove old columns, add component columns to HOTWATER
+            add_component_columns_to_supply(scenario)
 
         #4. about components
         path_3 = path_to_db_file_3(scenario, 'CONVERSION')

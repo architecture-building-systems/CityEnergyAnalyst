@@ -2646,32 +2646,10 @@ get_database_assemblies_supply_cooling:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: description
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Code of cooling supply assembly
         primary: true
@@ -2687,28 +2665,6 @@ get_database_assemblies_supply_cooling:
         unit: NA
       tertiary_components:
         description: codes of components installed in the tertiary supply system category (i.e. rejection components)
-        type: string
-        unit: NA
-      efficiency:
-        description: efficiency of the all in one system
-        type: float
-        unit: '[-]'
-        min: 0.0
-      feedstock:
-        choice:
-          values:
-          - NONE
-          - NATURALGAS
-          - BIOGAS
-          - GRID
-          - SOLAR
-          - OIL
-          - COAL
-          - WOOD
-          - WETBIOMASS
-          - DRYBIOMASS
-          - HYDROGEN
-        description: feedstock used by the the all in one system (refers to the FEEDSTOCK database)
         type: string
         unit: NA
       reference:
@@ -2737,32 +2693,10 @@ get_database_assemblies_supply_electricity:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: Description of Type of all in one system
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Type of all in one system
         primary: true
@@ -2816,32 +2750,10 @@ get_database_assemblies_supply_heating:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: Description of Type of all in one system
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Type of all in one system
         primary: true
@@ -2857,28 +2769,6 @@ get_database_assemblies_supply_heating:
         unit: NA
       tertiary_components:
         description: codes of components installed in the tertiary supply system category (i.e. rejection components)
-        type: string
-        unit: NA
-      efficiency:
-        description: efficiency of the all in one system
-        type: float
-        unit: '[-]'
-        min: 0.0
-      feedstock:
-        choice:
-          values:
-          - NONE
-          - NATURALGAS
-          - BIOGAS
-          - GRID
-          - SOLAR
-          - OIL
-          - COAL
-          - WOOD
-          - WETBIOMASS
-          - DRYBIOMASS
-          - HYDROGEN
-        description: feedstock used by the the all in one system (refers to the FEEDSTOCK database)
         type: string
         unit: NA
       reference:
@@ -2907,57 +2797,25 @@ get_database_assemblies_supply_hot_water:
   file_type: csv
   schema:
     columns:
-      CAPEX_USD2015kW:
-        description: Capital costs per kW
-        min: 0.0
-        type: float
-        unit: '[USD2015/kW]'
       description:
         description: Description of Type of all in one system
         type: string
         unit: NA
-      IR_%:
-        description: interest rate charged on the loan for the capital cost
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
-      LT_yr:
-        description: lifetime of assembly
-        min: 0
-        type: int
-        unit: '[yr]'
-      O&M_%:
-        description: operation and maintenance cost factor (fraction of the investment cost)
-        min: 0.0
-        type: float
-        unit: '[%]'
-        max: 100.0
       code:
         description: Type of all in one system
         primary: true
         type: string
         unit: NA
-      efficiency:
-        description: efficiency of the all in one system
-        type: float
-        unit: '[-]'
-        min: 0.0
-      feedstock:
-        choice:
-          values:
-          - NONE
-          - NATURALGAS
-          - BIOGAS
-          - GRID
-          - SOLAR
-          - OIL
-          - COAL
-          - WOOD
-          - WETBIOMASS
-          - DRYBIOMASS
-          - HYDROGEN
-        description: feedstock used by the the all in one system (refers to the FEEDSTOCK database)
+      primary_components:
+        description: codes of components installed in the primary supply system category (i.e. main components)
+        type: string
+        unit: NA
+      secondary_components:
+        description: codes of components installed in the secondary supply system category (i.e. supply components)
+        type: string
+        unit: NA
+      tertiary_components:
+        description: codes of components installed in the tertiary supply system category (i.e. rejection components)
         type: string
         unit: NA
       reference:
@@ -10931,73 +10789,17 @@ get_demand_results_file:
   file_type: csv
   schema:
     columns:
-      COAL_hs_kWh:
-        description: Coal requirement for space heating supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      COAL_ww_kWh:
-        description: Coal requirement for hotwater supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
+      # NOTE: Final energy columns by carrier (COAL_*, DC_*, DH_*, GRID_*, NG_*, OIL_*, WOOD_*, SOLAR_*, PV_*)
+      # and HVAC electricity breakdown (E_hs, E_cs, E_ww, E_cdata, E_cre) removed from demand outputs.
+      # Final energy calculations will be performed in a separate supply/primary-energy module.
+      # Demand module now outputs: Useful energy (Qhs, Qcs, Qww) and End-use energy (E_sys, Qhs_sys, Qcs_sys, Qww_sys)
       date:
         description: Time stamp for each day of the year ascending in hour intervals.
         type: date
         unit: NA
         values: YYYY-MM-DD hh:mm:ss
-      DC_cdata_kWh:
-        description: District cooling for data center cooling demand
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      DC_cre_kWh:
-        description: District cooling for refrigeration demand
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      DC_cs_kWh:
-        description: Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      DH_hs_kWh:
-        description: Energy requirement by district heating (space heating supply)
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      DH_ww_kWh:
-        description: Energy requirement by district heating (hotwater supply)
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      E_cdata_kWh:
-        description: Data centre cooling specific electricity consumption.
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      E_cre_kWh:
-        description: Refrigeration system electricity consumption.
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      E_cs_kWh:
-        description: Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      E_hs_kWh:
-        description: Heating system electricity consumption.
-        type: float
-        unit: '[kWh]'
-        min: 0.0
       E_sys_kWh:
-        description: End-use total electricity consumption  = Ea + El + Edata + Epro + Eaux + Ev + Eve
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      E_ww_kWh:
-        description: Hot water system electricity consumption.
+        description: End-use total electricity consumption (system-level demand) = Ea + El + Edata + Epro + Eaux + Ev + Eve
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11041,67 +10843,6 @@ get_demand_results_file:
         type: float
         unit: '[kWh]'
         min: 0.0
-      GRID_a_kWh:
-        description: Grid electricity consumption for appliances
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_aux_kWh:
-        description: Grid electricity consumption for auxiliary loads
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_cdata_kWh:
-        description: Grid electricity consumption for servers cooling
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_cre_kWh:
-        description: Grid electricity consumption for refrigeration
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_cs_kWh:
-        description: Grid electricity consumption for space cooling
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_data_kWh:
-        description: Grid electricity consumption for servers
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_hs_kWh:
-        description: Grid electricity consumption for space heating
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_kWh:
-        description: Grid total electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux
-          + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_l_kWh:
-        description: Grid electricity consumption for lighting
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_ve_kWh:
-        description: Grid electricity consumption for ventilation
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_pro_kWh:
-        description: Grid electricity consumption for industrial processes
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      GRID_ww_kWh:
-        description: Grid electricity consumption for hot water supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
       I_rad_kWh:
         description: Radiative heat loss
         type: float
@@ -11117,42 +10858,17 @@ get_demand_results_file:
         type: float
         unit: '[kWh]'
         min: 0.0
-      NG_hs_kWh:
-        description: NG requirement for space heating supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      NG_ww_kWh:
-        description: NG requirement for hotwater supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
       name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: NA
-      OIL_hs_kWh:
-        description: OIL requirement for space heating supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      OIL_ww_kWh:
-        description: OIL requirement for hotwater supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      PV_kWh:
-        description: PV electricity consumption
-        type: float
-        unit: '[kWh]'
-        min: 0.0
       QC_sys_kWh:
-        description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
+        description: Total end-use cooling demand (system-level), QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
         type: float
         unit: '[kWh]'
         min: 0.0
       QH_sys_kWh:
-        description: Total energy demand for heating, QH_sys = Qww_sys + Qhs_sys + Qhpro_sys
+        description: Total end-use heating demand (system-level), QH_sys = Qww_sys + Qhs_sys + Qhpro_sys
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11252,7 +10968,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qcs_kWh:
-        description: Specific cooling demand
+        description: Useful energy for space cooling (thermal demand at point of use)
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11302,7 +11018,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qcs_sys_kWh:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: End-use space cooling demand (system-level including HVAC losses), Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11327,7 +11043,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qhs_kWh:
-        description: Sensible heating system demand
+        description: Useful energy for space heating (thermal demand at point of use)
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11377,7 +11093,7 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qhs_sys_kWh:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: End-use space heating demand (system-level including HVAC losses), Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11387,22 +11103,12 @@ get_demand_results_file:
         unit: '[kWh]'
         min: 0.0
       Qww_kWh:
-        description: DHW specific heating demand
+        description: Useful energy for domestic hot water (thermal demand at taps)
         type: float
         unit: '[kWh]'
         min: 0.0
       Qww_sys_kWh:
-        description: End-use hotwater demand
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      SOLAR_hs_kWh:
-        description: Solar thermal energy requirement for space heating supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      SOLAR_ww_kWh:
-        description: Solar thermal energy requirement for hotwater supply
+        description: End-use domestic hot water demand (system-level including distribution losses)
         type: float
         unit: '[kWh]'
         min: 0.0
@@ -11525,16 +11231,6 @@ get_demand_results_file:
         description: Supply temperature hotwater system
         type: float
         unit: '[C]'
-        min: 0.0
-      WOOD_hs_kWh:
-        description: WOOD requirement for space heating supply
-        type: float
-        unit: '[kWh]'
-        min: 0.0
-      WOOD_ww_kWh:
-        description: WOOD requirement for hotwater supply
-        type: float
-        unit: '[kWh]'
         min: 0.0
       mcpcdata_sys_kWperC:
         description: Capacity flow rate (mass flow* specific heat capacity) of the chilled water delivered to data centre.
@@ -14900,133 +14596,13 @@ get_optimization_substations_total_file:
         type: float
         unit: '[m2]'
         min: 0.0
-      COAL_hs0_kW:
-        description: Nominal Coal requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      COAL_hs_MWhyr:
-        description: Coal requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      COAL_ww0_kW:
-        description: Nominal Coal requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      COAL_ww_MWhyr:
-        description: Coal requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DC_cdata0_kW:
-        description: Nominal district cooling for final data center cooling demand
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DC_cdata_MWhyr:
-        description: District cooling for data center cooling demand
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DC_cre0_kW:
-        description: Nominal district cooling for refrigeration demand
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DC_cre_MWhyr:
-        description: District cooling for refrigeration demand
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DC_cs0_kW:
-        description: Nominal district cooling for space cooling demand
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DC_cs_MWhyr:
-        description: Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DH_hs0_kW:
-        description: Nominal energy requirement by district heating (space heating supply)
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DH_hs_MWhyr:
-        description: Energy requirement by district heating (space heating supply)
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DH_ww0_kW:
-        description: Nominal Energy requirement by district heating (hotwater supply)
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DH_ww_MWhyr:
-        description: Energy requirement by district heating (hotwater supply)
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_cdata0_kW:
-        description: Nominal Data centre cooling specific electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_cdata_MWhyr:
-        description: Electricity consumption due to data center cooling
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_cre0_kW:
-        description: Nominal Refrigeration system electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_cre_MWhyr:
-        description: Electricity consumption due to refrigeration
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_cs0_kW:
-        description: Nominal Cooling system electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_cs_MWhyr:
-        description: Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_hs0_kW:
-        description: Nominal Heating system electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_hs_MWhyr:
-        description: Electricity consumption due to space heating
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       E_sys0_kW:
         description: Nominal end-use electricity demand
         type: float
         unit: '[kW]'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_ww0_kW:
-        description: Nominal Domestic hot water electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_ww_MWhyr:
-        description: Electricity consumption due to hot water
+        description: End-use total electricity consumption (system-level demand), E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15115,191 +14691,10 @@ get_optimization_substations_total_file:
         type: float
         unit: '[m2]'
         min: 0.0
-      GRID0_kW:
-        description: Nominal Grid electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_MWhyr:
-        description: Grid electricity consumption, GRID = GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux
-          + GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_a0_kW:
-        description: Nominal grid electricity requirements for appliances
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_a_MWhyr:
-        description: Grid electricity requirements for appliances
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_aux0_kW:
-        description: Nominal grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_aux_MWhyr:
-        description: Grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_cdata0_kW:
-        description: Nominal grid electricity requirements for servers cooling
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_cdata_MWhyr:
-        description: Grid electricity requirements for servers cooling
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_cre0_kW:
-        description: Nominal grid electricity requirements for refrigeration
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_cre_MWhyr:
-        description: Grid electricity requirements for refrigeration
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_cs0_kW:
-        description: Nominal grid electricity requirements for space cooling
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_cs_MWhyr:
-        description: Grid electricity requirements for space cooling
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_data0_kW:
-        description: Nominal grid electricity requirements for servers
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_data_MWhyr:
-        description: Grid electricity requirements for servers
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_hs0_kW:
-        description: Nominal grid electricity requirements for space heating
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_hs_MWhyr:
-        description: Grid electricity requirements for space heating
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_l0_kW:
-        description: Nominal grid electricity consumption for lights
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_l_MWhyr:
-        description: Grid electricity requirements for lights
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_ve0_kW:
-        description: Nominal grid electricity consumption for ventilatioon
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_ve_MWhyr:
-        description: Grid electricity requirements for ventilatioon
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_v0_kW:
-        description: Nominal grid electricity consumption for electric vehicles
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_v_MWhyr:
-        description: Grid electricity requirements for electric vehicles
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_pro0_kW:
-        description: Nominal grid electricity requirements for industrial processes
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_pro_MWhyr:
-        description: Grid electricity requirements for industrial processes
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_ww0_kW:
-        description: Nominal grid electricity requirements for hot water supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_ww_MWhyr:
-        description: Grid electricity requirements for hot water supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      NG_hs0_kW:
-        description: Nominal NG requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      NG_hs_MWhyr:
-        description: NG requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      NG_ww0_kW:
-        description: Nominal NG requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      NG_ww_MWhyr:
-        description: NG requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: NA
-      OIL_hs0_kW:
-        description: Nominal OIL requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      OIL_hs_MWhyr:
-        description: OIL requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      OIL_ww0_kW:
-        description: Nominal OIL requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      OIL_ww_MWhyr:
-        description: OIL requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      PV0_kW:
-        description: Nominal PV electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      PV_MWhyr:
-        description: PV electricity consumption
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       QC_sys0_kW:
         description: Nominal Total system cooling demand.
         type: float
@@ -15376,7 +14771,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qcs_MWhyr:
-        description: Total cooling demand
+        description: Useful energy for space cooling (thermal demand at point of use)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15476,7 +14871,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: End-use space cooling demand (system-level including HVAC losses), Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15626,7 +15021,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: End-use space heating demand (system-level including HVAC losses), Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15666,7 +15061,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qww_MWhyr:
-        description: DHW heating demand
+        description: Useful energy for domestic hot water (thermal demand at taps)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -15676,47 +15071,7 @@ get_optimization_substations_total_file:
         unit: '[kW]'
         min: 0.0
       Qww_sys_MWhyr:
-        description: End-use hotwater demand
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      SOLAR_hs0_kW:
-        description: Nominal solar thermal energy requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      SOLAR_hs_MWhyr:
-        description: Solar thermal energy requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      SOLAR_ww0_kW:
-        description: Nominal solar thermal energy requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      SOLAR_ww_MWhyr:
-        description: Solar thermal energy requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      WOOD_hs0_kW:
-        description: Nominal WOOD requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      WOOD_hs_MWhyr:
-        description: WOOD requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      WOOD_ww0_kW:
-        description: Nominal WOOD requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      WOOD_ww_MWhyr:
-        description: WOOD requirement for hotwater supply
+        description: End-use domestic hot water demand (system-level including distribution losses)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -16963,6 +16318,10 @@ get_total_demand:
   float_format: '%.3f'
   schema:
     columns:
+      # NOTE: Final energy columns by carrier (COAL_*, DC_*, DH_*, GRID_*, NG_*, OIL_*, WOOD_*, SOLAR_*, PV_*)
+      # and HVAC electricity breakdown (E_hs, E_cs, E_ww, E_cdata, E_cre) removed from demand outputs.
+      # Final energy calculations will be performed in a separate supply/primary-energy module.
+      # Demand module now outputs: Useful energy (Qhs, Qcs, Qww) and End-use energy (E_sys, Qhs_sys, Qcs_sys, Qww_sys)
       Af_m2:
         description: Conditioned floor area (heated/cooled)
         type: float
@@ -16978,133 +16337,13 @@ get_total_demand:
         type: float
         unit: '[m2]'
         min: 0.0
-      COAL_hs0_kW:
-        description: Nominal Coal requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      COAL_hs_MWhyr:
-        description: Coal requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      COAL_ww0_kW:
-        description: Nominal Coal requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      COAL_ww_MWhyr:
-        description: Coal requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DC_cdata0_kW:
-        description: Nominal district cooling for final data center cooling demand
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DC_cdata_MWhyr:
-        description: District cooling for data center cooling demand
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DC_cre0_kW:
-        description: Nominal district cooling for refrigeration demand
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DC_cre_MWhyr:
-        description: District cooling for refrigeration demand
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DC_cs0_kW:
-        description: Nominal district cooling for space cooling demand
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DC_cs_MWhyr:
-        description: Energy consumption of space cooling system (if supplied by District Cooling), DC_cs = Qcs_sys / eff_cs
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DH_hs0_kW:
-        description: Nominal energy requirement by district heating (space heating supply)
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DH_hs_MWhyr:
-        description: Energy requirement by district heating (space heating supply)
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      DH_ww0_kW:
-        description: Nominal Energy requirement by district heating (hotwater supply)
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      DH_ww_MWhyr:
-        description: Energy requirement by district heating (hotwater supply)
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_cdata0_kW:
-        description: Nominal Data centre cooling specific electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_cdata_MWhyr:
-        description: Electricity consumption due to data center cooling
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_cre0_kW:
-        description: Nominal Refrigeration system electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_cre_MWhyr:
-        description: Electricity consumption due to refrigeration
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_cs0_kW:
-        description: Nominal Cooling system electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_cs_MWhyr:
-        description: Energy consumption of cooling system (if supplied by electricity grid), E_cs = Qcs_sys / eff_cs
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_hs0_kW:
-        description: Nominal Heating system electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_hs_MWhyr:
-        description: Electricity consumption due to space heating
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       E_sys0_kW:
         description: Nominal end-use electricity demand
         type: float
         unit: '[kW]'
         min: 0.0
       E_sys_MWhyr:
-        description: End-use total electricity consumption, E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      E_ww0_kW:
-        description: Nominal Domestic hot water electricity consumption.
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      E_ww_MWhyr:
-        description: Electricity consumption due to hot water
+        description: End-use total electricity consumption (system-level demand), E_sys =  Eve + Ea + El + Edata + Epro + Eaux + Ev
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17193,198 +16432,17 @@ get_total_demand:
         type: float
         unit: '[m2]'
         min: 0.0
-      GRID0_kW:
-        description: Nominal Grid electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_MWhyr:
-        description: Grid electricity consumption, GRID_a + GRID_l + GRID_v + GRID_ve + GRID_data + GRID_pro + GRID_aux +
-          GRID_ww + GRID_cs + GRID_hs + GRID_cdata + GRID_cre
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_a0_kW:
-        description: Nominal grid electricity requirements for appliances
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_a_MWhyr:
-        description: Grid electricity requirements for appliances
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_aux0_kW:
-        description: Nominal grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_aux_MWhyr:
-        description: Grid electricity requirements for auxiliary loads
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_cdata0_kW:
-        description: Nominal grid electricity requirements for servers cooling
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_cdata_MWhyr:
-        description: Grid electricity requirements for servers cooling
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_cre0_kW:
-        description: Nominal grid electricity requirements for refrigeration
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_cre_MWhyr:
-        description: Grid electricity requirements for refrigeration
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_cs0_kW:
-        description: Nominal grid electricity requirements for space cooling
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_cs_MWhyr:
-        description: Grid electricity requirements for space cooling
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_data0_kW:
-        description: Nominal grid electricity requirements for servers
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_data_MWhyr:
-        description: Grid electricity requirements for servers
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_hs0_kW:
-        description: Nominal grid electricity requirements for space heating
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_hs_MWhyr:
-        description: Grid electricity requirements for space heating
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_l0_kW:
-        description: Nominal grid electricity consumption for lights
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_l_MWhyr:
-        description: Grid electricity requirements for lights
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_v0_kW:
-        description: Nominal grid electricity consumption for electric vehicles
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_v_MWhyr:
-        description: Grid electricity requirements for electric vehicles
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_ve0_kW:
-        description: Nominal grid electricity consumption for ventilation
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_ve_MWhyr:
-        description: Grid electricity requirements for ventilation
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_pro0_kW:
-        description: Nominal grid electricity requirements for industrial processes
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_pro_MWhyr:
-        description: Grid electricity requirements for industrial processes
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      GRID_ww0_kW:
-        description: Nominal grid electricity requirements for hot water supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      GRID_ww_MWhyr:
-        description: Grid electricity requirements for hot water supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      NG_hs0_kW:
-        description: Nominal NG requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      NG_hs_MWhyr:
-        description: NG requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      NG_ww0_kW:
-        description: Nominal NG requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      NG_ww_MWhyr:
-        description: NG requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       name:
         description: Unique building ID. It must start with a letter.
         type: string
         unit: NA
-      OIL_hs0_kW:
-        description: Nominal OIL requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      OIL_hs_MWhyr:
-        description: OIL requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      OIL_ww0_kW:
-        description: Nominal OIL requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      OIL_ww_MWhyr:
-        description: OIL requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      PV0_kW:
-        description: Nominal PV electricity consumption
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      PV_MWhyr:
-        description: PV electricity consumption
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
       QC_sys0_kW:
         description: Nominal Total system cooling demand.
         type: float
         unit: '[kW]'
         min: 0.0
       QC_sys_MWhyr:
-        description: Total energy demand for cooling, QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
+        description: Total end-use cooling demand (system-level), QC_sys = Qcs_sys + Qcdata_sys + Qcre_sys + Qcpro_sys
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17394,7 +16452,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       QH_sys_MWhyr:
-        description: Total energy demand for heating
+        description: Total end-use heating demand (system-level)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17454,7 +16512,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qcs_MWhyr:
-        description: Total cooling demand
+        description: Useful energy for space cooling (thermal demand at point of use)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17554,7 +16612,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qcs_sys_MWhyr:
-        description: End-use space cooling demand, Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
+        description: End-use space cooling demand (system-level including HVAC losses), Qcs_sys = Qcs_sen_sys + Qcs_lat_sys + Qcs_em_ls + Qcs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17604,7 +16662,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qhs_MWhyr:
-        description: Total heating demand
+        description: Useful energy for space heating (thermal demand at point of use)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17704,7 +16762,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qhs_sys_MWhyr:
-        description: End-use space heating demand, Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
+        description: End-use space heating demand (system-level including HVAC losses), Qhs_sys = Qhs_sen_sys + Qhs_em_ls + Qhs_dis_ls
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17744,7 +16802,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qww_MWhyr:
-        description: DHW heating demand
+        description: Useful energy for domestic hot water (thermal demand at taps)
         type: float
         unit: '[MWh/yr]'
         min: 0.0
@@ -17754,47 +16812,7 @@ get_total_demand:
         unit: '[kW]'
         min: 0.0
       Qww_sys_MWhyr:
-        description: End-use hotwater demand
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      SOLAR_hs0_kW:
-        description: Nominal solar thermal energy requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      SOLAR_hs_MWhyr:
-        description: Solar thermal energy requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      SOLAR_ww0_kW:
-        description: Nominal solar thermal energy requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      SOLAR_ww_MWhyr:
-        description: Solar thermal energy requirement for hotwater supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      WOOD_hs0_kW:
-        description: Nominal WOOD requirement for space heating supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      WOOD_hs_MWhyr:
-        description: WOOD requirement for space heating supply
-        type: float
-        unit: '[MWh/yr]'
-        min: 0.0
-      WOOD_ww0_kW:
-        description: Nominal WOOD requirement for hotwater supply
-        type: float
-        unit: '[kW]'
-        min: 0.0
-      WOOD_ww_MWhyr:
-        description: WOOD requirement for hotwater supply
+        description: End-use domestic hot water demand (system-level including distribution losses)
         type: float
         unit: '[MWh/yr]'
         min: 0.0

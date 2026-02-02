@@ -72,59 +72,7 @@ def calc_E_sys(tsd: TimeSeriesData) -> TimeSeriesData:
     return tsd
 
 
-def calc_Ef(bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> TimeSeriesData:
-    """
-    Calculate the compound of final electricity loads
-    with contain the end-use demand,
-
-    :param tsd: Time series data of building
-    :type tsd: cea.demand.time_series_data.TimeSeriesData
-
-    :param bpr: building properties
-    :type bpr: cea.demand.building_properties.BuildingProperties
-
-    """
-    # GET SYSTEMS EFFICIENCIES
-    energy_source = bpr.supply['source_el']
-    scale_technology = bpr.supply['scale_el']
-    total_el_demand = np.nansum([tsd.electrical_loads.Eve, tsd.electrical_loads.Ea, tsd.electrical_loads.El, tsd.electrical_loads.Edata, tsd.electrical_loads.Epro, tsd.electrical_loads.Eaux, tsd.electrical_loads.Ev,
-                                    tsd.electrical_loads.E_ww, tsd.electrical_loads.E_cs, tsd.electrical_loads.E_hs, tsd.electrical_loads.E_cdata, tsd.electrical_loads.E_cre], 0)
-
-    if scale_technology == "CITY":
-        if energy_source == "GRID":
-            tsd.electrical_loads.GRID = total_el_demand
-            tsd.electrical_loads.GRID_a = tsd.electrical_loads.Ea
-            tsd.electrical_loads.GRID_l = tsd.electrical_loads.El
-            tsd.electrical_loads.GRID_v = tsd.electrical_loads.Ev
-            tsd.electrical_loads.GRID_ve = tsd.electrical_loads.Eve
-            tsd.electrical_loads.GRID_data = tsd.electrical_loads.Edata
-            tsd.electrical_loads.GRID_pro = tsd.electrical_loads.Epro
-            tsd.electrical_loads.GRID_aux = tsd.electrical_loads.Eaux
-            tsd.electrical_loads.GRID_ww = tsd.electrical_loads.E_ww
-            tsd.electrical_loads.GRID_cs = tsd.electrical_loads.E_cs
-            tsd.electrical_loads.GRID_hs = tsd.electrical_loads.E_hs
-            tsd.electrical_loads.GRID_cdata = tsd.electrical_loads.E_cdata
-            tsd.electrical_loads.GRID_cre = tsd.electrical_loads.E_cre
-        else:
-            raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
-    elif scale_technology == "NONE":
-        tsd.electrical_loads.GRID = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_a = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_l = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_v = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_ve = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_data = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_pro = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_aux = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_ww = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_cs = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_hs = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_cdata = np.zeros(HOURS_IN_YEAR)
-        tsd.electrical_loads.GRID_cre = np.zeros(HOURS_IN_YEAR)
-    else:
-        raise Exception('check potential error in input database of LCA infrastructure / ELECTRICITY')
-
-    return tsd
+# NOTE: calc_Ef() function removed - primary energy calculation for electricity moved to primary-energy module
 
 
 def calc_Eaux(tsd: TimeSeriesData) -> TimeSeriesData:
