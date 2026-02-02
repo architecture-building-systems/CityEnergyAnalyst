@@ -240,7 +240,7 @@ def apply_network_mode_to_existing_buildings(existing_buildings, parameter_build
     if network_mode == 'validate':
         # Strict validation - must match exactly
         if missing_buildings or extra_buildings:
-            error_msg = [f"❌ Validation failed for {service_name}:"]
+            error_msg = [f"Validation failed for {service_name}:"]
             error_msg.append(f"   Existing network has: {len(existing_buildings)} buildings")
             error_msg.append(f"   Parameter specifies: {len(parameter_buildings)} buildings")
 
@@ -266,7 +266,7 @@ def apply_network_mode_to_existing_buildings(existing_buildings, parameter_build
             raise ValueError('\n'.join(error_msg))
 
         # Exact match - return parameter buildings
-        print(f"    {service_name}: ✓ Validation passed ({len(parameter_buildings)} buildings)")
+        print(f"    {service_name}: Validation passed ({len(parameter_buildings)} buildings)")
         return parameter_buildings
 
     elif network_mode == 'augment':
@@ -358,8 +358,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
             strict_extra_buildings=True  # Strict - raise error if extras
         )
         # If we get here, network matches exactly
-        print("  ✓ All specified buildings have valid nodes in network")
-        print("  ✓ No extra buildings in network")
+        print("  All specified buildings have valid nodes in network")
+        print("  No extra buildings in network")
     else:
         # Augment/Filter modes: Lenient validation - return missing list
         nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
@@ -387,7 +387,7 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                     f"Resolution: Set auto-modify-network=true or use validate mode."
                 )
 
-            print(f"\n  ⓘ Augment mode: Adding {len(missing_buildings)} missing building(s)...")
+            print(f"\n  Augment mode: Adding {len(missing_buildings)} missing building(s)...")
             print("    Extending network using Steiner tree optimisation...")
 
             street_network_gdf = gpd.read_file(locator.get_street_network())
@@ -403,9 +403,9 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                 connection_candidates=config.network_layout.connection_candidates
             )
 
-            print("  ✓ Augmentation successful - all buildings now in network")
+            print("  Augmentation successful - all buildings now in network")
         else:
-            print("  ✓ All specified buildings have valid nodes in network")
+            print("  All specified buildings have valid nodes in network")
 
     elif network_mode == NetworkLayoutMode.FILTER:
         # Filter mode: Remove extra buildings AND add missing buildings (exact match)
@@ -421,7 +421,7 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
 
             # Warning for filter mode
             print("\n" + "="*60)
-            print("⚠️  WARNING: FILTER MODE - Network will be modified!")
+            print("WARNING: FILTER MODE - Network will be modified!")
             print("="*60)
             if extra_buildings:
                 print(f"  Removing {len(extra_buildings)} building(s): {', '.join(list(extra_buildings)[:5])}")
@@ -455,9 +455,9 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                     connection_candidates=config.network_layout.connection_candidates
                 )
 
-            print("  ✓ Filter complete - network now matches parameter exactly")
+            print("  Filter complete - network now matches parameter exactly")
         else:
-            print("  ✓ All specified buildings have valid nodes in network")
+            print("  All specified buildings have valid nodes in network")
 
     return nodes_gdf, edges_gdf
 
@@ -539,7 +539,7 @@ def convert_simplified_nodes_to_full_format(nodes_gdf):
     # Reorder columns to match full format
     nodes_full = nodes_full[['building', 'name', 'type', 'geometry']]
 
-    print(f"  ✓ Converted {len(nodes_full)} nodes to full format")
+    print(f"  Converted {len(nodes_full)} nodes to full format")
     building_count = len(nodes_full[nodes_full['building'] != 'NONE'])
     junction_count = len(nodes_full[(nodes_full['type'] == 'NONE') & (nodes_full['building'] == 'NONE')])
     plant_count = len(nodes_full[nodes_full['type'].str.contains('PLANT', na=False)])
@@ -976,7 +976,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
     # Auto-create missing junction nodes
     if missing_nodes:
-        print(f"  ⚠ Found {len(missing_nodes)} missing junction node(s) at edge endpoints")
+        print(f"  Found {len(missing_nodes)} missing junction node(s) at edge endpoints")
         print("    Auto-creating junction nodes to ensure network connectivity...")
 
         for key, (exact_point, edge_names) in missing_nodes.items():
@@ -1122,7 +1122,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                     plant_node = nodes_gdf[nodes_gdf['building'] == plant_building]
                     temp_node_added = True
                 else:
-                    print(f"  ⚠ Warning: Plant building '{plant_building}' not found in zone geometry, skipping")
+                    print(f"  Warning: Plant building '{plant_building}' not found in zone geometry, skipping")
                     continue
 
             # Create a new PLANT node near this building
@@ -1281,7 +1281,7 @@ def resolve_plant_buildings(plant_building_input, available_buildings, network_t
                 print(f"      - {building}")
 
     if unmatched_buildings:
-        print(f"  ⚠ Warning: {len(unmatched_buildings)} plant building(s){label} not found in zone:")
+        print(f"  Warning: {len(unmatched_buildings)} plant building(s){label} not found in zone:")
         for building in unmatched_buildings[:5]:
             print(f"      - {building}")
         if len(unmatched_buildings) > 5:
@@ -1368,7 +1368,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
         # Warn if connected-buildings parameters have values that will be ignored
         if heating_connected_buildings_config or cooling_connected_buildings_config:
-            print("  ⚠ Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
+            print("  Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
             print("    Reason: 'overwrite-supply-settings' is False")
             print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
@@ -1405,12 +1405,12 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             print(f"  - District buildings (DC): {len(list_district_scale_buildings)}")
             if 'DH' in list_include_services:
                 print("  - District buildings (DH): 0 (no buildings found in supply.csv)")
-                print("  ⓘ DH service will be skipped")
+                print("  DH service will be skipped")
         elif buildings_to_validate_dh:
             print(f"  - District buildings (DH): {len(list_district_scale_buildings)}")
             if 'DC' in list_include_services:
                 print("  - District buildings (DC): 0 (no buildings found in supply.csv)")
-                print("  ⓘ DC service will be skipped")
+                print("  DC service will be skipped")
 
     # Track which buildings belong to DC and DH networks separately
     # Initialize as empty - will be populated based on list_include_services
@@ -1552,7 +1552,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Skip network generation if no buildings to connect
         if not connected_buildings_for_type:
             demand_type = "cooling" if type_network == "DC" else "heating"
-            print(f"  ⚠ Skipping {type_network} network: No buildings with {demand_type} demand")
+            print(f"  Skipping {type_network} network: No buildings with {demand_type} demand")
             print("    (All buildings were filtered out by 'consider-only-buildings-with-demand')")
             continue
 
@@ -1633,14 +1633,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                     last_node_idx = nodes_for_type.index[-1]
                     plant_type = nodes_for_type.loc[last_node_idx, 'type']
-                    print(f"    ✓ Added {plant_type} node for building '{plant_building}'")
+                    print(f"    Added {plant_type} node for building '{plant_building}'")
 
                     # Only remove the original building node if it was NOT a connected building
                     # If it's a connected building, we need to keep it to maintain network connectivity
                     if not is_connected_building:
                         plant_buildings_to_remove.append(plant_building)
                 else:
-                    print(f"    ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
+                    print(f"    Warning: Plant building '{plant_building}' not found in network nodes, skipping")
 
             # Remove the original building nodes for plant buildings that are NOT connected buildings
             if plant_buildings_to_remove:
@@ -1681,7 +1681,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                 last_node_idx = nodes_for_type.index[-1]
                 plant_type = nodes_for_type.loc[last_node_idx, 'type']
-                print(f"    ✓ Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
+                print(f"    Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
 
         # Validation: Check for duplicate node names after plant creation
         if nodes_for_type['name'].duplicated().any():
@@ -1699,7 +1699,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         output_nodes_path = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
         os.makedirs(os.path.dirname(output_nodes_path), exist_ok=True)
         nodes_for_type.to_file(output_nodes_path, driver='ESRI Shapefile')
-        print(f"  ✓ {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
+        print(f"  {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
 
         # NEW: Save per-building service configuration metadata (DH only, supply.csv mode only)
         if type_network == 'DH' and not overwrite_supply and per_building_services_dh:
@@ -1731,7 +1731,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
 
-            print("  ✓ building_services.json saved with per-building service configuration")
+            print("  building_services.json saved with per-building service configuration")
 
         # Clean up temp files for this network
         import glob
@@ -1758,11 +1758,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     all_edges_gdf.loc[idx, 'name'] = get_next_pipe_name(all_edges_gdf.loc[:idx])
         
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
-        print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
+        print(f"\n  Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
     # Summary
     if networks_generated:
-        print(f"\n  ✓ Network layout generation complete for: {', '.join(sorted(networks_generated))}")
+        print(f"\n  Network layout generation complete for: {', '.join(sorted(networks_generated))}")
         print(f"    Network name: {network_layout.network_name}")
         if len(networks_generated) > 1:
             folders = ' '.join([f"{nt}/" for nt in sorted(networks_generated)])
@@ -1772,7 +1772,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         if skipped_networks:
             for skipped in sorted(skipped_networks):
                 demand_type = "cooling" if skipped == "DC" else "heating"
-                print(f"    ⚠ {skipped} network was skipped (no buildings with {demand_type} demand)")
+                print(f"    {skipped} network was skipped (no buildings with {demand_type} demand)")
 
         # Report configuration errors that prevented network generation
         if network_errors:
@@ -1989,7 +1989,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
         # Warn if connected-buildings parameters have values that will be ignored
         if heating_connected_buildings_config or cooling_connected_buildings_config:
-            print("  ⚠ Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
+            print("  Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
             print("    Reason: 'overwrite-supply-settings' is False")
             print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
@@ -2093,7 +2093,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         all_edges_with_plants.append(edges_gdf_dc)
 
         if created_plants_dc:
-            print(f"\n✓ Created {len(created_plants_dc)} PLANT node(s) for DC network:")
+            print(f"\nCreated {len(created_plants_dc)} PLANT node(s) for DC network:")
             for plant_info in created_plants_dc:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
                 print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
@@ -2132,7 +2132,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         all_edges_with_plants.append(edges_gdf_dh)
 
         if created_plants_dh:
-            print(f"\n✓ Created {len(created_plants_dh)} PLANT node(s) for DH network:")
+            print(f"\nCreated {len(created_plants_dh)} PLANT node(s) for DH network:")
             for plant_info in created_plants_dh:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
                 print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
@@ -2163,13 +2163,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         # Normalize geometries to ensure consistent precision
         normalize_gdf_geometries(combined_edges, precision=SHAPEFILE_TOLERANCE, inplace=True)
         combined_edges.to_file(output_layout_path, driver='ESRI Shapefile')
-        print(f"\n  ✓ Saved layout.shp with {len(combined_edges)} edges (including plant connections)")
+        print(f"\n  Saved layout.shp with {len(combined_edges)} edges (including plant connections)")
     else:
         # No plant edges added, save original edges with normalization
         normalize_gdf_geometries(edges_gdf, precision=SHAPEFILE_TOLERANCE, inplace=True)
         edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
-        print(f"\n  ✓ Saved layout.shp with {len(edges_gdf)} edges")
-    print("  ✓ User-defined layout saved to:")
+        print(f"\n  Saved layout.shp with {len(edges_gdf)} edges")
+    print("  User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
     print("\n" + "=" * 80 + "\n")
 
@@ -2273,7 +2273,7 @@ def main(config: cea.config.Configuration):
                     print(f"    DC: No existing nodes found, using parameter ({len(cooling_connected_buildings_config)} buildings)")
                     list_cooling_buildings = cooling_connected_buildings_config
                 else:
-                    print("    ⚠ Warning: DC selected but no existing nodes and parameter is blank")
+                    print("    Warning: DC selected but no existing nodes and parameter is blank")
                     list_cooling_buildings = []
 
         # Process DH buildings (heating)
@@ -2299,7 +2299,7 @@ def main(config: cea.config.Configuration):
                     print(f"    DH: No existing nodes found, using parameter ({len(heating_connected_buildings_config)} buildings)")
                     list_heating_buildings = heating_connected_buildings_config
                 else:
-                    print("    ⚠ Warning: DH selected but no existing nodes and parameter is blank")
+                    print("    Warning: DH selected but no existing nodes and parameter is blank")
                     list_heating_buildings = []
 
         # Update union for universal layout
@@ -2310,8 +2310,8 @@ def main(config: cea.config.Configuration):
         edges_shp = existing_edges_path
         # Use DC nodes as primary (user-defined network loader will handle both services)
         nodes_shp = existing_dc_nodes_path if existing_dc_buildings else existing_dh_nodes_path
-        print(f"    ✓ Loaded existing network edges: {edges_shp}")
-        print(f"    ✓ Loaded existing network nodes: {nodes_shp}")
+        print(f"    Loaded existing network edges: {edges_shp}")
+        print(f"    Loaded existing network nodes: {nodes_shp}")
 
     try:
         # Generate network layout from user-defined files if provided
