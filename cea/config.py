@@ -1469,15 +1469,23 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
     """
 
     def initialize(self, parser):
-        """Get the supply category from the parameter definition"""
+        """Get the supply category and optional scale filter from the parameter definition"""
         try:
             self.supply_category = parser.get(self.section.name, f"{self.name}.supply-category")
         except Exception:
             raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (e.g., SUPPLY_COOLING, SUPPLY_HEATING, SUPPLY_HOTWATER)")
 
+        # Optional scale filter: 'BUILDING', 'DISTRICT', or None (show both)
+        try:
+            self.scale_filter = parser.get(self.section.name, f"{self.name}.scale")
+            if self.scale_filter not in ['BUILDING', 'DISTRICT']:
+                raise ValueError(f"Parameter {self.name} scale attribute must be 'BUILDING' or 'DISTRICT', got '{self.scale_filter}'")
+        except Exception:
+            self.scale_filter = None  # No filter, show both scales
+
     @property
     def _choices(self):
-        """Get all supply options (both building-scale and district-scale) with scale labels"""
+        """Get supply options with scale labels, optionally filtered by scale"""
         try:
             # Get all options grouped by scale
             all_options = self._get_all_supply_options()
@@ -1485,10 +1493,16 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
             # Get options currently in use in supply.csv
             options_in_use = self._get_supply_options_in_use()
 
+            # Determine which scales to show based on scale_filter
+            if self.scale_filter:
+                scales_to_show = [self.scale_filter]
+            else:
+                scales_to_show = ['BUILDING', 'DISTRICT']
+
             # Prioritize: options in use first, then rest alphabetically within each scale
             # Add scale suffix to each option for display
             result = []
-            for scale in ['BUILDING', 'DISTRICT']:
+            for scale in scales_to_show:
                 scale_options = [opt for opt in all_options if all_options[opt] == scale]
                 in_use = sorted([opt for opt in scale_options if opt in options_in_use])
                 not_in_use = sorted([opt for opt in scale_options if opt not in options_in_use])
@@ -1498,13 +1512,21 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
                 labeled_options = [f"{opt} {scale_label}" for opt in (in_use + not_in_use)]
                 result.extend(labeled_options)
 
-            # Always add default option at the end to trigger component-based fallback
-            result.append("Custom (use component settings below)")
-
             return result
         except Exception:
-            # Fallback to default option if there's any issue
-            return ["Custom (use component settings below)"]
+            # Fallback to empty list if there's any issue
+            return []
+
+    def decode(self, value) -> list[str]:
+        """Override parent decode to make blank = empty list (nullable) instead of select all"""
+        if value == '':
+            return []  # Blank means no selection (nullable)
+
+        # Parse and validate choices
+        from cea.utilities.standardize_coordinates import parse_string_to_list
+        choices = parse_string_to_list(value)
+        valid_choices = set(self._choices)
+        return [choice for choice in choices if choice in valid_choices]
 
     def _get_all_supply_options(self):
         """Get all supply codes from database with their scale (BUILDING or DISTRICT)"""

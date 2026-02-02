@@ -553,14 +553,13 @@ class DemandSection(Section):
 
 class FinalEnergySection(Section):
     """Typed section for final-energy configuration"""
-    what_if_name: str | None
     overwrite_supply_settings: bool
+    what_if_name: str | None
     network_name: str | None
-    network_type: list[str]
-    supply_type_cs: list
-    supply_type_hs: list
-    supply_type_dhw: list
-    booster_type: list
+    supply_type_cs: list | None
+    supply_type_hs: list | None
+    supply_type_dhw: list | None
+    dhw_booster_type: list | None
     buildings: list[str]
     panels_on_roof: str
     panels_on_wall_north: str
@@ -569,21 +568,19 @@ class FinalEnergySection(Section):
     panels_on_wall_west: str
 
     @overload
-    def __getattr__(self, item: Literal["what_if_name"]) -> str | None: ...
-    @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["supply_type_cs"]) -> list | None: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_cs"]) -> list: ...
+    def __getattr__(self, item: Literal["supply_type_hs"]) -> list | None: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_hs"]) -> list: ...
+    def __getattr__(self, item: Literal["supply_type_dhw"]) -> list | None: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_dhw"]) -> list: ...
-    @overload
-    def __getattr__(self, item: Literal["booster_type"]) -> list: ...
+    def __getattr__(self, item: Literal["dhw_booster_type"]) -> list | None: ...
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
