@@ -1685,6 +1685,17 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
                     f"Available options: {', '.join(all_options.keys())}"
                 )
 
+            # Validate against scale filter if set (for booster parameters)
+            if self.scale_filter:
+                actual_scale = all_options.get(v)
+                if actual_scale != self.scale_filter:
+                    scale_label = '(building)' if self.scale_filter == 'BUILDING' else '(district)'
+                    raise ValueError(
+                        f"'{v}' is a {actual_scale.lower()}-scale assembly, but this parameter "
+                        f"only accepts {self.scale_filter.lower()}-scale assemblies {scale_label}. "
+                        f"Please select a {self.scale_filter.lower()}-scale option from the dropdown."
+                    )
+
         # Check max 1 building-scale + max 1 district-scale
         building_count = sum(1 for v in value if all_options.get(v) == 'BUILDING')
         district_count = sum(1 for v in value if all_options.get(v) == 'DISTRICT')
@@ -1764,7 +1775,17 @@ class DistrictSupplyTypeParameter(MultiChoiceParameter):
 
             return labeled_values
 
-        # Otherwise, return auto-selected defaults from supply.csv (already labeled)
+        # Otherwise, return auto-selected defaults
+        if self.scale_filter:
+            # For parameters with scale filter (like booster params),
+            # auto-select the first assembly from _choices (respects priority order)
+            choices = self._choices
+            if choices:
+                # _choices already includes scale labels, return the first one
+                return [choices[0]]
+            return []
+
+        # For regular supply-type parameters, use auto-default from supply.csv
         try:
             return self._get_auto_default()
         except Exception:
