@@ -7,6 +7,16 @@ Outputs hourly timeseries and annual summaries organized by what-if scenario.
 Based on IMPLEMENTATION_PLAN.md and BACKEND_PLAN.md
 """
 
+__author__ = "Zhongming Shi"
+__copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 import os
 import pandas as pd
 from typing import Optional
