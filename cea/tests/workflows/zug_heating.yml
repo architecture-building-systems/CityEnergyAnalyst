@@ -48,16 +48,8 @@
 - script: thermal-network
   parameters:
     network-model: simplified
-- script: decentralized
 - script: optimization-new
   parameters:
     network-type: DH
     ga-number-of-generations: 2
     ga-population-size: 5
-#- script: multi-criteria-analysis
-#  parameters:
-#    generation: 2
-#- script: run-all-plots
-#  parameters:
-#    network-type: DH
-#    network-name: ""
