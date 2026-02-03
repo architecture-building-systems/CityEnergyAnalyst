@@ -23,7 +23,6 @@ from typing import Optional
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.dbf import dbf_to_dataframe
 
 
 def main(config: cea.config.Configuration):
@@ -68,17 +67,45 @@ def main(config: cea.config.Configuration):
         print(f"Created output folder: {output_folder}")
 
     # Step 3: Get list of buildings
-    zone_df = dbf_to_dataframe(locator.get_zone_geometry())
-    buildings = zone_df['Name'].tolist()
+    try:
+        import geopandas as gpd
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+        buildings = zone_gdf['name'].tolist()
+    except Exception:
+        # Fallback: try reading from demand results folder
+        import glob
+        demand_folder = locator.get_demand_results_folder()
+        demand_files = glob.glob(os.path.join(demand_folder, '*.csv'))
+        buildings = [os.path.splitext(os.path.basename(f))[0] for f in demand_files]
+
     print(f"Processing {len(buildings)} buildings")
 
-    # Step 4: Calculate final energy for each building (placeholder)
+    # Step 4: Calculate final energy for each building
     print("\nCalculating building final energy...")
+    building_dfs = {}
+
     for building in buildings:
-        print(f"  - {building}: Not yet implemented")
-        # TODO: Implement calculate_building_final_energy()
+        try:
+            from cea.analysis.final_energy.calculation import calculate_building_final_energy
+
+            # Calculate final energy for this building
+            final_energy_df = calculate_building_final_energy(building, locator, config)
+
+            # Save individual building file
+            output_file = locator.get_final_energy_building_file(building, whatif_name)
+            locator.ensure_parent_folder_exists(output_file)
+            final_energy_df.to_csv(output_file, index=False, float_format='%.3f')
+
+            # Store for aggregation
+            building_dfs[building] = final_energy_df
+
+            print(f"  ✓ {building}")
+
+        except Exception as e:
+            print(f"  ✗ {building}: {str(e)}")
 
     # Step 5: Calculate for district plants (placeholder)
+    plant_dfs = {}
     network_name = config.final_energy.network_name
     if network_name:
         print(f"\nDistrict network: {network_name}")

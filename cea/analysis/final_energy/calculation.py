@@ -70,7 +70,7 @@ def calculate_building_final_energy(
 
     # Initialize output DataFrame with demand columns
     final_energy = pd.DataFrame({
-        'date': demand_df['DATE'],  # Assuming DATE column exists
+        'date': demand_df['date'],
         'Qhs_sys_kWh': demand_df['Qhs_sys_kWh'],
         'Qww_sys_kWh': demand_df['Qww_sys_kWh'],
         'Qcs_sys_kWh': demand_df['Qcs_sys_kWh'],
@@ -82,12 +82,12 @@ def calculate_building_final_energy(
 
     # Step 3: Calculate final energy for each service
     # Space heating
-    if supply_config['space_heating']['scale'] == 'BUILDING':
+    if supply_config['space_heating'] and supply_config['space_heating']['scale'] == 'BUILDING':
         # Building-scale: use component efficiency
         carrier = supply_config['space_heating']['carrier']
         efficiency = supply_config['space_heating']['efficiency']
         final_energy[f'Qhs_sys_{carrier}_kWh'] = demand_df['Qhs_sys_kWh'] / efficiency
-    elif supply_config['space_heating']['scale'] == 'DISTRICT':
+    elif supply_config['space_heating'] and supply_config['space_heating']['scale'] == 'DISTRICT':
         # District heating: read from thermal-network
         network_name = supply_config['space_heating']['network_name']
         dh_data = load_district_heating_data(building_name, network_name, locator)
@@ -97,11 +97,11 @@ def calculate_building_final_energy(
         final_energy['Qhs_sys_NONE_kWh'] = 0.0
 
     # Hot water (DHW)
-    if supply_config['hot_water']['scale'] == 'BUILDING':
+    if supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'BUILDING':
         carrier = supply_config['hot_water']['carrier']
         efficiency = supply_config['hot_water']['efficiency']
         final_energy[f'Qww_sys_{carrier}_kWh'] = demand_df['Qww_sys_kWh'] / efficiency
-    elif supply_config['hot_water']['scale'] == 'DISTRICT':
+    elif supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'DISTRICT':
         network_name = supply_config['hot_water']['network_name']
         dh_data = load_district_heating_data(building_name, network_name, locator)
         final_energy['Qww_sys_DH_kWh'] = dh_data['DH_ww_kWh']
@@ -109,11 +109,11 @@ def calculate_building_final_energy(
         final_energy['Qww_sys_NONE_kWh'] = 0.0
 
     # Space cooling
-    if supply_config['space_cooling']['scale'] == 'BUILDING':
+    if supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'BUILDING':
         carrier = supply_config['space_cooling']['carrier']
         efficiency = supply_config['space_cooling']['efficiency']
         final_energy[f'Qcs_sys_{carrier}_kWh'] = demand_df['Qcs_sys_kWh'] / efficiency
-    elif supply_config['space_cooling']['scale'] == 'DISTRICT':
+    elif supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'DISTRICT':
         network_name = supply_config['space_cooling']['network_name']
         dc_data = load_district_cooling_data(building_name, network_name, locator)
         final_energy['Qcs_sys_DC_kWh'] = dc_data['DC_cs_kWh']
@@ -124,17 +124,30 @@ def calculate_building_final_energy(
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
 
     # Step 4: Handle booster systems (if applicable)
-    if supply_config['space_heating_booster']:
-        booster_data = load_booster_data(building_name, network_name, 'hs', locator)
-        carrier = supply_config['space_heating_booster']['carrier']
-        efficiency = supply_config['space_heating_booster']['efficiency']
-        final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
+    # Only load booster data if booster is configured AND has a network_name
+    if supply_config['space_heating_booster'] and supply_config['space_heating_booster']['network_name']:
+        network_name = supply_config['space_heating_booster']['network_name']
+        try:
+            booster_data = load_booster_data(building_name, network_name, 'hs', locator)
+            carrier = supply_config['space_heating_booster']['carrier']
+            efficiency = supply_config['space_heating_booster']['efficiency']
+            final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
+        except FileNotFoundError:
+            # Booster file not found - building may not be connected to network
+            # This is OK, just skip booster calculation
+            pass
 
-    if supply_config['hot_water_booster']:
-        booster_data = load_booster_data(building_name, network_name, 'dhw', locator)
-        carrier = supply_config['hot_water_booster']['carrier']
-        efficiency = supply_config['hot_water_booster']['efficiency']
-        final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
+    if supply_config['hot_water_booster'] and supply_config['hot_water_booster']['network_name']:
+        network_name = supply_config['hot_water_booster']['network_name']
+        try:
+            booster_data = load_booster_data(building_name, network_name, 'dhw', locator)
+            carrier = supply_config['hot_water_booster']['carrier']
+            efficiency = supply_config['hot_water_booster']['efficiency']
+            final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
+        except FileNotFoundError:
+            # Booster file not found - building may not be connected to network
+            # This is OK, just skip booster calculation
+            pass
 
     # Step 5: Add metadata columns
     final_energy['scale'] = 'BUILDING'
@@ -172,18 +185,20 @@ def load_supply_configuration(
         return load_whatif_supply_configuration(building_name, locator, config)
     else:
         # Production mode: use supply.csv
-        return load_production_supply_configuration(building_name, locator)
+        return load_production_supply_configuration(building_name, locator, config)
 
 
 def load_production_supply_configuration(
     building_name: str,
-    locator: cea.inputlocator.InputLocator
+    locator: cea.inputlocator.InputLocator,
+    config: cea.config.Configuration
 ) -> Dict:
     """
     Load supply configuration from supply.csv (production mode).
 
     :param building_name: Name of the building
     :param locator: InputLocator instance
+    :param config: Configuration instance
     :return: Supply configuration dict
     """
     from cea.datamanagement.database.assemblies import Supply
@@ -198,8 +213,11 @@ def load_production_supply_configuration(
     # Load supply database
     supply_db = Supply.from_locator(locator)
 
-    # Initialize config dict
-    config = {
+    # Get network name from config (if specified)
+    network_name = config.final_energy.network_name
+
+    # Initialize supply config dict
+    supply_config = {
         'space_heating': None,
         'hot_water': None,
         'space_cooling': None,
@@ -209,51 +227,56 @@ def load_production_supply_configuration(
 
     # Parse space heating
     if 'supply_type_hs' in building_supply and building_supply['supply_type_hs']:
-        config['space_heating'] = parse_supply_assembly(
+        supply_config['space_heating'] = parse_supply_assembly(
             building_supply['supply_type_hs'],
             supply_db.heating,
             locator,
-            'heating'
+            'heating',
+            network_name
         )
 
     # Parse hot water (DHW)
     if 'supply_type_dhw' in building_supply and building_supply['supply_type_dhw']:
-        config['hot_water'] = parse_supply_assembly(
+        supply_config['hot_water'] = parse_supply_assembly(
             building_supply['supply_type_dhw'],
             supply_db.hot_water,
             locator,
-            'hot_water'
+            'hot_water',
+            network_name
         )
 
     # Parse space cooling
     if 'supply_type_cs' in building_supply and building_supply['supply_type_cs']:
-        config['space_cooling'] = parse_supply_assembly(
+        supply_config['space_cooling'] = parse_supply_assembly(
             building_supply['supply_type_cs'],
             supply_db.cooling,
             locator,
-            'cooling'
+            'cooling',
+            network_name
         )
 
     # TODO: Handle booster systems - check if building is connected to district network
     # and if booster substation files exist
 
-    return config
+    return supply_config
 
 
 def parse_supply_assembly(
     assembly_code: str,
     assembly_df: pd.DataFrame,
     locator: cea.inputlocator.InputLocator,
-    service_type: str  # 'heating', 'hot_water', or 'cooling'
+    service_type: str,  # 'heating', 'hot_water', or 'cooling'
+    network_name: Optional[str] = None
 ) -> Dict:
     """
     Parse an assembly code and return its configuration.
 
     :param assembly_code: Assembly code (e.g., 'SUPPLY_HEATING_AS3')
-    :param assembly_df: Supply assembly DataFrame
+    :param assembly_df: Supply assembly DataFrame (from Supply.from_locator())
     :param locator: InputLocator instance
     :param service_type: Type of service
-    :return: Dict with scale, carrier, efficiency, assembly_code, component_code
+    :param network_name: Network name (required for DISTRICT scale)
+    :return: Dict with scale, carrier, efficiency, assembly_code, component_code, network_name
     """
     if assembly_code not in assembly_df.index:
         raise ValueError(f"Assembly {assembly_code} not found in database")
@@ -270,23 +293,27 @@ def parse_supply_assembly(
             'efficiency': None,
             'assembly_code': assembly_code,
             'component_code': None,
+            'network_name': None,
         }
 
-    # Get primary component
+    # Get primary component code
     component_code = assembly['primary_components']
     if pd.isna(component_code) or component_code == '-':
         raise ValueError(f"Assembly {assembly_code} has no primary component")
 
-    # Load component from database
+    # Load component information from COMPONENTS database
     component_info = load_component_info(component_code, locator)
 
-    return {
+    result = {
         'scale': scale,
         'carrier': component_info['carrier'],
         'efficiency': component_info['efficiency'],
         'assembly_code': assembly_code,
         'component_code': component_code,
+        'network_name': network_name if scale == 'DISTRICT' else None,
     }
+
+    return result
 
 
 def load_component_info(
@@ -303,7 +330,7 @@ def load_component_info(
     # Determine component type from code prefix
     if component_code.startswith('BO'):
         # Boiler
-        component_file = locator.get_database_conversion_boilers()
+        component_file = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
         df = pd.read_csv(component_file)
         components = df[df['code'] == component_code]
 
@@ -320,7 +347,7 @@ def load_component_info(
 
     elif component_code.startswith('HP'):
         # Heat pump
-        component_file = locator.get_database_conversion_heat_pumps()
+        component_file = locator.get_db4_components_conversion_conversion_technology_csv('HEAT_PUMPS')
         df = pd.read_csv(component_file)
         components = df[df['code'] == component_code]
 
@@ -337,7 +364,7 @@ def load_component_info(
 
     elif component_code.startswith('CH'):
         # Chiller
-        component_file = locator.get_database_conversion_vapor_compression_chillers()
+        component_file = locator.get_db4_components_conversion_conversion_technology_csv('VAPOR_COMPRESSION_CHILLERS')
         df = pd.read_csv(component_file)
         components = df[df['code'] == component_code]
 
@@ -390,14 +417,95 @@ def load_whatif_supply_configuration(
     :param config: Configuration instance
     :return: Supply configuration dict
     """
-    # TODO: Implement
-    # 1. Get supply-type-* parameters from config
-    # 2. Determine if building is connected to district network
-    # 3. Select appropriate assembly (building-scale vs district-scale)
-    # 4. Load assembly and component from database
-    # 5. Return configuration dict
+    from cea.datamanagement.database.assemblies import Supply
 
-    raise NotImplementedError("What-if mode supply configuration not yet implemented")
+    # Load supply database
+    supply_db = Supply.from_locator(locator)
+
+    # Get network name from config
+    network_name = config.final_energy.network_name
+
+    # Get supply type parameters from config
+    # These are lists of assembly codes (can be multiple due to multi-select)
+    supply_type_hs = config.final_energy.supply_type_hs if config.final_energy.supply_type_hs else []
+    supply_type_dhw = config.final_energy.supply_type_dhw if config.final_energy.supply_type_dhw else []
+    supply_type_cs = config.final_energy.supply_type_cs if config.final_energy.supply_type_cs else []
+
+    # Booster parameters
+    booster_hs = config.final_energy.hs_booster_type if config.final_energy.hs_booster_type else []
+    booster_dhw = config.final_energy.dhw_booster_type if config.final_energy.dhw_booster_type else []
+
+    # Initialize supply config dict
+    supply_config = {
+        'space_heating': None,
+        'hot_water': None,
+        'space_cooling': None,
+        'space_heating_booster': None,
+        'hot_water_booster': None,
+    }
+
+    # Helper function to strip scale labels from assembly codes
+    def strip_scale_label(assembly_str: str) -> str:
+        """Strip scale label from assembly code: 'SUPPLY_HEATING_AS3 (building)' -> 'SUPPLY_HEATING_AS3'"""
+        if ' (' in assembly_str:
+            return assembly_str.split(' (')[0]
+        return assembly_str
+
+    # Parse space heating (use first assembly if multiple selected)
+    if supply_type_hs and len(supply_type_hs) > 0:
+        assembly_code = strip_scale_label(supply_type_hs[0])  # Take first selection
+        supply_config['space_heating'] = parse_supply_assembly(
+            assembly_code,
+            supply_db.heating,
+            locator,
+            'heating',
+            network_name
+        )
+
+    # Parse hot water (DHW)
+    if supply_type_dhw and len(supply_type_dhw) > 0:
+        assembly_code = strip_scale_label(supply_type_dhw[0])
+        supply_config['hot_water'] = parse_supply_assembly(
+            assembly_code,
+            supply_db.hot_water,
+            locator,
+            'hot_water',
+            network_name
+        )
+
+    # Parse space cooling
+    if supply_type_cs and len(supply_type_cs) > 0:
+        assembly_code = strip_scale_label(supply_type_cs[0])
+        supply_config['space_cooling'] = parse_supply_assembly(
+            assembly_code,
+            supply_db.cooling,
+            locator,
+            'cooling',
+            network_name
+        )
+
+    # Parse booster systems
+    if booster_hs and len(booster_hs) > 0:
+        assembly_code = strip_scale_label(booster_hs[0])
+        supply_config['space_heating_booster'] = parse_supply_assembly(
+            assembly_code,
+            supply_db.heating,
+            locator,
+            'heating',
+            network_name
+        )
+
+    if booster_dhw and len(booster_dhw) > 0:
+        assembly_code = strip_scale_label(booster_dhw[0])
+        supply_config['hot_water_booster'] = parse_supply_assembly(
+            assembly_code,
+            supply_db.hot_water,
+            locator,
+            'hot_water',
+            network_name
+        )
+
+    return supply_config
 
 
 def load_district_heating_data(
