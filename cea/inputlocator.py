@@ -1625,6 +1625,88 @@ class InputLocator(object):
         """
         return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
 
+    # FINAL ENERGY
+    def get_final_energy_folder(self, whatif_name=None):
+        """
+        scenario/outputs/data/final-energy/{whatif_name}/
+
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to final energy folder for the what-if scenario
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        folder = os.path.join(self.get_lca_emissions_results_folder(), '..', 'final-energy', whatif_name)
+        return os.path.normpath(folder)
+
+    def get_final_energy_building_file(self, building_name, whatif_name=None):
+        """
+        scenario/outputs/data/final-energy/{whatif_name}/{building_name}.csv
+
+        :param building_name: Name of the building (e.g., 'B1001')
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to building hourly final energy file
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        folder = self.get_final_energy_folder(whatif_name)
+        return os.path.join(folder, f'{building_name}.csv')
+
+    def get_final_energy_plant_file(self, network_name, network_type, plant_name, whatif_name=None):
+        """
+        scenario/outputs/data/final-energy/{whatif_name}/{network_name}_{network_type}_{plant_name}.csv
+
+        :param network_name: Network layout name (e.g., 'xxx', 'qqq')
+        :param network_type: 'DH' (district heating) or 'DC' (district cooling)
+        :param plant_name: Plant node name from network shapefile (e.g., 'NODE_001', 'PLANT_A')
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to district plant hourly final energy file
+
+        Example:
+            locator.get_final_energy_plant_file('xxx', 'DH', 'NODE_001')
+            -> scenario/outputs/data/final-energy/baseline/xxx_DH_NODE_001.csv
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        folder = self.get_final_energy_folder(whatif_name)
+        filename = f'{network_name}_{network_type}_{plant_name}.csv'
+        return os.path.join(folder, filename)
+
+    def get_final_energy_buildings_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/final-energy/{whatif_name}/final_energy_buildings.csv
+
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to buildings summary file
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        folder = self.get_final_energy_folder(whatif_name)
+        return os.path.join(folder, 'final_energy_buildings.csv')
+
+    def get_final_energy_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/final-energy/{whatif_name}/final_energy.csv
+
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to final energy breakdown file (by carrier, service, and entity)
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        folder = self.get_final_energy_folder(whatif_name)
+        return os.path.join(folder, 'final_energy.csv')
+
+    def get_final_energy_supply_configuration_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/final-energy/{whatif_name}/supply_configuration.json
+
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to supply configuration JSON file
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        folder = self.get_final_energy_folder(whatif_name)
+        return os.path.join(folder, 'supply_configuration.json')
+
     # GRAPHS
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""
