@@ -274,6 +274,26 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
         cs_0 = cs[index]  # secondary side capacity mass flow
         if 'c' in load_type:  # we have DC
             A_hex, UA = calc_cooling_substation_heat_exchange(cs_0, Qnom, tsi_0, tpi_0, tso_0)
+        elif tpi_0 < (tso_0 + MIN_APPROACH_TEMP_K):
+            # Network temperature insufficient for this heating load.
+            # Use booster-aware sizing: DH pre-heats, booster handles remaining lift.
+            from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
+
+            T_target_C_arr = building_demand[T_sup].values
+            T_return_C_arr = building_demand[T_ret].values
+            booster_load_type = 'dhw' if 'ww' in load_type else 'space_heating'
+
+            Q_dh_W, _, _, _, A_hex_m2, _ = calc_dh_heating_with_booster_tracking(
+                Q_demand_W=Qf,
+                T_DH_supply_C=T_supply_C,
+                T_target_C=T_target_C_arr,
+                T_return_C=T_return_C_arr,
+                load_type=booster_load_type
+            )
+
+            A_hex = A_hex_m2
+            UA = U_HEAT * A_hex
+            Qnom = max(Q_dh_W)  # DH portion only
         else:
             A_hex, UA = calc_heating_substation_heat_exchange(cs_0, Qnom, tpi_0, tsi_0, tso_0)
 
