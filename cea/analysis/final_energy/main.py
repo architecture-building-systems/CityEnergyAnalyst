@@ -83,10 +83,18 @@ def main(config: cea.config.Configuration):
     # Step 4: Calculate final energy for each building
     print("\nCalculating building final energy...")
     building_dfs = {}
+    building_configs = {}
 
     for building in buildings:
         try:
-            from cea.analysis.final_energy.calculation import calculate_building_final_energy
+            from cea.analysis.final_energy.calculation import (
+                calculate_building_final_energy,
+                load_supply_configuration
+            )
+
+            # Load supply configuration
+            supply_config = load_supply_configuration(building, locator, config)
+            building_configs[building] = supply_config
 
             # Calculate final energy for this building
             final_energy_df = calculate_building_final_energy(building, locator, config)
@@ -114,11 +122,63 @@ def main(config: cea.config.Configuration):
     else:
         print("\nNo district network selected (standalone buildings only)")
 
-    # Step 6-7: Generate compilation files (placeholder)
+    # Step 6-7: Generate compilation files
     print("\nGenerating compilation files...")
-    print("  - final_energy_buildings.csv: Not yet implemented")
-    print("  - final_energy.csv: Not yet implemented")
-    print("  - supply_configuration.json: Not yet implemented")
+
+    if building_dfs:
+        from cea.analysis.final_energy.calculation import (
+            aggregate_buildings_summary,
+            create_final_energy_breakdown
+        )
+        import json
+        from datetime import datetime
+
+        try:
+            # Generate buildings summary
+            summary_df = aggregate_buildings_summary(building_dfs, plant_dfs, locator)
+            summary_file = locator.get_final_energy_buildings_file(whatif_name)
+            locator.ensure_parent_folder_exists(summary_file)
+            summary_df.to_csv(summary_file, index=False, float_format='%.3f')
+            print(f"  ✓ final_energy_buildings.csv ({len(summary_df)} rows)")
+
+        except Exception as e:
+            print(f"  ✗ final_energy_buildings.csv: {str(e)}")
+
+        try:
+            # Generate detailed breakdown
+            breakdown_df = create_final_energy_breakdown(
+                building_dfs, plant_dfs, building_configs, locator, config
+            )
+            breakdown_file = locator.get_final_energy_file(whatif_name)
+            locator.ensure_parent_folder_exists(breakdown_file)
+            breakdown_df.to_csv(breakdown_file, index=False, float_format='%.3f')
+            print(f"  ✓ final_energy.csv ({len(breakdown_df)} rows)")
+
+        except Exception as e:
+            print(f"  ✗ final_energy.csv: {str(e)}")
+
+        try:
+            # Generate supply configuration JSON
+            config_data = {
+                'metadata': {
+                    'whatif_name': whatif_name,
+                    'mode': 'whatif' if config.final_energy.overwrite_supply_settings else 'production',
+                    'timestamp': datetime.now().isoformat(),
+                    'network_name': config.final_energy.network_name,
+                },
+                'buildings': building_configs
+            }
+
+            config_file = locator.get_final_energy_supply_configuration_file(whatif_name)
+            locator.ensure_parent_folder_exists(config_file)
+            with open(config_file, 'w') as f:
+                json.dump(config_data, f, indent=2, default=str)
+            print(f"  ✓ supply_configuration.json")
+
+        except Exception as e:
+            print(f"  ✗ supply_configuration.json: {str(e)}")
+    else:
+        print("  - No buildings processed, skipping compilation files")
 
     print("\n" + "=" * 80)
     print("FINAL ENERGY CALCULATION COMPLETE")

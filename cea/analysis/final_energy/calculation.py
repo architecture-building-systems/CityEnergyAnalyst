@@ -702,20 +702,104 @@ def aggregate_buildings_summary(
     :param locator: InputLocator instance
     :return: Summary DataFrame with one row per building/plant
     """
-    # TODO: Implement
-    # 1. For each building/plant DataFrame:
-    #    - Sum all carrier columns to get annual totals (MWh)
-    #    - Find peak demand and timestamp
-    #    - Get building metadata (GFA, coordinates)
-    # 2. Combine into single summary DataFrame
-    # 3. Return with columns from BACKEND_PLAN.md section 2.3
+    import geopandas as gpd
 
-    raise NotImplementedError("Buildings summary aggregation not yet implemented")
+    # Read building metadata
+    zone_gdf = gpd.read_file(locator.get_zone_geometry())
+    zone_gdf = zone_gdf.set_index('name')
+
+    # Read total demand for GFA
+    total_demand_df = pd.read_csv(locator.get_total_demand()).set_index('name')
+
+    summary_rows = []
+
+    # Process buildings
+    for building_name, df in building_dfs.items():
+        # Get building metadata
+        if building_name in zone_gdf.index:
+            geom = zone_gdf.loc[building_name, 'geometry']
+            x_coord = geom.centroid.x
+            y_coord = geom.centroid.y
+        else:
+            x_coord = None
+            y_coord = None
+
+        GFA_m2 = total_demand_df.loc[building_name, 'GFA_m2'] if building_name in total_demand_df.index else None
+
+        # Sum demand columns (kWh -> MWh)
+        Qhs_sys_MWh = df['Qhs_sys_kWh'].sum() / 1000.0
+        Qww_sys_MWh = df['Qww_sys_kWh'].sum() / 1000.0
+        Qcs_sys_MWh = df['Qcs_sys_kWh'].sum() / 1000.0
+        E_sys_MWh = df['E_sys_kWh'].sum() / 1000.0
+
+        # Sum carrier columns by type
+        carrier_totals = {}
+        for col in df.columns:
+            if col.endswith('_kWh') and col not in ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']:
+                # Extract carrier from column name
+                # Format: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
+                parts = col.split('_')
+                if len(parts) >= 3:
+                    carrier = parts[2]  # Get carrier part
+                    if carrier not in carrier_totals:
+                        carrier_totals[carrier] = 0.0
+                    carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
+
+        # Calculate total final energy
+        TOTAL_MWh = sum(carrier_totals.values())
+
+        # Calculate peak demand
+        total_demand_kW = df['Qhs_sys_kWh'] + df['Qww_sys_kWh'] + df['Qcs_sys_kWh'] + df['E_sys_kWh']
+        peak_idx = total_demand_kW.idxmax()
+        peak_demand_kW = total_demand_kW.iloc[peak_idx] if len(total_demand_kW) > 0 else 0.0
+        peak_datetime = df.loc[peak_idx, 'date'] if len(total_demand_kW) > 0 else None
+
+        # Get case info
+        scale = df['scale'].iloc[0] if 'scale' in df.columns else 'BUILDING'
+        case = df['case'].iloc[0] if 'case' in df.columns else None
+        case_description = df['case_description'].iloc[0] if 'case_description' in df.columns else None
+
+        # Build row
+        row = {
+            'name': building_name,
+            'type': 'building',
+            'GFA_m2': GFA_m2,
+            'x_coord': x_coord,
+            'y_coord': y_coord,
+            'scale': scale,
+            'case': case,
+            'case_description': case_description,
+            'Qhs_sys_MWh': Qhs_sys_MWh,
+            'Qww_sys_MWh': Qww_sys_MWh,
+            'Qcs_sys_MWh': Qcs_sys_MWh,
+            'E_sys_MWh': E_sys_MWh,
+        }
+
+        # Add carrier columns
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+            row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
+
+        row['TOTAL_MWh'] = TOTAL_MWh
+        row['peak_demand_kW'] = peak_demand_kW
+        row['peak_datetime'] = peak_datetime
+
+        summary_rows.append(row)
+
+    # Process plants (TODO when plant calculation is implemented)
+    for plant_name, df in plant_dfs.items():
+        # Similar logic for plants
+        pass
+
+    # Create summary DataFrame
+    summary_df = pd.DataFrame(summary_rows)
+
+    return summary_df
 
 
 def create_final_energy_breakdown(
     building_dfs: Dict[str, pd.DataFrame],
     plant_dfs: Dict[str, pd.DataFrame],
+    building_configs: Dict[str, Dict],
     locator: cea.inputlocator.InputLocator,
     config: cea.config.Configuration
 ) -> pd.DataFrame:
@@ -724,16 +808,160 @@ def create_final_energy_breakdown(
 
     :param building_dfs: Dict of building_name -> final_energy DataFrame
     :param plant_dfs: Dict of plant_name -> final_energy DataFrame
+    :param building_configs: Dict of building_name -> supply_configuration
     :param locator: InputLocator instance
     :param config: Configuration instance
     :return: Breakdown DataFrame with multiple rows per building/plant
     """
-    # TODO: Implement
-    # 1. For each building/plant and service:
-    #    - Extract carrier, assembly, component info
-    #    - Calculate annual totals and peaks
-    #    - Add demand_column reference
-    # 2. Combine into single breakdown DataFrame
-    # 3. Return with columns from BACKEND_PLAN.md section 2.4
+    breakdown_rows = []
 
-    raise NotImplementedError("Final energy breakdown not yet implemented")
+    # Service mapping
+    service_map = {
+        'space_heating': {
+            'demand_col': 'Qhs_sys_kWh',
+            'prefix': 'Qhs_sys',
+        },
+        'hot_water': {
+            'demand_col': 'Qww_sys_kWh',
+            'prefix': 'Qww_sys',
+        },
+        'space_cooling': {
+            'demand_col': 'Qcs_sys_kWh',
+            'prefix': 'Qcs_sys',
+        },
+        'electricity': {
+            'demand_col': 'E_sys_kWh',
+            'prefix': 'E_sys',
+        },
+    }
+
+    # Process buildings
+    for building_name, df in building_dfs.items():
+        supply_config = building_configs.get(building_name, {})
+
+        # Process each service
+        for service_key, service_info in service_map.items():
+            service_config = supply_config.get(service_key)
+
+            if not service_config or service_config['scale'] == 'NONE':
+                continue
+
+            demand_col = service_info['demand_col']
+            prefix = service_info['prefix']
+
+            # Find carrier column
+            carrier = service_config['carrier']
+            carrier_col = f'{prefix}_{carrier}_kWh'
+
+            if carrier_col not in df.columns:
+                continue
+
+            # Calculate annual totals (kWh -> MWh)
+            annual_demand_MWh = df[demand_col].sum() / 1000.0
+            annual_final_energy_MWh = df[carrier_col].sum() / 1000.0
+
+            # Calculate peaks
+            peak_demand_idx = df[demand_col].idxmax()
+            peak_demand_kW = df.loc[peak_demand_idx, demand_col] if len(df) > 0 else 0.0
+            peak_final_energy_kW = df.loc[peak_demand_idx, carrier_col] if len(df) > 0 else 0.0
+            peak_datetime = df.loc[peak_demand_idx, 'date'] if len(df) > 0 else None
+
+            # Determine component type from component code
+            component_code = service_config.get('component_code')
+            if component_code:
+                if component_code.startswith('BO'):
+                    component_type = 'Boiler'
+                elif component_code.startswith('HP'):
+                    component_type = 'HeatPump'
+                elif component_code.startswith('CH'):
+                    component_type = 'VapourCompressionChiller'
+                else:
+                    component_type = 'Unknown'
+            else:
+                component_type = None
+
+            # Build row
+            row = {
+                'name': building_name,
+                'type': 'building',
+                'scale': service_config['scale'],
+                'service': service_key,
+                'demand_column': demand_col,
+                'carrier': carrier,
+                'assembly_code': service_config.get('assembly_code'),
+                'component_code': component_code,
+                'component_type': component_type,
+                'efficiency': service_config.get('efficiency'),
+                'annual_demand_MWh': annual_demand_MWh,
+                'annual_final_energy_MWh': annual_final_energy_MWh,
+                'peak_demand_kW': peak_demand_kW,
+                'peak_final_energy_kW': peak_final_energy_kW,
+                'peak_datetime': peak_datetime,
+            }
+
+            breakdown_rows.append(row)
+
+        # Process booster systems if present
+        if supply_config.get('space_heating_booster'):
+            booster_config = supply_config['space_heating_booster']
+            carrier = booster_config['carrier']
+            booster_col = f'Qhs_booster_{carrier}_kWh'
+
+            if booster_col in df.columns:
+                annual_final_energy_MWh = df[booster_col].sum() / 1000.0
+                if annual_final_energy_MWh > 0:
+                    row = {
+                        'name': building_name,
+                        'type': 'building',
+                        'scale': 'BUILDING',
+                        'service': 'space_heating_booster',
+                        'demand_column': 'Qhs_booster_kWh',
+                        'carrier': carrier,
+                        'assembly_code': booster_config.get('assembly_code'),
+                        'component_code': booster_config.get('component_code'),
+                        'component_type': 'Boiler',  # Boosters are typically boilers
+                        'efficiency': booster_config.get('efficiency'),
+                        'annual_demand_MWh': None,  # Booster demand is derived
+                        'annual_final_energy_MWh': annual_final_energy_MWh,
+                        'peak_demand_kW': None,
+                        'peak_final_energy_kW': None,
+                        'peak_datetime': None,
+                    }
+                    breakdown_rows.append(row)
+
+        if supply_config.get('hot_water_booster'):
+            booster_config = supply_config['hot_water_booster']
+            carrier = booster_config['carrier']
+            booster_col = f'Qww_booster_{carrier}_kWh'
+
+            if booster_col in df.columns:
+                annual_final_energy_MWh = df[booster_col].sum() / 1000.0
+                if annual_final_energy_MWh > 0:
+                    row = {
+                        'name': building_name,
+                        'type': 'building',
+                        'scale': 'BUILDING',
+                        'service': 'hot_water_booster',
+                        'demand_column': 'Qww_booster_kWh',
+                        'carrier': carrier,
+                        'assembly_code': booster_config.get('assembly_code'),
+                        'component_code': booster_config.get('component_code'),
+                        'component_type': 'Boiler',
+                        'efficiency': booster_config.get('efficiency'),
+                        'annual_demand_MWh': None,
+                        'annual_final_energy_MWh': annual_final_energy_MWh,
+                        'peak_demand_kW': None,
+                        'peak_final_energy_kW': None,
+                        'peak_datetime': None,
+                    }
+                    breakdown_rows.append(row)
+
+    # Process plants (TODO when plant calculation is implemented)
+    for plant_name, df in plant_dfs.items():
+        # Similar logic for plants
+        pass
+
+    # Create breakdown DataFrame
+    breakdown_df = pd.DataFrame(breakdown_rows)
+
+    return breakdown_df
