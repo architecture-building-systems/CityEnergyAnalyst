@@ -4058,6 +4058,9 @@ def main(config: cea.config.Configuration):
             succeeded.append(network_type)
         except (ValueError, FileNotFoundError) as e:
             print(f"An error occurred while processing the {network_type} network")
+            # Print full traceback for debugging
+            import traceback
+            traceback.print_exc()
             errors[network_type] = e
     
     if errors:
