@@ -1,8 +1,10 @@
 # Final Energy Calculation - Implementation Plan
 
 **Date Created:** 2026-02-02
+**Last Updated:** 2026-02-02 (finalized design decisions)
 **Purpose:** Design plan for new final-energy module using optimization-new equations
 **Target Output Format:** Similar to hourly_operational_emission.py
+**Status:** ✅ Design finalized, ready for implementation
 
 ---
 
@@ -12,12 +14,14 @@
 Calculate final energy (energy by carrier) for buildings using the same component-based efficiency models from optimization-new, outputting hourly timeseries in the same shape as emissions output.
 
 ### Key Differences from Old Approach
-| Aspect | Old (ASSEMBLIES) | New (optimization-new) |
+| Aspect | Old (ASSEMBLIES) | New (Final Energy) |
 |--------|-----------------|------------------------|
-| **Efficiency** | Single annual average | Component-specific COP/efficiency from COMPONENTS database |
-| **Calculation** | Simple division: `E = Q / η` | Component.operate() with part-load curves |
+| **Efficiency** | Single annual average | Component-specific constant COP/efficiency from COMPONENTS database |
+| **Calculation** | Simple division: `E = Q / η` | **Same:** Simple division `E = Q / η` (hourly) |
 | **Temporal** | Annual totals only | Hourly profiles (8760 rows) |
 | **What-if** | Not supported | Support what-if scenarios with parameter overrides |
+
+**Note:** We use constant efficiency (not part-load curves) to match CEA database approach.
 
 ---
 
@@ -142,12 +146,37 @@ supply-type-dhw.type = DistrictSupplyTypeParameter
 supply-type-dhw.supply-category = SUPPLY_HOTWATER
 supply-type-dhw.help = Domestic hot water supply system type(s)...
 
+hs-booster-type =
+hs-booster-type.type = DistrictSupplyTypeParameter
+hs-booster-type.supply-category = SUPPLY_HEATING
+hs-booster-type.scale = BUILDING
+hs-booster-type.help = Space heating booster system type (building-scale only)
+hs-booster-type.nullable = true
+
 dhw-booster-type =
 dhw-booster-type.type = DistrictSupplyTypeParameter
-dhw-booster-type.supply-category = SUPPLY_HOTWATER_BOOSTER
+dhw-booster-type.supply-category = SUPPLY_HOTWATER
 dhw-booster-type.scale = BUILDING
 dhw-booster-type.help = Domestic hot water booster system type (building-scale only)
+dhw-booster-type.nullable = true
 ```
+
+### Booster Parameter Behavior
+
+**Key attribute:** `.scale = BUILDING`
+
+This attribute filters the dropdown to **only show building-scale assemblies**:
+- ✅ Shows: `SUPPLY_HOTWATER_AS1 (building)`, `SUPPLY_HOTWATER_AS3 (building)`, etc.
+- ❌ Hides: `SUPPLY_HOTWATER_AS9 (district)`, `SUPPLY_HOTWATER_AS10 (district)`, etc.
+
+**Why building-scale only?**
+Booster systems are **local equipment** that supplement district supply when network temperature is insufficient. They are never district-scale.
+
+**Technical implementation:**
+The `DistrictSupplyTypeParameter` class respects the `.scale` attribute:
+1. `_choices` property filters by scale (line 1497-1500 in config.py)
+2. `decode()` method filters saved values to match scale (line 1715-1718)
+3. `get()` method does NOT auto-add missing scale when scale_filter is set (line 1750)
 
 ---
 
@@ -576,62 +605,146 @@ def test_whatif_mode_selects_district_for_connected():
 
 ---
 
-## 10. Open Questions for Discussion
+## 10. Implementation Decisions (Finalized)
 
-### Question 1: Hourly vs Annual Calculations
-- **Option A:** Calculate hourly using constant efficiency (like old approach)
-- **Option B:** Use optimization-new's part-load curves (more accurate but complex)
-- **Recommendation:** Start with Option A (Phase 1), add Option B later (Phase 2)
+### ✅ Decision 1: Constant Efficiency (NOT Part-Load Curves)
+**Decision:** Use constant efficiency from COMPONENTS database
+**Rationale:** Matches CEA database design, simpler implementation
+**Workflow:**
+```python
+# Step 1: Load assembly → get primary component code
+assembly_row['primary_components']  # e.g., 'BO1'
 
-### Question 2: District System Sources
-- **Current:** Read from thermal-network substation results
-- **Problem:** What if thermal-network not run yet?
-- **Options:**
-  - A: Require thermal-network as prerequisite
-  - B: Fall back to simple calculation (demand / efficiency)
-  - C: Raise error with clear message
-- **Recommendation:** Option A with clear error message if not found
+# Step 2: Load component → get efficiency and feedstock
+component_row['min_thermal_eff']  # e.g., 0.85
+component_row['feedstock']  # e.g., 'NATURALGAS'
 
-### Question 3: Booster Heating
-- **DHW-booster-type:** Separate parameter for booster systems
-- **Question:** How to combine base DHW + booster in calculations?
-- **Recommendation:** Discuss separately after core implementation
+# Step 3: Calculate hourly (simple division)
+for hour in range(8760):
+    fuel_kWh[hour] = demand_kWh[hour] / efficiency
+```
 
-### Question 4: Solar Thermal
-- **SOLAR carrier:** How to calculate solar fraction?
-- **Options:**
-  - A: Skip for Phase 1 (use NONE)
-  - B: Simple area-based calculation
-  - C: Read from solar-collector script results
-- **Recommendation:** Option A or C
+### ✅ Decision 2: District Systems - Require Thermal-Network Results
+**Decision:** Always require thermal-network simulation as prerequisite
+**Rationale:** District systems need accurate network flow data
+**Implementation:**
+```python
+if building in network_connected_buildings['DH']:
+    # Must have thermal-network results
+    network_file = locator.get_thermal_network_substation_file(network_name, building)
+    if not os.path.exists(network_file):
+        raise ValueError(
+            f"Building {building} connected to district network '{network_name}' "
+            f"but thermal-network results not found. "
+            f"Please run: cea thermal-network --network-name {network_name}"
+        )
+    # Read actual district consumption
+    df = pd.read_csv(network_file)
+    DH_hs_kWh = df['Qhs_dh_W'] / 1000  # Convert W to kWh
+```
 
-### Question 5: Multiple Components per Assembly
-- **Some assemblies:** Have primary + secondary + tertiary components
-- **Question:** How to handle multiple components for one service?
-- **Options:**
-  - A: Use only primary component for Phase 1
-  - B: Cascade through components (primary → secondary fallback)
-  - C: Parallel operation (both contribute)
-- **Recommendation:** Option A for simplicity
+### ✅ Decision 3: Booster Systems - Separate from Base DHW
+**Decision:** Booster systems calculated separately with dedicated parameters
+**Parameters:**
+- `hs-booster-type` (space heating booster, building-scale only)
+- `dhw-booster-type` (hot water booster, building-scale only)
+
+**Data Source:** `thermal-network/{network}/booster/DH/substation/DH_booster_substation_{building}.csv`
+
+**Calculation:**
+```python
+# Read booster substation file
+booster_df = pd.read_csv(locator.get_thermal_network_booster_substation(network, building))
+
+# District heating energy (base)
+DH_hs_kWh = (booster_df['Qhs_dh_W'] + booster_df['Qww_dh_W']) / 1000
+
+# Booster energy (supplement)
+booster_demand_kWh = (booster_df['Qhs_booster_W'] + booster_df['Qww_booster_W']) / 1000
+
+# Apply booster component efficiency
+booster_component = load_component(config.final_energy.dhw_booster_type)
+booster_fuel_kWh = booster_demand_kWh / booster_component['min_thermal_eff']
+
+# Output to appropriate carrier column
+final_energy['Qhs_sys_DH_kWh'] = DH_hs_kWh  # District
+final_energy[f'Qww_sys_{booster_feedstock}_kWh'] = booster_fuel_kWh  # Booster fuel
+```
+
+### ✅ Decision 4: Solar Thermal - Skip for Phase 1
+**Decision:** Not implemented in Phase 1
+**Rationale:** Complex calculation, low priority
+**Future:** Can add in Phase 2 by reading from solar-collector script results
+
+### ✅ Decision 5: Multiple Components - Use Primary Only
+**Decision:** Only use `primary_components` from ASSEMBLIES
+**Rationale:** Simplifies Phase 1, covers 95% of use cases
+**Ignored:**
+- `secondary_components` (e.g., backup boilers, pumps)
+- `tertiary_components` (e.g., cooling towers, heat rejection)
+
+**Future:** Phase 2 can add secondary/tertiary handling for complex systems (CHP, etc.)
 
 ---
 
 ## 11. Summary
 
 ### Advantages of This Approach
-✅ **Reuses optimization-new equations** - Consistent with existing system
+✅ **Reuses optimization-new equations** - Same component database and efficiency models
+✅ **Constant efficiency** - Matches CEA database design, simple and fast
 ✅ **Supports what-if scenarios** - Test different supply assemblies without modifying supply.csv
 ✅ **Matches emissions output format** - Easy integration with LCA module
 ✅ **Hourly resolution** - Enables time-dependent analysis
 ✅ **Network connectivity aware** - Respects physical constraints
+✅ **Booster systems supported** - Handles district + booster correctly
+
+### Design Decisions (Finalized 2026-02-02)
+1. ✅ **Constant efficiency** - Use COMPONENTS database `min_thermal_eff`, no part-load curves
+2. ✅ **District systems** - Require thermal-network simulation results as prerequisite
+3. ✅ **Booster systems** - Separate hs-booster-type and dhw-booster-type parameters (building-scale only)
+4. ✅ **Solar thermal** - Skip for Phase 1
+5. ✅ **Multiple components** - Use only primary_components for Phase 1
+
+### Implementation Phases
+
+**Phase 1: Core Calculation Engine** (Priority: HIGH)
+- [ ] Create `cea/analysis/final_energy/calculation.py`
+- [ ] Implement `calculate_building_final_energy()` function
+- [ ] Support constant efficiency calculation (hourly loop)
+- [ ] Handle building-scale assemblies → components → feedstock mapping
+- [ ] Handle district-scale systems (read from thermal-network)
+- [ ] Handle booster systems (read from booster substation files)
+- [ ] Generate output CSV with 8760 rows + carrier columns
+
+**Phase 2: Production Mode** (Priority: HIGH)
+- [ ] Create `cea/analysis/final_energy/production_mode.py`
+- [ ] Implement strict validation (supply.csv vs network connectivity)
+- [ ] Raise clear errors on mismatches
+- [ ] Save to `baseline/` folder
+
+**Phase 3: What-If Mode** (Priority: HIGH)
+- [ ] Create `cea/analysis/final_energy/whatif_mode.py`
+- [ ] Implement supply-type-* parameter usage
+- [ ] Auto-select building/district scale based on connectivity
+- [ ] Save to `whatif-{name}/` folder
+
+**Phase 4: Testing & Documentation** (Priority: MEDIUM)
+- [ ] Unit tests for efficiency calculations
+- [ ] Integration tests for production/what-if modes
+- [ ] Test booster system calculations
+- [ ] User guide for what-if scenarios
+
+**Phase 5: Future Enhancements** (Priority: LOW)
+- [ ] Part-load efficiency curves (if needed)
+- [ ] Solar thermal calculation
+- [ ] Secondary/tertiary component handling
+- [ ] CHP and complex system support
 
 ### Next Steps
-1. **Review this plan** - Discuss open questions
-2. **Implement Phase 1** - Core calculation engine with constant efficiency
-3. **Add tests** - Unit tests for components, integration tests for modes
-4. **Implement Phase 2** - Production mode with validation
-5. **Implement Phase 3** - What-if mode with parameter overrides
-6. **Add documentation** - User guide for what-if scenarios
+1. ✅ **Plan finalized** - All design decisions made
+2. **Start Phase 1** - Core calculation engine
+3. **Test with real scenarios** - Use booster data from `/Users/zshi/Library/CloudStorage/Dropbox/CEA2/batch_gh/_ZRH_ copy/`
+4. **Iterate based on results** - Refine as needed
 
 ---
 
