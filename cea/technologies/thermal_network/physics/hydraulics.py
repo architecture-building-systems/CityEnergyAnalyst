@@ -1,4 +1,3 @@
-import math
 import numpy as np
 from cea.constants import P_WATER_KGPERM3
 
@@ -74,11 +73,11 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     if loop_type == 1:  # dp/dm partial derivative of edge pressure loss equation
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
-                math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
+                np.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
     else:
         # [STANDARD: ISO 5167] Darcy-Weisbach equation for pressure loss
         pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-                math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
+                np.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
     return pressure_loss_edge_Pa
 
 
@@ -277,7 +276,7 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
         )
 
     # Validate denominator for Reynolds number calculation
-    denominator = math.pi * kinematic_viscosity_m2s * pipe_diameter_m
+    denominator = np.pi * kinematic_viscosity_m2s * pipe_diameter_m
 
     # Check for invalid denominator values
     if np.any(np.abs(denominator) < 1e-15):

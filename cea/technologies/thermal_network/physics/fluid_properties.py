@@ -1,4 +1,3 @@
-import math
 import numpy as np
 
 
@@ -49,7 +48,7 @@ def calc_kinematic_viscosity(temperature):
     # check if list type, this can cause problems
     if isinstance(temperature, list):
         temperature = np.array(temperature)
-    return 2.652623e-8 * math.e ** (557.5447 * (temperature - 140) ** -1)
+    return 2.652623e-8 * np.exp(557.5447 * (temperature - 140) ** -1)
 
 
 def calc_thermal_conductivity(temperature):
