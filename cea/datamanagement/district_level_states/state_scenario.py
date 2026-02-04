@@ -487,6 +487,7 @@ class DistrictEventTimeline:
         *,
         simulation_mode: Literal["pending", "all"],
         workflow: list[dict[str, Any]],
+        state_workflows: dict[int, list[dict[str, Any]]] | None = None,
     ) -> None:
         """Simulate state-in-time scenarios.
 
@@ -497,6 +498,12 @@ class DistrictEventTimeline:
         This updates both:
         - per-state signature files (`.district_timeline_signature.json`)
         - the district timeline log (`district_timeline_log.yml`) with timestamps / workflow metadata.
+
+        Args:
+            simulation_mode: "pending" or "all"
+            workflow: Default workflow to use for all states (fallback)
+            state_workflows: Optional dict mapping year -> custom workflow for that state
+                           If provided, uses custom workflow for each year; otherwise uses default workflow
         """
         if simulation_mode not in {"pending", "all"}:
             raise ValueError(
@@ -541,14 +548,20 @@ class DistrictEventTimeline:
                     )
                 )
 
+            # Use state-specific workflow if provided, otherwise use default
+            year_workflow = workflow
+            if state_workflows and int(year) in state_workflows:
+                year_workflow = state_workflows[int(year)]
+                print(f"Using custom workflow for state {year}")
+
             print(f"Simulating state-in-time scenario for year {year}...")
             DistrictStateYear(
                 timeline_name=self.timeline_name, year=int(year), modifications={}, main_locator=self.main_locator
-            ).simulate(self.config, workflow=workflow)
+            ).simulate(self.config, workflow=year_workflow)
 
             # Log metadata in the YAML log.
             entry = self.log_data.get(int(year), {}) or {}
-            entry["simulation_workflow"] = workflow
+            entry["simulation_workflow"] = year_workflow
             entry["latest_simulated_at"] = str(pd.Timestamp.now())
             self.log_data[int(year)] = entry
 
