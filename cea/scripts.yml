@@ -285,7 +285,8 @@ Life Cycle Analysis:
     interfaces: [ cli, dashboard ]
     module: cea.analysis.final_energy.main
     parameters: [ 'general:scenario',
-                  'final-energy'
+                  'final-energy',
+                  'solar-technology'
     ]
     input-files:
       - [ get_total_demand ]

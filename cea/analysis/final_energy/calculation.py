@@ -187,7 +187,22 @@ def calculate_building_final_energy(
             except FileNotFoundError:
                 pass
 
-    # Step 5: Add metadata columns
+    # Step 5: Add solar energy generation (broken down by facade)
+    # Only non-zero columns are included to save space
+    try:
+        solar_generation = calculate_solar_generation(building_name, config, locator)
+
+        # Add all columns from solar_generation (only non-zero facades included)
+        for col_name, col_data in solar_generation.items():
+            final_energy[col_name] = col_data
+
+    except ValueError as e:
+        # Solar potential files not found - re-raise with context
+        raise ValueError(
+            f"Error calculating solar generation for building {building_name}:\n{str(e)}"
+        )
+
+    # Step 6: Add metadata columns
     final_energy['scale'] = 'BUILDING'
     case_num, case_desc = determine_case(supply_config)
     final_energy['case'] = case_num
@@ -1552,3 +1567,218 @@ def create_final_energy_breakdown(
     breakdown_df = pd.DataFrame(breakdown_rows)
 
     return breakdown_df
+
+
+def parse_solar_panel_configuration(config: cea.config.Configuration) -> Dict[str, str]:
+    """
+    Parse solar panel configuration from config parameters.
+
+    Returns dict mapping facade name to technology code:
+    {
+        'roof': 'PV_PV1' or 'PVT_PV1_FP' or 'SC_FP' or None,
+        'wall_north': ...,
+        'wall_south': ...,
+        'wall_east': ...,
+        'wall_west': ...
+    }
+
+    :param config: Configuration instance
+    :return: Dict of facade -> technology code (or None if no panels)
+    """
+    facade_params = {
+        'roof': 'panels_on_roof',
+        'wall_north': 'panels_on_wall_north',
+        'wall_south': 'panels_on_wall_south',
+        'wall_east': 'panels_on_wall_east',
+        'wall_west': 'panels_on_wall_west',
+    }
+
+    configuration = {}
+    for facade, param_name in facade_params.items():
+        tech_code = getattr(config.solar_technology, param_name, None)
+
+        # Check if technology is installed
+        if tech_code and tech_code != 'No solar technology installed':
+            configuration[facade] = tech_code
+        else:
+            configuration[facade] = None
+
+    return configuration
+
+
+def get_solar_script_name(tech_code: str) -> str:
+    """
+    Map solar technology code to the script name for error messages.
+
+    :param tech_code: Technology code (e.g., 'PV_PV1', 'PVT_PV1_FP', 'SC_FP')
+    :return: Script name (e.g., 'photovoltaic', 'photovoltaic-thermal', 'solar-collector')
+    """
+    if tech_code.startswith('PV_'):
+        return 'photovoltaic'
+    elif tech_code.startswith('PVT_'):
+        return 'photovoltaic-thermal'
+    elif tech_code.startswith('SC_'):
+        return 'solar-collector'
+    else:
+        return 'solar'
+
+
+def read_solar_generation_file(
+    building_name: str,
+    tech_code: str,
+    locator: cea.inputlocator.InputLocator
+) -> pd.DataFrame:
+    """
+    Read solar generation results file for a given building and technology code.
+
+    Uses InputLocator methods:
+    - locator.PV_results(building, panel_type)
+    - locator.PVT_results(building, pv_panel_type, sc_panel_type)
+    - locator.SC_results(building, panel_type)
+
+    :param building_name: Building name (e.g., 'B1001')
+    :param tech_code: Technology code (e.g., 'PV_PV1', 'PVT_PV1_FP', 'SC_FP')
+    :param locator: InputLocator instance
+    :return: DataFrame with generation data (8760 rows, columns for each surface)
+    :raises ValueError: If solar potential file not found
+    """
+    # Parse technology code
+    parts = tech_code.split('_')
+    tech_type = parts[0]  # 'PV', 'PVT', or 'SC'
+
+    if tech_type == 'PV':
+        # PV_PV1 -> locator.PV_results('B1001', 'PV1')
+        panel_type = parts[1]  # 'PV1'
+        solar_file = locator.PV_results(building_name, panel_type)
+    elif tech_type == 'PVT':
+        # PVT_PV1_FP -> locator.PVT_results('B1001', 'PV1', 'FP')
+        pv_panel_type = parts[1]  # 'PV1'
+        sc_panel_type = parts[2]  # 'FP'
+        solar_file = locator.PVT_results(building_name, pv_panel_type, sc_panel_type)
+    elif tech_type == 'SC':
+        # SC_FP -> locator.SC_results('B1001', 'FP')
+        panel_type = parts[1]  # 'FP'
+        solar_file = locator.SC_results(building_name, panel_type)
+    else:
+        raise ValueError(f"Unknown solar technology type: {tech_type}")
+
+    if not os.path.exists(solar_file):
+        script_name = get_solar_script_name(tech_code)
+        raise ValueError(
+            f"Solar potential results not found for technology '{tech_code}' and building '{building_name}'.\n"
+            f"File expected: {solar_file}\n"
+            f"Please run 'cea {script_name}' script first with this panel type."
+        )
+
+    df = pd.read_csv(solar_file)
+    return df
+
+
+def calculate_solar_generation(
+    building_name: str,
+    config: cea.config.Configuration,
+    locator: cea.inputlocator.InputLocator
+) -> Dict[str, pd.Series]:
+    """
+    Calculate hourly solar energy generation for a building from all configured facades.
+
+    Returns generation broken down by facade plus totals (only non-zero columns):
+    - PV_roof_kWh, PV_wall_north_kWh, etc. (electricity from PV or PVT)
+    - SOLAR_roof_kWh, SOLAR_wall_north_kWh, etc. (heat from SC or PVT)
+    - PV_total_kWh, SOLAR_total_kWh (totals, if any generation exists)
+
+    All values are positive kWh (8760 hourly rows).
+    Only columns with non-zero generation are included to save space.
+
+    Column naming from solar potential files:
+    - PV: PV_roofs_top_E_kWh, PV_walls_north_E_kWh, etc.
+    - PVT: PVT_FP_roofs_top_E_kWh (electrical), PVT_FP_roofs_top_Q_kWh (thermal)
+    - SC: SC_FP_roofs_top_Q_kWh (thermal)
+
+    :param building_name: Building name (e.g., 'B1001')
+    :param config: Configuration instance
+    :param locator: InputLocator instance
+    :return: Dict with keys like 'PV_roof_kWh', 'SOLAR_roof_kWh', 'PV_total_kWh', etc.
+    """
+    # Parse panel configuration
+    panel_config = parse_solar_panel_configuration(config)
+
+    # Initialize generation dict - only add columns that have actual generation
+    generation = {}
+    pv_total = pd.Series([0.0] * HOURS_IN_YEAR)
+    solar_total = pd.Series([0.0] * HOURS_IN_YEAR)
+
+    # Process each facade
+    for facade, tech_code in panel_config.items():
+        if tech_code is None:
+            continue
+
+        # Read solar generation file (already per-building)
+        solar_df = read_solar_generation_file(building_name, tech_code, locator)
+
+        # Parse technology code
+        parts = tech_code.split('_')
+        tech_type = parts[0]  # 'PV', 'PVT', or 'SC'
+
+        # Map facade name to surface name in columns
+        if facade == 'roof':
+            surface_name = 'roofs_top'
+        elif facade == 'wall_north':
+            surface_name = 'walls_north'
+        elif facade == 'wall_south':
+            surface_name = 'walls_south'
+        elif facade == 'wall_east':
+            surface_name = 'walls_east'
+        elif facade == 'wall_west':
+            surface_name = 'walls_west'
+        else:
+            continue
+
+        # Construct column names based on technology type and actual file format
+        if tech_type == 'PV':
+            # PV: PV_roofs_top_E_kWh
+            e_col = f'PV_{surface_name}_E_kWh'
+            if e_col in solar_df.columns:
+                pv_gen = solar_df[e_col].values
+                if pv_gen.sum() > 0:  # Only add if non-zero
+                    generation[f'PV_{facade}_kWh'] = pd.Series(pv_gen)
+                    pv_total += pv_gen
+
+        elif tech_type == 'PVT':
+            # PVT: PVT_FP_roofs_top_E_kWh and PVT_FP_roofs_top_Q_kWh
+            # Extract collector type (FP, ET, etc.) - it's the part after PV panel type
+            collector_type = parts[2] if len(parts) > 2 else parts[1]
+            e_col = f'PVT_{collector_type}_{surface_name}_E_kWh'
+            q_col = f'PVT_{collector_type}_{surface_name}_Q_kWh'
+
+            if e_col in solar_df.columns:
+                pv_gen = solar_df[e_col].values
+                if pv_gen.sum() > 0:
+                    generation[f'PV_{facade}_kWh'] = pd.Series(pv_gen)
+                    pv_total += pv_gen
+
+            if q_col in solar_df.columns:
+                solar_gen = solar_df[q_col].values
+                if solar_gen.sum() > 0:
+                    generation[f'SOLAR_{facade}_kWh'] = pd.Series(solar_gen)
+                    solar_total += solar_gen
+
+        elif tech_type == 'SC':
+            # SC: SC_FP_roofs_top_Q_kWh
+            # Extract collector type
+            collector_type = parts[1]
+            q_col = f'SC_{collector_type}_{surface_name}_Q_kWh'
+
+            if q_col in solar_df.columns:
+                solar_gen = solar_df[q_col].values
+                if solar_gen.sum() > 0:
+                    generation[f'SOLAR_{facade}_kWh'] = pd.Series(solar_gen)
+                    solar_total += solar_gen
+
+    # Add totals only if there's any generation
+    if pv_total.sum() > 0:
+        generation['PV_total_kWh'] = pv_total
+    if solar_total.sum() > 0:
+        generation['SOLAR_total_kWh'] = solar_total
+
+    return generation
