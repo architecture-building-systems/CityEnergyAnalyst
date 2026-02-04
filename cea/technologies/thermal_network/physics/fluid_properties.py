@@ -20,7 +20,7 @@ def calc_kinematic_viscosity(temperature):
 
     Returns
     -------
-    ndarray or float
+    ndarray
         Kinematic viscosity [m²/s]
 
     Notes
@@ -44,10 +44,9 @@ def calc_kinematic_viscosity(temperature):
 
     References
     ----------
-    [EngToolbox] Exponential fit to Engineering Toolbox water viscosity data"""
-    # check if list type, this can cause problems
-    if isinstance(temperature, list):
-        temperature = np.array(temperature)
+    [EngToolbox] Exponential fit to Engineering Toolbox water viscosity data
+    """
+    temperature = np.asarray(temperature)
     return 2.652623e-8 * np.exp(557.5447 * (temperature - 140) ** -1)
 
 
@@ -70,7 +69,7 @@ def calc_thermal_conductivity(temperature):
 
     Returns
     -------
-    ndarray or float
+    ndarray
         Thermal conductivity [W/(m·K)]
 
     Notes
@@ -98,5 +97,7 @@ def calc_thermal_conductivity(temperature):
         Chemical Reference Data, 23(3), 385-404.
 
     This reference provides IAPWS-certified data for water thermal conductivity
-    based on extensive experimental measurements."""
+    based on extensive experimental measurements.
+    """
+    temperature = np.asarray(temperature)
     return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
