@@ -14,7 +14,7 @@ from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_P
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
+from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader

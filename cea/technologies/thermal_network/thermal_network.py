@@ -21,7 +21,13 @@ import cea.inputlocator
 import cea.technologies.substation as substation
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
+
+from cea.technologies.thermal_network.physics import (
+    calc_temperature_out_per_pipe,
+    calc_pressure_loss_pipe,
+    calc_nusselt,
+    calc_thermal_conductivity,
+)
 import cea.utilities.parallel
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
@@ -30,7 +36,7 @@ from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
 from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
-from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
+from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
 from cea.utilities import epwreader
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
@@ -1849,45 +1855,10 @@ def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
     return edge_mass_flow, edge_node_df
 
 
-def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, t_edge__k, loop_type):
-    """
-    Calculates the pressure losses throughout a pipe based on the Darcy-Weisbach equation and the Swamee-Jain
-    solution for the Darcy friction factor [Oppelt et al., 2016].
-
-    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
-    :param pipe_length_m: vector containing the length in m of each edge e in the network                     (e x 1)
-    :param mass_flow_rate_kgs: matrix containing the mass flow rate in each edge e at time t                  (t x e)
-    :param t_edge__k: matrix containing the temperature of the water in each edge e at time t                 (t x e)
-    :param loop_type: int indicating if function is called from loop calculation or not, or is derivate is necessary
-                        (1 = derivative of Loop, 2 = branch)
-    :type pipe_diameter_m: ndarray
-    :type pipe_length_m: ndarray
-    :type mass_flow_rate_kgs: ndarray
-    :type t_edge__k: list
-    :type loop_type: binary
-
-    :return pressure_loss_edge: pressure loss through each edge e at each time t                            (t x e)
-    :rtype pressure_loss_edge: ndarray
-
-    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
-    Applied Thermal Engineering, 2016.
-
-    """
-    mass_flow_rate_kgs = np.array(mass_flow_rate_kgs)
-    pipe_length_m = np.array(pipe_length_m)
-    pipe_diameter_m = np.array(pipe_diameter_m)
-    reynolds = calc_reynolds(mass_flow_rate_kgs, t_edge__k, pipe_diameter_m)
-
-    darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
-
-    if loop_type == 1:  # dp/dm partial derivative of edge pressure loss equation
-        pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
-                math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
-    else:
-        # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
-        pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
-                math.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
-    return pressure_loss_edge_Pa
+# [MOVED TO PHYSICS MODULE]
+# calc_pressure_loss_pipe is now defined in cea/technologies/thermal_network/physics/hydraulics.py
+# This function implements ISO 5167 Darcy-Weisbach pressure loss calculations
+# See STANDARDS.md for detailed standards mapping
 
 
 def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return, pressure_loss_substation):
@@ -1900,169 +1871,6 @@ def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_retu
     else:
         pressure_loss_system = np.full(4, 0.0)
     return pressure_loss_system
-
-
-def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
-    """
-    Calculates the Darcy friction factor [Oppelt et al., 2016].
-
-    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
-    :param reynolds: vector containing the reynolds number of flows in each edge in that timestep	      (e x 1)
-    :param pipe_roughness_m: float with pipe roughness
-    :type pipe_diameter_m: ndarray
-    :type reynolds: ndarray
-    :type pipe_roughness_m: float
-
-    :return darcy: calculated darcy friction factor for flow in each edge		(ex1)
-    :rtype darcy: ndarray
-
-    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
-      Applied Thermal Engineering, 2016.
-
-    .. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007). Fundamentals of Heat and Mass Transfer.
-       Fundamentals of Heat and Mass Transfer. https://doi.org/10.1016/j.applthermaleng.2011.03.022
-    """
-
-    darcy = np.zeros(reynolds.size)
-    # necessary to make sure pipe_diameter is 1D vector as input formats can vary
-    if hasattr(pipe_diameter_m[0], '__len__'):
-        pipe_diameter_m = pipe_diameter_m[0]
-    for rey in range(reynolds.size):
-        if reynolds[rey] <= 1:
-            darcy[rey] = 0
-        elif reynolds[rey] <= 2300:
-            # calculate the Darcy-Weisbach friction factor for laminar flow
-            darcy[rey] = 64 / reynolds[rey]
-        elif reynolds[rey] <= 5000:
-            # calculate the Darcy-Weisbach friction factor for transient flow (for pipe roughness of e/D=0.0002,
-            # @low reynolds numbers lines for smooth pipe nearl identical in Moody Diagram) so smooth pipe approximation used
-            darcy[rey] = 0.316 * reynolds[rey] ** -0.25
-        else:
-            # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=10E-6 - 0.05
-            # Validate logarithm argument
-            log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9
-            if not np.isfinite(log_arg) or log_arg <= 0:
-                raise ValueError(
-                    f"Invalid argument for logarithm in Swamee-Jain friction factor calculation!\n"
-                    f"Logarithm argument: {log_arg}\n"
-                    f"Pipe roughness: {pipe_roughness_m:.6e} m\n"
-                    f"Pipe diameter: {pipe_diameter_m[rey]:.6f} m\n"
-                    f"Reynolds number: {reynolds[rey]:.2f}\n"
-                    f"Darcy friction factor: {darcy[rey] if rey < len(darcy) else 'N/A'}\n\n"
-                    f"For valid Swamee-Jain calculation:\n"
-                    f"- Pipe roughness must be > 0 (typical: 1e-6 to 0.05 m)\n"
-                    f"- Pipe diameter must be > 0\n"
-                    f"- Reynolds number should be 5000 - 1e8\n"
-                    f"- Values must be finite (not NaN or inf)\n\n"
-                    f"**Check the pipe properties and flow conditions."
-                )
-
-            darcy[rey] = 1.325 * np.log(log_arg) ** (-2)
-
-    return darcy
-
-
-def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
-    """
-    Calculates the reynolds number of the internal flow inside the pipes.
-
-    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
-    :param mass_flow_rate_kgs: matrix containing the mass flow rate in each edge e at time t                    (t x e)
-    :param temperature__k: matrix containing the temperature of the water in each edge e at time t             (t x e)
-    :type pipe_diameter_m: ndarray
-    :type mass_flow_rate_kgs: ndarray
-    :type temperature__k: list
-    """
-    kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
-
-    # Validate inputs before calculation
-    if np.any(pipe_diameter_m <= 0):
-        min_diameter = np.min(pipe_diameter_m)
-        raise ValueError(
-            f"Invalid pipe diameter for Reynolds number calculation!\n"
-            f"Minimum pipe diameter: {min_diameter:.6e} m\n\n"
-            f"Pipe diameter must be > 0 (typical: 0.01-1.0 m)\n\n"
-            f"**Check pipe diameter values in the thermal network."
-        )
-
-    if np.any(kinematic_viscosity_m2s <= 0):
-        min_viscosity = np.min(kinematic_viscosity_m2s)
-        raise ValueError(
-            f"Invalid kinematic viscosity for Reynolds number calculation!\n"
-            f"Minimum kinematic viscosity: {min_viscosity:.6e} m²/s\n\n"
-            f"Kinematic viscosity must be > 0 (typical: 1e-6 m²/s for water)\n\n"
-            f"**Check temperature values (used for viscosity calculation)."
-        )
-
-    # Validate denominator for Reynolds number calculation
-    denominator = math.pi * kinematic_viscosity_m2s * pipe_diameter_m
-
-    # Check for invalid denominator values
-    if np.any(np.abs(denominator) < 1e-15):
-        min_denominator = np.min(np.abs(denominator))
-        raise ValueError(
-            f"Invalid configuration for Reynolds number calculation!\n"
-            f"Denominator (π * ν * D): minimum absolute value = {min_denominator:.6e}\n"
-            f"Kinematic viscosity (ν): {np.mean(kinematic_viscosity_m2s):.6e} m²/s (mean)\n"
-            f"Pipe diameter (D): {np.mean(pipe_diameter_m):.6f} m (mean)\n\n"
-            f"For valid Reynolds calculation:\n"
-            f"- Kinematic viscosity must be > 0 (typical: 1e-6 m²/s for water)\n"
-            f"- Pipe diameter must be > 0 (typical: 0.01-1.0 m)\n\n"
-            f"**Check:\n"
-            f"  - Temperature values (used for viscosity calculation)\n"
-            f"  - Pipe diameter values in the thermal network"
-        )
-
-    reynolds = np.nan_to_num(
-        4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / denominator)
-    # necessary if statement to make sure output is an array type, as input formats of files can vary
-    if hasattr(reynolds[0], '__len__'):
-        reynolds = reynolds[0]
-    return reynolds
-
-
-def calc_prandtl(temperature__k):
-    """
-    Calculates the prandtl number of the internal flow inside the pipes.
-
-    :param temperature__k: matrix containing the temperature of the water in each edge e at time t             (t x e)
-    :type temperature__k: list
-    """
-    kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
-    thermal_conductivity = calc_thermal_conductivity(temperature__k)  # W/(m*K)
-
-    return np.nan_to_num(
-        kinematic_viscosity_m2s * P_WATER_KGPERM3 * HEAT_CAPACITY_OF_WATER_JPERKGK / thermal_conductivity)
-
-
-def calc_kinematic_viscosity(temperature):
-    """
-    Calculates the kinematic viscosity of water as a function of temperature based on a simple fit from data from the
-    engineering toolbox.
-
-    :param temperature: in K
-    :return: kinematic viscosity in m2/s
-    """
-    # check if list type, this can cause problems
-    if isinstance(temperature, list):
-        temperature = np.array(temperature)
-    return 2.652623e-8 * math.e ** (557.5447 * (temperature - 140) ** -1)
-
-
-def calc_thermal_conductivity(temperature):
-    """
-    Calculates the thermal conductivity of water as a function of temperature based on a fit proposed in:
-
-    :param temperature: in K
-    :return: thermal conductivity in W/(m*K)
-
-    ... Standard Reference Data for the Thermal Conductivity of Water
-    Ramires, Nagasaka, et al.
-    1994
-
-    """
-
-    return 0.6065 * (-1.48445 + 4.12292 * temperature / 298.15 - 1.63866 * (temperature / 298.15) ** 2)
 
 
 def calc_max_edge_flowrate(thermal_network, processes=1):
@@ -3735,56 +3543,9 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     return k_all
 
 
-def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_type):
-    """
-    Calculates the nusselt number of the internal flow inside the pipes.
-
-    :param pipe_diameter_m: vector containing the pipe diameter in m for each edge e in the network           (e x 1)
-    :param mass_flow_rate_kgs: matrix containing the mass flow rate in each edge e at time t                    (t x e)
-    :param temperature_K: matrix containing the temperature of the water in each edge e at time t             (t x e)
-    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
-                         network
-    :type pipe_diameter_m: ndarray
-    :type mass_flow_rate_kgs: ndarray
-    :type temperature_K: list
-    :type network_type: str
-
-    :return nusselt: calculated nusselt number for flow in each edge		(ex1)
-    :rtype nusselt: ndarray
-
-	.. Incropera, F. P., DeWitt, D. P., Bergman, T. L., & Lavine, A. S. (2007).
-	    Fundamentals of Heat and Mass Transfer. Fundamentals of Heat and Mass Transfer.
-	    https://doi.org/10.1016/j.applthermaleng.2011.03.022
-    """
-
-    # calculate variable values necessary for nusselt number evaluation
-    reynolds = calc_reynolds(mass_flow_rate_kgs, temperature_K, pipe_diameter_m)
-    prandtl = calc_prandtl(temperature_K)
-    darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
-
-    nusselt = np.zeros(reynolds.size)
-    for rey in range(reynolds.size):
-        if reynolds[rey] <= 1:
-            # calculate nusselt number only if mass is flowing
-            nusselt[rey] = 0
-        elif reynolds[rey] <= 2300:
-            # calculate the Nusselt number for laminar flow
-            nusselt[rey] = 3.66
-        elif reynolds[rey] <= 10000:
-            # calculate the Nusselt for transient flow
-            nusselt[rey] = darcy[rey] / 8 * (reynolds[rey] - 1000) * prandtl[rey] / (
-                    1 + 12.7 * (darcy[rey] / 8) ** 0.5 * (prandtl[rey] ** 0.67 - 1))
-        else:
-            # calculate the Nusselt number for turbulent flow
-            # identify if heating or cooling case
-            if network_type == 'DH':  # warm fluid, so ground is cooling fluid in pipe, cooling case from view of thermodynamic flow
-                nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] ** 0.3
-            else:
-                # cold fluid, so ground is heating fluid in pipe, heating case from view of thermodynamic flow
-                nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] ** 0.4
-
-    return nusselt
-
+# [MOVED TO PHYSICS MODULE]
+# calc_nusselt is now defined in cea/technologies/thermal_network/physics/
+# See STANDARDS.md for detailed standards mapping
 
 def calc_thermal_loss_system(thermal_loss_pipe_supply, thermal_loss_pipe_return):
     thermal_loss_system = np.full(3, np.nan)
