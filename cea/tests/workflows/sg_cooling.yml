@@ -1,7 +1,6 @@
 - config: default
   "general:multiprocessing": False
   "general:project": "${CEA_general_project}/../sg_cooling/reference-case-open"
-  "radiation:daysim-bin-directory": "${CEA_radiation_daysim-bin-directory}"
 - script: extract-reference-case
   parameters:
     destination: "{general:project}/.."
@@ -41,6 +40,7 @@
 - script: network-layout
   parameters:
     network-name: baseline
+    itemised-dh-services: [domestic_hot_water]
     consider-only-buildings-with-demand: off
 - script: thermal-network
   parameters:
@@ -50,17 +50,8 @@
 - script: thermal-network
   parameters:
     network-model: simplified
-- script: decentralized
 - script: optimization-new
   parameters:
     network-type: DC
     ga-number-of-generations: 2
     ga-population-size: 5
-#- script: multi-criteria-analysis
-#  parameters:
-#    generation: 2
-#- script: run-all-plots
-#  parameters:
-##    plant-node: NODE41
-#    network-type: DC
-#    network-name: ""

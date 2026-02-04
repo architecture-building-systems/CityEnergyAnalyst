@@ -20,8 +20,7 @@ The repository of cea, which can be opened from Pycharm contains the next set of
   - tests
 
 - docs
-- bin
-- euler
+- scripts
 - setup
 - tests
 
@@ -91,8 +90,18 @@ docs
 
 Contains the developers manual of the CEA.
 
-euler
-~~~~~
+scripts
+~~~~~~~
 
-Contains source code needed to connect to the cluster of 50K cores called Euler at ETH Zurich
-(Only researchers at ETH Zurich can use this).
+Contains utility scripts for running CEA on external systems.
+
+scripts/euler
+^^^^^^^^^^^^^
+
+Contains scripts for running the CEA sensitivity analysis on the Euler HPC cluster at ETH Zurich
+(only researchers at ETH Zurich can use this).
+
+scripts/cleanup
+^^^^^^^^^^^^^^^
+
+Contains scripts for repository maintenance tasks.

@@ -188,7 +188,7 @@ class MapLayer(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def file_requirements(cls) -> List[FileRequirement]:
-        """Define file requirements for the layer"""
+        """Define file requirements for the layer, this will be used to check for missing input files and for caching"""
 
     @abc.abstractmethod
     def generate_data(self, parameters: dict) -> dict:

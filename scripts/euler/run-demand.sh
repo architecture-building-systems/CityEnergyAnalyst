@@ -62,5 +62,5 @@ for ((i=0;i<=SAMPLES_COUNT;i+=NUM_SIMULATIONS)) do
     export WEATHER
     export PYTHONUNBUFFERED=1
     echo "Submitting batch starting at sample $i with size $NUM_SIMULATIONS"
-    bsub sh $HOME/CityEnergyAnalyst/euler/run-demand-bsub.sh
+    bsub sh $HOME/CityEnergyAnalyst/scripts/euler/run-demand-bsub.sh
 done

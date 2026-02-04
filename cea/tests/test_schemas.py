@@ -175,6 +175,8 @@ class TestSchemas(unittest.TestCase):
     def test_each_folder_unique(self):
         locator = cea.inputlocator.ReferenceCaseOpenLocator()
         folders = {}  # map path -> lm
+
+        errors = []
         for attrib in dir(locator):
             if attrib.endswith("_folder") and not attrib.startswith("_"):
                 method = getattr(locator, attrib)
@@ -192,6 +194,8 @@ class TestSchemas(unittest.TestCase):
                     "plot_cea_feature": "demand",
                     "year_of_state": 2001,
                     "timeline_name": "test_timeline",
+                    "plan_name": "default",
+                    "phase": "timeline",
                 }
                 # Get actual parameter names from function signature
                 sig = inspect.signature(method)
@@ -199,21 +203,28 @@ class TestSchemas(unittest.TestCase):
                 parameters = {p: v for p, v in parameters.items() if p in param_names}
                 try:
                     folder = method(**parameters)
-                except TypeError as e:
-                    raise ValueError(f"Parameters found for {attrib}: {param_names}."
-                                     f"Add them to the test.") from e
+                except TypeError:
+                    errors.append(f"Parameters found for {attrib}: {param_names}. "
+                                  f"Missing {set(param_names) - set(parameters.keys())}. "
+                                  f"Add them to the test.")
+                    continue
+
                 if folder is None:
                     warnings.warn(f"{attrib} returned None, skipping...")
                     continue
                 folder = os.path.normcase(os.path.normpath(os.path.abspath(folder)))
                 if folder in folders:
-                    self.fail(
+                    errors.append(
                         f"Duplicate folder detected:\n"
                         f"  Folder: {folder}\n"
                         f"  First defined by: {folders[folder]}\n"
                         f"  Also defined by: {attrib}"
                     )
                 folders[folder] = attrib
+        
+        if errors:
+            error_msg = "Folder uniqueness test failed:\n" + "\n".join(errors)
+            self.fail(error_msg)
 
     def test_scripts_use_underscores_not_hyphen(self):
         schemas = cea.schemas.schemas(plugins=[])

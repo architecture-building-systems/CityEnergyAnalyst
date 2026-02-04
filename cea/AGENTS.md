@@ -6,6 +6,16 @@
 - `Parameter.encode(value: Any) → str` - Validate value before saving (strict)
 - `ChoiceParameter._choices → list[str]` - Available options (can be dynamic via `@property`)
 
+## After Modifying config.py
+
+**IMPORTANT**: After ANY changes to `config.py`, you MUST regenerate the type stub:
+
+```bash
+pixi run python cea/utilities/config_type_generator.py
+```
+
+This updates `config.pyi` with correct type hints for IDE autocompletion and type checking.
+
 ## Key Pattern: decode() vs encode()
 
 ### ✅ DO: Separate parsing from validation
