@@ -271,7 +271,7 @@ Life Cycle Analysis:
     label: Energy by Carrier
     short_description: Calculate final energy consumption by carrier type
     description: |
-      This feature calculates final energy consumption for each building by energy carrier.**Final energy** is the energy delivered to the building meter (electricity, natural gas, district heating/cooling, etc.),
+      This feature calculates final energy consumption for each building by energy carrier. **Final energy** is the energy delivered to the building meter (electricity, natural gas, district heating/cooling, etc.),
       accounting for supply system conversion efficiencies.
 
       **Process**:
