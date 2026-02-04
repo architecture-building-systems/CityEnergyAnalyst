@@ -2,6 +2,9 @@ import math
 import numpy as np
 from cea.constants import P_WATER_KGPERM3
 
+from .fluid_properties import calc_kinematic_viscosity
+from cea.technologies.constants import ROUGHNESS
+
 
 def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, t_edge__k, loop_type):
     """
@@ -61,8 +64,6 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     The loop_type parameter allows this function to be used both in:
     1. Direct pressure loss calculation for network branches
     2. Iterative network solving using the gradient method (Todini & Pilati, 1987)"""
-    from .hydraulics import calc_reynolds, calc_darcy
-    from cea.technologies.constants import ROUGHNESS
 
     mass_flow_rate_kgs = np.array(mass_flow_rate_kgs)
     pipe_length_m = np.array(pipe_length_m)
@@ -253,7 +254,6 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
         - Temperature: 273-413 K (0-140°C for liquid water)
         - Pipe diameter: 0.01-1.0 m (typical district heating range)
         - Mass flow rate: ≥ 0 kg/s"""
-    from .fluid_properties import calc_kinematic_viscosity
 
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
 

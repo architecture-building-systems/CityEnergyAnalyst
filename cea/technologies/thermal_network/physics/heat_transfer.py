@@ -1,6 +1,10 @@
 import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 
+from .hydraulics import calc_reynolds, calc_darcy
+from .fluid_properties import calc_kinematic_viscosity, calc_thermal_conductivity
+from cea.technologies.constants import ROUGHNESS
+
 
 def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_type):
     """
@@ -67,9 +71,6 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     ----------
     [Incropera2007] Section 8.4: Internal flow heat transfer correlations
     [VDI] VDI Heat Atlas, Section G1: Heat transfer in pipe flow"""
-    from .hydraulics import calc_reynolds, calc_darcy
-    from .heat_transfer import calc_prandtl
-    from cea.technologies.constants import ROUGHNESS
 
     # calculate variable values necessary for nusselt number evaluation
     reynolds = calc_reynolds(mass_flow_rate_kgs, temperature_K, pipe_diameter_m)
@@ -146,7 +147,6 @@ def calc_prandtl(temperature__k):
     References
     ----------
     [Incropera2007] Fundamentals of Heat and Mass Transfer, Chapter 8"""
-    from .fluid_properties import calc_kinematic_viscosity, calc_thermal_conductivity
 
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
     thermal_conductivity = calc_thermal_conductivity(temperature__k)  # W/(m*K)
