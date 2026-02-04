@@ -318,7 +318,5 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
 
     reynolds = np.nan_to_num(
         4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / denominator)
-    # necessary if statement to make sure output is an array type, as input formats of files can vary
-    if hasattr(reynolds[0], '__len__'):
-        reynolds = reynolds[0]
+
     return reynolds
