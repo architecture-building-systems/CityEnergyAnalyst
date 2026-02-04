@@ -25,6 +25,7 @@ from cea.optimization.preprocessing.preprocessing_main import get_building_names
 from cea.technologies.thermal_network.physics import (
     calc_temperature_out_per_pipe,
     calc_pressure_loss_pipe,
+    PressureLossMode,
     calc_nusselt,
     calc_thermal_conductivity,
 )
@@ -1431,9 +1432,9 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df, pi
             # calculate value similar to Hardy Cross correction factor
             # uses Hardy Cross method but a different variation for calculating the mass flow
             delta_m_num = calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, m_old, T_edge_K,
-                                                  2) * np.sign(m_old)  # calculate pressure losses
+                                                  PressureLossMode.DIRECT) * np.sign(m_old)  # calculate pressure losses
             delta_m_den = abs(calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, m_old, T_edge_K,
-                                                      1))  # calculate derivatives of pressure losses
+                                                      PressureLossMode.GRADIENT))  # calculate derivatives of pressure losses
             delta_m_num = delta_m_num.transpose()
 
             sum_delta_m_num = np.zeros((1, len(loops)))[0]
@@ -1630,12 +1631,12 @@ def calc_pressure_nodes(t_supply_node__k, t_return_node__k, thermal_network, t):
     # get the pressure drop through each edge
     pipe_length_equivalent = pipe_length * (1 + thermal_network.equivalent_length_factor)
     pressure_loss_pipe_supply__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length_equivalent, edge_mass_flow,
-                                                            temperature_supply_edges__k, 2)
+                                                            temperature_supply_edges__k, PressureLossMode.DIRECT)
     pressure_loss_critical_path_supply_pa, \
     substation_nodes_ix = calculate_pressure_loss_critical_path(pressure_loss_pipe_supply__pa, thermal_network)
     linear_pressure_loss_supply_Paperm = pressure_loss_pipe_supply__pa / pipe_length
     pressure_loss_pipe_return__pa = calc_pressure_loss_pipe(pipe_diameter, pipe_length_equivalent, edge_mass_flow,
-                                                            temperature_return_edges__k, 2)
+                                                            temperature_return_edges__k, PressureLossMode.DIRECT)
     pressure_loss_critical_path_return_pa, _ = calculate_pressure_loss_critical_path(pressure_loss_pipe_return__pa,
                                                                                      thermal_network)
     linear_pressure_loss_return_Paperm = pressure_loss_pipe_return__pa / pipe_length
@@ -1752,7 +1753,7 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
                                                                                           [valve_eq_length],
                                                                                           [node_flow],
                                                                                           [supply_temperature[
-                                                                                               building_index]], 0)
+                                                                                               building_index]], PressureLossMode.DIRECT)
 
                             if node_flow <= MAX_NODE_FLOW:
                                 ## calculate HEX losses
@@ -1795,7 +1796,7 @@ def calc_pressure_loss_substations(thermal_network, supply_temperature, t):
         valve_eq_length = building_diameter * 9  # Pope, J. E. (1997). Rules of thumb for mechanical engineers
         aggregated_valve = aggregated_valve + calc_pressure_loss_pipe([building_diameter], [valve_eq_length],
                                                                       [node_flow],
-                                                                      [supply_temperature[building_index]], 0)
+                                                                      [supply_temperature[building_index]], PressureLossMode.DIRECT)
 
         if node_flow <= MAX_NODE_FLOW:
             ## calculate HEX losses

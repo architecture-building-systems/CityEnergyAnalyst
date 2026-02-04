@@ -1,11 +1,22 @@
 import numpy as np
+from enum import IntEnum
 from cea.constants import P_WATER_KGPERM3
 
 from .fluid_properties import calc_kinematic_viscosity
 from cea.technologies.constants import ROUGHNESS
 
 
-def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, t_edge__k, loop_type):
+class PressureLossMode(IntEnum):
+    """Mode for pressure loss calculation.
+
+    GRADIENT: Calculate pressure gradient ∂P/∂m = f × 16 × m × L / (π² × D⁵ × ρ)
+    DIRECT: Calculate pressure loss ΔP = f × 8 × m² × L / (π² × D⁵ × ρ)
+    """
+    GRADIENT = 1
+    DIRECT = 2
+
+
+def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, t_edge__k, mode):
     """
     Calculate pressure loss in pipe using Darcy-Weisbach equation.
 
@@ -16,10 +27,10 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     Formula
     -------
-    For branch calculation (loop_type = 2):
+    For direct calculation (mode = DIRECT):
         ΔP = f × 8 × m² × L / (π² × D⁵ × ρ)  [Pa]
 
-    For loop derivative (loop_type = 1):
+    For gradient calculation (mode = GRADIENT):
         ∂P/∂m = f × 16 × m × L / (π² × D⁵ × ρ)  [Pa·s/kg]
 
     where:
@@ -39,16 +50,16 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
         Mass flow rate [kg/s] in each edge at time t (t x e)
     t_edge__k : list or ndarray
         Temperature [K] in each edge at time t (t x e)
-    loop_type : int
+    mode : PressureLossMode or int
         Calculation mode:
-        - 1: Partial derivative for loop calculation (∂P/∂m)
-        - 2: Direct pressure loss calculation (ΔP)
+        - PressureLossMode.GRADIENT (1): Partial derivative for loop calculation (∂P/∂m)
+        - PressureLossMode.DIRECT (2): Direct pressure loss calculation (ΔP)
 
     Returns
     -------
     ndarray
         Pressure loss [Pa] through each edge at each time (t x e)
-        Or pressure loss derivative [Pa·s/kg] if loop_type = 1
+        Or pressure loss derivative [Pa·s/kg] if mode = GRADIENT
 
     References
     ----------
@@ -60,7 +71,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     The Darcy-Weisbach equation is the fundamental equation for pressure loss
     in pipe flow and is valid for all flow regimes (laminar, transition, turbulent).
 
-    The loop_type parameter allows this function to be used both in:
+    The mode parameter allows this function to be used both in:
     1. Direct pressure loss calculation for network branches
     2. Iterative network solving using the gradient method (Todini & Pilati, 1987)
     """
@@ -72,11 +83,12 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
 
-    if loop_type == 1:  # dp/dm partial derivative of edge pressure loss equation
+    if mode == PressureLossMode.GRADIENT:
+        # Partial derivative ∂P/∂m for Hardy Cross method
         pressure_loss_edge_Pa = darcy * 16 * mass_flow_rate_kgs * pipe_length_m / (
                 np.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
     else:
-        # [STANDARD: ISO 5167] Darcy-Weisbach equation for pressure loss
+        # [STANDARD: ISO 5167] Darcy-Weisbach equation for direct pressure loss
         pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (
                 np.pi ** 2 * pipe_diameter_m ** 5 * P_WATER_KGPERM3)
     return pressure_loss_edge_Pa
