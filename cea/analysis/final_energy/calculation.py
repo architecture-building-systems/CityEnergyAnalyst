@@ -1038,6 +1038,7 @@ def determine_case(supply_config: Dict) -> Tuple[float, str]:
     4.01: DC + booster for space heating
     4.02: DC + booster for hot water
     4.03: DC + booster for both
+    5: District plant (energy producer)
 
     :param supply_config: Supply configuration dict
     :return: (case_number, case_description)
@@ -1288,9 +1289,38 @@ def aggregate_buildings_summary(
         # Get plant metadata
         network_name = df['network_name'].iloc[0] if 'network_name' in df.columns else None
 
+        # Get plant coordinates from network nodes.shp
+        x_coord = None
+        y_coord = None
+        if network_name:
+            try:
+                nodes_file = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+                if os.path.exists(nodes_file):
+                    nodes_gdf = gpd.read_file(nodes_file)
+                    plant_node = nodes_gdf[nodes_gdf['name'] == plant_name]
+                    if not plant_node.empty:
+                        geom = plant_node.iloc[0]['geometry']
+                        x_coord = geom.x
+                        y_coord = geom.y
+            except Exception:
+                pass  # Coordinates not critical, can be None
+
         # Sum thermal load
         thermal_load_MWh = df['thermal_load_kWh'].sum() / 1000.0 if 'thermal_load_kWh' in df.columns else 0.0
         pumping_MWh = df['pumping_load_kWh'].sum() / 1000.0 if 'pumping_load_kWh' in df.columns else 0.0
+
+        # Calculate peak demand (thermal + pumping)
+        thermal_load_kW = df['thermal_load_kWh'] if 'thermal_load_kWh' in df.columns else pd.Series([0] * len(df))
+        pumping_load_kW = df['pumping_load_kWh'] if 'pumping_load_kWh' in df.columns else pd.Series([0] * len(df))
+        total_load_kW = thermal_load_kW + pumping_load_kW
+
+        if len(total_load_kW) > 0 and total_load_kW.max() > 0:
+            peak_idx = total_load_kW.idxmax()
+            peak_demand_kW = total_load_kW.iloc[peak_idx]
+            peak_datetime = df.loc[peak_idx, 'date'] if 'date' in df.columns else None
+        else:
+            peak_demand_kW = 0.0
+            peak_datetime = None
 
         # Sum carrier columns by type
         carrier_totals = {}
@@ -1312,11 +1342,11 @@ def aggregate_buildings_summary(
         row = {
             'name': plant_name,
             'type': 'plant',
-            'GFA_m2': None,
-            'x_coord': None,
-            'y_coord': None,
+            'GFA_m2': 0,  # Not applicable for plants
+            'x_coord': x_coord,
+            'y_coord': y_coord,
             'scale': 'DISTRICT',
-            'case': None,
+            'case': 5,  # Case 5: District plant
             'case_description': f'{network_type} plant',
             'Qhs_sys_MWh': thermal_load_MWh if network_type == 'DH' else 0.0,
             'Qww_sys_MWh': 0.0,
@@ -1329,8 +1359,8 @@ def aggregate_buildings_summary(
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['TOTAL_MWh'] = TOTAL_MWh
-        row['peak_demand_kW'] = None
-        row['peak_datetime'] = None
+        row['peak_demand_kW'] = peak_demand_kW
+        row['peak_datetime'] = peak_datetime
 
         summary_rows.append(row)
 
