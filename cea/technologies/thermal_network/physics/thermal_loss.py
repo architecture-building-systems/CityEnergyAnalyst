@@ -64,7 +64,8 @@ def calc_temperature_out_per_pipe(t_in, m, k, t_ground):
     Valid ranges:
         - Mass flow: > 0.1 kg/s (minimum to avoid numerical issues)
         - Temperature: 273-413 K (liquid water)
-        - Thermal loss coefficient: > 0 kW/K"""
+        - Thermal loss coefficient: > 0 kW/K
+    """
     cp_kW_per_kgK = HEAT_CAPACITY_OF_WATER_JPERKGK / 1000  # Convert J to kW
 
     # Calculate denominator

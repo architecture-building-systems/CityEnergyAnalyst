@@ -70,7 +70,8 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     References
     ----------
     [Incropera2007] Section 8.4: Internal flow heat transfer correlations
-    [VDI] VDI Heat Atlas, Section G1: Heat transfer in pipe flow"""
+    [VDI] VDI Heat Atlas, Section G1: Heat transfer in pipe flow
+    """
 
     # calculate variable values necessary for nusselt number evaluation
     reynolds = calc_reynolds(mass_flow_rate_kgs, temperature_K, pipe_diameter_m)
@@ -146,7 +147,8 @@ def calc_prandtl(temperature__k):
 
     References
     ----------
-    [Incropera2007] Fundamentals of Heat and Mass Transfer, Chapter 8"""
+    [Incropera2007] Fundamentals of Heat and Mass Transfer, Chapter 8
+    """
 
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
     thermal_conductivity = calc_thermal_conductivity(temperature__k)  # W/(m*K)

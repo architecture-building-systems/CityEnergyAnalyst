@@ -62,7 +62,8 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
 
     The loop_type parameter allows this function to be used both in:
     1. Direct pressure loss calculation for network branches
-    2. Iterative network solving using the gradient method (Todini & Pilati, 1987)"""
+    2. Iterative network solving using the gradient method (Todini & Pilati, 1987)
+    """
 
     mass_flow_rate_kgs = np.array(mass_flow_rate_kgs)
     pipe_length_m = np.array(pipe_length_m)
@@ -149,7 +150,8 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     as roughness effects are minimal at low Reynolds numbers (see Moody Diagram).
 
     The function returns f = 0 for Re ≤ 1 to avoid division by zero and represent
-    negligible flow conditions."""
+    negligible flow conditions.
+    """
     darcy = np.zeros(reynolds.size)
     # necessary to make sure pipe_diameter is 1D vector as input formats can vary
     if hasattr(pipe_diameter_m[0], '__len__'):
@@ -252,7 +254,8 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     Valid ranges:
         - Temperature: 273-413 K (0-140°C for liquid water)
         - Pipe diameter: 0.01-1.0 m (typical district heating range)
-        - Mass flow rate: ≥ 0 kg/s"""
+        - Mass flow rate: ≥ 0 kg/s
+    """
 
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
 
