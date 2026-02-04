@@ -78,26 +78,37 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     prandtl = calc_prandtl(temperature_K)
     darcy = calc_darcy(pipe_diameter_m, reynolds, ROUGHNESS)
 
-    nusselt = np.zeros(reynolds.size)
-    for rey in range(reynolds.size):
-        if reynolds[rey] <= 1:
-            # calculate nusselt number only if mass is flowing
-            nusselt[rey] = 0
-        elif reynolds[rey] <= 2300:
-            # [STANDARD: ISO 12241] Laminar flow: Nu = 3.66 (fully developed, constant T_wall)
-            nusselt[rey] = 3.66
-        elif reynolds[rey] <= 10000:
-            # [STANDARD: VDI Heat Atlas] Gnielinski correlation for transition regime
-            nusselt[rey] = darcy[rey] / 8 * (reynolds[rey] - 1000) * prandtl[rey] / (
-                    1 + 12.7 * (darcy[rey] / 8) ** 0.5 * (prandtl[rey] ** 0.67 - 1))
-        else:
-            # [STANDARD: VDI Heat Atlas, Incropera] Dittus-Boelter equation for turbulent flow
-            # identify if heating or cooling case
-            if network_type == 'DH':  # warm fluid, so ground is cooling fluid in pipe, cooling case from view of thermodynamic flow
-                nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] ** 0.3
-            else:
-                # cold fluid, so ground is heating fluid in pipe, heating case from view of thermodynamic flow
-                nusselt[rey] = 0.023 * reynolds[rey] ** 0.8 * prandtl[rey] ** 0.4
+    # Vectorized calculation using np.select for different flow regimes
+    # Define conditions for each regime
+    cond_no_flow = reynolds <= 1
+    cond_laminar = (reynolds > 1) & (reynolds <= 2300)
+    cond_transition = (reynolds > 2300) & (reynolds <= 10000)
+    cond_turbulent = reynolds > 10000
+
+    # Calculate Nusselt for transition regime (Gnielinski correlation)
+    # [STANDARD: VDI Heat Atlas] Gnielinski correlation for transition regime
+    nusselt_transition = darcy / 8 * (reynolds - 1000) * prandtl / (
+            1 + 12.7 * (darcy / 8) ** 0.5 * (prandtl ** 0.67 - 1))
+
+    # Calculate Nusselt for turbulent regime (Dittus-Boelter equation)
+    # [STANDARD: VDI Heat Atlas, Incropera] Dittus-Boelter equation for turbulent flow
+    if network_type == 'DH':
+        # District heating: warm fluid, ground cooling (n=0.3)
+        nusselt_turbulent = 0.023 * reynolds ** 0.8 * prandtl ** 0.3
+    else:
+        # District cooling: cold fluid, ground heating (n=0.4)
+        nusselt_turbulent = 0.023 * reynolds ** 0.8 * prandtl ** 0.4
+
+    # Apply conditions to select appropriate Nusselt value
+    conditions = [cond_no_flow, cond_laminar, cond_transition, cond_turbulent]
+    choices = [
+        0,                      # No flow
+        3.66,                   # [STANDARD: ISO 12241] Laminar flow (fully developed, constant T_wall)
+        nusselt_transition,     # Transition regime
+        nusselt_turbulent       # Turbulent regime
+    ]
+
+    nusselt = np.select(conditions, choices, default=0)
 
     return nusselt
 
