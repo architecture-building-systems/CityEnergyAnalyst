@@ -33,6 +33,7 @@ class Configuration:
     occupancy: OccupancySection
     demand: DemandSection
     final_energy: FinalEnergySection
+    solar_technology: SolarTechnologySection
     what_ifs: WhatIfsSection
     emissions: EmissionsSection
     extract_reference_case: ExtractReferenceCaseSection
@@ -131,6 +132,8 @@ class Configuration:
     def __getattr__(self, item: Literal["demand"]) -> DemandSection: ...
     @overload
     def __getattr__(self, item: Literal["final_energy"]) -> FinalEnergySection: ...
+    @overload
+    def __getattr__(self, item: Literal["solar_technology"]) -> SolarTechnologySection: ...
     @overload
     def __getattr__(self, item: Literal["what_ifs"]) -> WhatIfsSection: ...
     @overload
@@ -556,17 +559,14 @@ class FinalEnergySection(Section):
     overwrite_supply_settings: bool
     what_if_name: str | None
     network_name: str | None
-    supply_type_cs: list | None
-    supply_type_hs: list | None
-    supply_type_dhw: list | None
-    hs_booster_type: list | None
-    dhw_booster_type: list | None
-    buildings: list[str]
-    panels_on_roof: str
-    panels_on_wall_north: str
-    panels_on_wall_south: str
-    panels_on_wall_east: str
-    panels_on_wall_west: str
+    supply_type_cs_building: str | None
+    supply_type_cs_district: str | None
+    supply_type_hs_building: str | None
+    supply_type_hs_district: str | None
+    supply_type_dhw_building: str | None
+    supply_type_dhw_district: str | None
+    hs_booster_type: str | None
+    dhw_booster_type: str | None
 
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
@@ -575,15 +575,32 @@ class FinalEnergySection(Section):
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_cs"]) -> list | None: ...
+    def __getattr__(self, item: Literal["supply_type_cs_building"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_hs"]) -> list | None: ...
+    def __getattr__(self, item: Literal["supply_type_cs_district"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["supply_type_dhw"]) -> list | None: ...
+    def __getattr__(self, item: Literal["supply_type_hs_building"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["hs_booster_type"]) -> list | None: ...
+    def __getattr__(self, item: Literal["supply_type_hs_district"]) -> str | None: ...
     @overload
-    def __getattr__(self, item: Literal["dhw_booster_type"]) -> list | None: ...
+    def __getattr__(self, item: Literal["supply_type_dhw_building"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["supply_type_dhw_district"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["hs_booster_type"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["dhw_booster_type"]) -> str | None: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class SolarTechnologySection(Section):
+    """Typed section for solar-technology configuration"""
+    buildings: list[str]
+    panels_on_roof: str
+    panels_on_wall_north: str
+    panels_on_wall_south: str
+    panels_on_wall_east: str
+    panels_on_wall_west: str
+
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload

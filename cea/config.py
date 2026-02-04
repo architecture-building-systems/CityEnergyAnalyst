@@ -1528,340 +1528,83 @@ class MultiChoiceFeedstockParameter(MultiChoiceParameter):
         return []
 
 
-class DistrictSupplyTypeParameter(MultiChoiceParameter):
+class DistrictSupplyTypeParameter(ChoiceParameter):
     """
-    Parameter for selecting supply system types for both building-scale and district-scale.
+    Parameter for selecting a single supply system assembly filtered by category and scale.
 
-    Allows multi-select (max 2):
-    - One building-scale assembly (for standalone buildings)
-    - One district-scale assembly (for district network buildings)
-
-    The system automatically applies the appropriate assembly based on building context.
+    Filters assemblies from the database based on:
+    - supply-category: SUPPLY_COOLING, SUPPLY_HEATING, or SUPPLY_HOTWATER
+    - scale: BUILDING or DISTRICT
     """
 
     def initialize(self, parser):
-        """Get the supply category and optional scale filter from the parameter definition"""
+        """Get the supply category and scale from the parameter definition"""
         try:
             self.supply_category = parser.get(self.section.name, f"{self.name}.supply-category")
         except Exception:
-            raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (e.g., SUPPLY_COOLING, SUPPLY_HEATING, SUPPLY_HOTWATER)")
+            raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (SUPPLY_COOLING, SUPPLY_HEATING, or SUPPLY_HOTWATER)")
 
-        # Optional scale filter: 'BUILDING', 'DISTRICT', or None (show both)
-        from configparser import NoOptionError
         try:
-            self.scale_filter = parser.get(self.section.name, f"{self.name}.scale")
-            if self.scale_filter not in ['BUILDING', 'DISTRICT']:
-                raise ValueError(f"Parameter {self.name} scale attribute must be 'BUILDING' or 'DISTRICT', got '{self.scale_filter}'")
-        except NoOptionError:
-            # Scale attribute not specified - show both scales
-            self.scale_filter = None
+            self.scale = parser.get(self.section.name, f"{self.name}.scale")
+            if self.scale not in ['BUILDING', 'DISTRICT']:
+                raise ValueError(f"Parameter {self.name} must have 'scale' attribute set to 'BUILDING' or 'DISTRICT', got '{self.scale}'")
+        except Exception:
+            raise ValueError(f"Parameter {self.name} must have 'scale' attribute (BUILDING or DISTRICT)")
 
     @property
     def _choices(self):
-        """Get supply options with scale labels, optionally filtered by scale"""
+        """Get supply assembly codes filtered by category and scale"""
         try:
-            # Get all options grouped by scale
-            all_options = self._get_all_supply_options()
+            import pandas as pd
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
 
-            # Get options currently in use in supply.csv
-            options_in_use = self._get_supply_options_in_use()
+            # Map category to locator method
+            category_to_method = {
+                'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+                'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+                'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+            }
 
-            # Determine which scales to show based on scale_filter
-            if self.scale_filter:
-                scales_to_show = [self.scale_filter]
-            else:
-                scales_to_show = ['BUILDING', 'DISTRICT']
+            if self.supply_category not in category_to_method:
+                return []
 
-            # Prioritize: options in use first, then rest alphabetically within each scale
-            # Add scale suffix to each option for display
-            result = []
-            for scale in scales_to_show:
-                scale_options = [opt for opt in all_options if all_options[opt] == scale]
-                in_use = sorted([opt for opt in scale_options if opt in options_in_use])
-                not_in_use = sorted([opt for opt in scale_options if opt not in options_in_use])
+            filepath = category_to_method[self.supply_category]()
 
-                # Add scale label suffix for display
-                scale_label = '(building)' if scale == 'BUILDING' else '(district)'
-                labeled_options = [f"{opt} {scale_label}" for opt in (in_use + not_in_use)]
-                result.extend(labeled_options)
+            if not os.path.exists(filepath):
+                return []
 
-            return result
+            df = pd.read_csv(filepath)
+
+            # Filter by scale
+            if 'scale' in df.columns and 'code' in df.columns:
+                filtered = df[df['scale'] == self.scale]
+                return sorted(filtered['code'].tolist())
+
+            return []
         except Exception:
-            # Fallback to empty list if there's any issue
             return []
 
-    def _get_all_supply_options(self):
-        """Get all supply codes from database with their scale (BUILDING or DISTRICT)"""
-        import pandas as pd
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
+    @property
+    def default(self):
+        """Return None for empty defaults instead of empty string"""
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return None
+        return self.decode(_default)
 
-        # Map category to locator method
-        category_to_method = {
-            'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
-            'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
-            'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
-        }
-
-        if self.supply_category not in category_to_method:
-            return {}
-
-        filepath = category_to_method[self.supply_category]()
-
-        if not os.path.exists(filepath):
-            return {}
-
-        df = pd.read_csv(filepath)
-
-        # Return dict of {code: scale}
-        if 'scale' in df.columns and 'code' in df.columns:
-            return {row['code']: row['scale'] for _, row in df.iterrows() if row['scale'] in ['BUILDING', 'DISTRICT']}
-
-        return {}
-
-    def _get_supply_options_in_use(self):
-        """Get supply options currently used in supply.csv"""
-        import pandas as pd
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
-        supply_csv_path = locator.get_building_supply()
-
-        if not os.path.exists(supply_csv_path):
-            return []
-
-        supply_df = pd.read_csv(supply_csv_path)
-
-        # Map category to column name
-        category_to_column = {
-            'SUPPLY_COOLING': 'supply_type_cs',
-            'SUPPLY_HEATING': 'supply_type_hs',
-            'SUPPLY_HOTWATER': 'supply_type_dhw',
-        }
-
-        column = category_to_column.get(self.supply_category)
-        if column not in supply_df.columns:
-            return []
-
-        return supply_df[column].unique().tolist()
-
-    def _get_auto_default(self):
-        """
-        Auto-select most prevalent building-scale and district-scale assemblies.
-
-        Strategy:
-        1. Find most common building-scale assembly in supply.csv
-        2. Find most common district-scale assembly in supply.csv
-        3. If no district-scale found in supply.csv, auto-select first from database
-        4. If no building-scale found in supply.csv, auto-select first from database
-
-        Returns list with up to 2 items: [building, district] (one from each scale)
-        """
-        import pandas as pd
-        locator = cea.inputlocator.InputLocator(self.config.scenario)
-        supply_csv_path = locator.get_building_supply()
-
-        if not os.path.exists(supply_csv_path):
-            return []
-
-        supply_df = pd.read_csv(supply_csv_path)
-
-        # Map category to column name
-        category_to_column = {
-            'SUPPLY_COOLING': 'supply_type_cs',
-            'SUPPLY_HEATING': 'supply_type_hs',
-            'SUPPLY_HOTWATER': 'supply_type_dhw',
-        }
-
-        column = category_to_column.get(self.supply_category)
-        if column not in supply_df.columns:
-            return []
-
-        # Get all available options with their scales
-        all_options = self._get_all_supply_options()
-
-        # Count occurrences of each code in supply.csv
-        value_counts = supply_df[column].value_counts()
-
-        # Find most common building-scale and district-scale
-        most_common_building = None
-        most_common_district = None
-
-        for code, count in value_counts.items():
-            if code not in all_options:
-                continue
-
-            scale = all_options[code]
-            if scale == 'BUILDING' and most_common_building is None:
-                most_common_building = code
-            elif scale == 'DISTRICT' and most_common_district is None:
-                most_common_district = code
-
-            # Stop once we've found both
-            if most_common_building and most_common_district:
-                break
-
-        # If no building-scale assembly found in supply.csv, auto-select first from database
-        if most_common_building is None:
-            building_options = [code for code, scale in all_options.items() if scale == 'BUILDING']
-            if building_options:
-                most_common_building = sorted(building_options)[0]  # First alphabetically
-
-        # If no district-scale assembly found in supply.csv, auto-select first from database
-        if most_common_district is None:
-            district_options = [code for code, scale in all_options.items() if scale == 'DISTRICT']
-            if district_options:
-                most_common_district = sorted(district_options)[0]  # First alphabetically
-
-        # Return list with non-None values, WITH scale labels
-        result = []
-        if most_common_building:
-            result.append(f"{most_common_building} (building)")
-        if most_common_district:
-            result.append(f"{most_common_district} (district)")
-
-        return result
-
-    def _strip_scale_label(self, value):
-        """Strip scale label suffix like '(building)' or '(district)' from value"""
-        if not value:
-            return value
-        # Remove ' (building)' or ' (district)' suffix if present
-        for suffix in [' (building)', ' (district)']:
-            if value.endswith(suffix):
-                return value[:-len(suffix)]
-        return value
-
-    def encode(self, value: list):
-        """Validate multi-select: max 1 building-scale + max 1 district-scale"""
-        # Handle empty values
-        if not value or (isinstance(value, str) and value.strip() == ''):
+    def encode(self, value):
+        """Allow None/empty values for nullable parameter"""
+        if value is None or value == '':
             return ''
+        return super().encode(value)
 
-        # Convert single value to list for consistent handling
-        if not isinstance(value, list):
-            value = [value]
-
-        # Strip scale labels from display values
-        value = [self._strip_scale_label(v) for v in value if v]
-
-        if not value:
-            return ''
-
-        # Get all available options with their scales
-        all_options = self._get_all_supply_options()
-
-        # Validate each selection is valid
-        for v in value:
-            if v not in all_options:
-                raise ValueError(
-                    f"'{v}' is not a valid {self.supply_category} option. "
-                    f"Available options: {', '.join(all_options.keys())}"
-                )
-
-            # Validate against scale filter if set (for booster parameters)
-            if self.scale_filter:
-                actual_scale = all_options.get(v)
-                if actual_scale != self.scale_filter:
-                    scale_label = '(building)' if self.scale_filter == 'BUILDING' else '(district)'
-                    raise ValueError(
-                        f"'{v}' is a {actual_scale.lower()}-scale assembly, but this parameter "
-                        f"only accepts {self.scale_filter.lower()}-scale assemblies {scale_label}. "
-                        f"Please select a {self.scale_filter.lower()}-scale option from the dropdown."
-                    )
-
-        # Check max 1 building-scale + max 1 district-scale
-        building_count = sum(1 for v in value if all_options.get(v) == 'BUILDING')
-        district_count = sum(1 for v in value if all_options.get(v) == 'DISTRICT')
-
-        if building_count > 1:
-            raise ValueError(
-                f"Select maximum 1 building-scale {self.supply_category} assembly. "
-                f"Currently selected {building_count}: {[v for v in value if all_options.get(v) == 'BUILDING']}"
-            )
-
-        if district_count > 1:
-            raise ValueError(
-                f"Select maximum 1 district-scale {self.supply_category} assembly. "
-                f"Currently selected {district_count}: {[v for v in value if all_options.get(v) == 'DISTRICT']}"
-            )
-
-        return ', '.join(map(str, value))
-
-    def decode(self, value) -> list:
-        """Decode comma-separated values into list (without scale labels for internal storage)"""
-        if not value or value == '':
-            return []
-
-        choices = parse_string_to_list(value)
-
-        # Get valid choices from filtered _choices (respects scale_filter)
-        # Strip labels from _choices to get base codes for comparison
-        valid_codes = set(self._strip_scale_label(c) for c in self._choices)
-
-        # Strip labels and filter to valid choices only (based on scale_filter)
-        return [self._strip_scale_label(choice) for choice in choices if self._strip_scale_label(choice) in valid_codes]
-
-    def get(self):
-        """Get parameter value, always returning values with scale labels"""
-        # Get the actual config value (stored without labels)
-        config_value = super().get()
-
-        # Get all available options with their scales
-        all_options = self._get_all_supply_options()
-
-        # If config has a value, add labels and check if we need to auto-add missing scale
-        if config_value:
-            labeled_values = []
-            has_district = False
-            has_building = False
-
-            for code in config_value:
-                if code in all_options:
-                    scale = all_options[code]
-                    scale_label = '(building)' if scale == 'BUILDING' else '(district)'
-                    labeled_values.append(f"{code} {scale_label}")
-
-                    if scale == 'DISTRICT':
-                        has_district = True
-                    elif scale == 'BUILDING':
-                        has_building = True
-                else:
-                    # If code not in database, use it without label
-                    labeled_values.append(code)
-
-            # Auto-add missing scale from database (bidirectional)
-            # ONLY if no scale filter is set (for booster parameters with scale filter, don't auto-add)
-            if not self.scale_filter:
-                # If only building-scale configured, auto-add first district-scale
-                if has_building and not has_district:
-                    district_options = [code for code, scale in all_options.items() if scale == 'DISTRICT']
-                    if district_options:
-                        first_district = sorted(district_options)[0]
-                        labeled_values.append(f"{first_district} (district)")
-
-                # If only district-scale configured, auto-add first building-scale
-                elif has_district and not has_building:
-                    building_options = [code for code, scale in all_options.items() if scale == 'BUILDING']
-                    if building_options:
-                        first_building = sorted(building_options)[0]
-                        labeled_values.append(f"{first_building} (building)")
-
-            return labeled_values
-
-        # Otherwise, return auto-selected defaults
-        if self.scale_filter:
-            # For parameters with scale filter (like booster params),
-            # auto-select the first assembly from _choices (respects priority order)
-            choices = self._choices
-            if choices:
-                # _choices already includes scale labels, return the first one
-                return [choices[0]]
-            return []
-
-        # For regular supply-type parameters, use auto-default from supply.csv
-        try:
-            return self._get_auto_default()
-        except Exception:
-            # If auto-default fails, return empty list
-            return []
+    def decode(self, value):
+        """Allow empty values for nullable parameter, return None for empty"""
+        if value == '':
+            return None
+        if str(value) in self._choices:
+            return str(value)
+        return None
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
