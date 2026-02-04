@@ -234,7 +234,7 @@ def main(config: cea.config.Configuration):
     if building_dfs:
         from cea.analysis.final_energy.calculation import (
             aggregate_buildings_summary,
-            create_final_energy_breakdown
+            create_hourly_timeseries_aggregation
         )
         import json
         from datetime import datetime
@@ -251,14 +251,14 @@ def main(config: cea.config.Configuration):
             print(f"  ✗ final_energy_buildings.csv: {str(e)}")
 
         try:
-            # Generate detailed breakdown
-            breakdown_df = create_final_energy_breakdown(
-                building_dfs, plant_dfs, building_configs, locator, config
+            # Generate hourly timeseries aggregation (8760 rows)
+            timeseries_df = create_hourly_timeseries_aggregation(
+                building_dfs, plant_dfs
             )
-            breakdown_file = locator.get_final_energy_file(whatif_name)
-            locator.ensure_parent_folder_exists(breakdown_file)
-            breakdown_df.to_csv(breakdown_file, index=False, float_format='%.3f')
-            print(f"  ✓ final_energy.csv ({len(breakdown_df)} rows)")
+            timeseries_file = locator.get_final_energy_file(whatif_name)
+            locator.ensure_parent_folder_exists(timeseries_file)
+            timeseries_df.to_csv(timeseries_file, index=False, float_format='%.3f')
+            print(f"  ✓ final_energy.csv ({len(timeseries_df)} rows)")
 
         except Exception as e:
             print(f"  ✗ final_energy.csv: {str(e)}")

@@ -1340,6 +1340,108 @@ def aggregate_buildings_summary(
     return summary_df
 
 
+def create_hourly_timeseries_aggregation(
+    building_dfs: Dict[str, pd.DataFrame],
+    plant_dfs: Dict[str, pd.DataFrame]
+) -> pd.DataFrame:
+    """
+    Aggregate all buildings + plants into hourly timeseries (8760 rows).
+
+    Output columns match final_energy_buildings.csv structure but with hourly data:
+    - date: timestamp for each hour
+    - Qhs_sys_kWh: total space heating demand
+    - Qww_sys_kWh: total DHW demand
+    - Qcs_sys_kWh: total cooling demand
+    - E_sys_kWh: total electricity demand
+    - NATURALGAS_kWh: total natural gas consumption
+    - GRID_kWh: total grid electricity
+    - DH_kWh: total district heating
+    - DC_kWh: total district cooling
+    - SOLAR_kWh: total solar thermal generation
+    - PV_kWh: total solar electrical generation
+    - TOTAL_kWh: total final energy
+
+    :param building_dfs: Dict of building_name -> final_energy DataFrame (8760 rows each)
+    :param plant_dfs: Dict of plant_name -> final_energy DataFrame (8760 rows each)
+    :return: Aggregated DataFrame with 8760 rows
+    """
+    if not building_dfs:
+        raise ValueError("No building data to aggregate")
+
+    # Start with first building's date column
+    first_building_df = list(building_dfs.values())[0]
+    aggregated = pd.DataFrame({'date': first_building_df['date']})
+
+    # Initialize all possible columns with zeros
+    demand_columns = ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']
+    for col in demand_columns:
+        aggregated[col] = 0.0
+
+    # Track all carrier types found
+    all_carriers = set()
+
+    # Aggregate building data
+    for building_name, df in building_dfs.items():
+        # Sum demand columns
+        for col in demand_columns:
+            if col in df.columns:
+                aggregated[col] += df[col].fillna(0)
+
+        # Sum carrier columns
+        for col in df.columns:
+            if col.endswith('_kWh') and col not in demand_columns and col != 'date':
+                # Extract carrier from column name
+                # Formats: Qhs_sys_NATURALGAS_kWh, PV_roof_kWh, SOLAR_wall_north_kWh
+                if '_sys_' in col:
+                    # Service-specific carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
+                    parts = col.split('_')
+                    carrier = parts[2] if len(parts) >= 3 else col
+                elif col.startswith('PV_'):
+                    # Solar electrical: PV_roof_kWh, PV_total_kWh -> PV
+                    carrier = 'PV'
+                elif col.startswith('SOLAR_'):
+                    # Solar thermal: SOLAR_roof_kWh, SOLAR_total_kWh -> SOLAR
+                    carrier = 'SOLAR'
+                else:
+                    continue
+
+                # Aggregate by carrier type (not by service)
+                carrier_col = f'{carrier}_kWh'
+                if carrier_col not in aggregated.columns:
+                    aggregated[carrier_col] = 0.0
+                    all_carriers.add(carrier)
+
+                aggregated[carrier_col] += df[col].fillna(0)
+
+    # Aggregate plant data
+    for plant_name, df in plant_dfs.items():
+        # Plants contribute to carrier columns only (no demand columns)
+        for col in df.columns:
+            if col.endswith('_kWh') and col != 'date':
+                # Plant columns format: plant_heating_NATURALGAS_kWh, plant_pumping_GRID_kWh
+                if 'plant_heating_' in col or 'plant_cooling_' in col:
+                    parts = col.split('_')
+                    carrier = parts[2] if len(parts) >= 3 else col
+                elif 'plant_pumping_' in col:
+                    parts = col.split('_')
+                    carrier = parts[2] if len(parts) >= 3 else 'GRID'
+                else:
+                    continue
+
+                carrier_col = f'{carrier}_kWh'
+                if carrier_col not in aggregated.columns:
+                    aggregated[carrier_col] = 0.0
+                    all_carriers.add(carrier)
+
+                aggregated[carrier_col] += df[col].fillna(0)
+
+    # Calculate total final energy (sum of all carriers)
+    carrier_cols = [f'{carrier}_kWh' for carrier in all_carriers]
+    aggregated['TOTAL_kWh'] = aggregated[carrier_cols].sum(axis=1)
+
+    return aggregated
+
+
 def create_final_energy_breakdown(
     building_dfs: Dict[str, pd.DataFrame],
     plant_dfs: Dict[str, pd.DataFrame],
