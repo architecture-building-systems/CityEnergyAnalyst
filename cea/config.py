@@ -810,6 +810,73 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+class WhatIfNameParameter(StringParameter):
+    """
+    Parameter for what-if scenario names with collision detection.
+    Validates in real-time to prevent overwriting existing final-energy results.
+    """
+
+    def _validate_whatif_name(self, value) -> str:
+        """
+        Validate what-if name for invalid characters and collision with existing scenarios.
+        """
+        value = value.strip()
+
+        # Check for invalid filesystem characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"What-if name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing what-if scenarios
+        scenario = self.config.scenario
+        locator = cea.inputlocator.InputLocator(scenario)
+
+        # Check if final-energy folder exists for this what-if name
+        whatif_folder = locator.get_final_energy_folder(value)
+        if os.path.exists(whatif_folder):
+            raise ValueError(
+                f"What-if (sub)scenario '{value}' already exists. "
+                f"Choose a different name or delete the existing one."
+            )
+
+        return value
+
+    def encode(self, value):
+        """
+        Validate and encode what-if name.
+        Raises ValueError if name contains invalid characters or collides with existing scenario.
+        """
+        if not str(value) or str(value).strip() == '':
+            raise ValueError("What-if name is required. Please provide a valid name.")
+
+        return self._validate_whatif_name(str(value))
+
+    def decode(self, value):
+        """
+        Parse and normalize what-if name from config file.
+        Lenient parsing - only validates security concerns (filesystem characters).
+        Business rules (collision check) are enforced in encode().
+        """
+        if not value:
+            return ""
+
+        value = value.strip()
+
+        # Only validate filesystem characters (security concern)
+        # Collision check is encode's job when creating new scenarios
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"What-if name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        return value
+
+
 class NetworkLayoutNameParameter(StringParameter):
     """
     Parameter for network layout names with collision detection.
