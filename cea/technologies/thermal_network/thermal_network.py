@@ -1855,12 +1855,6 @@ def change_to_edge_node_matrix_t(edge_mass_flow, edge_node_df):
     return edge_mass_flow, edge_node_df
 
 
-# [MOVED TO PHYSICS MODULE]
-# calc_pressure_loss_pipe is now defined in cea/technologies/thermal_network/physics/hydraulics.py
-# This function implements ISO 5167 Darcy-Weisbach pressure loss calculations
-# See STANDARDS.md for detailed standards mapping
-
-
 def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return, pressure_loss_substation):
     if max(np.nan_to_num(pressure_loss_pipe_supply)) > 0.0:
         pressure_loss_system = np.full(4, np.nan)
@@ -3542,10 +3536,6 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     k_all = abs(np.diag(k_all))
     return k_all
 
-
-# [MOVED TO PHYSICS MODULE]
-# calc_nusselt is now defined in cea/technologies/thermal_network/physics/
-# See STANDARDS.md for detailed standards mapping
 
 def calc_thermal_loss_system(thermal_loss_pipe_supply, thermal_loss_pipe_return):
     thermal_loss_system = np.full(3, np.nan)
