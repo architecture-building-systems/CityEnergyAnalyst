@@ -124,30 +124,68 @@ def calculate_building_final_energy(
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
 
     # Step 4: Handle booster systems (if applicable)
-    # Only load booster data if booster is configured AND has a network_name
+    # Auto-detect boosters from thermal-network files (production mode)
+    # or use configured boosters (what-if mode)
+
+    # For production mode: check if building has district heating with potential boosters
+    has_dh_heating = (supply_config['space_heating'] and
+                      supply_config['space_heating']['scale'] == 'DISTRICT')
+    has_dh_dhw = (supply_config['hot_water'] and
+                  supply_config['hot_water']['scale'] == 'DISTRICT')
+
+    # Space heating booster
     if supply_config['space_heating_booster'] and supply_config['space_heating_booster']['network_name']:
+        # What-if mode: booster explicitly configured
         network_name = supply_config['space_heating_booster']['network_name']
         try:
             booster_data = load_booster_data(building_name, network_name, 'hs', locator)
-            carrier = supply_config['space_heating_booster']['carrier']
-            efficiency = supply_config['space_heating_booster']['efficiency']
-            final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
+            if booster_data['Qhs_booster_kWh'].sum() > 0:
+                carrier = supply_config['space_heating_booster']['carrier']
+                efficiency = supply_config['space_heating_booster']['efficiency']
+                final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
         except FileNotFoundError:
-            # Booster file not found - building may not be connected to network
-            # This is OK, just skip booster calculation
             pass
+    elif has_dh_heating:
+        # Production mode: auto-detect booster from thermal-network
+        network_name = supply_config['space_heating']['network_name']
+        if network_name:
+            try:
+                booster_data = load_booster_data(building_name, network_name, 'hs', locator)
+                if booster_data['Qhs_booster_kWh'].sum() > 0:
+                    # Auto-detect booster: assume natural gas boiler (most common)
+                    # TODO: Read booster type from thermal-network metadata
+                    carrier = 'NATURALGAS'
+                    efficiency = 0.85  # Default booster efficiency
+                    final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
+            except FileNotFoundError:
+                pass
 
+    # Hot water booster
     if supply_config['hot_water_booster'] and supply_config['hot_water_booster']['network_name']:
+        # What-if mode: booster explicitly configured
         network_name = supply_config['hot_water_booster']['network_name']
         try:
             booster_data = load_booster_data(building_name, network_name, 'dhw', locator)
-            carrier = supply_config['hot_water_booster']['carrier']
-            efficiency = supply_config['hot_water_booster']['efficiency']
-            final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
+            if booster_data['Qww_booster_kWh'].sum() > 0:
+                carrier = supply_config['hot_water_booster']['carrier']
+                efficiency = supply_config['hot_water_booster']['efficiency']
+                final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
         except FileNotFoundError:
-            # Booster file not found - building may not be connected to network
-            # This is OK, just skip booster calculation
             pass
+    elif has_dh_dhw:
+        # Production mode: auto-detect booster from thermal-network
+        network_name = supply_config['hot_water']['network_name']
+        if network_name:
+            try:
+                booster_data = load_booster_data(building_name, network_name, 'dhw', locator)
+                if booster_data['Qww_booster_kWh'].sum() > 0:
+                    # Auto-detect booster: assume natural gas boiler (most common)
+                    # TODO: Read booster type from thermal-network metadata
+                    carrier = 'NATURALGAS'
+                    efficiency = 0.85  # Default booster efficiency
+                    final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
+            except FileNotFoundError:
+                pass
 
     # Step 5: Add metadata columns
     final_energy['scale'] = 'BUILDING'
@@ -304,10 +342,26 @@ def parse_supply_assembly(
     # Load component information from COMPONENTS database
     component_info = load_component_info(component_code, locator)
 
+    # For district systems, carrier is DH or DC, not the plant fuel
+    if scale == 'DISTRICT':
+        # Determine if it's heating or cooling based on service type
+        if service_type in ['space_heating', 'hot_water']:
+            carrier = 'DH'  # District heating
+        elif service_type == 'space_cooling':
+            carrier = 'DC'  # District cooling
+        else:
+            carrier = 'DH'  # Default to DH
+        # District systems don't have efficiency at building level (handled at plant)
+        efficiency = None
+    else:
+        # Building-scale: use component carrier and efficiency
+        carrier = component_info['carrier']
+        efficiency = component_info['efficiency']
+
     result = {
         'scale': scale,
-        'carrier': component_info['carrier'],
-        'efficiency': component_info['efficiency'],
+        'carrier': carrier,
+        'efficiency': efficiency,
         'assembly_code': assembly_code,
         'component_code': component_code,
         'network_name': network_name if scale == 'DISTRICT' else None,
@@ -412,6 +466,15 @@ def load_whatif_supply_configuration(
     """
     Load supply configuration from config parameters (what-if mode).
 
+    Logic:
+    1. Read building's configured scale from supply.csv
+    2. Check if building is connected to network (substation file exists)
+    3. Apply override logic:
+       - supply.csv=DISTRICT + no connection → use building assembly (fallback)
+       - supply.csv=DISTRICT + has connection → use district assembly (keep)
+       - supply.csv=BUILDING + no connection → use building assembly (keep)
+       - supply.csv=BUILDING + has connection → use district assembly (upgrade)
+
     :param building_name: Name of the building
     :param locator: InputLocator instance
     :param config: Configuration instance
@@ -451,59 +514,177 @@ def load_whatif_supply_configuration(
             return assembly_str.split(' (')[0]
         return assembly_str
 
-    # Parse space heating (use first assembly if multiple selected)
+    # Helper function to separate building and district assemblies
+    def separate_assemblies(options: list, assembly_df: pd.DataFrame) -> tuple:
+        """
+        Separate assembly options into building-scale and district-scale.
+
+        :param options: List of assembly codes with scale labels
+        :param assembly_df: Assembly dataframe to look up scale
+        :return: (building_assembly, district_assembly)
+        """
+        building_assembly = None
+        district_assembly = None
+
+        for option in options:
+            assembly_code = strip_scale_label(option)
+            if assembly_code in assembly_df.index:
+                scale = assembly_df.loc[assembly_code, 'scale']
+                if scale == 'BUILDING':
+                    building_assembly = assembly_code
+                elif scale == 'DISTRICT':
+                    district_assembly = assembly_code
+
+        return building_assembly, district_assembly
+
+    # Read supply.csv to get building's configured scale
+    supply_df = pd.read_csv(locator.get_building_supply()).set_index('name')
+    if building_name not in supply_df.index:
+        raise ValueError(f"Building {building_name} not found in supply.csv")
+
+    building_supply = supply_df.loc[building_name]
+
+    # Helper function to check network connectivity
+    def is_connected_to_network(building_name: str, network_name: str, network_type: str) -> bool:
+        """Check if building has substation file in network."""
+        if not network_name:
+            return False
+
+        substation_file = locator.get_thermal_network_substation_results_file(
+            building_name, network_type, network_name
+        )
+        return os.path.exists(substation_file)
+
+    # Helper function to select assembly based on override logic
+    def select_assembly_with_override(
+        options: list,
+        assembly_df: pd.DataFrame,
+        configured_scale: str,
+        is_connected: bool
+    ) -> str:
+        """
+        Select assembly based on configured scale and actual connectivity.
+
+        :param options: List of assembly options from config
+        :param assembly_df: Assembly dataframe
+        :param configured_scale: Scale from supply.csv ('BUILDING' or 'DISTRICT')
+        :param is_connected: Whether building has substation file
+        :return: Selected assembly code
+        """
+        # Separate building and district options
+        building_assembly, district_assembly = separate_assemblies(options, assembly_df)
+
+        # Apply override logic
+        if configured_scale == 'DISTRICT':
+            if is_connected:
+                # supply.csv=DISTRICT + has connection → use district (keep)
+                return district_assembly if district_assembly else building_assembly
+            else:
+                # supply.csv=DISTRICT + no connection → use building (fallback)
+                return building_assembly if building_assembly else district_assembly
+        else:  # configured_scale == 'BUILDING'
+            if is_connected:
+                # supply.csv=BUILDING + has connection → use district (upgrade)
+                return district_assembly if district_assembly else building_assembly
+            else:
+                # supply.csv=BUILDING + no connection → use building (keep)
+                return building_assembly if building_assembly else district_assembly
+
+    # Parse space heating
     if supply_type_hs and len(supply_type_hs) > 0:
-        assembly_code = strip_scale_label(supply_type_hs[0])  # Take first selection
-        supply_config['space_heating'] = parse_supply_assembly(
-            assembly_code,
+        # Get configured scale from supply.csv
+        configured_scale_hs = 'BUILDING'  # Default
+        if 'supply_type_hs' in building_supply and building_supply['supply_type_hs']:
+            hs_assembly = building_supply['supply_type_hs']
+            if hs_assembly in supply_db.heating.index:
+                configured_scale_hs = supply_db.heating.loc[hs_assembly, 'scale']
+
+        # Check network connectivity
+        is_connected_dh = is_connected_to_network(building_name, network_name, 'DH')
+
+        # Select assembly with override logic
+        assembly_code = select_assembly_with_override(
+            supply_type_hs,
             supply_db.heating,
-            locator,
-            'heating',
-            network_name
+            configured_scale_hs,
+            is_connected_dh
         )
 
-    # Parse hot water (DHW)
+        if assembly_code:
+            supply_config['space_heating'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.heating,
+                locator,
+                'heating',
+                network_name
+            )
+
+    # Parse hot water (DHW) - always building scale, never district
     if supply_type_dhw and len(supply_type_dhw) > 0:
-        assembly_code = strip_scale_label(supply_type_dhw[0])
-        supply_config['hot_water'] = parse_supply_assembly(
-            assembly_code,
-            supply_db.hot_water,
-            locator,
-            'hot_water',
-            network_name
-        )
+        # DHW is always building-scale, so always select building assembly
+        building_assembly, _ = separate_assemblies(supply_type_dhw, supply_db.hot_water)
+        assembly_code = building_assembly
+
+        if assembly_code:
+            supply_config['hot_water'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.hot_water,
+                locator,
+                'hot_water',
+                network_name
+            )
 
     # Parse space cooling
     if supply_type_cs and len(supply_type_cs) > 0:
-        assembly_code = strip_scale_label(supply_type_cs[0])
-        supply_config['space_cooling'] = parse_supply_assembly(
-            assembly_code,
+        # Get configured scale from supply.csv
+        configured_scale_cs = 'BUILDING'  # Default
+        if 'supply_type_cs' in building_supply and building_supply['supply_type_cs']:
+            cs_assembly = building_supply['supply_type_cs']
+            if cs_assembly in supply_db.cooling.index:
+                configured_scale_cs = supply_db.cooling.loc[cs_assembly, 'scale']
+
+        # Check network connectivity
+        is_connected_dc = is_connected_to_network(building_name, network_name, 'DC')
+
+        # Select assembly with override logic
+        assembly_code = select_assembly_with_override(
+            supply_type_cs,
             supply_db.cooling,
-            locator,
-            'cooling',
-            network_name
+            configured_scale_cs,
+            is_connected_dc
         )
 
-    # Parse booster systems
+        if assembly_code:
+            supply_config['space_cooling'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.cooling,
+                locator,
+                'cooling',
+                network_name
+            )
+
+    # Parse booster systems (always building-scale, ignore network preference)
     if booster_hs and len(booster_hs) > 0:
         assembly_code = strip_scale_label(booster_hs[0])
-        supply_config['space_heating_booster'] = parse_supply_assembly(
-            assembly_code,
-            supply_db.heating,
-            locator,
-            'heating',
-            network_name
-        )
+        if assembly_code:
+            supply_config['space_heating_booster'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.heating,
+                locator,
+                'heating',
+                network_name
+            )
 
     if booster_dhw and len(booster_dhw) > 0:
         assembly_code = strip_scale_label(booster_dhw[0])
-        supply_config['hot_water_booster'] = parse_supply_assembly(
-            assembly_code,
-            supply_db.hot_water,
-            locator,
-            'hot_water',
-            network_name
-        )
+        if assembly_code:
+            supply_config['hot_water_booster'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.hot_water,
+                locator,
+                'hot_water',
+                network_name
+            )
 
     return supply_config
 
@@ -622,6 +803,51 @@ def load_booster_data(
     return result
 
 
+def validate_district_assembly_consistency(building_configs: Dict[str, Dict]) -> None:
+    """
+    Validate that all buildings connected to district use the same assembly type.
+
+    Raises ValueError if multiple district assembly types are detected.
+
+    :param building_configs: Dict of building_name -> supply_configuration
+    """
+    # Collect district assemblies for each service
+    dh_assemblies = set()
+    dc_assemblies = set()
+
+    for building_name, config in building_configs.items():
+        # Check space heating
+        if config.get('space_heating') and config['space_heating']['scale'] == 'DISTRICT':
+            assembly_code = config['space_heating']['assembly_code']
+            dh_assemblies.add(assembly_code)
+
+        # Check hot water (rarely district, but check anyway)
+        if config.get('hot_water') and config['hot_water']['scale'] == 'DISTRICT':
+            assembly_code = config['hot_water']['assembly_code']
+            dh_assemblies.add(assembly_code)
+
+        # Check space cooling
+        if config.get('space_cooling') and config['space_cooling']['scale'] == 'DISTRICT':
+            assembly_code = config['space_cooling']['assembly_code']
+            dc_assemblies.add(assembly_code)
+
+    # Validate district heating assemblies
+    if len(dh_assemblies) > 1:
+        raise ValueError(
+            f"Multiple district heating assembly types detected: {dh_assemblies}\n"
+            f"All buildings in a district heating network must use the same assembly type.\n"
+            f"Please select only one district heating assembly in supply-type-hs."
+        )
+
+    # Validate district cooling assemblies
+    if len(dc_assemblies) > 1:
+        raise ValueError(
+            f"Multiple district cooling assembly types detected: {dc_assemblies}\n"
+            f"All buildings in a district cooling network must use the same assembly type.\n"
+            f"Please select only one district cooling assembly in supply-type-cs."
+        )
+
+
 def determine_case(supply_config: Dict) -> Tuple[float, str]:
     """
     Determine case number and description based on supply configuration.
@@ -680,13 +906,97 @@ def calculate_plant_final_energy(
     :param config: Configuration instance
     :return: DataFrame with 8760 rows and carrier columns
     """
-    # TODO: Implement
-    # 1. Read plant configuration from network files
-    # 2. Read plant energy consumption
-    # 3. Apply plant equipment efficiency
-    # 4. Return DataFrame with plant carrier columns
+    # Step 1: Read plant thermal load
+    network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
 
-    raise NotImplementedError("Plant final energy calculation not yet implemented")
+    if network_type == 'DH':
+        plant_load_file = os.path.join(network_folder, f'DH_{network_name}_plant_thermal_load_kW.csv')
+    elif network_type == 'DC':
+        plant_load_file = os.path.join(network_folder, f'DC_{network_name}_plant_thermal_load_kW.csv')
+    else:
+        raise ValueError(f"Unknown network type: {network_type}")
+
+    if not os.path.exists(plant_load_file):
+        raise FileNotFoundError(
+            f"Plant thermal load file not found: {plant_load_file}\n"
+            f"Please run 'cea thermal-network' first."
+        )
+
+    plant_load_df = pd.read_csv(plant_load_file)
+
+    # Convert kW to kWh (hourly average power -> hourly energy)
+    thermal_load_kWh = plant_load_df['thermal_load_kW'].values
+
+    # Step 2: Read plant pumping load
+    if network_type == 'DH':
+        pumping_file = os.path.join(network_folder, f'DH_{network_name}_plant_pumping_load_kW.csv')
+    else:
+        pumping_file = os.path.join(network_folder, f'DC_{network_name}_plant_pumping_load_kW.csv')
+
+    if os.path.exists(pumping_file):
+        pumping_df = pd.read_csv(pumping_file)
+        pumping_load_kWh = pumping_df.iloc[:, 0].values  # First column is pumping load
+    else:
+        pumping_load_kWh = np.zeros(len(thermal_load_kWh))
+
+    # Step 3: Get plant equipment configuration
+    # For what-if mode: use config parameters
+    # For production mode: read from network metadata or use defaults
+
+    if config.final_energy.overwrite_supply_settings:
+        # What-if mode: use configured plant type
+        # TODO: Add plant-type parameter to config
+        # For now, use default based on network type
+        if network_type == 'DH':
+            # Default: Natural gas boiler
+            plant_carrier = 'NATURALGAS'
+            plant_efficiency = 0.85
+        else:
+            # Default: Electric chiller
+            plant_carrier = 'GRID'
+            plant_efficiency = 3.0  # COP
+    else:
+        # Production mode: try to detect from network metadata
+        # For now, use defaults (can be enhanced later)
+        if network_type == 'DH':
+            plant_carrier = 'NATURALGAS'
+            plant_efficiency = 0.85
+        else:
+            plant_carrier = 'GRID'
+            plant_efficiency = 3.0
+
+    # Step 4: Calculate final energy consumption
+    # Plant fuel/electricity = thermal load / efficiency
+    final_energy_kWh = thermal_load_kWh / plant_efficiency
+
+    # Step 5: Create output dataframe
+    # Generate date column (assuming standard 8760 hours)
+    import datetime
+    start_date = datetime.datetime(2011, 1, 1)
+    dates = [start_date + datetime.timedelta(hours=i) for i in range(len(thermal_load_kWh))]
+
+    result = pd.DataFrame({
+        'date': [d.strftime('%Y-%m-%d %H:%M:%S') for d in dates],
+        'thermal_load_kWh': thermal_load_kWh,
+        'pumping_load_kWh': pumping_load_kWh,
+    })
+
+    # Add carrier column
+    if network_type == 'DH':
+        result[f'plant_heating_{plant_carrier}_kWh'] = final_energy_kWh
+    else:
+        result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh
+
+    # Add pumping electricity
+    result['plant_pumping_GRID_kWh'] = pumping_load_kWh
+
+    # Add metadata
+    result['scale'] = 'DISTRICT'
+    result['plant_name'] = plant_name
+    result['network_name'] = network_name
+    result['network_type'] = network_type
+
+    return result
 
 
 def aggregate_buildings_summary(
@@ -785,10 +1095,65 @@ def aggregate_buildings_summary(
 
         summary_rows.append(row)
 
-    # Process plants (TODO when plant calculation is implemented)
-    for plant_name, df in plant_dfs.items():
-        # Similar logic for plants
-        pass
+    # Process plants
+    for plant_key, df in plant_dfs.items():
+        # Parse plant key: "DH_NODE5" or "DC_NODE1"
+        parts = plant_key.split('_', 1)
+        if len(parts) == 2:
+            network_type = parts[0]
+            plant_name = parts[1]
+        else:
+            plant_name = plant_key
+            network_type = df['network_type'].iloc[0] if 'network_type' in df.columns else 'UNKNOWN'
+
+        # Get plant metadata
+        network_name = df['network_name'].iloc[0] if 'network_name' in df.columns else None
+
+        # Sum thermal load
+        thermal_load_MWh = df['thermal_load_kWh'].sum() / 1000.0 if 'thermal_load_kWh' in df.columns else 0.0
+        pumping_MWh = df['pumping_load_kWh'].sum() / 1000.0 if 'pumping_load_kWh' in df.columns else 0.0
+
+        # Sum carrier columns by type
+        carrier_totals = {}
+        for col in df.columns:
+            if col.endswith('_kWh') and col not in ['thermal_load_kWh', 'pumping_load_kWh']:
+                # Extract carrier from column name
+                # Format: plant_heating_NATURALGAS_kWh -> NATURALGAS
+                parts_col = col.split('_')
+                if len(parts_col) >= 3:
+                    carrier = parts_col[2]  # Get carrier part
+                    if carrier not in carrier_totals:
+                        carrier_totals[carrier] = 0.0
+                    carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
+
+        # Calculate total final energy
+        TOTAL_MWh = sum(carrier_totals.values())
+
+        # Build row
+        row = {
+            'name': plant_name,
+            'type': 'plant',
+            'GFA_m2': None,
+            'x_coord': None,
+            'y_coord': None,
+            'scale': 'DISTRICT',
+            'case': None,
+            'case_description': f'{network_type} plant',
+            'Qhs_sys_MWh': thermal_load_MWh if network_type == 'DH' else 0.0,
+            'Qww_sys_MWh': 0.0,
+            'Qcs_sys_MWh': thermal_load_MWh if network_type == 'DC' else 0.0,
+            'E_sys_MWh': pumping_MWh,
+        }
+
+        # Add carrier columns
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+            row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
+
+        row['TOTAL_MWh'] = TOTAL_MWh
+        row['peak_demand_kW'] = None
+        row['peak_datetime'] = None
+
+        summary_rows.append(row)
 
     # Create summary DataFrame
     summary_df = pd.DataFrame(summary_rows)
@@ -854,6 +1219,8 @@ def create_final_energy_breakdown(
             carrier_col = f'{prefix}_{carrier}_kWh'
 
             if carrier_col not in df.columns:
+                # Try alternative column names for district systems
+                # District systems may use simplified names like Qhs_sys_DH_kWh
                 continue
 
             # Calculate annual totals (kWh -> MWh)
@@ -902,26 +1269,49 @@ def create_final_energy_breakdown(
             breakdown_rows.append(row)
 
         # Process booster systems if present
-        if supply_config.get('space_heating_booster'):
-            booster_config = supply_config['space_heating_booster']
-            carrier = booster_config['carrier']
-            booster_col = f'Qhs_booster_{carrier}_kWh'
-
-            if booster_col in df.columns:
+        # Check both configured boosters and auto-detected boosters
+        for booster_col in df.columns:
+            if '_booster_' in booster_col and booster_col.endswith('_kWh'):
                 annual_final_energy_MWh = df[booster_col].sum() / 1000.0
                 if annual_final_energy_MWh > 0:
+                    # Parse column name: Qhs_booster_NATURALGAS_kWh or Qww_booster_NATURALGAS_kWh
+                    parts = booster_col.split('_')
+                    if parts[0] == 'Qhs':
+                        service = 'space_heating_booster'
+                        demand_col = 'Qhs_booster_kWh'
+                    elif parts[0] == 'Qww':
+                        service = 'hot_water_booster'
+                        demand_col = 'Qww_booster_kWh'
+                    else:
+                        continue
+
+                    # Extract carrier from column name
+                    carrier = parts[2]  # NATURALGAS, GRID, etc.
+
+                    # Get booster config if available (what-if mode)
+                    booster_config = supply_config.get(service)
+                    if booster_config:
+                        assembly_code = booster_config.get('assembly_code')
+                        component_code = booster_config.get('component_code')
+                        efficiency = booster_config.get('efficiency')
+                    else:
+                        # Auto-detected booster (production mode)
+                        assembly_code = 'AUTO_DETECTED'
+                        component_code = None
+                        efficiency = 0.85  # Default
+
                     row = {
                         'name': building_name,
                         'type': 'building',
                         'scale': 'BUILDING',
-                        'service': 'space_heating_booster',
-                        'demand_column': 'Qhs_booster_kWh',
+                        'service': service,
+                        'demand_column': demand_col,
                         'carrier': carrier,
-                        'assembly_code': booster_config.get('assembly_code'),
-                        'component_code': booster_config.get('component_code'),
-                        'component_type': 'Boiler',  # Boosters are typically boilers
-                        'efficiency': booster_config.get('efficiency'),
-                        'annual_demand_MWh': None,  # Booster demand is derived
+                        'assembly_code': assembly_code,
+                        'component_code': component_code,
+                        'component_type': 'Booster',
+                        'efficiency': efficiency,
+                        'annual_demand_MWh': None,  # Booster demand is derived from network temp delta
                         'annual_final_energy_MWh': annual_final_energy_MWh,
                         'peak_demand_kW': None,
                         'peak_final_energy_kW': None,
@@ -929,37 +1319,70 @@ def create_final_energy_breakdown(
                     }
                     breakdown_rows.append(row)
 
-        if supply_config.get('hot_water_booster'):
-            booster_config = supply_config['hot_water_booster']
-            carrier = booster_config['carrier']
-            booster_col = f'Qww_booster_{carrier}_kWh'
+    # Process plants
+    for plant_key, df in plant_dfs.items():
+        # Parse plant key: "DH_NODE5" or "DC_NODE1"
+        parts = plant_key.split('_', 1)
+        if len(parts) == 2:
+            network_type = parts[0]
+            plant_name = parts[1]
+        else:
+            plant_name = plant_key
+            network_type = df['network_type'].iloc[0] if 'network_type' in df.columns else 'UNKNOWN'
 
-            if booster_col in df.columns:
-                annual_final_energy_MWh = df[booster_col].sum() / 1000.0
-                if annual_final_energy_MWh > 0:
-                    row = {
-                        'name': building_name,
-                        'type': 'building',
-                        'scale': 'BUILDING',
-                        'service': 'hot_water_booster',
-                        'demand_column': 'Qww_booster_kWh',
-                        'carrier': carrier,
-                        'assembly_code': booster_config.get('assembly_code'),
-                        'component_code': booster_config.get('component_code'),
-                        'component_type': 'Boiler',
-                        'efficiency': booster_config.get('efficiency'),
-                        'annual_demand_MWh': None,
-                        'annual_final_energy_MWh': annual_final_energy_MWh,
-                        'peak_demand_kW': None,
-                        'peak_final_energy_kW': None,
-                        'peak_datetime': None,
-                    }
-                    breakdown_rows.append(row)
+        # Process heating/cooling carrier
+        for col in df.columns:
+            if col.startswith('plant_heating_') or col.startswith('plant_cooling_'):
+                # Extract carrier: plant_heating_NATURALGAS_kWh -> NATURALGAS
+                parts_col = col.split('_')
+                if len(parts_col) >= 3:
+                    carrier = parts_col[2]
+                    service_type = 'heating' if 'heating' in col else 'cooling'
 
-    # Process plants (TODO when plant calculation is implemented)
-    for plant_name, df in plant_dfs.items():
-        # Similar logic for plants
-        pass
+                    annual_final_energy_MWh = df[col].sum() / 1000.0
+
+                    if annual_final_energy_MWh > 0:
+                        row = {
+                            'name': plant_name,
+                            'type': 'plant',
+                            'scale': 'DISTRICT',
+                            'service': f'plant_{service_type}',
+                            'demand_column': 'thermal_load_kWh',
+                            'carrier': carrier,
+                            'assembly_code': None,
+                            'component_code': None,
+                            'component_type': 'Boiler' if carrier == 'NATURALGAS' else 'Chiller',
+                            'efficiency': 0.85 if carrier == 'NATURALGAS' else 3.0,
+                            'annual_demand_MWh': df['thermal_load_kWh'].sum() / 1000.0 if 'thermal_load_kWh' in df.columns else None,
+                            'annual_final_energy_MWh': annual_final_energy_MWh,
+                            'peak_demand_kW': None,
+                            'peak_final_energy_kW': None,
+                            'peak_datetime': None,
+                        }
+                        breakdown_rows.append(row)
+
+        # Process pumping electricity
+        if 'plant_pumping_GRID_kWh' in df.columns:
+            annual_pumping_MWh = df['plant_pumping_GRID_kWh'].sum() / 1000.0
+            if annual_pumping_MWh > 0:
+                row = {
+                    'name': plant_name,
+                    'type': 'plant',
+                    'scale': 'DISTRICT',
+                    'service': 'plant_pumping',
+                    'demand_column': 'pumping_load_kWh',
+                    'carrier': 'GRID',
+                    'assembly_code': None,
+                    'component_code': None,
+                    'component_type': 'Pump',
+                    'efficiency': 1.0,
+                    'annual_demand_MWh': df['pumping_load_kWh'].sum() / 1000.0 if 'pumping_load_kWh' in df.columns else None,
+                    'annual_final_energy_MWh': annual_pumping_MWh,
+                    'peak_demand_kW': None,
+                    'peak_final_energy_kW': None,
+                    'peak_datetime': None,
+                }
+                breakdown_rows.append(row)
 
     # Create breakdown DataFrame
     breakdown_df = pd.DataFrame(breakdown_rows)
