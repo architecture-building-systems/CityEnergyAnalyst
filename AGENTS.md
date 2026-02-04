@@ -145,6 +145,13 @@ cea.api.demand(scenario='/path/to/scenario')
 
 **No emoticons in code**: Never add emoji or emoticons to code files, comments, or print statements.
 
+**Physics function docstrings**: When writing physics-based functions (hydraulics, heat transfer, thermodynamics, fluid properties):
+- ✅ **MUST follow** the docstring specification in `docs/developer/documenting-physics/docstring-specification.md`
+- ✅ Verify standards citations are correct before referencing
+- ✅ Include formulas with Unicode symbols
+- ✅ All parameters and returns must have units in [square brackets]
+- ✅ Use proper reference format: [Tag] Author (Year). Title. Journal, Volume, Pages
+
 **British English**: All user-facing text MUST use British English spelling and terminology:
 - ✅ "normalised" (not "normalized")
 - ✅ "optimisation" (not "optimization")
