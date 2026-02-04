@@ -116,7 +116,7 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     pipe_diameter_m : ndarray
         Pipe diameter [m] for each edge (e x 1)
     reynolds : ndarray
-        Reynolds number [-] for each edge (e x 1)
+        Reynolds number [-] for each edge at time t (t x e)
     pipe_roughness_m : float
         Absolute pipe roughness [m]
         Typical value: 0.02 mm (2×10⁻⁵ m) for steel pipe
@@ -125,7 +125,7 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     Returns
     -------
     ndarray
-        Darcy friction factor [-] for each edge (e x 1)
+        Darcy friction factor [-] for each edge at time t (t x e)
 
     Raises
     ------
@@ -152,43 +152,62 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     The function returns f = 0 for Re ≤ 1 to avoid division by zero and represent
     negligible flow conditions.
     """
-    darcy = np.zeros(reynolds.size)
-    # necessary to make sure pipe_diameter is 1D vector as input formats can vary
-    if hasattr(pipe_diameter_m[0], '__len__'):
-        pipe_diameter_m = pipe_diameter_m[0]
-    for rey in range(reynolds.size):
-        if reynolds[rey] <= 1:
-            darcy[rey] = 0
-        elif reynolds[rey] <= 2300:
-            # [STANDARD: ISO 5167] Laminar flow: f = 64/Re
-            darcy[rey] = 64 / reynolds[rey]
-        elif reynolds[rey] <= 5000:
-            # [STANDARD: Transition regime] Blasius equation for smooth pipes
-            # Reference: Moody Diagram (Incropera et al., 2007)
-            # At low Re, roughness effects negligible
-            darcy[rey] = 0.316 * reynolds[rey] ** -0.25
-        else:
-            # [STANDARD: ISO 5167, EN 13941] Swamee-Jain equation
-            # Explicit Colebrook-White approximation
-            # Valid: Re ∈ [5000, 10⁸], ε/D ∈ [10⁻⁶, 0.05]
-            log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9
-            if not np.isfinite(log_arg) or log_arg <= 0:
-                raise ValueError(
-                    f"Invalid argument for logarithm in Swamee-Jain friction factor calculation!\n"
-                    f"Logarithm argument: {log_arg}\n"
-                    f"Pipe roughness: {pipe_roughness_m:.6e} m\n"
-                    f"Pipe diameter: {pipe_diameter_m[rey]:.6f} m\n"
-                    f"Reynolds number: {reynolds[rey]:.2f}\n"
-                    f"Darcy friction factor: {darcy[rey] if rey < len(darcy) else 'N/A'}\n\n"
-                    f"For valid Swamee-Jain calculation:\n"
-                    f"- Pipe roughness must be > 0 (typical: 1e-6 to 0.05 m)\n"
-                    f"- Pipe diameter must be > 0\n"
-                    f"- Reynolds number should be 5000 - 1e8\n"
-                    f"- Values must be finite (not NaN or inf)\n\n"
-                    f"**Check the pipe properties and flow conditions."
-                )
+    # Ensure pipe_diameter_m is 1-D array for broadcasting
+    pipe_diameter_m = np.asarray(pipe_diameter_m).flatten()
+    reynolds = np.asarray(reynolds)
 
-            darcy[rey] = 1.325 * np.log(log_arg) ** (-2)
+    # Define conditions for each flow regime
+    cond_no_flow = reynolds <= 1
+    cond_laminar = (reynolds > 1) & (reynolds <= 2300)
+    cond_transition = (reynolds > 2300) & (reynolds <= 5000)
+    cond_turbulent = reynolds > 5000
+
+    # Calculate Darcy for laminar regime
+    # [STANDARD: ISO 5167] Laminar flow: f = 64/Re
+    darcy_laminar = 64 / np.where(reynolds > 0, reynolds, 1)  # Avoid division by zero
+
+    # Calculate Darcy for transition regime
+    # [STANDARD: Transition regime] Blasius equation for smooth pipes
+    # Reference: Moody Diagram (Incropera et al., 2007)
+    darcy_transition = 0.316 * reynolds ** -0.25
+
+    # Calculate Darcy for turbulent regime
+    # [STANDARD: ISO 5167, EN 13941] Swamee-Jain equation
+    # Explicit Colebrook-White approximation
+    # Valid: Re ∈ [5000, 10⁸], ε/D ∈ [10⁻⁶, 0.05]
+    log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m) + 5.74 / reynolds ** 0.9
+
+    # Validate logarithm argument for turbulent flow
+    invalid_turbulent = cond_turbulent & (~np.isfinite(log_arg) | (log_arg <= 0))
+    if np.any(invalid_turbulent):
+        # Find first invalid case for error reporting
+        idx = np.unravel_index(np.argmax(invalid_turbulent), invalid_turbulent.shape)
+        raise ValueError(
+            f"Invalid argument for logarithm in Swamee-Jain friction factor calculation!\n"
+            f"Logarithm argument: {log_arg[idx]}\n"
+            f"Pipe roughness: {pipe_roughness_m:.6e} m\n"
+            f"Pipe diameter: {pipe_diameter_m[idx[-1]] if pipe_diameter_m.ndim > 0 else pipe_diameter_m:.6f} m\n"
+            f"Reynolds number: {reynolds[idx]:.2f}\n\n"
+            f"For valid Swamee-Jain calculation:\n"
+            f"- Pipe roughness must be > 0 (typical: 1e-6 to 0.05 m)\n"
+            f"- Pipe diameter must be > 0\n"
+            f"- Reynolds number should be 5000 - 1e8\n"
+            f"- Values must be finite (not NaN or inf)\n\n"
+            f"**Check the pipe properties and flow conditions."
+        )
+
+    darcy_turbulent = 1.325 * np.log(log_arg) ** (-2)
+
+    # Apply conditions to select appropriate Darcy value
+    conditions = [cond_no_flow, cond_laminar, cond_transition, cond_turbulent]
+    choices = [
+        0,                  # No flow
+        darcy_laminar,      # Laminar regime
+        darcy_transition,   # Transition regime
+        darcy_turbulent     # Turbulent regime
+    ]
+
+    darcy = np.select(conditions, choices, default=0)
 
     return darcy
 
