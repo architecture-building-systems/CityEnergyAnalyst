@@ -663,7 +663,7 @@ def load_whatif_supply_configuration(
                 network_name
             )
 
-    # Parse booster systems (always building-scale, ignore network preference)
+    # Parse booster systems (always building-scale, but need network_name to read substation files)
     if booster_hs and len(booster_hs) > 0:
         assembly_code = strip_scale_label(booster_hs[0])
         if assembly_code:
@@ -674,6 +674,8 @@ def load_whatif_supply_configuration(
                 'heating',
                 network_name
             )
+            # Boosters are building-scale but need network_name for substation files
+            supply_config['space_heating_booster']['network_name'] = network_name
 
     if booster_dhw and len(booster_dhw) > 0:
         assembly_code = strip_scale_label(booster_dhw[0])
@@ -685,6 +687,8 @@ def load_whatif_supply_configuration(
                 'hot_water',
                 network_name
             )
+            # Boosters are building-scale but need network_name for substation files
+            supply_config['hot_water_booster']['network_name'] = network_name
 
     return supply_config
 
