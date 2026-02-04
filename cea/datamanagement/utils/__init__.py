@@ -45,5 +45,5 @@ def migrate_void_deck_data(locator: InputLocator) -> None:
     invalid_floors = zone_gdf[actual_floors <= 0]
     if len(invalid_floors) > 0:
         invalid_buildings = invalid_floors["name"].tolist()
-        warnings.warn(f"Some buildings have void_deck greater than floors_ag: {invalid_buildings}",
+        warnings.warn(f"Some buildings have void_deck greater than or equal to floors_ag: {invalid_buildings}",
                       RuntimeWarning)

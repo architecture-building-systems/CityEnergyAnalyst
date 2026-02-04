@@ -65,7 +65,7 @@ def calc_h_ac(a_t: float) -> float:
     """
     Source: (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    :param a_t: area of all surfaces facing the building zone in [m2], equivalent to `bpr.rc_model['Atot']`. 
+    :param a_t: area of all surfaces facing the building zone in [m2], equivalent to `bpr.rc_model['Atot']`.
                 See documentation for `calc_prop_rc_model`.
     :type a_t: float
     :return: `h_ac`: heat loss factor from air node to central node, used in 5R1C model.
@@ -74,9 +74,29 @@ def calc_h_ac(a_t: float) -> float:
 
     # get properties from bpr # TODO: to be addressed in issue #443
 
-    # 
+    # Check building area
+    if a_t <= 0:
+        raise ValueError(
+            f"Invalid building area in RC model!\n"
+            f"Building area (a_t): {a_t:.2f} m²\n\n"
+            f"Building area must be > 0.\n"
+            f"**Check the building geometry input."
+        )
 
-    h_ac = a_t / (1 / h_cv_i - 1 / h_ic)
+    # Check denominator for division
+    denominator = 1 / h_cv_i - 1 / h_ic
+    if abs(denominator) < 1e-10:
+        raise ValueError(
+            f"Invalid RC model configuration - denominator near zero!\n"
+            f"h_cv_i: {h_cv_i:.4f} W/m²K\n"
+            f"h_ic: {h_ic:.4f} W/m²K\n"
+            f"Denominator (1/h_cv_i - 1/h_ic): {denominator:.10e}\n\n"
+            f"**Check the RC model heat transfer coefficients in SIA 2044 constants."
+        )
+
+    #
+
+    h_ac = a_t / denominator
 
     return h_ac
 
@@ -109,9 +129,29 @@ def calc_h_em(h_op_m: float, h_mc: float) -> float:
     :rtype: float
     """
     if h_op_m > 0:
-        h_em = 1.0 / (1.0 / h_op_m - 1.0 / h_mc)
+        # Check h_mc before division
+        if h_mc <= 0:
+            raise ValueError(
+                f"Invalid heat transfer coefficient in RC model!\n"
+                f"h_mc (mass-to-central node): {h_mc:.4f} W/K\n\n"
+                f"Heat transfer coefficient must be > 0.\n"
+                f"**Check the RC model calculation for h_mc."
+            )
+
+        # Check denominator
+        denominator = 1.0 / h_op_m - 1.0 / h_mc
+        if abs(denominator) < 1e-10:
+            raise ValueError(
+                f"Invalid RC model configuration - denominator near zero in h_em calculation!\n"
+                f"h_op_m: {h_op_m:.4f} W/K\n"
+                f"h_mc: {h_mc:.4f} W/K\n"
+                f"Denominator (1/h_op_m - 1/h_mc): {denominator:.10e}\n\n"
+                f"**Check the RC model heat transfer coefficients."
+            )
+
+        h_em = 1.0 / denominator
     else:
-        # h_op_m = 0, no heat transfer from mass to outside air. 
+        # h_op_m = 0, no heat transfer from mass to outside air.
         # Therefore h_em (part of heat transfer from mass to outside air) should also be 0.
         h_em = 0
 
@@ -497,9 +537,15 @@ def calc_h_1(h_ea: float, h_ac: float) -> float:
     :rtype: float
     """
 
-    # get values
-    h_ea = h_ea
-    h_ac = h_ac
+    # Check heat transfer coefficients before division
+    if h_ea <= 0 or h_ac <= 0:
+        raise ValueError(
+            f"Invalid heat transfer coefficients in RC model h_1 calculation!\n"
+            f"h_ea (external air to air node): {h_ea:.4f} W/K\n"
+            f"h_ac (air node to central node): {h_ac:.4f} W/K\n\n"
+            f"Heat transfer coefficients must be > 0.\n"
+            f"**Check the RC model heat transfer coefficient calculations."
+        )
 
     h_1 = 1 / (1 / h_ea + 1 / h_ac)
 
@@ -529,7 +575,7 @@ def calc_h_3(h_2: float, h_mc: float) -> float:
     """
     Source: (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    Calculates the heat loss factor from mass node via central node (via conduction) 
+    Calculates the heat loss factor from mass node via central node (via conduction)
     to the outside (via conduction and convection).
 
     :param h_2: total heat loss factor from central node to outside air via convection and conduction
@@ -539,6 +585,16 @@ def calc_h_3(h_2: float, h_mc: float) -> float:
     :return: augmented heat loss factor from mass node via central node to outside air.
     :rtype: float
     """
+
+    # Check heat transfer coefficients before division
+    if h_2 <= 0 or h_mc <= 0:
+        raise ValueError(
+            f"Invalid heat transfer coefficients in RC model h_3 calculation!\n"
+            f"h_2 (central node to outside): {h_2:.4f} W/K\n"
+            f"h_mc (mass node to central node): {h_mc:.4f} W/K\n\n"
+            f"Heat transfer coefficients must be > 0.\n"
+            f"**Check the RC model heat transfer coefficient calculations."
+        )
 
     h_3 = 1.0 / (1.0 / h_2 + 1.0 / h_mc)
     return h_3
@@ -697,7 +753,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr: BuildingPropertiesRow, 
     Ea = tsd.electrical_loads.Ea[t] * min(bpr.rc_model.Af / bpr.rc_model.Aef, 1.0)  # account for a proportion of internal gains
     Epro = tsd.electrical_loads.Epro[t]
     # account for a proportion of solar gains. This is very simplified for now.
-    I_sol = tsd.solar.I_sol_and_I_rad[t] * np.sqrt(bpr.rc_model.Hs_ag)
+    I_sol = tsd.solar.I_sol_and_I_rad[t] * bpr.rc_model.Hs_ag
     T_ext = tsd.weather.T_ext[t]
     theta_ve_mech = tsd.rc_model_temperatures.theta_ve_mech[t]
 

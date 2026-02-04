@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from cea.datamanagement.database.assemblies import Envelope
-from cea.demand.building_properties.base import BuildingPropertiesDatabase
+from cea.demand.building_properties.base import BuildingPropertiesDatabase, DatabaseMapping
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -50,51 +50,48 @@ class BuildingEnvelope(BuildingPropertiesDatabase):
         :rtype: DataFrame
 
         """
-        # TODO: Get mappings from schema or similar to avoid hardcoding
-        # Database mappings: (db_dataframe, join_column_name, columns_to_extract)
         envelope_database = Envelope.from_locator(locator)
+
         db_mappings = {
-            'envelope construction': (
-                envelope_database.mass,
-                'type_mass',
-                None,
-                ['Cm_Af']
+            'envelope construction': DatabaseMapping(
+                data=envelope_database.mass,
+                join_column='type_mass',
+                fields=['Cm_Af']
             ),
-            'envelope leakage': (
-                envelope_database.tightness,
-                'type_leak',
-                None,
-                ['n50']
+            'envelope leakage': DatabaseMapping(
+                data=envelope_database.tightness,
+                join_column='type_leak',
+                fields=['n50']
             ),
-            'envelope roof': (
-                envelope_database.roof,
-                'type_roof',
-                None,
-                ['e_roof', 'a_roof', 'U_roof']
+            'envelope roof': DatabaseMapping(
+                data=envelope_database.roof,
+                join_column='type_roof',
+                fields=['e_roof', 'a_roof', 'U_roof']
             ),
-            'envelope wall': (
-                envelope_database.wall,
-                'type_wall',
-                None,
-                ['e_wall', 'a_wall', 'U_wall']
+            'envelope wall': DatabaseMapping(
+                data=envelope_database.wall,
+                join_column='type_wall',
+                fields=['e_wall', 'a_wall', 'U_wall']
             ),
-            'envelope window': (
-                envelope_database.window,
-                'type_win',
-                None,
-                ['e_win', 'G_win', 'U_win', 'F_F']
+            'envelope window': DatabaseMapping(
+                data=envelope_database.window,
+                join_column='type_win',
+                fields=['e_win', 'G_win', 'U_win', 'F_F']
             ),
-            'envelope shading': (
-                envelope_database.shading,
-                'type_shade',
-                None,
-                ['rf_sh']
+            'envelope shading': DatabaseMapping(
+                data=envelope_database.shading,
+                join_column='type_shade',
+                fields=['rf_sh', 'shading_location', 'shading_setpoint_Wm2'],
+                field_defaults={
+                    'shading_location': 'interior',
+                    'shading_setpoint_Wm2': 300
+                }
             ),
-            'envelope floor': (
-                envelope_database.floor,
-                'type_base',
-                None,
-                ['U_base'])
+            'envelope floor': DatabaseMapping(
+                data=envelope_database.floor,
+                join_column='type_base',
+                fields=['U_base']
+            )
         }
 
         return BuildingEnvelope.map_database_properties(prop_envelope, db_mappings)
