@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from cea.datamanagement.database.assemblies import Supply
-from cea.demand.building_properties.base import BuildingPropertiesDatabase
+from cea.demand.building_properties.base import BuildingPropertiesDatabase, DatabaseMapping
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -34,6 +34,7 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
         # Supply system mappings: (db dataframe, join_column, column_renames, fields_to_extract)
         # NOTE: Only scale is extracted. Efficiency and feedstock calculations moved to primary-energy module.
         supply_database = Supply.from_locator(locator)
+
         supply_mappings = {
             'supply heating': (
                 supply_database.heating,

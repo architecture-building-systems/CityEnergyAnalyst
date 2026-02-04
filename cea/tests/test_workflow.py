@@ -1,5 +1,5 @@
 import glob
-import multiprocessing.pool
+import multiprocessing
 import os
 import sys
 import unittest
@@ -104,9 +104,10 @@ class TestWorkflows(unittest.TestCase):
         return config
 
     def _test_workflows(self):
-        with multiprocessing.pool.Pool() as p:
-            p.map(_run_workflow_with_prefix, [self.get_workflow_config(workflow) for workflow in self.get_test_workflows()])
-
+        ctx = multiprocessing.get_context("spawn")
+        with ctx.Pool() as p:
+            # Ensure fast fail on first exception
+            list(p.imap(_run_workflow_with_prefix, [self.get_workflow_config(workflow) for workflow in self.get_test_workflows()]))
 
 if __name__ == '__main__':
     unittest.main()
