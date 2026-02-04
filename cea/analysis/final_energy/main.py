@@ -56,9 +56,9 @@ def main(config: cea.config.Configuration):
             )
         print(f"Mode: What-if scenario '{whatif_name}'")
     else:
-        # Production mode
-        whatif_name = "baseline"
-        print(f"Mode: Production (baseline)")
+        # Production mode - use network-name from config
+        whatif_name = config.final_energy.network_name if config.final_energy.network_name else "production"
+        print(f"Mode: Production (network: {whatif_name})")
 
     # Step 2: Create output folder
     output_folder = locator.get_final_energy_folder(whatif_name)

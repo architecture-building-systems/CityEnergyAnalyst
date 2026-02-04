@@ -33,7 +33,7 @@ class Configuration:
     occupancy: OccupancySection
     demand: DemandSection
     final_energy: FinalEnergySection
-    system_costs: SystemCostsSection
+    what_ifs: WhatIfsSection
     emissions: EmissionsSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
@@ -132,7 +132,7 @@ class Configuration:
     @overload
     def __getattr__(self, item: Literal["final_energy"]) -> FinalEnergySection: ...
     @overload
-    def __getattr__(self, item: Literal["system_costs"]) -> SystemCostsSection: ...
+    def __getattr__(self, item: Literal["what_ifs"]) -> WhatIfsSection: ...
     @overload
     def __getattr__(self, item: Literal["emissions"]) -> EmissionsSection: ...
     @overload
@@ -598,44 +598,15 @@ class FinalEnergySection(Section):
     def __getattr__(self, item: Literal["panels_on_wall_west"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
-class SystemCostsSection(Section):
-    """Typed section for system-costs configuration"""
-    network_name: str | None
-    network_type: list[str]
-    supply_type_cs: list
-    supply_type_hs: list
-    supply_type_dhw: list
-    available_feedstocks: list[str]
-    cooling_components: list[str]
-    heating_components: list[str]
-    heat_rejection_components: list[str]
+class WhatIfsSection(Section):
+    """Typed section for what-ifs configuration"""
+    what_if_name: str
 
-    @overload
-    def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
-    @overload
-    def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["supply_type_cs"]) -> list: ...
-    @overload
-    def __getattr__(self, item: Literal["supply_type_hs"]) -> list: ...
-    @overload
-    def __getattr__(self, item: Literal["supply_type_dhw"]) -> list: ...
-    @overload
-    def __getattr__(self, item: Literal["available_feedstocks"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["cooling_components"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["heating_components"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["heat_rejection_components"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class EmissionsSection(Section):
     """Typed section for emissions configuration"""
     year_end: int | None
-    buildings: list[str]
-    include_pv: bool
-    pv_codes: list[str]
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: Any
     grid_decarbonise_reference_year: int | None
@@ -644,12 +615,6 @@ class EmissionsSection(Section):
 
     @overload
     def __getattr__(self, item: Literal["year_end"]) -> int | None: ...
-    @overload
-    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["include_pv"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["pv_codes"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["grid_carbon_intensity_dataset_csv"]) -> str | None: ...
     @overload
@@ -1460,9 +1425,9 @@ class DecentralizedSection(Section):
 
 class NetworkLayoutSection(Section):
     """Typed section for network-layout configuration"""
+    overwrite_supply_settings: bool
     network_name: str
     include_services: list[str]
-    overwrite_supply_settings: bool
     itemised_dh_services: list[str]
     cooling_connected_buildings: list[str]
     heating_connected_buildings: list[str]
@@ -1481,11 +1446,11 @@ class NetworkLayoutSection(Section):
     snap_tolerance: float | None
 
     @overload
+    def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
+    @overload
     def __getattr__(self, item: Literal["network_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["itemised_dh_services"]) -> list[str]: ...
     @overload

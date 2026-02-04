@@ -855,14 +855,18 @@ class NetworkLayoutNameParameter(StringParameter):
         return self._validate_network_name(str(value))
 
     def decode(self, value):
-        """Parse and normalize network name from config file"""
+        """
+        Parse and normalize network name from config file.
+        Lenient parsing - only validates security concerns (filesystem characters).
+        Business rules (collision check) are enforced in encode().
+        """
         if not value:
             return ""
 
         value = value.strip()
 
         # Only validate filesystem characters (security concern)
-        # Don't check collision - that's encode's job when saving
+        # Collision check is encode's job when creating new networks
         invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
         if any(char in value for char in invalid_chars):
             raise ValueError(

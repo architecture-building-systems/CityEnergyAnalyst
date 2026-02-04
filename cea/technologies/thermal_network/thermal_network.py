@@ -372,29 +372,51 @@ class ThermalNetwork(object):
             self.locator, self.network_type, self.network_name
         )
 
-        # Get nodes path for metadata file location
-        nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
-
-        # NEW: Read per-building service configuration metadata (if available)
+        # NEW: Read per-building service configuration metadata from unified network_connectivity.json
         import json
-        metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+        connectivity_json_path = self.locator.get_network_connectivity_file(self.network_name)
         per_building_services = None
 
-        if os.path.exists(metadata_path):
-            with open(metadata_path, 'r') as f:
-                metadata = json.load(f)
+        if os.path.exists(connectivity_json_path):
+            # Read from unified network_connectivity.json
+            with open(connectivity_json_path, 'r') as f:
+                connectivity_data = json.load(f)
 
-            # Convert lists back to sets
-            per_building_services = {
-                building: set(services)
-                for building, services in metadata['per_building_services'].items()
-            }
+            # Extract per-building services for this network type (DH only has this info)
+            if self.network_type in connectivity_data.get('networks', {}):
+                network_data = connectivity_data['networks'][self.network_type]
+                per_building_services_dict = network_data.get('per_building_services', {})
 
-            print("  ℹ Loaded per-building service configuration from layout metadata")
-            print(f"    - Network services: {', '.join(metadata['network_services'])}")
+                if per_building_services_dict:
+                    # Convert lists back to sets
+                    per_building_services = {
+                        building: set(services)
+                        for building, services in per_building_services_dict.items()
+                    }
+                    print("  ℹ Loaded per-building service configuration from network_connectivity.json")
+                    if 'network_services' in network_data:
+                        print(f"    - Network services: {', '.join(network_data['network_services'])}")
         else:
-            # Legacy mode: no metadata file
-            print("  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
+            # Fallback: Try legacy building_services.json location
+            nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
+            legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+            if os.path.exists(legacy_metadata_path):
+                with open(legacy_metadata_path, 'r') as f:
+                    metadata = json.load(f)
+
+                # Convert lists back to sets
+                per_building_services = {
+                    building: set(services)
+                    for building, services in metadata['per_building_services'].items()
+                }
+
+                print("  ℹ Loaded per-building service configuration from legacy building_services.json")
+                print(f"    - Network services: {', '.join(metadata['network_services'])}")
+
+        if per_building_services is None:
+            # No metadata file found (legacy layout or overwrite-supply-settings=true)
+            print("  ℹ No network_connectivity.json found (legacy layout or overwrite-supply-settings=true)")
             print("    - Assuming all buildings use all services")
 
         # Store for passing to simulation functions
@@ -3911,6 +3933,104 @@ def check_heating_cooling_demand(locator, config):
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
 
+def generate_network_connectivity_json(locator, network_name, network_type):
+    """
+    Generate network connectivity data for DH or DC network.
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name (e.g., 'xxx')
+    :param network_type: 'DH' or 'DC'
+    :return: Dictionary with connectivity information
+    """
+    import json
+
+    # Read metadata_nodes.csv to get plant and building connections
+    metadata_file = os.path.join(
+        locator.get_output_thermal_network_type_folder(network_type, network_name),
+        f'{network_type}_{network_name}_metadata_nodes.csv'
+    )
+
+    if not os.path.exists(metadata_file):
+        return None
+
+    metadata_df = pd.read_csv(metadata_file)
+
+    # Extract buildings (CONSUMER nodes)
+    consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
+    buildings_connected = consumer_nodes['building'].tolist()
+
+    # Extract plants (PLANT nodes)
+    plant_nodes = metadata_df[metadata_df['type'].str.startswith('PLANT', na=False)]
+    plants = []
+    for _, plant_row in plant_nodes.iterrows():
+        plants.append({
+            'name': plant_row['name'],
+            'type': plant_row['type'],
+            'coordinates': plant_row['coordinates'] if pd.notna(plant_row['coordinates']) else None
+        })
+
+    return {
+        'buildings_connected': sorted(buildings_connected),
+        'plants': plants
+    }
+
+
+def save_network_connectivity_file(locator, network_name):
+    """
+    Save network_connectivity.json file for a network layout.
+    Combines DH and DC connectivity information into a single file.
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name
+    """
+    import json
+    from datetime import datetime
+
+    connectivity_data = {
+        'network_name': network_name,
+        'timestamp': datetime.now().isoformat(),
+        'DH': {
+            'buildings_connected': [],
+            'plants': []
+        },
+        'DC': {
+            'buildings_connected': [],
+            'plants': []
+        }
+    }
+
+    # Check for DH network
+    dh_folder = locator.get_output_thermal_network_type_folder('DH', network_name)
+    if os.path.exists(dh_folder):
+        dh_connectivity = generate_network_connectivity_json(locator, network_name, 'DH')
+        if dh_connectivity:
+            connectivity_data['DH'] = dh_connectivity
+
+    # Check for DC network
+    dc_folder = locator.get_output_thermal_network_type_folder('DC', network_name)
+    if os.path.exists(dc_folder):
+        dc_connectivity = generate_network_connectivity_json(locator, network_name, 'DC')
+        if dc_connectivity:
+            connectivity_data['DC'] = dc_connectivity
+
+    # Save to network folder root using InputLocator method
+    output_file = locator.get_network_connectivity_file(network_name)
+
+    with open(output_file, 'w') as f:
+        json.dump(connectivity_data, f, indent=2)
+
+    print(f"\nGenerated network connectivity file: {output_file}")
+
+    # Print summary
+    total_dh_buildings = len(connectivity_data['DH']['buildings_connected'])
+    total_dc_buildings = len(connectivity_data['DC']['buildings_connected'])
+    total_dh_plants = len(connectivity_data['DH']['plants'])
+    total_dc_plants = len(connectivity_data['DC']['plants'])
+
+    print(f"  DH: {total_dh_buildings} buildings connected, {total_dh_plants} plant(s)")
+    print(f"  DC: {total_dc_buildings} buildings connected, {total_dc_plants} plant(s)")
+
+
 def main(config: cea.config.Configuration):
     """
     Run thermal network Part 2: Flow & Sizing
@@ -4012,23 +4132,44 @@ def main(config: cea.config.Configuration):
 
         try:
             if network_model == 'simplified':
-                # Read per-building service configuration from network layout metadata
+                # Read per-building service configuration from unified network_connectivity.json
                 import json
-                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-                metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+                connectivity_json_path = locator.get_network_connectivity_file(network_name)
                 per_building_services = None
 
-                if os.path.exists(metadata_path):
-                    with open(metadata_path, 'r') as f:
-                        metadata = json.load(f)
+                if os.path.exists(connectivity_json_path):
+                    # Read from unified network_connectivity.json
+                    with open(connectivity_json_path, 'r') as f:
+                        connectivity_data = json.load(f)
 
-                    # Convert lists back to sets
-                    per_building_services = {
-                        building: set(services)
-                        for building, services in metadata['per_building_services'].items()
-                    }
+                    # Extract per-building services for this network type
+                    if network_type in connectivity_data.get('networks', {}):
+                        network_data = connectivity_data['networks'][network_type]
+                        per_building_services_dict = network_data.get('per_building_services', {})
 
-                    print("  ℹ Per-building service configuration loaded from metadata")
+                        if per_building_services_dict:
+                            # Convert lists back to sets
+                            per_building_services = {
+                                building: set(services)
+                                for building, services in per_building_services_dict.items()
+                            }
+                            print("  ℹ Per-building service configuration loaded from network_connectivity.json")
+                else:
+                    # Fallback: Try legacy building_services.json location
+                    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+                    legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+                    if os.path.exists(legacy_metadata_path):
+                        with open(legacy_metadata_path, 'r') as f:
+                            metadata = json.load(f)
+
+                        # Convert lists back to sets
+                        per_building_services = {
+                            building: set(services)
+                            for building, services in metadata['per_building_services'].items()
+                        }
+
+                        print("  ℹ Per-building service configuration loaded from legacy building_services.json")
 
                 thermal_network_simplified(locator, config, network_type, network_name,
                                           per_building_services=per_building_services)
@@ -4062,7 +4203,14 @@ def main(config: cea.config.Configuration):
             import traceback
             traceback.print_exc()
             errors[network_type] = e
-    
+
+    # Generate network connectivity JSON file if at least one network succeeded
+    if succeeded and not errors:
+        try:
+            save_network_connectivity_file(locator, network_name)
+        except Exception as e:
+            print(f"Warning: Failed to generate network connectivity JSON: {e}")
+
     if errors:
         print(f"\n{'='*60}")
         print("Errors occurred during processing:")
