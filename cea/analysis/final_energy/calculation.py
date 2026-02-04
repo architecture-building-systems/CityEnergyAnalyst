@@ -244,7 +244,7 @@ def load_production_supply_configuration(
     # Read supply.csv
     supply_df = pd.read_csv(locator.get_building_supply()).set_index('name')
     if building_name not in supply_df.index:
-        raise ValueError(f"Building {building_name} not found in supply.csv")
+        raise ValueError(f"Building {building_name} not found in Building properties/Supply")
 
     building_supply = supply_df.loc[building_name]
 
@@ -540,7 +540,7 @@ def load_whatif_supply_configuration(
     # Read supply.csv to get building's configured scale
     supply_df = pd.read_csv(locator.get_building_supply()).set_index('name')
     if building_name not in supply_df.index:
-        raise ValueError(f"Building {building_name} not found in supply.csv")
+        raise ValueError(f"Building {building_name} not found in Building properties/Supply")
 
     building_supply = supply_df.loc[building_name]
 
@@ -852,6 +852,165 @@ def validate_district_assembly_consistency(building_configs: Dict[str, Dict]) ->
         )
 
 
+def validate_supply_network_consistency(
+    buildings: list,
+    network_name: Optional[str],
+    locator: cea.inputlocator.InputLocator
+) -> None:
+    """
+    Validate that supply.csv matches the selected network's actual connectivity.
+
+    This is an early validation check for production mode to fail fast if there's
+    a mismatch between supply.csv configuration and network connectivity.
+
+    Rules:
+    - If network_name=(none) or blank: All buildings should have BUILDING scale
+    - If network_name=X: Buildings connected in network X should have DISTRICT scale,
+      buildings NOT connected should have BUILDING scale
+
+    :param buildings: List of building names to validate
+    :param network_name: Network layout name (can be None, empty, or "(none)")
+    :param locator: InputLocator instance
+    :raises ValueError: If supply.csv doesn't match network connectivity
+    """
+    import json
+
+    # Read supply.csv
+    supply_file = locator.get_building_supply()
+    if not os.path.exists(supply_file):
+        raise FileNotFoundError(
+            f"Building supply file not found: {supply_file}\n"
+            f"Please run 'cea demand' first or create Building properties/Supply in Building Properties/Supply."
+        )
+
+    supply_df = pd.read_csv(supply_file).set_index('name')
+
+    # Edge case: network_name is (none) or blank
+    if not network_name or network_name.lower() == '(none)':
+        # All buildings should have BUILDING scale
+        # Need to load database to check assembly scales
+        from cea.demand.building_properties.building_supply_systems import Supply
+        supply_db = Supply.from_locator(locator)
+
+        mismatches = []
+        for building in buildings:
+            if building not in supply_df.index:
+                continue
+
+            building_supply = supply_df.loc[building]
+
+            # Check heating scale (look up assembly in database)
+            if 'supply_type_hs' in building_supply and pd.notna(building_supply['supply_type_hs']):
+                assembly_code = building_supply['supply_type_hs']
+                if assembly_code in supply_db.heating.index:
+                    scale = supply_db.heating.loc[assembly_code, 'scale']
+                    if scale == 'DISTRICT':
+                        mismatches.append(f"  - {building}: heating assembly '{assembly_code}' is DISTRICT scale (should be BUILDING)")
+
+            # Check cooling scale (look up assembly in database)
+            if 'supply_type_cs' in building_supply and pd.notna(building_supply['supply_type_cs']):
+                assembly_code = building_supply['supply_type_cs']
+                if assembly_code in supply_db.cooling.index:
+                    scale = supply_db.cooling.loc[assembly_code, 'scale']
+                    if scale == 'DISTRICT':
+                        mismatches.append(f"  - {building}: cooling assembly '{assembly_code}' is DISTRICT scale (should be BUILDING)")
+
+        if mismatches:
+            raise ValueError(
+                "Supply configuration mismatch: network-name is blank but some buildings are configured for district scale.\n"
+                "All buildings must have BUILDING scale assemblies when no network is selected.\n\n"
+                f"Buildings with incorrect scale:\n" + "\n".join(mismatches) + "\n\n"
+                "Please update Building properties/Supply in Building Properties/Supply to use building-scale assemblies."
+            )
+
+        return  # Validation passed for (none) case
+
+    # Normal case: network_name is specified
+    # Read network_connectivity.json
+    connectivity_json_path = locator.get_network_connectivity_file(network_name)
+
+    if not os.path.exists(connectivity_json_path):
+        print(f"  ️  Warning: network_connectivity.json not found for network '{network_name}'")
+        print(f"     Skipping connectivity validation (legacy network or not yet generated)")
+        return  # Skip validation for legacy networks
+
+    with open(connectivity_json_path, 'r') as f:
+        connectivity_data = json.load(f)
+
+    # Get per-building service connectivity for DH and DC
+    dh_services = {}  # building -> set of services
+    dc_services = {}  # building -> set of services
+
+    if 'DH' in connectivity_data.get('networks', {}):
+        dh_network = connectivity_data['networks']['DH']
+        per_building = dh_network.get('per_building_services', {})
+        for building, services in per_building.items():
+            dh_services[building] = set(services)
+
+    if 'DC' in connectivity_data.get('networks', {}):
+        dc_network = connectivity_data['networks']['DC']
+        per_building = dc_network.get('per_building_services', {})
+        for building, services in per_building.items():
+            dc_services[building] = set(services)
+
+    # Load database to check assembly scales
+    from cea.demand.building_properties.building_supply_systems import Supply
+    supply_db = Supply.from_locator(locator)
+
+    # Validate each building
+    mismatches = []
+    for building in buildings:
+        if building not in supply_df.index:
+            continue
+
+        building_supply = supply_df.loc[building]
+
+        # Check space heating (look up assembly scale in database)
+        if 'supply_type_hs' in building_supply and pd.notna(building_supply['supply_type_hs']):
+            assembly_code = building_supply['supply_type_hs']
+            if assembly_code in supply_db.heating.index:
+                scale_hs = supply_db.heating.loc[assembly_code, 'scale']
+                # Check if building has DH connection for SPACE HEATING service
+                building_dh_services = dh_services.get(building, set())
+                is_connected_for_space_heating = 'space_heating' in building_dh_services
+
+                if scale_hs == 'DISTRICT' and not is_connected_for_space_heating:
+                    mismatches.append(
+                        f"  - {building}: heating assembly '{assembly_code}' is DISTRICT but NOT connected to DH network '{network_name}' for space heating"
+                    )
+                elif scale_hs == 'BUILDING' and is_connected_for_space_heating:
+                    mismatches.append(
+                        f"  - {building}: heating assembly '{assembly_code}' is BUILDING but IS connected to DH network '{network_name}' for space heating"
+                    )
+
+        # Check space cooling (look up assembly scale in database)
+        if 'supply_type_cs' in building_supply and pd.notna(building_supply['supply_type_cs']):
+            assembly_code = building_supply['supply_type_cs']
+            if assembly_code in supply_db.cooling.index:
+                scale_cs = supply_db.cooling.loc[assembly_code, 'scale']
+                # Check if building has DC connection for SPACE COOLING service
+                building_dc_services = dc_services.get(building, set())
+                is_connected_for_space_cooling = 'space_cooling' in building_dc_services
+
+                if scale_cs == 'DISTRICT' and not is_connected_for_space_cooling:
+                    mismatches.append(
+                        f"  - {building}: cooling assembly '{assembly_code}' is DISTRICT but NOT connected to DC network '{network_name}' for space cooling"
+                    )
+                elif scale_cs == 'BUILDING' and is_connected_for_space_cooling:
+                    mismatches.append(
+                        f"  - {building}: cooling assembly '{assembly_code}' is BUILDING but IS connected to DC network '{network_name}' for space cooling"
+                    )
+
+    if mismatches:
+        raise ValueError(
+            "Supply configuration mismatch with network '{network_name}' connectivity.\n"
+            "Buildings in Building properties/Supply don't match actual network connections.\n\n"
+            f"Mismatches found:\n" + "\n".join(mismatches) + "\n\n"
+            "Please update Building properties/Supply in Building Properties/Supply to match network connectivity,\n"
+            "or run 'cea network-layout' to create a network matching your supply configuration."
+        )
+
+
 def determine_case(supply_config: Dict) -> Tuple[float, str]:
     """
     Determine case number and description based on supply configuration.
@@ -939,7 +1098,8 @@ def calculate_plant_final_energy(
 
     if os.path.exists(pumping_file):
         pumping_df = pd.read_csv(pumping_file)
-        pumping_load_kWh = pumping_df.iloc[:, 0].values  # First column is pumping load
+        # Use total pressure loss as pumping load
+        pumping_load_kWh = pumping_df['pressure_loss_total_kW'].values
     else:
         pumping_load_kWh = np.zeros(len(thermal_load_kWh))
 

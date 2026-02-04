@@ -46,19 +46,23 @@ def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # Step 1: Determine mode and whatif_name
+    # Always use what-if-name for output folder name (both modes)
+    whatif_name = config.final_energy.what_if_name
+    if not whatif_name:
+        raise ValueError(
+            "what-if-name is required. Please set final-energy:what-if-name parameter."
+        )
+
     if config.final_energy.overwrite_supply_settings:
         # What-if mode
-        whatif_name = config.final_energy.what_if_name
-        if not whatif_name:
-            raise ValueError(
-                "What-if mode enabled (overwrite-supply-settings=True) but no what-if-name specified. "
-                "Please set final-energy:what-if-name parameter."
-            )
         print(f"Mode: What-if scenario '{whatif_name}'")
     else:
-        # Production mode - use network-name from config
-        whatif_name = config.final_energy.network_name if config.final_energy.network_name else "production"
-        print(f"Mode: Production (network: {whatif_name})")
+        # Production mode
+        network_name_value = config.final_energy.network_name
+        if network_name_value:
+            print(f"Mode: Production (what-if: {whatif_name}, network: {network_name_value})")
+        else:
+            print(f"Mode: Production (what-if: {whatif_name}, no district networks)")
 
     # Step 2: Create output folder
     output_folder = locator.get_final_energy_folder(whatif_name)
@@ -79,6 +83,21 @@ def main(config: cea.config.Configuration):
         buildings = [os.path.splitext(os.path.basename(f))[0] for f in demand_files]
 
     print(f"Processing {len(buildings)} buildings")
+
+    # Step 3.5: Early validation - check supply.csv matches network connectivity (production mode only)
+    if not config.final_energy.overwrite_supply_settings:
+        print("\nValidating supply configuration against network connectivity...")
+        from cea.analysis.final_energy.calculation import validate_supply_network_consistency
+        try:
+            validate_supply_network_consistency(
+                buildings=buildings,
+                network_name=config.final_energy.network_name,
+                locator=locator
+            )
+            print("  ✓ Supply configuration matches network connectivity")
+        except ValueError as e:
+            print(f"\n❌ Validation failed:\n{e}")
+            raise
 
     # Step 4: Calculate final energy for each building
     print("\nCalculating building final energy...")
