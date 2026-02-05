@@ -294,8 +294,8 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
     :param phase: Phase dictionary
     :return: Phase result dictionary with actual simulation results
     """
-    from cea.technologies.thermal_network.simplified.solver import thermal_network_simplified
-    from cea.technologies.thermal_network.detailed.thermal_network import (
+    from cea.technologies.thermal_network.simplified.model import thermal_network_simplified
+    from cea.technologies.thermal_network.detailed.model import (
         check_heating_cooling_demand, ThermalNetwork, thermal_network_main
     )
 

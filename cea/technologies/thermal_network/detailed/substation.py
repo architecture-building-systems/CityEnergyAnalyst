@@ -1083,7 +1083,7 @@ def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """
-    from cea.technologies.thermal_network.detailed.thermal_network import ThermalNetwork
+    from cea.technologies.thermal_network.detailed.model import ThermalNetwork
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 
