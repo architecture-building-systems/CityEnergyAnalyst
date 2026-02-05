@@ -1,11 +1,19 @@
 # Thermal Network Documentation
 
-## Documentation Files
+For comprehensive documentation on using and understanding the thermal network system, see the [Thermal Network Documentation](../../../docs/thermal_network/index.md).
 
-- [Index](../../../docs/thermal_network/index.md) - Documentation overview and navigation
-- [Calculations](../../../docs/thermal_network/calculations.md) - Technical calculations reference
-- [Exploration Summary](../../../docs/thermal_network/exploration_summary.md) - High-level overview of findings
-- [Refactoring Guide](../../../docs/thermal_network/refactoring_guide.md) - Comprehensive technical reference
-- [Quick Reference](../../../docs/thermal_network/quick_reference.txt) - Developer cheat sheet
-- [Simplified Model](../../../docs/thermal_network/simplified_model.md) - Simplified model documentation
-- [Part 1 Implementation Plan](../../../docs/thermal_network/part1_implementation_plan.md) - Implementation plan for Phase 1
+## Key Documents
+
+### User Documentation
+- **[Standard Operating Procedure (SOP)](../../../docs/thermal_network/SOP.md)** - How to configure and use thermal networks
+- **[Recent Changes](../../../docs/thermal_network/CHANGES.md)** - Migration guide for service-aware implementation
+
+### Technical Reference
+- **[Calculations](../../../docs/thermal_network/calculations.md)** - Physical and mathematical models
+- **[Simplified Model](../../../docs/thermal_network/simplified_model.md)** - Overview of the simplified solver
+
+## Quick Links
+
+- Two-phase architecture: [SOP.md § 1](../../../docs/thermal_network/SOP.md#1-the-two-phase-architecture)
+- Building selection logic: [SOP.md § 2](../../../docs/thermal_network/SOP.md#2-building-and-service-selection-logic)
+- Service priority configuration: [SOP.md § 3](../../../docs/thermal_network/SOP.md#3-service-priority--network-temperature)
