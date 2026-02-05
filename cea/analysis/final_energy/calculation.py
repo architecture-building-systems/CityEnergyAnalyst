@@ -238,6 +238,27 @@ def load_supply_configuration(
         return load_whatif_supply_configuration(building_name, locator, config)
     else:
         # Production mode: use supply.csv
+        # Warn if user has set parameters but overwrite is disabled
+        has_parameters_set = any([
+            config.final_energy.supply_type_hs_building,
+            config.final_energy.supply_type_hs_district,
+            config.final_energy.supply_type_dhw_building,
+            config.final_energy.supply_type_dhw_district,
+            config.final_energy.supply_type_cs_building,
+            config.final_energy.supply_type_cs_district,
+            config.final_energy.hs_booster_type,
+            config.final_energy.dhw_booster_type,
+        ])
+
+        if has_parameters_set:
+            import warnings
+            warnings.warn(
+                "Supply system parameters are set but 'overwrite-supply-settings' is False. "
+                "User selections will be ignored and CEA will use supply.csv instead. "
+                "Set 'overwrite-supply-settings = True' to apply your parameter selections.",
+                UserWarning
+            )
+
         return load_production_supply_configuration(building_name, locator, config)
 
 
@@ -482,13 +503,10 @@ def load_whatif_supply_configuration(
     Load supply configuration from config parameters (what-if mode).
 
     Logic:
-    1. Read building's configured scale from supply.csv
-    2. Check if building is connected to network (substation file exists)
-    3. Apply override logic:
-       - supply.csv=DISTRICT + no connection → use building assembly (fallback)
-       - supply.csv=DISTRICT + has connection → use district assembly (keep)
-       - supply.csv=BUILDING + no connection → use building assembly (keep)
-       - supply.csv=BUILDING + has connection → use district assembly (upgrade)
+    1. Check if building is connected to network (substation file exists)
+    2. If connected → use district assembly parameter (supply-type-XX-district)
+    3. If not connected → use building assembly parameter (supply-type-XX-building)
+    4. If parameter is None/empty → fall back to supply.csv
 
     :param building_name: Name of the building
     :param locator: InputLocator instance
@@ -503,16 +521,6 @@ def load_whatif_supply_configuration(
     # Get network name from config
     network_name = config.final_energy.network_name
 
-    # Get supply type parameters from config
-    # These are lists of assembly codes (can be multiple due to multi-select)
-    supply_type_hs = config.final_energy.supply_type_hs if config.final_energy.supply_type_hs else []
-    supply_type_dhw = config.final_energy.supply_type_dhw if config.final_energy.supply_type_dhw else []
-    supply_type_cs = config.final_energy.supply_type_cs if config.final_energy.supply_type_cs else []
-
-    # Booster parameters
-    booster_hs = config.final_energy.hs_booster_type if config.final_energy.hs_booster_type else []
-    booster_dhw = config.final_energy.dhw_booster_type if config.final_energy.dhw_booster_type else []
-
     # Initialize supply config dict
     supply_config = {
         'space_heating': None,
@@ -522,37 +530,7 @@ def load_whatif_supply_configuration(
         'hot_water_booster': None,
     }
 
-    # Helper function to strip scale labels from assembly codes
-    def strip_scale_label(assembly_str: str) -> str:
-        """Strip scale label from assembly code: 'SUPPLY_HEATING_AS3 (building)' -> 'SUPPLY_HEATING_AS3'"""
-        if ' (' in assembly_str:
-            return assembly_str.split(' (')[0]
-        return assembly_str
-
-    # Helper function to separate building and district assemblies
-    def separate_assemblies(options: list, assembly_df: pd.DataFrame) -> tuple:
-        """
-        Separate assembly options into building-scale and district-scale.
-
-        :param options: List of assembly codes with scale labels
-        :param assembly_df: Assembly dataframe to look up scale
-        :return: (building_assembly, district_assembly)
-        """
-        building_assembly = None
-        district_assembly = None
-
-        for option in options:
-            assembly_code = strip_scale_label(option)
-            if assembly_code in assembly_df.index:
-                scale = assembly_df.loc[assembly_code, 'scale']
-                if scale == 'BUILDING':
-                    building_assembly = assembly_code
-                elif scale == 'DISTRICT':
-                    district_assembly = assembly_code
-
-        return building_assembly, district_assembly
-
-    # Read supply.csv to get building's configured scale
+    # Read supply.csv as fallback
     supply_df = pd.read_csv(locator.get_building_supply()).set_index('name')
     if building_name not in supply_df.index:
         raise ValueError(f"Building {building_name} not found in Building properties/Supply")
@@ -570,118 +548,90 @@ def load_whatif_supply_configuration(
         )
         return os.path.exists(substation_file)
 
-    # Helper function to select assembly based on override logic
-    def select_assembly_with_override(
-        options: list,
-        assembly_df: pd.DataFrame,
-        configured_scale: str,
-        is_connected: bool
+    # Helper function to select assembly based on connectivity
+    def select_assembly(
+        building_assembly: str,
+        district_assembly: str,
+        is_connected: bool,
+        fallback_from_supply: str
     ) -> str:
         """
-        Select assembly based on configured scale and actual connectivity.
+        Select assembly based on network connectivity.
 
-        :param options: List of assembly options from config
-        :param assembly_df: Assembly dataframe
-        :param configured_scale: Scale from supply.csv ('BUILDING' or 'DISTRICT')
+        :param building_assembly: Building-scale assembly from config
+        :param district_assembly: District-scale assembly from config
         :param is_connected: Whether building has substation file
+        :param fallback_from_supply: Assembly from supply.csv (fallback)
         :return: Selected assembly code
         """
-        # Separate building and district options
-        building_assembly, district_assembly = separate_assemblies(options, assembly_df)
-
-        # Apply override logic
-        if configured_scale == 'DISTRICT':
-            if is_connected:
-                # supply.csv=DISTRICT + has connection → use district (keep)
-                return district_assembly if district_assembly else building_assembly
-            else:
-                # supply.csv=DISTRICT + no connection → use building (fallback)
-                return building_assembly if building_assembly else district_assembly
-        else:  # configured_scale == 'BUILDING'
-            if is_connected:
-                # supply.csv=BUILDING + has connection → use district (upgrade)
-                return district_assembly if district_assembly else building_assembly
-            else:
-                # supply.csv=BUILDING + no connection → use building (keep)
-                return building_assembly if building_assembly else district_assembly
+        if is_connected:
+            # Use district assembly if provided, otherwise fallback
+            return district_assembly if district_assembly else fallback_from_supply
+        else:
+            # Use building assembly if provided, otherwise fallback
+            return building_assembly if building_assembly else fallback_from_supply
 
     # Parse space heating
-    if supply_type_hs and len(supply_type_hs) > 0:
-        # Get configured scale from supply.csv
-        configured_scale_hs = 'BUILDING'  # Default
-        if 'supply_type_hs' in building_supply and building_supply['supply_type_hs']:
-            hs_assembly = building_supply['supply_type_hs']
-            if hs_assembly in supply_db.heating.index:
-                configured_scale_hs = supply_db.heating.loc[hs_assembly, 'scale']
+    is_connected_dh = is_connected_to_network(building_name, network_name, 'DH')
 
-        # Check network connectivity
-        is_connected_dh = is_connected_to_network(building_name, network_name, 'DH')
+    assembly_code = select_assembly(
+        config.final_energy.supply_type_hs_building,
+        config.final_energy.supply_type_hs_district,
+        is_connected_dh,
+        building_supply.get('supply_type_hs')
+    )
 
-        # Select assembly with override logic
-        assembly_code = select_assembly_with_override(
-            supply_type_hs,
+    if assembly_code and assembly_code in supply_db.heating.index:
+        supply_config['space_heating'] = parse_supply_assembly(
+            assembly_code,
             supply_db.heating,
-            configured_scale_hs,
-            is_connected_dh
+            locator,
+            'heating',
+            network_name
         )
 
-        if assembly_code:
-            supply_config['space_heating'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.heating,
-                locator,
-                'heating',
-                network_name
-            )
+    # Parse hot water (DHW) - can be building or district scale
+    is_connected_dhw = is_connected_to_network(building_name, network_name, 'DH')  # DHW uses DH network
 
-    # Parse hot water (DHW) - always building scale, never district
-    if supply_type_dhw and len(supply_type_dhw) > 0:
-        # DHW is always building-scale, so always select building assembly
-        building_assembly, _ = separate_assemblies(supply_type_dhw, supply_db.hot_water)
-        assembly_code = building_assembly
+    assembly_code = select_assembly(
+        config.final_energy.supply_type_dhw_building,
+        config.final_energy.supply_type_dhw_district,
+        is_connected_dhw,
+        building_supply.get('supply_type_dhw')
+    )
 
-        if assembly_code:
-            supply_config['hot_water'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.hot_water,
-                locator,
-                'hot_water',
-                network_name
-            )
+    if assembly_code and assembly_code in supply_db.hot_water.index:
+        supply_config['hot_water'] = parse_supply_assembly(
+            assembly_code,
+            supply_db.hot_water,
+            locator,
+            'hot_water',
+            network_name
+        )
 
     # Parse space cooling
-    if supply_type_cs and len(supply_type_cs) > 0:
-        # Get configured scale from supply.csv
-        configured_scale_cs = 'BUILDING'  # Default
-        if 'supply_type_cs' in building_supply and building_supply['supply_type_cs']:
-            cs_assembly = building_supply['supply_type_cs']
-            if cs_assembly in supply_db.cooling.index:
-                configured_scale_cs = supply_db.cooling.loc[cs_assembly, 'scale']
+    is_connected_dc = is_connected_to_network(building_name, network_name, 'DC')
 
-        # Check network connectivity
-        is_connected_dc = is_connected_to_network(building_name, network_name, 'DC')
+    assembly_code = select_assembly(
+        config.final_energy.supply_type_cs_building,
+        config.final_energy.supply_type_cs_district,
+        is_connected_dc,
+        building_supply.get('supply_type_cs')
+    )
 
-        # Select assembly with override logic
-        assembly_code = select_assembly_with_override(
-            supply_type_cs,
+    if assembly_code and assembly_code in supply_db.cooling.index:
+        supply_config['space_cooling'] = parse_supply_assembly(
+            assembly_code,
             supply_db.cooling,
-            configured_scale_cs,
-            is_connected_dc
+            locator,
+            'cooling',
+            network_name
         )
 
-        if assembly_code:
-            supply_config['space_cooling'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.cooling,
-                locator,
-                'cooling',
-                network_name
-            )
-
-    # Parse booster systems (always building-scale, but need network_name to read substation files)
-    if booster_hs and len(booster_hs) > 0:
-        assembly_code = strip_scale_label(booster_hs[0])
-        if assembly_code:
+    # Parse booster systems (always building-scale)
+    if config.final_energy.hs_booster_type:
+        assembly_code = config.final_energy.hs_booster_type
+        if assembly_code and assembly_code in supply_db.heating.index:
             supply_config['space_heating_booster'] = parse_supply_assembly(
                 assembly_code,
                 supply_db.heating,
@@ -692,9 +642,9 @@ def load_whatif_supply_configuration(
             # Boosters are building-scale but need network_name for substation files
             supply_config['space_heating_booster']['network_name'] = network_name
 
-    if booster_dhw and len(booster_dhw) > 0:
-        assembly_code = strip_scale_label(booster_dhw[0])
-        if assembly_code:
+    if config.final_energy.dhw_booster_type:
+        assembly_code = config.final_energy.dhw_booster_type
+        if assembly_code and assembly_code in supply_db.hot_water.index:
             supply_config['hot_water_booster'] = parse_supply_assembly(
                 assembly_code,
                 supply_db.hot_water,
