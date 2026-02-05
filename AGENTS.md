@@ -6,14 +6,14 @@
 - **Don't create AGENTS.md in every directory** - Only create when the directory contains complex patterns that aren't obvious from code
 
 **When to create AGENTS.md**:
-- ✅ **DO create** when the directory has:
+- **DO create** when the directory has:
   - Complex architectural patterns not obvious from code
   - Critical design decisions that affect how code should be written
   - Non-obvious relationships between components
   - Common pitfalls or important DO/DON'T patterns
   - State management, data flow, or API patterns needing explanation
 
-- ❌ **DON'T create** when:
+- **DON'T create** when:
   - Directory contains simple utility functions
   - Code is self-explanatory with good docstrings
   - It's a small module with straightforward logic
@@ -36,10 +36,10 @@
 - `function_name(args) → ReturnType` - One-line description
 
 ## Key Patterns
-### ✅ DO: Pattern name
+### DO: Pattern name
 ```code example```
 
-### ❌ DON'T: Anti-pattern name
+### DON'T: Anti-pattern name
 ```code example```
 
 ## Related Files
@@ -53,16 +53,16 @@
 - Update immediately after making code changes, not as an afterthought
 - **Prune verbose sections** - If AGENTS.md is >200 lines, look for opportunities to condense
 - Focus on architectural patterns, state management, data flow, and key concepts that aren't obvious from code alone
-- If you need to preserve detailed explanations, move them to a separate `*_GUIDE.md` file for human readers
+- **Create comprehensive user documentation** - When detailed explanations are needed, create proper documentation in `docs/` with sections, examples, and context for human readers. AGENTS.md should remain concise LLM reference only
 
 **Code quality directives**:
 - **Extract meaningful patterns, not trivial wrappers** - Only create helper functions when they add real value:
-  - ✅ **DO extract** when:
+  - **DO extract** when:
     - Logic must be done in a specific way to avoid bugs (e.g., `get_next_node_name()` - prevents duplicates)
     - Complex workflow logic that's hard to understand inline (e.g., multi-step validation)
     - Algorithm that requires deep understanding to get right
     - Pattern that encapsulates important business rules
-  - ❌ **DON'T extract** when:
+  - **DON'T extract** when:
     - It's just a 1-2 line wrapper around existing functions
     - It's standard library usage (file I/O, simple pandas operations)
     - The abstraction obscures rather than clarifies intent
@@ -146,18 +146,18 @@ cea.api.demand(scenario='/path/to/scenario')
 **No emoticons in code**: Never add emoji or emoticons to code files, comments, or print statements.
 
 **Physics function docstrings**: When writing physics-based functions (hydraulics, heat transfer, thermodynamics, fluid properties):
-- ✅ **MUST follow** the docstring specification in `docs/developer/documenting-physics/docstring-specification.md`
-- ✅ Verify standards citations are correct before referencing
-- ✅ Include formulas with Unicode symbols
-- ✅ All parameters and returns must have units in [square brackets]
-- ✅ Use proper reference format: [Tag] Author (Year). Title. Journal, Volume, Pages
+- **MUST follow** the docstring specification in `docs/developer/documenting-physics/docstring-specification.md`
+- Verify standards citations are correct before referencing
+- Include formulas with Unicode symbols
+- All parameters and returns must have units in [square brackets]
+- Use proper reference format: [Tag] Author (Year). Title. Journal, Volume, Pages
 
 **British English**: All user-facing text MUST use British English spelling and terminology:
-- ✅ "normalised" (not "normalized")
-- ✅ "optimisation" (not "optimization")
-- ✅ "behaviour" (not "behavior")
-- ✅ "colour" (not "color")
-- ✅ "centre" (not "center")
+- "normalised" (not "normalized")
+- "optimisation" (not "optimization")
+- "behaviour" (not "behavior")
+- "colour" (not "color")
+- "centre" (not "center")
 
 **Where to apply**:
 - `cea/default.config` - All help text and descriptions
