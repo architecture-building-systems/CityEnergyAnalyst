@@ -8,20 +8,17 @@ hydraulic network
 
 import cea.config
 import cea.inputlocator
-import cea.technologies.thermal_network.thermal_network_costs
 from cea.technologies.thermal_network.detailed.model import ThermalNetwork, thermal_network_main
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
-import cea.technologies.thermal_network.thermal_network_costs as network_costs
+from cea.technologies.thermal_network.common.costs import calc_network_size, calc_Ctot_cs_district
 import os
 import pandas as pd
 import numpy as np
 import time
 import operator
 import random
-
-from cea.technologies.thermal_network.thermal_network_costs import calc_network_size
 
 
 
@@ -330,8 +327,7 @@ def translate_individual(network_info, individual):
     for building in network_info.plant_building_index:
         building_plants.append(network_info.building_names[building])
         print(network_info.building_names[building])
-    print()
-    'With ', int(individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_DISCONNECTED)), ' disconnected building(s): '
+    print('With ', int(individual[LEN_INDIVIDUAL_HEADER:].count(INDIVIDUAL_DISCONNECTED)), ' disconnected building(s): ')
     disconnected_buildings = []
     for building in network_info.disconnected_buildings_index:
         disconnected_buildings.append(network_info.building_names[building])
@@ -428,7 +424,7 @@ def objective_function(network_info, network_layout, thermal_network):
         thermal_network_main(network_info.locator, thermal_network, processes=1)
 
     ## Cost calculations
-    Capex_total, Opex_total, Costs_total, cost_storage = network_costs.calc_Ctot_cs_district(network_info)
+    Capex_total, Opex_total, Costs_total, cost_storage = calc_Ctot_cs_district(network_info)
 
     return Capex_total, Opex_total, Costs_total, cost_storage
 

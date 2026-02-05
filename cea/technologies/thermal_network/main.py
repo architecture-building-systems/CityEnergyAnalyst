@@ -75,7 +75,7 @@ def main(config: cea.config.Configuration):
         print("\n" + "="*80)
         print("MULTI-PHASE THERMAL NETWORK SIMULATION")
         print("="*80)
-        from cea.technologies.thermal_network.thermal_network_phasing import run_multi_phase
+        from cea.technologies.thermal_network.common.phasing import run_multi_phase
         return run_multi_phase(config, locator, network_names)
 
     # Continue with existing single-phase logic
