@@ -720,7 +720,7 @@ def delete_building_schedule(state_locator: InputLocator, building_name: str) ->
     """
     Delete the schedule file related to a specific building in the event scenario.
     This includes the following file:
-    - building schedule file (`locator.get_building_occupancy_schedule(building_name)`)
+    - building schedule file (`locator.get_building_weekly_schedules(building_name)`)
     """
     schedule_file_path = state_locator.get_building_weekly_schedules(building_name)
     if os.path.exists(schedule_file_path):
