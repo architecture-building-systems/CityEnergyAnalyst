@@ -29,7 +29,7 @@ from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_
                                         Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
 from cea.optimization.lca_calculations import LcaCalculations
 from cea.optimization.preprocessing.decentralized_buildings_heating import get_unique_keys_from_dicts
-from cea.technologies.thermal_network.thermal_network import calculate_ground_temperature
+from cea.technologies.thermal_network.simplified.solver import calculate_ground_temperature
 from cea.technologies.supply_systems_database import SupplySystemsDatabase
 import cea.utilities.parallel
 

@@ -9,7 +9,7 @@ hydraulic network
 import cea.config
 import cea.inputlocator
 import cea.technologies.thermal_network.thermal_network_costs
-from cea.technologies.thermal_network.thermal_network import ThermalNetwork, thermal_network_main
+from cea.technologies.thermal_network.detailed.thermal_network import ThermalNetwork, thermal_network_main
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
 from cea.utilities import epwreader
 from cea.technologies.supply_systems_database import SupplySystemsDatabase

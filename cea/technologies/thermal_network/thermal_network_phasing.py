@@ -11,7 +11,7 @@ import pandas as pd
 import geopandas as gpd
 from typing import TYPE_CHECKING, List, Dict, Optional
 
-from cea.technologies.thermal_network.utility import load_network_shapefiles
+from cea.technologies.thermal_network.common.geometry import load_network_shapefiles
 
 if TYPE_CHECKING:
     from cea.config import Configuration
@@ -294,9 +294,9 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
     :param phase: Phase dictionary
     :return: Phase result dictionary with actual simulation results
     """
-    from cea.technologies.thermal_network.thermal_network import (
-        thermal_network_simplified, check_heating_cooling_demand,
-        ThermalNetwork, thermal_network_main
+    from cea.technologies.thermal_network.simplified.solver import thermal_network_simplified
+    from cea.technologies.thermal_network.detailed.thermal_network import (
+        check_heating_cooling_demand, ThermalNetwork, thermal_network_main
     )
 
     network_name = phase['network_name']

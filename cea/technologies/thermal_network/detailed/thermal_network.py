@@ -19,7 +19,7 @@ import re
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-import cea.technologies.thermal_network.substation_matrix as substation_matrix
+import cea.technologies.thermal_network.detailed.substation as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 
 from cea.technologies.thermal_network.physics import (
@@ -35,8 +35,8 @@ from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOUR
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
-from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
+from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.simplified.solver import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
 from cea.utilities import epwreader

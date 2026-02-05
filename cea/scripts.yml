@@ -256,7 +256,7 @@ Thermal Network Design:
     short_description: Solve thermal hydraulic network flow and sizing
     description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli, dashboard]
-    module: cea.technologies.thermal_network.thermal_network
+    module: cea.technologies.thermal_network.detailed.thermal_network
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network']
     input-files:

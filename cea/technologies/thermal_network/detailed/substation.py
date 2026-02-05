@@ -93,7 +93,7 @@ def determine_building_supply_temperatures(building_names, locator, substation_s
     :param delta_T_supply_return: Temperature difference between supply and return
     :return: Dictionary of building demands with target temperatures
     """
-    from cea.technologies.thermal_network.network_service_priority import get_heating_systems_for_network_temp
+    from cea.technologies.thermal_network.common.service_priority import get_heating_systems_for_network_temp
 
     # Determine which heating systems to use for network temp calculation
     heating_systems_for_network_temp = get_heating_systems_for_network_temp(
@@ -1083,7 +1083,7 @@ def main(config: cea.config.Configuration):
     """
     run the whole network summary routine
     """
-    from cea.technologies.thermal_network.thermal_network import ThermalNetwork
+    from cea.technologies.thermal_network.detailed.thermal_network import ThermalNetwork
 
     locator = cea.inputlocator.InputLocator(config.scenario)
 
