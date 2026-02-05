@@ -4,7 +4,7 @@ This directory contains comprehensive documentation of the CEA thermal network i
 
 ## Documentation Files
 
-### 1. THERMAL_NETWORK_EXPLORATION_SUMMARY.md (10 KB)
+### 1. exploration_summary.md (10 KB)
 **Purpose**: High-level overview of the entire exploration
 
 **Contents**:
@@ -21,7 +21,7 @@ This directory contains comprehensive documentation of the CEA thermal network i
 
 ---
 
-### 2. THERMAL_NETWORK_REFACTORING_GUIDE.md (28 KB, 799 lines)
+### 2. refactoring_guide.md (28 KB, 799 lines)
 **Purpose**: Comprehensive technical reference for architects and developers
 
 **Contents** (14 parts):
@@ -44,7 +44,7 @@ This directory contains comprehensive documentation of the CEA thermal network i
 
 ---
 
-### 3. THERMAL_NETWORK_QUICK_REFERENCE.txt (14 KB)
+### 3. quick_reference.txt (14 KB)
 **Purpose**: Developer cheat sheet for quick lookup during implementation
 
 **Contents** (text format for terminal viewing):
@@ -67,31 +67,31 @@ This directory contains comprehensive documentation of the CEA thermal network i
 ## How to Use These Documents
 
 ### For Understanding the System
-1. Start with **EXPLORATION_SUMMARY.md** (10 min read)
-2. Read **REFACTORING_GUIDE.md** Part 1-3 (30 min)
-3. Review **QUICK_REFERENCE.txt** architecture diagram (5 min)
+1. Start with **exploration_summary.md** (10 min read)
+2. Read **refactoring_guide.md** Part 1-3 (30 min)
+3. Review **quick_reference.txt** architecture diagram (5 min) - if available
 
 ### For Implementing Phase 1 (Supply.csv Enhancement)
-1. Review REFACTORING_GUIDE.md Part 3 (Building selection)
-2. Review REFACTORING_GUIDE.md Part 5 (Supply.csv integration)
-3. Use QUICK_REFERENCE.txt REFACTORING_OPPORTUNITIES section
+1. Review refactoring_guide.md Part 3 (Building selection)
+2. Review refactoring_guide.md Part 5 (Supply.csv integration)
+3. Use quick_reference.txt REFACTORING_OPPORTUNITIES section - if available
 4. Reference key files: main.py lines 149-174, 636-727
 
 ### For Implementing Phase 2 (Separate DHW/SH Networks)
-1. Study REFACTORING_GUIDE.md Part 6 (Service configuration)
-2. Study REFACTORING_GUIDE.md Part 8-9 (Plant nodes and file structure)
+1. Study refactoring_guide.md Part 6 (Service configuration)
+2. Study refactoring_guide.md Part 8-9 (Plant nodes and file structure)
 3. Reference key files: plant_node_operations.py
 4. Reference building_heating_booster.py for booster logic
 
 ### For Code Navigation
-1. Use QUICK_REFERENCE.txt KEY FILES section for file locations
-2. Use REFACTORING_GUIDE.md Part 14 for detailed file reference with line numbers
-3. Use EXPLORATION_SUMMARY.md CODE LOCATIONS SUMMARY for specific functions
+1. Use quick_reference.txt KEY FILES section for file locations - if available
+2. Use refactoring_guide.md Part 14 for detailed file reference with line numbers
+3. Use exploration_summary.md CODE LOCATIONS SUMMARY for specific functions
 
 ### For New Developers
-1. Read EXPLORATION_SUMMARY.md completely (20 min)
-2. Read QUICK_REFERENCE.txt (print for desk reference) (15 min)
-3. Keep REFACTORING_GUIDE.md open while exploring code (reference)
+1. Read exploration_summary.md completely (20 min)
+2. Read quick_reference.txt (print for desk reference) (15 min) - if available
+3. Keep refactoring_guide.md open while exploring code (reference)
 
 ---
 
@@ -213,7 +213,7 @@ Result: DH network at 60°C for DHW, space heating gets direct supply (no booste
 
 ## Testing Checklist
 
-From THERMAL_NETWORK_QUICK_REFERENCE.txt:
+From THERMAL_NETWORK_quick_reference.txt:
 
 - [ ] Test building selection with various config combinations
 - [ ] Test supply.csv with missing columns
@@ -232,9 +232,9 @@ From THERMAL_NETWORK_QUICK_REFERENCE.txt:
 
 | Document | Size | Lines | Purpose |
 |----------|------|-------|---------|
-| EXPLORATION_SUMMARY.md | 10 KB | ~300 | Overview |
-| REFACTORING_GUIDE.md | 28 KB | 799 | Deep reference |
-| QUICK_REFERENCE.txt | 14 KB | ~400 | Developer cheat sheet |
+| exploration_summary.md | 10 KB | ~300 | Overview |
+| refactoring_guide.md | 28 KB | 799 | Deep reference |
+| quick_reference.txt | 14 KB | 283 | Developer cheat sheet |
 
 Total: 52 KB of comprehensive documentation
 
@@ -243,31 +243,31 @@ Total: 52 KB of comprehensive documentation
 ## Navigation Tips
 
 ### I want to understand the overall architecture
-→ Read EXPLORATION_SUMMARY.md then QUICK_REFERENCE.txt ASCII diagrams
+→ Read exploration_summary.md then quick_reference.txt ASCII diagrams (if available)
 
 ### I need to implement Phase 1 (supply.csv enhancement)
-→ Read REFACTORING_GUIDE.md Part 3 and Part 5, then navigate to code using KEY FILES section
+→ Read refactoring_guide.md Part 3 and Part 5, then navigate to code using KEY FILES section
 
 ### I need to implement Phase 2 (separate networks)
-→ Read REFACTORING_GUIDE.md Part 6 and Part 8, study booster logic in building_heating_booster.py
+→ Read refactoring_guide.md Part 6 and Part 8, study booster logic in building_heating_booster.py
 
 ### I'm debugging a building selection issue
-→ Use QUICK_REFERENCE.txt BUILDING SELECTION DECISION TREE and navigate to specific code
+→ Use quick_reference.txt BUILDING SELECTION DECISION TREE (if available) and navigate to specific code
 
 ### I need to add a new configuration parameter
-→ Read REFACTORING_GUIDE.md Part 2, check default.config, follow CLAUDE.md patterns
+→ Read refactoring_guide.md Part 2, check default.config, follow AGENTS.md patterns in cea/technologies/thermal_network/
 
 ### I need to understand plant node placement
-→ Read REFACTORING_GUIDE.md Part 8, read QUICK_REFERENCE.txt PLANT NODE PLACEMENT section
+→ Read refactoring_guide.md Part 8, read quick_reference.txt PLANT NODE PLACEMENT section (if available)
 
 ---
 
 ## Related Documentation
 
 See also:
-- `/cea/CLAUDE.md` - General LLM guidelines for CEA
-- `/cea/technologies/network_layout/CLAUDE.md` - Network layout API patterns
+- `/CLAUDE.md` (project root) - General LLM guidelines for CEA
 - `/cea/technologies/network_layout/AGENTS.md` - Network layout architectural patterns
+- `/cea/technologies/thermal_network/AGENTS.md` - Thermal network architectural patterns
 - `/cea/default.config` - All configuration parameters with help text
 
 ---
