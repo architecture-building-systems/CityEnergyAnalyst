@@ -71,7 +71,8 @@
 
 **Directory-specific AGENTS.md files**:
 - `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES
-- `cea/analysis/costs/AGENTS.md` - Cost calculation patterns
+- `cea/analysis/costs/AGENTS.md` - Cost calculation patterns, 4-case logic, 3-level fallback
+- `cea/analysis/heat/AGENTS.md` - Heat rejection (mirrors cost architecture)
 - `cea/demand/AGENTS.md` - Demand calculations, HVAC vs SUPPLY, output columns
 - `cea/interfaces/dashboard/AGENTS.md` - Dashboard job system, worker process
 - `cea/technologies/network_layout/AGENTS.md` - Network connectivity, coordinate normalization
@@ -180,7 +181,8 @@ cea.api.demand(scenario='/path/to/scenario')
 
 For detailed patterns in specific modules, see:
 - `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES
-- `cea/analysis/costs/AGENTS.md` - Cost calculations
+- `cea/analysis/costs/AGENTS.md` - Cost calculations, 4-case logic, 3-level fallback
+- `cea/analysis/heat/AGENTS.md` - Heat rejection (mirrors cost architecture)
 - `cea/demand/AGENTS.md` - Demand simulation, HVAC vs SUPPLY
 - `cea/interfaces/dashboard/AGENTS.md` - Job system, worker processes
 - `cea/technologies/network_layout/AGENTS.md` - Network connectivity

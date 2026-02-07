@@ -1,4 +1,5 @@
 from typing import Optional
+import os
 
 import pandas as pd
 import geopandas as gpd
@@ -14,6 +15,36 @@ IGNORE_COLUMNS = {"name", "GFA_m2", "period", "date", "hour", "month", "day"}
 def period_to_year(period: pd.Series) -> pd.Series:
     """Convert a period string of the form 'Y_XXXX' to an integer year XXXX"""
     return period.str.extract(r'Y_(\d{4})')[0].astype(int)
+
+
+def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
+    """
+    Filter buildings to only include those that exist in zone geometry.
+    Returns tuple of (filtered_buildings, geometry_df, centroids).
+    Gracefully handles missing buildings by excluding them.
+    """
+    import geopandas as gpd
+    from pyproj import CRS
+
+    if not buildings:
+        return [], None, []
+
+    try:
+        zone_gdf = gpd.read_file(locator.get_zone_geometry()).set_index("name")
+
+        # Filter to only buildings that exist in geometry
+        existing_buildings = [b for b in buildings if b in zone_gdf.index]
+
+        if not existing_buildings:
+            return [], None, []
+
+        geometry_df = zone_gdf.loc[existing_buildings]
+        centroids = geometry_df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+
+        return existing_buildings, geometry_df, centroids
+    except Exception as e:
+        print(f"Warning: Error reading zone geometry: {e}")
+        return [], None, []
 
 
 class LifecycleEmissionsMapLayer(MapLayer):
@@ -103,6 +134,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
             FileRequirement(
                 "Embodied Emissions Timeline Files",
                 file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -130,30 +162,52 @@ class LifecycleEmissionsMapLayer(MapLayer):
             }
         }
 
+        # Filter buildings that exist in geometry
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
+
+        if not buildings:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         def get_data(building, centroid):
-            df = pd.read_csv(
-                self.locator.get_lca_timeline_building(building), usecols=["period", data_column]
-            )
+            try:
+                building_file = self.locator.get_lca_timeline_building(building)
+                if not os.path.exists(building_file):
+                    return None
 
-            data = df[data_column]
-            data.index = period_to_year(df['period'])
+                df = pd.read_csv(building_file, usecols=["period", data_column])
 
-            total_min = 0
-            total_max = data.sum()
+                data = df[data_column]
+                data.index = period_to_year(df['period'])
 
-            period_value = data.loc[start:end].sum()
-            period_min = period_value
-            period_max = period_value
+                total_min = 0
+                total_max = data.sum()
 
-            data = {"position": [centroid.x, centroid.y], "value": period_value}
+                period_value = data.loc[start:end].sum()
+                period_min = period_value
+                period_max = period_value
 
-            return total_min, total_max, period_min, period_max, data
+                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
-        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+                return total_min, total_max, period_min, period_max, data_point
+            except Exception as e:
+                print(f"Warning: Error reading lifecycle emissions for {building}: {e}")
+                return None
 
-        values = (get_data(building, centroid)
-                  for building, centroid in zip(buildings, building_centroids))
+        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+
+        # Filter out None values (missing files)
+        values = [v for v in values if v is not None]
+
+        if not values:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
@@ -248,6 +302,7 @@ class OperationalEmissionsMapLayer(MapLayer):
             FileRequirement(
                 "Operational Emissions Hourly Files",
                 file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -259,12 +314,11 @@ class OperationalEmissionsMapLayer(MapLayer):
         buildings = self.locator.get_zone_building_names()
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
-        
+
         data_column = parameters['data-column']
 
         if data_column is None or data_column not in self._get_data_columns():
             raise ValueError(f"Invalid data column: {data_column}")
-
 
         output = {
             "data": [],
@@ -279,28 +333,52 @@ class OperationalEmissionsMapLayer(MapLayer):
             }
         }
 
+        # Filter buildings that exist in geometry
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
+
+        if not buildings:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         def get_data(building, centroid):
-            data = pd.read_csv(self.locator.get_lca_operational_hourly_building(building), usecols=[data_column])[data_column]
+            try:
+                building_file = self.locator.get_lca_operational_hourly_building(building)
+                if not os.path.exists(building_file):
+                    return None
 
-            total_min = 0
-            total_max = data.sum()
+                data = pd.read_csv(building_file, usecols=[data_column])[data_column]
 
-            if start < end:
-                period_value = data.iloc[start:end + 1].sum()
-            else:
-                period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
-            period_min = period_value
-            period_max = period_value
+                total_min = 0
+                total_max = data.sum()
 
-            data = {"position": [centroid.x, centroid.y], "value": period_value}
+                if start < end:
+                    period_value = data.iloc[start:end + 1].sum()
+                else:
+                    period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
+                period_min = period_value
+                period_max = period_value
 
-            return total_min, total_max, period_min, period_max, data
+                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
-        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+                return total_min, total_max, period_min, period_max, data_point
+            except Exception as e:
+                print(f"Warning: Error reading operational emissions for {building}: {e}")
+                return None
 
-        values = (get_data(building, centroid)
-                  for building, centroid in zip(buildings, building_centroids))
+        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+
+        # Filter out None values (missing files)
+        values = [v for v in values if v is not None]
+
+        if not values:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
@@ -365,3 +443,180 @@ class EmissionTimelineMapLayer(MapLayer):
 
     def generate_data(self, parameters: dict) -> dict:
         return {}
+
+
+class AnthropogenicHeatMapLayer(MapLayer):
+    category = LifeCycleAnalysisCategory
+    name = "anthropogenic-heat-rejection"
+    label = "Anthropogenic Heat Rejection (Hourly/Daily)"
+    description = "Visualise heat rejection from building systems and district cooling plants"
+
+    def _get_results_files(self, _):
+        """Return required files for caching"""
+        # Read buildings file to get list of entities
+        buildings_file = self.locator.get_heat_rejection_buildings()
+        if not os.path.exists(buildings_file):
+            return []
+
+        buildings_df = pd.read_csv(buildings_file)
+        entity_names = buildings_df['name'].tolist()
+
+        # Return buildings file + all individual entity files
+        files = [buildings_file]
+        for entity_name in entity_names:
+            entity_file = self.locator.get_heat_rejection_hourly_building(entity_name)
+            if os.path.exists(entity_file):
+                files.append(entity_file)
+
+        return files
+
+    @classmethod
+    def expected_parameters(cls):
+        return {
+            'period':
+                ParameterDefinition(
+                    "Period",
+                    "array",
+                    default=[1, 365],
+                    description="Period to generate the data (start, end) in days",
+                    selector="time-series",
+                ),
+            'radius':
+                ParameterDefinition(
+                    "Radius",
+                    "number",
+                    default=5,
+                    description="Radius of hexagon bin in metres",
+                    selector="input",
+                    range=[0, 100],
+                    filter="radius",
+                ),
+            'scale':
+                ParameterDefinition(
+                    "Scale",
+                    "number",
+                    default=1,
+                    description="Scale of hexagon bin height",
+                    selector="input",
+                    range=[0.1, 10],
+                    filter="scale",
+                ),
+        }
+
+    @classmethod
+    def file_requirements(cls):
+        return [
+            FileRequirement(
+                "Zone Buildings Geometry",
+                file_locator="locator:get_zone_geometry",
+            ),
+            FileRequirement(
+                "Heat Rejection Buildings Summary",
+                file_locator="locator:get_heat_rejection_buildings",
+            ),
+            FileRequirement(
+                "Heat Rejection Hourly Building Files",
+                file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing, handled gracefully
+            ),
+        ]
+
+    @cache_output
+    def generate_data(self, parameters):
+        """Generates the hexagon heatmap output for anthropogenic heat rejection"""
+
+        period = parameters['period']
+        start, end = day_range_to_hour_range(period[0], period[1])
+
+        # Read buildings file to get entity list and coordinates
+        buildings_df = pd.read_csv(self.locator.get_heat_rejection_buildings())
+        entity_names = buildings_df['name'].tolist()
+
+        output = {
+            "data": [],
+            "properties": {
+                "name": self.name,
+                "label": "Anthropogenic Heat Rejection",
+                "description": self.description,
+                "colours": {
+                    "colour_array": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
+                    "points": 12
+                }
+            }
+        }
+
+        def get_data(entity_name, centroid):
+            # Read individual entity file
+            entity_file = self.locator.get_heat_rejection_hourly_building(entity_name)
+
+            if not os.path.exists(entity_file):
+                return 0.0, 0.0, {"position": [centroid.x, centroid.y], "value": 0.0}
+
+            entity_df = pd.read_csv(entity_file)
+
+            # Sum all heat rejection for this entity across all hours (should be exactly 8760)
+            total_value = entity_df['heat_rejection_kW'].sum()
+
+            # Filter by period (start and end are 0-indexed hour numbers)
+            period_df = entity_df.iloc[start:end+1]
+            period_value = period_df['heat_rejection_kW'].sum()
+
+            data_point = {"position": [centroid.x, centroid.y], "value": period_value}
+
+            return total_value, period_value, data_point
+
+        # Set buildings file as index
+        buildings_df = buildings_df.set_index('name')
+
+        # Get zone geometry for CRS
+        zone_gdf = gpd.read_file(self.locator.get_zone_geometry())
+
+        # Create GeoDataFrame with entity coordinates
+        entity_gdf = gpd.GeoDataFrame(
+            buildings_df.loc[entity_names],
+            geometry=gpd.points_from_xy(
+                buildings_df.loc[entity_names]['x_coord'],
+                buildings_df.loc[entity_names]['y_coord']
+            ),
+            crs=zone_gdf.crs
+        )
+        entity_centroids = entity_gdf.geometry.to_crs(CRS.from_epsg(4326))
+
+        # Handle case where there are no entities or all files are missing
+        if not entity_names:
+            output['data'] = []
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
+        values = (get_data(entity_name, centroid)
+                  for entity_name, centroid in zip(entity_names, entity_centroids))
+
+        total_values, period_values, data = zip(*values)
+
+        # Filter out entities with zero values (missing files)
+        non_zero_data = [(t, p, d) for t, p, d in zip(total_values, period_values, data) if p > 0 or t > 0]
+
+        if non_zero_data:
+            total_values, period_values, data = zip(*non_zero_data)
+        else:
+            # All entities have zero values
+            total_values, period_values, data = (0.0,), (0.0,), []
+
+        output['data'] = data
+        output['properties']['range'] = {
+            'total': {
+                'label': 'Total Range',
+                'min': float(min(total_values)) if total_values else 0.0,
+                'max': float(max(total_values)) if total_values else 0.0
+            },
+            'period': {
+                'label': 'Period Range',
+                'min': float(min(period_values)) if period_values else 0.0,
+                'max': float(max(period_values)) if period_values else 0.0
+            }
+        }
+
+        return output

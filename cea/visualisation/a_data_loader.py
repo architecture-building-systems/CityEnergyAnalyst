@@ -110,7 +110,8 @@ def get_plot_metrics_dict(locator):
         'sc': solar_metrics,
         'lifecycle-emissions': lifecycle_emission_metrics,
         'operational-emissions': operational_emission_metrics,
-        'emission-timeline': lifecycle_emission_metrics
+        'emission-timeline': lifecycle_emission_metrics,
+        'heat-rejection': ['heat_rejection']
     }
 
 
@@ -123,7 +124,8 @@ def get_plot_analytics_dict(locator):
         'pvt': [],
         'sc': [],
         'lifecycle-emissions': [],
-        'operational-emissions': []
+        'operational-emissions': [],
+        'heat-rejection': []
     }
 
 # Trigger the summary feature and point to the csv results file

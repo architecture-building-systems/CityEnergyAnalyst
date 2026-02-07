@@ -12,6 +12,7 @@ not applying this technique to the demand script.
 This module exports the function `map` which is intended to replace both ``map_async`` and the builtin ``map`` function
 (which was used when ``config.multiprocessing == False``). This simplifies multiprocessing.
 """
+from typing import TypeVar, ParamSpec, Callable, Any, List
 
 import multiprocessing
 import sys
@@ -28,8 +29,16 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+P = ParamSpec('P')
+T = TypeVar('T')
+CallbackFunc = Callable[[int, int, tuple, Any], None]
 
-def vectorize(func, processes=1, on_complete=None):
+
+def vectorize(
+    func: Callable[P, T],
+    processes: int = 1,
+    on_complete: CallbackFunc | None = None
+) -> Callable[..., List[T]]:
     """
     Similar to ``numpy.vectorize``, this function wraps ``func`` so that it operates on sequences (of same length)
     of inputs and outputs a sequence of results, similar to ``map(func, *args)``.
@@ -62,34 +71,35 @@ def vectorize(func, processes=1, on_complete=None):
         return single_process_wrapper(func, on_complete)
 
 
-def __multiprocess_wrapper(func, processes, on_complete):
+def __multiprocess_wrapper(func: Callable[P, T], processes: int, on_complete: CallbackFunc | None) -> Callable[..., List[T]]:
     """Create a worker pool to map the function, taking care to set up STDOUT and STDERR"""
 
-    def wrapper(*args):
+    def wrapper(*args: ...) -> List[T]:
         print("Using {processes} CPU's".format(processes=processes))
-        pool = multiprocessing.Pool(processes)
-        manager = multiprocessing.Manager()
+        ctx = multiprocessing.get_context("spawn")
+        pool = ctx.Pool(processes)
+        manager = ctx.Manager()
 
         # a queue for STDOUT and STDERR output of sub-processes (see cea.utilities.workerstream.QueueWorkerStream)
         queue = manager.Queue()
 
         # make sure the first arg is a list (not a generator) since we need the length of the sequence
-        args = [list(a) for a in args]
-        n = len(args[0])  # the number of iterations to map
+        args_list = [list(a) for a in args]
+        n = len(args_list[0])  # the number of iterations to map
 
         # set up the list of i-values for on_complete
         i_queue = manager.Queue()
         for i in range(n):
             i_queue.put(i)
 
-        args = [repeat(func, n),
+        _args = [repeat(func, n),
                 repeat(queue, n),
                 repeat(on_complete, n),
                 repeat(i_queue, n),
-                repeat(n, n)] + args
-        args = zip(*args)
+                repeat(n, n)] + args_list
+        _args = zip(*_args)
 
-        map_result = pool.map_async(__apply_func_with_worker_stream, args)
+        map_result = pool.map_async(__apply_func_with_worker_stream, _args)
 
         while not map_result.ready():
             stream_from_queue(queue)
@@ -136,16 +146,16 @@ def __apply_func_with_worker_stream(args):
     return result
 
 
-def single_process_wrapper(func, on_complete):
+def single_process_wrapper(func: Callable[P, T], on_complete: CallbackFunc | None) -> Callable[..., List[T]]:
     """The simplest form of vectorization: Just loop"""
 
-    def wrapper(*args):
+    def wrapper(*args: ...) -> List[T]:
         print("Using single process")
 
-        args = [list(a) for a in args]
-        n = len(args[0])
-        map_result = []
-        for i, instance_args in enumerate(zip(*args)):
+        args_list= [list(a) for a in args]
+        n: int = len(args_list[0])
+        map_result: List[T] = []
+        for i, instance_args in enumerate(zip(*args_list)):
             result = func(*instance_args)
             if on_complete:
                 on_complete(i, n, instance_args, result)

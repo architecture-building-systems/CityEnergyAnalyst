@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
@@ -6,6 +7,33 @@ from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement
 from cea.interfaces.dashboard.map_layers.demand import DemandCategory
 from cea.plots.colors import color_to_hex
+
+
+def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
+    """
+    Filter buildings to only include those that exist in zone geometry.
+    Returns tuple of (filtered_buildings, geometry_df, centroids).
+    Gracefully handles missing buildings by excluding them.
+    """
+    if not buildings:
+        return [], None, []
+
+    try:
+        zone_gdf = gpd.read_file(locator.get_zone_geometry()).set_index("name")
+
+        # Filter to only buildings that exist in geometry
+        existing_buildings = [b for b in buildings if b in zone_gdf.index]
+
+        if not existing_buildings:
+            return [], None, []
+
+        geometry_df = zone_gdf.loc[existing_buildings]
+        centroids = geometry_df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+
+        return existing_buildings, geometry_df, centroids
+    except Exception as e:
+        print(f"Warning: Error reading zone geometry: {e}")
+        return [], None, []
 
 
 class DemandMapLayer(MapLayer):
@@ -103,6 +131,7 @@ class DemandMapLayer(MapLayer):
             FileRequirement(
                 "Demand Results",
                 file_locator="layer:_get_results_files",
+                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -130,33 +159,57 @@ class DemandMapLayer(MapLayer):
             }
         }
 
+        # Filter buildings that exist in geometry
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
+
+        if not buildings:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         def get_building_demand(building, centroid):
-            demand = pd.read_csv(self.locator.get_demand_results_file(building), usecols=[data_column])[data_column]
+            try:
+                demand_file = self.locator.get_demand_results_file(building)
+                if not os.path.exists(demand_file):
+                    return None
 
-            total_min = 0
-            total_max = demand.sum()
+                demand = pd.read_csv(demand_file, usecols=[data_column])[data_column]
 
-            if start < end:
-                period_value = demand.iloc[start:end + 1].sum()
-            else:
-                period_value = demand.iloc[start:].sum() + demand.iloc[:end + 1].sum()
-            period_min = period_value
-            period_max = period_value
+                total_min = 0
+                total_max = demand.sum()
 
-            data = {"position": [centroid.x, centroid.y], "value": period_value}
+                if start < end:
+                    period_value = demand.iloc[start:end + 1].sum()
+                else:
+                    period_value = demand.iloc[start:].sum() + demand.iloc[:end + 1].sum()
+                period_min = period_value
+                period_max = period_value
 
-            return total_min, total_max, period_min, period_max, data
+                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
 
-        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
-        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+                return total_min, total_max, period_min, period_max, data_point
+            except Exception as e:
+                print(f"Warning: Error reading demand for {building}: {e}")
+                return None
 
         # with ThreadPoolExecutor() as executor:
         #     values = executor.map(get_building_demand, buildings, building_centroids)
         #
         # total_min, total_max, period_min, period_max, data = zip(*values)
 
-        values = (get_building_demand(building, centroid)
-                  for building, centroid in zip(buildings, building_centroids))
+        values = [get_building_demand(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+
+        # Filter out None values (missing files)
+        values = [v for v in values if v is not None]
+
+        if not values:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 

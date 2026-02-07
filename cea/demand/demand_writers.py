@@ -66,40 +66,34 @@ class DemandWriter(ABC):
         # Electricity breakdown
         'Ea', 'El', 'Ev', 'Eve', 'Eal', 'Edata', 'Epro',
         'Eaux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
-        # Heating subsystem details
+        # Heating sensible/latent breakdown (technical debug data)
         'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_sen_aru', 'Qhs_sen_sys',
         'Qhs_lat_ahu', 'Qhs_lat_aru', 'Qhs_lat_sys',
-        'Qhs_sys_shu', 'Qhs_sys_ahu', 'Qhs_sys_aru',
         'Qhs_em_ls', 'Qhs_dis_ls', 'Qhs',
-        # Cooling subsystem details
+        # Cooling sensible/latent breakdown (technical debug data)
         'Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_sen_aru',
         'Qcs_lat_ahu', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys',
-        'Qcs_em_ls', 'Qcs_dis_ls',
-        'Qcs_sys_scu', 'Qcs_sys_ahu', 'Qcs_sys_aru', 'Qcs',
-        # Hot water details
+        'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs',
+        # Hot water/refrigeration/data (technical debug data)
         'Qww', 'Qcre', 'Qcdata',
+        # Note: Subsystem loads (Qhs_sys_*, Qcs_sys_*) moved to regular output
+        # as they're required by thermal-network substation calculations
     }
 
     TECHNICAL_MASSFLOW_VARS = {
-        # Air flow rates
+        # Air flow rates (technical debug data)
         'ma_sup_hs_ahu', 'ma_sup_hs_aru',
         'ma_sup_cs_ahu', 'ma_sup_cs_aru',
-        # Subsystem mass flows
-        'mcphs_sys_ahu', 'mcphs_sys_aru', 'mcphs_sys_shu',
-        'mcpcs_sys_ahu', 'mcpcs_sys_aru', 'mcpcs_sys_scu',
-        'mcptw', 'mww_kgs',
+        # Note: Subsystem mass flows (mcphs_sys_*, mcpcs_sys_*) moved to regular output
+        # as they're required by thermal-network substation calculations
     }
 
     TECHNICAL_TEMPERATURE_VARS = {
-        # Air temperatures
+        # Air temperatures (technical debug data)
         'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru',
         'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru',
-        # Subsystem temperatures
-        'Ths_sys_re_ahu', 'Ths_sys_re_aru', 'Ths_sys_re_shu',
-        'Ths_sys_sup_ahu', 'Ths_sys_sup_aru', 'Ths_sys_sup_shu',
-        'Tcs_sys_re_ahu', 'Tcs_sys_re_aru', 'Tcs_sys_re_scu',
-        'Tcs_sys_sup_ahu', 'Tcs_sys_sup_aru', 'Tcs_sys_sup_scu',
-        'Tww_re',
+        # Note: Subsystem temperatures (Ths_sys_*, Tcs_sys_*) moved to regular output
+        # as they're required by thermal-network substation calculations
     }
 
     def __init__(self, loads=None, massflows=None, temperatures=None, retain_technical_results=True):

@@ -58,13 +58,29 @@ HVAC (temperatures, capacities) → Demand (kWh) → SUPPLY (costs, emissions)
 
 **Key columns**:
 ```python
-# End Use (building needs)
-Qhs_sys_kWh, Qcs_sys_kWh, Qww_sys_kWh
+# End Use (building needs) - System sizing
+Qhs_sys_kWh    # Space heating demand (radiators, AHU heating coils)
+Qww_sys_kWh    # Domestic hot water demand (DHW, taps, showers)
+Qhpro_sys_kWh  # Process heating demand (industrial processes)
+QH_sys_kWh     # TOTAL heating = Qhs_sys_kWh + Qww_sys_kWh + Qhpro_sys_kWh
 
-# Final Energy (source consumption)
-GRID_hs_kWh, NG_hs_kWh, DH_hs_kWh  # Heating
-GRID_cs_kWh, DC_cs_kWh             # Cooling
+Qcs_sys_kWh    # Space cooling demand (chillers, AHU cooling coils)
+Qcre_sys_kWh   # Refrigeration cooling demand
+Qcdata_sys_kWh # Data centre cooling demand
+Qcpro_sys_kWh  # Process cooling demand (industrial processes)
+QC_sys_kWh     # TOTAL cooling = Qcs_sys_kWh + Qcre_sys_kWh + Qcdata_sys_kWh + Qcpro_sys_kWh
+
+# Final Energy (source consumption) - Bills, emissions
+GRID_hs_kWh, NG_hs_kWh, DH_hs_kWh  # Space heating sources
+GRID_ww_kWh, NG_ww_kWh, DH_ww_kWh  # DHW sources
+GRID_cs_kWh, DC_cs_kWh             # Cooling sources
 ```
+
+**IMPORTANT**:
+- `QH_sys_kWh` = total heating (space + DHW + process)
+- `QC_sys_kWh` = total cooling (space + refrigeration + data + process)
+- DH networks serve ALL heating services (use `QH_sys_kWh`)
+- DC networks serve ALL cooling services (use `QC_sys_kWh`)
 
 **Calculation** (`thermal_loads.py`):
 ```python

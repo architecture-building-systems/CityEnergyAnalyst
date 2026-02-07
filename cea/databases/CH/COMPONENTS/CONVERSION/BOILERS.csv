@@ -8,8 +8,8 @@ conventional oil boiler,BO2,oil,Coil,730000,10000000000,W,0.84,26.5,82,126,USD-2
 condensing natural gas boiler,BO3,gas-cond,Cgas,1,90000,W,0.92,26.5,82,88,USD-2015,22505.5432372506,0.304878048780488,1,0,0,20,5,5,,"ASHRAE 90.1/2019 - minimum efficiency rating, 10 CFR Appendix A - boiler testing temperatures"
 condensing natural gas boiler,BO3,gas-cond,Cgas,90000,730000,W,0.9,26.5,82,88,USD-2015,38913.5254988914,0.121951219512195,1,0,0,20,5,5,,"ASHRAE 90.1/2019 - minimum efficiency rating, 10 CFR Appendix A - boiler testing temperatures"
 condensing natural gas boiler,BO3,gas-cond,Cgas,730000,10000000000,W,0.92,26.5,82,88,USD-2015,93126.3858093126,0.0155210643015521,1,0,0,20,5,5,,"ASHRAE 90.1/2019 - minimum efficiency rating, 10 CFR Appendix A - boiler testing temperatures"
-coal-fired furnace,BO4,coal,Ccoa,1,20000,W,0.75,26.5,90,160,USD-2015,91136,348,1,-22565,0,20,5,5,,EU – Ecodesign solid fuel boilers – minimum efficiency rating; Viadus Hercules U24 data factsheet
-coal-fired furnace,BO4,coal,Ccoa,20000,10000000000,W,0.77,26.5,90,160,USD-2015,91136,348,1,-22565,0,20,5,5,,EU – Ecodesign solid fuel boilers – minimum efficiency rating; Viadus Hercules U24 data factsheet
-electrical boiler,BO5,elec,E230AC,1,10000000000,W,0.99,26.5,80,80,USD-2015,36931,254,0.91,-7740,0,20,5,5,,"Bosch Tronic Heat manual/spec; “Electrificaiton potential of U.S. …”, Schoeneberger et al. 2022;"
-wood furnace,BO6,wood,Cwod,1,20000,W,0.9,26.5,90,120,USD-2015,8808,331,0.94,-614,0,20,5,5,,Hargassner industrial brochure; FNR Leitfaden Bioenergie (cost bands)
-wood furnace,BO6,wood,Cwod,20000,10000000000,W,0.93,26.5,90,120,USD-2015,8808,331,0.94,-614,0,20,5,5,,Hargassner industrial brochure; FNR Leitfaden Bioenergie (cost bands)
+coal-fired furnace,BO4,coal,Ccoa,1,20000,W,0.75,26.5,90,160,USD-2015,91136,0.4,1.0,0,0,20,5,5,,EU – Ecodesign solid fuel boilers; corrected cost formula (linear)
+coal-fired furnace,BO4,coal,Ccoa,20000,10000000000,W,0.77,26.5,90,160,USD-2015,91136,0.4,1.0,0,0,20,5,5,,EU – Ecodesign solid fuel boilers; corrected cost formula (linear)
+electrical boiler,BO5,elec,E230AC,1,10000000000,W,0.99,26.5,80,80,USD-2015,36931,0.2,1.0,0,0,20,5,5,,"Bosch Tronic Heat manual/spec; corrected cost formula to match assembly costs (200 USD/kW)"
+wood furnace,BO6,wood,Cwod,1,20000,W,0.9,26.5,90,120,USD-2015,8808,0.5,1.0,0,0,20,5,5,,"Hargassner industrial brochure; corrected cost formula (linear ~500 USD/kW)"
+wood furnace,BO6,wood,Cwod,20000,10000000000,W,0.93,26.5,90,120,USD-2015,8808,0.5,1.0,0,0,20,5,5,,"Hargassner industrial brochure; corrected cost formula (linear ~500 USD/kW)"

@@ -23,7 +23,8 @@ import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
 import cea.utilities.parallel
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR
+from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
+                           THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
@@ -371,29 +372,51 @@ class ThermalNetwork(object):
             self.locator, self.network_type, self.network_name
         )
 
-        # Get nodes path for metadata file location
-        nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
-
-        # NEW: Read per-building service configuration metadata (if available)
+        # NEW: Read per-building service configuration metadata from unified network_connectivity.json
         import json
-        metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+        connectivity_json_path = self.locator.get_network_connectivity_file(self.network_name)
         per_building_services = None
 
-        if os.path.exists(metadata_path):
-            with open(metadata_path, 'r') as f:
-                metadata = json.load(f)
+        if os.path.exists(connectivity_json_path):
+            # Read from unified network_connectivity.json
+            with open(connectivity_json_path, 'r') as f:
+                connectivity_data = json.load(f)
 
-            # Convert lists back to sets
-            per_building_services = {
-                building: set(services)
-                for building, services in metadata['per_building_services'].items()
-            }
+            # Extract per-building services for this network type (DH only has this info)
+            if self.network_type in connectivity_data.get('networks', {}):
+                network_data = connectivity_data['networks'][self.network_type]
+                per_building_services_dict = network_data.get('per_building_services', {})
 
-            print("  ℹ Loaded per-building service configuration from layout metadata")
-            print(f"    - Network services: {', '.join(metadata['network_services'])}")
+                if per_building_services_dict:
+                    # Convert lists back to sets
+                    per_building_services = {
+                        building: set(services)
+                        for building, services in per_building_services_dict.items()
+                    }
+                    print("  ℹ Loaded per-building service configuration from network_connectivity.json")
+                    if 'network_services' in network_data:
+                        print(f"    - Network services: {', '.join(network_data['network_services'])}")
         else:
-            # Legacy mode: no metadata file
-            print("  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
+            # Fallback: Try legacy building_services.json location
+            nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
+            legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+            if os.path.exists(legacy_metadata_path):
+                with open(legacy_metadata_path, 'r') as f:
+                    metadata = json.load(f)
+
+                # Convert lists back to sets
+                per_building_services = {
+                    building: set(services)
+                    for building, services in metadata['per_building_services'].items()
+                }
+
+                print("  ℹ Loaded per-building service configuration from legacy building_services.json")
+                print(f"    - Network services: {', '.join(metadata['network_services'])}")
+
+        if per_building_services is None:
+            # No metadata file found (legacy layout or overwrite-supply-settings=true)
+            print("  ℹ No network_connectivity.json found (legacy layout or overwrite-supply-settings=true)")
             print("    - Assuming all buildings use all services")
 
         # Store for passing to simulation functions
@@ -1938,8 +1961,25 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
             darcy[rey] = 0.316 * reynolds[rey] ** -0.25
         else:
             # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation, applicable for Reynolds= 5000 - 10E8; pipe_roughness=10E-6 - 0.05
-            darcy[rey] = 1.325 * np.log(
-                pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9) ** (-2)
+            # Validate logarithm argument
+            log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m[rey]) + 5.74 / reynolds[rey] ** 0.9
+            if not np.isfinite(log_arg) or log_arg <= 0:
+                raise ValueError(
+                    f"Invalid argument for logarithm in Swamee-Jain friction factor calculation!\n"
+                    f"Logarithm argument: {log_arg}\n"
+                    f"Pipe roughness: {pipe_roughness_m:.6e} m\n"
+                    f"Pipe diameter: {pipe_diameter_m[rey]:.6f} m\n"
+                    f"Reynolds number: {reynolds[rey]:.2f}\n"
+                    f"Darcy friction factor: {darcy[rey] if rey < len(darcy) else 'N/A'}\n\n"
+                    f"For valid Swamee-Jain calculation:\n"
+                    f"- Pipe roughness must be > 0 (typical: 1e-6 to 0.05 m)\n"
+                    f"- Pipe diameter must be > 0\n"
+                    f"- Reynolds number should be 5000 - 1e8\n"
+                    f"- Values must be finite (not NaN or inf)\n\n"
+                    f"**Check the pipe properties and flow conditions."
+                )
+
+            darcy[rey] = 1.325 * np.log(log_arg) ** (-2)
 
     return darcy
 
@@ -1957,8 +1997,46 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     """
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
 
+    # Validate inputs before calculation
+    if np.any(pipe_diameter_m <= 0):
+        min_diameter = np.min(pipe_diameter_m)
+        raise ValueError(
+            f"Invalid pipe diameter for Reynolds number calculation!\n"
+            f"Minimum pipe diameter: {min_diameter:.6e} m\n\n"
+            f"Pipe diameter must be > 0 (typical: 0.01-1.0 m)\n\n"
+            f"**Check pipe diameter values in the thermal network."
+        )
+
+    if np.any(kinematic_viscosity_m2s <= 0):
+        min_viscosity = np.min(kinematic_viscosity_m2s)
+        raise ValueError(
+            f"Invalid kinematic viscosity for Reynolds number calculation!\n"
+            f"Minimum kinematic viscosity: {min_viscosity:.6e} m²/s\n\n"
+            f"Kinematic viscosity must be > 0 (typical: 1e-6 m²/s for water)\n\n"
+            f"**Check temperature values (used for viscosity calculation)."
+        )
+
+    # Validate denominator for Reynolds number calculation
+    denominator = math.pi * kinematic_viscosity_m2s * pipe_diameter_m
+
+    # Check for invalid denominator values
+    if np.any(np.abs(denominator) < 1e-15):
+        min_denominator = np.min(np.abs(denominator))
+        raise ValueError(
+            f"Invalid configuration for Reynolds number calculation!\n"
+            f"Denominator (π * ν * D): minimum absolute value = {min_denominator:.6e}\n"
+            f"Kinematic viscosity (ν): {np.mean(kinematic_viscosity_m2s):.6e} m²/s (mean)\n"
+            f"Pipe diameter (D): {np.mean(pipe_diameter_m):.6f} m (mean)\n\n"
+            f"For valid Reynolds calculation:\n"
+            f"- Kinematic viscosity must be > 0 (typical: 1e-6 m²/s for water)\n"
+            f"- Pipe diameter must be > 0 (typical: 0.01-1.0 m)\n\n"
+            f"**Check:\n"
+            f"  - Temperature values (used for viscosity calculation)\n"
+            f"  - Pipe diameter values in the thermal network"
+        )
+
     reynolds = np.nan_to_num(
-        4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / (math.pi * kinematic_viscosity_m2s * pipe_diameter_m))
+        4 * (abs(mass_flow_rate_kgs) / P_WATER_KGPERM3) / denominator)
     # necessary if statement to make sure output is an array type, as input formats of files can vary
     if hasattr(reynolds[0], '__len__'):
         reynolds = reynolds[0]
@@ -2780,12 +2858,12 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                 max_node_dt = max(abs(node_dt).dropna(axis=1).values[0])
                 # max supply node temperature difference
 
-            if max_node_dt > 1 and iteration < 10:
+            if max_node_dt > THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K and iteration < 10:
                 # update the substation supply temperature and re-enter the iteration
                 t_substation_supply__k = t_substation_supply_2
                 # print(iteration, 'iteration. Maximum node temperature difference:', max_node_dT)
                 iteration += 1
-            elif max_node_dt > 10 and 20 > iteration >= 10:
+            elif max_node_dt > 10 * THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K and 20 > iteration >= 10:
                 # FIXME: This is to avoid endless iteration, other design strategies should be implemented.
                 # update the substation supply temperature and re-enter the iteration
                 t_substation_supply__k = t_substation_supply_2
@@ -2808,7 +2886,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
 
                 # exit iteration
                 flag = 1
-                if not max_node_dt < 1:
+                if not max_node_dt < THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K:
                     # print('supply temperature converged after', iteration, 'iterations.', 'dT:', max_node_dT)
                     # else:
                     print('Warning: supply temperature did not converge after', iteration, 'iterations at timestep', t,
@@ -3579,18 +3657,93 @@ def calc_aggregated_heat_conduction_coefficient(mass_flow, edge_df, pipe_propert
     k_all = []
     for pipe_number, pipe in enumerate(L_pipe.index):
         # calculate heat resistances, equation (3) in Wang et al., 2016
-        R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe] / pipe_properties_df.loc['D_int_m', pipe]) / (
-                2 * math.pi * conductivity_pipe)  # [m*K/W]
+        D_ext = pipe_properties_df.loc['D_ext_m', pipe]
+        D_int = pipe_properties_df.loc['D_int_m', pipe]
+
+        # Validate pipe dimensions for logarithm calculation
+        if D_int <= 0 or D_ext <= 0:
+            raise ValueError(
+                f"Invalid pipe dimensions for thermal resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"Internal diameter (D_int): {D_int:.6f} m\n"
+                f"External diameter (D_ext): {D_ext:.6f} m\n\n"
+                f"All pipe diameters must be > 0.\n"
+                f"**Check the pipe properties in the thermal network."
+            )
+
+        if D_ext <= D_int:
+            raise ValueError(
+                f"Invalid pipe dimensions - external diameter must be > internal diameter!\n"
+                f"Pipe: {pipe}\n"
+                f"Internal diameter (D_int): {D_int:.6f} m\n"
+                f"External diameter (D_ext): {D_ext:.6f} m\n\n"
+                f"**Check the pipe properties in the thermal network."
+            )
+
+        R_pipe = np.log(D_ext / D_int) / (2 * math.pi * conductivity_pipe)  # [m*K/W]
+
         if network_type == 'DC':
             D_ins = 0.25 * pipe_properties_df.loc[
                 'D_ins_m', pipe]  # approximation based on COOLMANT CLM 2.0 Pipe catalogue
         else:
             D_ins = pipe_properties_df.loc['D_ins_m', pipe]
-        R_insulation = np.log(
-            (D_ins + pipe_properties_df.loc['D_ext_m', pipe]) / pipe_properties_df.loc['D_ext_m', pipe]) / (
+
+        # Validate insulation dimensions for logarithm calculation
+        D_outer_with_ins = D_ins + D_ext
+        if D_outer_with_ins <= D_ext:
+            raise ValueError(
+                f"Invalid insulation configuration!\n"
+                f"Pipe: {pipe}\n"
+                f"External diameter (D_ext): {D_ext:.6f} m\n"
+                f"Insulation thickness (D_ins): {D_ins:.6f} m\n"
+                f"Outer diameter with insulation: {D_outer_with_ins:.6f} m\n\n"
+                f"Insulation thickness must be > 0.\n"
+                f"**Check the pipe insulation properties in the thermal network."
+            )
+
+        R_insulation = np.log(D_outer_with_ins / D_ext) / (
                                2 * math.pi * conductivity_insulation)  # [m*K/W]
-        a = 2 * network_depth / (pipe_properties_df.loc['D_ins_m', pipe])
-        R_ground = np.log(a + (a ** 2 - 1) ** 0.5) / (2 * math.pi * conductivity_ground)  # [m*K/W]
+
+        # Validate ground resistance calculation
+        D_ins_full = pipe_properties_df.loc['D_ins_m', pipe]
+        if D_ins_full <= 0:
+            raise ValueError(
+                f"Invalid insulation diameter for ground resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"Insulation diameter (D_ins_m): {D_ins_full:.6f} m\n\n"
+                f"Insulation diameter must be > 0.\n"
+                f"**Check the pipe insulation properties in the thermal network."
+            )
+
+        a = 2 * network_depth / D_ins_full
+
+        # Guard against invalid a parameter (a < 1 produces complex/NaN results)
+        if a < 1:
+            raise ValueError(
+                f"Invalid 'a' parameter for ground resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"a parameter: {a:.6f} (must be >= 1)\n"
+                f"Network depth: {network_depth:.2f} m\n"
+                f"Insulation diameter (D_ins_m): {D_ins_full:.6f} m\n\n"
+                f"For valid calculation: 2 * network_depth / D_ins_m >= 1\n"
+                f"Either increase network depth or reduce insulation diameter."
+            )
+
+        log_arg_ground = a + (a ** 2 - 1) ** 0.5
+
+        # Guard against NaN/non-finite or non-positive log argument
+        if not np.isfinite(log_arg_ground) or log_arg_ground <= 0:
+            raise ValueError(
+                f"Invalid argument for logarithm in ground resistance calculation!\n"
+                f"Pipe: {pipe}\n"
+                f"Network depth: {network_depth:.2f} m\n"
+                f"Insulation diameter: {D_ins_full:.6f} m\n"
+                f"a parameter: {a:.6f}\n"
+                f"Logarithm argument: {log_arg_ground}\n\n"
+                f"**Check network depth and insulation diameter values."
+            )
+
+        R_ground = np.log(log_arg_ground) / (2 * math.pi * conductivity_ground)  # [m*K/W]
         # calculate convection heat transfer resistance
         if np.isclose(alpha_th[pipe_number], 0):
             R_conv = 0.2  # case with no massflow, avoids divide by 0 error
@@ -3779,9 +3932,103 @@ def check_heating_cooling_demand(locator, config):
         if not buildings_name_with_cooling:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
-# ============================
-# test
-# ============================
+
+def generate_network_connectivity_json(locator, network_name, network_type):
+    """
+    Generate network connectivity data for DH or DC network.
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name (e.g., 'xxx')
+    :param network_type: 'DH' or 'DC'
+    :return: Dictionary with connectivity information
+    """
+    import json
+
+    # Read metadata_nodes.csv to get plant and building connections
+    metadata_file = os.path.join(
+        locator.get_output_thermal_network_type_folder(network_type, network_name),
+        f'{network_type}_{network_name}_metadata_nodes.csv'
+    )
+
+    if not os.path.exists(metadata_file):
+        return None
+
+    metadata_df = pd.read_csv(metadata_file)
+
+    # Extract buildings (CONSUMER nodes)
+    consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
+    buildings_connected = consumer_nodes['building'].tolist()
+
+    # Extract plants (PLANT nodes)
+    plant_nodes = metadata_df[metadata_df['type'].str.startswith('PLANT', na=False)]
+    plants = []
+    for _, plant_row in plant_nodes.iterrows():
+        plants.append({
+            'name': plant_row['name'],
+            'type': plant_row['type'],
+            'coordinates': plant_row['coordinates'] if pd.notna(plant_row['coordinates']) else None
+        })
+
+    return {
+        'buildings_connected': sorted(buildings_connected),
+        'plants': plants
+    }
+
+
+def save_network_connectivity_file(locator, network_name):
+    """
+    Save network_connectivity.json file for a network layout.
+    Combines DH and DC connectivity information into a single file.
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name
+    """
+    import json
+    from datetime import datetime
+
+    connectivity_data = {
+        'network_name': network_name,
+        'timestamp': datetime.now().isoformat(),
+        'DH': {
+            'buildings_connected': [],
+            'plants': []
+        },
+        'DC': {
+            'buildings_connected': [],
+            'plants': []
+        }
+    }
+
+    # Check for DH network
+    dh_folder = locator.get_output_thermal_network_type_folder('DH', network_name)
+    if os.path.exists(dh_folder):
+        dh_connectivity = generate_network_connectivity_json(locator, network_name, 'DH')
+        if dh_connectivity:
+            connectivity_data['DH'] = dh_connectivity
+
+    # Check for DC network
+    dc_folder = locator.get_output_thermal_network_type_folder('DC', network_name)
+    if os.path.exists(dc_folder):
+        dc_connectivity = generate_network_connectivity_json(locator, network_name, 'DC')
+        if dc_connectivity:
+            connectivity_data['DC'] = dc_connectivity
+
+    # Save to network folder root using InputLocator method
+    output_file = locator.get_network_connectivity_file(network_name)
+
+    with open(output_file, 'w') as f:
+        json.dump(connectivity_data, f, indent=2)
+
+    print(f"\nGenerated network connectivity file: {output_file}")
+
+    # Print summary
+    total_dh_buildings = len(connectivity_data['DH']['buildings_connected'])
+    total_dc_buildings = len(connectivity_data['DC']['buildings_connected'])
+    total_dh_plants = len(connectivity_data['DH']['plants'])
+    total_dc_plants = len(connectivity_data['DC']['plants'])
+
+    print(f"  DH: {total_dh_buildings} buildings connected, {total_dh_plants} plant(s)")
+    print(f"  DC: {total_dc_buildings} buildings connected, {total_dc_plants} plant(s)")
 
 
 def main(config: cea.config.Configuration):
@@ -3885,23 +4132,44 @@ def main(config: cea.config.Configuration):
 
         try:
             if network_model == 'simplified':
-                # Read per-building service configuration from network layout metadata
+                # Read per-building service configuration from unified network_connectivity.json
                 import json
-                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-                metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+                connectivity_json_path = locator.get_network_connectivity_file(network_name)
                 per_building_services = None
 
-                if os.path.exists(metadata_path):
-                    with open(metadata_path, 'r') as f:
-                        metadata = json.load(f)
+                if os.path.exists(connectivity_json_path):
+                    # Read from unified network_connectivity.json
+                    with open(connectivity_json_path, 'r') as f:
+                        connectivity_data = json.load(f)
 
-                    # Convert lists back to sets
-                    per_building_services = {
-                        building: set(services)
-                        for building, services in metadata['per_building_services'].items()
-                    }
+                    # Extract per-building services for this network type
+                    if network_type in connectivity_data.get('networks', {}):
+                        network_data = connectivity_data['networks'][network_type]
+                        per_building_services_dict = network_data.get('per_building_services', {})
 
-                    print("  ℹ Per-building service configuration loaded from metadata")
+                        if per_building_services_dict:
+                            # Convert lists back to sets
+                            per_building_services = {
+                                building: set(services)
+                                for building, services in per_building_services_dict.items()
+                            }
+                            print("  ℹ Per-building service configuration loaded from network_connectivity.json")
+                else:
+                    # Fallback: Try legacy building_services.json location
+                    nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+                    legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+                    if os.path.exists(legacy_metadata_path):
+                        with open(legacy_metadata_path, 'r') as f:
+                            metadata = json.load(f)
+
+                        # Convert lists back to sets
+                        per_building_services = {
+                            building: set(services)
+                            for building, services in metadata['per_building_services'].items()
+                        }
+
+                        print("  ℹ Per-building service configuration loaded from legacy building_services.json")
 
                 thermal_network_simplified(locator, config, network_type, network_name,
                                           per_building_services=per_building_services)
@@ -3931,8 +4199,18 @@ def main(config: cea.config.Configuration):
             succeeded.append(network_type)
         except (ValueError, FileNotFoundError) as e:
             print(f"An error occurred while processing the {network_type} network")
+            # Print full traceback for debugging
+            import traceback
+            traceback.print_exc()
             errors[network_type] = e
-    
+
+    # Generate network connectivity JSON file if at least one network succeeded
+    if succeeded and not errors:
+        try:
+            save_network_connectivity_file(locator, network_name)
+        except Exception as e:
+            print(f"Warning: Failed to generate network connectivity JSON: {e}")
+
     if errors:
         print(f"\n{'='*60}")
         print("Errors occurred during processing:")

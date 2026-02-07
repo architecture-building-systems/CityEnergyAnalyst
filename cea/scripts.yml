@@ -267,9 +267,36 @@ Thermal Network Design:
 
 
 Life Cycle Analysis:
+  - name: final-energy
+    label: Energy by Carrier
+    short_description: Calculate final energy consumption by carrier type
+    description: |
+      This feature calculates final energy consumption for each building by energy carrier. **Final energy** is the energy delivered to the building meter (electricity, natural gas, district heating/cooling, etc.),
+      accounting for supply system conversion efficiencies.
+
+      **Process**:
+      - Takes end-use energy demand from the Energy Demand Forecasting Feature (E_sys, Qhs_sys, Qcs_sys, Qww_sys)
+      - Applies supply system configurations from Building Properties/Supply or What-if Settings
+      - Calculates conversion losses based on system efficiencies (boilers, heat pumps, chillers, etc.)
+      - Outputs energy consumption by energy carrier: GRID (electricity), NG (natural gas), DH (district heating), DC (district cooling), WOOD, OIL, COAL, SOLAR (thermal), PV (electricity), etc.
+
+      **Outputs**: Hourly and annual energy consumption for each building and total scenario consumption by energy carrier.
+
+    interfaces: [ cli, dashboard ]
+    module: cea.analysis.final_energy.main
+    parameters: [ 'general:scenario',
+                  'final-energy',
+                  'solar-technology'
+    ]
+    input-files:
+      - [ get_total_demand ]
+      - [ get_building_supply ]
+      - [ get_demand_results_file, building_name ]
+      - [ get_weather_file ]
+      - [ get_db4_components_conversion_folder ]
 
   - name: emissions
-    label: Emissions
+    label: GHG Emissions
     short_description: Calculate embodied and operational GHG emissions from final energy
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
@@ -287,7 +314,7 @@ Life Cycle Analysis:
       _Ensure proper citation and compliance with their terms of use._
     interfaces: [cli, dashboard]
     module: cea.analysis.lca.main
-    parameters: ['general:scenario', emissions]
+    parameters: ['general:scenario', what-ifs, emissions]
     input-files:
       - [get_total_demand]
       - [get_building_architecture]
@@ -302,16 +329,78 @@ Life Cycle Analysis:
       - [get_radiation_metadata, building_name]
       - [get_radiation_building, building_name]
 
+#  - name: system-costs
+#    label: Energy Supply System Costs (DEPRECATED)
+#    short_description: "[DEPRECATED] Use 'baseline-costs' instead"
+#    description: |
+#      **DEPRECATED**: This script is deprecated and will be removed in CEA v5.0.
+#
+#      Please use the new 'baseline-costs' script instead, which provides:
+#      - More accurate cost calculations (using COMPONENTS database)
+#      - Component-level cost breakdowns
+#      - Consistency with optimisation results
+#
+#      This script remains for backward compatibility only.
+#    interfaces: [cli]
+#    module: cea.analysis.costs.system_costs
+#    parameters: ['general:scenario', costs]
+#    input-files:
+#      - [get_total_demand]
+#      - [get_building_supply]
+
   - name: system-costs
-    label: Energy Supply System Costs
-    short_description: Calculate costs for energy supply systems
-    description: This Feature calculates the costs for energy supply systems.
+    label: Costs
+    short_description: Calculate detailed costs for base case supply systems
+    description: |
+      This feature calculates costs for baseline supply systems using detailed
+      component specifications and hourly operation simulation.
+
+      **Calculates**:
+      - Capital costs (CAPEX) - annualised and total
+      - Operating costs (OPEX) - fixed and variable
+      - Total Annualised Cost (TAC)
+      - Breakdown by energy service (heating, cooling, DHW, electricity)
+      - Breakdown by scale (building, district, city)
+      - Component-level details
+
+      Uses the same calculation engine as optimisation for accuracy.
     interfaces: [cli, dashboard]
-    module: cea.analysis.costs.system_costs
-    parameters: ['general:scenario', costs]
+    module: cea.analysis.costs.main
+    parameters: ['general:scenario', what-ifs]
     input-files:
       - [get_total_demand]
       - [get_building_supply]
+      - [get_zone_geometry]
+
+  - name: anthropogenic-heat
+    label: Heat Rejection
+    short_description: Calculate heat rejection to the environment from energy systems
+    description: |
+      This feature calculates anthropogenic heat emissions (heat rejection) from
+      building and district energy systems to assess urban heat island impacts.
+
+      **Calculates**:
+      - Total annual heat rejection (MWh/yr)
+      - Peak hourly heat rejection (kW)
+      - Spatial distribution (building and plant locations)
+      - Hourly time series profiles
+      - Breakdown by component type (chillers, cooling towers, boilers)
+      - Building-scale vs. district-scale contributions
+
+      **Outputs**:
+      - Summary by building/plant with coordinates
+      - Hourly spatial data for heatmap visualisation
+      - Component-level breakdown
+
+      Uses heat rejection tracking from optimisation engine. Supports multiple
+      plants per network with equal heat distribution.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.heat.main
+    parameters: ['general:scenario', what-ifs]
+    input-files:
+      - [get_total_demand]
+      - [get_building_supply]
+      - [get_zone_geometry]
 
 
 Energy Supply System Optimisation:
@@ -712,6 +801,17 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
+  - name: plot-heat-rejection
+    label: Plot - Anthropogenic Heat Rejection
+    short_description: Plot bar chart of building anthropogenic heat rejection
+    description: This Feature plots bar chart of the results of anthropogenic heat rejection analysis
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-heat-rejection, plots-building-filter]
+    input-files:
+      - [get_heat_rejection_buildings]
+      - [get_zone_geometry]
+
   - name: plot-lifecycle-emissions
     label: Plot - Lifecycle Emissions
     short_description: Plot bar chart of building lifecycle emissions
@@ -799,3 +899,15 @@ Visualisation:
     parameters: ['general:scenario']
     input-files:
       - [get_new_optimization_optimal_supply_systems_summary_file]
+
+  - name: plot-cost-breakdown
+    label: Plot - Cost Breakdown
+    short_description: Plot cost breakdown for energy supply systems
+    description: This Feature plots cost breakdown for energy supply systems
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.cost_breakdown
+    parameters: ['general:scenario',
+                 plots-general,
+                 plots-cost-breakdown]
+    input-files:
+      - [get_baseline_costs_detailed]

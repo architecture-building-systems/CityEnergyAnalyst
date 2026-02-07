@@ -1856,213 +1856,279 @@ get_building_weekly_schedules:
         type: float
   used_by:
   - demand
-get_costs_operation_file:
+get_baseline_costs:
   created_by:
   - system_costs
-  file_path: outputs/data/costs/operation_costs.csv
+  file_path: outputs/data/costs/baseline_costs.csv
   file_type: csv
   schema:
     columns:
-      Aocc_m2:
-        description: Occupied floor area (heated/cooled)
+      name:
+        description: Building or network name
+        type: string
+        unit: NA
+      GFA_m2:
+        description: Gross floor area (sum of all buildings for networks)
         type: float
         unit: '[m2]'
         min: 0.0
-      COAL_hs_cost_m2yr:
-        description: Operation costs of coal due to space heating per unit conditioned floor area
+      Capex_total_USD:
+        description: Total capital expenditure for all supply systems and components
         type: float
-        unit: '[$USD(2015)/m2.yr]'
+        unit: '[$USD(2015)]'
         min: 0.0
-      COAL_hs_cost_yr:
-        description: Operation costs of coal due to space heating
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      COAL_ww_cost_m2yr:
-        description: Operation costs of coal due to hotwater per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      COAL_ww_cost_yr:
-        description: Operation costs of coal due to hotwater
+      Capex_a_USD:
+        description: Annualised capital expenditure for all supply systems
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      Capex_a_sys_district_scale_USD:
-        description: Annualized capital expenditures of district-scale systems
+      Opex_fixed_a_USD:
+        description: Annual fixed operational expenditure (O&M)
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      Capex_a_sys_building_scale_USD:
-        description: Annualized capital expenditures of building-scale systems
+      Opex_var_a_USD:
+        description: Annual variable operational expenditure (energy costs)
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      DC_cdata_cost_m2yr:
-        description: Operation costs of district cooling due to data center cooling per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      DC_cdata_cost_yr:
-        description: Operation costs of district cooling due to data center cooling
+      Opex_a_USD:
+        description: Total annual operational expenditure (fixed + variable)
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      DC_cre_cost_m2yr:
-        description: Operation costs of district cooling due to cool room refrigeration per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      DC_cre_cost_yr:
-        description: Operation costs of district cooling due to cool room refrigeration
+      TAC_USD:
+        description: Total annualised cost (CAPEX_a + OPEX_a)
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      DC_cs_cost_m2yr:
-        description: Operation costs of district cooling due to space cooling per unit conditioned floor area
+      Capex_total_building_scale_USD:
+        description: Total capital expenditure for building-scale systems
         type: float
-        unit: '[$USD(2015)/m2.yr]'
+        unit: '[$USD(2015)]'
         min: 0.0
-      DC_cs_cost_yr:
-        description: Operation costs of district cooling due to space cooling
+      Capex_total_district_scale_USD:
+        description: Total capital expenditure for district-scale systems (networks + piping)
         type: float
-        unit: '[$USD(2015)/yr]'
+        unit: '[$USD(2015)]'
         min: 0.0
-      DH_hs_cost_m2yr:
-        description: Operation costs of district heating due to space heating per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      DH_hs_cost_yr:
-        description: Operation costs of district heating due to space heating
+      Capex_a_building_scale_USD:
+        description: Annualised capital expenditure for building-scale systems
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      DH_ww_cost_m2yr:
-        description: Operation costs of district heating due to domestic hot water per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      DH_ww_cost_yr:
-        description: Operation costs of district heating due to domestic hot water
+      Capex_a_district_scale_USD:
+        description: Annualised capital expenditure for district-scale systems
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      GRID_cost_m2yr:
-        description: Operation costs due to electricity supply from the grid per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      GRID_cost_yr:
-        description: Operation costs due to electricity supply from the grid
+      Opex_a_building_scale_USD:
+        description: Annual operational expenditure for building-scale systems
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
-      NG_hs_cost_m2yr:
-        description: Operation costs of natural gas due to space heating per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      NG_hs_cost_yr:
-        description: Operation costs of natural gas due to space heating
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      NG_ww_cost_m2yr:
-        description: Operation costs of natural gas due to domestic hot water per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      NG_ww_cost_yr:
-        description: Operation costs of natural gas due to domestic hot water
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      name:
-        description: Unique building ID. It must start with a letter.
-        type: string
-        unit: '[-]'
-      OIL_hs_cost_m2yr:
-        description: Operation costs of oil due to space heating per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      OIL_hs_cost_yr:
-        description: Operation costs of oil due to space heating
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      OIL_ww_cost_m2yr:
-        description: Operation costs of oil due to domestic hot water per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      OIL_ww_cost_yr:
-        description: Operation costs of oil due to domestic hot water
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      Opex_a_sys_district_scale_USD:
-        description: Annual operational expenditures of district-scale systems
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      Opex_a_sys_building_scale_USD:
-        description: Annual operational expenditures of building-scale systems
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      PV_cost_m2yr:
-        description: Operation costs due to electricity supply from PV per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      PV_cost_yr:
-        description: Operation costs due to electricity supply from PV
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      SOLAR_hs_cost_m2yr:
-        description: Operation costs due to solar collectors for space heating per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      SOLAR_hs_cost_yr:
-        description: Operation costs due to solar collectors for space heating
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      SOLAR_ww_cost_m2yr:
-        description: Operation costs due to solar collectors for domestic hot water per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      SOLAR_ww_cost_yr:
-        description: Operation costs due to solar collectors for domestic hot water
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      WOOD_hs_cost_m2yr:
-        description: Operation costs of wood due to space heating per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      WOOD_hs_cost_yr:
-        description: Operation costs of wood due to space heating
-        type: float
-        unit: '[$USD(2015)/yr]'
-        min: 0.0
-      WOOD_ww_cost_m2yr:
-        description: Operation costs of wood due to domestic hot water per unit conditioned floor area
-        type: float
-        unit: '[$USD(2015)/m2.yr]'
-        min: 0.0
-      WOOD_ww_cost_yr:
-        description: Operation costs of wood due to domestic hot water
+      Opex_a_district_scale_USD:
+        description: Annual operational expenditure for district-scale systems
         type: float
         unit: '[$USD(2015)/yr]'
         min: 0.0
   used_by: []
+
+get_baseline_costs_detailed:
+  created_by:
+  - system_costs
+  file_path: outputs/data/costs/baseline_costs_detailed.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or network name
+        type: string
+        unit: NA
+      network_type:
+        description: Network type (DC for district cooling, DH for district heating) or empty for standalone buildings
+        type: string
+        unit: NA
+      service:
+        description: Energy service (e.g., GRID_cs for grid cooling, DC_network for district cooling network, NONE for buildings with no systems)
+        type: string
+        unit: NA
+      code:
+        description: Component code (e.g., CH1 for chiller type 1, CT1 for cooling tower type 1, PIPES for distribution piping) or energy carrier code (e.g., E230AC for electricity, NATURALGAS for natural gas)
+        type: string
+        unit: NA
+      capacity_kW:
+        description: Component capacity in kilowatts (0 for energy carriers and piping)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      placement:
+        description: Component placement in system (primary for heat/cooling generation, secondary for intermediate conversion, tertiary for heat rejection, distribution for piping, energy_carrier for fuel/electricity costs)
+        type: string
+        unit: NA
+      capex_total_USD:
+        description: Total capital expenditure for component
+        type: float
+        unit: '[$USD(2015)]'
+        min: 0.0
+      capex_a_USD:
+        description: Annualised capital expenditure for component
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      opex_fixed_a_USD:
+        description: Annual fixed operational expenditure (operations and maintenance)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      opex_var_a_USD:
+        description: Annual variable operational expenditure (energy costs from fuel or electricity purchases)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      scale:
+        description: System scale (BUILDING for individual building systems, DISTRICT for district network systems)
+        type: string
+        unit: NA
+  used_by: []
+
+get_heat_rejection_buildings:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/heat_rejection_buildings.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or network plant name
+        type: string
+        unit: NA
+      type:
+        description: Type of heat source (building for individual buildings, plant for district energy plants)
+        type: string
+        unit: NA
+      GFA_m2:
+        description: Gross floor area (0 for plant nodes)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      x_coord:
+        description: X coordinate for spatial location (longitude or projected coordinate)
+        type: float
+        unit: '[m]'
+      y_coord:
+        description: Y coordinate for spatial location (latitude or projected coordinate)
+        type: float
+        unit: '[m]'
+      heat_rejection_annual_MWh:
+        description: Total annual heat rejection to environment (sum of all energy carriers)
+        type: float
+        unit: '[MWh]'
+        min: 0.0
+      peak_heat_rejection_kW:
+        description: Peak hourly heat rejection rate
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      peak_datetime:
+        description: Date and time of peak heat rejection
+        type: string
+        unit: NA
+      scale:
+        description: System scale (BUILDING for individual building systems, DISTRICT for district network plants)
+        type: string
+        unit: NA
+  used_by: []
+
+get_heat_rejection_components:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/heat_rejection_components.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or network plant name
+        type: string
+        unit: NA
+      network_type:
+        description: Network type (DC for district cooling, DH for district heating) or empty for standalone buildings
+        type: string
+        unit: NA
+      service:
+        description: Energy service (e.g., GRID_cs for grid cooling, DC_plant for district cooling plant)
+        type: string
+        unit: NA
+      component_code:
+        description: Component code (e.g., CH1 for chiller type 1, CT1 for cooling tower type 1)
+        type: string
+        unit: NA
+      energy_carrier:
+        description: Energy carrier code for heat rejection medium (e.g., T_AIR_20C for air at 20C, T_AIR_ODB for outdoor air)
+        type: string
+        unit: NA
+      heat_rejection_annual_MWh:
+        description: Annual heat rejection for this component and energy carrier
+        type: float
+        unit: '[MWh]'
+        min: 0.0
+      peak_heat_rejection_kW:
+        description: Peak hourly heat rejection rate for this component
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      scale:
+        description: System scale (BUILDING for individual building systems, DISTRICT for district network plants)
+        type: string
+        unit: NA
+  used_by: []
+
+get_heat_rejection_hourly_building:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/{building}.csv
+  file_type: csv
+  schema:
+    columns:
+      DATE:
+        description: Timestamp for this hour (8760 hours total, no leap day)
+        type: string
+        unit: NA
+      heat_rejection_kW:
+        description: Heat rejection rate at this hour (sum of all energy carriers)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+  used_by: []
+
+get_heat_rejection_hourly_spatial:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/heat/heat_rejection_hourly_spatial.csv
+  file_type: csv
+  deprecated: true
+  deprecated_note: 'Use get_heat_rejection_hourly_building() instead for individual building files'
+  schema:
+    columns:
+      name:
+        description: Building or network plant name
+        type: string
+        unit: NA
+      type:
+        description: Type of heat source (building for individual buildings, plant for district energy plants)
+        type: string
+        unit: NA
+      date:
+        description: Timestamp for this hour (8760 hours per location)
+        type: string
+        unit: NA
+      heat_rejection_kW:
+        description: Heat rejection rate at this hour (sum of all energy carriers)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+  used_by: []
+
 get_database_assemblies_envelope_mass:
   created_by:
   - database_helper
@@ -2199,12 +2265,37 @@ get_database_assemblies_envelope_shading:
         primary: true
         type: string
         unit: NA
+        values: alphanumeric
+      shading_location:
+        description: Location of shading device ('interior' or 'exterior' only)
+        type: string
+        unit: '[-]'
+        nullable: true
+        choice:
+          values:
+            - interior
+            - exterior
       rf_sh:
-        description: Shading coefficient when shading device is active. Defined according to ISO 13790.
+        description: Shading coefficient when shading device is active. A value of 
+          1 means that all solar heat is gained. Defined according to ISO 13790. 
+          If exterior blinds incident window radiation will be multiplied by this 
+          factor. If interior blinds the window G-value will be multiplied by 
+          this factor and the incident radiation on the window will be multiplied 
+          by the resulting product.
         type: float
         unit: '[-]'
         min: 0.0
         max: 1.0
+      shading_setpoint_Wm2:
+        description: Activation setpoint for shading in [W/m2]. When the direct
+          solar radiation on a surface exceeds this value, the shading device
+          is activated. Defaults to 300 W/m2.
+        type: float
+        unit: '[W/m2]'
+        values: '{1.0...3500.0}'
+        min: 1.0
+        max: 3500.0
+        default: 300.0
   used_by:
   - demand
   - radiation
@@ -2318,7 +2409,8 @@ get_database_assemblies_envelope_window:
         unit: '[kg CO2-eq/m2]'
         max: 0.0
       G_win:
-        description: Solar heat gain coefficient. Defined according to ISO 13790.
+        description: Solar heat gain coefficient. A value of 1 means all solar heat is 
+          gained. Defined according to ISO 13790.
         type: float
         unit: '[-]'
         min: 0.0
@@ -17270,3 +17362,603 @@ get_zone_geometry:
   - shallow_geothermal_potential
   - solar_collector
   - thermal_network
+
+get_final_energy_buildings_file:
+  created_by:
+  - final_energy
+  file_path: outputs/data/final-energy/{whatif_name}/final_energy_buildings.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building name or plant name (e.g., B1001, NODE16)
+        type: string
+        unit: NA
+      type:
+        description: Entity type (building or plant)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - building
+          - plant
+      GFA_m2:
+        description: Gross floor area (0 for plants)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+        nullable: true
+      x_coord:
+        description: X coordinate of building centroid or plant node location
+        type: float
+        unit: '[m]'
+        nullable: true
+      y_coord:
+        description: Y coordinate of building centroid or plant node location
+        type: float
+        unit: '[m]'
+        nullable: true
+      scale:
+        description: System scale (BUILDING for standalone, DISTRICT for networked)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - BUILDING
+          - DISTRICT
+      case:
+        description: "Connectivity case: 1=Standalone, 2=DH+DC, 3=DH only, 4=DC only, 4.01/4.02/4.03=DC with boosters, 5=District plant"
+        type: float
+        unit: NA
+        nullable: true
+      case_description:
+        description: Human-readable description of connectivity case
+        type: string
+        unit: NA
+        nullable: true
+      Qhs_sys_MWh:
+        description: Annual space heating system demand
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      Qww_sys_MWh:
+        description: Annual domestic hot water system demand
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      Qcs_sys_MWh:
+        description: Annual space cooling system demand
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      E_sys_MWh:
+        description: Annual electricity system demand (appliances, lighting, ventilation)
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      NATURALGAS_MWh:
+        description: Annual natural gas consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      OIL_MWh:
+        description: Annual oil consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      COAL_MWh:
+        description: Annual coal consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      WOOD_MWh:
+        description: Annual wood/biomass consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      GRID_MWh:
+        description: Annual grid electricity consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      DH_MWh:
+        description: Annual district heating consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      DC_MWh:
+        description: Annual district cooling consumption
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      SOLAR_MWh:
+        description: Annual solar thermal generation (from SC and PVT panels)
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      PV_MWh:
+        description: Annual solar electrical generation (from PV and PVT panels)
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      TOTAL_MWh:
+        description: Total annual final energy consumption (sum of all carriers)
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      peak_demand_kW:
+        description: Peak total demand (thermal + electrical)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+        nullable: true
+      peak_datetime:
+        description: Timestamp when peak demand occurs
+        type: string
+        unit: NA
+        nullable: true
+  used_by: []
+
+get_final_energy_file:
+  created_by:
+  - final_energy
+  file_path: outputs/data/final-energy/{whatif_name}/final_energy.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Timestamp for each hour (8760 rows per year)
+        type: datetime64
+        unit: NA
+      Qhs_sys_kWh:
+        description: Hourly space heating system demand (all buildings aggregated)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      Qww_sys_kWh:
+        description: Hourly domestic hot water system demand (all buildings aggregated)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      Qcs_sys_kWh:
+        description: Hourly space cooling system demand (all buildings aggregated)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      E_sys_kWh:
+        description: Hourly electricity system demand (all buildings aggregated)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      NATURALGAS_kWh:
+        description: Hourly natural gas consumption (buildings + plants)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      OIL_kWh:
+        description: Hourly oil consumption (buildings + plants)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      COAL_kWh:
+        description: Hourly coal consumption (buildings + plants)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      WOOD_kWh:
+        description: Hourly wood/biomass consumption (buildings + plants)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      GRID_kWh:
+        description: Hourly grid electricity consumption (buildings + plants)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      DH_kWh:
+        description: Hourly district heating consumption
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      DC_kWh:
+        description: Hourly district cooling consumption
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_kWh:
+        description: Hourly solar thermal generation (from SC and PVT panels)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      PV_kWh:
+        description: Hourly solar electrical generation (from PV and PVT panels)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      TOTAL_kWh:
+        description: Hourly total final energy consumption (sum of all carriers)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+  used_by: []
+
+get_final_energy_building_file:
+  created_by:
+  - final_energy
+  file_path: outputs/data/final-energy/{whatif_name}/{building}.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Timestamp for each hour (8760 rows per year)
+        type: datetime64
+        unit: NA
+      Qhs_sys_kWh:
+        description: Hourly space heating system demand
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      Qww_sys_kWh:
+        description: Hourly domestic hot water system demand
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      Qcs_sys_kWh:
+        description: Hourly space cooling system demand
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      E_sys_kWh:
+        description: Hourly electricity system demand (appliances, lighting, ventilation)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      Qhs_sys_NATURALGAS_kWh:
+        description: Hourly natural gas consumption for space heating
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qww_sys_NATURALGAS_kWh:
+        description: Hourly natural gas consumption for hot water
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qhs_sys_GRID_kWh:
+        description: Hourly grid electricity consumption for space heating (heat pumps)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qcs_sys_GRID_kWh:
+        description: Hourly grid electricity consumption for space cooling
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qhs_sys_DH_kWh:
+        description: Hourly district heating consumption for space heating
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qww_sys_DH_kWh:
+        description: Hourly district heating consumption for hot water
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qcs_sys_DC_kWh:
+        description: Hourly district cooling consumption
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qhs_booster_NATURALGAS_kWh:
+        description: Hourly natural gas consumption for space heating booster
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      Qww_booster_NATURALGAS_kWh:
+        description: Hourly natural gas consumption for hot water booster
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      E_sys_GRID_kWh:
+        description: Hourly grid electricity consumption for appliances/lighting/ventilation
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      PV_roof_kWh:
+        description: Hourly solar electrical generation from roof panels
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      PV_wall_north_kWh:
+        description: Hourly solar electrical generation from north wall panels
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      PV_wall_south_kWh:
+        description: Hourly solar electrical generation from south wall panels
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      PV_wall_east_kWh:
+        description: Hourly solar electrical generation from east wall panels
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      PV_wall_west_kWh:
+        description: Hourly solar electrical generation from west wall panels
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      PV_total_kWh:
+        description: Hourly total solar electrical generation (sum of all facades)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_roof_kWh:
+        description: Hourly solar thermal generation from roof collectors
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_wall_north_kWh:
+        description: Hourly solar thermal generation from north wall collectors
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_wall_south_kWh:
+        description: Hourly solar thermal generation from south wall collectors
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_wall_east_kWh:
+        description: Hourly solar thermal generation from east wall collectors
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_wall_west_kWh:
+        description: Hourly solar thermal generation from west wall collectors
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      SOLAR_total_kWh:
+        description: Hourly total solar thermal generation (sum of all facades)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      scale:
+        description: System scale (BUILDING for standalone, DISTRICT for networked)
+        type: string
+        unit: NA
+      case:
+        description: "Connectivity case: 1=Standalone, 2=DH+DC, 3=DH only, 4=DC only, 4.01/4.02/4.03=DC with boosters"
+        type: float
+        unit: NA
+      case_description:
+        description: Human-readable description of connectivity case
+        type: string
+        unit: NA
+  used_by: []
+
+get_final_energy_plant_file:
+  created_by:
+  - final_energy
+  file_path: outputs/data/final-energy/{whatif_name}/{network_type}_{network_name}_{plant_name}.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Timestamp for each hour (8760 rows per year)
+        type: datetime64
+        unit: NA
+      thermal_load_kWh:
+        description: Hourly thermal load served by the plant (heating or cooling)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      pumping_load_kWh:
+        description: Hourly pumping energy consumption for distribution network
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      plant_heating_NATURALGAS_kWh:
+        description: Hourly natural gas consumption for district heating plant
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_heating_OIL_kWh:
+        description: Hourly oil consumption for district heating plant
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_heating_WOOD_kWh:
+        description: Hourly wood/biomass consumption for district heating plant
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_heating_GRID_kWh:
+        description: Hourly grid electricity consumption for district heating plant (heat pumps)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_cooling_GRID_kWh:
+        description: Hourly grid electricity consumption for district cooling plant (chillers)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_pumping_GRID_kWh:
+        description: Hourly grid electricity consumption for network pumping
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+      scale:
+        description: System scale (always DISTRICT for plants)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - DISTRICT
+      plant_name:
+        description: Plant node name from network shapefile (e.g., NODE16, PLANT_A)
+        type: string
+        unit: NA
+      network_name:
+        description: Network layout name
+        type: string
+        unit: NA
+      network_type:
+        description: Network type (DH for district heating, DC for district cooling)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - DH
+          - DC
+  used_by: []
+
+get_final_energy_supply_configuration_file:
+  created_by:
+  - final_energy
+  file_path: outputs/data/final-energy/{whatif_name}/supply_configuration.json
+  file_type: json
+  schema:
+    type: object
+    properties:
+      metadata:
+        type: object
+        description: Configuration metadata and run information
+        properties:
+          whatif_name:
+            type: string
+            description: What-if scenario name
+          mode:
+            type: string
+            description: Calculation mode (whatif or production)
+            enum:
+            - whatif
+            - production
+          timestamp:
+            type: string
+            description: ISO 8601 timestamp when configuration was created
+          network_name:
+            type: string
+            description: District network name (null if standalone only)
+            nullable: true
+      buildings:
+        type: object
+        description: Supply system configuration for each building
+        additionalProperties:
+          type: object
+          description: Building supply configuration
+          properties:
+            space_heating:
+              type: object
+              description: Space heating system configuration
+              nullable: true
+              properties:
+                scale:
+                  type: string
+                  enum:
+                  - BUILDING
+                  - DISTRICT
+                assembly_code:
+                  type: string
+                  description: Assembly code from supply database
+                component_code:
+                  type: string
+                  description: Primary component code
+                carrier:
+                  type: string
+                  description: Energy carrier (NATURALGAS, GRID, DH, etc.)
+                efficiency:
+                  type: number
+                  description: System efficiency (unitless for boilers, COP for heat pumps)
+            hot_water:
+              type: object
+              description: Domestic hot water system configuration
+              nullable: true
+              properties:
+                scale:
+                  type: string
+                  enum:
+                  - BUILDING
+                  - DISTRICT
+                assembly_code:
+                  type: string
+                component_code:
+                  type: string
+                carrier:
+                  type: string
+                efficiency:
+                  type: number
+            space_cooling:
+              type: object
+              description: Space cooling system configuration
+              nullable: true
+              properties:
+                scale:
+                  type: string
+                  enum:
+                  - BUILDING
+                  - DISTRICT
+                assembly_code:
+                  type: string
+                component_code:
+                  type: string
+                carrier:
+                  type: string
+                efficiency:
+                  type: number
+            space_heating_booster:
+              type: object
+              description: Space heating booster configuration (district systems only)
+              nullable: true
+              properties:
+                component_code:
+                  type: string
+                carrier:
+                  type: string
+                efficiency:
+                  type: number
+            hot_water_booster:
+              type: object
+              description: Hot water booster configuration (district systems only)
+              nullable: true
+              properties:
+                component_code:
+                  type: string
+                carrier:
+                  type: string
+                efficiency:
+                  type: number
+  used_by: []
