@@ -495,7 +495,8 @@ def _generate_parameter_class_stub() -> str:
         "fqname: str",
         "config: Configuration",
         "help: str",
-        "category: Optional[str]"
+        "category: Optional[str]",
+        "nullable: bool"
     ]
     
     return "\n".join([

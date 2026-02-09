@@ -3,7 +3,7 @@ import cea.inputlocator
 
 
 def deconstruct_parameters(p: cea.config.Parameter, config=None):
-    params = {'name': p.name, 'type': type(p).__name__, 'nullable': False, 'help': p.help}
+    params = {'name': p.name, 'type': type(p).__name__, 'nullable': p.nullable, 'help': p.help}
     try:
         if isinstance(p, cea.config.BuildingsParameter):
             params['value'] = []
@@ -26,11 +26,6 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
 
     if hasattr(p, "_extensions") or hasattr(p, "extensions"):
         params["extensions"] = getattr(p, "_extensions", None) or getattr(p, "extensions")
-
-    try:
-        params["nullable"] = p.nullable
-    except AttributeError:
-        pass
 
     # Add GUI metadata hints
     params["needs_validation"] = _should_validate(p)
