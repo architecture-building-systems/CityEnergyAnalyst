@@ -101,7 +101,6 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
             continue
         
         default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
-        print(parameter.name, default_value, parameter.nullable)
         # Don't set parameters that are not nullable and have an empty default value
         if default_value == "" and not parameter.nullable:
             logger.debug(f"Skipping {parameter.name} since it has no default value")
