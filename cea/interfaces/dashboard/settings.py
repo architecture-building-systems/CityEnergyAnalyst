@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     project_root: Optional[str] = None
 
     local: bool = Field(default=True, description="Run in local mode. Writes to local file")
-    cors_origin: str = "*"
+    cors_origin: str = "http://localhost:5050"
 
     workers: Optional[int] = Field(default=None, description="Number of workers")
 
@@ -48,12 +48,48 @@ class Settings(BaseSettings):
     config_path: Optional[str] = "~/cea.config"
 
     @model_validator(mode='after')
-    def validate_non_local_mode(self):
-        if not self.local:
-            if self.cors_origin == "*":
-                logger.warning("Security warning: Running with cors_origin='*'. "
-                               "This allows any origin to access your API and may pose security risks.")
+    def validate_cors_origin(self):
+        """
+        Validate CORS origin format and security.
 
+        This validator handles all CORS-related validation including:
+        - Blocking wildcard origins in production mode
+        - Validating URL format for specific origins
+        - Supporting comma-separated multiple origins
+        """
+        if self.cors_origin == "*":
+            if not self.local:
+                raise ValueError(
+                    f"Wildcard CORS origin ('*') is not allowed in non-local mode. "
+                    f"Please set {(ENV_VAR_PREFIX + 'cors_origin').upper()} to your frontend URL(s)."
+                )
+            # Allow wildcard in local mode, but warn
+            logger.warning(
+                "Using wildcard CORS origin ('*'). This is only safe for local development. "
+                "For production, set CEA_CORS_ORIGIN to specific domain(s)."
+            )
+            return self
+
+        # Validate each origin in comma-separated list
+        import re
+        origins = [o.strip() for o in self.cors_origin.split(",")]
+        pattern = r'^https?://[a-zA-Z0-9\-\.:]+(:[0-9]+)?$'
+
+        for origin in origins:
+            if not re.match(pattern, origin):
+                raise ValueError(
+                    f"Invalid CORS origin format: '{origin}'. "
+                    "Expected format: http://hostname[:port] or https://hostname[:port]"
+                )
+
+        return self
+
+    @model_validator(mode='after')
+    def validate_non_local_mode(self):
+        """
+        Validate required settings for non-local mode
+        """
+        if not self.local:
             if database_settings.url is None:
                 raise ValueError(f"Database URL not set. Please set {(ENV_VAR_PREFIX + 'db_url').upper()}.")
 
