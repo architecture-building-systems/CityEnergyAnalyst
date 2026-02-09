@@ -382,7 +382,7 @@ class Section:
 
 
 class Parameter:
-    def __init__(self, name, section, config):
+    def __init__(self, name: str, section: Section, config: Configuration):
         """
         :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
         :type name: str
@@ -405,6 +405,11 @@ class Parameter:
             self.category = config.default_config.get(section.name, f"{self.name}.category", raw=True)
         except configparser.NoOptionError:
             self.category = None
+
+        try:
+            self.nullable = config.default_config.getboolean(section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
         # FIXME: REMOVE THIS
         # give subclasses a chance to specialize their behavior
@@ -496,11 +501,6 @@ class FileParameter(Parameter):
                 self._direction = 'input'
         except configparser.NoOptionError:
             self._direction = 'input'
-
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
 
     def encode(self, value):
         if value is None:
@@ -654,11 +654,6 @@ class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
 
     def initialize(self, parser):
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
-
         # Read min/max bounds if specified
         try:
             self._min = int(parser.get(self.section.name, f"{self.name}.min"))
@@ -705,11 +700,6 @@ class RealParameter(Parameter):
             self._decimal_places = int(parser.get(self.section.name, f"{self.name}.decimal-places"))
         except configparser.NoOptionError:
             self._decimal_places = 4
-
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
 
         # Read min/max bounds if specified
         try:
@@ -982,11 +972,6 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # Override to dynamically populate choices based on available networks
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
-
         # Check if this parameter should default to (none) instead of most recent network
         try:
             self.default_to_none = parser.getboolean(self.section.name, f"{self.name}.default-to-none")
@@ -1390,10 +1375,7 @@ class SingleBuildingParameter(ChoiceParameter):
 
     def initialize(self, parser):
         # skip the default ChoiceParameter initialization of _choices
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
+        pass
 
     @property
     def _choices(self):

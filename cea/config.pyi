@@ -1747,6 +1747,7 @@ class Parameter:
     config: Configuration
     help: str
     category: Optional[str]
+    nullable: bool
 
     def __init__(self, name, section, config) -> None: ...
     def __repr__(self) -> str: ...
