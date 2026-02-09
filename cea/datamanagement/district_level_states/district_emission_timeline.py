@@ -59,7 +59,6 @@ from cea.datamanagement.district_level_states.timeline_years import (
     ensure_state_years_exist,
     get_building_construction_years,
     get_required_state_years,
-    reconcile_states_to_cumulative_modifications,
 )
 from cea.demand.building_properties import BuildingProperties
 from cea.inputlocator import InputLocator
@@ -1960,7 +1959,6 @@ def create_district_material_timeline(
 
     years = get_required_state_years(config, timeline_variant_name)
     log_data = ensure_state_years_exist(config, years=years, update_yaml=True, timeline_name=timeline_variant_name)
-    reconcile_states_to_cumulative_modifications(config, timeline_variant_name, years, log_data=log_data)
 
     # Determine overall year range
     start_year = min(years)

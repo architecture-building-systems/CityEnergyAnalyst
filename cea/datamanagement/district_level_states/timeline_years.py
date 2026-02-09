@@ -9,16 +9,7 @@ import geopandas as gpd
 
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
-from cea.datamanagement.district_level_states.timeline_log import load_log_yaml
-from cea.datamanagement.district_level_states.timeline_integrity import (
-    compute_state_year_missing_modifications,
-    merge_modify_recipes,
-)
-from cea.datamanagement.district_level_states.state_scenario import (
-    _apply_state_construction_changes,
-    _regenerate_building_properties_from_archetypes,
-    DistrictEventTimeline,
-)
+from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
 
 
 def list_state_years(main_locator: InputLocator, timeline_name: str) -> list[int]:
@@ -95,52 +86,5 @@ def ensure_state_years_exist(
     return timeline.ensure_state_years_exist(
         [int(y) for y in years],
         update_yaml=update_yaml,
-        regenerate_building_properties=True,
         update_building_events=True,
     )
-
-
-def reconcile_states_to_cumulative_modifications(
-    config: Configuration,
-    timeline_name: str,
-    years: Iterable[int],
-    *,
-    log_data: dict[int, dict[str, Any]] | None = None,
-) -> None:
-    """Apply cumulative YAML modifications so each `state_{year}` reflects full history up to that year.
-
-    This is the non-interactive equivalent of the "reconcile future years" logic.
-    It uses `compute_state_year_missing_modifications` to detect drift and then applies only missing fields.
-
-    NOTE: This does *not* change the YAML (it only mutates the state scenario databases).
-    """
-    main_locator = InputLocator(config.scenario)
-    if log_data is None:
-        log_data = load_log_yaml(main_locator, allow_missing=True, allow_empty=True, timeline_name=timeline_name)
-
-    cumulative: dict[str, dict[str, dict[str, Any]]] = {}
-    years_sorted = sorted(set(int(y) for y in years))
-
-    for year in years_sorted:
-        year_entry = log_data.get(year, {}) or {}
-        delta = (year_entry.get("modifications", {}) or {})
-        cumulative = merge_modify_recipes(cumulative, delta)
-
-        missing_recipe, errors = compute_state_year_missing_modifications(config, timeline_name, year, cumulative)
-        if errors:
-            formatted = "\n".join(f"- {e}" for e in errors)
-            raise ValueError(f"Errors while reconciling state_{year}:\n" + formatted)
-
-        if missing_recipe:
-            modified = _apply_state_construction_changes(
-                config,
-                timeline_name,
-                year,
-                missing_recipe,
-                trigger_year=None,
-            )
-            if modified:
-                state_locator = InputLocator(
-                    main_locator.get_state_in_time_scenario_folder(timeline_name, year)
-                )
-                _regenerate_building_properties_from_archetypes(state_locator)
