@@ -411,10 +411,6 @@ class Parameter:
         except configparser.NoOptionError:
             self.nullable = False
 
-        # FIXME: REMOVE THIS
-        # give subclasses a chance to specialize their behavior
-        self.initialize(config.default_config)
-
     @property
     def default(self):
         return self.decode(self.config.default_config.get(self.section.name, self.name))
@@ -425,12 +421,6 @@ class Parameter:
     @property
     def py_name(self):
         return self.name.replace('-', '_')
-
-    def initialize(self, parser):
-        """
-        Override this function to initialize a parameter with values as read from
-        the default.config
-        """
 
     def encode(self, value) -> str:
         """Encode ``value`` to a string representation for writing to the configuration file"""
@@ -470,9 +460,10 @@ class Parameter:
 class PathParameter(Parameter):
     """Describes a folder in the system"""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         try:
-            self._direction = parser.get(self.section.name, f"{self.name}.direction")
+            self._direction = config.default_config.get(section.name, f"{name}.direction")
             if self._direction not in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
@@ -493,10 +484,11 @@ class NullablePathParameter(PathParameter):
 class FileParameter(Parameter):
     """Describes a file in the system."""
 
-    def initialize(self, parser):
-        self._extensions = parser.get(self.section.name, f"{self.name}.extensions").split()
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._extensions = config.default_config.get(section.name, f"{name}.extensions").split()
         try:
-            self._direction = parser.get(self.section.name, f"{self.name}.direction")
+            self._direction = config.default_config.get(section.name, f"{name}.direction")
             if self._direction not in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
@@ -586,7 +578,8 @@ class WeatherPathParameter(Parameter):
     THIRD_PARTY_WEATHER_SOURCES = ['climate.onebuilding.org']
     MORPHING = ['pyepwmorph']
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
         self._extensions = ['epw']
 
@@ -653,15 +646,16 @@ class BooleanParameter(Parameter):
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # Read min/max bounds if specified
         try:
-            self._min = int(parser.get(self.section.name, f"{self.name}.min"))
+            self._min = int(config.default_config.get(section.name, f"{name}.min"))
         except (configparser.NoOptionError, ValueError):
             self._min = None
 
         try:
-            self._max = int(parser.get(self.section.name, f"{self.name}.max"))
+            self._max = int(config.default_config.get(section.name, f"{name}.max"))
         except (configparser.NoOptionError, ValueError):
             self._max = None
 
@@ -694,21 +688,22 @@ class IntegerParameter(Parameter):
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(parser.get(self.section.name, f"{self.name}.decimal-places"))
+            self._decimal_places = int(config.default_config.get(section.name, f"{name}.decimal-places"))
         except configparser.NoOptionError:
             self._decimal_places = 4
 
         # Read min/max bounds if specified
         try:
-            self._min = float(parser.get(self.section.name, f"{self.name}.min"))
+            self._min = float(config.default_config.get(section.name, f"{name}.min"))
         except (configparser.NoOptionError, ValueError):
             self._min = None
 
         try:
-            self._max = float(parser.get(self.section.name, f"{self.name}.max"))
+            self._max = float(config.default_config.get(section.name, f"{name}.max"))
         except (configparser.NoOptionError, ValueError):
             self._max = None
 
@@ -778,9 +773,10 @@ class PluginListParameter(ListParameter):
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # allow the parent option to be set
-        self._parent = parser.get(self.section.name, f"{self.name}.parent")
+        self._parent = config.default_config.get(section.name, f"{name}.parent")
 
     def decode(self, value):
         """Only return the folders that exist"""
@@ -864,9 +860,10 @@ class NetworkLayoutNameParameter(StringParameter):
 
 
 class OptimizationIndividualListParameter(ListParameter):
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # allow the parent option to be set
-        self._project = parser.get(self.section.name, f"{self.name}.project")
+        self._project = config.default_config.get(section.name, f"{name}.project")
 
     def get_folders(self, project=None):
         if not project:
@@ -893,9 +890,19 @@ class DateParameter(Parameter):
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
 
-    def initialize(self, parser):
-        # when called for the first time, make sure there is a `._choices` parameter
-        self._choices = parse_string_to_list(parser.get(self.section.name, f"{self.name}.choices"))
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._choices_cache = None
+
+    @property
+    def _choices(self):
+        """Lazy-loaded cached property for static choices from config file.
+        Dynamic subclasses should override this property without caching."""
+        if self._choices_cache is None:
+            self._choices_cache = parse_string_to_list(
+                self.config.default_config.get(self.section.name, f"{self.name}.choices")
+            )
+        return self._choices_cache
 
     def encode(self, value):
         if str(value) not in self._choices:
@@ -970,11 +977,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     _network_types = {'DH', 'DC'}
 
-    def initialize(self, parser):
-        # Override to dynamically populate choices based on available networks
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # Check if this parameter should default to (none) instead of most recent network
         try:
-            self.default_to_none = parser.getboolean(self.section.name, f"{self.name}.default-to-none")
+            self.default_to_none = config.default_config.getboolean(section.name, f"{name}.default-to-none")
         except configparser.NoOptionError:
             self.default_to_none = False
 
@@ -1193,7 +1200,8 @@ class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
                          if
@@ -1243,9 +1251,10 @@ class DatabasePathParameter(Parameter):
 class PlantNodeParameter(ChoiceParameter):
     """A parameter that refers to valid PLANT nodes of a thermal-network"""
 
-    def initialize(self, parser):
-        self.network_name_fqn = parser.get(self.section.name, f"{self.name}.network-name")
-        self.network_type_fqn = parser.get(self.section.name, f"{self.name}.network-type")
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.network_name_fqn = config.default_config.get(section.name, f"{name}.network-name")
+        self.network_type_fqn = config.default_config.get(section.name, f"{name}.network-type")
 
     @property
     def _choices(self):
@@ -1280,8 +1289,9 @@ class PlantNodeParameter(ChoiceParameter):
 class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
 
-    def initialize(self, parser):
-        self.exclude_current = parser.get(self.section.name, f"{self.name}.exclude_current", fallback=False)
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.exclude_current = config.default_config.get(section.name, f"{name}.exclude_current", fallback=False)
 
     def encode(self, value):
         """Make sure the scenario folder exists"""
@@ -1322,9 +1332,6 @@ class ScenarioParameter(Parameter):
 
 class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
-
-    def initialize(self, parser):
-        super().initialize(parser)
 
     @property
     def default(self):
@@ -1373,10 +1380,6 @@ class OrderedMultiChoiceParameter(MultiChoiceParameter):
 class SingleBuildingParameter(ChoiceParameter):
     """A (single) building in the zone"""
 
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
@@ -1402,10 +1405,6 @@ class SingleBuildingParameter(ChoiceParameter):
 class SingleThermalStorageParameter(ChoiceParameter):
     """A (single) building in the zone"""
 
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
@@ -1427,10 +1426,6 @@ class UseTypeRatioParameter(ListParameter):
 
 class GenerationParameter(ChoiceParameter):
     """A (single) building in the zone"""
-
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
 
     @property
     def _choices(self):
@@ -1471,10 +1466,6 @@ class GenerationParameter(ChoiceParameter):
 class SystemParameter(ChoiceParameter):
     """A (single) building in the zone"""
 
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
     @property
     def _choices(self):
         scenario = self.config.scenario
@@ -1492,10 +1483,6 @@ class SystemParameter(ChoiceParameter):
 
 class MultiSystemParameter(MultiChoiceParameter):
     """A (single) building in the zone"""
-
-    def initialize(self, parser):
-        # skip the default MultiChoiceParameter initialization of _choices
-        pass
 
     @property
     def _choices(self):
@@ -1521,8 +1508,8 @@ class MultiSystemParameter(MultiChoiceParameter):
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
 
-    def initialize(self, parser):
-        # skip the default MultiChoiceParameter initialization of _choices
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         self._empty = False
 
     @property
@@ -1617,6 +1604,12 @@ def parse_string_coordinate_list(string_tuples):
 class ColumnChoiceParameter(ChoiceParameter):
     _supported_extensions = ['.csv']
 
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.locator_method = config.default_config.get(section.name, f"{name}.locator")
+        self.column_name = config.default_config.get(section.name, f"{name}.column")
+        self.kwargs = self._parse_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
+
     @staticmethod
     def _parse_kwargs(value: str) -> Dict[str, str]:
         """
@@ -1637,12 +1630,6 @@ class ColumnChoiceParameter(ChoiceParameter):
             return kwargs
         except Exception as e:
             raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
-
-
-    def initialize(self, parser):
-        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
-        self.column_name = parser.get(self.section.name, f"{self.name}.column")
-        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
 
     @property
     def _choices(self):
