@@ -279,9 +279,11 @@ class EmissionTimelinePlot:
         )
 
         # Apply y-axis min/max if specified in config
-        if hasattr(self.config.plots_emission_timeline, 'y_min') and self.config.plots_emission_timeline.y_min is not None:
-            if hasattr(self.config.plots_emission_timeline, 'y_max') and self.config.plots_emission_timeline.y_max is not None:
-                yaxis_config['range'] = [self.config.plots_emission_timeline.y_min, self.config.plots_emission_timeline.y_max]
+        y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
+        y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+
+        if y_min is not None or y_max is not None:
+            yaxis_config['range'] = [y_min, y_max]
 
         # Apply y-axis step if specified in config
         if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
@@ -400,9 +402,11 @@ class EmissionTimelinePlot:
         )
 
         # Apply y-axis min/max if specified in config
-        if hasattr(self.config.plots_emission_timeline, 'y_min') and self.config.plots_emission_timeline.y_min is not None:
-            if hasattr(self.config.plots_emission_timeline, 'y_max') and self.config.plots_emission_timeline.y_max is not None:
-                yaxis_config['range'] = [self.config.plots_emission_timeline.y_min, self.config.plots_emission_timeline.y_max]
+        y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
+        y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+
+        if y_min is not None or y_max is not None:
+            yaxis_config['range'] = [y_min, y_max]
 
         # Apply y-axis step if specified in config
         if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
@@ -566,9 +570,11 @@ class EmissionTimelinePlot:
         )
 
         # Apply y-axis min/max if specified in config
-        if hasattr(self.config.plots_emission_timeline, 'y_min') and self.config.plots_emission_timeline.y_min is not None:
-            if hasattr(self.config.plots_emission_timeline, 'y_max') and self.config.plots_emission_timeline.y_max is not None:
-                yaxis_config['range'] = [self.config.plots_emission_timeline.y_min, self.config.plots_emission_timeline.y_max]
+        y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
+        y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+
+        if y_min is not None or y_max is not None:
+            yaxis_config['range'] = [y_min, y_max]
 
         # Apply y-axis step if specified in config
         if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
