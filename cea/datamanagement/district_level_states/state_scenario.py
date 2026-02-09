@@ -172,7 +172,7 @@ class DistrictStateYear:
         scenario_config = deepcopy(main_config)
         scenario_config.scenario = state_folder
         if (
-            type(scenario_config.emissions.year_end) is int
+            isinstance(scenario_config.emissions.year_end, int)
             and int(self.year) > scenario_config.emissions.year_end
         ):
             scenario_config.emissions.year_end = int(self.year)
@@ -798,8 +798,6 @@ def _apply_state_construction_changes(
     )
     state_locator = InputLocator(state_scenario_folder)
 
-    snapshot = None
-
     try:
         archetype_df = pd.read_csv(
             state_locator.get_database_archetypes_construction_type(),
@@ -887,8 +885,6 @@ def _apply_state_construction_changes(
         
         return True
     except Exception:
-        if snapshot is not None:
-            snapshot.restore()
         raise
 
 
@@ -1058,8 +1054,5 @@ def validate_timeline_name(timeline_name: str) -> str:
     # Check for names that start or end with periods or spaces (problematic on Windows)
     if timeline_name.startswith('.') or timeline_name.endswith('.'):
         raise ValueError("Timeline name cannot start or end with a period.")
-    
-    if timeline_name.endswith(' '):
-        raise ValueError("Timeline name cannot end with a space.")
     
     return timeline_name
