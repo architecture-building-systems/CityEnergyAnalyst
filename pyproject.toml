@@ -179,3 +179,4 @@ notebook = "*"
 pixi-pycharm = ">=0.0.8,<0.0.9" # for pycharm support
 uv = "*"
 timezonefinder = ">=8.1.0,<9" # to fix Windows installation due to pyepwmorpher
+pulp = ">=2.8.0,<3"
