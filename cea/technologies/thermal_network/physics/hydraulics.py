@@ -181,13 +181,13 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     # Calculate Darcy for transition regime
     # [STANDARD: Transition regime] Blasius equation for smooth pipes
     # Reference: Moody Diagram (Incropera et al., 2007)
-    darcy_transition = 0.316 * reynolds ** -0.25
+    darcy_transition = 0.316 * np.where(reynolds > 0, reynolds, 1) ** -0.25
 
     # Calculate Darcy for turbulent regime
     # [STANDARD: ISO 5167, EN 13941] Swamee-Jain equation
     # Explicit Colebrook-White approximation
     # Valid: Re ∈ [5000, 10⁸], ε/D ∈ [10⁻⁶, 0.05]
-    log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m) + 5.74 / reynolds ** 0.9
+    log_arg = pipe_roughness_m / (3.7 * pipe_diameter_m) + 5.74 / np.where(reynolds > 0, reynolds, 1) ** 0.9
 
     # Validate logarithm argument for turbulent flow
     invalid_turbulent = cond_turbulent & (~np.isfinite(log_arg) | (log_arg <= 0))
