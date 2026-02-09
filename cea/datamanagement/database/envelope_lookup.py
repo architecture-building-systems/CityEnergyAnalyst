@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import pandas as pd
 
+from dataclasses import fields as dataclass_fields
 from cea.datamanagement.database.assemblies import Envelope
 
 if TYPE_CHECKING:
@@ -21,8 +22,8 @@ class EnvelopeLookup:
     _FLOAT_FIELDS = {
         "U",
         "GHG_kgCO2m2",
-        # "GHG_production_kgCO2m2", # needed in future for detailed LCA
-        # "GHG_recycling_kgCO2m2",
+        "GHG_production_kgCO2m2",
+        "GHG_recycling_kgCO2m2",
         "GHG_biogenic_kgCO2m2",
         "G_win",
         "e_win",
@@ -33,37 +34,50 @@ class EnvelopeLookup:
     }
 
     def __init__(self, envelope: Envelope):
-        self._dfs: dict[str, pd.DataFrame] = {
-            name: df
-            for name, df in {
-                "wall": envelope.wall,
-                "roof": envelope.roof,
-                "floor": envelope.floor,
-                "window": envelope.window,
-                "tightness": envelope.tightness,
-                "shading": envelope.shading,
-                "mass": envelope.mass,
-            }.items()
-            if df is not None
-        }
-        if not self._dfs:
-            raise ValueError("No envelope databases loaded.")
-
-        # Build code owner map; reject duplicates across ALL DBs and within a DB
+        self.envelope = envelope
+        # Build owner map directly from envelope attributes
         self._owner: dict[str, str] = {}
         dups: dict[str, list[str]] = {}
-        for db_name, df in self._dfs.items():
+        any_loaded = False
+        for f in dataclass_fields(Envelope):
+            name = f.name
+            df: pd.DataFrame | None = getattr(envelope, name)
+            if df is None:
+                continue
+            any_loaded = True
             if df.index.duplicated().any():
                 dup_in = sorted(set(df.index[df.index.duplicated()].astype(str)))
-                raise ValueError(f"Duplicate codes within DB '{db_name}': {dup_in}")
+                raise ValueError(f"Duplicate codes within DB '{name}': {dup_in}")
             for code in df.index.astype(str):
                 if code in self._owner:
-                    dups.setdefault(code, [self._owner[code]]).append(db_name)
+                    dups.setdefault(code, [self._owner[code]]).append(name)
                 else:
-                    self._owner[code] = db_name
+                    self._owner[code] = name
+        if not any_loaded:
+            raise ValueError("No envelope databases loaded.")
         if dups:
             details = "; ".join(f"{c}: {sorted(dbset)}" for c, dbset in dups.items())
             raise ValueError(f"Duplicate codes across DBs are not allowed: {details}")
+
+    # --- helpers -----------------------------------------------------------------
+    def _df_for(self, db_name: str) -> pd.DataFrame:
+        """Return the DataFrame for a given envelope DB name or raise if missing/None."""
+        if not hasattr(self.envelope, db_name):
+            raise ValueError(f"Envelope has no attribute '{db_name}'.")
+        df = getattr(self.envelope, db_name)
+        if df is None:
+            raise ValueError(f"Envelope DataFrame '{db_name}' is None (not loaded).")
+        return df
+
+    @property
+    def databases(self) -> list[str]:
+        """List of database names present (non-empty DataFrames)."""
+        out = []
+        for f in dataclass_fields(Envelope):
+            df = getattr(self.envelope, f.name)
+            if isinstance(df, pd.DataFrame) and not df.empty:
+                out.append(f.name)
+        return out
 
     @classmethod
     def from_locator(cls, locator: InputLocator) -> "EnvelopeLookup":
@@ -97,7 +111,7 @@ class EnvelopeLookup:
         if code not in self._owner:
             raise ValueError(f"Code '{code}' not found in any database.")
         db = self._owner[code]
-        df = self._dfs[db]
+        df = self._df_for(db)
 
         col = self._col(db, field)
         if col not in df.columns:
@@ -148,8 +162,8 @@ class EnvelopeLookup:
             "U",
             "GHG_kgCO2m2",
             "GHG_biogenic_kgCO2m2",
-            # "GHG_production_kgCO2m2", # needed in future for detailed LCA
-            # "GHG_recycling_kgCO2m2",
+            "GHG_production_kgCO2m2",
+            "GHG_recycling_kgCO2m2",
             "Service_Life",
         }:
             # Map explicitly per DB to avoid ambiguous suffix logic.
@@ -165,10 +179,10 @@ class EnvelopeLookup:
                 return f"GHG_{suf}_kgCO2m2"
             if field == "GHG_biogenic_kgCO2m2":
                 return f"GHG_biogenic_{suf}_kgCO2m2"
-            # if field == "GHG_production_kgCO2m2": # needed in future for detailed LCA
-            #     return f"GHG_production_{suf}_kgCO2m2"
-            # if field == "GHG_recycling_kgCO2m2":
-            #     return f"GHG_recycling_{suf}_kgCO2m2"
+            if field == "GHG_production_kgCO2m2":
+                return f"GHG_production_{suf}_kgCO2m2"
+            if field == "GHG_recycling_kgCO2m2":
+                return f"GHG_recycling_{suf}_kgCO2m2"
             # Service_Life
             return f"Service_Life_{suf}"
 
@@ -202,3 +216,20 @@ class EnvelopeLookup:
             f"Unsupported field '{field}'. Allowed: U, GHG_kgCO2m2, GHG_biogenic_kgCO2m2, Service_Life, "
             "description, Reference, G_win, e_win, F_F, n50, rf_sh, Cm_af."
         )
+
+    def set_item_value(self, code: str, field: str, value: int | float | str | None) -> None:
+        """Set value for (code, field). See `get_item_value` for supported fields."""
+        code = str(code)
+        if code not in self._owner:
+            raise ValueError(f"Code '{code}' not found in any database.")
+        db = self._owner[code]
+        df = self._df_for(db)
+
+        col = self._col(db, field)
+        if col not in df.columns:
+            raise KeyError(
+                f"Column '{col}' not found in '{db}' for code '{code}'. "
+                f"Available: {', '.join(map(str, df.columns))}"
+            )
+
+        df.at[code, col] = value

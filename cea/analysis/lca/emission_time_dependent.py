@@ -4,10 +4,9 @@ import warnings
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
 
-from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
+from cea.analysis.lca.emission_timeline import BuildingYearlyEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
 from cea.config import Configuration
-from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.demand.building_properties import BuildingProperties
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
@@ -223,7 +222,6 @@ def total_yearly(config: Configuration) -> None:
 
             print(f"  Including PV life cycle emissions for panel types: {', '.join(pv_codes)}")
 
-    envelope_lookup = EnvelopeLookup.from_locator(locator)
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[
         ["year", "drybulb_C", "wetbulb_C", "relhum_percent", "windspd_ms", "skytemp_C"]
@@ -231,9 +229,8 @@ def total_yearly(config: Configuration) -> None:
     building_properties = BuildingProperties(locator, weather_data, buildings)
     results: list[tuple[str, pd.DataFrame]] = []
     for building in buildings:
-        timeline = BuildingEmissionTimeline(
+        timeline = BuildingYearlyEmissionTimeline(
             building_properties=building_properties,
-            envelope_lookup=envelope_lookup,
             building_name=building,
             locator=locator,
             end_year=end_year,
@@ -305,21 +302,26 @@ def sum_by_building(result_list: list[tuple[str, pd.DataFrame]]) -> pd.DataFrame
         It has the same columns as the input dataframes.
     :rtype: pd.DataFrame
     """
-    # create a new df, each row is the summed value for a building across all its df's indices
-    columns_without_date = [col for col in result_list[0][1].columns if col not in ['date', 'name']]
+    # Create a new df: each row is the summed value for a building across all its df's indices.
+    # Only numeric columns are aggregated (e.g., ignore free-text columns like 'Note').
+    sample_df = result_list[0][1].copy()
+    sample_df = sample_df.drop(columns=[c for c in ("date", "name") if c in sample_df.columns])
+    numeric_cols = list(sample_df.select_dtypes(include="number").columns)
     summed_df = pd.DataFrame(
         data=0.0,
         index=[building for building, _ in result_list],
-        columns=columns_without_date,
+        columns=numeric_cols,
     )
     summed_df.index.rename("name", inplace=True)
     for building, df in result_list:
         df_copy = df.copy()
-        if 'date' in df_copy.columns:
-            df_copy.pop('date')
-        if 'name' in df_copy.columns:
-            df_copy.pop('name')
-        summed_df.loc[building] += df_copy.sum(axis=0).to_numpy()
+        if "date" in df_copy.columns:
+            df_copy = df_copy.drop(columns=["date"])
+        if "name" in df_copy.columns:
+            df_copy = df_copy.drop(columns=["name"])
+
+        df_numeric = df_copy.select_dtypes(include="number")
+        summed_df.loc[building] = summed_df.loc[building].add(df_numeric.sum(axis=0), fill_value=0.0)
     return summed_df
 
 
@@ -383,6 +385,10 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
             df_copy = df_copy.drop(columns=['date'])
         if "name" in df_copy.columns:
             df_copy = df_copy.drop(columns=['name'])
+
+        # Sum only numeric columns (ignore free-text columns like 'Note')
+        df_copy = df_copy.select_dtypes(include="number")
+
         # Extract year values from index if it's a year index
         if has_year_index and year_series is None:
             year_series = pd.Series(df_copy.index.values, index=df_copy.index)

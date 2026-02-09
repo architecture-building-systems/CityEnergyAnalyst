@@ -24,14 +24,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def archetypes_mapper(locator,
-                      update_architecture_dbf,
-                      update_air_conditioning_systems_dbf,
-                      update_indoor_comfort_dbf,
-                      update_internal_loads_dbf,
-                      update_supply_systems_dbf,
-                      update_schedule_operation_cea,
-                      list_buildings
+def archetypes_mapper(locator: cea.inputlocator.InputLocator,
+                      update_architecture_dbf: bool,
+                      update_air_conditioning_systems_dbf: bool,
+                      update_indoor_comfort_dbf: bool,
+                      update_internal_loads_dbf: bool,
+                      update_supply_systems_dbf: bool,
+                      update_schedule_operation_cea: bool,
+                      list_buildings: list[str],
                       ):
     """
     algorithm to query building properties from statistical database

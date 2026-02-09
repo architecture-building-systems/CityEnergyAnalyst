@@ -192,6 +192,8 @@ class TestSchemas(unittest.TestCase):
                     "hour_end": 24,
                     "folder_name": "test",
                     "plot_cea_feature": "demand",
+                    "year_of_state": 2001,
+                    "timeline_name": "test_timeline",
                     "plan_name": "default",
                     "phase": "timeline",
                 }

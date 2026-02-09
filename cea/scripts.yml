@@ -175,7 +175,7 @@ Renewable Energy Potential Assessment:
 
 Energy Demand Forecasting:
   - name: occupancy
-    label: "Energy Demand Part 1: building occupancy"
+    label: "Energy Demand Part 1: Building Occupancy"
     short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
@@ -193,7 +193,7 @@ Energy Demand Forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: "Energy Demand Part 2: load modelling"
+    label: "Energy Demand Part 2: Load Modelling"
     short_description: Forecast end-use energy loads and final energy consumption by carrier
     description: |
       This Feature uses CEA models to forecast building energy demand at hourly resolution.
@@ -265,6 +265,120 @@ Thermal Network Design:
       - [get_database_components_distribution_thermal_grid]
       - [get_weather_file]
 
+Scenario Evolution Planning:
+  - name: create-new-timeline
+    label: "Step 0: Create New Timeline"
+    short_description: Create a new district timeline (SAVE SETTINGS after this step!)
+    description: |
+      This Feature allows you to create a new timeline. 
+      If you only want to work on existing timeline, you can ignore this step.
+      
+      **Workflow**:
+      1. **Complete this step first** - Enter new timeline name
+      2. **Click "Save Settings"** - This saves your timeline selection
+      3. **Proceed to Step 1** - Define atomic changes for this timeline
+      4. If you want to switch timelines later, return to this step, select a different timeline, and save again
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.create_new_timeline
+    parameters: ['general:scenario', create-new-timeline]
+
+  - name: district-atomic-changes-define
+    label: "Step 1: Define Atomic Change"
+    short_description: Define reusable atomic changes for the selected timeline
+    description: |
+      This Feature allows you to define reusable atomic changes that can be applied to multiple years.
+      An atomic change is a named modification template (e.g. "upgrade_wall_insulation", "retrofit_hvac_2025") containing construction 
+      property updates that can be applied to selected building archetypes.
+      
+      **Prerequisites**: Complete Step 0 (Select Timeline) and save settings first!
+
+      **Workflow**:
+      1. Define atomic changes with meaningful names using this tool
+      2. Use Step 2 to apply one or more atomic changes to specific years
+      3. Use Step 3 to bake the changes into state scenarios
+      
+      **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.district_atomic_changes_define
+    parameters: ['general:scenario', district-atomic-changes-define]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: district-events-apply-changes
+    label: "Step 2: Apply Atomic Changes to Year"
+    short_description: Apply one or more atomic changes to a specific year
+    description: |
+      This Feature applies predefined atomic changes to a specific year in the district timeline.
+      You can select multiple atomic changes to apply simultaneously - the system will detect and prevent conflicts
+      (e.g. if two changes try to modify the same field on the same building).
+      
+      **Prerequisites**: Complete Step 0 (Select Timeline) and Step 1 (Define Changes) first!
+
+      **Important**: When you select a non-default timeline, make sure to **save settings**, 
+      leave this page and return to refresh the list of available atomic changes!
+
+      **Workflow**:
+      1. Define atomic changes using Step 1
+      2. Use this tool to apply selected changes to specific years
+      3. Use Step 3 to bake the changes into state scenarios
+      
+      **Conflict Detection**:
+      If selected atomic changes have conflicting modifications (modifying the same field on the same building),
+      the tool will fail with a clear error message listing the conflicts.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.district_events_apply_changes
+    parameters: ['general:scenario', district-events-apply-changes]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: district-events-build
+    label: "Step 3: Bake Scenario Evolution States"
+    short_description: Create or update state-in-time scenarios from the timeline
+    description: |
+      This Feature materialises state-in-time scenarios (`state_{year}` folders) based on the timeline's `district_timeline_log.yml`.
+      
+      **Prerequisites**: Complete Steps 0-2 (Select Timeline, Define Changes, Apply to Years) first!
+
+      Use this after you have finished applying atomic changes to years. It creates or reconciles state folders for each year.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.bake_states_from_log
+    parameters: ['general:scenario', bake-states]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: state-simulations
+    label: "Step 4: Simulate & Build Timeline"
+    short_description: Run simulations for all state-in-time years
+    description: |
+      This Feature runs simulations for all state-in-time years in the selected timeline. 
+      Afterwards, it reads component changes and simulation results across all states in the timeline 
+      to create a comprehensive emission timeline, including embodied emissions (component changes + 
+      lifetime-based renovation) and operational emissions.
+      
+      **Prerequisites**: Complete Steps 0-3 (Select Timeline, Define Changes, Apply Changes, Bake States) first!
+      
+      It runs:
+      - Radiation
+      - Occupancy
+      - Demand
+      - Photovoltaic
+      - Emissions
+
+      And builds the district emission timeline.
+      
+      The parameters of these simulations must be saved in their respective dashboards before running this Feature.
+    interfaces: [cli, dashboard]
+    module: cea.datamanagement.district_level_states.state_simulations
+    parameters: ['general:scenario', state-simulations]
 
 Life Cycle Analysis:
 
@@ -436,7 +550,7 @@ Utilities:
     short_description: Verify and migrate inputs to CEA-4 format
     description: |
       This Feature verifies the inputs are in the correct format for CEA-4.
-      It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      It also migrates Late-CEA-3 inputs data - Note the process of migration is not reversible.
 
     interfaces: [cli, dashboard]
     module: cea.datamanagement.format_helper.format_helper

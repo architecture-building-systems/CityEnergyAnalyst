@@ -1632,35 +1632,40 @@ def parse_string_coordinate_list(string_tuples):
     return coordinates_list
 
 
+def parse_locator_kwargs(value: str) -> Dict[str, str]:
+    """
+    Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary.
+    Used by ChoiceParameter subclasses that need to pass kwargs to InputLocator methods.
+    """
+    kwargs = dict()
+    if value is None:
+        return kwargs
+
+    try:
+        value = value.strip()
+
+        if value:
+            for kwarg in value.split(','):
+                key, val = kwarg.strip().split('=')
+                kwargs[key] = val
+
+        return kwargs
+    except Exception as e:
+        raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
+
+
 class ColumnChoiceParameter(ChoiceParameter):
     _supported_extensions = ['.csv']
-
-    @staticmethod
-    def _parse_kwargs(value: str) -> Dict[str, str]:
-        """
-        Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary
-        """
-        kwargs = dict()
-        if value is None:
-            return kwargs
-
-        try:
-            value = value.strip()
-
-            if value:
-                for kwarg in value.split(','):
-                    key, value = kwarg.strip().split('=')
-                    kwargs[key] = value
-
-            return kwargs
-        except Exception as e:
-            raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
-
 
     def initialize(self, parser):
         self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
         self.column_name = parser.get(self.section.name, f"{self.name}.column")
-        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+        self.kwargs = parse_locator_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
     @property
     def _choices(self):
@@ -1685,16 +1690,190 @@ class ColumnChoiceParameter(ChoiceParameter):
                 raise ValueError(f'Column {self.column_name} not found in source file')
 
             codes = df[self.column_name].unique()
-            return list(codes)
+            choices = list(codes)
+
+            if self.nullable:
+                # Use empty-string as the on-disk representation of None.
+                # Put it first so it's easy to find in UIs.
+                if '' not in choices:
+                    choices.insert(0, '')
+                else:
+                    choices = [''] + [c for c in choices if c != '']
+
+            return choices
         except FileNotFoundError as e:
             # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
             raise FileNotFoundError(f'Could not find source file at {location} to generate choices for {self.name}') from e
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
+    def encode(self, value):
+        if value is None or value == '':
+            if self.nullable:
+                return ''
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return str(value)
+
+    def decode(self, value):
+        # If nullable, default empty values to None (instead of silently selecting the first database entry).
+        if self.nullable and (value is None or str(value) == ''):
+            return None
+
+        if str(value) in self._choices:
+            if self.nullable and str(value) == '':
+                return None
+            return str(value)
+
+        if self.nullable:
+            return None
+
+        if not self._choices:
+            raise ValueError(f"No choices for {self.fqname} to decode {value}")
+        return self._choices[0]
+
 
 class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
+
+
+class SubfolderChoiceParameter(ChoiceParameter):
+    """Select a single subfolder from a folder returned by a locator method."""
+
+    def initialize(self, parser):
+        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
+        self.kwargs = parse_locator_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
+        
+        try:
+            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        
+        try:
+            location = getattr(locator, self.locator_method)(**self.kwargs)
+        except AttributeError as e:
+            raise AttributeError(f'Invalid locator method {self.locator_method} given in config file, '
+                                 f'check value under {self.section.name}.{self.name} in default.config') from e
+        
+        try:
+            subfolders = [folder for folder in os.listdir(location) if os.path.isdir(os.path.join(location, folder))]
+            choices = sorted(subfolders)
+            
+            if self.nullable:
+                # Use empty-string as the on-disk representation of None.
+                # Put it first so it's easy to find in UIs.
+                if '' not in choices:
+                    choices.insert(0, '')
+                else:
+                    choices = [''] + [c for c in choices if c != '']
+            
+            return choices
+        except FileNotFoundError:
+            # Directory doesn't exist yet - return appropriate empty choices based on nullable
+            # (may happen during initial scenario setup)
+            return [''] if self.nullable else []
+        except OSError as e:
+            raise ValueError(f'There was an error reading subfolders for {self.name} from {location}') from e
+
+    def encode(self, value):
+        if value is None or value == '':
+            if self.nullable or not self._choices:
+                # Allow empty string if nullable or if no subfolders exist yet
+                return ''
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return str(value)
+
+    def decode(self, value):
+        # If no subfolders exist yet, allow empty values regardless of nullable
+        if not self._choices:
+            return None if self.nullable else ''
+
+        # If nullable, default empty values to None (instead of silently selecting the first subfolder).
+        if self.nullable and (value is None or str(value) == ''):
+            return None
+
+        if str(value) in self._choices:
+            if self.nullable and str(value) == '':
+                return None
+            return str(value)
+
+        if self.nullable:
+            return None
+
+        # Non-nullable: return first choice if available
+        if self._choices:
+            return self._choices[0]
+        else:
+            return ''
+
+
+class AtomicChangeMultiChoiceParameter(MultiChoiceParameter):
+    """Select multiple atomic changes from a district timeline's atomic_changes.yml file."""
+
+    def initialize(self, parser):
+        # Don't call super().initialize() - we don't need .choices from config file
+        # Choices are dynamically loaded from atomic_changes.yml via _choices property
+        pass
+
+    @property
+    def _choices(self):
+        from cea.datamanagement.district_level_states.atomic_changes import load_atomic_changes
+        
+        # Load atomic changes for this timeline
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        timeline_name = self.config.district_events_apply_changes.existing_timeline_name
+        
+        if not timeline_name:
+            return []
+        
+        try:
+            changes = load_atomic_changes(locator, timeline_name=str(timeline_name))
+            result = sorted(changes.keys())
+            return result
+        except (FileNotFoundError, ValueError):
+            return []
+
+    def encode(self, value):
+        if not value:
+            return ''
+        
+        if isinstance(value, str):
+            # Parse comma-separated string
+            value = [v.strip() for v in value.split(',') if v.strip()]
+        
+        # Validate all choices exist
+        available = self._choices
+        if available:  # Only validate if choices are available
+            invalid = [v for v in value if v not in available]
+            if invalid:
+                raise ValueError(
+                    f"Invalid atomic change names for {self.fqname}: {', '.join(invalid)}. "
+                    f"Available: {', '.join(available)}")
+        
+        return ', '.join(value)
+
+    def decode(self, value):
+        if not value:
+            return []
+        
+        if isinstance(value, str):
+            # Parse comma-separated string
+            return [v.strip() for v in value.split(',') if v.strip()]
+        
+        return list(value)
 
 
 class PlotContextParameter(Parameter):
