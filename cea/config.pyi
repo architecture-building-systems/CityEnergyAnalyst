@@ -1700,6 +1700,9 @@ class PlotsEmissionTimelineSection(Section):
     pv_code: str
     y_metric_unit: str
     y_normalised_by: str
+    y_min: float | None
+    y_max: float | None
+    y_step: float | None
     net_zero_target_year: int
     context: dict[str, Any] | None
 
@@ -1717,6 +1720,12 @@ class PlotsEmissionTimelineSection(Section):
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["y_min"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["y_max"]) -> float | None: ...
+    @overload
+    def __getattr__(self, item: Literal["y_step"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["net_zero_target_year"]) -> int: ...
     @overload
