@@ -267,6 +267,26 @@ class EmissionTimelinePlot:
         if self.bool_accumulated:
             y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
 
+        # Configure y-axis range and step from config
+        yaxis_config = dict(
+            title=y_axis_title,
+            showgrid=True,
+            gridcolor='rgba(200,200,200,0.3)',
+            zeroline=True,
+            zerolinewidth=2,
+            zerolinecolor='black'
+            # Allow negative values to show below x-axis
+        )
+
+        # Apply y-axis min/max if specified in config
+        if hasattr(self.config.plots_emission_timeline, 'y_min') and self.config.plots_emission_timeline.y_min is not None:
+            if hasattr(self.config.plots_emission_timeline, 'y_max') and self.config.plots_emission_timeline.y_max is not None:
+                yaxis_config['range'] = [self.config.plots_emission_timeline.y_min, self.config.plots_emission_timeline.y_max]
+
+        # Apply y-axis step if specified in config
+        if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
+            yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
+
         fig.update_layout(
             title=dict(
                 text=self.plot_title,
@@ -278,15 +298,7 @@ class EmissionTimelinePlot:
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
-            yaxis=dict(
-                title=y_axis_title,
-                showgrid=True,
-                gridcolor='rgba(200,200,200,0.3)',
-                zeroline=True,
-                zerolinewidth=2,
-                zerolinecolor='black'
-                # Allow negative values to show below x-axis
-            ),
+            yaxis=yaxis_config,
             hovermode='x unified',
             plot_bgcolor='white',
             paper_bgcolor='white',
@@ -376,6 +388,26 @@ class EmissionTimelinePlot:
         if 'cumulative' not in plot_title.lower():
             plot_title = plot_title + " (Cumulative)"
 
+        # Configure y-axis range and step from config
+        yaxis_config = dict(
+            title=y_axis_title,
+            showgrid=True,
+            gridcolor='rgba(200,200,200,0.3)',
+            zeroline=True,
+            zerolinewidth=2,
+            zerolinecolor='black'
+            # Allow negative values to show below x-axis for net emissions
+        )
+
+        # Apply y-axis min/max if specified in config
+        if hasattr(self.config.plots_emission_timeline, 'y_min') and self.config.plots_emission_timeline.y_min is not None:
+            if hasattr(self.config.plots_emission_timeline, 'y_max') and self.config.plots_emission_timeline.y_max is not None:
+                yaxis_config['range'] = [self.config.plots_emission_timeline.y_min, self.config.plots_emission_timeline.y_max]
+
+        # Apply y-axis step if specified in config
+        if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
+            yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
+
         fig.update_layout(
             title=dict(
                 text=plot_title,
@@ -387,15 +419,7 @@ class EmissionTimelinePlot:
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
-            yaxis=dict(
-                title=y_axis_title,
-                showgrid=True,
-                gridcolor='rgba(200,200,200,0.3)',
-                zeroline=True,
-                zerolinewidth=2,
-                zerolinecolor='black'
-                # Allow negative values to show below x-axis for net emissions
-            ),
+            yaxis=yaxis_config,
             hovermode='x unified',
             plot_bgcolor='white',
             paper_bgcolor='white',
@@ -530,6 +554,26 @@ class EmissionTimelinePlot:
         if 'cumulative' not in plot_title.lower():
             plot_title = plot_title + " (Cumulative)"
 
+        # Configure y-axis range and step from config
+        yaxis_config = dict(
+            title=y_axis_title,
+            showgrid=True,
+            gridcolor='rgba(200,200,200,0.3)',
+            zeroline=True,
+            zerolinewidth=2,
+            zerolinecolor='black'
+            # Allow negative values to show below x-axis with stackgroup='negative'
+        )
+
+        # Apply y-axis min/max if specified in config
+        if hasattr(self.config.plots_emission_timeline, 'y_min') and self.config.plots_emission_timeline.y_min is not None:
+            if hasattr(self.config.plots_emission_timeline, 'y_max') and self.config.plots_emission_timeline.y_max is not None:
+                yaxis_config['range'] = [self.config.plots_emission_timeline.y_min, self.config.plots_emission_timeline.y_max]
+
+        # Apply y-axis step if specified in config
+        if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
+            yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
+
         fig.update_layout(
             title=dict(
                 text=plot_title,
@@ -541,15 +585,7 @@ class EmissionTimelinePlot:
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
-            yaxis=dict(
-                title=y_axis_title,
-                showgrid=True,
-                gridcolor='rgba(200,200,200,0.3)',
-                zeroline=True,
-                zerolinewidth=2,
-                zerolinecolor='black'
-                # Allow negative values to show below x-axis with stackgroup='negative'
-            ),
+            yaxis=yaxis_config,
             hovermode='x unified',
             plot_bgcolor='white',
             paper_bgcolor='white',
