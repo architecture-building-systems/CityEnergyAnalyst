@@ -700,18 +700,30 @@ def plot_emission_timeline(config, context: dict):
                                                    solar_panel_types_list)
 
     # Validate PV columns exist in loaded data (column-level validation)
+    # Only check if PV is actually being plotted
     pv_code = getattr(plot_config, 'pv_code', None)
     if pv_code:
-        # Check if expected PV columns exist in the data
-        expected_pv_patterns = [f'PV_{pv_code}_', f'_PV_{pv_code}']
-        pv_columns_found = any(
-            any(pattern in col for pattern in expected_pv_patterns)
-            for col in df_to_plotly.columns
+        # Check if PV services or components are selected
+        operation_services = getattr(plot_config, 'operation_services', [])
+        envelope_components = getattr(plot_config, 'envelope_components', [])
+
+        pv_is_selected = (
+            'pv_electricity_offset' in operation_services or
+            'pv_electricity_export' in operation_services or
+            'pv' in envelope_components
         )
 
-        if not pv_columns_found:
-            from cea.visualisation.a_data_loader import raise_missing_pv_error
-            raise_missing_pv_error(pv_code, context='emission')
+        if pv_is_selected:
+            # Check if expected PV columns exist in the data
+            expected_pv_patterns = [f'PV_{pv_code}_', f'_PV_{pv_code}']
+            pv_columns_found = any(
+                any(pattern in col for pattern in expected_pv_patterns)
+                for col in df_to_plotly.columns
+            )
+
+            if not pv_columns_found:
+                from cea.visualisation.a_data_loader import raise_missing_pv_error
+                raise_missing_pv_error(pv_code, context='emission')
 
     # # Add placeholder columns for biogenic and PV if their source columns exist (dummy values)
     # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
