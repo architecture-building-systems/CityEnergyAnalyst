@@ -46,7 +46,7 @@ CEA ignores `supply_systems.csv`.
 ### Step 2: Demand Filtering
 If `consider-only-buildings-with-demand = True`, CEA performs an additional check:
 1.  It reads the total demand results.
-2.  If a building has **zero annual demand** for its assigned district services (e.g., a building connects for DHW but has 0kWh DHW demand), it is **removed** from the network layout.
+2.  If a building has **zero annual demand** for its assigned district services (e.g., a building connects for DHW but has 0 kWh DHW demand), it is **removed** from the network layout.
 
 ### Step 3: Network Service Union
 The network itself is configured to provide the **union** of all services required by the connected buildings. For example, if Building A needs Space Heating and Building B needs DHW, the plant is configured as `PLANT_hs_ww` to provide both.
