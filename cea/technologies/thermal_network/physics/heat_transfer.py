@@ -1,3 +1,4 @@
+from typing import Literal
 import numpy as np
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
 
@@ -6,7 +7,7 @@ from .fluid_properties import calc_kinematic_viscosity, calc_thermal_conductivit
 from cea.technologies.constants import ROUGHNESS
 
 
-def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_type):
+def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_type: Literal['DH', 'DC']):
     """
     Calculate Nusselt number for internal pipe flow using regime-appropriate correlations.
 
@@ -72,6 +73,11 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     [Incropera2007] Section 8.4: Internal flow heat transfer correlations
     [VDI] VDI Heat Atlas, Section G1: Heat transfer in pipe flow
     """
+    # Validate network_type before any computation
+    if network_type not in {'DH', 'DC'}:
+        raise ValueError(
+            f"Unsupported network_type '{network_type}'. Expected 'DH' or 'DC'."
+        )
 
     # calculate variable values necessary for nusselt number evaluation
     reynolds = calc_reynolds(mass_flow_rate_kgs, temperature_K, pipe_diameter_m)
@@ -95,7 +101,7 @@ def calc_nusselt(mass_flow_rate_kgs, temperature_K, pipe_diameter_m, network_typ
     if network_type == 'DH':
         # District heating: warm fluid, ground cooling (n=0.3)
         nusselt_turbulent = 0.023 * reynolds ** 0.8 * prandtl ** 0.3
-    else:
+    elif network_type == 'DC':
         # District cooling: cold fluid, ground heating (n=0.4)
         nusselt_turbulent = 0.023 * reynolds ** 0.8 * prandtl ** 0.4
 
