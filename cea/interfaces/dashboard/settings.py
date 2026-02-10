@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     project_root: Optional[str] = None
 
     local: bool = Field(default=True, description="Run in local mode. Writes to local file")
-    cors_origin: str = "http://localhost:5050"
+    cors_origin: str = Field(default="*", description="CORS origin(s) allowed to access the API. Use '*' for all origins (not recommended for production). For multiple origins, provide a comma-separated list (e.g. 'http://localhost:3000,https://mydomain.com')")
 
     workers: Optional[int] = Field(default=None, description="Number of workers")
 
