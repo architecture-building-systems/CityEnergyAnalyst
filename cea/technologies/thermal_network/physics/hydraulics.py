@@ -165,8 +165,8 @@ def calc_darcy(pipe_diameter_m, reynolds, pipe_roughness_m):
     negligible flow conditions.
     """
     # Ensure pipe_diameter_m is 1-D array for broadcasting
-    pipe_diameter_m = np.asarray(pipe_diameter_m).flatten()
-    reynolds = np.asarray(reynolds)
+    pipe_diameter_m = np.asarray(pipe_diameter_m, dtype=np.float64).flatten()
+    reynolds = np.asarray(reynolds, dtype=np.float64)
 
     # Define conditions for each flow regime
     cond_no_flow = reynolds <= 1
@@ -289,6 +289,7 @@ def calc_reynolds(mass_flow_rate_kgs, temperature__k, pipe_diameter_m):
     """
 
     kinematic_viscosity_m2s = calc_kinematic_viscosity(temperature__k)  # m2/s
+    pipe_diameter_m = np.asarray(pipe_diameter_m, dtype=np.float64)
 
     # Validate inputs before calculation
     if np.any(pipe_diameter_m <= 0):
