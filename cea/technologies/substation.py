@@ -149,7 +149,7 @@ def calc_temp_hex_building_side_heating(building_demand_df, heating_configuratio
         if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
             # LTDH mode: space heating drives network temp, DHW uses booster
             # FALLBACK: When space heating = 0 but DHW > 0, use minimum temp for DHW pre-heating
-            from cea.technologies.thermal_network.substation_matrix import MIN_NETWORK_TEMP_FOR_PREHEATING_C
+            from cea.technologies.thermal_network.detailed.substation import MIN_NETWORK_TEMP_FOR_PREHEATING_C
 
             # Check if we have DHW demand when space heating is zero
             has_space_heating = (Ths_supply > 0.1)  # Space heating temp > 0

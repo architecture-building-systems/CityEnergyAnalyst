@@ -8,11 +8,21 @@ on:
     branches: [master, release-**]
     # Ignore changes in the interfaces directory since they do not have tests
     # TODO: Add tests for interfaces module
-    paths: ['cea/**', 'pyproject.toml', 'pixi.lock', '!cea/interfaces/**']
+    paths: 
+      - 'cea/**'
+      - 'pyproject.toml'
+      - 'pixi.lock'
+      - '!cea/interfaces/**'
+      - '!**/*.md'
 
   push:
     branches: [master]
-    paths: ['cea/**', 'pyproject.toml', 'pixi.lock', '!cea/interfaces/**']
+    paths: 
+      - 'cea/**'
+      - 'pyproject.toml'
+      - 'pixi.lock'
+      - '!cea/interfaces/**'
+      - '!**/*.md'
 
 concurrency:
   # Use head_ref for PRs, fall back to ref for pushes
