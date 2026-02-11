@@ -11,6 +11,7 @@ def calc_kinematic_viscosity(temperature):
 
     This exponential correlation provides a simple fit to experimental data
     from the Engineering Toolbox for liquid water.
+    (https://www.engineeringtoolbox.com/water-dynamic-kinematic-viscosity-d_596.html?vA=273&units=K#)
 
     Parameters
     ----------
