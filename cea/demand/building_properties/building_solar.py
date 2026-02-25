@@ -135,14 +135,14 @@ def get_thermal_resistance_surface(prop_envelope, weather_data):
     '''
     This function defines the surface resistance of external surfaces RSE according to ISO 6946 Eq. (A.1).
     '''
-
-    # define surface thermal resistances according to ISO 6946
+    # calculate convective heat transfer coefficient
     h_c = np.vectorize(calc_hc)(weather_data['windspd_ms'].values)
     # generate an array of 0.5 * (sky_temp(t) + air_temp(t-1))
     theta_ss = 0.5 * (
             weather_data['skytemp_C'].values +
             np.array([weather_data['drybulb_C'].values[0]] +
                      list(weather_data['drybulb_C'].values[0:HOURS_IN_YEAR - 1])))
+    # define surface thermal resistances according to ISO 6946
     thermal_resistance_surface_wall = (h_c + calc_hr(prop_envelope.e_wall, theta_ss)) ** -1
     thermal_resistance_surface_win = (h_c + calc_hr(prop_envelope.e_win, theta_ss)) ** -1
     thermal_resistance_surface_roof = (h_c + calc_hr(prop_envelope.e_roof, theta_ss)) ** -1
