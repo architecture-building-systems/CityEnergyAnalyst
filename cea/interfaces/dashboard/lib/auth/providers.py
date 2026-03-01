@@ -45,7 +45,8 @@ class StackAuth(AuthClient):
     cookie_prefix = "stack"
     access_token_name = f"{cookie_prefix}-access"
     refresh_token_name = f"{cookie_prefix}-refresh-{project_id}"
-    jwks_url = f"https://api.stack-auth.com/api/v1/projects/{project_id}/.well-known/jwks.json"
+    stack_uri = _settings.stack_uri
+    jwks_url = f"{stack_uri}/api/v1/projects/{project_id}/.well-known/jwks.json"
 
     def __init__(self, access_token: str, refresh_token: Optional[str]):
         if self.project_id is None:
@@ -107,7 +108,7 @@ class StackAuth(AuthClient):
         try:
             res = requests.request(
                 method,
-                f'https://api.stack-auth.com{endpoint}',
+                f'{self.stack_uri}{endpoint}',
                 headers={
                     'x-stack-access-type': 'client',
                     'x-stack-project-id': self.project_id,
