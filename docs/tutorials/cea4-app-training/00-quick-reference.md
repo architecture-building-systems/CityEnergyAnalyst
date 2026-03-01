@@ -67,8 +67,8 @@ This page provides a complete overview of all 39 features available in the CEA-4
 
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Supply System Optimisation: Building-Scale** | Optimise decentralised energy supply systems | Find optimal building-level energy system configurations |
-| **Supply System Optimisation: District-Scale** | Optimise centralised energy supply systems | Find optimal district-level energy system configurations |
+| **Supply System Optimisation: Building-Scale** | Optimise decentralised energy supply systems *(CLI only)* | Find optimal building-level energy system configurations |
+| **District Supply System Optimisation** | Optimise centralised energy supply systems | Find optimal district-level energy system configurations |
 
 ---
 
@@ -145,7 +145,7 @@ This page provides a complete overview of all 39 features available in the CEA-4
 2. **Streets Helper** → Fetch street network (may be automatic in wizard)
 3. **Thermal Network Part 1** → Generate network layout
 4. **Thermal Network Part 2** → Size network pipes
-5. **Supply System Optimisation: District-Scale** → Optimise system
+5. **District Supply System Optimisation** → Optimise system
 6. **Emissions** → Calculate lifecycle emissions
 7. **Energy Supply System Costs** → Calculate system costs
 8. **Plot - Pareto Front** → Visualise optimisation results

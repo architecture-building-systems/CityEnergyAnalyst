@@ -63,8 +63,8 @@ Assess environmental impacts and costs of building energy systems.
 
 ### 7. [Energy Supply System Optimisation](07-supply-optimisation.md)
 Optimise energy supply systems for buildings and districts.
-- Building-Scale Supply System Optimisation
-- District-Scale Supply System Optimisation
+- Building-Scale Supply System Optimisation *(CLI only)*
+- District Supply System Optimisation
 
 ### 8. [Data Management](08-data-management.md)
 Prepare and validate input data for CEA analysis.

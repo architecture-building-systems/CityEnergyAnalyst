@@ -6,6 +6,8 @@ Supply system optimisation features use multi-objective optimisation algorithms 
 
 ## Supply System Optimisation: Building-Scale
 
+⚠️ **Note**: This feature is only available via **Command Line Interface (CLI)**. It is not accessible through the CEA-4 App dashboard.
+
 ### Overview
 Optimises decentralised energy supply systems for individual buildings. The feature explores combinations of conversion technologies (boilers, heat pumps, chillers, etc.) and renewable energy sources (PV, solar thermal, geothermal) to find cost-effective and low-carbon solutions for each building independently.
 
@@ -60,24 +62,28 @@ Optimises decentralised energy supply systems for individual buildings. The feat
 
 ### How to Use
 
+**Note**: This feature must be run from the command line. See [CLI Documentation](https://city-energy-analyst.readthedocs.io/) for detailed parameter configuration.
+
 1. **Complete prerequisites**:
    - ✅ Energy Demand Part 2
    - ✅ (Optional) Renewable energy assessments
 
-2. **Configure optimisation**:
-   - Navigate to **Energy Supply System Optimisation**
-   - Select **Supply System Optimisation: Building-Scale**
-   - Enable desired technology options
-   - Set population size and generations
+2. **Run via CLI**:
+   ```bash
+   cea decentralized-building-main --scenario /path/to/scenario
+   ```
+
+3. **Configure parameters** (optional):
+   - Edit `cea.config` file in your scenario folder
+   - Or pass parameters via command line flags
+   - Key parameters: population size, generations, technology options
    - Enable multiprocessing (strongly recommended)
 
-3. **Run optimisation**:
-   - Click **Run**
-   - **Processing time**: 30 minutes to 4 hours depending on:
-     - Number of buildings
-     - Population size × generations
-     - Technology options enabled
-     - CPU cores available
+4. **Processing time**: 30 minutes to 4 hours depending on:
+   - Number of buildings
+   - Population size × generations
+   - Technology options enabled
+   - CPU cores available
 
 ### Output Files
 
@@ -223,7 +229,7 @@ District optimisation must account for:
 
 2. **Configure optimisation**:
    - Navigate to **Energy Supply System Optimisation**
-   - Select **Supply System Optimisation: District-Scale**
+   - Select **District Supply System Optimisation**
    - Enable desired system options (DH, DC, CHP, storage, etc.)
    - Set population and generation parameters
    - Configure multiprocessing
