@@ -696,10 +696,10 @@ class Network(object):
                         cls._domain_locator.get_optimization_substations_results_file(building_name, "DH", "0"))
                     cls._domain_buildings_flow_rate_m3pers[building_name] = \
                         substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-                    cls._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_K"]
+                    cls._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_C"] + 273.15
                     cls._domain_buildings_return_temp_K[building_name] = \
-                        np.where(substation_results["T_return_DH_result_K"] > 273.15,
-                                 substation_results["T_return_DH_result_K"], np.nan)
+                        np.where(substation_results["T_return_DH_result_C"] > 0,
+                                 substation_results["T_return_DH_result_C"] + 273.15, np.nan)
 
             if network_type == "DC":
                 buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')

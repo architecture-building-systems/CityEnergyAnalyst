@@ -42,7 +42,7 @@ def register_scripts():
             print_execution_time(t0, status=ScriptStatus.INTERRUPTED)
             raise
 
-    def script_wrapper(cea_script):
+    def script_wrapper(cea_script: "cea.scripts.CeaScript"):
         # defines script_runner using closures so that it's tied to a specific cea script.
         module_path = cea_script.module
         script_module = importlib.import_module(module_path)

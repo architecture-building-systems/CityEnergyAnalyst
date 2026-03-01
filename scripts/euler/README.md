@@ -60,7 +60,7 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
 ## Running the scripts
 
 There are two ways to run the scripts. The first way is with the python modules as shown for the Windows case. On
-Euler, the scripts in the `euler` folder of the `CityEnergyAnalyst` repository contains a set of handy bash scripts that
+Euler, the scripts in the `scripts/euler` folder of the `CityEnergyAnalyst` repository contains a set of handy bash scripts that
 simplify running the scripts.
 
 ### On Windows
@@ -208,12 +208,12 @@ The next step is to run the analysis on the results. This is done in a single pr
 
 To create the samples, you need to set up the parameters of the analysis first. These are used by the three scripts 
 `create-samples.sh`, `run-demand.sh` and `analyze-simulations.sh` bash scripts found in the euler folder 
-(`$HOME/CityEnergyAnalyst/euler`):
+(`$HOME/CityEnergyAnalyst/scripts/euler/`):
 
 ```
 [darthoma@euler05 ~]$ export N=10
 [darthoma@euler05 ~]$ export METHOD=morris
-[darthoma@euler05 ~]$ sh CityEnergyAnalyst/euler/create-samples.sh
+[darthoma@euler05 ~]$ sh CityEnergyAnalyst/scripts/euler/create-samples.sh
 created 12 samples in /cluster/scratch/darthoma/samples_morris_1
 ```
 
@@ -225,7 +225,7 @@ When choosing your variables to analyze and the number of samples to be created,
 #### Run the simulations
 
 ```
-[darthoma@euler05 ~]$ sh CityEnergyAnalyst/euler/run-demand.sh
+[darthoma@euler05 ~]$ sh CityEnergyAnalyst/scripts/euler/run-demand.sh
 Generic job.
 Job <31205729> is submitted to queue <normal.4h>.
 ```
@@ -245,7 +245,7 @@ bpeek 31300468 | grep elapsed | wc
 Assuming you still have the same variables exported as you had when you ran the samples script:
 
 ```
-[darthoma@euler05 ~]$ sh euler/analyze-simulations.sh
+[darthoma@euler05 ~]$ sh CityEnergyAnalyst/scripts/euler/analyze-simulations.sh
 ```
 
 This will produce the file `analysis.xls` in the samples folder. Use `scp` to copy that back to your windows machine:

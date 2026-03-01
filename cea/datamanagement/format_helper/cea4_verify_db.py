@@ -713,7 +713,8 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
         if list_missing_names_assemblies:
             if verbose:
                 for key, values in dict_missing_assemblies.items():
-                    print('! Ensure .csv file(s) are present in COMPONENTS>{ASSEMBLIES} folder: {missing_name_assemblies}, with assembly(ies) defined: {assemblies}.'.format(ASSEMBLIES=ASSEMBLIES, missing_name_assemblies=key, assemblies=', '.join(map(str, values))))
+                    values_list = values if isinstance(values, list) else [values]
+                    print('! Ensure .csv file(s) are present in COMPONENTS>{ASSEMBLIES} folder: {missing_name_assemblies}, with assembly(ies) defined: {assemblies}.'.format(ASSEMBLIES=ASSEMBLIES, missing_name_assemblies=key, assemblies=', '.join(map(str, values_list))))
 
     #4. verify columns and values in .csv files for assemblies
     for COMPONENTS in COMPONENTS_FOLDERS:
@@ -734,7 +735,8 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_names_conversion)
             if verbose:
                 for key, values in dict_missing_conversion.items():
-                    print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {missing_name_conversion}, with component(s) defined: {components}.'.format(missing_name_conversion=key, components=', '.join(map(str, values))))
+                    values_list = values if isinstance(values, list) else [values]
+                    print('! Ensure .csv file(s) are present in COMPONENTS>CONVERSION folder: {missing_name_conversion}, with component(s) defined: {components}.'.format(missing_name_conversion=key, components=', '.join(map(str, values_list))))
         for sheet in list_conversion_db:
             list_missing_columns_csv_conversion, list_issues_against_csv_conversion = verify_file_against_schema_4_db(scenario, 'CONVERSION', sheet_name=sheet)
             add_values_to_dict(dict_missing_db, 'CONVERSION', list_missing_columns_csv_conversion)
@@ -776,8 +778,9 @@ def cea4_verify_db(scenario, verbose=False) -> Dict[str, List[str]]:
             list_missing_names_feedstocks = list(dict_missing_feedstocks.keys())
             add_values_to_dict(dict_missing_db, 'FEEDSTOCKS', list_missing_names_feedstocks)
             if verbose:
-                for key, _ in dict_missing_feedstocks.items():
-                    print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS>FEEDSTOCKS_LIBRARY folder: {list_missing_feedstocks}.'.format(list_missing_feedstocks=', '.join(map(str, [key]))))
+                for key, values in dict_missing_feedstocks.items():
+                    values_list = values if isinstance(values, list) else [values]
+                    print('! Ensure .csv file(s) are present in COMPONENTS>FEEDSTOCKS>FEEDSTOCKS_LIBRARY folder: {list_missing_feedstocks}, with feedstock(s) defined: {feedstocks}.'.format(list_missing_feedstocks=key, feedstocks=', '.join(map(str, values_list))))
         if 'ENERGY_CARRIERS' not in list_missing_files_csv_feedstocks_components:
             list_missing_energy_carriers, update_column = find_missing_values_directory_column(path_to_db_file_4(scenario, 'FEEDSTOCKS_LIBRARY'), path_to_db_file_4(scenario, 'FEEDSTOCKS', 'ENERGY_CARRIERS'), 'feedstock_file', column_name_2_3='cost_and_ghg_tab')
             if list_missing_energy_carriers:

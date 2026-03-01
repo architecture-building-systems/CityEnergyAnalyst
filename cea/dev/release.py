@@ -57,10 +57,18 @@ def update_changelog() -> None:
     except subprocess.CalledProcessError:
         raise Exception("Current CEA directory is not a git repository.")
 
-    changelog_script_path = os.path.join(os.path.dirname(__file__), "..", "..", "bin", "create-changelog.py")
-    result = subprocess.run(["python", changelog_script_path], check=True, capture_output=True,
-                            cwd=os.path.dirname(__file__))
-    changelog = result.stdout.decode()
+    from cea.dev import create_changelog
+    import io
+    import sys
+
+    # Capture stdout from create_changelog.main()
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        create_changelog.main()
+        changelog = sys.stdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
 
     with open(changelog_path, "w") as f:
         f.write(changelog)

@@ -82,9 +82,14 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
 
     # run substation model to derive temperatures of the building
     substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", ""))
-    q_load_Wh = np.vectorize(calc_new_load)(substation_results["mdot_DH_result_kgpers"],
-                                            substation_results["T_supply_DH_result_K"],
-                                            substation_results["T_return_DH_result_K"])
+    # Substation outputs are in Celsius; convert to Kelvin for thermal calculations
+    T_supply_DH_result_K = substation_results["T_supply_DH_result_C"] + 273.15
+    T_return_DH_result_K = substation_results["T_return_DH_result_C"] + 273.15
+    q_load_Wh = np.vectorize(calc_new_load)(
+        substation_results["mdot_DH_result_kgpers"],
+        T_supply_DH_result_K,
+        T_return_DH_result_K
+    )
     Qnom_W = q_load_Wh.max()
     # Create empty matrices
     Opex_a_var_USD = np.zeros((13, 7))
@@ -104,8 +109,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # save supply system activation of all supply configurations
     heating_dispatch = {}
     # Supply with the Boiler / FC / GHP
-    Tret_K = substation_results["T_return_DH_result_K"].values
-    Tsup_K = substation_results["T_supply_DH_result_K"].values
+    Tret_K = (substation_results["T_return_DH_result_C"].values + 273.15)
+    Tsup_K = (substation_results["T_supply_DH_result_C"].values + 273.15)
     mdot_kgpers = substation_results["mdot_DH_result_kgpers"].values
     ## Start Hourly calculation
     Tret_K = np.where(Tret_K > 0.0, Tret_K, Tsup_K)

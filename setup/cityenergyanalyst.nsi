@@ -4,6 +4,7 @@ Unicode true
 !define VER $%CEA_VERSION%
 !define CEA_GUI_NAME "CEA-4 Desktop"  # references productName from GUI package.json. ensure it is the same
 !define CEA_GUI_INSTALL_FOLDER "app"
+!define VC_REDIST_URL "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
 # Request the highest possible execution level for the current user
 !define MULTIUSER_EXECUTIONLEVEL Highest
@@ -22,6 +23,38 @@ Unicode true
 !include "MUI2.nsh"
 
 Var LauncherExtension
+
+; Macro to run a command and abort on failure
+!macro RunCommand CommandStr DescriptionStr ErrorMsg
+    nsExec::ExecToLog 'cmd /c "${CommandStr} 2>&1"'
+    Pop $0  # capture exit code
+    DetailPrint '${DescriptionStr} returned $0'
+    ${If} "$0" != "0"
+        ${If} "$0" == "-1073741515"
+            DetailPrint "Install using ${VC_REDIST_URL} and retry."
+            Abort "Missing Visual C++ Redistributable (error 0xC0000135)."
+        ${Else}
+            Abort "${ErrorMsg}"
+        ${EndIf}
+    ${EndIf}
+!macroend
+
+; Macro to uninstall CEA Desktop, with forced removal as fallback
+!macro UninstallCEADesktop
+    ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe"
+            DetailPrint "Uninstalling ${CEA_GUI_NAME}"
+            nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
+            Pop $0
+            DetailPrint "Uninstaller returned: $0"
+            Sleep 1000
+        ${EndIf}
+        ; Force remove folder if uninstaller failed or did not exist
+        ${If} ${FileExists} "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+            RMDir /r /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
+        ${EndIf}
+    ${EndIf}
+!macroend
 
 Name "${CEA_TITLE} ${VER}"
 OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
@@ -94,7 +127,8 @@ Function .onInstFailed
         Delete /REBOOTOK "$INSTDIR\gui_setup.exe"
     ${EndIf}
 
-
+    # remove partially installed CEA Desktop
+    !insertmacro UninstallCEADesktop
 FunctionEnd
 
 Function BaseInstallationSection
@@ -106,6 +140,15 @@ Function BaseInstallationSection
     ${Else}
         StrCpy $LauncherExtension "bat"  # Fallback to batch
     ${EndIf}
+
+    # check if micromamba works first before proceeding
+    DetailPrint "Checking requirements"
+    CreateDirectory "$INSTDIR\dependencies"
+    SetOutPath "$INSTDIR\dependencies"
+    File "dependencies\micromamba.exe"
+    SetOutPath "$INSTDIR"
+    # create hook for cmd shell
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"' "Setup micromamba" "Error setting up micromamba"
 
     # Install GUI first so that rollback would not be as painful in case of failure
     # install the CEA Desktop to $CEA_GUI_INSTALL_FOLDER
@@ -124,6 +167,7 @@ Function BaseInstallationSection
     Delete "$INSTDIR\gui_setup.exe"
 
     File "${WHEEL_FILE}"
+    # Note: overwrites micromamba.exe extracted earlier for requirements check
     File /r "dependencies"
 
     SetOutPath "$INSTDIR\dependencies"
@@ -131,19 +175,12 @@ Function BaseInstallationSection
     Delete "$INSTDIR\dependencies\cea-env.7z"
     SetOutPath "$INSTDIR"
 
-    # create hook for cmd shell
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" shell hook -s cmd.exe "$INSTDIR\dependencies\micromamba"'
     # fix pip due to change in python path
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall'
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea python -m pip install --upgrade pip --force-reinstall' "Checking pip" "Could not setup pip - see Details"
 
     # install CEA from wheel
     DetailPrint "pip installing CityEnergyAnalyst==${VER}"
-    nsExec::ExecToLog '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"'
-    Pop $0 # make sure cea was installed
-    DetailPrint 'pip install cityenergyanalyst==${VER} returned $0'
-    ${If} "$0" != "0"
-        Abort "Could not install CityEnergyAnalyst ${VER} - see Details"
-    ${EndIf}
+    !insertmacro RunCommand '"$INSTDIR\dependencies\micromamba.exe" run -r "$INSTDIR\dependencies\micromamba" -n cea pip install "$INSTDIR\${WHEEL_FILE}"' "Installing CityEnergyAnalyst" "Could not install CityEnergyAnalyst ${VER} - see Details"
     Delete "$INSTDIR\${WHEEL_FILE}"
     
     # Run cea --version to check if installation was successful
@@ -220,20 +257,13 @@ Function un.UninstallSection
     Delete /REBOOTOK "$DESKTOP\CEA Console.lnk"
     Delete /REBOOTOK "$DESKTOP\CEA Desktop.lnk"
 
-    ; Uninstall CEA Desktop silently
-    DetailPrint 'Uninstalling ${CEA_GUI_NAME}'
-    nsExec::ExecToLog '"$INSTDIR\${CEA_GUI_INSTALL_FOLDER}\Uninstall ${CEA_GUI_NAME}.exe" /S'
-    Pop $0
-    DetailPrint "Uninstaller returned: $0"
-    
-    ; Optional: Add a small delay to ensure all processes are terminated
-    Sleep 1000
+    ; Uninstall CEA Desktop
+    !insertmacro UninstallCEADesktop
 
     ; Delete files in install directory
     Delete /REBOOTOK "$INSTDIR\CEA Console.lnk"
     Delete /REBOOTOK "$INSTDIR\CEA Desktop.lnk"
     Delete /REBOOTOK "$INSTDIR\cea-icon.ico"
-    RMDir /R /REBOOTOK "$INSTDIR\${CEA_GUI_INSTALL_FOLDER}"
     RMDir /R /REBOOTOK "$INSTDIR\dependencies"
 
     Delete /REBOOTOK "$INSTDIR\Uninstall_CityEnergyAnalyst_${VER}.exe"

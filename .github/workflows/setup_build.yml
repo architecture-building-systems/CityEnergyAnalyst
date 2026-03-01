@@ -190,7 +190,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.P12_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.GUI_GH_TOKEN }}
         run: |
-          cd gui
-          yarn
+          cd $GITHUB_WORKSPACE/gui
+          yarn install
           yarn version $CEA_VERSION
           yarn electron:release --arm64 --x64
