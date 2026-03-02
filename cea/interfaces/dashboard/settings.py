@@ -2,7 +2,7 @@ from functools import lru_cache
 import os
 from typing import Optional
 
-from pydantic import model_validator, Field
+from pydantic import field_validator, model_validator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from cea.interfaces.dashboard.constants import ENV_VAR_PREFIX
@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     # Local only settings
     config_path: Optional[str] = "~/cea.config"
 
+    @field_validator('cors_origin', mode='before')
+    @classmethod
+    def normalise_cors_origin(cls, v):
+        return v.strip() if isinstance(v, str) else v
+
     @model_validator(mode='after')
     def validate_cors_origin(self):
         """
@@ -57,8 +62,7 @@ class Settings(BaseSettings):
         - Validating URL format for specific origins
         - Supporting comma-separated multiple origins
         """
-        cors = self.cors_origin.strip()
-        if cors == "*":
+        if self.cors_origin == "*":
             if not self.local:
                 raise ValueError(
                     f"Wildcard CORS origin ('*') is not allowed in non-local mode. "
@@ -73,7 +77,7 @@ class Settings(BaseSettings):
 
         # Validate each origin in comma-separated list
         import re
-        origins = [o.strip() for o in cors.split(",")]
+        origins = [o.strip() for o in self.cors_origin.split(",")]
         pattern = r'^https?://[a-zA-Z0-9\-.]+(:[0-9]+)?$'
 
         for origin in origins:
