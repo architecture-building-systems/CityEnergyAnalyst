@@ -73,7 +73,7 @@ class Settings(BaseSettings):
         # Validate each origin in comma-separated list
         import re
         origins = [o.strip() for o in self.cors_origin.split(",")]
-        pattern = r'^https?://[a-zA-Z0-9\-\.:]+(:[0-9]+)?$'
+        pattern = r'^https?://[a-zA-Z0-9\-.]+(:[0-9]+)?$'
 
         for origin in origins:
             if not re.match(pattern, origin):
