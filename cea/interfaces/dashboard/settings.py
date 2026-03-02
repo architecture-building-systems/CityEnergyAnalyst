@@ -57,7 +57,8 @@ class Settings(BaseSettings):
         - Validating URL format for specific origins
         - Supporting comma-separated multiple origins
         """
-        if self.cors_origin == "*":
+        cors = self.cors_origin.strip()
+        if cors == "*":
             if not self.local:
                 raise ValueError(
                     f"Wildcard CORS origin ('*') is not allowed in non-local mode. "
@@ -72,7 +73,7 @@ class Settings(BaseSettings):
 
         # Validate each origin in comma-separated list
         import re
-        origins = [o.strip() for o in self.cors_origin.split(",")]
+        origins = [o.strip() for o in cors.split(",")]
         pattern = r'^https?://[a-zA-Z0-9\-.]+(:[0-9]+)?$'
 
         for origin in origins:
