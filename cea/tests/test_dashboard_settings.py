@@ -21,7 +21,8 @@ class TestWildcardOrigin:
 
     def test_wildcard_with_whitespace_treated_as_wildcard_local(self):
         # " * " should normalise to "*" and pass in local mode
-        make_settings(local=True, cors_origin=" * ")
+        s = make_settings(local=True, cors_origin=" * ")
+        assert s.cors_origin == "*"
 
     def test_wildcard_rejected_in_non_local_mode(self):
         with pytest.raises(ValidationError, match="not allowed in non-local mode"):
