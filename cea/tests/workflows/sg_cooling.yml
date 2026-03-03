@@ -50,17 +50,8 @@
 - script: thermal-network
   parameters:
     network-model: simplified
-- script: decentralized
 - script: optimization-new
   parameters:
     network-type: DC
     ga-number-of-generations: 2
     ga-population-size: 5
-#- script: multi-criteria-analysis
-#  parameters:
-#    generation: 2
-#- script: run-all-plots
-#  parameters:
-##    plant-node: NODE41
-#    network-type: DC
-#    network-name: ""

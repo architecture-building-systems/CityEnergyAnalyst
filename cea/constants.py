@@ -97,6 +97,37 @@ AT_MIN_K = 2
 CT_MAX_SIZE_W = 10000000
 """Maximum cooling tower size in W."""
 
+# Temperature difference tolerances for numerical stability
+MIN_TEMP_DIFF_FOR_MASS_FLOW_K = 0.001
+"""Minimum temperature difference for mass flow calculation in K or °C.
+
+Physical basis: At 1 millikelvin or below, water flow becomes negligible and pump energy ≈ 0.
+Used to avoid division by near-zero in heat transfer and mass flow calculations.
+Used in: electrical_loads.py (pump auxiliary energy), substation.py (heat exchanger calculations).
+Note: Temperature differences in K and °C are equivalent (ΔT_K = ΔT_°C).
+"""
+
+MIN_TEMP_DIFF_FOR_HEX_LMTD_K = 0.001
+"""Minimum temperature difference for LMTD calculation in K.
+
+Used in: substation.py calc_dTm_HEX() to avoid log(1) = 0 when dT1 ≈ dT2.
+"""
+
+MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K = 1.0
+"""Minimum temperature difference for heat pump/chiller operation in K.
+
+Physical basis: Below 1 K difference, thermodynamic cycle becomes impractical (COP → ∞ or COP → 0).
+Used in: chiller_vapor_compression.py, heatpumps.py - validates T_cond vs T_evap.
+Typical operating range: 5-40 K for heat pumps, 20-40 K for chillers.
+"""
+
+THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K = 1.0
+"""Convergence criterion for thermal network temperature iterations in K.
+
+Used in: thermal_network.py - iterative solver for network supply temperatures.
+Network is considered converged when max node temperature difference < this value.
+"""
+
 # Rabtherm technology parameters
 VEL_FLOW_MPERS = 3
 """Flow velocity in m/s (from Rabtherm technology)."""

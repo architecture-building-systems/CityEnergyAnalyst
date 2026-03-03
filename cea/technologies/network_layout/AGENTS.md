@@ -3,6 +3,121 @@
 ## Purpose
 Build thermal network connectivity graphs by connecting buildings to street networks while preserving curved geometries and maintaining coordinate precision.
 
+## Connected Buildings Configuration
+
+### Separate Parameters for Heating and Cooling
+
+**Network Part 1** (this script) uses separate parameters for district heating and cooling services:
+- `heating-connected-buildings`: Buildings to connect to district heating network
+- `cooling-connected-buildings`: Buildings to connect to district cooling network
+
+**Key Concept**: User-provided networks represent a **universal pipe trench** (physical infrastructure corridor) that can contain both heating and cooling pipes.
+
+### Workflow: Universal Layout → Service-Specific Nodes
+
+**Step 1: Create Universal Layout (Pipe Trench)**
+- Covers **union** of heating + cooling buildings
+- Represents physical infrastructure corridor
+- Output: `thermal-network/{network_name}/layout.shp`
+
+**Step 2: Generate Service-Specific Nodes (Part 1)**
+- Extract heating buildings → `thermal-network/{network_name}/dh/layout/nodes.shp`
+- Extract cooling buildings → `thermal-network/{network_name}/dc/layout/nodes.shp`
+- Nodes files store which buildings connect to which service
+
+**Step 3: Generate Service-Specific Edges (Part 2)**
+- Part 2 script reads universal layout + service-specific nodes
+- Generates `dc/layout/edges.shp` and `dh/layout/edges.shp`
+
+### Example Usage
+
+```python
+# Different buildings for heating vs cooling
+heating-connected-buildings: B1001, B1002, B1003
+cooling-connected-buildings: B1003, B1004, B1005
+
+# Result:
+# - Universal layout.shp covers: B1001, B1002, B1003, B1004, B1005 (union of 5 buildings)
+# - dh/layout/nodes.shp contains: B1001, B1002, B1003 (3 heating nodes)
+# - dc/layout/nodes.shp contains: B1003, B1004, B1005 (3 cooling nodes)
+# - Part 2 generates separate edges for each service
+```
+
+### Parameter Behavior
+
+**When blank (empty list):**
+- `heating-connected-buildings = ` → All buildings with heating demand
+- `cooling-connected-buildings = ` → All buildings with cooling demand
+
+**When explicitly set:**
+- Only specified buildings are connected to that service
+- Universal layout still covers the union of both lists
+
+**With `consider-only-buildings-with-demand = true`:**
+- Filters each service's buildings by demand type
+- DC buildings filtered by cooling demand
+- DH buildings filtered by heating demand
+- Universal layout covers filtered union
+
+### Loading Existing Networks
+
+**When using `existing-network` parameter**, CEA loads service-specific nodes and applies network-layout-mode separately for each service:
+
+**Files Loaded:**
+- Universal layout: `thermal-network/{existing_network}/layout.shp`
+- DC nodes: `thermal-network/{existing_network}/dc/layout/nodes.shp`
+- DH nodes: `thermal-network/{existing_network}/dh/layout/nodes.shp`
+
+**Network-Layout-Mode Applied Per Service:**
+
+| Mode | Behavior with Existing Network |
+|------|-------------------------------|
+| **validate** | Error if existing DC nodes ≠ cooling-connected-buildings OR existing DH nodes ≠ heating-connected-buildings |
+| **augment** | DC: Union(existing DC nodes, cooling-connected-buildings)<br>DH: Union(existing DH nodes, heating-connected-buildings) |
+| **filter** | DC: Use cooling-connected-buildings exactly<br>DH: Use heating-connected-buildings exactly |
+
+**Example - Augment Mode:**
+```
+Existing network "my-network":
+  - dc/layout/nodes.shp: B1003, B1004, B1005
+  - dh/layout/nodes.shp: B1001, B1002, B1003
+
+Parameters:
+  existing-network: my-network
+  cooling-connected-buildings: B1003, B1004, B1005, B1006  # Add B1006
+  heating-connected-buildings: B1001, B1002, B1003, B1004  # Add B1004
+  network-layout-mode: augment
+
+Result:
+  - DC augmented: B1003, B1004, B1005, B1006 (added B1006)
+  - DH augmented: B1001, B1002, B1003, B1004 (added B1004)
+  - Universal layout augmented with Steiner tree for new buildings
+  - New network saved with updated service-specific nodes
+```
+
+**Example - Validate Mode:**
+```
+Existing network "my-network":
+  - dc/layout/nodes.shp: B1003, B1004, B1005
+  - dh/layout/nodes.shp: B1001, B1002, B1003
+
+Parameters:
+  existing-network: my-network
+  cooling-connected-buildings: B1003, B1004, B1005  # Matches ✓
+  heating-connected-buildings: B1001, B1002, B1003, B1004  # Missing B1004 ✗
+  network-layout-mode: validate
+
+Result:
+  ❌ ERROR - DH validation failed
+  Missing in existing network: B1004
+  Resolution: Use augment/filter mode or update parameter
+```
+
+**Edge Cases:**
+- **Blank parameter + existing nodes**: Keep existing service buildings
+- **Blank parameter + no existing nodes**: Empty list (warning issued)
+- **Parameter set + no existing nodes**: Use parameter buildings (new service added)
+
 ## User-Defined Network Layout Modes
 
 ### Overview

@@ -98,13 +98,13 @@ class TestCalcThermalLoads(unittest.TestCase):
             expected_qcs_sys_kwh = buildings[b][1]
             expected_qww_sys_kwh = buildings[b][2]
             self.assertAlmostEqual(expected_qhs_sys_kwh, qhs_sys_kwh,
-                                   msg="qhs_sys_kwh for %(b)s should be: %(qhs_sys_kwh).5f, was %(expected_qhs_sys_kwh).5f" % locals(),
+                                   msg=f"qhs_sys_kwh for {b}: got {qhs_sys_kwh:.5f}, expected {expected_qhs_sys_kwh:.5f}",
                                    places=3)
             self.assertAlmostEqual(expected_qcs_sys_kwh, qcs_sys_kwh,
-                                   msg="qcs_sys_kwh for %(b)s should be: %(qcs_sys_kwh).5f, was %(expected_qcs_sys_kwh).5f" % locals(),
+                                   msg=f"qcs_sys_kwh for {b}: got {qcs_sys_kwh:.5f}, expected {expected_qcs_sys_kwh:.5f}",
                                    places=3)
             self.assertAlmostEqual(expected_qww_sys_kwh, qww_sys_kwh,
-                                   msg="qww_sys_kwh for %(b)s should be: %(qww_sys_kwh).5f, was %(expected_qww_sys_kwh).5f" % locals(),
+                                   msg=f"qww_sys_kwh for {b}: got {qww_sys_kwh:.5f}, expected {expected_qww_sys_kwh:.5f}",
                                    places=3)
 
 
