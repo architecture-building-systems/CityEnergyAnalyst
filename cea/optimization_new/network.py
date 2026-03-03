@@ -41,7 +41,7 @@ from cea.technologies.network_layout.graph_utils import (
     normalize_geometry,
     normalize_gdf_geometries
 )
-from cea.technologies.thermal_network.simplified_thermal_network import calculate_ground_temperature, \
+from cea.technologies.thermal_network.simplified.model import calculate_ground_temperature, \
     calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
