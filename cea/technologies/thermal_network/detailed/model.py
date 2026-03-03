@@ -3683,104 +3683,6 @@ def check_heating_cooling_demand(locator, config):
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
 
 
-def generate_network_connectivity_json(locator, network_name, network_type):
-    """
-    Generate network connectivity data for DH or DC network.
-
-    :param locator: InputLocator instance
-    :param network_name: Network layout name (e.g., 'xxx')
-    :param network_type: 'DH' or 'DC'
-    :return: Dictionary with connectivity information
-    """
-    import json
-
-    # Read metadata_nodes.csv to get plant and building connections
-    metadata_file = os.path.join(
-        locator.get_output_thermal_network_type_folder(network_type, network_name),
-        f'{network_type}_{network_name}_metadata_nodes.csv'
-    )
-
-    if not os.path.exists(metadata_file):
-        return None
-
-    metadata_df = pd.read_csv(metadata_file)
-
-    # Extract buildings (CONSUMER nodes)
-    consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
-    buildings_connected = consumer_nodes['building'].tolist()
-
-    # Extract plants (PLANT nodes)
-    plant_nodes = metadata_df[metadata_df['type'].str.startswith('PLANT', na=False)]
-    plants = []
-    for _, plant_row in plant_nodes.iterrows():
-        plants.append({
-            'name': plant_row['name'],
-            'type': plant_row['type'],
-            'coordinates': plant_row['coordinates'] if pd.notna(plant_row['coordinates']) else None
-        })
-
-    return {
-        'buildings_connected': sorted(buildings_connected),
-        'plants': plants
-    }
-
-
-def save_network_connectivity_file(locator, network_name):
-    """
-    Save network_connectivity.json file for a network layout.
-    Combines DH and DC connectivity information into a single file.
-
-    :param locator: InputLocator instance
-    :param network_name: Network layout name
-    """
-    import json
-    from datetime import datetime
-
-    connectivity_data = {
-        'network_name': network_name,
-        'timestamp': datetime.now().isoformat(),
-        'DH': {
-            'buildings_connected': [],
-            'plants': []
-        },
-        'DC': {
-            'buildings_connected': [],
-            'plants': []
-        }
-    }
-
-    # Check for DH network
-    dh_folder = locator.get_output_thermal_network_type_folder('DH', network_name)
-    if os.path.exists(dh_folder):
-        dh_connectivity = generate_network_connectivity_json(locator, network_name, 'DH')
-        if dh_connectivity:
-            connectivity_data['DH'] = dh_connectivity
-
-    # Check for DC network
-    dc_folder = locator.get_output_thermal_network_type_folder('DC', network_name)
-    if os.path.exists(dc_folder):
-        dc_connectivity = generate_network_connectivity_json(locator, network_name, 'DC')
-        if dc_connectivity:
-            connectivity_data['DC'] = dc_connectivity
-
-    # Save to network folder root using InputLocator method
-    output_file = locator.get_network_connectivity_file(network_name)
-
-    with open(output_file, 'w') as f:
-        json.dump(connectivity_data, f, indent=2)
-
-    print(f"\nGenerated network connectivity file: {output_file}")
-
-    # Print summary
-    total_dh_buildings = len(connectivity_data['DH']['buildings_connected'])
-    total_dc_buildings = len(connectivity_data['DC']['buildings_connected'])
-    total_dh_plants = len(connectivity_data['DH']['plants'])
-    total_dc_plants = len(connectivity_data['DC']['plants'])
-
-    print(f"  DH: {total_dh_buildings} buildings connected, {total_dh_plants} plant(s)")
-    print(f"  DC: {total_dc_buildings} buildings connected, {total_dc_plants} plant(s)")
-
-
 def main(config: cea.config.Configuration):
     """
     Run thermal network Part 2: Flow & Sizing
@@ -3953,13 +3855,6 @@ def main(config: cea.config.Configuration):
             import traceback
             traceback.print_exc()
             errors[network_type] = e
-
-    # Generate network connectivity JSON file if at least one network succeeded
-    if succeeded and not errors:
-        try:
-            save_network_connectivity_file(locator, network_name)
-        except Exception as e:
-            print(f"Warning: Failed to generate network connectivity JSON: {e}")
 
     if errors:
         print(f"\n{'='*60}")

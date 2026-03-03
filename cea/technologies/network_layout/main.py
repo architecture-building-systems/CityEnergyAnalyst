@@ -1322,8 +1322,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Get all zone buildings for validation
     all_zone_buildings = locator.get_zone_building_names()
 
-    # Initialize per-building services dict (will be populated in supply.csv mode)
+    # Initialize per-building services dict (will be populated in supply.csv mode or what-if mode)
     per_building_services_dh = {}
+    per_building_services_dc = {}
 
     # Determine which buildings should be in the network
     if overwrite_supply:
@@ -1336,6 +1337,15 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             all_zone_buildings=all_zone_buildings,
             include_services=list_include_services
         )
+
+        # In what-if mode, populate per_building_services with default assumptions:
+        # - DH buildings: both space_heating and domestic_hot_water
+        # - DC buildings: space_cooling only
+        for building in list_heating_buildings:
+            per_building_services_dh[building] = {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER}
+
+        for building in list_cooling_buildings:
+            per_building_services_dc[building] = {PlantServices.SPACE_COOLING}
 
         # Check demand separately for DC and DH
         buildings_without_demand_dc = []
@@ -1365,8 +1375,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        # NEW: Per-building service configuration (for DH only - DC doesn't differentiate services)
+        # NEW: Per-building service configuration (for both DH and DC)
         per_building_services_dh = {}
+        per_building_services_dc = {}
 
         # Warn if connected-buildings parameters have values that will be ignored
         if heating_connected_buildings_config or cooling_connected_buildings_config:
@@ -1379,8 +1390,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # Get per-building services from supply.csv for DH (needed for itemised services validation)
                 buildings_to_validate, per_building_services_dh = get_buildings_and_services_from_supply_csv(locator, network_type=service)
             else:
-                # DC: Get buildings from supply.csv (per-service differentiation not needed for DC)
-                buildings_to_validate, _ = get_buildings_and_services_from_supply_csv(locator, network_type=service)
+                # DC: Get per-building services from supply.csv
+                buildings_to_validate, per_building_services_dc = get_buildings_and_services_from_supply_csv(locator, network_type=service)
 
             buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
             buildings_without_demand = set(buildings_to_validate) - buildings_with_demand
@@ -1704,7 +1715,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         nodes_for_type.to_file(output_nodes_path, driver='ESRI Shapefile')
         print(f"  {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
 
-        # Store metadata for unified network_connectivity.json (both DH and DC)
+        # Store metadata for unified connectivity.json (both DH and DC)
         import json
 
         # Get plant type from nodes
@@ -1716,14 +1727,20 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         connected_building_names = building_nodes['building'].unique().tolist()
 
         # Store metadata for this network type (will be used for unified JSON)
+        # Select appropriate per_building_services dict based on network type
+        if type_network == 'DH':
+            per_building_services_dict = per_building_services_dh
+        else:  # DC
+            per_building_services_dict = per_building_services_dc
+
         network_metadata[type_network] = {
             'plant_type': plant_type,
             'connected_buildings': connected_building_names,
             'network_services': itemised_dh_services if type_network == 'DH' else [],
-            'per_building_services': {} if not per_building_services_dh or type_network != 'DH' else {
+            'per_building_services': {
                 building: list(services)
-                for building, services in per_building_services_dh.items()
-            }
+                for building, services in per_building_services_dict.items()
+            } if per_building_services_dict else {}
         }
 
         # Clean up temp files for this network
@@ -1753,8 +1770,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
         print(f"\n  Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
-    # Generate unified network_connectivity.json at network_name level
-    if network_metadata and not overwrite_supply:
+    # Generate unified connectivity.json at network_name level
+    if network_metadata:
         connectivity_json_path = locator.get_network_connectivity_file(network_layout.network_name)
 
         # Build unified connectivity structure
@@ -1778,7 +1795,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         if 'DC' in network_metadata:
             unified_connectivity['networks']['DC'] = {
                 'plant_type': network_metadata['DC']['plant_type'],
-                'connected_buildings': network_metadata['DC']['connected_buildings']
+                'connected_buildings': network_metadata['DC']['connected_buildings'],
+                'per_building_services': network_metadata['DC']['per_building_services']
             }
 
         # Save unified JSON
@@ -1786,7 +1804,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         with open(connectivity_json_path, 'w') as f:
             json.dump(unified_connectivity, f, indent=2)
 
-        print(f"\n  Saved network_connectivity.json with connectivity info for {', '.join(sorted(network_metadata.keys()))} networks")
+        print(f"\n  Saved connectivity.json with connectivity info for {', '.join(sorted(network_metadata.keys()))} networks")
 
     # Summary
     if networks_generated:
