@@ -99,10 +99,10 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name == 'scenario':
             continue
-
+        
         default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
         # Don't set parameters that are not nullable and have an empty default value
-        if default_value == "" and (not hasattr(parameter, "nullable") or not parameter.nullable):
+        if default_value == "" and not parameter.nullable:
             logger.debug(f"Skipping {parameter.name} since it has no default value")
             continue
 
