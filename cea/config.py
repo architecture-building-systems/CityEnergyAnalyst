@@ -412,14 +412,14 @@ class Parameter:
             self.nullable = False
 
     @property
-    def default(self):
+    def default(self) -> Any:
         return self.decode(self.config.default_config.get(self.section.name, self.name))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Parameter {self.section.name}:{self.name}={self.get()}>"
 
     @property
-    def py_name(self):
+    def py_name(self) -> str:
         return self.name.replace('-', '_')
 
     def encode(self, value) -> str:
@@ -439,12 +439,12 @@ class Parameter:
         except ValueError as ex:
             raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
-    def get_raw(self):
+    def get_raw(self) -> str:
         """Return the value from the config file, but without replacing references and also
         without decoding."""
         return self.config.user_config.get(self.section.name, self.name)
 
-    def replace_references(self, encoded_value):
+    def replace_references(self, encoded_value: str) -> str:
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
             return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get_raw()
@@ -452,7 +452,7 @@ class Parameter:
         encoded_value = re.sub(r"{([a-z\d-]+):([a-z\d-]+)}", lookup_config, encoded_value)
         return encoded_value
 
-    def set(self, value, force=False):
+    def set(self, value: Any, force=False):
         if force:
             encoded_value = "" if value is None else str(value)
         else:
