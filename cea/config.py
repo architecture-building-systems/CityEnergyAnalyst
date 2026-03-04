@@ -1128,28 +1128,6 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
     Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
     Inherits network discovery logic from NetworkLayoutChoiceParameter.
     """
-
-    @property
-    def default(self):
-        _default = self.config.default_config.get(self.section.name, self.name)
-        if _default == '':
-            return []
-        return self.decode(_default)
-
-    def get(self) -> list[str]:
-        """Return the value from the config file as a list"""
-        encoded_value = self.get_raw()
-        encoded_value = self.replace_references(encoded_value)
-
-        try:
-            return self.decode(encoded_value)
-        except ValueError as ex:
-            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
-
-    def set(self, value):
-        encoded_value = self.encode(value)
-        self.config.user_config.set(self.section.name, self.name, encoded_value)
-
     def encode(self, value: list[str] | str):
         """
         Validate and encode a list of network layout names.
@@ -1341,20 +1319,6 @@ class MultiChoiceParameter(ChoiceParameter):
         if _default == '':
             return []
         return self.decode(_default)
-
-    def get(self) -> list[str]:
-        """Return the value from the config file"""
-        encoded_value = self.get_raw()
-        encoded_value = self.replace_references(encoded_value)
-
-        try:
-            return self.decode(encoded_value)
-        except ValueError as ex:
-            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
-
-    def set(self, value):
-        encoded_value = self.encode(value)
-        self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value: list):
         if not isinstance(value, list):
