@@ -103,10 +103,9 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
             continue
 
         default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
-        # Force set parameters that are not nullable and have an empty default value
+        # Set empty string for non-nullable parameters with empty default values, bypassing validation
         if not default_value and default_value is not False and default_value != 0 and not parameter.nullable:
-            logger.debug("Force setting parameter", parameter.name, "to default value:", default_value)
-            parameter.set(default_value, force=True)
+            parameter.set_empty()
             continue
 
         is_valid, error_message = validate_parameter(parameter, default_value)

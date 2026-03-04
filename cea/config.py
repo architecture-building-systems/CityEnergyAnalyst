@@ -452,12 +452,16 @@ class Parameter:
         encoded_value = re.sub(r"{([a-z\d-]+):([a-z\d-]+)}", lookup_config, encoded_value)
         return encoded_value
 
-    def set(self, value: Any, force=False):
-        if force:
-            encoded_value = "" if value is None else str(value)
-        else:
-            encoded_value = self.encode(value)
+    def set(self, value: Any):
+        encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
+
+    def set_empty(self):
+        """
+        Set parameter to an empty value (an empty string) in the config, bypassing encode() validation.
+        It ignores whether the parameter is nullable or not.
+        """
+        self.config.user_config.set(self.section.name, self.name, "")
 
 
 class PathParameter(Parameter):
