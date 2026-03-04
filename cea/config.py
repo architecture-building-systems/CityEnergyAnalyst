@@ -374,7 +374,13 @@ class Section:
                     f"Bad parameter type in default.config: {section.name}/{name}={parameter_type}"
                 )
 
-            return globals()[parameter_type](name, section, config)
+            parameter = globals()[parameter_type](name, section, config)
+
+            # Call initialize() if the parameter class defines it
+            if hasattr(parameter, 'initialize') and callable(getattr(parameter, 'initialize')):
+                parameter.initialize(config.default_config)
+
+            return parameter
 
         return {parameter_name.lower(): construct_parameter(parameter_name.lower(), self, self.config)
                 for parameter_name in self.config.default_config.options(self.name)
@@ -1531,6 +1537,9 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
 
     def initialize(self, parser):
         """Get the supply category and scale from the parameter definition"""
+        # Declare dependency so frontend refreshes choices when scenario changes
+        self.depends_on = ['general:scenario']
+
         try:
             self.supply_category = parser.get(self.section.name, f"{self.name}.supply-category")
         except Exception:
@@ -1548,6 +1557,9 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
         """Get supply assembly codes filtered by category and scale"""
         try:
             import pandas as pd
+            import logging
+            logger = logging.getLogger(__name__)
+
             locator = cea.inputlocator.InputLocator(self.config.scenario)
 
             # Map category to locator method
@@ -1558,11 +1570,13 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
             }
 
             if self.supply_category not in category_to_method:
+                logger.warning(f"DistrictSupplyTypeParameter({self.name}): Invalid supply_category '{self.supply_category}'")
                 return []
 
             filepath = category_to_method[self.supply_category]()
 
             if not os.path.exists(filepath):
+                logger.warning(f"DistrictSupplyTypeParameter({self.name}): File not found: {filepath}")
                 return []
 
             df = pd.read_csv(filepath)
@@ -1570,10 +1584,17 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
             # Filter by scale
             if 'scale' in df.columns and 'code' in df.columns:
                 filtered = df[df['scale'] == self.scale]
-                return sorted(filtered['code'].tolist())
+                choices = sorted(filtered['code'].tolist())
+                logger.debug(f"DistrictSupplyTypeParameter({self.name}): Found {len(choices)} choices for category={self.supply_category}, scale={self.scale}")
+                return choices
+            else:
+                logger.warning(f"DistrictSupplyTypeParameter({self.name}): Missing 'scale' or 'code' columns in {filepath}")
+                return []
 
-            return []
-        except Exception:
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"DistrictSupplyTypeParameter({self.name}): Error getting choices: {e}", exc_info=True)
             return []
 
     @property
