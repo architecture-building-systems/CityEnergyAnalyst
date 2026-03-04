@@ -95,11 +95,13 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     # Ensure that parameters that depend on scenario files will be parsed correctly
     default_config.scenario = config.scenario
 
+    field_errors = {}
+
     # Set the parameters to their default values
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name == 'scenario':
             continue
-        
+
         default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
         # Force set parameters that are not nullable and have an empty default value
         if not default_value and default_value is not False and default_value != 0 and not parameter.nullable:
@@ -107,8 +109,21 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
             parameter.set(default_value, force=True)
             continue
 
-        parameter.set(default_value)
-    
+        is_valid, error_message = validate_parameter(parameter, default_value)
+        if not is_valid:
+            field_errors[parameter.name] = error_message
+        else:
+            parameter.set(default_value)
+
+    if field_errors:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                'message': 'Validation failed',
+                'field_errors': field_errors
+            }
+        )
+
     if isinstance(config, CEADatabaseConfig):
         await config.save()
     else:
@@ -257,11 +272,26 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
 
 @router.post('/{tool_name}/check')
 async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+    field_errors = {}
+
     # Set config parameters
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name in payload:
             value = payload[parameter.name]
-            parameter.set(value)
+            is_valid, error_message = validate_parameter(parameter, value)
+            if not is_valid:
+                field_errors[parameter.name] = error_message
+            else:
+                parameter.set(value)
+
+    if field_errors:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                'message': 'Validation failed',
+                'field_errors': field_errors
+            }
+        )
 
     # TODO: Add plugin support
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
