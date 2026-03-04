@@ -1161,13 +1161,13 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
 
         return ', '.join(map(str, value))
 
-    def decode(self, value) -> list[str]:
+    def decode(self, value) -> list[str] | None:
         """
         Decode comma-separated network names into a list.
-        Returns empty list if value is empty.
+        Returns None if value is empty.
         """
-        if value == '' or not value:
-            return []
+        if value == '':
+            return None
 
         # Parse comma-separated values (function imported at top of file)
         choices = parse_string_to_list(value)
