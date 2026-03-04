@@ -982,12 +982,20 @@ class ChoiceParameter(Parameter):
         return self._choices_cache
 
     def encode(self, value):
+        # Allow empty/None values if parameter is nullable
+        if self.nullable and (value is None or str(value).strip() == ''):
+            return ''
+
         if str(value) not in self._choices:
             raise ValueError(
                 f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
         return str(value)
 
     def decode(self, value):
+        # Allow empty values if parameter is nullable
+        if self.nullable and (value is None or str(value).strip() == ''):
+            return None
+
         if str(value) in self._choices:
             return str(value)
         else:
@@ -1552,6 +1560,11 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
         except Exception:
             raise ValueError(f"Parameter {self.name} must have 'scale' attribute (BUILDING or DISTRICT)")
 
+        # Log initialization for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"DistrictSupplyTypeParameter({self.name}) initialized: category={self.supply_category}, scale={self.scale}, nullable={self.nullable}")
+
     @property
     def _choices(self):
         """Get supply assembly codes filtered by category and scale"""
@@ -1607,13 +1620,15 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
 
     def encode(self, value):
         """Allow None/empty values for nullable parameter"""
-        if value is None or value == '':
+        # Handle None, empty strings, and string representations of null
+        if self.nullable and (value is None or str(value).strip() in ['', 'null', 'None', 'Nothing Selected']):
             return ''
         return super().encode(value)
 
     def decode(self, value):
         """Allow empty values for nullable parameter, return None for empty"""
-        if value == '':
+        # Handle empty strings and string representations of null
+        if value is None or str(value).strip() in ['', 'null', 'None', 'Nothing Selected']:
             return None
         if str(value) in self._choices:
             return str(value)
