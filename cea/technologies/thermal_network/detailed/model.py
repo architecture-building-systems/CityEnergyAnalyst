@@ -894,11 +894,12 @@ def thermal_network_main(locator, thermal_network, processes=1):
         # Get network temperature (CT mode) or None (VT mode)
         fixed_network_temp_C = thermal_network.get_plant_supply_temperature() if thermal_network.network_temperature_dh >= 0 else None
 
-        # Prepare per-building services (all buildings use same services from plant type)
-        per_building_services = None
-        if thermal_network.itemised_dh_services is not None:
+        # Use per-building services from connectivity.json if available (overwrite-supply-settings=False)
+        # Fall back to uniform plant-type assignment if not available (legacy or what-if mode)
+        per_building_services = thermal_network.per_building_services
+        if per_building_services is None and thermal_network.itemised_dh_services is not None:
             per_building_services = {
-                building: thermal_network.itemised_dh_services
+                building: set(thermal_network.itemised_dh_services)
                 for building in thermal_network.building_names
             }
 

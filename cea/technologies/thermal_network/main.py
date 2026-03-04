@@ -114,22 +114,25 @@ def main(config: cea.config.Configuration):
             if network_model == 'simplified':
                 from cea.technologies.thermal_network.simplified.model import thermal_network_simplified
 
-                # Read per-building service configuration from network layout metadata
-                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-                metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+                # Read per-building service configuration from connectivity.json
+                connectivity_json_path = locator.get_network_connectivity_file(network_name)
                 per_building_services = None
 
-                if os.path.exists(metadata_path):
-                    with open(metadata_path, 'r') as f:
-                        metadata = json.load(f)
+                if os.path.exists(connectivity_json_path):
+                    with open(connectivity_json_path, 'r') as f:
+                        connectivity_data = json.load(f)
 
-                    # Convert lists back to sets
-                    per_building_services = {
-                        building: set(services)
-                        for building, services in metadata['per_building_services'].items()
-                    }
+                    # Extract per-building services for this network type
+                    if network_type in connectivity_data.get('networks', {}):
+                        network_data = connectivity_data['networks'][network_type]
+                        per_building_services_dict = network_data.get('per_building_services', {})
 
-                    print("  Per-building service configuration loaded from metadata")
+                        if per_building_services_dict:
+                            per_building_services = {
+                                building: set(services)
+                                for building, services in per_building_services_dict.items()
+                            }
+                            print("  Per-building service configuration loaded from connectivity.json")
 
                 thermal_network_simplified(locator, config, network_type, network_name,
                                           per_building_services=per_building_services)
