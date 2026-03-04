@@ -84,19 +84,15 @@ def main(config: cea.config.Configuration):
 
     print(f"Processing {len(buildings)} buildings")
 
-    # Step 3.5: Early validation - check supply.csv matches network connectivity (production mode only)
+    # Step 3.5: Validate supply.csv matches network connectivity (production mode only)
     if not config.final_energy.overwrite_supply_settings:
-        print("\nValidating supply configuration against network connectivity...")
-        from cea.analysis.final_energy.calculation import validate_supply_network_consistency
+        print("\nChecking supply system configuration...")
+        from cea.analysis.final_energy.supply_validation import validate_supply_consistency
         try:
-            validate_supply_network_consistency(
-                buildings=buildings,
-                network_name=config.final_energy.network_name,
-                locator=locator
-            )
-            print("  ✓ Supply configuration matches network connectivity")
+            validate_supply_consistency(locator, config)
+            print("  Supply system configuration is consistent.")
         except ValueError as e:
-            print(f"\n❌ Validation failed:\n{e}")
+            print(f"\n{e}")
             raise
 
     # Step 4: Calculate final energy for each building
@@ -104,7 +100,6 @@ def main(config: cea.config.Configuration):
     building_dfs = {}
     building_configs = {}
 
-    # Validation will be done after all buildings are processed
     for building in buildings:
         try:
             from cea.analysis.final_energy.calculation import (

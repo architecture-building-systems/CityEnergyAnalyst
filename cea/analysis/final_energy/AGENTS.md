@@ -13,6 +13,14 @@
 - `aggregate_buildings_summary(building_dfs, plant_dfs, locator) → DataFrame` - Create annual summary
 - `create_final_energy_breakdown(building_dfs, plant_dfs, building_configs, locator, config) → DataFrame` - Create detailed breakdown
 
+**Supply Validation API** (`supply_validation.py`):
+- `validate_supply_consistency(locator, config) → None` - Main entry point (called by main.py)
+- `validate_standalone_mode(locator) → None` - No network: all buildings must be BUILDING scale
+- `validate_network_mode(locator, network_name) → None` - Network selected: supply.csv must match connectivity.json
+- `validate_dh_consistency(dh_network, supply_df, scale_mapping) → None` - DH-specific checks + Option 1 rule
+- `validate_dc_consistency(dc_network, supply_df, scale_mapping) → None` - DC-specific checks
+- `validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name) → None` - DISTRICT scale in supply.csv must be in network
+
 ## Key Patterns
 
 ### ✅ DO: What-If Mode Assembly Selection (Override Logic)
