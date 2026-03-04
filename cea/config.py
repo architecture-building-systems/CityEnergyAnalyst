@@ -452,8 +452,11 @@ class Parameter:
         encoded_value = re.sub(r"{([a-z\d-]+):([a-z\d-]+)}", lookup_config, encoded_value)
         return encoded_value
 
-    def set(self, value):
-        encoded_value = self.encode(value)
+    def set(self, value, force=False):
+        if force:
+            encoded_value = "" if value is None else str(value)
+        else:
+            encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
 
 
