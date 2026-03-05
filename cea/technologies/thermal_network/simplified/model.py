@@ -530,29 +530,34 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
 
-    # Extract service configuration from plant node type (DH only)
+    # Determine DH service configuration from dh-temperature-mode config parameter
     itemised_dh_services = None
-    is_legacy = False
     if network_type == "DH":
-        from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
+        from cea.technologies.network_layout.plant_node_operations import (
+            PlantServices, get_dh_services_from_plant_type
+        )
 
-        # Find plant nodes
+        # Check for legacy plant node suffix and warn if found
         plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not plant_nodes.empty:
             plant_type = plant_nodes.iloc[0]['type']
-            services, is_legacy = get_dh_services_from_plant_type(plant_type)
+            _, is_legacy = get_dh_services_from_plant_type(plant_type)
+            # is_legacy=False means a service suffix was found (e.g. PLANT_hs_ww, PLANT_ww_hs)
+            if not is_legacy:
+                print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
+                print("    This suffix is no longer used to control network temperature.")
+                print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
+                print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
 
-            if is_legacy:
-                print("  ℹ Using legacy temperature control:")
-                print("    - Services: space heating + domestic hot water")
-                print("    - Supply temperature: max(space heating temp, DHW temp)")
-                print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
-                # Pass None for legacy mode to trigger default behavior
-                itemised_dh_services = None
-            else:
-                itemised_dh_services = services
-                service_names = ' → '.join(itemised_dh_services)
-                print(f"  ℹ DH service configuration: {service_names}")
+        # Always use dh-temperature-mode config to determine service order
+        dh_temperature_mode = config.thermal_network.dh_temperature_mode
+        if dh_temperature_mode == 'high-temperature':
+            itemised_dh_services = [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING]
+            print("  DH temperature mode: high-temperature (DHW priority, ~60-80 degrees C)")
+        else:
+            # Default: low-temperature (space heating priority)
+            itemised_dh_services = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+            print("  DH temperature mode: low-temperature (space heating priority, ~35-55 degrees C)")
 
     # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
     # calculate substations for all buildings
@@ -598,8 +603,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"Solutions:\n"
                         f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
                         f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
-                        f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
-                        f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
+                        f"  3. If DHW is priority, set dh-temperature-mode = high-temperature (needs 50-80°C)\n"
+                        f"  4. If space heating is priority, set dh-temperature-mode = low-temperature (needs 35-55°C)\n"
                         f"{'='*60}\n"
                     )
             else:

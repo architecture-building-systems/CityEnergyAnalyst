@@ -997,6 +997,7 @@ class ThermalNetworkSection(Section):
     """Typed section for thermal-network configuration"""
     network_name: list[str]
     network_type: list[str]
+    dh_temperature_mode: str
     network_temperature_dh: float
     network_temperature_dc: float
     network_model: str
@@ -1020,6 +1021,8 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["network_name"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["network_type"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["dh_temperature_mode"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["network_temperature_dh"]) -> float: ...
     @overload
@@ -1445,11 +1448,11 @@ class NetworkLayoutSection(Section):
     overwrite_supply_settings: bool
     network_name: str
     include_services: list[str]
-    itemised_dh_services: list[str]
     cooling_connected_buildings: list[str]
     heating_connected_buildings: list[str]
     cooling_plant_building: Any
     heating_plant_building: Any
+    itemised_dh_services: list[str]
     number_of_components: int | None
     existing_network: str | None
     edges_shp_path: str | None
@@ -1469,8 +1472,6 @@ class NetworkLayoutSection(Section):
     @overload
     def __getattr__(self, item: Literal["include_services"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["itemised_dh_services"]) -> list[str]: ...
-    @overload
     def __getattr__(self, item: Literal["cooling_connected_buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["heating_connected_buildings"]) -> list[str]: ...
@@ -1478,6 +1479,8 @@ class NetworkLayoutSection(Section):
     def __getattr__(self, item: Literal["cooling_plant_building"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["heating_plant_building"]) -> Any: ...
+    @overload
+    def __getattr__(self, item: Literal["itemised_dh_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["number_of_components"]) -> int | None: ...
     @overload

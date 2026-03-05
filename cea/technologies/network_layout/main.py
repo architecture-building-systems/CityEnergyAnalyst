@@ -828,13 +828,7 @@ def validate_itemised_dh_services_against_building_properties(itemised_dh_servic
 
     # Services match exactly - generate success message with priority info
     services_display = [service_names.get(s, s) for s in itemised_dh_services]
-
-    if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
-        temp_info = "low-temperature network (e.g., 35-55°C)"
-    else:
-        temp_info = "high-temperature network (60°C+)"
-
-    success_msg = f"Network service priority: {' → '.join(services_display)} ({temp_info})"
+    success_msg = f"Network service configuration: {' + '.join(services_display)}"
 
     return ('ok', success_msg, buildings_by_service)
 

@@ -90,6 +90,7 @@ class ThermalNetwork(object):
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
         self.network_temperature_dh = -1  # -1 for VT mode, positive value for CT mode
         self.network_temperature_dc = -1  # -1 for VT mode, positive value for CT mode
+        self.dh_temperature_mode = 'low-temperature'  # VT mode strategy: 'low-temperature' or 'high-temperature'
         # Deprecated parameters (kept for backward compatibility)
         self.temperature_control = "VT"  # DEPRECATED: use network_temperature_dh/dc instead
         self.plant_supply_temperature = 80  # DEPRECATED: use network_temperature_dh/dc instead
@@ -143,6 +144,7 @@ class ThermalNetwork(object):
                                           "minimum_edge_mass_flow", "diameter_iteration_limit",
                                           "substation_cooling_systems", "substation_heating_systems",
                                           "network_temperature_dh", "network_temperature_dc",
+                                          "dh_temperature_mode",
                                           "temperature_control", "plant_supply_temperature", "equivalent_length_factor"]
         for field in thermal_network_section_fields:
             if hasattr(thermal_network_section, field):
@@ -438,28 +440,32 @@ class ThermalNetwork(object):
         all_nodes_df = node_df[['type', 'building', 'coordinates']]
         all_nodes_df.to_csv(self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
 
-        # Extract service configuration from plant node type (DH only)
+        # Determine DH service configuration from dh-temperature-mode config parameter
         self.itemised_dh_services = None
         if self.network_type == 'DH':
-            from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
+            from cea.technologies.network_layout.plant_node_operations import (
+                PlantServices, get_dh_services_from_plant_type
+            )
 
-            # Find plant nodes
+            # Check for legacy plant node suffix and warn if found
             plant_nodes = all_nodes_df[all_nodes_df['type'].str.contains('PLANT', na=False)]
             if not plant_nodes.empty:
                 plant_type = plant_nodes.iloc[0]['type']
-                services, is_legacy = get_dh_services_from_plant_type(plant_type)
+                _, is_legacy = get_dh_services_from_plant_type(plant_type)
+                # is_legacy=False means a service suffix was found (e.g. PLANT_hs_ww, PLANT_ww_hs)
+                if not is_legacy:
+                    print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
+                    print("    This suffix is no longer used to control network temperature.")
+                    print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
+                    print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
 
-                if is_legacy:
-                    print("  ℹ Using legacy temperature control:")
-                    print("    - Services: space heating + domestic hot water")
-                    print("    - Supply temperature: max(space heating temp, DHW temp)")
-                    print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
-                    # Pass None for legacy mode to trigger default behavior
-                    self.itemised_dh_services = None
-                else:
-                    self.itemised_dh_services = services
-                    service_names = ' → '.join(self.itemised_dh_services)
-                    print(f"  ℹ DH service configuration: {service_names}")
+            # Always use dh-temperature-mode config to determine service order
+            if self.dh_temperature_mode == 'high-temperature':
+                self.itemised_dh_services = [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING]
+                print("  DH temperature mode: high-temperature (DHW priority, ~60-80 degrees C)")
+            else:
+                self.itemised_dh_services = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+                print("  DH temperature mode: low-temperature (space heating priority, ~35-55 degrees C)")
 
         # extract the list of buildings in the current network
         building_names = all_nodes_df.building[all_nodes_df.type == 'CONSUMER'].reset_index(drop=True)

@@ -153,6 +153,8 @@ def main(config: cea.config.Configuration):
                                    'use_representative_week_per_month', 'minimum_mass_flow_iteration_limit',
                                    'minimum_edge_mass_flow', 'diameter_iteration_limit',
                                    'substation_cooling_systems', 'substation_heating_systems',
+                                   'network_temperature_dh', 'network_temperature_dc',
+                                   'dh_temperature_mode',
                                    'temperature_control', 'plant_supply_temperature', 'equivalent_length_factor']:
                             if hasattr(base_config, attr):
                                 setattr(self, attr, getattr(base_config, attr))
