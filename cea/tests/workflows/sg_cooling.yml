@@ -44,6 +44,11 @@
     consider-only-buildings-with-demand: off
 - script: thermal-network
   parameters:
+    network-name: baseline
+    network-model: detailed
+    stop-t: 744 # run for one month
+- script: thermal-network
+  parameters:
     network-model: simplified
 - script: optimization-new
   parameters:
