@@ -412,14 +412,14 @@ class Parameter:
             self.nullable = False
 
     @property
-    def default(self):
+    def default(self) -> Any:
         return self.decode(self.config.default_config.get(self.section.name, self.name))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Parameter {self.section.name}:{self.name}={self.get()}>"
 
     @property
-    def py_name(self):
+    def py_name(self) -> str:
         return self.name.replace('-', '_')
 
     def encode(self, value) -> str:
@@ -439,12 +439,12 @@ class Parameter:
         except ValueError as ex:
             raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
-    def get_raw(self):
+    def get_raw(self) -> str:
         """Return the value from the config file, but without replacing references and also
         without decoding."""
         return self.config.user_config.get(self.section.name, self.name)
 
-    def replace_references(self, encoded_value):
+    def replace_references(self, encoded_value: str) -> str:
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
             return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get_raw()
@@ -452,9 +452,16 @@ class Parameter:
         encoded_value = re.sub(r"{([a-z\d-]+):([a-z\d-]+)}", lookup_config, encoded_value)
         return encoded_value
 
-    def set(self, value):
+    def set(self, value: Any):
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
+
+    def set_empty(self):
+        """
+        Set parameter to an empty value (an empty string) in the config, bypassing encode() validation.
+        It ignores whether the parameter is nullable or not.
+        """
+        self.config.user_config.set(self.section.name, self.name, "")
 
 
 class PathParameter(Parameter):
@@ -835,7 +842,9 @@ class NetworkLayoutNameParameter(StringParameter):
         Validate and encode network name.
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
-        if not str(value) or str(value).strip() == '':
+        if not value or str(value).strip() == '':
+            if self.nullable:
+                return ''
             raise ValueError("Network name is required. Please provide a valid name.")
 
         return self._validate_network_name(str(value))
@@ -1126,28 +1135,6 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
     Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
     Inherits network discovery logic from NetworkLayoutChoiceParameter.
     """
-
-    @property
-    def default(self):
-        _default = self.config.default_config.get(self.section.name, self.name)
-        if _default == '':
-            return []
-        return self.decode(_default)
-
-    def get(self) -> list[str]:
-        """Return the value from the config file as a list"""
-        encoded_value = self.get_raw()
-        encoded_value = self.replace_references(encoded_value)
-
-        try:
-            return self.decode(encoded_value)
-        except ValueError as ex:
-            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
-
-    def set(self, value):
-        encoded_value = self.encode(value)
-        self.config.user_config.set(self.section.name, self.name, encoded_value)
-
     def encode(self, value: list[str] | str):
         """
         Validate and encode a list of network layout names.
@@ -1181,9 +1168,9 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
     def decode(self, value) -> list[str]:
         """
         Decode comma-separated network names into a list.
-        Returns empty list if value is empty.
+        Returns an empty list if value is empty.
         """
-        if value == '' or not value:
+        if value == '':
             return []
 
         # Parse comma-separated values (function imported at top of file)
@@ -1339,20 +1326,6 @@ class MultiChoiceParameter(ChoiceParameter):
         if _default == '':
             return []
         return self.decode(_default)
-
-    def get(self) -> list[str]:
-        """Return the value from the config file"""
-        encoded_value = self.get_raw()
-        encoded_value = self.replace_references(encoded_value)
-
-        try:
-            return self.decode(encoded_value)
-        except ValueError as ex:
-            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
-
-    def set(self, value):
-        encoded_value = self.encode(value)
-        self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value: list):
         if not isinstance(value, list):
