@@ -34,7 +34,7 @@ from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
 from cea.resources import geothermal
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.simplified.model import add_date_to_dataframe
+from cea.technologies.thermal_network.common.date_utils import add_date_to_dataframe
 from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
 from cea.utilities import epwreader
@@ -90,6 +90,7 @@ class ThermalNetwork(object):
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
         self.network_temperature_dh = -1  # -1 for VT mode, positive value for CT mode
         self.network_temperature_dc = -1  # -1 for VT mode, positive value for CT mode
+        self.dh_temperature_mode = 'low-temperature'  # VT mode strategy: 'low-temperature' or 'high-temperature'
         # Deprecated parameters (kept for backward compatibility)
         self.temperature_control = "VT"  # DEPRECATED: use network_temperature_dh/dc instead
         self.plant_supply_temperature = 80  # DEPRECATED: use network_temperature_dh/dc instead
@@ -143,6 +144,7 @@ class ThermalNetwork(object):
                                           "minimum_edge_mass_flow", "diameter_iteration_limit",
                                           "substation_cooling_systems", "substation_heating_systems",
                                           "network_temperature_dh", "network_temperature_dc",
+                                          "dh_temperature_mode",
                                           "temperature_control", "plant_supply_temperature", "equivalent_length_factor"]
         for field in thermal_network_section_fields:
             if hasattr(thermal_network_section, field):
@@ -377,29 +379,51 @@ class ThermalNetwork(object):
             self.locator, self.network_type, self.network_name
         )
 
-        # Get nodes path for metadata file location
-        nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
-
-        # NEW: Read per-building service configuration metadata (if available)
+        # NEW: Read per-building service configuration metadata from unified network_connectivity.json
         import json
-        metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+        connectivity_json_path = self.locator.get_network_connectivity_file(self.network_name)
         per_building_services = None
 
-        if os.path.exists(metadata_path):
-            with open(metadata_path, 'r') as f:
-                metadata = json.load(f)
+        if os.path.exists(connectivity_json_path):
+            # Read from unified network_connectivity.json
+            with open(connectivity_json_path, 'r') as f:
+                connectivity_data = json.load(f)
 
-            # Convert lists back to sets
-            per_building_services = {
-                building: set(services)
-                for building, services in metadata['per_building_services'].items()
-            }
+            # Extract per-building services for this network type (DH only has this info)
+            if self.network_type in connectivity_data.get('networks', {}):
+                network_data = connectivity_data['networks'][self.network_type]
+                per_building_services_dict = network_data.get('per_building_services', {})
 
-            print("  ℹ Loaded per-building service configuration from layout metadata")
-            print(f"    - Network services: {', '.join(metadata['network_services'])}")
+                if per_building_services_dict:
+                    # Convert lists back to sets
+                    per_building_services = {
+                        building: set(services)
+                        for building, services in per_building_services_dict.items()
+                    }
+                    print("  ℹ Loaded per-building service configuration from network_connectivity.json")
+                    if 'network_services' in network_data:
+                        print(f"    - Network services: {', '.join(network_data['network_services'])}")
         else:
-            # Legacy mode: no metadata file
-            print("  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
+            # Fallback: Try legacy building_services.json location
+            nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
+            legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+            if os.path.exists(legacy_metadata_path):
+                with open(legacy_metadata_path, 'r') as f:
+                    metadata = json.load(f)
+
+                # Convert lists back to sets
+                per_building_services = {
+                    building: set(services)
+                    for building, services in metadata['per_building_services'].items()
+                }
+
+                print("  ℹ Loaded per-building service configuration from legacy building_services.json")
+                print(f"    - Network services: {', '.join(metadata['network_services'])}")
+
+        if per_building_services is None:
+            # No metadata file found (legacy layout or overwrite-supply-settings=true)
+            print("  ℹ No network_connectivity.json found (legacy layout or overwrite-supply-settings=true)")
             print("    - Assuming all buildings use all services")
 
         # Store for passing to simulation functions
@@ -416,28 +440,32 @@ class ThermalNetwork(object):
         all_nodes_df = node_df[['type', 'building', 'coordinates']]
         all_nodes_df.to_csv(self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
 
-        # Extract service configuration from plant node type (DH only)
+        # Determine DH service configuration from dh-temperature-mode config parameter
         self.itemised_dh_services = None
         if self.network_type == 'DH':
-            from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
+            from cea.technologies.network_layout.plant_node_operations import (
+                PlantServices, get_dh_services_from_plant_type
+            )
 
-            # Find plant nodes
+            # Check for legacy plant node suffix and warn if found
             plant_nodes = all_nodes_df[all_nodes_df['type'].str.contains('PLANT', na=False)]
             if not plant_nodes.empty:
                 plant_type = plant_nodes.iloc[0]['type']
-                services, is_legacy = get_dh_services_from_plant_type(plant_type)
+                _, is_legacy = get_dh_services_from_plant_type(plant_type)
+                # is_legacy=False means a service suffix was found (e.g. PLANT_hs_ww, PLANT_ww_hs)
+                if not is_legacy:
+                    print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
+                    print("    This suffix is no longer used to control network temperature.")
+                    print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
+                    print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
 
-                if is_legacy:
-                    print("  ℹ Using legacy temperature control:")
-                    print("    - Services: space heating + domestic hot water")
-                    print("    - Supply temperature: max(space heating temp, DHW temp)")
-                    print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
-                    # Pass None for legacy mode to trigger default behavior
-                    self.itemised_dh_services = None
-                else:
-                    self.itemised_dh_services = services
-                    service_names = ' → '.join(self.itemised_dh_services)
-                    print(f"  ℹ DH service configuration: {service_names}")
+            # Always use dh-temperature-mode config to determine service order
+            if self.dh_temperature_mode == 'high-temperature':
+                self.itemised_dh_services = [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING]
+                print("  DH temperature mode: high-temperature (DHW priority, ~60-80 degrees C)")
+            else:
+                self.itemised_dh_services = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+                print("  DH temperature mode: low-temperature (space heating priority, ~35-55 degrees C)")
 
         # extract the list of buildings in the current network
         building_names = all_nodes_df.building[all_nodes_df.type == 'CONSUMER'].reset_index(drop=True)
@@ -872,11 +900,12 @@ def thermal_network_main(locator, thermal_network, processes=1):
         # Get network temperature (CT mode) or None (VT mode)
         fixed_network_temp_C = thermal_network.get_plant_supply_temperature() if thermal_network.network_temperature_dh >= 0 else None
 
-        # Prepare per-building services (all buildings use same services from plant type)
-        per_building_services = None
-        if thermal_network.itemised_dh_services is not None:
+        # Use per-building services from connectivity.json if available (overwrite-supply-settings=False)
+        # Fall back to uniform plant-type assignment if not available (legacy or what-if mode)
+        per_building_services = thermal_network.per_building_services
+        if per_building_services is None and thermal_network.itemised_dh_services is not None:
             per_building_services = {
-                building: thermal_network.itemised_dh_services
+                building: set(thermal_network.itemised_dh_services)
                 for building in thermal_network.building_names
             }
 
@@ -3659,3 +3688,4 @@ def check_heating_cooling_demand(locator, config):
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         if not buildings_name_with_cooling:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
+

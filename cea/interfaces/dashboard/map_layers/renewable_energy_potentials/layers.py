@@ -13,6 +13,33 @@ from cea.interfaces.dashboard.map_layers.renewable_energy_potentials import Rene
 from cea.plots.colors import color_to_hex
 
 
+def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
+    """
+    Filter buildings to only include those that exist in zone geometry.
+    Returns tuple of (filtered_buildings, geometry_df, centroids).
+    Gracefully handles missing buildings by excluding them.
+    """
+    if not buildings:
+        return [], None, []
+
+    try:
+        zone_gdf = gpd.read_file(locator.get_zone_geometry()).set_index("name")
+
+        # Filter to only buildings that exist in geometry
+        existing_buildings = [b for b in buildings if b in zone_gdf.index]
+
+        if not existing_buildings:
+            return [], None, []
+
+        geometry_df = zone_gdf.loc[existing_buildings]
+        centroids = geometry_df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+
+        return existing_buildings, geometry_df, centroids
+    except Exception as e:
+        print(f"Warning: Error reading zone geometry: {e}")
+        return [], None, []
+
+
 class SolarPotentialsLayer(MapLayer):
     category = RenewableEnergyPotentialsCategory
     name = "renewable-energy-potentials"
@@ -131,6 +158,7 @@ class SolarPotentialsLayer(MapLayer):
                 "Solar potentials",
                 file_locator="layer:_get_results_files",
                 depends_on=["technology", "panel-type"],
+                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -161,37 +189,60 @@ class SolarPotentialsLayer(MapLayer):
         panel_type = parameters.get("panel-type")
         data_column = self._data_columns[technology]
 
+        # Filter buildings that exist in geometry
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(locator, buildings)
+
+        if not buildings:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
+
         def get_building_potential(building, centroid):
-            if technology == "PV":
-                path = self.locator.PV_results(building, panel_type)
-            elif technology == "PVT":
-                path = self.locator.PVT_results(building)
-            elif technology == "SC":
-                path = self.locator.SC_results(building, panel_type)
-            else:
-                raise ValueError(f"Invalid technology specified: {technology}")
+            try:
+                if technology == "PV":
+                    path = self.locator.PV_results(building, panel_type)
+                elif technology == "PVT":
+                    path = self.locator.PVT_results(building)
+                elif technology == "SC":
+                    path = self.locator.SC_results(building, panel_type)
+                else:
+                    raise ValueError(f"Invalid technology specified: {technology}")
 
-            df = pd.read_csv(path, usecols=[data_column])[data_column]
+                if not os.path.exists(path):
+                    return None
 
-            total_min = 0
-            total_max = df.sum()
+                df = pd.read_csv(path, usecols=[data_column])[data_column]
 
-            if start < end:
-                period_value = df.iloc[start:end + 1].sum()
-            else:
-                period_value = df.iloc[start:].sum() + df.iloc[:end + 1].sum()
-            period_min = period_value
-            period_max = period_value
+                total_min = 0
+                total_max = df.sum()
 
-            data = {"position": [centroid.x, centroid.y], "value": float(period_value)}
+                if start < end:
+                    period_value = df.iloc[start:end + 1].sum()
+                else:
+                    period_value = df.iloc[start:].sum() + df.iloc[:end + 1].sum()
+                period_min = period_value
+                period_max = period_value
 
-            return total_min, total_max, period_min, period_max, data
+                data_point = {"position": [centroid.x, centroid.y], "value": float(period_value)}
 
-        df = gpd.read_file(locator.get_zone_geometry()).set_index("name").loc[buildings]
-        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
+                return total_min, total_max, period_min, period_max, data_point
+            except Exception as e:
+                print(f"Warning: Error reading {technology} potentials for {building}: {e}")
+                return None
 
-        values = (get_building_potential(building, centroid)
-                  for building, centroid in zip(buildings, building_centroids))
+        values = [get_building_potential(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+
+        # Filter out None values (missing files)
+        values = [v for v in values if v is not None]
+
+        if not values:
+            output['properties']['range'] = {
+                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+            }
+            return output
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 

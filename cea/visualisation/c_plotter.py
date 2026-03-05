@@ -42,6 +42,21 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     if column_name.endswith('_m2'):
         return f"{column_name} (Area)"
     
+    # Demand metric display names (check base column name for normalized versions)
+    demand_display_names = {
+        'E_sys_kWh': 'Electricity',
+        'Qcs_sys_kWh': 'Space Cooling',
+        'Qhs_sys_kWh': 'Space Heating',
+        'Qww_sys_kWh': 'Domestic Hot Water',
+        'QC_sys_kWh': 'Total Cooling',
+        'QH_sys_kWh': 'Total Heating',
+    }
+
+    # Check if this is a demand column (including normalized versions like E_sys_kWh/m2)
+    for cea_col, display_name in demand_display_names.items():
+        if column_name.startswith(cea_col):
+            return display_name
+
     # Solar surface mapping
     surface_mappings = {
         'roofs_top': 'roofs_top',
@@ -51,7 +66,7 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         'walls_west': 'walls_west',
         'total': 'total'
     }
-    
+
     # Check each surface mapping
     for col_pattern, user_name in surface_mappings.items():
         if col_pattern in column_name and user_name in y_metric_to_plot:
@@ -164,6 +179,8 @@ class bar_plot:
                 title = "CEA-4 Lifecycle Emissions"
             elif plot_cea_feature == 'operational-emissions':
                 title = "CEA-4 Operational Emissions"
+            elif plot_cea_feature == 'heat-rejection':
+                title = "CEA-4 Anthropogenic Heat Rejection"
             else:
                 raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the title mapping.")
 
@@ -298,7 +315,29 @@ class bar_plot:
                     y_label = "Operational Emissions per Gross Floor Area (g CO2e/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
-            
+
+            elif plot_cea_feature == 'heat-rejection':
+                if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Heat Rejection (MWh/yr)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Heat Rejection per Gross Floor Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Heat Rejection per Conditioned Floor Area (MWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Heat Rejection (kWh/yr)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Heat Rejection per Gross Floor Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Heat Rejection per Conditioned Floor Area (kWh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Heat Rejection (Wh/yr)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'gross_floor_area':
+                    y_label = "Heat Rejection per Gross Floor Area (Wh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'conditioned_floor_area':
+                    y_label = "Heat Rejection per Conditioned Floor Area (Wh/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+
             else:
                 raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the y_label mapping.")
 

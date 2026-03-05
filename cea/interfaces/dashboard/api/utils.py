@@ -48,6 +48,9 @@ def _should_validate(p: cea.config.Parameter) -> bool:
     if isinstance(p, cea.config.NetworkLayoutNameParameter):
         return True
 
+    if isinstance(p, cea.config.WhatIfNameParameter):
+        return True
+
     # Add more parameter types here as needed
     # if isinstance(p, cea.config.SomeOtherComplexParameter):
     #     return True
