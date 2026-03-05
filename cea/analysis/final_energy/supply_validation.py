@@ -88,7 +88,8 @@ def validate_standalone_mode(locator):
             + "\n".join(mismatches)
             + "\n\nPlease either:\n"
             "  (a) Select a network in the final-energy settings, or\n"
-            "  (b) Change these buildings to BUILDING-scale assemblies in supply.csv"
+            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply"
+            "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
         )
 
 
@@ -148,8 +149,8 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping):
         if building_row.empty:
             raise ValueError(
                 f"Building '{building}' is listed in the DH network (connectivity.json) "
-                f"but is not found in Building Properties/Supply (supply.csv).\n\n"
-                f"Please re-run 'network-layout' after updating supply.csv."
+                f"but is not found in Building Properties/Supply.\n\n"
+                f"Please re-run 'network-layout' after updating Building Properties/Supply."
             )
 
         row = building_row.iloc[0]
@@ -251,8 +252,8 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
         if building_row.empty:
             raise ValueError(
                 f"Building '{building}' is listed in the DC network (connectivity.json) "
-                f"but is not found in Building Properties/Supply (supply.csv).\n\n"
-                f"Please re-run 'network-layout' after updating supply.csv."
+                f"but is not found in Building Properties/Supply.\n\n"
+                f"Please re-run 'network-layout' after updating Building Properties/Supply."
             )
 
         row = building_row.iloc[0]
@@ -333,11 +334,12 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
         raise ValueError(
             "The following buildings have DISTRICT-scale assemblies in Building Properties/Supply "
             "but are not connected to the selected network. "
-            "This may mean supply.csv was updated after running network-layout.\n\n"
+            "This may mean Building Properties/Supply was updated after running network-layout.\n\n"
             + "\n".join(mismatches)
             + "\n\nPlease either:\n"
             "  (a) Re-run 'network-layout' to regenerate connectivity.json, or\n"
-            "  (b) Change these buildings to BUILDING-scale assemblies in supply.csv"
+            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply"
+            "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
         )
 
 
