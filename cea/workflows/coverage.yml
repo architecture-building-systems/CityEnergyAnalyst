@@ -53,17 +53,15 @@
 - script: network-layout
   parameters:
     network-type: DH
-- script: thermal-network
+- script: thermal-network-detailed
   parameters:
     network-type: DH
-    network-model: detailed
 #    stop-t: 744 # run for one month
     start-t: 0
     stop-t: 24 # run for one day
 - script: thermal-network
   parameters:
     network-type: DH
-    network-model: simplified
 - script: decentralized
 - script: optimization
   parameters:
@@ -131,17 +129,15 @@
 - script: network-layout
   parameters:
     network-type: DC
-- script: thermal-network
+- script: thermal-network-detailed
   parameters:
     network-type: DC
-    network-model: detailed
 #    stop-t: 744 # run for one month
     start-t: 0
     stop-t: 24 # run for one day
 - script: thermal-network
   parameters:
     network-type: DC
-    network-model: simplified
 - script: decentralized
 - script: optimization
   parameters:

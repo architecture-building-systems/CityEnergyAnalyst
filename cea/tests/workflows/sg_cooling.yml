@@ -42,14 +42,13 @@
     network-name: baseline
     itemised-dh-services: [domestic_hot_water]
     consider-only-buildings-with-demand: off
-- script: thermal-network
+- script: thermal-network-detailed
   parameters:
     network-name: baseline
-    network-model: detailed
     stop-t: 744 # run for one month
 - script: thermal-network
   parameters:
-    network-model: simplified
+    network-name: baseline
 - script: optimization-new
   parameters:
     network-type: DC
