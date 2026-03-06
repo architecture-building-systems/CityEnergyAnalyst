@@ -14,6 +14,7 @@ from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_P
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.common.date_utils import add_date_to_dataframe
 from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
@@ -66,21 +67,6 @@ if sys.platform == "darwin" and platform.processor() == "arm":
     if result.returncode != 0:
         subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)
 
-
-def add_date_to_dataframe(locator, df):
-    # create date range for the calculation year
-    weather_file = locator.get_weather_file()
-    weather_data = epw_reader(weather_file)
-    year = weather_data['year'][0]
-    date_range = get_date_range_hours_from_year(year)
-
-    # Convert date_range to datetime
-    date_column = pd.to_datetime(date_range, errors='coerce')
-
-    # Insert the 'date' column at the first position
-    df.insert(0, 'date', date_column)
-
-    return df
 
 def calculate_ground_temperature(locator):
     """

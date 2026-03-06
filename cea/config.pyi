@@ -1000,7 +1000,6 @@ class ThermalNetworkSection(Section):
     dh_temperature_mode: str
     network_temperature_dh: float
     network_temperature_dc: float
-    network_model: str
     min_head_substation: float
     hw_friction_coefficient: int
     peak_load_velocity: float
@@ -1027,8 +1026,6 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["network_temperature_dh"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["network_temperature_dc"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["network_model"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["min_head_substation"]) -> float: ...
     @overload
