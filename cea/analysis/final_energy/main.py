@@ -125,7 +125,9 @@ def main(config: cea.config.Configuration):
             print(f"  ✓ {building}")
 
         except Exception as e:
+            import traceback
             print(f"  ✗ {building}: {str(e)}")
+            traceback.print_exc()
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
     if config.final_energy.overwrite_supply_settings and building_configs:

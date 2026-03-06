@@ -140,6 +140,10 @@ def validate_network_mode(locator, network_name, config):
     # Check for buildings in supply.csv with DISTRICT scale that aren't in connectivity.json
     validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name)
 
+    # Check that buildings with booster demand have a booster assembly configured
+    if 'DH' in connectivity.get('networks', {}):
+        validate_booster_configuration(connectivity['networks']['DH'], network_name, locator, config)
+
 
 def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, config):
     """
@@ -350,6 +354,78 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
             "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply"
             "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
         )
+
+
+def validate_booster_configuration(dh_network, network_name, locator, config):
+    """
+    Validate that buildings with booster demand have a booster assembly configured.
+
+    Reads substation files for all DH-connected buildings and checks whether
+    space heating or domestic hot water booster demand is present. If so,
+    the corresponding booster assembly must be set in the config.
+
+    Called before any building is processed so the script fails fast with
+    a single consolidated error instead of per-building failures.
+
+    :param dh_network: Dict from connectivity.json['networks']['DH']
+    :param network_name: Network layout name (for substation file paths)
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :raises ValueError: If any building has booster demand without a configured assembly
+    """
+    hs_booster_type = config.final_energy.hs_booster_type_building
+    dhw_booster_type = config.final_energy.dhw_booster_type_building
+
+    hs_needs_booster = []
+    dhw_needs_booster = []
+
+    per_building_services = dh_network.get('per_building_services', {})
+
+    for building, services in per_building_services.items():
+        substation_file = locator.get_thermal_network_substation_results_file(
+            building, 'DH', network_name
+        )
+
+        if not os.path.exists(substation_file):
+            continue
+
+        try:
+            substation_df = pd.read_csv(substation_file)
+        except Exception:
+            continue
+
+        if 'space_heating' in services and 'Qhs_booster_W' in substation_df.columns:
+            if substation_df['Qhs_booster_W'].sum() > 0 and not hs_booster_type:
+                hs_needs_booster.append(building)
+
+        if 'domestic_hot_water' in services and 'Qww_booster_W' in substation_df.columns:
+            if substation_df['Qww_booster_W'].sum() > 0 and not dhw_booster_type:
+                dhw_needs_booster.append(building)
+
+    messages = []
+
+    if hs_needs_booster:
+        listing = "\n".join(f"  - {b}" for b in sorted(hs_needs_booster))
+        messages.append(
+            f"The following buildings have space heating booster demand from the "
+            f"low-temperature district heating network, but no booster assembly is configured:\n"
+            f"{listing}\n\n"
+            f"Please select a booster assembly in 'hs-booster-type-building' "
+            f"(Energy by Carrier settings)."
+        )
+
+    if dhw_needs_booster:
+        listing = "\n".join(f"  - {b}" for b in sorted(dhw_needs_booster))
+        messages.append(
+            f"The following buildings have domestic hot water booster demand from the "
+            f"low-temperature district heating network, but no booster assembly is configured:\n"
+            f"{listing}\n\n"
+            f"Please select a booster assembly in 'dhw-booster-type-building' "
+            f"(Energy by Carrier settings)."
+        )
+
+    if messages:
+        raise ValueError("\n\n".join(messages))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
