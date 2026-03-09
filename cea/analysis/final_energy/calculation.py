@@ -290,8 +290,30 @@ def load_production_supply_configuration(
             network_name
         )
 
-    # TODO: Handle booster systems - check if building is connected to district network
-    # and if booster substation files exist
+    # Parse booster systems (always building-scale)
+    if config.final_energy.hs_booster_type_building:
+        assembly_code = config.final_energy.hs_booster_type_building
+        if assembly_code and assembly_code in supply_db.heating.index:
+            supply_config['space_heating_booster'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.heating,
+                locator,
+                'heating',
+                network_name
+            )
+            supply_config['space_heating_booster']['network_name'] = network_name
+
+    if config.final_energy.dhw_booster_type_building:
+        assembly_code = config.final_energy.dhw_booster_type_building
+        if assembly_code and assembly_code in supply_db.hot_water.index:
+            supply_config['hot_water_booster'] = parse_supply_assembly(
+                assembly_code,
+                supply_db.hot_water,
+                locator,
+                'hot_water',
+                network_name
+            )
+            supply_config['hot_water_booster']['network_name'] = network_name
 
     return supply_config
 
