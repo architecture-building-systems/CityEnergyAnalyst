@@ -562,8 +562,9 @@ class DemandSection(Section):
 
 class FinalEnergySection(Section):
     """Typed section for final-energy configuration"""
+    buildings: list[str]
     overwrite_supply_settings: bool
-    what_if_name: str | None
+    what_if_name: str
     network_name: str | None
     dhw_booster_type_building: str | None
     hs_booster_type_building: str | None
@@ -575,9 +576,11 @@ class FinalEnergySection(Section):
     supply_type_dhw_district: str | None
 
     @overload
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["what_if_name"]) -> str | None: ...
+    def __getattr__(self, item: Literal["what_if_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload

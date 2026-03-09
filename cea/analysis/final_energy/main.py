@@ -75,8 +75,10 @@ def main(config: cea.config.Configuration):
         os.makedirs(output_folder)
         print(f"Created output folder: {output_folder}")
 
+    buildings = config.final_energy.buildings if config.final_energy.buildings else None
+
     try:
-        _run(config, locator, whatif_name, output_folder, buildings=None)
+        _run(config, locator, whatif_name, output_folder, buildings=buildings)
     except Exception:
         if analysis_folder_was_created and os.path.exists(analysis_folder):
             shutil.rmtree(analysis_folder)
@@ -88,16 +90,17 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     """Inner implementation called by main() so folder cleanup can wrap it cleanly."""
 
     # Step 3: Get list of buildings
-    try:
-        import geopandas as gpd
-        zone_gdf = gpd.read_file(locator.get_zone_geometry())
-        buildings = zone_gdf['name'].tolist()
-    except Exception:
-        # Fallback: try reading from demand results folder
-        import glob
-        demand_folder = locator.get_demand_results_folder()
-        demand_files = glob.glob(os.path.join(demand_folder, '*.csv'))
-        buildings = [os.path.splitext(os.path.basename(f))[0] for f in demand_files]
+    if buildings is None:
+        try:
+            import geopandas as gpd
+            zone_gdf = gpd.read_file(locator.get_zone_geometry())
+            buildings = zone_gdf['name'].tolist()
+        except Exception:
+            # Fallback: try reading from demand results folder
+            import glob
+            demand_folder = locator.get_demand_results_folder()
+            demand_files = glob.glob(os.path.join(demand_folder, '*.csv'))
+            buildings = [os.path.splitext(os.path.basename(f))[0] for f in demand_files]
 
     print(f"Processing {len(buildings)} buildings")
 
