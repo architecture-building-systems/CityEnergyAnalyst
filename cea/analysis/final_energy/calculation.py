@@ -123,19 +123,9 @@ def calculate_building_final_energy(
     # Electricity (always GRID)
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
 
-    # Step 4: Handle booster systems (if applicable)
-    # Auto-detect boosters from thermal-network files (production mode)
-    # or use configured boosters (what-if mode)
-
-    # For production mode: check if building has district heating with potential boosters
-    has_dh_heating = (supply_config['space_heating'] and
-                      supply_config['space_heating']['scale'] == 'DISTRICT')
-    has_dh_dhw = (supply_config['hot_water'] and
-                  supply_config['hot_water']['scale'] == 'DISTRICT')
-
+    # Step 4: Handle booster systems (if configured)
     # Space heating booster
     if supply_config['space_heating_booster'] and supply_config['space_heating_booster']['network_name']:
-        # What-if mode: booster explicitly configured
         network_name = supply_config['space_heating_booster']['network_name']
         try:
             booster_data = load_booster_data(building_name, network_name, 'hs', locator)
@@ -145,24 +135,9 @@ def calculate_building_final_energy(
                 final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
         except FileNotFoundError:
             pass
-    elif has_dh_heating:
-        # Production mode: auto-detect booster from thermal-network
-        network_name = supply_config['space_heating']['network_name']
-        if network_name:
-            try:
-                booster_data = load_booster_data(building_name, network_name, 'hs', locator)
-                if booster_data['Qhs_booster_kWh'].sum() > 0:
-                    # Auto-detect booster: assume natural gas boiler (most common)
-                    # TODO: Read booster type from thermal-network metadata
-                    carrier = 'NATURALGAS'
-                    efficiency = 0.85  # Default booster efficiency
-                    final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
-            except FileNotFoundError:
-                pass
 
     # Hot water booster
     if supply_config['hot_water_booster'] and supply_config['hot_water_booster']['network_name']:
-        # What-if mode: booster explicitly configured
         network_name = supply_config['hot_water_booster']['network_name']
         try:
             booster_data = load_booster_data(building_name, network_name, 'dhw', locator)
@@ -172,20 +147,6 @@ def calculate_building_final_energy(
                 final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
         except FileNotFoundError:
             pass
-    elif has_dh_dhw:
-        # Production mode: auto-detect booster from thermal-network
-        network_name = supply_config['hot_water']['network_name']
-        if network_name:
-            try:
-                booster_data = load_booster_data(building_name, network_name, 'dhw', locator)
-                if booster_data['Qww_booster_kWh'].sum() > 0:
-                    # Auto-detect booster: assume natural gas boiler (most common)
-                    # TODO: Read booster type from thermal-network metadata
-                    carrier = 'NATURALGAS'
-                    efficiency = 0.85  # Default booster efficiency
-                    final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
-            except FileNotFoundError:
-                pass
 
     # Step 5: Add solar energy generation (broken down by facade)
     # Only non-zero columns are included to save space
@@ -246,8 +207,8 @@ def load_supply_configuration(
             config.final_energy.supply_type_dhw_district,
             config.final_energy.supply_type_cs_building,
             config.final_energy.supply_type_cs_district,
-            config.final_energy.hs_booster_type,
-            config.final_energy.dhw_booster_type,
+            config.final_energy.hs_booster_type_building,
+            config.final_energy.dhw_booster_type_building,
         ])
 
         if has_parameters_set:
@@ -629,8 +590,8 @@ def load_whatif_supply_configuration(
         )
 
     # Parse booster systems (always building-scale)
-    if config.final_energy.hs_booster_type:
-        assembly_code = config.final_energy.hs_booster_type
+    if config.final_energy.hs_booster_type_building:
+        assembly_code = config.final_energy.hs_booster_type_building
         if assembly_code and assembly_code in supply_db.heating.index:
             supply_config['space_heating_booster'] = parse_supply_assembly(
                 assembly_code,
@@ -642,8 +603,8 @@ def load_whatif_supply_configuration(
             # Boosters are building-scale but need network_name for substation files
             supply_config['space_heating_booster']['network_name'] = network_name
 
-    if config.final_energy.dhw_booster_type:
-        assembly_code = config.final_energy.dhw_booster_type
+    if config.final_energy.dhw_booster_type_building:
+        assembly_code = config.final_energy.dhw_booster_type_building
         if assembly_code and assembly_code in supply_db.hot_water.index:
             supply_config['hot_water_booster'] = parse_supply_assembly(
                 assembly_code,

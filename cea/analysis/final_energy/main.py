@@ -18,6 +18,7 @@ __status__ = "Production"
 
 
 import os
+import shutil
 import pandas as pd
 from typing import Optional
 
@@ -66,9 +67,22 @@ def main(config: cea.config.Configuration):
 
     # Step 2: Create output folder
     output_folder = locator.get_final_energy_folder(whatif_name)
-    if not os.path.exists(output_folder):
+    folder_was_created = not os.path.exists(output_folder)
+    if folder_was_created:
         os.makedirs(output_folder)
         print(f"Created output folder: {output_folder}")
+
+    try:
+        _run(config, locator, whatif_name, output_folder, buildings=None)
+    except Exception:
+        if folder_was_created and os.path.exists(output_folder):
+            shutil.rmtree(output_folder)
+            print(f"Removed output folder due to error: {output_folder}")
+        raise
+
+
+def _run(config, locator, whatif_name, output_folder, buildings):
+    """Inner implementation called by main() so folder cleanup can wrap it cleanly."""
 
     # Step 3: Get list of buildings
     try:
@@ -125,7 +139,9 @@ def main(config: cea.config.Configuration):
             print(f"  ✓ {building}")
 
         except Exception as e:
+            import traceback
             print(f"  ✗ {building}: {str(e)}")
+            traceback.print_exc()
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
     if config.final_energy.overwrite_supply_settings and building_configs:

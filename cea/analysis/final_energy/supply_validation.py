@@ -15,6 +15,16 @@ import os
 import pandas as pd
 
 
+# Maps component code prefix → (CSV filename, temperature column).
+# Used to look up a component's design supply temperature.
+# Longer prefixes are checked first to avoid false matches.
+COMPONENT_SUPPLY_TEMP_MAP = {
+    'OEHR': ('COGENERATION_PLANTS', 'T_water_out_design'),
+    'BO':   ('BOILERS',             'T_water_out_rating'),
+    'HP':   ('HEAT_PUMPS',          'T_cond_design'),
+}
+
+
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
@@ -39,7 +49,7 @@ def validate_supply_consistency(locator, config):
     if not network_name or network_name == '(none)':
         validate_standalone_mode(locator)
     else:
-        validate_network_mode(locator, network_name)
+        validate_network_mode(locator, network_name, config)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -97,7 +107,7 @@ def validate_standalone_mode(locator):
 # Scenario 2: Network selected
 # ─────────────────────────────────────────────────────────────────────────────
 
-def validate_network_mode(locator, network_name):
+def validate_network_mode(locator, network_name, config):
     """
     Validate supply.csv matches network connectivity.json.
 
@@ -108,11 +118,13 @@ def validate_network_mode(locator, network_name):
     4. Buildings in supply.csv with DISTRICT scale must appear in connectivity.json
     5. All DH buildings use the same space_heating assembly
     6. All DH buildings use the same domestic_hot_water assembly
-    7. DH space_heating assembly == domestic_hot_water assembly (Option 1 rule)
-    8. All DC buildings use the same space_cooling assembly
+    7. DH space_heating and domestic_hot_water assemblies use the same equipment components
+    8. DH assembly equipment is temperature-compatible with network configuration
+    9. All DC buildings use the same space_cooling assembly
 
     :param locator: InputLocator instance
     :param network_name: Network layout name
+    :param config: Configuration instance
     :raises ValueError: If any inconsistency is found
     """
     connectivity = load_network_connectivity(locator, network_name)
@@ -120,7 +132,7 @@ def validate_network_mode(locator, network_name):
     scale_mapping = load_all_assembly_scales(locator)
 
     if 'DH' in connectivity.get('networks', {}):
-        validate_dh_consistency(connectivity['networks']['DH'], supply_df, scale_mapping)
+        validate_dh_consistency(connectivity['networks']['DH'], supply_df, scale_mapping, locator, config)
 
     if 'DC' in connectivity.get('networks', {}):
         validate_dc_consistency(connectivity['networks']['DC'], supply_df, scale_mapping)
@@ -128,14 +140,25 @@ def validate_network_mode(locator, network_name):
     # Check for buildings in supply.csv with DISTRICT scale that aren't in connectivity.json
     validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name)
 
+    # Check that buildings with booster demand have a booster assembly configured
+    if 'DH' in connectivity.get('networks', {}):
+        validate_booster_configuration(connectivity['networks']['DH'], network_name, locator, config)
 
-def validate_dh_consistency(dh_network, supply_df, scale_mapping):
+
+def validate_dh_consistency(dh_network, supply_df, scale_mapping, locator, config):
     """
-    Validate DH network consistency (Option 1: same plant serves hs + dhw).
+    Validate DH network consistency.
+
+    Checks:
+    - Each DH building has a valid DISTRICT-scale assembly for its services
+    - All buildings use the same hs assembly; all use the same dhw assembly
+    - hs and dhw assemblies use the same primary/secondary/tertiary equipment components
 
     :param dh_network: Dict from connectivity.json['networks']['DH']
     :param supply_df: DataFrame from supply.csv
     :param scale_mapping: Dict {assembly_code: scale}
+    :param locator: InputLocator instance
+    :param config: Configuration instance (reserved for future use)
     :raises ValueError: If any inconsistency is found
     """
     per_building_services = dh_network.get('per_building_services', {})
@@ -213,21 +236,11 @@ def validate_dh_consistency(dh_network, supply_df, scale_mapping):
             f"Please update Building Properties/Supply so all DH buildings use the same assembly."
         )
 
-    # Option 1: hs assembly must equal dhw assembly (same plant, same fuel)
+    # Validate component-level consistency
     if hs_assemblies and dhw_assemblies:
         hs_assembly = next(iter(set(hs_assemblies.values())))
         dhw_assembly = next(iter(set(dhw_assemblies.values())))
-
-        if hs_assembly != dhw_assembly:
-            raise ValueError(
-                f"The district heating plant serves both space heating and domestic hot water "
-                f"from the same source, so both must use the same assembly.\n\n"
-                f"Currently:\n"
-                f"  - space heating (supply_type_hs):       {hs_assembly}\n"
-                f"  - domestic hot water (supply_type_dhw): {dhw_assembly}\n\n"
-                f"Please set both to the same SUPPLY_HEATING assembly "
-                f"(e.g., both use {hs_assembly})."
-            )
+        validate_component_levels_match(hs_assembly, dhw_assembly, locator)
 
 
 def validate_dc_consistency(dc_network, supply_df, scale_mapping):
@@ -343,9 +356,293 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
         )
 
 
+def validate_booster_configuration(dh_network, network_name, locator, config):
+    """
+    Validate that buildings with booster demand have a booster assembly configured.
+
+    Reads substation files for all DH-connected buildings and checks whether
+    space heating or domestic hot water booster demand is present. If so,
+    the corresponding booster assembly must be set in the config.
+
+    Called before any building is processed so the script fails fast with
+    a single consolidated error instead of per-building failures.
+
+    :param dh_network: Dict from connectivity.json['networks']['DH']
+    :param network_name: Network layout name (for substation file paths)
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :raises ValueError: If any building has booster demand without a configured assembly
+    """
+    hs_booster_type = config.final_energy.hs_booster_type_building
+    dhw_booster_type = config.final_energy.dhw_booster_type_building
+
+    hs_needs_booster = []
+    dhw_needs_booster = []
+
+    per_building_services = dh_network.get('per_building_services', {})
+
+    for building, services in per_building_services.items():
+        substation_file = locator.get_thermal_network_substation_results_file(
+            building, 'DH', network_name
+        )
+
+        if not os.path.exists(substation_file):
+            continue
+
+        try:
+            substation_df = pd.read_csv(substation_file)
+        except Exception:
+            continue
+
+        if 'space_heating' in services and 'Qhs_booster_W' in substation_df.columns:
+            if substation_df['Qhs_booster_W'].sum() > 0 and not hs_booster_type:
+                hs_needs_booster.append(building)
+
+        if 'domestic_hot_water' in services and 'Qww_booster_W' in substation_df.columns:
+            if substation_df['Qww_booster_W'].sum() > 0 and not dhw_booster_type:
+                dhw_needs_booster.append(building)
+
+    messages = []
+
+    if hs_needs_booster:
+        listing = "\n".join(f"  - {b}" for b in sorted(hs_needs_booster))
+        messages.append(
+            f"The following buildings have space heating booster demand from the "
+            f"low-temperature district heating network, but no booster assembly is configured:\n"
+            f"{listing}\n\n"
+            f"Please select a booster assembly in 'hs-booster-type-building' "
+            f"(Energy by Carrier settings)."
+        )
+
+    if dhw_needs_booster:
+        listing = "\n".join(f"  - {b}" for b in sorted(dhw_needs_booster))
+        messages.append(
+            f"The following buildings have domestic hot water booster demand from the "
+            f"low-temperature district heating network, but no booster assembly is configured:\n"
+            f"{listing}\n\n"
+            f"Please select a booster assembly in 'dhw-booster-type-building' "
+            f"(Energy by Carrier settings)."
+        )
+
+    if messages:
+        raise ValueError("\n\n".join(messages))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
+def load_assembly_components(assembly_code, locator):
+    """
+    Load component codes for a given supply assembly.
+
+    :param assembly_code: Assembly code, e.g. 'SUPPLY_HEATING_AS9'
+    :param locator: InputLocator instance
+    :return: Dict with keys 'primary_components', 'secondary_components', 'tertiary_components'
+             (values are component code strings or None if not specified)
+    :raises ValueError: If assembly code not found in database
+    """
+    code = str(assembly_code).strip()
+
+    if code.startswith('SUPPLY_HEATING'):
+        filepath = locator.get_database_assemblies_supply_heating()
+    elif code.startswith('SUPPLY_HOTWATER'):
+        filepath = locator.get_database_assemblies_supply_hot_water()
+    elif code.startswith('SUPPLY_COOLING'):
+        filepath = locator.get_database_assemblies_supply_cooling()
+    else:
+        raise ValueError(f"Unknown assembly code prefix: '{code}'")
+
+    if not os.path.exists(filepath):
+        raise ValueError(f"Assembly database file not found: {filepath}")
+
+    df = pd.read_csv(filepath)
+    row = df[df['code'] == code]
+
+    if row.empty:
+        raise ValueError(f"Assembly '{code}' not found in database: {filepath}")
+
+    row = row.iloc[0]
+
+    def safe_get(col):
+        val = row.get(col)
+        if pd.isna(val) or str(val).strip() in ['', '-', 'NONE', 'None']:
+            return None
+        return str(val).strip()
+
+    return {
+        'primary_components':   safe_get('primary_components'),
+        'secondary_components': safe_get('secondary_components'),
+        'tertiary_components':  safe_get('tertiary_components'),
+    }
+
+
+def get_component_design_supply_temperature(component_code, locator):
+    """
+    Look up the design supply temperature of a heating component.
+
+    Uses COMPONENT_SUPPLY_TEMP_MAP to find the correct CSV and column.
+    Returns None for unknown component types (check is silently skipped).
+
+    :param component_code: Component code, e.g. 'BO6', 'HP3'
+    :param locator: InputLocator instance
+    :return: Design supply temperature in degrees C, or None if unknown type
+    """
+    if not component_code:
+        return None
+
+    code = str(component_code).strip()
+
+    # Check longer prefixes first to avoid false matches (e.g. OEHR before O)
+    matched_entry = None
+    for prefix in sorted(COMPONENT_SUPPLY_TEMP_MAP.keys(), key=len, reverse=True):
+        if code.startswith(prefix):
+            matched_entry = COMPONENT_SUPPLY_TEMP_MAP[prefix]
+            break
+
+    if matched_entry is None:
+        return None
+
+    csv_name, temp_col = matched_entry
+    filepath = locator.get_db4_components_conversion_conversion_technology_csv(csv_name)
+
+    if not os.path.exists(filepath):
+        return None
+
+    df = pd.read_csv(filepath)
+    row = df[df['code'] == code]
+
+    if row.empty:
+        return None
+
+    val = row.iloc[0].get(temp_col)
+    if pd.isna(val):
+        return None
+
+    return float(val)
+
+
+def validate_component_levels_match(hs_code, dhw_code, locator):
+    """
+    Validate that hs and dhw assemblies use the same equipment at all three component levels.
+
+    The district heating plant is a single physical installation, so both space heating
+    and domestic hot water must reference assemblies with identical components.
+
+    :param hs_code: Space heating assembly code (e.g., 'SUPPLY_HEATING_AS9')
+    :param dhw_code: Domestic hot water assembly code (e.g., 'SUPPLY_HOTWATER_AS9')
+    :param locator: InputLocator instance
+    :raises ValueError: If any component level differs between the two assemblies
+    """
+    hs_components = load_assembly_components(hs_code, locator)
+    dhw_components = load_assembly_components(dhw_code, locator)
+
+    level_labels = {
+        'primary_components':   'primary',
+        'secondary_components': 'secondary',
+        'tertiary_components':  'tertiary',
+    }
+
+    for key, label in level_labels.items():
+        hs_val = hs_components[key]
+        dhw_val = dhw_components[key]
+
+        if hs_val != dhw_val:
+            raise ValueError(
+                f"The district heating plant serves both space heating and domestic hot water "
+                f"from the same source, but their supply assemblies specify different {label} "
+                f"equipment.\n\n"
+                f"  Space heating   ({hs_code}):      {label} = {hs_val or '(none)'}\n"
+                f"  Domestic hot water ({dhw_code}): {label} = {dhw_val or '(none)'}\n\n"
+                f"Both assemblies must reference the same {label} equipment component, "
+                f"since the district plant is a single physical installation that needs "
+                f"one consistent efficiency and sizing curve.\n\n"
+                f"Please update Building Properties/Supply so both services use assemblies "
+                f"with matching {label} components."
+            )
+
+
+def validate_assembly_temperature_vs_network(assembly_code, locator, dh_temperature_mode,
+                                             network_temperature_dh, tolerance=5.0):
+    """
+    Validate that the assembly's primary component can supply the required network temperature.
+
+    VT mode temperature ranges (with tolerance applied at both ends):
+      low-temperature:  30–65 °C
+      high-temperature: 50–95 °C
+
+    CT mode: component must reach the fixed supply temperature (only too-cold is checked).
+
+    :param assembly_code: Assembly code to check
+    :param locator: InputLocator instance
+    :param dh_temperature_mode: 'low-temperature' or 'high-temperature' (VT mode)
+    :param network_temperature_dh: Fixed supply temperature in degrees C (-1 = VT mode)
+    :param tolerance: Allowable temperature deviation in degrees C
+    :raises ValueError: If component temperature is incompatible with network configuration
+    """
+    components = load_assembly_components(assembly_code, locator)
+    primary_code = components.get('primary_components')
+
+    if not primary_code:
+        return
+
+    t_design = get_component_design_supply_temperature(primary_code, locator)
+
+    if t_design is None:
+        return
+
+    is_ct_mode = network_temperature_dh is not None and float(network_temperature_dh) > 0
+
+    if is_ct_mode:
+        t_ct = float(network_temperature_dh)
+        if t_design < t_ct - tolerance:
+            raise ValueError(
+                f"The assembly '{assembly_code}' (primary component: {primary_code}) is "
+                f"incompatible with the district heating network configuration.\n\n"
+                f"Network mode: CT (constant temperature) at {t_ct:.0f} °C\n"
+                f"Component '{primary_code}' design supply temperature: {t_design:.0f} °C "
+                f"(minimum required: {t_ct - tolerance:.0f} °C with {tolerance:.0f} °C tolerance)\n\n"
+                f"The district plant cannot reach the required network supply temperature.\n\n"
+                f"Please either:\n"
+                f"  (a) Select an assembly with a higher-temperature component, or\n"
+                f"  (b) Reduce 'network-temperature-dh' in thermal-network settings to match "
+                f"the equipment capability"
+            )
+    else:
+        if dh_temperature_mode == 'high-temperature':
+            t_min, t_max = 50.0, 95.0
+            mode_label = 'VT high-temperature'
+        else:
+            t_min, t_max = 30.0, 65.0
+            mode_label = 'VT low-temperature'
+
+        if t_design < t_min - tolerance:
+            raise ValueError(
+                f"The assembly '{assembly_code}' (primary component: {primary_code}) is "
+                f"incompatible with the district heating network configuration.\n\n"
+                f"Network mode: {mode_label}\n"
+                f"Valid temperature range: {t_min:.0f}–{t_max:.0f} °C "
+                f"(with {tolerance:.0f} °C tolerance: {t_min - tolerance:.0f}–{t_max + tolerance:.0f} °C)\n"
+                f"Component '{primary_code}' design supply temperature: {t_design:.0f} °C (too low)\n\n"
+                f"Please either:\n"
+                f"  (a) Select an assembly with a higher-temperature component, or\n"
+                f"  (b) Change 'dh-temperature-mode' in thermal-network settings"
+            )
+
+        if t_design > t_max + tolerance:
+            raise ValueError(
+                f"The assembly '{assembly_code}' (primary component: {primary_code}) is "
+                f"incompatible with the district heating network configuration.\n\n"
+                f"Network mode: {mode_label}\n"
+                f"Valid temperature range: {t_min:.0f}–{t_max:.0f} °C "
+                f"(with {tolerance:.0f} °C tolerance: {t_min - tolerance:.0f}–{t_max + tolerance:.0f} °C)\n"
+                f"Component '{primary_code}' design supply temperature: {t_design:.0f} °C (too high)\n\n"
+                f"Please either:\n"
+                f"  (a) Select an assembly with a lower-temperature component "
+                f"(e.g., heat pump or low-temperature boiler), or\n"
+                f"  (b) Change 'dh-temperature-mode' to 'high-temperature' in thermal-network settings"
+            )
+
 
 def load_network_connectivity(locator, network_name):
     """

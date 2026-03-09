@@ -1593,6 +1593,10 @@ class DistrictSupplyTypeParameter(ChoiceParameter):
 
     def encode(self, value):
         """Allow None/empty values for nullable parameter"""
+        # Unwrap single-element list (frontend may send JSON arrays for single-choice parameters)
+        if isinstance(value, list):
+            value = value[0] if value else None
+
         # Handle None, empty strings, and string representations of null
         if self.nullable and (value is None or str(value).strip() in ['', 'null', 'None', 'Nothing Selected']):
             return ''
