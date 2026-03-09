@@ -826,9 +826,9 @@ def determine_case(supply_config: Dict) -> Tuple[float, str]:
 
     # Determine case
     if hs_district and dhw_district and cs_district:
-        return (2, "DH + DC (centralized heating + cooling)")
+        return (2, "DH + DC (centralised heating + cooling)")
     elif hs_district and dhw_district and not cs_district:
-        return (3, "DH only (centralized heating + standalone cooling)")
+        return (3, "DH only (centralised heating + standalone cooling)")
     elif not hs_district and not dhw_district and cs_district:
         if hs_booster and dhw_booster:
             return (4.03, "DC + booster for both space heating and hot water")
@@ -837,7 +837,7 @@ def determine_case(supply_config: Dict) -> Tuple[float, str]:
         elif dhw_booster:
             return (4.02, "DC + booster for hot water")
         else:
-            return (4, "DC only (standalone heating + centralized cooling)")
+            return (4, "DC only (standalone heating + centralised cooling)")
     else:
         return (1, "Standalone (all services)")
 
