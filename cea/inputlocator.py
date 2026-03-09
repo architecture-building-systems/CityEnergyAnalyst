@@ -1644,18 +1644,30 @@ class InputLocator(object):
         """
         return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
 
+    # ANALYSIS (shared parent for what-if scenario outputs)
+    def get_analysis_folder(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/
+
+        Shared parent folder for all what-if analysis results
+        (final-energy, costs, emissions, heat-rejection, etc.).
+
+        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :return: Path to what-if analysis folder
+        """
+        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
+            whatif_name = "baseline"
+        return os.path.join(self.scenario, 'outputs', 'data', 'analysis', whatif_name)
+
     # FINAL ENERGY
     def get_final_energy_folder(self, whatif_name=None):
         """
-        scenario/outputs/data/final-energy/{whatif_name}/
+        scenario/outputs/data/analysis/{whatif_name}/final-energy/
 
         :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
         :return: Path to final energy folder for the what-if scenario
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
-        folder = os.path.join(self.get_lca_emissions_results_folder(), '..', 'final-energy', whatif_name)
-        return os.path.normpath(folder)
+        return os.path.join(self.get_analysis_folder(whatif_name), 'final-energy')
 
     def get_final_energy_building_file(self, building_name, whatif_name=None):
         """
@@ -1714,17 +1726,17 @@ class InputLocator(object):
         folder = self.get_final_energy_folder(whatif_name)
         return os.path.join(folder, 'final_energy.csv')
 
-    def get_final_energy_supply_configuration_file(self, whatif_name=None):
+    def get_analysis_configuration_file(self, whatif_name=None):
         """
-        scenario/outputs/data/final-energy/{whatif_name}/supply_configuration.json
+        scenario/outputs/data/analysis/{whatif_name}/configuration.json
+
+        Shared configuration file for all what-if analysis results
+        (final-energy, costs, emissions, heat-rejection, etc.).
 
         :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
-        :return: Path to supply configuration JSON file
+        :return: Path to what-if configuration JSON file
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
-        folder = self.get_final_energy_folder(whatif_name)
-        return os.path.join(folder, 'supply_configuration.json')
+        return os.path.join(self.get_analysis_folder(whatif_name), 'configuration.json')
 
     # GRAPHS
     def get_plots_folder(self, category):
