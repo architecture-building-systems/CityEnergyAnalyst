@@ -342,50 +342,56 @@ def parse_supply_assembly(
     # Get scale
     scale = assembly['scale']
 
+    def _get_component(col):
+        val = assembly.get(col)
+        return None if pd.isna(val) or val == '-' else val
+
     if scale == 'NONE':
         return {
             'scale': 'NONE',
             'carrier': None,
             'efficiency': None,
             'assembly_code': assembly_code,
-            'component_code': None,
+            'primary_component': None,
+            'secondary_component': None,
+            'tertiary_component': None,
             'network_name': None,
         }
 
-    # Get primary component code
-    component_code = assembly['primary_components']
-    if pd.isna(component_code) or component_code == '-':
+    # Get component codes at each layer
+    primary_component = _get_component('primary_components')
+    secondary_component = _get_component('secondary_components')
+    tertiary_component = _get_component('tertiary_components')
+
+    if not primary_component:
         raise ValueError(f"Assembly {assembly_code} has no primary component")
 
     # Load component information from COMPONENTS database
-    component_info = load_component_info(component_code, locator)
+    component_info = load_component_info(primary_component, locator)
 
     # For district systems, carrier is DH or DC, not the plant fuel
     if scale == 'DISTRICT':
-        # Determine if it's heating or cooling based on service type
         if service_type in ['space_heating', 'hot_water']:
-            carrier = 'DH'  # District heating
+            carrier = 'DH'
         elif service_type == 'space_cooling':
-            carrier = 'DC'  # District cooling
+            carrier = 'DC'
         else:
-            carrier = 'DH'  # Default to DH
-        # District systems don't have efficiency at building level (handled at plant)
+            carrier = 'DH'
         efficiency = None
     else:
-        # Building-scale: use component carrier and efficiency
         carrier = component_info['carrier']
         efficiency = component_info['efficiency']
 
-    result = {
+    return {
         'scale': scale,
         'carrier': carrier,
         'efficiency': efficiency,
         'assembly_code': assembly_code,
-        'component_code': component_code,
+        'primary_component': primary_component,
+        'secondary_component': secondary_component,
+        'tertiary_component': tertiary_component,
         'network_name': network_name if scale == 'DISTRICT' else None,
     }
-
-    return result
 
 
 def load_component_info(
