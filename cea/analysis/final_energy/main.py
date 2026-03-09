@@ -101,8 +101,19 @@ def _run(config, locator, whatif_name, output_folder, buildings):
 
     print(f"Processing {len(buildings)} buildings")
 
-    # Step 3.5: Validate supply.csv matches network connectivity (production mode only)
-    if not config.final_energy.overwrite_supply_settings:
+    # Step 3.5: Pre-flight configuration validation
+    if config.final_energy.overwrite_supply_settings:
+        # What-if mode: verify all required assembly params are explicitly set
+        print("\nChecking what-if assembly parameters...")
+        from cea.analysis.final_energy.supply_validation import validate_whatif_params
+        try:
+            validate_whatif_params(locator, config)
+            print("  All assembly parameters are set.")
+        except ValueError as e:
+            print(f"\n{e}")
+            raise
+    else:
+        # Production mode: verify supply.csv matches network connectivity
         print("\nChecking supply system configuration...")
         from cea.analysis.final_energy.supply_validation import validate_supply_consistency
         try:
@@ -150,7 +161,7 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     if config.final_energy.overwrite_supply_settings and building_configs:
         try:
             from cea.analysis.final_energy.calculation import validate_district_assembly_consistency
-            validate_district_assembly_consistency(building_configs)
+            validate_district_assembly_consistency(building_configs, locator)
         except ValueError as e:
             print(f"\n❌ Validation Error: {str(e)}")
             raise
@@ -316,17 +327,16 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"Failed: {failed_buildings}")
 
         # Calculate total energy by carrier
-        total_final = 0.0
         if summary_df is not None:
             print("\nTotal Final Energy by Carrier:")
-            for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+            total_final = 0.0
+            for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
                 carrier_col = f'{carrier}_MWh'
                 if carrier_col in summary_df.columns:
                     total = summary_df[carrier_col].sum()
                     if total > 0:
                         print(f"  {carrier}: {total:,.2f} MWh/year")
-
-            total_final = summary_df['TOTAL_MWh'].sum()
+                        total_final += total
             print(f"  TOTAL: {total_final:,.2f} MWh/year")
 
         # Calculate total demand

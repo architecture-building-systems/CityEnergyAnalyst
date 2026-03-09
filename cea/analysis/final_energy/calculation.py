@@ -491,10 +491,10 @@ def load_whatif_supply_configuration(
     Load supply configuration from config parameters (what-if mode).
 
     Logic:
-    1. Check if building is connected to network (substation file exists)
-    2. If connected → use district assembly parameter (supply-type-XX-district)
-    3. If not connected → use building assembly parameter (supply-type-XX-building)
-    4. If parameter is None/empty → fall back to supply.csv
+    1. Determine connectivity from connectivity.json (authoritative source)
+    2. If connected to DH/DC → require and use the district assembly parameter
+    3. If not connected → require and use the building assembly parameter
+    4. If the required parameter is not set → raise ValueError (no silent fallback)
 
     :param building_name: Name of the building
     :param locator: InputLocator instance
@@ -502,14 +502,11 @@ def load_whatif_supply_configuration(
     :return: Supply configuration dict
     """
     from cea.datamanagement.database.assemblies import Supply
+    from cea.analysis.final_energy.supply_validation import load_network_connectivity
 
-    # Load supply database
     supply_db = Supply.from_locator(locator)
-
-    # Get network name from config
     network_name = config.final_energy.network_name
 
-    # Initialize supply config dict
     supply_config = {
         'space_heating': None,
         'hot_water': None,
@@ -518,129 +515,93 @@ def load_whatif_supply_configuration(
         'hot_water_booster': None,
     }
 
-    # Read supply.csv as fallback
-    supply_df = pd.read_csv(locator.get_building_supply()).set_index('name')
-    if building_name not in supply_df.index:
-        raise ValueError(f"Building {building_name} not found in Building properties/Supply")
+    # Determine connectivity from connectivity.json (authoritative source)
+    dh_buildings: set = set()
+    dc_buildings: set = set()
+    if network_name:
+        try:
+            connectivity = load_network_connectivity(locator, network_name)
+            dh_buildings = set(
+                connectivity.get('networks', {}).get('DH', {}).get('per_building_services', {}).keys()
+            )
+            dc_buildings = set(
+                connectivity.get('networks', {}).get('DC', {}).get('per_building_services', {}).keys()
+            )
+        except ValueError:
+            pass  # No connectivity.json → treat all buildings as standalone
 
-    building_supply = supply_df.loc[building_name]
-
-    # Helper function to check network connectivity
-    def is_connected_to_network(building_name: str, network_name: str, network_type: str) -> bool:
-        """Check if building has substation file in network."""
-        if not network_name:
-            return False
-
-        substation_file = locator.get_thermal_network_substation_results_file(
-            building_name, network_type, network_name
-        )
-        return os.path.exists(substation_file)
-
-    # Helper function to select assembly based on connectivity
-    def select_assembly(
-        building_assembly: str,
-        district_assembly: str,
-        is_connected: bool,
-        fallback_from_supply: str
-    ) -> str:
-        """
-        Select assembly based on network connectivity.
-
-        :param building_assembly: Building-scale assembly from config
-        :param district_assembly: District-scale assembly from config
-        :param is_connected: Whether building has substation file
-        :param fallback_from_supply: Assembly from supply.csv (fallback)
-        :return: Selected assembly code
-        """
+    def select_assembly(building_assembly, district_assembly, is_connected, param_building, param_district):
         if is_connected:
-            # Use district assembly if provided, otherwise fallback
-            return district_assembly if district_assembly else fallback_from_supply
+            if not district_assembly:
+                raise ValueError(
+                    f"Building '{building_name}' is connected to the district network "
+                    f"but '{param_district}' is not set.\n\n"
+                    f"Please specify a district-scale assembly in the what-if settings."
+                )
+            return district_assembly
         else:
-            # Use building assembly if provided, otherwise fallback
-            return building_assembly if building_assembly else fallback_from_supply
+            if not building_assembly:
+                raise ValueError(
+                    f"Building '{building_name}' is not connected to the district network "
+                    f"but '{param_building}' is not set.\n\n"
+                    f"Please specify a building-scale assembly in the what-if settings."
+                )
+            return building_assembly
 
-    # Parse space heating
-    is_connected_dh = is_connected_to_network(building_name, network_name, 'DH')
-
+    # Space heating
     assembly_code = select_assembly(
         config.final_energy.supply_type_hs_building,
         config.final_energy.supply_type_hs_district,
-        is_connected_dh,
-        building_supply.get('supply_type_hs')
+        building_name in dh_buildings,
+        'supply-type-hs-building',
+        'supply-type-hs-district'
     )
-
     if assembly_code and assembly_code in supply_db.heating.index:
         supply_config['space_heating'] = parse_supply_assembly(
-            assembly_code,
-            supply_db.heating,
-            locator,
-            'heating',
-            network_name
+            assembly_code, supply_db.heating, locator, 'heating', network_name
         )
 
-    # Parse hot water (DHW) - can be building or district scale
-    is_connected_dhw = is_connected_to_network(building_name, network_name, 'DH')  # DHW uses DH network
-
+    # Hot water (DHW) — uses DH network
     assembly_code = select_assembly(
         config.final_energy.supply_type_dhw_building,
         config.final_energy.supply_type_dhw_district,
-        is_connected_dhw,
-        building_supply.get('supply_type_dhw')
+        building_name in dh_buildings,
+        'supply-type-dhw-building',
+        'supply-type-dhw-district'
     )
-
     if assembly_code and assembly_code in supply_db.hot_water.index:
         supply_config['hot_water'] = parse_supply_assembly(
-            assembly_code,
-            supply_db.hot_water,
-            locator,
-            'hot_water',
-            network_name
+            assembly_code, supply_db.hot_water, locator, 'hot_water', network_name
         )
 
-    # Parse space cooling
-    is_connected_dc = is_connected_to_network(building_name, network_name, 'DC')
-
+    # Space cooling
     assembly_code = select_assembly(
         config.final_energy.supply_type_cs_building,
         config.final_energy.supply_type_cs_district,
-        is_connected_dc,
-        building_supply.get('supply_type_cs')
+        building_name in dc_buildings,
+        'supply-type-cs-building',
+        'supply-type-cs-district'
     )
-
     if assembly_code and assembly_code in supply_db.cooling.index:
         supply_config['space_cooling'] = parse_supply_assembly(
-            assembly_code,
-            supply_db.cooling,
-            locator,
-            'cooling',
-            network_name
+            assembly_code, supply_db.cooling, locator, 'cooling', network_name
         )
 
-    # Parse booster systems (always building-scale)
+    # Boosters (always building-scale, same as production mode)
     if config.final_energy.hs_booster_type_building:
         assembly_code = config.final_energy.hs_booster_type_building
         if assembly_code and assembly_code in supply_db.heating.index:
             supply_config['space_heating_booster'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.heating,
-                locator,
-                'heating',
-                network_name
+                assembly_code, supply_db.heating, locator, 'heating', network_name
             )
-            # Boosters are building-scale but need network_name for substation files
             supply_config['space_heating_booster']['network_name'] = network_name
 
     if config.final_energy.dhw_booster_type_building:
         assembly_code = config.final_energy.dhw_booster_type_building
         if assembly_code and assembly_code in supply_db.hot_water.index:
             supply_config['hot_water_booster'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.hot_water,
-                locator,
-                'hot_water',
-                network_name
+                assembly_code, supply_db.hot_water, locator, 'hot_water', network_name
             )
-            # Boosters are building-scale but need network_name for substation files
             supply_config['hot_water_booster']['network_name'] = network_name
 
     return supply_config
@@ -760,48 +721,61 @@ def load_booster_data(
     return result
 
 
-def validate_district_assembly_consistency(building_configs: Dict[str, Dict]) -> None:
+def validate_district_assembly_consistency(
+    building_configs: Dict[str, Dict],
+    locator: cea.inputlocator.InputLocator
+) -> None:
     """
-    Validate that all buildings connected to district use the same assembly type.
-
-    Raises ValueError if multiple district assembly types are detected.
+    Validate that all buildings connected to district use the same assembly,
+    and that the hs and dhw assemblies reference the same equipment components.
 
     :param building_configs: Dict of building_name -> supply_configuration
+    :param locator: InputLocator instance (for component-level cross-check)
     """
-    # Collect district assemblies for each service
-    dh_assemblies = set()
-    dc_assemblies = set()
+    from cea.analysis.final_energy.supply_validation import validate_component_levels_match
 
-    for building_name, config in building_configs.items():
-        # Check space heating
-        if config.get('space_heating') and config['space_heating']['scale'] == 'DISTRICT':
-            assembly_code = config['space_heating']['assembly_code']
-            dh_assemblies.add(assembly_code)
+    hs_assemblies = set()
+    dhw_assemblies = set()
+    cs_assemblies = set()
 
-        # Check hot water (rarely district, but check anyway)
-        if config.get('hot_water') and config['hot_water']['scale'] == 'DISTRICT':
-            assembly_code = config['hot_water']['assembly_code']
-            dh_assemblies.add(assembly_code)
+    for building_name, cfg in building_configs.items():
+        if cfg.get('space_heating') and cfg['space_heating']['scale'] == 'DISTRICT':
+            hs_assemblies.add(cfg['space_heating']['assembly_code'])
 
-        # Check space cooling
-        if config.get('space_cooling') and config['space_cooling']['scale'] == 'DISTRICT':
-            assembly_code = config['space_cooling']['assembly_code']
-            dc_assemblies.add(assembly_code)
+        if cfg.get('hot_water') and cfg['hot_water']['scale'] == 'DISTRICT':
+            dhw_assemblies.add(cfg['hot_water']['assembly_code'])
 
-    # Validate district heating assemblies
-    if len(dh_assemblies) > 1:
+        if cfg.get('space_cooling') and cfg['space_cooling']['scale'] == 'DISTRICT':
+            cs_assemblies.add(cfg['space_cooling']['assembly_code'])
+
+    if len(hs_assemblies) > 1:
         raise ValueError(
-            f"Multiple district heating assembly types detected: {dh_assemblies}\n"
-            f"All buildings in a district heating network must use the same assembly type.\n"
-            f"Please select only one district heating assembly in supply-type-hs."
+            f"Multiple district heating assembly types detected for space heating: {hs_assemblies}\n"
+            f"All buildings in a district heating network must use the same assembly.\n"
+            f"Please select only one assembly in supply-type-hs-district."
         )
 
-    # Validate district cooling assemblies
-    if len(dc_assemblies) > 1:
+    if len(dhw_assemblies) > 1:
         raise ValueError(
-            f"Multiple district cooling assembly types detected: {dc_assemblies}\n"
-            f"All buildings in a district cooling network must use the same assembly type.\n"
-            f"Please select only one district cooling assembly in supply-type-cs."
+            f"Multiple district heating assembly types detected for domestic hot water: {dhw_assemblies}\n"
+            f"All buildings in a district heating network must use the same assembly.\n"
+            f"Please select only one assembly in supply-type-dhw-district."
+        )
+
+    if len(cs_assemblies) > 1:
+        raise ValueError(
+            f"Multiple district cooling assembly types detected: {cs_assemblies}\n"
+            f"All buildings in a district cooling network must use the same assembly.\n"
+            f"Please select only one assembly in supply-type-cs-district."
+        )
+
+    # Cross-check: hs and dhw assemblies must reference the same equipment components
+    # (the district plant is one physical installation serving both services)
+    if hs_assemblies and dhw_assemblies:
+        validate_component_levels_match(
+            next(iter(hs_assemblies)),
+            next(iter(dhw_assemblies)),
+            locator
         )
 
 
@@ -1015,9 +989,6 @@ def aggregate_buildings_summary(
                         carrier_totals[carrier] = 0.0
                     carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
 
-        # Calculate total final energy
-        TOTAL_MWh = sum(carrier_totals.values())
-
         # Calculate peak demand
         total_demand_kW = df['Qhs_sys_kWh'] + df['Qww_sys_kWh'] + df['Qcs_sys_kWh'] + df['E_sys_kWh']
         peak_idx = total_demand_kW.idxmax()
@@ -1045,11 +1016,10 @@ def aggregate_buildings_summary(
             'E_sys_MWh': E_sys_MWh,
         }
 
-        # Add carrier columns
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+        # Add purchased/imported carrier columns (excludes solar generation)
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
-        row['TOTAL_MWh'] = TOTAL_MWh
         row['peak_demand_kW'] = peak_demand_kW
         row['peak_datetime'] = peak_datetime
 
@@ -1115,9 +1085,6 @@ def aggregate_buildings_summary(
                         carrier_totals[carrier] = 0.0
                     carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
 
-        # Calculate total final energy
-        TOTAL_MWh = sum(carrier_totals.values())
-
         # Build row
         row = {
             'name': plant_name,
@@ -1134,11 +1101,10 @@ def aggregate_buildings_summary(
             'E_sys_MWh': pumping_MWh,
         }
 
-        # Add carrier columns
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+        # Add purchased/imported carrier columns (excludes solar generation)
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
-        row['TOTAL_MWh'] = TOTAL_MWh
         row['peak_demand_kW'] = peak_demand_kW
         row['peak_datetime'] = peak_datetime
 
@@ -1201,16 +1167,23 @@ def create_hourly_timeseries_aggregation(
         for col in df.columns:
             if col.endswith('_kWh') and col not in demand_columns and col != 'date':
                 # Extract carrier from column name
-                # Formats: Qhs_sys_NATURALGAS_kWh, PV_roof_kWh, SOLAR_wall_north_kWh
-                if '_sys_' in col:
-                    # Service-specific carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
+                # Formats:
+                #   Qhs_sys_NATURALGAS_kWh          -> NATURALGAS
+                #   PV_{facade}_kWh                 -> PV
+                #   PVT_{collector}_{facade}_E_kWh  -> PV  (electrical)
+                #   PVT_{collector}_{facade}_Q_kWh  -> SOLAR  (thermal)
+                #   SC_{collector}_{facade}_kWh     -> SOLAR
+                if '_sys_' in col or '_booster_' in col:
+                    # Service/booster carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                     parts = col.split('_')
                     carrier = parts[2] if len(parts) >= 3 else col
                 elif col.startswith('PV_'):
-                    # Solar electrical: PV_roof_kWh, PV_total_kWh -> PV
                     carrier = 'PV'
-                elif col.startswith('SOLAR_'):
-                    # Solar thermal: SOLAR_roof_kWh, SOLAR_total_kWh -> SOLAR
+                elif col.startswith('PVT_') and col.endswith('_E_kWh'):
+                    carrier = 'PV'
+                elif col.startswith('PVT_') and col.endswith('_Q_kWh'):
+                    carrier = 'SOLAR'
+                elif col.startswith('SC_'):
                     carrier = 'SOLAR'
                 else:
                     continue
@@ -1594,31 +1567,24 @@ def calculate_solar_generation(
     """
     Calculate hourly solar energy generation for a building from all configured facades.
 
-    Returns generation broken down by facade plus totals (only non-zero columns):
-    - PV_roof_kWh, PV_wall_north_kWh, etc. (electricity from PV or PVT)
-    - SOLAR_roof_kWh, SOLAR_wall_north_kWh, etc. (heat from SC or PVT)
-    - PV_total_kWh, SOLAR_total_kWh (totals, if any generation exists)
+    Returns generation broken down by facade (only non-zero columns):
+    - PV_{facade}_kWh                — electricity from PV
+    - PVT_{collector}_{facade}_E_kWh — electricity from PVT (e.g. PVT_FP_roof_E_kWh)
+    - PVT_{collector}_{facade}_Q_kWh — heat from PVT     (e.g. PVT_FP_roof_Q_kWh)
+    - SC_{collector}_{facade}_kWh    — heat from SC      (e.g. SC_FP_roof_kWh, SC_ET_roof_kWh)
 
     All values are positive kWh (8760 hourly rows).
-    Only columns with non-zero generation are included to save space.
-
-    Column naming from solar potential files:
-    - PV: PV_roofs_top_E_kWh, PV_walls_north_E_kWh, etc.
-    - PVT: PVT_FP_roofs_top_E_kWh (electrical), PVT_FP_roofs_top_Q_kWh (thermal)
-    - SC: SC_FP_roofs_top_Q_kWh (thermal)
 
     :param building_name: Building name (e.g., 'B1001')
     :param config: Configuration instance
     :param locator: InputLocator instance
-    :return: Dict with keys like 'PV_roof_kWh', 'SOLAR_roof_kWh', 'PV_total_kWh', etc.
+    :return: Dict with facade-level generation columns
     """
     # Parse panel configuration
     panel_config = parse_solar_panel_configuration(config)
 
     # Initialize generation dict - only add columns that have actual generation
     generation = {}
-    pv_total = pd.Series([0.0] * HOURS_IN_YEAR)
-    solar_total = pd.Series([0.0] * HOURS_IN_YEAR)
 
     # Process each facade
     for facade, tech_code in panel_config.items():
@@ -1632,33 +1598,29 @@ def calculate_solar_generation(
         parts = tech_code.split('_')
         tech_type = parts[0]  # 'PV', 'PVT', or 'SC'
 
-        # Map facade name to surface name in columns
-        if facade == 'roof':
-            surface_name = 'roofs_top'
-        elif facade == 'wall_north':
-            surface_name = 'walls_north'
-        elif facade == 'wall_south':
-            surface_name = 'walls_south'
-        elif facade == 'wall_east':
-            surface_name = 'walls_east'
-        elif facade == 'wall_west':
-            surface_name = 'walls_west'
-        else:
+        # Map facade name to surface name used in source file columns
+        surface_map = {
+            'roof': 'roofs_top',
+            'wall_north': 'walls_north',
+            'wall_south': 'walls_south',
+            'wall_east': 'walls_east',
+            'wall_west': 'walls_west',
+        }
+        if facade not in surface_map:
             continue
+        surface_name = surface_map[facade]
 
-        # Construct column names based on technology type and actual file format
         if tech_type == 'PV':
-            # PV: PV_roofs_top_E_kWh
+            # Column: PV_roofs_top_E_kWh → output: PV_{facade}_kWh
             e_col = f'PV_{surface_name}_E_kWh'
             if e_col in solar_df.columns:
                 pv_gen = solar_df[e_col].values
-                if pv_gen.sum() > 0:  # Only add if non-zero
+                if pv_gen.sum() > 0:
                     generation[f'PV_{facade}_kWh'] = pd.Series(pv_gen)
-                    pv_total += pv_gen
 
         elif tech_type == 'PVT':
-            # PVT: PVT_FP_roofs_top_E_kWh and PVT_FP_roofs_top_Q_kWh
-            # Extract collector type (FP, ET, etc.) - it's the part after PV panel type
+            # Columns: PVT_FP_roofs_top_E_kWh / PVT_FP_roofs_top_Q_kWh
+            # Output:  PVT_FP_{facade}_E_kWh  / PVT_FP_{facade}_Q_kWh
             collector_type = parts[2] if len(parts) > 2 else parts[1]
             e_col = f'PVT_{collector_type}_{surface_name}_E_kWh'
             q_col = f'PVT_{collector_type}_{surface_name}_Q_kWh'
@@ -1666,31 +1628,21 @@ def calculate_solar_generation(
             if e_col in solar_df.columns:
                 pv_gen = solar_df[e_col].values
                 if pv_gen.sum() > 0:
-                    generation[f'PV_{facade}_kWh'] = pd.Series(pv_gen)
-                    pv_total += pv_gen
+                    generation[f'PVT_{collector_type}_{facade}_E_kWh'] = pd.Series(pv_gen)
 
             if q_col in solar_df.columns:
                 solar_gen = solar_df[q_col].values
                 if solar_gen.sum() > 0:
-                    generation[f'SOLAR_{facade}_kWh'] = pd.Series(solar_gen)
-                    solar_total += solar_gen
+                    generation[f'PVT_{collector_type}_{facade}_Q_kWh'] = pd.Series(solar_gen)
 
         elif tech_type == 'SC':
-            # SC: SC_FP_roofs_top_Q_kWh
-            # Extract collector type
-            collector_type = parts[1]
+            # Column: SC_FP_roofs_top_Q_kWh → output: SC_FP_{facade}_kWh
+            collector_type = parts[1]  # 'FP' or 'ET'
             q_col = f'SC_{collector_type}_{surface_name}_Q_kWh'
 
             if q_col in solar_df.columns:
                 solar_gen = solar_df[q_col].values
                 if solar_gen.sum() > 0:
-                    generation[f'SOLAR_{facade}_kWh'] = pd.Series(solar_gen)
-                    solar_total += solar_gen
-
-    # Add totals only if there's any generation
-    if pv_total.sum() > 0:
-        generation['PV_total_kWh'] = pv_total
-    if solar_total.sum() > 0:
-        generation['SOLAR_total_kWh'] = solar_total
+                    generation[f'SC_{collector_type}_{facade}_kWh'] = pd.Series(solar_gen)
 
     return generation

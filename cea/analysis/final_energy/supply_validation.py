@@ -35,6 +35,81 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def validate_whatif_params(locator, config):
+    """
+    Validate that all required assembly parameters are set for what-if mode.
+
+    Loads connectivity.json to determine which buildings are connected to DH/DC,
+    then checks that the corresponding district and building assembly params are set.
+    Raises a single ValueError listing all missing params before any buildings are processed.
+
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :raises ValueError: If any required assembly parameter is not set
+    """
+    network_name = config.final_energy.network_name
+
+    dh_buildings: set = set()
+    dc_buildings: set = set()
+    if network_name:
+        try:
+            connectivity = load_network_connectivity(locator, network_name)
+            dh_buildings = set(
+                connectivity.get('networks', {}).get('DH', {}).get('per_building_services', {}).keys()
+            )
+            dc_buildings = set(
+                connectivity.get('networks', {}).get('DC', {}).get('per_building_services', {}).keys()
+            )
+        except ValueError:
+            pass  # No connectivity.json → treat all buildings as standalone
+
+    # Load all buildings to determine standalone set
+    try:
+        import geopandas as gpd
+        zone_gdf = gpd.read_file(locator.get_zone_geometry())
+        all_buildings = set(zone_gdf['name'].tolist())
+    except Exception:
+        all_buildings = set()
+
+    standalone_dh = all_buildings - dh_buildings
+    standalone_dc = all_buildings - dc_buildings
+
+    missing = []
+
+    if dh_buildings and not config.final_energy.supply_type_hs_district:
+        missing.append(
+            f"  - 'supply-type-hs-district': required for {len(dh_buildings)} DH-connected building(s)"
+        )
+    if standalone_dh and not config.final_energy.supply_type_hs_building:
+        missing.append(
+            f"  - 'supply-type-hs-building': required for {len(standalone_dh)} standalone building(s)"
+        )
+    if dh_buildings and not config.final_energy.supply_type_dhw_district:
+        missing.append(
+            f"  - 'supply-type-dhw-district': required for {len(dh_buildings)} DH-connected building(s)"
+        )
+    if standalone_dh and not config.final_energy.supply_type_dhw_building:
+        missing.append(
+            f"  - 'supply-type-dhw-building': required for {len(standalone_dh)} standalone building(s)"
+        )
+    if dc_buildings and not config.final_energy.supply_type_cs_district:
+        missing.append(
+            f"  - 'supply-type-cs-district': required for {len(dc_buildings)} DC-connected building(s)"
+        )
+    if standalone_dc and not config.final_energy.supply_type_cs_building:
+        missing.append(
+            f"  - 'supply-type-cs-building': required for {len(standalone_dc)} standalone building(s)"
+        )
+
+    if missing:
+        raise ValueError(
+            "What-if mode requires all assembly parameters to be explicitly set.\n"
+            "The following parameters are missing:\n"
+            + "\n".join(missing)
+            + "\n\nPlease set these parameters in the Energy by Carrier settings."
+        )
+
+
 def validate_supply_consistency(locator, config):
     """
     Validate supply.csv is consistent with network connectivity.
