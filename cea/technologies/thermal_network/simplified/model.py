@@ -505,12 +505,12 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                   If None, all buildings use all services (legacy behavior)
     """
     # local variables
-    min_head_substation_kPa = config.thermal_network.min_head_substation
+    min_head_substation_kPa = config.thermal_network_simplified.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
-    coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
-    velocity_ms = config.thermal_network.peak_load_velocity
+    coefficient_friction_hazen_williams = config.thermal_network_simplified.hw_friction_coefficient
+    velocity_ms = config.thermal_network_simplified.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
-    peak_load_percentage = config.thermal_network.peak_load_percentage
+    peak_load_percentage = config.thermal_network_simplified.peak_load_percentage
 
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
