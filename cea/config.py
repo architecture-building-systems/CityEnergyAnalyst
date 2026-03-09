@@ -834,7 +834,7 @@ class WhatIfNameParameter(StringParameter):
         locator = cea.inputlocator.InputLocator(scenario)
 
         # Check if final-energy folder exists for this what-if name
-        whatif_folder = locator.get_final_energy_folder(value)
+        whatif_folder = locator.get_analysis_folder(value)
         if os.path.exists(whatif_folder):
             raise ValueError(
                 f"What-if (sub)scenario '{value}' already exists. "
