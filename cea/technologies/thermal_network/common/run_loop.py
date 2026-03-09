@@ -6,15 +6,19 @@ import os
 import traceback
 
 
-def validate_and_resolve_mode(config, locator):
+def validate_and_resolve_mode(config, locator, section=None):
     """
     Validate network count vs multi_phase_mode and return (network_name, network_names).
 
     Returns (network_name, None) for single-phase mode.
     Returns (None, network_names) for multi-phase mode.
     Raises ValueError on invalid configuration.
+
+    :param section: config section to read network_name from (defaults to config.thermal_network)
     """
-    network_names = config.thermal_network.network_name  # List
+    if section is None:
+        section = config.thermal_network
+    network_names = section.network_name  # List
     multi_phase_mode = config.thermal_network_phasing.multi_phase_mode  # Boolean
     num_networks = len(network_names)
 
@@ -88,15 +92,19 @@ def validate_network_name(locator, network_name):
             raise ValueError("Network name is required. Please select a network layout.")
 
 
-def run_network_types_loop(config, locator, network_name, run_single_network_type, model_label):
+def run_network_types_loop(config, locator, network_name, run_single_network_type, model_label,
+                           section=None):
     """
-    Iterate over config.thermal_network.network_type, call run_single_network_type for each,
+    Iterate over network_type, call run_single_network_type for each,
     accumulate errors, and print a summary.
 
     :param run_single_network_type: callable(locator, config, network_type, network_name)
     :param model_label: label string for display (e.g. "Simplified" or "Detailed")
+    :param section: config section to read network_type from (defaults to config.thermal_network)
     """
-    network_types = config.thermal_network.network_type
+    if section is None:
+        section = config.thermal_network
+    network_types = section.network_type
     errors = {}
     succeeded = []
 

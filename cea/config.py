@@ -834,7 +834,7 @@ class WhatIfNameParameter(StringParameter):
         locator = cea.inputlocator.InputLocator(scenario)
 
         # Check if final-energy folder exists for this what-if name
-        whatif_folder = locator.get_final_energy_folder(value)
+        whatif_folder = locator.get_analysis_folder(value)
         if os.path.exists(whatif_folder):
             raise ValueError(
                 f"What-if (sub)scenario '{value}' already exists. "
@@ -849,6 +849,8 @@ class WhatIfNameParameter(StringParameter):
         Raises ValueError if name contains invalid characters or collides with existing scenario.
         """
         if not str(value) or str(value).strip() == '':
+            if self.nullable:
+                return ''
             raise ValueError("What-if name is required. Please provide a valid name.")
 
         return self._validate_whatif_name(str(value))

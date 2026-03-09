@@ -50,6 +50,8 @@ class Configuration:
     test: TestSection
     trace_inputlocator: TraceInputlocatorSection
     thermal_network: ThermalNetworkSection
+    thermal_network_simplified: ThermalNetworkSimplifiedSection
+    thermal_network_detailed: ThermalNetworkDetailedSection
     thermal_network_phasing: ThermalNetworkPhasingSection
     thermal_network_optimization: ThermalNetworkOptimizationSection
     optimization: OptimizationSection
@@ -166,6 +168,10 @@ class Configuration:
     def __getattr__(self, item: Literal["trace_inputlocator"]) -> TraceInputlocatorSection: ...
     @overload
     def __getattr__(self, item: Literal["thermal_network"]) -> ThermalNetworkSection: ...
+    @overload
+    def __getattr__(self, item: Literal["thermal_network_simplified"]) -> ThermalNetworkSimplifiedSection: ...
+    @overload
+    def __getattr__(self, item: Literal["thermal_network_detailed"]) -> ThermalNetworkDetailedSection: ...
     @overload
     def __getattr__(self, item: Literal["thermal_network_phasing"]) -> ThermalNetworkPhasingSection: ...
     @overload
@@ -1000,21 +1006,7 @@ class ThermalNetworkSection(Section):
     dh_temperature_mode: str
     network_temperature_dh: float
     network_temperature_dc: float
-    min_head_substation: float
-    hw_friction_coefficient: int
-    peak_load_velocity: float
     equivalent_length_factor: float
-    peak_load_percentage: float
-    set_diameter: bool
-    load_max_edge_flowrate_from_previous_run: bool
-    start_t: int
-    stop_t: int
-    use_representative_week_per_month: bool
-    minimum_mass_flow_iteration_limit: int
-    minimum_edge_mass_flow: float
-    diameter_iteration_limit: int
-    substation_cooling_systems: list[str]
-    substation_heating_systems: list[str]
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> list[str]: ...
@@ -1027,15 +1019,39 @@ class ThermalNetworkSection(Section):
     @overload
     def __getattr__(self, item: Literal["network_temperature_dc"]) -> float: ...
     @overload
+    def __getattr__(self, item: Literal["equivalent_length_factor"]) -> float: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class ThermalNetworkSimplifiedSection(Section):
+    """Typed section for thermal-network-simplified configuration"""
+    min_head_substation: float
+    hw_friction_coefficient: int
+    peak_load_velocity: float
+    peak_load_percentage: float
+
+    @overload
     def __getattr__(self, item: Literal["min_head_substation"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["hw_friction_coefficient"]) -> int: ...
     @overload
     def __getattr__(self, item: Literal["peak_load_velocity"]) -> float: ...
     @overload
-    def __getattr__(self, item: Literal["equivalent_length_factor"]) -> float: ...
-    @overload
     def __getattr__(self, item: Literal["peak_load_percentage"]) -> float: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class ThermalNetworkDetailedSection(Section):
+    """Typed section for thermal-network-detailed configuration"""
+    set_diameter: bool
+    load_max_edge_flowrate_from_previous_run: bool
+    start_t: int
+    stop_t: int
+    use_representative_week_per_month: bool
+    minimum_mass_flow_iteration_limit: int
+    minimum_edge_mass_flow: float
+    diameter_iteration_limit: int
+    substation_cooling_systems: list[str]
+    substation_heating_systems: list[str]
+
     @overload
     def __getattr__(self, item: Literal["set_diameter"]) -> bool: ...
     @overload

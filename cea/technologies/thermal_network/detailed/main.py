@@ -47,7 +47,7 @@ def main(config: cea.config.Configuration):
                     if hasattr(base_config, attr):
                         setattr(self, attr, getattr(base_config, attr))
 
-        per_network_config = NetworkConfig(config.thermal_network, network_type)
+        per_network_config = NetworkConfig(config.thermal_network_detailed, network_type)
         thermal_network = ThermalNetwork(locator, network_name, per_network_config)
         thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
 

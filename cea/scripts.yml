@@ -252,13 +252,15 @@ Thermal Network Design:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: "Thermal Network Part 2: flow & sizing (Simplified)"
-    short_description: Solve thermal hydraulic network flow and sizing using simplified model
-    description: This feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout), using the simplified model.
+    label: "Thermal Network Part 2: flow & sizing"
+    short_description: Solve thermal hydraulic network flow and sizing using an EPANET-based model
+    description: |
+      This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
     interfaces: [cli, dashboard]
     module: cea.technologies.thermal_network.simplified.main
     parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network']
+                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network',
+                 'thermal-network-simplified']
     input-files:
       - [get_demand_results_file, building_name]
       - [get_db4_components_conversion_folder]
@@ -268,11 +270,12 @@ Thermal Network Design:
   - name: thermal-network-detailed
     label: "Thermal Network Part 2: flow & sizing (Detailed)"
     short_description: Solve thermal hydraulic network flow and sizing using detailed model
-    description: This feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout), using the detailed EPANET-based model.
+    description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
     interfaces: [cli]
     module: cea.technologies.thermal_network.detailed.main
     parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network']
+                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network',
+                 'thermal-network-detailed']
     input-files:
       - [get_demand_results_file, building_name]
       - [get_db4_components_conversion_folder]
