@@ -286,14 +286,14 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                 'buildings': building_configs
             }
 
-            config_file = locator.get_final_energy_supply_configuration_file(whatif_name)
+            config_file = locator.get_analysis_configuration_file(whatif_name)
             locator.ensure_parent_folder_exists(config_file)
             with open(config_file, 'w') as f:
                 json.dump(config_data, f, indent=2, default=str)
-            print(f"  ✓ supply_configuration.json")
+            print("  ✓ configuration.json")
 
         except Exception as e:
-            print(f"  ✗ supply_configuration.json: {str(e)}")
+            print(f"  ✗ configuration.json: {str(e)}")
     else:
         print("  - No buildings processed, skipping compilation files")
 
