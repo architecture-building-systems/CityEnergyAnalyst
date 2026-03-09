@@ -565,14 +565,14 @@ class FinalEnergySection(Section):
     overwrite_supply_settings: bool
     what_if_name: str | None
     network_name: str | None
+    dhw_booster_type_building: str | None
+    hs_booster_type_building: str | None
     supply_type_cs_building: str | None
     supply_type_cs_district: str | None
     supply_type_hs_building: str | None
     supply_type_hs_district: str | None
     supply_type_dhw_building: str | None
     supply_type_dhw_district: str | None
-    hs_booster_type_building: str | None
-    dhw_booster_type_building: str | None
 
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
@@ -580,6 +580,10 @@ class FinalEnergySection(Section):
     def __getattr__(self, item: Literal["what_if_name"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["dhw_booster_type_building"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["hs_booster_type_building"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["supply_type_cs_building"]) -> str | None: ...
     @overload
@@ -592,10 +596,6 @@ class FinalEnergySection(Section):
     def __getattr__(self, item: Literal["supply_type_dhw_building"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["supply_type_dhw_district"]) -> str | None: ...
-    @overload
-    def __getattr__(self, item: Literal["hs_booster_type_building"]) -> str | None: ...
-    @overload
-    def __getattr__(self, item: Literal["dhw_booster_type_building"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class SolarTechnologySection(Section):

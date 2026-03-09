@@ -19,7 +19,6 @@ from cea.technologies.thermal_network.physics import calc_temperature_out_per_pi
 from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
-from cea.utilities.date import get_date_range_hours_from_year
 from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 
