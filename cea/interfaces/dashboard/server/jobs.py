@@ -141,7 +141,7 @@ async def get_jobs(
     """
     Get a paginated list of jobs for the current project with optional filtering.
 
-    Returns jobs ordered by creation time (most recent first), paginated by `limit` and `page`.
+    Returns jobs ordered by creation time (most recent first), paginated by `limit` and `offset`.
     Jobs are filtered by deleted_at field rather than state to preserve completion states.
     """
     query = select(JobInfo).where(JobInfo.project_id == project_id)
