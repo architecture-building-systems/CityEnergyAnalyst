@@ -849,6 +849,8 @@ class WhatIfNameParameter(StringParameter):
         Raises ValueError if name contains invalid characters or collides with existing scenario.
         """
         if not str(value) or str(value).strip() == '':
+            if self.nullable:
+                return ''
             raise ValueError("What-if name is required. Please provide a valid name.")
 
         return self._validate_whatif_name(str(value))
