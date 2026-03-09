@@ -20,7 +20,6 @@ __status__ = "Production"
 import os
 import shutil
 import pandas as pd
-from typing import Optional
 
 import cea.config
 import cea.inputlocator

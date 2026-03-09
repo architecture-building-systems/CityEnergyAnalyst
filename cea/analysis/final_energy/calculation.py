@@ -28,7 +28,6 @@ from typing import Dict, Optional, Tuple
 
 import cea.config
 import cea.inputlocator
-from cea.utilities.dbf import dbf_to_dataframe
 
 
 # Constants
