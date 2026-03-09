@@ -65,18 +65,22 @@ def main(config: cea.config.Configuration):
             print(f"Mode: Production (what-if: {whatif_name}, no district networks)")
 
     # Step 2: Create output folder
+    # Track the what-if analysis folder (parent of final-energy/ and configuration.json)
+    # so that on failure the entire what-if folder is cleaned up, not just final-energy/.
+    analysis_folder = locator.get_analysis_folder(whatif_name)
+    analysis_folder_was_created = not os.path.exists(analysis_folder)
+
     output_folder = locator.get_final_energy_folder(whatif_name)
-    folder_was_created = not os.path.exists(output_folder)
-    if folder_was_created:
+    if not os.path.exists(output_folder):
         os.makedirs(output_folder)
         print(f"Created output folder: {output_folder}")
 
     try:
         _run(config, locator, whatif_name, output_folder, buildings=None)
     except Exception:
-        if folder_was_created and os.path.exists(output_folder):
-            shutil.rmtree(output_folder)
-            print(f"Removed output folder due to error: {output_folder}")
+        if analysis_folder_was_created and os.path.exists(analysis_folder):
+            shutil.rmtree(analysis_folder)
+            print(f"Removed output folder due to error: {analysis_folder}")
         raise
 
 
