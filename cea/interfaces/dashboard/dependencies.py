@@ -239,7 +239,7 @@ def get_project_root(user_id: CEAUserID) -> Optional[str]:
             raise ValueError("Project root not set. Unable to determine project root.")
         project_root = os.path.join(os.path.normpath(project_root), user_id)
 
-    logger.info(f"Using project root: {project_root}")
+    logger.debug(f"Using project root: {project_root}")
     return project_root
 
 
