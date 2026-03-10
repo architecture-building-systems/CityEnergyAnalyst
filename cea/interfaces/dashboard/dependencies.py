@@ -96,7 +96,7 @@ class CEADatabaseConfig(cea.config.Configuration):
         return out
 
     async def read(self) -> None:
-        logger.info("Reading config from database")
+        cea_db_config_logger.debug(f"Reading config for user: {self._user_id}")
 
         # Try to get config from cache first
         _cache = get_cache()
@@ -108,23 +108,26 @@ class CEADatabaseConfig(cea.config.Configuration):
             cea_db_config_logger.debug(f"Using cached config for user: {self._user_id}")
             self.user_config = config.user_config
             return
-        else:
-            logger.warning(f"Cache miss: {self._user_id}")
+
+        cea_db_config_logger.debug(f"Cache miss for user: {self._user_id}")
 
         async with get_session_context() as session:
             try:
                 result = await session.execute(select(Config).where(Config.user_id == self._user_id))
                 _config = result.scalar()
                 if _config:
-                    cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
+                    cea_db_config_logger.debug(f"Reading config from database for user: {self._user_id}")
                     self.from_dict(_config.config)
             except Exception as e:
-                logger.error(e)
-                cea_db_config_logger.warning("Returning local config")
+                cea_db_config_logger.error(f"Error reading config from database: {e}")
+                cea_db_config_logger.warning("Returning default config")
+
+        await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
+        cea_db_config_logger.debug(f"Cached config for user: {self._user_id}")
 
     async def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
-        logger.info("Saving config to database")
+        cea_db_config_logger.debug(f"Saving config for user: {self._user_id}")
 
         # Update config object in cache
         _cache = get_cache()
