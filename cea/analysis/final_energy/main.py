@@ -65,24 +65,25 @@ def main(config: cea.config.Configuration):
             print(f"Mode: Production (what-if: {whatif_name}, no district networks)")
 
     # Step 2: Create output folder
-    # Track the what-if analysis folder (parent of final-energy/ and configuration.json)
-    # so that on failure the entire what-if folder is cleaned up, not just final-energy/.
     analysis_folder = locator.get_analysis_folder(whatif_name)
-    analysis_folder_was_created = not os.path.exists(analysis_folder)
+    analysis_folder_is_new = not os.path.exists(analysis_folder)
 
     output_folder = locator.get_final_energy_folder(whatif_name)
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
         print(f"Created output folder: {output_folder}")
 
-    buildings = config.final_energy.buildings if config.final_energy.buildings else None
-
     try:
-        _run(config, locator, whatif_name, output_folder, buildings=buildings)
+        _run(config, locator, whatif_name, output_folder, buildings=None)
     except Exception:
-        if analysis_folder_was_created and os.path.exists(analysis_folder):
+        # Always remove the final-energy output folder on failure — it may be partial.
+        if os.path.exists(output_folder):
+            shutil.rmtree(output_folder)
+            print(f"Removed output folder due to error: {output_folder}")
+        # If the analysis folder was newly created this run, remove it entirely.
+        if analysis_folder_is_new and os.path.exists(analysis_folder):
             shutil.rmtree(analysis_folder)
-            print(f"Removed output folder due to error: {analysis_folder}")
+            print(f"Removed analysis folder due to error: {analysis_folder}")
         raise
 
 
@@ -171,37 +172,46 @@ def _run(config, locator, whatif_name, output_folder, buildings):
 
     # Step 5: Calculate for district plants
     plant_dfs = {}
+    plant_configs = {}
     network_name = config.final_energy.network_name
     if network_name:
         print(f"\nDistrict network: {network_name}")
         print("Calculating district plant final energy...")
 
-        from cea.analysis.final_energy.calculation import calculate_plant_final_energy
+        from cea.analysis.final_energy.calculation import (
+            calculate_plant_final_energy,
+            derive_plant_config,
+        )
 
         # Determine which network types to process
         network_types = []
-        if 'DH' in building_configs and any(
-            cfg.get('space_heating') and cfg['space_heating']['scale'] == 'DISTRICT'
+        if any(
+            cfg.get('space_heating', {}).get('carrier') == 'DH' or
+            cfg.get('hot_water', {}).get('carrier') == 'DH'
             for cfg in building_configs.values()
         ):
             network_types.append('DH')
-        if 'DC' in building_configs and any(
-            cfg.get('space_cooling') and cfg['space_cooling']['scale'] == 'DISTRICT'
+        if any(
+            cfg.get('space_cooling', {}).get('carrier') == 'DC'
             for cfg in building_configs.values()
         ):
             network_types.append('DC')
 
         # If no district buildings found, try to detect from network files
         if not network_types:
-            # Check if DH network exists
             dh_folder = locator.get_output_thermal_network_type_folder('DH', network_name)
             if os.path.exists(dh_folder):
                 network_types.append('DH')
 
-            # Check if DC network exists
             dc_folder = locator.get_output_thermal_network_type_folder('DC', network_name)
             if os.path.exists(dc_folder):
                 network_types.append('DC')
+
+        # Derive plant configs from building district configs
+        for network_type in network_types:
+            pc = derive_plant_config(building_configs, network_type, locator)
+            if pc:
+                plant_configs[network_type] = pc
 
         # Calculate for each network type
         for network_type in network_types:
@@ -229,7 +239,8 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                     plant_name = plant_row['name']
                     try:
                         plant_df = calculate_plant_final_energy(
-                            network_name, network_type, plant_name, locator, config
+                            network_name, network_type, plant_name, locator, config,
+                            plant_config=plant_configs.get(network_type)
                         )
 
                         # Save individual plant file
@@ -300,7 +311,8 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                     'timestamp': datetime.now().isoformat(),
                     'network_name': config.final_energy.network_name,
                 },
-                'buildings': building_configs
+                'buildings': building_configs,
+                'plants': plant_configs,
             }
 
             config_file = locator.get_analysis_configuration_file(whatif_name)

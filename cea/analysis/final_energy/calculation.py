@@ -461,6 +461,52 @@ def load_component_info(
         raise ValueError(f"Unknown component type for code {component_code}")
 
 
+def derive_plant_config(
+    building_configs: Dict,
+    network_type: str,
+    locator: cea.inputlocator.InputLocator
+) -> Optional[Dict]:
+    """
+    Derive plant configuration from building district supply configs.
+
+    Finds the first DISTRICT-scale building for the given network type and extracts
+    primary/secondary/tertiary component codes plus carrier and efficiency for the plant.
+
+    :param building_configs: Dict of building_name → supply config (from configuration.json)
+    :param network_type: 'DH' or 'DC'
+    :param locator: InputLocator instance
+    :return: Plant config dict or None if no district buildings found
+    """
+    service_keys = ['space_heating', 'hot_water'] if network_type == 'DH' else ['space_cooling']
+    carrier_label = 'DH' if network_type == 'DH' else 'DC'
+
+    for supply_cfg in building_configs.values():
+        for service_key in service_keys:
+            cfg = supply_cfg.get(service_key)
+            if not cfg or cfg.get('carrier') != carrier_label:
+                continue
+
+            primary_component = cfg.get('primary_component')
+            if not primary_component:
+                continue
+
+            component_info = load_component_info(primary_component, locator)
+            carrier = component_info['carrier']
+            efficiency = component_info['efficiency']
+
+            return {
+                'network_type': network_type,
+                'assembly_code': cfg.get('assembly_code', ''),
+                'primary_component': primary_component,
+                'secondary_component': cfg.get('secondary_component'),
+                'tertiary_component': cfg.get('tertiary_component'),
+                'carrier': carrier,
+                'efficiency': efficiency,
+            }
+
+    return None
+
+
 def map_fuel_code_to_carrier(fuel_code: str) -> str:
     """
     Map database fuel codes to carrier names.
@@ -827,7 +873,8 @@ def calculate_plant_final_energy(
     network_type: str,
     plant_name: str,
     locator: cea.inputlocator.InputLocator,
-    config: cea.config.Configuration
+    config: cea.config.Configuration,
+    plant_config: Optional[Dict] = None
 ) -> pd.DataFrame:
     """
     Calculate hourly final energy consumption for one district plant.
@@ -873,31 +920,14 @@ def calculate_plant_final_energy(
     else:
         pumping_load_kWh = np.zeros(len(thermal_load_kWh))
 
-    # Step 3: Get plant equipment configuration
-    # For what-if mode: use config parameters
-    # For production mode: read from network metadata or use defaults
-
-    if config.final_energy.overwrite_supply_settings:
-        # What-if mode: use configured plant type
-        # TODO: Add plant-type parameter to config
-        # For now, use default based on network type
-        if network_type == 'DH':
-            # Default: Natural gas boiler
-            plant_carrier = 'NATURALGAS'
-            plant_efficiency = 0.85
-        else:
-            # Default: Electric chiller
-            plant_carrier = 'GRID'
-            plant_efficiency = 3.0  # COP
-    else:
-        # Production mode: try to detect from network metadata
-        # For now, use defaults (can be enhanced later)
-        if network_type == 'DH':
-            plant_carrier = 'NATURALGAS'
-            plant_efficiency = 0.85
-        else:
-            plant_carrier = 'GRID'
-            plant_efficiency = 3.0
+    # Step 3: Get plant equipment configuration from building district configs
+    if not plant_config:
+        raise ValueError(
+            f"No plant configuration found for {network_type} plant '{plant_name}'. "
+            "Ensure district buildings are configured with a DISTRICT-scale supply assembly."
+        )
+    plant_carrier = plant_config['carrier']
+    plant_efficiency = plant_config['efficiency']
 
     # Step 4: Calculate final energy consumption
     # Plant fuel/electricity = thermal load / efficiency

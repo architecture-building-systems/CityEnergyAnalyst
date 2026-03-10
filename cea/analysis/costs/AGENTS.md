@@ -40,10 +40,10 @@ TAC = Capex_a + Opex_fixed_a + Opex_var_a
 | DISTRICT (building) | 0 | 0 | 0 (at plant level) |
 | Plant row | From default component | component cost | carrier_MWh × feedstock_price |
 
-**Plant default components**:
-- DH + NATURALGAS → BO1, efficiency=0.85
-- DH + GRID → HP1, efficiency=0.85
-- DC + GRID → CH1, efficiency=3.0
+**Plant components** (from `configuration.json['plants']`):
+- Derived during final-energy from the DISTRICT-scale supply assembly of connected buildings
+- e.g., AS9 → `primary_component=BO1`, carrier=NATURALGAS, efficiency=0.85
+- Fallback hardcoded defaults only when `plants` section is absent
 
 ## Key Patterns
 

@@ -51,18 +51,6 @@ COMPONENT_PREFIX_TO_TABLE = {
     'PVT': 'PHOTOVOLTAIC_THERMAL_PANELS',
 }
 
-# Default plant components by network type and dominant carrier
-PLANT_DEFAULT_COMPONENTS = {
-    'DH': {'NATURALGAS': 'BO1', 'OIL': 'BO2', 'COAL': 'BO4', 'WOOD': 'BO6', 'GRID': 'HP1'},
-    'DC': {'GRID': 'CH1'},
-}
-
-# Default plant efficiencies
-PLANT_DEFAULT_EFFICIENCY = {
-    'DH': 0.85,
-    'DC': 3.0,
-}
-
 
 def _get_component_row(component_code, locator):
     """Return the first matching component row for the given code."""
@@ -304,7 +292,7 @@ def _process_electricity_service(building_name, supply_cfg, peak_kW, grid_MWh, l
     }
 
 
-def _process_plant_row(plant_row, locator):
+def _process_plant_row(plant_row, plant_configs, locator):
     """Compute costs for a district plant from the summary row."""
     rows = []
     plant_name = plant_row['name']
@@ -321,24 +309,20 @@ def _process_plant_row(plant_row, locator):
     else:
         return rows
 
-    # Find dominant non-pumping carrier
-    thermal_carriers = ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID']
-    dominant_carrier = None
-    dominant_mwh = 0.0
-    for c in thermal_carriers:
-        mwh = plant_row.get(f'{c}_MWh', 0.0) or 0.0
-        if mwh > dominant_mwh:
-            dominant_mwh = mwh
-            dominant_carrier = c
-
-    if not dominant_carrier:
+    # Load plant config from configuration.json (set during final-energy from district assembly)
+    pc = plant_configs.get(network_type)
+    if not pc:
         return rows
 
-    component_code = PLANT_DEFAULT_COMPONENTS.get(network_type, {}).get(dominant_carrier)
-    if not component_code:
+    component_code = pc.get('primary_component')
+    efficiency = pc.get('efficiency')
+    dominant_carrier = pc.get('carrier')
+    assembly_code = pc.get('assembly_code', '')
+
+    if not component_code or not efficiency or not dominant_carrier:
         return rows
 
-    efficiency = PLANT_DEFAULT_EFFICIENCY.get(network_type, 1.0)
+    dominant_mwh = plant_row.get(f'{dominant_carrier}_MWh', 0.0) or 0.0
     capacity_kW = peak_kW / efficiency
 
     try:
@@ -357,7 +341,7 @@ def _process_plant_row(plant_row, locator):
 
     rows.append({
         'name': plant_name, 'service': service_label, 'scale': 'DISTRICT',
-        'assembly_code': '', 'component_code': component_code,
+        'assembly_code': assembly_code, 'component_code': component_code,
         'carrier': dominant_carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
         'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
         'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
@@ -580,6 +564,7 @@ def calculate_costs_for_whatif(whatif_name, locator):
     with open(config_file) as f:
         config_data = json.load(f)
     building_configs = config_data.get('buildings', {})
+    plant_configs = config_data.get('plants', {})
 
     summary_file = locator.get_final_energy_buildings_file(whatif_name)
     if not os.path.exists(summary_file):
@@ -646,7 +631,7 @@ def calculate_costs_for_whatif(whatif_name, locator):
     if 'type' in summary_df.columns:
         plant_rows_df = summary_df[summary_df['type'] == 'plant']
         for _, row in plant_rows_df.iterrows():
-            component_rows.extend(_process_plant_row(row, locator))
+            component_rows.extend(_process_plant_row(row, plant_configs, locator))
 
     # --- Solar costs ---
     all_names = list(building_rows_df['name'])
