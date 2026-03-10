@@ -5,7 +5,8 @@ from enum import IntEnum
 from typing import Optional
 
 from pydantic import AwareDatetime, computed_field
-from sqlalchemy import Index
+from sqlalchemy import Index, Column, Text
+from sqlalchemy.orm import deferred
 from sqlmodel import Field, SQLModel, JSON, DateTime, BigInteger, select, inspect, text
 
 import cea.scripts
@@ -134,8 +135,12 @@ class JobInfo(SQLModel, table=True):
             return (self.end_time - self.start_time).total_seconds()
         return None
 
+# Defer stdout/stderr — large text columns excluded from all queries by default
+JobInfo.stdout = deferred(Column(Text), group='logs')  # type: ignore[assignment]
+JobInfo.stderr = deferred(Column(Text), group='logs')  # type: ignore[assignment]
+
 # Composite index on (project_id, created_time DESC) for efficient job listing queries
-Index("ix_job_project_id_created_time_desc", JobInfo.__table__.c.project_id, JobInfo.__table__.c.created_time.desc())
+Index("ix_job_project_id_created_time_desc", JobInfo.__table__.c.project_id, JobInfo.__table__.c.created_time.desc()) # type: ignore
 
 
 class Download(SQLModel, table=True):
