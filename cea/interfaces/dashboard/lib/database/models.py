@@ -6,7 +6,6 @@ from typing import Optional
 
 from pydantic import AwareDatetime, computed_field
 from sqlalchemy import Index
-from sqlalchemy.sql.expression import desc
 from sqlmodel import Field, SQLModel, JSON, DateTime, BigInteger, select, inspect, text
 
 import cea.scripts
@@ -92,9 +91,6 @@ class Project(SQLModel, table=True):
 
 class JobInfo(SQLModel, table=True):
     __tablename__ = "job"
-    __table_args__ = (
-        Index("ix_job_project_id_created_time_desc", "project_id", desc("created_time")),
-    )
 
     """Store all the information required to run a job"""
     id: str = Field(default_factory=lambda: uuid.uuid4().hex, primary_key=True)
@@ -137,6 +133,9 @@ class JobInfo(SQLModel, table=True):
         if self.start_time is not None and self.end_time is not None:
             return (self.end_time - self.start_time).total_seconds()
         return None
+
+# Composite index on (project_id, created_time DESC) for efficient job listing queries
+Index("ix_job_project_id_created_time_desc", JobInfo.__table__.c.project_id, JobInfo.__table__.c.created_time.desc())
 
 
 class Download(SQLModel, table=True):
