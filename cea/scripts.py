@@ -4,6 +4,7 @@ Provides the list of scripts known to the CEA - to be used by interfaces built o
 
 
 import os
+from functools import lru_cache
 from typing import List, TYPE_CHECKING
 
 import yaml
@@ -130,18 +131,27 @@ class CeaScript(object):
         return result
 
 
-def list_scripts(plugins):
-    """List all scripts in scripts.yml and those defined in configured plugins
-    :parameter List[CeaPlugin] plugins: the list of plugins to include in the search for scripts.
-    """
+@lru_cache(maxsize=1)
+def _load_scripts_yml() -> List[CeaScript]:
+    """Load and parse scripts.yml once for the lifetime of the process."""
     with open(SCRIPTS_YML, "r") as fp:
         scripts_by_category = yaml.load(fp, Loader=yaml.CLoader)
-    for plugin in plugins:
-        scripts_by_category.update(plugin.scripts)
+    return [
+        CeaScript(script_dict, category)
+        for category, scripts in scripts_by_category.items()
+        for script_dict in scripts
+    ]
 
-    for category in scripts_by_category.keys():
-        for script_dict in scripts_by_category[category]:
-            yield CeaScript(script_dict, category)
+
+def list_scripts(plugins):
+    """List all scripts in scripts.yml and those defined in configured plugins.
+    :parameter List[CeaPlugin] plugins: the list of plugins to include in the search for scripts.
+    """
+    yield from _load_scripts_yml()
+    for plugin in plugins:
+        for category, scripts in plugin.scripts.items():
+            for script_dict in scripts:
+                yield CeaScript(script_dict, category)
 
 
 def by_name(script_name, plugins=None):
