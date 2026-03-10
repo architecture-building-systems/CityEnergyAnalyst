@@ -463,6 +463,17 @@ class data_processor:
                 'heat_rejection': 'heat_rejection_kWh'
             }
 
+        elif plot_cea_feature == 'final-energy':
+            y_cea_metric_map = {
+                'carrier_grid_electricity':   'GRID_kWh',
+                'carrier_natural_gas':        'NATURALGAS_kWh',
+                'carrier_district_heating':   'DH_kWh',
+                'carrier_district_cooling':   'DC_kWh',
+                'carrier_oil':                'OIL_kWh',
+                'carrier_coal':               'COAL_kWh',
+                'carrier_wood':               'WOOD_kWh',
+            }
+
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
 
@@ -671,7 +682,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
 
     # Step 2: Handle "by_building" mode
     if plot_instance.x_to_plot == 'by_building':
-        if plot_cea_feature in ('demand',  'operational-emissions', 'lifecycle-emissions', 'heat-rejection'):
+        if plot_cea_feature in ('demand', 'final-energy', 'operational-emissions', 'lifecycle-emissions', 'heat-rejection'):
             df_to_plotly = normalise_dataframe_by_index(df_y_metrics, normaliser_m2)
 
         elif plot_cea_feature in ('pv', 'pvt', 'sc'):
@@ -918,7 +929,7 @@ def normalise_dataframe_columns_by_m2_columns(df_y_metrics):
 def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list, scenario=None):
     plot_instance_b = data_processor(plot_config, plot_config_general, plots_building_filter, plot_instance_a, plot_cea_feature, df_summary_data, df_architecture_data, solar_panel_types_list, scenario)
 
-    if plot_cea_feature in ["demand", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions", "heat-rejection"]:
+    if plot_cea_feature in ["demand", "final-energy", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions", "heat-rejection"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature, scenario)
 
         if plot_instance_b.x_to_plot in x_to_plot_building:

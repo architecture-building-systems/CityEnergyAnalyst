@@ -57,6 +57,20 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         if column_name.startswith(cea_col):
             return display_name
 
+    # Final energy carrier display names
+    final_energy_display_names = {
+        'GRID_kWh': 'Grid Electricity',
+        'NATURALGAS_kWh': 'Natural Gas',
+        'DH_kWh': 'District Heating',
+        'DC_kWh': 'District Cooling',
+        'OIL_kWh': 'Oil',
+        'COAL_kWh': 'Coal',
+        'WOOD_kWh': 'Wood',
+    }
+    for cea_col, display_name in final_energy_display_names.items():
+        if column_name.startswith(cea_col):
+            return display_name
+
     # Solar surface mapping
     surface_mappings = {
         'roofs_top': 'roofs_top',
@@ -181,6 +195,8 @@ class bar_plot:
                 title = "CEA-4 Operational Emissions"
             elif plot_cea_feature == 'heat-rejection':
                 title = "CEA-4 Anthropogenic Heat Rejection"
+            elif plot_cea_feature == 'final-energy':
+                title = "CEA-4 Building Final Energy by Carrier"
             else:
                 raise ValueError(f"Invalid plot_cea_feature: {plot_cea_feature}. Please add the title mapping.")
 
@@ -203,6 +219,22 @@ class bar_plot:
                     y_label = "Energy Demand (Wh/yr)"
                 elif self.y_metric_unit == 'Wh' and self.y_normalised_by != 'no_normalisation':
                     y_label = "Energy Use Intensity (Wh/yr/m2)"
+                else:
+                    raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
+
+            elif plot_cea_feature == 'final-energy':
+                if self.y_metric_unit == 'MWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Final Energy (MWh/yr)"
+                elif self.y_metric_unit == 'MWh' and self.y_normalised_by != 'no_normalisation':
+                    y_label = "Final Energy Use Intensity (MWh/yr/m2)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Final Energy (kWh/yr)"
+                elif self.y_metric_unit == 'kWh' and self.y_normalised_by != 'no_normalisation':
+                    y_label = "Final Energy Use Intensity (kWh/yr/m2)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by == 'no_normalisation':
+                    y_label = "Final Energy (Wh/yr)"
+                elif self.y_metric_unit == 'Wh' and self.y_normalised_by != 'no_normalisation':
+                    y_label = "Final Energy Use Intensity (Wh/yr/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
 

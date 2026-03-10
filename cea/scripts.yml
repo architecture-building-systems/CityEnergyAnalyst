@@ -818,6 +818,18 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
+  - name: plot-final-energy
+    label: Plot - Building Final Energy by Carrier
+    short_description: Plot bar chart of final energy consumption by energy carrier
+    description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (electricity grid, natural gas, district heating, etc.)
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-final-energy, plots-building-filter]
+    input-files:
+      - [get_final_energy_buildings_file, plots-final-energy:what-if-name]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
   - name: plot-heat-rejection
     label: Plot - Anthropogenic Heat Rejection
     short_description: Plot bar chart of building anthropogenic heat rejection

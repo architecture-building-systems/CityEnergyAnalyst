@@ -217,6 +217,8 @@ _BASE_COLUMN_COLORS = {
     "OIL": "blue_light",
     "HYDROGEN": "uuen_blue_light",
     "NONE": "grey",
+    "DH": "red",
+    "DC": "blue",
 
     "PV_PV1_offset_total": "yellow",
     "PV_PV2_offset_total": "yellow",

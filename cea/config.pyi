@@ -77,6 +77,7 @@ class Configuration:
     plots_general: PlotsGeneralSection
     plots_building_filter: PlotsBuildingFilterSection
     plots_demand: PlotsDemandSection
+    plots_final_energy: PlotsFinalEnergySection
     plots_heat_rejection: PlotsHeatRejectionSection
     plots_lifecycle_emissions: PlotsLifecycleEmissionsSection
     plots_operational_emissions: PlotsOperationalEmissionsSection
@@ -222,6 +223,8 @@ class Configuration:
     def __getattr__(self, item: Literal["plots_building_filter"]) -> PlotsBuildingFilterSection: ...
     @overload
     def __getattr__(self, item: Literal["plots_demand"]) -> PlotsDemandSection: ...
+    @overload
+    def __getattr__(self, item: Literal["plots_final_energy"]) -> PlotsFinalEnergySection: ...
     @overload
     def __getattr__(self, item: Literal["plots_heat_rejection"]) -> PlotsHeatRejectionSection: ...
     @overload
@@ -562,7 +565,6 @@ class DemandSection(Section):
 
 class FinalEnergySection(Section):
     """Typed section for final-energy configuration"""
-    buildings: list[str]
     overwrite_supply_settings: bool
     what_if_name: str
     network_name: str | None
@@ -575,8 +577,6 @@ class FinalEnergySection(Section):
     supply_type_dhw_building: str | None
     supply_type_dhw_district: str | None
 
-    @overload
-    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["overwrite_supply_settings"]) -> bool: ...
     @overload
@@ -1716,6 +1716,26 @@ class PlotsDemandSection(Section):
     y_normalised_by: str
     x_to_plot: str
 
+    @overload
+    def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["x_to_plot"]) -> str: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PlotsFinalEnergySection(Section):
+    """Typed section for plots-final-energy configuration"""
+    what_if_name: str
+    y_metric_to_plot: list[str]
+    y_metric_unit: str
+    y_normalised_by: str
+    x_to_plot: str
+
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload

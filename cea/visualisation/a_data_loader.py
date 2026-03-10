@@ -93,6 +93,8 @@ def raise_missing_pv_error(pv_codes, context='file'):
 demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_electricity', 'enduse_cooling_demand', 'enduse_space_cooling_demand', 'enduse_space_cooling', 'enduse_heating_demand', 'enduse_space_heating_demand', 'enduse_space_heating', 'enduse_dhw_demand', 'enduse_dhw']
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
 
+final_energy_metrics = ['carrier_grid_electricity', 'carrier_natural_gas', 'carrier_district_heating', 'carrier_district_cooling', 'carrier_oil', 'carrier_coal', 'carrier_wood']
+
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
 
@@ -105,6 +107,7 @@ def get_plot_metrics_dict(locator):
 
     return {
         'demand': demand_metrics,
+        'final-energy': final_energy_metrics,
         'pv': solar_metrics,
         'pvt': solar_metrics,
         'sc': solar_metrics,
@@ -120,6 +123,7 @@ def get_plot_analytics_dict(locator):
     # This doesn't need emission context, but kept for consistency
     return {
         'demand': demand_analytics,
+        'final-energy': [],
         'pv': solar_analytics,
         'pvt': [],
         'sc': [],
@@ -127,6 +131,69 @@ def get_plot_analytics_dict(locator):
         'operational-emissions': [],
         'heat-rejection': []
     }
+
+def _export_final_energy_to_plots_folder(locator, whatif_name, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
+    """
+    Read final_energy_buildings.csv for the given what-if scenario and write an
+    intermediate CSV to the standard export/plots path expected by the pipeline.
+
+    Carrier columns are converted from MWh to kWh so the pipeline's unit-
+    conversion logic (which expects _kWh suffixes) works without modification.
+
+    Column mapping (final_energy_buildings.csv → intermediate CSV):
+        GRID_MWh        → GRID_kWh
+        NATURALGAS_MWh  → NATURALGAS_kWh
+        DH_MWh          → DH_kWh
+        DC_MWh          → DC_kWh
+        OIL_MWh         → OIL_kWh
+        COAL_MWh        → COAL_kWh
+        WOOD_MWh        → WOOD_kWh
+        GFA_m2          → GFA_m2  (pass-through for normalisation)
+    """
+    src_path = locator.get_final_energy_buildings_file(whatif_name)
+    df = pd.read_csv(src_path)
+
+    # Filter to building rows only (exclude plant rows)
+    if 'type' in df.columns:
+        df = df[df['type'] == 'building'].copy()
+
+    # Optionally filter to selected buildings
+    if buildings:
+        df = df[df['name'].isin(buildings)].copy()
+
+    carrier_rename = {
+        'GRID_MWh': 'GRID_kWh',
+        'NATURALGAS_MWh': 'NATURALGAS_kWh',
+        'DH_MWh': 'DH_kWh',
+        'DC_MWh': 'DC_kWh',
+        'OIL_MWh': 'OIL_kWh',
+        'COAL_MWh': 'COAL_kWh',
+        'WOOD_MWh': 'WOOD_kWh',
+    }
+
+    keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
+    df_out = df[keep_cols].copy()
+
+    # Convert MWh → kWh and rename
+    for mwh_col, kwh_col in carrier_rename.items():
+        if mwh_col in df_out.columns:
+            df_out[mwh_col] = df_out[mwh_col] * 1000.0
+    df_out = df_out.rename(columns=carrier_rename)
+
+    if bool_aggregate_by_building:
+        # Add 'period' column expected by pipeline for annually aggregated building data
+        df_out['period'] = 'annually'
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'final-energy', 'final-energy', time_period, period_start, period_end
+        )
+    else:
+        out_path = locator.get_export_results_summary_cea_feature_time_period_file(
+            locator.get_export_plots_folder(), 'final-energy', 'final-energy', time_period, period_start, period_end
+        )
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    df_out.to_csv(out_path, index=False, float_format='%.3f')
+
 
 # Trigger the summary feature and point to the csv results file
 class csv_pointer:
@@ -210,6 +277,15 @@ class csv_pointer:
 
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
+        if self.plot_cea_feature == 'final-energy':
+            whatif_name = self.config.what_if_name
+            _export_final_energy_to_plots_folder(
+                self.locator, whatif_name, self.buildings,
+                self.bool_aggregate_by_building, self.time_period,
+                self.period_start, self.period_end
+            )
+            return
+
         list_metrics_analytics = get_plot_analytics_dict(self.locator).get(self.plot_cea_feature, [])
         if any(item in list_metrics_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = True
