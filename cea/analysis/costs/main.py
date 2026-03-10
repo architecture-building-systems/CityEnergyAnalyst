@@ -1,16 +1,28 @@
 """
-Baseline costs for supply systems - Main entry point.
+System costs calculation based on final-energy results.
 
-This module provides the main entry point and orchestration logic for baseline
-cost calculations. The detailed cost calculation functions are in supply_costs.py.
+Reads supply configuration and final-energy results to calculate CAPEX and OPEX
+for each building's energy service systems.
+
+Data sources (sole source of truth):
+- configuration.json: per-building supply configs (component, scale, efficiency, carrier)
+- final_energy_buildings.csv: annual summary (carrier MWh, service MWh, peak kW)
+- B####.csv hourly files: per-service peak demand and booster annual energy
+- outputs/data/potentials/solar/*_total_buildings.csv: installed solar area
 """
 
+import json
+import os
+from math import log, ceil
+
 import pandas as pd
-from cea.inputlocator import InputLocator
+
 import cea.config
+from cea.inputlocator import InputLocator
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Zhongming Shi"
-__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -18,370 +30,714 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# Carrier name → feedstock CSV file name mapping
+CARRIER_TO_FEEDSTOCK = {
+    'NATURALGAS': 'NATURALGAS',
+    'OIL': 'OIL',
+    'COAL': 'COAL',
+    'WOOD': 'WOOD',
+    'GRID': 'GRID',
+}
 
-def validate_network_results_exist(locator, network_name, network_type):
+# Component code prefix → COMPONENTS table name
+COMPONENT_PREFIX_TO_TABLE = {
+    'BO': 'BOILERS',
+    'HP': 'HEAT_PUMPS',
+    'CH': 'VAPOR_COMPRESSION_CHILLERS',
+    'CT': 'COOLING_TOWERS',
+    'AC': 'ABSORPTION_CHILLERS',
+    'PV': 'PHOTOVOLTAIC_PANELS',
+    'SC': 'SOLAR_COLLECTORS',
+    'PVT': 'PHOTOVOLTAIC_THERMAL_PANELS',
+}
+
+# Default plant components by network type and dominant carrier
+PLANT_DEFAULT_COMPONENTS = {
+    'DH': {'NATURALGAS': 'BO1', 'OIL': 'BO2', 'COAL': 'BO4', 'WOOD': 'BO6', 'GRID': 'HP1'},
+    'DC': {'GRID': 'CH1'},
+}
+
+# Default plant efficiencies
+PLANT_DEFAULT_EFFICIENCY = {
+    'DH': 0.85,
+    'DC': 3.0,
+}
+
+
+def _get_component_row(component_code, locator):
+    """Return the first matching component row for the given code."""
+    for prefix, table_name in COMPONENT_PREFIX_TO_TABLE.items():
+        if component_code.upper().startswith(prefix):
+            path = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
+            df = pd.read_csv(path)
+            rows = df[df['code'] == component_code]
+            if not rows.empty:
+                return rows.iloc[0], table_name
+            return None, table_name
+    raise ValueError(f"Unknown component code prefix: {component_code}")
+
+
+def _calc_cost_curve(quantity, row):
     """
-    Check if thermal-network results exist for the given network and type.
+    Apply cost curve: InvC = a + b*Q^c + (d + e*Q)*ln(Q)
 
-    :param locator: InputLocator instance
-    :param network_name: Name of the network layout
-    :param network_type: 'DH' or 'DC'
-    :return: tuple of (is_valid: bool, error_message: str or None)
+    :param quantity: Raw quantity in the component's native unit (W for thermal/PV/PVT, m² for SC)
+    :param row: Component database row with a,b,c,d,e,cap_min,cap_max,IR_%,LT_yr,O&M_%
+    :return: (capex_total_USD, capex_a_USD, opex_fixed_a_USD)
     """
-    import os
+    if quantity <= 0:
+        return 0.0, 0.0, 0.0
 
-    # Check for required thermal-network output files
-    network_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-    layout_folder = os.path.join(network_folder, 'layout')
+    cap_min = row.get('cap_min', 1)
+    cap_max = row.get('cap_max', float('inf'))
+    if quantity < cap_min:
+        quantity = cap_min
 
-    # Required files from thermal-network
-    nodes_file = os.path.join(layout_folder, 'nodes.shp')
-    edges_file = os.path.join(layout_folder, 'edges.shp')
+    if quantity <= cap_max:
+        Q = quantity
+        n_units = 1
+    else:
+        n_units = int(ceil(quantity / cap_max))
+        Q = quantity / n_units
 
-    missing_files = []
-    if not os.path.exists(nodes_file):
-        missing_files.append(nodes_file)
-    if not os.path.exists(edges_file):
-        missing_files.append(edges_file)
+    a, b, c, d, e = row['a'], row['b'], row['c'], row['d'], row['e']
+    IR_pct = row['IR_%']
+    LT_yr = row['LT_yr']
+    OM_frac = row['O&M_%'] / 100.0
 
-    if missing_files:
-        error_msg = f"Thermal-network results not found for network '{network_name}' ({network_type}).\n\n"
-        error_msg += "Missing files:\n"
-        for f in missing_files:
-            error_msg += f"  - {f}\n"
-        error_msg += "\nPlease run 'thermal-network' script (both part 1 and part 2) before running baseline-costs.\n"
-        error_msg += "Alternatively, select a different network layout that has been completed."
-        return False, error_msg
+    InvC_unit = a + b * Q ** c + (d + e * Q) * log(Q)
+    InvC = InvC_unit * n_units
 
-    return True, None
+    capex_a = calc_capex_annualized(InvC, IR_pct, LT_yr)
+    opex_fixed_a = InvC * OM_frac
+
+    return InvC, capex_a, opex_fixed_a
 
 
-def merge_network_type_costs(all_results):
+def _calc_component_cost(component_code, capacity_kW, locator):
     """
-    Merge heating and cooling costs for each building.
+    Calculate CAPEX and O&M for a component at a given capacity in kW.
+    Converts kW to W before applying the cost curve.
 
-    :param all_results: dict of {network_type: {building_name: results}}
-    :return: dict of {building_name: {network_type: results}}
+    :return: (capex_total_USD, capex_a_USD, opex_fixed_a_USD)
     """
-    merged = {}
+    comp_row, _ = _get_component_row(component_code, locator)
+    if comp_row is None:
+        raise ValueError(f"Component {component_code} not found in database")
 
-    # Get all building names across all network types
-    all_buildings = set()
-    for network_type, results in all_results.items():
-        all_buildings.update(results.keys())
-
-    for building_name in all_buildings:
-        merged[building_name] = {}
-        for network_type, results in all_results.items():
-            if building_name in results:
-                merged[building_name][network_type] = results[building_name]
-
-    return merged
+    Q_W = capacity_kW * 1000.0
+    return _calc_cost_curve(Q_W, comp_row)
 
 
-def baseline_costs_main(locator, config):
+def _mean_feedstock_price(carrier, locator):
     """
-    Calculate baseline costs for heating and/or cooling systems.
-
-    :param locator: InputLocator instance
-    :param config: Configuration instance
-    :return: DataFrame with cost results
+    Return mean annual variable buy price (USD/kWh) for a carrier.
+    Feedstock files have 24 hourly rows; take the mean.
     """
-    from cea.analysis.costs.supply_costs import (
-        calculate_all_buildings_as_standalone,
-        calculate_standalone_building_costs,
-        calculate_costs_for_network_type
-    )
+    feedstock_name = CARRIER_TO_FEEDSTOCK.get(carrier)
+    if not feedstock_name:
+        return 0.0
+    path = locator.get_db4_components_feedstocks_feedstocks_csv(feedstock_name)
+    if not os.path.exists(path):
+        return 0.0
+    df = pd.read_csv(path)
+    if 'Opex_var_buy_USD2015kWh' not in df.columns:
+        return 0.0
+    return float(df['Opex_var_buy_USD2015kWh'].mean())
 
-    # Get network types (can be list like ['DH', 'DC'] or single value like 'DH')
-    network_types = config.system_costs.network_type
-    if isinstance(network_types, str):
-        network_types = [network_types]
 
-    # Get network name - can be None/empty to assess all buildings as standalone
-    network_name = config.system_costs.network_name
+def _per_service_peaks_and_booster(building_name, whatif_name, supply_cfg, locator):
+    """
+    Read hourly final-energy file for a building.
 
-    print(f"\n{'='*70}")
-    print("BUILDING ENERGY SUPPLY SYSTEM COSTS CALCULATION")
-    print(f"{'='*70}")
+    Returns:
+    - peaks: dict with per-service peak kW for hs/ww/cs/E
+    - booster_data: dict with per-booster-service (hs_booster/ww_booster) →
+                    {peak_kW, annual_kWh, carrier}
+    """
+    path = locator.get_final_energy_building_file(building_name, whatif_name)
+    if not os.path.exists(path):
+        return {'hs': 0.0, 'ww': 0.0, 'cs': 0.0, 'E': 0.0}, {}
 
-    # Check if user selected "(none)" - assess all buildings as standalone
-    if not network_name or network_name == '' or network_name == '(none)':
-        print("Mode: STANDALONE ONLY (all buildings assessed as standalone systems)")
-        print("District-scale supply systems will be treated as building-scale for cost calculations.")
+    df = pd.read_csv(path)
 
-        # Calculate ALL buildings as standalone (ignore district-scale designation)
-        all_results = calculate_all_buildings_as_standalone(locator, config)
+    peaks = {
+        'hs': float(df['Qhs_sys_kWh'].max()) if 'Qhs_sys_kWh' in df.columns else 0.0,
+        'ww': float(df['Qww_sys_kWh'].max()) if 'Qww_sys_kWh' in df.columns else 0.0,
+        'cs': float(df['Qcs_sys_kWh'].max()) if 'Qcs_sys_kWh' in df.columns else 0.0,
+        'E': float(df['E_sys_kWh'].max()) if 'E_sys_kWh' in df.columns else 0.0,
+    }
 
-        # Format using the same formatter as normal mode
-        merged_results = merge_network_type_costs(all_results)
-        from cea.analysis.costs.format_simplified import format_output_simplified
-        final_results, detailed_results = format_output_simplified(merged_results, locator)
+    booster_data = {}
+    for booster_key, service_label in [('space_heating_booster', 'hs_booster'),
+                                        ('hot_water_booster', 'ww_booster')]:
+        booster_cfg = supply_cfg.get(booster_key)
+        if not booster_cfg or not isinstance(booster_cfg, dict):
+            continue
+        if booster_cfg.get('scale') == 'NONE' or booster_cfg.get('scale') is None:
+            continue
+        carrier = booster_cfg.get('carrier')
+        if not carrier:
+            continue
 
-        # Calculate solar panel costs
-        print(f"\n{'-'*70}")
-        print("Calculating solar panel costs...")
-        from cea.analysis.costs.solar_costs import calculate_building_solar_costs, merge_solar_costs_to_buildings
-        import geopandas as gpd
-
-        # Get ALL buildings from zone geometry (solar is independent of network connectivity)
-        zone_gdf = gpd.read_file(locator.get_zone_geometry())
-        all_building_names = zone_gdf['name'].tolist()
-
-        # Filter by config.system_costs_solar.buildings if specified
-        if config.system_costs_solar.buildings:
-            all_building_names = [b for b in all_building_names if b in config.system_costs_solar.buildings]
-
-        solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
-
-        # Append solar details to costs_components.csv
-        if not solar_details.empty:
-            detailed_results = pd.concat([detailed_results, solar_details], ignore_index=True)
-            print(f"  Added {len(solar_details)} solar panel component rows")
-
-        # Add/update solar costs in costs_buildings.csv
-        if not solar_summary.empty:
-            final_results = merge_solar_costs_to_buildings(final_results, solar_summary)
-            print(f"  Updated costs for {len(solar_summary)} buildings with solar panels")
-
-        # Sort results by building name
-        final_results = final_results.sort_values('name').reset_index(drop=True)
-        detailed_results = detailed_results.sort_values('name').reset_index(drop=True)
-
-        # Save results
-        print(f"\n{'-'*70}")
-        print("Saving results...")
-
-        # Clean up existing results folder for standalone mode (if it exists)
-        import os
-        import shutil
-        output_file = locator.get_baseline_costs(network_name=None)
-        output_folder = os.path.dirname(output_file)
-
-        if os.path.exists(output_folder):
-            print(f"  Cleaning up existing results: {output_folder}")
-            shutil.rmtree(output_folder)
-
-        locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=None))
-        final_results.to_csv(locator.get_baseline_costs(network_name=None), index=False, float_format='%.2f', na_rep='nan')
-        detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=None), index=False, float_format='%.2f', na_rep='nan')
-
-        print(f"\n{'='*70}")
-        print("COMPLETED (Standalone Mode)")
-        print(f"{'='*70}")
-        print(f"Summary: {locator.get_baseline_costs(network_name=None)}")
-        print(f"Detailed: {locator.get_baseline_costs_detailed(network_name=None)}")
-        print("\nNote: Standalone-only mode provides simplified cost estimates")
-        return
-
-    print("Mode: NETWORK (+ STANDALONE)")
-    print(f"Network layout: {network_name}")
-    print(f"Network types: {', '.join(network_types)}")
-
-    # Validate that thermal-network part 2 has been run for each network type
-    print(f"\n{'-'*70}")
-    print("Validating thermal-network results...")
-    validation_errors = {}
-    valid_network_types = []
-
-    for network_type in network_types:
-        is_valid, error_msg = validate_network_results_exist(locator, network_name, network_type)
-        if is_valid:
-            print(f"  ✓ {network_type} network '{network_name}' results found")
-            valid_network_types.append(network_type)
+        # Column name: Qhs_booster_{carrier}_kWh or Qww_booster_{carrier}_kWh
+        prefix = 'Qhs' if 'heating' in booster_key else 'Qww'
+        col = f'{prefix}_booster_{carrier}_kWh'
+        if col in df.columns:
+            peak_kW = float(df[col].max())
+            annual_kWh = float(df[col].sum())
         else:
-            validation_errors[network_type] = error_msg
+            peak_kW = 0.0
+            annual_kWh = 0.0
 
-    # If no network types passed validation, stop here
-    if not valid_network_types:
-        print(f"\n{'='*70}")
-        print("VALIDATION ERRORS")
-        print(f"{'='*70}")
-        for network_type, error in validation_errors.items():
-            print(f"\n{network_type} network:\n{error}\n")
-        raise ValueError(
-            f"All network types failed validation ({', '.join(network_types)}). "
-            "See errors above."
+        booster_data[service_label] = {
+            'peak_kW': peak_kW,
+            'annual_kWh': annual_kWh,
+            'carrier': carrier,
+            'component_code': booster_cfg.get('primary_component'),
+            'efficiency': booster_cfg.get('efficiency', 1.0),
+            'assembly_code': booster_cfg.get('assembly_code', ''),
+        }
+
+    return peaks, booster_data
+
+
+def _process_building_service(building_name, service_label, supply_cfg_key, supply_cfg,
+                               peak_kW, carrier_MWh, locator):
+    """Compute costs for one building service (hs/ww/cs)."""
+    cfg = supply_cfg.get(supply_cfg_key)
+    if not cfg or cfg.get('scale') == 'NONE':
+        return None
+
+    scale = cfg.get('scale', 'BUILDING')
+    component_code = cfg.get('primary_component')
+    efficiency = cfg.get('efficiency')
+    carrier = cfg.get('carrier')
+    assembly_code = cfg.get('assembly_code', '')
+
+    if scale == 'DISTRICT':
+        return {
+            'name': building_name, 'service': service_label, 'scale': scale,
+            'assembly_code': assembly_code, 'component_code': None,
+            'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
+            'Capex_total_USD': 0.0, 'Capex_a_USD': 0.0,
+            'Opex_fixed_a_USD': 0.0, 'Opex_var_a_USD': 0.0, 'TAC_USD': 0.0,
+        }
+
+    if not component_code or not efficiency or efficiency <= 0:
+        return None
+
+    capacity_kW = peak_kW / efficiency if peak_kW > 0 else 0.0
+
+    try:
+        capex_total, capex_a, opex_fixed_a = _calc_component_cost(
+            component_code, capacity_kW, locator
         )
+    except (ValueError, ZeroDivisionError) as e:
+        print(f"    Warning: CAPEX calc failed for {building_name} {service_label} ({component_code}): {e}")
+        capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
 
-    # Show validation warnings for failed network types (but continue with valid ones)
-    if validation_errors:
-        print(f"\n{'-'*70}")
-        print("VALIDATION WARNINGS")
-        print(f"{'-'*70}")
-        for network_type, error in validation_errors.items():
-            print(f"\n{network_type} network:\n{error}\n")
-        print(f"Continuing with valid network types: {', '.join(valid_network_types)}")
+    carrier_mwh = carrier_MWh.get(carrier, 0.0) if carrier else 0.0
+    price = _mean_feedstock_price(carrier, locator) if carrier else 0.0
+    opex_var_a = carrier_mwh * 1000.0 * price
 
-    all_results = {}
+    tac = capex_a + opex_fixed_a + opex_var_a
+    return {
+        'name': building_name, 'service': service_label, 'scale': scale,
+        'assembly_code': assembly_code, 'component_code': component_code,
+        'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+        'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
+        'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+    }
 
-    # Calculate standalone building costs ONCE for all services (not per network_type)
-    # Standalone buildings should show all their systems regardless of which networks are being analyzed
-    print(f"\n{'-'*70}")
-    print("Calculating standalone building costs...")
-    standalone_results = calculate_standalone_building_costs(locator, config, network_name)
 
-    # Calculate costs for each VALID network type
-    calculation_errors = {}
-    succeeded = []
+def _process_booster_services(building_name, booster_data, locator):
+    """Compute costs for all booster services of a building."""
+    rows = []
+    for service_label, bd in booster_data.items():
+        peak_kW = bd['peak_kW']
+        annual_kWh = bd['annual_kWh']
+        carrier = bd['carrier']
+        component_code = bd['component_code']
+        efficiency = bd['efficiency'] or 1.0
+        assembly_code = bd['assembly_code']
 
-    for network_type in valid_network_types:
-        print(f"\n{'-'*70}")
-        print(f"Calculating {network_type} district network costs...")
+        if not component_code or peak_kW <= 0:
+            continue
+
+        capacity_kW = peak_kW / efficiency
+
         try:
-            results = calculate_costs_for_network_type(
-                locator, config, network_type, network_name, standalone_results,
-                all_selected_network_types=valid_network_types
+            capex_total, capex_a, opex_fixed_a = _calc_component_cost(
+                component_code, capacity_kW, locator
             )
-            all_results[network_type] = results
-            succeeded.append(network_type)
-        except ValueError as e:
-            # Check if this is a "no demand" or "no supply system" error
-            error_msg = str(e)
-            if "None of the components chosen" in error_msg or "T30W" in error_msg or "T10W" in error_msg:
-                # Show detailed error if it's an energy carrier mismatch
-                if "ERROR: Insufficient capacity" in error_msg:
-                    # This is our detailed error message - show it
-                    print(error_msg)
-                else:
-                    # Generic message for simple cases
-                    print(f"  ⚠ Skipping {network_type}: No valid supply systems")
-                    print(f"    (Expected for scenarios with no {network_type} demand)")
-                calculation_errors[network_type] = error_msg
-                continue
-            else:
-                # Re-raise other errors
-                raise
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"    Warning: CAPEX calc failed for {building_name} {service_label} ({component_code}): {e}")
+            capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
 
-    # Check if we got any results
-    if not all_results:
-        print(f"\n{'='*70}")
-        print("CALCULATION ERRORS")
-        print(f"{'='*70}")
-        for network_type, error in calculation_errors.items():
-            print(f"\n{network_type} network:\n{error}\n")
-        raise ValueError(
-            "No valid supply systems found for any of the selected network types.\n"
-            f"Selected network types: {', '.join(network_types)}\n\n"
-            "Please check that:\n"
-            "1. Buildings have supply systems configured in Building Properties/Supply settings\n"
-            "2. The selected network type matches the building demands (DH for heating, DC for cooling)"
+        price = _mean_feedstock_price(carrier, locator)
+        opex_var_a = annual_kWh * price  # kWh × USD/kWh = USD
+
+        tac = capex_a + opex_fixed_a + opex_var_a
+        rows.append({
+            'name': building_name, 'service': service_label, 'scale': 'BUILDING',
+            'assembly_code': assembly_code, 'component_code': component_code,
+            'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
+            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+        })
+    return rows
+
+
+def _process_electricity_service(building_name, supply_cfg, peak_kW, grid_MWh, locator):
+    """Compute variable OPEX for electricity (grid connection — no CAPEX)."""
+    cfg = supply_cfg.get('electricity')
+    assembly_code = cfg.get('assembly_code', '') if cfg else ''
+    price = _mean_feedstock_price('GRID', locator)
+    opex_var_a = grid_MWh * 1000.0 * price
+    return {
+        'name': building_name, 'service': 'E', 'scale': 'BUILDING',
+        'assembly_code': assembly_code, 'component_code': None,
+        'carrier': 'GRID', 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
+        'Capex_total_USD': 0.0, 'Capex_a_USD': 0.0,
+        'Opex_fixed_a_USD': 0.0, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': opex_var_a,
+    }
+
+
+def _process_plant_row(plant_row, locator):
+    """Compute costs for a district plant from the summary row."""
+    rows = []
+    plant_name = plant_row['name']
+    peak_kW = plant_row.get('peak_demand_kW', 0.0) or 0.0
+    if peak_kW <= 0:
+        return rows
+
+    # Infer network type from case_description (set during final-energy from configuration.json)
+    case_desc = plant_row.get('case_description', '') or ''
+    if 'DH' in case_desc:
+        network_type = 'DH'
+    elif 'DC' in case_desc:
+        network_type = 'DC'
+    else:
+        return rows
+
+    # Find dominant non-pumping carrier
+    thermal_carriers = ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID']
+    dominant_carrier = None
+    dominant_mwh = 0.0
+    for c in thermal_carriers:
+        mwh = plant_row.get(f'{c}_MWh', 0.0) or 0.0
+        if mwh > dominant_mwh:
+            dominant_mwh = mwh
+            dominant_carrier = c
+
+    if not dominant_carrier:
+        return rows
+
+    component_code = PLANT_DEFAULT_COMPONENTS.get(network_type, {}).get(dominant_carrier)
+    if not component_code:
+        return rows
+
+    efficiency = PLANT_DEFAULT_EFFICIENCY.get(network_type, 1.0)
+    capacity_kW = peak_kW / efficiency
+
+    try:
+        capex_total, capex_a, opex_fixed_a = _calc_component_cost(
+            component_code, capacity_kW, locator
+        )
+    except (ValueError, ZeroDivisionError) as e:
+        print(f"    Warning: CAPEX calc failed for plant {plant_name} ({component_code}): {e}")
+        capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
+
+    price = _mean_feedstock_price(dominant_carrier, locator)
+    opex_var_a = dominant_mwh * 1000.0 * price
+
+    service_label = 'hs' if network_type == 'DH' else 'cs'
+    tac = capex_a + opex_fixed_a + opex_var_a
+
+    rows.append({
+        'name': plant_name, 'service': service_label, 'scale': 'DISTRICT',
+        'assembly_code': '', 'component_code': component_code,
+        'carrier': dominant_carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+        'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
+        'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+    })
+    return rows
+
+
+def _calc_solar_costs_for_scenario(all_building_names, locator):
+    """
+    Calculate CAPEX and O&M for solar panels (PV, SC, PVT) installed on buildings.
+
+    Scans potentials/solar/ folder for total_buildings files.
+    Solar has CAPEX and fixed O&M only (variable OPEX = 0, fuel is free).
+
+    :return: list of component row dicts, one per building per technology
+    """
+    solar_folder = locator.get_potentials_solar_folder()
+    if not os.path.exists(solar_folder):
+        return []
+
+    component_rows = []
+
+    # Scan for PV, SC, PVT total_buildings files
+    for fname in os.listdir(solar_folder):
+        if not fname.endswith('_total_buildings.csv'):
+            continue
+
+        fpath = os.path.join(solar_folder, fname)
+        try:
+            df = pd.read_csv(fpath)
+        except Exception:
+            continue
+
+        if 'name' not in df.columns:
+            continue
+
+        if fname.startswith('PV_') and not fname.startswith('PVT_'):
+            # PV_{panel_type}_total_buildings.csv
+            panel_type = fname[3:fname.index('_total_buildings')]
+            comp_rows = _solar_pv_costs(df, panel_type, 'PV', locator)
+            component_rows.extend(comp_rows)
+
+        elif fname.startswith('SC_'):
+            # SC_{panel_type}_total_buildings.csv
+            panel_type = fname[3:fname.index('_total_buildings')]
+            comp_rows = _solar_sc_costs(df, panel_type, locator)
+            component_rows.extend(comp_rows)
+
+        elif fname.startswith('PVT_'):
+            # PVT_{pv}_{sc}_total_buildings.csv  (e.g., PVT_PV1_FP or PVT_PV1_ET)
+            suffix = fname[4:fname.index('_total_buildings')]
+            parts = suffix.split('_', 1)
+            pv_type = parts[0] if parts else 'PV1'
+            sc_type = parts[1] if len(parts) > 1 else ''
+            comp_rows = _solar_pvt_costs(df, pv_type, sc_type, locator)
+            component_rows.extend(comp_rows)
+
+    return component_rows
+
+
+def _solar_pv_costs(df, panel_type, service_prefix, locator):
+    """Calculate PV panel costs from total_buildings DataFrame."""
+    rows = []
+    if 'area_PV_m2' not in df.columns:
+        return rows
+
+    try:
+        pv_db = pd.read_csv(
+            locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS')
+        )
+        comp = pv_db[pv_db['code'] == panel_type]
+        if comp.empty:
+            # Fall back to first PV component
+            comp = pv_db.head(1)
+        comp = comp.iloc[0]
+    except Exception:
+        return rows
+
+    # capacity_Wp and module_area_m2 allow converting area → peak power
+    capacity_Wp = comp.get('capacity_Wp', 325.0)
+    module_area_m2 = comp.get('module_area_m2', 1.76)
+    wp_per_m2 = capacity_Wp / module_area_m2 if module_area_m2 > 0 else 185.0
+
+    for _, brow in df.iterrows():
+        building_name = brow['name']
+        area_m2 = brow.get('area_PV_m2', 0.0) or 0.0
+        if area_m2 <= 0:
+            continue
+
+        capacity_W = area_m2 * wp_per_m2
+        try:
+            capex_total, capex_a, opex_fixed_a = _calc_cost_curve(capacity_W, comp)
+        except (ValueError, ZeroDivisionError):
+            capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
+
+        tac = capex_a + opex_fixed_a
+        rows.append({
+            'name': building_name, 'service': f'PV_{panel_type}', 'scale': 'BUILDING',
+            'assembly_code': '', 'component_code': panel_type,
+            'carrier': None, 'peak_service_kW': capacity_W / 1000.0,
+            'capacity_kW': capacity_W / 1000.0,
+            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
+            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
+        })
+    return rows
+
+
+def _solar_sc_costs(df, panel_type, locator):
+    """Calculate solar collector costs from total_buildings DataFrame."""
+    rows = []
+    if 'area_SC_m2' not in df.columns:
+        return rows
+
+    try:
+        sc_db = pd.read_csv(
+            locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS')
+        )
+        # Match by type field (e.g., 'ET' or 'FP')
+        comp = sc_db[sc_db['type'] == panel_type]
+        if comp.empty:
+            comp = sc_db.head(1)
+        comp = comp.iloc[0]
+    except Exception:
+        return rows
+
+    for _, brow in df.iterrows():
+        building_name = brow['name']
+        area_m2 = brow.get('area_SC_m2', 0.0) or 0.0
+        if area_m2 <= 0:
+            continue
+
+        # SC cost curve uses m² directly (unit = 'm2')
+        try:
+            capex_total, capex_a, opex_fixed_a = _calc_cost_curve(area_m2, comp)
+        except (ValueError, ZeroDivisionError):
+            capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
+
+        tac = capex_a + opex_fixed_a
+        rows.append({
+            'name': building_name, 'service': f'SC_{panel_type}', 'scale': 'BUILDING',
+            'assembly_code': '', 'component_code': comp['code'],
+            'carrier': None, 'peak_service_kW': None,
+            'capacity_kW': area_m2,  # stored as m² for SC
+            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
+            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
+        })
+    return rows
+
+
+def _solar_pvt_costs(df, pv_type, sc_type, locator):
+    """Calculate PVT panel costs from total_buildings DataFrame."""
+    rows = []
+    if 'area_PVT_m2' not in df.columns:
+        return rows
+
+    try:
+        pvt_db = pd.read_csv(
+            locator.get_db4_components_conversion_conversion_technology_csv(
+                'PHOTOVOLTAIC_THERMAL_PANELS'
+            )
+        )
+        comp = pvt_db.head(1).iloc[0]
+    except Exception:
+        return rows
+
+    # Use PV component to get Wp/m² ratio for area → W conversion
+    try:
+        pv_db = pd.read_csv(
+            locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS')
+        )
+        pv_comp = pv_db[pv_db['code'] == pv_type]
+        if pv_comp.empty:
+            pv_comp = pv_db.head(1)
+        pv_comp = pv_comp.iloc[0]
+        capacity_Wp = pv_comp.get('capacity_Wp', 325.0)
+        module_area_m2 = pv_comp.get('module_area_m2', 1.76)
+        wp_per_m2 = capacity_Wp / module_area_m2 if module_area_m2 > 0 else 185.0
+    except Exception:
+        wp_per_m2 = 185.0
+
+    for _, brow in df.iterrows():
+        building_name = brow['name']
+        area_m2 = brow.get('area_PVT_m2', 0.0) or 0.0
+        if area_m2 <= 0:
+            continue
+
+        capacity_W = area_m2 * wp_per_m2
+        try:
+            capex_total, capex_a, opex_fixed_a = _calc_cost_curve(capacity_W, comp)
+        except (ValueError, ZeroDivisionError):
+            capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
+
+        service_label = f'PVT_{pv_type}_{sc_type}' if sc_type else f'PVT_{pv_type}'
+        tac = capex_a + opex_fixed_a
+        rows.append({
+            'name': building_name, 'service': service_label, 'scale': 'BUILDING',
+            'assembly_code': '', 'component_code': comp['code'],
+            'carrier': None, 'peak_service_kW': capacity_W / 1000.0,
+            'capacity_kW': capacity_W / 1000.0,
+            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
+            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
+        })
+    return rows
+
+
+def calculate_costs_for_whatif(whatif_name, locator):
+    """
+    Calculate CAPEX and OPEX for all buildings and plants in a what-if scenario.
+
+    :param whatif_name: What-if scenario name
+    :param locator: InputLocator instance
+    :return: (buildings_df, components_df) DataFrames
+    """
+    config_file = locator.get_analysis_configuration_file(whatif_name)
+    if not os.path.exists(config_file):
+        raise FileNotFoundError(
+            f"configuration.json not found for what-if '{whatif_name}': {config_file}\n"
+            "Please run 'final-energy' first."
+        )
+    with open(config_file) as f:
+        config_data = json.load(f)
+    building_configs = config_data.get('buildings', {})
+
+    summary_file = locator.get_final_energy_buildings_file(whatif_name)
+    if not os.path.exists(summary_file):
+        raise FileNotFoundError(
+            f"final_energy_buildings.csv not found for what-if '{whatif_name}': {summary_file}\n"
+            "Please run 'final-energy' first."
+        )
+    summary_df = pd.read_csv(summary_file)
+
+    component_rows = []
+
+    # --- Building rows ---
+    building_rows_df = summary_df[summary_df['type'] == 'building']
+    for _, row in building_rows_df.iterrows():
+        building_name = row['name']
+        supply_cfg = building_configs.get(building_name, {})
+
+        carrier_MWh = {
+            c: row.get(f'{c}_MWh', 0.0) or 0.0
+            for c in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']
+        }
+
+        peaks, booster_data = _per_service_peaks_and_booster(
+            building_name, whatif_name, supply_cfg, locator
         )
 
-    # Merge results from all network types (but don't format yet)
-    merged_results = merge_network_type_costs(all_results)
-
-    # Calculate solar panel costs
-    print(f"\n{'-'*70}")
-    print("Calculating solar panel costs...")
-    from cea.analysis.costs.solar_costs import calculate_building_solar_costs, merge_solar_costs_to_buildings
-    import geopandas as gpd
-
-    # Get ALL buildings from zone geometry (solar is independent of network connectivity)
-    zone_gdf = gpd.read_file(locator.get_zone_geometry())
-    all_building_names = zone_gdf['name'].tolist()
-
-    # Filter by config.system_costs_solar.buildings if specified
-    if config.system_costs_solar.buildings:
-        all_building_names = [b for b in all_building_names if b in config.system_costs_solar.buildings]
-
-    solar_details, solar_summary = calculate_building_solar_costs(config, locator, all_building_names)
-
-    # Merge and format all results (after solar costs are calculated)
-    print(f"\n{'-'*70}")
-    print("Merging and formatting results...")
-    from cea.analysis.costs.format_simplified import format_output_simplified
-    final_results, detailed_results = format_output_simplified(merged_results, locator)
-
-    # Append solar details to costs_components.csv
-    if not solar_details.empty:
-        detailed_results = pd.concat([detailed_results, solar_details], ignore_index=True)
-        print(f"  Added {len(solar_details)} solar panel component rows")
-
-    # Add/update solar costs in costs_buildings.csv
-    if not solar_summary.empty:
-        final_results = merge_solar_costs_to_buildings(final_results, solar_summary)
-        print(f"  Updated costs for {len(solar_summary)} buildings with solar panels")
-
-    # Sort results by building name
-    final_results = final_results.sort_values('name').reset_index(drop=True)
-    detailed_results = detailed_results.sort_values('name').reset_index(drop=True)
-
-    # Check for errors BEFORE saving - fail fast if any network failed
-    all_errors = {**validation_errors, **calculation_errors}
-
-    if all_errors:
-        # If any network failed, raise error instead of partial completion
-        failed_types = sorted(all_errors.keys())
-        succeeded_types = sorted(succeeded)
-
-        print(f"\n{'='*70}")
-        print("ERROR: INCOMPLETE RESULTS")
-        print(f"{'='*70}")
-
-        error_details = []
-        for network_type, error_msg in all_errors.items():
-            error_details.append(f"  {network_type}: {error_msg}")
-
-        error_message = (
-            f"System-costs calculation failed for {len(failed_types)} of {len(network_types)} requested network type(s).\n"
-            f"\n"
-            f"Requested: {', '.join(network_types)}\n"
-            f"Succeeded: {', '.join(succeeded_types) if succeeded_types else 'None'}\n"
-            f"Failed: {', '.join(failed_types)}\n"
-            f"\n"
-            f"Error details:\n"
-            f"{chr(10).join(error_details)}\n"
-            f"\n"
-            f"Please fix the errors above and run again.\n"
-            f"Partial results have NOT been saved."
+        # Space heating
+        r = _process_building_service(
+            building_name, 'hs', 'space_heating', supply_cfg,
+            peaks['hs'], carrier_MWh, locator
         )
+        if r:
+            component_rows.append(r)
 
-        raise RuntimeError(error_message)
+        # Hot water
+        r = _process_building_service(
+            building_name, 'ww', 'hot_water', supply_cfg,
+            peaks['ww'], carrier_MWh, locator
+        )
+        if r:
+            component_rows.append(r)
 
-    # Only save results if all networks succeeded
-    print(f"\n{'-'*70}")
-    print("Saving results...")
+        # Space cooling
+        r = _process_building_service(
+            building_name, 'cs', 'space_cooling', supply_cfg,
+            peaks['cs'], carrier_MWh, locator
+        )
+        if r:
+            component_rows.append(r)
 
-    # Clean up existing results folder for this network (if it exists)
-    import os
-    import shutil
-    output_file = locator.get_baseline_costs(network_name=network_name)
-    output_folder = os.path.dirname(output_file)
+        # Booster systems
+        component_rows.extend(_process_booster_services(building_name, booster_data, locator))
 
-    if os.path.exists(output_folder):
-        print(f"  Cleaning up existing results: {output_folder}")
-        shutil.rmtree(output_folder)
+        # Electricity (variable OPEX only)
+        grid_mwh = carrier_MWh.get('GRID', 0.0)
+        if peaks['E'] > 0 or grid_mwh > 0:
+            r = _process_electricity_service(
+                building_name, supply_cfg, peaks['E'], grid_mwh, locator
+            )
+            if r:
+                component_rows.append(r)
 
-    locator.ensure_parent_folder_exists(locator.get_baseline_costs(network_name=network_name))
-    final_results.to_csv(locator.get_baseline_costs(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
-    detailed_results.to_csv(locator.get_baseline_costs_detailed(network_name=network_name), index=False, float_format='%.2f', na_rep='nan')
+    # --- Plant rows ---
+    if 'type' in summary_df.columns:
+        plant_rows_df = summary_df[summary_df['type'] == 'plant']
+        for _, row in plant_rows_df.iterrows():
+            component_rows.extend(_process_plant_row(row, locator))
 
-    print(f"\n{'='*70}")
-    print("COMPLETED")
-    print(f"{'='*70}")
-    print(f"Summary: {locator.get_baseline_costs(network_name=network_name)}")
-    print(f"Detailed: {locator.get_baseline_costs_detailed(network_name=network_name)}")
-    print(f"\nAll network types completed successfully: {', '.join(sorted(succeeded))}")
+    # --- Solar costs ---
+    all_names = list(building_rows_df['name'])
+    solar_rows = _calc_solar_costs_for_scenario(all_names, locator)
+    component_rows.extend(solar_rows)
 
-    # Check if any networks were found
-    has_networks = any(name.startswith('N') for name in final_results['name'])
-    if has_networks:
-        print("\nNote: Network costs include central plant equipment and piping.")
-        print("      Variable energy costs (electricity, fuels) are NOT included.")
-        print("  For complete costs including energy consumption, refer to optimisation results.")
+    # Build components DataFrame
+    if not component_rows:
+        components_df = pd.DataFrame(columns=[
+            'name', 'service', 'scale', 'assembly_code', 'component_code',
+            'carrier', 'peak_service_kW', 'capacity_kW',
+            'Capex_total_USD', 'Capex_a_USD', 'Opex_fixed_a_USD', 'Opex_var_a_USD', 'TAC_USD'
+        ])
+    else:
+        components_df = pd.DataFrame(component_rows)
 
-    return final_results
+    # Aggregate to building-level summary
+    if not components_df.empty:
+        agg = components_df.groupby('name').agg(
+            Capex_total_USD=('Capex_total_USD', 'sum'),
+            Capex_a_USD=('Capex_a_USD', 'sum'),
+            Opex_fixed_a_USD=('Opex_fixed_a_USD', 'sum'),
+            Opex_var_a_USD=('Opex_var_a_USD', 'sum'),
+            TAC_USD=('TAC_USD', 'sum'),
+        ).reset_index()
+    else:
+        agg = pd.DataFrame(columns=['name', 'Capex_total_USD', 'Capex_a_USD',
+                                     'Opex_fixed_a_USD', 'Opex_var_a_USD', 'TAC_USD'])
+
+    meta_cols = [c for c in ['name', 'type', 'GFA_m2', 'x_coord', 'y_coord', 'scale']
+                 if c in summary_df.columns]
+    buildings_df = summary_df[meta_cols].merge(agg, on='name', how='left').fillna(0.0)
+    buildings_df['whatif_name'] = whatif_name
+
+    return buildings_df, components_df
 
 
 def main(config: cea.config.Configuration):
     """
-    Main entry point for baseline-costs script.
+    Main entry point for system-costs script.
 
     :param config: Configuration instance
     """
     locator = InputLocator(config.scenario)
-    baseline_costs_main(locator, config)
+
+    whatif_names = config.what_ifs.what_if_name
+    if not whatif_names:
+        raise ValueError(
+            "what-if-name is required. Please select at least one what-if scenario."
+        )
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
+
+    print("=" * 80)
+    print("SYSTEM COSTS CALCULATION")
+    print("=" * 80)
+
+    for whatif_name in whatif_names:
+        print(f"\nProcessing what-if scenario: {whatif_name}")
+        print("-" * 60)
+
+        try:
+            buildings_df, components_df = calculate_costs_for_whatif(whatif_name, locator)
+
+            buildings_file = locator.get_costs_whatif_buildings_file(whatif_name)
+            components_file = locator.get_costs_whatif_components_file(whatif_name)
+            locator.ensure_parent_folder_exists(buildings_file)
+
+            buildings_df.to_csv(buildings_file, index=False, float_format='%.2f')
+            components_df.to_csv(components_file, index=False, float_format='%.2f')
+
+            print(f"  Buildings processed: {len(buildings_df)}")
+            print(f"  Component rows: {len(components_df)}")
+
+            if not buildings_df.empty:
+                total_capex_a = buildings_df['Capex_a_USD'].sum()
+                total_opex_var = buildings_df['Opex_var_a_USD'].sum()
+                total_tac = buildings_df['TAC_USD'].sum()
+                print(f"  Total annualised CAPEX: {total_capex_a:,.0f} USD/yr")
+                print(f"  Total variable OPEX:    {total_opex_var:,.0f} USD/yr")
+                print(f"  Total TAC:              {total_tac:,.0f} USD/yr")
+
+            print(f"  Saved: {buildings_file}")
+            print(f"  Saved: {components_file}")
+
+        except FileNotFoundError as e:
+            print(f"  Error: {e}")
+
+    print("\n" + "=" * 80)
+    print("SYSTEM COSTS CALCULATION COMPLETE")
+    print("=" * 80)
 
 
 if __name__ == '__main__':

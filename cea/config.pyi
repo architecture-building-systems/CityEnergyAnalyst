@@ -626,7 +626,7 @@ class SolarTechnologySection(Section):
 
 class WhatIfsSection(Section):
     """Typed section for what-ifs configuration"""
-    what_if_name: str
+    what_if_name: list[str]
 
     def __getattr__(self, item: str) -> Any: ...
 

@@ -1738,6 +1738,33 @@ class InputLocator(object):
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'configuration.json')
 
+    def get_costs_whatif_folder(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/costs/
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to costs folder for the what-if scenario
+        """
+        return os.path.join(self.get_analysis_folder(whatif_name), 'costs')
+
+    def get_costs_whatif_buildings_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/costs/costs_buildings.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to costs buildings summary file
+        """
+        return os.path.join(self.get_costs_whatif_folder(whatif_name), 'costs_buildings.csv')
+
+    def get_costs_whatif_components_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/costs/costs_components.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to costs components detail file
+        """
+        return os.path.join(self.get_costs_whatif_folder(whatif_name), 'costs_components.csv')
+
     # GRAPHS
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""
