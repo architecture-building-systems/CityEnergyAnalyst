@@ -819,7 +819,7 @@ Visualisation:
       - [get_zone_geometry]
 
   - name: plot-final-energy
-    label: Plot - Building Final Energy by Carrier
+    label: Plot - Energy by Carrier
     short_description: Plot bar chart of final energy consumption by energy carrier
     description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (electricity grid, natural gas, district heating, etc.)
     interfaces: [cli, dashboard]
@@ -827,6 +827,17 @@ Visualisation:
     parameters: ['general:scenario', plots-general, plots-final-energy, plots-building-filter]
     input-files:
       - [get_final_energy_buildings_file, plots-final-energy:what-if-name]
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-solar
+    label: Plot - Solar Technology
+    short_description: Plot bar chart of solar energy technologies' yields results
+    description: This Feature plots bar chart of the results of solar energy technologies' potential assessment
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-solar, plots-building-filter]
+    input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
 
@@ -858,12 +869,12 @@ Visualisation:
     short_description: Visualise how emissions evolve over time
     description: |
       This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
-      
-      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
+
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
       a line plot for displaying overall net emissions against a target year to achieve net-zero,
-      a stacked area plot to understand total emissions and how each source contributes to the whole, 
+      a stacked area plot to understand total emissions and how each source contributes to the whole,
       and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
-      
+
       See details and examples [here](https://platform.idaida.ch/course/view.php?id=41)
 
     interfaces: [cli, dashboard]
@@ -885,17 +896,6 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
       - [get_total_yearly_operational_building]
-
-  - name: plot-solar
-    label: Plot - Solar Technology
-    short_description: Plot bar chart of solar energy technologies' yields results
-    description: This Feature plots bar chart of the results of solar energy technologies' potential assessment
-    interfaces: [cli, dashboard]
-    module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-solar, plots-building-filter]
-    input-files:
-      - [get_building_architecture]
-      - [get_zone_geometry]
 
   - name: plot-comfort-chart
     label: Plot - Building Comfort Chart

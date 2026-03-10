@@ -132,13 +132,16 @@ def get_plot_analytics_dict(locator):
         'heat-rejection': []
     }
 
-def _export_final_energy_to_plots_folder(locator, whatif_name, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
+def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
     """
-    Read final_energy_buildings.csv for the given what-if scenario and write an
+    Read final_energy_buildings.csv for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
 
     Carrier columns are converted from MWh to kWh so the pipeline's unit-
     conversion logic (which expects _kWh suffixes) works without modification.
+
+    When multiple what-if names are selected, building names are prefixed with
+    "{whatif_name}/" so each scenario appears as a distinct bar group.
 
     Column mapping (final_energy_buildings.csv → intermediate CSV):
         GRID_MWh        → GRID_kWh
@@ -150,16 +153,8 @@ def _export_final_energy_to_plots_folder(locator, whatif_name, buildings, bool_a
         WOOD_MWh        → WOOD_kWh
         GFA_m2          → GFA_m2  (pass-through for normalisation)
     """
-    src_path = locator.get_final_energy_buildings_file(whatif_name)
-    df = pd.read_csv(src_path)
-
-    # Filter to building rows only (exclude plant rows)
-    if 'type' in df.columns:
-        df = df[df['type'] == 'building'].copy()
-
-    # Optionally filter to selected buildings
-    if buildings:
-        df = df[df['name'].isin(buildings)].copy()
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
 
     carrier_rename = {
         'GRID_MWh': 'GRID_kWh',
@@ -171,14 +166,36 @@ def _export_final_energy_to_plots_folder(locator, whatif_name, buildings, bool_a
         'WOOD_MWh': 'WOOD_kWh',
     }
 
-    keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
-    df_out = df[keep_cols].copy()
+    dfs = []
+    multi = len(whatif_names) > 1
+    for whatif_name in whatif_names:
+        src_path = locator.get_final_energy_buildings_file(whatif_name)
+        df = pd.read_csv(src_path)
 
-    # Convert MWh → kWh and rename
-    for mwh_col, kwh_col in carrier_rename.items():
-        if mwh_col in df_out.columns:
-            df_out[mwh_col] = df_out[mwh_col] * 1000.0
-    df_out = df_out.rename(columns=carrier_rename)
+        # Filter to building rows only (exclude plant rows)
+        if 'type' in df.columns:
+            df = df[df['type'] == 'building'].copy()
+
+        # Optionally filter to selected buildings
+        if buildings:
+            df = df[df['name'].isin(buildings)].copy()
+
+        keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
+        df_out = df[keep_cols].copy()
+
+        # Convert MWh → kWh and rename
+        for mwh_col in carrier_rename:
+            if mwh_col in df_out.columns:
+                df_out[mwh_col] = df_out[mwh_col] * 1000.0
+        df_out = df_out.rename(columns=carrier_rename)
+
+        # Prefix building names with scenario name when comparing multiple scenarios
+        if multi:
+            df_out['name'] = whatif_name + '/' + df_out['name']
+
+        dfs.append(df_out)
+
+    df_out = pd.concat(dfs, ignore_index=True)
 
     if bool_aggregate_by_building:
         # Add 'period' column expected by pipeline for annually aggregated building data
@@ -278,9 +295,11 @@ class csv_pointer:
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
         if self.plot_cea_feature == 'final-energy':
-            whatif_name = self.config.what_if_name
+            whatif_names = self.config.what_if_name  # list from WhatIfNameMultiChoiceParameter
+            if not whatif_names:
+                return
             _export_final_energy_to_plots_folder(
-                self.locator, whatif_name, self.buildings,
+                self.locator, whatif_names, self.buildings,
                 self.bool_aggregate_by_building, self.time_period,
                 self.period_start, self.period_end
             )

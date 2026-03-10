@@ -1274,6 +1274,49 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
         return valid_choices
 
 
+class WhatIfNameChoiceParameter(ChoiceParameter):
+    """
+    Parameter for selecting an existing what-if scenario name from a dropdown.
+    Scans outputs/data/analysis/ for existing subfolders.
+    """
+
+    @property
+    def _choices(self):
+        try:
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
+            if not os.path.exists(analysis_root):
+                return []
+            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+            names = sorted(
+                name for name in os.listdir(analysis_root)
+                if os.path.isdir(os.path.join(analysis_root, name))
+            )
+            if mode == 'final_energy':
+                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            return names
+        except Exception:
+            return []
+
+    def encode(self, value):
+        # Always allow empty values — the UI enforces required selection
+        if value is None or str(value).strip() == '':
+            return ''
+        value = str(value).strip()
+        choices = self._choices
+        if choices and value not in choices:
+            raise ValueError(
+                f"What-if scenario '{value}' does not exist. "
+                f"Available: {', '.join(choices) or 'none'}"
+            )
+        return value
+
+    def decode(self, value):
+        if not value:
+            return ''
+        return str(value).strip()
+
+
 class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
@@ -1434,6 +1477,53 @@ class MultiChoiceParameter(ChoiceParameter):
         choices = parse_string_to_list(value)
         valid_choices = set(self._choices)
         return [choice for choice in choices if choice in valid_choices]
+
+
+class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
+    """
+    Multi-choice version of WhatIfNameChoiceParameter.
+    Scans outputs/data/analysis/ for existing subfolders and allows selecting multiple.
+    Supports mode=final_energy to filter to scenarios with final-energy output.
+    """
+
+    @property
+    def _choices(self):
+        try:
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
+            if not os.path.exists(analysis_root):
+                return []
+            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+            names = sorted(
+                name for name in os.listdir(analysis_root)
+                if os.path.isdir(os.path.join(analysis_root, name))
+            )
+            if mode == 'final_energy':
+                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            return names
+        except Exception:
+            return []
+
+    def encode(self, value):
+        # Always allow empty — UI handles required validation
+        if not value:
+            return ''
+        if not isinstance(value, list):
+            value = [str(value).strip()]
+        choices = self._choices
+        not_in_choices = set(value) - set(choices)
+        if choices and not_in_choices:
+            raise ValueError(
+                f"What-if scenario(s) {not_in_choices} do not exist. "
+                f"Available: {', '.join(choices) or 'none'}"
+            )
+        return ', '.join(value)
+
+    def decode(self, value) -> list:
+        if not value or str(value).strip() == '':
+            return []
+        choices_set = set(self._choices)
+        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
 
 
 class MultiChoiceFeedstockParameter(MultiChoiceParameter):
