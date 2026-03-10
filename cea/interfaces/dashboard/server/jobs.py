@@ -133,21 +133,21 @@ def cleanup_job_temp_files(job_id: str):
 async def get_jobs(
     session: SessionDep,
     project_id: CEAProjectID,
-    limit: int | None = Query(None, description="Maximum number of jobs to return (most recent first)"),
+    limit: int = Query(50, ge=1, le=500, description="Number of jobs to return (most recent first)"),
+    offset: int = Query(0, ge=0, description="Number of jobs to skip"),
     state: int | None = Query(None, description="Filter by job state (0=PENDING, 1=STARTED, 2=SUCCESS, 3=ERROR, 4=CANCELED, 5=KILLED)"),
     exclude_deleted: bool = Query(True, description="Exclude deleted jobs from results")
 ) -> List[JobInfo]:
     """
-    Get a list of jobs for the current project with optional filtering.
+    Get a paginated list of jobs for the current project with optional filtering.
 
-    By default, returns all non-deleted jobs ordered by creation time (most recent first).
+    Returns jobs ordered by creation time (most recent first), paginated by `limit` and `offset`.
     Jobs are filtered by deleted_at field rather than state to preserve completion states.
     """
     query = select(JobInfo).where(JobInfo.project_id == project_id)
 
     # Filter by state if specified
     if state is not None:
-        # Validate state is a valid JobState value
         try:
             job_state = JobState(state)
             query = query.where(JobInfo.state == job_state)
@@ -161,9 +161,8 @@ async def get_jobs(
     # Order by created_time descending (most recent first)
     query = query.order_by(desc(JobInfo.created_time))
 
-    # Apply limit if specified
-    if limit is not None and limit > 0:
-        query = query.limit(limit)
+    # Apply pagination
+    query = query.limit(limit).offset(offset)
 
     result = await session.execute(query)
     return list(result.scalars().all())
