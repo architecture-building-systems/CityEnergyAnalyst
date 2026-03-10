@@ -16,6 +16,7 @@ import psutil
 import sqlalchemy.exc
 from fastapi import APIRouter, HTTPException, status, Request, Query
 from pydantic import BaseModel
+from sqlalchemy.orm import undefer_group
 from sqlmodel import select, desc
 from starlette.datastructures import UploadFile as _UploadFile
 
@@ -171,7 +172,7 @@ async def get_jobs(
 @router.get("/{job_id}")
 async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
     """Return a JobInfo by id"""
-    job = await session.get(JobInfo, job_id)
+    job = await session.get(JobInfo, job_id, options=[undefer_group('logs')])
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
