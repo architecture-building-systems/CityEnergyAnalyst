@@ -346,6 +346,27 @@ def _process_plant_row(plant_row, plant_configs, locator):
         'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
         'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
     })
+
+    # Secondary and tertiary components: CAPEX + fixed O&M only (variable OPEX counted in primary)
+    for comp_code in [pc.get('secondary_component'), pc.get('tertiary_component')]:
+        if not comp_code:
+            continue
+        try:
+            capex_total_s, capex_a_s, opex_fixed_a_s = _calc_component_cost(
+                comp_code, capacity_kW, locator
+            )
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"    Warning: CAPEX calc failed for plant {plant_name} ({comp_code}): {e}")
+            capex_total_s, capex_a_s, opex_fixed_a_s = 0.0, 0.0, 0.0
+        tac_s = capex_a_s + opex_fixed_a_s
+        rows.append({
+            'name': plant_name, 'service': service_label, 'scale': 'DISTRICT',
+            'assembly_code': assembly_code, 'component_code': comp_code,
+            'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+            'Capex_total_USD': capex_total_s, 'Capex_a_USD': capex_a_s,
+            'Opex_fixed_a_USD': opex_fixed_a_s, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac_s,
+        })
+
     return rows
 
 
@@ -483,7 +504,7 @@ def _solar_sc_costs(df, panel_type, locator):
         rows.append({
             'name': building_name, 'service': f'SC_{panel_type}', 'scale': 'BUILDING',
             'assembly_code': '', 'component_code': comp['code'],
-            'carrier': None, 'peak_service_kW': None,
+            'carrier': None, 'peak_service_kW': 0.0,
             'capacity_kW': area_m2,  # stored as m² for SC
             'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
             'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
