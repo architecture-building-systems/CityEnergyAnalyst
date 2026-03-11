@@ -445,6 +445,37 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
             'opex_fixed_a_USD': opex_fixed_pu, 'opex_var_a_USD': pumping_opex, 'TAC_USD': tac_pu,
         })
 
+    # Network piping: CAPEX from THERMAL_GRID.csv unit costs × pipe lengths
+    # No OPEX for pipes; annualised with infrastructure defaults (LT=40yr, IR=5%)
+    if network_name:
+        edges_file = locator.get_thermal_network_edge_list_file(network_type, network_name)
+        if os.path.exists(edges_file):
+            try:
+                edges_df = pd.read_csv(edges_file)
+                grid_path = locator.get_database_components_distribution_thermal_grid()
+                grid_df = pd.read_csv(grid_path)
+                unit_cost = {row['pipe_DN']: row['Inv_USD2015perm'] for _, row in grid_df.iterrows()}
+
+                total_length_m = 0.0
+                capex_pipes = 0.0
+                for _, edge in edges_df.iterrows():
+                    dn = edge['pipe_DN']
+                    length_m = edge['length_m']
+                    capex_pipes += unit_cost.get(dn, 0.0) * length_m
+                    total_length_m += length_m
+
+                if capex_pipes > 0:
+                    capex_a_pipes = calc_capex_annualized(capex_pipes, 5.0, 40)
+                    rows.append({
+                        'name': plant_name, 'service': f'{service_label}_piping', 'scale': 'DISTRICT',
+                        'assembly_code': assembly_code, 'component_code': 'PIPES',
+                        'carrier': None, 'peak_service_kW': 0.0, 'capacity_kW': total_length_m,
+                        'capex_total_USD': capex_pipes, 'capex_a_USD': capex_a_pipes,
+                        'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': 0.0, 'TAC_USD': capex_a_pipes,
+                    })
+            except Exception as e:
+                print(f"    Warning: Piping cost calc failed for {plant_name}: {e}")
+
     return rows
 
 

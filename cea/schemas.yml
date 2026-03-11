@@ -2067,7 +2067,7 @@ get_costs_whatif_components_file:
         type: string
         unit: NA
       service:
-        description: Energy service (hs, ww, cs, E, hs_booster, ww_booster, hs_pumping, PV_*, SC_*, PVT_*)
+        description: Energy service (hs, ww, cs, E, hs_booster, ww_booster, hs_pumping, hs_piping, cs_pumping, cs_piping, PV_*, SC_*, PVT_*)
         type: string
         unit: NA
       scale:

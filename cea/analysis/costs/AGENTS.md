@@ -106,6 +106,20 @@ opex_var = annual_kWh * price           # kWh × USD/kWh = USD  ← NOT /1000
 # network_name comes from config_data['metadata']['network_name']
 ```
 
+### DO: Plant piping — THERMAL_GRID CAPEX, no OPEX
+
+```python
+# Pipe costs from metadata_edges.csv × THERMAL_GRID.csv unit cost (Inv_USD2015perm)
+# No ×2 factor — Inv_USD2015perm already covers supply+return per metre of network
+# No OPEX for pipes; infrastructure defaults: LT=40yr, IR=5%
+# capacity_kW field stores total network length in metres (proxy for pipe sizing metric)
+# component_code = 'PIPES', service = '{hs|cs}_piping'
+edges_df = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+grid_df = pd.read_csv(locator.get_database_components_distribution_thermal_grid())
+capex_pipes = sum(unit_cost[edge.pipe_DN] * edge.length_m for edge in edges_df)
+capex_a = calc_capex_annualized(capex_pipes, 5.0, 40)
+```
+
 ### DO: Solar costs from potentials/solar/ folder
 
 ```python
