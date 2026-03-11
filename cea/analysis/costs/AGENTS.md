@@ -93,9 +93,17 @@ opex_var = annual_kWh * price           # kWh × USD/kWh = USD  ← NOT /1000
 ```python
 # case_description is set during final-energy from configuration.json
 # 'DH' in case_description → DH plant, 'DC' in case_description → DC plant
-# Plant default components:
-# DH + NATURALGAS → BO1 (efficiency=0.85)
-# DC + GRID → CH1 (efficiency=3.0)
+```
+
+### DO: Plant pumping — PU1 CAPEX + GRID OPEX
+
+```python
+# Peak pumping kW from plant hourly file (pumping_load_kWh column)
+# PU1 CAPEX uses peak_pumping_kW (sized on peak network pressure loss)
+# GRID OPEX: only when dominant_carrier != 'GRID'
+#   - DH plants: NATURALGAS primary → add GRID pumping OPEX separately
+#   - DC plants: GRID primary → pumping already bundled into GRID_MWh, OPEX = 0 here
+# network_name comes from config_data['metadata']['network_name']
 ```
 
 ### DO: Solar costs from potentials/solar/ folder
@@ -104,6 +112,32 @@ opex_var = annual_kWh * price           # kWh × USD/kWh = USD  ← NOT /1000
 # PV: capacity_W = area_PV_m2 × (capacity_Wp / module_area_m2), unit='W'
 # SC: capacity = area_SC_m2 directly (unit='m2', cost curve b×area)
 # PVT: use full suffix (PV1_FP, PV1_ET) as service label to avoid duplicates
+```
+
+### DO: Per-service carrier MWh for OPEX (not aggregate summary column)
+
+```python
+# _per_service_peaks_and_booster returns service_mwh dict:
+# service_mwh['hs'] = sum(Qhs_sys_*_kWh columns) / 1000  ← only hs carrier MWh
+# service_mwh['ww'] = sum(Qww_sys_*_kWh columns) / 1000  ← only ww carrier MWh
+# service_mwh['cs'] = sum(Qcs_sys_*_kWh columns) / 1000  ← only cs carrier MWh
+# service_mwh['E']  = sum(E_sys_*_kWh columns) / 1000    ← only E carrier MWh
+# Use these for opex_var — never use GRID_MWh from summary (includes cooling + E_sys)
+```
+
+### DO: Select correct piecewise row for multi-range components
+
+```python
+# _get_component_row(code, locator, capacity_W=Q_W) picks the matching cap_min/cap_max row
+# PU1 has 4 rows: 500-4000W, 4000-37000W, 37000-375000W, 37000-∞W
+# Always pass capacity_W so the correct cost curve segment is used
+```
+
+### DO: PVT prefix before PV in COMPONENT_PREFIX_TO_TABLE
+
+```python
+# 'PVT' must appear before 'PV' — 'PVT1'.startswith('PV') is True
+# HEX must also be registered: 'HEX': 'HEAT_EXCHANGERS'
 ```
 
 ### DON'T: Use part-load curves or variable efficiency

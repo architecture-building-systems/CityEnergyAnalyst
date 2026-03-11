@@ -69,6 +69,22 @@ efficiency = component_info['efficiency']  # 0.82
 final_energy_kWh = demand_kWh / efficiency
 ```
 
+### ✅ DO: Aggregate CT fan electricity into carrier total (building and plant)
+
+```python
+# CT tertiary component adds fan electricity to the same GRID carrier column
+# heat_rejected = cooling_demand + chiller_electricity
+# ct_fan_kWh = heat_rejected * ct_info['efficiency']  (aux_power from COOLING_TOWERS.csv)
+# Qcs_sys_GRID_kWh = chiller_kWh + ct_fan_kWh  (aggregated, no per-component split)
+```
+
+**Component support in `load_component_info`**:
+- `BO*` → BOILERS, carrier=fuel, efficiency=`min_eff_rating`
+- `HP*` → HEAT_PUMPS, carrier=GRID, efficiency=`min_eff_rating_seasonal`
+- `CH*` → VAPOR_COMPRESSION_CHILLERS, carrier=GRID, efficiency=`min_eff_rating`
+- `CT*` → COOLING_TOWERS, carrier=GRID, efficiency=`aux_power` (fan kWh per kWh heat rejected)
+- `HEX*` → passive, carrier=None, efficiency=None (no energy consumption)
+
 ### ✅ DO: Read district consumption from thermal-network
 
 ```python

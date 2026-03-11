@@ -111,7 +111,18 @@ def calculate_building_final_energy(
     if supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'BUILDING':
         carrier = supply_config['space_cooling']['carrier']
         efficiency = supply_config['space_cooling']['efficiency']
-        final_energy[f'Qcs_sys_{carrier}_kWh'] = demand_df['Qcs_sys_kWh'] / efficiency
+        cooling_demand = demand_df['Qcs_sys_kWh']
+        chiller_kWh = cooling_demand / efficiency
+        # Include tertiary cooling tower fan electricity (aggregated into carrier total)
+        tertiary_component = supply_config['space_cooling'].get('tertiary_component')
+        if tertiary_component and tertiary_component.startswith('CT'):
+            from cea.technologies.cooling_tower import calc_CT_const
+            ct_info = load_component_info(tertiary_component, locator)
+            heat_rejected_kWh = cooling_demand + chiller_kWh
+            ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
+            final_energy[f'Qcs_sys_{carrier}_kWh'] = chiller_kWh + ct_fan_kWh
+        else:
+            final_energy[f'Qcs_sys_{carrier}_kWh'] = chiller_kWh
     elif supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'DISTRICT':
         network_name = supply_config['space_cooling']['network_name']
         dc_data = load_district_cooling_data(building_name, network_name, locator)
@@ -455,6 +466,29 @@ def load_component_info(
         return {
             'carrier': 'GRID',  # Chillers use electricity
             'efficiency': component['min_eff_rating']
+        }
+
+    elif component_code.startswith('CT'):
+        # Cooling tower — carrier is GRID (fan electricity); efficiency is aux_power ratio
+        component_file = locator.get_db4_components_conversion_conversion_technology_csv('COOLING_TOWERS')
+        df = pd.read_csv(component_file)
+        components = df[df['code'] == component_code]
+
+        if components.empty:
+            raise ValueError(f"Component {component_code} not found in COOLING_TOWERS database")
+
+        component = components.iloc[0]
+
+        return {
+            'carrier': 'GRID',
+            'efficiency': component['aux_power']  # fan kWh per kWh of heat rejected
+        }
+
+    elif component_code.startswith('HEX'):
+        # Heat exchanger — passive, no carrier consumption
+        return {
+            'carrier': None,
+            'efficiency': None
         }
 
     else:
@@ -949,7 +983,16 @@ def calculate_plant_final_energy(
     if network_type == 'DH':
         result[f'plant_heating_{plant_carrier}_kWh'] = final_energy_kWh
     else:
-        result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh
+        # Include tertiary cooling tower fan electricity (aggregated into carrier total)
+        tertiary_component = plant_config.get('tertiary_component')
+        if tertiary_component and tertiary_component.startswith('CT'):
+            from cea.technologies.cooling_tower import calc_CT_const
+            ct_info = load_component_info(tertiary_component, locator)
+            heat_rejected_kWh = thermal_load_kWh + final_energy_kWh
+            ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
+            result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh + ct_fan_kWh
+        else:
+            result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh
 
     # Add pumping electricity
     result['plant_pumping_GRID_kWh'] = pumping_load_kWh
