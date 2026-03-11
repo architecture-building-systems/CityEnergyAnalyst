@@ -1765,6 +1765,43 @@ class InputLocator(object):
         """
         return os.path.join(self.get_costs_whatif_folder(whatif_name), 'costs_components.csv')
 
+    def get_heat_rejection_whatif_folder(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/heat/
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to heat rejection folder for the what-if scenario
+        """
+        return os.path.join(self.get_analysis_folder(whatif_name), 'heat')
+
+    def get_heat_rejection_whatif_buildings_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/heat/heat_rejection_buildings.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to heat rejection buildings summary file
+        """
+        return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), 'heat_rejection_buildings.csv')
+
+    def get_heat_rejection_whatif_components_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/heat/heat_rejection_components.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to heat rejection components detail file
+        """
+        return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), 'heat_rejection_components.csv')
+
+    def get_heat_rejection_whatif_building_file(self, building_name, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/heat/{building_name}.csv
+
+        :param building_name: Building or plant identifier (e.g. 'B1001', 'NODE16')
+        :param whatif_name: What-if scenario name.
+        :return: Path to hourly heat rejection file for this building or plant
+        """
+        return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), f'{building_name}.csv')
+
     # GRAPHS
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""

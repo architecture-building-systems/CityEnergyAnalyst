@@ -17977,6 +17977,122 @@ get_final_energy_plant_file:
           - DC
   used_by: []
 
+get_heat_rejection_whatif_buildings_file:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/analysis/{whatif_name}/heat/heat_rejection_buildings.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building name or plant identifier (e.g. B1001, NODE16)
+        type: string
+        unit: NA
+      type:
+        description: Entity type (building or plant)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - building
+          - plant
+      GFA_m2:
+        description: Gross floor area (0 for plants)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+        nullable: true
+      x_coord:
+        description: X coordinate of building centroid or plant node location
+        type: float
+        unit: '[m]'
+        nullable: true
+      y_coord:
+        description: Y coordinate of building centroid or plant node location
+        type: float
+        unit: '[m]'
+        nullable: true
+      scale:
+        description: System scale (BUILDING for standalone, DISTRICT for networked)
+        type: string
+        unit: NA
+        nullable: true
+      case:
+        description: Connectivity case number from final-energy
+        type: float
+        unit: NA
+        nullable: true
+      case_description:
+        description: Human-readable description of connectivity case
+        type: string
+        unit: NA
+        nullable: true
+      heat_rejection_annual_MWh:
+        description: Total annual heat rejection to the environment
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+      peak_heat_rejection_kW:
+        description: Peak hourly heat rejection rate
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      whatif_name:
+        description: What-if scenario name
+        type: string
+        unit: NA
+  used_by: []
+
+get_heat_rejection_whatif_components_file:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/analysis/{whatif_name}/heat/heat_rejection_components.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building name or plant identifier
+        type: string
+        unit: NA
+      service:
+        description: Energy service (hs, ww, cs, hs_booster, ww_booster)
+        type: string
+        unit: NA
+      scale:
+        description: System scale (BUILDING or DISTRICT)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - BUILDING
+          - DISTRICT
+      assembly_code:
+        description: Supply assembly code from database
+        type: string
+        unit: NA
+        nullable: true
+      component_code:
+        description: Primary component code (e.g. BO1, CH1)
+        type: string
+        unit: NA
+        nullable: true
+      carrier:
+        description: Energy carrier (NATURALGAS, GRID, DH, DC, etc.)
+        type: string
+        unit: NA
+        nullable: true
+      peak_heat_rejection_kW:
+        description: Peak hourly heat rejection for this service
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      heat_rejection_annual_MWh:
+        description: Annual heat rejection for this service
+        type: float
+        unit: '[MWh/yr]'
+        min: 0.0
+  used_by: []
+
 get_analysis_configuration_file:
   created_by:
   - final_energy
