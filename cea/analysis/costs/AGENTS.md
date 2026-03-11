@@ -165,9 +165,9 @@ outputs/data/analysis/{whatif_name}/costs/
 └── costs_components.csv   # One row per service per building
 ```
 
-**costs_components.csv columns**: `name, service, scale, assembly_code, component_code, carrier, peak_service_kW, capacity_kW, Capex_total_USD, Capex_a_USD, Opex_fixed_a_USD, Opex_var_a_USD, TAC_USD`
+**costs_components.csv columns**: `name, service, scale, assembly_code, component_code, carrier, peak_service_kW, capacity_kW, capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD, TAC_USD`
 
-**costs_buildings.csv columns**: metadata from summary + `Capex_total_USD, Capex_a_USD, Opex_fixed_a_USD, Opex_var_a_USD, TAC_USD, whatif_name`
+**costs_buildings.csv columns**: metadata from summary + `capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD, TAC_USD, whatif_name`
 
 ## Related Files
 

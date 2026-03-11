@@ -1992,6 +1992,137 @@ get_baseline_costs_detailed:
         unit: NA
   used_by: []
 
+get_costs_whatif_buildings_file:
+  created_by:
+  - system_costs
+  file_path: outputs/data/analysis/{whatif_name}/costs/costs_buildings.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or plant name
+        type: string
+        unit: NA
+      type:
+        description: Row type (building or plant)
+        type: string
+        unit: NA
+      GFA_m2:
+        description: Gross floor area
+        type: float
+        unit: '[m2]'
+        min: 0.0
+      x_coord:
+        description: Building centroid x coordinate
+        type: float
+        unit: '[m]'
+      y_coord:
+        description: Building centroid y coordinate
+        type: float
+        unit: '[m]'
+      scale:
+        description: Supply system scale (BUILDING or DISTRICT)
+        type: string
+        unit: NA
+      capex_total_USD:
+        description: Total capital expenditure for all supply systems
+        type: float
+        unit: '[$USD(2015)]'
+        min: 0.0
+      capex_a_USD:
+        description: Annualised capital expenditure for all supply systems
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      opex_fixed_a_USD:
+        description: Annual fixed operational expenditure (O&M)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      opex_var_a_USD:
+        description: Annual variable operational expenditure (energy costs)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      TAC_USD:
+        description: Total annualised cost (capex_a + opex_fixed_a + opex_var_a)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      whatif_name:
+        description: What-if scenario name
+        type: string
+        unit: NA
+  used_by: []
+
+get_costs_whatif_components_file:
+  created_by:
+  - system_costs
+  file_path: outputs/data/analysis/{whatif_name}/costs/costs_components.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building or plant name
+        type: string
+        unit: NA
+      service:
+        description: Energy service (hs, ww, cs, E, hs_booster, ww_booster, hs_pumping, PV_*, SC_*, PVT_*)
+        type: string
+        unit: NA
+      scale:
+        description: Supply system scale (BUILDING or DISTRICT)
+        type: string
+        unit: NA
+      assembly_code:
+        description: Supply assembly code (e.g., SUPPLY_HEATING_AS3)
+        type: string
+        unit: NA
+      component_code:
+        description: Component code (e.g., BO1, HP1, CH1, PU1)
+        type: string
+        unit: NA
+      carrier:
+        description: Energy carrier (NATURALGAS, GRID, OIL, etc.)
+        type: string
+        unit: NA
+      peak_service_kW:
+        description: Peak service demand in kilowatts
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      capacity_kW:
+        description: Component capacity in kilowatts (peak / efficiency)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+      capex_total_USD:
+        description: Total capital expenditure for this component
+        type: float
+        unit: '[$USD(2015)]'
+        min: 0.0
+      capex_a_USD:
+        description: Annualised capital expenditure for this component
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      opex_fixed_a_USD:
+        description: Annual fixed operational expenditure (O&M)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      opex_var_a_USD:
+        description: Annual variable operational expenditure (energy costs)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+      TAC_USD:
+        description: Total annualised cost (capex_a + opex_fixed_a + opex_var_a)
+        type: float
+        unit: '[$USD(2015)/yr]'
+        min: 0.0
+  used_by: []
+
 get_heat_rejection_buildings:
   created_by:
   - anthropogenic_heat

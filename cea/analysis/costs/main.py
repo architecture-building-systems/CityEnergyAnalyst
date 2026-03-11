@@ -244,8 +244,8 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
             'name': building_name, 'service': service_label, 'scale': scale,
             'assembly_code': assembly_code, 'component_code': None,
             'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
-            'Capex_total_USD': 0.0, 'Capex_a_USD': 0.0,
-            'Opex_fixed_a_USD': 0.0, 'Opex_var_a_USD': 0.0, 'TAC_USD': 0.0,
+            'capex_total_USD': 0.0, 'capex_a_USD': 0.0,
+            'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': 0.0, 'TAC_USD': 0.0,
         }
 
     if not component_code or not efficiency or efficiency <= 0:
@@ -269,8 +269,8 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
         'name': building_name, 'service': service_label, 'scale': scale,
         'assembly_code': assembly_code, 'component_code': component_code,
         'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
-        'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
-        'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+        'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+        'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
     }
 
 
@@ -306,8 +306,8 @@ def _process_booster_services(building_name, booster_data, locator):
             'name': building_name, 'service': service_label, 'scale': 'BUILDING',
             'assembly_code': assembly_code, 'component_code': component_code,
             'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
-            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
-            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+            'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+            'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
         })
     return rows
 
@@ -325,8 +325,8 @@ def _process_electricity_service(building_name, supply_cfg, peak_kW, e_sys_mwh, 
         'name': building_name, 'service': 'E', 'scale': 'BUILDING',
         'assembly_code': assembly_code, 'component_code': None,
         'carrier': 'GRID', 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
-        'Capex_total_USD': 0.0, 'Capex_a_USD': 0.0,
-        'Opex_fixed_a_USD': 0.0, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': opex_var_a,
+        'capex_total_USD': 0.0, 'capex_a_USD': 0.0,
+        'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': opex_var_a, 'TAC_USD': opex_var_a,
     }
 
 
@@ -381,8 +381,8 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
         'name': plant_name, 'service': service_label, 'scale': 'DISTRICT',
         'assembly_code': assembly_code, 'component_code': component_code,
         'carrier': dominant_carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
-        'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
-        'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+        'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+        'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
     })
 
     # Secondary and tertiary components: CAPEX + fixed O&M only (variable OPEX counted in primary)
@@ -401,8 +401,8 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
             'name': plant_name, 'service': service_label, 'scale': 'DISTRICT',
             'assembly_code': assembly_code, 'component_code': comp_code,
             'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
-            'Capex_total_USD': capex_total_s, 'Capex_a_USD': capex_a_s,
-            'Opex_fixed_a_USD': opex_fixed_a_s, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac_s,
+            'capex_total_USD': capex_total_s, 'capex_a_USD': capex_a_s,
+            'opex_fixed_a_USD': opex_fixed_a_s, 'opex_var_a_USD': 0.0, 'TAC_USD': tac_s,
         })
 
     # Network pumping: CAPEX (PU1) + OPEX (GRID electricity)
@@ -441,8 +441,8 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
             'name': plant_name, 'service': f'{service_label}_pumping', 'scale': 'DISTRICT',
             'assembly_code': assembly_code, 'component_code': 'PU1',
             'carrier': 'GRID', 'peak_service_kW': peak_pumping_kW, 'capacity_kW': peak_pumping_kW,
-            'Capex_total_USD': capex_pu, 'Capex_a_USD': capex_a_pu,
-            'Opex_fixed_a_USD': opex_fixed_pu, 'Opex_var_a_USD': pumping_opex, 'TAC_USD': tac_pu,
+            'capex_total_USD': capex_pu, 'capex_a_USD': capex_a_pu,
+            'opex_fixed_a_USD': opex_fixed_pu, 'opex_var_a_USD': pumping_opex, 'TAC_USD': tac_pu,
         })
 
     return rows
@@ -542,8 +542,8 @@ def _solar_pv_costs(df, panel_type, service_prefix, locator):
             'assembly_code': '', 'component_code': comp['code'],
             'carrier': None, 'peak_service_kW': capacity_W / 1000.0,
             'capacity_kW': capacity_W / 1000.0,
-            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
-            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
+            'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+            'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': 0.0, 'TAC_USD': tac,
         })
     return rows
 
@@ -584,8 +584,8 @@ def _solar_sc_costs(df, panel_type, locator):
             'assembly_code': '', 'component_code': comp['code'],
             'carrier': None, 'peak_service_kW': 0.0,
             'capacity_kW': area_m2,  # stored as m² for SC
-            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
-            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
+            'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+            'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': 0.0, 'TAC_USD': tac,
         })
     return rows
 
@@ -643,8 +643,8 @@ def _solar_pvt_costs(df, pv_type, sc_type, locator):
             'assembly_code': '', 'component_code': comp['code'],
             'carrier': None, 'peak_service_kW': capacity_W / 1000.0,
             'capacity_kW': capacity_W / 1000.0,
-            'Capex_total_USD': capex_total, 'Capex_a_USD': capex_a,
-            'Opex_fixed_a_USD': opex_fixed_a, 'Opex_var_a_USD': 0.0, 'TAC_USD': tac,
+            'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+            'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': 0.0, 'TAC_USD': tac,
         })
     return rows
 
@@ -739,7 +739,7 @@ def calculate_costs_for_whatif(whatif_name, locator):
         components_df = pd.DataFrame(columns=[
             'name', 'service', 'scale', 'assembly_code', 'component_code',
             'carrier', 'peak_service_kW', 'capacity_kW',
-            'Capex_total_USD', 'Capex_a_USD', 'Opex_fixed_a_USD', 'Opex_var_a_USD', 'TAC_USD'
+            'capex_total_USD', 'capex_a_USD', 'opex_fixed_a_USD', 'opex_var_a_USD', 'TAC_USD'
         ])
     else:
         components_df = pd.DataFrame(component_rows)
@@ -747,15 +747,15 @@ def calculate_costs_for_whatif(whatif_name, locator):
     # Aggregate to building-level summary
     if not components_df.empty:
         agg = components_df.groupby('name').agg(
-            Capex_total_USD=('Capex_total_USD', 'sum'),
-            Capex_a_USD=('Capex_a_USD', 'sum'),
-            Opex_fixed_a_USD=('Opex_fixed_a_USD', 'sum'),
-            Opex_var_a_USD=('Opex_var_a_USD', 'sum'),
+            capex_total_USD=('capex_total_USD', 'sum'),
+            capex_a_USD=('capex_a_USD', 'sum'),
+            opex_fixed_a_USD=('opex_fixed_a_USD', 'sum'),
+            opex_var_a_USD=('opex_var_a_USD', 'sum'),
             TAC_USD=('TAC_USD', 'sum'),
         ).reset_index()
     else:
-        agg = pd.DataFrame(columns=['name', 'Capex_total_USD', 'Capex_a_USD',
-                                     'Opex_fixed_a_USD', 'Opex_var_a_USD', 'TAC_USD'])
+        agg = pd.DataFrame(columns=['name', 'capex_total_USD', 'capex_a_USD',
+                                     'opex_fixed_a_USD', 'opex_var_a_USD', 'TAC_USD'])
 
     meta_cols = [c for c in ['name', 'type', 'GFA_m2', 'x_coord', 'y_coord', 'scale']
                  if c in summary_df.columns]
@@ -803,8 +803,8 @@ def main(config: cea.config.Configuration):
             print(f"  Component rows: {len(components_df)}")
 
             if not buildings_df.empty:
-                total_capex_a = buildings_df['Capex_a_USD'].sum()
-                total_opex_var = buildings_df['Opex_var_a_USD'].sum()
+                total_capex_a = buildings_df['capex_a_USD'].sum()
+                total_opex_var = buildings_df['opex_var_a_USD'].sum()
                 total_tac = buildings_df['TAC_USD'].sum()
                 print(f"  Total annualised CAPEX: {total_capex_a:,.0f} USD/yr")
                 print(f"  Total variable OPEX:    {total_opex_var:,.0f} USD/yr")
