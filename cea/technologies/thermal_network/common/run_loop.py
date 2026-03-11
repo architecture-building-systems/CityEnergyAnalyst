@@ -19,7 +19,10 @@ def validate_and_resolve_mode(config, locator, section=None):
     if section is None:
         section = config.thermal_network
     network_names = section.network_name  # List
-    multi_phase_mode = config.thermal_network_phasing.multi_phase_mode  # Boolean
+    try:
+        multi_phase_mode = config.thermal_network_phasing.sizing_strategy
+    except AttributeError:
+        multi_phase_mode = False  # Default to single-phase if phasing config is missing
     num_networks = len(network_names)
 
     if num_networks == 0:
@@ -41,25 +44,11 @@ def validate_and_resolve_mode(config, locator, section=None):
         except FileNotFoundError:
             raise ValueError("Network name is required. Please select a network layout.")
 
-    elif num_networks == 1 and not multi_phase_mode:
+    elif not multi_phase_mode:
         print("\n" + "=" * 80)
         print("SINGLE-PHASE THERMAL NETWORK SIMULATION")
         print("=" * 80)
-        return network_names[0], None
-
-    elif num_networks > 1 and not multi_phase_mode:
-        raise ValueError(
-            f"Multiple networks selected ({num_networks}) but multi-phase-mode is False.\n"
-            f"Resolution: Set thermal-network-phasing:multi-phase-mode = true\n"
-            f"           or select only ONE network for single-phase simulation."
-        )
-
-    elif num_networks == 1 and multi_phase_mode:
-        raise ValueError(
-            "Multi-phase mode enabled but only 1 network selected.\n"
-            "Resolution: Select MULTIPLE networks (e.g., phase1, phase2, phase3)\n"
-            "           or set thermal-network-phasing:multi-phase-mode = false"
-        )
+        return network_names, None
 
     else:  # num_networks > 1 and multi_phase_mode
         print("\n" + "=" * 80)

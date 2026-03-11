@@ -53,7 +53,8 @@ def main(config: cea.config.Configuration):
         thermal_network_simplified(locator, config, network_type, network_name,
                                    per_building_services=per_building_services)
 
-    run_network_types_loop(config, locator, network_name, run_simplified, "Simplified")
+    for network in network_name:
+        run_network_types_loop(config, locator, network, run_simplified, "Simplified")
 
 
 if __name__ == '__main__':
