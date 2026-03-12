@@ -1771,22 +1771,22 @@ class PlotsHeatRejectionSection(Section):
 
 class PlotsLifecycleEmissionsSection(Section):
     """Typed section for plots-lifecycle-emissions configuration"""
+    what_if_name: list
     y_category_to_plot: list[str]
     operation_services: list[str]
     envelope_components: list[str]
-    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1797,22 +1797,22 @@ class PlotsLifecycleEmissionsSection(Section):
 
 class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
+    what_if_name: list
     y_category_to_plot: list[str]
     operation_services: list[str]
     energy_carriers: list[str]
-    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["energy_carriers"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1823,11 +1823,11 @@ class PlotsOperationalEmissionsSection(Section):
 
 class PlotsEmissionTimelineSection(Section):
     """Typed section for plots-emission-timeline configuration"""
+    what_if_name: list
     plot_type: str
     y_category_to_plot: list[str]
     operation_services: list[str]
     envelope_components: list[str]
-    pv_code: str
     y_metric_unit: str
     y_normalised_by: str
     y_min: float | None
@@ -1837,6 +1837,8 @@ class PlotsEmissionTimelineSection(Section):
     context: dict[str, Any] | None
 
     @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
+    @overload
     def __getattr__(self, item: Literal["plot_type"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
@@ -1844,8 +1846,6 @@ class PlotsEmissionTimelineSection(Section):
     def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["envelope_components"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["pv_code"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload

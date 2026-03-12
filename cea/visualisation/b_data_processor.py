@@ -34,6 +34,7 @@ class data_processor:
         self.buildings = plots_building_filter.buildings
         # Store locator for lazy emission context initialisation
         self.locator = plot_instance.locator
+        self.whatif_names = getattr(plot_instance, 'whatif_names', [])
 
         # For lifecycle-emissions and emission-timeline, generate y_metric_to_plot from new parameters
         if plot_cea_feature in ('lifecycle-emissions', 'emission-timeline'):
@@ -67,15 +68,13 @@ class data_processor:
 
     def _generate_lifecycle_emission_columns(self, plot_config):
         """
-        Generate column names for lifecycle emissions based on four config parameters.
+        Generate column names for lifecycle emissions based on config parameters.
 
         Parameters from plot_config:
         - y_category_to_plot: list of ['operation', 'production', 'demolition', 'biogenic']
         - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
-                                       'pv_electricity_offset', 'pv_electricity_export']
-        - envelope_components: list of ['wall_ag', 'wall_bg', 'wall_part', 'win_ag', 'roof',
-                                        'upperside', 'underside', 'floor', 'base', 'technical_systems', 'pv']
-        - pv_code: str, single PV panel code (e.g., 'PV1')
+                                       'PV_E', 'PVT_E', 'PVT_Q', 'SC_Q']
+        - envelope_components: list of envelope components (used when not in what-if mode)
 
         Returns:
         - list of column names (without unit suffix)
@@ -87,11 +86,18 @@ class data_processor:
             'space_cooling': 'Qcs_sys',
             'dhw': 'Qww_sys',
         }
+        # Solar tech class to offset column name
+        solar_to_offset = {
+            'PV_E': 'PV_E_offset',
+            'PVT_E': 'PVT_E_offset',
+            'PVT_Q': 'PVT_Q_offset',
+            'SC_Q': 'SC_Q_offset',
+        }
 
         categories = plot_config.y_category_to_plot
         operation_services = getattr(plot_config, 'operation_services', [])
         envelope_components = getattr(plot_config, 'envelope_components', [])
-        pv_code = getattr(plot_config, 'pv_code', None)
+        whatif_mode = bool(self.whatif_names)
 
         columns = []
 
@@ -99,46 +105,38 @@ class data_processor:
         if 'operation' in categories:
             for service in operation_services:
                 if service in service_to_tech:
-                    # Regular operation service: operation_E_sys, operation_Qhs_sys, etc.
                     columns.append(f"operation_{service_to_tech[service]}")
-                elif service == 'pv_electricity_offset' and pv_code:
-                    # PV offset column: PV_{pv_code}_GRID_offset
-                    columns.append(f"PV_{pv_code}_GRID_offset")
-                elif service == 'pv_electricity_export' and pv_code:
-                    # PV export column: PV_{pv_code}_GRID_export
-                    columns.append(f"PV_{pv_code}_GRID_export")
+                elif service in solar_to_offset:
+                    columns.append(solar_to_offset[service])
 
         # Generate embodied columns (production, demolition, biogenic)
         for category in ['production', 'demolition', 'biogenic']:
             if category in categories:
-                for component in envelope_components:
-                    if component == 'pv' and pv_code:
-                        # PV embodied emissions: production_PV_{pv_code}, demolition_PV_{pv_code}, etc.
-                        columns.append(f"{category}_PV_{pv_code}")
-                    else:
-                        # Regular component: production_wall_ag, demolition_roof, biogenic_floor, etc.
+                if whatif_mode:
+                    # What-if mode: only total category columns are available
+                    columns.append(category)
+                else:
+                    for component in envelope_components:
                         columns.append(f"{category}_{component}")
 
         return columns
 
     def _generate_operational_emission_columns(self, plot_config):
         """
-        Generate column names for operational emissions based on four config parameters.
+        Generate column names for operational emissions based on config parameters.
 
         Parameters from plot_config:
         - y_category_to_plot: list of ['operation', 'energy_carrier']
         - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
-                                       'pv_electricity_offset', 'pv_electricity_export']
-        - energy_carriers: list of ['GRID', 'NATURALGAS', 'BIOGAS', 'SOLAR', 'DRYBIOMASS',
-                                    'WETBIOMASS', 'COAL', 'WOOD', 'OIL', 'HYDROGEN', 'NONE']
-        - pv_code: str, single PV panel code (e.g., 'PV1')
+                                       'PV_E', 'PVT_E', 'PVT_Q', 'SC_Q']
+        - energy_carriers: list of ['GRID', 'NATURALGAS', 'BIOGAS', etc.]
 
         Returns:
         - list of column names (without unit suffix)
 
         Logic:
         - Both operation AND energy_carrier: Generate hybrids (Qhs_sys_NATURALGAS, E_sys_GRID, etc.)
-        - Only operation: Generate aggregated by service (Qhs_sys, E_sys, etc.) + PV if selected
+        - Only operation: Generate aggregated by service (Qhs_sys, E_sys, etc.) + solar offsets
         - Only energy_carrier: Generate aggregated by carrier (GRID, NATURALGAS, etc.)
         """
         # Service name to tech name mapping
@@ -148,11 +146,17 @@ class data_processor:
             'space_cooling': 'Qcs_sys',
             'dhw': 'Qww_sys',
         }
+        # Solar tech class to offset column name
+        solar_to_offset = {
+            'PV_E': 'PV_E_offset',
+            'PVT_E': 'PVT_E_offset',
+            'PVT_Q': 'PVT_Q_offset',
+            'SC_Q': 'SC_Q_offset',
+        }
 
         categories = plot_config.y_category_to_plot
         operation_services = getattr(plot_config, 'operation_services', [])
         energy_carriers = getattr(plot_config, 'energy_carriers', [])
-        pv_code = getattr(plot_config, 'pv_code', None)
 
         columns = []
 
@@ -167,30 +171,22 @@ class data_processor:
                     for carrier in energy_carriers:
                         columns.append(f"{service_name}_{carrier}")
 
-            # Add PV columns if selected (PV doesn't combine with carriers)
+            # Solar offsets don't combine with carriers
             for service in operation_services:
-                if service == 'pv_electricity_offset' and pv_code:
-                    columns.append(f"PV_{pv_code}_GRID_offset")
-                elif service == 'pv_electricity_export' and pv_code:
-                    columns.append(f"PV_{pv_code}_GRID_export")
+                if service in solar_to_offset:
+                    columns.append(solar_to_offset[service])
 
         elif 'operation' in categories:
             # Only operation: aggregated by service
             for service in operation_services:
                 if service in service_to_tech:
-                    # Aggregated service: E_sys, Qhs_sys, Qcs_sys, Qww_sys
                     columns.append(service_to_tech[service])
-                elif service == 'pv_electricity_offset' and pv_code:
-                    # PV offset column: PV_{pv_code}_GRID_offset
-                    columns.append(f"PV_{pv_code}_GRID_offset")
-                elif service == 'pv_electricity_export' and pv_code:
-                    # PV export column: PV_{pv_code}_GRID_export
-                    columns.append(f"PV_{pv_code}_GRID_export")
+                elif service in solar_to_offset:
+                    columns.append(solar_to_offset[service])
 
         elif 'energy_carrier' in categories:
             # Only energy_carrier: aggregated by carrier
             for carrier in energy_carriers:
-                # Carrier columns: GRID, NATURALGAS, BIOGAS, etc.
                 columns.append(carrier)
 
         return columns
@@ -297,6 +293,9 @@ class data_processor:
             else:
                 all_entities = set(self.df_summary_data.index.unique())
             buildings_to_use = list(all_entities)
+        elif self.whatif_names and self.df_summary_data is not None and 'name' in self.df_summary_data.columns:
+            # For what-if emissions: use buildings from the summary CSV rather than architecture filter
+            buildings_to_use = self.df_summary_data['name'].tolist()
         else:
             # Filter to only buildings that exist in architecture data
             # (some buildings may be filtered out by year/type/use criteria)
@@ -317,6 +316,13 @@ class data_processor:
             buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
             normaliser_m2 = arch_data.loc[buildings_in_arch, ['GFA_m2']].copy()
             normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
+
+            # For what-if mode, supplement missing buildings from summary GFA column
+            if self.whatif_names and self.df_summary_data is not None and 'GFA_m2' in self.df_summary_data.columns:
+                summary_gfa = self.df_summary_data.set_index('name')['GFA_m2']
+                for b in buildings_to_use:
+                    if b not in normaliser_m2.index and b in summary_gfa.index:
+                        normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
 
             # For heat-rejection, calculate GFA for plants
             if plot_cea_feature == 'heat-rejection':
@@ -376,11 +382,14 @@ class data_processor:
 
 
     def process_data(self, plot_cea_feature):
-        # Lazy initialisation for emission-related plots
-        if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
+        # Lazy initialisation for emission-related plots (only needed for legacy non-whatif mode)
+        if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions') and not self.whatif_names:
             emission_context = get_emission_context(self.locator)
             lifecycle_emission_metrics = emission_context["yearly_colnames"]
             operational_emission_metrics = emission_context["hourly_colnames"]
+        else:
+            lifecycle_emission_metrics = []
+            operational_emission_metrics = []
 
         if plot_cea_feature == 'demand':
             y_cea_metric_map = {
@@ -451,13 +460,21 @@ class data_processor:
             else:
                 raise ValueError(f"Invalid SC collector type in appendix: {self.appendix}")
         elif plot_cea_feature == 'operational-emissions':
-            y_cea_metric_map = {
-                key: [key+"_kgCO2e"] for key in operational_emission_metrics
-            }
+            if self.whatif_names:
+                # What-if mode: y_metric_to_plot already has the right base column names
+                y_cea_metric_map = {key: [key + '_kgCO2e'] for key in self.y_metric_to_plot}
+            else:
+                y_cea_metric_map = {
+                    key: [key+"_kgCO2e"] for key in operational_emission_metrics
+                }
         elif plot_cea_feature == 'lifecycle-emissions':
-            y_cea_metric_map = {
-                key: [key+"_kgCO2e"] for key in lifecycle_emission_metrics
-            }
+            if self.whatif_names:
+                # What-if mode: y_metric_to_plot already has the right base column names
+                y_cea_metric_map = {key: [key + '_kgCO2e'] for key in self.y_metric_to_plot}
+            else:
+                y_cea_metric_map = {
+                    key: [key+"_kgCO2e"] for key in lifecycle_emission_metrics
+                }
         elif plot_cea_feature == 'heat-rejection':
             y_cea_metric_map = {
                 'heat_rejection': 'heat_rejection_kWh'
@@ -495,28 +512,30 @@ class data_processor:
         # Check if the required columns exist in the data
         missing_columns = [col for col in list_columns if col not in self.df_summary_data.columns]
         if missing_columns:
-            # Check if missing columns are PV-related
-            pv_missing_columns = [col for col in missing_columns if col.startswith('PV_') or '_PV_' in col]
+            # Solar tech-class offset columns (PV_E_offset, PVT_E_offset, etc.) may be absent
+            # when no solar panels exist; treat as zero rather than an error
+            _solar_offset_suffixes = ('_E_offset_kgCO2e', '_Q_offset_kgCO2e', '_E_offset', '_Q_offset')
+            solar_missing = [c for c in missing_columns if any(c.endswith(s) for s in _solar_offset_suffixes)]
+            non_solar_missing = [c for c in missing_columns if c not in solar_missing]
 
-            if pv_missing_columns:
-                # Extract PV panel codes from missing column names
-                # Format: PV_{code}_GRID_offset, PV_{code}_GRID_export, production_PV_{code}, etc.
-                pv_codes = set()
-                for col in pv_missing_columns:
-                    if col.startswith('PV_'):
-                        # Format: PV_{code}_GRID_offset or PV_{code}_GRID_export
-                        parts = col.split('_')
-                        if len(parts) >= 2:
-                            pv_codes.add(parts[1])  # Extract code from PV_{code}_...
-                    elif '_PV_' in col:
-                        # Format: production_PV_{code}, demolition_PV_{code}, biogenic_PV_{code}
-                        parts = col.split('_PV_')
-                        if len(parts) == 2:
-                            pv_codes.add(parts[1])  # Extract code from ..._PV_{code}
-
-                if pv_codes:
-                    from cea.visualisation.a_data_loader import raise_missing_pv_error
-                    raise_missing_pv_error(list(pv_codes), context='emission')
+            if non_solar_missing:
+                # Check if remaining missing columns are old-style PV panel code columns
+                pv_missing_columns = [col for col in non_solar_missing if
+                                      (col.startswith('PV_') and '_GRID_' in col) or '_PV_' in col]
+                if pv_missing_columns:
+                    pv_codes = set()
+                    for col in pv_missing_columns:
+                        if col.startswith('PV_'):
+                            parts = col.split('_')
+                            if len(parts) >= 2:
+                                pv_codes.add(parts[1])
+                        elif '_PV_' in col:
+                            parts = col.split('_PV_')
+                            if len(parts) == 2:
+                                pv_codes.add(parts[1])
+                    if pv_codes:
+                        from cea.visualisation.a_data_loader import raise_missing_pv_error
+                        raise_missing_pv_error(list(pv_codes), context='emission')
 
             # For non-PV missing columns, just warn and filter
             print(f"⚠️ Missing columns in data: {missing_columns}")

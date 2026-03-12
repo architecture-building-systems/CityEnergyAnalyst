@@ -871,15 +871,15 @@ Visualisation:
     module: cea.visualisation.plot_main
     parameters: ['general:scenario', plots-general, plots-lifecycle-emissions, plots-building-filter]
     input-files:
+      - [get_emissions_whatif_buildings_file, 'plots-lifecycle-emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
 
   - name: plot-emission-timeline
     label: Plot - Emission Timeline
     short_description: Visualise how emissions evolve over time
     description: |
-      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, solar offsets).
 
       It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
       a line plot for displaying overall net emissions against a target year to achieve net-zero,
@@ -892,6 +892,7 @@ Visualisation:
     module: cea.visualisation.special.emission_timeline
     parameters: ['general:scenario', plots-emission-timeline, plots-building-filter]
     input-files:
+      - [get_emissions_whatif_timeline_file, 'plots-emission-timeline:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
 
@@ -904,9 +905,9 @@ Visualisation:
     module: cea.visualisation.plot_main
     parameters: ['general:scenario', plots-general, plots-operational-emissions, plots-building-filter]
     input-files:
+      - [get_emissions_whatif_buildings_file, 'plots-operational-emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
 
   - name: plot-comfort-chart
     label: Plot - Building Comfort Chart

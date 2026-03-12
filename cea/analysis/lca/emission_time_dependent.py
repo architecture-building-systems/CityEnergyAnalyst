@@ -842,9 +842,10 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
 
     if timeline_results:
         df_by_year = sum_by_index([df for _, df in timeline_results])
+        df_by_year = df_by_year.drop(columns=['name'], errors='ignore')
         df_by_year.to_csv(
             locator.get_emissions_whatif_timeline_file(whatif_name),
-            index=False,
+            index=True,
             float_format='%.2f',
         )
         print(f'  District emission timeline saved to: {locator.get_emissions_whatif_timeline_file(whatif_name)}')

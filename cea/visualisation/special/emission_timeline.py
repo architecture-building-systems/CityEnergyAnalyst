@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
@@ -75,7 +77,7 @@ class EmissionTimelinePlot:
 
     def _aggregate_into_9_categories(self):
         """
-        Aggregate emission columns into 9 main categories:
+        Aggregate emission columns into main categories:
         - space_heating (operation_Qhs_sys)
         - space_cooling (operation_Qcs_sys)
         - dhw (operation_Qww_sys)
@@ -83,8 +85,7 @@ class EmissionTimelinePlot:
         - production (all production_*)
         - demolition (all demolition_*)
         - biogenic (all biogenic_*)
-        - pv_electricity_offset (PV_*_offset)
-        - pv_electricity_export (PV_*_export)
+        - solar_offset (PV_E_offset_*, PVT_E_offset_*, PVT_Q_offset_*, SC_Q_offset_*)
 
         Returns:
         --------
@@ -98,8 +99,7 @@ class EmissionTimelinePlot:
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
-            'pv_electricity_offset': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_offset'},
-            'pv_electricity_export': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_export'}
+            'solar_offset': {'columns': [], 'positive': False, 'display_name': 'solar_offset'},
         }
 
         # Categorize columns
@@ -115,12 +115,10 @@ class EmissionTimelinePlot:
                 categories['dhw']['columns'].append(col)
             elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
                 categories['electricity']['columns'].append(col)
-            # Check for PV offset/export
-            elif 'pv_' in col_lower and '_offset' in col_lower:
-                categories['pv_electricity_offset']['columns'].append(col)
-            elif 'pv_' in col_lower and '_export' in col_lower:
-                categories['pv_electricity_export']['columns'].append(col)
-            # Check for lifecycle categories
+            # Solar offset columns (PV_E_offset, PVT_E_offset, PVT_Q_offset, SC_Q_offset)
+            elif col_lower.endswith('_offset_kgco2e') or col_lower.endswith('_offset'):
+                categories['solar_offset']['columns'].append(col)
+            # Check for lifecycle embodied categories
             elif col_lower.startswith('biogenic'):
                 categories['biogenic']['columns'].append(col)
             elif col_lower.startswith('production'):
@@ -221,8 +219,7 @@ class EmissionTimelinePlot:
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
-            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
-            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
+            'solar_offset': COLOURS_TO_RGB['yellow'],
         }
 
         fig = go.Figure()
@@ -460,8 +457,7 @@ class EmissionTimelinePlot:
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
-            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
-            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
+            'solar_offset': COLOURS_TO_RGB['yellow'],
         }
 
         fig = go.Figure()
@@ -666,78 +662,144 @@ class EmissionTimelinePlot:
         else:
             return f'Emissions ({unit})'
 
+def _load_whatif_timeline_df(locator, whatif_names):
+    """
+    Load and aggregate the district-level emission timeline from what-if results.
+
+    Returns a DataFrame with:
+    - 'X': year values
+    - emission columns with _kgCO2e suffix (operation_Qhs_sys_kgCO2e, production_kgCO2e, etc.)
+    """
+    dfs = []
+    for whatif_name in whatif_names:
+        timeline_path = locator.get_emissions_whatif_timeline_file(whatif_name)
+        if not os.path.exists(timeline_path):
+            print(f"Warning: timeline file not found for what-if '{whatif_name}': {timeline_path}")
+            continue
+        df = pd.read_csv(timeline_path)
+        dfs.append(df)
+
+    if not dfs:
+        return pd.DataFrame()
+
+    # Sum across multiple what-if scenarios (numeric columns only)
+    if len(dfs) == 1:
+        combined = dfs[0]
+    else:
+        numeric_cols = dfs[0].select_dtypes(include='number').columns.tolist()
+        non_numeric = [c for c in dfs[0].columns if c not in numeric_cols]
+        combined = dfs[0].copy()
+        for df in dfs[1:]:
+            combined[numeric_cols] = combined[numeric_cols].add(df[numeric_cols].fillna(0), fill_value=0)
+
+    # Detect year column (the timeline index is named 'period' with values like 'Y_2024')
+    year_col = None
+    for candidate in ('period', 'year', 'Year', 'Y', 'index'):
+        if candidate in combined.columns:
+            year_col = candidate
+            break
+
+    if year_col is None and combined.index.name:
+        combined = combined.reset_index()
+        year_col = combined.columns[0]
+    elif year_col is None:
+        combined = combined.reset_index()
+        year_col = combined.columns[0]
+
+    combined = combined.rename(columns={year_col: 'X'})
+    return combined
+
+
+def _get_timeline_y_columns(df, operation_services, y_categories):
+    """Detect which timeline columns match the requested services and categories."""
+    service_to_tech = {
+        'electricity': 'operation_E_sys',
+        'space_heating': 'operation_Qhs_sys',
+        'space_cooling': 'operation_Qcs_sys',
+        'dhw': 'operation_Qww_sys',
+    }
+    solar_to_col = {
+        'PV_E': 'PV_E_offset',
+        'PVT_E': 'PVT_E_offset',
+        'PVT_Q': 'PVT_Q_offset',
+        'SC_Q': 'SC_Q_offset',
+    }
+
+    wanted = []
+    if 'operation' in y_categories:
+        for service in operation_services:
+            if service in service_to_tech:
+                base = service_to_tech[service]
+                # find the column (may or may not have _kgCO2e suffix)
+                col = next((c for c in df.columns if c.startswith(base)), None)
+                if col:
+                    wanted.append(col)
+            elif service in solar_to_col:
+                base = solar_to_col[service]
+                col = next((c for c in df.columns if c.startswith(base)), None)
+                if col:
+                    wanted.append(col)
+
+    for category in ('production', 'demolition', 'biogenic'):
+        if category in y_categories:
+            cols = [c for c in df.columns if c.startswith(f'{category}_')]
+            wanted.extend(cols)
+
+    return wanted
+
+
 def plot_emission_timeline(config, context: dict):
+    import cea.inputlocator
+
     scenario = config.scenario
-    plot_cea_feature = 'lifecycle-emissions'
-    period_start = context.get('period_start', 0)
-    period_end = context.get('period_end', 8759)
     plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
+    period_start = context.get('period_start', None)
+    period_end = context.get('period_end', None)
     bool_accumulated = True
-    solar_panel_types_list = []
-    plots_building_filter = config.sections["plots-building-filter"]
     plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
-    bool_include_advanced_analytics = False
-    plot_config.x_to_plot = 'district_and_annually'
 
-    # Note: PV validation is deferred to after data loading
-    # We need to check if PV columns exist in the loaded emission data,
-    # not just if PV result files exist
+    whatif_names = getattr(plot_config, 'what_if_name', [])
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names] if whatif_names else []
 
-    # FIXME: temporary fix for missing x_sorted_by and x_sorted_reversed in plot_config_general
-    # use dummy config for plot_config_general
-    class DummyConfig:
-        def __init__(self):
-            self.x_sorted_by = "default"
-            self.x_sorted_reversed = False
-    plot_config_general = DummyConfig()
+    if whatif_names:
+        # What-if path: read district-level timeline directly from emissions results
+        locator = cea.inputlocator.InputLocator(scenario)
+        df_to_plotly = _load_whatif_timeline_df(locator, whatif_names)
 
-    # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config,
-                                                                                plots_building_filter, scenario,
-                                                                                plot_cea_feature,
-                                                                                period_start, period_end,
-                                                                                solar_panel_types_list,
-                                                                                bool_include_advanced_analytics)
+        if df_to_plotly.empty:
+            import plotly.graph_objs as go
+            return go.Figure()
 
-    # Activate b_data_processor
-    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter,
-                                                   plot_instance, plot_cea_feature, df_summary_data,
-                                                   df_architecture_data,
-                                                   solar_panel_types_list, scenario)
-
-    # Validate PV columns exist in loaded data (column-level validation)
-    # Only check if PV is actually being plotted
-    pv_code = getattr(plot_config, 'pv_code', None)
-    if pv_code:
-        # Check if PV services or components are selected
         operation_services = getattr(plot_config, 'operation_services', [])
-        envelope_components = getattr(plot_config, 'envelope_components', [])
+        y_categories = getattr(plot_config, 'y_category_to_plot', ['operation', 'production', 'demolition', 'biogenic'])
+        list_y_columns = _get_timeline_y_columns(df_to_plotly, operation_services, y_categories)
 
-        pv_is_selected = (
-            'pv_electricity_offset' in operation_services or
-            'pv_electricity_export' in operation_services or
-            'pv' in envelope_components
+    else:
+        # Legacy path: use process_building_summary pipeline
+        plot_cea_feature = 'lifecycle-emissions'
+        solar_panel_types_list = []
+        plots_building_filter = config.sections["plots-building-filter"]
+        bool_include_advanced_analytics = False
+        plot_config.x_to_plot = 'district_and_annually'
+
+        class DummyConfig:
+            def __init__(self):
+                self.x_sorted_by = "default"
+                self.x_sorted_reversed = False
+        plot_config_general = DummyConfig()
+
+        df_summary_data, df_architecture_data, plot_instance = plot_input_processor(
+            plot_config, plots_building_filter, scenario, plot_cea_feature,
+            period_start or 0, period_end or 8759, solar_panel_types_list,
+            bool_include_advanced_analytics
         )
 
-        if pv_is_selected:
-            # Check if expected PV columns exist in the data
-            expected_pv_patterns = [f'PV_{pv_code}_', f'_PV_{pv_code}']
-            pv_columns_found = any(
-                any(pattern in col for pattern in expected_pv_patterns)
-                for col in df_to_plotly.columns
-            )
-
-            if not pv_columns_found:
-                from cea.visualisation.a_data_loader import raise_missing_pv_error
-                raise_missing_pv_error(pv_code, context='emission')
-
-    # # Add placeholder columns for biogenic and PV if their source columns exist (dummy values)
-    # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
-    #     list_y_columns.append('biogenic_underside_kgCO2e/m2')
-    # if 'operation_E_sys_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_E_sys_kgCO2e/m2']
-    #     list_y_columns.append('pv_kgCO2e/m2')
+        df_to_plotly, list_y_columns = calc_x_y_metric(
+            plot_config, plot_config_general, plots_building_filter,
+            plot_instance, plot_cea_feature, df_summary_data, df_architecture_data,
+            solar_panel_types_list, scenario
+        )
 
     # Create EmissionTimelinePlot instance
     plot_title = "CEA-4 Emission Timeline"
