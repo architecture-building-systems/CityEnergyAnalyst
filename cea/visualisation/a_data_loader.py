@@ -482,28 +482,117 @@ def _export_lifecycle_emissions_to_plots_folder(locator, whatif_names, buildings
     df_out.to_csv(out_path, index=False, float_format='%.3f')
 
 
+def _aggregate_op_emission_row(hdf, n=None):
+    """
+    Aggregate one building's hourly operational emission DataFrame into derived columns.
+
+    Returns a dict with three levels of aggregation (all with _kgCO2e suffix):
+    - Service totals:       operation_Qhs_sys_kgCO2e, operation_E_sys_kgCO2e, ...
+    - Carrier totals:       GRID_kgCO2e, NATURALGAS_kgCO2e, ...
+    - Service×carrier:      Qhs_sys_NATURALGAS_kgCO2e, E_sys_GRID_kgCO2e, ...  (kept as-is)
+    - Solar offsets:        PV_E_offset_kgCO2e, PVT_E_offset_kgCO2e, ...
+    """
+    # Maps hourly-file column prefix → (service_dest for totals, canonical_service for hybrid col)
+    _PREFIXES = {
+        'Qhs_sys_':     ('operation_Qhs_sys', 'Qhs_sys'),
+        'Qww_sys_':     ('operation_Qww_sys', 'Qww_sys'),
+        'Qcs_sys_':     ('operation_Qcs_sys', 'Qcs_sys'),
+        'E_sys_':       ('operation_E_sys',   'E_sys'),
+        'Qhs_booster_': ('operation_Qhs_sys', 'Qhs_sys'),  # boosters fold into Qhs_sys
+        'Qww_booster_': ('operation_Qww_sys', 'Qww_sys'),
+    }
+    _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e',
+                      'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
+
+    out = {}
+    cols_data = {col: (hdf[col].values[:n] if n is not None else hdf[col].values)
+                 for col in hdf.columns if col not in ('date', 'name')}
+
+    for col, vals in cols_data.items():
+        if not col.endswith('_kgCO2e'):
+            continue
+
+        # Solar offset columns — keep as-is
+        if col in _SOLAR_OFFSETS:
+            out[col] = out.get(col, 0.0) + (vals.sum() if n is None else vals.sum())
+            continue
+
+        # Operational service×carrier columns
+        for prefix, (service_dest, canonical_service) in _PREFIXES.items():
+            if col.startswith(prefix):
+                carrier = col[len(prefix):-len('_kgCO2e')]
+                col_sum = vals.sum()
+                # service total
+                svc_col = f'{service_dest}_kgCO2e'
+                out[svc_col] = out.get(svc_col, 0.0) + col_sum
+                # carrier total
+                car_col = f'{carrier}_kgCO2e'
+                out[car_col] = out.get(car_col, 0.0) + col_sum
+                # service×carrier (canonical service name, not booster)
+                hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
+                out[hybrid_col] = out.get(hybrid_col, 0.0) + col_sum
+                break
+
+    return out
+
+
+def _aggregate_op_emission_hourly(hdf, n):
+    """
+    Same as _aggregate_op_emission_row but returns numpy arrays for district time-series.
+    Columns: service totals, carrier totals, service×carrier, solar offsets.
+    """
+    import numpy as np
+
+    _PREFIXES = {
+        'Qhs_sys_':     ('operation_Qhs_sys', 'Qhs_sys'),
+        'Qww_sys_':     ('operation_Qww_sys', 'Qww_sys'),
+        'Qcs_sys_':     ('operation_Qcs_sys', 'Qcs_sys'),
+        'E_sys_':       ('operation_E_sys',   'E_sys'),
+        'Qhs_booster_': ('operation_Qhs_sys', 'Qhs_sys'),
+        'Qww_booster_': ('operation_Qww_sys', 'Qww_sys'),
+    }
+    _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e',
+                      'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
+
+    out = {}
+    for col in hdf.columns:
+        if col in ('date', 'name') or not col.endswith('_kgCO2e'):
+            continue
+        vals = hdf[col].values[:n]
+
+        if col in _SOLAR_OFFSETS:
+            out[col] = out[col] + vals if col in out else vals.copy()
+            continue
+
+        for prefix, (service_dest, canonical_service) in _PREFIXES.items():
+            if col.startswith(prefix):
+                carrier = col[len(prefix):-len('_kgCO2e')]
+                svc_col = f'{service_dest}_kgCO2e'
+                car_col = f'{carrier}_kgCO2e'
+                hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
+                out[svc_col]    = out[svc_col]    + vals if svc_col    in out else vals.copy()
+                out[car_col]    = out[car_col]    + vals if car_col    in out else vals.copy()
+                out[hybrid_col] = out[hybrid_col] + vals if hybrid_col in out else vals.copy()
+                break
+
+    return out
+
+
 def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
     """
     Read operational emissions results for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
 
-    For building-level annual view: reads per-building hourly emission files and sums annually.
-    For district time-series views: sums across all buildings and aggregates to requested time period.
+    Exports three levels of aggregation so all y-category-to-plot combinations work:
+    - Service totals:    operation_Qhs_sys_kgCO2e  (for 'operation' only)
+    - Carrier totals:    GRID_kgCO2e               (for 'energy_carrier' only)
+    - Service×carrier:   Qhs_sys_NATURALGAS_kgCO2e (for both selected)
+    - Solar offsets:     PV_E_offset_kgCO2e        (always)
     """
     from cea.utilities.date import get_date_range_hours_from_year
 
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
-
-    _SERVICE_MAP = {
-        'Qhs_sys_': 'operation_Qhs_sys',
-        'Qww_sys_': 'operation_Qww_sys',
-        'Qcs_sys_': 'operation_Qcs_sys',
-        'E_sys_': 'operation_E_sys',
-        'Qhs_booster_': 'operation_Qhs_sys',
-        'Qww_booster_': 'operation_Qww_sys',
-    }
-    _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e', 'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
 
     multi = len(whatif_names) > 1
 
@@ -525,25 +614,11 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
                 if not os.path.exists(hourly_path):
                     continue
                 hdf = pd.read_csv(hourly_path)
-
                 out_row = {
                     'name': f'{whatif_name}/{building_name}' if multi else building_name,
                     'GFA_m2': row.get('GFA_m2', 0.0),
                 }
-                service_totals = {}
-                for col in hdf.columns:
-                    for prefix, dest in _SERVICE_MAP.items():
-                        if col.startswith(prefix) and col.endswith('_kgCO2e'):
-                            key = f'{dest}_kgCO2e'
-                            service_totals[key] = service_totals.get(key, 0.0) + hdf[col].sum()
-                            break
-                out_row.update(service_totals)
-
-                for solar_col in _SOLAR_OFFSETS:
-                    if solar_col in hdf.columns:
-                        base = solar_col[:-len('_kgCO2e')]
-                        out_row[f'{base}_kgCO2e'] = hdf[solar_col].sum()
-
+                out_row.update(_aggregate_op_emission_row(hdf))
                 out_row['period'] = 'annually'
                 dfs.append(out_row)
 
@@ -576,23 +651,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
                 continue
             hdf = pd.read_csv(hourly_path)
             n = min(len(hdf), len(dates))
-            row = {'date': dates[:n]}
-            service_sums = {}
-            for col in hdf.columns:
-                for prefix, dest in _SERVICE_MAP.items():
-                    if col.startswith(prefix) and col.endswith('_kgCO2e'):
-                        key = f'{dest}_kgCO2e'
-                        if key not in service_sums:
-                            service_sums[key] = hdf[col].values[:n].copy()
-                        else:
-                            service_sums[key] += hdf[col].values[:n]
-                        break
-            row.update(service_sums)
-            for solar_col in _SOLAR_OFFSETS:
-                if solar_col in hdf.columns:
-                    base = solar_col[:-len('_kgCO2e')]
-                    row[f'{base}_kgCO2e'] = hdf[solar_col].values[:n]
-            hourly_df = pd.DataFrame(row)
+            row_dict = {'date': dates[:n]}
+            row_dict.update(_aggregate_op_emission_hourly(hdf, n))
+            hourly_df = pd.DataFrame(row_dict)
             hourly_df = slice_hourly_results_for_custom_time_period(period_start, period_end, hourly_df)
             entity_dfs.append(hourly_df)
 
