@@ -629,12 +629,13 @@ class SolarTechnologySection(Section):
 
 class WhatIfsSection(Section):
     """Typed section for what-ifs configuration"""
-    what_if_name: list[str]
+    what_if_name: list
 
     def __getattr__(self, item: str) -> Any: ...
 
 class EmissionsSection(Section):
     """Typed section for emissions configuration"""
+    what_if_name: list
     year_end: int | None
     grid_carbon_intensity_dataset_csv: str | None
     csv_carbon_intensity_column_name: Any
@@ -642,6 +643,8 @@ class EmissionsSection(Section):
     grid_decarbonise_target_year: int | None
     grid_decarbonise_target_emission_factor: float | None
 
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["year_end"]) -> int | None: ...
     @overload
@@ -1082,16 +1085,13 @@ class ThermalNetworkDetailedSection(Section):
 
 class ThermalNetworkPhasingSection(Section):
     """Typed section for thermal-network-phasing configuration"""
-    multi_phase_mode: bool
-    phasing_plan_name: str | None
+    phasing_plan_name: str
     phase_completion_year: List[str]
     sizing_strategy: str
     replacement_cost_multiplier: float
 
     @overload
-    def __getattr__(self, item: Literal["multi_phase_mode"]) -> bool: ...
-    @overload
-    def __getattr__(self, item: Literal["phasing_plan_name"]) -> str | None: ...
+    def __getattr__(self, item: Literal["phasing_plan_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["phase_completion_year"]) -> List[str]: ...
     @overload
@@ -1731,14 +1731,14 @@ class PlotsDemandSection(Section):
 
 class PlotsFinalEnergySection(Section):
     """Typed section for plots-final-energy configuration"""
-    what_if_name: list[str]
+    what_if_name: list
     y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload
@@ -1751,14 +1751,14 @@ class PlotsFinalEnergySection(Section):
 
 class PlotsHeatRejectionSection(Section):
     """Typed section for plots-heat-rejection configuration"""
-    what_if_name: list[str]
+    what_if_name: list
     y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload
@@ -1881,14 +1881,14 @@ class PlotsSolarSection(Section):
 
 class PlotsCostBreakdownSection(Section):
     """Typed section for plots-cost-breakdown configuration"""
-    what_if_name: list[str]
+    what_if_name: list
     y_cost_category_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
     @overload
-    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
     @overload
@@ -1901,13 +1901,13 @@ class PlotsCostBreakdownSection(Section):
 
 class PlotsCostSankeySection(Section):
     """Typed section for plots-cost-sankey configuration"""
-    what_if_name: list[str]
+    what_if_name: list
     y_cost_category_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
 
     @overload
-    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
     @overload

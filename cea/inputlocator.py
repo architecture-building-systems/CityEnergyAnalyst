@@ -1802,6 +1802,52 @@ class InputLocator(object):
         """
         return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), f'{building_name}.csv')
 
+    def get_emissions_whatif_folder(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to emissions folder for this what-if scenario
+        """
+        return os.path.join(self.get_analysis_folder(whatif_name), 'emissions')
+
+    def get_emissions_whatif_buildings_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/emissions_buildings.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to emissions buildings summary file
+        """
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'emissions_buildings.csv')
+
+    def get_emissions_whatif_operational_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/emissions_operational.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to operational emissions detail file
+        """
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'emissions_operational.csv')
+
+    def get_emissions_whatif_timeline_file(self, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/emissions_timeline.csv
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to emissions timeline file
+        """
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'emissions_timeline.csv')
+
+    def get_emissions_whatif_building_file(self, building_name, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/{building_name}.csv
+
+        :param building_name: Building identifier (e.g. 'B1001')
+        :param whatif_name: What-if scenario name.
+        :return: Path to hourly emissions file for this building
+        """
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), f'{building_name}.csv')
+
     # GRAPHS
     def get_plots_folder(self, category):
         """scenario/outputs/plots/timeseries"""

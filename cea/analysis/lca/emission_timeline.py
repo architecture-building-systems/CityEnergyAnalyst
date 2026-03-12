@@ -393,6 +393,7 @@ class BuildingEmissionTimeline:
     def fill_operational_emissions(
         self,
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
+        operational_df: pd.DataFrame | None = None,
     ) -> None:
         """Fill operational emissions into the timeline, with optional per-feedstock discounting.
 
@@ -404,12 +405,20 @@ class BuildingEmissionTimeline:
 
         Column convention assumed: `{demand_type}_{feedstock}_kgCO2e` where demand_type is one of
         {Qhs_sys, Qww_sys, Qcs_sys, E_sys} and feedstock is in the feedstock database (plus 'NONE').
+
+        :param feedstock_policies: Optional dict mapping feedstock key to (ref_year, tar_year, tar_fraction).
+        :param operational_df: Optional pre-computed hourly emissions DataFrame. When provided, this
+            DataFrame is used directly instead of reading from the saved operational hourly file.
+            Must have the same column naming convention ({demand_type}_{feedstock}_kgCO2e).
         """
         self.check_demolished()
         demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
         feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
 
-        _, operational_timeseries = self._read_operational_timeseries()
+        if operational_df is not None:
+            operational_timeseries = operational_df.drop(columns=['date', 'name'], errors='ignore')
+        else:
+            _, operational_timeseries = self._read_operational_timeseries()
         yearly_sum = operational_timeseries.sum(axis=0)
         operational_multiyrs = self._tile_yearly(yearly_sum)
         self._apply_feedstock_policies(operational_multiyrs, feedstock_policies, feedstocks, demand_types)

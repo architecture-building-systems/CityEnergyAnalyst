@@ -1504,6 +1504,8 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
                 names = [name for name in names if os.path.exists(locator.get_heat_rejection_whatif_buildings_file(name))]
             elif mode == 'costs':
                 names = [name for name in names if os.path.exists(locator.get_costs_whatif_buildings_file(name))]
+            elif mode == 'emissions':
+                names = [name for name in names if os.path.exists(locator.get_emissions_whatif_buildings_file(name))]
             return names
         except Exception:
             return []
