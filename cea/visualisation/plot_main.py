@@ -128,6 +128,12 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
 def main(config: cea.config.Configuration):
     scenario = config.scenario
     context: dict[str, Any] = config.plots_general.context
+    # When running via CLI, the script identity is known — override any stale feature in context
+    try:
+        plot_cea_feature = get_plot_cea_feature(config)
+        context = {**context, 'feature': plot_cea_feature}
+    except CEAException:
+        pass  # Fall back to feature stored in context
     fig = plot_all(config, scenario, context, hide_title=False)
     plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 

@@ -730,14 +730,14 @@ def _get_timeline_y_columns(df, operation_services, y_categories):
         for service in operation_services:
             if service in service_to_tech:
                 base = service_to_tech[service]
-                # find the column (may or may not have _kgCO2e suffix)
                 col = next((c for c in df.columns if c.startswith(base)), None)
                 if col:
                     wanted.append(col)
-            elif service in solar_to_col:
-                base = solar_to_col[service]
-                col = next((c for c in df.columns if c.startswith(base)), None)
-                if col:
+        # Always include all solar offset columns that exist in the timeline (regardless of
+        # which solar services the user has ticked — they come from what-if emissions results)
+        for col in df.columns:
+            if col.endswith('_offset_kgCO2e') or col.endswith('_offset'):
+                if col not in wanted:
                     wanted.append(col)
 
     for category in ('production', 'demolition', 'biogenic'):

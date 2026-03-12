@@ -2654,8 +2654,8 @@ list_metrics_district_heating = ['DH_plant_thermal_load[kWh]','DH_electricity_co
 list_metrics_district_cooling = ['DC_plant_thermal_load[kWh]','DC_electricity_consumption_for_pressure_loss[kWh]']
 
 list_metrics_architecture = ['conditioned_floor_area[m2]','roof_area[m2]','gross_floor_area[m2]','occupied_floor_area[m2]']
-list_metrics_lifecycle_emissions = list(normalisation_name_mapping_emission_timeline_yearly.keys())
-list_metrics_operational_emissions = list(normalisation_name_mapping_emission_timeline_hourly_operational.keys())
+list_metrics_lifecycle_emissions = []  # populated via get_emission_context()["list_metrics_lifecycle_emissions"]
+list_metrics_operational_emissions = []  # populated via get_emission_context()["list_metrics_operational_emissions"]
 list_metrics_heat_rejection = ['heat_rejection[kWh]']
 
 def get_list_list_metrics_with_date(config):

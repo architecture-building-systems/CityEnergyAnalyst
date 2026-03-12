@@ -311,13 +311,18 @@ class data_processor:
                 print(f"Warning: {len(missing)} buildings filtered out from architecture data: {sorted(missing)}")
 
         if self.y_normalised_by == 'gross_floor_area':
-            # Get architecture data for buildings that exist in it
-            arch_data = self.df_architecture_data.set_index('name')
-            buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
-            normaliser_m2 = arch_data.loc[buildings_in_arch, ['GFA_m2']].copy()
-            normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
+            # Start from architecture data when available; fall back to empty frame
+            if self.df_architecture_data is not None:
+                arch_data = self.df_architecture_data.set_index('name')
+                buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
+                normaliser_m2 = arch_data.loc[buildings_in_arch, ['GFA_m2']].copy()
+                normaliser_m2 = normaliser_m2.rename(columns={'GFA_m2': 'normaliser_m2'})
+            else:
+                buildings_in_arch = []
+                normaliser_m2 = pd.DataFrame({'normaliser_m2': pd.Series(dtype=float)})
+                normaliser_m2.index.name = 'name'
 
-            # For what-if mode, supplement missing buildings from summary GFA column
+            # Supplement missing buildings from summary GFA column (what-if mode)
             if self.whatif_names and self.df_summary_data is not None and 'GFA_m2' in self.df_summary_data.columns:
                 summary_gfa = self.df_summary_data.set_index('name')['GFA_m2']
                 for b in buildings_to_use:
@@ -332,10 +337,15 @@ class data_processor:
                     normaliser_m2.loc[plant] = plant_area
 
         elif self.y_normalised_by == 'conditioned_floor_area':
-            arch_data = self.df_architecture_data.set_index('name')
-            buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
-            normaliser_m2 = arch_data.loc[buildings_in_arch, ['Af_m2']].copy()
-            normaliser_m2 = normaliser_m2.rename(columns={'Af_m2': 'normaliser_m2'})
+            if self.df_architecture_data is not None:
+                arch_data = self.df_architecture_data.set_index('name')
+                buildings_in_arch = [b for b in buildings_to_use if b in arch_data.index]
+                normaliser_m2 = arch_data.loc[buildings_in_arch, ['Af_m2']].copy()
+                normaliser_m2 = normaliser_m2.rename(columns={'Af_m2': 'normaliser_m2'})
+            else:
+                buildings_in_arch = []
+                normaliser_m2 = pd.DataFrame({'normaliser_m2': pd.Series(dtype=float)})
+                normaliser_m2.index.name = 'name'
 
             # For heat-rejection, calculate conditioned floor area for plants
             if plot_cea_feature == 'heat-rejection':
@@ -346,7 +356,6 @@ class data_processor:
 
         elif self.y_normalised_by == 'no_normalisation':
             # Create normaliser with value 1 for ALL entities (including plants)
-            import pandas as pd
             normaliser_m2 = pd.DataFrame({'normaliser_m2': 1}, index=buildings_to_use)
             normaliser_m2.index.name = 'name'
         else:
