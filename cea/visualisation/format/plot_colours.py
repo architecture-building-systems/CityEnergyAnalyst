@@ -279,6 +279,17 @@ _BASE_COLUMN_COLORS = {
     "production_pv": "purple",
     "biogenic_pv": "grey",
     "demolition_pv": "brown",
+
+    # What-if mode lifecycle totals (no component suffix)
+    "production": "purple",
+    "biogenic": "grey",
+    "demolition": "brown",
+
+    # Solar offset columns (electric = yellows, thermal = oranges)
+    "PV_E_offset":  "yellow",        # PV electric offset
+    "PVT_E_offset": "yellow_light",  # PVT electric offset
+    "PVT_Q_offset": "orange",        # PVT thermal offset
+    "SC_Q_offset":  "orange_light",  # SC thermal offset
 }
 
 
