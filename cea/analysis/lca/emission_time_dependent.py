@@ -483,11 +483,17 @@ _ZERO_EMISSION_CARRIERS = {'DH', 'DC', 'NONE'}
 _CARRIER_COLUMN_PREFIXES = ('Qhs_sys_', 'Qww_sys_', 'Qcs_sys_', 'E_sys_',
                              'Qhs_booster_', 'Qww_booster_')
 
-# Prefixes identifying solar-thermal production columns (positive heat, offset heating carrier)
-_SOLAR_THERMAL_PREFIXES = ('Q_PVT_gen_', 'Q_SC_gen_', 'Q_PVT_', 'Q_SC_')
+# Solar column detection helpers (based on actual final-energy column naming):
+#   PV electric  : PV_{facade}_kWh          → starts with 'PV_'
+#   PVT electric : PVT_{type}_{facade}_E_kWh → starts with 'PVT_', ends with '_E_kWh'
+#   PVT thermal  : PVT_{type}_{facade}_Q_kWh → starts with 'PVT_', ends with '_Q_kWh'
+#   SC thermal   : SC_{type}_{facade}_kWh    → starts with 'SC_'
 
-# Prefixes identifying solar-electric production columns (offset grid electricity)
-_SOLAR_ELECTRIC_PREFIXES = ('E_PV_gen_', 'E_PVT_gen_', 'E_PV_', 'E_PVT_')
+def _is_solar_thermal_col(col: str) -> bool:
+    return (col.startswith('PVT_') and col.endswith('_Q_kWh')) or col.startswith('SC_')
+
+def _is_solar_electric_col(col: str) -> bool:
+    return col.startswith('PV_') or (col.startswith('PVT_') and col.endswith('_E_kWh'))
 
 
 def _expand_feedstock_emissions(feedstock_db) -> pd.DataFrame:
@@ -537,22 +543,41 @@ def _calc_operational_emissions_from_fe(
                     result[em_col] = fe_df[col].values * emission_intensity[carrier].values
                 break
 
-    # Solar thermal offset: heat produced displaces building heating carrier
+    # Solar thermal offset: aggregate PVT_Q and SC_Q across all facades into two columns
+    # 1 kWh of solar heat offsets 1 kWh × emission_factor of the heating carrier (η=1, same as electric).
     hs_carrier = (supply_cfg.get('space_heating') or {}).get('carrier', '')
     if hs_carrier and hs_carrier not in _ZERO_EMISSION_CARRIERS and hs_carrier in emission_intensity.columns:
         hs_intensity = emission_intensity[hs_carrier].values
+        pvt_q_total = np.zeros(len(fe_df))
+        sc_q_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
-            if col.endswith('_kWh') and any(col.startswith(p) for p in _SOLAR_THERMAL_PREFIXES):
-                offset_col = f'{col[:-4]}_thermal_offset_kgCO2e'
-                result[offset_col] = -fe_df[col].values * hs_intensity
+            if not col.endswith('_kWh'):
+                continue
+            if col.startswith('PVT_') and col.endswith('_Q_kWh'):
+                pvt_q_total += fe_df[col].values
+            elif col.startswith('SC_'):
+                sc_q_total += fe_df[col].values
+        if pvt_q_total.sum() > 0:
+            result['PVT_Q_offset_kgCO2e'] = -pvt_q_total * hs_intensity
+        if sc_q_total.sum() > 0:
+            result['SC_Q_offset_kgCO2e'] = -sc_q_total * hs_intensity
 
-    # Solar electric offset: electricity produced displaces grid
+    # Solar electric offset: aggregate PV and PVT_E across all facades into two columns
     if 'GRID' in emission_intensity.columns:
         grid_intensity = emission_intensity['GRID'].values
+        pv_e_total = np.zeros(len(fe_df))
+        pvt_e_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
-            if col.endswith('_kWh') and any(col.startswith(p) for p in _SOLAR_ELECTRIC_PREFIXES):
-                offset_col = f'{col[:-4]}_elec_offset_kgCO2e'
-                result[offset_col] = -fe_df[col].values * grid_intensity
+            if not col.endswith('_kWh'):
+                continue
+            if col.startswith('PV_'):
+                pv_e_total += fe_df[col].values
+            elif col.startswith('PVT_') and col.endswith('_E_kWh'):
+                pvt_e_total += fe_df[col].values
+        if pv_e_total.sum() > 0:
+            result['PV_E_offset_kgCO2e'] = -pv_e_total * grid_intensity
+        if pvt_e_total.sum() > 0:
+            result['PVT_E_offset_kgCO2e'] = -pvt_e_total * grid_intensity
 
     return pd.DataFrame(result, index=fe_df.index)
 
