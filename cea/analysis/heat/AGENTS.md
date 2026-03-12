@@ -86,6 +86,22 @@ outputs/data/analysis/{whatif_name}/heat/
 
 **heat_rejection_components.csv** columns: `name, service, scale, assembly_code, component_code, carrier, peak_heat_rejection_kW, heat_rejection_annual_MWh`
 
+## Visualisation (Bar Chart & Map Layer)
+
+### Bar chart (`plot-heat-rejection` script)
+
+- Config: `[plots-heat-rejection]` with `what-if-name` (WhatIfNameMultiChoiceParameter, mode=final_energy)
+- `a_data_loader.py:_export_heat_rejection_to_plots_folder()` — bypasses `result_summary.py`:
+  - Building annual view: reads `heat_rejection_buildings.csv`, converts `heat_rejection_annual_MWh × 1000 → heat_rejection_kWh`, adds `period='annually'`
+  - District time-series: sums entity hourly files, aggregates via `exec_aggregate_time_period()`
+- The `execute_summary()` method in `csv_pointer` dispatches to this function (same pattern as `final-energy`)
+
+### Map layer (`AnthropogenicHeatMapLayer`)
+
+- `expected_parameters()` includes `whatif_name` (`selector="choice"`, `options_generator="_get_whatif_names"`)
+- `_get_whatif_names()` scans `outputs/data/analysis/*/heat/heat_rejection_buildings.csv`
+- `generate_data()` reads from `locator.get_heat_rejection_whatif_buildings_file(whatif_name)` and `locator.get_heat_rejection_whatif_building_file(name, whatif_name)`
+
 ## Related Files
 
 - `heat_rejection.py` — All calculation functions
@@ -93,4 +109,5 @@ outputs/data/analysis/{whatif_name}/heat/
 - `cea/analysis/final_energy/` — Must run first to produce inputs
 - `cea/analysis/costs/AGENTS.md` — Reference for parallel architecture
 - `cea/technologies/cooling_tower.py` — `calc_CT_const(q_hot, eff_rating)`
-- `cea/technologies/boiler.py` — `calc_boiler_const(Q_load, efficiency)`
+- `cea/visualisation/a_data_loader.py` — Bar chart export bypass
+- `cea/interfaces/dashboard/map_layers/life_cycle_analysis/layers.py` — `AnthropogenicHeatMapLayer`

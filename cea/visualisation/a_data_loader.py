@@ -11,6 +11,8 @@ import pandas as pd
 from cea.import_export.result_summary import (
     get_emission_context,
     process_building_summary,
+    exec_aggregate_time_period,
+    slice_hourly_results_for_custom_time_period,
 )
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -134,82 +136,266 @@ def get_plot_analytics_dict(locator):
 
 def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
     """
-    Read final_energy_buildings.csv for one or more what-if scenarios and write an
+    Read final-energy results for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
 
-    Carrier columns are converted from MWh to kWh so the pipeline's unit-
-    conversion logic (which expects _kWh suffixes) works without modification.
+    For building-level annual view: reads final_energy_buildings.csv (annual totals),
+    converts MWh → kWh.  Multiple what-if names are prefixed on the building name.
 
-    When multiple what-if names are selected, building names are prefixed with
-    "{whatif_name}/" so each scenario appears as a distinct bar group.
+    For building-level monthly/seasonal view and all district time-series views:
+    reads per-building B####.csv hourly files, sums carrier columns, then aggregates
+    via exec_aggregate_time_period() — the same pattern used by heat-rejection.
 
-    Column mapping (final_energy_buildings.csv → intermediate CSV):
-        GRID_MWh        → GRID_kWh
-        NATURALGAS_MWh  → NATURALGAS_kWh
-        DH_MWh          → DH_kWh
-        DC_MWh          → DC_kWh
-        OIL_MWh         → OIL_kWh
-        COAL_MWh        → COAL_kWh
-        WOOD_MWh        → WOOD_kWh
-        GFA_m2          → GFA_m2  (pass-through for normalisation)
+    Carrier column mapping:
+        GRID_MWh / *_GRID_kWh      → GRID_kWh
+        NATURALGAS_MWh / *_NATURALGAS_kWh → NATURALGAS_kWh
+        DH_MWh / *_DH_kWh         → DH_kWh
+        DC_MWh / *_DC_kWh         → DC_kWh
+        OIL_MWh / *_OIL_kWh       → OIL_kWh
+        COAL_MWh / *_COAL_kWh     → COAL_kWh
+        WOOD_MWh / *_WOOD_kWh     → WOOD_kWh
     """
+    from cea.utilities.date import get_date_range_hours_from_year
+
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
 
-    carrier_rename = {
-        'GRID_MWh': 'GRID_kWh',
-        'NATURALGAS_MWh': 'NATURALGAS_kWh',
-        'DH_MWh': 'DH_kWh',
-        'DC_MWh': 'DC_kWh',
-        'OIL_MWh': 'OIL_kWh',
-        'COAL_MWh': 'COAL_kWh',
-        'WOOD_MWh': 'WOOD_kWh',
-    }
-
-    dfs = []
+    carriers = ['GRID', 'NATURALGAS', 'DH', 'DC', 'OIL', 'COAL', 'WOOD']
+    carrier_rename = {f'{c}_MWh': f'{c}_kWh' for c in carriers}
     multi = len(whatif_names) > 1
-    for whatif_name in whatif_names:
-        src_path = locator.get_final_energy_buildings_file(whatif_name)
-        df = pd.read_csv(src_path)
 
-        # Filter to building rows only (exclude plant rows)
-        if 'type' in df.columns:
-            df = df[df['type'] == 'building'].copy()
+    if bool_aggregate_by_building and time_period == 'annually':
+        # Fast path: read annual summary CSV (no hourly files needed)
+        dfs = []
+        for whatif_name in whatif_names:
+            src_path = locator.get_final_energy_buildings_file(whatif_name)
+            if not os.path.exists(src_path):
+                continue
+            df = pd.read_csv(src_path)
+            if 'type' in df.columns:
+                df = df[df['type'] == 'building'].copy()
+            if buildings:
+                df = df[df['name'].isin(buildings)].copy()
+            keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
+            df_out = df[keep_cols].copy()
+            for mwh_col in carrier_rename:
+                if mwh_col in df_out.columns:
+                    df_out[mwh_col] = df_out[mwh_col] * 1000.0
+            df_out = df_out.rename(columns=carrier_rename)
+            if multi:
+                df_out['name'] = whatif_name + '/' + df_out['name']
+            df_out['period'] = 'annually'
+            dfs.append(df_out)
+        if not dfs:
+            return
+        df_out = pd.concat(dfs, ignore_index=True)
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'final-energy', 'final-energy', 'annually', period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
 
-        # Optionally filter to selected buildings
-        if buildings:
-            df = df[df['name'].isin(buildings)].copy()
+    elif bool_aggregate_by_building:
+        # Building monthly/seasonal view — read per-building hourly files
+        dates = get_date_range_hours_from_year(2005)
+        dfs = []
+        for whatif_name in whatif_names:
+            summary_path = locator.get_final_energy_buildings_file(whatif_name)
+            if not os.path.exists(summary_path):
+                continue
+            summary_df = pd.read_csv(summary_path)
+            if 'type' in summary_df.columns:
+                summary_df = summary_df[summary_df['type'] == 'building']
+            if buildings:
+                summary_df = summary_df[summary_df['name'].isin(buildings)]
+            gfa_map = summary_df.set_index('name')['GFA_m2'].to_dict() if 'GFA_m2' in summary_df.columns else {}
 
-        keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
-        df_out = df[keep_cols].copy()
+            for building_name in summary_df['name'].tolist():
+                building_file = locator.get_final_energy_building_file(building_name, whatif_name)
+                if not os.path.exists(building_file):
+                    continue
+                bdf = pd.read_csv(building_file)
+                n = min(len(bdf), len(dates))
+                row = {'date': dates[:n]}
+                for carrier in carriers:
+                    cols = [c for c in bdf.columns if c.endswith(f'_{carrier}_kWh')]
+                    if cols:
+                        row[f'{carrier}_kWh'] = bdf[cols].sum(axis=1).values[:n]
+                hourly_df = pd.DataFrame(row)
+                hourly_df = slice_hourly_results_for_custom_time_period(period_start, period_end, hourly_df)
 
-        # Convert MWh → kWh and rename
-        for mwh_col in carrier_rename:
-            if mwh_col in df_out.columns:
-                df_out[mwh_col] = df_out[mwh_col] * 1000.0
-        df_out = df_out.rename(columns=carrier_rename)
+                list_list_df, _ = exec_aggregate_time_period(True, [[hourly_df]], [time_period])
+                if not list_list_df or not list_list_df[0]:
+                    continue
+                agg_df = list_list_df[0][0]
+                display_name = f'{whatif_name}/{building_name}' if multi else building_name
+                agg_df.insert(0, 'name', display_name)
+                agg_df['GFA_m2'] = gfa_map.get(building_name, 0.0)
+                dfs.append(agg_df)
 
-        # Prefix building names with scenario name when comparing multiple scenarios
-        if multi:
-            df_out['name'] = whatif_name + '/' + df_out['name']
-
-        dfs.append(df_out)
-
-    df_out = pd.concat(dfs, ignore_index=True)
-
-    if bool_aggregate_by_building:
-        # Add 'period' column expected by pipeline for annually aggregated building data
-        df_out['period'] = 'annually'
+        if not dfs:
+            return
+        df_out = pd.concat(dfs, ignore_index=True)
         out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
             'final-energy', 'final-energy', time_period, period_start, period_end
         )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
     else:
+        # District views
+        if time_period == 'annually':
+            # Annual district view: sum per-building annual totals to a single district row
+            dfs = []
+            for whatif_name in whatif_names:
+                src_path = locator.get_final_energy_buildings_file(whatif_name)
+                if not os.path.exists(src_path):
+                    continue
+                df = pd.read_csv(src_path)
+                if 'type' in df.columns:
+                    df = df[df['type'] == 'building'].copy()
+                if buildings:
+                    df = df[df['name'].isin(buildings)].copy()
+                keep_cols = [c for c in carrier_rename if c in df.columns]
+                df_out = df[keep_cols].copy()
+                for mwh_col in carrier_rename:
+                    if mwh_col in df_out.columns:
+                        df_out[mwh_col] = df_out[mwh_col] * 1000.0
+                df_out = df_out.rename(columns=carrier_rename)
+                dfs.append(df_out)
+            if not dfs:
+                return
+            totals = pd.concat(dfs, ignore_index=True).sum(numeric_only=True)
+            df_out = pd.DataFrame([totals])
+            df_out.insert(0, 'period', 'annually')
+        else:
+            # District time-series: read all buildings' hourly files, sum per carrier, aggregate
+            whatif_name = whatif_names[0]
+            dates = get_date_range_hours_from_year(2005)
+            summary_path = locator.get_final_energy_buildings_file(whatif_name)
+            if not os.path.exists(summary_path):
+                return
+            summary_df = pd.read_csv(summary_path)
+            if 'type' in summary_df.columns:
+                summary_df = summary_df[summary_df['type'] == 'building']
+            if buildings:
+                summary_df = summary_df[summary_df['name'].isin(buildings)]
+
+            entity_dfs = []
+            for building_name in summary_df['name'].tolist():
+                building_file = locator.get_final_energy_building_file(building_name, whatif_name)
+                if not os.path.exists(building_file):
+                    continue
+                bdf = pd.read_csv(building_file)
+                n = min(len(bdf), len(dates))
+                row = {'date': dates[:n]}
+                for carrier in carriers:
+                    cols = [c for c in bdf.columns if c.endswith(f'_{carrier}_kWh')]
+                    if cols:
+                        row[f'{carrier}_kWh'] = bdf[cols].sum(axis=1).values[:n]
+                hourly_df = pd.DataFrame(row)
+                hourly_df = slice_hourly_results_for_custom_time_period(period_start, period_end, hourly_df)
+                entity_dfs.append(hourly_df)
+
+            if not entity_dfs:
+                return
+            list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+            if not list_list_df or not list_list_df[0]:
+                return
+            df_out = list_list_df[0][0]
+
         out_path = locator.get_export_results_summary_cea_feature_time_period_file(
             locator.get_export_plots_folder(), 'final-energy', 'final-energy', time_period, period_start, period_end
         )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
 
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
+    """
+    Read heat rejection results for one or more what-if scenarios and write an
+    intermediate CSV to the standard export/plots path expected by the pipeline.
+
+    For building-level annual view: reads heat_rejection_buildings.csv, converts
+    heat_rejection_annual_MWh → heat_rejection_kWh.
+
+    For district time-series views: sums hourly files across all entities and
+    aggregates to the requested time resolution using result_summary machinery.
+    """
+    from cea.utilities.date import get_date_range_hours_from_year
+
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
+
+    if bool_aggregate_by_building:
+        dfs = []
+        multi = len(whatif_names) > 1
+        for whatif_name in whatif_names:
+            src_path = locator.get_heat_rejection_whatif_buildings_file(whatif_name)
+            if not os.path.exists(src_path):
+                continue
+            df = pd.read_csv(src_path)
+            if 'type' in df.columns:
+                df = df[df['type'] == 'building'].copy()
+            if buildings:
+                df = df[df['name'].isin(buildings)].copy()
+            keep_cols = [c for c in ['name', 'GFA_m2', 'heat_rejection_annual_MWh'] if c in df.columns]
+            df_out = df[keep_cols].copy()
+            if 'heat_rejection_annual_MWh' in df_out.columns:
+                df_out['heat_rejection_kWh'] = df_out['heat_rejection_annual_MWh'] * 1000.0
+                df_out = df_out.drop(columns=['heat_rejection_annual_MWh'])
+            if multi:
+                df_out['name'] = whatif_name + '/' + df_out['name']
+            dfs.append(df_out)
+        if not dfs:
+            return
+        df_out = pd.concat(dfs, ignore_index=True)
+        df_out['period'] = 'annually'
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'heat-rejection', 'heat-rejection', 'annually', period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    else:
+        # District time-series view — use first whatif_name
+        whatif_name = whatif_names[0]
+        buildings_file = locator.get_heat_rejection_whatif_buildings_file(whatif_name)
+        if not os.path.exists(buildings_file):
+            return
+        buildings_df = pd.read_csv(buildings_file)
+        entity_names = buildings_df['name'].tolist()
+
+        dates = get_date_range_hours_from_year(2005)
+        entity_dfs = []
+        for entity_name in entity_names:
+            entity_file = locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
+            if not os.path.exists(entity_file):
+                continue
+            entity_df = pd.read_csv(entity_file)
+            if 'heat_rejection_kW' not in entity_df.columns:
+                continue
+            n = min(len(entity_df), len(dates))
+            df = pd.DataFrame({
+                'date': dates[:n],
+                'heat_rejection_kWh': entity_df['heat_rejection_kW'].values[:n],
+            })
+            df = slice_hourly_results_for_custom_time_period(period_start, period_end, df)
+            entity_dfs.append(df)
+
+        if not entity_dfs:
+            return
+
+        list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+        if not list_list_df or not list_list_df[0]:
+            return
+
+        df_result = list_list_df[0][0]
+        out_path = locator.get_export_results_summary_cea_feature_time_period_file(
+            locator.get_export_plots_folder(), 'heat-rejection', 'heat-rejection', time_period, period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_result.to_csv(out_path, index=False, float_format='%.3f')
 
 
 # Trigger the summary feature and point to the csv results file
@@ -294,6 +480,17 @@ class csv_pointer:
 
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
+        if self.plot_cea_feature == 'heat-rejection':
+            whatif_names = self.config.what_if_name  # list from WhatIfNameMultiChoiceParameter
+            if not whatif_names:
+                return
+            _export_heat_rejection_to_plots_folder(
+                self.locator, whatif_names, self.buildings,
+                self.bool_aggregate_by_building, self.time_period,
+                self.period_start, self.period_end
+            )
+            return
+
         if self.plot_cea_feature == 'final-energy':
             whatif_names = self.config.what_if_name  # list from WhatIfNameMultiChoiceParameter
             if not whatif_names:

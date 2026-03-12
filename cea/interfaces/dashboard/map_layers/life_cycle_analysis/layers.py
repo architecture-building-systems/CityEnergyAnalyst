@@ -451,20 +451,32 @@ class AnthropogenicHeatMapLayer(MapLayer):
     label = "Anthropogenic Heat Rejection (Hourly/Daily)"
     description = "Visualise heat rejection from building systems and district cooling plants"
 
-    def _get_results_files(self, _):
+    def _get_whatif_names(self) -> Optional[list]:
+        """Return sorted list of what-if names that have heat rejection results."""
+        base = os.path.join(self.locator.scenario, 'outputs', 'data', 'analysis')
+        if not os.path.exists(base):
+            return None
+        names = [
+            d for d in os.listdir(base)
+            if os.path.exists(os.path.join(base, d, 'heat', 'heat_rejection_buildings.csv'))
+        ]
+        return sorted(names) or None
+
+    def _get_results_files(self, parameters):
         """Return required files for caching"""
-        # Read buildings file to get list of entities
-        buildings_file = self.locator.get_heat_rejection_buildings()
+        whatif_name = parameters.get('whatif_name')
+        if not whatif_name:
+            return []
+        buildings_file = self.locator.get_heat_rejection_whatif_buildings_file(whatif_name)
         if not os.path.exists(buildings_file):
             return []
 
         buildings_df = pd.read_csv(buildings_file)
         entity_names = buildings_df['name'].tolist()
 
-        # Return buildings file + all individual entity files
         files = [buildings_file]
         for entity_name in entity_names:
-            entity_file = self.locator.get_heat_rejection_hourly_building(entity_name)
+            entity_file = self.locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
             if os.path.exists(entity_file):
                 files.append(entity_file)
 
@@ -473,6 +485,14 @@ class AnthropogenicHeatMapLayer(MapLayer):
     @classmethod
     def expected_parameters(cls):
         return {
+            'whatif_name':
+                ParameterDefinition(
+                    "What-if scenario",
+                    "string",
+                    description="Select a what-if scenario with heat rejection results",
+                    options_generator="_get_whatif_names",
+                    selector="choice",
+                ),
             'period':
                 ParameterDefinition(
                     "Period",
@@ -512,12 +532,8 @@ class AnthropogenicHeatMapLayer(MapLayer):
             ),
             FileRequirement(
                 "Heat Rejection Buildings Summary",
-                file_locator="locator:get_heat_rejection_buildings",
-            ),
-            FileRequirement(
-                "Heat Rejection Hourly Building Files",
                 file_locator="layer:_get_results_files",
-                optional=True,  # Individual building files may be missing, handled gracefully
+                optional=True,
             ),
         ]
 
@@ -525,11 +541,18 @@ class AnthropogenicHeatMapLayer(MapLayer):
     def generate_data(self, parameters):
         """Generates the hexagon heatmap output for anthropogenic heat rejection"""
 
+        whatif_name = parameters.get('whatif_name')
+        if not whatif_name:
+            return {"data": [], "properties": {"name": self.name, "label": "Anthropogenic Heat Rejection", "description": self.description}}
+
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        # Read buildings file to get entity list and coordinates
-        buildings_df = pd.read_csv(self.locator.get_heat_rejection_buildings())
+        buildings_file = self.locator.get_heat_rejection_whatif_buildings_file(whatif_name)
+        if not os.path.exists(buildings_file):
+            return {"data": [], "properties": {"name": self.name, "label": "Anthropogenic Heat Rejection", "description": self.description}}
+
+        buildings_df = pd.read_csv(buildings_file)
         entity_names = buildings_df['name'].tolist()
 
         output = {
@@ -546,18 +569,15 @@ class AnthropogenicHeatMapLayer(MapLayer):
         }
 
         def get_data(entity_name, centroid):
-            # Read individual entity file
-            entity_file = self.locator.get_heat_rejection_hourly_building(entity_name)
+            entity_file = self.locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
 
             if not os.path.exists(entity_file):
                 return 0.0, 0.0, {"position": [centroid.x, centroid.y], "value": 0.0}
 
             entity_df = pd.read_csv(entity_file)
 
-            # Sum all heat rejection for this entity across all hours (should be exactly 8760)
             total_value = entity_df['heat_rejection_kW'].sum()
 
-            # Filter by period (start and end are 0-indexed hour numbers)
             period_df = entity_df.iloc[start:end+1]
             period_value = period_df['heat_rejection_kW'].sum()
 
@@ -565,13 +585,10 @@ class AnthropogenicHeatMapLayer(MapLayer):
 
             return total_value, period_value, data_point
 
-        # Set buildings file as index
         buildings_df = buildings_df.set_index('name')
 
-        # Get zone geometry for CRS
         zone_gdf = gpd.read_file(self.locator.get_zone_geometry())
 
-        # Create GeoDataFrame with entity coordinates
         entity_gdf = gpd.GeoDataFrame(
             buildings_df.loc[entity_names],
             geometry=gpd.points_from_xy(
@@ -582,7 +599,6 @@ class AnthropogenicHeatMapLayer(MapLayer):
         )
         entity_centroids = entity_gdf.geometry.to_crs(CRS.from_epsg(4326))
 
-        # Handle case where there are no entities or all files are missing
         if not entity_names:
             output['data'] = []
             output['properties']['range'] = {
@@ -596,13 +612,11 @@ class AnthropogenicHeatMapLayer(MapLayer):
 
         total_values, period_values, data = zip(*values)
 
-        # Filter out entities with zero values (missing files)
         non_zero_data = [(t, p, d) for t, p, d in zip(total_values, period_values, data) if p > 0 or t > 0]
 
         if non_zero_data:
             total_values, period_values, data = zip(*non_zero_data)
         else:
-            # All entities have zero values
             total_values, period_values, data = (0.0,), (0.0,), []
 
         output['data'] = data

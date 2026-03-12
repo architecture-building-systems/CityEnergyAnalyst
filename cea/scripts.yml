@@ -424,15 +424,13 @@ Life Cycle Analysis:
       - Hourly spatial data for heatmap visualisation
       - Component-level breakdown
 
-      Uses heat rejection tracking from optimisation engine. Supports multiple
-      plants per network with equal heat distribution.
+      Uses final-energy carrier flows as input. Run 'final-energy' first.
     interfaces: [cli, dashboard]
     module: cea.analysis.heat.main
     parameters: ['general:scenario', what-ifs]
     input-files:
-      - [get_total_demand]
-      - [get_building_supply]
-      - [get_zone_geometry]
+      - [get_final_energy_buildings_file, 'what-ifs:what-if-name']
+      - [get_analysis_configuration_file, 'what-ifs:what-if-name']
 
 
 Energy Supply System Optimisation:
@@ -864,7 +862,7 @@ Visualisation:
     module: cea.visualisation.plot_main
     parameters: ['general:scenario', plots-general, plots-heat-rejection, plots-building-filter]
     input-files:
-      - [get_heat_rejection_buildings]
+      - [get_heat_rejection_whatif_buildings_file, 'plots-heat-rejection:what-if-name']
       - [get_zone_geometry]
 
   - name: plot-lifecycle-emissions
