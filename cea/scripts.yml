@@ -837,9 +837,9 @@ Visualisation:
     description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (electricity grid, natural gas, district heating, etc.)
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-final-energy, plots-building-filter]
+    parameters: ['general:scenario', what-ifs, plots-general, plots-final-energy, plots-building-filter]
     input-files:
-      - [get_final_energy_buildings_file, plots-final-energy:what-if-name]
+      - [get_final_energy_buildings_file, 'what-ifs:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
 
@@ -860,9 +860,9 @@ Visualisation:
     description: This Feature plots bar chart of the results of anthropogenic heat rejection analysis
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-heat-rejection, plots-building-filter]
+    parameters: ['general:scenario', what-ifs, plots-general, plots-heat-rejection, plots-building-filter]
     input-files:
-      - [get_heat_rejection_whatif_buildings_file, 'plots-heat-rejection:what-if-name']
+      - [get_heat_rejection_whatif_buildings_file, 'what-ifs:what-if-name']
       - [get_zone_geometry]
 
   - name: plot-lifecycle-emissions

@@ -402,7 +402,7 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list):
+    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=None):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -413,6 +413,7 @@ class csv_pointer:
 
         x, x_facet = get_x_and_x_facet(plot_config.x_to_plot)
         self.config = plot_config
+        self.whatif_names = whatif_names or []
         self.scenario = scenario
         self.locator = InputLocator(scenario=scenario)
         self.plot_cea_feature = plot_cea_feature
@@ -481,22 +482,20 @@ class csv_pointer:
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
         if self.plot_cea_feature == 'heat-rejection':
-            whatif_names = self.config.what_if_name  # list from WhatIfNameMultiChoiceParameter
-            if not whatif_names:
+            if not self.whatif_names:
                 return
             _export_heat_rejection_to_plots_folder(
-                self.locator, whatif_names, self.buildings,
+                self.locator, self.whatif_names, self.buildings,
                 self.bool_aggregate_by_building, self.time_period,
                 self.period_start, self.period_end
             )
             return
 
         if self.plot_cea_feature == 'final-energy':
-            whatif_names = self.config.what_if_name  # list from WhatIfNameMultiChoiceParameter
-            if not whatif_names:
+            if not self.whatif_names:
                 return
             _export_final_energy_to_plots_folder(
-                self.locator, whatif_names, self.buildings,
+                self.locator, self.whatif_names, self.buildings,
                 self.bool_aggregate_by_building, self.time_period,
                 self.period_start, self.period_end
             )
@@ -624,7 +623,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False):
+def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False, whatif_names=None):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -659,7 +658,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
                     raise_missing_pv_error(pv_code)
 
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
+    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=whatif_names)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
