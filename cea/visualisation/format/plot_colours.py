@@ -220,6 +220,13 @@ _BASE_COLUMN_COLORS = {
     "DH": "red",
     "DC": "blue",
 
+    # ===== Cost Categories =====
+    "CAPEX_total":             "grey",
+    "CAPEX_annualised":        "grey_light",
+    "OPEX_fixed_annual":       "blue",
+    "OPEX_variable_annual":    "blue_light",
+    "Total_annualised_costs":  "purple",
+
     "PV_PV1_offset_total": "yellow",
     "PV_PV2_offset_total": "yellow",
     "PV_PV3_offset_total": "yellow",

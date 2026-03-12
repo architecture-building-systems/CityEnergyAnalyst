@@ -84,6 +84,7 @@ class Configuration:
     plots_emission_timeline: PlotsEmissionTimelineSection
     plots_solar: PlotsSolarSection
     plots_cost_breakdown: PlotsCostBreakdownSection
+    plots_cost_sankey: PlotsCostSankeySection
 
     # Common general section parameters (frequently accessed)
     project: str
@@ -237,6 +238,8 @@ class Configuration:
     def __getattr__(self, item: Literal["plots_solar"]) -> PlotsSolarSection: ...
     @overload
     def __getattr__(self, item: Literal["plots_cost_breakdown"]) -> PlotsCostBreakdownSection: ...
+    @overload
+    def __getattr__(self, item: Literal["plots_cost_sankey"]) -> PlotsCostSankeySection: ...
 
     # Overloads for general section parameter access
     @overload
@@ -1878,11 +1881,14 @@ class PlotsSolarSection(Section):
 
 class PlotsCostBreakdownSection(Section):
     """Typed section for plots-cost-breakdown configuration"""
+    what_if_name: list[str]
     y_cost_category_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
     @overload
@@ -1891,6 +1897,23 @@ class PlotsCostBreakdownSection(Section):
     def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["x_to_plot"]) -> str: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PlotsCostSankeySection(Section):
+    """Typed section for plots-cost-sankey configuration"""
+    what_if_name: list[str]
+    y_cost_category_to_plot: list[str]
+    y_metric_unit: str
+    y_normalised_by: str
+
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class Parameter:

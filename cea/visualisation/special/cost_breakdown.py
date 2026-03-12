@@ -137,6 +137,42 @@ def get_component_name(code):
     return component_names.get(code, code)
 
 
+def load_whatif_costs_data(locator, whatif_name):
+    """
+    Load costs_components.csv from a what-if analysis output folder and normalise
+    column names to match the legacy schema expected by process_data_by_grouping().
+
+    :param locator: InputLocator instance
+    :param whatif_name: What-if scenario name
+    :return: tuple of (detailed_df, architecture_df)
+    """
+    df = pd.read_csv(locator.get_costs_whatif_components_file(whatif_name))
+
+    # Rename new-style columns to legacy names so process_data_by_grouping() is reused unchanged
+    df = df.rename(columns={
+        'CAPEX_total':          'capex_total_USD',
+        'CAPEX_annualised':     'capex_a_USD',
+        'OPEX_fixed_annual':    'opex_fixed_a_USD',
+        'OPEX_variable_annual': 'opex_var_a_USD',
+        'component_code':       'code',
+    })
+
+    # Mark energy-carrier rows so by_energy_carrier grouping works (carrier column
+    # plays the role of placement=='energy_carrier' in the legacy schema).
+    if 'carrier' in df.columns and 'placement' not in df.columns:
+        df['placement'] = df['carrier'].apply(
+            lambda c: 'energy_carrier' if pd.notna(c) and str(c).strip() else 'component'
+        )
+
+    # Architecture: use the final-energy buildings summary for GFA
+    arch_path = locator.get_final_energy_buildings_file(whatif_name)
+    arch = pd.read_csv(arch_path)[['name', 'GFA_m2']]
+    arch = arch[arch['name'].notna()].copy()
+    arch['Af_m2'] = arch['GFA_m2']
+
+    return df, arch
+
+
 def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_categories,
                                y_normalised_by, y_metric_unit, locator, config):
     """
@@ -458,11 +494,14 @@ def main(config):
     y_metric_unit = plot_config.y_metric_unit
     x_to_plot = plot_config.x_to_plot
 
-    # Check if baseline costs file exists
+    # Dispatch: use what-if costs when what-if-name is set, else fall back to baseline
+    whatif_names = getattr(plot_config, 'what_if_name', [])
     detailed_costs_path = locator.get_baseline_costs_detailed()
     try:
-        # Load data
-        detailed_df, architecture_df = load_baseline_costs_data(locator)
+        if whatif_names:
+            detailed_df, architecture_df = load_whatif_costs_data(locator, whatif_names[0])
+        else:
+            detailed_df, architecture_df = load_baseline_costs_data(locator)
 
         # Process data according to configuration
         df_long, id_col = process_data_by_grouping(
