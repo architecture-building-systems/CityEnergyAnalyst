@@ -19,7 +19,7 @@ class StackAuthSettings(BaseSettings):
 
     project_id: Optional[str] = None
     publishable_client_key: Optional[str] = None
-    stack_uri: Optional[str] = "https://api.stack-auth.com"
+    stack_uri: str = "https://api.stack-auth.com"
 
 
 class LimitSettings(BaseSettings):

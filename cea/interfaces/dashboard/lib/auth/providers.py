@@ -45,7 +45,7 @@ class StackAuth(AuthClient):
     cookie_prefix = "stack"
     access_token_name = f"{cookie_prefix}-access"
     refresh_token_name = f"{cookie_prefix}-refresh-{project_id}"
-    stack_uri = _settings.stack_uri
+    stack_uri = _settings.stack_uri.rstrip("/")
     jwks_url = f"{stack_uri}/api/v1/projects/{project_id}/.well-known/jwks.json"
 
     def __init__(self, access_token: str, refresh_token: Optional[str]):
