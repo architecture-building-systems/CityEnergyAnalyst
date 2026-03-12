@@ -18093,6 +18093,104 @@ get_heat_rejection_whatif_components_file:
         min: 0.0
   used_by: []
 
+get_emissions_whatif_buildings_file:
+  created_by:
+  - emissions
+  file_path: outputs/data/analysis/{whatif_name}/emissions/emissions_buildings.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Building name or plant identifier (e.g. B1001, NODE16)
+        type: string
+        unit: NA
+      type:
+        description: Entity type (building or plant)
+        type: string
+        unit: NA
+        choice:
+          values:
+          - building
+          - plant
+      GFA_m2:
+        description: Gross floor area (null for plants)
+        type: float
+        unit: '[m2]'
+        min: 0.0
+        nullable: true
+      x_coord:
+        description: X coordinate of building centroid or plant node location
+        type: float
+        unit: '[m]'
+        nullable: true
+      y_coord:
+        description: Y coordinate of building centroid or plant node location
+        type: float
+        unit: '[m]'
+        nullable: true
+      scale:
+        description: System scale (BUILDING for standalone, DISTRICT for networked)
+        type: string
+        unit: NA
+        nullable: true
+      case:
+        description: Connectivity case number from final-energy
+        type: float
+        unit: NA
+        nullable: true
+      case_description:
+        description: Human-readable description of connectivity case
+        type: string
+        unit: NA
+        nullable: true
+      operation_kgCO2e:
+        description: Total annual operational GHG emissions
+        type: float
+        unit: '[kgCO2e/yr]'
+      production_kgCO2e:
+        description: Total lifecycle production (embodied) GHG emissions across all years
+        type: float
+        unit: '[kgCO2e]'
+      biogenic_kgCO2e:
+        description: Total lifecycle biogenic carbon storage across all years (negative = sequestration)
+        type: float
+        unit: '[kgCO2e]'
+      demolition_kgCO2e:
+        description: Total lifecycle demolition GHG emissions across all years
+        type: float
+        unit: '[kgCO2e]'
+      whatif_name:
+        description: What-if scenario name
+        type: string
+        unit: NA
+  used_by: []
+
+get_emissions_whatif_operational_file:
+  created_by:
+  - emissions
+  file_path: outputs/data/analysis/{whatif_name}/emissions/emissions_operational.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Hourly timestamp
+        type: string
+        unit: NA
+  used_by: []
+
+get_emissions_whatif_timeline_file:
+  created_by:
+  - emissions
+  file_path: outputs/data/analysis/{whatif_name}/emissions/emissions_timeline.csv
+  file_type: csv
+  schema:
+    columns:
+      period:
+        description: Year label (e.g. Y_2025)
+        type: string
+        unit: NA
+  used_by: []
+
 get_analysis_configuration_file:
   created_by:
   - final_energy
