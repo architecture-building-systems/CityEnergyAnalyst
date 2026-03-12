@@ -693,7 +693,12 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         print(f'  Hourly operational emissions for {building_name} saved.')
         operational_results.append((building_name, hourly_op))
 
+        # Annual operational total for summary (sum all emission columns except date/name)
+        op_cols = [c for c in hourly_op.columns if c not in ('date', 'name')]
+        op_total = float(hourly_op[op_cols].sum().sum()) if op_cols else 0.0
+
         # Yearly emission timeline (embodied + operational)
+        embodied_total = 0.0
         try:
             timeline = BuildingEmissionTimeline(
                 building_properties=building_properties,
@@ -709,12 +714,14 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             )
             timeline.demolish(demolition_year=end_year + 1)
             timeline_results.append((building_name, timeline.timeline))
+            # Sum all embodied columns (production + biogenic + demolition) across all years
+            embodied_prefixes = ('production_', 'biogenic_', 'demolition_')
+            embodied_cols = [c for c in timeline.timeline.columns
+                             if any(c.startswith(p) for p in embodied_prefixes)]
+            embodied_total = float(timeline.timeline[embodied_cols].sum().sum()) if embodied_cols else 0.0
         except Exception as e:
             print(f'  Warning: could not compute emission timeline for {building_name}: {e}')
 
-        # Annual operational total for summary (sum all emission columns except date/name)
-        op_cols = [c for c in hourly_op.columns if c not in ('date', 'name')]
-        op_total = float(hourly_op[op_cols].sum().sum()) if op_cols else 0.0
         buildings_rows_out.append({
             'name': building_name,
             'type': 'building',
@@ -725,6 +732,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'case': row.get('case'),
             'case_description': row.get('case_description'),
             'operational_kgCO2e': op_total,
+            'embodied_kgCO2e': embodied_total,
             'whatif_name': whatif_name,
         })
 
@@ -770,6 +778,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'case': row.get('case'),
             'case_description': case_desc,
             'operational_kgCO2e': op_total,
+            'embodied_kgCO2e': 0.0,
             'whatif_name': whatif_name,
         })
 
