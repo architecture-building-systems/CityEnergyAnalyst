@@ -1500,6 +1500,8 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             )
             if mode == 'final_energy':
                 names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            elif mode == 'heat_rejection':
+                names = [name for name in names if os.path.exists(locator.get_heat_rejection_whatif_buildings_file(name))]
             return names
         except Exception:
             return []

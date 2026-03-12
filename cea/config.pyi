@@ -1728,11 +1728,14 @@ class PlotsDemandSection(Section):
 
 class PlotsFinalEnergySection(Section):
     """Typed section for plots-final-energy configuration"""
+    what_if_name: list[str]
     y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload
@@ -1745,11 +1748,14 @@ class PlotsFinalEnergySection(Section):
 
 class PlotsHeatRejectionSection(Section):
     """Typed section for plots-heat-rejection configuration"""
+    what_if_name: list[str]
     y_metric_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
 
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_to_plot"]) -> list[str]: ...
     @overload
