@@ -132,15 +132,19 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     building_dfs = {}
     building_configs = {}
 
+    from cea.analysis.final_energy.calculation import (
+        calculate_building_final_energy,
+        load_supply_configuration,
+        parse_solar_panel_configuration,
+    )
+    solar_panel_config = parse_solar_panel_configuration(config)
+
     for building in buildings:
         try:
-            from cea.analysis.final_energy.calculation import (
-                calculate_building_final_energy,
-                load_supply_configuration
-            )
 
             # Load supply configuration
             supply_config = load_supply_configuration(building, locator, config)
+            supply_config['solar'] = solar_panel_config
             building_configs[building] = supply_config
 
             # Calculate final energy for this building
@@ -273,7 +277,7 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     if building_dfs:
         from cea.analysis.final_energy.calculation import (
             aggregate_buildings_summary,
-            create_hourly_timeseries_aggregation
+            create_hourly_timeseries_aggregation,
         )
         import json
         from datetime import datetime

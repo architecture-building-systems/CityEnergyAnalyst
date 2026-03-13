@@ -479,15 +479,22 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     return rows
 
 
-def _calc_solar_costs_for_scenario(locator):
+def _calc_solar_costs_for_scenario(locator, active_tech_codes):
     """
     Calculate CAPEX and O&M for solar panels (PV, SC, PVT) installed on buildings.
 
-    Scans potentials/solar/ folder for total_buildings files.
+    Scans potentials/solar/ folder for total_buildings files, restricted to the
+    technology codes recorded in configuration.json['solar'].
     Solar has CAPEX and fixed O&M only (variable OPEX = 0, fuel is free).
 
+    :param locator: InputLocator instance
+    :param active_tech_codes: set of tech code strings from configuration.json['solar']
+        e.g. {'PV_PV1', 'SC_ET'}.  Empty set → skip solar entirely.
     :return: list of component row dicts, one per building per technology
     """
+    if not active_tech_codes:
+        return []
+
     solar_folder = locator.get_potentials_solar_folder()
     if not os.path.exists(solar_folder):
         return []
@@ -497,6 +504,11 @@ def _calc_solar_costs_for_scenario(locator):
     # Scan for PV, SC, PVT total_buildings files
     for fname in os.listdir(solar_folder):
         if not fname.endswith('_total_buildings.csv'):
+            continue
+
+        # Derive tech code from filename and skip if not in active set
+        tech_code = fname[: fname.index('_total_buildings')]
+        if tech_code not in active_tech_codes:
             continue
 
         fpath = os.path.join(solar_folder, fname)
@@ -761,8 +773,14 @@ def calculate_costs_for_whatif(whatif_name, locator):
         for _, row in plant_rows_df.iterrows():
             component_rows.extend(_process_plant_row(row, plant_configs, whatif_name, network_name, locator))
 
-    # --- Solar costs ---
-    solar_rows = _calc_solar_costs_for_scenario(locator)
+    # --- Solar costs (only for technologies configured in this what-if) ---
+    active_tech_codes = {
+        v
+        for cfg in building_configs.values()
+        for v in cfg.get('solar', {}).values()
+        if v
+    }
+    solar_rows = _calc_solar_costs_for_scenario(locator, active_tech_codes)
     component_rows.extend(solar_rows)
 
     # Build components DataFrame

@@ -960,7 +960,6 @@ Visualisation:
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.cost_sankey
     parameters: ['general:scenario',
-                 plots-general,
                  plots-cost-sankey]
     input-files:
       - [get_costs_whatif_components_file, 'plots-cost-sankey:what-if-name']

@@ -51,11 +51,11 @@ _SERVICE_DISPLAY = {
 }
 
 _COST_CAT_DISPLAY = {
-    'CAPEX_total':            'CAPEX Total',
-    'CAPEX_annualised':       'CAPEX Annualised',
-    'OPEX_fixed_annual':      'OPEX Fixed',
-    'OPEX_variable_annual':   'OPEX Variable',
-    'Total_annualised_costs': 'Total Annualised',
+    'capex_total_USD':   'CAPEX Total',
+    'capex_a_USD':       'CAPEX Annualised',
+    'opex_fixed_a_USD':  'OPEX Fixed',
+    'opex_var_a_USD':    'OPEX Variable',
+    'TAC_USD':           'Total Annualised',
 }
 
 # Service node colours (borrow from demand palette)
@@ -267,7 +267,6 @@ def main(config: cea.config.Configuration):
     """
     locator = InputLocator(config.scenario)
     plot_config = config.plots_cost_sankey
-    plot_config_general = config.plots_general
 
     whatif_names = getattr(plot_config, 'what_if_name', [])
     if not whatif_names:
@@ -321,14 +320,14 @@ def main(config: cea.config.Configuration):
         )
 
     # Title
-    if plot_config_general.plot_title:
-        title = plot_config_general.plot_title
+    if plot_config.plot_title:
+        title = plot_config.plot_title
     else:
         title = f'System Costs — {whatif_name}'
 
     fig = create_sankey_fig(sankey_data, title, unit_label)
 
-    # Apply size from plots-general if set
+    #
     plot_width = 1600
     plot_height = int(plot_width / 16 * 7)
     fig.update_layout(width=plot_width, height=plot_height)
