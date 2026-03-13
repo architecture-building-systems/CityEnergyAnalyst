@@ -50,6 +50,21 @@ _SERVICE_DISPLAY = {
     'DC':  'District Cooling',
 }
 
+# Solar service prefix → display name
+_SOLAR_SERVICE_DISPLAY = {
+    'PV':  'PV (Electricity)',
+    'SC':  'Solar Collector (Heat)',
+    'PVT': 'PVT (Heat + Electricity)',
+}
+
+
+def _solar_service_display(service_raw):
+    """Return a display name for a solar service code (e.g. 'PV_PV1' → 'PV (Electricity)')."""
+    for prefix, label in _SOLAR_SERVICE_DISPLAY.items():
+        if service_raw.startswith(prefix + '_') or service_raw == prefix:
+            return label
+    return service_raw
+
 _COST_CAT_DISPLAY = {
     'capex_total_USD':   'CAPEX Total',
     'capex_a_USD':       'CAPEX Annualised',
@@ -60,12 +75,15 @@ _COST_CAT_DISPLAY = {
 
 # Service node colours (borrow from demand palette)
 _SERVICE_COLOURS = {
-    'Space Heating':       COLOURS_TO_RGB['red'],
-    'Domestic Hot Water':  COLOURS_TO_RGB['orange'],
-    'Space Cooling':       COLOURS_TO_RGB['blue'],
-    'Electricity':         COLOURS_TO_RGB['green'],
-    'District Heating':    COLOURS_TO_RGB['red_light'],
-    'District Cooling':    COLOURS_TO_RGB['blue_light'],
+    'Space Heating':              COLOURS_TO_RGB['red'],
+    'Domestic Hot Water':         COLOURS_TO_RGB['orange'],
+    'Space Cooling':              COLOURS_TO_RGB['blue'],
+    'Electricity':                COLOURS_TO_RGB['green'],
+    'District Heating':           COLOURS_TO_RGB['red_light'],
+    'District Cooling':           COLOURS_TO_RGB['blue_light'],
+    'PV (Electricity)':           COLOURS_TO_RGB['yellow'],
+    'Solar Collector (Heat)':     COLOURS_TO_RGB['yellow'],
+    'PVT (Heat + Electricity)':   COLOURS_TO_RGB['yellow'],
 }
 
 _UNIT_DIVISORS = {'USD': 1, 'kUSD': 1_000, 'mioUSD': 1_000_000}
@@ -124,9 +142,12 @@ def build_sankey_data(df, cost_cats, unit_divisor, normaliser=1.0):
 
     # Service column
     if 'service' in df.columns:
-        df['service_display'] = df['service'].fillna('Unknown').apply(
-            lambda s: _SERVICE_DISPLAY.get(str(s).strip(), str(s).strip())
-        )
+        def _resolve_service(s):
+            s = str(s).strip()
+            if s in _SERVICE_DISPLAY:
+                return _SERVICE_DISPLAY[s]
+            return _solar_service_display(s)
+        df['service_display'] = df['service'].fillna('Unknown').apply(_resolve_service)
     else:
         df['service_display'] = 'Unknown'
 

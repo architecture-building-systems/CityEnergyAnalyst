@@ -583,7 +583,7 @@ def _solar_pv_costs(df, panel_type, service_prefix, locator):
         rows.append({
             'name': building_name, 'service': f'PV_{panel_type}', 'scale': 'BUILDING',
             'assembly_code': '', 'component_code': comp['code'],
-            'carrier': None, 'peak_service_kW': capacity_W / 1000.0,
+            'carrier': 'SOLAR', 'peak_service_kW': capacity_W / 1000.0,
             'capacity_kW': capacity_W / 1000.0,
             'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
             'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': 0.0, 'TAC_USD': tac,
@@ -625,7 +625,7 @@ def _solar_sc_costs(df, panel_type, locator):
         rows.append({
             'name': building_name, 'service': f'SC_{panel_type}', 'scale': 'BUILDING',
             'assembly_code': '', 'component_code': comp['code'],
-            'carrier': None, 'peak_service_kW': 0.0,
+            'carrier': 'SOLAR', 'peak_service_kW': 0.0,
             'capacity_kW': area_m2,  # stored as m² for SC
             'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
             'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': 0.0, 'TAC_USD': tac,
@@ -684,7 +684,7 @@ def _solar_pvt_costs(df, pv_type, sc_type, locator):
         rows.append({
             'name': building_name, 'service': service_label, 'scale': 'BUILDING',
             'assembly_code': '', 'component_code': comp['code'],
-            'carrier': None, 'peak_service_kW': capacity_W / 1000.0,
+            'carrier': 'SOLAR', 'peak_service_kW': capacity_W / 1000.0,
             'capacity_kW': capacity_W / 1000.0,
             'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
             'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': 0.0, 'TAC_USD': tac,
