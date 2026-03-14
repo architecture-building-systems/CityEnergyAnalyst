@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import shutil
@@ -51,31 +50,6 @@ def _validate_three_layer_topology_row(
         raise ValueError(errors[0])
 
 
-def _canonical_json(obj: Any) -> str:
-    """Create a stable JSON representation for hashing / signatures."""
-
-    def _normalise(v: Any) -> Any:
-        if isinstance(v, dict):
-            return {
-                str(k): _normalise(v[k]) for k in sorted(v.keys(), key=str)
-            }
-        if isinstance(v, list):
-            return [_normalise(x) for x in v]
-        if isinstance(v, float):
-            # Keep signatures stable across JSON float formatting.
-            return float(v)
-        return v
-
-    return json.dumps(
-        _normalise(obj), sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    )
-
-
-def _recipe_signature(recipe: ModifyRecipe) -> str:
-    payload = _canonical_json(recipe).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
-
-
 @dataclass
 class DistrictStateYear:
     """Represents a single state year definition and its on-disk realisation (if any)."""
@@ -94,18 +68,6 @@ class DistrictStateYear:
 
     def exists_on_disk(self) -> bool:
         return os.path.exists(self.state_folder())
-
-    def read_applied_signature(self) -> str | None:
-        path = self.signature_path()
-        if not os.path.exists(path):
-            return None
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                rec = json.load(f) or {}
-            sig = rec.get("applied_signature")
-            return str(sig) if sig else None
-        except Exception:
-            return None
 
     def read_signature_record(self) -> dict[str, Any] | None:
         path = self.signature_path()
@@ -128,11 +90,13 @@ class DistrictStateYear:
         rec = self.read_signature_record()
         if not rec:
             return True
-        applied = rec.get("applied_signature")
-        simulated = rec.get("simulated_signature")
-        if not applied:
-            return True
-        return simulated != applied
+
+        status = str(rec.get("simulation_status") or "").strip().lower()
+        if status:
+            return status != "simulated"
+
+        # Backward compatibility for older records without simulation_status.
+        return not bool(rec.get("simulated_at"))
 
     def mark_simulated(
         self,
@@ -142,7 +106,6 @@ class DistrictStateYear:
         rec = self.read_signature_record() or {"year": int(self.year)}
         now = str(pd.Timestamp.now())
         rec["simulated_at"] = now
-        rec["simulated_signature"] = rec.get("applied_signature")
         rec["simulation_status"] = "simulated"
         if workflow is not None:
             rec["simulated_workflow"] = workflow
@@ -157,7 +120,7 @@ class DistrictStateYear:
         """Run the standard simulation workflow for this state year.
 
         This is a state-level operation: it executes the workflow in the `state_{year}` scenario and then
-        updates the signature file to mark the state as simulated.
+        updates the per-state status file to mark the state as simulated.
         """
         from copy import deepcopy
 
@@ -189,19 +152,15 @@ class DistrictStateYear:
 
         self.mark_simulated(workflow=workflow)
 
-    def write_applied_signature(
-        self, *, signature: str
-    ) -> None:
+    def mark_built(self) -> None:
         path = self.signature_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
         rec = {
             "year": int(self.year),
-            "applied_signature": str(signature),
             "built_at": str(pd.Timestamp.now()),
             # A rebuilt / newly built state needs simulation.
             "simulation_status": "needs_simulation",
             "simulated_at": None,
-            "simulated_signature": None,
         }
         with open(path, "w", encoding="utf-8") as f:
             json.dump(rec, f, indent=2)
@@ -425,7 +384,6 @@ class DistrictEventTimeline:
 
         for year in years:
             year_recipe = cumulative.get(int(year), {})
-            expected_sig = _recipe_signature(year_recipe)
             state = DistrictStateYear(
                 timeline_name=self.timeline_name,
                 year=int(year),
@@ -464,7 +422,7 @@ class DistrictEventTimeline:
             # This final check ensures the state is ready for simulation
             print("  State databases and building properties are consistent")
 
-            state.write_applied_signature(signature=expected_sig)
+            state.mark_built()
             built_years.append(int(year))
 
         print("District state materialisation finished.")
@@ -475,7 +433,7 @@ class DistrictEventTimeline:
         print(f"Timeline folder: {self.main_locator.get_district_timeline_folder(timeline_name=self.timeline_name)}")
         print(f"Log file: {self.main_locator.get_district_timeline_log_file(timeline_name=self.timeline_name)}")
         print(
-            "Each built state folder contains an applied signature in '.district_timeline_signature.json'."
+            "Each built state folder contains simulation status metadata in '.district_timeline_signature.json'."
         )
 
         check_district_timeline_log_yaml_integrity(self.config, self.timeline_name)
@@ -494,7 +452,7 @@ class DistrictEventTimeline:
         - `all`: simulate every `state_{year}` folder present in `district_timeline_states`.
 
         This updates both:
-        - per-state signature files (`.district_timeline_signature.json`)
+        - per-state status files (`.district_timeline_signature.json`)
         - the district timeline log (`district_timeline_log.yml`) with timestamps / workflow metadata.
 
         Args:
