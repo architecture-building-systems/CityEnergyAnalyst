@@ -13,6 +13,7 @@ import cea.interfaces.dashboard.server as server
 from cea.interfaces.dashboard.lib.database.models import create_db_and_tables
 from cea.interfaces.dashboard.lib.database.session import close_db_connection
 from cea.interfaces.dashboard.lib.cache.provider import cleanup_cache_connections
+from cea.interfaces.dashboard.lib.cors import CORSConfig
 from cea.interfaces.dashboard.lib.logs import logger, getCEAServerLogger
 from cea.interfaces.dashboard.lib.socketio import socket_app
 from cea.interfaces.dashboard.settings import get_settings
@@ -96,12 +97,35 @@ app = FastAPI(lifespan=lifespan)
 socket_app.other_asgi_app = app
 
 # Setup CORS
+cors_origin = get_settings().cors_origin
+
+# Parse comma-separated origins
+if cors_origin == "*":
+    origins = ["*"]
+    # Disable credentials with wildcard origin for security
+    allow_credentials = False
+    logger.warning(
+        "CORS: Using wildcard origin ('*') with credentials disabled. "
+        "Only use this in local development."
+    )
+else:
+    origins = [o.strip() for o in cors_origin.split(",")]
+    allow_credentials = True
+
+# CORS configuration - centralised
+cors_config = CORSConfig(
+    origins=origins,
+    allow_credentials=allow_credentials,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[get_settings().cors_origin],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_config.origins,
+    allow_credentials=cors_config.allow_credentials,
+    allow_methods=cors_config.methods,
+    allow_headers=cors_config.headers,
 )
 
 # Mount socketio app
@@ -119,12 +143,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     if request:
         logger.error(f"request: {request}")
 
+    # Get CORS headers matching CORSMiddleware configuration
+    request_origin = request.headers.get("Origin")
+    cors_headers = cors_config.get_response_headers(request_origin)
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": exc.errors()},
-        headers={
-            "Access-Control-Allow-Origin": get_settings().cors_origin,
-        }
+        headers=cors_headers
     )
 
 @app.exception_handler(Exception)
@@ -132,10 +158,12 @@ async def uncaught_exception_handler(request: Request, exc: Exception):
     logger.error(f"Uncaught exception [{type(exc).__name__}] in \"{request.method} {request.url.path}\":\n"
                  f"{exc}")
 
+    # Get CORS headers matching CORSMiddleware configuration
+    request_origin = request.headers.get("Origin")
+    cors_headers = cors_config.get_response_headers(request_origin)
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": f"Uncaught exception: {exc}"},
-        headers={
-            "Access-Control-Allow-Origin": get_settings().cors_origin,
-        }
+        headers=cors_headers
     )
