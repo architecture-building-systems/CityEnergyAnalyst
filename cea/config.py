@@ -1700,6 +1700,12 @@ class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
 
 
+class StandardMultiChoiceParameter(ColumnMultiChoiceParameter):
+    """Distinct multi-choice type for construction standards used by the GUI."""
+
+    pass
+
+
 class SubfolderChoiceParameter(ChoiceParameter):
     """Select a single subfolder from a folder returned by a locator method."""
 
