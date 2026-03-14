@@ -1703,14 +1703,10 @@ class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
 class SubfolderChoiceParameter(ChoiceParameter):
     """Select a single subfolder from a folder returned by a locator method."""
 
-    def initialize(self, parser):
-        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
-        self.kwargs = parse_locator_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
-        
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.locator_method = config.default_config.get(section.name, f"{name}.locator")
+        self.kwargs = parse_locator_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
 
     @property
     def _choices(self):
