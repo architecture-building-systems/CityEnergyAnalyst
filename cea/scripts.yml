@@ -382,7 +382,7 @@ Scenario Evolution Planning:
       
       The parameters of these simulations must be saved in their respective dashboards before running this Feature.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.state_simulations
+    module: cea.datamanagement.district_level_states.state_simulation.main
     parameters: ['general:scenario', 'state-simulations:existing-timeline-name', 'emissions:include-pv']
 
 Life Cycle Analysis:

@@ -463,7 +463,7 @@ class DistrictEventTimeline:
         - `all`: simulate every `state_{year}` folder present in `district_timeline_states`.
 
         Note:
-            The dedicated Step 4 wrapper in `state_simulations.py` no longer calls this helper,
+            The dedicated Step 4 wrapper in `state_simulation/main.py` no longer calls this helper,
             because thermal-network reuse makes Step 4 state years interdependent and it now
             orchestrates a two-pass `all` run directly. This method remains available as a
             generic timeline helper for other callers.
