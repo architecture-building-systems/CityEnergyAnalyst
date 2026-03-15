@@ -19,6 +19,14 @@ class ServiceBuildingSets(TypedDict):
 ServiceEligibility = dict[str, ServiceBuildingSets]
 
 
+def build_supply_scale_mapping(supply_db: pd.DataFrame) -> dict[str, str]:
+    """Convert a supply database table into an explicit `code -> scale` mapping."""
+    return {
+        str(code): str(scale)
+        for code, scale in zip(supply_db["code"], supply_db["scale"])
+    }
+
+
 def get_state_service_eligibility(state_locator: InputLocator) -> ServiceEligibility:
     """Return district-service assignment, demand, and eligible-building sets for one state."""
     service_eligibility: ServiceEligibility = {}
@@ -82,39 +90,39 @@ def report_service_requirements(year: int, service_eligibility: ServiceEligibili
 
 
 def get_service_scale_mapping(locator: InputLocator, network_type: str) -> dict[str, str]:
-    """Load the supply-assembly scale mapping for the requested district service."""
+    """Load the supply database scale mapping for the requested district service."""
     if network_type == "DH":
-        heating_assemblies = pd.read_csv(locator.get_database_assemblies_supply_heating())
-        hot_water_assemblies = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
-        scale_mapping = heating_assemblies.set_index("code")["scale"].to_dict()
-        scale_mapping.update(hot_water_assemblies.set_index("code")["scale"].to_dict())
+        heating_supply_db = pd.read_csv(locator.get_database_assemblies_supply_heating())
+        hot_water_supply_db = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+        scale_mapping = build_supply_scale_mapping(heating_supply_db)
+        scale_mapping.update(build_supply_scale_mapping(hot_water_supply_db))
         return scale_mapping
 
-    cooling_assemblies = pd.read_csv(locator.get_database_assemblies_supply_cooling())
-    return cooling_assemblies.set_index("code")["scale"].to_dict()
+    cooling_supply_db = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+    return build_supply_scale_mapping(cooling_supply_db)
 
 
 def get_buildings_with_district_service(locator: InputLocator, network_type: str) -> list[str]:
     """Return buildings configured for district heating or district cooling in `supply.csv`."""
-    supply_df = pd.read_csv(locator.get_building_supply())
+    supply_properties_df = pd.read_csv(locator.get_building_supply())
     scale_mapping = get_service_scale_mapping(locator, network_type)
 
     buildings_with_district = []
-    for _, row in supply_df.iterrows():
+    for _, row in supply_properties_df.iterrows():
         building_name = row["name"]
         has_district_service = False
 
-        if network_type == "DH" and "supply_type_hs" in supply_df.columns:
+        if network_type == "DH" and "supply_type_hs" in supply_properties_df.columns:
             hs_code = row.get("supply_type_hs")
             if hs_code and not pd.isna(hs_code) and scale_mapping.get(hs_code) == "DISTRICT":
                 has_district_service = True
 
-        if network_type == "DH" and "supply_type_dhw" in supply_df.columns:
+        if network_type == "DH" and "supply_type_dhw" in supply_properties_df.columns:
             dhw_code = row.get("supply_type_dhw")
             if dhw_code and not pd.isna(dhw_code) and scale_mapping.get(dhw_code) == "DISTRICT":
                 has_district_service = True
 
-        if network_type == "DC" and "supply_type_cs" in supply_df.columns:
+        if network_type == "DC" and "supply_type_cs" in supply_properties_df.columns:
             cs_code = row.get("supply_type_cs")
             if cs_code and not pd.isna(cs_code) and scale_mapping.get(cs_code) == "DISTRICT":
                 has_district_service = True
