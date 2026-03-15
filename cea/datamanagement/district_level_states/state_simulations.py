@@ -2,29 +2,143 @@ from __future__ import annotations
 
 import os
 import shutil
-from typing import Literal, Any
+from copy import deepcopy
+from typing import Any
+
+import geopandas as gpd
 import pandas as pd
 
 from cea.config import Configuration
-from cea.inputlocator import InputLocator
-from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
+from cea.datamanagement.utils import migrate_void_deck_data
 from cea.datamanagement.district_level_states.district_emission_timeline import create_district_material_timeline
+from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline, DistrictStateYear
+from cea.datamanagement.district_level_states.timeline_integrity import check_district_timeline_log_yaml_integrity
+from cea.inputlocator import InputLocator
 
-default_workflow: list[dict[str, Any]] = [
-    {"config": "."},  # use state-in-time scenario as base config
-    {"script": "radiation"},
-    {"script": "occupancy"},
-    {"script": "demand"},
-    {"script": "photovoltaic"},
-    {
-        "script": "emissions",
-        "parameters": {
-            "grid-decarbonise-reference-year": None, # apply decarbonisation after timeline being assembled
-            "grid-decarbonise-target-year": None,
-            "grid-decarbonise-target-emission-factor": None,
-        },
+DISTRICT_SERVICES = ("DC", "DH")
+SERVICE_LABELS = {"DC": "cooling", "DH": "heating"}
+DH_ITEMISED_SERVICES = ["space_heating", "domestic_hot_water"]
+
+EMISSIONS_STEP: dict[str, Any] = {
+    "script": "emissions",
+    "parameters": {
+        "grid-decarbonise-reference-year": None,  # apply decarbonisation after timeline being assembled
+        "grid-decarbonise-target-year": None,
+        "grid-decarbonise-target-emission-factor": None,
     },
-]
+}
+
+
+def should_include_photovoltaic(config: Configuration | None) -> bool:
+    """Return whether Step 4 should keep the photovoltaic script in the base workflow."""
+    if config is None:
+        return True
+    with config.ignore_restrictions():
+        return bool(getattr(config.emissions, "include_pv", False))
+
+
+def should_use_crax_radiation(state_locator: InputLocator) -> bool:
+    """Return True when the state has no buildings with `void_deck > 0`."""
+    try:
+        migrate_void_deck_data(state_locator)
+        zone_gdf = gpd.read_file(state_locator.get_zone_geometry())
+    except Exception as exc:
+        print(
+            f"Warning: Could not inspect void_deck values for radiation engine selection: {exc}. "
+            "Falling back to DAYSIM."
+        )
+        return False
+
+    if "void_deck" not in zone_gdf.columns:
+        return True
+
+    void_deck = pd.to_numeric(zone_gdf["void_deck"], errors="coerce").fillna(0)
+    return bool((void_deck <= 0).all())
+
+
+def build_base_simulation_workflow(
+    config: Configuration | None = None,
+    *,
+    use_crax_radiation: bool = False,
+) -> list[dict[str, Any]]:
+    workflow: list[dict[str, Any]] = [
+        {"config": "."},  # use state-in-time scenario as base config
+        {"script": "radiation-crax" if use_crax_radiation else "radiation"},
+        {"script": "occupancy"},
+        {"script": "demand"},
+    ]
+    if should_include_photovoltaic(config):
+        workflow.append({"script": "photovoltaic"})
+    return workflow
+
+
+def prepare_base_workflow_for_state(
+    config: Configuration,
+    timeline_name: str,
+    year: int,
+) -> list[dict[str, Any]]:
+    main_locator = InputLocator(config.scenario)
+    state_locator = InputLocator(
+        main_locator.get_state_in_time_scenario_folder(
+            timeline_name=timeline_name, year_of_state=year
+        )
+    )
+    use_crax_radiation = should_use_crax_radiation(state_locator)
+
+    if use_crax_radiation:
+        print(
+            f"Warning: State {year} has no buildings with void_deck > 0. "
+            "Using radiation-crax instead of radiation (DAYSIM)."
+        )
+
+    if not should_include_photovoltaic(config):
+        print(
+            f"State {year}: Skipping photovoltaic because emissions.include-pv is False."
+        )
+
+    return build_base_simulation_workflow(
+        config,
+        use_crax_radiation=use_crax_radiation,
+    )
+
+
+def build_default_workflow() -> list[dict[str, Any]]:
+    workflow = build_base_simulation_workflow()
+    workflow.append(deepcopy(EMISSIONS_STEP))
+    return workflow
+
+
+default_workflow = build_default_workflow()
+
+
+def get_state_service_eligibility(
+    state_locator: InputLocator,
+) -> dict[str, dict[str, list[str]]]:
+    """Return district-service eligibility per thermal service for one state scenario."""
+    service_eligibility: dict[str, dict[str, list[str]]] = {}
+
+    for network_type in DISTRICT_SERVICES:
+        eligibility = {
+            "district_buildings": [],
+            "demand_buildings": [],
+            "eligible_buildings": [],
+        }
+        try:
+            district_buildings = sorted(set(get_buildings_with_district_service(state_locator, network_type)))
+            demand_buildings = sorted(set(get_buildings_with_demand_for_service(state_locator, network_type)))
+            eligible_buildings = sorted(set(district_buildings) & set(demand_buildings))
+
+            eligibility["district_buildings"] = district_buildings
+            eligibility["demand_buildings"] = demand_buildings
+            eligibility["eligible_buildings"] = eligible_buildings
+        except FileNotFoundError as exc:
+            print(f"Warning: Could not check {network_type} requirements - {exc}")
+        except Exception as exc:
+            print(f"Warning: Error checking {network_type} requirements - {exc}")
+
+        service_eligibility[network_type] = eligibility
+
+    return service_eligibility
 
 
 def determine_required_services_for_state(state_locator: InputLocator) -> list[str]:
@@ -43,55 +157,16 @@ def determine_required_services_for_state(state_locator: InputLocator) -> list[s
     Returns:
         List of required services based on buildings with district configuration AND demand:
             - ['DC'] if only district cooling is needed
-            - ['DH'] if only district heating is needed  
+            - ['DH'] if only district heating is needed
             - ['DC', 'DH'] if both services are needed
             - [] if no district services are needed
     """
-    required_services = []
-
-    # Check both DC and DH
-    for network_type in ['DC', 'DH']:
-        try:
-            # Check 1: Buildings configured for district service in supply.csv
-            buildings_with_district_service = get_buildings_with_district_service(
-                state_locator, network_type
-            )
-            
-            if not buildings_with_district_service:
-                continue
-            
-            # Check 2: Buildings with actual demand
-            buildings_with_demand = get_buildings_with_demand_for_service(
-                state_locator, network_type
-            )
-            
-            if not buildings_with_demand:
-                service_name = "cooling" if network_type == "DC" else "heating"
-                print(
-                    f"Warning: Buildings configured for district {service_name} "
-                    f"but none have actual demand. Skipping {network_type} network."
-                )
-                continue
-            
-            # Check 3: Intersection - buildings that have both district service AND demand
-            buildings_needing_network = set(buildings_with_district_service) & set(buildings_with_demand)
-            
-            if buildings_needing_network:
-                required_services.append(network_type)
-                service_name = "cooling" if network_type == "DC" else "heating"
-                print(
-                    f"State requires {network_type} network: "
-                    f"{len(buildings_needing_network)} buildings with district {service_name}"
-                )
-        
-        except FileNotFoundError as e:
-            print(f"Warning: Could not check {network_type} requirements - {e}")
-            continue
-        except Exception as e:
-            print(f"Warning: Error checking {network_type} requirements - {e}")
-            continue
-    
-    return required_services
+    service_eligibility = get_state_service_eligibility(state_locator)
+    return [
+        network_type
+        for network_type in DISTRICT_SERVICES
+        if service_eligibility.get(network_type, {}).get("eligible_buildings")
+    ]
 
 
 def get_buildings_with_district_service(locator: InputLocator, network_type: str) -> list[str]:
@@ -271,11 +346,12 @@ def copy_network_layout_files(
     target_network_folder: str,
 ) -> None:
     """
-    Copy thermal network layout files from source to target, excluding DC/DH subfolders.
+    Copy the reusable network-layout artefacts from source to target.
 
-    Copies only the shapefile components (layout.shp, .dbf, .prj, .cpg, .shx) and any
-    other files directly in the network folder, but skips the DC and DH subfolders
-    to keep size manageable (those contain hourly simulation results which can be GBs).
+    Copies the root `layout.*` files plus the service-specific `DC/layout` and `DH/layout`
+    subfolders. Those service layout folders contain the `nodes.shp` files that
+    `network-layout --existing-network` requires for augment / filter / validate mode,
+    while still avoiding the large hourly simulation outputs elsewhere in `DC/` and `DH/`.
 
     Args:
         source_network_folder: Absolute path to source network folder (from previous state).
@@ -284,74 +360,110 @@ def copy_network_layout_files(
             Example: "C:/scenario/district_timelines/timeline1/state_2040/outputs/data/thermal-network/thermal_network_2025"
     
     Files copied:
-        - layout.shp, layout.dbf, layout.prj, layout.cpg, layout.shx (shapefile components)
-        - Any other files in the root of the network folder
-    
+        - Root-level layout files (e.g. `layout.shp`, `layout.dbf`, ...)
+        - `DC/layout/*` if present
+        - `DH/layout/*` if present
+
     Files skipped:
-        - DC/ subfolder (contains cooling network simulation results)
-        - DH/ subfolder (contains heating network simulation results)
+        - Other files and folders under `DC/` and `DH/` (hourly simulation outputs, reports, etc.)
     """
     os.makedirs(target_network_folder, exist_ok=True)
-    
-    # Copy all files in the source folder (but not subfolders)
+
     for item in os.listdir(source_network_folder):
         source_item = os.path.join(source_network_folder, item)
-        
-        # Skip DC and DH subdirectories
+
         if os.path.isdir(source_item) and item in ['DC', 'DH']:
+            source_layout_folder = os.path.join(source_item, 'layout')
+            if os.path.isdir(source_layout_folder):
+                target_layout_folder = os.path.join(target_network_folder, item, 'layout')
+                shutil.copytree(source_layout_folder, target_layout_folder, dirs_exist_ok=True)
             continue
-        
+
         target_item = os.path.join(target_network_folder, item)
-        
+
         if os.path.isfile(source_item):
             shutil.copy2(source_item, target_item)
         elif os.path.isdir(source_item):
-            # Copy other subdirectories if they exist
             shutil.copytree(source_item, target_item, dirs_exist_ok=True)
 
 
-def prepare_workflow_for_state(
+def build_network_layout_step(
+    year: int,
+    required_services: list[str],
+    service_eligibility: dict[str, dict[str, list[str]]],
+    previous_network_name: str | None,
+) -> dict[str, Any]:
+    network_name = f"thermal_network_{year}"
+    return {
+        "script": "network-layout",
+        "parameters": {
+            "network-name": network_name,
+            "include-services": required_services,
+            "overwrite-supply-settings": True,
+            "itemised-dh-services": list(DH_ITEMISED_SERVICES),
+            "heating-connected-buildings": list(service_eligibility["DH"]["eligible_buildings"]),
+            "cooling-connected-buildings": list(service_eligibility["DC"]["eligible_buildings"]),
+            "network-layout-mode": "augment",
+            "auto-modify-network": True,
+            "existing-network": previous_network_name,
+        },
+    }
+
+
+def build_thermal_network_step(year: int, required_services: list[str]) -> dict[str, Any]:
+    network_name = f"thermal_network_{year}"
+    return {
+        "script": "thermal-network",
+        "parameters": {
+            "network-name": [network_name],
+            "network-type": list(required_services),
+            "multi-phase-mode": False,
+        },
+    }
+
+
+def cleanup_target_network_outputs(state_locator: InputLocator, year: int) -> None:
+    """Remove stale current-year network outputs before rerunning network-layout."""
+    network_name = f"thermal_network_{year}"
+    target_network_folder = state_locator.get_thermal_network_folder_network_name_folder(
+        network_name
+    )
+    if not os.path.exists(target_network_folder):
+        return
+
+    print(
+        f"Warning: State {year} already contains network outputs for '{network_name}'. "
+        "Removing the stale current-year folder before rerunning network-layout."
+    )
+    shutil.rmtree(target_network_folder)
+
+
+def prepare_post_demand_workflow_for_state(
     config: Configuration,
     timeline_name: str,
     year: int,
     state_years: list[int],
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """
-    Prepare workflow for a specific state year, with thermal network step if needed.
+    Prepare the post-demand part of the Step 4 workflow for one state year.
 
     This function:
-    1. Determines if the state needs DC/DH networks (proactive check)
-    2. Finds and copies the latest previous network layout if available
-    3. Builds workflow dict with appropriate network-layout parameters
+    1. Reads the freshly generated demand outputs for the state
+    2. Determines per-service district-network eligibility
+    3. Finds and copies the latest previous network layout if available
+    4. Builds the remaining per-state workflow:
+       optional network-layout -> optional thermal-network -> emissions
 
     Args:
         config: Main configuration object pointing to the main scenario.
-            Example: Configuration() with scenario="C:/scenario"
         timeline_name: Name of the timeline being processed.
-            Example: "baseline_scenario" or "test_timeline"
-        year: State year to prepare workflow for.
-            Example: 2040
-        state_years: List of all state years in timeline (sorted ascending).
-            Example: [2000, 2025, 2040, 2050]
+        year: State year being prepared.
+        state_years: All state years in the timeline, sorted ascending.
 
     Returns:
-        Workflow list for this specific state year. Either:
-            - Default workflow if no district services needed
-            - Default workflow + network-layout step if district services needed
-        
-        Example return with network:
-            [
-                {"config": "."},
-                {"script": "radiation"},
-                ...,
-                {"script": "network-layout", "parameters": {
-                    "network-name": "thermal_network_2040",
-                    "include-services": ["DC", "DH"],
-                    "overwrite-supply-settings": False,
-                    "itemised-dh-services": ["space_heating", "domestic_hot_water"],
-                    "existing-network": "thermal_network_2025"
-                }}
-            ]
+        Remaining workflow steps for this state:
+            - `[emissions]` if no district services are needed
+            - `[network-layout, thermal-network, emissions]` otherwise
     """
     main_locator = InputLocator(config.scenario)
     state_locator = InputLocator(
@@ -359,43 +471,57 @@ def prepare_workflow_for_state(
             timeline_name=timeline_name, year_of_state=year
         )
     )
-    
-    # Determine required services for this state
-    required_services = determine_required_services_for_state(state_locator)
-    
+
+    service_eligibility = get_state_service_eligibility(state_locator)
+    required_services = [
+        network_type
+        for network_type in DISTRICT_SERVICES
+        if service_eligibility[network_type]["eligible_buildings"]
+    ]
+
+    for network_type in DISTRICT_SERVICES:
+        district_buildings = service_eligibility[network_type]["district_buildings"]
+        eligible_buildings = service_eligibility[network_type]["eligible_buildings"]
+        if eligible_buildings:
+            service_name = SERVICE_LABELS[network_type]
+            print(
+                f"State {year}: {network_type} network required for "
+                f"{len(eligible_buildings)} building(s) with district {service_name} and positive demand."
+            )
+        elif district_buildings:
+            service_name = SERVICE_LABELS[network_type]
+            print(
+                f"State {year}: Skipping {network_type} network because no buildings have both "
+                f"district {service_name} supply and positive demand."
+            )
+
+    workflow = []
     if not required_services:
-        print(f"State {year}: No district thermal services required. Skipping network-layout.")
-        return list(default_workflow)
-    
-    # Find latest previous network
+        print(
+            f"State {year}: No district thermal services required. "
+            "Skipping network-layout and thermal-network."
+        )
+        workflow.append(deepcopy(EMISSIONS_STEP))
+        return workflow
+
+    cleanup_target_network_outputs(state_locator, year)
+
     previous_network_name, source_year = find_latest_network_folder(
         main_locator, timeline_name, year, state_years
     )
-    
-    # Prepare network-layout parameters
-    network_name = f"thermal_network_{year}"
-    network_params = {
-        "network-name": network_name,
-        "include-services": required_services,
-        "overwrite-supply-settings": False,
-        "itemised-dh-services": ["space_heating", "domestic_hot_water"],
-    }
-    
-    # Handle existing network reference
+
     if previous_network_name and source_year:
         print(
             f"State {year}: Found previous network '{previous_network_name}' "
             f"from state {source_year}. Copying layout files..."
         )
-        
-        # Create locator for source state
+
         source_state_locator = InputLocator(
             main_locator.get_state_in_time_scenario_folder(
                 timeline_name=timeline_name, year_of_state=source_year
             )
         )
-        
-        # Get source and target network folder paths using locator methods
+
         source_network_folder = source_state_locator.get_thermal_network_folder_network_name_folder(
             previous_network_name
         )
@@ -405,29 +531,65 @@ def prepare_workflow_for_state(
         
         try:
             copy_network_layout_files(source_network_folder, target_network_folder)
-            network_params["existing-network"] = previous_network_name
             print(f"State {year}: Successfully copied network layout from state {source_year}.")
-        except Exception as e:
+        except Exception as exc:
             print(
-                f"Warning: Failed to copy network from state {source_year}: {e}. "
+                f"Warning: Failed to copy network from state {source_year}: {exc}. "
                 f"Will generate new layout."
             )
+            previous_network_name = None
     else:
         print(
             f"State {year}: No previous network found. "
             f"Will generate new layout from scratch."
         )
-    
-    # Build workflow with network-layout step
-    workflow = list(default_workflow)
-    workflow.append({
-        "script": "network-layout",
-        "parameters": network_params,
-    })
-    
+
+    workflow.append(
+        build_network_layout_step(
+            year=year,
+            required_services=required_services,
+            service_eligibility=service_eligibility,
+            previous_network_name=previous_network_name,
+        )
+    )
+    workflow.append(build_thermal_network_step(year, required_services))
+    workflow.append(deepcopy(EMISSIONS_STEP))
+
     services_str = ", ".join(required_services)
-    print(f"State {year}: Adding network-layout step with services: {services_str}")
-    
+    print(
+        f"State {year}: Adding network-layout and thermal-network steps with services: {services_str}"
+    )
+
+    return workflow
+
+
+def prepare_workflow_for_state(
+    config: Configuration,
+    timeline_name: str,
+    year: int,
+    state_years: list[int],
+) -> list[dict[str, Any]]:
+    """
+    Prepare the full Step 4 workflow for a specific state year.
+
+    This helper is useful when demand outputs already exist. The runtime execution path
+    now uses `prepare_base_workflow_for_state(...)` first and only then calls
+    `prepare_post_demand_workflow_for_state(...)` so service eligibility can use the
+    current state's fresh `Total_demand.csv`.
+    """
+    workflow = prepare_base_workflow_for_state(
+        config=config,
+        timeline_name=timeline_name,
+        year=year,
+    )
+    workflow.extend(
+        prepare_post_demand_workflow_for_state(
+            config=config,
+            timeline_name=timeline_name,
+            year=year,
+            state_years=state_years,
+        )
+    )
     return workflow
 
 
@@ -435,55 +597,96 @@ def simulate_all_states(config: Configuration, timeline_name: str) -> None:
     """
     Simulate all state-in-time scenarios as per the district timeline log YAML file.
 
-    Each state gets a customised workflow that includes network-layout only if the state
-    has buildings using district heating/cooling with actual demand. This is the main
-    orchestration function that prepares per-state workflows and executes simulations.
+    Each state gets a customised workflow that includes network-layout and thermal-network
+    only if the state has buildings using district heating/cooling with actual demand.
+    Emissions always run last. This is the main orchestration function that prepares
+    per-state workflows and executes simulations.
 
     Args:
         config: The configuration object pointing to the main scenario folder.
         timeline_name: Name of the timeline to simulate.
     
     Process:
-        1. Loads timeline and gets all state years
-        2. Prepares custom workflow for each state (with/without network-layout)
-        3. Executes simulations in sequence (or only pending states)
+        1. Loads timeline and validates state/log integrity
+        2. Runs the base workflow through `demand` for each target state
+        3. Prepares and runs the post-demand workflow (network steps if needed, then emissions)
         4. Updates timeline log with simulation metadata
+
+    Notes:
+        Step 4 always reruns all state years. Existing-network reuse makes the state
+        sequence interdependent, so this wrapper no longer offers a pending-only mode.
     """
     timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
-    
-    # Get all state years in the timeline
-    state_years = sorted([state.year for state in timeline.state_years()])
-    
-    # Determine simulation mode
-    simulation_mode: Literal["pending", "all"]
-    if getattr(config.state_simulations, "simulation_mode", "all") == "pending":
-        simulation_mode = "pending"
-    else:
-        simulation_mode = "all"
-    
-    # Prepare per-state workflows
-    print("\n" + "="*80)
-    print("Preparing workflows for all states...")
-    print("="*80)
-    
-    state_workflows: dict[int, list[dict[str, Any]]] = {}
-    for year in state_years:
-        print(f"\n--- Preparing workflow for state {year} ---")
-        workflow = prepare_workflow_for_state(
-            config, timeline_name, year, state_years
+
+    check_district_timeline_log_yaml_integrity(config, timeline_name)
+
+    state_years = timeline.list_state_years_on_disk()
+    if not state_years:
+        raise ValueError(
+            "No state-in-time scenarios found in the district timeline folder."
         )
-        state_workflows[year] = workflow
-    
-    print("\n" + "="*80)
-    print("Starting state simulations...")
-    print("="*80 + "\n")
-    
-    # Simulate states with customised workflows (per-state)
-    timeline.simulate_states(
-        simulation_mode=simulation_mode,
-        workflow=list(default_workflow),  # Fallback workflow
-        state_workflows=state_workflows,  # Custom workflows per state
-    )
+    state_years.sort()
+
+    years_to_simulate = list(state_years)
+
+    print("\n" + "=" * 80)
+    print("Starting state simulations for all state-in-time scenarios...")
+    print("=" * 80)
+    print(f"Found state years: {state_years}")
+    print(f"Years to simulate: {years_to_simulate}\n")
+
+    if not years_to_simulate:
+        print("Nothing to simulate: all state years are up to date.")
+        return
+
+    simulated_years: list[int] = []
+    skipped_years = [year for year in state_years if year not in set(years_to_simulate)]
+    for year in years_to_simulate:
+        base_workflow = prepare_base_workflow_for_state(
+            config=config,
+            timeline_name=timeline_name,
+            year=int(year),
+        )
+        print(f"\n--- Simulating state {year}: base workflow ---")
+        state = DistrictStateYear(
+            timeline_name=timeline.timeline_name,
+            year=int(year),
+            modifications={},
+            main_locator=timeline.main_locator,
+        )
+        state.simulate(config, workflow=base_workflow, mark_simulated=False)
+
+        print(f"\n--- Simulating state {year}: post-demand workflow ---")
+        post_demand_workflow = prepare_post_demand_workflow_for_state(
+            config=config,
+            timeline_name=timeline_name,
+            year=int(year),
+            state_years=state_years,
+        )
+        full_workflow = deepcopy(base_workflow) + deepcopy(post_demand_workflow)
+        state.simulate(
+            config,
+            workflow=post_demand_workflow,
+            recorded_workflow=full_workflow,
+        )
+
+        entry = timeline.log_data.get(int(year), {}) or {}
+        entry["simulation_workflow"] = full_workflow
+        entry["latest_simulated_at"] = str(pd.Timestamp.now())
+        timeline.log_data[int(year)] = entry
+
+        simulated_years.append(int(year))
+        print(f"Simulation for state-in-time scenario year {year} completed.")
+
+    timeline.save()
+
+    print("State-in-time simulations finished.")
+    print(f"Simulated: {len(simulated_years)} years")
+    if simulated_years:
+        print(f"Years simulated: {simulated_years}")
+    print(f"Skipped: {len(skipped_years)} years")
+    if skipped_years:
+        print(f"Years skipped: {skipped_years}")
 
 
 def main(config: Configuration) -> None:

@@ -116,11 +116,19 @@ class DistrictStateYear:
         main_config: Configuration,
         *,
         workflow: list[dict[str, Any]],
+        mark_simulated: bool = True,
+        recorded_workflow: list[dict[str, Any]] | None = None,
     ) -> None:
         """Run the standard simulation workflow for this state year.
 
         This is a state-level operation: it executes the workflow in the `state_{year}` scenario and then
-        updates the per-state status file to mark the state as simulated.
+        optionally updates the per-state status file to mark the state as simulated.
+
+        Note:
+            `mark_simulated` and `recorded_workflow` are still needed even though the Step 4
+            wrapper no longer exposes a pending-only mode. Step 4 now runs in two passes
+            (`base workflow` first, then `post-demand workflow`), so the first pass must not
+            label the state as fully simulated before the second pass finishes.
         """
         from copy import deepcopy
 
@@ -150,7 +158,10 @@ class DistrictStateYear:
                     "Invalid step configuration: {i} - {step}".format(i=i, step=step)
                 )
 
-        self.mark_simulated(workflow=workflow)
+        if mark_simulated:
+            self.mark_simulated(
+                workflow=recorded_workflow if recorded_workflow is not None else workflow
+            )
 
     def mark_built(self) -> None:
         path = self.signature_path()
@@ -450,6 +461,12 @@ class DistrictEventTimeline:
         - `pending`: simulate only states that have not been simulated yet, or whose construction changes
           mean results are out of date.
         - `all`: simulate every `state_{year}` folder present in `district_timeline_states`.
+
+        Note:
+            The dedicated Step 4 wrapper in `state_simulations.py` no longer calls this helper,
+            because thermal-network reuse makes Step 4 state years interdependent and it now
+            orchestrates a two-pass `all` run directly. This method remains available as a
+            generic timeline helper for other callers.
 
         This updates both:
         - per-state status files (`.district_timeline_signature.json`)

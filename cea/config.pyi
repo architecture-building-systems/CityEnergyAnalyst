@@ -757,12 +757,7 @@ class BakeStatesSection(Section):
 class StateSimulationsSection(Section):
     """Typed section for state-simulations configuration"""
     existing_timeline_name: str
-    simulation_mode: str
 
-    @overload
-    def __getattr__(self, item: Literal["existing_timeline_name"]) -> str: ...
-    @overload
-    def __getattr__(self, item: Literal["simulation_mode"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ExtractReferenceCaseSection(Section):

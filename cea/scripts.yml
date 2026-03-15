@@ -366,19 +366,24 @@ Scenario Evolution Planning:
       
       **Prerequisites**: Complete Steps 0-3 (Select Timeline, Define Changes, Apply Changes, Bake States) first!
       
-      It runs:
-      - Radiation
+      For each state year it runs:
+      - Radiation (Daysim, or CRAX with a warning when all buildings have `void_deck = 0`)
       - Occupancy
       - Demand
-      - Photovoltaic
-      - Emissions
+      - Photovoltaic (only when emissions include PV)
+      - If district thermal services are required for that state:
+        - Network Layout (Part 1)
+        - Thermal Network (Part 2, forced to single-phase for the state-specific network)
+      - Emissions (always last)
 
-      And builds the district emission timeline.
+      It then builds the district material and emission timeline outputs.
+
+      This Feature always reruns all state years because network reuse makes the state sequence interdependent.
       
       The parameters of these simulations must be saved in their respective dashboards before running this Feature.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_simulations
-    parameters: ['general:scenario', state-simulations]
+    parameters: ['general:scenario', 'state-simulations:existing-timeline-name', 'emissions:include-pv']
 
 Life Cycle Analysis:
 
