@@ -12,8 +12,6 @@ from cea.datamanagement.district_level_states.state_simulation import network_ha
 from cea.datamanagement.district_level_states.state_simulation import service_checks
 from cea.inputlocator import InputLocator
 
-DH_ITEMISED_SERVICES = ["space_heating", "domestic_hot_water"]
-
 EMISSIONS_STEP: dict[str, Any] = {
     "script": "emissions",
     "parameters": {
@@ -97,24 +95,31 @@ def prepare_base_workflow_for_state(
 def build_network_layout_step(
     year: int,
     required_services: list[str],
-    service_eligibility: service_checks.ServiceEligibility,
     previous_network_name: str | None,
+    dh_network_services: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build the `network-layout` step for one state year."""
     network_name = f"thermal_network_{year}"
+    parameters: dict[str, Any] = {
+        "network-name": network_name,
+        "include-services": required_services,
+        "overwrite-supply-settings": False,
+        "network-layout-mode": "augment",
+        "auto-modify-network": True,
+        "existing-network": previous_network_name,
+    }
+
+    if "DH" in required_services:
+        if not dh_network_services:
+            raise ValueError(
+                f"State {year}: DH network requested but no district DH services were "
+                "derived from the state's supply settings."
+            )
+        parameters["itemised-dh-services"] = list(dh_network_services)
+
     return {
         "script": "network-layout",
-        "parameters": {
-            "network-name": network_name,
-            "include-services": required_services,
-            "overwrite-supply-settings": True,
-            "itemised-dh-services": list(DH_ITEMISED_SERVICES),
-            "heating-connected-buildings": list(service_eligibility["DH"]["eligible_buildings"]),
-            "cooling-connected-buildings": list(service_eligibility["DC"]["eligible_buildings"]),
-            "network-layout-mode": "augment",
-            "auto-modify-network": True,
-            "existing-network": previous_network_name,
-        },
+        "parameters": parameters,
     }
 
 
@@ -164,13 +169,20 @@ def prepare_post_demand_workflow_for_state(
         year=year,
         state_years=state_years,
     )
+    dh_network_services: list[str] = []
+    if "DH" in required_services:
+        dh_network_services = service_checks.get_state_dh_network_services(state_locator)
+        services_str = " -> ".join(dh_network_services)
+        print(
+            f"State {year}: DH service mix from supply settings: {services_str}"
+        )
 
     workflow = [
         build_network_layout_step(
             year=year,
             required_services=required_services,
-            service_eligibility=service_eligibility,
             previous_network_name=previous_network_name,
+            dh_network_services=dh_network_services,
         ),
         build_thermal_network_step(year, required_services),
         deepcopy(EMISSIONS_STEP),

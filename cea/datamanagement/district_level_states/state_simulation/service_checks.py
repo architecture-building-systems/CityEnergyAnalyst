@@ -8,6 +8,7 @@ from cea.inputlocator import InputLocator
 
 DISTRICT_SERVICES = ("DC", "DH")
 SERVICE_LABELS = {"DC": "cooling", "DH": "heating"}
+DH_SERVICE_ORDER = ("space_heating", "domestic_hot_water")
 
 
 class ServiceBuildingSets(TypedDict):
@@ -102,25 +103,57 @@ def get_service_scale_mapping(locator: InputLocator, network_type: str) -> dict[
     return build_supply_scale_mapping(cooling_supply_db)
 
 
+def order_dh_services(services: set[str]) -> list[str]:
+    """Return DH services in CEA's canonical priority order."""
+    ordered_services = [service for service in DH_SERVICE_ORDER if service in services]
+    ordered_services.extend(sorted(service for service in services if service not in DH_SERVICE_ORDER))
+    return ordered_services
+
+
+def get_buildings_with_district_dh_services(locator: InputLocator) -> dict[str, set[str]]:
+    """Return the district DH services configured for each building in `supply.csv`."""
+    supply_properties_df = pd.read_csv(locator.get_building_supply())
+    scale_mapping = get_service_scale_mapping(locator, "DH")
+
+    district_dh_services_by_building: dict[str, set[str]] = {}
+    for _, row in supply_properties_df.iterrows():
+        building_name = row["name"]
+        building_services: set[str] = set()
+
+        hs_code = row.get("supply_type_hs")
+        if hs_code and not pd.isna(hs_code) and scale_mapping.get(hs_code) == "DISTRICT":
+            building_services.add("space_heating")
+
+        dhw_code = row.get("supply_type_dhw")
+        if dhw_code and not pd.isna(dhw_code) and scale_mapping.get(dhw_code) == "DISTRICT":
+            building_services.add("domestic_hot_water")
+
+        if building_services:
+            district_dh_services_by_building[building_name] = building_services
+
+    return district_dh_services_by_building
+
+
+def get_state_dh_network_services(locator: InputLocator) -> list[str]:
+    """Return the ordered union of district DH services present in the state's `supply.csv`."""
+    network_services: set[str] = set()
+    for building_services in get_buildings_with_district_dh_services(locator).values():
+        network_services.update(building_services)
+
+    return order_dh_services(network_services)
+
+
 def get_buildings_with_district_service(locator: InputLocator, network_type: str) -> list[str]:
     """Return buildings configured for district heating or district cooling in `supply.csv`."""
+    if network_type == "DH":
+        return list(get_buildings_with_district_dh_services(locator))
+
     supply_properties_df = pd.read_csv(locator.get_building_supply())
     scale_mapping = get_service_scale_mapping(locator, network_type)
-
     buildings_with_district = []
     for _, row in supply_properties_df.iterrows():
         building_name = row["name"]
         has_district_service = False
-
-        if network_type == "DH" and "supply_type_hs" in supply_properties_df.columns:
-            hs_code = row.get("supply_type_hs")
-            if hs_code and not pd.isna(hs_code) and scale_mapping.get(hs_code) == "DISTRICT":
-                has_district_service = True
-
-        if network_type == "DH" and "supply_type_dhw" in supply_properties_df.columns:
-            dhw_code = row.get("supply_type_dhw")
-            if dhw_code and not pd.isna(dhw_code) and scale_mapping.get(dhw_code) == "DISTRICT":
-                has_district_service = True
 
         if network_type == "DC" and "supply_type_cs" in supply_properties_df.columns:
             cs_code = row.get("supply_type_cs")

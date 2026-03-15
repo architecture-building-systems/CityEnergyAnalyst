@@ -372,18 +372,23 @@ Scenario Evolution Planning:
       - Demand
       - Photovoltaic (only when emissions include PV)
       - If district thermal services are required for that state:
-        - Network Layout (Part 1)
+        - Network Layout (Part 1, reading district connections and DH service mix from the state's supply settings)
         - Thermal Network (Part 2, forced to single-phase for the state-specific network)
       - Emissions (always last)
 
       It then builds the district material and emission timeline outputs.
 
       This Feature always reruns all state years because network reuse makes the state sequence interdependent.
-      
-      The parameters of these simulations must be saved in their respective dashboards before running this Feature.
+      Existing-network reuse is additive: if a later state requests fewer connected buildings than the
+      inherited network already contains, `network-layout` keeps the inherited layout, warns about the
+      extra buildings, and simulates only the currently active consumers.
+
+      This Step 4 wrapper does not re-own the settings of the underlying scripts. Save the desired
+      `radiation`, `occupancy`, `demand`, `photovoltaic`, `network-layout`, `thermal-network`, and
+      `emissions` settings in their own dashboards or config sections before running this Feature.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_simulation.main
-    parameters: ['general:scenario', 'state-simulations:existing-timeline-name', 'emissions:include-pv']
+    parameters: ['general:scenario', 'state-simulations:existing-timeline-name']
 
 Life Cycle Analysis:
 
