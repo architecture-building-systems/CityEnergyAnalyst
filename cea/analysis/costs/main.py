@@ -323,7 +323,7 @@ def _process_electricity_service(building_name, supply_cfg, peak_kW, e_sys_mwh, 
     opex_var_a = e_sys_mwh * 1000.0 * price
     return {
         'name': building_name, 'service': 'E', 'scale': 'BUILDING',
-        'assembly_code': assembly_code, 'component_code': None,
+        'assembly_code': assembly_code, 'component_code': 'GRID',
         'carrier': 'GRID', 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
         'capex_total_USD': 0.0, 'capex_a_USD': 0.0,
         'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': opex_var_a, 'TAC_USD': opex_var_a,
