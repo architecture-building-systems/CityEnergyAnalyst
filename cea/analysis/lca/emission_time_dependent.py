@@ -710,11 +710,9 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         hourly_op = _calc_operational_emissions_from_fe(fe_df, emission_intensity, supply_cfg)
 
         # Save per-building hourly operational emissions
-        hourly_op.to_csv(
-            locator.get_emissions_whatif_building_file(building_name, whatif_name),
-            index=False,
-            float_format='%.2f',
-        )
+        operational_file = locator.get_emissions_whatif_building_file(building_name, whatif_name)
+        os.makedirs(os.path.dirname(operational_file), exist_ok=True)
+        hourly_op.to_csv(operational_file, index=False, float_format='%.2f')
         print(f'  Hourly operational emissions for {building_name} saved.')
         operational_results.append((building_name, hourly_op))
 
@@ -735,12 +733,23 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
                 end_year=end_year,
             )
             timeline.fill_embodied_emissions()
+            solar_config = supply_cfg.get('solar', {})
+            if solar_config:
+                timeline.fill_solar_embodied_emissions(solar_config)
             timeline.fill_operational_emissions(
                 feedstock_policies=feedstock_policies,
                 operational_df=hourly_op,
             )
             timeline.demolish(demolition_year=end_year + 1)
             timeline_results.append((building_name, timeline.timeline))
+
+            # Save per-building timeline
+            building_timeline_file = locator.get_emissions_whatif_building_timeline_file(
+                building_name, whatif_name
+            )
+            os.makedirs(os.path.dirname(building_timeline_file), exist_ok=True)
+            timeline.timeline.to_csv(building_timeline_file, float_format='%.2f')
+            print(f'  Emission timeline for {building_name} saved.')
             # Sum each lifecycle category across all years
             production_total = float(timeline.timeline[
                 [c for c in timeline.timeline.columns if c.startswith('production_')]
@@ -795,16 +804,29 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
 
         plant_df = pd.read_csv(plant_fe_path)
         hourly_plant = _calc_plant_operational_emissions_from_fe(plant_df, emission_intensity)
-        hourly_plant.to_csv(
-            locator.get_emissions_whatif_building_file(plant_name, whatif_name),
-            index=False,
-            float_format='%.2f',
-        )
+        plant_operational_file = locator.get_emissions_whatif_building_file(plant_name, whatif_name)
+        os.makedirs(os.path.dirname(plant_operational_file), exist_ok=True)
+        hourly_plant.to_csv(plant_operational_file, index=False, float_format='%.2f')
         print(f'  Hourly operational emissions for plant {plant_name} saved.')
         operational_results.append((plant_name, hourly_plant))
 
         op_cols = [c for c in hourly_plant.columns if c not in ('date', 'name')]
         op_total = float(hourly_plant[op_cols].sum().sum()) if op_cols else 0.0
+
+        # Save per-plant timeline (operational only, same annual total repeated for each year)
+        if timeline_results:
+            year_index = timeline_results[0][1].index
+            annual_totals = hourly_plant[op_cols].sum() if op_cols else pd.Series(dtype=float)
+            plant_timeline_df = pd.DataFrame(
+                {col: annual_totals[col] for col in annual_totals.index},
+                index=year_index,
+            )
+            plant_timeline_file = locator.get_emissions_whatif_building_timeline_file(
+                plant_name, whatif_name
+            )
+            os.makedirs(os.path.dirname(plant_timeline_file), exist_ok=True)
+            plant_timeline_df.to_csv(plant_timeline_file, float_format='%.2f')
+            print(f'  Emission timeline for plant {plant_name} saved.')
         buildings_rows_out.append({
             'name': plant_name,
             'type': 'plant',

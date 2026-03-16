@@ -246,6 +246,64 @@ class BuildingEmissionTimeline:
             embodied_intensity = cast(float, pv_db.loc[pv_code, 'module_embodied_kgco2m2'])
             self.log_emissions(pv_area, embodied_intensity, 0.0, 0.0, lifetime, pv_type_str)
 
+    def fill_solar_embodied_emissions(self, solar_config: dict) -> None:
+        """Log embodied emissions for solar panels based on solar_config from configuration.json.
+
+        Groups panels by output type: PV_E, SC_Q, PVT_E, PVT_Q.
+        Only PV panels have module_embodied_kgco2m2 in the database; SC and PVT columns
+        are initialised to zero (no embodied data available).
+
+        :param solar_config: Dict of facade → tech_code (e.g. {'roof': 'PV_PV1', 'wall_south': 'SC_FP'})
+        """
+        self.check_demolished()
+
+        tech_codes = {v for v in solar_config.values() if v}
+        if not tech_codes:
+            return
+
+        # Determine which output groups are active
+        active_groups: set[str] = set()
+        for code in tech_codes:
+            tech_type = code.split('_')[0]
+            if tech_type == 'PV':
+                active_groups.add('PV_E')
+            elif tech_type == 'SC':
+                active_groups.add('SC_Q')
+            elif tech_type == 'PVT':
+                active_groups.add('PVT_E')
+                active_groups.add('PVT_Q')
+
+        # Initialise timeline columns for all active groups to zero
+        for group in sorted(active_groups):
+            for emission_type in self._EMISSION_TYPES:
+                col_name = f"{emission_type}_{group}_kgCO2e"
+                if col_name not in self.timeline.columns:
+                    self.timeline[col_name] = 0.0
+
+        # PV embodied emissions (module_embodied_kgco2m2 available in PHOTOVOLTAIC_PANELS)
+        pv_codes = {code.split('_')[1] for code in tech_codes if code.split('_')[0] == 'PV'}
+        if pv_codes:
+            pv_db = pd.read_csv(
+                self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'),
+                index_col='code',
+            )
+            for pv_code in pv_codes:
+                if pv_code not in pv_db.index:
+                    continue
+                buildings_path = self.locator.PV_total_buildings(pv_code)
+                if not os.path.exists(buildings_path):
+                    continue
+                buildings_df = pd.read_csv(buildings_path, index_col='name')
+                if self.name not in buildings_df.index:
+                    continue
+                pv_area = float(buildings_df.at[self.name, 'area_PV_m2'])
+                if pv_area <= 0:
+                    continue
+                embodied = float(pv_db.at[pv_code, 'module_embodied_kgco2m2'])
+                lifetime = int(pv_db.at[pv_code, 'LT_yr'])
+                self._log_emission_with_lifetime(pv_area * embodied, lifetime, 'production_PV_E_kgCO2e')
+        # SC and PVT: no module_embodied_kgco2m2 in database — columns remain at zero
+
     def discount_over_year(
         self,
         base: pd.Series,

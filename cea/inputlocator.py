@@ -1840,13 +1840,23 @@ class InputLocator(object):
 
     def get_emissions_whatif_building_file(self, building_name, whatif_name=None):
         """
-        scenario/outputs/data/analysis/{whatif_name}/emissions/{building_name}.csv
+        scenario/outputs/data/analysis/{whatif_name}/emissions/operational/{building_name}.csv
 
         :param building_name: Building identifier (e.g. 'B1001')
         :param whatif_name: What-if scenario name.
-        :return: Path to hourly emissions file for this building
+        :return: Path to hourly operational emissions file for this building or plant
         """
-        return os.path.join(self.get_emissions_whatif_folder(whatif_name), f'{building_name}.csv')
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'operational', f'{building_name}.csv')
+
+    def get_emissions_whatif_building_timeline_file(self, building_name, whatif_name=None):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/timeline/{building_name}.csv
+
+        :param building_name: Building identifier (e.g. 'B1001')
+        :param whatif_name: What-if scenario name.
+        :return: Path to yearly emission timeline file for this building
+        """
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'timeline', f'{building_name}.csv')
 
     # GRAPHS
     def get_plots_folder(self, category):
