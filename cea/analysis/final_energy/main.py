@@ -162,6 +162,12 @@ def _run(config, locator, whatif_name, output_folder, buildings):
 
         except Exception as e:
             errors[building] = str(e)
+    
+    if errors:
+        print("\nBuildings with errors:")
+        for building, error in errors.items():
+            print(f"  ✗ {building}: {error}")
+        raise Exception(f"{len(errors)} buildings failed final energy calculation. See above for details.")
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
     if config.final_energy.overwrite_supply_settings and building_configs:
