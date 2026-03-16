@@ -1645,6 +1645,17 @@ class InputLocator(object):
         return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
 
     # ANALYSIS (shared parent for what-if scenario outputs)
+    def get_analysis_parent_folder(self):
+        """
+        scenario/outputs/data/analysis/
+
+        Parent folder for all what-if scenario analysis results.
+
+        :return: Path to analysis parent folder
+        """
+        return os.path.join(self.scenario, 'outputs', 'data', 'analysis')
+
+
     def get_analysis_folder(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/
@@ -1655,7 +1666,7 @@ class InputLocator(object):
         :param whatif_name: What-if scenario name.
         :return: Path to what-if analysis folder
         """
-        return os.path.join(self.scenario, 'outputs', 'data', 'analysis', whatif_name)
+        return os.path.join(self.get_analysis_parent_folder(), whatif_name)
 
     # FINAL ENERGY
     def get_final_energy_folder(self, whatif_name):

@@ -47,6 +47,12 @@ def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
         return [], None, []
 
 
+def get_whatif_names(locator) -> list:
+    """Return sorted list of what-if names that have lifecycle analysis results."""
+    base = locator.get_analysis_parent_folder()
+    return sorted([name for name in os.listdir(base)]) if os.path.isdir(base) else []
+
+
 class LifecycleEmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "lifecycle-emissions"
@@ -404,15 +410,24 @@ class EmissionTimelineMapLayer(MapLayer):
     label = "Emission Timeline"
     description = ""
 
+    def _get_whatif_names(self) -> Optional[list]:
+        """Return sorted list of what-if names that have emission results."""
+        names = get_whatif_names(self.locator)
+        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
+    
     def _get_results_files(self, _):
         buildings = self.locator.get_zone_building_names()
         return [self.locator.get_lca_timeline_building(b) for b in buildings]
 
-    def _get_period_range(self) -> list:
+    def _get_period_range(self, parameters) -> list:
         """Get the valid period range from available data"""
+        whatif_name = parameters.get('whatif_name')
+
+        if whatif_name is None:
+            return [None, None]
+
         try:
-            buildings = self.locator.get_zone_building_names()
-            timeline_df = self.locator.get_lca_timeline_building(buildings[0])
+            timeline_df = self.locator.get_emissions_whatif_timeline_file(whatif_name)
             df = pd.read_csv(timeline_df)
             df['year'] = period_to_year(df['period'])
             return [int(df['year'].min()), int(df['year'].max())]
@@ -422,6 +437,14 @@ class EmissionTimelineMapLayer(MapLayer):
     @classmethod
     def expected_parameters(cls):
         return {
+            'whatif_name':
+                ParameterDefinition(
+                    "What-if scenario",
+                    "string",
+                    description="Select a what-if scenario with emission results",
+                    options_generator="_get_whatif_names",
+                    selector="choice",
+                ),
             'timeline':
                 ParameterDefinition(
                     "Period",
@@ -429,6 +452,7 @@ class EmissionTimelineMapLayer(MapLayer):
                     description="Period to generate the data based on years",
                     selector="slider",
                     options_generator="_get_period_range",
+                    depends_on=['whatif_name']
                 ),
         }
     
