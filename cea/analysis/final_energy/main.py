@@ -139,9 +139,9 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     )
     solar_panel_config = parse_solar_panel_configuration(config)
 
+    errors = {}
     for building in buildings:
         try:
-
             # Load supply configuration
             supply_config = load_supply_configuration(building, locator, config)
             supply_config['solar'] = solar_panel_config
@@ -161,9 +161,7 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"  ✓ {building}")
 
         except Exception as e:
-            import traceback
-            print(f"  ✗ {building}: {str(e)}")
-            traceback.print_exc()
+            errors[building] = str(e)
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
     if config.final_energy.overwrite_supply_settings and building_configs:
