@@ -1645,100 +1645,99 @@ class InputLocator(object):
         return os.path.join(self.get_heat_folder(), 'heat_rejection_hourly_spatial.csv')
 
     # ANALYSIS (shared parent for what-if scenario outputs)
-    def get_analysis_folder(self, whatif_name=None):
+    def get_analysis_parent_folder(self):
+        """
+        scenario/outputs/data/analysis/
+
+        Parent folder for all what-if scenario analysis results.
+
+        :return: Path to analysis parent folder
+        """
+        return os.path.join(self.scenario, 'outputs', 'data', 'analysis')
+
+
+    def get_analysis_folder(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/
 
         Shared parent folder for all what-if analysis results
         (final-energy, costs, emissions, heat-rejection, etc.).
 
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to what-if analysis folder
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
-        return os.path.join(self.scenario, 'outputs', 'data', 'analysis', whatif_name)
+        return os.path.join(self.get_analysis_parent_folder(), whatif_name)
 
     # FINAL ENERGY
-    def get_final_energy_folder(self, whatif_name=None):
+    def get_final_energy_folder(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/final-energy/
 
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to final energy folder for the what-if scenario
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'final-energy')
 
-    def get_final_energy_building_file(self, building_name, whatif_name=None):
+    def get_final_energy_building_file(self, building_name, whatif_name):
         """
         scenario/outputs/data/final-energy/{whatif_name}/{building_name}.csv
 
         :param building_name: Name of the building (e.g., 'B1001')
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to building hourly final energy file
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
         folder = self.get_final_energy_folder(whatif_name)
         return os.path.join(folder, f'{building_name}.csv')
 
-    def get_final_energy_plant_file(self, network_name, network_type, plant_name, whatif_name=None):
+    def get_final_energy_plant_file(self, network_name, network_type, plant_name, whatif_name):
         """
         scenario/outputs/data/final-energy/{whatif_name}/{network_name}_{network_type}_{plant_name}.csv
 
         :param network_name: Network layout name (e.g., 'xxx', 'qqq')
         :param network_type: 'DH' (district heating) or 'DC' (district cooling)
         :param plant_name: Plant node name from network shapefile (e.g., 'NODE_001', 'PLANT_A')
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to district plant hourly final energy file
 
         Example:
-            locator.get_final_energy_plant_file('xxx', 'DH', 'NODE_001')
+            locator.get_final_energy_plant_file('xxx', 'DH', 'NODE_001', 'baseline')
             -> scenario/outputs/data/final-energy/baseline/xxx_DH_NODE_001.csv
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
         folder = self.get_final_energy_folder(whatif_name)
         filename = f'{network_name}_{network_type}_{plant_name}.csv'
         return os.path.join(folder, filename)
 
-    def get_final_energy_buildings_file(self, whatif_name=None):
+    def get_final_energy_buildings_file(self, whatif_name):
         """
         scenario/outputs/data/final-energy/{whatif_name}/final_energy_buildings.csv
 
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to buildings summary file
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
-        folder = self.get_final_energy_folder(whatif_name)
-        return os.path.join(folder, 'final_energy_buildings.csv')
+        return os.path.join(self.get_final_energy_folder(whatif_name), 'final_energy_buildings.csv')
 
-    def get_final_energy_file(self, whatif_name=None):
+    def get_final_energy_file(self, whatif_name):
         """
         scenario/outputs/data/final-energy/{whatif_name}/final_energy.csv
 
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to final energy breakdown file (by carrier, service, and entity)
         """
-        if not whatif_name or whatif_name.strip() in ["", "(baseline)"]:
-            whatif_name = "baseline"
-        folder = self.get_final_energy_folder(whatif_name)
-        return os.path.join(folder, 'final_energy.csv')
+        return os.path.join(self.get_final_energy_folder(whatif_name), 'final_energy.csv')
 
-    def get_analysis_configuration_file(self, whatif_name=None):
+    def get_analysis_configuration_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/configuration.json
 
         Shared configuration file for all what-if analysis results
         (final-energy, costs, emissions, heat-rejection, etc.).
 
-        :param whatif_name: What-if scenario name. If None, empty, or "(baseline)", uses "baseline" folder.
+        :param whatif_name: What-if scenario name.
         :return: Path to what-if configuration JSON file
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'configuration.json')
 
-    def get_costs_whatif_folder(self, whatif_name=None):
+    def get_costs_whatif_folder(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/costs/
 
@@ -1747,7 +1746,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'costs')
 
-    def get_costs_whatif_buildings_file(self, whatif_name=None):
+    def get_costs_whatif_buildings_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/costs/costs_buildings.csv
 
@@ -1756,7 +1755,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_costs_whatif_folder(whatif_name), 'costs_buildings.csv')
 
-    def get_costs_whatif_components_file(self, whatif_name=None):
+    def get_costs_whatif_components_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/costs/costs_components.csv
 
@@ -1765,7 +1764,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_costs_whatif_folder(whatif_name), 'costs_components.csv')
 
-    def get_heat_rejection_whatif_folder(self, whatif_name=None):
+    def get_heat_rejection_whatif_folder(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/heat/
 
@@ -1774,7 +1773,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'heat')
 
-    def get_heat_rejection_whatif_buildings_file(self, whatif_name=None):
+    def get_heat_rejection_whatif_buildings_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/heat/heat_rejection_buildings.csv
 
@@ -1783,7 +1782,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), 'heat_rejection_buildings.csv')
 
-    def get_heat_rejection_whatif_components_file(self, whatif_name=None):
+    def get_heat_rejection_whatif_components_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/heat/heat_rejection_components.csv
 
@@ -1792,7 +1791,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), 'heat_rejection_components.csv')
 
-    def get_heat_rejection_whatif_building_file(self, building_name, whatif_name=None):
+    def get_heat_rejection_whatif_building_file(self, building_name, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/heat/{building_name}.csv
 
@@ -1802,7 +1801,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_heat_rejection_whatif_folder(whatif_name), f'{building_name}.csv')
 
-    def get_emissions_whatif_folder(self, whatif_name=None):
+    def get_emissions_whatif_folder(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/emissions/
 
@@ -1811,7 +1810,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'emissions')
 
-    def get_emissions_whatif_buildings_file(self, whatif_name=None):
+    def get_emissions_whatif_buildings_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/emissions/emissions_buildings.csv
 
@@ -1820,7 +1819,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'emissions_buildings.csv')
 
-    def get_emissions_whatif_operational_file(self, whatif_name=None):
+    def get_emissions_whatif_operational_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/emissions/emissions_operational.csv
 
@@ -1829,7 +1828,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'emissions_operational.csv')
 
-    def get_emissions_whatif_timeline_file(self, whatif_name=None):
+    def get_emissions_whatif_timeline_file(self, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/emissions/emissions_timeline.csv
 
@@ -1838,7 +1837,7 @@ class InputLocator(object):
         """
         return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'emissions_timeline.csv')
 
-    def get_emissions_whatif_building_file(self, building_name, whatif_name=None):
+    def get_emissions_whatif_building_file(self, building_name, whatif_name):
         """
         scenario/outputs/data/analysis/{whatif_name}/emissions/operational/{building_name}.csv
 
