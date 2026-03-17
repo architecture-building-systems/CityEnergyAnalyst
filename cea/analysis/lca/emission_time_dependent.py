@@ -159,8 +159,8 @@ def operational_hourly(config: Configuration) -> None:
 
     # df_by_building = to_ton(sum_by_building(results))
     df_by_building = sum_by_building(results)
-    # df_by_hour = to_ton(sum_by_index([df for _, df in results]))
-    df_by_hour = sum_by_index([df for _, df in results])
+    # df_by_hour = to_ton(sum_by_hour([df for _, df in results]))
+    df_by_hour = sum_by_hour([df for _, df in results])
     df_by_building.to_csv(locator.get_total_yearly_operational_building(), float_format='%.2f')
     df_by_hour.to_csv(locator.get_total_yearly_operational_hour(), index=False, float_format='%.2f')
     print(
@@ -267,8 +267,8 @@ def total_yearly(config: Configuration) -> None:
     #
     # df_by_building = to_ton(sum_by_building(results))
     df_by_building = sum_by_building(results)
-    # df_by_year = to_ton(sum_by_index([df for _, df in results]))
-    df_by_year = sum_by_index([df for _, df in results])
+    # df_by_year = to_ton(sum_by_year([df for _, df in results]))
+    df_by_year = sum_by_year([df for _, df in results])
     df_by_building.to_csv(locator.get_total_emissions_building_year_end(year_end=end_year), float_format='%.2f')
     df_by_year.to_csv(locator.get_total_emissions_timeline_year_end(year_end=end_year), index=False, float_format='%.2f')
     print(
@@ -323,9 +323,35 @@ def sum_by_building(result_list: list[tuple[str, pd.DataFrame]]) -> pd.DataFrame
     return summed_df
 
 
-def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
-    """Sum all values across all dataframes that share the same index.
-    Useful for getting district-level time-dependent data across multiple buildings.
+def sum_by_hour(dfs: list[pd.DataFrame]) -> pd.DataFrame:
+    """Sum hourly emission DataFrames across buildings into a district total.
+
+    Each DataFrame has a numeric hour index (0-8759) and a ``date`` column.
+    The ``date`` column is taken from the first DataFrame and prepended to the
+    result; all other columns are summed element-wise.
+
+    :param dfs: Per-building hourly emission DataFrames.
+    :type dfs: list[pd.DataFrame]
+    :return: District-level hourly emissions with ``date`` as the first column.
+    :rtype: pd.DataFrame
+    """
+    if not dfs:
+        raise ValueError("dfs must be non-empty")
+
+    date_series = dfs[0]['date'].copy()
+    dfs_for_sum = [df.drop(columns=['date', 'name'], errors='ignore') for df in dfs]
+
+    out = pd.concat(dfs_for_sum).groupby(level=0, sort=True).sum()
+    out.insert(0, 'date', date_series.to_list())
+    return out
+
+
+def sum_by_year(dfs: list[pd.DataFrame]) -> pd.DataFrame:
+    """Sum yearly emission DataFrames across buildings into a district total.
+
+    Each DataFrame has a ``Y_XXXX``-formatted string index. Buildings may span
+    different year ranges; missing years are filled with 0. The result has a
+    ``period`` column (``Y_XXXX``) as the first column.
 
     For example:
     ```
@@ -357,93 +383,28 @@ def sum_by_index(dfs: list[pd.DataFrame]) -> pd.DataFrame:
                 2006        3       4
     ```
 
-    :param dfs: A list of dataframes to sum.
+    :param dfs: Per-building yearly emission DataFrames.
     :type dfs: list[pd.DataFrame]
-    :return: A dataframe with the summed values.
+    :return: District-level yearly emissions with ``period`` as the first column.
     :rtype: pd.DataFrame
     """
     if not dfs:
         raise ValueError("dfs must be non-empty")
 
-    # Get sample dataframe to understand structure
-    sample_df = dfs[0]
-    has_date_column = 'date' in sample_df.columns
-    has_year_index = isinstance(sample_df.index[0], str) and sample_df.index[0].startswith('Y_')
+    dfs_for_sum = [df.drop(columns=['name'], errors='ignore') for df in dfs]
 
-    # Create copies of dataframes without the date column for summing
-    dfs_for_sum = []
-    date_series = None
-    year_series = None
-
-    for df in dfs:
-        df_copy = df.copy()
-        if 'date' in df_copy.columns:
-            if date_series is None:
-                date_series = df_copy['date'].copy()
-            df_copy = df_copy.drop(columns=['date'])
-        if "name" in df_copy.columns:
-            df_copy = df_copy.drop(columns=['name'])
-        # Extract year values from index if it's a year index
-        if has_year_index and year_series is None:
-            year_series = pd.Series(df_copy.index.values, index=df_copy.index)
-        dfs_for_sum.append(df_copy)
-
-    # Perform the sum operation on numeric columns only
-    if has_year_index:
-        # Extract numeric years from 'Y_XXXX' formatted indices
-        min_year = min(int(str(df.index.min()).replace('Y_', '')) for df in dfs_for_sum)
-        max_year = max(int(str(df.index.max()).replace('Y_', '')) for df in dfs_for_sum)
-        reindex_range = [f"Y_{year}" for year in range(min_year, max_year + 1)]
-    else:
-        # Handle numeric indices by coercing to int
-        index_min = min(int(df.index.min()) for df in dfs_for_sum)
-        index_max = max(int(df.index.max()) for df in dfs_for_sum)
-        reindex_range = pd.RangeIndex(index_min, index_max + 1)
+    min_year = min(int(str(df.index.min()).replace('Y_', '')) for df in dfs_for_sum)
+    max_year = max(int(str(df.index.max()).replace('Y_', '')) for df in dfs_for_sum)
+    reindex_range = [f"Y_{year}" for year in range(min_year, max_year + 1)]
 
     out = (
         pd.concat(dfs_for_sum)
         .groupby(level=0, sort=True)
         .sum()
         .reindex(reindex_range, fill_value=0.0)
+        .reset_index()
+        .rename(columns={'index': 'period'})
     )
-
-    # Add date or year column as first column if it existed, but don't reset index
-    if has_date_column and date_series is not None:
-        # Reset index temporarily to add date column
-        out_with_index = out.reset_index(drop=True)
-
-        # Ensure date_series has the right length
-        if len(date_series) >= len(out_with_index):
-            out_with_index.insert(0, 'date', date_series.iloc[:len(out_with_index)].to_list())
-        else:
-            # If date_series is shorter, repeat the pattern
-            full_dates = pd.concat([date_series] * (len(out_with_index) // len(date_series) + 1))
-            out_with_index.insert(0, 'date', full_dates.iloc[:len(out_with_index)].to_list())
-
-        # Reorder columns: date first, then emission columns
-        date_cols = ['date']
-        emission_cols = [col for col in out_with_index.columns if col not in date_cols]
-        out = out_with_index[date_cols + emission_cols]
-    elif has_year_index and year_series is not None:
-        # Reset index temporarily to add year column
-        out_with_index = out.reset_index(drop=True)
-
-        # Ensure year_series has the right length
-        if len(year_series) >= len(out_with_index):
-            out_with_index.insert(0, 'period', year_series.iloc[:len(out_with_index)].to_list())
-        else:
-            # If year_series is shorter, repeat the pattern
-            full_years = pd.concat([year_series] * (len(out_with_index) // len(year_series) + 1))
-            out_with_index.insert(0, 'period', full_years.iloc[:len(out_with_index)].to_list())
-
-        # Reorder columns: year first, then emission columns
-        year_cols = ['period']
-        emission_cols = [col for col in out_with_index.columns if col not in year_cols]
-        out = out_with_index[year_cols + emission_cols]
-    else:
-        # No date or year column, just reset index without keeping it
-        out = out.reset_index(drop=True)
-
     return out
 
 
@@ -854,7 +815,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         print(f'  Emissions buildings summary saved to: {locator.get_emissions_whatif_buildings_file(whatif_name)}')
 
     if operational_results:
-        df_by_hour = sum_by_index([df for _, df in operational_results])
+        df_by_hour = sum_by_hour([df for _, df in operational_results])
         df_by_hour.to_csv(
             locator.get_emissions_whatif_operational_file(whatif_name),
             index=False,
@@ -863,11 +824,10 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         print(f'  District operational emissions saved to: {locator.get_emissions_whatif_operational_file(whatif_name)}')
 
     if timeline_results:
-        df_by_year = sum_by_index([df for _, df in timeline_results])
-        df_by_year = df_by_year.drop(columns=['name'], errors='ignore')
+        df_by_year = sum_by_year([df for _, df in timeline_results])
         df_by_year.to_csv(
             locator.get_emissions_whatif_timeline_file(whatif_name),
-            index=True,
+            index=False,
             float_format='%.2f',
         )
         print(f'  District emission timeline saved to: {locator.get_emissions_whatif_timeline_file(whatif_name)}')
