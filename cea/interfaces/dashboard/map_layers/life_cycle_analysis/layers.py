@@ -59,11 +59,13 @@ class LifecycleEmissionsMapLayer(MapLayer):
     label = "Lifecycle Emissions (Annual)"
     description = ""
 
-    def _get_data_columns(self) -> Optional[list]:
+    def _get_data_columns(self, parameters) -> Optional[list]:
         buildings = self.locator.get_zone_building_names()
-        if not buildings:
+        whatif_name = parameters.get('whatif_name')
+
+        if not buildings or not whatif_name:
             return
-        results_path = self.locator.get_lca_timeline_building(buildings[0])
+        results_path = self.locator.get_emissions_whatif_building_timeline_file(buildings[0], whatif_name)
 
         try:
             emissions_df = pd.read_csv(results_path)
@@ -73,15 +75,29 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         return sorted(list(columns))
 
-    def _get_results_files(self, _):
-        buildings = self.locator.get_zone_building_names()
-        return [self.locator.get_lca_timeline_building(b) for b in buildings]
+    def _get_whatif_names(self) -> Optional[list]:
+        """Return sorted list of what-if names that have lifecycle analysis results."""
+        names = get_whatif_names(self.locator)
+        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
 
-    def _get_period_range(self) -> list:
+    def _get_results_files(self, parameters) -> list:
+        whatif_name = parameters.get('whatif_name')
+        
+        if not whatif_name:
+            return []
+
+        buildings = self.locator.get_zone_building_names()
+        return [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
+
+    def _get_period_range(self, parameters) -> list:
         """Get the valid period range from available data"""
+        whatif_name = parameters.get('whatif_name')
+        if not whatif_name:
+            return [None, None]
+
         try:
             buildings = self.locator.get_zone_building_names()
-            timeline_df = self.locator.get_lca_timeline_building(buildings[0])
+            timeline_df = self.locator.get_emissions_whatif_building_timeline_file(buildings[0], whatif_name)
             df = pd.read_csv(timeline_df)
             df['year'] = period_to_year(df['period'])
             return [int(df['year'].min()), int(df['year'].max())]
@@ -92,6 +108,14 @@ class LifecycleEmissionsMapLayer(MapLayer):
     @classmethod
     def expected_parameters(cls):
         return {
+            'whatif_name':
+                ParameterDefinition(
+                    "What-if scenario",
+                    "string",
+                    description="Select a what-if scenario with emission results",
+                    options_generator="_get_whatif_names",
+                    selector="choice",
+                ),
             'data-column':
                 ParameterDefinition(
                     "Data Column",
@@ -99,6 +123,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
                     description="Data column to use",
                     options_generator="_get_data_columns",
                     selector="choice",
+                    depends_on=['whatif_name']
                 ),
             'timeline':
                 ParameterDefinition(
@@ -107,6 +132,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
                     description="Period to generate the data based on years",
                     selector="slider",
                     options_generator="_get_period_range",
+                    depends_on=['whatif_name']
                 ),
             'radius':
                 ParameterDefinition(
@@ -150,6 +176,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         # FIXME: Hardcoded to zone buildings for now
         buildings = self.locator.get_zone_building_names()
+        whatif_name = parameters.get('whatif_name')
 
         data_column = parameters['data-column']
         period = parameters['timeline']
@@ -171,7 +198,8 @@ class LifecycleEmissionsMapLayer(MapLayer):
         # Filter buildings that exist in geometry
         buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
 
-        if not buildings:
+        # If no buildings or what-if scenario is selected, return empty data with range of 0 to avoid errors in frontend
+        if not buildings or not whatif_name:
             output['properties']['range'] = {
                 'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
                 'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
@@ -180,7 +208,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         def get_data(building, centroid):
             try:
-                building_file = self.locator.get_lca_timeline_building(building)
+                building_file = self.locator.get_emissions_whatif_building_timeline_file(building, whatif_name)
                 if not os.path.exists(building_file):
                     return None
 
