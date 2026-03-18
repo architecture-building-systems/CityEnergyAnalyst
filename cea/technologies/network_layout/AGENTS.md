@@ -218,6 +218,9 @@ connected-buildings: B1001, B1002, B1003
 **Key properties:**
 - **User's disk files never modified**: Only in-memory GeoDataFrames are changed
 - Augmentation: New buildings connect at optimal entry points (existing nodes)
+- When reusing an existing DH network, copied plant nodes must be reconciled with the
+  current `itemised-dh-services` before saving `DH/layout/nodes.shp`; otherwise
+  `thermal-network` infers the old service mix from the stale plant type
 - Filtering: Uses graph-based cleanup to remove orphaned infrastructure
 - Both use `connection_candidates` parameter (default: 3) for Steiner optimisation
 - Coordinate precision: SHAPEFILE_TOLERANCE (6 decimal places)
