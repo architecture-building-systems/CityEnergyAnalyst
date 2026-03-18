@@ -415,9 +415,14 @@ class EmissionTimelineMapLayer(MapLayer):
         names = get_whatif_names(self.locator)
         return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
     
-    def _get_results_files(self, _):
+    def _get_results_files(self, parameters) -> list:
+        whatif_name = parameters.get('whatif_name')
+        
+        if not whatif_name:
+            return []
+
         buildings = self.locator.get_zone_building_names()
-        return [self.locator.get_lca_timeline_building(b) for b in buildings]
+        return [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
 
     def _get_period_range(self, parameters) -> list:
         """Get the valid period range from available data"""
