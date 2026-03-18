@@ -1329,17 +1329,38 @@ def _merge_augmented_network(
 
     # 2. Merge nodes - keep all user nodes, add new building nodes for missing buildings
 
-    # Get existing node names and coordinates to avoid conflicts
-    existing_node_names = set(user_nodes_gdf['name'].tolist())
-    user_node_coords = set()
-    for idx, row in user_nodes_gdf.iterrows():
-        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        user_node_coords.add(coord)
-
-    # Extract building nodes from Steiner result for missing buildings ONLY
+    # If the copied user network is missing a building node at an edge endpoint,
+    # network-layout may have already created a placeholder junction there. When
+    # augmentation later adds the real consumer node at the same coordinates we
+    # must drop the placeholder, otherwise thermal-network sees duplicate node
+    # names at one point and creates isolated singleton components.
     new_building_nodes = steiner_nodes_gdf[
         steiner_nodes_gdf['building'].isin(missing_building_names)
     ].copy()
+    new_building_coords = {
+        normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        for _, row in new_building_nodes.iterrows()
+    }
+
+    if new_building_coords:
+        placeholder_user_mask = user_nodes_gdf.apply(
+            lambda row: (
+                str(row.get('building', '')).strip().upper() in {'', 'NONE'}
+                and str(row.get('type', '')).strip().upper() in {'', 'NONE'}
+                and normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0] in new_building_coords
+            ),
+            axis=1
+        )
+        user_nodes_for_merge = user_nodes_gdf[~placeholder_user_mask].copy()
+    else:
+        user_nodes_for_merge = user_nodes_gdf.copy()
+
+    # Get existing node names and coordinates to avoid conflicts
+    existing_node_names = set(user_nodes_for_merge['name'].tolist())
+    user_node_coords = set()
+    for idx, row in user_nodes_for_merge.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        user_node_coords.add(coord)
 
     # Rename building nodes if they conflict with existing names
     node_rename_counter = 1
@@ -1389,11 +1410,11 @@ def _merge_augmented_network(
     # Combine: user nodes + new building nodes + unique junction nodes
     augmented_nodes_gdf = gpd.GeoDataFrame(
         pd.concat([
-            user_nodes_gdf,
+            user_nodes_for_merge,
             new_building_nodes,
-            gpd.GeoDataFrame(unique_junction_nodes, crs=user_nodes_gdf.crs) if unique_junction_nodes else gpd.GeoDataFrame(columns=user_nodes_gdf.columns, crs=user_nodes_gdf.crs)
+            gpd.GeoDataFrame(unique_junction_nodes, crs=user_nodes_for_merge.crs) if unique_junction_nodes else gpd.GeoDataFrame(columns=user_nodes_for_merge.columns, crs=user_nodes_for_merge.crs)
         ], ignore_index=True),
-        crs=user_nodes_gdf.crs
+        crs=user_nodes_for_merge.crs
     )
 
     return augmented_nodes_gdf, augmented_edges_gdf
