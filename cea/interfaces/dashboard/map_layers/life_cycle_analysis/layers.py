@@ -1,5 +1,6 @@
 from typing import Optional
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import geopandas as gpd
@@ -47,6 +48,29 @@ def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
         return [], None, []
 
 
+def get_columns_from_building_files(paths: list) -> Optional[list]:
+    """
+    Read only the header row of each file in parallel and return the sorted union
+    of all data columns (excluding IGNORE_COLUMNS). Returns None if no file is readable.
+    """
+    def read_header(path):
+        try:
+            return set(pd.read_csv(path, nrows=0).columns)
+        except (FileNotFoundError, pd.errors.EmptyDataError):
+            return None
+
+    with ThreadPoolExecutor() as executor:
+        results = list(executor.map(read_header, paths))
+
+    columns = set()
+    for result in results:
+        if result is not None:
+            columns |= result
+
+    columns -= IGNORE_COLUMNS
+    return sorted(columns) if columns else None
+
+
 def get_whatif_names(locator) -> list:
     """Return sorted list of what-if names that have lifecycle analysis results."""
     base = locator.get_analysis_parent_folder()
@@ -65,15 +89,9 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         if not buildings or not whatif_name:
             return
-        results_path = self.locator.get_emissions_whatif_building_timeline_file(buildings[0], whatif_name)
 
-        try:
-            emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns) - IGNORE_COLUMNS
-        except (pd.errors.EmptyDataError, FileNotFoundError):
-            return
-
-        return sorted(list(columns))
+        paths = [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
+        return get_columns_from_building_files(paths)
 
     def _get_whatif_names(self) -> Optional[list]:
         """Return sorted list of what-if names that have lifecycle analysis results."""
@@ -273,15 +291,9 @@ class OperationalEmissionsMapLayer(MapLayer):
 
         if not buildings or not whatif_name:
             return
-        results_path = self.locator.get_emissions_whatif_building_file(buildings[0], whatif_name)
 
-        try:
-            emissions_df = pd.read_csv(results_path)
-            columns = set(emissions_df.columns) - IGNORE_COLUMNS
-        except (pd.errors.EmptyDataError, FileNotFoundError):
-            return
-
-        return sorted(list(columns))
+        paths = [self.locator.get_emissions_whatif_building_file(b, whatif_name) for b in buildings]
+        return get_columns_from_building_files(paths)
 
     def _get_whatif_names(self) -> Optional[list]:
         """Return sorted list of what-if names that have operational emissions results."""
