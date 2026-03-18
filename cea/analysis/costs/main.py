@@ -338,19 +338,22 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     if peak_kW <= 0:
         return rows
 
-    # Infer network type from case_description (set during final-energy from configuration.json)
-    case_desc = plant_row.get('case_description', '') or ''
-    if 'DH' in case_desc:
-        network_type = 'DH'
-    elif 'DC' in case_desc:
-        network_type = 'DC'
-    else:
-        return rows
-
-    # Load plant config from configuration.json (set during final-energy from district assembly)
-    pc = plant_configs.get(network_type)
+    # Load plant config from configuration.json (keyed by plant_name since CEA-4)
+    pc = plant_configs.get(plant_name)
     if not pc:
         return rows
+
+    # network_type is stored inside the plant config
+    network_type = pc.get('network_type', '')
+    if network_type not in ('DH', 'DC'):
+        # Fallback: infer from case_description for backwards compatibility
+        case_desc = plant_row.get('case_description', '') or ''
+        if 'DH' in case_desc:
+            network_type = 'DH'
+        elif 'DC' in case_desc:
+            network_type = 'DC'
+        else:
+            return rows
 
     component_code = pc.get('primary_component')
     efficiency = pc.get('efficiency')
