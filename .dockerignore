@@ -42,7 +42,7 @@ logo
 notebooks
 
 # Misc
-euler
+scripts
 *.bak
 *.prof
 

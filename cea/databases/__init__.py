@@ -76,9 +76,13 @@ class CEADatabase:
 
     def save(self, locator: InputLocator):
         """Save the database components to CSV files using the provided locator."""
-        self.archetypes.save(locator)
-        self.assemblies.save(locator)
-        self.components.save(locator)
+        # FIXME: Revert changes if there is an error during saving to avoid partial saves
+        try:
+            self.archetypes.save(locator)
+            self.assemblies.save(locator)
+            self.components.save(locator)
+        except Exception as e:
+            raise CEADatabaseException(f"Failed to save CEA database: {e}") from e
 
     @classmethod
     def _locator_mappings(cls) -> dict[str, dict[str, Any]]:
@@ -115,12 +119,13 @@ class CEADatabase:
 
     @classmethod
     def from_locator(cls, locator: InputLocator) -> CEADatabase:
+        """Initialize the database by reading CSV files using the provided locator."""
         try:
             archetypes = Archetypes.from_locator(locator)
             assemblies = Assemblies.from_locator(locator)
             components = Components.from_locator(locator)
         except Exception as e:
-            raise CEADatabaseException(f"Failed to initialize CEA database: {e}")
+            raise CEADatabaseException(f"Failed to initialize CEA database: {e}") from e
 
         return cls(archetypes=archetypes, assemblies=assemblies, components=components)
 
@@ -136,7 +141,7 @@ class CEADatabase:
 
             return cls(archetypes=archetypes, assemblies=assemblies, components=components)
         except Exception as e:
-            raise CEADatabaseException(f"Failed to create CEA database from dict: {e}")
+            raise CEADatabaseException(f"Failed to create CEA database from dict: {e}") from e
 
     def is_empty(self) -> bool:
         return self.archetypes.is_empty() and self.assemblies.is_empty() and self.components.is_empty()

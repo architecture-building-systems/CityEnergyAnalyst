@@ -87,7 +87,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
             Q_DH_building_netw_total_W += (substation_df[iteration].Q_heating_W.values +
                                            substation_df[iteration].Q_dhw_W.values)
 
-            sum_tret_mdot_heat += substation_df[iteration].T_return_DH_result_K.values * substation_df[
+            sum_tret_mdot_heat += (substation_df[iteration].T_return_DH_result_C.values + 273.15) * substation_df[
                 iteration].mdot_DH_result_kgpers.values
 
             Qcdata_netw_total_kWh += demand_df[iteration].Qcdata_sys_kWh.values

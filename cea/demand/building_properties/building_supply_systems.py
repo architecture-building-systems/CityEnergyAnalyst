@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from cea.demand.building_properties.base import BuildingPropertiesDatabase
+from cea.datamanagement.database.assemblies import Supply
+from cea.demand.building_properties.base import BuildingPropertiesDatabase, DatabaseMapping
 
 if TYPE_CHECKING:
     from cea.inputlocator import InputLocator
@@ -30,31 +31,32 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
 
     @staticmethod
     def get_properties_supply_systems(locator: InputLocator, properties_supply: pd.DataFrame):
-        # Supply system mappings: (locator_method, join_column, column_renames, fields_to_extract)
+        supply_database = Supply.from_locator(locator)
+
         supply_mappings = {
-            'supply heating': (
-                locator.get_database_assemblies_supply_heating(),
-                'supply_type_hs',
-                {"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"},
-                ['source_hs', 'scale_hs', 'eff_hs']
+            'supply heating': DatabaseMapping(
+                data=supply_database.heating,
+                join_column='supply_type_hs',
+                fields=['source_hs', 'scale_hs', 'eff_hs'],
+                column_renames={"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"}
             ),
-            'supply cooling': (
-                locator.get_database_assemblies_supply_cooling(),
-                'supply_type_cs',
-                {"feedstock": "source_cs", "scale": "scale_cs", "efficiency": "eff_cs"},
-                ['source_cs', 'scale_cs', 'eff_cs']
+            'supply cooling': DatabaseMapping(
+                data=supply_database.cooling,
+                join_column='supply_type_cs',
+                fields=['source_cs', 'scale_cs', 'eff_cs'],
+                column_renames={"feedstock": "source_cs", "scale": "scale_cs", "efficiency": "eff_cs"}
             ),
-            'supply dhw': (
-                locator.get_database_assemblies_supply_hot_water(),
-                'supply_type_dhw',
-                {"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"},
-                ['source_dhw', 'scale_dhw', 'eff_dhw']
+            'supply dhw': DatabaseMapping(
+                data=supply_database.hot_water,
+                join_column='supply_type_dhw',
+                fields=['source_dhw', 'scale_dhw', 'eff_dhw'],
+                column_renames={"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"}
             ),
-            'supply electricity': (
-                locator.get_database_assemblies_supply_electricity(),
-                'supply_type_el',
-                {"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"},
-                ['source_el', 'scale_el', 'eff_el']
+            'supply electricity': DatabaseMapping(
+                data=supply_database.electricity,
+                join_column='supply_type_el',
+                fields=['source_el', 'scale_el', 'eff_el'],
+                column_renames={"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"}
             )
         }
 

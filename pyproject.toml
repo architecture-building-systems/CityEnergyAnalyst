@@ -2,7 +2,7 @@
 name = "cityenergyanalyst"
 description = "City Energy Analyst"
 readme = "README.rst"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [
     { name = "Architecture and Building Systems", email = "cea@arch.ethz.ch" }
@@ -144,7 +144,7 @@ coverage = "pytest --cov=cea cea/tests/"
 
 # Development tasks
 lint = {cmd = "ruff check --fix ."}
-setup-dev = {cmd = "uv pip install -e . --group dev"}
+setup-dev = {cmd = "pip install -e . --group dev"}
 build-wheel = {cmd = "uv build"}
 export-spec = {cmd = "pixi workspace export conda-explicit-spec --ignore-pypi-errors conda-spec"}
 export-conda = {cmd = "pixi workspace export conda-environment environment.yml"}

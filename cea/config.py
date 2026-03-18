@@ -382,7 +382,7 @@ class Section:
 
 
 class Parameter:
-    def __init__(self, name, section, config):
+    def __init__(self, name: str, section: Section, config: Configuration):
         """
         :param name: The name of the parameter (as it appears in the configuration file, all lowercase)
         :type name: str
@@ -406,26 +406,21 @@ class Parameter:
         except configparser.NoOptionError:
             self.category = None
 
-        # FIXME: REMOVE THIS
-        # give subclasses a chance to specialize their behavior
-        self.initialize(config.default_config)
+        try:
+            self.nullable = config.default_config.getboolean(section.name, f"{self.name}.nullable")
+        except configparser.NoOptionError:
+            self.nullable = False
 
     @property
-    def default(self):
+    def default(self) -> Any:
         return self.decode(self.config.default_config.get(self.section.name, self.name))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Parameter {self.section.name}:{self.name}={self.get()}>"
 
     @property
-    def py_name(self):
+    def py_name(self) -> str:
         return self.name.replace('-', '_')
-
-    def initialize(self, parser):
-        """
-        Override this function to initialize a parameter with values as read from
-        the default.config
-        """
 
     def encode(self, value) -> str:
         """Encode ``value`` to a string representation for writing to the configuration file"""
@@ -444,12 +439,12 @@ class Parameter:
         except ValueError as ex:
             raise ValueError(f'{self.section.name}:{self.name} - {ex}')
 
-    def get_raw(self):
+    def get_raw(self) -> str:
         """Return the value from the config file, but without replacing references and also
         without decoding."""
         return self.config.user_config.get(self.section.name, self.name)
 
-    def replace_references(self, encoded_value):
+    def replace_references(self, encoded_value: str) -> str:
         # expand references (like ``{general:scenario}``)
         def lookup_config(matchobj):
             return self.config.sections[matchobj.group(1)].parameters[matchobj.group(2)].get_raw()
@@ -457,17 +452,25 @@ class Parameter:
         encoded_value = re.sub(r"{([a-z\d-]+):([a-z\d-]+)}", lookup_config, encoded_value)
         return encoded_value
 
-    def set(self, value):
+    def set(self, value: Any):
         encoded_value = self.encode(value)
         self.config.user_config.set(self.section.name, self.name, encoded_value)
+
+    def set_empty(self):
+        """
+        Set parameter to an empty value (an empty string) in the config, bypassing encode() validation.
+        It ignores whether the parameter is nullable or not.
+        """
+        self.config.user_config.set(self.section.name, self.name, "")
 
 
 class PathParameter(Parameter):
     """Describes a folder in the system"""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         try:
-            self._direction = parser.get(self.section.name, f"{self.name}.direction")
+            self._direction = config.default_config.get(section.name, f"{name}.direction")
             if self._direction not in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
@@ -488,19 +491,15 @@ class NullablePathParameter(PathParameter):
 class FileParameter(Parameter):
     """Describes a file in the system."""
 
-    def initialize(self, parser):
-        self._extensions = parser.get(self.section.name, f"{self.name}.extensions").split()
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._extensions = config.default_config.get(section.name, f"{name}.extensions").split()
         try:
-            self._direction = parser.get(self.section.name, f"{self.name}.direction")
+            self._direction = config.default_config.get(section.name, f"{name}.direction")
             if self._direction not in {'input', 'output'}:
                 self._direction = 'input'
         except configparser.NoOptionError:
             self._direction = 'input'
-
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
 
     def encode(self, value):
         if value is None:
@@ -554,6 +553,22 @@ class InputFileParameter(FileParameter):
     """A parameter that describes a user provided input file."""
 
 
+class UserNetworkInputFileParameter(InputFileParameter):
+    """
+    Special InputFileParameter for user-defined network inputs (edges-shp-path, nodes-shp-path, network-geojson-path).
+    Validates mutual exclusivity with existing-network parameter.
+    """
+
+    def encode(self, value):
+        # Validate mutual exclusivity before calling parent encode
+        # Determine which parameter this is based on self.name
+        param_name = self.name.replace('-', '_')  # Convert from config format to attribute format
+        _validate_user_network_input_exclusivity(self.config, param_name, value)
+
+        # Call parent encode
+        return super().encode(value)
+
+
 class JsonParameter(Parameter):
     """A parameter that gets / sets JSON data (useful for dictionaries, lists etc.)"""
 
@@ -570,7 +585,8 @@ class WeatherPathParameter(Parameter):
     THIRD_PARTY_WEATHER_SOURCES = ['climate.onebuilding.org']
     MORPHING = ['pyepwmorph']
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         self._locator = None  # cache the InputLocator in case we need it again as they can be expensive to create
         self._extensions = ['epw']
 
@@ -637,18 +653,34 @@ class BooleanParameter(Parameter):
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        # Read min/max bounds if specified
         try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
+            self._min = int(config.default_config.get(section.name, f"{name}.min"))
+        except (configparser.NoOptionError, ValueError):
+            self._min = None
+
+        try:
+            self._max = int(config.default_config.get(section.name, f"{name}.max"))
+        except (configparser.NoOptionError, ValueError):
+            self._max = None
 
     def encode(self, value):
         if value is None or value == "":
             if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable IntegerParameter.")
             return ""
-        return str(int(value))
+
+        int_value = int(value)
+
+        # Validate bounds
+        if self._min is not None and int_value < self._min:
+            raise ValueError(f"{self.fqname} must be >= {self._min}, got {int_value}")
+        if self._max is not None and int_value > self._max:
+            raise ValueError(f"{self.fqname} must be <= {self._max}, got {int_value}")
+
+        return str(int_value)
 
     def decode(self, value) -> int | None:
         try:
@@ -663,24 +695,40 @@ class IntegerParameter(Parameter):
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(parser.get(self.section.name, f"{self.name}.decimal-places"))
+            self._decimal_places = int(config.default_config.get(section.name, f"{name}.decimal-places"))
         except configparser.NoOptionError:
             self._decimal_places = 4
 
+        # Read min/max bounds if specified
         try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
+            self._min = float(config.default_config.get(section.name, f"{name}.min"))
+        except (configparser.NoOptionError, ValueError):
+            self._min = None
+
+        try:
+            self._max = float(config.default_config.get(section.name, f"{name}.max"))
+        except (configparser.NoOptionError, ValueError):
+            self._max = None
 
     def encode(self, value):
         if value is None or value == "":
             if not self.nullable:
                 raise ValueError("Can't encode None for non-nullable RealParameter.")
             return ''
-        return format(float(value), ".%i" % self._decimal_places)
+
+        float_value = float(value)
+
+        # Validate bounds
+        if self._min is not None and float_value < self._min:
+            raise ValueError(f"{self.fqname} must be >= {self._min}, got {float_value}")
+        if self._max is not None and float_value > self._max:
+            raise ValueError(f"{self.fqname} must be <= {self._max}, got {float_value}")
+
+        return format(float_value, ".%i" % self._decimal_places)
 
     def decode(self, value) -> float | None:
         try:
@@ -732,9 +780,10 @@ class PluginListParameter(ListParameter):
 class SubfoldersParameter(ListParameter):
     """A list of subfolder names of a parent folder."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # allow the parent option to be set
-        self._parent = parser.get(self.section.name, f"{self.name}.parent")
+        self._parent = config.default_config.get(section.name, f"{name}.parent")
 
     def decode(self, value):
         """Only return the folders that exist"""
@@ -793,7 +842,9 @@ class NetworkLayoutNameParameter(StringParameter):
         Validate and encode network name.
         Raises ValueError if name contains invalid characters or collides with existing network.
         """
-        if not str(value) or str(value).strip() == '':
+        if not value or str(value).strip() == '':
+            if self.nullable:
+                return ''
             raise ValueError("Network name is required. Please provide a valid name.")
 
         return self._validate_network_name(str(value))
@@ -818,9 +869,10 @@ class NetworkLayoutNameParameter(StringParameter):
 
 
 class OptimizationIndividualListParameter(ListParameter):
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # allow the parent option to be set
-        self._project = parser.get(self.section.name, f"{self.name}.project")
+        self._project = config.default_config.get(section.name, f"{name}.project")
 
     def get_folders(self, project=None):
         if not project:
@@ -847,9 +899,19 @@ class DateParameter(Parameter):
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
 
-    def initialize(self, parser):
-        # when called for the first time, make sure there is a `._choices` parameter
-        self._choices = parse_string_to_list(parser.get(self.section.name, f"{self.name}.choices"))
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._choices_cache = None
+
+    @property
+    def _choices(self):
+        """Lazy-loaded cached property for static choices from config file.
+        Dynamic subclasses should override this property without caching."""
+        if self._choices_cache is None:
+            self._choices_cache = parse_string_to_list(
+                self.config.default_config.get(self.section.name, f"{self.name}.choices")
+            )
+        return self._choices_cache
 
     def encode(self, value):
         if str(value) not in self._choices:
@@ -866,6 +928,57 @@ class ChoiceParameter(Parameter):
             return self._choices[0]
 
 
+def _validate_user_network_input_exclusivity(config, param_being_set, value_being_set):
+    """
+    Validate that only ONE user-defined network input method is being used.
+
+    Three mutually exclusive methods:
+    1. existing-network (NetworkLayoutChoiceParameter)
+    2. edges-shp-path + nodes-shp-path (InputFileParameter)
+    3. network-geojson-path (InputFileParameter)
+
+    Args:
+        config: Configuration object
+        param_being_set: Name of parameter being validated ('existing_network', 'edges_shp_path', etc.)
+        value_being_set: Value being set for the parameter
+
+    Raises:
+        ValueError: If more than one input method would be active after setting this value
+    """
+    # Get current values (before the new value is set) - these are in network-layout section
+    existing_net = getattr(config.network_layout, 'existing_network', None)
+    edges_shp = getattr(config.network_layout, 'edges_shp_path', None)
+    nodes_shp = getattr(config.network_layout, 'nodes_shp_path', None)
+    geojson_path = getattr(config.network_layout, 'network_geojson_path', None)
+
+    # Simulate setting the new value
+    if param_being_set == 'existing_network':
+        existing_net = value_being_set
+    elif param_being_set == 'edges_shp_path':
+        edges_shp = value_being_set
+    elif param_being_set == 'nodes_shp_path':
+        nodes_shp = value_being_set
+    elif param_being_set == 'network_geojson_path':
+        geojson_path = value_being_set
+
+    # Count how many input methods would be active
+    methods_used = []
+    if existing_net and str(existing_net).strip() and str(existing_net) not in ['', '(none)']:
+        methods_used.append("existing-network")
+    if edges_shp or nodes_shp:
+        methods_used.append("edges-shp-path/nodes-shp-path")
+    if geojson_path:
+        methods_used.append("network-geojson-path")
+
+    # Enforce mutual exclusivity
+    if len(methods_used) > 1:
+        raise ValueError(
+            f"Only ONE user-defined network input method can be used at a time. "
+            f"Currently using: {', '.join(methods_used)}. "
+            f"Please choose either: (1) existing-network, (2) edges-shp-path + nodes-shp-path, or (3) network-geojson-path."
+        )
+
+
 class NetworkLayoutChoiceParameter(ChoiceParameter):
     """
     Parameter for selecting existing network layouts based on network type.
@@ -873,16 +986,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
 
     _network_types = {'DH', 'DC'}
 
-    def initialize(self, parser):
-        # Override to dynamically populate choices based on available networks
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
-
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         # Check if this parameter should default to (none) instead of most recent network
         try:
-            self.default_to_none = parser.getboolean(self.section.name, f"{self.name}.default-to-none")
+            self.default_to_none = config.default_config.getboolean(section.name, f"{name}.default-to-none")
         except configparser.NoOptionError:
             self.default_to_none = False
 
@@ -941,7 +1049,11 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         """
         Validate and encode value.
         Raises ValueError if the network layout doesn't exist (unless nullable).
+        Also validates mutual exclusivity with edges-shp-path, nodes-shp-path, and network-geojson-path.
         """
+        # Check mutual exclusivity with other user-defined network input methods
+        _validate_user_network_input_exclusivity(self.config, 'existing_network', value)
+
         # Handle (none) choice for nullable parameters - save special marker
         if self.nullable and str(value) == "(none)":
             return '(none)'
@@ -1018,11 +1130,65 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             return ''
 
 
+class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
+    """
+    Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
+    Inherits network discovery logic from NetworkLayoutChoiceParameter.
+    """
+    def encode(self, value: list[str] | str):
+        """
+        Validate and encode a list of network layout names.
+        Raises ValueError if any network layout doesn't exist.
+        """
+        if not len(value) and self.nullable:
+            return ''
+            
+        if isinstance(value, list):
+            # Handle empty list
+            if not len(value) and not self.nullable:
+                raise ValueError("At least one network layout is required.")
+        elif isinstance(value, str):
+            # Parse comma-separated string into list
+            value = parse_string_to_list(value)
+        else:
+            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list or str, got {type(value)}.")
+
+        available_networks = self._get_available_networks()
+
+        # Validate that all networks exist
+        invalid_networks = set(value) - set(available_networks)
+        if len(invalid_networks) > 0:
+            raise ValueError(
+                f"Invalid network layouts {invalid_networks} for {self.name}. "
+                f"Available layouts: {', '.join(available_networks)}"
+            )
+
+        return ', '.join(map(str, value))
+
+    def decode(self, value) -> list[str]:
+        """
+        Decode comma-separated network names into a list.
+        Returns an empty list if value is empty.
+        """
+        if value == '':
+            return []
+
+        # Parse comma-separated values (function imported at top of file)
+        choices = parse_string_to_list(value)
+
+        # Filter to only valid networks (lenient - ignore invalid ones)
+        available_networks = self._get_available_networks()
+        valid_choices = [choice for choice in choices if choice in available_networks]
+
+        return valid_choices
+
+
 class DatabasePathParameter(Parameter):
     """A parameter that can either be set to a region-specific CEA Database (e.g. CH or SG) or to a user-defined
     folder that has the same structure."""
 
-    def initialize(self, parser):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         self.locator = cea.inputlocator.InputLocator(None, [])
         self._choices = {p: os.path.join(self.locator.db_path, p) for p in os.listdir(self.locator.db_path)
                          if
@@ -1072,9 +1238,10 @@ class DatabasePathParameter(Parameter):
 class PlantNodeParameter(ChoiceParameter):
     """A parameter that refers to valid PLANT nodes of a thermal-network"""
 
-    def initialize(self, parser):
-        self.network_name_fqn = parser.get(self.section.name, f"{self.name}.network-name")
-        self.network_type_fqn = parser.get(self.section.name, f"{self.name}.network-type")
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.network_name_fqn = config.default_config.get(section.name, f"{name}.network-name")
+        self.network_type_fqn = config.default_config.get(section.name, f"{name}.network-type")
 
     @property
     def _choices(self):
@@ -1109,8 +1276,9 @@ class PlantNodeParameter(ChoiceParameter):
 class ScenarioNameParameter(ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
 
-    def initialize(self, parser):
-        self.exclude_current = parser.get(self.section.name, f"{self.name}.exclude_current", fallback=False)
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.exclude_current = config.default_config.get(section.name, f"{name}.exclude_current", fallback=False)
 
     def encode(self, value):
         """Make sure the scenario folder exists"""
@@ -1152,29 +1320,12 @@ class ScenarioParameter(Parameter):
 class MultiChoiceParameter(ChoiceParameter):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
 
-    def initialize(self, parser):
-        super().initialize(parser)
-
     @property
     def default(self):
         _default = self.config.default_config.get(self.section.name, self.name)
         if _default == '':
             return []
         return self.decode(_default)
-
-    def get(self) -> list[str]:
-        """Return the value from the config file"""
-        encoded_value = self.get_raw()
-        encoded_value = self.replace_references(encoded_value)
-
-        try:
-            return self.decode(encoded_value)
-        except ValueError as ex:
-            raise ValueError(f'{self.section.name}:{self.name} - {ex}')
-
-    def set(self, value):
-        encoded_value = self.encode(value)
-        self.config.user_config.set(self.section.name, self.name, encoded_value)
 
     def encode(self, value: list):
         if not isinstance(value, list):
@@ -1202,13 +1353,6 @@ class OrderedMultiChoiceParameter(MultiChoiceParameter):
 class SingleBuildingParameter(ChoiceParameter):
     """A (single) building in the zone"""
 
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        try:
-            self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable")
-        except configparser.NoOptionError:
-            self.nullable = False
-
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
@@ -1234,10 +1378,6 @@ class SingleBuildingParameter(ChoiceParameter):
 class SingleThermalStorageParameter(ChoiceParameter):
     """A (single) building in the zone"""
 
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project
@@ -1259,10 +1399,6 @@ class UseTypeRatioParameter(ListParameter):
 
 class GenerationParameter(ChoiceParameter):
     """A (single) building in the zone"""
-
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
 
     @property
     def _choices(self):
@@ -1303,10 +1439,6 @@ class GenerationParameter(ChoiceParameter):
 class SystemParameter(ChoiceParameter):
     """A (single) building in the zone"""
 
-    def initialize(self, parser):
-        # skip the default ChoiceParameter initialization of _choices
-        pass
-
     @property
     def _choices(self):
         scenario = self.config.scenario
@@ -1324,10 +1456,6 @@ class SystemParameter(ChoiceParameter):
 
 class MultiSystemParameter(MultiChoiceParameter):
     """A (single) building in the zone"""
-
-    def initialize(self, parser):
-        # skip the default MultiChoiceParameter initialization of _choices
-        pass
 
     @property
     def _choices(self):
@@ -1353,8 +1481,8 @@ class MultiSystemParameter(MultiChoiceParameter):
 class BuildingsParameter(MultiChoiceParameter):
     """A list of buildings in the zone"""
 
-    def initialize(self, parser):
-        # skip the default MultiChoiceParameter initialization of _choices
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
         self._empty = False
 
     @property
@@ -1449,6 +1577,12 @@ def parse_string_coordinate_list(string_tuples):
 class ColumnChoiceParameter(ChoiceParameter):
     _supported_extensions = ['.csv']
 
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.locator_method = config.default_config.get(section.name, f"{name}.locator")
+        self.column_name = config.default_config.get(section.name, f"{name}.column")
+        self.kwargs = self._parse_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
+
     @staticmethod
     def _parse_kwargs(value: str) -> Dict[str, str]:
         """
@@ -1469,12 +1603,6 @@ class ColumnChoiceParameter(ChoiceParameter):
             return kwargs
         except Exception as e:
             raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
-
-
-    def initialize(self, parser):
-        self.locator_method = parser.get(self.section.name, f"{self.name}.locator")
-        self.column_name = parser.get(self.section.name, f"{self.name}.column")
-        self.kwargs = self._parse_kwargs(parser.get(self.section.name, f"{self.name}.kwargs", fallback=None))
 
     @property
     def _choices(self):

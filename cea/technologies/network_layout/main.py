@@ -1,6 +1,7 @@
 import os
 import shutil
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from enum import StrEnum
 
 import geopandas as gpd
 import networkx as nx
@@ -12,10 +13,13 @@ import cea.inputlocator
 from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
-from cea.technologies.network_layout.plant_node_operations import add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name
+from cea.technologies.network_layout.plant_node_operations import (
+    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices,
+    DEFAULT_SERVICES
+)
 from cea.technologies.network_layout.substations_location import calc_building_centroids
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
-from cea.optimization_new.user_network_loader import load_user_defined_network, validate_network_covers_district_buildings
+from cea.optimization_new.user_network_loader import load_user_defined_network
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -25,6 +29,439 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+class NetworkLayoutMode(StrEnum):
+    """Mode for handling mismatches between user-defined network and connected buildings."""
+
+    VALIDATE = 'validate'
+    """Strict validation - error if network doesn't match parameter exactly."""
+
+    AUGMENT = 'augment'
+    """Add missing buildings to network (union/additive)."""
+
+    FILTER = 'filter'
+    """Add missing AND remove extra buildings (exact match to parameter)."""
+
+
+def read_network_config_parameters(config):
+    """
+    Extract common network configuration parameters.
+
+    Centralises config reading to avoid duplication across multiple functions.
+
+    Args:
+        config: Configuration instance
+
+    Returns:
+        dict: Dictionary with common network configuration parameters:
+            - overwrite_supply: bool
+            - heating_connected_buildings: list[str]
+            - cooling_connected_buildings: list[str]
+            - include_services: list[str]
+            - itemised_dh_services: list[str]
+    """
+    return {
+        'overwrite_supply': config.network_layout.overwrite_supply_settings,
+        'heating_connected_buildings': config.network_layout.heating_connected_buildings,
+        'cooling_connected_buildings': config.network_layout.cooling_connected_buildings,
+        'include_services': config.network_layout.include_services,
+        'itemised_dh_services': config.network_layout.itemised_dh_services,
+    }
+
+
+def initialize_building_lists(heating_connected_buildings_config, cooling_connected_buildings_config,
+                              all_zone_buildings, network_building_names=None, include_services=None):
+    """
+    Initialise heating and cooling building lists based on parameters.
+
+    When overwrite_supply is True, this determines which buildings connect to each service
+    based on the heating/cooling-connected-buildings parameters.
+
+    Args:
+        heating_connected_buildings_config: List from heating-connected-buildings parameter
+        cooling_connected_buildings_config: List from cooling-connected-buildings parameter
+        all_zone_buildings: List of all buildings in the zone
+        network_building_names: Optional list of buildings from user-defined network
+        include_services: List of services to include (['DC'], ['DH'], or ['DC', 'DH'])
+
+    Returns:
+        Tuple of (list_heating_buildings, list_cooling_buildings, list_district_scale_buildings)
+        where list_district_scale_buildings is the union of heating and cooling buildings
+        for ONLY the services in include_services
+    """
+    is_heating_explicitly_set = bool(heating_connected_buildings_config)
+    is_cooling_explicitly_set = bool(cooling_connected_buildings_config)
+
+    # For user-defined networks: if both parameters are blank, use network buildings
+    if network_building_names and not is_heating_explicitly_set and not is_cooling_explicitly_set:
+        print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
+        for building_name in network_building_names[:10]:
+            print(f"      - {building_name}")
+        if len(network_building_names) > 10:
+            print(f"      ... and {len(network_building_names) - 10} more")
+
+        list_heating_buildings = network_building_names.copy()
+        list_cooling_buildings = network_building_names.copy()
+        list_district_scale_buildings = network_building_names
+    else:
+        # Standard initialization: use parameters or all buildings
+        if is_heating_explicitly_set:
+            list_heating_buildings = heating_connected_buildings_config
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (user-defined)")
+        else:
+            list_heating_buildings = all_zone_buildings.copy()
+            print(f"  - Heating connected buildings: {len(list_heating_buildings)} (all buildings)")
+
+        if is_cooling_explicitly_set:
+            list_cooling_buildings = cooling_connected_buildings_config
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (user-defined)")
+        else:
+            list_cooling_buildings = all_zone_buildings.copy()
+            print(f"  - Cooling connected buildings: {len(list_cooling_buildings)} (all buildings)")
+
+        # Create union for universal layout - ONLY include services that are selected
+        buildings_to_include = []
+        if include_services:
+            if 'DH' in include_services:
+                buildings_to_include.append(set(list_heating_buildings))
+            if 'DC' in include_services:
+                buildings_to_include.append(set(list_cooling_buildings))
+
+        # Union of selected services only
+        if buildings_to_include:
+            list_district_scale_buildings = list(set.union(*buildings_to_include))
+        else:
+            # Fallback if no include_services provided (backward compatibility)
+            list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
+
+        # Print union info (different messages for user-defined vs auto-layout)
+        if network_building_names:
+            print(f"  - Union (for universal layout validation): {len(list_district_scale_buildings)}")
+            print(f"  - Buildings in user layout: {len(network_building_names)}")
+        else:
+            services_included = []
+            if include_services:
+                if 'DH' in include_services:
+                    services_included.append('heating')
+                if 'DC' in include_services:
+                    services_included.append('cooling')
+            services_str = ' + '.join(services_included) if services_included else 'all services'
+            print(f"  - Universal layout will cover: {len(list_district_scale_buildings)} building(s) ({services_str})")
+
+    return list_heating_buildings, list_cooling_buildings, list_district_scale_buildings
+
+
+def process_service_buildings(service, input_buildings, locator, filter_by_demand=False, print_filtering_message=True):
+    """
+    Process building list for a single service (DC or DH).
+
+    Args:
+        service: 'DC' or 'DH'
+        input_buildings: List of buildings for this service (from parameters or supply.csv)
+        locator: InputLocator instance
+        filter_by_demand: If True, filter buildings by demand (intersection). If False, use all input buildings.
+        print_filtering_message: If True, print message when buildings are filtered out
+
+    Returns:
+        Tuple of (buildings_for_service, buildings_without_demand)
+        - buildings_for_service: List of buildings to include in network
+        - buildings_without_demand: List of buildings without demand (empty if filter_by_demand=False)
+    """
+    service_label = "cooling" if service == 'DC' else "heating"
+    buildings_set = set(input_buildings)
+    buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+    buildings_without_demand = list(buildings_set - buildings_with_demand)
+
+    if filter_by_demand:
+        # Filter by demand (intersection)
+        buildings_for_service = list(buildings_set & buildings_with_demand)
+
+        # Print filtering message if requested
+        if print_filtering_message:
+            buildings_filtered = buildings_set - buildings_with_demand
+            if buildings_filtered:
+                print(f"    - {service}: Filtered out {len(buildings_filtered)} building(s) without {service_label} demand")
+    else:
+        # Don't filter - use all input buildings
+        buildings_for_service = input_buildings.copy()
+
+    return buildings_for_service, buildings_without_demand
+
+
+def extract_building_nodes(nodes_gdf, exclude_plant_nodes=True):
+    """
+    Extract building nodes from a nodes GeoDataFrame.
+
+    Filters out nodes that are not buildings (NONE) and optionally plant nodes.
+
+    Args:
+        nodes_gdf: GeoDataFrame with 'building' and optionally 'type' columns
+        exclude_plant_nodes: If True, exclude nodes where type='PLANT' (default True)
+
+    Returns:
+        GeoDataFrame with only building nodes (copy of filtered data)
+    """
+    # Filter: building column has a value and is not 'NONE'
+    mask = (
+        nodes_gdf['building'].notna() &
+        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    )
+
+    # Optionally exclude plant nodes
+    if exclude_plant_nodes and 'type' in nodes_gdf.columns:
+        mask = mask & (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')
+
+    return nodes_gdf[mask].copy()
+
+
+def apply_network_mode_to_existing_buildings(existing_buildings, parameter_buildings, network_mode, service_name):
+    """
+    Apply network-layout-mode (validate/augment/filter) to reconcile existing network buildings with parameter.
+
+    Args:
+        existing_buildings: List of buildings in existing network nodes
+        parameter_buildings: List of buildings from heating/cooling-connected-buildings parameter
+        network_mode: Network layout mode ('validate', 'augment', or 'filter')
+        service_name: Name of service for error messages (e.g., 'DC (cooling)', 'DH (heating)')
+
+    Returns:
+        List of buildings after applying mode
+
+    Raises:
+        ValueError: If validate mode and buildings don't match
+    """
+    existing_set = set(existing_buildings)
+    parameter_set = set(parameter_buildings)
+
+    missing_buildings = parameter_set - existing_set  # In parameter but not in existing
+    extra_buildings = existing_set - parameter_set    # In existing but not in parameter
+
+    if network_mode == 'validate':
+        # Strict validation - must match exactly
+        if missing_buildings or extra_buildings:
+            error_msg = [f"Validation failed for {service_name}:"]
+            error_msg.append(f"   Existing network has: {len(existing_buildings)} buildings")
+            error_msg.append(f"   Parameter specifies: {len(parameter_buildings)} buildings")
+
+            if missing_buildings:
+                error_msg.append(f"\n   Missing in existing network ({len(missing_buildings)} buildings):")
+                for b in sorted(missing_buildings)[:10]:
+                    error_msg.append(f"     - {b}")
+                if len(missing_buildings) > 10:
+                    error_msg.append(f"     ... and {len(missing_buildings) - 10} more")
+
+            if extra_buildings:
+                error_msg.append(f"\n   Extra in existing network ({len(extra_buildings)} buildings):")
+                for b in sorted(extra_buildings)[:10]:
+                    error_msg.append(f"     - {b}")
+                if len(extra_buildings) > 10:
+                    error_msg.append(f"     ... and {len(extra_buildings) - 10} more")
+
+            error_msg.append("\nResolution options:")
+            error_msg.append("  1. Use 'augment' mode to add missing buildings")
+            error_msg.append("  2. Use 'filter' mode to match parameter exactly")
+            # Generate correct parameter name based on service type
+            param_name = "cooling-connected-buildings" if "cooling" in service_name.lower() else "heating-connected-buildings"
+            error_msg.append(f"  3. Update {param_name} parameter to match network")
+
+            raise ValueError('\n'.join(error_msg))
+
+        # Exact match - return parameter buildings
+        print(f"    {service_name}: Validation passed ({len(parameter_buildings)} buildings)")
+        return parameter_buildings
+
+    elif network_mode == 'augment':
+        # Union - keep existing + add missing
+        result = list(existing_set | parameter_set)
+        if missing_buildings:
+            print(f"    {service_name}: Augment mode - adding {len(missing_buildings)} building(s)")
+        else:
+            print(f"    {service_name}: Augment mode - no buildings to add ({len(result)} buildings)")
+        return result
+
+    elif network_mode == 'filter':
+        # Exact match to parameter - add missing AND remove extra
+        result = parameter_buildings
+        changes = []
+        if missing_buildings:
+            changes.append(f"add {len(missing_buildings)}")
+        if extra_buildings:
+            changes.append(f"remove {len(extra_buildings)}")
+
+        if changes:
+            print(f"    {service_name}: Filter mode - {' and '.join(changes)} building(s) → {len(result)} total")
+        else:
+            print(f"    {service_name}: Filter mode - exact match ({len(result)} buildings)")
+        return result
+
+    else:
+        raise ValueError(f"Unsupported network-layout-mode: {network_mode!r}")
+
+
+def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_validate, zone_gdf,
+                                       network_types_to_generate, config, locator, snap_tolerance):
+    """
+    Apply network-layout-mode (validate/augment/filter) to user-defined network.
+
+    This function validates and optionally modifies the user-provided network to match
+    the specified buildings_to_validate list according to the network-layout-mode.
+
+    Args:
+        nodes_gdf: GeoDataFrame of network nodes
+        edges_gdf: GeoDataFrame of network edges
+        buildings_to_validate: List of building names that should be in network
+        zone_gdf: GeoDataFrame of zone geometry
+        network_types_to_generate: Set of network types ('DC', 'DH')
+        config: Configuration instance
+        locator: InputLocator instance
+        snap_tolerance: Snap tolerance for geometry operations
+
+    Returns:
+        Tuple of (nodes_gdf, edges_gdf) after applying mode
+
+    Raises:
+        ValueError: If validation fails or auto_modify is False when modifications needed
+    """
+    from cea.optimization_new.user_network_loader import (
+        validate_network_covers_district_buildings,
+        augment_user_network_with_buildings,
+        filter_network_to_buildings
+    )
+
+    # Get network layout mode and modification settings
+    try:
+        network_mode = NetworkLayoutMode(config.network_layout.network_layout_mode)
+    except ValueError:
+        raise ValueError(
+            f"Unsupported network-layout-mode: {config.network_layout.network_layout_mode!r}. "
+            f"Expected one of: {', '.join(m.value for m in NetworkLayoutMode)}."
+        )
+    auto_modify = config.network_layout.auto_modify_network
+
+    # Check for extra buildings in network (buildings not in parameter)
+    network_buildings = set(nodes_gdf[
+        nodes_gdf['building'].notna() &
+        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    ]['building'].unique())
+    extra_buildings = network_buildings - set(buildings_to_validate)
+
+    # Validate network covers all specified buildings
+    # Behavior depends on mode: validate = strict, augment/filter = lenient
+    if network_mode == NetworkLayoutMode.VALIDATE:
+        # Validate mode: Strict validation - errors for any mismatch
+        nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
+            nodes_gdf,
+            zone_gdf,
+            buildings_to_validate,
+            list(network_types_to_generate),
+            edges_gdf,
+            allow_augmentation=False,  # Strict - raise error if missing
+            strict_extra_buildings=True  # Strict - raise error if extras
+        )
+        # If we get here, network matches exactly
+        print("  All specified buildings have valid nodes in network")
+        print("  No extra buildings in network")
+    else:
+        # Augment/Filter modes: Lenient validation - return missing list
+        nodes_gdf, missing_buildings = validate_network_covers_district_buildings(
+            nodes_gdf,
+            zone_gdf,
+            buildings_to_validate,
+            list(network_types_to_generate),
+            edges_gdf,
+            allow_augmentation=True,  # Return missing list (no errors)
+            strict_extra_buildings=False  # Lenient - warnings only for extras
+        )
+
+    # Apply mode-specific behavior
+    if network_mode == NetworkLayoutMode.VALIDATE:
+        # Already validated above with strict mode
+        pass
+
+    elif network_mode == NetworkLayoutMode.AUGMENT:
+        # Augment mode: Add missing buildings (union)
+        if missing_buildings:
+            if not auto_modify:
+                raise ValueError(
+                    f"Augment mode requires auto-modify-network=true to add missing buildings.\n"
+                    f"  Missing buildings: {', '.join(missing_buildings[:10])}\n"
+                    f"Resolution: Set auto-modify-network=true or use validate mode."
+                )
+
+            print(f"\n  Augment mode: Adding {len(missing_buildings)} missing building(s)...")
+            print("    Extending network using Steiner tree optimisation...")
+
+            street_network_gdf = gpd.read_file(locator.get_street_network())
+
+            nodes_gdf, edges_gdf = augment_user_network_with_buildings(
+                user_nodes_gdf=nodes_gdf,
+                user_edges_gdf=edges_gdf,
+                zone_gdf=zone_gdf,
+                missing_building_names=missing_buildings,
+                street_network_gdf=street_network_gdf,
+                locator=locator,
+                snap_tolerance=snap_tolerance,
+                connection_candidates=config.network_layout.connection_candidates
+            )
+
+            print("  Augmentation successful - all buildings now in network")
+        else:
+            print("  All specified buildings have valid nodes in network")
+
+    elif network_mode == NetworkLayoutMode.FILTER:
+        # Filter mode: Remove extra buildings AND add missing buildings (exact match)
+        if extra_buildings or missing_buildings:
+            if not auto_modify:
+                msg = "Filter mode requires auto-modify-network=true for modifications.\n"
+                if extra_buildings:
+                    msg += f"  Extra buildings to remove: {', '.join(list(extra_buildings)[:10])}\n"
+                if missing_buildings:
+                    msg += f"  Missing buildings to add: {', '.join(missing_buildings[:10])}\n"
+                msg += "Resolution: Set auto-modify-network=true or use validate mode."
+                raise ValueError(msg)
+
+            # Warning for filter mode
+            print("\n" + "="*60)
+            print("WARNING: FILTER MODE - Network will be modified!")
+            print("="*60)
+            if extra_buildings:
+                print(f"  Removing {len(extra_buildings)} building(s): {', '.join(list(extra_buildings)[:5])}")
+                if len(extra_buildings) > 5:
+                    print(f"    ... and {len(extra_buildings) - 5} more")
+            if missing_buildings:
+                print(f"  Adding {len(missing_buildings)} building(s): {', '.join(missing_buildings[:5])}")
+                if len(missing_buildings) > 5:
+                    print(f"    ... and {len(missing_buildings) - 5} more")
+            print("  Original network files on disk will NOT be changed.")
+            print("="*60 + "\n")
+
+            # Step 1: Remove extra buildings
+            if extra_buildings:
+                nodes_gdf, edges_gdf = filter_network_to_buildings(
+                    nodes_gdf, edges_gdf, buildings_to_validate
+                )
+
+            # Step 2: Add missing buildings
+            if missing_buildings:
+                street_network_gdf = gpd.read_file(locator.get_street_network())
+
+                nodes_gdf, edges_gdf = augment_user_network_with_buildings(
+                    user_nodes_gdf=nodes_gdf,
+                    user_edges_gdf=edges_gdf,
+                    zone_gdf=zone_gdf,
+                    missing_building_names=missing_buildings,
+                    street_network_gdf=street_network_gdf,
+                    locator=locator,
+                    snap_tolerance=snap_tolerance,
+                    connection_candidates=config.network_layout.connection_candidates
+                )
+
+            print("  Filter complete - network now matches parameter exactly")
+        else:
+            print("  All specified buildings have valid nodes in network")
+
+    return nodes_gdf, edges_gdf
 
 
 def convert_simplified_nodes_to_full_format(nodes_gdf):
@@ -104,7 +541,7 @@ def convert_simplified_nodes_to_full_format(nodes_gdf):
     # Reorder columns to match full format
     nodes_full = nodes_full[['building', 'name', 'type', 'geometry']]
 
-    print(f"  ✓ Converted {len(nodes_full)} nodes to full format")
+    print(f"  Converted {len(nodes_full)} nodes to full format")
     building_count = len(nodes_full[nodes_full['building'] != 'NONE'])
     junction_count = len(nodes_full[(nodes_full['type'] == 'NONE') & (nodes_full['building'] == 'NONE')])
     plant_count = len(nodes_full[nodes_full['type'].str.contains('PLANT', na=False)])
@@ -144,32 +581,262 @@ def print_demand_warning(buildings_without_demand, service_name):
         print("  Note: These buildings will be included in layout but may not be simulated in thermal-network")
 
 
-def get_buildings_from_supply_csv(locator, network_type):
+def get_buildings_and_services_from_supply_csv(locator, network_type):
     """
-    Read supply.csv and return list of buildings configured for district heating/cooling.
+    Read supply.csv and determine per-building service configuration.
+
+    For DH networks, checks both supply_type_hs and supply_type_dhw:
+    - If supply_type_hs maps to DISTRICT → building uses space_heating service
+    - If supply_type_dhw maps to DISTRICT → building uses domestic_hot_water service
+    - Building connects if either service is DISTRICT
+
+    For DC networks, checks supply_type_cs:
+    - If supply_type_cs maps to DISTRICT → building uses space_cooling service
 
     :param locator: InputLocator instance
     :param network_type: "DH" or "DC"
-    :return: List of building names
+    :return: Tuple of (buildings_list, per_building_services)
+             buildings_list: List of building names with at least one DISTRICT service
+             per_building_services: Dict mapping building → set of services
+                                   Example: {'B001': {'space_heating', 'domestic_hot_water'},
+                                            'B002': {'space_heating'},
+                                            'B003': {'domestic_hot_water'}}
     """
     supply_df = pd.read_csv(locator.get_building_supply())
 
-    # Read assemblies database to map codes to scale (DISTRICT vs BUILDING)
+    # Read assemblies databases for code-to-scale mapping
+    scale_mapping = {}
+
     if network_type == "DH":
-        assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_heating())
-        system_type_col = 'supply_type_hs'
+        # For DH, need both heating and hotwater assemblies
+        heating_assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_heating())
+        hotwater_assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_hot_water())
+
+        # Merge both mappings
+        scale_mapping.update(heating_assemblies_df.set_index('code')['scale'].to_dict())
+        scale_mapping.update(hotwater_assemblies_df.set_index('code')['scale'].to_dict())
     else:  # DC
-        assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_cooling())
-        system_type_col = 'supply_type_cs'
+        cooling_assemblies_df = pd.read_csv(locator.get_database_assemblies_supply_cooling())
+        scale_mapping = cooling_assemblies_df.set_index('code')['scale'].to_dict()
 
-    # Create mapping: code -> scale (DISTRICT/BUILDING)
-    scale_mapping = assemblies_df.set_index('code')['scale'].to_dict()
+    per_building_services = {}
 
-    # Filter buildings with DISTRICT scale
-    supply_df['scale'] = supply_df[system_type_col].map(scale_mapping)
-    district_buildings = supply_df[supply_df['scale'] == 'DISTRICT']['name'].tolist()
+    for _, row in supply_df.iterrows():
+        building_name = row['name']
+        building_services = set()
 
-    return district_buildings
+        # Check space heating service (DH only)
+        if network_type == "DH" and 'supply_type_hs' in supply_df.columns:
+            hs_code = row.get('supply_type_hs', None)
+            if hs_code and not pd.isna(hs_code):
+                hs_scale = scale_mapping.get(hs_code, None)
+                if hs_scale == 'DISTRICT':
+                    building_services.add(PlantServices.SPACE_HEATING)
+
+        # Check domestic hot water service (DH only)
+        if network_type == "DH" and 'supply_type_dhw' in supply_df.columns:
+            dhw_code = row.get('supply_type_dhw', None)
+            if dhw_code and not pd.isna(dhw_code):
+                dhw_scale = scale_mapping.get(dhw_code, None)
+                if dhw_scale == 'DISTRICT':
+                    building_services.add(PlantServices.DOMESTIC_HOT_WATER)
+
+        # Check cooling service (DC only)
+        if network_type == "DC" and 'supply_type_cs' in supply_df.columns:
+            cs_code = row.get('supply_type_cs', None)
+            if cs_code and not pd.isna(cs_code):
+                cs_scale = scale_mapping.get(cs_code, None)
+                if cs_scale == 'DISTRICT':
+                    building_services.add(PlantServices.SPACE_COOLING)
+
+        # Store building if it uses at least one DISTRICT service
+        if building_services:
+            per_building_services[building_name] = building_services
+
+    buildings_list = list(per_building_services.keys())
+
+    return buildings_list, per_building_services
+
+
+def get_network_services_from_buildings(per_building_services):
+    """
+    Determine which services the network must provide (union of all building needs).
+
+    Args:
+        per_building_services: Dict {building_name: set of services}
+
+    Returns:
+        network_services: Set of services needed by at least one building
+                         Example: {'space_heating', 'domestic_hot_water'}
+    """
+    network_services = set()
+    for building_services in per_building_services.values():
+        network_services.update(building_services)
+
+    return network_services
+
+
+def apply_service_priority_order(services):
+    """
+    Apply service priority ordering for plant suffix generation.
+
+    Service Priority (NOT alphabetical):
+    1. space_heating (hs) - typically larger load, comes FIRST
+    2. domestic_hot_water (ww) - comes SECOND
+    3. space_cooling (cs) - for DC networks
+
+    This ensures plant suffix is _hs_ww (not _ww_hs) when both services present.
+
+    Args:
+        services: Set or list of service names
+
+    Returns:
+        List of services in priority order
+
+    Examples:
+        {'domestic_hot_water', 'space_heating'} → ['space_heating', 'domestic_hot_water']
+        {'domestic_hot_water'} → ['domestic_hot_water']
+        {'space_heating'} → ['space_heating']
+    """
+    # Define priority order (lower index = higher priority)
+    priority_order = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_COOLING]
+
+    # Filter and sort services by priority
+    ordered_services = [svc for svc in priority_order if svc in services]
+
+    # Add any unrecognised services at the end (future-proofing)
+    for svc in services:
+        if svc not in ordered_services:
+            ordered_services.append(svc)
+
+    return ordered_services
+
+
+def validate_itemised_dh_services_against_building_properties(itemised_dh_services: list[str], per_building_services):
+    """
+    Validate itemised-dh-services against Building Properties/Supply settings.
+
+    Enforces STRICT validation: itemised-dh-services must match exactly the services
+    that buildings are configured to receive from the district network.
+    - ERROR if network is missing services buildings need (subset)
+    - ERROR if network provides services no building uses (superset)
+
+    Args:
+        itemised_dh_services: List of services network will provide (from config)
+        per_building_services: Dict mapping building → set of DISTRICT services
+                              (from Building Properties/Supply)
+
+    Returns:
+        Tuple of (validation_level, message, buildings_by_service)
+        - validation_level: 'ok' or 'error'
+        - message: Human-readable validation message
+        - buildings_by_service: Dict mapping service → list of buildings using that service
+
+    Examples:
+        # Valid - exact match
+        itemised_dh_services = ['space_heating', 'domestic_hot_water']
+        per_building_services = {'B1': {'space_heating'}, 'B2': {'domestic_hot_water'}}
+        → ('ok', 'Network service priority: space heating → domestic hot water (low-temperature)', {...})
+
+        # Error - subset (missing DHW)
+        itemised_dh_services = ['space_heating']
+        per_building_services = {'B1': {'space_heating', 'domestic_hot_water'}}
+        → ('error', 'Network configuration error: itemised-dh-services excludes...', {...})
+
+        # Error - superset (unused DHW)
+        itemised_dh_services = ['space_heating', 'domestic_hot_water']
+        per_building_services = {'B1': {'space_heating'}}
+        → ('error', 'Network configuration error: itemised-dh-services includes...', {...})
+    """
+    # Use default services if itemised_dh_services is None or empty
+    # Default: [SPACE_HEATING, DOMESTIC_HOT_WATER] (low-temp priority)
+    if not itemised_dh_services:
+        itemised_dh_services = list(DEFAULT_SERVICES)
+
+    # Union of all DISTRICT services buildings expect from network
+    district_services_needed = set()
+    for building_services in per_building_services.values():
+        district_services_needed.update(building_services)
+
+    user_services = set(itemised_dh_services)
+
+    # Count buildings by service type (for detailed error messages)
+    buildings_by_service = {}
+    for service in [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]:
+        buildings_by_service[service] = [
+            b for b, svcs in per_building_services.items()
+            if service in svcs
+        ]
+
+    # Human-readable service names
+    service_names = {
+        PlantServices.SPACE_HEATING: 'space heating',
+        PlantServices.DOMESTIC_HOT_WATER: 'domestic hot water'
+    }
+
+    # STRICT VALIDATION: Must match exactly (no subset, no superset)
+
+    # Check 1: Network missing services that buildings need (SUBSET ERROR)
+    missing_services = district_services_needed - user_services
+    if missing_services:
+        buildings_affected = []
+        for service in missing_services:
+            buildings_affected.extend(buildings_by_service.get(service, []))
+        buildings_affected = list(set(buildings_affected))  # deduplicate
+
+        missing_names = [service_names.get(s, s) for s in sorted(missing_services)]
+
+        error_msg = (
+            f"Network configuration error: itemised-dh-services excludes {', '.join(missing_names)} "
+            f"but {len(buildings_affected)} building(s) in Building Properties/Supply "
+            "are configured to receive these services from the district network.\n\n"
+            f"Buildings affected: {', '.join(sorted(buildings_affected[:10]))}"
+            f"{'...' if len(buildings_affected) > 10 else ''}\n\n"
+            "Please either:\n"
+            f"  1. Add {', '.join(missing_names)} to itemised-dh-services, OR\n"
+            "  2. Update Building Properties/Supply to use BUILDING-scale for these services, OR\n"
+            "  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+        )
+
+        return ('error', error_msg, buildings_by_service)
+
+    # Check 2: Network provides services no building needs (SUPERSET ERROR)
+    unused_services = user_services - district_services_needed
+    if unused_services:
+        unused_names = [service_names.get(s, s) for s in sorted(unused_services)]
+
+        # Count building types for informative message
+        hs_only = sum(1 for svcs in per_building_services.values() if svcs == {PlantServices.SPACE_HEATING})
+        ww_only = sum(1 for svcs in per_building_services.values() if svcs == {PlantServices.DOMESTIC_HOT_WATER})
+        both = sum(1 for svcs in per_building_services.values()
+                  if svcs == {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER})
+
+        error_msg = (
+            f"Network configuration error: itemised-dh-services includes {', '.join(unused_names)} "
+            "but no buildings in Building Properties/Supply use these services from the district network.\n\n"
+            "Building service breakdown:\n"
+            f"  - Space heating only: {hs_only} building(s)\n"
+            f"  - Domestic hot water only: {ww_only} building(s)\n"
+            f"  - Both services: {both} building(s)\n\n"
+            f"Please either:\n"
+            f"  1. Remove {', '.join(unused_names)} from itemised-dh-services, OR\n"
+            "  2. Update Building Properties/Supply to add DISTRICT-scale for these services, OR\n"
+            "  3. Set overwrite-supply-settings=true to ignore Building Properties/Supply"
+        )
+
+        return ('error', error_msg, buildings_by_service)
+
+    # Services match exactly - generate success message with priority info
+    services_display = [service_names.get(s, s) for s in itemised_dh_services]
+
+    if itemised_dh_services[0] == PlantServices.SPACE_HEATING:
+        temp_info = "low-temperature network (e.g., 35-55°C)"
+    else:
+        temp_info = "high-temperature network (60°C+)"
+
+    success_msg = f"Network service priority: {' → '.join(services_display)} ({temp_info})"
+
+    return ('ok', success_msg, buildings_by_service)
 
 
 def get_buildings_with_demand(locator, network_type):
@@ -187,7 +854,7 @@ def get_buildings_with_demand(locator, network_type):
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Total demand file not found: {demand_path}\n"
-            f"Please run the 'demand' tool first to generate building demand data."
+            "Please run the 'demand' tool first to generate building demand data."
         )
 
     # Determine demand field based on network type
@@ -208,7 +875,7 @@ def get_buildings_with_demand(locator, network_type):
         raise ValueError(
             f"Required column '{field}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
             f"Available columns: {list(total_demand.columns)}\n"
-            f"Please ensure the 'demand' tool was run successfully."
+            "Please ensure the 'demand' tool was run successfully."
         )
 
     # Filter buildings with demand
@@ -216,7 +883,8 @@ def get_buildings_with_demand(locator, network_type):
     return buildings_with_demand
 
 
-def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator, expected_num_components=None, snap_tolerance=SNAP_TOLERANCE):
+def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names, network_type, locator,
+                            expected_num_components=None, snap_tolerance=SNAP_TOLERANCE, itemised_dh_services=None):
     """
     Auto-create missing PLANT nodes in user-defined networks.
 
@@ -234,21 +902,26 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     :param locator: InputLocator instance
     :param expected_num_components: Expected number of disconnected components (optional, for validation)
     :param snap_tolerance: Maximum distance for snapping geometries (meters), defaults to SNAP_TOLERANCE
+    :param itemised_dh_services: List of services in priority order (for DH only)
     :return: Tuple of (updated nodes_gdf, updated edges_gdf, list of created plants)
     """
     # Check for existing plants based on network type
     # PLANT = shared (both DC and DH)
     # PLANT_DC = DC only
     # PLANT_DH = DH only
+    # PLANT_hs_ww, PLANT_ww_hs, etc = DH with service configuration
     plants_shared = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT']
     plants_dc = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DC']
-    plants_dh = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+    plants_dh_legacy = nodes_gdf[nodes_gdf['type'].fillna('').str.upper() == 'PLANT_DH']
+
+    # Detect DH service-specific plants (e.g., PLANT_hs_ww, PLANT_ww_hs, PLANT_HS_WW, etc - case insensitive)
+    plants_dh_service = nodes_gdf[nodes_gdf['type'].fillna('').str.upper().str.match(r'PLANT_(HS|WW)(_HS|_WW)?$')]
 
     # Determine which plants apply to this network type
     if network_type == 'DC':
         existing_plants = pd.concat([plants_shared, plants_dc]).drop_duplicates()
     elif network_type == 'DH':
-        existing_plants = pd.concat([plants_shared, plants_dh]).drop_duplicates()
+        existing_plants = pd.concat([plants_shared, plants_dh_legacy, plants_dh_service]).drop_duplicates()
     else:
         existing_plants = plants_shared
 
@@ -258,8 +931,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             print(f"    - Shared plants (PLANT): {len(plants_shared)}")
         if network_type == 'DC' and len(plants_dc) > 0:
             print(f"    - DC-only plants (PLANT_DC): {len(plants_dc)}")
-        if network_type == 'DH' and len(plants_dh) > 0:
-            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh)}")
+        if network_type == 'DH' and len(plants_dh_legacy) > 0:
+            print(f"    - DH-only plants (PLANT_DH): {len(plants_dh_legacy)}")
+        if network_type == 'DH' and len(plants_dh_service) > 0:
+            print(f"    - DH service-specific plants (PLANT_hs_ww, etc): {len(plants_dh_service)}")
 
     # Build graph to detect components (need to do this even if plants exist, for validation)
     # Note: User-defined networks may not have start_node/end_node columns yet
@@ -303,7 +978,7 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
     # Auto-create missing junction nodes
     if missing_nodes:
-        print(f"  ⚠ Found {len(missing_nodes)} missing junction node(s) at edge endpoints")
+        print(f"  Found {len(missing_nodes)} missing junction node(s) at edge endpoints")
         print("    Auto-creating junction nodes to ensure network connectivity...")
 
         for key, (exact_point, edge_names) in missing_nodes.items():
@@ -363,24 +1038,24 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
             if actual_num_components == 1:
                 context_msg = (
                     f"  - Your network has only 1 connected component but you expected {expected_num_components}.\n"
-                    f"    → This means your network is fully connected (no gaps).\n"
-                    f"    → Update 'number-of-components' to 1, or leave it blank to skip validation.\n"
+                    "    → This means your network is fully connected (no gaps).\n"
+                    "    → Update 'number-of-components' to 1, or leave it blank to skip validation.\n"
                 )
             elif actual_num_components < expected_num_components:
                 context_msg = (
                     f"  - Your network has fewer components ({actual_num_components}) than expected ({expected_num_components}).\n"
-                    f"    → Some components may be unintentionally connected.\n"
+                    "    → Some components may be unintentionally connected.\n"
                     f"    → Update 'number-of-components' to {actual_num_components}, or leave it blank to skip validation.\n"
                 )
             else:  # actual > expected
                 context_msg = (
                     f"  - Your network has more components ({actual_num_components}) than expected ({expected_num_components}).\n"
-                    f"    → Your network has unintentional gaps/disconnections.\n"
+                    "    → Your network has unintentional gaps/disconnections.\n"
                     f"    → Check edges.shp for missing connections, or update 'number-of-components' to {actual_num_components}.\n"
                 )
 
             raise ValueError(
-                f"Network component mismatch:\n"
+                "Network component mismatch:\n"
                 f"  Expected: {expected_num_components} component(s)\n"
                 f"  Found: {actual_num_components} disconnected component(s) in provided network\n\n"
                 f"{context_msg}"
@@ -391,10 +1066,10 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
         if plant_building_names:
             raise ValueError(
                 f"User-defined network already contains {len(existing_plants)} PLANT node(s), but plant buildings are also specified.\n"
-                f"CEA cannot determine which plants to use.\n\n"
-                f"Resolution:\n"
-                f"  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
-                f"  2. Remove PLANT nodes from your network layout shapefile"
+                "CEA cannot determine which plants to use.\n\n"
+                "Resolution:\n"
+                "  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
+                "  2. Remove PLANT nodes from your network layout shapefile"
             )
         print("  Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
@@ -403,17 +1078,15 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
     if len(components) > 1 and plant_building_names:
         raise ValueError(
             f"User-defined network has {len(components)} disconnected components and plant buildings are specified.\n"
-            f"CEA cannot determine which plant should be placed in which component.\n\n"
-            f"Resolution:\n"
-            f"  1. Remove plant building specifications and CEA will automatically place one plant per component (anchor load), OR\n"
-            f"  2. Add PLANT nodes directly to your network layout shapefile, OR\n"
-            f"  3. Connect all components into a single network"
+            "CEA cannot determine which plant should be placed in which component.\n\n"
+            "Resolution:\n"
+            "  1. Remove plant building specifications and CEA will automatically place one plant per component (anchor load), OR\n"
+            "  2. Add PLANT nodes directly to your network layout shapefile, OR\n"
+            "  3. Connect all components into a single network"
         )
 
-    # Get building nodes for analysis
-    building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                                (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                                (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+    # Get building nodes for analysis (exclude PLANT nodes)
+    building_nodes = extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)
 
     # Load demand data to find anchor building
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -451,17 +1124,19 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                     plant_node = nodes_gdf[nodes_gdf['building'] == plant_building]
                     temp_node_added = True
                 else:
-                    print(f"  ⚠ Warning: Plant building '{plant_building}' not found in zone geometry, skipping")
+                    print(f"  Warning: Plant building '{plant_building}' not found in zone geometry, skipping")
                     continue
 
             # Create a new PLANT node near this building
             building_anchor = plant_node
+            plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
             nodes_gdf, edges_gdf = add_plant_close_to_anchor(
                 building_anchor,
                 nodes_gdf,
                 edges_gdf,
                 'T1',  # Default pipe material
-                150    # Default pipe diameter
+                150,   # Default pipe diameter
+                plant_type=plant_type
             )
 
             # The newly created plant node is the last one
@@ -510,12 +1185,14 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
 
             # Create a new PLANT node near this building (separate from building node)
             building_anchor = anchor_node
+            plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
             nodes_gdf, edges_gdf = add_plant_close_to_anchor(
                 building_anchor,
                 nodes_gdf,
                 edges_gdf,
                 'T1',  # Default pipe material
-                150    # Default pipe diameter
+                150,   # Default pipe diameter
+                plant_type=plant_type
             )
 
             # The newly created plant node is the last one
@@ -606,7 +1283,7 @@ def resolve_plant_buildings(plant_building_input, available_buildings, network_t
                 print(f"      - {building}")
 
     if unmatched_buildings:
-        print(f"  ⚠ Warning: {len(unmatched_buildings)} plant building(s){label} not found in zone:")
+        print(f"  Warning: {len(unmatched_buildings)} plant building(s){label} not found in zone:")
         for building in unmatched_buildings[:5]:
             print(f"      - {building}")
         if len(unmatched_buildings) > 5:
@@ -625,9 +1302,14 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     total_demand_location = locator.get_total_demand()
 
     # Read config parameters
-    overwrite_supply = config.network_layout.overwrite_supply_settings
-    connected_buildings_config = config.network_layout.connected_buildings
-    list_include_services = config.network_layout.include_services
+    params = read_network_config_parameters(config)
+    overwrite_supply = params['overwrite_supply']
+    heating_connected_buildings_config = params['heating_connected_buildings']
+    cooling_connected_buildings_config = params['cooling_connected_buildings']
+    list_include_services = params['include_services']
+    itemised_dh_services = params['itemised_dh_services']
+
+    # Function-specific parameters
     consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
     connection_candidates = config.network_layout.connection_candidates
     snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
@@ -640,36 +1322,42 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Get all zone buildings for validation
     all_zone_buildings = locator.get_zone_building_names()
 
+    # Initialize per-building services dict (will be populated in supply.csv mode)
+    per_building_services_dh = {}
+
     # Determine which buildings should be in the network
     if overwrite_supply:
-        # Use connected-buildings parameter (what-if scenarios)
-        # Check if connected-buildings was explicitly set (non-empty list)
-        is_explicitly_set = bool(connected_buildings_config)
+        # Use heating/cooling-connected-buildings parameters (what-if scenarios)
+        print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
 
-        if is_explicitly_set:
-            # User explicitly specified buildings
-            list_district_scale_buildings = connected_buildings_config
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - User-defined connected buildings: {len(list_district_scale_buildings)}")
-        else:
-            # Blank connected-buildings (auto-populated): use all zone buildings
-            list_district_scale_buildings = all_zone_buildings
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - Using all buildings from zone geometry: {len(list_district_scale_buildings)}")
+        list_heating_buildings, list_cooling_buildings, list_district_scale_buildings = initialize_building_lists(
+            heating_connected_buildings_config=heating_connected_buildings_config,
+            cooling_connected_buildings_config=cooling_connected_buildings_config,
+            all_zone_buildings=all_zone_buildings,
+            include_services=list_include_services
+        )
 
         # Check demand separately for DC and DH
-        district_buildings_set = set(list_district_scale_buildings)
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
         for service in list_include_services:
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
-            buildings_without_demand = district_buildings_set - buildings_with_demand
-
             if service == 'DC':
-                buildings_without_demand_dc = list(buildings_without_demand)
+                _, buildings_without_demand_dc = process_service_buildings(
+                    service='DC',
+                    input_buildings=list_cooling_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
             elif service == 'DH':
-                buildings_without_demand_dh = list(buildings_without_demand)
+                _, buildings_without_demand_dh = process_service_buildings(
+                    service='DH',
+                    input_buildings=list_heating_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
     else:
         # Use supply.csv to determine district buildings
         buildings_to_validate_dc = []
@@ -677,14 +1365,23 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        # Warn if connected-buildings parameter has values that will be ignored
-        if connected_buildings_config:
-            print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
+        # NEW: Per-building service configuration (for DH only - DC doesn't differentiate services)
+        per_building_services_dh = {}
+
+        # Warn if connected-buildings parameters have values that will be ignored
+        if heating_connected_buildings_config or cooling_connected_buildings_config:
+            print("  Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
             print("    Reason: 'overwrite-supply-settings' is False")
-            print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+            print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
         for service in list_include_services:
-            buildings_to_validate = get_buildings_from_supply_csv(locator, network_type=service)
+            if service == 'DH':
+                # Get per-building services from supply.csv for DH (needed for itemised services validation)
+                buildings_to_validate, per_building_services_dh = get_buildings_and_services_from_supply_csv(locator, network_type=service)
+            else:
+                # DC: Get buildings from supply.csv (per-service differentiation not needed for DC)
+                buildings_to_validate, _ = get_buildings_and_services_from_supply_csv(locator, network_type=service)
+
             buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
             buildings_without_demand = set(buildings_to_validate) - buildings_with_demand
 
@@ -709,55 +1406,71 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         elif buildings_to_validate_dc:
             print(f"  - District buildings (DC): {len(list_district_scale_buildings)}")
             if 'DH' in list_include_services:
-                print("  - District buildings (DH): 0")
-                list_include_services.remove('DH')
+                print("  - District buildings (DH): 0 (no buildings found in Building Properties/Supply)")
+                print("  DH service will be skipped")
         elif buildings_to_validate_dh:
             print(f"  - District buildings (DH): {len(list_district_scale_buildings)}")
             if 'DC' in list_include_services:
-                print("  - District buildings (DC): 0")
-                list_include_services.remove('DC')
+                print("  - District buildings (DC): 0 (no buildings found in Building Properties/Supply)")
+                print("  DC service will be skipped")
 
     # Track which buildings belong to DC and DH networks separately
+    # Initialize as empty - will be populated based on list_include_services
     buildings_for_dc = []
     buildings_for_dh = []
 
     # Apply consider_only_buildings_with_demand filter if enabled
     if consider_only_buildings_with_demand:
-        buildings_before_filter = len(list_district_scale_buildings)
-        district_buildings_set = set(list_district_scale_buildings)
-        buildings_with_any_demand = set()
+        print("  - Filtering buildings by demand requirement...")
 
-        # Process each service type
+        # Process each service (use service-specific list if in overwrite mode)
         for service in list_include_services:
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
-
-            # Assign buildings to service-specific list
             if service == 'DC':
-                buildings_for_dc = list(district_buildings_set & buildings_with_demand)
+                input_buildings = list_cooling_buildings if overwrite_supply else buildings_to_validate_dc
+                buildings_for_dc, _ = process_service_buildings(
+                    service='DC',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=True,
+                    print_filtering_message=True
+                )
             elif service == 'DH':
-                buildings_for_dh = list(district_buildings_set & buildings_with_demand)
+                input_buildings = list_heating_buildings if overwrite_supply else buildings_to_validate_dh
+                buildings_for_dh, _ = process_service_buildings(
+                    service='DH',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=True,
+                    print_filtering_message=True
+                )
 
-            # Track filtered buildings and print message
-            buildings_filtered = district_buildings_set - buildings_with_demand
-            if buildings_filtered:
-                demand_type = 'cooling' if service == 'DC' else 'heating'
-                print(f"  - consider-only-buildings-with-demand ({service}): Filtered out {len(buildings_filtered)} building(s) without {demand_type} demand")
+        # Update union to reflect filtered buildings
+        list_district_scale_buildings = list(set(buildings_for_dc) | set(buildings_for_dh))
+        print(f"  - Buildings after demand filtering: {len(list_district_scale_buildings)}")
 
-            # Accumulate buildings with demand for any service
-            buildings_with_any_demand.update(buildings_with_demand)
-
-        # Keep only buildings with demand for at least one service
-        list_district_scale_buildings = list(district_buildings_set & buildings_with_any_demand)
-        buildings_after_filter = len(list_district_scale_buildings)
-
-        if buildings_before_filter != buildings_after_filter:
-            print(f"  - Total buildings after filtering: {buildings_after_filter} (was {buildings_before_filter})")
     else:
-        # When not filtering by demand, all buildings go to both networks
-        if 'DC' in list_include_services:
-            buildings_for_dc = list_district_scale_buildings.copy()
-        if 'DH' in list_include_services:
-            buildings_for_dh = list_district_scale_buildings.copy()
+        # When not filtering by demand, use full lists for each service
+        # Only assign for services in list_include_services (others stay as empty [])
+        for service in list_include_services:
+            if service == 'DC':
+                input_buildings = list_cooling_buildings if overwrite_supply else buildings_to_validate_dc
+                buildings_for_dc, _ = process_service_buildings(
+                    service='DC',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
+            elif service == 'DH':
+                input_buildings = list_heating_buildings if overwrite_supply else buildings_to_validate_dh
+                buildings_for_dh, _ = process_service_buildings(
+                    service='DH',
+                    input_buildings=input_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
+
         # Print demand warnings when not filtering
         print_demand_warning(buildings_without_demand_dc, "cooling")
         print_demand_warning(buildings_without_demand_dh, "heating")
@@ -788,6 +1501,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
     # Collect all edges from both networks
     all_edges_list = []
     networks_generated = []  # Track which networks were actually generated
+    network_errors = {}  # Track errors per network type
 
     # Generate Steiner tree for each network type separately
     for type_network in network_types_to_generate:
@@ -803,10 +1517,44 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             plant_buildings_for_type = heating_plant_buildings_list
             connected_buildings_for_type = buildings_for_dh
 
+            # Validate itemised-dh-services when using Building Properties/Supply
+            if not overwrite_supply and per_building_services_dh:
+                # itemised-dh-services is ALWAYS the authority for network service configuration
+                # Validate it against Building Properties/Supply (strict validation)
+
+                validation_level, message, _ = \
+                    validate_itemised_dh_services_against_building_properties(
+                        itemised_dh_services,
+                        per_building_services_dh
+                    )
+
+                if validation_level == 'error':
+                    # Store error and skip this network (allow other networks to continue)
+                    network_errors[type_network] = message
+                    print(f"\n  ✗ Configuration error - skipping {type_network} network")
+                    print(f"    {message.split(chr(10))[0]}")  # Show first line of error
+                    print("    (See full error details at end of script)")
+                    continue
+
+                # Validation passed - log configuration
+                hs_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {PlantServices.SPACE_HEATING})
+                ww_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {PlantServices.DOMESTIC_HOT_WATER})
+                both = sum(1 for svcs in per_building_services_dh.values()
+                          if svcs == {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER})
+
+                print("  ℹ Network configuration:")
+                print("    - Building selection: From Building Properties/Supply")
+                print("    - Service configuration: From itemised-dh-services")
+                print(f"    - {message}")  # e.g., "Network service priority: space heating → domestic hot water (low-temperature)"
+                print("  ℹ Building service breakdown:")
+                print(f"    - Space heating only: {hs_only} building(s)")
+                print(f"    - Domestic hot water only: {ww_only} building(s)")
+                print(f"    - Both services: {both} building(s)")
+
         # Skip network generation if no buildings to connect
         if not connected_buildings_for_type:
             demand_type = "cooling" if type_network == "DC" else "heating"
-            print(f"  ⚠ Skipping {type_network} network: No buildings with {demand_type} demand")
+            print(f"  Skipping {type_network} network: No buildings with {demand_type} demand")
             print("    (All buildings were filtered out by 'consider-only-buildings-with-demand')")
             continue
 
@@ -845,17 +1593,18 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         temp_edges_path = output_layout_path.replace('layout.shp', f'_temp_edges_{type_network}.shp')
 
         disconnected_building_names = []
-        calc_steiner_spanning_tree(crs_projected,
-                                   building_centroids_df,
-                                   potential_network_graph,
-                                   temp_edges_path,
-                                   temp_nodes_path,
-                                   type_network,
-                                   total_demand_location,
-                                   None,  # None = skip plant creation (caller will add plants manually)
-                                   disconnected_building_names,
-                                   method=steiner_algorithm,
-                                   connection_candidates=connection_candidates)
+        calc_steiner_spanning_tree(
+            crs_projected=crs_projected,
+            building_centroids_df=building_centroids_df,
+            potential_network_graph=potential_network_graph,
+            path_output_edges_shp=temp_edges_path,
+            path_output_nodes_shp=temp_nodes_path,
+            total_demand_location=total_demand_location,
+            plant_building_names=None,  # Skip plant creation (caller will add plants manually)
+            disconnected_building_names=disconnected_building_names,
+            method=steiner_algorithm,
+            connection_candidates=connection_candidates
+        )
 
         # Read generated nodes and edges
         nodes_for_type = gpd.read_file(temp_nodes_path)
@@ -874,25 +1623,26 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # Find the building node for this plant
                 building_anchor = nodes_for_type[nodes_for_type['building'] == plant_building]
                 if not building_anchor.empty:
+                    plant_type = get_plant_type_from_services(itemised_dh_services, type_network)
                     nodes_for_type, edges_for_type = add_plant_close_to_anchor(
                         building_anchor,
                         nodes_for_type,
                         edges_for_type,
                         'T1',  # Default pipe material
-                        150    # Default pipe diameter
+                        150,   # Default pipe diameter
+                        plant_type=plant_type
                     )
-                    # Mark the newly created plant node with network-specific type
-                    # The last node added is the plant node
+                    # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                     last_node_idx = nodes_for_type.index[-1]
-                    nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
-                    print(f"    ✓ Added PLANT_{type_network} node for building '{plant_building}'")
+                    plant_type = nodes_for_type.loc[last_node_idx, 'type']
+                    print(f"    Added {plant_type} node for building '{plant_building}'")
 
                     # Only remove the original building node if it was NOT a connected building
                     # If it's a connected building, we need to keep it to maintain network connectivity
                     if not is_connected_building:
                         plant_buildings_to_remove.append(plant_building)
                 else:
-                    print(f"    ⚠ Warning: Plant building '{plant_building}' not found in network nodes, skipping")
+                    print(f"    Warning: Plant building '{plant_building}' not found in network nodes, skipping")
 
             # Remove the original building nodes for plant buildings that are NOT connected buildings
             if plant_buildings_to_remove:
@@ -903,11 +1653,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             total_demand = pd.read_csv(total_demand_location)
             demand_field = "QH_sys_MWhyr" if type_network == "DH" else "QC_sys_MWhyr"
             
-            # Get building nodes
-            building_nodes = nodes_for_type[
-                nodes_for_type['building'].notna() &
-                (nodes_for_type['building'].fillna('').str.upper() != 'NONE')
-            ].copy()
+            # Get building nodes (exclude NONE, but include PLANT if present)
+            building_nodes = extract_building_nodes(nodes_for_type, exclude_plant_nodes=False)
             
             if not building_nodes.empty:
                 # Find building with highest demand in this network
@@ -924,18 +1671,19 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # Create a separate plant node near the anchor building
                 # Building node remains as CONSUMER, plant is a separate node
                 building_anchor = building_nodes[building_nodes['building'] == anchor_building]
+                plant_type = get_plant_type_from_services(itemised_dh_services, type_network)
                 nodes_for_type, edges_for_type = add_plant_close_to_anchor(
                     building_anchor,
                     nodes_for_type,
                     edges_for_type,
                     'T1',  # Default pipe material
-                    150    # Default pipe diameter
+                    150,   # Default pipe diameter
+                    plant_type=plant_type
                 )
-                # Mark the newly created plant node with network-specific type
-                # The last node added is the plant node
+                # The last node added is the plant node (type already set by add_plant_close_to_anchor)
                 last_node_idx = nodes_for_type.index[-1]
-                nodes_for_type.loc[last_node_idx, 'type'] = f'PLANT_{type_network}'
-                print(f"    ✓ Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
+                plant_type = nodes_for_type.loc[last_node_idx, 'type']
+                print(f"    Auto-assigned building '{anchor_building}' as anchor for PLANT_{type_network} (highest demand)")
 
         # Validation: Check for duplicate node names after plant creation
         if nodes_for_type['name'].duplicated().any():
@@ -953,7 +1701,39 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         output_nodes_path = locator.get_network_layout_nodes_shapefile(type_network, network_layout.network_name)
         os.makedirs(os.path.dirname(output_nodes_path), exist_ok=True)
         nodes_for_type.to_file(output_nodes_path, driver='ESRI Shapefile')
-        print(f"  ✓ {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
+        print(f"  {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
+
+        # NEW: Save per-building service configuration metadata (DH only, supply.csv mode only)
+        if type_network == 'DH' and not overwrite_supply and per_building_services_dh:
+            import json
+
+            # Convert sets to lists for JSON serialization
+            per_building_services_serializable = {
+                building: list(services)
+                for building, services in per_building_services_dh.items()
+            }
+
+            # Get plant type from nodes
+            plant_nodes = nodes_for_type[nodes_for_type['type'].str.startswith('PLANT', na=False)]
+            plant_type = plant_nodes.iloc[0]['type'] if not plant_nodes.empty else 'PLANT'
+
+            # Prepare metadata
+            metadata = {
+                'network_type': type_network,
+                'network_name': network_layout.network_name,
+                'plant_type': plant_type,
+                'network_services': itemised_dh_services,
+                'per_building_services': per_building_services_serializable,
+                'overwrite_supply_settings': overwrite_supply,
+                'timestamp': pd.Timestamp.now().isoformat()
+            }
+
+            # Save to JSON file in same directory as nodes.shp
+            metadata_path = os.path.join(os.path.dirname(output_nodes_path), 'building_services.json')
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            print("  building_services.json saved with per-building service configuration")
 
         # Clean up temp files for this network
         import glob
@@ -980,11 +1760,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     all_edges_gdf.loc[idx, 'name'] = get_next_pipe_name(all_edges_gdf.loc[:idx])
         
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
-        print(f"\n  ✓ Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
+        print(f"\n  Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
     # Summary
     if networks_generated:
-        print(f"\n  ✓ Network layout generation complete for: {', '.join(sorted(networks_generated))}")
+        print(f"\n  Network layout generation complete for: {', '.join(sorted(networks_generated))}")
         print(f"    Network name: {network_layout.network_name}")
         if len(networks_generated) > 1:
             folders = ' '.join([f"{nt}/" for nt in sorted(networks_generated)])
@@ -994,19 +1774,51 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         if skipped_networks:
             for skipped in sorted(skipped_networks):
                 demand_type = "cooling" if skipped == "DC" else "heating"
-                print(f"    ⚠ {skipped} network was skipped (no buildings with {demand_type} demand)")
+                print(f"    {skipped} network was skipped (no buildings with {demand_type} demand)")
+
+        # Report configuration errors that prevented network generation
+        if network_errors:
+            print(f"\n  ✗ Configuration errors prevented generation of {len(network_errors)} network(s):")
+            for network_type, error_msg in sorted(network_errors.items()):
+                print(f"\n  {network_type} Network Error:")
+                # Indent error message lines
+                for line in error_msg.split('\n'):
+                    print(f"    {line}")
+
+            # Raise error at end so script exits with error code
+            failed_networks = ', '.join(sorted(network_errors.keys()))
+            raise ValueError(
+                f"Network generation failed for: {failed_networks}\n"
+                f"See error details above. Successfully generated: {', '.join(sorted(networks_generated))}"
+            )
     else:
-        # All networks were skipped - this is an error
-        skipped_info = []
-        for nt in sorted(network_types_to_generate):
-            demand_type = "cooling" if nt == "DC" else "heating"
-            skipped_info.append(f"{nt} (no {demand_type} demand)")
-        raise ValueError(
-            f"No networks were generated - all requested network types were skipped:\n"
-            f"  {', '.join(skipped_info)}\n"
-            f"Please check that your buildings have the required demand, or adjust the "
-            f"'consider-only-buildings-with-demand' setting in Network Layout configuration."
-        )
+        # All networks were skipped - check if it's configuration errors or demand issues
+        if network_errors:
+            # Configuration errors prevented generation
+            print("\n  ✗ Configuration errors prevented generation of all requested networks:")
+            for network_type, error_msg in sorted(network_errors.items()):
+                print(f"\n  {network_type} Network Error:")
+                # Indent error message lines
+                for line in error_msg.split('\n'):
+                    print(f"    {line}")
+
+            failed_networks = ', '.join(sorted(network_errors.keys()))
+            raise ValueError(
+                f"Network generation failed for all requested networks: {failed_networks}\n"
+                f"See error details above."
+            )
+        else:
+            # No configuration errors - must be demand issues
+            skipped_info = []
+            for nt in sorted(network_types_to_generate):
+                demand_type = "cooling" if nt == "DC" else "heating"
+                skipped_info.append(f"{nt} (no {demand_type} demand)")
+            raise ValueError(
+                f"No networks were generated - all requested network types were skipped:\n"
+                f"  {', '.join(skipped_info)}\n"
+                f"Please check that your buildings have the required demand, or adjust the "
+                f"'consider-only-buildings-with-demand' setting in Network Layout configuration."
+            )
 
 
 @dataclass
@@ -1016,18 +1828,15 @@ class NetworkLayout:
 
     Attributes:
         network_name: Unique identifier for this network layout variant
-        connected_buildings: List of building IDs to include in the network
         algorithm: Steiner tree algorithm to use ('kou' or 'mehlhorn')
-        disconnected_buildings: Buildings that could not be connected (populated during generation)
 
     Note:
+        - Connected buildings are now specified separately for heating and cooling via config parameters
         - pipe_diameter and type_mat are set as defaults in steiner_spanning_tree.py, not here
         - consider_only_buildings_with_demand is read from config.network_layout, not this dataclass
     """
     network_name: str
-    connected_buildings: list[str]
     algorithm: str = ""
-    disconnected_buildings: list[str] = field(default_factory=list)
 
     @classmethod
     def from_config(cls, network_layout, locator: cea.inputlocator.InputLocator) -> 'NetworkLayout':
@@ -1036,7 +1845,6 @@ class NetworkLayout:
                                                   locator)
 
         return cls(network_name=network_name,
-                   connected_buildings=network_layout.connected_buildings,
                    algorithm=network_layout.algorithm)
 
     @staticmethod
@@ -1091,23 +1899,28 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("=" * 80 + "\n")
         raise
 
+    if result is None:
+        print("\nNo valid network data found in user-defined input. Skipping user-defined network processing.\n")
+        return
+
     nodes_gdf, edges_gdf = result
 
     print(f"  - Nodes: {len(nodes_gdf)}")
     print(f"  - Edges: {len(edges_gdf)}")
 
-    overwrite_supply = config.network_layout.overwrite_supply_settings
-    connected_buildings_config = config.network_layout.connected_buildings
-    list_include_services = config.network_layout.include_services
+    params = read_network_config_parameters(config)
+    overwrite_supply = params['overwrite_supply']
+    heating_connected_buildings_config = params['heating_connected_buildings']
+    cooling_connected_buildings_config = params['cooling_connected_buildings']
+    list_include_services = params['include_services']
+    itemised_dh_services = params['itemised_dh_services']
 
     # Validate include_services is not empty
     if not list_include_services:
         raise ValueError("No thermal services selected. Please specify at least one service in 'include-services' (DC and/or DH).")
 
-    # Get building nodes from user-provided network
-    building_nodes = nodes_gdf[nodes_gdf['building'].notna() &
-                               (nodes_gdf['building'].fillna('').str.upper() != 'NONE') &
-                               (nodes_gdf['type'].fillna('').str.upper() != 'PLANT')].copy()
+    # Get building nodes from user-provided network (exclude PLANT nodes)
+    building_nodes = extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)
     network_building_names = sorted(building_nodes['building'].unique())
 
     # ALWAYS validate that network building names exist in zone geometry
@@ -1136,40 +1949,38 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
     # Determine which buildings should be in the network
     if overwrite_supply:
-        # Use connected-buildings parameter (what-if scenarios)
-        # Check if connected-buildings was explicitly set (non-empty list)
-        is_explicitly_set = bool(connected_buildings_config)
+        # Use heating/cooling-connected-buildings parameters (what-if scenarios)
+        print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
 
-        if is_explicitly_set:
-            # User explicitly specified buildings
-            buildings_to_validate = connected_buildings_config
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - User-defined connected buildings: {len(buildings_to_validate)}")
-            print(f"  - Buildings in user layout: {len(network_building_names)}")
-        else:
-            # Blank connected-buildings (auto-populated): accept whatever is in user layout
-            # BUT we already validated building names exist in zone geometry above
-            print("  - Mode: Overwrite district thermal connections defined in Building Properties/Supply")
-            print(f"  - Using buildings from user-provided layout: {len(network_building_names)}")
-            for building_name in network_building_names[:10]:
-                print(f"      - {building_name}")
-            if len(network_building_names) > 10:
-                print(f"      ... and {len(network_building_names) - 10} more")
-            buildings_to_validate = network_building_names  # Validate these buildings exist and have nodes
+        list_heating_buildings, list_cooling_buildings, buildings_to_validate = initialize_building_lists(
+            heating_connected_buildings_config=heating_connected_buildings_config,
+            cooling_connected_buildings_config=cooling_connected_buildings_config,
+            all_zone_buildings=all_zone_buildings,
+            network_building_names=network_building_names,
+            include_services=list_include_services
+        )
 
         # Check demand separately for DC and DH
-        buildings_to_validate_set = set(buildings_to_validate)
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
         for service in list_include_services:
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
-            buildings_without_demand = buildings_to_validate_set - buildings_with_demand
-
             if service == 'DC':
-                buildings_without_demand_dc = list(buildings_without_demand)
+                _, buildings_without_demand_dc = process_service_buildings(
+                    service='DC',
+                    input_buildings=list_cooling_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
             elif service == 'DH':
-                buildings_without_demand_dh = list(buildings_without_demand)
+                _, buildings_without_demand_dh = process_service_buildings(
+                    service='DH',
+                    input_buildings=list_heating_buildings,
+                    locator=locator,
+                    filter_by_demand=False,
+                    print_filtering_message=False
+                )
 
     else:
         # Use supply.csv to determine district buildings
@@ -1178,14 +1989,14 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        # Warn if connected-buildings parameter has values that will be ignored
-        if connected_buildings_config:
-            print("  ⚠ Warning: 'connected-buildings' parameter is set but will be ignored")
+        # Warn if connected-buildings parameters have values that will be ignored
+        if heating_connected_buildings_config or cooling_connected_buildings_config:
+            print("  Warning: 'heating-connected-buildings' and/or 'cooling-connected-buildings' parameters are set but will be ignored")
             print("    Reason: 'overwrite-supply-settings' is False")
-            print("    To use 'connected-buildings', set 'overwrite-supply-settings' to True")
+            print("    To use these parameters, set 'overwrite-supply-settings' to True")
 
         for service in list_include_services:
-            buildings_to_validate_service = get_buildings_from_supply_csv(locator, network_type=service)
+            buildings_to_validate_service, _ = get_buildings_and_services_from_supply_csv(locator, network_type=service)
             buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
             buildings_without_demand = set(buildings_to_validate_service) - buildings_with_demand
 
@@ -1226,16 +2037,17 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print_demand_warning(buildings_without_demand_dc, "cooling")
     print_demand_warning(buildings_without_demand_dh, "heating")
 
-    # Validate network covers all specified buildings
-    nodes_gdf, _ = validate_network_covers_district_buildings(
-        nodes_gdf,
-        zone_gdf,  # Already loaded above for validation
-        buildings_to_validate,
-        list(network_types_to_generate),
-        edges_gdf
+    # Apply network layout mode (validate/augment/filter)
+    nodes_gdf, edges_gdf = apply_network_mode_to_user_network(
+        nodes_gdf=nodes_gdf,
+        edges_gdf=edges_gdf,
+        buildings_to_validate=buildings_to_validate,
+        zone_gdf=zone_gdf,
+        network_types_to_generate=network_types_to_generate,
+        config=config,
+        locator=locator,
+        snap_tolerance=snap_tolerance
     )
-
-    print("  ✓ All specified buildings have valid nodes in network")
 
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
@@ -1260,25 +2072,33 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("  DC NETWORK")
         print(f"{'='*60}")
 
-        # Create copy of nodes for DC network
-        nodes_gdf_dc = nodes_gdf.copy()
+        # Filter nodes to only include DC (cooling) buildings + PLANT/NONE nodes
+        # Exclude buildings that are only in heating list
+        dc_building_filter = (
+            (nodes_gdf['building'].isin(list_cooling_buildings)) |  # DC buildings
+            (nodes_gdf['building'].fillna('').str.upper() == 'NONE') |  # Junction nodes
+            (nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT'))  # Plant nodes
+        )
+        nodes_gdf_dc = nodes_gdf[dc_building_filter].copy()
         edges_gdf_dc = edges_gdf.copy()
+        print(f"  - Filtered to {len(nodes_gdf_dc)} nodes for DC network ({len([b for b in nodes_gdf_dc['building'] if b in list_cooling_buildings])} cooling buildings)")
+
         nodes_gdf_dc, edges_gdf_dc, created_plants_dc = auto_create_plant_nodes(
             nodes_gdf_dc, edges_gdf_dc, zone_gdf,
             cooling_plant_buildings_list, 'DC', locator,
             expected_num_components,
-            snap_tolerance
+            snap_tolerance,
+            itemised_dh_services=None  # DC network doesn't use service config
         )
         
         # Collect edges (including plant connection edges)
         all_edges_with_plants.append(edges_gdf_dc)
 
         if created_plants_dc:
-            print(f"\n Auto-assigned {len(created_plants_dc)} building node(s) as PLANT (DC):")
+            print(f"\nCreated {len(created_plants_dc)} PLANT node(s) for DC network:")
             for plant_info in created_plants_dc:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-            print("  Note: Existing building nodes converted to PLANT type")
+                print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
 
         # Normalize plant types: PLANT and PLANT_DC both become PLANT for DC network
         nodes_gdf_dc['type'] = nodes_gdf_dc['type'].replace({'PLANT_DC': 'PLANT'})
@@ -1291,28 +2111,36 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print("  DH NETWORK")
         print(f"{'='*60}")
 
-        # Create copy of nodes for DH network
-        nodes_gdf_dh = nodes_gdf.copy()
+        # Filter nodes to only include DH (heating) buildings + PLANT/NONE nodes
+        # Exclude buildings that are only in cooling list
+        dh_building_filter = (
+            (nodes_gdf['building'].isin(list_heating_buildings)) |  # DH buildings
+            (nodes_gdf['building'].fillna('').str.upper() == 'NONE') |  # Junction nodes
+            (nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT'))  # Plant nodes
+        )
+        nodes_gdf_dh = nodes_gdf[dh_building_filter].copy()
         edges_gdf_dh = edges_gdf.copy()
+        print(f"  - Filtered to {len(nodes_gdf_dh)} nodes for DH network ({len([b for b in nodes_gdf_dh['building'] if b in list_heating_buildings])} heating buildings)")
+
         nodes_gdf_dh, edges_gdf_dh, created_plants_dh = auto_create_plant_nodes(
             nodes_gdf_dh, edges_gdf_dh, zone_gdf,
             heating_plant_buildings_list, 'DH', locator,
             expected_num_components,
-            snap_tolerance
+            snap_tolerance,
+            itemised_dh_services=itemised_dh_services
         )
         
         # Collect edges (including plant connection edges)
         all_edges_with_plants.append(edges_gdf_dh)
 
         if created_plants_dh:
-            print(f"\n Auto-assigned {len(created_plants_dh)} building node(s) as PLANT (DH):")
+            print(f"\nCreated {len(created_plants_dh)} PLANT node(s) for DH network:")
             for plant_info in created_plants_dh:
                 reason_text = "user-specified anchor" if plant_info['reason'] == 'user-specified' else "anchor load (highest demand)"
-                print(f"      - {plant_info['node_name']}: building '{plant_info['building']}' ({reason_text})")
-            print("  Note: Existing building nodes converted to PLANT type")
+                print(f"      - {plant_info['node_name']}: near building '{plant_info['building']}' ({reason_text})")
 
-        # Normalize plant types: PLANT and PLANT_DH both become PLANT for DH network
-        nodes_gdf_dh['type'] = nodes_gdf_dh['type'].replace({'PLANT_DH': 'PLANT'})
+        # Note: DH plant types preserve service configuration (e.g., PLANT_hs_ww, PLANT_ww_hs)
+        # No normalization needed for DH network
 
         os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
         nodes_gdf_dh.to_file(output_node_path_dh, driver='ESRI Shapefile')
@@ -1337,14 +2165,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         # Normalize geometries to ensure consistent precision
         normalize_gdf_geometries(combined_edges, precision=SHAPEFILE_TOLERANCE, inplace=True)
         combined_edges.to_file(output_layout_path, driver='ESRI Shapefile')
-        print(f"\n  ✓ Saved layout.shp with {len(combined_edges)} edges (including plant connections)")
+        print(f"\n  Saved layout.shp with {len(combined_edges)} edges (including plant connections)")
     else:
         # No plant edges added, save original edges with normalization
         normalize_gdf_geometries(edges_gdf, precision=SHAPEFILE_TOLERANCE, inplace=True)
         edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
-        print(f"\n  ✓ Saved layout.shp with {len(edges_gdf)} edges")
-
-    print("  ✓ User-defined layout saved to:")
+        print(f"\n  Saved layout.shp with {len(edges_gdf)} edges")
+    print("  User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
     print("\n" + "=" * 80 + "\n")
 
@@ -1358,10 +2185,164 @@ def main(config: cea.config.Configuration):
 
     print(f"Network name: {network_layout.network_name}")
 
+    # Read config parameters needed for existing network processing
+    params = read_network_config_parameters(config)
+    heating_connected_buildings_config = params['heating_connected_buildings']
+    cooling_connected_buildings_config = params['cooling_connected_buildings']
+    list_include_services = params['include_services']
+
+    # Initialize building lists (may be overridden by existing network loading)
+    list_heating_buildings = []
+    list_cooling_buildings = []
+
     # Check if user provided custom network layout
+    existing_network = config.network_layout.existing_network
     edges_shp = config.network_layout.edges_shp_path
     nodes_shp = config.network_layout.nodes_shp_path
     geojson_path = config.network_layout.network_geojson_path
+
+    # If existing-network is specified, load edges/nodes from that network
+    if existing_network and existing_network not in ['', '(none)']:
+        print(f"\n  Loading existing network: {existing_network}")
+        # Edges are in layout.shp at the network-name level (universal pipe trench)
+        existing_edges_path = locator.get_network_layout_shapefile(existing_network)
+
+        if not os.path.exists(existing_edges_path):
+            raise ValueError(
+                f"Could not find edges for existing network '{existing_network}'.\n"
+                f"Expected to find: {existing_edges_path}"
+            )
+
+        # Load BOTH DC and DH nodes to preserve service-specific building assignments
+        existing_dc_nodes_path = locator.get_network_layout_nodes_shapefile('DC', existing_network)
+        existing_dh_nodes_path = locator.get_network_layout_nodes_shapefile('DH', existing_network)
+
+        existing_dc_buildings = []
+        existing_dh_buildings = []
+        dc_nodes_gdf = None
+        dh_nodes_gdf = None
+
+        # Extract buildings from DC nodes
+        if os.path.exists(existing_dc_nodes_path):
+            dc_nodes_gdf = gpd.read_file(existing_dc_nodes_path)
+            # Get building nodes (exclude PLANT and NONE nodes)
+            building_nodes = extract_building_nodes(dc_nodes_gdf, exclude_plant_nodes=True)
+            existing_dc_buildings = sorted(building_nodes['building'].unique().tolist())
+            print(f"    Found DC nodes: {len(existing_dc_buildings)} buildings")
+
+        # Extract buildings from DH nodes
+        if os.path.exists(existing_dh_nodes_path):
+            dh_nodes_gdf = gpd.read_file(existing_dh_nodes_path)
+            # Get building nodes (exclude PLANT and NONE nodes)
+            building_nodes = extract_building_nodes(dh_nodes_gdf, exclude_plant_nodes=True)
+            existing_dh_buildings = sorted(building_nodes['building'].unique().tolist())
+            print(f"    Found DH nodes: {len(existing_dh_buildings)} buildings")
+
+        # Validate at least one service's nodes were found
+        if not existing_dc_buildings and not existing_dh_buildings:
+            raise ValueError(
+                f"Could not find any building nodes in existing network '{existing_network}'.\n"
+                f"Searched paths:\n"
+                f"  - {existing_dc_nodes_path}\n"
+                f"  - {existing_dh_nodes_path}\n\n"
+                f"At least one service (DC or DH) must have nodes."
+            )
+
+        # Merge DC and DH nodes for complete universal layout
+        # Only include nodes from services specified in include_services
+        import tempfile
+
+        nodes_gdfs_to_merge = []
+        if 'DC' in list_include_services and dc_nodes_gdf is not None:
+            nodes_gdfs_to_merge.append(dc_nodes_gdf)
+        if 'DH' in list_include_services and dh_nodes_gdf is not None:
+            nodes_gdfs_to_merge.append(dh_nodes_gdf)
+
+        if len(nodes_gdfs_to_merge) > 1:
+            # Both DC and DH exist - merge them
+            merged_nodes_gdf = gpd.GeoDataFrame(
+                pd.concat(nodes_gdfs_to_merge, ignore_index=True),
+                crs=nodes_gdfs_to_merge[0].crs
+            )
+            # Remove duplicate nodes (same building may appear in both services)
+            merged_nodes_gdf = merged_nodes_gdf.drop_duplicates(subset=['building', 'geometry'], keep='first')
+            print(f"    Merged DC and DH nodes: {len(merged_nodes_gdf)} total nodes (union of both services)")
+
+            # Write merged nodes to temporary file
+            temp_nodes_file = tempfile.NamedTemporaryFile(suffix='.shp', delete=False, dir=os.path.dirname(existing_edges_path))
+            merged_nodes_path = temp_nodes_file.name
+            temp_nodes_file.close()
+            merged_nodes_gdf.to_file(merged_nodes_path, driver='ESRI Shapefile')
+        else:
+            # Only one service exists - use that service's nodes directly
+            merged_nodes_path = existing_dc_nodes_path if dc_nodes_gdf is not None else existing_dh_nodes_path
+
+        # Apply network-layout-mode to reconcile existing nodes with parameters
+        network_mode_str = config.network_layout.network_layout_mode
+        print(f"    Network layout mode: {network_mode_str}")
+
+        # Process DC buildings (cooling)
+        if 'DC' in list_include_services:
+            if existing_dc_buildings:
+                # Existing network has DC nodes - reconcile with parameter
+                if cooling_connected_buildings_config:
+                    # User specified cooling buildings - apply mode
+                    result_dc = apply_network_mode_to_existing_buildings(
+                        existing_buildings=existing_dc_buildings,
+                        parameter_buildings=cooling_connected_buildings_config,
+                        network_mode=network_mode_str,
+                        service_name='DC (cooling)'
+                    )
+                    list_cooling_buildings = result_dc
+                else:
+                    # Blank parameter - keep existing
+                    print("    DC: Using existing network buildings (parameter blank)")
+                    list_cooling_buildings = existing_dc_buildings.copy()
+            else:
+                # No DC nodes in existing network - must use parameter
+                if cooling_connected_buildings_config:
+                    print(f"    DC: No existing nodes found, using parameter ({len(cooling_connected_buildings_config)} buildings)")
+                    list_cooling_buildings = cooling_connected_buildings_config
+                else:
+                    print("    Warning: DC selected but no existing nodes and parameter is blank")
+                    list_cooling_buildings = []
+
+        # Process DH buildings (heating)
+        if 'DH' in list_include_services:
+            if existing_dh_buildings:
+                # Existing network has DH nodes - reconcile with parameter
+                if heating_connected_buildings_config:
+                    # User specified heating buildings - apply mode
+                    result_dh = apply_network_mode_to_existing_buildings(
+                        existing_buildings=existing_dh_buildings,
+                        parameter_buildings=heating_connected_buildings_config,
+                        network_mode=network_mode_str,
+                        service_name='DH (heating)'
+                    )
+                    list_heating_buildings = result_dh
+                else:
+                    # Blank parameter - keep existing
+                    print("    DH: Using existing network buildings (parameter blank)")
+                    list_heating_buildings = existing_dh_buildings.copy()
+            else:
+                # No DH nodes in existing network - must use parameter
+                if heating_connected_buildings_config:
+                    print(f"    DH: No existing nodes found, using parameter ({len(heating_connected_buildings_config)} buildings)")
+                    list_heating_buildings = heating_connected_buildings_config
+                else:
+                    print("    Warning: DH selected but no existing nodes and parameter is blank")
+                    list_heating_buildings = []
+
+        # Update union for universal layout
+        list_district_scale_buildings = list(set(list_heating_buildings) | set(list_cooling_buildings))
+        print(f"    Universal layout will cover: {len(list_district_scale_buildings)} building(s) (union)")
+
+        # Set these as the input paths for user-defined network processing
+        edges_shp = existing_edges_path
+        # Use DC nodes as primary (user-defined network loader will handle both services)
+        nodes_shp = existing_dc_nodes_path if existing_dc_buildings else existing_dh_nodes_path
+        print(f"    Loaded existing network edges: {edges_shp}")
+        print(f"    Loaded existing network nodes: {nodes_shp}")
 
     try:
         # Generate network layout from user-defined files if provided
