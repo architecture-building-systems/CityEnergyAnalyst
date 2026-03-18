@@ -1071,6 +1071,12 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 "  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
                 "  2. Remove PLANT nodes from your network layout shapefile"
             )
+        if network_type == 'DH' and itemised_dh_services:
+            desired_plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
+            current_plant_types = set(nodes_gdf.loc[existing_plants.index, 'type'].dropna().tolist())
+            if current_plant_types != {desired_plant_type}:
+                nodes_gdf.loc[existing_plants.index, 'type'] = desired_plant_type
+                print(f"    - Updated existing DH plant node(s) to {desired_plant_type}")
         print("  Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
 
