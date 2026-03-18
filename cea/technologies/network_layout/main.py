@@ -2007,6 +2007,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 buildings_to_validate_dh = buildings_to_validate_service
                 buildings_without_demand_dh = list(buildings_without_demand)
 
+        # Keep service-specific building lists aligned with supply-driven validation.
+        # Later DC/DH node export uses these lists regardless of overwrite mode.
+        list_cooling_buildings = buildings_to_validate_dc
+        list_heating_buildings = buildings_to_validate_dh
+
         # Combine DC and DH buildings (union - unique values only)
         buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
 
