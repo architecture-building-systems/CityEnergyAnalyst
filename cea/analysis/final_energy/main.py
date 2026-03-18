@@ -215,11 +215,12 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             if os.path.exists(dc_folder):
                 network_types.append('DC')
 
-        # Derive plant configs from building district configs
+        # Derive plant configs per network type (same config for all plants of same type)
+        plant_configs_by_type = {}
         for network_type in network_types:
             pc = derive_plant_config(building_configs, network_type, locator)
             if pc:
-                plant_configs[network_type] = pc
+                plant_configs_by_type[network_type] = pc
 
         # Calculate for each network type
         for network_type in network_types:
@@ -242,13 +243,15 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                     print(f"  ✗ {network_type}: No plant nodes found in network")
                     continue
 
+                type_pc = plant_configs_by_type.get(network_type)
+
                 # Calculate for each plant
                 for _, plant_row in plant_nodes.iterrows():
                     plant_name = plant_row['name']
                     try:
                         plant_df = calculate_plant_final_energy(
                             network_name, network_type, plant_name, locator, config,
-                            plant_config=plant_configs.get(network_type)
+                            plant_config=type_pc
                         )
 
                         # Save individual plant file
@@ -261,6 +264,10 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                         # Store for aggregation
                         plant_key = f"{network_type}_{plant_name}"
                         plant_dfs[plant_key] = plant_df
+
+                        # Register per-plant config keyed by plant_name
+                        if type_pc:
+                            plant_configs[plant_name] = {**type_pc, 'network_type': network_type}
 
                         print(f"  ✓ {network_type} plant {plant_name}")
 
