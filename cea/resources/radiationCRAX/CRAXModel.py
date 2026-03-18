@@ -1,6 +1,11 @@
 import os
 import sys
 import subprocess
+import shutil
+import uuid
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Iterator
 
 __author__ = "Xiaoyu Wang"
 __copyright__ = ["Copyright 2025, Architecture and Building Systems - ETH Zurich"], \
@@ -18,6 +23,18 @@ from cea.resources.utils import get_radiation_bin_path
 REQUIRED_CRAX_BINARIES = [
     "radiation", "mesh-generation"
 ]
+
+WINDOWS_RUNTIME_DLL_PATTERNS = (
+    "arrow*.dll",
+    "libprotobuf*.dll",
+    "libzstd.dll",
+    "msvcp140*.dll",
+    "parquet.dll",
+    "snappy.dll",
+    "vcomp140.dll",
+    "vcruntime140*.dll",
+    "zstd.dll",
+)
 
 
 class CRAX:
@@ -39,6 +56,74 @@ class CRAX:
         self.is_windows = sys.platform == "win32"
         self.is_mac = sys.platform == "darwin"
 
+    @staticmethod
+    def _get_runtime_search_paths() -> list[Path]:
+        python_prefix = Path(sys.prefix)
+        return [python_prefix, python_prefix / "Library" / "bin"]
+
+    @staticmethod
+    def _get_runtime_root() -> Path:
+        override = os.environ.get("CEA_CRAX_RUNTIME_DIR")
+        if override:
+            return Path(override)
+
+        if sys.platform == "win32":
+            app_data = os.environ.get("APPDATA")
+            if not app_data:
+                app_data = str(Path.home() / "AppData" / "Roaming")
+            return Path(app_data) / "CityEnergyAnalyst" / "crax-runtime"
+
+        if sys.platform == "darwin":
+            return Path.home() / "Library" / "Application Support" / "CityEnergyAnalyst" / "crax-runtime"
+
+        return Path.home() / ".local" / "share" / "CityEnergyAnalyst" / "crax-runtime"
+
+    def _copy_runtime_files(self, runtime_dir: Path):
+        """Stage local DLLs so Windows prefers the Pixi runtime over System32."""
+        seen: set[str] = set()
+
+        for source_dir in self._get_runtime_search_paths():
+            if not source_dir.is_dir():
+                continue
+
+            for pattern in WINDOWS_RUNTIME_DLL_PATTERNS:
+                for source in source_dir.glob(pattern):
+                    key = source.name.lower()
+                    if key in seen:
+                        continue
+
+                    shutil.copy2(source, runtime_dir / source.name)
+                    seen.add(key)
+
+    @contextmanager
+    def _get_execution_context(self, exe_name: str) -> Iterator[tuple[str, str, dict[str, str]]]:
+        exe_dir = Path(self.crax_exe_dir)
+        exe_path = exe_dir / exe_name
+        env = os.environ.copy()
+
+        if self.is_windows:
+            runtime_root = self._get_runtime_root()
+            runtime_root.mkdir(parents=True, exist_ok=True)
+            runtime_dir = runtime_root / f"cea_crax_runtime_{uuid.uuid4().hex}"
+            runtime_dir.mkdir()
+            try:
+                shutil.copy2(exe_path, runtime_dir / exe_name)
+                self._copy_runtime_files(runtime_dir)
+                yield str(runtime_dir / exe_name), str(runtime_dir), env
+            finally:
+                shutil.rmtree(runtime_dir, ignore_errors=True)
+            return
+
+        python_prefix = Path(sys.prefix)
+        if self.is_mac:
+            lib_path = python_prefix / "lib"
+            env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
+        else:
+            lib_path = python_prefix / "lib"
+            env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
+
+        yield str(exe_path), str(exe_dir), env
+
     def run_mesh_generation(self, json_file: str):
         """
         Execute the mesh-generation executable with a JSON input file.
@@ -46,62 +131,44 @@ class CRAX:
         :param json_file: The full path to the JSON file to be used as input.
         """
         exe_name = "mesh-generation.exe" if self.is_windows else "mesh-generation"
-        exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
 
-        env = os.environ.copy()
+        with self._get_execution_context(exe_name) as (exe_path, working_dir, env):
+            cmd = [exe_path, json_file]
 
-        # Command to run the exe
-        cmd = [os.path.join(exe_dir, exe_name), json_file]
-
-        # Run the command with cwd set to exe_dir and using the modified env
-        try:
-            result = subprocess.run(cmd, capture_output=True, env=env, cwd=exe_dir, text=True)
-            result.check_returncode()  # This will raise an error if the command failed
-            print(result.stdout)
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Error running mesh-generation (exited with code {e.returncode}):\n{e.stderr}")
+            try:
+                result = subprocess.run(cmd, capture_output=True, env=env, cwd=working_dir, text=True)
+                result.check_returncode()  # This will raise an error if the command failed
+                print(result.stdout)
+                return result.stdout
+            except subprocess.CalledProcessError as e:
+                error_output = e.stderr or e.stdout
+                raise RuntimeError(
+                    f"Error running mesh-generation (exited with code {e.returncode}):\n{error_output}"
+                )
 
     def run_radiation(self, json_file: str):
         """
         Execute the radiation executable with a JSON input file.
 
-        Tries to load the required shared arrow library from conda environment if available.
-
-        On Windows, the command is prefixed with a PATH assignment so that the folder
-        containing arrow.dll (i.e. self.crax_exe_dir) is included in the environment for
-        the execution of the command.
+        On Windows, stage the executable beside the Pixi runtime DLLs so the bundled
+        C/C++ runtime is preferred over incompatible System32 copies.
 
         :param json_file: The full path to the JSON file to be used as input.
         :return: The output from the radiation executable.
         """
         exe_name = "radiation.exe" if self.is_windows else "radiation"
-        exe_dir = self.crax_exe_dir  # Directory containing both radiation.exe and arrow.dll
 
-        # Setting dynamic library paths is required for CRAX to find its dependencies in python env e.g. arrow
-        env = os.environ.copy()
-        python_prefix = sys.prefix
-        if self.is_windows:
-            lib_path = os.path.join(python_prefix, 'Library', 'bin')
-            env["PATH"] = f"{lib_path};{env['PATH']}"
-        elif self.is_mac:
-            lib_path = os.path.join(python_prefix, 'lib')
-            env["DYLD_LIBRARY_PATH"] = f"{lib_path}:{env.get('DYLD_LIBRARY_PATH', '')}"
-        else:
-            lib_path = os.path.join(python_prefix, 'lib')
-            env["LD_LIBRARY_PATH"] = f"{lib_path}:{env.get('LD_LIBRARY_PATH', '')}"
-        
-        # Command to run the exe
-        cmd = [os.path.join(exe_dir, exe_name), json_file]
+        with self._get_execution_context(exe_name) as (exe_path, working_dir, env):
+            cmd = [exe_path, json_file]
 
-        # Run the command with cwd set to exe_dir and using the modified env
-        try:
-            result = subprocess.run(cmd, capture_output=True, env=env, cwd=exe_dir, text=True)
-            result.check_returncode()  # This will raise an error if the command failed
-            print(result.stdout)
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Error running radiation (exited with code {e.returncode}):\n{e.stderr}")
+            try:
+                result = subprocess.run(cmd, capture_output=True, env=env, cwd=working_dir, text=True)
+                result.check_returncode()  # This will raise an error if the command failed
+                print(result.stdout)
+                return result.stdout
+            except subprocess.CalledProcessError as e:
+                error_output = e.stderr or e.stdout
+                raise RuntimeError(f"Error running radiation (exited with code {e.returncode}):\n{error_output}")
 
 
 def check_crax_exe_directory() -> str:
