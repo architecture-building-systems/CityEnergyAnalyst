@@ -55,16 +55,16 @@ _SERVICE_ORDER = [
     'Domestic Hot Water',
     'Space Cooling',
     'Electricity',
-    'Solar Generation',
+    'Solar',
     'Distribution',
 ]
 
 _SERVICE_COLOURS = {
-    'Space Heating':      COLOURS_TO_RGB['red'],
-    'Domestic Hot Water': COLOURS_TO_RGB['orange'],
-    'Space Cooling':      COLOURS_TO_RGB['blue'],
-    'Electricity':        COLOURS_TO_RGB['green'],
-    'Solar Generation':   COLOURS_TO_RGB['yellow'],
+    'Space Heating':      COLOURS_TO_RGB['red_light'],
+    'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
+    'Space Cooling':      COLOURS_TO_RGB['blue_light'],
+    'Electricity':        COLOURS_TO_RGB['purple_light'],
+    'Solar':   COLOURS_TO_RGB['yellow_light'],
     'Distribution':       COLOURS_TO_RGB['grey_light'],
 }
 
@@ -99,21 +99,21 @@ _COMPONENT_PREFIX_DISPLAY = [
 
 _COMPONENT_EXACT_DISPLAY = {
     'PIPES': 'Piping',
-    'GRID':  'Grid Connection',
+    'GRID':  'City Grid',
 }
 
 _TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red_light'],
-    'Heat Pump':       COLOURS_TO_RGB['blue_light'],
+    'Boiler':          COLOURS_TO_RGB['red'],
+    'Heat Pump':       COLOURS_TO_RGB['orange'],
     'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['teal_light'],
-    'Pump':            COLOURS_TO_RGB['green_light'],
-    'Piping':          COLOURS_TO_RGB['grey_lighter'],
-    'Heat Exchanger':  COLOURS_TO_RGB['grey_light'],
-    'Grid Connection': COLOURS_TO_RGB['green_light'],
+    'Cooling Tower':   COLOURS_TO_RGB['blue'],
+    'Pump':            COLOURS_TO_RGB['orange'],
+    'Piping':          COLOURS_TO_RGB['grey'],
+    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
+    'City Grid': COLOURS_TO_RGB['purple'],
     'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow_light'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow_light'],
+    'Solar Collector': COLOURS_TO_RGB['yellow'],
+    'PVT Panel':       COLOURS_TO_RGB['yellow'],
 }
 
 
@@ -151,17 +151,17 @@ _DETAIL_LABEL_MAP = {
 }
 
 _DETAIL_COLOURS = {
-    'CAPEX Annualised': COLOURS_TO_RGB['purple_light'],
-    'CAPEX Total':      COLOURS_TO_RGB['purple'],
-    'OPEX Fixed':       COLOURS_TO_RGB['brown'],
-    'OPEX Variable':    COLOURS_TO_RGB['brown_light'],
+    'CAPEX Annualised': COLOURS_TO_RGB['brown_light'],
+    'CAPEX Total':      COLOURS_TO_RGB['brown_light'],
+    'OPEX Fixed':       COLOURS_TO_RGB['grey_light'],
+    'OPEX Variable':    COLOURS_TO_RGB['grey_light'],
 }
 
 # ── Layer 3: summary nodes ────────────────────────────────────────────────────
 
 _SUMMARY_COLOURS = {
-    'CAPEX': COLOURS_TO_RGB['purple'],
-    'OPEX':  COLOURS_TO_RGB['brown'],
+    'CAPEX': COLOURS_TO_RGB['brown'],
+    'OPEX':  COLOURS_TO_RGB['grey'],
 }
 
 _UNIT_DIVISORS = {'USD': 1, 'kUSD': 1_000, 'mioUSD': 1_000_000}
@@ -490,7 +490,6 @@ def main(config: cea.config.Configuration):
     title = plot_config.plot_title or f'System Costs — {whatif_name}'
     fig = create_sankey_fig(sankey_data, title, unit_label)
 
-    plot_width = 1600
-    fig.update_layout(width=plot_width, height=int(plot_width / 16 * 7))
-
-    return fig.to_html(full_html=False, include_plotlyjs='cdn')
+    fig.update_layout(autosize=True)
+    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)

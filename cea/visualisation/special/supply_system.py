@@ -12,9 +12,13 @@ __status__ = "Production"
 
 
 def main(config):
-    fig =  supply_system_main(config)
+    fig = supply_system_main(config)
 
-    return fig.to_html() if fig is not None else ""
+    if fig is None:
+        return ""
+    fig.update_layout(autosize=True)
+    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
 
 
 if __name__ == '__main__':

@@ -116,12 +116,8 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     # Activate c_plotter
     fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
     
-    # Use 16:9 landscape aspect ratio for professional presentation
-    plot_width = 1600
-    plot_height = int(plot_width / 16 * 7)  # 16:9 aspect ratio = 900px height
-    
-    fig.update_layout(width=plot_width, height=plot_height)
-    
+    fig.update_layout(autosize=True)
+
     return fig
 
 
@@ -135,11 +131,12 @@ def main(config: cea.config.Configuration):
     except CEAException:
         pass  # Fall back to feature stored in context
     fig = plot_all(config, scenario, context, hide_title=False)
-    plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 
     if sys.stdout.isatty():
         fig.show(renderer="browser")
-    return plot_html
+
+    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
 
 
 if __name__ == '__main__':

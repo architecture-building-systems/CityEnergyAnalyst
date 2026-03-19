@@ -514,7 +514,9 @@ def main(config):
         # Create visualization
         fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general)
 
-        return fig.to_html()
+        fig.update_layout(autosize=True)
+        html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+        return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
 
     except FileNotFoundError:
         error_html = f"""
