@@ -1,12 +1,20 @@
 """
 Energy Flow Sankey diagram.
 
-    [Carrier]  →  [Scale]  →  [Component]  →  [Service]
+    [Carrier]  →  [Plant Component]  →  [Network]  →  [Building Component]  →  [Service]
 
-Layer count controlled by x-to-plot (scale, component, both, or neither).
-All link widths are in energy units (kWh / MWh / GWh / kWh/m²).
+For district systems (DC/DH), the primary carrier is what the plant consumes (e.g. GRID for
+a chiller). For building-scale systems, the carrier is what the building equipment consumes
+(e.g. NATURALGAS for a gas boiler).
 
-Data source: B####.csv hourly files + configuration.json from final-energy analysis.
+Layer visibility is controlled by x-to-plot:
+  'component' → show plant-side equipment and building-side equipment nodes
+  'scale'     → show DC/DH network node (district) or Building node (building-scale)
+
+Data sources:
+  - B####.csv          hourly building final energy files
+  - {net}_{type}_{plant}.csv  hourly plant final energy files (if available)
+  - configuration.json component/scale/carrier mapping
 """
 
 import json
@@ -57,7 +65,6 @@ def _carrier_display(code):
 
 
 def _carrier_colour(code):
-    # Solar panel variants all map to yellow
     if code.startswith('PV_') or code.startswith('SC_') or code.startswith('PVT_'):
         return COLOURS_TO_RGB['yellow']
     return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB['grey'])
@@ -66,8 +73,9 @@ def _carrier_colour(code):
 # ── Layer 1: scale ────────────────────────────────────────────────────────────
 
 _SCALE_COLOURS = {
-    'Building': COLOURS_TO_RGB['blue_light'],
-    'District': COLOURS_TO_RGB['teal_light'],
+    'Building':         COLOURS_TO_RGB['blue_light'],
+    'DC Network':       COLOURS_TO_RGB['teal_light'],
+    'DH Network':       COLOURS_TO_RGB['red_light'],
 }
 
 # ── Layer 2: components ───────────────────────────────────────────────────────
@@ -139,13 +147,13 @@ _SERVICE_COLOURS = {
 
 # Maps config parameter choice → service display name
 _SERVICE_DISPLAY = {
-    'space_heating':    'Space Heating',
+    'space_heating':      'Space Heating',
     'domestic_hot_water': 'Domestic Hot Water',
-    'space_cooling':    'Space Cooling',
-    'electricity':      'Electricity',
+    'space_cooling':      'Space Cooling',
+    'electricity':        'Electricity',
 }
 
-# Maps config key in configuration.json → (service display name, B####.csv column prefix)
+# Maps configuration.json key → (service display name, B####.csv column prefix)
 _CONFIG_KEY_MAP = {
     'space_heating': ('Space Heating',      'Qhs_sys'),
     'hot_water':     ('Domestic Hot Water', 'Qww_sys'),
@@ -155,6 +163,14 @@ _CONFIG_KEY_MAP = {
 
 _UNIT_DIVISORS = {'kWh': 1, 'MWh': 1_000, 'GWh': 1_000_000}
 
+# Placeholder node labels for empty layers
+_NO_DISTRICT = 'No District System'
+_NO_BUILDING = 'No Building Conversion'
+_PLACEHOLDER_COLOUR = COLOURS_TO_RGB.get('grey_lighter', 'rgb(210,210,210)')
+
+# Fixed x positions for the 4 layers (Plotly 0–1 range, exclusive of exact 0/1)
+_LAYER_X = {0: 0.01, 1: 0.34, 2: 0.67, 3: 0.99}
+
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -162,15 +178,97 @@ def _to_rgba(rgb_str, alpha=0.5):
     return rgb_str.replace('rgb(', 'rgba(').replace(')', f',{alpha})')
 
 
+# ── plant data loader ─────────────────────────────────────────────────────────
+
+def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
+    """
+    Load annual plant energy input totals from plant CSV files.
+
+    Returns dict keyed by network_type ('DH' or 'DC'):
+      {
+        '_carrier_raw': 'GRID',
+        'carrier': 'Electricity Grid',
+        'component': 'Chiller (CH1)',
+        'input_kWh': 5_000_000.0,
+      }
+    Returns an empty dict if no plant files exist.
+    """
+    # Collect network_name per network_type from building configs
+    network_names = {}
+    for bconfig in building_configs.values():
+        for cfg_key in ('space_heating', 'hot_water', 'space_cooling'):
+            cfg = bconfig.get(cfg_key)
+            if not cfg or cfg.get('scale') != 'DISTRICT':
+                continue
+            nt = 'DH' if cfg_key in ('space_heating', 'hot_water') else 'DC'
+            if nt not in network_names and cfg.get('network_name'):
+                network_names[nt] = cfg['network_name']
+
+    totals = {}
+    folder = locator.get_final_energy_folder(whatif_name)
+
+    for plant_name, plant_cfg in plant_configs.items():
+        network_type = plant_cfg.get('network_type', '')
+        carrier_raw = plant_cfg.get('carrier', 'GRID')
+        component_code = plant_cfg.get('primary_component', '')
+        network_name = network_names.get(network_type, '')
+        if not network_type or not network_name:
+            continue
+
+        # Scan for all plant files: {network_name}_{network_type}_{plant_name}.csv
+        prefix = f'{network_name}_{network_type}_'
+        plant_files = [
+            os.path.join(folder, f) for f in os.listdir(folder)
+            if f.startswith(prefix) and f.endswith('.csv')
+        ]
+        if not plant_files:
+            continue
+
+        carrier_col = (
+            f'plant_cooling_{carrier_raw}_kWh'
+            if network_type == 'DC'
+            else f'plant_heating_{carrier_raw}_kWh'
+        )
+
+        total_input = 0.0
+        for fpath in plant_files:
+            df = pd.read_csv(fpath)
+            if carrier_col in df.columns:
+                total_input += df[carrier_col].sum()
+
+        if total_input > 0:
+            if network_type in totals:
+                totals[network_type]['input_kWh'] += total_input
+            else:
+                totals[network_type] = {
+                    '_carrier_raw': carrier_raw,
+                    'carrier': _carrier_display(carrier_raw),
+                    'component': _component_display(component_code) if component_code else '',
+                    'input_kWh': total_input,
+                }
+
+    return totals
+
+
 # ── data loader ───────────────────────────────────────────────────────────────
 
 def load_energy_flow_data(locator, whatif_name):
     """
-    Aggregate energy flow across all buildings into a flat DataFrame.
+    Aggregate energy flow across all buildings and plants into a flat DataFrame.
 
-    Returns
+    Columns
     -------
-    pd.DataFrame  columns: carrier, scale, component, service, value_kWh
+    primary_carrier    display name of the primary energy carrier entering the system
+    _carrier_raw       raw carrier code (for colour lookup)
+    plant_component    plant-side equipment display name (DISTRICT only, else '')
+    network            network type 'DC' or 'DH' (DISTRICT only, else '')
+    building_component building-side equipment display name (HEX for district, equipment for building)
+    scale              'District' or 'Building'
+    service            end-use service display name
+    value_kWh          building-side annual energy consumption
+    plant_input_kWh    annual primary energy input to the plant (DISTRICT only; equals value_kWh
+                       for building-scale rows)
+    _has_plant_data    True if plant CSV files were found
     """
     config_file = locator.get_analysis_configuration_file(whatif_name)
     if not os.path.exists(config_file):
@@ -180,6 +278,9 @@ def load_energy_flow_data(locator, whatif_name):
         config_data = json.load(f)
 
     building_configs = config_data.get('buildings', {})
+    plant_configs = config_data.get('plants', {})
+
+    plant_totals = _load_plant_totals(locator, whatif_name, plant_configs, building_configs)
 
     records = []
 
@@ -192,157 +293,317 @@ def load_energy_flow_data(locator, whatif_name):
 
         for cfg_key, (svc_display, col_prefix) in _CONFIG_KEY_MAP.items():
             svc_config = bconfig.get(cfg_key)
+
+            # Electricity has no supply config entry — read columns directly at building scale
             if not svc_config:
+                if cfg_key != 'electricity':
+                    continue
+                for col in annual.index:
+                    if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
+                            and col != f'{col_prefix}_kWh'):
+                        continue
+                    val = annual[col]
+                    if val <= 0:
+                        continue
+                    carrier_raw = col[len(col_prefix) + 1:-4]
+                    records.append({
+                        'primary_carrier':    _carrier_display(carrier_raw),
+                        '_carrier_raw':       carrier_raw,
+                        'plant_component':    '',
+                        'network':            '',
+                        'building_component': '',
+                        'scale':              'Building',
+                        'service':            svc_display,
+                        'value_kWh':          val,
+                        'plant_input_kWh':    val,
+                        '_has_plant_data':    False,
+                    })
                 continue
 
-            primary_carrier = svc_config.get('carrier', '')
-            component_code = svc_config.get('primary_component', '')
-            scale_label = 'District' if svc_config.get('scale') == 'DISTRICT' else 'Building'
+            scale = svc_config.get('scale', 'BUILDING')
 
-            for col in annual.index:
-                if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
-                        and col != f'{col_prefix}_kWh'):
-                    continue
-                val = annual[col]
+            if scale == 'DISTRICT':
+                network_type = 'DH' if cfg_key in ('space_heating', 'hot_water') else 'DC'
+                col = f'{col_prefix}_{network_type}_kWh'
+                val = annual.get(col, 0)
                 if val <= 0:
                     continue
 
-                carrier = col[len(col_prefix) + 1:-4]  # strip {prefix}_ and _kWh
-                comp = _component_display(component_code) if carrier == primary_carrier else ''
+                pt = plant_totals.get(network_type)
+                if pt:
+                    carrier_raw = pt['_carrier_raw']
+                    carrier = pt['carrier']
+                    plant_comp = pt['component']
+                    plant_input = pt['input_kWh']
+                    has_plant = True
+                else:
+                    # No plant files: fall back to network carrier as entry point
+                    carrier_raw = network_type  # 'DC' or 'DH'
+                    carrier = _carrier_display(carrier_raw)
+                    plant_comp = _component_display(svc_config.get('primary_component', ''))
+                    plant_input = val
+                    has_plant = False
+
+                building_comp = svc_config.get('tertiary_component') or ''
+                if building_comp:
+                    building_comp = _component_display(building_comp)
 
                 records.append({
-                    'carrier':   _carrier_display(carrier),
-                    '_carrier_raw': carrier,
-                    'scale':     scale_label,
-                    'component': comp,
-                    'service':   svc_display,
-                    'value_kWh': val,
+                    'primary_carrier':    carrier,
+                    '_carrier_raw':       carrier_raw,
+                    'plant_component':    plant_comp,
+                    'network':            network_type,
+                    'building_component': building_comp,
+                    'scale':              'District',
+                    'service':            svc_display,
+                    'value_kWh':          val,
+                    'plant_input_kWh':    plant_input,
+                    '_has_plant_data':    has_plant,
                 })
 
+            else:
+                primary_carrier_raw = svc_config.get('carrier', '')
+                component_code = svc_config.get('primary_component', '')
+
+                for col in annual.index:
+                    if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
+                            and col != f'{col_prefix}_kWh'):
+                        continue
+                    val = annual[col]
+                    if val <= 0:
+                        continue
+
+                    carrier_raw = col[len(col_prefix) + 1:-4]
+                    comp = _component_display(component_code) if carrier_raw == primary_carrier_raw else ''
+
+                    records.append({
+                        'primary_carrier':    _carrier_display(carrier_raw),
+                        '_carrier_raw':       carrier_raw,
+                        'plant_component':    '',
+                        'network':            '',
+                        'building_component': comp,
+                        'scale':              'Building',
+                        'service':            svc_display,
+                        'value_kWh':          val,
+                        'plant_input_kWh':    val,
+                        '_has_plant_data':    False,
+                    })
+
     if not records:
-        return pd.DataFrame(columns=['carrier', '_carrier_raw', 'scale', 'component', 'service', 'value_kWh'])
+        cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
+                'building_component', 'scale', 'service', 'value_kWh',
+                'plant_input_kWh', '_has_plant_data']
+        return pd.DataFrame(columns=cols)
 
     df = pd.DataFrame(records)
-    return df.groupby(['carrier', '_carrier_raw', 'scale', 'component', 'service'],
-                      as_index=False)['value_kWh'].sum()
+
+    group_cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
+                  'building_component', 'scale', 'service', '_has_plant_data']
+
+    district = df[df['scale'] == 'District']
+    building = df[df['scale'] == 'Building']
+
+    parts = []
+    if not district.empty:
+        # value_kWh: sum across buildings
+        # plant_input_kWh: when plant data exists the total is the same for every building row
+        #   → take max to avoid double-counting; when no plant data it equals value_kWh → sum
+        has_plant = district.groupby(group_cols)['_has_plant_data'].any()
+        d_agg = district.groupby(group_cols, as_index=False).agg(
+            value_kWh=('value_kWh', 'sum'),
+            plant_input_kWh=('plant_input_kWh', 'sum'),
+        )
+        # Overwrite with max for rows that have real plant data (avoids double-counting)
+        for i, row in d_agg.iterrows():
+            key = tuple(row[c] for c in group_cols)
+            if has_plant.get(key, False):
+                grp = district.groupby(group_cols).get_group(key)
+                d_agg.at[i, 'plant_input_kWh'] = grp['plant_input_kWh'].max()
+        parts.append(d_agg)
+    if not building.empty:
+        b_agg = building.groupby(group_cols, as_index=False).agg(
+            value_kWh=('value_kWh', 'sum'),
+            plant_input_kWh=('plant_input_kWh', 'sum'),
+        )
+        parts.append(b_agg)
+
+    return pd.concat(parts, ignore_index=True)
 
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
 def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.0):
     """
-    Transform energy flow DataFrame into Sankey node/link data.
+    Build a STRICT 4-layer Sankey: City → District → Building → End-use service.
+
+    Every flow path occupies all four layers. When no real component exists at a layer,
+    an explicit placeholder node is inserted:
+      - 'No District System'  when a building-scale flow has no district plant
+      - 'No Building Conversion' when a flow has no building-side equipment
+
+    x_to_plot controls whether real component nodes are shown at each layer:
+      'district' → show district plant equipment (Chiller, DH Boiler, …)
+      'building' → show building equipment (Heat Exchanger, standalone Boiler, …)
+    Placeholder nodes are always shown regardless of x_to_plot.
 
     Parameters
     ----------
-    df : pd.DataFrame           Output of load_energy_flow_data().
-    service_filter : list[str]  Subset of _SERVICE_DISPLAY keys. Empty = all.
-    x_to_plot : list[str]       Subset of ['scale', 'component']. Empty = both.
-    unit_divisor : float        1 for kWh, 1000 for MWh, 1e6 for GWh.
-    normaliser : float          GFA in m² when normalising per m²; 1.0 otherwise.
+    df             Output of load_energy_flow_data().
+    service_filter list[str]  Subset of _SERVICE_DISPLAY keys. Empty = all.
+    x_to_plot      list[str]  Subset of ['district', 'building'].
+    unit_divisor   float
+    normaliser     float      GFA in m² when normalising per m²; 1.0 otherwise.
 
     Returns
     -------
-    dict  node_labels, node_colors, source, target, value, link_colors
+    dict  node_labels, node_colors, node_x, node_y, source, target, value, link_colors
     None  if no non-zero data.
     """
     if not service_filter:
         service_filter = list(_SERVICE_DISPLAY.keys())
-    if not x_to_plot:
-        x_to_plot = ['scale', 'component']
 
-    # Map param choices to display names
-    service_display_filter = [_SERVICE_DISPLAY[s] for s in service_filter if s in _SERVICE_DISPLAY]
-
-    show_scale = 'scale' in x_to_plot
-    show_component = 'component' in x_to_plot
+    show_district = 'district' in x_to_plot
+    show_building = 'building' in x_to_plot
     divisor = unit_divisor * normaliser
 
+    service_display_filter = [_SERVICE_DISPLAY[s] for s in service_filter if s in _SERVICE_DISPLAY]
     df = df[df['service'].isin(service_display_filter)].copy()
     df = df[df['value_kWh'] > 0]
     if df.empty:
         return None
 
-    # Collect ordered unique nodes per layer
-    carrier_set = set(df['carrier'].unique())
-    carriers = sorted(carrier_set)
+    district_df = df[df['scale'] == 'District']
+    building_df = df[df['scale'] == 'Building']
 
-    scales = sorted(df['scale'].unique()) if show_scale else []
-    components = [c for c in sorted(df['component'].unique()) if c] if show_component else []
+    # ── Layer 0: City ──────────────────────────────────────────────────────
+    l0 = sorted(df['primary_carrier'].unique())
+
+    # ── Layer 1: District ──────────────────────────────────────────────────
+    # Real district components + placeholder if any building-scale flows exist
+    l1_real = (
+        sorted(set(district_df['plant_component'].unique()) - {''})
+        if show_district and not district_df.empty else []
+    )
+    l1_placeholder = [_NO_DISTRICT] if not building_df.empty else []
+    l1 = l1_real + l1_placeholder
+
+    # ── Layer 2: Building ──────────────────────────────────────────────────
+    # Real building components + placeholder if any flow has no building equipment
+    l2_real = (
+        sorted(set(df['building_component'].unique()) - {''})
+        if show_building else []
+    )
+    need_bldg_placeholder = df['building_component'].eq('').any()
+    l2_placeholder = [_NO_BUILDING] if need_bldg_placeholder else []
+    l2 = l2_real + l2_placeholder
+
+    # ── Layer 3: End-use service ───────────────────────────────────────────
     svc_set = set(df['service'].unique())
-    services = [s for s in _SERVICE_ORDER if s in svc_set]
-    services += sorted(svc_set - set(services))
+    l3 = [s for s in _SERVICE_ORDER if s in svc_set] + sorted(svc_set - set(_SERVICE_ORDER))
 
-    node_labels = carriers + scales + components + services
+    # ── Build node list with fixed x positions ─────────────────────────────
+    layer_nodes = [(l0, 0), (l1, 1), (l2, 2), (l3, 3)]
+    node_labels, node_x, node_layer = [], [], []
+    for nodes, layer in layer_nodes:
+        for n in nodes:
+            node_labels.append(n)
+            node_x.append(_LAYER_X[layer])
+            node_layer.append(layer)
+
     if not node_labels:
         return None
 
     idx = {label: i for i, label in enumerate(node_labels)}
 
-    node_colors = (
-        [_carrier_colour(row['_carrier_raw']) for _, row in
-         df.drop_duplicates('carrier').set_index('carrier').reindex(carriers).reset_index().iterrows()]
-        + [_SCALE_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in scales]
-        + [_tech_colour(c) for c in components]
-        + [_SERVICE_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in services]
-    )
+    # Distribute y evenly within each layer column
+    layer_counts = {0: len(l0), 1: len(l1), 2: len(l2), 3: len(l3)}
+    layer_counters = {k: 0 for k in range(4)}
+    node_y = []
+    for layer in node_layer:
+        n = layer_counts[layer]
+        i = layer_counters[layer]
+        node_y.append((i + 0.5) / n if n > 1 else 0.5)
+        layer_counters[layer] += 1
 
-    sources, targets, values, link_colors = [], [], [], []
+    # ── Node colours ───────────────────────────────────────────────────────
+    carrier_colour_map = {
+        row['primary_carrier']: _carrier_colour(row['_carrier_raw'])
+        for _, row in df.drop_duplicates('primary_carrier').iterrows()
+    }
+
+    def _node_colour(label, layer):
+        if label in (_NO_DISTRICT, _NO_BUILDING):
+            return _PLACEHOLDER_COLOUR
+        if layer == 0:
+            return carrier_colour_map.get(label, COLOURS_TO_RGB['grey'])
+        if layer in (1, 2):
+            return _tech_colour(label)
+        return _SERVICE_COLOURS.get(label, COLOURS_TO_RGB['grey'])
+
+    node_colors = [_node_colour(label, layer) for label, layer in zip(node_labels, node_layer)]
+
+    # ── Link builder ───────────────────────────────────────────────────────
+    srcs, tgts, vals, link_colors = [], [], [], []
 
     def add_link(src, tgt, val, colour):
         if src not in idx or tgt not in idx or val <= 0:
             return
-        sources.append(idx[src])
-        targets.append(idx[tgt])
-        values.append(val / divisor)
+        srcs.append(idx[src])
+        tgts.append(idx[tgt])
+        vals.append(val / divisor)
         link_colors.append(_to_rgba(colour))
 
-    # Helper to get carrier colour from display name
-    _carrier_colour_by_display = {
-        row['carrier']: _carrier_colour(row['_carrier_raw'])
-        for _, row in df.drop_duplicates('carrier').iterrows()
-    }
+    # ── District flows: carrier → district_comp → building_comp → service ──
+    if not district_df.empty:
+        # Layer 0→1: one link per (carrier, plant_comp) — use plant_input_kWh
+        for (carrier, pc), grp in district_df.groupby(['primary_carrier', 'plant_component']):
+            c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
+            plant_val = grp['plant_input_kWh'].iloc[0]
+            d1 = pc if (show_district and pc) else _NO_DISTRICT
+            add_link(carrier, d1, plant_val, c_colour)
 
-    if show_scale and show_component:
-        for (c, sc), g in df.groupby(['carrier', 'scale']):
-            add_link(c, sc, g['value_kWh'].sum(), _carrier_colour_by_display.get(c, COLOURS_TO_RGB['grey']))
-        for (sc, comp), g in df[df['component'] != ''].groupby(['scale', 'component']):
-            add_link(sc, comp, g['value_kWh'].sum(), _SCALE_COLOURS.get(sc, COLOURS_TO_RGB['grey']))
-        for (comp, svc), g in df[df['component'] != ''].groupby(['component', 'service']):
-            add_link(comp, svc, g['value_kWh'].sum(), _tech_colour(comp))
-        # Rows without component: scale → service directly
-        for (sc, svc), g in df[df['component'] == ''].groupby(['scale', 'service']):
-            add_link(sc, svc, g['value_kWh'].sum(), _SCALE_COLOURS.get(sc, COLOURS_TO_RGB['grey']))
+        # Layer 1→2→3: per row (aggregated to one row per service)
+        for _, row in district_df.iterrows():
+            pc = row['plant_component']
+            bc = row['building_component']
+            service = row['service']
+            val = row['value_kWh']
 
-    elif show_scale:
-        for (c, sc), g in df.groupby(['carrier', 'scale']):
-            add_link(c, sc, g['value_kWh'].sum(), _carrier_colour_by_display.get(c, COLOURS_TO_RGB['grey']))
-        for (sc, svc), g in df.groupby(['scale', 'service']):
-            add_link(sc, svc, g['value_kWh'].sum(), _SCALE_COLOURS.get(sc, COLOURS_TO_RGB['grey']))
+            d1 = pc if (show_district and pc and pc in idx) else _NO_DISTRICT
+            d2 = bc if (show_building and bc and bc in idx) else _NO_BUILDING
+            d1_colour = _tech_colour(d1) if d1 != _NO_DISTRICT else _PLACEHOLDER_COLOUR
+            d2_colour = _tech_colour(d2) if d2 != _NO_BUILDING else _PLACEHOLDER_COLOUR
 
-    elif show_component:
-        for (c, comp), g in df[df['component'] != ''].groupby(['carrier', 'component']):
-            add_link(c, comp, g['value_kWh'].sum(), _carrier_colour_by_display.get(c, COLOURS_TO_RGB['grey']))
-        for (comp, svc), g in df[df['component'] != ''].groupby(['component', 'service']):
-            add_link(comp, svc, g['value_kWh'].sum(), _tech_colour(comp))
-        # No component: carrier → service directly
-        for (c, svc), g in df[df['component'] == ''].groupby(['carrier', 'service']):
-            add_link(c, svc, g['value_kWh'].sum(), _carrier_colour_by_display.get(c, COLOURS_TO_RGB['grey']))
+            add_link(d1, d2, val, d1_colour)
+            add_link(d2, service, val, d2_colour)
 
-    else:
-        for (c, svc), g in df.groupby(['carrier', 'service']):
-            add_link(c, svc, g['value_kWh'].sum(), _carrier_colour_by_display.get(c, COLOURS_TO_RGB['grey']))
+    # ── Building-scale flows: carrier → No District → building_comp → service
+    for _, row in building_df.iterrows():
+        carrier = row['primary_carrier']
+        bc = row['building_component']
+        service = row['service']
+        val = row['value_kWh']
+        c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
 
-    if not sources:
+        d2 = bc if (show_building and bc and bc in idx) else _NO_BUILDING
+        d2_colour = _tech_colour(d2) if d2 != _NO_BUILDING else _PLACEHOLDER_COLOUR
+
+        add_link(carrier, _NO_DISTRICT, val, c_colour)
+        add_link(_NO_DISTRICT, d2, val, _PLACEHOLDER_COLOUR)
+        add_link(d2, service, val, d2_colour)
+
+    if not srcs:
         return None
 
     return {
-        'node_labels':  node_labels,
-        'node_colors':  node_colors,
-        'source':       sources,
-        'target':       targets,
-        'value':        values,
-        'link_colors':  link_colors,
+        'node_labels': node_labels,
+        'node_colors': node_colors,
+        'node_x':      node_x,
+        'node_y':      node_y,
+        'source':      srcs,
+        'target':      tgts,
+        'value':       vals,
+        'link_colors': link_colors,
     }
 
 
@@ -350,10 +611,12 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
 def create_sankey_fig(sankey_data, title, unit_label):
     fig = go.Figure(go.Sankey(
-        arrangement='snap',
+        arrangement='fixed',
         node=dict(
             label=sankey_data['node_labels'],
             color=sankey_data['node_colors'],
+            x=sankey_data['node_x'],
+            y=sankey_data['node_y'],
             pad=24,
             thickness=20,
             line=dict(color=COLOURS_TO_RGB['grey_lighter'], width=0.5),
@@ -376,7 +639,6 @@ def create_sankey_fig(sankey_data, title, unit_label):
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=20, r=20, t=60, b=20),
     )
     return fig
 
@@ -416,7 +678,6 @@ def main(config: cea.config.Configuration):
     y_metric_unit = plot_config.y_metric_unit
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1_000)
 
-    # Normalisation
     normaliser = 1.0
     if plot_config.y_normalised_by == 'gross_floor_area':
         fe_path = locator.get_final_energy_buildings_file(whatif_name)
