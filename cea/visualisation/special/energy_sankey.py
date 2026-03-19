@@ -527,7 +527,6 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
     # ── Build node list ────────────────────────────────────────────────────
     # node_keys: unique routing IDs (used in idx); node_labels: display names
-    _PT = 'rgba(0,0,0,0)'  # transparent colour for invisible pass-throughs
     layer_specs = [
         ([(n, n) for n in l0],        0),
         ([(n, n) for n in l1_real] + [(k, '') for k in l1_pt], 1),
@@ -560,7 +559,9 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
     def _node_colour(key, layer):
         if key.startswith('__pt_'):
-            return _PT
+            # key format: __pt_{layer}_{carrier_display_name}
+            pt_carrier = key.split('_', 4)[4]
+            return _to_rgba(carrier_colour_map.get(pt_carrier, COLOURS_TO_RGB['grey']))
         if layer == 0:
             return carrier_colour_map.get(key, COLOURS_TO_RGB['grey'])
         if layer in (1, 2):
