@@ -1903,17 +1903,23 @@ class PlotsCostSankeySection(Section):
     """Typed section for plots-cost-sankey configuration"""
     what_if_name: list
     y_cost_category_to_plot: list[str]
+    capex_view: str
     y_metric_unit: str
     y_normalised_by: str
+    x_to_plot: list[str]
 
     @overload
     def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
     @overload
+    def __getattr__(self, item: Literal["capex_view"]) -> str: ...
+    @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["x_to_plot"]) -> list[str]: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class Parameter:
