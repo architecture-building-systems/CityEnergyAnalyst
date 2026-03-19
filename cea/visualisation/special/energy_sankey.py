@@ -702,13 +702,38 @@ def create_sankey_fig(sankey_data, title, unit_label):
             ),
         ),
     ))
+    # ── Column labels at the bottom ────────────────────────────────────────
+    column_labels = [
+        ('City',             _LAYER_X[0]),
+        ('District',         _LAYER_X[1]),
+        ('Building',         _LAYER_X[2]),
+        ('End-use Service',  _LAYER_X[3]),
+    ]
+    # Only label columns that have at least one visible node
+    visible_xs = set(
+        x for lbl, x in zip(sankey_data['node_labels'], sankey_data['node_x'])
+        if lbl != ''
+    )
+    annotations = [
+        dict(
+            x=x, y=-0.08,
+            xref='paper', yref='paper',
+            text=f'<b>{lbl}</b>',
+            showarrow=False,
+            font=dict(size=12, color=COLOURS_TO_RGB['grey']),
+        )
+        for lbl, x in column_labels
+        if x in visible_xs
+    ]
+
     fig.update_layout(
         title_text=title,
         title_font_size=16,
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=20, r=20, t=60, b=20),
+        margin=dict(l=20, r=20, t=60, b=60),
+        annotations=annotations,
     )
     return fig
 
