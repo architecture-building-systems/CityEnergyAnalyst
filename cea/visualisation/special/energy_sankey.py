@@ -143,10 +143,10 @@ _CARRIER_ORDER = [
 ]
 
 _SERVICE_ORDER = [
-    'Electricity',
     'Space Heating',
     'Domestic Hot Water',
     'Space Cooling',
+    'Electricity',
     'Distribution',
 ]
 
@@ -728,18 +728,33 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
     node_y_list = [0.5] * len(node_keys)
     margin, gap = 0.02, 0.02
-    for indices in layer_indices.values():
-        if not indices:
-            continue
-        flows = [node_flow[i] for i in indices]
+
+    def _assign_y(ordered_indices: list[int]) -> None:
+        """Assign y positions to nodes in the given order, proportional to flow."""
+        flows = [node_flow[i] for i in ordered_indices]
         total = sum(flows)
-        n = len(indices)
+        n = len(ordered_indices)
         available = 1.0 - 2 * margin - gap * (n - 1)
         y = margin
-        for node_idx, flow in zip(indices, flows):
+        for node_idx, flow in zip(ordered_indices, flows):
             height = (flow / total * available) if total > 0 else available / n
             node_y_list[node_idx] = round(min(max(y + height / 2, margin), 1 - margin), 4)
             y += height + gap
+
+    # Layer 0: order already fixed by _CARRIER_ORDER in l0 construction
+    _assign_y(layer_indices[0])
+
+    # Layers 1-3: barycenter ordering — sort each node by the average y-position
+    # of its source nodes in the previous layer, minimising link crossings
+    for lyr in range(1, 4):
+        indices = layer_indices[lyr]
+        if not indices:
+            continue
+        barycenters = {}
+        for node_idx in indices:
+            src_ys = [node_y_list[s] for s, t in zip(srcs, tgts) if t == node_idx]
+            barycenters[node_idx] = sum(src_ys) / len(src_ys) if src_ys else 0.5
+        _assign_y(sorted(indices, key=lambda i: barycenters[i]))
 
     return {
         'node_labels': node_labels,
