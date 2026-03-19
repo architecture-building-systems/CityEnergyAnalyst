@@ -299,8 +299,14 @@ def build_ldc_fig(component_display, data_by_whatif, unit, unit_divisor):
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=60, r=20, t=60, b=60),
-        legend=dict(orientation='v', x=1.02, xanchor='left'),
+        margin=dict(l=60, r=20, t=60, b=120),
+        legend=dict(
+            orientation='h',
+            x=0.5,
+            xanchor='center',
+            y=-0.25,
+            yanchor='top',
+        ),
     )
     return fig
 
