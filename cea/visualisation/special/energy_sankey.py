@@ -105,7 +105,7 @@ _TECH_COLOURS = {
     'Pump':            COLOURS_TO_RGB['orange'],
     'Piping':          COLOURS_TO_RGB['grey'],
     'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid':       COLOURS_TO_RGB['green'],
+    'City Grid':       COLOURS_TO_RGB['purple'],
     'PV Panel':        COLOURS_TO_RGB['yellow'],
     'Solar Collector': COLOURS_TO_RGB['yellow'],
     'PVT Panel':       COLOURS_TO_RGB['yellow'],
@@ -131,11 +131,22 @@ def _tech_colour(display_label):
 
 # ── Layer 3: services ─────────────────────────────────────────────────────────
 
+_CARRIER_ORDER = [
+    'Electricity Grid',
+    'Natural Gas',
+    'Wood',
+    'Oil',
+    'Coal',
+    'Solar',
+    'District Heating',
+    'District Cooling',
+]
+
 _SERVICE_ORDER = [
+    'Electricity',
     'Space Heating',
     'Domestic Hot Water',
     'Space Cooling',
-    'Electricity',
 ]
 
 _SERVICE_COLOURS = {
@@ -475,41 +486,71 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     district_df = df[df['scale'] == 'District']
     building_df = df[df['scale'] == 'Building']
 
-    # ── Layer 0: City ──────────────────────────────────────────────────────
-    l0 = sorted(df['primary_carrier'].unique())
+    # ── Determine which carriers need invisible pass-through nodes ─────────
+    # A building-scale flow with no district component skips layer 1.
+    # A building-scale flow with no building component also skips layer 2.
+    # Pass-through nodes route those flows through the correct columns so
+    # links never jump over an intermediate layer (which causes visual overlap).
+    pt_needed: set[tuple[int, str]] = set()
+    for _, row in building_df.iterrows():
+        carrier = row['primary_carrier']
+        bc = row['building_component']
+        if show_district:
+            pt_needed.add((1, carrier))
+        if show_building and not bc:
+            pt_needed.add((2, carrier))
 
-    # ── Layer 1: District ──────────────────────────────────────────────────
-    l1 = (
+    def _pt_key(layer: int, carrier: str) -> str:
+        return f"__pt_{layer}_{carrier}"
+
+    # ── Layer 0: City ──────────────────────────────────────────────────────
+    carrier_set = set(df['primary_carrier'].unique())
+    l0 = [c for c in _CARRIER_ORDER if c in carrier_set] + sorted(carrier_set - set(_CARRIER_ORDER))
+
+    # ── Layer 1: real district nodes + invisible pass-throughs ─────────────
+    l1_real = (
         sorted(set(district_df['plant_component'].unique()) - {''})
         if show_district and not district_df.empty else []
     )
+    l1_pt = [_pt_key(1, c) for c in l0 if (1, c) in pt_needed]
 
-    # ── Layer 2: Building ──────────────────────────────────────────────────
-    l2 = (
+    # ── Layer 2: real building nodes + invisible pass-throughs ─────────────
+    l2_real = (
         sorted(set(df['building_component'].unique()) - {''})
         if show_building else []
     )
+    l2_pt = [_pt_key(2, c) for c in l0 if (2, c) in pt_needed]
 
     # ── Layer 3: End-use service ───────────────────────────────────────────
     svc_set = set(df['service'].unique())
     l3 = [s for s in _SERVICE_ORDER if s in svc_set] + sorted(svc_set - set(_SERVICE_ORDER))
 
-    # ── Build node list with fixed x positions ─────────────────────────────
-    layer_nodes = [(l0, 0), (l1, 1), (l2, 2), (l3, 3)]
-    node_labels, node_x, node_layer = [], [], []
-    for nodes, layer in layer_nodes:
-        for n in nodes:
-            node_labels.append(n)
-            node_x.append(_LAYER_X[layer])
+    # ── Build node list ────────────────────────────────────────────────────
+    # node_keys: unique routing IDs (used in idx); node_labels: display names
+    _PT = 'rgba(0,0,0,0)'  # transparent colour for invisible pass-throughs
+    layer_specs = [
+        ([(n, n) for n in l0],        0),
+        ([(n, n) for n in l1_real] + [(k, '') for k in l1_pt], 1),
+        ([(n, n) for n in l2_real] + [(k, '') for k in l2_pt], 2),
+        ([(n, n) for n in l3],        3),
+    ]
+
+    node_keys: list[str] = []
+    node_labels: list[str] = []
+    node_x_list: list[float] = []
+    node_layer: list[int] = []
+
+    for specs, layer in layer_specs:
+        for key, label in specs:
+            node_keys.append(key)
+            node_labels.append(label)
+            node_x_list.append(_LAYER_X[layer])
             node_layer.append(layer)
 
-    if not node_labels:
+    if not node_keys:
         return None
 
-    idx = {label: i for i, label in enumerate(node_labels)}
-
-    # y positions computed after links (placeholder — filled below)
-    node_y = [0.5] * len(node_labels)
+    idx = {key: i for i, key in enumerate(node_keys)}
 
     # ── Node colours ───────────────────────────────────────────────────────
     carrier_colour_map = {
@@ -517,25 +558,25 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         for _, row in df.drop_duplicates('primary_carrier').iterrows()
     }
 
-    def _node_colour(label, layer):
-        if label in (_NO_DISTRICT, _NO_BUILDING):
-            return _PLACEHOLDER_COLOUR
+    def _node_colour(key, layer):
+        if key.startswith('__pt_'):
+            return _PT
         if layer == 0:
-            return carrier_colour_map.get(label, COLOURS_TO_RGB['grey'])
+            return carrier_colour_map.get(key, COLOURS_TO_RGB['grey'])
         if layer in (1, 2):
-            return _tech_colour(label)
-        return _SERVICE_COLOURS.get(label, COLOURS_TO_RGB['grey'])
+            return _tech_colour(key)
+        return _SERVICE_COLOURS.get(key, COLOURS_TO_RGB['grey'])
 
-    node_colors = [_node_colour(label, layer) for label, layer in zip(node_labels, node_layer)]
+    node_colors = [_node_colour(k, lyr) for k, lyr in zip(node_keys, node_layer)]
 
     # ── Link builder ───────────────────────────────────────────────────────
     srcs, tgts, vals, link_colors = [], [], [], []
 
-    def add_link(src, tgt, val, colour):
-        if src not in idx or tgt not in idx or val <= 0:
+    def add_link(src_key, tgt_key, val, colour):
+        if src_key not in idx or tgt_key not in idx or val <= 0:
             return
-        srcs.append(idx[src])
-        tgts.append(idx[tgt])
+        srcs.append(idx[src_key])
+        tgts.append(idx[tgt_key])
         vals.append(val / divisor)
         link_colors.append(_to_rgba(colour))
 
@@ -566,7 +607,7 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
             else:
                 add_link(prev, service, val, prev_colour)
 
-    # ── Building-scale flows: carrier → [building_comp] → service
+    # ── Building-scale flows: route through pass-through nodes to avoid skips
     for _, row in building_df.iterrows():
         carrier = row['primary_carrier']
         bc = row['building_component']
@@ -575,30 +616,41 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
         bc_colour = _tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
 
+        prev, prev_colour = carrier, c_colour
+
+        # Layer 0→1: route through district pass-through if district shown
+        if show_district and (1, carrier) in pt_needed:
+            add_link(prev, _pt_key(1, carrier), val, c_colour)
+            prev = _pt_key(1, carrier)
+
+        # Layer 1→2 or 1→3: use real building component or building pass-through
         if show_building and bc and bc in idx:
-            add_link(carrier, bc, val, c_colour)
+            add_link(prev, bc, val, prev_colour)
             add_link(bc, service, val, bc_colour)
+        elif show_building and (2, carrier) in pt_needed:
+            add_link(prev, _pt_key(2, carrier), val, prev_colour)
+            add_link(_pt_key(2, carrier), service, val, prev_colour)
         else:
-            add_link(carrier, service, val, c_colour)
+            add_link(prev, service, val, prev_colour)
 
     if not srcs:
         return None
 
-    # ── Flow-based y positioning ───────────────────────────────────────────
-    node_inflow = [0.0] * len(node_labels)
-    node_outflow = [0.0] * len(node_labels)
+    # ── Flow-based y positioning for arrangement='fixed' ──────────────────
+    node_inflow = [0.0] * len(node_keys)
+    node_outflow = [0.0] * len(node_keys)
     for s, t, v in zip(srcs, tgts, vals):
         node_outflow[s] += v
         node_inflow[t] += v
-    node_flow = [max(node_inflow[i], node_outflow[i]) for i in range(len(node_labels))]
+    node_flow = [max(node_inflow[i], node_outflow[i]) for i in range(len(node_keys))]
 
-    layer_node_indices: dict[int, list[int]] = {k: [] for k in range(4)}
+    layer_indices: dict[int, list[int]] = {k: [] for k in range(4)}
     for i, lyr in enumerate(node_layer):
-        layer_node_indices[lyr].append(i)
+        layer_indices[lyr].append(i)
 
-    margin = 0.02
-    gap = 0.02
-    for lyr_idx, indices in layer_node_indices.items():
+    node_y_list = [0.5] * len(node_keys)
+    margin, gap = 0.02, 0.02
+    for indices in layer_indices.values():
         if not indices:
             continue
         flows = [node_flow[i] for i in indices]
@@ -608,14 +660,14 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         y = margin
         for node_idx, flow in zip(indices, flows):
             height = (flow / total * available) if total > 0 else available / n
-            node_y[node_idx] = round(min(max(y + height / 2, margin), 1 - margin), 4)
+            node_y_list[node_idx] = round(min(max(y + height / 2, margin), 1 - margin), 4)
             y += height + gap
 
     return {
         'node_labels': node_labels,
         'node_colors': node_colors,
-        'node_x':      node_x,
-        'node_y':      node_y,
+        'node_x':      node_x_list,
+        'node_y':      node_y_list,
         'source':      srcs,
         'target':      tgts,
         'value':       vals,
@@ -635,7 +687,7 @@ def create_sankey_fig(sankey_data, title, unit_label):
             y=sankey_data['node_y'],
             pad=24,
             thickness=20,
-            line=dict(color=COLOURS_TO_RGB['grey_lighter'], width=0.5),
+            line=dict(color='rgba(0,0,0,0)', width=0),
         ),
         link=dict(
             source=sankey_data['source'],
@@ -655,6 +707,7 @@ def create_sankey_fig(sankey_data, title, unit_label):
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
+        margin=dict(l=20, r=20, t=60, b=20),
     )
     return fig
 

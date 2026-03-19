@@ -110,7 +110,7 @@ _TECH_COLOURS = {
     'Pump':            COLOURS_TO_RGB['orange'],
     'Piping':          COLOURS_TO_RGB['grey'],
     'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid': COLOURS_TO_RGB['green'],
+    'City Grid': COLOURS_TO_RGB['purple'],
     'PV Panel':        COLOURS_TO_RGB['yellow'],
     'Solar Collector': COLOURS_TO_RGB['yellow'],
     'PVT Panel':       COLOURS_TO_RGB['yellow'],
