@@ -63,7 +63,7 @@ _SERVICE_COLOURS = {
     'Space Heating':      COLOURS_TO_RGB['red_light'],
     'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
     'Space Cooling':      COLOURS_TO_RGB['blue_light'],
-    'Electricity':        COLOURS_TO_RGB['purple_light'],
+    'Electricity':        COLOURS_TO_RGB['green_light'],
     'Solar':   COLOURS_TO_RGB['yellow_light'],
     'Distribution':       COLOURS_TO_RGB['grey_light'],
 }
@@ -110,7 +110,7 @@ _TECH_COLOURS = {
     'Pump':            COLOURS_TO_RGB['orange'],
     'Piping':          COLOURS_TO_RGB['grey'],
     'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid': COLOURS_TO_RGB['purple'],
+    'City Grid': COLOURS_TO_RGB['green'],
     'PV Panel':        COLOURS_TO_RGB['yellow'],
     'Solar Collector': COLOURS_TO_RGB['yellow'],
     'PVT Panel':       COLOURS_TO_RGB['yellow'],

@@ -479,23 +479,16 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     l0 = sorted(df['primary_carrier'].unique())
 
     # ── Layer 1: District ──────────────────────────────────────────────────
-    # Real district components + placeholder if any building-scale flows exist
-    l1_real = (
+    l1 = (
         sorted(set(district_df['plant_component'].unique()) - {''})
         if show_district and not district_df.empty else []
     )
-    l1_placeholder = [_NO_DISTRICT] if not building_df.empty else []
-    l1 = l1_real + l1_placeholder
 
     # ── Layer 2: Building ──────────────────────────────────────────────────
-    # Real building components + placeholder if any flow has no building equipment
-    l2_real = (
+    l2 = (
         sorted(set(df['building_component'].unique()) - {''})
         if show_building else []
     )
-    need_bldg_placeholder = df['building_component'].eq('').any()
-    l2_placeholder = [_NO_BUILDING] if need_bldg_placeholder else []
-    l2 = l2_real + l2_placeholder
 
     # ── Layer 3: End-use service ───────────────────────────────────────────
     svc_set = set(df['service'].unique())
@@ -515,15 +508,8 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
     idx = {label: i for i, label in enumerate(node_labels)}
 
-    # Distribute y evenly within each layer column
-    layer_counts = {0: len(l0), 1: len(l1), 2: len(l2), 3: len(l3)}
-    layer_counters = {k: 0 for k in range(4)}
-    node_y = []
-    for layer in node_layer:
-        n = layer_counts[layer]
-        i = layer_counters[layer]
-        node_y.append((i + 0.5) / n if n > 1 else 0.5)
-        layer_counters[layer] += 1
+    # y positions computed after links (placeholder — filled below)
+    node_y = [0.5] * len(node_labels)
 
     # ── Node colours ───────────────────────────────────────────────────────
     carrier_colour_map = {
@@ -553,47 +539,77 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         vals.append(val / divisor)
         link_colors.append(_to_rgba(colour))
 
-    # ── District flows: carrier → district_comp → building_comp → service ──
+    # ── District flows: carrier → [district_comp] → [building_comp] → service
     if not district_df.empty:
         # Layer 0→1: one link per (carrier, plant_comp) — use plant_input_kWh
         for (carrier, pc), grp in district_df.groupby(['primary_carrier', 'plant_component']):
             c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
             plant_val = grp['plant_input_kWh'].iloc[0]
-            d1 = pc if (show_district and pc) else _NO_DISTRICT
-            add_link(carrier, d1, plant_val, c_colour)
+            if show_district and pc and pc in idx:
+                add_link(carrier, pc, plant_val, c_colour)
 
-        # Layer 1→2→3: per row (aggregated to one row per service)
+        # Layer 1→2→3: per row
         for _, row in district_df.iterrows():
+            carrier = row['primary_carrier']
             pc = row['plant_component']
             bc = row['building_component']
             service = row['service']
             val = row['value_kWh']
+            c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
+            pc_colour = _tech_colour(pc) if pc else c_colour
+            bc_colour = _tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
 
-            d1 = pc if (show_district and pc and pc in idx) else _NO_DISTRICT
-            d2 = bc if (show_building and bc and bc in idx) else _NO_BUILDING
-            d1_colour = _tech_colour(d1) if d1 != _NO_DISTRICT else _PLACEHOLDER_COLOUR
-            d2_colour = _tech_colour(d2) if d2 != _NO_BUILDING else _PLACEHOLDER_COLOUR
+            prev, prev_colour = (pc, pc_colour) if (show_district and pc and pc in idx) else (carrier, c_colour)
+            if show_building and bc and bc in idx:
+                add_link(prev, bc, val, prev_colour)
+                add_link(bc, service, val, bc_colour)
+            else:
+                add_link(prev, service, val, prev_colour)
 
-            add_link(d1, d2, val, d1_colour)
-            add_link(d2, service, val, d2_colour)
-
-    # ── Building-scale flows: carrier → No District → building_comp → service
+    # ── Building-scale flows: carrier → [building_comp] → service
     for _, row in building_df.iterrows():
         carrier = row['primary_carrier']
         bc = row['building_component']
         service = row['service']
         val = row['value_kWh']
         c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
+        bc_colour = _tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
 
-        d2 = bc if (show_building and bc and bc in idx) else _NO_BUILDING
-        d2_colour = _tech_colour(d2) if d2 != _NO_BUILDING else _PLACEHOLDER_COLOUR
-
-        add_link(carrier, _NO_DISTRICT, val, c_colour)
-        add_link(_NO_DISTRICT, d2, val, _PLACEHOLDER_COLOUR)
-        add_link(d2, service, val, d2_colour)
+        if show_building and bc and bc in idx:
+            add_link(carrier, bc, val, c_colour)
+            add_link(bc, service, val, bc_colour)
+        else:
+            add_link(carrier, service, val, c_colour)
 
     if not srcs:
         return None
+
+    # ── Flow-based y positioning ───────────────────────────────────────────
+    node_inflow = [0.0] * len(node_labels)
+    node_outflow = [0.0] * len(node_labels)
+    for s, t, v in zip(srcs, tgts, vals):
+        node_outflow[s] += v
+        node_inflow[t] += v
+    node_flow = [max(node_inflow[i], node_outflow[i]) for i in range(len(node_labels))]
+
+    layer_node_indices: dict[int, list[int]] = {k: [] for k in range(4)}
+    for i, lyr in enumerate(node_layer):
+        layer_node_indices[lyr].append(i)
+
+    margin = 0.02
+    gap = 0.02
+    for lyr_idx, indices in layer_node_indices.items():
+        if not indices:
+            continue
+        flows = [node_flow[i] for i in indices]
+        total = sum(flows)
+        n = len(indices)
+        available = 1.0 - 2 * margin - gap * (n - 1)
+        y = margin
+        for node_idx, flow in zip(indices, flows):
+            height = (flow / total * available) if total > 0 else available / n
+            node_y[node_idx] = round(min(max(y + height / 2, margin), 1 - margin), 4)
+            y += height + gap
 
     return {
         'node_labels': node_labels,
