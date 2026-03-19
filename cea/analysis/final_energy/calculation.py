@@ -276,7 +276,7 @@ def load_production_supply_configuration(
             building_supply['supply_type_hs'],
             supply_db.heating,
             locator,
-            'heating',
+            'space_heating',
             network_name
         )
 
@@ -296,7 +296,7 @@ def load_production_supply_configuration(
             building_supply['supply_type_cs'],
             supply_db.cooling,
             locator,
-            'cooling',
+            'space_cooling',
             network_name
         )
 
@@ -308,7 +308,7 @@ def load_production_supply_configuration(
                 assembly_code,
                 supply_db.heating,
                 locator,
-                'heating',
+                'space_heating',
                 network_name
             )
             supply_config['space_heating_booster']['network_name'] = network_name
@@ -651,7 +651,7 @@ def load_whatif_supply_configuration(
         )
         if assembly_code and assembly_code in supply_db.heating.index:
             supply_config['space_heating'] = parse_supply_assembly(
-                assembly_code, supply_db.heating, locator, 'heating', network_name
+                assembly_code, supply_db.heating, locator, 'space_heating', network_name
             )
 
     # Hot water (DHW) — uses DH network; skip if no hot water demand
@@ -679,7 +679,7 @@ def load_whatif_supply_configuration(
         )
         if assembly_code and assembly_code in supply_db.cooling.index:
             supply_config['space_cooling'] = parse_supply_assembly(
-                assembly_code, supply_db.cooling, locator, 'cooling', network_name
+                assembly_code, supply_db.cooling, locator, 'space_cooling', network_name
             )
 
     # Boosters (always building-scale, same as production mode)
@@ -687,7 +687,7 @@ def load_whatif_supply_configuration(
         assembly_code = config.final_energy.hs_booster_type_building
         if assembly_code and assembly_code in supply_db.heating.index:
             supply_config['space_heating_booster'] = parse_supply_assembly(
-                assembly_code, supply_db.heating, locator, 'heating', network_name
+                assembly_code, supply_db.heating, locator, 'space_heating', network_name
             )
             supply_config['space_heating_booster']['network_name'] = network_name
 
