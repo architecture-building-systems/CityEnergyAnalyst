@@ -964,3 +964,15 @@ Visualisation:
     input-files:
       - [get_costs_whatif_components_file, 'plots-cost-sankey:what-if-name']
       - [get_zone_geometry]
+
+  - name: plot-energy-sankey
+    label: Plot - Energy Flow Sankey
+    short_description: Sankey diagram of annual energy flows from carrier to end-use service
+    description: Visualises what-if scenario annual energy flows as a Sankey diagram flowing from energy carrier through optional scale and component layers to end-use service.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.energy_sankey
+    parameters: ['general:scenario',
+                 plots-energy-sankey]
+    input-files:
+      - [get_final_energy_buildings_file, 'plots-energy-sankey:what-if-name']
+      - [get_zone_geometry]

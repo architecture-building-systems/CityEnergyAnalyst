@@ -23,7 +23,7 @@ from cea.inputlocator import InputLocator
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 
 __author__ = "Zhongming Shi"
-__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
 __license__ = "MIT"
 __version__ = "0.3"
