@@ -1,11 +1,16 @@
 """
-Cost Sankey diagram — 3-layer, money-only.
+Cost Sankey diagram — 3 or 4-layer, money-only.
 
-    [Service]  →  [Technology]  →  [Cost Category]
+    [Service]  →  [Technology]  →  [Cost Detail]  →  [CAPEX / OPEX]  (4-layer)
+    [Service]  →  [Technology]  →  [CAPEX]                            (3-layer, CAPEX only)
 
-All link widths are in the same money unit (USD/year annualised).
-No energy carriers appear in this diagram; energy flows belong in a
-separate Energy Sankey.
+Layer count:
+  - CAPEX only  → 3 layers (Service → Technology → CAPEX)
+  - OPEX only   → 4 layers (Service → Technology → OPEX Fixed / OPEX Variable → OPEX)
+  - Both        → 4 layers (Service → Technology → CAPEX detail / OPEX Fixed / OPEX Variable → CAPEX / OPEX)
+
+All link widths are in the same money unit (USD/year or total USD).
+No energy carriers appear in this diagram; energy flows belong in a separate Energy Sankey.
 
 Data source: costs_components.csv produced by cea.analysis.costs.main.
 """
@@ -18,10 +23,10 @@ from cea.inputlocator import InputLocator
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 
 __author__ = "Zhongming Shi"
-__copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Zhongming Shi"]
 __license__ = "MIT"
-__version__ = "0.2"
+__version__ = "0.3"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
@@ -29,7 +34,6 @@ __status__ = "Production"
 
 # ── Layer 0: service groups ───────────────────────────────────────────────────
 
-# Maps raw `service` column values → display group name
 _SERVICE_GROUP_MAP = {
     'hs':            'Space Heating',
     'DH':            'Space Heating',
@@ -51,16 +55,16 @@ _SERVICE_ORDER = [
     'Domestic Hot Water',
     'Space Cooling',
     'Electricity',
-    'Solar Generation',
+    'Solar',
     'Distribution',
 ]
 
 _SERVICE_COLOURS = {
-    'Space Heating':      COLOURS_TO_RGB['red'],
-    'Domestic Hot Water': COLOURS_TO_RGB['orange'],
-    'Space Cooling':      COLOURS_TO_RGB['blue'],
-    'Electricity':        COLOURS_TO_RGB['green'],
-    'Solar Generation':   COLOURS_TO_RGB['yellow'],
+    'Space Heating':      COLOURS_TO_RGB['red_light'],
+    'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
+    'Space Cooling':      COLOURS_TO_RGB['blue_light'],
+    'Electricity':        COLOURS_TO_RGB['green_light'],
+    'Solar':   COLOURS_TO_RGB['yellow_light'],
     'Distribution':       COLOURS_TO_RGB['grey_light'],
 }
 
@@ -76,13 +80,12 @@ def _service_group(raw):
         return 'Distribution'
     if 'pumping' in s.lower():
         return 'Distribution'
-    return s  # fallback: use raw value as its own group
+    return s
 
 
 # ── Layer 1: technologies ─────────────────────────────────────────────────────
 
 _COMPONENT_PREFIX_DISPLAY = [
-    # (prefix, display_template)  — ordered longest-first to avoid short-prefix shadowing
     ('PVT', 'PVT Panel'),
     ('PV',  'PV Panel'),
     ('SC',  'Solar Collector'),
@@ -96,21 +99,21 @@ _COMPONENT_PREFIX_DISPLAY = [
 
 _COMPONENT_EXACT_DISPLAY = {
     'PIPES': 'Piping',
-    'GRID':  'Grid Connection',
+    'GRID':  'City Grid',
 }
 
 _TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red_light'],
-    'Heat Pump':       COLOURS_TO_RGB['blue_light'],
+    'Boiler':          COLOURS_TO_RGB['red'],
+    'Heat Pump':       COLOURS_TO_RGB['orange'],
     'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['teal_light'],
-    'Pump':            COLOURS_TO_RGB['green_light'],
-    'Piping':          COLOURS_TO_RGB['grey_lighter'],
-    'Heat Exchanger':  COLOURS_TO_RGB['grey_light'],
-    'Grid Connection': COLOURS_TO_RGB['green_light'],
+    'Cooling Tower':   COLOURS_TO_RGB['blue'],
+    'Pump':            COLOURS_TO_RGB['orange'],
+    'Piping':          COLOURS_TO_RGB['grey'],
+    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
+    'City Grid': COLOURS_TO_RGB['purple'],
     'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow_light'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow_light'],
+    'Solar Collector': COLOURS_TO_RGB['yellow'],
+    'PVT Panel':       COLOURS_TO_RGB['yellow'],
 }
 
 
@@ -126,7 +129,6 @@ def _component_display(code):
 
 
 def _tech_base_type(display_label):
-    """Extract the base type string from a display label for colour lookup."""
     for base in _TECH_COLOURS:
         if display_label.startswith(base):
             return base
@@ -138,22 +140,28 @@ def _tech_colour(display_label):
     return _TECH_COLOURS.get(base, COLOURS_TO_RGB['grey'])
 
 
-# ── Layer 2: cost categories ──────────────────────────────────────────────────
+# ── Layer 2: cost detail nodes ────────────────────────────────────────────────
 
-_COST_CAT_DISPLAY = {
-    'capex_total_USD':  'CAPEX Total',
+# Maps CSV column → detail node label
+_DETAIL_LABEL_MAP = {
     'capex_a_USD':      'CAPEX Annualised',
+    'capex_total_USD':  'CAPEX Total',
     'opex_fixed_a_USD': 'OPEX Fixed',
     'opex_var_a_USD':   'OPEX Variable',
-    'TAC_USD':          'Total Annualised',
 }
 
-_COST_CAT_COLOURS = {
-    'CAPEX Total':       COLOURS_TO_RGB['purple'],
-    'CAPEX Annualised':  COLOURS_TO_RGB['purple_light'],
-    'OPEX Fixed':        COLOURS_TO_RGB['brown'],
-    'OPEX Variable':     COLOURS_TO_RGB['brown_light'],
-    'Total Annualised':  COLOURS_TO_RGB['grey'],
+_DETAIL_COLOURS = {
+    'CAPEX Annualised': COLOURS_TO_RGB['brown_light'],
+    'CAPEX Total':      COLOURS_TO_RGB['brown_light'],
+    'OPEX Fixed':       COLOURS_TO_RGB['grey_light'],
+    'OPEX Variable':    COLOURS_TO_RGB['grey_light'],
+}
+
+# ── Layer 3: summary nodes ────────────────────────────────────────────────────
+
+_SUMMARY_COLOURS = {
+    'CAPEX': COLOURS_TO_RGB['brown'],
+    'OPEX':  COLOURS_TO_RGB['grey'],
 }
 
 _UNIT_DIVISORS = {'USD': 1, 'kUSD': 1_000, 'mioUSD': 1_000_000}
@@ -168,21 +176,37 @@ def _to_rgba(rgb_str, alpha=0.5):
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
-def build_sankey_data(df, cost_cats, unit_divisor, normaliser=1.0):
+def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, normaliser=1.0):
     """
-    Transform costs_components DataFrame into a 3-layer cost Sankey.
+    Transform costs_components DataFrame into a cost Sankey.
 
-    Layers (all widths in money units):
-        Layer 0  Service group   e.g. Space Heating, Solar Generation
-        Layer 1  Technology      e.g. Boiler (BO1), PV Panel (PV1)
-        Layer 2  Cost category   e.g. CAPEX Annualised, OPEX Variable
+    Layer structure depends on x_to_plot and cost_cats_selection:
+
+      service + component (or empty = both):
+        CAPEX only → Service → Component → CAPEX
+        OPEX only  → Service → Component → OPEX Fixed / OPEX Variable → OPEX
+        Both       → Service → Component → CAPEX / OPEX Fixed / OPEX Variable → CAPEX / OPEX
+
+      service only:
+        CAPEX only → Service → CAPEX
+        OPEX only  → Service → OPEX Fixed / OPEX Variable → OPEX
+        Both       → Service → CAPEX / OPEX Fixed / OPEX Variable → CAPEX / OPEX
+
+      component only:
+        CAPEX only → Component → CAPEX
+        OPEX only  → Component → OPEX Fixed / OPEX Variable → OPEX
+        Both       → Component → CAPEX / OPEX Fixed / OPEX Variable → CAPEX / OPEX
 
     Parameters
     ----------
     df : pd.DataFrame
         costs_components.csv content.
-    cost_cats : list[str]
-        Column names to include (e.g. ['capex_a_USD', 'opex_var_a_USD']).
+    cost_cats_selection : list[str]
+        High-level selections: subset of ['CAPEX', 'OPEX']. Empty = both.
+    capex_view : str
+        'annualised' → use capex_a_USD; 'total' → use capex_total_USD.
+    x_to_plot : list[str]
+        Subset of ['service', 'component']. Empty = both.
     unit_divisor : float
         1 for USD, 1 000 for kUSD, 1 000 000 for mioUSD.
     normaliser : float
@@ -194,83 +218,152 @@ def build_sankey_data(df, cost_cats, unit_divisor, normaliser=1.0):
     None  if no non-zero data found.
     """
     df = df.copy()
-
-    present_cats = [c for c in cost_cats if c in df.columns]
-    if not present_cats:
-        return None
-
     divisor = unit_divisor * normaliser
 
-    # Resolve display columns
+    # Empty = all selected
+    if not cost_cats_selection:
+        cost_cats_selection = ['CAPEX', 'OPEX']
+    if not x_to_plot:
+        x_to_plot = ['service', 'component']
+
+    include_capex = 'CAPEX' in cost_cats_selection
+    include_opex = 'OPEX' in cost_cats_selection
+    show_service = 'service' in x_to_plot
+    show_component = 'component' in x_to_plot
+
+    capex_col = 'capex_a_USD' if capex_view == 'annualised' else 'capex_total_USD'
+    capex_detail_label = _DETAIL_LABEL_MAP[capex_col]
+
+    capex_cols = [capex_col] if include_capex and capex_col in df.columns else []
+    opex_cols = [c for c in ['opex_fixed_a_USD', 'opex_var_a_USD'] if c in df.columns] if include_opex else []
+    all_cols = capex_cols + opex_cols
+
+    if not all_cols:
+        return None
+
     df['_service_group'] = df['service'].fillna('Unknown').apply(_service_group)
     df['_tech_display']  = df['component_code'].fillna('Unknown').apply(_component_display)
 
-    # ── Layer 0→1: service → technology ──────────────────────────────────
-    l01 = (
-        df.groupby(['_service_group', '_tech_display'])[present_cats]
-        .sum()
-        .assign(_total=lambda x: x.sum(axis=1))
-        .reset_index()
-    )
-    l01 = l01[l01['_total'] > 0]
+    # Column → detail label mapping (insertion order preserved)
+    col_to_label = {}
+    if capex_cols:
+        col_to_label[capex_col] = capex_detail_label
+    for col in opex_cols:
+        col_to_label[col] = _DETAIL_LABEL_MAP[col]
+    detail_labels = list(dict.fromkeys(col_to_label.values()))
 
-    # ── Layer 1→2: technology → cost category ────────────────────────────
-    records = []
-    for cat in present_cats:
-        agg = df.groupby('_tech_display')[cat].sum().reset_index()
-        agg.columns = ['_tech_display', '_value']
-        agg['_cost_cat'] = _COST_CAT_DISPLAY.get(cat, cat)
-        records.append(agg[agg['_value'] > 0])
-    l12 = pd.concat(records, ignore_index=True) if records else pd.DataFrame()
+    # Summary layer: always when OPEX selected (aggregates Fixed + Variable)
+    need_summary = include_opex
+    summary_labels = []
+    if need_summary:
+        if include_capex and capex_cols:
+            summary_labels.append('CAPEX')
+        if opex_cols:
+            summary_labels.append('OPEX')
 
-    if l01.empty:
+    # ── Build node list ───────────────────────────────────────────────────
+    # Collect service/tech sets from rows with non-zero totals
+    totals = df.groupby(['_service_group', '_tech_display'])[all_cols].sum()
+    totals = totals[totals.sum(axis=1) > 0].reset_index()
+
+    services, technologies = [], []
+    if show_service:
+        svc_set = set(totals['_service_group'].unique())
+        services = [s for s in _SERVICE_ORDER if s in svc_set]
+        services += sorted(svc_set - set(services))
+    if show_component:
+        technologies = sorted(set(totals['_tech_display'].unique()))
+
+    node_labels = services + technologies + detail_labels + summary_labels
+    if not node_labels:
         return None
-
-    # ── node lists ────────────────────────────────────────────────────────
-    # Services: preserve preferred order, then any extras alphabetically
-    svc_set = set(l01['_service_group'].unique())
-    services = [s for s in _SERVICE_ORDER if s in svc_set]
-    services += sorted(svc_set - set(services))
-
-    tech_set = set(l01['_tech_display'].unique())
-    if not l12.empty:
-        tech_set |= set(l12['_tech_display'].unique())
-    technologies = sorted(tech_set)
-
-    cost_cats_display = [_COST_CAT_DISPLAY.get(c, c) for c in present_cats]
-
-    node_labels = services + technologies + cost_cats_display
     idx = {label: i for i, label in enumerate(node_labels)}
 
     node_colors = (
         [_SERVICE_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in services]
         + [_tech_colour(t) for t in technologies]
-        + [_COST_CAT_COLOURS.get(c, COLOURS_TO_RGB['grey']) for c in cost_cats_display]
+        + [_DETAIL_COLOURS.get(d, COLOURS_TO_RGB['grey']) for d in detail_labels]
+        + [_SUMMARY_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in summary_labels]
     )
 
-    # ── links ─────────────────────────────────────────────────────────────
     sources, targets, values, link_colors = [], [], [], []
 
-    for _, row in l01.iterrows():
-        svc = row['_service_group']
-        tech = row['_tech_display']
-        if svc not in idx or tech not in idx:
-            continue
-        sources.append(idx[svc])
-        targets.append(idx[tech])
-        values.append(row['_total'] / divisor)
-        link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
-
-    if not l12.empty:
-        for _, row in l12.iterrows():
+    if show_service and show_component:
+        # ── Service → Component ───────────────────────────────────────────
+        for _, row in totals.iterrows():
+            svc = row['_service_group']
             tech = row['_tech_display']
-            cat  = row['_cost_cat']
-            if tech not in idx or cat not in idx:
+            if svc not in idx or tech not in idx:
                 continue
-            sources.append(idx[tech])
-            targets.append(idx[cat])
-            values.append(row['_value'] / divisor)
-            link_colors.append(_to_rgba(_tech_colour(tech)))
+            sources.append(idx[svc])
+            targets.append(idx[tech])
+            values.append(row[all_cols].sum() / divisor)
+            link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
+
+        # ── Component → Detail ────────────────────────────────────────────
+        for col, detail_label in col_to_label.items():
+            if col not in df.columns or detail_label not in idx:
+                continue
+            for tech, val in df.groupby('_tech_display')[col].sum().items():
+                if val <= 0 or tech not in idx:
+                    continue
+                sources.append(idx[tech])
+                targets.append(idx[detail_label])
+                values.append(val / divisor)
+                link_colors.append(_to_rgba(_tech_colour(tech)))
+
+    elif show_service:
+        # ── Service → Detail ──────────────────────────────────────────────
+        for col, detail_label in col_to_label.items():
+            if col not in df.columns or detail_label not in idx:
+                continue
+            for svc, val in df.groupby('_service_group')[col].sum().items():
+                if val <= 0 or svc not in idx:
+                    continue
+                sources.append(idx[svc])
+                targets.append(idx[detail_label])
+                values.append(val / divisor)
+                link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
+
+    else:
+        # show_component only (or fallback)
+        # ── Component → Detail ────────────────────────────────────────────
+        for col, detail_label in col_to_label.items():
+            if col not in df.columns or detail_label not in idx:
+                continue
+            for tech, val in df.groupby('_tech_display')[col].sum().items():
+                if val <= 0 or tech not in idx:
+                    continue
+                sources.append(idx[tech])
+                targets.append(idx[detail_label])
+                values.append(val / divisor)
+                link_colors.append(_to_rgba(_tech_colour(tech)))
+
+    # ── Detail → Summary ─────────────────────────────────────────────────
+    if need_summary:
+        label_to_col = {v: k for k, v in col_to_label.items()}
+        detail_to_summary = {}
+        if include_capex and capex_detail_label in detail_labels:
+            detail_to_summary[capex_detail_label] = 'CAPEX'
+        for col in opex_cols:
+            detail_to_summary[_DETAIL_LABEL_MAP[col]] = 'OPEX'
+
+        for detail_label, summary_label in detail_to_summary.items():
+            col = label_to_col.get(detail_label)
+            if col is None or col not in df.columns:
+                continue
+            if detail_label not in idx or summary_label not in idx:
+                continue
+            total_val = df[col].sum()
+            if total_val <= 0:
+                continue
+            sources.append(idx[detail_label])
+            targets.append(idx[summary_label])
+            values.append(total_val / divisor)
+            link_colors.append(_to_rgba(_DETAIL_COLOURS.get(detail_label, COLOURS_TO_RGB['grey'])))
+
+    if not sources:
+        return None
 
     return {
         'node_labels':  node_labels,
@@ -336,11 +429,6 @@ def main(config: cea.config.Configuration):
     """
     Entry point for the plot-cost-sankey script.
 
-    Produces a 3-layer cost Sankey:
-        [Service]  →  [Technology]  →  [Cost Category]
-
-    All link widths are in money units (USD/year or kUSD/year).
-
     :param config: CEA Configuration instance
     :return: HTML string of the Plotly Sankey figure
     """
@@ -371,9 +459,10 @@ def main(config: cea.config.Configuration):
 
     df = pd.read_csv(components_path)
 
-    cost_cats    = plot_config.y_cost_category_to_plot
+    cost_cats_selection = plot_config.y_cost_category_to_plot
+    capex_view = plot_config.capex_view
     y_metric_unit = plot_config.y_metric_unit
-    unit_divisor  = _UNIT_DIVISORS.get(y_metric_unit, 1)
+    unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1)
 
     # Normalisation
     normaliser = 1.0
@@ -387,7 +476,8 @@ def main(config: cea.config.Configuration):
     else:
         unit_label = y_metric_unit
 
-    sankey_data = build_sankey_data(df, cost_cats, unit_divisor, normaliser)
+    x_to_plot = plot_config.x_to_plot
+    sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, normaliser)
     if sankey_data is None:
         return (
             '<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
@@ -400,7 +490,6 @@ def main(config: cea.config.Configuration):
     title = plot_config.plot_title or f'System Costs — {whatif_name}'
     fig = create_sankey_fig(sankey_data, title, unit_label)
 
-    plot_width = 1600
-    fig.update_layout(width=plot_width, height=int(plot_width / 16 * 7))
-
-    return fig.to_html(full_html=False, include_plotlyjs='cdn')
+    fig.update_layout(autosize=True)
+    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)

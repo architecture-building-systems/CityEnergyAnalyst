@@ -666,30 +666,6 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         else:
             dh_fraction = 0
 
-        # Special validation for PLANT_hs_ww with no space heating demand
-        if itemised_dh_services == ['space_heating', 'domestic_hot_water']:
-            # This is a PLANT_hs_ww network (space heating priority)
-            if total_hs_demand_kWh < 1.0:  # Less than 1 kWh/year of space heating
-                raise ValueError(
-                    f"\n{'='*70}\n"
-                    f"❌ ERROR: PLANT_hs_ww network has zero space heating demand\n"
-                    f"{'='*70}\n"
-                    f"  Plant type: PLANT_hs_ww (space heating → DHW priority)\n"
-                    f"  Space heating demand: {total_hs_demand_kWh:.2f} kWh/year\n"
-                    f"  DHW demand: {total_ww_demand_kWh:.2f} kWh/year\n"
-                    f"\n"
-                    f"PLANT_hs_ww networks are designed for buildings with space heating needs.\n"
-                    f"The network temperature is controlled by space heating requirements (35-45°C).\n"
-                    f"\n"
-                    f"Solutions:\n"
-                    f"  1. Use PLANT_ww network type for DHW-only buildings\n"
-                    f"     - Run network layout with 'itemised-dh-services' = ['domestic_hot_water']\n"
-                    f"     - Network designed for higher temperatures (50-80°C)\n"
-                    f"  2. Check if space heating demand exists in total-demand files\n"
-                    f"     - Verify QH_sys_MWhyr > 0 for connected buildings\n"
-                    f"  3. Remove buildings from network if they truly have no heating demand\n"
-                    f"{'='*70}\n"
-                )
 
         # If DH contribution is less than 1%, warn user and suggest minimum temperature (CT mode only)
         if dh_fraction < 0.01 and fixed_network_temp_C is not None:
@@ -1109,9 +1085,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Network topology issues\n"
                 f"     - Disconnected segments (should be caught earlier)\n"
                 f"     - Invalid boundary conditions\n"
-                f"  4. Plant type mismatch with building demands\n"
-                f"     - PLANT_hs_ww with zero space heating → use PLANT_ww\n"
-                f"     - PLANT_ww_hs with zero DHW → use PLANT_hs_ww\n"
+                f"  4. Temperature mode mismatch with building demands\n"
+                f"     - Verify dh-temperature-mode matches your building service types\n"
                 f"\n"
                 f"Resolution:\n"
                 f"  - Review all warnings and errors printed above\n"

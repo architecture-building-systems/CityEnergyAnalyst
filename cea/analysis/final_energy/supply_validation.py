@@ -74,31 +74,65 @@ def validate_whatif_params(locator, config):
     standalone_dh = all_buildings - dh_buildings
     standalone_dc = all_buildings - dc_buildings
 
+    # Load total demand to skip params for services with zero demand
+    hs_demand_buildings: set = set()
+    dhw_demand_buildings: set = set()
+    cs_demand_buildings: set = set()
+    try:
+        demand_path = locator.get_total_demand()
+        demand_df = pd.read_csv(demand_path).set_index('name')
+        for building in all_buildings:
+            if building not in demand_df.index:
+                # Unknown demand → be conservative: require params
+                hs_demand_buildings.add(building)
+                dhw_demand_buildings.add(building)
+                cs_demand_buildings.add(building)
+                continue
+            row = demand_df.loc[building]
+            if row.get('Qhs_sys_MWhyr', 0.0) > 0.0:
+                hs_demand_buildings.add(building)
+            if row.get('Qww_sys_MWhyr', 0.0) > 0.0:
+                dhw_demand_buildings.add(building)
+            if row.get('Qcs_sys_MWhyr', 0.0) > 0.0:
+                cs_demand_buildings.add(building)
+    except Exception:
+        # If demand file unreadable, be conservative: require all params
+        hs_demand_buildings = all_buildings.copy()
+        dhw_demand_buildings = all_buildings.copy()
+        cs_demand_buildings = all_buildings.copy()
+
+    dh_hs = dh_buildings & hs_demand_buildings
+    dh_dhw = dh_buildings & dhw_demand_buildings
+    standalone_hs = standalone_dh & hs_demand_buildings
+    standalone_dhw = standalone_dh & dhw_demand_buildings
+    dc_cs = dc_buildings & cs_demand_buildings
+    standalone_cs = standalone_dc & cs_demand_buildings
+
     missing = []
 
-    if dh_buildings and not config.final_energy.supply_type_hs_district:
+    if dh_hs and not config.final_energy.supply_type_hs_district:
         missing.append(
-            f"  - 'supply-type-hs-district': required for {len(dh_buildings)} DH-connected building(s)"
+            f"  - 'supply-type-hs-district': required for {len(dh_hs)} DH-connected building(s) with space heating demand"
         )
-    if standalone_dh and not config.final_energy.supply_type_hs_building:
+    if standalone_hs and not config.final_energy.supply_type_hs_building:
         missing.append(
-            f"  - 'supply-type-hs-building': required for {len(standalone_dh)} standalone building(s)"
+            f"  - 'supply-type-hs-building': required for {len(standalone_hs)} standalone building(s) with space heating demand"
         )
-    if dh_buildings and not config.final_energy.supply_type_dhw_district:
+    if dh_dhw and not config.final_energy.supply_type_dhw_district:
         missing.append(
-            f"  - 'supply-type-dhw-district': required for {len(dh_buildings)} DH-connected building(s)"
+            f"  - 'supply-type-dhw-district': required for {len(dh_dhw)} DH-connected building(s) with hot water demand"
         )
-    if standalone_dh and not config.final_energy.supply_type_dhw_building:
+    if standalone_dhw and not config.final_energy.supply_type_dhw_building:
         missing.append(
-            f"  - 'supply-type-dhw-building': required for {len(standalone_dh)} standalone building(s)"
+            f"  - 'supply-type-dhw-building': required for {len(standalone_dhw)} standalone building(s) with hot water demand"
         )
-    if dc_buildings and not config.final_energy.supply_type_cs_district:
+    if dc_cs and not config.final_energy.supply_type_cs_district:
         missing.append(
-            f"  - 'supply-type-cs-district': required for {len(dc_buildings)} DC-connected building(s)"
+            f"  - 'supply-type-cs-district': required for {len(dc_cs)} DC-connected building(s) with cooling demand"
         )
-    if standalone_dc and not config.final_energy.supply_type_cs_building:
+    if standalone_cs and not config.final_energy.supply_type_cs_building:
         missing.append(
-            f"  - 'supply-type-cs-building': required for {len(standalone_dc)} standalone building(s)"
+            f"  - 'supply-type-cs-building': required for {len(standalone_cs)} standalone building(s) with cooling demand"
         )
 
     if missing:

@@ -714,7 +714,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         for name in emission_context["hourly_colnames"]
     } | {
         name+"[kgCO2e]": [name+"_kgCO2e"]
-        for name in emission_timeline_yearly_colnames_nounit
+        for name in emission_context["yearly_colnames"]
     } | {
         "heat_rejection[kWh]": ["heat_rejection_kWh"]
         for name in emission_context["yearly_colnames"]

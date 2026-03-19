@@ -194,13 +194,13 @@ def _run(config, locator, whatif_name, output_folder, buildings):
         # Determine which network types to process
         network_types = []
         if any(
-            cfg.get('space_heating', {}).get('carrier') == 'DH' or
-            cfg.get('hot_water', {}).get('carrier') == 'DH'
+            (cfg.get('space_heating') or {}).get('carrier') == 'DH' or
+            (cfg.get('hot_water') or {}).get('carrier') == 'DH'
             for cfg in building_configs.values()
         ):
             network_types.append('DH')
         if any(
-            cfg.get('space_cooling', {}).get('carrier') == 'DC'
+            (cfg.get('space_cooling') or {}).get('carrier') == 'DC'
             for cfg in building_configs.values()
         ):
             network_types.append('DC')

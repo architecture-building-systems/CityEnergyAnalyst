@@ -842,8 +842,9 @@ def create_emission_timeline_plot(config):
 
 def main(config):
     fig = create_emission_timeline_plot(config)
-    plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    return plot_html
+    fig.update_layout(autosize=True)
+    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
 
 
 if __name__ == '__main__':

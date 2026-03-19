@@ -276,7 +276,7 @@ def load_production_supply_configuration(
             building_supply['supply_type_hs'],
             supply_db.heating,
             locator,
-            'heating',
+            'space_heating',
             network_name
         )
 
@@ -296,7 +296,7 @@ def load_production_supply_configuration(
             building_supply['supply_type_cs'],
             supply_db.cooling,
             locator,
-            'cooling',
+            'space_cooling',
             network_name
         )
 
@@ -308,7 +308,7 @@ def load_production_supply_configuration(
                 assembly_code,
                 supply_db.heating,
                 locator,
-                'heating',
+                'space_heating',
                 network_name
             )
             supply_config['space_heating_booster']['network_name'] = network_name
@@ -610,6 +610,18 @@ def load_whatif_supply_configuration(
         except ValueError:
             pass  # No connectivity.json → treat all buildings as standalone
 
+    # Load building's annual demand to skip services with zero demand
+    _demand_row = {}
+    try:
+        demand_df = pd.read_csv(locator.get_total_demand()).set_index('name')
+        if building_name in demand_df.index:
+            _demand_row = demand_df.loc[building_name].to_dict()
+    except Exception:
+        pass
+
+    def _has_demand(col):
+        return float(_demand_row.get(col, 1.0)) > 0.0
+
     def select_assembly(building_assembly, district_assembly, is_connected, param_building, param_district):
         if is_connected:
             if not district_assembly:
@@ -628,51 +640,54 @@ def load_whatif_supply_configuration(
                 )
             return building_assembly
 
-    # Space heating
-    assembly_code = select_assembly(
-        config.final_energy.supply_type_hs_building,
-        config.final_energy.supply_type_hs_district,
-        building_name in dh_buildings,
-        'supply-type-hs-building',
-        'supply-type-hs-district'
-    )
-    if assembly_code and assembly_code in supply_db.heating.index:
-        supply_config['space_heating'] = parse_supply_assembly(
-            assembly_code, supply_db.heating, locator, 'heating', network_name
+    # Space heating — skip if building has no space heating demand
+    if _has_demand('Qhs_sys_MWhyr'):
+        assembly_code = select_assembly(
+            config.final_energy.supply_type_hs_building,
+            config.final_energy.supply_type_hs_district,
+            building_name in dh_buildings,
+            'supply-type-hs-building',
+            'supply-type-hs-district'
         )
+        if assembly_code and assembly_code in supply_db.heating.index:
+            supply_config['space_heating'] = parse_supply_assembly(
+                assembly_code, supply_db.heating, locator, 'space_heating', network_name
+            )
 
-    # Hot water (DHW) — uses DH network
-    assembly_code = select_assembly(
-        config.final_energy.supply_type_dhw_building,
-        config.final_energy.supply_type_dhw_district,
-        building_name in dh_buildings,
-        'supply-type-dhw-building',
-        'supply-type-dhw-district'
-    )
-    if assembly_code and assembly_code in supply_db.hot_water.index:
-        supply_config['hot_water'] = parse_supply_assembly(
-            assembly_code, supply_db.hot_water, locator, 'hot_water', network_name
+    # Hot water (DHW) — uses DH network; skip if no hot water demand
+    if _has_demand('Qww_sys_MWhyr'):
+        assembly_code = select_assembly(
+            config.final_energy.supply_type_dhw_building,
+            config.final_energy.supply_type_dhw_district,
+            building_name in dh_buildings,
+            'supply-type-dhw-building',
+            'supply-type-dhw-district'
         )
+        if assembly_code and assembly_code in supply_db.hot_water.index:
+            supply_config['hot_water'] = parse_supply_assembly(
+                assembly_code, supply_db.hot_water, locator, 'hot_water', network_name
+            )
 
-    # Space cooling
-    assembly_code = select_assembly(
-        config.final_energy.supply_type_cs_building,
-        config.final_energy.supply_type_cs_district,
-        building_name in dc_buildings,
-        'supply-type-cs-building',
-        'supply-type-cs-district'
-    )
-    if assembly_code and assembly_code in supply_db.cooling.index:
-        supply_config['space_cooling'] = parse_supply_assembly(
-            assembly_code, supply_db.cooling, locator, 'cooling', network_name
+    # Space cooling — skip if no cooling demand
+    if _has_demand('Qcs_sys_MWhyr'):
+        assembly_code = select_assembly(
+            config.final_energy.supply_type_cs_building,
+            config.final_energy.supply_type_cs_district,
+            building_name in dc_buildings,
+            'supply-type-cs-building',
+            'supply-type-cs-district'
         )
+        if assembly_code and assembly_code in supply_db.cooling.index:
+            supply_config['space_cooling'] = parse_supply_assembly(
+                assembly_code, supply_db.cooling, locator, 'space_cooling', network_name
+            )
 
     # Boosters (always building-scale, same as production mode)
     if config.final_energy.hs_booster_type_building:
         assembly_code = config.final_energy.hs_booster_type_building
         if assembly_code and assembly_code in supply_db.heating.index:
             supply_config['space_heating_booster'] = parse_supply_assembly(
-                assembly_code, supply_db.heating, locator, 'heating', network_name
+                assembly_code, supply_db.heating, locator, 'space_heating', network_name
             )
             supply_config['space_heating_booster']['network_name'] = network_name
 
@@ -877,9 +892,9 @@ def determine_case(supply_config: Dict) -> Tuple[float, str]:
     :param supply_config: Supply configuration dict
     :return: (case_number, case_description)
     """
-    hs_district = supply_config['space_heating']['scale'] == 'DISTRICT'
-    dhw_district = supply_config['hot_water']['scale'] == 'DISTRICT'
-    cs_district = supply_config['space_cooling']['scale'] == 'DISTRICT'
+    hs_district = bool(supply_config['space_heating']) and supply_config['space_heating']['scale'] == 'DISTRICT'
+    dhw_district = bool(supply_config['hot_water']) and supply_config['hot_water']['scale'] == 'DISTRICT'
+    cs_district = bool(supply_config['space_cooling']) and supply_config['space_cooling']['scale'] == 'DISTRICT'
 
     hs_booster = supply_config['space_heating_booster'] is not None
     dhw_booster = supply_config['hot_water_booster'] is not None

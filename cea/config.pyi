@@ -85,6 +85,7 @@ class Configuration:
     plots_solar: PlotsSolarSection
     plots_cost_breakdown: PlotsCostBreakdownSection
     plots_cost_sankey: PlotsCostSankeySection
+    plots_energy_sankey: PlotsEnergySankeySection
 
     # Common general section parameters (frequently accessed)
     project: str
@@ -240,6 +241,8 @@ class Configuration:
     def __getattr__(self, item: Literal["plots_cost_breakdown"]) -> PlotsCostBreakdownSection: ...
     @overload
     def __getattr__(self, item: Literal["plots_cost_sankey"]) -> PlotsCostSankeySection: ...
+    @overload
+    def __getattr__(self, item: Literal["plots_energy_sankey"]) -> PlotsEnergySankeySection: ...
 
     # Overloads for general section parameter access
     @overload
@@ -1903,13 +1906,42 @@ class PlotsCostSankeySection(Section):
     """Typed section for plots-cost-sankey configuration"""
     what_if_name: list
     y_cost_category_to_plot: list[str]
+    capex_view: str
     y_metric_unit: str
     y_normalised_by: str
+    x_to_plot: list[str]
 
     @overload
     def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
     def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["capex_view"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["x_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PlotsEnergySankeySection(Section):
+    """Typed section for plots-energy-sankey configuration"""
+    plot_title: Optional[str]
+    what_if_name: list
+    x_to_plot: list[str]
+    y_service_category_to_plot: list[str]
+    y_metric_unit: str
+    y_normalised_by: str
+
+    @overload
+    def __getattr__(self, item: Literal["plot_title"]) -> Optional[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
+    @overload
+    def __getattr__(self, item: Literal["x_to_plot"]) -> list[str]: ...  # choices: district, building
+    @overload
+    def __getattr__(self, item: Literal["y_service_category_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload

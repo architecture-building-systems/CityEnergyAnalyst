@@ -447,10 +447,9 @@ class bar_plot:
 
         # About background color and dimensions
         fig.update_layout(
-            plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),       # Inside the plotting area
-            paper_bgcolor="white",      # Entire figure background (including margins)
-            width=1000,  # Set plot width in pixels
-            height=600,  # Set plot height in pixels
+            plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),
+            paper_bgcolor="white",
+            autosize=True,
         )
 
         # About the grid color and bar gaps
