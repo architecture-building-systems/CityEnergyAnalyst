@@ -1532,6 +1532,115 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
         return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
 
 
+class ComponentMultiChoiceParameter(MultiChoiceParameter):
+    """
+    Multi-choice parameter that dynamically lists supply components found in
+    configuration.json for the selected what-if scenarios and scale.
+
+    Depends on sibling parameters `what-if-name` and `scale` in the same section.
+    Choices = intersection of components across all selected what-if scenarios,
+    filtered by selected scale(s):
+      - 'district' -> components from plants section of configuration.json
+      - 'building' -> components from buildings section of configuration.json
+    """
+
+    def initialize(self, parser):
+        self.help = parser.get(self.section.name, f"{self.name}.help", fallback="")
+        self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable", fallback=True)
+        self.depends_on = [
+            f'{self.section.name}:what-if-name',
+            f'{self.section.name}:scale',
+        ]
+
+    @property
+    def _choices(self):
+        _component_prefix_display = [
+            ('PVT', 'PVT Panel'),
+            ('PV',  'PV Panel'),
+            ('SC',  'Solar Collector'),
+            ('BO',  'Boiler'),
+            ('HP',  'Heat Pump'),
+            ('CH',  'Chiller'),
+            ('CT',  'Cooling Tower'),
+            ('PU',  'Pump'),
+            ('HEX', 'Heat Exchanger'),
+        ]
+        _component_exact_display = {
+            'PIPES': 'Piping',
+            'GRID':  'City Grid',
+        }
+
+        def _component_display(code):
+            code = str(code).strip()
+            if code in _component_exact_display:
+                return _component_exact_display[code]
+            for prefix, label in _component_prefix_display:
+                if code.startswith(prefix):
+                    return f'{label} ({code})'
+            return code
+
+        try:
+            import json
+            section_attr = self.section.name.replace('-', '_')
+            section = getattr(self.config, section_attr)
+            what_if_names = section.what_if_name
+            scales = section.scale
+            if not what_if_names or not scales:
+                return []
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            component_sets = []
+            for whatif_name in what_if_names:
+                config_file = locator.get_analysis_configuration_file(whatif_name)
+                if not os.path.exists(config_file):
+                    continue
+                with open(config_file) as f:
+                    config_data = json.load(f)
+                components = set()
+                if 'district' in scales:
+                    for plant_cfg in config_data.get('plants', {}).values():
+                        for key in ('primary_component', 'secondary_component', 'tertiary_component'):
+                            code = plant_cfg.get(key, '')
+                            if code:
+                                components.add(_component_display(code))
+                        # Always include Pump if network exists
+                        components.add('Pump')
+                if 'building' in scales:
+                    for bconfig in config_data.get('buildings', {}).values():
+                        for svc_cfg in bconfig.values():
+                            if not isinstance(svc_cfg, dict):
+                                continue
+                            if svc_cfg.get('scale') != 'BUILDING':
+                                continue
+                            for key in ('primary_component', 'secondary_component', 'tertiary_component'):
+                                code = svc_cfg.get(key, '')
+                                if code:
+                                    components.add(_component_display(code))
+                if components:
+                    component_sets.append(components)
+            if not component_sets:
+                return []
+            shared = component_sets[0].intersection(*component_sets[1:])
+            return sorted(shared)
+        except Exception:
+            return []
+
+    def encode(self, value):
+        if not value:
+            return ''
+        if not isinstance(value, list):
+            value = [str(value).strip()]
+        return ', '.join(value)
+
+    def decode(self, value) -> list:
+        if not value or str(value).strip() == '':
+            return []
+        choices_set = set(self._choices)
+        result = [v.strip() for v in str(value).split(',') if v.strip()]
+        if choices_set:
+            result = [v for v in result if v in choices_set]
+        return result
+
+
 class MultiChoiceFeedstockParameter(MultiChoiceParameter):
     """
     Parameter for selecting feedstock options from available feedstock CSV files.

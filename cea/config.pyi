@@ -86,6 +86,7 @@ class Configuration:
     plots_cost_breakdown: PlotsCostBreakdownSection
     plots_cost_sankey: PlotsCostSankeySection
     plots_energy_sankey: PlotsEnergySankeySection
+    plots_ldc_component: PlotsLdcComponentSection
 
     # Common general section parameters (frequently accessed)
     project: str
@@ -243,6 +244,8 @@ class Configuration:
     def __getattr__(self, item: Literal["plots_cost_sankey"]) -> PlotsCostSankeySection: ...
     @overload
     def __getattr__(self, item: Literal["plots_energy_sankey"]) -> PlotsEnergySankeySection: ...
+    @overload
+    def __getattr__(self, item: Literal["plots_ldc_component"]) -> PlotsLdcComponentSection: ...
 
     # Overloads for general section parameter access
     @overload
@@ -1946,6 +1949,26 @@ class PlotsEnergySankeySection(Section):
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PlotsLdcComponentSection(Section):
+    """Typed section for plots-ldc-component configuration"""
+    what_if_name: list
+    scale: list[str]
+    components: list[str]
+    buildings: list[str]
+    y_metric_unit: str
+
+    @overload
+    def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
+    @overload
+    def __getattr__(self, item: Literal["scale"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["components"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class Parameter:

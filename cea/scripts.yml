@@ -976,3 +976,14 @@ Visualisation:
     input-files:
       - [get_final_energy_buildings_file, 'plots-energy-sankey:what-if-name']
       - [get_zone_geometry]
+
+  - name: plot-ldc-component
+    label: Plot - Load Duration Curve by Component
+    short_description: Load duration curves for supply components from final energy results
+    description: Generates one load duration curve per selected supply component, showing annual hourly loads sorted from peak to minimum. Supports comparison across multiple what-if scenarios.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.ldc_component
+    parameters: ['general:scenario', plots-ldc-component]
+    input-files:
+      - [get_final_energy_buildings_file, 'plots-ldc-component:what-if-name']
+      - [get_zone_geometry]
