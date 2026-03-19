@@ -246,17 +246,21 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
 
         total_input = 0.0
         total_pumping = 0.0
+        total_thermal = 0.0
         for fpath in plant_files:
             plant_df = pd.read_csv(fpath)
             if carrier_col in plant_df.columns:
                 total_input += plant_df[carrier_col].sum()
             if 'plant_pumping_GRID_kWh' in plant_df.columns:
                 total_pumping += plant_df['plant_pumping_GRID_kWh'].sum()
+            if 'thermal_load_kWh' in plant_df.columns:
+                total_thermal += plant_df['thermal_load_kWh'].sum()
 
-        if total_input > 0 or total_pumping > 0:
+        if total_input > 0 or total_pumping > 0 or total_thermal > 0:
             if network_type in totals:
                 totals[network_type]['input_kWh'] += total_input
                 totals[network_type]['pumping_kWh'] += total_pumping
+                totals[network_type]['thermal_load_kWh'] += total_thermal
             else:
                 totals[network_type] = {
                     '_carrier_raw': carrier_raw,
@@ -264,6 +268,7 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
                     'component': _component_display(component_code) if component_code else '',
                     'input_kWh': total_input,
                     'pumping_kWh': total_pumping,
+                    'thermal_load_kWh': total_thermal,
                 }
 
     return totals
@@ -425,6 +430,32 @@ def load_energy_flow_data(locator, whatif_name):
                         '_has_plant_data':    False,
                     })
 
+    # ── District thermal network losses (plant output − building receipts) ────
+    for nt, pt in plant_totals.items():
+        thermal_load = pt.get('thermal_load_kWh', 0.0)
+        if thermal_load <= 0:
+            continue
+        receipts = sum(
+            r['value_kWh'] for r in records
+            if r.get('scale') == 'District'
+            and r.get('network') == nt
+            and r.get('service') != 'Distribution'
+        )
+        thermal_loss = thermal_load - receipts
+        if thermal_loss > 0:
+            records.append({
+                'primary_carrier':    pt['carrier'],
+                '_carrier_raw':       pt['_carrier_raw'],
+                'plant_component':    pt.get('component', ''),
+                'network':            nt,
+                'building_component': '',
+                'scale':              'District',
+                'service':            'Distribution',
+                'value_kWh':          thermal_loss,
+                'plant_input_kWh':    0.0,
+                '_has_plant_data':    True,
+            })
+
     if not records:
         cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
                 'building_component', 'scale', 'service', 'value_kWh',
@@ -511,11 +542,11 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     district_df = df[df['scale'] == 'District']
     building_df = df[df['scale'] == 'Building']
 
-    # ── Determine which carriers need invisible pass-through nodes ─────────
-    # A building-scale flow with no district component skips layer 1.
-    # A building-scale flow with no building component also skips layer 2.
-    # Pass-through nodes route those flows through the correct columns so
-    # links never jump over an intermediate layer (which causes visual overlap).
+    # ── Determine which pass-through nodes are needed ──────────────────────
+    # Building-scale flows with no district/building component skip those layers.
+    # District flows with no building component (e.g. thermal loss → Distribution)
+    # also skip layer 2 when show_building=True.
+    # Pass-through nodes route flows column-by-column, preventing visual overlap.
     pt_needed: set[tuple[int, str]] = set()
     for _, row in building_df.iterrows():
         carrier = row['primary_carrier']
@@ -525,26 +556,38 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         if show_building and not bc:
             pt_needed.add((2, carrier))
 
+    # District-origin pass-throughs at layer 2 (keyed by plant_component)
+    dist_pt2_needed: set[str] = set()
+    for _, row in district_df.iterrows():
+        pc = row['plant_component']
+        bc = row['building_component']
+        if show_district and show_building and pc and not bc:
+            dist_pt2_needed.add(pc)
+
     def _pt_key(layer: int, carrier: str) -> str:
         return f"__pt_{layer}_{carrier}"
+
+    def _pt_dist_key(pc: str) -> str:
+        return f"__dpt_2_{pc}"
 
     # ── Layer 0: City ──────────────────────────────────────────────────────
     carrier_set = set(df['primary_carrier'].unique())
     l0 = [c for c in _CARRIER_ORDER if c in carrier_set] + sorted(carrier_set - set(_CARRIER_ORDER))
 
-    # ── Layer 1: real district nodes + invisible pass-throughs ─────────────
+    # ── Layer 1: real district nodes + carrier pass-throughs ───────────────
     l1_real = (
         sorted(set(district_df['plant_component'].unique()) - {''})
         if show_district and not district_df.empty else []
     )
     l1_pt = [_pt_key(1, c) for c in l0 if (1, c) in pt_needed]
 
-    # ── Layer 2: real building nodes + invisible pass-throughs ─────────────
+    # ── Layer 2: real building nodes + carrier + district pass-throughs ────
     l2_real = (
         sorted(set(df['building_component'].unique()) - {''})
         if show_building else []
     )
     l2_pt = [_pt_key(2, c) for c in l0 if (2, c) in pt_needed]
+    l2_pt_dist = [_pt_dist_key(pc) for pc in sorted(dist_pt2_needed)]
 
     # ── Layer 3: End-use service ───────────────────────────────────────────
     svc_set = set(df['service'].unique())
@@ -555,7 +598,7 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     layer_specs = [
         ([(n, n) for n in l0],        0),
         ([(n, n) for n in l1_real] + [(k, '') for k in l1_pt], 1),
-        ([(n, n) for n in l2_real] + [(k, '') for k in l2_pt], 2),
+        ([(n, n) for n in l2_real] + [(k, '') for k in l2_pt] + [(k, '') for k in l2_pt_dist], 2),
         ([(n, n) for n in l3],        3),
     ]
 
@@ -583,8 +626,12 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     }
 
     def _node_colour(key, layer):
+        if key.startswith('__dpt_2_'):
+            # district-origin pass-through: colour follows plant component
+            pc_name = key[len('__dpt_2_'):]
+            return _to_rgba(_tech_colour(pc_name))
         if key.startswith('__pt_'):
-            # key format: __pt_{layer}_{carrier_display_name}
+            # carrier-based pass-through: key format __pt_{layer}_{carrier}
             pt_carrier = key.split('_', 4)[4]
             return _to_rgba(carrier_colour_map.get(pt_carrier, COLOURS_TO_RGB['grey']))
         if layer == 0:
@@ -608,30 +655,35 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
     # ── District flows: carrier → [district_comp] → [building_comp] → service
     if not district_df.empty:
-        # Layer 0→1: one link per (carrier, plant_comp) — use plant_input_kWh
-        for (carrier, pc), grp in district_df.groupby(['primary_carrier', 'plant_component']):
-            c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
-            plant_val = grp['plant_input_kWh'].iloc[0]
+        # Layer 0→1: one link per (carrier, plant_comp) — use max plant_input_kWh
+        # (thermal loss rows have plant_input_kWh=0; max picks the real electricity value)
+        for (d_carrier, pc), grp in district_df.groupby(['primary_carrier', 'plant_component']):
+            c_colour = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
+            plant_val = grp['plant_input_kWh'].max()
             if show_district and pc and pc in idx:
-                add_link(carrier, pc, plant_val, c_colour)
+                add_link(d_carrier, pc, plant_val, c_colour)
 
         # Layer 1→2→3: per row
         for _, row in district_df.iterrows():
-            carrier = row['primary_carrier']
+            d_carrier = row['primary_carrier']
             pc = row['plant_component']
             bc = row['building_component']
             service = row['service']
-            val = row['value_kWh']
-            c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
+            d_val = row['value_kWh']
+            c_colour = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
             pc_colour = _tech_colour(pc) if pc else c_colour
             bc_colour = _tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
 
-            prev, prev_colour = (pc, pc_colour) if (show_district and pc and pc in idx) else (carrier, c_colour)
+            prev, prev_colour = (pc, pc_colour) if (show_district and pc and pc in idx) else (d_carrier, c_colour)
             if show_building and bc and bc in idx:
-                add_link(prev, bc, val, prev_colour)
-                add_link(bc, service, val, bc_colour)
+                add_link(prev, bc, d_val, prev_colour)
+                add_link(bc, service, d_val, bc_colour)
+            elif show_building and pc in dist_pt2_needed:
+                # District flow with no bc skips building layer — route through pass-through
+                add_link(prev, _pt_dist_key(pc), d_val, prev_colour)
+                add_link(_pt_dist_key(pc), service, d_val, prev_colour)
             else:
-                add_link(prev, service, val, prev_colour)
+                add_link(prev, service, d_val, prev_colour)
 
     # ── Building-scale flows: route through pass-through nodes to avoid skips
     for _, row in building_df.iterrows():
