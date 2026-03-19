@@ -1554,32 +1554,8 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
 
     @property
     def _choices(self):
-        _component_prefix_display = [
-            ('PVT', 'PVT Panel'),
-            ('PV',  'PV Panel'),
-            ('SC',  'Solar Collector'),
-            ('BO',  'Boiler'),
-            ('HP',  'Heat Pump'),
-            ('CH',  'Chiller'),
-            ('CT',  'Cooling Tower'),
-            ('PU',  'Pump'),
-            ('HEX', 'Heat Exchanger'),
-        ]
-        _component_exact_display = {
-            'PIPES': 'Piping',
-            'GRID':  'City Grid',
-        }
-
-        def _component_display(code):
-            code = str(code).strip()
-            if code in _component_exact_display:
-                return _component_exact_display[code]
-            for prefix, label in _component_prefix_display:
-                if code.startswith(prefix):
-                    return f'{label} ({code})'
-            return code
-
         try:
+            from cea.visualisation.format.plot_colours import component_display as _component_display
             import json
             section_attr = self.section.name.replace('-', '_')
             section = getattr(self.config, section_attr)

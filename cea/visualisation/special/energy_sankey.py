@@ -23,7 +23,11 @@ import pandas as pd
 import plotly.graph_objects as go
 import cea.config
 from cea.inputlocator import InputLocator
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.visualisation.format.plot_colours import (
+    COLOURS_TO_RGB,
+    component_display,
+    component_tech_colour,
+)
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -79,54 +83,6 @@ _SCALE_COLOURS = {
 }
 
 # ── Layer 2: components ───────────────────────────────────────────────────────
-
-_COMPONENT_PREFIX_DISPLAY = [
-    ('PVT', 'PVT Panel'),
-    ('PV',  'PV Panel'),
-    ('SC',  'Solar Collector'),
-    ('BO',  'Boiler'),
-    ('HP',  'Heat Pump'),
-    ('CH',  'Chiller'),
-    ('CT',  'Cooling Tower'),
-    ('PU',  'Pump'),
-    ('HEX', 'Heat Exchanger'),
-]
-
-_COMPONENT_EXACT_DISPLAY = {
-    'PIPES': 'Piping',
-    'GRID':  'City Grid',
-}
-
-_TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red'],
-    'Heat Pump':       COLOURS_TO_RGB['orange'],
-    'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['blue'],
-    'Pump':            COLOURS_TO_RGB['orange'],
-    'Piping':          COLOURS_TO_RGB['grey'],
-    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid':       COLOURS_TO_RGB['purple'],
-    'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow'],
-}
-
-
-def _component_display(code):
-    code = str(code).strip()
-    if code in _COMPONENT_EXACT_DISPLAY:
-        return _COMPONENT_EXACT_DISPLAY[code]
-    for prefix, label in _COMPONENT_PREFIX_DISPLAY:
-        if code.startswith(prefix):
-            return f'{label} ({code})'
-    return code
-
-
-def _tech_colour(display_label):
-    for base, colour in _TECH_COLOURS.items():
-        if display_label.startswith(base):
-            return colour
-    return COLOURS_TO_RGB['grey']
 
 
 # ── Layer 3: services ─────────────────────────────────────────────────────────
@@ -265,7 +221,7 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
                 totals[network_type] = {
                     '_carrier_raw': carrier_raw,
                     'carrier': _carrier_display(carrier_raw),
-                    'component': _component_display(component_code) if component_code else '',
+                    'component': component_display(component_code) if component_code else '',
                     'input_kWh': total_input,
                     'pumping_kWh': total_pumping,
                     'thermal_load_kWh': total_thermal,
@@ -381,13 +337,13 @@ def load_energy_flow_data(locator, whatif_name):
                     # No plant files: fall back to network carrier as entry point
                     carrier_raw = network_type  # 'DC' or 'DH'
                     carrier = _carrier_display(carrier_raw)
-                    plant_comp = _component_display(svc_config.get('primary_component', ''))
+                    plant_comp = component_display(svc_config.get('primary_component', ''))
                     plant_input = val
                     has_plant = False
 
                 building_comp = svc_config.get('tertiary_component') or ''
                 if building_comp:
-                    building_comp = _component_display(building_comp)
+                    building_comp = component_display(building_comp)
 
                 records.append({
                     'primary_carrier':    carrier,
@@ -415,7 +371,7 @@ def load_energy_flow_data(locator, whatif_name):
                         continue
 
                     carrier_raw = col[len(col_prefix) + 1:-4]
-                    comp = _component_display(component_code) if carrier_raw == primary_carrier_raw else ''
+                    comp = component_display(component_code) if carrier_raw == primary_carrier_raw else ''
 
                     records.append({
                         'primary_carrier':    _carrier_display(carrier_raw),
@@ -629,7 +585,7 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         if key.startswith('__dpt_2_'):
             # district-origin pass-through: colour follows plant component
             pc_name = key[len('__dpt_2_'):]
-            return _to_rgba(_tech_colour(pc_name))
+            return _to_rgba(component_tech_colour(pc_name))
         if key.startswith('__pt_'):
             # carrier-based pass-through: key format __pt_{layer}_{carrier}
             pt_carrier = key.split('_', 4)[4]
@@ -637,7 +593,7 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         if layer == 0:
             return carrier_colour_map.get(key, COLOURS_TO_RGB['grey'])
         if layer in (1, 2):
-            return _tech_colour(key)
+            return component_tech_colour(key)
         return _SERVICE_COLOURS.get(key, COLOURS_TO_RGB['grey'])
 
     node_colors = [_node_colour(k, lyr) for k, lyr in zip(node_keys, node_layer)]
@@ -671,8 +627,8 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
             service = row['service']
             d_val = row['value_kWh']
             c_colour = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
-            pc_colour = _tech_colour(pc) if pc else c_colour
-            bc_colour = _tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
+            pc_colour = component_tech_colour(pc) if pc else c_colour
+            bc_colour = component_tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
 
             prev, prev_colour = (pc, pc_colour) if (show_district and pc and pc in idx) else (d_carrier, c_colour)
             if show_building and bc and bc in idx:
@@ -692,7 +648,7 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         service = row['service']
         val = row['value_kWh']
         c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
-        bc_colour = _tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
+        bc_colour = component_tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
 
         prev, prev_colour = carrier, c_colour
 

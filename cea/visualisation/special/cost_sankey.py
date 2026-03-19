@@ -20,7 +20,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import cea.config
 from cea.inputlocator import InputLocator
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.visualisation.format.plot_colours import (
+    COLOURS_TO_RGB,
+    COMPONENT_TECH_COLOURS,
+    component_display,
+    component_tech_colour,
+)
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -85,51 +90,9 @@ def _service_group(raw):
 
 # ── Layer 1: technologies ─────────────────────────────────────────────────────
 
-_COMPONENT_PREFIX_DISPLAY = [
-    ('PVT', 'PVT Panel'),
-    ('PV',  'PV Panel'),
-    ('SC',  'Solar Collector'),
-    ('BO',  'Boiler'),
-    ('HP',  'Heat Pump'),
-    ('CH',  'Chiller'),
-    ('CT',  'Cooling Tower'),
-    ('PU',  'Pump'),
-    ('HEX', 'Heat Exchanger'),
-]
-
-_COMPONENT_EXACT_DISPLAY = {
-    'PIPES': 'Piping',
-    'GRID':  'City Grid',
-}
-
-_TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red'],
-    'Heat Pump':       COLOURS_TO_RGB['orange'],
-    'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['blue'],
-    'Pump':            COLOURS_TO_RGB['orange'],
-    'Piping':          COLOURS_TO_RGB['grey'],
-    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid': COLOURS_TO_RGB['purple'],
-    'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow'],
-}
-
-
-def _component_display(code):
-    """Map a component code to a readable technology label."""
-    code = str(code).strip()
-    if code in _COMPONENT_EXACT_DISPLAY:
-        return _COMPONENT_EXACT_DISPLAY[code]
-    for prefix, label in _COMPONENT_PREFIX_DISPLAY:
-        if code.startswith(prefix):
-            return f'{label} ({code})'
-    return code
-
 
 def _tech_base_type(display_label):
-    for base in _TECH_COLOURS:
+    for base in COMPONENT_TECH_COLOURS:
         if display_label.startswith(base):
             return base
     return None
@@ -137,7 +100,7 @@ def _tech_base_type(display_label):
 
 def _tech_colour(display_label):
     base = _tech_base_type(display_label)
-    return _TECH_COLOURS.get(base, COLOURS_TO_RGB['grey'])
+    return COMPONENT_TECH_COLOURS.get(base, COLOURS_TO_RGB['grey'])
 
 
 # ── Layer 2: cost detail nodes ────────────────────────────────────────────────
@@ -242,7 +205,7 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         return None
 
     df['_service_group'] = df['service'].fillna('Unknown').apply(_service_group)
-    df['_tech_display']  = df['component_code'].fillna('Unknown').apply(_component_display)
+    df['_tech_display']  = df['component_code'].fillna('Unknown').apply(component_display)
 
     # Column → detail label mapping (insertion order preserved)
     col_to_label = {}

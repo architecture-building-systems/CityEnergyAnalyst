@@ -17,7 +17,11 @@ import pandas as pd
 import plotly.graph_objects as go
 import cea.config
 from cea.inputlocator import InputLocator
-from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.visualisation.format.plot_colours import (
+    COLOURS_TO_RGB,
+    component_display as _component_display,
+    component_tech_colour as _tech_colour,
+)
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -29,50 +33,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# ── component display helpers ─────────────────────────────────────────────────
-
-_COMPONENT_PREFIX_DISPLAY = [
-    ('PVT', 'PVT Panel'),
-    ('PV',  'PV Panel'),
-    ('SC',  'Solar Collector'),
-    ('BO',  'Boiler'),
-    ('HP',  'Heat Pump'),
-    ('CH',  'Chiller'),
-    ('CT',  'Cooling Tower'),
-    ('PU',  'Pump'),
-    ('HEX', 'Heat Exchanger'),
-]
-
-_COMPONENT_EXACT_DISPLAY = {
-    'PIPES': 'Piping',
-    'GRID':  'City Grid',
-}
-
-
-def _component_display(code):
-    code = str(code).strip()
-    if code in _COMPONENT_EXACT_DISPLAY:
-        return _COMPONENT_EXACT_DISPLAY[code]
-    for prefix, label in _COMPONENT_PREFIX_DISPLAY:
-        if code.startswith(prefix):
-            return f'{label} ({code})'
-    return code
-
-
 # ── colours ───────────────────────────────────────────────────────────────────
-
-_TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red'],
-    'Heat Pump':       COLOURS_TO_RGB['orange'],
-    'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['blue'],
-    'Pump':            COLOURS_TO_RGB['orange'],
-    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid':       COLOURS_TO_RGB['purple'],
-    'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow'],
-}
 
 # Whatif line colours for multi-scenario comparison
 _WHATIF_COLOURS = [
@@ -94,14 +55,8 @@ _CONFIG_KEY_COL_PREFIX = {
 }
 
 
-def _tech_colour(display_label):
-    for base, colour in _TECH_COLOURS.items():
-        if display_label.startswith(base):
-            return colour
-    return COLOURS_TO_RGB['grey']
-
-
 def _to_rgba(rgb_str, alpha=0.2):
+
     return rgb_str.replace('rgb(', 'rgba(').replace(')', f',{alpha})')
 
 
@@ -309,15 +264,19 @@ def build_ldc_fig(component_display, data_by_whatif, unit, unit_divisor):
     """
     fig = go.Figure()
 
+    multi_scenario = len(data_by_whatif) > 1
     for wi_idx, (whatif_name, series_dict) in enumerate(data_by_whatif.items()):
-        colour = _WHATIF_COLOURS[wi_idx % len(_WHATIF_COLOURS)]
         for label, hourly in series_dict.items():
             sorted_vals = np.sort(hourly)[::-1] / unit_divisor
             x = np.linspace(0, 100, len(sorted_vals))
-            if len(data_by_whatif) > 1 or len(series_dict) > 1:
+            if multi_scenario or len(series_dict) > 1:
                 name = f"{whatif_name} \u2014 {label}"
             else:
                 name = whatif_name
+            if multi_scenario:
+                colour = _WHATIF_COLOURS[wi_idx % len(_WHATIF_COLOURS)]
+            else:
+                colour = _tech_colour(component_display)
             fig.add_trace(go.Scatter(
                 x=x,
                 y=sorted_vals,

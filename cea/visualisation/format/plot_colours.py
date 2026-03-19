@@ -350,6 +350,60 @@ def get_column_color(column_name):
     return _BASE_COLUMN_COLORS.get(base_name, "grey")
 
 
+# ── Component display helpers ─────────────────────────────────────────────────
+
+COMPONENT_PREFIX_DISPLAY = [
+    ('PVT', 'PVT Panel'),
+    ('PV',  'PV Panel'),
+    ('SC',  'Solar Collector'),
+    ('BO',  'Boiler'),
+    ('HP',  'Heat Pump'),
+    ('CH',  'Chiller'),
+    ('CT',  'Cooling Tower'),
+    ('PU',  'Pump'),
+    ('HEX', 'Heat Exchanger'),
+]
+
+COMPONENT_EXACT_DISPLAY = {
+    'PIPES': 'Piping',
+    'GRID':  'City Grid',
+}
+
+
+def component_display(code):
+    """Map a component code (e.g. 'CH1', 'BO2') to a human-readable display name."""
+    code = str(code).strip()
+    if code in COMPONENT_EXACT_DISPLAY:
+        return COMPONENT_EXACT_DISPLAY[code]
+    for prefix, label in COMPONENT_PREFIX_DISPLAY:
+        if code.startswith(prefix):
+            return f'{label} ({code})'
+    return code
+
+
+COMPONENT_TECH_COLOURS = {
+    'Boiler':          COLOURS_TO_RGB['red'],
+    'Heat Pump':       COLOURS_TO_RGB['orange'],
+    'Chiller':         COLOURS_TO_RGB['blue'],
+    'Cooling Tower':   COLOURS_TO_RGB['blue'],
+    'Pump':            COLOURS_TO_RGB['orange'],
+    'Piping':          COLOURS_TO_RGB['grey'],
+    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
+    'City Grid':       COLOURS_TO_RGB['purple'],
+    'PV Panel':        COLOURS_TO_RGB['yellow'],
+    'Solar Collector': COLOURS_TO_RGB['yellow'],
+    'PVT Panel':       COLOURS_TO_RGB['yellow'],
+}
+
+
+def component_tech_colour(display_label):
+    """Return the RGB colour string for a component display label."""
+    for base, colour in COMPONENT_TECH_COLOURS.items():
+        if display_label.startswith(base):
+            return colour
+    return COLOURS_TO_RGB['grey']
+
+
 # Generate the full COLUMNS_TO_COLOURS dict for backward compatibility
 COLUMNS_TO_COLOURS = {}
 for base_name, color in _BASE_COLUMN_COLORS.items():
