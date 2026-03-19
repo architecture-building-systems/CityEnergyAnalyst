@@ -147,6 +147,7 @@ _SERVICE_ORDER = [
     'Space Heating',
     'Domestic Hot Water',
     'Space Cooling',
+    'Distribution',
 ]
 
 _SERVICE_COLOURS = {
@@ -154,6 +155,7 @@ _SERVICE_COLOURS = {
     'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
     'Space Cooling':      COLOURS_TO_RGB['blue_light'],
     'Electricity':        COLOURS_TO_RGB['green_light'],
+    'Distribution':       COLOURS_TO_RGB['grey_light'],
 }
 
 # Maps config parameter choice → service display name
@@ -162,6 +164,7 @@ _SERVICE_DISPLAY = {
     'domestic_hot_water': 'Domestic Hot Water',
     'space_cooling':      'Space Cooling',
     'electricity':        'Electricity',
+    'distribution':       'Distribution',
 }
 
 # Maps configuration.json key → (service display name, B####.csv column prefix)
@@ -242,20 +245,25 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
         )
 
         total_input = 0.0
+        total_pumping = 0.0
         for fpath in plant_files:
-            df = pd.read_csv(fpath)
-            if carrier_col in df.columns:
-                total_input += df[carrier_col].sum()
+            plant_df = pd.read_csv(fpath)
+            if carrier_col in plant_df.columns:
+                total_input += plant_df[carrier_col].sum()
+            if 'plant_pumping_GRID_kWh' in plant_df.columns:
+                total_pumping += plant_df['plant_pumping_GRID_kWh'].sum()
 
-        if total_input > 0:
+        if total_input > 0 or total_pumping > 0:
             if network_type in totals:
                 totals[network_type]['input_kWh'] += total_input
+                totals[network_type]['pumping_kWh'] += total_pumping
             else:
                 totals[network_type] = {
                     '_carrier_raw': carrier_raw,
                     'carrier': _carrier_display(carrier_raw),
                     'component': _component_display(component_code) if component_code else '',
                     'input_kWh': total_input,
+                    'pumping_kWh': total_pumping,
                 }
 
     return totals
@@ -294,6 +302,23 @@ def load_energy_flow_data(locator, whatif_name):
     plant_totals = _load_plant_totals(locator, whatif_name, plant_configs, building_configs)
 
     records = []
+
+    # ── District pumping rows (one per network type) ───────────────────────
+    for network_type, pt in plant_totals.items():
+        pumping = pt.get('pumping_kWh', 0.0)
+        if pumping > 0:
+            records.append({
+                'primary_carrier':    'Electricity Grid',
+                '_carrier_raw':       'GRID',
+                'plant_component':    'Pump',
+                'network':            network_type,
+                'building_component': '',
+                'scale':              'District',
+                'service':            'Distribution',
+                'value_kWh':          pumping,
+                'plant_input_kWh':    pumping,
+                '_has_plant_data':    True,
+            })
 
     for building, bconfig in building_configs.items():
         bfile = locator.get_final_energy_building_file(building, whatif_name)
