@@ -897,25 +897,27 @@ def create_sankey_fig(sankey_data, title, unit_label):
             ),
         ),
     ))
-    # ── Column labels at the bottom ────────────────────────────────────────
-    # l2 (booster/standalone) and l3 (HEX/distribution) are both building-side
-    # components, so they share one "Building" label centred between them.
-    building_x = (_LAYER_X[2] + _LAYER_X[3]) / 2
+    # ── Column labels and divider lines ────────────────────────────────────
+    # End-use services belong to the Building zone, so Building spans l2–l4.
+    # City | District | Building (l2 + l3 + l4)
+    building_label_x = (_LAYER_X[2] + _LAYER_X[4]) / 2
     column_labels = [
-        ('City',            _LAYER_X[0]),
-        ('District',        _LAYER_X[1]),
-        ('Building',        building_x),
-        ('End-use Service', _LAYER_X[4]),
+        ('City',     _LAYER_X[0]),
+        ('District', _LAYER_X[1]),
+        ('Building', building_label_x),
     ]
     visible_xs = set(
         x for lbl, x in zip(sankey_data['node_labels'], sankey_data['node_x'])
         if lbl != ''
     )
-    # Building label is visible when either l2 or l3 has nodes
-    building_visible = _LAYER_X[2] in visible_xs or _LAYER_X[3] in visible_xs
     annotations = []
     for lbl, x in column_labels:
-        show = building_visible if lbl == 'Building' else x in visible_xs
+        if lbl == 'Building':
+            show = any(
+                _LAYER_X[i] in visible_xs for i in (2, 3, 4)
+            )
+        else:
+            show = x in visible_xs
         if show:
             annotations.append(dict(
                 x=x, y=-0.08,
@@ -923,6 +925,24 @@ def create_sankey_fig(sankey_data, title, unit_label):
                 text=f'<b>{lbl}</b>',
                 showarrow=False,
                 font=dict(size=12, color=COLOURS_TO_RGB['grey']),
+            ))
+
+    # Dashed vertical dividers between City/District and District/Building.
+    # Only draw a divider when nodes exist on both sides.
+    dividers = [
+        (_LAYER_X[0], _LAYER_X[1]),  # City | District
+        (_LAYER_X[1], _LAYER_X[2]),  # District | Building
+    ]
+    shapes = []
+    for x_left, x_right in dividers:
+        if x_left in visible_xs and x_right in visible_xs:
+            shapes.append(dict(
+                type='line',
+                x0=(x_left + x_right) / 2,
+                x1=(x_left + x_right) / 2,
+                y0=0.02, y1=0.98,
+                xref='paper', yref='paper',
+                line=dict(color='rgba(150,150,150,0.5)', width=1, dash='dash'),
             ))
 
     fig.update_layout(
@@ -933,6 +953,7 @@ def create_sankey_fig(sankey_data, title, unit_label):
         paper_bgcolor=COLOURS_TO_RGB['white'],
         margin=dict(l=20, r=20, t=60, b=60),
         annotations=annotations,
+        shapes=shapes,
     )
     return fig
 
