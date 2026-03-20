@@ -624,7 +624,7 @@ def load_energy_flow_data(locator, whatif_name):
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
-def build_sankey_data(df, service_filter, unit_divisor):
+def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=True):
     """
     Build a 5-layer Sankey: City → District → Building → Distribution → End-use service.
 
@@ -821,11 +821,16 @@ def build_sankey_data(df, service_filter, unit_divisor):
     # plant_input_kWh = carrier energy consumed (irradiation for solar, = value_kWh otherwise).
     # Using plant_input_kWh for the carrier→component link creates an unequal node width
     # that implicitly shows conversion efficiency (e.g. solar panel COP).
+    # When use_solar_irradiation is False, treat carrier_kWh == value_kWh for Solar rows
+    # so solar nodes appear with equal in/out widths (no efficiency visualisation).
     b_path_agg = (
         building_df
         .groupby(['primary_carrier', 'building_component', 'service'], as_index=False)
         .agg(value_kWh=('value_kWh', 'sum'), carrier_kWh=('plant_input_kWh', 'sum'))
     )
+    if not use_solar_irradiation:
+        is_solar = b_path_agg['primary_carrier'] == 'Solar'
+        b_path_agg.loc[is_solar, 'carrier_kWh'] = b_path_agg.loc[is_solar, 'value_kWh']
     for _, row in b_path_agg.iterrows():
         carrier      = row['primary_carrier']
         bc           = row['building_component']
@@ -1009,6 +1014,7 @@ def main(config: cea.config.Configuration):
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1_000)
     unit_label = y_metric_unit
     custom_title = plot_config.plot_title
+    use_solar_irradiation = getattr(plot_config, 'use_solar_irradiation', True)
 
     html_outputs = []
     for whatif_name in whatif_names:
@@ -1025,7 +1031,7 @@ def main(config: cea.config.Configuration):
             continue
 
         df = load_energy_flow_data(locator, whatif_name)
-        sankey_data = build_sankey_data(df, service_filter, unit_divisor)
+        sankey_data = build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation)
         if sankey_data is None:
             html_outputs.append(
                 f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
