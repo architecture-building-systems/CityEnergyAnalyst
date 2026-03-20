@@ -28,7 +28,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def run_multi_phase(config: "Configuration", locator: "InputLocator", network_names: List[str]):
+def run_multi_phase(config: "Configuration", locator: "InputLocator", network_names: List[str],
+                    model_type: str = 'simplified'):
     """
     Main entry point for multi-phase thermal network simulation and optimisation.
 
@@ -41,6 +42,7 @@ def run_multi_phase(config: "Configuration", locator: "InputLocator", network_na
     :param config: Configuration object
     :param locator: InputLocator object
     :param network_names: List of network layout names (one per phase)
+    :param model_type: 'simplified' or 'detailed'
     """
     print("\n" + "="*80)
     print("MULTI-PHASE THERMAL NETWORK OPTIMISATION")
@@ -53,7 +55,7 @@ def run_multi_phase(config: "Configuration", locator: "InputLocator", network_na
 
     # Step 2: Simulate each phase
     print("\nStep 2: Simulating thermal-hydraulic performance for each phase...")
-    phase_results = simulate_all_phases(config, locator, phases)
+    phase_results = simulate_all_phases(config, locator, phases, model_type=model_type)
 
     # Step 3: Optimise pipe sizing
     print("\nStep 3: Optimising pipe sizing across phases...")
@@ -65,7 +67,7 @@ def run_multi_phase(config: "Configuration", locator: "InputLocator", network_na
     # Step 3.5: Re-run simulation with optimized DN to get accurate pressure drops and pumping energy
     print("\nStep 3.5: Re-running simulation with optimised pipe sizes...")
     phase_results_optimized = resimulate_with_optimized_dn(
-        config, locator, phases, phase_results, sizing_decisions
+        config, locator, phases, phase_results, sizing_decisions, model_type=model_type
     )
 
     # Step 4: Save results
@@ -191,7 +193,7 @@ def validate_phases(phases: List[Dict]):
     print(f"  Phase validation passed: {len(phases)} phases in chronological order")
 
 
-def simulate_all_phases(config, locator, phases: List[Dict]) -> List[Dict]:
+def simulate_all_phases(config, locator, phases: List[Dict], model_type: str = 'simplified') -> List[Dict]:
     """
     Run thermal-network simulation for each phase independently.
 
@@ -216,7 +218,7 @@ def simulate_all_phases(config, locator, phases: List[Dict]) -> List[Dict]:
         # For now, create placeholder result
         # This will be replaced with actual ThermalNetwork simulation call
 
-        phase_result = simulate_single_phase(config, locator, phase)
+        phase_result = simulate_single_phase(config, locator, phase, model_type=model_type)
         phase_results.append(phase_result)
 
         print(f"  Phase {phase['index']} simulation complete")
@@ -227,7 +229,8 @@ def simulate_all_phases(config, locator, phases: List[Dict]) -> List[Dict]:
 
 
 def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
-                                  phase_results: List[Dict], sizing_decisions: Dict) -> List[Dict]:
+                                  phase_results: List[Dict], sizing_decisions: Dict,
+                                  model_type: str = 'simplified') -> List[Dict]:
     """
     Re-run thermal network simulation for each phase using optimised pipe diameters.
 
@@ -271,7 +274,7 @@ def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
 
         # Re-run simulation with optimised DN
         try:
-            optimized_result = simulate_single_phase(config, locator, phase)
+            optimized_result = simulate_single_phase(config, locator, phase, model_type=model_type)
             optimized_phase_results.append(optimized_result)
 
             print("    Re-simulation complete with optimised DN")
@@ -285,13 +288,14 @@ def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
     return optimized_phase_results
 
 
-def simulate_single_phase(config, locator, phase: Dict) -> Dict:
+def simulate_single_phase(config, locator, phase: Dict, model_type: str = 'simplified') -> Dict:
     """
     Simulate a single phase network by calling actual thermal network simulation.
 
     :param config: Configuration object
     :param locator: InputLocator object
     :param phase: Phase dictionary
+    :param model_type: 'simplified' or 'detailed'
     :return: Phase result dictionary with actual simulation results
     """
     from cea.technologies.thermal_network.simplified.model import thermal_network_simplified
@@ -300,37 +304,56 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
     )
 
     network_name = phase['network_name']
-    network_model = config.thermal_network.network_model
     network_types = config.thermal_network.network_type
     if isinstance(network_types, list):
         network_type = network_types[0] if len(network_types) > 0 else 'DH'
     else:
         network_type = network_types or 'DH'
 
-    print(f"\n  Running {network_model} model simulation...")
+    print(f"\n  Running {model_type} model simulation...")
 
     # Run the actual thermal network simulation
     try:
-        if network_model == 'simplified':
-            # Read per-building service configuration from network layout metadata
-            nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-            metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+        if model_type == 'simplified':
+            # Read per-building service configuration from unified network_connectivity.json
+            connectivity_json_path = locator.get_network_connectivity_file(network_name)
             per_building_services = None
 
-            if os.path.exists(metadata_path):
-                with open(metadata_path, 'r') as f:
-                    metadata = json.load(f)
+            if os.path.exists(connectivity_json_path):
+                # Read from unified network_connectivity.json
+                with open(connectivity_json_path, 'r') as f:
+                    connectivity_data = json.load(f)
 
-                # Convert lists back to sets
-                per_building_services = {
-                    building: set(services)
-                    for building, services in metadata['per_building_services'].items()
-                }
+                # Extract per-building services for this network type
+                if network_type in connectivity_data.get('networks', {}):
+                    network_data = connectivity_data['networks'][network_type]
+                    per_building_services_dict = network_data.get('per_building_services', {})
+
+                    if per_building_services_dict:
+                        # Convert lists back to sets
+                        per_building_services = {
+                            building: set(services)
+                            for building, services in per_building_services_dict.items()
+                        }
+            else:
+                # Fallback: Try legacy building_services.json location
+                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
+                legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+                if os.path.exists(legacy_metadata_path):
+                    with open(legacy_metadata_path, 'r') as f:
+                        metadata = json.load(f)
+
+                    # Convert lists back to sets
+                    per_building_services = {
+                        building: set(services)
+                        for building, services in metadata['per_building_services'].items()
+                    }
 
             thermal_network_simplified(locator, config, network_type, network_name,
                                       per_building_services=per_building_services)
 
-        elif network_model == 'detailed':
+        elif model_type == 'detailed':
             check_heating_cooling_demand(locator, config)
 
             # Create a per-network config section with the correct network_type
@@ -343,6 +366,8 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
                                'use_representative_week_per_month', 'minimum_mass_flow_iteration_limit',
                                'minimum_edge_mass_flow', 'diameter_iteration_limit',
                                'substation_cooling_systems', 'substation_heating_systems',
+                               'network_temperature_dh', 'network_temperature_dc',
+                               'dh_temperature_mode',
                                'temperature_control', 'plant_supply_temperature', 'equivalent_length_factor']:
                         if hasattr(base_config, attr):
                             setattr(self, attr, getattr(base_config, attr))
@@ -351,7 +376,7 @@ def simulate_single_phase(config, locator, phase: Dict) -> Dict:
             thermal_network = ThermalNetwork(locator, network_name, per_network_config)
             thermal_network_main(locator, thermal_network, processes=config.get_number_of_processes())
         else:
-            raise RuntimeError(f"Unknown network model: {network_model}")
+            raise RuntimeError(f"Unknown model type: {model_type}")
 
     except Exception as e:
         print(f"  Warning: Simulation failed: {e}")

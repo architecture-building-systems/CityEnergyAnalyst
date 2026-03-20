@@ -335,7 +335,23 @@ class EnergyCarrier:
         thermal_ecs_of_subtype = EnergyCarrier._thermal_energy_carriers[energy_carrier_subtype]
         thermal_ec_mean_quals = pd.to_numeric(thermal_ecs_of_subtype['mean_qual'])
         if not np.isnan(temperature):
-            index_closest_mean_temp = (thermal_ec_mean_quals - temperature).abs().nsmallest(n=1).index[0]
+            # Find closest temperature match
+            # When there's a tie (e.g., 80°C is equidistant from 60°C and 100°C),
+            # prefer the LOWER temperature to minimise energy waste
+            distances = (thermal_ec_mean_quals - temperature).abs()
+            min_distance = distances.min()
+
+            # Get all indices with minimum distance
+            tied_indices = distances[distances == min_distance].index
+
+            if len(tied_indices) > 1:
+                # Multiple carriers at same distance - choose the one with LOWER temperature
+                tied_temps = thermal_ec_mean_quals.loc[tied_indices]
+                index_closest_mean_temp = tied_temps.idxmin()
+            else:
+                # Single closest match
+                index_closest_mean_temp = tied_indices[0]
+
             energy_carrier_code = thermal_ecs_of_subtype['code'].loc[index_closest_mean_temp]
         else:
             energy_carrier_code = thermal_ecs_of_subtype['code'].iloc[0]

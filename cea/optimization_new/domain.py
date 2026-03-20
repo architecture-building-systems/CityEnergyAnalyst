@@ -117,7 +117,15 @@ class Domain(object):
                 # Only check demand energy carrier for standalone buildings with actual demand
                 # District buildings get their supply from the network, not individual components
                 if has_demand and not is_district:
-                    building.check_demand_energy_carrier()
+                    try:
+                        building.check_demand_energy_carrier()
+                    except ValueError as e:
+                        # Skip buildings with incompatible network types (e.g., DH network with cooling-only building)
+                        # This can happen when loading all buildings with a specific network_type filter
+                        if "Network type mismatch" in str(e):
+                            continue
+                        else:
+                            raise
 
                 self.buildings.append(building)
 

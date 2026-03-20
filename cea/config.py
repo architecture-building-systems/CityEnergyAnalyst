@@ -374,7 +374,13 @@ class Section:
                     f"Bad parameter type in default.config: {section.name}/{name}={parameter_type}"
                 )
 
-            return globals()[parameter_type](name, section, config)
+            parameter = globals()[parameter_type](name, section, config)
+
+            # Call initialize() if the parameter class defines it
+            if hasattr(parameter, 'initialize') and callable(getattr(parameter, 'initialize')):
+                parameter.initialize(config.default_config)
+
+            return parameter
 
         return {parameter_name.lower(): construct_parameter(parameter_name.lower(), self, self.config)
                 for parameter_name in self.config.default_config.options(self.name)
@@ -803,6 +809,75 @@ class StringParameter(Parameter):
     """Default Parameter type"""""
 
 
+class WhatIfNameParameter(StringParameter):
+    """
+    Parameter for what-if scenario names with collision detection.
+    Validates in real-time to prevent overwriting existing final-energy results.
+    """
+
+    def _validate_whatif_name(self, value) -> str:
+        """
+        Validate what-if name for invalid characters and collision with existing scenarios.
+        """
+        value = value.strip()
+
+        # Check for invalid filesystem characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"What-if name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing what-if scenarios
+        scenario = self.config.scenario
+        locator = cea.inputlocator.InputLocator(scenario)
+
+        # Check if final-energy folder exists for this what-if name
+        whatif_folder = locator.get_analysis_folder(value)
+        if os.path.exists(whatif_folder):
+            raise ValueError(
+                f"What-if (sub)scenario '{value}' already exists. "
+                f"Choose a different name or delete the existing one."
+            )
+
+        return value
+
+    def encode(self, value):
+        """
+        Validate and encode what-if name.
+        Raises ValueError if name contains invalid characters or collides with existing scenario.
+        """
+        if not str(value) or str(value).strip() == '':
+            if self.nullable:
+                return ''
+            raise ValueError("What-if name is required. Please provide a valid name.")
+
+        return self._validate_whatif_name(str(value))
+
+    def decode(self, value):
+        """
+        Parse and normalize what-if name from config file.
+        Lenient parsing - only validates security concerns (filesystem characters).
+        Business rules (collision check) are enforced in encode().
+        """
+        if not value:
+            return ""
+
+        value = value.strip()
+
+        # Only validate filesystem characters (security concern)
+        # Collision check is encode's job when creating new scenarios
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"What-if name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        return value
+
+
 class NetworkLayoutNameParameter(StringParameter):
     """
     Parameter for network layout names with collision detection.
@@ -850,14 +925,18 @@ class NetworkLayoutNameParameter(StringParameter):
         return self._validate_network_name(str(value))
 
     def decode(self, value):
-        """Parse and normalize network name from config file"""
+        """
+        Parse and normalize network name from config file.
+        Lenient parsing - only validates security concerns (filesystem characters).
+        Business rules (collision check) are enforced in encode().
+        """
         if not value:
             return ""
 
         value = value.strip()
 
         # Only validate filesystem characters (security concern)
-        # Don't check collision - that's encode's job when saving
+        # Collision check is encode's job when creating new networks
         invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
         if any(char in value for char in invalid_chars):
             raise ValueError(
@@ -914,12 +993,20 @@ class ChoiceParameter(Parameter):
         return self._choices_cache
 
     def encode(self, value):
+        # Allow empty/None values if parameter is nullable
+        if self.nullable and (value is None or str(value).strip() == ''):
+            return ''
+
         if str(value) not in self._choices:
             raise ValueError(
                 f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
         return str(value)
 
     def decode(self, value):
+        # Allow empty values if parameter is nullable
+        if self.nullable and (value is None or str(value).strip() == ''):
+            return None
+
         if str(value) in self._choices:
             return str(value)
         else:
@@ -1084,8 +1171,12 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         Decode and validate value exists in available networks.
         Returns the selected value if valid, otherwise returns the most recent network as default.
 
-        If no value provided and no networks found for current network-type, try to find
-        the most recent network across ALL network types and switch network-type accordingly.
+        For nullable parameters (like network-name-dc, network-name-dh), returns empty string
+        if no networks found without error messages.
+
+        For non-nullable parameters, if no value provided and no networks found for current
+        network-type, try to find the most recent network across ALL network types and switch
+        network-type accordingly.
         """
         # Handle (none) marker - user explicitly chose no network
         if value == '(none)':
@@ -1181,6 +1272,49 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
         valid_choices = [choice for choice in choices if choice in available_networks]
 
         return valid_choices
+
+
+class WhatIfNameChoiceParameter(ChoiceParameter):
+    """
+    Parameter for selecting an existing what-if scenario name from a dropdown.
+    Scans outputs/data/analysis/ for existing subfolders.
+    """
+
+    @property
+    def _choices(self):
+        try:
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
+            if not os.path.exists(analysis_root):
+                return []
+            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+            names = sorted(
+                name for name in os.listdir(analysis_root)
+                if os.path.isdir(os.path.join(analysis_root, name))
+            )
+            if mode == 'final_energy':
+                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            return names
+        except Exception:
+            return []
+
+    def encode(self, value):
+        # Always allow empty values — the UI enforces required selection
+        if value is None or str(value).strip() == '':
+            return ''
+        value = str(value).strip()
+        choices = self._choices
+        if choices and value not in choices:
+            raise ValueError(
+                f"What-if scenario '{value}' does not exist. "
+                f"Available: {', '.join(choices) or 'none'}"
+            )
+        return value
+
+    def decode(self, value):
+        if not value:
+            return ''
+        return str(value).strip()
 
 
 class DatabasePathParameter(Parameter):
@@ -1343,6 +1477,322 @@ class MultiChoiceParameter(ChoiceParameter):
         choices = parse_string_to_list(value)
         valid_choices = set(self._choices)
         return [choice for choice in choices if choice in valid_choices]
+
+
+class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
+    """
+    Multi-choice version of WhatIfNameChoiceParameter.
+    Scans outputs/data/analysis/ for existing subfolders and allows selecting multiple.
+    Supports mode=final_energy to filter to scenarios with final-energy output.
+    """
+
+    @property
+    def _choices(self):
+        try:
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            analysis_root = os.path.dirname(locator.get_analysis_folder('__probe__'))
+            if not os.path.exists(analysis_root):
+                return []
+            mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
+            names = sorted(
+                name for name in os.listdir(analysis_root)
+                if os.path.isdir(os.path.join(analysis_root, name))
+            )
+            if mode == 'final_energy':
+                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
+            elif mode == 'heat_rejection':
+                names = [name for name in names if os.path.exists(locator.get_heat_rejection_whatif_buildings_file(name))]
+            elif mode == 'costs':
+                names = [name for name in names if os.path.exists(locator.get_costs_whatif_buildings_file(name))]
+            elif mode == 'emissions':
+                names = [name for name in names if os.path.exists(locator.get_emissions_whatif_buildings_file(name))]
+            return names
+        except Exception:
+            return []
+
+    def encode(self, value):
+        # Always allow empty — UI handles required validation
+        if not value:
+            return ''
+        if not isinstance(value, list):
+            value = [str(value).strip()]
+        choices = self._choices
+        not_in_choices = set(value) - set(choices)
+        if choices and not_in_choices:
+            raise ValueError(
+                f"What-if scenario(s) {not_in_choices} do not exist. "
+                f"Available: {', '.join(choices) or 'none'}"
+            )
+        return ', '.join(value)
+
+    def decode(self, value) -> list:
+        if not value or str(value).strip() == '':
+            return []
+        choices_set = set(self._choices)
+        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
+
+
+class ComponentMultiChoiceParameter(MultiChoiceParameter):
+    """
+    Multi-choice parameter that dynamically lists supply components found in
+    configuration.json for the selected what-if scenarios and scale.
+
+    Depends on sibling parameters `what-if-name` and `scale` in the same section.
+    Choices = intersection of components across all selected what-if scenarios,
+    filtered by selected scale(s):
+      - 'district' -> components from plants section of configuration.json
+      - 'building' -> components from buildings section of configuration.json
+    """
+
+    def initialize(self, parser):
+        self.help = parser.get(self.section.name, f"{self.name}.help", fallback="")
+        self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable", fallback=True)
+        self.depends_on = [
+            f'{self.section.name}:what-if-name',
+            f'{self.section.name}:scale',
+        ]
+
+    @property
+    def _choices(self):
+        try:
+            from cea.visualisation.format.plot_colours import component_display as _component_display
+            import json
+            section_attr = self.section.name.replace('-', '_')
+            section = getattr(self.config, section_attr)
+            what_if_names = section.what_if_name
+            scales = section.scale
+            if not what_if_names or not scales:
+                return []
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            component_sets = []
+            for whatif_name in what_if_names:
+                config_file = locator.get_analysis_configuration_file(whatif_name)
+                if not os.path.exists(config_file):
+                    continue
+                with open(config_file) as f:
+                    config_data = json.load(f)
+                components = set()
+                if 'district' in scales:
+                    for plant_cfg in config_data.get('plants', {}).values():
+                        for key in ('primary_component', 'secondary_component', 'tertiary_component'):
+                            code = plant_cfg.get(key, '')
+                            if code:
+                                components.add(_component_display(code))
+                        # Always include Pump if network exists
+                        components.add('Pump')
+                if 'building' in scales:
+                    for bconfig in config_data.get('buildings', {}).values():
+                        for svc_cfg in bconfig.values():
+                            if not isinstance(svc_cfg, dict):
+                                continue
+                            if svc_cfg.get('scale') != 'BUILDING':
+                                continue
+                            for key in ('primary_component', 'secondary_component', 'tertiary_component'):
+                                code = svc_cfg.get(key, '')
+                                if code:
+                                    components.add(_component_display(code))
+                if components:
+                    component_sets.append(components)
+            if not component_sets:
+                return []
+            shared = component_sets[0].intersection(*component_sets[1:])
+            return sorted(shared)
+        except Exception:
+            return []
+
+    def encode(self, value):
+        if not value:
+            return ''
+        if not isinstance(value, list):
+            value = [str(value).strip()]
+        return ', '.join(value)
+
+    def decode(self, value) -> list:
+        if not value or str(value).strip() == '':
+            return []
+        choices_set = set(self._choices)
+        result = [v.strip() for v in str(value).split(',') if v.strip()]
+        if choices_set:
+            result = [v for v in result if v in choices_set]
+        return result
+
+
+class MultiChoiceFeedstockParameter(MultiChoiceParameter):
+    """
+    Parameter for selecting feedstock options from available feedstock CSV files.
+
+    Dynamically reads feedstock files from:
+    {scenario}/inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/*.csv
+
+    Returns a list of feedstock codes (e.g., ['GRID', 'NATURALGAS', 'SOLAR']).
+    """
+
+    def initialize(self, parser):
+        """Override to skip setting _choices from config file - we compute it dynamically"""
+        self.help = parser.get(self.section.name, f"{self.name}.help", fallback="")
+        self.nullable = parser.getboolean(self.section.name, f"{self.name}.nullable", fallback=False)
+        self.depends_on = parse_string_to_list(parser.get(self.section.name, f"{self.name}.depends-on", fallback=""))
+
+    @property
+    def _choices(self):
+        """
+        Dynamically scan feedstock directory for available feedstock CSV files.
+        Reads fresh from filesystem each time (no caching).
+
+        :return: List of feedstock codes (filenames without .csv extension)
+        """
+        import os
+        import glob
+
+        feedstock_dirs_to_try = []
+
+        try:
+            import cea.inputlocator
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+            # Current database structure: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY
+            scenario_feedstock_dir = os.path.join(
+                locator.scenario,
+                'inputs',
+                'database',
+                'COMPONENTS',
+                'FEEDSTOCKS',
+                'FEEDSTOCKS_LIBRARY'
+            )
+            feedstock_dirs_to_try.append(scenario_feedstock_dir)
+        except (AttributeError, Exception):
+            pass
+
+        # Fallback to default database
+        try:
+            import cea.databases
+            default_db_path = os.path.dirname(cea.databases.__file__)
+            default_feedstock_dir = os.path.join(
+                default_db_path,
+                'CH',
+                'COMPONENTS',
+                'FEEDSTOCKS',
+                'FEEDSTOCKS_LIBRARY'
+            )
+            feedstock_dirs_to_try.append(default_feedstock_dir)
+        except Exception:
+            pass
+
+        # Try each directory until we find one that exists
+        for feedstock_dir in feedstock_dirs_to_try:
+            if os.path.exists(feedstock_dir):
+                csv_files = glob.glob(os.path.join(feedstock_dir, '*.csv'))
+                if csv_files:
+                    # Extract filenames without .csv extension
+                    feedstocks = [os.path.splitext(os.path.basename(f))[0] for f in csv_files]
+                    return sorted(feedstocks)
+
+        return []
+
+
+class DistrictSupplyTypeParameter(ChoiceParameter):
+    """
+    Parameter for selecting a single supply system assembly filtered by category and scale.
+
+    Filters assemblies from the database based on:
+    - supply-category: SUPPLY_COOLING, SUPPLY_HEATING, or SUPPLY_HOTWATER
+    - scale: BUILDING or DISTRICT
+    """
+
+    def initialize(self, parser):
+        """Get the supply category and scale from the parameter definition"""
+        # Declare dependency so frontend refreshes choices when scenario changes
+        self.depends_on = ['general:scenario']
+
+        try:
+            self.supply_category = parser.get(self.section.name, f"{self.name}.supply-category")
+        except Exception:
+            raise ValueError(f"Parameter {self.name} must have 'supply-category' attribute (SUPPLY_COOLING, SUPPLY_HEATING, or SUPPLY_HOTWATER)")
+
+        try:
+            self.scale = parser.get(self.section.name, f"{self.name}.scale")
+            if self.scale not in ['BUILDING', 'DISTRICT']:
+                raise ValueError(f"Parameter {self.name} must have 'scale' attribute set to 'BUILDING' or 'DISTRICT', got '{self.scale}'")
+        except Exception:
+            raise ValueError(f"Parameter {self.name} must have 'scale' attribute (BUILDING or DISTRICT)")
+
+        # Log initialization for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"DistrictSupplyTypeParameter({self.name}) initialized: category={self.supply_category}, scale={self.scale}, nullable={self.nullable}")
+
+    @property
+    def _choices(self):
+        """Get supply assembly codes filtered by category and scale"""
+        try:
+            import pandas as pd
+            import logging
+            logger = logging.getLogger(__name__)
+
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+
+            # Map category to locator method
+            category_to_method = {
+                'SUPPLY_COOLING': locator.get_database_assemblies_supply_cooling,
+                'SUPPLY_HEATING': locator.get_database_assemblies_supply_heating,
+                'SUPPLY_HOTWATER': locator.get_database_assemblies_supply_hot_water,
+            }
+
+            if self.supply_category not in category_to_method:
+                logger.warning(f"DistrictSupplyTypeParameter({self.name}): Invalid supply_category '{self.supply_category}'")
+                return []
+
+            filepath = category_to_method[self.supply_category]()
+
+            if not os.path.exists(filepath):
+                logger.warning(f"DistrictSupplyTypeParameter({self.name}): File not found: {filepath}")
+                return []
+
+            df = pd.read_csv(filepath)
+
+            # Filter by scale
+            if 'scale' in df.columns and 'code' in df.columns:
+                filtered = df[df['scale'] == self.scale]
+                choices = sorted(filtered['code'].tolist())
+                logger.debug(f"DistrictSupplyTypeParameter({self.name}): Found {len(choices)} choices for category={self.supply_category}, scale={self.scale}")
+                return choices
+            else:
+                logger.warning(f"DistrictSupplyTypeParameter({self.name}): Missing 'scale' or 'code' columns in {filepath}")
+                return []
+
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"DistrictSupplyTypeParameter({self.name}): Error getting choices: {e}", exc_info=True)
+            return []
+
+    @property
+    def default(self):
+        """Return None for empty defaults instead of empty string"""
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return None
+        return self.decode(_default)
+
+    def encode(self, value):
+        """Allow None/empty values for nullable parameter"""
+        # Unwrap single-element list (frontend may send JSON arrays for single-choice parameters)
+        if isinstance(value, list):
+            value = value[0] if value else None
+
+        # Handle None, empty strings, and string representations of null
+        if self.nullable and (value is None or str(value).strip() in ['', 'null', 'None', 'Nothing Selected']):
+            return ''
+        return super().encode(value)
+
+    def decode(self, value):
+        """Allow empty values for nullable parameter, return None for empty"""
+        # Handle empty strings and string representations of null
+        if value is None or str(value).strip() in ['', 'null', 'None', 'Nothing Selected']:
+            return None
+        if str(value) in self._choices:
+            return str(value)
+        return None
 
 
 class OrderedMultiChoiceParameter(MultiChoiceParameter):
@@ -1637,6 +2087,86 @@ class ColumnChoiceParameter(ChoiceParameter):
 
 class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
     pass
+
+
+class SolarPanelChoiceParameter(ChoiceParameter):
+    """
+    Nullable parameter for selecting solar technology types available in the scenario.
+    Scans potentials/solar folder for PV, PVT, and SC results.
+    """
+
+    def initialize(self, parser):
+        # Override to dynamically populate choices based on available solar results
+        pass
+
+    @property
+    def _choices(self):
+        """Dynamically generate list of available solar technologies"""
+        return self._get_available_solar_technologies()
+
+    def _get_available_solar_technologies(self) -> List[str]:
+        """
+        Scan potentials/solar folder for available solar technology results.
+        Returns list of technology codes like: PV_PV1, PVT_PV1_FP, SC_FP, etc.
+        """
+        try:
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            solar_folder = locator.get_potentials_solar_folder()
+
+            if not os.path.exists(solar_folder):
+                return []
+
+            technologies = []
+
+            # Scan for PV results (e.g., PV_PV1_total.csv)
+            pv_pattern = os.path.join(solar_folder, 'PV_*_total.csv')
+            for filepath in glob.glob(pv_pattern):
+                filename = os.path.basename(filepath)
+                # Extract technology code: PV_PV1_total.csv -> PV_PV1
+                tech_code = filename.replace('_total.csv', '')
+                technologies.append(tech_code)
+
+            # Scan for PVT results (e.g., PVT_PV1_FP_total.csv)
+            pvt_pattern = os.path.join(solar_folder, 'PVT_*_total.csv')
+            for filepath in glob.glob(pvt_pattern):
+                filename = os.path.basename(filepath)
+                # Extract technology code: PVT_PV1_FP_total.csv -> PVT_PV1_FP
+                tech_code = filename.replace('_total.csv', '')
+                technologies.append(tech_code)
+
+            # Scan for SC results (e.g., SC_FP_total.csv)
+            sc_pattern = os.path.join(solar_folder, 'SC_*_total.csv')
+            for filepath in glob.glob(sc_pattern):
+                filename = os.path.basename(filepath)
+                # Extract technology code: SC_FP_total.csv -> SC_FP
+                tech_code = filename.replace('_total.csv', '')
+                technologies.append(tech_code)
+
+            return sorted(set(technologies))
+        except Exception:
+            return []
+
+    @property
+    def default(self):
+        """Return None for empty defaults instead of empty string"""
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return None
+        return self.decode(_default)
+
+    def encode(self, value):
+        """Allow None/empty values for nullable parameter"""
+        if value is None or value == '':
+            return ''
+        return super().encode(value)
+
+    def decode(self, value):
+        """Allow empty values for nullable parameter, return None for empty"""
+        if value == '':
+            return None
+        if str(value) in self._choices:
+            return str(value)
+        return None
 
 
 class PlotContextParameter(Parameter):

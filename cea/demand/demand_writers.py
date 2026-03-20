@@ -11,10 +11,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads, 
-                                       CoolingLoads, FuelSource, HeatingSystemMassFlows, 
-                                       CoolingSystemMassFlows, HeatingSystemTemperatures, 
+from cea.demand.time_series_data import (ElectricalLoads, HeatingLoads,
+                                       CoolingLoads, HeatingSystemMassFlows,
+                                       CoolingSystemMassFlows, HeatingSystemTemperatures,
                                        CoolingSystemTemperatures, RCModelTemperatures)
+# NOTE: FuelSource removed - moved to primary-energy module
 
 from cea.utilities.reporting import TSD_KEYS_ENERGY_BALANCE_DASHBOARD, TSD_KEYS_SOLAR
 
@@ -28,7 +29,8 @@ FLOAT_FORMAT = '%.3f'
 def get_all_load_keys():
     """Get all available load keys from time series data classes."""
     load_keys = []
-    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads, FuelSource]
+    # NOTE: FuelSource removed from load_classes - moved to primary-energy module
+    load_classes = [ElectricalLoads, HeatingLoads, CoolingLoads]
     for cls in load_classes:
         load_keys.extend(list(cls.__dataclass_fields__.keys()))
     return load_keys
@@ -59,11 +61,56 @@ class DemandWriter(ABC):
     - implement the `write_to_csv` method
     """
 
-    def __init__(self, loads=None, massflows=None, temperatures=None):
+    # Technical columns to exclude when retain-technical-results = False
+    TECHNICAL_LOAD_VARS = {
+        # Electricity breakdown
+        'Ea', 'El', 'Ev', 'Eve', 'Eal', 'Edata', 'Epro',
+        'Eaux', 'Eaux_hs', 'Eaux_cs', 'Eaux_ww', 'Eaux_fw', 'Ehs_lat_aux',
+        # Heating sensible/latent breakdown (technical debug data)
+        'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_sen_aru', 'Qhs_sen_sys',
+        'Qhs_lat_ahu', 'Qhs_lat_aru', 'Qhs_lat_sys',
+        'Qhs_em_ls', 'Qhs_dis_ls', 'Qhs',
+        # Cooling sensible/latent breakdown (technical debug data)
+        'Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_sen_aru',
+        'Qcs_lat_ahu', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys',
+        'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs',
+        # Hot water/refrigeration/data (technical debug data)
+        'Qww', 'Qcre', 'Qcdata',
+        # Note: Subsystem loads (Qhs_sys_*, Qcs_sys_*) moved to regular output
+        # as they're required by thermal-network substation calculations
+    }
+
+    TECHNICAL_MASSFLOW_VARS = {
+        # Air flow rates (technical debug data)
+        'ma_sup_hs_ahu', 'ma_sup_hs_aru',
+        'ma_sup_cs_ahu', 'ma_sup_cs_aru',
+        # Note: Subsystem mass flows (mcphs_sys_*, mcpcs_sys_*) moved to regular output
+        # as they're required by thermal-network substation calculations
+    }
+
+    TECHNICAL_TEMPERATURE_VARS = {
+        # Air temperatures (technical debug data)
+        'ta_re_hs_ahu', 'ta_sup_hs_ahu', 'ta_re_hs_aru', 'ta_sup_hs_aru',
+        'ta_re_cs_ahu', 'ta_sup_cs_ahu', 'ta_re_cs_aru', 'ta_sup_cs_aru',
+        # Note: Subsystem temperatures (Ths_sys_*, Tcs_sys_*) moved to regular output
+        # as they're required by thermal-network substation calculations
+    }
+
+    def __init__(self, loads=None, massflows=None, temperatures=None, retain_technical_results=True):
         # If empty lists are provided, generate all available keys
-        self.load_vars = loads if loads else get_all_load_keys()
-        self.mass_flow_vars = massflows if massflows else get_all_massflow_keys()
-        self.temperature_vars = temperatures if temperatures else get_all_temperature_keys()
+        all_load_vars = loads if loads else get_all_load_keys()
+        all_mass_flow_vars = massflows if massflows else get_all_massflow_keys()
+        all_temperature_vars = temperatures if temperatures else get_all_temperature_keys()
+
+        # Filter out technical columns if retain_technical_results is False
+        if not retain_technical_results:
+            self.load_vars = [v for v in all_load_vars if v not in self.TECHNICAL_LOAD_VARS]
+            self.mass_flow_vars = [v for v in all_mass_flow_vars if v not in self.TECHNICAL_MASSFLOW_VARS]
+            self.temperature_vars = [v for v in all_temperature_vars if v not in self.TECHNICAL_TEMPERATURE_VARS]
+        else:
+            self.load_vars = all_load_vars
+            self.mass_flow_vars = all_mass_flow_vars
+            self.temperature_vars = all_temperature_vars
 
         self.load_plotting_vars = TSD_KEYS_ENERGY_BALANCE_DASHBOARD | TSD_KEYS_SOLAR
 
@@ -152,8 +199,8 @@ class DemandWriter(ABC):
 class HourlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
 
-    def __init__(self, loads=None, massflows=None, temperatures=None):
-        super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures)
+    def __init__(self, loads=None, massflows=None, temperatures=None, retain_technical_results=True):
+        super(HourlyDemandWriter, self).__init__(loads, massflows, temperatures, retain_technical_results)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         locator.ensure_parent_folder_exists(locator.get_demand_results_file(building_name, 'csv'))
@@ -170,8 +217,8 @@ class HourlyDemandWriter(DemandWriter):
 class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
 
-    def __init__(self, loads=None, massflows=None, temperatures=None):
-        super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures)
+    def __init__(self, loads=None, massflows=None, temperatures=None, retain_technical_results=True):
+        super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures, retain_technical_results)
         self.MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september',
                        'october', 'november', 'december']
 

@@ -127,14 +127,18 @@ class CeaScript(object):
                 result.append(locator.get_zone_building_names()[0])
             else:
                 # expect an fqname for the config object
-                result.append(config.get(arg))
+                value = config.get(arg)
+                # MultiChoiceParameter returns a list — use the first element for file existence check
+                if isinstance(value, list):
+                    value = value[0] if value else None
+                result.append(value)
         return result
 
 
 @lru_cache(maxsize=1)
 def _load_scripts_yml() -> List[CeaScript]:
     """Load and parse scripts.yml once for the lifetime of the process."""
-    with open(SCRIPTS_YML, "r") as fp:
+    with open(SCRIPTS_YML, "r", encoding="utf-8") as fp:
         scripts_by_category = yaml.load(fp, Loader=yaml.CLoader)
     return [
         CeaScript(script_dict, category)

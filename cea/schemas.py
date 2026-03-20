@@ -43,7 +43,7 @@ def schemas(plugins: Optional[List] = None) -> Dict:
 
     if key not in __schemas:
         schemas_yml = os.path.join(os.path.dirname(__file__), 'schemas.yml')
-        with open(schemas_yml, "r") as f:
+        with open(schemas_yml, "r", encoding="utf-8") as f:
             schemas_dict = yaml.load(f, Loader=yaml.CLoader)
         __schemas[key] = schemas_dict
 

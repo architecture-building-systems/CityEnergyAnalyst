@@ -196,13 +196,13 @@ Energy Demand Forecasting:
     label: "Energy Demand Part 2: load modelling"
     short_description: Forecast end-use energy loads and final energy consumption by carrier
     description: |
-      This Feature uses CEA models to forecast building energy demand at hourly resolution.
+      This Feature forecasts building energy demand at hourly resolution.
 
-      **End-use energy loads**: Heating, cooling, domestic hot water, electricity for appliances/lighting (by service)
+      **Useful energy**: Pure thermal demand for heating, cooling, and domestic hot water (heat in rooms, hot water at taps)
 
-      **Final energy consumption**: Energy by carrier (GRID electricity, natural gas, district heating/cooling, etc.) delivered to the building boundary
+      **End-use energy loads**: System-level energy demand including HVAC distribution and emission losses (Qhs_sys, Qcs_sys, Qww_sys, E_sys)
 
-      Final energy represents what is delivered to and consumed at the building, before accounting for upstream generation/transmission losses (which are captured in Primary Energy calculations).
+      Note: Final energy by carrier (GRID electricity, natural gas, district heating/cooling) and primary energy calculations are performed in separate supply and emissions modules.
     interfaces: [cli, dashboard]
     module: cea.demand.demand_main
     parameters: ['general:scenario',
@@ -252,13 +252,46 @@ Thermal Network Design:
       - [get_zone_geometry]
 
   - name: thermal-network
-    label: "Thermal Network Part 2: flow & sizing"
-    short_description: Solve thermal hydraulic network flow and sizing
-    description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
+    label: "Thermal Network Part 2a: flow & sizing, single-phase"
+    short_description: Solve thermal hydraulic network flow and sizing using an EPANET-based model without considering phasing
+    description: |
+      This Feature solves the thermal hydraulic network based on the thermal network's piping layout (single-phase) created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
     interfaces: [cli, dashboard]
-    module: cea.technologies.thermal_network.main
+    module: cea.technologies.thermal_network.simplified.main
     parameters: ['general:scenario', 'general:multiprocessing',
-                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network']
+                 'general:number-of-cpus-to-keep-free', 'thermal-network',
+                 'thermal-network-simplified']
+    input-files:
+      - [get_demand_results_file, building_name]
+      - [get_db4_components_conversion_folder]
+      - [get_database_components_distribution_thermal_grid]
+      - [get_weather_file]
+
+  - name: thermal-network-multiple-phase
+    label: "Thermal Network Part 2b: flow & sizing, multiple-phase"
+    short_description: Solve thermal hydraulic network flow and sizing using an EPANET-based model with considering phasing
+    description: |
+      This Feature solves the thermal hydraulic network based on the thermal network's piping layout (multiple-phase) created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
+    interfaces: [cli, dashboard]
+    module: cea.technologies.thermal_network.simplified.main
+    parameters: ['general:scenario', 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network',
+                 'thermal-network-simplified']
+    input-files:
+      - [get_demand_results_file, building_name]
+      - [get_db4_components_conversion_folder]
+      - [get_database_components_distribution_thermal_grid]
+      - [get_weather_file]
+
+  - name: thermal-network-detailed
+    label: "Thermal Network Part 2: flow & sizing, detailed model"
+    short_description: Solve thermal hydraulic network flow and sizing using detailed model
+    description: This Feature solves the thermal hydraulic network based on the thermal network's piping layout created by Feature Thermal Network Part I (layout).
+    interfaces: [cli]
+    module: cea.technologies.thermal_network.detailed.main
+    parameters: ['general:scenario', 'general:multiprocessing',
+                 'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network',
+                 'thermal-network-detailed']
     input-files:
       - [get_demand_results_file, building_name]
       - [get_db4_components_conversion_folder]
@@ -267,9 +300,36 @@ Thermal Network Design:
 
 
 Life Cycle Analysis:
+  - name: final-energy
+    label: Energy by Carrier
+    short_description: Calculate final energy consumption by carrier type
+    description: |
+      This feature calculates final energy consumption for each building by energy carrier. **Final energy** is the energy delivered to the building meter (electricity, natural gas, district heating/cooling, etc.),
+      accounting for supply system conversion efficiencies.
+
+      **Process**:
+      - Takes end-use energy demand from the Energy Demand Forecasting Feature (E_sys, Qhs_sys, Qcs_sys, Qww_sys)
+      - Applies supply system configurations from Building Properties/Supply or What-if Settings
+      - Calculates conversion losses based on system efficiencies (boilers, heat pumps, chillers, etc.)
+      - Outputs energy consumption by energy carrier: GRID (electricity), NG (natural gas), DH (district heating), DC (district cooling), WOOD, OIL, COAL, SOLAR (thermal), PV (electricity), etc.
+
+      **Outputs**: Hourly and annual energy consumption for each building and total scenario consumption by energy carrier.
+
+    interfaces: [ cli, dashboard ]
+    module: cea.analysis.final_energy.main
+    parameters: [ 'general:scenario',
+                  'final-energy',
+                  'solar-technology'
+    ]
+    input-files:
+      - [ get_total_demand ]
+      - [ get_building_supply ]
+      - [ get_demand_results_file, building_name ]
+      - [ get_weather_file ]
+      - [ get_db4_components_conversion_folder ]
 
   - name: emissions
-    label: Emissions
+    label: GHG Emissions
     short_description: Calculate embodied and operational GHG emissions from final energy
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
@@ -289,11 +349,9 @@ Life Cycle Analysis:
     module: cea.analysis.lca.main
     parameters: ['general:scenario', emissions]
     input-files:
-      - [get_total_demand]
+      - [get_final_energy_buildings_file, 'emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_building_supply]
-      - [get_demand_results_file, building_name]
       - [get_weather_file]
       - [get_database_assemblies_envelope_floor]
       - [get_database_assemblies_envelope_wall]
@@ -302,16 +360,75 @@ Life Cycle Analysis:
       - [get_radiation_metadata, building_name]
       - [get_radiation_building, building_name]
 
+#  - name: system-costs
+#    label: Energy Supply System Costs (DEPRECATED)
+#    short_description: "[DEPRECATED] Use 'baseline-costs' instead"
+#    description: |
+#      **DEPRECATED**: This script is deprecated and will be removed in CEA v5.0.
+#
+#      Please use the new 'baseline-costs' script instead, which provides:
+#      - More accurate cost calculations (using COMPONENTS database)
+#      - Component-level cost breakdowns
+#      - Consistency with optimisation results
+#
+#      This script remains for backward compatibility only.
+#    interfaces: [cli]
+#    module: cea.analysis.costs.system_costs
+#    parameters: ['general:scenario', costs]
+#    input-files:
+#      - [get_total_demand]
+#      - [get_building_supply]
+
   - name: system-costs
-    label: Energy Supply System Costs
-    short_description: Calculate costs for energy supply systems
-    description: This Feature calculates the costs for energy supply systems.
+    label: Costs
+    short_description: Calculate detailed costs for base case supply systems
+    description: |
+      This feature calculates costs for baseline supply systems using detailed
+      component specifications and hourly operation simulation.
+
+      **Calculates**:
+      - Capital costs (CAPEX) - annualised and total
+      - Operating costs (OPEX) - fixed and variable
+      - Total Annualised Cost (TAC)
+      - Breakdown by energy service (heating, cooling, DHW, electricity)
+      - Breakdown by scale (building, district, city)
+      - Component-level details
+
+      Uses the same calculation engine as optimisation for accuracy.
     interfaces: [cli, dashboard]
-    module: cea.analysis.costs.system_costs
-    parameters: ['general:scenario', costs]
+    module: cea.analysis.costs.main
+    parameters: ['general:scenario', what-ifs]
     input-files:
-      - [get_total_demand]
-      - [get_building_supply]
+      - [get_final_energy_buildings_file, 'what-ifs:what-if-name']
+      - [get_analysis_configuration_file, 'what-ifs:what-if-name']
+
+  - name: anthropogenic-heat
+    label: Heat Rejection
+    short_description: Calculate heat rejection to the environment from energy systems
+    description: |
+      This feature calculates anthropogenic heat emissions (heat rejection) from
+      building and district energy systems to assess urban heat island impacts.
+
+      **Calculates**:
+      - Total annual heat rejection (MWh/yr)
+      - Peak hourly heat rejection (kW)
+      - Spatial distribution (building and plant locations)
+      - Hourly time series profiles
+      - Breakdown by component type (chillers, cooling towers, boilers)
+      - Building-scale vs. district-scale contributions
+
+      **Outputs**:
+      - Summary by building/plant with coordinates
+      - Hourly spatial data for heatmap visualisation
+      - Component-level breakdown
+
+      Uses final-energy carrier flows as input. Run 'final-energy' first.
+    interfaces: [cli, dashboard]
+    module: cea.analysis.heat.main
+    parameters: ['general:scenario', what-ifs]
+    input-files:
+      - [get_final_energy_buildings_file, 'what-ifs:what-if-name']
+      - [get_analysis_configuration_file, 'what-ifs:what-if-name']
 
 
 Energy Supply System Optimisation:
@@ -712,6 +829,40 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
+  - name: plot-final-energy
+    label: Plot - Energy by Carrier
+    short_description: Plot bar chart of final energy consumption by energy carrier
+    description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (electricity grid, natural gas, district heating, etc.)
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-final-energy, plots-building-filter]
+    input-files:
+      - [get_final_energy_buildings_file, 'plots-final-energy:what-if-name']
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-solar
+    label: Plot - Solar Technology
+    short_description: Plot bar chart of solar energy technologies' yields results
+    description: This Feature plots bar chart of the results of solar energy technologies' potential assessment
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-solar, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-heat-rejection
+    label: Plot - Anthropogenic Heat Rejection
+    short_description: Plot bar chart of building anthropogenic heat rejection
+    description: This Feature plots bar chart of the results of anthropogenic heat rejection analysis
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-heat-rejection, plots-building-filter]
+    input-files:
+      - [get_heat_rejection_whatif_buildings_file, 'plots-heat-rejection:what-if-name']
+      - [get_zone_geometry]
+
   - name: plot-lifecycle-emissions
     label: Plot - Lifecycle Emissions
     short_description: Plot bar chart of building lifecycle emissions
@@ -720,27 +871,28 @@ Visualisation:
     module: cea.visualisation.plot_main
     parameters: ['general:scenario', plots-general, plots-lifecycle-emissions, plots-building-filter]
     input-files:
+      - [get_emissions_whatif_buildings_file, 'plots-lifecycle-emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
 
   - name: plot-emission-timeline
     label: Plot - Emission Timeline
     short_description: Visualise how emissions evolve over time
     description: |
-      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
-      
-      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, solar offsets).
+
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
       a line plot for displaying overall net emissions against a target year to achieve net-zero,
-      a stacked area plot to understand total emissions and how each source contributes to the whole, 
+      a stacked area plot to understand total emissions and how each source contributes to the whole,
       and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
-      
+
       See details and examples [here](https://platform.idaida.ch/course/view.php?id=41)
 
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.emission_timeline
     parameters: ['general:scenario', plots-emission-timeline, plots-building-filter]
     input-files:
+      - [get_emissions_whatif_timeline_file, 'plots-emission-timeline:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
 
@@ -753,18 +905,7 @@ Visualisation:
     module: cea.visualisation.plot_main
     parameters: ['general:scenario', plots-general, plots-operational-emissions, plots-building-filter]
     input-files:
-      - [get_building_architecture]
-      - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
-
-  - name: plot-solar
-    label: Plot - Solar Technology
-    short_description: Plot bar chart of solar energy technologies' yields results
-    description: This Feature plots bar chart of the results of solar energy technologies' potential assessment
-    interfaces: [cli, dashboard]
-    module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-solar, plots-building-filter]
-    input-files:
+      - [get_emissions_whatif_buildings_file, 'plots-operational-emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
 
@@ -799,3 +940,50 @@ Visualisation:
     parameters: ['general:scenario']
     input-files:
       - [get_new_optimization_optimal_supply_systems_summary_file]
+
+  - name: plot-cost-breakdown
+    label: Plot - Cost Breakdown
+    short_description: Plot cost breakdown for energy supply systems
+    description: This Feature plots cost breakdown for energy supply systems. Supports both baseline costs and what-if scenario costs.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.cost_breakdown
+    parameters: ['general:scenario',
+                 plots-general,
+                 plots-cost-breakdown]
+    input-files:
+      - [get_baseline_costs_detailed]
+
+  - name: plot-cost-sankey
+    label: Plot - System Cost Sankey
+    short_description: Sankey diagram of system costs by carrier, service and cost category
+    description: Visualises what-if scenario system costs as a Sankey diagram flowing from energy carrier to service to cost category (CAPEX/OPEX).
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.cost_sankey
+    parameters: ['general:scenario',
+                 plots-cost-sankey]
+    input-files:
+      - [get_costs_whatif_components_file, 'plots-cost-sankey:what-if-name']
+      - [get_zone_geometry]
+
+  - name: plot-energy-sankey
+    label: Plot - Energy Flow Sankey
+    short_description: Sankey diagram of annual energy flows from carrier to end-use service
+    description: Visualises what-if scenario annual energy flows as a Sankey diagram flowing from energy carrier through optional scale and component layers to end-use service.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.energy_sankey
+    parameters: ['general:scenario',
+                 plots-energy-sankey]
+    input-files:
+      - [get_final_energy_buildings_file, 'plots-energy-sankey:what-if-name']
+      - [get_zone_geometry]
+
+  - name: plot-ldc-component
+    label: Plot - Load Duration Curve by Component
+    short_description: Load duration curves for supply components from final energy results
+    description: Generates one load duration curve per selected supply component, showing annual hourly loads sorted from peak to minimum. Supports comparison across multiple what-if scenarios.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.ldc_component
+    parameters: ['general:scenario', plots-ldc-component]
+    input-files:
+      - [get_final_energy_buildings_file, 'plots-ldc-component:what-if-name']
+      - [get_zone_geometry]
