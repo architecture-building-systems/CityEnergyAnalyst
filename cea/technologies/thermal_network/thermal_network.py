@@ -21,18 +21,16 @@ import cea.inputlocator
 import cea.technologies.substation as substation
 import cea.technologies.thermal_network.substation_matrix as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
+from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe, calculate_ground_temperature
 import cea.utilities.parallel
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
-from cea.resources import geothermal
 from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.simplified_thermal_network import thermal_network_simplified, add_date_to_dataframe
 from cea.technologies.constants import ROUGHNESS, NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
-from cea.utilities import epwreader
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 from cea.technologies.heat_exchangers import get_heat_exchanger_by_description
 from cea.technologies.network_layout.plant_node_operations import PlantServices
@@ -1283,22 +1281,6 @@ def extrapolate_datapoints_for_representative_weeks(representative_week_data):
     while len(representative_week_df.index) < HOURS_IN_YEAR:
         representative_week_df = representative_week_df.append(representative_week_df.mean(), ignore_index=True)
     return representative_week_df
-
-
-
-def calculate_ground_temperature(locator):
-    """
-    calculate ground temperatures.
-
-    :param locator:
-    :return: list of ground temperatures, one for each hour of the year
-    :rtype: list[np.float64]
-    """
-    weather_file = locator.get_weather_file()
-    T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
-    network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
-    return T_ground_K
 
 
 def hourly_thermal_calculation(t, thermal_network):

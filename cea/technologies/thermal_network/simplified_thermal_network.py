@@ -14,9 +14,7 @@ from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_P
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe
-from cea.resources import geothermal
-from cea.technologies.constants import NETWORK_DEPTH
+from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe, calculate_ground_temperature
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.technologies.network_layout.plant_node_operations import PlantServices
@@ -81,20 +79,6 @@ def add_date_to_dataframe(locator, df):
     df.insert(0, 'date', date_column)
 
     return df
-
-def calculate_ground_temperature(locator):
-    """
-    calculate ground temperatures.
-
-    :param locator:
-    :return: list of ground temperatures, one for each hour of the year
-    :rtype: list[np.float64]
-    """
-    weather_file = locator.get_weather_file()
-    T_ambient_C = epw_reader(weather_file)['drybulb_C']
-    network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
-    return T_ground_K
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
@@ -1031,7 +1015,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         else:
             # 1st ITERATION SKIPPED: DIAMETERS DO NOT NEED TO BE CALCULATED
             print("Skipping 1st iteration to calculate pipe diameters...")
-
+            pipe_names = edge_df.index
             pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
             selection_of_catalog = edge_df.reset_index().merge(pipe_catalog, on='pipe_DN').set_index('name')
             pipe_dn = selection_of_catalog['pipe_DN']

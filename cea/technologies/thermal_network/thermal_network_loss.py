@@ -6,7 +6,9 @@ Hydraulic - thermal network
 
 
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
-
+from cea.utilities.epwreader import epw_reader
+from cea.resources.geothermal import calc_ground_temperature
+from cea.technologies.constants import NETWORK_DEPTH
 
 def calc_temperature_out_per_pipe(t_in, m, k, t_ground):
     """
@@ -41,3 +43,17 @@ def calc_temperature_out_per_pipe(t_in, m, k, t_ground):
     t_out = numerator / denominator  # [K]
 
     return t_out
+
+def calculate_ground_temperature(locator):
+    """
+    calculate ground temperatures.
+
+    :param locator:
+    :return: list of ground temperatures, one for each hour of the year
+    :rtype: list[np.float64]
+    """
+    weather_file = locator.get_weather_file()
+    T_ambient_C = epw_reader(weather_file)['drybulb_C']
+    network_depth_m = NETWORK_DEPTH  # [m]
+    T_ground_K = calc_ground_temperature(T_ambient_C.values, network_depth_m)
+    return T_ground_K
