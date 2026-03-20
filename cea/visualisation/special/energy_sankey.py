@@ -942,7 +942,7 @@ def create_sankey_fig(sankey_data, title, unit_label):
                 x1=(x_left + x_right) / 2,
                 y0=0.02, y1=0.98,
                 xref='paper', yref='paper',
-                line=dict(color='rgba(150,150,150,0.5)', width=1, dash='dash'),
+                line=dict(color='rgba(150,150,150,0.5)', width=1, dash='6,3'),
             ))
 
     fig.update_layout(
