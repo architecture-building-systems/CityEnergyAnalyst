@@ -110,6 +110,8 @@ def _tech_base_type(display_label):
 
 
 def _tech_colour(display_label):
+    if display_label == 'City Grid':
+        return COLOURS_TO_RGB['green']
     base = _tech_base_type(display_label)
     return COMPONENT_TECH_COLOURS.get(base, COLOURS_TO_RGB['grey'])
 
@@ -127,15 +129,15 @@ _DETAIL_LABEL_MAP = {
 _DETAIL_COLOURS = {
     'CAPEX Annualised': COLOURS_TO_RGB['brown_light'],
     'CAPEX Total':      COLOURS_TO_RGB['brown_light'],
-    'OPEX Fixed':       COLOURS_TO_RGB['grey_light'],
-    'OPEX Variable':    COLOURS_TO_RGB['grey_light'],
+    'OPEX Fixed':       COLOURS_TO_RGB['purple_light'],
+    'OPEX Variable':    COLOURS_TO_RGB['purple_light'],
 }
 
 # ── Layer 3: summary nodes ────────────────────────────────────────────────────
 
 _SUMMARY_COLOURS = {
     'CAPEX': COLOURS_TO_RGB['brown'],
-    'OPEX':  COLOURS_TO_RGB['grey'],
+    'OPEX':  COLOURS_TO_RGB['purple'],
 }
 
 _UNIT_DIVISORS = {'USD': 1, 'kUSD': 1_000, 'mioUSD': 1_000_000}
@@ -216,7 +218,13 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         return None
 
     df['_service_group'] = df['service'].fillna('Unknown').apply(_service_group)
-    df['_tech_display']  = df['component_code'].fillna('Unknown').apply(component_display)
+    df['_tech_display'] = df.apply(
+        lambda r: component_display(
+            r['component_code'] if pd.notna(r['component_code']) and str(r['component_code']).strip() != ''
+            else r.get('carrier', 'Unknown')
+        ),
+        axis=1,
+    )
     df['_scale_display'] = df['scale'].fillna('BUILDING').map(_SCALE_DISPLAY).fillna('Building')
 
     # Column → detail label mapping (insertion order preserved)
