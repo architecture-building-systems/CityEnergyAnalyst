@@ -101,19 +101,19 @@ _SERVICE_ORDER = [
     'Domestic Hot Water',
     'Space Cooling',
     'Electricity',
-    'Offset Heat',
-    'Offset Electricity',
     'Distribution',
+    '(−) Offset Heat',
+    '(−) Offset Electricity',
 ]
 
 _SERVICE_COLOURS = {
-    'Space Heating':      COLOURS_TO_RGB['red_light'],
-    'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
-    'Space Cooling':      COLOURS_TO_RGB['blue_light'],
-    'Electricity':        COLOURS_TO_RGB['green_light'],
-    'Offset Heat':        COLOURS_TO_RGB['yellow'],
-    'Offset Electricity': COLOURS_TO_RGB['yellow'],
-    'Distribution':       COLOURS_TO_RGB['grey_light'],
+    'Space Heating':        COLOURS_TO_RGB['red_light'],
+    'Domestic Hot Water':   COLOURS_TO_RGB['orange_light'],
+    'Space Cooling':        COLOURS_TO_RGB['blue_light'],
+    'Electricity':          COLOURS_TO_RGB['green_light'],
+    'Distribution':         COLOURS_TO_RGB['grey_light'],
+    '(−) Offset Heat':      COLOURS_TO_RGB['yellow'],
+    '(−) Offset Electricity': COLOURS_TO_RGB['yellow'],
 }
 
 # Maps config parameter choice → service display name
@@ -122,9 +122,9 @@ _SERVICE_DISPLAY = {
     'domestic_hot_water': 'Domestic Hot Water',
     'space_cooling':      'Space Cooling',
     'electricity':        'Electricity',
-    'offset_heat':        'Offset Heat',
-    'offset_electricity': 'Offset Electricity',
     'distribution':       'Distribution',
+    'offset_heat':        '(−) Offset Heat',
+    'offset_electricity': '(−) Offset Electricity',
 }
 
 # Maps configuration.json key → (service display name, B####.csv column prefix)
@@ -474,7 +474,7 @@ def load_energy_flow_data(locator, whatif_name):
                     'network':            '',
                     'building_component': comp,
                     'scale':              'Building',
-                    'service':            'Offset Electricity',
+                    'service':            '(−) Offset Electricity',
                     'value_kWh':          val,
                     'plant_input_kWh':    val,
                     '_has_plant_data':    False,
@@ -492,7 +492,7 @@ def load_energy_flow_data(locator, whatif_name):
                     'network':            '',
                     'building_component': comp,
                     'scale':              'Building',
-                    'service':            'Offset Heat',
+                    'service':            '(−) Offset Heat',
                     'value_kWh':          val,
                     'plant_input_kWh':    val,
                     '_has_plant_data':    False,
@@ -510,7 +510,7 @@ def load_energy_flow_data(locator, whatif_name):
                         'network':            '',
                         'building_component': comp,
                         'scale':              'Building',
-                        'service':            'Offset Electricity',
+                        'service':            '(−) Offset Electricity',
                         'value_kWh':          val_e,
                         'plant_input_kWh':    val_e,
                         '_has_plant_data':    False,
@@ -523,7 +523,7 @@ def load_energy_flow_data(locator, whatif_name):
                         'network':            '',
                         'building_component': comp,
                         'scale':              'Building',
-                        'service':            'Offset Heat',
+                        'service':            '(−) Offset Heat',
                         'value_kWh':          val_q,
                         'plant_input_kWh':    val_q,
                         '_has_plant_data':    False,
