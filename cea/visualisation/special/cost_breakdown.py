@@ -494,54 +494,71 @@ def main(config):
     y_metric_unit = plot_config.y_metric_unit
     x_to_plot = plot_config.x_to_plot
 
-    # Dispatch: use what-if costs when what-if-name is set, else fall back to baseline
     whatif_names = getattr(plot_config, 'what_if_name', [])
-    detailed_costs_path = locator.get_baseline_costs_detailed()
-    try:
-        if whatif_names:
-            detailed_df, architecture_df = load_whatif_costs_data(locator, whatif_names[0])
-        else:
+
+    # When no what-if selected, fall back to baseline data (single chart)
+    if not whatif_names:
+        detailed_costs_path = locator.get_baseline_costs_detailed()
+        try:
             detailed_df, architecture_df = load_baseline_costs_data(locator)
+            df_long, id_col = process_data_by_grouping(
+                detailed_df, architecture_df,
+                x_to_plot, y_cost_categories,
+                y_normalised_by, y_metric_unit,
+                locator, config
+            )
+            fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general)
+            fig.update_layout(autosize=True)
+            html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+            return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+        except FileNotFoundError:
+            return (
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;background:#ffe0e0;">'
+                f'<h3>Baseline costs data not found</h3>'
+                f'<p>Run <strong>baseline-costs</strong> first.</p>'
+                f'<code>{detailed_costs_path}</code></div>'
+            )
+        except Exception as e:
+            return (
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;background:#ffe0e0;">'
+                f'<h3>Error creating visualisation</h3><code>{e}</code></div>'
+            )
 
-        # Process data according to configuration
-        df_long, id_col = process_data_by_grouping(
-            detailed_df, architecture_df,
-            x_to_plot, y_cost_categories,
-            y_normalised_by, y_metric_unit,
-            locator, config
-        )
+    html_outputs = []
+    for whatif_name in whatif_names:
+        try:
+            detailed_df, architecture_df = load_whatif_costs_data(locator, whatif_name)
+            df_long, id_col = process_data_by_grouping(
+                detailed_df, architecture_df,
+                x_to_plot, y_cost_categories,
+                y_normalised_by, y_metric_unit,
+                locator, config
+            )
+            fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general)
+            fig.update_layout(autosize=True, title_text=f'Cost Breakdown — {whatif_name}')
+            include_js = 'cdn' if not html_outputs else False
+            html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                            config={'responsive': True}))
+        except FileNotFoundError:
+            html_outputs.append(
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Costs data not found for <em>{whatif_name}</em></h3>'
+                f'<p>Run <strong>system-costs</strong> for this scenario first.</p></div>'
+            )
+        except Exception as e:
+            html_outputs.append(
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Error for <em>{whatif_name}</em></h3><code>{e}</code></div>'
+            )
 
-        # Create visualization
-        fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general)
-
-        fig.update_layout(autosize=True)
-        html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
-        return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
-
-    except FileNotFoundError:
-        error_html = f"""
-        <div style="padding: 20px; border: 2px solid #ff6b6b; border-radius: 5px; background-color: #ffe0e0;">
-            <h3 style="color: #c92a2a; margin-top: 0;">Baseline Costs Data Not Found</h3>
-            <p>The baseline costs file could not be found:</p>
-            <code style="display: block; padding: 10px; background-color: #fff; border-radius: 3px; margin: 10px 0;">
-                {detailed_costs_path}
-            </code>
-            <p>Please run the <strong>baseline-costs</strong> script first to generate the required data.</p>
-        </div>
-        """
-        return error_html
-
-    except Exception as e:
-        error_html = f"""
-        <div style="padding: 20px; border: 2px solid #ff6b6b; border-radius: 5px; background-color: #ffe0e0;">
-            <h3 style="color: #c92a2a; margin-top: 0;">Error Creating Visualization</h3>
-            <p>An error occurred while creating the cost breakdown chart:</p>
-            <code style="display: block; padding: 10px; background-color: #fff; border-radius: 3px; margin: 10px 0;">
-                {str(e)}
-            </code>
-        </div>
-        """
-        return error_html
+    body = '\n'.join(html_outputs)
+    return (
+        '<!DOCTYPE html><html>'
+        '<head><meta charset="utf-8"><style>html,body{height:100%;margin:0}</style></head>'
+        f'<body>{body}</body></html>'
+    )
 
 
 if __name__ == '__main__':

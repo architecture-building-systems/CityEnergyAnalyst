@@ -961,52 +961,70 @@ def main(config: cea.config.Configuration):
             '</div>'
         )
 
-    whatif_name = whatif_names[0]
-    config_path = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_path):
-        return (
-            f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-            f'background:#ffe0e0;">'
-            f'<h3>Final energy data not found</h3>'
-            f'<p>Run <strong>final-energy</strong> for scenario <em>{whatif_name}</em> first.</p>'
-            f'<code>{config_path}</code>'
-            f'</div>'
-        )
-
-    df = load_energy_flow_data(locator, whatif_name)
-
     service_filter = plot_config.y_service_category_to_plot
     x_to_plot = plot_config.x_to_plot
     y_metric_unit = plot_config.y_metric_unit
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1_000)
+    normalise_by_gfa = plot_config.y_normalised_by == 'gross_floor_area'
+    unit_label = f'{y_metric_unit}/m² GFA' if normalise_by_gfa else y_metric_unit
+    custom_title = plot_config.plot_title
 
-    normaliser = 1.0
-    if plot_config.y_normalised_by == 'gross_floor_area':
-        fe_path = locator.get_final_energy_buildings_file(whatif_name)
-        if os.path.exists(fe_path):
-            fe_df = pd.read_csv(fe_path)
-            gfa = fe_df['GFA_m2'].sum() if 'GFA_m2' in fe_df.columns else 1.0
-            normaliser = gfa if gfa > 0 else 1.0
-        unit_label = f'{y_metric_unit}/m² GFA'
-    else:
-        unit_label = y_metric_unit
+    html_outputs = []
+    for whatif_name in whatif_names:
+        config_path = locator.get_analysis_configuration_file(whatif_name)
+        if not os.path.exists(config_path):
+            html_outputs.append(
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Final energy data not found for <em>{whatif_name}</em></h3>'
+                f'<p>Run <strong>final-energy</strong> for this scenario first.</p>'
+                f'<code>{config_path}</code>'
+                f'</div>'
+            )
+            continue
 
-    sankey_data = build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser)
-    if sankey_data is None:
+        df = load_energy_flow_data(locator, whatif_name)
+
+        normaliser = 1.0
+        if normalise_by_gfa:
+            fe_path = locator.get_final_energy_buildings_file(whatif_name)
+            if os.path.exists(fe_path):
+                fe_df = pd.read_csv(fe_path)
+                gfa = fe_df['GFA_m2'].sum() if 'GFA_m2' in fe_df.columns else 1.0
+                normaliser = gfa if gfa > 0 else 1.0
+
+        sankey_data = build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser)
+        if sankey_data is None:
+            html_outputs.append(
+                f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
+                f'background:#fff8e1;margin:12px 0">'
+                f'<h3>No energy flow data for <em>{whatif_name}</em></h3>'
+                f'<p>The selected service categories produced no non-zero values.</p>'
+                f'</div>'
+            )
+            continue
+
+        title = custom_title if (custom_title and len(whatif_names) == 1) else f'Energy Flow — {whatif_name}'
+        fig = create_sankey_fig(sankey_data, title, unit_label)
+        fig.update_layout(autosize=True)
+        include_js = 'cdn' if not html_outputs else False
+        html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                        config={'responsive': True}))
+
+    if not html_outputs:
         return (
             '<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
             'background:#fff8e1;">'
             '<h3>No energy flow data to display</h3>'
-            '<p>The selected service categories produced no non-zero values.</p>'
             '</div>'
         )
 
-    title = plot_config.plot_title or f'Energy Flow — {whatif_name}'
-    fig = create_sankey_fig(sankey_data, title, unit_label)
-
-    fig.update_layout(autosize=True)
-    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
-    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+    body = '\n'.join(html_outputs)
+    return (
+        '<!DOCTYPE html><html>'
+        '<head><meta charset="utf-8"><style>html,body{height:100%;margin:0}</style></head>'
+        f'<body>{body}</body></html>'
+    )
 
 
 if __name__ == '__main__':
