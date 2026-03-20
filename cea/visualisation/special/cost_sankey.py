@@ -69,7 +69,8 @@ _SERVICE_COLOURS = {
     'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
     'Space Cooling':      COLOURS_TO_RGB['blue_light'],
     'Electricity':        COLOURS_TO_RGB['green_light'],
-    'Solar':   COLOURS_TO_RGB['yellow_light'],
+    'Solar':            COLOURS_TO_RGB['yellow_light'],
+    'Solar Generation': COLOURS_TO_RGB['yellow_light'],
     'Distribution':       COLOURS_TO_RGB['grey_light'],
 }
 
@@ -88,7 +89,17 @@ def _service_group(raw):
     return s
 
 
-# ── Layer 1: technologies ─────────────────────────────────────────────────────
+# ── Layer 1: scale ────────────────────────────────────────────────────────────
+
+_SCALE_ORDER = ['District', 'Building']
+_SCALE_COLOURS = {
+    'District': COLOURS_TO_RGB['red_light'],
+    'Building': COLOURS_TO_RGB['blue_light'],
+}
+_SCALE_DISPLAY = {'BUILDING': 'Building', 'DISTRICT': 'District'}
+
+
+# ── Layer 2: technologies ─────────────────────────────────────────────────────
 
 
 def _tech_base_type(display_label):
@@ -206,6 +217,7 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
 
     df['_service_group'] = df['service'].fillna('Unknown').apply(_service_group)
     df['_tech_display']  = df['component_code'].fillna('Unknown').apply(component_display)
+    df['_scale_display'] = df['scale'].fillna('BUILDING').map(_SCALE_DISPLAY).fillna('Building')
 
     # Column → detail label mapping (insertion order preserved)
     col_to_label = {}
@@ -225,26 +237,89 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
             summary_labels.append('OPEX')
 
     # ── Build node list ───────────────────────────────────────────────────
-    # Collect service/tech sets from rows with non-zero totals
-    totals = df.groupby(['_service_group', '_tech_display'])[all_cols].sum()
+    totals = df.groupby(['_service_group', '_scale_display', '_tech_display'])[all_cols].sum()
     totals = totals[totals.sum(axis=1) > 0].reset_index()
 
-    services, technologies = [], []
+    services = []
     if show_service:
         svc_set = set(totals['_service_group'].unique())
         services = [s for s in _SERVICE_ORDER if s in svc_set]
         services += sorted(svc_set - set(services))
-    if show_component:
-        technologies = sorted(set(totals['_tech_display'].unique()))
 
-    node_labels = services + technologies + detail_labels + summary_labels
-    if not node_labels:
+    # District components at x=0.25 (DAG depth 1 from service).
+    # Building components must be at DAG depth 2; transparent pass-through nodes
+    # at x=0.25 ensure arrangement='snap' places them in the Building column (x=0.50).
+    district_comps: list[str] = []   # tech display names
+    building_comps: list[str] = []
+
+    # Pass-through nodes: one per service that has at least one building component.
+    # Key: "__cpt__{svc}", placed at x=0.25 (invisible, zero-height pass-through).
+    building_svc_set: set[str] = set()
+
+    if show_component:
+        dist_seen: set[str] = set()
+        bldg_seen: set[str] = set()
+        for _, row in totals.sort_values(['_scale_display', '_tech_display']).iterrows():
+            tech = row['_tech_display']
+            scale = row['_scale_display']
+            svc = row['_service_group']
+            if scale == 'District':
+                if tech not in dist_seen:
+                    dist_seen.add(tech)
+                    district_comps.append(tech)
+            else:
+                if tech not in bldg_seen:
+                    bldg_seen.add(tech)
+                    building_comps.append(tech)
+                if show_service:
+                    building_svc_set.add(svc)
+
+    # Pass-through nodes (one per service that has building-scale components)
+    pass_throughs = sorted(building_svc_set)  # keys: "__cpt__{svc}"
+
+    # Full node list in DAG order:
+    #   depth 0: services
+    #   depth 1: district components + pass-through nodes
+    #   depth 2: building components
+    #   depth 3: detail
+    #   depth 4: summary
+    all_node_keys = (
+        services
+        + [f'District::{t}' for t in district_comps]
+        + [f'__cpt__{s}' for s in pass_throughs]
+        + [f'Building::{t}' for t in building_comps]
+        + detail_labels
+        + summary_labels
+    )
+    all_node_labels = (
+        services
+        + district_comps
+        + ['' for _ in pass_throughs]   # invisible
+        + building_comps
+        + detail_labels
+        + summary_labels
+    )
+    all_node_x = (
+        [0.01] * len(services)
+        + [0.25] * len(district_comps)
+        + [0.25] * len(pass_throughs)
+        + [0.50] * len(building_comps)
+        + [0.75] * len(detail_labels)
+        + [0.99] * len(summary_labels)
+    )
+
+    if not all_node_keys:
         return None
-    idx = {label: i for i, label in enumerate(node_labels)}
+    idx = {key: i for i, key in enumerate(all_node_keys)}
+
+    def _pt_colour(svc):
+        return _to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey']))
 
     node_colors = (
         [_SERVICE_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in services]
-        + [_tech_colour(t) for t in technologies]
+        + [_tech_colour(t) for t in district_comps]
+        + [_pt_colour(s) for s in pass_throughs]
+        + [_tech_colour(t) for t in building_comps]
         + [_DETAIL_COLOURS.get(d, COLOURS_TO_RGB['grey']) for d in detail_labels]
         + [_SUMMARY_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in summary_labels]
     )
@@ -252,31 +327,56 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     sources, targets, values, link_colors = [], [], [], []
 
     if show_service and show_component:
-        # ── Service → Component ───────────────────────────────────────────
-        for _, row in totals.iterrows():
-            svc = row['_service_group']
-            tech = row['_tech_display']
-            if svc not in idx or tech not in idx:
+        # ── Service → District Component ─────────────────────────────────
+        dist_totals = totals[totals['_scale_display'] == 'District']
+        for _, row in dist_totals.groupby(['_service_group', '_tech_display'])[all_cols].sum().reset_index().iterrows():
+            svc  = row['_service_group']
+            ckey = f"District::{row['_tech_display']}"
+            if svc not in idx or ckey not in idx:
+                continue
+            val = row[all_cols].sum()
+            if val <= 0:
                 continue
             sources.append(idx[svc])
-            targets.append(idx[tech])
-            values.append(row[all_cols].sum() / divisor)
+            targets.append(idx[ckey])
+            values.append(val / divisor)
             link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
+
+        # ── Service → Pass-through → Building Component ───────────────────
+        bldg_totals = totals[totals['_scale_display'] != 'District']
+        for _, row in bldg_totals.groupby(['_service_group', '_tech_display'])[all_cols].sum().reset_index().iterrows():
+            svc  = row['_service_group']
+            pt   = f'__cpt__{svc}'
+            ckey = f"Building::{row['_tech_display']}"
+            val  = row[all_cols].sum()
+            if val <= 0 or svc not in idx or pt not in idx or ckey not in idx:
+                continue
+            svc_colour = _to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey']))
+            sources.append(idx[svc])
+            targets.append(idx[pt])
+            values.append(val / divisor)
+            link_colors.append(svc_colour)
+            sources.append(idx[pt])
+            targets.append(idx[ckey])
+            values.append(val / divisor)
+            link_colors.append(svc_colour)
 
         # ── Component → Detail ────────────────────────────────────────────
         for col, detail_label in col_to_label.items():
             if col not in df.columns or detail_label not in idx:
                 continue
-            for tech, val in df.groupby('_tech_display')[col].sum().items():
-                if val <= 0 or tech not in idx:
+            for (scale, tech), val in df.groupby(['_scale_display', '_tech_display'])[col].sum().items():
+                prefix = 'District' if scale == 'District' else 'Building'
+                ckey = f'{prefix}::{tech}'
+                if val <= 0 or ckey not in idx:
                     continue
-                sources.append(idx[tech])
+                sources.append(idx[ckey])
                 targets.append(idx[detail_label])
                 values.append(val / divisor)
                 link_colors.append(_to_rgba(_tech_colour(tech)))
 
     elif show_service:
-        # ── Service → Detail ──────────────────────────────────────────────
+        # ── Service → Detail (no component layer) ────────────────────────
         for col, detail_label in col_to_label.items():
             if col not in df.columns or detail_label not in idx:
                 continue
@@ -289,15 +389,16 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
                 link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
 
     else:
-        # show_component only (or fallback)
-        # ── Component → Detail ────────────────────────────────────────────
+        # ── Component only → Detail ───────────────────────────────────────
         for col, detail_label in col_to_label.items():
             if col not in df.columns or detail_label not in idx:
                 continue
-            for tech, val in df.groupby('_tech_display')[col].sum().items():
-                if val <= 0 or tech not in idx:
+            for (scale, tech), val in df.groupby(['_scale_display', '_tech_display'])[col].sum().items():
+                prefix = 'District' if scale == 'District' else 'Building'
+                ckey = f'{prefix}::{tech}'
+                if val <= 0 or ckey not in idx:
                     continue
-                sources.append(idx[tech])
+                sources.append(idx[ckey])
                 targets.append(idx[detail_label])
                 values.append(val / divisor)
                 link_colors.append(_to_rgba(_tech_colour(tech)))
@@ -329,8 +430,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         return None
 
     return {
-        'node_labels':  node_labels,
+        'node_labels':  all_node_labels,
         'node_colors':  node_colors,
+        'node_x':       all_node_x,
         'source':       sources,
         'target':       targets,
         'value':        values,
@@ -359,9 +461,10 @@ def create_sankey_fig(sankey_data, title, unit_label):
         node=dict(
             label=sankey_data['node_labels'],
             color=sankey_data['node_colors'],
+            x=sankey_data['node_x'],
             pad=24,
             thickness=20,
-            line=dict(color=COLOURS_TO_RGB['grey_lighter'], width=0.5),
+            line=dict(color='rgba(0,0,0,0)', width=0),
         ),
         link=dict(
             source=sankey_data['source'],
@@ -375,13 +478,64 @@ def create_sankey_fig(sankey_data, title, unit_label):
             ),
         ),
     ))
+
+    # ── Column labels and divider lines ────────────────────────────────────
+    # Each label is placed at the exact x of its node column.
+    visible_xs = set(
+        x for lbl, x in zip(sankey_data['node_labels'], sankey_data['node_x'])
+        if lbl != ''
+    )
+
+    # Compute x for merged "Cost" label: leftmost visible cost column
+    cost_xs = [x for x in (0.75, 0.99) if x in visible_xs]
+    cost_label_x = cost_xs[0] if len(cost_xs) == 1 else (0.75 + 0.99) / 2 if cost_xs else None
+
+    column_labels = [
+        ('Service',   0.01),
+        ('District',  0.25),
+        ('Building',  0.50),
+    ]
+    if cost_label_x is not None:
+        column_labels.append(('Cost', cost_label_x))
+
+    annotations = []
+    for lbl, x in column_labels:
+        if x in visible_xs or lbl == 'Cost':
+            annotations.append(dict(
+                x=x, y=-0.08,
+                xref='paper', yref='paper',
+                text=f'<b>{lbl}</b>',
+                showarrow=False,
+                font=dict(size=12, color=COLOURS_TO_RGB['grey']),
+            ))
+
+    # Dashed vertical dividers between columns (only when nodes exist on both sides)
+    dividers = [
+        (0.01, 0.25),   # Service | District
+        (0.25, 0.50),   # District | Building
+        (0.50, 0.75),   # Building | Cost
+    ]
+    shapes = []
+    for x_left, x_right in dividers:
+        if x_left in visible_xs and x_right in visible_xs:
+            shapes.append(dict(
+                type='line',
+                x0=(x_left + x_right) / 2,
+                x1=(x_left + x_right) / 2,
+                y0=0.02, y1=0.98,
+                xref='paper', yref='paper',
+                line=dict(color='rgba(150,150,150,0.5)', width=1, dash='6,3'),
+            ))
+
     fig.update_layout(
         title_text=title,
         title_font_size=16,
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=20, r=20, t=60, b=20),
+        margin=dict(l=20, r=20, t=60, b=60),
+        annotations=annotations,
+        shapes=shapes,
     )
     return fig
 
