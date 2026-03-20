@@ -42,27 +42,25 @@ __status__ = "Production"
 # ── Layer 0: energy carriers ──────────────────────────────────────────────────
 
 _CARRIER_COLOURS = {
-    'NATURALGAS':  COLOURS_TO_RGB['orange'],
-    'GRID':        COLOURS_TO_RGB['green'],
-    'GRID_DIRECT': COLOURS_TO_RGB['green_light'],
-    'DH':          COLOURS_TO_RGB['red'],
-    'DC':          COLOURS_TO_RGB['blue'],
-    'WOOD':        COLOURS_TO_RGB['brown'],
-    'OIL':         COLOURS_TO_RGB['brown_light'],
-    'COAL':        COLOURS_TO_RGB['grey'],
-    'SOLAR':       COLOURS_TO_RGB['yellow'],
+    'NATURALGAS': COLOURS_TO_RGB['orange'],
+    'GRID':       COLOURS_TO_RGB['green'],
+    'DH':         COLOURS_TO_RGB['red'],
+    'DC':         COLOURS_TO_RGB['blue'],
+    'WOOD':       COLOURS_TO_RGB['brown'],
+    'OIL':        COLOURS_TO_RGB['brown_light'],
+    'COAL':       COLOURS_TO_RGB['grey'],
+    'SOLAR':      COLOURS_TO_RGB['yellow'],
 }
 
 _CARRIER_DISPLAY = {
-    'NATURALGAS':  'Natural Gas',
-    'GRID':        'Electricity Grid',
-    'GRID_DIRECT': 'Building Electricity',
-    'DH':          'District Heating',
-    'DC':          'District Cooling',
-    'WOOD':        'Wood',
-    'OIL':         'Oil',
-    'COAL':        'Coal',
-    'SOLAR':       'Solar',
+    'NATURALGAS': 'Natural Gas',
+    'GRID':       'Electricity Grid',
+    'DH':         'District Heating',
+    'DC':         'District Cooling',
+    'WOOD':       'Wood',
+    'OIL':        'Oil',
+    'COAL':       'Coal',
+    'SOLAR':      'Solar',
 }
 
 
@@ -71,8 +69,6 @@ def _carrier_display(code):
 
 
 def _carrier_colour(code):
-    if code.startswith('PV_') or code.startswith('SC_') or code.startswith('PVT_'):
-        return COLOURS_TO_RGB['yellow']
     return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB['grey'])
 
 
@@ -91,7 +87,6 @@ _SCALE_COLOURS = {
 
 _CARRIER_ORDER = [
     'Electricity Grid',
-    'Building Electricity',
     'Natural Gas',
     'Wood',
     'Oil',
@@ -106,6 +101,8 @@ _SERVICE_ORDER = [
     'Domestic Hot Water',
     'Space Cooling',
     'Electricity',
+    'Offset Heat',
+    'Offset Electricity',
     'Distribution',
 ]
 
@@ -114,6 +111,8 @@ _SERVICE_COLOURS = {
     'Domestic Hot Water': COLOURS_TO_RGB['orange_light'],
     'Space Cooling':      COLOURS_TO_RGB['blue_light'],
     'Electricity':        COLOURS_TO_RGB['green_light'],
+    'Offset Heat':        COLOURS_TO_RGB['yellow'],
+    'Offset Electricity': COLOURS_TO_RGB['yellow'],
     'Distribution':       COLOURS_TO_RGB['grey_light'],
 }
 
@@ -123,6 +122,8 @@ _SERVICE_DISPLAY = {
     'domestic_hot_water': 'Domestic Hot Water',
     'space_cooling':      'Space Cooling',
     'electricity':        'Electricity',
+    'offset_heat':        'Offset Heat',
+    'offset_electricity': 'Offset Electricity',
     'distribution':       'Distribution',
 }
 
@@ -314,9 +315,6 @@ def load_energy_flow_data(locator, whatif_name):
             svc_config = bconfig.get(cfg_key)
 
             # Electricity has no supply config entry — read columns directly at building scale.
-            # Use GRID_DIRECT raw code so these flows get a separate 'Building Electricity'
-            # carrier node, keeping 'Electricity Grid' only for equipment-mediated flows
-            # (e.g. heat pumps, chillers) and preventing direct use from swamping them.
             if not svc_config:
                 if cfg_key != 'electricity':
                     continue
@@ -328,11 +326,9 @@ def load_energy_flow_data(locator, whatif_name):
                     if val <= 0:
                         continue
                     carrier_raw = col[len(col_prefix) + 1:-4]
-                    # Map GRID direct use to GRID_DIRECT so it gets its own carrier node
-                    display_raw = 'GRID_DIRECT' if carrier_raw == 'GRID' else carrier_raw
                     records.append({
-                        'primary_carrier':    _carrier_display(display_raw),
-                        '_carrier_raw':       display_raw,
+                        'primary_carrier':    _carrier_display(carrier_raw),
+                        '_carrier_raw':       carrier_raw,
                         'plant_component':    '',
                         'network':            '',
                         'building_component': '',
@@ -455,6 +451,83 @@ def load_energy_flow_data(locator, whatif_name):
                 'plant_input_kWh':    val,
                 '_has_plant_data':    False,
             })
+
+        # ── Solar panel generation ──────────────────────────────────────────
+        # Solar flows never deduct from demand; they go to separate Offset nodes.
+        # Config structure: {"surface": "tech_code"}, e.g. {"roof": "PV_PV3"}
+        solar_config = bconfig.get('solar', {})
+        for surface, tech_code in solar_config.items():
+            if not tech_code:
+                continue
+            comp = component_display(tech_code)
+            parts = tech_code.split('_')
+            tech_type = parts[0]  # 'PV', 'SC', or 'PVT'
+
+            if tech_type == 'PV':
+                val = annual.get(f'PV_{surface}_kWh', 0)
+                if val <= 0:
+                    continue
+                records.append({
+                    'primary_carrier':    'Solar',
+                    '_carrier_raw':       'SOLAR',
+                    'plant_component':    '',
+                    'network':            '',
+                    'building_component': comp,
+                    'scale':              'Building',
+                    'service':            'Offset Electricity',
+                    'value_kWh':          val,
+                    'plant_input_kWh':    val,
+                    '_has_plant_data':    False,
+                })
+
+            elif tech_type == 'SC':
+                panel_type = '_'.join(parts[1:])  # e.g. 'ET' or 'FP'
+                val = annual.get(f'SC_{panel_type}_{surface}_kWh', 0)
+                if val <= 0:
+                    continue
+                records.append({
+                    'primary_carrier':    'Solar',
+                    '_carrier_raw':       'SOLAR',
+                    'plant_component':    '',
+                    'network':            '',
+                    'building_component': comp,
+                    'scale':              'Building',
+                    'service':            'Offset Heat',
+                    'value_kWh':          val,
+                    'plant_input_kWh':    val,
+                    '_has_plant_data':    False,
+                })
+
+            elif tech_type == 'PVT':
+                panel_type = parts[-1]  # last segment: 'FP' or 'ET'
+                val_e = annual.get(f'PVT_{panel_type}_{surface}_E_kWh', 0)
+                val_q = annual.get(f'PVT_{panel_type}_{surface}_Q_kWh', 0)
+                if val_e > 0:
+                    records.append({
+                        'primary_carrier':    'Solar',
+                        '_carrier_raw':       'SOLAR',
+                        'plant_component':    '',
+                        'network':            '',
+                        'building_component': comp,
+                        'scale':              'Building',
+                        'service':            'Offset Electricity',
+                        'value_kWh':          val_e,
+                        'plant_input_kWh':    val_e,
+                        '_has_plant_data':    False,
+                    })
+                if val_q > 0:
+                    records.append({
+                        'primary_carrier':    'Solar',
+                        '_carrier_raw':       'SOLAR',
+                        'plant_component':    '',
+                        'network':            '',
+                        'building_component': comp,
+                        'scale':              'Building',
+                        'service':            'Offset Heat',
+                        'value_kWh':          val_q,
+                        'plant_input_kWh':    val_q,
+                        '_has_plant_data':    False,
+                    })
 
     # ── District thermal network losses (plant output − building receipts) ────
     for nt, pt in plant_totals.items():
@@ -751,8 +824,11 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
                 else:
                     add_link(carrier, bc, val, c_colour)
                 # Booster: if this service has an HEX in l3, route through it.
-                # Otherwise (standalone), link directly to service.
-                hex_nodes = service_to_hex.get(service, [])
+                # Otherwise (standalone or solar), link directly to service.
+                # Solar must never route through the district HEX —
+                # solar panels are standalone generators with no district interface.
+                is_solar = carrier == 'Solar'
+                hex_nodes = [] if is_solar else service_to_hex.get(service, [])
                 if hex_nodes:
                     for hex_node in hex_nodes:
                         if hex_node in idx:
@@ -762,16 +838,36 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
                     add_link(bc, service, val, bc_colour)
             else:
                 # Component shared with District layer (e.g. standalone building uses same
-                # code as district plant). Route directly to service — standalone buildings
-                # have no district HEX. The district flow already routes district buildings
-                # through HEX correctly.
+                # code as district plant). Route through HEX if one exists for this service,
+                # consistent with how district buildings are routed.
                 add_link(carrier, bc, val, c_colour)
-                add_link(bc, service, val, bc_colour)
+                hex_nodes = service_to_hex.get(service, [])
+                if hex_nodes:
+                    for hex_node in hex_nodes:
+                        if hex_node in idx:
+                            add_link(bc, hex_node, val, bc_colour)
+                            add_link(hex_node, service, val, component_tech_colour(hex_node))
+                else:
+                    add_link(bc, service, val, bc_colour)
         else:
             add_link(carrier, service, val, c_colour)
 
     if not srcs:
         return None
+
+    # Merge duplicate (source, target) links — same component routing to the same
+    # node via multiple services creates separate bands in Plotly; consolidate them.
+    link_map: dict[tuple, list] = {}
+    for s, t, v, c in zip(srcs, tgts, vals, link_colors):
+        key = (s, t)
+        if key in link_map:
+            link_map[key][0] += v
+        else:
+            link_map[key] = [v, c]
+    srcs        = [k[0]    for k in link_map]
+    tgts        = [k[1]    for k in link_map]
+    vals        = [v[0]    for v in link_map.values()]
+    link_colors = [v[1]    for v in link_map.values()]
 
     return {
         'node_labels': node_labels,
