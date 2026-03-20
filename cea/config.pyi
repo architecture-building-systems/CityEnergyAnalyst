@@ -1935,7 +1935,6 @@ class PlotsEnergySankeySection(Section):
     """Typed section for plots-energy-sankey configuration"""
     plot_title: Any
     what_if_name: list
-    x_to_plot: list[str]
     y_service_category_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
@@ -1944,8 +1943,6 @@ class PlotsEnergySankeySection(Section):
     def __getattr__(self, item: Literal["plot_title"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
-    @overload
-    def __getattr__(self, item: Literal["x_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_service_category_to_plot"]) -> list[str]: ...
     @overload

@@ -598,11 +598,11 @@ def load_energy_flow_data(locator, whatif_name):
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
-def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.0):
+def build_sankey_data(df, service_filter, unit_divisor, normaliser=1.0):
     """
     Build a 5-layer Sankey: City → District → Building → Distribution → End-use service.
 
-    Column layout (auto-collapses to 4 when no booster components exist):
+    Column layout (auto-collapses when a layer has no data):
       l0 City        — energy carriers (Natural Gas, Oil, Electricity Grid, …)
       l1 District    — district plant equipment (BO1, Pump) + invisible pass-throughs
       l2 Building    — booster / standalone building equipment (BO2, standalone boilers)
@@ -614,31 +614,23 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
       Oil → [PT l1] → BO2 [l2] → HEX [l3] → Hot Water [l4]
       Electricity → Electricity [l4]  (no intermediate nodes)
 
-    When no booster exists, arrangement='snap' places HEX at topological depth 2
-    (Building column), so the layout collapses to 4 columns naturally.
-
-    x_to_plot controls whether real component nodes are shown at each layer:
-      'district' → show district plant equipment (Chiller, DH Boiler, …)
-      'building' → show building equipment (Heat Exchanger, standalone Boiler, …)
-
     Parameters
     ----------
     df             Output of load_energy_flow_data().
     service_filter list[str]  Subset of _SERVICE_DISPLAY keys. Empty = all.
-    x_to_plot      list[str]  Subset of ['district', 'building'].
     unit_divisor   float
     normaliser     float      GFA in m² when normalising per m²; 1.0 otherwise.
 
     Returns
     -------
-    dict  node_labels, node_colors, node_x, node_y, source, target, value, link_colors
+    dict  node_labels, node_colors, node_x, source, target, value, link_colors
     None  if no non-zero data.
     """
     if not service_filter:
         service_filter = list(_SERVICE_DISPLAY.keys())
 
-    show_district = 'district' in x_to_plot
-    show_building = 'building' in x_to_plot
+    show_district = True
+    show_building = True
     divisor = unit_divisor * normaliser
 
     service_display_filter = [_SERVICE_DISPLAY[s] for s in service_filter if s in _SERVICE_DISPLAY]
@@ -962,7 +954,6 @@ def main(config: cea.config.Configuration):
         )
 
     service_filter = plot_config.y_service_category_to_plot
-    x_to_plot = plot_config.x_to_plot
     y_metric_unit = plot_config.y_metric_unit
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1_000)
     normalise_by_gfa = plot_config.y_normalised_by == 'gross_floor_area'
@@ -993,7 +984,7 @@ def main(config: cea.config.Configuration):
                 gfa = fe_df['GFA_m2'].sum() if 'GFA_m2' in fe_df.columns else 1.0
                 normaliser = gfa if gfa > 0 else 1.0
 
-        sankey_data = build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser)
+        sankey_data = build_sankey_data(df, service_filter, unit_divisor, normaliser)
         if sankey_data is None:
             html_outputs.append(
                 f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
