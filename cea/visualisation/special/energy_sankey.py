@@ -42,25 +42,27 @@ __status__ = "Production"
 # ── Layer 0: energy carriers ──────────────────────────────────────────────────
 
 _CARRIER_COLOURS = {
-    'NATURALGAS': COLOURS_TO_RGB['orange'],
-    'GRID':       COLOURS_TO_RGB['green'],
-    'DH':         COLOURS_TO_RGB['red'],
-    'DC':         COLOURS_TO_RGB['blue'],
-    'WOOD':       COLOURS_TO_RGB['brown'],
-    'OIL':        COLOURS_TO_RGB['brown_light'],
-    'COAL':       COLOURS_TO_RGB['grey'],
-    'SOLAR':      COLOURS_TO_RGB['yellow'],
+    'NATURALGAS':  COLOURS_TO_RGB['orange'],
+    'GRID':        COLOURS_TO_RGB['green'],
+    'GRID_DIRECT': COLOURS_TO_RGB['green_light'],
+    'DH':          COLOURS_TO_RGB['red'],
+    'DC':          COLOURS_TO_RGB['blue'],
+    'WOOD':        COLOURS_TO_RGB['brown'],
+    'OIL':         COLOURS_TO_RGB['brown_light'],
+    'COAL':        COLOURS_TO_RGB['grey'],
+    'SOLAR':       COLOURS_TO_RGB['yellow'],
 }
 
 _CARRIER_DISPLAY = {
-    'NATURALGAS': 'Natural Gas',
-    'GRID':       'Electricity Grid',
-    'DH':         'District Heating',
-    'DC':         'District Cooling',
-    'WOOD':       'Wood',
-    'OIL':        'Oil',
-    'COAL':       'Coal',
-    'SOLAR':      'Solar',
+    'NATURALGAS':  'Natural Gas',
+    'GRID':        'Electricity Grid',
+    'GRID_DIRECT': 'Building Electricity',
+    'DH':          'District Heating',
+    'DC':          'District Cooling',
+    'WOOD':        'Wood',
+    'OIL':         'Oil',
+    'COAL':        'Coal',
+    'SOLAR':       'Solar',
 }
 
 
@@ -89,6 +91,7 @@ _SCALE_COLOURS = {
 
 _CARRIER_ORDER = [
     'Electricity Grid',
+    'Building Electricity',
     'Natural Gas',
     'Wood',
     'Oil',
@@ -131,6 +134,12 @@ _CONFIG_KEY_MAP = {
     'electricity':   ('Electricity',        'E_sys'),
 }
 
+# Maps booster config key → B####.csv column prefix for booster energy
+_BOOSTER_COL_PREFIX = {
+    'space_heating_booster': 'Qhs_booster',
+    'hot_water_booster':     'Qww_booster',
+}
+
 _UNIT_DIVISORS = {'kWh': 1, 'MWh': 1_000, 'GWh': 1_000_000}
 
 # Placeholder node labels for empty layers
@@ -138,8 +147,9 @@ _NO_DISTRICT = 'No District System'
 _NO_BUILDING = 'No Building Conversion'
 _PLACEHOLDER_COLOUR = COLOURS_TO_RGB.get('grey_lighter', 'rgb(210,210,210)')
 
-# Fixed x positions for the 4 layers (Plotly 0–1 range, exclusive of exact 0/1)
-_LAYER_X = {0: 0.01, 1: 0.34, 2: 0.67, 3: 0.99}
+# Fixed x positions for up to 5 layers (Plotly 0–1 range, exclusive of exact 0/1)
+# Layout auto-collapses to 4 columns when no booster components exist.
+_LAYER_X = {0: 0.01, 1: 0.25, 2: 0.50, 3: 0.75, 4: 0.99}
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -288,10 +298,25 @@ def load_energy_flow_data(locator, whatif_name):
 
         annual = pd.read_csv(bfile).sum(numeric_only=True)
 
+        # Build booster lookup: {base_cfg_key: {carrier_raw: component_code}}
+        # Booster carriers are processed separately; skip them in the base service loop.
+        booster_carriers: dict[str, set] = {}
+        for bst_key in ('space_heating_booster', 'hot_water_booster'):
+            bst_cfg = bconfig.get(bst_key)
+            if not isinstance(bst_cfg, dict) or bst_cfg.get('scale') != 'BUILDING':
+                continue
+            base_key = bst_key.replace('_booster', '')
+            c_raw = bst_cfg.get('carrier', '')
+            if base_key and c_raw:
+                booster_carriers.setdefault(base_key, set()).add(c_raw)
+
         for cfg_key, (svc_display, col_prefix) in _CONFIG_KEY_MAP.items():
             svc_config = bconfig.get(cfg_key)
 
-            # Electricity has no supply config entry — read columns directly at building scale
+            # Electricity has no supply config entry — read columns directly at building scale.
+            # Use GRID_DIRECT raw code so these flows get a separate 'Building Electricity'
+            # carrier node, keeping 'Electricity Grid' only for equipment-mediated flows
+            # (e.g. heat pumps, chillers) and preventing direct use from swamping them.
             if not svc_config:
                 if cfg_key != 'electricity':
                     continue
@@ -303,9 +328,11 @@ def load_energy_flow_data(locator, whatif_name):
                     if val <= 0:
                         continue
                     carrier_raw = col[len(col_prefix) + 1:-4]
+                    # Map GRID direct use to GRID_DIRECT so it gets its own carrier node
+                    display_raw = 'GRID_DIRECT' if carrier_raw == 'GRID' else carrier_raw
                     records.append({
-                        'primary_carrier':    _carrier_display(carrier_raw),
-                        '_carrier_raw':       carrier_raw,
+                        'primary_carrier':    _carrier_display(display_raw),
+                        '_carrier_raw':       display_raw,
                         'plant_component':    '',
                         'network':            '',
                         'building_component': '',
@@ -341,9 +368,15 @@ def load_energy_flow_data(locator, whatif_name):
                     plant_input = val
                     has_plant = False
 
-                building_comp = svc_config.get('tertiary_component') or ''
-                if building_comp:
-                    building_comp = component_display(building_comp)
+                # District connections always have a heat exchanger at the building boundary.
+                # Fall back to 'HEX' if no explicit building-side component is configured.
+                building_comp = (
+                    svc_config.get('tertiary_component')
+                    or svc_config.get('secondary_component')
+                    or svc_config.get('building_component')
+                    or 'HEX'
+                )
+                building_comp = component_display(building_comp)
 
                 records.append({
                     'primary_carrier':    carrier,
@@ -361,6 +394,7 @@ def load_energy_flow_data(locator, whatif_name):
             else:
                 primary_carrier_raw = svc_config.get('carrier', '')
                 component_code = svc_config.get('primary_component', '')
+                skip_carriers = booster_carriers.get(cfg_key, set())
 
                 for col in annual.index:
                     if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
@@ -371,6 +405,9 @@ def load_energy_flow_data(locator, whatif_name):
                         continue
 
                     carrier_raw = col[len(col_prefix) + 1:-4]
+                    if carrier_raw in skip_carriers:
+                        continue  # handled by booster loop below
+
                     comp = component_display(component_code) if carrier_raw == primary_carrier_raw else ''
 
                     records.append({
@@ -385,6 +422,39 @@ def load_energy_flow_data(locator, whatif_name):
                         'plant_input_kWh':    val,
                         '_has_plant_data':    False,
                     })
+
+        # ── Booster components (space_heating_booster / hot_water_booster) ──
+        for bst_key in ('space_heating_booster', 'hot_water_booster'):
+            bst_cfg = bconfig.get(bst_key)
+            if not isinstance(bst_cfg, dict) or bst_cfg.get('scale') != 'BUILDING':
+                continue
+            base_key = bst_key.replace('_booster', '')
+            svc_display, col_prefix = _CONFIG_KEY_MAP.get(base_key, ('', ''))
+            if not svc_display:
+                continue
+            bst_carrier_raw = bst_cfg.get('carrier', '')
+            bst_comp_code   = bst_cfg.get('primary_component', '')
+            if not bst_carrier_raw:
+                continue
+            bst_col_prefix = _BOOSTER_COL_PREFIX.get(bst_key, '')
+            if not bst_col_prefix:
+                continue
+            bst_col = f'{bst_col_prefix}_{bst_carrier_raw}_kWh'
+            val = annual.get(bst_col, 0)
+            if val <= 0:
+                continue
+            records.append({
+                'primary_carrier':    _carrier_display(bst_carrier_raw),
+                '_carrier_raw':       bst_carrier_raw,
+                'plant_component':    '',
+                'network':            '',
+                'building_component': component_display(bst_comp_code) if bst_comp_code else '',
+                'scale':              'Building',
+                'service':            svc_display,
+                'value_kWh':          val,
+                'plant_input_kWh':    val,
+                '_has_plant_data':    False,
+            })
 
     # ── District thermal network losses (plant output − building receipts) ────
     for nt, pt in plant_totals.items():
@@ -457,17 +527,26 @@ def load_energy_flow_data(locator, whatif_name):
 
 def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.0):
     """
-    Build a STRICT 4-layer Sankey: City → District → Building → End-use service.
+    Build a 5-layer Sankey: City → District → Building → Distribution → End-use service.
 
-    Every flow path occupies all four layers. When no real component exists at a layer,
-    an explicit placeholder node is inserted:
-      - 'No District System'  when a building-scale flow has no district plant
-      - 'No Building Conversion' when a flow has no building-side equipment
+    Column layout (auto-collapses to 4 when no booster components exist):
+      l0 City        — energy carriers (Natural Gas, Oil, Electricity Grid, …)
+      l1 District    — district plant equipment (BO1, Pump) + invisible pass-throughs
+      l2 Building    — booster / standalone building equipment (BO2, standalone boilers)
+      l3 Distribution— building-side district interface nodes (HEX)
+      l4 Service     — end-use services (Space Heating, Domestic Hot Water, …)
+
+    Typical flow paths:
+      NatGas → BO1 [l1] → HEX [l3] → Space Heating [l4]
+      Oil → [PT l1] → BO2 [l2] → HEX [l3] → Hot Water [l4]
+      Electricity → Electricity [l4]  (no intermediate nodes)
+
+    When no booster exists, arrangement='snap' places HEX at topological depth 2
+    (Building column), so the layout collapses to 4 columns naturally.
 
     x_to_plot controls whether real component nodes are shown at each layer:
       'district' → show district plant equipment (Chiller, DH Boiler, …)
       'building' → show building equipment (Heat Exchanger, standalone Boiler, …)
-    Placeholder nodes are always shown regardless of x_to_plot.
 
     Parameters
     ----------
@@ -490,7 +569,9 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     divisor = unit_divisor * normaliser
 
     service_display_filter = [_SERVICE_DISPLAY[s] for s in service_filter if s in _SERVICE_DISPLAY]
-    df = df[df['service'].isin(service_display_filter)].copy()
+    # Always include Distribution: it carries district pumping + thermal losses
+    # which are intrinsic to district systems, not a user-selectable service.
+    df = df[df['service'].isin(service_display_filter) | (df['service'] == 'Distribution')].copy()
     df = df[df['value_kWh'] > 0]
     if df.empty:
         return None
@@ -498,77 +579,78 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     district_df = df[df['scale'] == 'District']
     building_df = df[df['scale'] == 'Building']
 
-    # ── Determine which pass-through nodes are needed ──────────────────────
-    # Building-scale flows with no district/building component skip those layers.
-    # District flows with no building component (e.g. thermal loss → Distribution)
-    # also skip layer 2 when show_building=True.
-    # Pass-through nodes route flows column-by-column, preventing visual overlap.
-    pt_needed: set[tuple[int, str]] = set()
-    for _, row in building_df.iterrows():
-        carrier = row['primary_carrier']
-        bc = row['building_component']
-        if show_district:
-            pt_needed.add((1, carrier))
-        if show_building and not bc:
-            pt_needed.add((2, carrier))
-
-    # District-origin pass-throughs at layer 2 (keyed by plant_component)
-    dist_pt2_needed: set[str] = set()
-    for _, row in district_df.iterrows():
-        pc = row['plant_component']
-        bc = row['building_component']
-        if show_district and show_building and pc and not bc:
-            dist_pt2_needed.add(pc)
-
-    def _pt_key(layer: int, carrier: str) -> str:
-        return f"__pt_{layer}_{carrier}"
-
-    def _pt_dist_key(pc: str) -> str:
-        return f"__dpt_2_{pc}"
-
     # ── Layer 0: City ──────────────────────────────────────────────────────
     carrier_set = set(df['primary_carrier'].unique())
     l0 = [c for c in _CARRIER_ORDER if c in carrier_set] + sorted(carrier_set - set(_CARRIER_ORDER))
 
-    # ── Layer 1: real district nodes + carrier pass-throughs ───────────────
-    l1_real = (
+    # ── Layer 1: district plant components ────────────────────────────────
+    l1 = (
         sorted(set(district_df['plant_component'].unique()) - {''})
         if show_district and not district_df.empty else []
     )
-    l1_pt = [_pt_key(1, c) for c in l0 if (1, c) in pt_needed]
+    l1_set = set(l1)
 
-    # ── Layer 2: real building nodes + carrier + district pass-throughs ────
-    l2_real = (
-        sorted(set(df['building_component'].unique()) - {''})
-        if show_building else []
-    )
-    l2_pt = [_pt_key(2, c) for c in l0 if (2, c) in pt_needed]
-    l2_pt_dist = [_pt_dist_key(pc) for pc in sorted(dist_pt2_needed)]
+    # ── Layer 2: building-scale components (boosters + standalone) ────────
+    # Only includes building_df components (not district). Excludes l1 (district
+    # plant codes reused as-is) and l3 (district building-side codes like HEX).
+    l3_raw = set(district_df['building_component'].unique()) - {''}
 
-    # ── Layer 3: End-use service ───────────────────────────────────────────
+    l2_raw = set(building_df['building_component'].unique()) - {''}
+    l2 = sorted(l2_raw - l1_set - l3_raw) if show_building else []
+    l2_set = set(l2)
+
+    # ── Layer 3: district building-side components (HEX) ──────────────────
+    # Building-boundary interface nodes for district systems (e.g. Heat Exchanger).
+    l3 = sorted(l3_raw) if show_building else []
+    l3_set = set(l3)
+
+    # Transparent pass-through nodes at l1 for building-scale carriers.
+    # arrangement='snap' uses DAG depth, not x hints, for intermediate nodes.
+    # Without a pass-through, Oil→BO2 puts BO2 at depth 1 (District column).
+    # With a pass-through at l1: Oil→PT[depth 1]→BO2[depth 2] = Building column.
+    building_pt: dict[str, str] = {}
+    if not building_df.empty:
+        for carrier in building_df['primary_carrier'].unique():
+            if not carrier:
+                continue
+            bcs = set(
+                building_df[building_df['primary_carrier'] == carrier]['building_component'].unique()
+            ) - {''}
+            if bcs & l2_set:
+                building_pt[carrier] = f'__bpt__{carrier}'
+    l1_pt = sorted(building_pt.values())
+
+    # Lookup: l3 HEX nodes per service — used to route booster components through HEX.
+    # A booster in l2 routes: carrier → PT[l1] → BO2[l2] → HEX[l3] → service[l4].
+    service_to_hex: dict[str, list[str]] = {}
+    if not district_df.empty and l3_set:
+        for svc, grp in district_df.groupby('service'):
+            hexes = [bc for bc in grp['building_component'].unique() if bc in l3_set]
+            if hexes:
+                service_to_hex[svc] = hexes
+
+    # ── Layer 4: End-use service ───────────────────────────────────────────
     svc_set = set(df['service'].unique())
-    l3 = [s for s in _SERVICE_ORDER if s in svc_set] + sorted(svc_set - set(_SERVICE_ORDER))
+    l4 = [s for s in _SERVICE_ORDER if s in svc_set] + sorted(svc_set - set(_SERVICE_ORDER))
 
     # ── Build node list ────────────────────────────────────────────────────
-    # node_keys: unique routing IDs (used in idx); node_labels: display names
     layer_specs = [
-        ([(n, n) for n in l0],        0),
-        ([(n, n) for n in l1_real] + [(k, '') for k in l1_pt], 1),
-        ([(n, n) for n in l2_real] + [(k, '') for k in l2_pt] + [(k, '') for k in l2_pt_dist], 2),
-        ([(n, n) for n in l3],        3),
+        (l0,          0),
+        (l1 + l1_pt,  1),
+        (l2,          2),
+        (l3,          3),
+        (l4,          4),
     ]
 
     node_keys: list[str] = []
     node_labels: list[str] = []
     node_x_list: list[float] = []
-    node_layer: list[int] = []
 
-    for specs, layer in layer_specs:
-        for key, label in specs:
-            node_keys.append(key)
-            node_labels.append(label)
+    for nodes, layer in layer_specs:
+        for n in nodes:
+            node_keys.append(n)
+            node_labels.append('' if n.startswith('__bpt__') else n)
             node_x_list.append(_LAYER_X[layer])
-            node_layer.append(layer)
 
     if not node_keys:
         return None
@@ -582,21 +664,18 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
     }
 
     def _node_colour(key, layer):
-        if key.startswith('__dpt_2_'):
-            # district-origin pass-through: colour follows plant component
-            pc_name = key[len('__dpt_2_'):]
-            return _to_rgba(component_tech_colour(pc_name))
-        if key.startswith('__pt_'):
-            # carrier-based pass-through: key format __pt_{layer}_{carrier}
-            pt_carrier = key.split('_', 4)[4]
-            return _to_rgba(carrier_colour_map.get(pt_carrier, COLOURS_TO_RGB['grey']))
+        if key.startswith('__bpt__'):
+            carrier_name = key[len('__bpt__'):]
+            return _to_rgba(carrier_colour_map.get(carrier_name, COLOURS_TO_RGB['grey']))
         if layer == 0:
             return carrier_colour_map.get(key, COLOURS_TO_RGB['grey'])
-        if layer in (1, 2):
+        if layer in (1, 2, 3):
             return component_tech_colour(key)
         return _SERVICE_COLOURS.get(key, COLOURS_TO_RGB['grey'])
 
-    node_colors = [_node_colour(k, lyr) for k, lyr in zip(node_keys, node_layer)]
+    node_colors = [_node_colour(k, lyr) for k, lyr in zip(node_keys, [
+        layer for nodes, layer in layer_specs for _ in nodes
+    ])]
 
     # ── Link builder ───────────────────────────────────────────────────────
     srcs, tgts, vals, link_colors = [], [], [], []
@@ -609,114 +688,95 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
         vals.append(val / divisor)
         link_colors.append(_to_rgba(colour))
 
-    # ── District flows: carrier → [district_comp] → [building_comp] → service
+    # ── District flows ─────────────────────────────────────────────────────
     if not district_df.empty:
-        # Layer 0→1: one link per (carrier, plant_comp) — use max plant_input_kWh
-        # (thermal loss rows have plant_input_kWh=0; max picks the real electricity value)
+        # Carrier → plant component: one aggregated link per (carrier, plant)
         for (d_carrier, pc), grp in district_df.groupby(['primary_carrier', 'plant_component']):
             c_colour = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
             plant_val = grp['plant_input_kWh'].max()
             if show_district and pc and pc in idx:
                 add_link(d_carrier, pc, plant_val, c_colour)
 
-        # Layer 1→2→3: per row
-        for _, row in district_df.iterrows():
+        # Plant/carrier → building component → service
+        # Aggregate across buildings first to avoid one link per building
+        d_path_agg = (
+            district_df
+            .groupby(['primary_carrier', 'plant_component', 'building_component', 'service'],
+                     as_index=False)
+            .agg(value_kWh=('value_kWh', 'sum'))
+        )
+        for _, row in d_path_agg.iterrows():
             d_carrier = row['primary_carrier']
-            pc = row['plant_component']
-            bc = row['building_component']
-            service = row['service']
-            d_val = row['value_kWh']
-            c_colour = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
+            pc        = row['plant_component']
+            bc        = row['building_component']
+            service   = row['service']
+            d_val     = row['value_kWh']
+            c_colour  = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
             pc_colour = component_tech_colour(pc) if pc else c_colour
-            bc_colour = component_tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
+            bc_colour = component_tech_colour(bc) if bc else pc_colour
 
-            prev, prev_colour = (pc, pc_colour) if (show_district and pc and pc in idx) else (d_carrier, c_colour)
+            prev, prev_colour = (
+                (pc, pc_colour) if (show_district and pc and pc in idx)
+                else (d_carrier, c_colour)
+            )
             if show_building and bc and bc in idx:
                 add_link(prev, bc, d_val, prev_colour)
                 add_link(bc, service, d_val, bc_colour)
-            elif show_building and pc in dist_pt2_needed:
-                # District flow with no bc skips building layer — route through pass-through
-                add_link(prev, _pt_dist_key(pc), d_val, prev_colour)
-                add_link(_pt_dist_key(pc), service, d_val, prev_colour)
             else:
                 add_link(prev, service, d_val, prev_colour)
 
-    # ── Building-scale flows: route through pass-through nodes to avoid skips
-    for _, row in building_df.iterrows():
-        carrier = row['primary_carrier']
-        bc = row['building_component']
-        service = row['service']
-        val = row['value_kWh']
-        c_colour = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
-        bc_colour = component_tech_colour(bc) if bc else COLOURS_TO_RGB['grey']
+    # ── Building-scale flows ───────────────────────────────────────────────
+    # Aggregate across buildings first
+    b_path_agg = (
+        building_df
+        .groupby(['primary_carrier', 'building_component', 'service'], as_index=False)
+        .agg(value_kWh=('value_kWh', 'sum'))
+    )
+    for _, row in b_path_agg.iterrows():
+        carrier   = row['primary_carrier']
+        bc        = row['building_component']
+        service   = row['service']
+        val       = row['value_kWh']
+        c_colour  = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
+        bc_colour = component_tech_colour(bc) if bc else c_colour
 
-        prev, prev_colour = carrier, c_colour
-
-        # Layer 0→1: route through district pass-through if district shown
-        if show_district and (1, carrier) in pt_needed:
-            add_link(prev, _pt_key(1, carrier), val, c_colour)
-            prev = _pt_key(1, carrier)
-
-        # Layer 1→2 or 1→3: use real building component or building pass-through
         if show_building and bc and bc in idx:
-            add_link(prev, bc, val, prev_colour)
-            add_link(bc, service, val, bc_colour)
-        elif show_building and (2, carrier) in pt_needed:
-            add_link(prev, _pt_key(2, carrier), val, prev_colour)
-            add_link(_pt_key(2, carrier), service, val, prev_colour)
+            if bc in l2_set:
+                # Building-scale component (l2): route via pass-through at l1 so snap
+                # places BO2 at DAG depth 2 (Building column) not depth 1 (District).
+                pt = building_pt.get(carrier)
+                if pt and pt in idx:
+                    add_link(carrier, pt, val, c_colour)
+                    add_link(pt,      bc, val, c_colour)
+                else:
+                    add_link(carrier, bc, val, c_colour)
+                # Booster: if this service has an HEX in l3, route through it.
+                # Otherwise (standalone), link directly to service.
+                hex_nodes = service_to_hex.get(service, [])
+                if hex_nodes:
+                    for hex_node in hex_nodes:
+                        if hex_node in idx:
+                            add_link(bc, hex_node, val, bc_colour)
+                            add_link(hex_node, service, val, component_tech_colour(hex_node))
+                else:
+                    add_link(bc, service, val, bc_colour)
+            else:
+                # Component shared with District layer (e.g. standalone building uses same
+                # code as district plant). Route directly to service — standalone buildings
+                # have no district HEX. The district flow already routes district buildings
+                # through HEX correctly.
+                add_link(carrier, bc, val, c_colour)
+                add_link(bc, service, val, bc_colour)
         else:
-            add_link(prev, service, val, prev_colour)
+            add_link(carrier, service, val, c_colour)
 
     if not srcs:
         return None
-
-    # ── Flow-based y positioning for arrangement='fixed' ──────────────────
-    node_inflow = [0.0] * len(node_keys)
-    node_outflow = [0.0] * len(node_keys)
-    for s, t, v in zip(srcs, tgts, vals):
-        node_outflow[s] += v
-        node_inflow[t] += v
-    node_flow = [max(node_inflow[i], node_outflow[i]) for i in range(len(node_keys))]
-
-    layer_indices: dict[int, list[int]] = {k: [] for k in range(4)}
-    for i, lyr in enumerate(node_layer):
-        layer_indices[lyr].append(i)
-
-    node_y_list = [0.5] * len(node_keys)
-    margin, gap = 0.02, 0.02
-
-    def _assign_y(ordered_indices: list[int]) -> None:
-        """Assign y positions to nodes in the given order, proportional to flow."""
-        flows = [node_flow[i] for i in ordered_indices]
-        total = sum(flows)
-        n = len(ordered_indices)
-        available = 1.0 - 2 * margin - gap * (n - 1)
-        y = margin
-        for node_idx, flow in zip(ordered_indices, flows):
-            height = (flow / total * available) if total > 0 else available / n
-            node_y_list[node_idx] = round(min(max(y + height / 2, margin), 1 - margin), 4)
-            y += height + gap
-
-    # Layer 0: order already fixed by _CARRIER_ORDER in l0 construction
-    _assign_y(layer_indices[0])
-
-    # Layers 1-3: barycenter ordering — sort each node by the average y-position
-    # of its source nodes in the previous layer, minimising link crossings
-    for lyr in range(1, 4):
-        indices = layer_indices[lyr]
-        if not indices:
-            continue
-        barycenters = {}
-        for node_idx in indices:
-            src_ys = [node_y_list[s] for s, t in zip(srcs, tgts) if t == node_idx]
-            barycenters[node_idx] = sum(src_ys) / len(src_ys) if src_ys else 0.5
-        _assign_y(sorted(indices, key=lambda i: barycenters[i]))
 
     return {
         'node_labels': node_labels,
         'node_colors': node_colors,
         'node_x':      node_x_list,
-        'node_y':      node_y_list,
         'source':      srcs,
         'target':      tgts,
         'value':       vals,
@@ -728,12 +788,11 @@ def build_sankey_data(df, service_filter, x_to_plot, unit_divisor, normaliser=1.
 
 def create_sankey_fig(sankey_data, title, unit_label):
     fig = go.Figure(go.Sankey(
-        arrangement='fixed',
+        arrangement='snap',
         node=dict(
             label=sankey_data['node_labels'],
             color=sankey_data['node_colors'],
             x=sankey_data['node_x'],
-            y=sankey_data['node_y'],
             pad=24,
             thickness=20,
             line=dict(color='rgba(0,0,0,0)', width=0),
@@ -751,28 +810,32 @@ def create_sankey_fig(sankey_data, title, unit_label):
         ),
     ))
     # ── Column labels at the bottom ────────────────────────────────────────
+    # l2 (booster/standalone) and l3 (HEX/distribution) are both building-side
+    # components, so they share one "Building" label centred between them.
+    building_x = (_LAYER_X[2] + _LAYER_X[3]) / 2
     column_labels = [
-        ('City',             _LAYER_X[0]),
-        ('District',         _LAYER_X[1]),
-        ('Building',         _LAYER_X[2]),
-        ('End-use Service',  _LAYER_X[3]),
+        ('City',            _LAYER_X[0]),
+        ('District',        _LAYER_X[1]),
+        ('Building',        building_x),
+        ('End-use Service', _LAYER_X[4]),
     ]
-    # Only label columns that have at least one visible node
     visible_xs = set(
         x for lbl, x in zip(sankey_data['node_labels'], sankey_data['node_x'])
         if lbl != ''
     )
-    annotations = [
-        dict(
-            x=x, y=-0.08,
-            xref='paper', yref='paper',
-            text=f'<b>{lbl}</b>',
-            showarrow=False,
-            font=dict(size=12, color=COLOURS_TO_RGB['grey']),
-        )
-        for lbl, x in column_labels
-        if x in visible_xs
-    ]
+    # Building label is visible when either l2 or l3 has nodes
+    building_visible = _LAYER_X[2] in visible_xs or _LAYER_X[3] in visible_xs
+    annotations = []
+    for lbl, x in column_labels:
+        show = building_visible if lbl == 'Building' else x in visible_xs
+        if show:
+            annotations.append(dict(
+                x=x, y=-0.08,
+                xref='paper', yref='paper',
+                text=f'<b>{lbl}</b>',
+                showarrow=False,
+                font=dict(size=12, color=COLOURS_TO_RGB['grey']),
+            ))
 
     fig.update_layout(
         title_text=title,
