@@ -1674,6 +1674,11 @@ def calculate_solar_generation(
     # Initialize generation dict - only add columns that have actual generation
     generation = {}
 
+    # Track which tech types have already had their radiation column added.
+    # radiation_kWh in solar files is a building-wide total (all surfaces of that tech),
+    # so it must be written once per tech type, not once per facade.
+    radiation_added: set = set()
+
     # Process each facade
     for facade, tech_code in panel_config.items():
         if tech_code is None:
@@ -1699,12 +1704,18 @@ def calculate_solar_generation(
         surface_name = surface_map[facade]
 
         if tech_type == 'PV':
+            panel_type = parts[1]
             # Column: PV_roofs_top_E_kWh → output: PV_{facade}_kWh
             e_col = f'PV_{surface_name}_E_kWh'
             if e_col in solar_df.columns:
                 pv_gen = solar_df[e_col].values
                 if pv_gen.sum() > 0:
                     generation[f'PV_{facade}_kWh'] = pd.Series(pv_gen)
+            # Radiation: total irradiation on all PV panels of this type (once per panel_type)
+            rad_key = f'PV_{panel_type}'
+            if rad_key not in radiation_added and 'radiation_kWh' in solar_df.columns:
+                generation[f'PV_{panel_type}_radiation_kWh'] = pd.Series(solar_df['radiation_kWh'].values)
+                radiation_added.add(rad_key)
 
         elif tech_type == 'PVT':
             # Columns: PVT_FP_roofs_top_E_kWh / PVT_FP_roofs_top_Q_kWh
@@ -1723,6 +1734,12 @@ def calculate_solar_generation(
                 if solar_gen.sum() > 0:
                     generation[f'PVT_{collector_type}_{facade}_Q_kWh'] = pd.Series(solar_gen)
 
+            # Radiation: total irradiation on all PVT panels of this collector type (once)
+            rad_key = f'PVT_{collector_type}'
+            if rad_key not in radiation_added and 'radiation_kWh' in solar_df.columns:
+                generation[f'PVT_{collector_type}_radiation_kWh'] = pd.Series(solar_df['radiation_kWh'].values)
+                radiation_added.add(rad_key)
+
         elif tech_type == 'SC':
             # Column: SC_FP_roofs_top_Q_kWh → output: SC_FP_{facade}_kWh
             collector_type = parts[1]  # 'FP' or 'ET'
@@ -1732,5 +1749,11 @@ def calculate_solar_generation(
                 solar_gen = solar_df[q_col].values
                 if solar_gen.sum() > 0:
                     generation[f'SC_{collector_type}_{facade}_kWh'] = pd.Series(solar_gen)
+
+            # Radiation: total irradiation on all SC panels of this collector type (once)
+            rad_key = f'SC_{collector_type}'
+            if rad_key not in radiation_added and 'radiation_kWh' in solar_df.columns:
+                generation[f'SC_{collector_type}_radiation_kWh'] = pd.Series(solar_df['radiation_kWh'].values)
+                radiation_added.add(rad_key)
 
     return generation

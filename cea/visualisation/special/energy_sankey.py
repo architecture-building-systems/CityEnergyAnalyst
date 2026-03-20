@@ -455,7 +455,12 @@ def load_energy_flow_data(locator, whatif_name):
         # ── Solar panel generation ──────────────────────────────────────────
         # Solar flows never deduct from demand; they go to separate Offset nodes.
         # Config structure: {"surface": "tech_code"}, e.g. {"roof": "PV_PV3"}
+        # plant_input_kWh = total irradiation (from *_radiation_kWh column in B####.csv),
+        # counted ONCE per tech_code to avoid double-counting across surfaces.
+        # value_kWh = useful output (electricity or heat).
+        # The gap between incoming (irradiation) and outgoing (useful) shows efficiency losses.
         solar_config = bconfig.get('solar', {})
+        solar_radiation_seen: set = set()
         for surface, tech_code in solar_config.items():
             if not tech_code:
                 continue
@@ -464,9 +469,16 @@ def load_energy_flow_data(locator, whatif_name):
             tech_type = parts[0]  # 'PV', 'SC', or 'PVT'
 
             if tech_type == 'PV':
+                panel_type = parts[1]
                 val = annual.get(f'PV_{surface}_kWh', 0)
                 if val <= 0:
                     continue
+                # Radiation counted once per panel_type; 0 for subsequent surfaces
+                if tech_code not in solar_radiation_seen:
+                    radiation = annual.get(f'PV_{panel_type}_radiation_kWh', val)
+                    solar_radiation_seen.add(tech_code)
+                else:
+                    radiation = 0
                 records.append({
                     'primary_carrier':    'Solar',
                     '_carrier_raw':       'SOLAR',
@@ -476,7 +488,7 @@ def load_energy_flow_data(locator, whatif_name):
                     'scale':              'Building',
                     'service':            '(−) Offset Electricity',
                     'value_kWh':          val,
-                    'plant_input_kWh':    val,
+                    'plant_input_kWh':    radiation,
                     '_has_plant_data':    False,
                 })
 
@@ -485,6 +497,11 @@ def load_energy_flow_data(locator, whatif_name):
                 val = annual.get(f'SC_{panel_type}_{surface}_kWh', 0)
                 if val <= 0:
                     continue
+                if tech_code not in solar_radiation_seen:
+                    radiation = annual.get(f'SC_{panel_type}_radiation_kWh', val)
+                    solar_radiation_seen.add(tech_code)
+                else:
+                    radiation = 0
                 records.append({
                     'primary_carrier':    'Solar',
                     '_carrier_raw':       'SOLAR',
@@ -494,7 +511,7 @@ def load_energy_flow_data(locator, whatif_name):
                     'scale':              'Building',
                     'service':            '(−) Offset Heat',
                     'value_kWh':          val,
-                    'plant_input_kWh':    val,
+                    'plant_input_kWh':    radiation,
                     '_has_plant_data':    False,
                 })
 
@@ -502,7 +519,15 @@ def load_energy_flow_data(locator, whatif_name):
                 panel_type = parts[-1]  # last segment: 'FP' or 'ET'
                 val_e = annual.get(f'PVT_{panel_type}_{surface}_E_kWh', 0)
                 val_q = annual.get(f'PVT_{panel_type}_{surface}_Q_kWh', 0)
+                # Radiation split proportionally between E and Q outputs
+                if tech_code not in solar_radiation_seen:
+                    radiation_total = annual.get(f'PVT_{panel_type}_radiation_kWh', val_e + val_q)
+                    solar_radiation_seen.add(tech_code)
+                else:
+                    radiation_total = 0
+                total_out = val_e + val_q
                 if val_e > 0:
+                    rad_e = radiation_total * (val_e / total_out) if total_out > 0 else 0
                     records.append({
                         'primary_carrier':    'Solar',
                         '_carrier_raw':       'SOLAR',
@@ -512,10 +537,11 @@ def load_energy_flow_data(locator, whatif_name):
                         'scale':              'Building',
                         'service':            '(−) Offset Electricity',
                         'value_kWh':          val_e,
-                        'plant_input_kWh':    val_e,
+                        'plant_input_kWh':    rad_e,
                         '_has_plant_data':    False,
                     })
                 if val_q > 0:
+                    rad_q = radiation_total * (val_q / total_out) if total_out > 0 else 0
                     records.append({
                         'primary_carrier':    'Solar',
                         '_carrier_raw':       'SOLAR',
@@ -525,7 +551,7 @@ def load_energy_flow_data(locator, whatif_name):
                         'scale':              'Building',
                         'service':            '(−) Offset Heat',
                         'value_kWh':          val_q,
-                        'plant_input_kWh':    val_q,
+                        'plant_input_kWh':    rad_q,
                         '_has_plant_data':    False,
                     })
 
@@ -791,19 +817,23 @@ def build_sankey_data(df, service_filter, unit_divisor):
                 add_link(prev, service, d_val, prev_colour)
 
     # ── Building-scale flows ───────────────────────────────────────────────
-    # Aggregate across buildings first
+    # Aggregate across buildings first.
+    # plant_input_kWh = carrier energy consumed (irradiation for solar, = value_kWh otherwise).
+    # Using plant_input_kWh for the carrier→component link creates an unequal node width
+    # that implicitly shows conversion efficiency (e.g. solar panel COP).
     b_path_agg = (
         building_df
         .groupby(['primary_carrier', 'building_component', 'service'], as_index=False)
-        .agg(value_kWh=('value_kWh', 'sum'))
+        .agg(value_kWh=('value_kWh', 'sum'), carrier_kWh=('plant_input_kWh', 'sum'))
     )
     for _, row in b_path_agg.iterrows():
-        carrier   = row['primary_carrier']
-        bc        = row['building_component']
-        service   = row['service']
-        val       = row['value_kWh']
-        c_colour  = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
-        bc_colour = component_tech_colour(bc) if bc else c_colour
+        carrier      = row['primary_carrier']
+        bc           = row['building_component']
+        service      = row['service']
+        val          = row['value_kWh']       # useful output: component → service
+        carrier_val  = row['carrier_kWh']     # carrier input: carrier → component
+        c_colour     = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
+        bc_colour    = component_tech_colour(bc) if bc else c_colour
 
         if show_building and bc and bc in idx:
             if bc in l2_set:
@@ -811,10 +841,10 @@ def build_sankey_data(df, service_filter, unit_divisor):
                 # places BO2 at DAG depth 2 (Building column) not depth 1 (District).
                 pt = building_pt.get(carrier)
                 if pt and pt in idx:
-                    add_link(carrier, pt, val, c_colour)
-                    add_link(pt,      bc, val, c_colour)
+                    add_link(carrier, pt, carrier_val, c_colour)
+                    add_link(pt,      bc, carrier_val, c_colour)
                 else:
-                    add_link(carrier, bc, val, c_colour)
+                    add_link(carrier, bc, carrier_val, c_colour)
                 # Booster: if this service has an HEX in l3, route through it.
                 # Otherwise (standalone or solar), link directly to service.
                 # Solar must never route through the district HEX —
@@ -832,7 +862,7 @@ def build_sankey_data(df, service_filter, unit_divisor):
                 # Component shared with District layer (e.g. standalone building uses same
                 # code as district plant). Route through HEX if one exists for this service,
                 # consistent with how district buildings are routed.
-                add_link(carrier, bc, val, c_colour)
+                add_link(carrier, bc, carrier_val, c_colour)
                 hex_nodes = service_to_hex.get(service, [])
                 if hex_nodes:
                     for hex_node in hex_nodes:
@@ -842,7 +872,7 @@ def build_sankey_data(df, service_filter, unit_divisor):
                 else:
                     add_link(bc, service, val, bc_colour)
         else:
-            add_link(carrier, service, val, c_colour)
+            add_link(carrier, service, carrier_val, c_colour)
 
     if not srcs:
         return None
