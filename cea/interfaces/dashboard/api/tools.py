@@ -94,8 +94,17 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
+async def get_tool_properties(config: CEAConfig, tool_name: str,
+                               project: Optional[str] = None,
+                               scenario_name: Optional[str] = None) -> ToolProperties:
     # TODO: Add plugin support
+
+    # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
+    if project is not None:
+        config.project = project
+    if scenario_name is not None:
+        config.scenario_name = scenario_name
+
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
     parameters = []
