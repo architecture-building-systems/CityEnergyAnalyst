@@ -598,7 +598,7 @@ def load_energy_flow_data(locator, whatif_name):
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
-def build_sankey_data(df, service_filter, unit_divisor, normaliser=1.0):
+def build_sankey_data(df, service_filter, unit_divisor):
     """
     Build a 5-layer Sankey: City → District → Building → Distribution → End-use service.
 
@@ -631,7 +631,7 @@ def build_sankey_data(df, service_filter, unit_divisor, normaliser=1.0):
 
     show_district = True
     show_building = True
-    divisor = unit_divisor * normaliser
+    divisor = unit_divisor
 
     service_display_filter = [_SERVICE_DISPLAY[s] for s in service_filter if s in _SERVICE_DISPLAY]
     # Always include Distribution: it carries district pumping + thermal losses
@@ -956,8 +956,7 @@ def main(config: cea.config.Configuration):
     service_filter = plot_config.y_service_category_to_plot
     y_metric_unit = plot_config.y_metric_unit
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1_000)
-    normalise_by_gfa = plot_config.y_normalised_by == 'gross_floor_area'
-    unit_label = f'{y_metric_unit}/m² GFA' if normalise_by_gfa else y_metric_unit
+    unit_label = y_metric_unit
     custom_title = plot_config.plot_title
 
     html_outputs = []
@@ -975,16 +974,7 @@ def main(config: cea.config.Configuration):
             continue
 
         df = load_energy_flow_data(locator, whatif_name)
-
-        normaliser = 1.0
-        if normalise_by_gfa:
-            fe_path = locator.get_final_energy_buildings_file(whatif_name)
-            if os.path.exists(fe_path):
-                fe_df = pd.read_csv(fe_path)
-                gfa = fe_df['GFA_m2'].sum() if 'GFA_m2' in fe_df.columns else 1.0
-                normaliser = gfa if gfa > 0 else 1.0
-
-        sankey_data = build_sankey_data(df, service_filter, unit_divisor, normaliser)
+        sankey_data = build_sankey_data(df, service_filter, unit_divisor)
         if sankey_data is None:
             html_outputs.append(
                 f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'

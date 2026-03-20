@@ -1937,7 +1937,6 @@ class PlotsEnergySankeySection(Section):
     what_if_name: list
     y_service_category_to_plot: list[str]
     y_metric_unit: str
-    y_normalised_by: str
 
     @overload
     def __getattr__(self, item: Literal["plot_title"]) -> Any: ...
@@ -1947,8 +1946,6 @@ class PlotsEnergySankeySection(Section):
     def __getattr__(self, item: Literal["y_service_category_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
-    @overload
-    def __getattr__(self, item: Literal["y_normalised_by"]) -> str: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsLdcComponentSection(Section):
