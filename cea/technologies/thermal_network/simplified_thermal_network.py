@@ -525,6 +525,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     velocity_ms = config.thermal_network.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
     peak_load_percentage = config.thermal_network.peak_load_percentage
+    set_diameter = config.thermal_network.set_diameter
 
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
@@ -944,96 +945,108 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         wn.options.hydraulic.accuracy = 0.01
         wn.options.hydraulic.trials = 100
 
-        # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
-        print("Starting 1st iteration to calculate pipe diameters...")
-        try:
-            sim = wntr.sim.EpanetSimulator(wn)
-            results = sim.run_sim()
-        except Exception as e:
-            error_msg = str(e)
-            
-            # Provide context-specific error messages
-            if "110" in error_msg or "cannot solve" in error_msg.lower():
-                raise ValueError(
-                    f"WNTR simulation failed (Error 110 - cannot solve hydraulic equations):\n{error_msg}\n\n"
-                    f"This typically indicates network topology or hydraulic issues:\n"
-                    f"Possible causes:\n"
-                    f"  - Disconnected network components (already validated - this shouldn't happen)\n"
-                    f"  - Extreme pipe lengths or diameters causing numerical instability\n"
-                    f"  - Conflicting pressure/flow constraints\n"
-                    f"  - Insufficient pressure sources (check plant node configuration)\n\n"
-                    f"Resolution:\n"
-                    f"  1. Check network layout for very long pipes or unusual geometries\n"
-                    f"  2. Verify min_head_substation configuration (current: {min_head_substation_kPa} kPa)\n"
-                    f"  3. Check demand values are reasonable (not extremely high)\n"
-                    f"  4. Review pipe friction coefficient (current: {coefficient_friction_hazen_williams})"
-                ) from e
-            elif "convergence" in error_msg.lower():
-                raise ValueError(
-                    f"WNTR simulation failed to converge:\n{error_msg}\n\n"
-                    f"Possible causes:\n"
-                    f"  - Network has extreme pressure/flow conditions\n"
-                    f"  - Demand patterns have very high peaks\n"
-                    f"  - Pipe diameters too small for required flows\n\n"
-                    f"Resolution:\n"
-                    f"  1. Check peak_load_percentage setting (current: {peak_load_percentage}%)\n"
-                    f"  2. Increase initial pipe diameter estimates\n"
-                    f"  3. Verify demand profiles are reasonable"
-                ) from e
-            elif "negative pressure" in error_msg.lower():
-                raise ValueError(
-                    f"WNTR simulation error - negative pressure detected:\n{error_msg}\n\n"
-                    f"Possible causes:\n"
-                    f"  - Insufficient pump head at plant node\n"
-                    f"  - Network too long or high friction losses\n"
-                    f"  - Elevation differences not properly accounted for\n\n"
-                    f"Resolution:\n"
-                    f"  1. Increase min_head_substation (current: {min_head_substation_kPa} kPa)\n"
-                    f"  2. Check thermal_transfer_unit_design_head_m calculation\n"
-                    f"  3. Reduce friction coefficient or increase pipe diameters"
-                ) from e
-            else:
-                raise ValueError(
-                    f"WNTR simulation failed during 1st iteration (diameter calculation):\n{error_msg}\n\n"
-                    f"Check your network topology, demand patterns, and configuration parameters.\n"
-                    f"Enable debug mode for more details."
-                ) from e
-        
-        # Validate results
-        if results.link['flowrate'].empty:
-            raise ValueError(
-                "WNTR simulation produced empty flowrate results. "
-                "This indicates a problem with network definition or simulation setup."
-            )
-        
-        if results.link['flowrate'].isna().any().any():
-            nan_pipes = results.link['flowrate'].columns[results.link['flowrate'].isna().any()].tolist()
-            warnings.warn(
-                f"WNTR simulation produced NaN flowrates for {len(nan_pipes)} pipe(s): {nan_pipes[:5]}. "
-                f"Results may be unreliable. Check network connectivity and demand patterns."
-            )
-        
-        max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
-        pipe_names = max_volume_flow_rates_m3s.index.values
-        pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
-        pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
-            *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
-              flow in max_volume_flow_rates_m3s])
-        pipe_dn = pd.Series(pipe_DN, pipe_names)
-        diameter_int_m = pd.Series(D_int_m, pipe_names)
-        diameter_ext_m = pd.Series(D_ext_m, pipe_names)
-        diameter_ins_m = pd.Series(D_ins_m, pipe_names)
+        if set_diameter:
+            # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+            print("Starting 1st iteration to calculate pipe diameters...")
+            try:
+                sim = wntr.sim.EpanetSimulator(wn)
+                results = sim.run_sim()
+            except Exception as e:
+                error_msg = str(e)
 
-        # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+                # Provide context-specific error messages
+                if "110" in error_msg or "cannot solve" in error_msg.lower():
+                    raise ValueError(
+                        f"WNTR simulation failed (Error 110 - cannot solve hydraulic equations):\n{error_msg}\n\n"
+                        f"This typically indicates network topology or hydraulic issues:\n"
+                        f"Possible causes:\n"
+                        f"  - Disconnected network components (already validated - this shouldn't happen)\n"
+                        f"  - Extreme pipe lengths or diameters causing numerical instability\n"
+                        f"  - Conflicting pressure/flow constraints\n"
+                        f"  - Insufficient pressure sources (check plant node configuration)\n\n"
+                        f"Resolution:\n"
+                        f"  1. Check network layout for very long pipes or unusual geometries\n"
+                        f"  2. Verify min_head_substation configuration (current: {min_head_substation_kPa} kPa)\n"
+                        f"  3. Check demand values are reasonable (not extremely high)\n"
+                        f"  4. Review pipe friction coefficient (current: {coefficient_friction_hazen_williams})"
+                    ) from e
+                elif "convergence" in error_msg.lower():
+                    raise ValueError(
+                        f"WNTR simulation failed to converge:\n{error_msg}\n\n"
+                        f"Possible causes:\n"
+                        f"  - Network has extreme pressure/flow conditions\n"
+                        f"  - Demand patterns have very high peaks\n"
+                        f"  - Pipe diameters too small for required flows\n\n"
+                        f"Resolution:\n"
+                        f"  1. Check peak_load_percentage setting (current: {peak_load_percentage}%)\n"
+                        f"  2. Increase initial pipe diameter estimates\n"
+                        f"  3. Verify demand profiles are reasonable"
+                    ) from e
+                elif "negative pressure" in error_msg.lower():
+                    raise ValueError(
+                        f"WNTR simulation error - negative pressure detected:\n{error_msg}\n\n"
+                        f"Possible causes:\n"
+                        f"  - Insufficient pump head at plant node\n"
+                        f"  - Network too long or high friction losses\n"
+                        f"  - Elevation differences not properly accounted for\n\n"
+                        f"Resolution:\n"
+                        f"  1. Increase min_head_substation (current: {min_head_substation_kPa} kPa)\n"
+                        f"  2. Check thermal_transfer_unit_design_head_m calculation\n"
+                        f"  3. Reduce friction coefficient or increase pipe diameters"
+                    ) from e
+                else:
+                    raise ValueError(
+                        f"WNTR simulation failed during 1st iteration (diameter calculation):\n{error_msg}\n\n"
+                        f"Check your network topology, demand patterns, and configuration parameters.\n"
+                        f"Enable debug mode for more details."
+                    ) from e
+
+            # Validate results
+            if results.link['flowrate'].empty:
+                raise ValueError(
+                    "WNTR simulation produced empty flowrate results. "
+                    "This indicates a problem with network definition or simulation setup."
+                )
+
+            if results.link['flowrate'].isna().any().any():
+                nan_pipes = results.link['flowrate'].columns[results.link['flowrate'].isna().any()].tolist()
+                warnings.warn(
+                    f"WNTR simulation produced NaN flowrates for {len(nan_pipes)} pipe(s): {nan_pipes[:5]}. "
+                    f"Results may be unreliable. Check network connectivity and demand patterns."
+                )
+
+            max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
+            pipe_names = max_volume_flow_rates_m3s.index.values
+            pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+            pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
+                *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
+                  flow in max_volume_flow_rates_m3s])
+            pipe_dn = pd.Series(pipe_DN, pipe_names)
+            diameter_int_m = pd.Series(D_int_m, pipe_names)
+            diameter_ext_m = pd.Series(D_ext_m, pipe_names)
+            diameter_ins_m = pd.Series(D_ins_m, pipe_names)
+            edge_df['pipe_DN'] = pipe_dn
+            edge_df['D_int_m'] = D_int_m
+
+        else:
+            # 1st ITERATION SKIPPED: DIAMETERS DO NOT NEED TO BE CALCULATED
+            print("Skipping 1st iteration to calculate pipe diameters...")
+
+            pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+            selection_of_catalog = edge_df.reset_index().merge(pipe_catalog, on='pipe_DN').set_index('name')
+            pipe_dn = selection_of_catalog['pipe_DN']
+            diameter_int_m = selection_of_catalog['D_int_m']
+            diameter_ext_m = selection_of_catalog['D_ext_m']
+            diameter_ins_m = selection_of_catalog['D_ins_m']
+
+        # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for the whole year
         print("Starting 2nd iteration to calculate pressure drops...")
+
         # modify diameter and run simulations
-        edge_df['pipe_DN'] = pipe_dn
-        edge_df['D_int_m'] = D_int_m
         for edge in edge_df.iterrows():
             edge_name = edge[0]
             pipe = wn.get_link(edge_name)
             pipe.diameter = diameter_int_m[edge_name]
-        
         try:
             sim = wntr.sim.EpanetSimulator(wn)
             results = sim.run_sim()
