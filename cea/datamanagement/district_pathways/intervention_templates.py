@@ -144,7 +144,7 @@ def resolve_intervention_templates_to_recipe(
     Resolve a list of intervention-template names into a merged ModifyRecipe.
     Raises ValueError if there are conflicts.
     """
-    from cea.datamanagement.district_level_states.conflict_detector import (
+    from cea.datamanagement.district_pathways.intervention_template_conflicts import (
         detect_intervention_template_conflicts,
     )
     

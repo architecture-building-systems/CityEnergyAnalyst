@@ -11,14 +11,14 @@ from cea.config import Configuration
 from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
-from cea.datamanagement.district_level_states.timeline_integrity import (
+from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,
     merge_modify_recipes,
 )
-from cea.datamanagement.district_level_states.envelope_topology import (
+from cea.datamanagement.district_pathways.envelope_topology import (
     validate_three_layer_topology,
 )
-from cea.datamanagement.district_level_states.timeline_log import (
+from cea.datamanagement.district_pathways.pathway_log import (
     add_year_in_pathway_yaml,
     del_year_in_pathway_yaml,
     load_pathway_log_yaml,

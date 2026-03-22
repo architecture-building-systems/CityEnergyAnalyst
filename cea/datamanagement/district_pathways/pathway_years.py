@@ -9,7 +9,7 @@ import geopandas as gpd
 
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
-from cea.datamanagement.district_level_states.state_scenario import (
+from cea.datamanagement.district_pathways.pathway_state import (
     DistrictEvolutionPathway,
 )
 

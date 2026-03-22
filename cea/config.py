@@ -1792,7 +1792,7 @@ class InterventionTemplateMultiChoiceParameter(MultiChoiceParameter):
 
     @property
     def _choices(self):
-        from cea.datamanagement.district_level_states.atomic_changes import load_intervention_templates
+        from cea.datamanagement.district_pathways.intervention_templates import load_intervention_templates
         
         # Load intervention templates for this pathway
         locator = cea.inputlocator.InputLocator(self.config.scenario)

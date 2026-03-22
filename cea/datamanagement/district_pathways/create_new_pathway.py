@@ -3,7 +3,7 @@
 import os
 
 from cea.config import Configuration
-from cea.datamanagement.district_level_states.state_scenario import validate_pathway_name
+from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
 from cea.inputlocator import InputLocator
 
 

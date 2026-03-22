@@ -55,7 +55,7 @@ from cea.constants import (
     SERVICE_LIFE_OF_TECHNICAL_SYSTEMS,
 )
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
-from cea.datamanagement.district_level_states.timeline_years import (
+from cea.datamanagement.district_pathways.pathway_years import (
     ensure_state_years_exist,
     get_building_construction_years,
     get_required_state_years,

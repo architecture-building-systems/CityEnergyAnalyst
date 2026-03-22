@@ -1,9 +1,9 @@
 """Apply intervention templates to a specific year in a district evolution pathway."""
 from cea.config import Configuration
-from cea.datamanagement.district_level_states.atomic_changes import (
+from cea.datamanagement.district_pathways.intervention_templates import (
     resolve_intervention_templates_to_recipe,
 )
-from cea.datamanagement.district_level_states.state_scenario import (
+from cea.datamanagement.district_pathways.pathway_state import (
     DistrictEvolutionPathway,
 )
 

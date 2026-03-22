@@ -20,15 +20,15 @@ from copy import deepcopy
 import pandas as pd
 
 from cea.config import Configuration
-from cea.datamanagement.district_level_states.district_emission_timeline import (
+from cea.datamanagement.district_pathways.pathway_emissions_timeline import (
     create_district_pathway_emissions_timeline,
 )
-from cea.datamanagement.district_level_states.state_scenario import (
+from cea.datamanagement.district_pathways.pathway_state import (
     DistrictEvolutionPathway,
     DistrictStateYear,
 )
-from cea.datamanagement.district_level_states.state_simulation import workflow_assembly
-from cea.datamanagement.district_level_states.timeline_integrity import (
+from cea.datamanagement.district_pathways.state_simulation import workflow_assembly
+from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,
 )
 

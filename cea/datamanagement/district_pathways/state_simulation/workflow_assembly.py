@@ -8,8 +8,8 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.datamanagement.utils import migrate_void_deck_data
-from cea.datamanagement.district_level_states.state_simulation import network_handling
-from cea.datamanagement.district_level_states.state_simulation import service_checks
+from cea.datamanagement.district_pathways.state_simulation import network_handling
+from cea.datamanagement.district_pathways.state_simulation import service_checks
 from cea.inputlocator import InputLocator
 
 EMISSIONS_STEP: dict[str, Any] = {

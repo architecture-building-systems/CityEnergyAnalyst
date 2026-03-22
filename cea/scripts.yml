@@ -265,7 +265,7 @@ Thermal Network Design:
       - [get_database_components_distribution_thermal_grid]
       - [get_weather_file]
 
-Scenario Evolution Planning:
+District Evolution Pathways:
   - name: create-new-pathway
     label: "Step 0: Create District Evolution Pathway"
     short_description: Create a new district evolution pathway (SAVE SETTINGS after this step!)
@@ -279,7 +279,7 @@ Scenario Evolution Planning:
       3. **Proceed to Step 1** - Define intervention templates for this pathway
       4. If you want to switch pathways later, return to this step, select a different pathway, and save again
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.create_new_timeline
+    module: cea.datamanagement.district_pathways.create_new_pathway
     parameters: ['general:scenario', create-new-pathway]
 
   - name: pathway-intervention-templates-define
@@ -299,7 +299,7 @@ Scenario Evolution Planning:
       
       **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.district_atomic_changes_define
+    module: cea.datamanagement.district_pathways.pathway_intervention_templates_define
     parameters: ['general:scenario', pathway-intervention-templates-define]
     input-files:
       - [get_input_folder]
@@ -329,7 +329,7 @@ Scenario Evolution Planning:
       If selected intervention templates have conflicting modifications (modifying the same field on the same building),
       the tool will fail with a clear error message listing the conflicts.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.district_events_apply_changes
+    module: cea.datamanagement.district_pathways.pathway_events_apply_templates
     parameters: ['general:scenario', pathway-events-apply-templates]
     input-files:
       - [get_input_folder]
@@ -347,7 +347,7 @@ Scenario Evolution Planning:
 
       Use this after you have finished applying intervention templates to years. It creates or reconciles state folders for each year.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.bake_states_from_log
+    module: cea.datamanagement.district_pathways.bake_pathway_states
     parameters: ['general:scenario', bake-pathway-states]
     input-files:
       - [get_input_folder]
@@ -387,7 +387,7 @@ Scenario Evolution Planning:
       `radiation`, `occupancy`, `demand`, `photovoltaic`, `network-layout`, `thermal-network`, and
       `emissions` settings in their own dashboards or config sections before running this Feature.
     interfaces: [cli, dashboard]
-    module: cea.datamanagement.district_level_states.state_simulation.main
+    module: cea.datamanagement.district_pathways.state_simulation.main
     parameters: ['general:scenario', 'pathway-simulations:existing-pathway-name']
 
 Life Cycle Analysis:

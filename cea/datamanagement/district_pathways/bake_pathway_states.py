@@ -1,13 +1,13 @@
 """Materialise pathway states from the district pathway log.
 
 This module exists as a dedicated CEA script entrypoint. The core implementation lives in
-`cea.datamanagement.district_level_states.state_scenario`.
+`cea.datamanagement.district_pathways.pathway_state`.
 """
 
 from __future__ import annotations
 
 from cea.config import Configuration
-from cea.datamanagement.district_level_states.state_scenario import DistrictEvolutionPathway
+from cea.datamanagement.district_pathways.pathway_state import DistrictEvolutionPathway
 
 
 def main(config: Configuration) -> None:

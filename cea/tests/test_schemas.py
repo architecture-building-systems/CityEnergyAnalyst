@@ -193,7 +193,7 @@ class TestSchemas(unittest.TestCase):
                     "folder_name": "test",
                     "plot_cea_feature": "demand",
                     "year_of_state": 2001,
-                    "timeline_name": "test_timeline",
+                    "pathway_name": "test_pathway",
                     "plan_name": "default",
                     "phase": "timeline",
                 }

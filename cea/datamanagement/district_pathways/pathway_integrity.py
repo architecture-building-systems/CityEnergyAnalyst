@@ -6,10 +6,10 @@ import pandas as pd
 
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
-from cea.datamanagement.district_level_states.envelope_topology import (
+from cea.datamanagement.district_pathways.envelope_topology import (
     validate_three_layer_topology,
 )
-from cea.datamanagement.district_level_states.timeline_log import (
+from cea.datamanagement.district_pathways.pathway_log import (
     load_pathway_log_yaml,
 )
 

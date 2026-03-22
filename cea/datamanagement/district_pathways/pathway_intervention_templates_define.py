@@ -1,9 +1,9 @@
 """Define intervention templates for district evolution pathways."""
 from cea.config import Configuration
-from cea.datamanagement.district_level_states.atomic_changes import (
+from cea.datamanagement.district_pathways.intervention_templates import (
     add_or_update_intervention_template,
 )
-from cea.datamanagement.district_level_states.state_scenario import create_modify_recipe
+from cea.datamanagement.district_pathways.pathway_state import create_modify_recipe
 
 
 def main(config: Configuration) -> None:
