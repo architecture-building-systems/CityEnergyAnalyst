@@ -11,15 +11,18 @@ Endpoints:
 import os
 from typing import Optional
 
+import geopandas
 import pandas as pd
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 import cea.config
 import cea.inputlocator
+import cea.scripts
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import secure_path
+from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 logger = getCEAServerLogger("cea-server-reports")
 
@@ -358,6 +361,111 @@ async def get_report_plot(
         config.scenario_name = os.path.basename(original_scenario)
 
 
+# Maps visualisation script names to the feature key used by plot_all.
+SCRIPT_TO_FEATURE = {
+    "plot-demand": "demand",
+    "plot-final-energy": "energy-by-carrier",
+    "plot-solar": "solar",
+    "plot-heat-rejection": "heat",
+    "plot-lifecycle-emissions": "lifecycle-emissions",
+    "plot-operational-emissions": "operational-emissions",
+    "plot-emission-timeline": "emission-timeline",
+    "plot-comfort-chart": "comfort-chart",
+    "plot-pareto-front": "pareto-front",
+    "plot-supply-system": "supply-system",
+    "plot-cost-breakdown": "cost-breakdown",
+    "plot-cost-sankey": "cost-sankey",
+    "plot-energy-sankey": "energy-sankey",
+    "plot-ldc-component": "ldc-component",
+}
+
+
+@router.post("/plot-custom", response_class=HTMLResponse)
+async def get_custom_plot(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    payload: dict,
+):
+    """Render a plot using the visualisation system with custom parameters.
+
+    Accepts { script, parameters, scenario } and returns HTML div.
+    The script must be a valid visualisation tool name (e.g. plot-demand).
+    Parameters are applied to the config before running the plot.
+    """
+    from cea.visualisation.plot_main import plot_all
+
+    script_name = payload.get("script")
+    parameters = payload.get("parameters", {})
+    scenario = payload.get("scenario")
+
+    if not script_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="script is required",
+        )
+
+    feature = SCRIPT_TO_FEATURE.get(script_name)
+    if feature is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown plot script: {script_name}. "
+                   f"Supported: {list(SCRIPT_TO_FEATURE.keys())}",
+        )
+
+    # Validate the script exists
+    try:
+        script = cea.scripts.by_name(script_name, plugins=config.plugins)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Script not found: {script_name}",
+        )
+
+    original_scenario = config.scenario
+    try:
+        # Override scenario if provided
+        if scenario:
+            scenario_path = _resolve_scenario_path(
+                project_root,
+                os.path.dirname(scenario) if os.sep in scenario else config.project,
+                os.path.basename(scenario),
+            )
+            config.project = os.path.dirname(scenario_path)
+            config.scenario_name = os.path.basename(scenario_path)
+
+        # Apply parameters to config
+        for _, parameter in config.matching_parameters(script.parameters):
+            if parameter.name in parameters:
+                value = parameters[parameter.name]
+                if isinstance(value, list):
+                    parameter.set(parameter.decode(",".join(str(v) for v in value)))
+                else:
+                    parameter.set(parameter.decode(str(value)))
+
+        context = {"feature": feature}
+        fig = plot_all(config, config.scenario, context, hide_title=False)
+        fig.update_layout(autosize=True)
+        html = fig.to_html(
+            full_html=False, include_plotlyjs="cdn",
+            config={"responsive": True},
+        )
+        return HTMLResponse(html, 200)
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Missing data for plot: {e}",
+        )
+    except Exception as e:
+        logger.error("Error generating custom plot: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating plot: {e}",
+        )
+    finally:
+        config.project = os.path.dirname(original_scenario)
+        config.scenario_name = os.path.basename(original_scenario)
+
+
 @router.get("/scenarios")
 async def get_scenarios(project_root: CEAProjectRoot, project: str):
     """List scenarios for a project (for inter-mode comparison)."""
@@ -375,6 +483,30 @@ async def get_scenarios(project_root: CEAProjectRoot, project: str):
 
     scenarios = cea.config.get_scenarios_list(project_path)
     return {"scenarios": scenarios}
+
+
+@router.get("/zone-geojson")
+async def get_zone_geojson(project_root: CEAProjectRoot, project: str, scenario: str):
+    """Return zone geometry as GeoJSON for map thumbnail rendering."""
+    scenario_path = _resolve_scenario_path(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    zone_path = locator.get_zone_geometry()
+
+    if not os.path.isfile(zone_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Zone geometry not found for this scenario.",
+        )
+
+    try:
+        gdf = geopandas.read_file(zone_path).to_crs(get_geographic_coordinate_system())
+        return JSONResponse(content=gdf.__geo_interface__, media_type="application/json")
+    except Exception as e:
+        logger.error("Error reading zone geometry: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error reading zone geometry: {e}",
+        )
 
 
 @router.get("/features")
