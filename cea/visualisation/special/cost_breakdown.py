@@ -369,7 +369,8 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
     return df_long, id_col
 
 
-def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general):
+def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general,
+                                x_range=None, category_order=None):
     """
     Create stacked horizontal bar chart of costs.
 
@@ -448,21 +449,28 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         color_discrete_map=cost_type_colors
     )
 
-    # Improve layout with CEA background color
+    # Height: use global category count when provided (ensures consistent height across scenarios)
+    n_categories = len(category_order) if category_order is not None else len(df_long[id_col].unique())
     fig.update_layout(
         xaxis_title=y_label,
         yaxis_title=x_label if x_label else '',
         hovermode='closest',
         legend_title='Cost Category',
-        height=max(400, len(df_long[id_col].unique()) * 40),  # Dynamic height
+        height=max(400, n_categories * 40),
         margin=dict(l=150, r=50, t=80, b=60),
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white']
     )
 
-    # Apply y-axis range if specified (note: for horizontal bars, this affects x-axis)
+    # Y-axis category order: enforce global order when comparing multiple scenarios
+    if category_order is not None:
+        fig.update_yaxes(categoryorder='array', categoryarray=category_order)
+
+    # X-axis range: user override wins; otherwise use global max when provided
     if plot_config_general.y_min is not None or plot_config_general.y_max is not None:
         fig.update_xaxes(range=[plot_config_general.y_min, plot_config_general.y_max])
+    elif x_range is not None:
+        fig.update_xaxes(range=x_range)
 
     # Format hover template
     fig.update_traces(
@@ -524,7 +532,9 @@ def main(config):
                 f'<h3>Error creating visualisation</h3><code>{e}</code></div>'
             )
 
-    html_outputs = []
+    # ── First pass: process all scenarios, collect data for axis alignment ───
+    # slot: ('ok', whatif_name, df_long, id_col) or ('err', html_str)
+    slots = []
     for whatif_name in whatif_names:
         try:
             detailed_df, architecture_df = load_whatif_costs_data(locator, whatif_name)
@@ -534,24 +544,75 @@ def main(config):
                 y_normalised_by, y_metric_unit,
                 locator, config
             )
-            fig = create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general)
-            fig.update_layout(autosize=True, title_text=f'Cost Breakdown — {whatif_name}')
-            include_js = 'cdn' if not html_outputs else False
-            html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
-                                            config={'responsive': True}))
+            slots.append(('ok', whatif_name, df_long, id_col))
         except FileNotFoundError:
-            html_outputs.append(
+            slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
                 f'background:#ffe0e0;margin:12px 0">'
                 f'<h3>Costs data not found for <em>{whatif_name}</em></h3>'
                 f'<p>Run <strong>system-costs</strong> for this scenario first.</p></div>'
-            )
+            )))
         except Exception as e:
-            html_outputs.append(
+            slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
                 f'background:#ffe0e0;margin:12px 0">'
                 f'<h3>Error for <em>{whatif_name}</em></h3><code>{e}</code></div>'
-            )
+            )))
+
+    # Compute global axis alignment from all successful scenarios
+    ok_slots = [(n, dl, ic) for kind, *rest in slots if kind == 'ok' for n, dl, ic in [rest]]
+    if ok_slots:
+        # Global x max: max stacked total per category across all scenarios
+        global_x_max = max(
+            dl.groupby(ic)['total_cost'].sum().max()
+            for _, dl, ic in ok_slots
+        )
+        x_range = [0, global_x_max * 1.05]
+        # Global category order: union of all categories, sorted by max total across scenarios
+        category_totals: dict = {}
+        for _, dl, ic in ok_slots:
+            for cat, total in dl.groupby(ic)['total_cost'].sum().items():
+                category_totals[cat] = max(category_totals.get(cat, 0.0), total)
+        category_order = sorted(category_totals, key=lambda c: category_totals[c])
+    else:
+        x_range = None
+        category_order = None
+        shared_id_col = None
+
+    # ── Second pass: render with shared axes, preserve order ─────────────────
+    html_outputs = []
+    plotly_included = False
+    for slot in slots:
+        if slot[0] == 'err':
+            html_outputs.append(slot[1])
+            continue
+        _, whatif_name, df_long, id_col = slot
+        # Add zero rows for categories absent in this scenario so all bars are visible
+        if category_order is not None:
+            cost_types = df_long[['cost_type_raw', 'cost_type']].drop_duplicates()
+            present = set(df_long[id_col].unique())
+            missing = [c for c in category_order if c not in present]
+            if missing:
+                padding_rows = []
+                for cat in missing:
+                    for _, ct_row in cost_types.iterrows():
+                        padding_rows.append({
+                            id_col: cat,
+                            'cost_type_raw': ct_row['cost_type_raw'],
+                            'cost_type': ct_row['cost_type'],
+                            'total_cost': 0.0,
+                            'group_total': 0.0,
+                        })
+                df_long = pd.concat([df_long, pd.DataFrame(padding_rows)], ignore_index=True)
+        fig = create_cost_breakdown_chart(
+            df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general,
+            x_range=x_range, category_order=category_order,
+        )
+        fig.update_layout(autosize=True, title_text=f'Cost Breakdown — {whatif_name}')
+        include_js = 'cdn' if not plotly_included else False
+        plotly_included = True
+        html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                        config={'responsive': True}))
 
     body = '\n'.join(html_outputs)
     return (

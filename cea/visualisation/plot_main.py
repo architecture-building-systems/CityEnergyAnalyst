@@ -51,7 +51,7 @@ def get_plot_cea_feature(config: cea.config.Configuration) -> str:
     return sections.pop().split("-", 1)[1]
 
 
-def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False):
+def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, hide_title: bool = False, bool_include_advanced_analytics: bool = False, whatif_names_override: list | None = None):
     # Extract parameters from dictionary
     plot_cea_feature: str | None = plot_dict.get('feature')
     # If feature is not found, figure out based on config
@@ -103,7 +103,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
     # Activate a_data_loader
-    whatif_names = getattr(plot_config, 'what_if_name', [])
+    whatif_names = whatif_names_override if whatif_names_override is not None else getattr(plot_config, 'what_if_name', [])
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature,
                                                                                 period_start, period_end,
                                                                                 solar_panel_types_list, bool_include_advanced_analytics,
@@ -125,18 +125,87 @@ def main(config: cea.config.Configuration):
     scenario = config.scenario
     context: dict[str, Any] = config.plots_general.context
     # When running via CLI, the script identity is known — override any stale feature in context
+    plot_cea_feature = None
     try:
         plot_cea_feature = get_plot_cea_feature(config)
         context = {**context, 'feature': plot_cea_feature}
     except CEAException:
-        pass  # Fall back to feature stored in context
-    fig = plot_all(config, scenario, context, hide_title=False)
+        plot_cea_feature = context.get('feature')  # Fall back to feature stored in context
 
-    if sys.stdout.isatty():
-        fig.show(renderer="browser")
+    # Determine config section umbrella (solar features all share 'plots-solar')
+    whatif_names = []
+    if plot_cea_feature:
+        umbrella = 'solar' if plot_cea_feature in ('pv', 'pvt', 'sc') else plot_cea_feature
+        try:
+            _section = config.sections[f'plots-{umbrella}']
+            whatif_names = list(getattr(_section, 'what_if_name', []) or [])
+        except (KeyError, AttributeError):
+            pass
 
-    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
-    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+    # ── Single-figure path (no what-if or only one selected) ─────────────────
+    if len(whatif_names) <= 1:
+        fig = plot_all(config, scenario, context, hide_title=False)
+        fig.update_layout(autosize=True)
+
+        if sys.stdout.isatty():
+            fig.show(renderer="browser")
+
+        html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+        return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+
+    # ── Multi-figure path: one figure per what-if with aligned y-axis ────────
+    # slot: ('ok', whatif_name, fig) or ('err', whatif_name, html_str)
+    slots = []
+    for whatif_name in whatif_names:
+        try:
+            fig = plot_all(config, scenario, context, hide_title=False,
+                           whatif_names_override=[whatif_name])
+            slots.append(('ok', whatif_name, fig))
+        except Exception as e:
+            slots.append(('err', whatif_name, (
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Error plotting <em>{whatif_name}</em></h3>'
+                f'<code>{e}</code></div>'
+            )))
+
+    # Compute global y-range from all successful figures when user has not set explicit bounds
+    plot_config_general = config.plots_general
+    user_y_min = plot_config_general.y_min
+    user_y_max = plot_config_general.y_max
+
+    global_y_min = global_y_max = None
+    if user_y_min is None and user_y_max is None:
+        y_ranges = [
+            fig.layout.yaxis.range
+            for kind, _, fig in slots
+            if kind == 'ok' and fig.layout.yaxis.range
+        ]
+        if y_ranges:
+            global_y_min = min(r[0] for r in y_ranges)
+            global_y_max = max(r[1] for r in y_ranges)
+
+    html_outputs = []
+    plotly_included = False
+    for slot in slots:
+        if slot[0] == 'err':
+            html_outputs.append(slot[2])
+            continue
+        _, whatif_name, fig = slot
+        if global_y_min is not None:
+            fig.update_yaxes(range=[global_y_min, global_y_max])
+        fig.update_layout(autosize=True)
+        include_js = 'cdn' if not plotly_included else False
+        plotly_included = True
+        html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                        config={'responsive': True}))
+
+    body = '\n'.join(html_outputs)
+    return (
+        '<!DOCTYPE html><html>'
+        '<head><meta charset="utf-8"><style>html,body{height:100%;margin:0}</style></head>'
+        f'<body>{body}</body></html>'
+    )
 
 
 if __name__ == '__main__':
