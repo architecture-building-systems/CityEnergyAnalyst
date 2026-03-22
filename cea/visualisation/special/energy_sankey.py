@@ -1016,36 +1016,59 @@ def main(config: cea.config.Configuration):
     custom_title = plot_config.plot_title
     use_solar_irradiation = getattr(plot_config, 'use_solar_irradiation', True)
 
-    html_outputs = []
+    # ── First pass: build all sankey_data, collect totals for proportional height ──
+    _BASE_HEIGHT = 600
+    _MIN_HEIGHT = 150
+    # slot: either ('ok', whatif_name, sankey_data) or ('err', html_str)
+    slots = []
+
     for whatif_name in whatif_names:
         config_path = locator.get_analysis_configuration_file(whatif_name)
         if not os.path.exists(config_path):
-            html_outputs.append(
+            slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
                 f'background:#ffe0e0;margin:12px 0">'
                 f'<h3>Final energy data not found for <em>{whatif_name}</em></h3>'
                 f'<p>Run <strong>final-energy</strong> for this scenario first.</p>'
                 f'<code>{config_path}</code>'
                 f'</div>'
-            )
+            )))
             continue
 
         df = load_energy_flow_data(locator, whatif_name)
         sankey_data = build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation)
         if sankey_data is None:
-            html_outputs.append(
+            slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
                 f'background:#fff8e1;margin:12px 0">'
                 f'<h3>No energy flow data for <em>{whatif_name}</em></h3>'
                 f'<p>The selected service categories produced no non-zero values.</p>'
                 f'</div>'
-            )
+            )))
             continue
 
+        slots.append(('ok', whatif_name, sankey_data))
+
+    global_total = max(
+        (sum(sd['value']) for kind, *rest in slots if kind == 'ok' for sd in [rest[1]]),
+        default=1.0,
+    )
+
+    # ── Second pass: render with proportional heights, preserve order ─────────
+    html_outputs = []
+    plotly_included = False
+    for slot in slots:
+        if slot[0] == 'err':
+            html_outputs.append(slot[1])
+            continue
+        _, whatif_name, sankey_data = slot
+        scenario_total = sum(sankey_data['value'])
+        height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
         title = custom_title if (custom_title and len(whatif_names) == 1) else f'Energy Flow — {whatif_name}'
         fig = create_sankey_fig(sankey_data, title, unit_label)
-        fig.update_layout(autosize=True)
-        include_js = 'cdn' if not html_outputs else False
+        fig.update_layout(height=height, autosize=False)
+        include_js = 'cdn' if not plotly_included else False
+        plotly_included = True
         html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
                                         config={'responsive': True}))
 
