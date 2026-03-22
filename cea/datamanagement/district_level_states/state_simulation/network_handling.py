@@ -8,7 +8,7 @@ from cea.inputlocator import InputLocator
 
 def find_previous_network(
     main_locator: InputLocator,
-    timeline_name: str,
+    pathway_name: str,
     year: int,
     state_years: list[int],
 ) -> tuple[str | None, int | None]:
@@ -21,7 +21,7 @@ def find_previous_network(
     for source_year in previous_years:
         source_state_locator = InputLocator(
             main_locator.get_state_in_time_scenario_folder(
-                timeline_name=timeline_name, year_of_state=source_year
+                pathway_name=pathway_name, year_of_state=source_year
             )
         )
         thermal_network_folder = source_state_locator.get_thermal_network_folder()
@@ -82,14 +82,14 @@ def cleanup_current_network_outputs(state_locator: InputLocator, year: int) -> N
 def copy_previous_network_for_state(
     main_locator: InputLocator,
     state_locator: InputLocator,
-    timeline_name: str,
+    pathway_name: str,
     year: int,
     state_years: list[int],
 ) -> str | None:
     """Copy the latest previous network into the current state and return its network name."""
     previous_network_name, source_year = find_previous_network(
         main_locator=main_locator,
-        timeline_name=timeline_name,
+        pathway_name=pathway_name,
         year=year,
         state_years=state_years,
     )
@@ -104,7 +104,7 @@ def copy_previous_network_for_state(
 
     source_state_locator = InputLocator(
         main_locator.get_state_in_time_scenario_folder(
-            timeline_name=timeline_name, year_of_state=source_year
+            pathway_name=pathway_name, year_of_state=source_year
         )
     )
     source_network_folder = source_state_locator.get_thermal_network_folder_network_name_folder(

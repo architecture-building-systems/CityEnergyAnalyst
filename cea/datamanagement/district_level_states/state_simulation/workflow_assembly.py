@@ -68,14 +68,14 @@ def build_base_workflow(
 
 def prepare_base_workflow_for_state(
     config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     year: int,
 ) -> list[dict[str, Any]]:
     """Prepare the pre-network workflow for one state year."""
     main_locator = InputLocator(config.scenario)
     state_locator = InputLocator(
         main_locator.get_state_in_time_scenario_folder(
-            timeline_name=timeline_name, year_of_state=year
+            pathway_name=pathway_name, year_of_state=year
         )
     )
     use_crax_radiation = should_use_crax_radiation(state_locator)
@@ -138,7 +138,7 @@ def build_thermal_network_step(year: int, required_services: list[str]) -> dict[
 
 def prepare_post_demand_workflow_for_state(
     config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     year: int,
     state_years: list[int],
 ) -> list[dict[str, Any]]:
@@ -146,7 +146,7 @@ def prepare_post_demand_workflow_for_state(
     main_locator = InputLocator(config.scenario)
     state_locator = InputLocator(
         main_locator.get_state_in_time_scenario_folder(
-            timeline_name=timeline_name, year_of_state=year
+            pathway_name=pathway_name, year_of_state=year
         )
     )
 
@@ -165,7 +165,7 @@ def prepare_post_demand_workflow_for_state(
     previous_network_name = network_handling.copy_previous_network_for_state(
         main_locator=main_locator,
         state_locator=state_locator,
-        timeline_name=timeline_name,
+        pathway_name=pathway_name,
         year=year,
         state_years=state_years,
     )
@@ -197,20 +197,20 @@ def prepare_post_demand_workflow_for_state(
 
 def prepare_workflow_for_state(
     config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     year: int,
     state_years: list[int],
 ) -> list[dict[str, Any]]:
     """Prepare the full Step 4 workflow for one state year."""
     workflow = prepare_base_workflow_for_state(
         config=config,
-        timeline_name=timeline_name,
+        pathway_name=pathway_name,
         year=year,
     )
     workflow.extend(
         prepare_post_demand_workflow_for_state(
             config=config,
-            timeline_name=timeline_name,
+            pathway_name=pathway_name,
             year=year,
             state_years=state_years,
         )

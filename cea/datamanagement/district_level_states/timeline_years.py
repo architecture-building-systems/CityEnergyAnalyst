@@ -9,16 +9,18 @@ import geopandas as gpd
 
 from cea.config import Configuration
 from cea.inputlocator import InputLocator
-from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
+from cea.datamanagement.district_level_states.state_scenario import (
+    DistrictEvolutionPathway,
+)
 
 
-def list_state_years(main_locator: InputLocator, timeline_name: str) -> list[int]:
-    """Return sorted list of state years present under `district_timeline_states/state_YYYY/`."""
+def list_state_years(main_locator: InputLocator, pathway_name: str) -> list[int]:
+    """Return sorted list of pathway state years present under `district_pathways/{pathway_name}/state_YYYY/`."""
     years: list[int] = []
-    timeline_folder = main_locator.get_district_timeline_folder(timeline_name)
-    if not os.path.exists(timeline_folder):
+    pathway_folder = main_locator.get_district_pathway_folder(pathway_name)
+    if not os.path.exists(pathway_folder):
         return years
-    for name in os.listdir(timeline_folder):
+    for name in os.listdir(pathway_folder):
         if not name.startswith("state_"):
             continue
         try:
@@ -53,22 +55,22 @@ def get_building_construction_years(locator: InputLocator) -> dict[str, int]:
     return out
 
 
-def get_required_state_years(config: Configuration, timeline_name: str) -> list[int]:
+def get_required_state_years(config: Configuration, pathway_name: str) -> list[int]:
     """Compute which years should have a `state_{year}` folder.
 
     Rules:
     - Always include all years present in YAML log.
     - Always include all distinct building construction years from `zone.shp`.
 
-    This ensures operational timelines capture both policy/standard changes and building births.
+    This ensures pathway simulations capture both policy/standard changes and building births.
     """
-    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
-    return timeline.required_state_years()
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    return pathway.required_state_years()
 
 
 def ensure_state_years_exist(
     config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     years: Iterable[int],
     *,
     update_yaml: bool = True,
@@ -82,8 +84,8 @@ def ensure_state_years_exist(
 
     Returns the (possibly updated) YAML log data in memory.
     """
-    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
-    return timeline.ensure_state_years_exist(
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    return pathway.ensure_state_years_exist(
         [int(y) for y in years],
         update_yaml=update_yaml,
         update_building_events=True,

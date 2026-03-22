@@ -1,7 +1,4 @@
-"""
-Manage atomic change definitions for district timelines.
-Atomic changes are reusable modification templates that can be applied to specific years.
-"""
+"""Manage intervention-template definitions for district evolution pathways."""
 import os
 from typing import Any
 
@@ -16,24 +13,24 @@ class _NoAliasSafeDumper(yaml.SafeDumper):
         return True
 
 
-def load_atomic_changes(
+def load_intervention_templates(
     locator: InputLocator,
     *,
-    timeline_name: str,
+    pathway_name: str,
     allow_missing: bool = False,
 ) -> dict[str, dict[str, Any]]:
     """
-    Load atomic changes from YAML file.
+    Load intervention templates from YAML file.
     
     Returns:
-        dict mapping change_name -> {description: str, modifications: ModifyRecipe}
+        dict mapping template_name -> {description: str, modifications: ModifyRecipe}
     """
-    yml_path = locator.get_district_timeline_atomic_changes_file(timeline_name)
+    yml_path = locator.get_district_pathway_intervention_templates_file(pathway_name)
     if not os.path.exists(yml_path):
         if allow_missing:
             return {}
         raise FileNotFoundError(
-            f"Atomic changes file '{yml_path}' does not exist. Create it first."
+            f"Intervention-template file '{yml_path}' does not exist. Create it first."
         )
     
     with open(yml_path, 'r') as f:
@@ -41,25 +38,25 @@ def load_atomic_changes(
     
     if not isinstance(data, dict):
         raise ValueError(
-            f"Atomic changes file '{yml_path}' must contain a YAML mapping at the top level."
+            f"Intervention-template file '{yml_path}' must contain a YAML mapping at the top level."
         )
     
     return data
 
 
-def save_atomic_changes(
+def save_intervention_templates(
     locator: InputLocator,
-    atomic_changes: dict[str, dict[str, Any]],
+    intervention_templates: dict[str, dict[str, Any]],
     *,
-    timeline_name: str,
+    pathway_name: str,
 ) -> None:
-    """Save atomic changes to YAML file."""
-    yml_path = locator.get_district_timeline_atomic_changes_file(timeline_name)
+    """Save intervention templates to YAML file."""
+    yml_path = locator.get_district_pathway_intervention_templates_file(pathway_name)
     os.makedirs(os.path.dirname(yml_path), exist_ok=True)
     
     with open(yml_path, 'w') as f:
         yaml.dump(
-            atomic_changes,
+            intervention_templates,
             f,
             Dumper=_NoAliasSafeDumper,
             sort_keys=True,
@@ -67,89 +64,119 @@ def save_atomic_changes(
         )
 
 
-def add_or_update_atomic_change(
+def add_or_update_intervention_template(
     config: Configuration,
-    timeline_name: str,
-    change_name: str,
+    pathway_name: str,
+    template_name: str,
     description: str,
     modifications: dict[str, dict[str, dict[str, Any]]],
 ) -> None:
-    """
-    Add or update an atomic change definition.
-    
-    Args:
-        config: CEA configuration
-        timeline_name: Name of the timeline
-        change_name: Unique identifier for this atomic change
-        description: Human-readable description
-        modifications: ModifyRecipe dict {building: {component: {field: value}}}
-    """
+    """Add or update an intervention-template definition."""
     locator = InputLocator(config.scenario)
-    atomic_changes = load_atomic_changes(locator, timeline_name=timeline_name, allow_missing=True)
+    intervention_templates = load_intervention_templates(
+        locator,
+        pathway_name=pathway_name,
+        allow_missing=True,
+    )
     
-    atomic_changes[change_name] = {
+    intervention_templates[template_name] = {
         'description': description,
         'modifications': modifications,
     }
     
-    save_atomic_changes(locator, atomic_changes, timeline_name=timeline_name)
-    print(f"Atomic change '{change_name}' saved to timeline '{timeline_name}'")
+    save_intervention_templates(
+        locator,
+        intervention_templates,
+        pathway_name=pathway_name,
+    )
+    print(
+        f"Intervention template '{template_name}' saved to pathway '{pathway_name}'"
+    )
 
 
-def delete_atomic_change(
+def delete_intervention_template(
     config: Configuration,
-    timeline_name: str,
-    change_name: str,
+    pathway_name: str,
+    template_name: str,
 ) -> None:
-    """Delete an atomic change definition."""
+    """Delete an intervention-template definition."""
     locator = InputLocator(config.scenario)
-    atomic_changes = load_atomic_changes(locator, timeline_name=timeline_name)
+    intervention_templates = load_intervention_templates(
+        locator,
+        pathway_name=pathway_name,
+    )
     
-    if change_name not in atomic_changes:
-        raise ValueError(f"Atomic change '{change_name}' does not exist in timeline '{timeline_name}'")
+    if template_name not in intervention_templates:
+        raise ValueError(
+            f"Intervention template '{template_name}' does not exist in pathway '{pathway_name}'"
+        )
     
-    del atomic_changes[change_name]
-    save_atomic_changes(locator, atomic_changes, timeline_name=timeline_name)
-    print(f"Atomic change '{change_name}' deleted from timeline '{timeline_name}'")
+    del intervention_templates[template_name]
+    save_intervention_templates(
+        locator,
+        intervention_templates,
+        pathway_name=pathway_name,
+    )
+    print(
+        f"Intervention template '{template_name}' deleted from pathway '{pathway_name}'"
+    )
 
 
-def get_atomic_change_names(locator: InputLocator, timeline_name: str) -> list[str]:
-    """Get list of all atomic change names in a timeline."""
-    atomic_changes = load_atomic_changes(locator, timeline_name=timeline_name, allow_missing=True)
-    return sorted(atomic_changes.keys())
-
-
-def resolve_atomic_changes_to_recipe(
+def get_intervention_template_names(
     locator: InputLocator,
-    timeline_name: str,
-    change_names: list[str],
+    pathway_name: str,
+) -> list[str]:
+    """Get the list of intervention-template names in a pathway."""
+    intervention_templates = load_intervention_templates(
+        locator,
+        pathway_name=pathway_name,
+        allow_missing=True,
+    )
+    return sorted(intervention_templates.keys())
+
+
+def resolve_intervention_templates_to_recipe(
+    locator: InputLocator,
+    pathway_name: str,
+    template_names: list[str],
 ) -> dict[str, dict[str, dict[str, Any]]]:
     """
-    Resolve a list of atomic change names into a merged ModifyRecipe.
+    Resolve a list of intervention-template names into a merged ModifyRecipe.
     Raises ValueError if there are conflicts.
     """
-    from cea.datamanagement.district_level_states.conflict_detector import detect_conflicts
+    from cea.datamanagement.district_level_states.conflict_detector import (
+        detect_intervention_template_conflicts,
+    )
     
-    atomic_changes = load_atomic_changes(locator, timeline_name=timeline_name)
+    intervention_templates = load_intervention_templates(
+        locator,
+        pathway_name=pathway_name,
+    )
     
     # Check all requested changes exist
-    missing = [name for name in change_names if name not in atomic_changes]
+    missing = [
+        name for name in template_names if name not in intervention_templates
+    ]
     if missing:
         raise ValueError(
-            f"Atomic changes not found in timeline '{timeline_name}': {', '.join(missing)}"
+            f"Intervention templates not found in pathway '{pathway_name}': {', '.join(missing)}"
         )
     
     # Check for conflicts
-    conflicts = detect_conflicts(change_names, atomic_changes)
+    conflicts = detect_intervention_template_conflicts(
+        template_names,
+        intervention_templates,
+    )
     if conflicts:
         raise ValueError(
-            "Cannot apply atomic changes due to conflicts:\n" + "\n".join(f"  - {c}" for c in conflicts)
+            "Cannot apply intervention templates due to conflicts:\n"
+            + "\n".join(f"  - {c}" for c in conflicts)
         )
     
     # Merge modifications
     merged_recipe: dict[str, dict[str, dict[str, Any]]] = {}
-    for change_name in change_names:
-        modifications = atomic_changes[change_name]['modifications']
+    for template_name in template_names:
+        modifications = intervention_templates[template_name]['modifications']
         for building, components in modifications.items():
             if building not in merged_recipe:
                 merged_recipe[building] = {}

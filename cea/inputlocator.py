@@ -141,54 +141,61 @@ class InputLocator(object):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
     
-    def get_district_timeline_container_folder(self):
-        """Returns the folder as a representation of district timeline, containing all district timeline data:
+    def get_district_pathway_container_folder(self):
+        """Returns the folder storing district evolution pathways.
 
-        `scenario/district_timelines`"""
-        return os.path.join(self.scenario, "district_timelines")
+        `scenario/district_pathways`"""
+        return os.path.join(self.scenario, "district_pathways")
     
-    def get_district_timeline_folder(self, timeline_name: str):
-        """Returns the folder as a representation of district timeline, containing state-in-time scenarios:
+    def get_district_pathway_folder(self, pathway_name: str):
+        """Returns the folder storing one district evolution pathway.
 
-        `scenario/district_timelines/{timeline_name}`"""
-        return os.path.join(self.get_district_timeline_container_folder(), timeline_name)
+        `scenario/district_pathways/{pathway_name}`"""
+        return os.path.join(self.get_district_pathway_container_folder(), pathway_name)
 
-    def get_state_in_time_scenario_folder(self, timeline_name: str, year_of_state: int):
-        """Returns the folder containing a specific state-in-time scenario:
+    def get_state_in_time_scenario_folder(self, pathway_name: str, year_of_state: int):
+        """Returns the folder containing a specific pathway state scenario.
 
-        `scenario/district_timelines/{timeline_name}/state_{year_of_state}`"""
-        return os.path.join(self.get_district_timeline_folder(timeline_name), f'state_{year_of_state}')
-    def get_district_timeline_log_file(self, timeline_name: str):
-        """Returns the log file for the district timeline scenarios:
+        `scenario/district_pathways/{pathway_name}/state_{year_of_state}`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), f'state_{year_of_state}')
+
+    def get_district_pathway_log_file(self, pathway_name: str):
+        """Returns the log file for a district evolution pathway.
         
-        `scenario/district_timelines/{timeline_name}/district_timeline_log.yml`"""
-        return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_timeline_log.yml')
+        `scenario/district_pathways/{pathway_name}/district_pathway_log.yml`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'district_pathway_log.yml')
     
-    def get_district_timeline_atomic_changes_file(self, timeline_name: str):
-        """Returns the atomic changes file for the district timeline:
+    def get_district_pathway_intervention_templates_file(self, pathway_name: str):
+        """Returns the intervention-template file for a district evolution pathway.
         
-        `scenario/district_timelines/{timeline_name}/atomic_changes.yml`"""
-        return os.path.join(self.get_district_timeline_folder(timeline_name), 'atomic_changes.yml')
+        `scenario/district_pathways/{pathway_name}/intervention_templates.yml`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'intervention_templates.yml')
     
-    def get_district_material_timeline_path(self, timeline_name: str):
-        """Returns the district-level material timeline CSV file:
+    def get_district_pathway_emissions_timeline_path(self, pathway_name: str):
+        """Returns the district-level pathway emissions timeline CSV file.
         
-        `scenario/district_timelines/{timeline_name}/district_material_timeline.csv`"""
-        return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_material_timeline.csv')
-    
-    def get_district_material_timelines_buildings_folder(self, timeline_name: str):
-        """Returns the folder containing per-building material timeline CSV files:
-        
-        `scenario/district_timelines/{timeline_name}/district_material_timelines_buildings`"""
-        return os.path.join(self.get_district_timeline_folder(timeline_name), 'district_material_timelines_buildings')
-
-    def get_district_material_timeline_building_file(self, timeline_name: str, building_name: str):
-        """Returns the per-building material timeline CSV file for a specific building:
-        
-        `scenario/district_timelines/{timeline_name}/district_material_timelines_buildings/{building_name}_material_timeline.csv`"""
+        `scenario/district_pathways/{pathway_name}/district_pathway_emissions_timeline.csv`"""
         return os.path.join(
-            self.get_district_material_timelines_buildings_folder(timeline_name),
-            f'{building_name}_material_timeline.csv'
+            self.get_district_pathway_folder(pathway_name),
+            'district_pathway_emissions_timeline.csv',
+        )
+    
+    def get_building_pathway_emissions_timelines_folder(self, pathway_name: str):
+        """Returns the folder containing per-building pathway emissions timeline CSV files.
+        
+        `scenario/district_pathways/{pathway_name}/building_pathway_emissions_timelines`"""
+        return os.path.join(
+            self.get_district_pathway_folder(pathway_name),
+            'building_pathway_emissions_timelines',
+        )
+
+    def get_building_pathway_emissions_timeline_file(self, pathway_name: str, building_name: str):
+        """Returns the per-building pathway emissions timeline CSV file for a specific building.
+        
+        `scenario/district_pathways/{pathway_name}/building_pathway_emissions_timelines/{building_name}_pathway_emissions_timeline.csv`"""
+        return os.path.join(
+            self.get_building_pathway_emissions_timelines_folder(pathway_name),
+            f'{building_name}_pathway_emissions_timeline.csv'
         )
     
     def get_export_results_folder(self):

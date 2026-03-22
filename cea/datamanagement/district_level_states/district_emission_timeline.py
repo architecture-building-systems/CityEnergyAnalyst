@@ -1,8 +1,8 @@
-"""District material timeline (event-driven).
+"""District pathway emissions timeline (event-driven).
 
 This module builds a district-level emissions timeline with *event semantics*:
 - Operational emissions are applied as step functions per state-year simulation results.
-- Embodied emissions are applied as discrete events driven by `district_timeline_log.yml`.
+- Embodied emissions are applied as discrete events driven by `district_pathway_log.yml`.
 
 The changes are logged per archetype in the .yaml file. Therefore, the first task is to recreate the
 individual building's changelog based on archetype changes.
@@ -24,7 +24,7 @@ Core workflow:
     for windows / supply systems).
 - For each building, generate a `MaterialChangeEmissionTimeline` by iterating through the years in which
     something happens (authored modifications, code changes, or due replacements).
-- Sum building timelines to create the district timeline.
+- Sum building timelines to create the district pathway emissions timeline.
 
 The embodied timeline iteration is implemented by `MaterialChangeEmissionTimeline.build_embodied_from_log`,
 which uses `_BuildingEventCursor` to select the next year to process.
@@ -67,7 +67,7 @@ from cea.utilities import epwreader
 _MATERIAL_SRC_COMPONENTS: set[str] = {"wall", "roof", "base", "floor", "part"}
 _ASSEMBLY_SRC_COMPONENTS: set[str] = {"win"}
 
-# Layered envelope components supported by the district timeline log.
+# Layered envelope components supported by the district pathway log.
 # Values are envelope DB table names used by `EnvelopeLookup`.
 _LAYERED_COMPONENT_TO_DB: dict[str, str] = {
     "wall": "wall",
@@ -672,7 +672,7 @@ def _prepare_archetype_timeline(
                     continue
                 if component not in _LAYERED_COMPONENT_TO_DB:
                     raise ValueError(
-                        f"Unsupported modified component '{component}' in district timeline log. "
+                        f"Unsupported modified component '{component}' in district pathway log. "
                         f"Supported components: {sorted(_LAYERED_COMPONENT_TO_DB.keys())}"
                     )
                 old_layers = archetype_layers[archetype].get(component)
@@ -707,7 +707,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     def __init__(
         self,
         *,
-        timeline_variant_name: str,
+        pathway_name: str,
         building_name: str,
         locator: InputLocator,
     ):
@@ -717,7 +717,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         self.supply_codes: dict[str, str] = {}
         self._notes_by_year: dict[str, list[str]] = {}
         super().__init__(name=building_name, locator=locator)
-        self.timeline_variant_name = str(timeline_variant_name)
+        self.pathway_name = str(pathway_name)
 
     def add_note(self, *, year: int, message: str) -> None:
         label = f"Y_{int(year)}"
@@ -911,7 +911,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     ) -> None:
         """Populate embodied (production / demolition / biogenic) emissions for this building.
 
-        This method interprets the district timeline log as the source of truth for envelope layer changes
+        This method interprets the district pathway log as the source of truth for envelope layer changes
         (per archetype / construction standard) and turns those changes into *building-level* emission events.
         The resulting events are written directly into `self.timeline`.
 
@@ -940,8 +940,8 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             area_dict: Building surface areas used to scale per-m2 material intensities.
             materials: Materials database (indexed by material name) providing emission factors and density.
             years_sorted: Sorted list of state years present in the district log.
-            start_year: First year in the district timeline horizon.
-            end_year: Last year in the district timeline horizon.
+            start_year: First year in the district pathway horizon.
+            end_year: Last year in the district pathway horizon.
             archetype_timeline: Precomputed archetype snapshots + delta events (layers + construction types).
             service_life_by_src_component: Mapping `src_component -> Service_Life (years)`.
         """
@@ -1204,7 +1204,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
             if lifetime_any is None:
                 raise ValueError(
                     f"Missing Service_Life for component '{src_component}' (const_type={const_type}). "
-                    "Service life is mandatory for the district material timeline replacement scheduling."
+                    "Service life is mandatory for the district pathway emissions timeline replacement scheduling."
                 )
             lifetime = int(lifetime_any)
             if lifetime <= 0:
@@ -1676,7 +1676,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
 def _load_building_const_types(locator: InputLocator) -> dict[str, str]:
     """Return {building_name: const_type} from `zone.shp`.
 
-    The `district_timeline_log.yml` stores modifications keyed by archetype / construction standard
+    The `district_pathway_log.yml` stores modifications keyed by archetype / construction standard
     (e.g., `STANDARD1`). Buildings map to those standards via the `const_type` attribute.
     """
     zone = gpd.read_file(locator.get_zone_geometry())
@@ -1918,10 +1918,10 @@ def _feedstock_policies_from_config(config: Configuration) -> Mapping[str, tuple
     )
 
 
-def create_district_material_timeline(
+def create_district_pathway_emissions_timeline(
     config: Configuration,
     *,
-    timeline_variant_name: str,
+    pathway_name: str,
     allow_missing_operational: bool = False,
 ) -> pd.DataFrame:
     """Create a district-level *event* emissions timeline driven by the YAML log.
@@ -1929,7 +1929,7 @@ def create_district_material_timeline(
     Key idea (mirrors the standard district emissions timeline):
     1) Generate a *building-level* event timeline for each building using:
        - the building's `const_type` (archetype / construction standard) from `zone.shp`
-       - the per-year `modifications` in `district_timeline_log.yml` (assumed authoritative)
+       - the per-year `modifications` in `district_pathway_log.yml` (assumed authoritative)
        - building birth / demolition events in `building_events`
     2) Aggregate to district level by summing all building timelines.
 
@@ -1942,8 +1942,8 @@ def create_district_material_timeline(
       plus `production_kgCO2e`, `demolition_kgCO2e`, `biogenic_kgCO2e`, and per-demand operational columns.
 
     Files:
-    - District aggregate (exposed): `district_timeline_states/district_material_timeline.csv`
-    - Per-building timelines (for inspection): `district_timeline_states/district_material_timelines_buildings/*.csv`
+    - District aggregate (exposed): `district_pathways/{pathway_name}/district_pathway_emissions_timeline.csv`
+    - Per-building timelines (for inspection): `district_pathways/{pathway_name}/building_pathway_emissions_timelines/*.csv`
 
     Naming convention:
     - This function only outputs emission columns; all columns end with `_kgCO2e`.
@@ -1957,8 +1957,13 @@ def create_district_material_timeline(
 
     main_locator = InputLocator(config.scenario)
 
-    years = get_required_state_years(config, timeline_variant_name)
-    log_data = ensure_state_years_exist(config, years=years, update_yaml=True, timeline_name=timeline_variant_name)
+    years = get_required_state_years(config, pathway_name)
+    log_data = ensure_state_years_exist(
+        config,
+        years=years,
+        update_yaml=True,
+        pathway_name=pathway_name,
+    )
 
     # Determine overall year range
     start_year = min(years)
@@ -2004,7 +2009,7 @@ def create_district_material_timeline(
 
     for year in years_sorted:
         state_locator = InputLocator(
-            main_locator.get_state_in_time_scenario_folder(timeline_variant_name, year)
+            main_locator.get_state_in_time_scenario_folder(pathway_name, year)
         )
         buildings = list(state_locator.get_zone_building_names())
         if buildings:
@@ -2023,7 +2028,7 @@ def create_district_material_timeline(
         )
         raise FileNotFoundError(
             "Some state years are missing solar-radiation outputs required for surface areas.\n"
-            "Run the `state-simulations` script (includes Radiation) for all state years, then rerun this timeline.\n"
+            "Run the `pathway-simulations` script (includes Radiation) for all state years, then rerun this pathway emissions timeline.\n"
             "Missing examples:\n" + sample_lines
         )
 
@@ -2032,8 +2037,8 @@ def create_district_material_timeline(
         raise FileNotFoundError(
             "Missing operational-by-building results for some state years: "
             f"{years_str}.\n"
-            "Run the `state-simulations` script (includes Emissions) to generate outputs for all state years, "
-            "or call create_district_material_timeline(..., allow_missing_operational=True) for best-effort carry-forward."
+            "Run the `pathway-simulations` script (includes Emissions) to generate outputs for all state years, "
+            "or call create_district_pathway_emissions_timeline(..., allow_missing_operational=True) for best-effort carry-forward."
         )
 
     # --- Inputs needed for per-building aggregation ---------------------------------
@@ -2049,7 +2054,7 @@ def create_district_material_timeline(
 
     for year in years_sorted:
         state_locator = InputLocator(
-            main_locator.get_state_in_time_scenario_folder(timeline_variant_name, year)
+            main_locator.get_state_in_time_scenario_folder(pathway_name, year)
         )
         buildings_in_state = list(state_locator.get_zone_building_names())
         if not buildings_in_state:
@@ -2130,7 +2135,7 @@ def create_district_material_timeline(
 
     for b in all_buildings:
         building_timeline = MaterialChangeEmissionTimeline(
-            timeline_variant_name=timeline_variant_name,
+            pathway_name=pathway_name,
             building_name=b,
             locator=main_locator,
         )
@@ -2175,18 +2180,18 @@ def create_district_material_timeline(
             service_life_by_src_component=archetype_service_life[const_type],
         )
 
-    # Persist per-building timelines under the district timeline folder.
+    # Persist per-building timelines under the district pathway folder.
     # This keeps the district-level output as the primary result while still exposing detailed per-building files.
-    per_building_folder = main_locator.get_district_material_timelines_buildings_folder(
-        timeline_variant_name
+    per_building_folder = main_locator.get_building_pathway_emissions_timelines_folder(
+        pathway_name
     )
     os.makedirs(per_building_folder, exist_ok=True)
     for b, building_timeline in building_timelines.items():
         # Only write timelines for buildings that actually exist in the timeline horizon.
         if building_timeline.construction_year is None:
             continue
-        save_b_path = main_locator.get_district_material_timeline_building_file(
-            timeline_variant_name, building_name=b
+        save_b_path = main_locator.get_building_pathway_emissions_timeline_file(
+            pathway_name, building_name=b
         )
         try:
             df_save = building_timeline.timeline.copy()
@@ -2194,7 +2199,7 @@ def create_district_material_timeline(
             df_save.to_csv(save_b_path, float_format="%.2f")
         except PermissionError as e:
             raise PermissionError(
-                "Permission denied writing a per-building material timeline CSV. "
+                "Permission denied writing a per-building pathway emissions timeline CSV. "
                 "This often happens on Windows when the CSV is open in Excel or locked by OneDrive sync. "
                 f"Close '{save_b_path}' and rerun."
             ) from e
@@ -2220,16 +2225,16 @@ def create_district_material_timeline(
             out.loc[label, tech_cols].to_numpy(dtype=float).sum()
         )
 
-    # Persist under district timeline folder to avoid mixing with lifetime-based timelines.
-    save_path = main_locator.get_district_material_timeline_path(
-        timeline_variant_name
+    # Persist under the district pathway folder to avoid mixing with lifetime-based timelines.
+    save_path = main_locator.get_district_pathway_emissions_timeline_path(
+        pathway_name
     )
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     try:
         out.to_csv(save_path, float_format="%.2f")
     except PermissionError as e:
         raise PermissionError(
-            "Permission denied writing the district material timeline output. "
+            "Permission denied writing the district pathway emissions timeline output. "
             "This often happens on Windows when the CSV is open in Excel or locked by OneDrive sync. "
             f"Close '{save_path}' and rerun."
         ) from e
@@ -2238,14 +2243,14 @@ def create_district_material_timeline(
 
 
 def main(config: Configuration) -> None:
-    timeline_variant_name = config.state_simulations.existing_timeline_name
-    if not timeline_variant_name:
+    pathway_name = config.pathway_simulations.existing_pathway_name
+    if not pathway_name:
         raise ValueError(
-            "No existing timeline name provided. "
-            "Please provide an existing timeline name to create the district material timeline."
+            "No existing pathway name provided. "
+            "Please provide an existing pathway name to create the district pathway emissions timeline."
         )
-    df = create_district_material_timeline(config, timeline_variant_name=timeline_variant_name)
-    print(f"District material timeline saved with {len(df)} years.")
+    df = create_district_pathway_emissions_timeline(config, pathway_name=pathway_name)
+    print(f"District pathway emissions timeline saved with {len(df)} years.")
 
 
 if __name__ == "__main__":

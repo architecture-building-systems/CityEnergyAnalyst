@@ -266,105 +266,105 @@ Thermal Network Design:
       - [get_weather_file]
 
 Scenario Evolution Planning:
-  - name: create-new-timeline
-    label: "Step 0: Create New Timeline"
-    short_description: Create a new district timeline (SAVE SETTINGS after this step!)
+  - name: create-new-pathway
+    label: "Step 0: Create District Evolution Pathway"
+    short_description: Create a new district evolution pathway (SAVE SETTINGS after this step!)
     description: |
-      This Feature allows you to create a new timeline. 
-      If you only want to work on existing timeline, you can ignore this step.
+      This Feature allows you to create a new district evolution pathway. 
+      If you only want to work on an existing pathway, you can ignore this step.
       
       **Workflow**:
-      1. **Complete this step first** - Enter new timeline name
-      2. **Click "Save Settings"** - This saves your timeline selection
-      3. **Proceed to Step 1** - Define atomic changes for this timeline
-      4. If you want to switch timelines later, return to this step, select a different timeline, and save again
+      1. **Complete this step first** - Enter a new pathway name
+      2. **Click "Save Settings"** - This saves your pathway selection
+      3. **Proceed to Step 1** - Define intervention templates for this pathway
+      4. If you want to switch pathways later, return to this step, select a different pathway, and save again
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.create_new_timeline
-    parameters: ['general:scenario', create-new-timeline]
+    parameters: ['general:scenario', create-new-pathway]
 
-  - name: district-atomic-changes-define
-    label: "Step 1: Define Atomic Change"
-    short_description: Define reusable atomic changes for the selected timeline
+  - name: pathway-intervention-templates-define
+    label: "Step 1: Define Intervention Template"
+    short_description: Define reusable intervention templates for the selected pathway
     description: |
-      This Feature allows you to define reusable atomic changes that can be applied to multiple years.
-      An atomic change is a named modification template (e.g. "upgrade_wall_insulation", "retrofit_hvac_2025") containing construction 
+      This Feature allows you to define reusable intervention templates that can be applied to multiple years.
+      An intervention template is a named modification template (e.g. "upgrade_wall_insulation", "retrofit_hvac") containing construction 
       property updates that can be applied to selected building archetypes.
       
-      **Prerequisites**: Complete Step 0 (Select Timeline) and save settings first!
+      **Prerequisites**: Complete Step 0 (Select Pathway) and save settings first!
 
       **Workflow**:
-      1. Define atomic changes with meaningful names using this tool
-      2. Use Step 2 to apply one or more atomic changes to specific years
+      1. Define intervention templates with meaningful names using this tool
+      2. Use Step 2 to apply one or more intervention templates to specific years
       3. Use Step 3 to bake the changes into state scenarios
       
       **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.district_atomic_changes_define
-    parameters: ['general:scenario', district-atomic-changes-define]
+    parameters: ['general:scenario', pathway-intervention-templates-define]
     input-files:
       - [get_input_folder]
       - [get_zone_geometry]
       - [get_db4_folder]
       - [get_building_properties_folder]
 
-  - name: district-events-apply-changes
-    label: "Step 2: Apply Atomic Changes to Year"
-    short_description: Apply one or more atomic changes to a specific year
+  - name: pathway-events-apply-templates
+    label: "Step 2: Apply Intervention Templates to Year"
+    short_description: Create or update the pathway event for a specific year
     description: |
-      This Feature applies predefined atomic changes to a specific year in the district timeline.
-      You can select multiple atomic changes to apply simultaneously - the system will detect and prevent conflicts
-      (e.g. if two changes try to modify the same field on the same building).
+      This Feature applies predefined intervention templates to a specific year in the district evolution pathway.
+      You can select multiple intervention templates to compose one pathway event - the system will detect and prevent conflicts
+      (e.g. if two templates try to modify the same field on the same building).
       
-      **Prerequisites**: Complete Step 0 (Select Timeline) and Step 1 (Define Changes) first!
+      **Prerequisites**: Complete Step 0 (Select Pathway) and Step 1 (Define Intervention Templates) first!
 
-      **Important**: When you select a non-default timeline, make sure to **save settings**, 
-      leave this page and return to refresh the list of available atomic changes!
+      **Important**: When you select a non-default pathway, make sure to **save settings**, 
+      leave this page and return to refresh the list of available intervention templates!
 
       **Workflow**:
-      1. Define atomic changes using Step 1
-      2. Use this tool to apply selected changes to specific years
+      1. Define intervention templates using Step 1
+      2. Use this tool to apply selected templates to specific years
       3. Use Step 3 to bake the changes into state scenarios
       
       **Conflict Detection**:
-      If selected atomic changes have conflicting modifications (modifying the same field on the same building),
+      If selected intervention templates have conflicting modifications (modifying the same field on the same building),
       the tool will fail with a clear error message listing the conflicts.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.district_events_apply_changes
-    parameters: ['general:scenario', district-events-apply-changes]
+    parameters: ['general:scenario', pathway-events-apply-templates]
     input-files:
       - [get_input_folder]
       - [get_zone_geometry]
       - [get_db4_folder]
       - [get_building_properties_folder]
 
-  - name: district-events-build
-    label: "Step 3: Bake Scenario Evolution States"
-    short_description: Create or update state-in-time scenarios from the timeline
+  - name: bake-pathway-states
+    label: "Step 3: Bake Pathway States"
+    short_description: Create or update pathway states from the pathway log
     description: |
-      This Feature materialises state-in-time scenarios (`state_{year}` folders) based on the timeline's `district_timeline_log.yml`.
+      This Feature materialises pathway states (`state_{year}` folders) based on the pathway's `district_pathway_log.yml`.
       
-      **Prerequisites**: Complete Steps 0-2 (Select Timeline, Define Changes, Apply to Years) first!
+      **Prerequisites**: Complete Steps 0-2 (Select Pathway, Define Intervention Templates, Apply to Years) first!
 
-      Use this after you have finished applying atomic changes to years. It creates or reconciles state folders for each year.
+      Use this after you have finished applying intervention templates to years. It creates or reconciles state folders for each year.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.bake_states_from_log
-    parameters: ['general:scenario', bake-states]
+    parameters: ['general:scenario', bake-pathway-states]
     input-files:
       - [get_input_folder]
       - [get_zone_geometry]
       - [get_db4_folder]
       - [get_building_properties_folder]
 
-  - name: state-simulations
-    label: "Step 4: Simulate & Build Timeline"
-    short_description: Run simulations for all state-in-time years
+  - name: pathway-simulations
+    label: "Step 4: Simulate Pathway"
+    short_description: Run simulations for all pathway states
     description: |
-      This Feature runs simulations for all state-in-time years in the selected timeline. 
-      Afterwards, it reads component changes and simulation results across all states in the timeline 
-      to create a comprehensive emission timeline, including embodied emissions (component changes + 
+      This Feature runs simulations for all pathway states in the selected pathway. 
+      Afterwards, it reads component changes and simulation results across all pathway states 
+      to create a comprehensive pathway emissions timeline, including embodied emissions (component changes + 
       lifetime-based renovation) and operational emissions.
       
-      **Prerequisites**: Complete Steps 0-3 (Select Timeline, Define Changes, Apply Changes, Bake States) first!
+      **Prerequisites**: Complete Steps 0-3 (Select Pathway, Define Intervention Templates, Apply Templates, Bake States) first!
       
       For each state year it runs:
       - Radiation (Daysim, or CRAX with a warning when all buildings have `void_deck = 0`)
@@ -376,7 +376,7 @@ Scenario Evolution Planning:
         - Thermal Network (Part 2, forced to single-phase for the state-specific network)
       - Emissions (always last)
 
-      It then builds the district material and emission timeline outputs.
+      It then builds the district pathway emissions timeline outputs.
 
       This Feature always reruns all state years because network reuse makes the state sequence interdependent.
       Existing-network reuse is additive: if a later state requests fewer connected buildings than the
@@ -388,7 +388,7 @@ Scenario Evolution Planning:
       `emissions` settings in their own dashboards or config sections before running this Feature.
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_level_states.state_simulation.main
-    parameters: ['general:scenario', 'state-simulations:existing-timeline-name']
+    parameters: ['general:scenario', 'pathway-simulations:existing-pathway-name']
 
 Life Cycle Analysis:
 

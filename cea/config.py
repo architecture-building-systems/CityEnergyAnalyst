@@ -1781,27 +1781,28 @@ class SubfolderChoiceParameter(ChoiceParameter):
             return ''
 
 
-class AtomicChangeMultiChoiceParameter(MultiChoiceParameter):
-    """Select multiple atomic changes from a district timeline's atomic_changes.yml file."""
-
-    def initialize(self, parser):
-        # Don't call super().initialize() - we don't need .choices from config file
-        # Choices are dynamically loaded from atomic_changes.yml via _choices property
-        pass
+class InterventionTemplateMultiChoiceParameter(MultiChoiceParameter):
+    """Select multiple intervention templates from a district pathway's YAML file."""
+    # Dashboard note:
+    # The GUI currently recognises this backend class name in
+    # CityEnergyAnalyst-GUI/src/components/Parameter.jsx to render a multi-select widget.
+    # If you rename this class again, update the frontend switch there in the same change.
+    # Refresh available templates when the selected pathway changes.
+    depends_on = ['existing-pathway-name']
 
     @property
     def _choices(self):
-        from cea.datamanagement.district_level_states.atomic_changes import load_atomic_changes
+        from cea.datamanagement.district_level_states.atomic_changes import load_intervention_templates
         
-        # Load atomic changes for this timeline
+        # Load intervention templates for this pathway
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        timeline_name = self.config.district_events_apply_changes.existing_timeline_name
+        pathway_name = self.config.pathway_events_apply_templates.existing_pathway_name
         
-        if not timeline_name:
+        if not pathway_name:
             return []
         
         try:
-            changes = load_atomic_changes(locator, timeline_name=str(timeline_name))
+            changes = load_intervention_templates(locator, pathway_name=str(pathway_name))
             result = sorted(changes.keys())
             return result
         except (FileNotFoundError, ValueError):
@@ -1821,7 +1822,7 @@ class AtomicChangeMultiChoiceParameter(MultiChoiceParameter):
             invalid = [v for v in value if v not in available]
             if invalid:
                 raise ValueError(
-                    f"Invalid atomic change names for {self.fqname}: {', '.join(invalid)}. "
+                    f"Invalid intervention template names for {self.fqname}: {', '.join(invalid)}. "
                     f"Available: {', '.join(available)}")
         
         return ', '.join(value)

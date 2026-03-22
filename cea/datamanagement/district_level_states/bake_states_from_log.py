@@ -1,4 +1,4 @@
-"""Materialise state-in-time scenarios from the district timeline log.
+"""Materialise pathway states from the district pathway log.
 
 This module exists as a dedicated CEA script entrypoint. The core implementation lives in
 `cea.datamanagement.district_level_states.state_scenario`.
@@ -7,15 +7,15 @@ This module exists as a dedicated CEA script entrypoint. The core implementation
 from __future__ import annotations
 
 from cea.config import Configuration
-from cea.datamanagement.district_level_states.state_scenario import DistrictEventTimeline
+from cea.datamanagement.district_level_states.state_scenario import DistrictEvolutionPathway
 
 
 def main(config: Configuration) -> None:
-    timeline_name = config.bake_states.existing_timeline_name
-    if not timeline_name:
+    pathway_name = config.bake_pathway_states.existing_pathway_name
+    if not pathway_name:
         raise ValueError(
-            "No existing timeline name provided. "
-            "Please provide an existing timeline name to bake states from."
+            "No existing pathway name provided. "
+            "Please provide an existing pathway name to bake states from."
         )
-    timeline = DistrictEventTimeline(config, timeline_name=timeline_name)
-    timeline.bake_states_from_log()
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    pathway.bake_states_from_log()

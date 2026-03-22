@@ -9,27 +9,32 @@ from cea.inputlocator import InputLocator
 from cea.datamanagement.district_level_states.envelope_topology import (
     validate_three_layer_topology,
 )
-from cea.datamanagement.district_level_states.timeline_log import load_log_yaml
+from cea.datamanagement.district_level_states.timeline_log import (
+    load_pathway_log_yaml,
+)
 
 
 ModifyRecipe = dict[str, dict[str, dict[str, Any]]]
 
 
-def check_district_timeline_log_yaml_integrity(main_config: Configuration, timeline_name: str) -> dict[int, dict[str, Any]]:
-    """Check that the district timeline log is consistent with existing state-in-time scenarios.
+def check_district_pathway_log_yaml_integrity(
+    main_config: Configuration,
+    pathway_name: str,
+) -> dict[int, dict[str, Any]]:
+    """Check that the district pathway log is consistent with existing pathway states.
 
-    NOTE: `main_config` must point to the *main* scenario (the one containing the district timeline folder).
+    NOTE: `main_config` must point to the *main* scenario (the one containing the district pathway folder).
     Do not pass a state scenario config here.
     Checks that every logged modification is reflected in the state scenario databases
     """
     main_locator = InputLocator(main_config.scenario)
-    dict_from_yaml = load_log_yaml(main_locator, timeline_name=timeline_name)
+    dict_from_yaml = load_pathway_log_yaml(main_locator, pathway_name=pathway_name)
     existing_years_in_yml = set(dict_from_yaml.keys())
 
     existing_years_in_folders = set()
-    district_timeline_folder = main_locator.get_district_timeline_folder(timeline_name)
-    if os.path.exists(district_timeline_folder):
-        for folder_name in os.listdir(district_timeline_folder):
+    district_pathway_folder = main_locator.get_district_pathway_folder(pathway_name)
+    if os.path.exists(district_pathway_folder):
+        for folder_name in os.listdir(district_pathway_folder):
             if folder_name.startswith("state_"):
                 year_str = folder_name.replace("state_", "")
                 try:
@@ -37,20 +42,20 @@ def check_district_timeline_log_yaml_integrity(main_config: Configuration, timel
                     existing_years_in_folders.add(year)
                 except ValueError:
                     print(
-                        f"Warning: Invalid state-in-time folder name '{folder_name}' in district timeline folder."
+                        f"Warning: Invalid pathway-state folder name '{folder_name}' in district pathway folder."
                     )
 
     years_only_in_folders = existing_years_in_folders - existing_years_in_yml
     years_only_in_yml = existing_years_in_yml - existing_years_in_folders
     if years_only_in_folders:
         raise ValueError(
-            "The following state-in-time years exist in folders but not in the district timeline log file: "
+            "The following pathway-state years exist in folders but not in the district pathway log file: "
             f"{sorted(years_only_in_folders)}"
         )
 
     if years_only_in_yml:
         raise ValueError(
-            "The following state-in-time years exist in the district timeline log file but not in folders: "
+            "The following pathway-state years exist in the district pathway log file but not in folders: "
             f"{sorted(years_only_in_yml)}"
         )
 
@@ -64,7 +69,7 @@ def check_district_timeline_log_yaml_integrity(main_config: Configuration, timel
         errors.extend(
             check_state_year_comprehensive_integrity(
             main_config,
-            timeline_name,
+            pathway_name,
             year_of_state,
             cumulative_modifications,
             )
@@ -73,7 +78,7 @@ def check_district_timeline_log_yaml_integrity(main_config: Configuration, timel
     if errors:
         formatted = "\n".join(f"- {msg}" for msg in errors)
         raise ValueError(
-            "District timeline integrity check failed (comprehensive mode).\n" + formatted
+            "District pathway integrity check failed (comprehensive mode).\n" + formatted
         )
 
     return dict_from_yaml
@@ -99,7 +104,7 @@ def merge_modify_recipes(base: ModifyRecipe, delta: ModifyRecipe) -> ModifyRecip
 
 def check_state_year_comprehensive_integrity(
     main_config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     year_of_state: int,
     expected_modifications: ModifyRecipe,
 ) -> list[str]:
@@ -108,13 +113,13 @@ def check_state_year_comprehensive_integrity(
     Validates that all modifications *up to and including* `year_of_state` are reflected in that
     `state_{year}` scenario.
 
-    NOTE: `main_config` must point to the *main* scenario (the one containing the district timeline folder).
+    NOTE: `main_config` must point to the *main* scenario (the one containing the district pathway folder).
     Do not pass a state scenario config here.
     """
     errors: list[str] = []
     try:
         state_locator = InputLocator(
-            InputLocator(main_config.scenario).get_state_in_time_scenario_folder(timeline_name, year_of_state)
+            InputLocator(main_config.scenario).get_state_in_time_scenario_folder(pathway_name, year_of_state)
         )
     except Exception as e:
         return [
@@ -297,5 +302,5 @@ def _get_envelope_db_path(locator: InputLocator, envelope_component: str) -> str
     if envelope_component == "floor":
         return locator.get_database_assemblies_envelope_floor()
     raise ValueError(
-        f"Unsupported envelope component '{envelope_component}' for comprehensive timeline integrity check."
+        f"Unsupported envelope component '{envelope_component}' for comprehensive pathway integrity check."
     )

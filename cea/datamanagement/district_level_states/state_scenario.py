@@ -12,17 +12,17 @@ from cea.datamanagement.archetypes_mapper import archetypes_mapper
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.datamanagement.databases_verification import verify_input_geometry_zone
 from cea.datamanagement.district_level_states.timeline_integrity import (
-    check_district_timeline_log_yaml_integrity,
+    check_district_pathway_log_yaml_integrity,
     merge_modify_recipes,
 )
 from cea.datamanagement.district_level_states.envelope_topology import (
     validate_three_layer_topology,
 )
 from cea.datamanagement.district_level_states.timeline_log import (
-    add_year_in_yaml,
-    del_year_in_yaml,
-    load_log_yaml,
-    save_log_yaml,
+    add_year_in_pathway_yaml,
+    del_year_in_pathway_yaml,
+    load_pathway_log_yaml,
+    save_pathway_log_yaml,
 )
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
@@ -53,17 +53,17 @@ def _validate_three_layer_topology_row(
 @dataclass
 class DistrictStateYear:
     """Represents a single state year definition and its on-disk realisation (if any)."""
-    timeline_name: str
+    pathway_name: str
     year: int
     modifications: ModifyRecipe
     main_locator: InputLocator
 
     def state_folder(self) -> str:
-        return self.main_locator.get_state_in_time_scenario_folder(self.timeline_name, int(self.year))
+        return self.main_locator.get_state_in_time_scenario_folder(self.pathway_name, int(self.year))
 
     def signature_path(self) -> str:
         return os.path.join(
-            self.state_folder(), ".district_timeline_signature.json"
+            self.state_folder(), ".district_pathway_signature.json"
         )
 
     def exists_on_disk(self) -> bool:
@@ -177,30 +177,30 @@ class DistrictStateYear:
             json.dump(rec, f, indent=2)
 
 
-class DistrictEventTimeline:
-    """Manage district timeline definitions (YAML) and materialise state scenarios from them.
-    The config points to the main scenario; the timeline_name selects which district timeline to manage."""
+class DistrictEvolutionPathway:
+    """Manage district evolution pathway definitions (YAML) and materialise state scenarios from them.
+    The config points to the main scenario; the pathway_name selects which district evolution pathway to manage."""
 
-    def __init__(self, config: Configuration, timeline_name: str):
+    def __init__(self, config: Configuration, pathway_name: str):
         self.config = config
         self.main_locator = InputLocator(config.scenario)
-        self.timeline_name = validate_timeline_name(timeline_name)
-        # Ensure the district timeline folder exists for first-time runs.
-        os.makedirs(self.main_locator.get_district_timeline_folder(self.timeline_name), exist_ok=True)
-        self.log_data: dict[int, dict[str, Any]] = load_log_yaml(
+        self.pathway_name = validate_pathway_name(pathway_name)
+        # Ensure the district evolution pathway folder exists for first-time runs.
+        os.makedirs(self.main_locator.get_district_pathway_folder(self.pathway_name), exist_ok=True)
+        self.log_data: dict[int, dict[str, Any]] = load_pathway_log_yaml(
             self.main_locator,
             allow_missing=True,
             allow_empty=True,
-            timeline_name=self.timeline_name,
+            pathway_name=self.pathway_name,
         )
 
     def list_state_years_on_disk(self) -> list[int]:
-        """Return sorted list of state years present under `district_timelines/{timeline_name}/state_YYYY/`."""
+        """Return sorted list of state years present under `district_pathways/{pathway_name}/state_YYYY/`."""
         years: list[int] = []
-        timeline_folder = self.main_locator.get_district_timeline_folder(self.timeline_name)
-        if not os.path.exists(timeline_folder):
+        pathway_folder = self.main_locator.get_district_pathway_folder(self.pathway_name)
+        if not os.path.exists(pathway_folder):
             return years
-        for name in os.listdir(timeline_folder):
+        for name in os.listdir(pathway_folder):
             if not name.startswith("state_"):
                 continue
             try:
@@ -242,7 +242,7 @@ class DistrictEventTimeline:
         - Always include all years present in YAML log.
         - Always include all distinct building construction years from `zone.shp`.
 
-        This ensures operational timelines capture both policy/standard changes and building births.
+        This ensures pathway simulations capture both policy and building-birth changes.
         """
         years_from_log = set(int(y) for y in self.log_data.keys())
         years_from_buildings = set(self.get_building_construction_years().values())
@@ -273,7 +273,7 @@ class DistrictEventTimeline:
             if year not in existing_years:
                 create_state_in_time_scenario(
                     self.config,
-                    timeline_name=self.timeline_name,
+                    pathway_name=self.pathway_name,
                     year_of_state=year,
                     update_yaml=False,
                 )
@@ -290,9 +290,9 @@ class DistrictEventTimeline:
                 entry.setdefault("modifications", {})
                 self.log_data[year] = entry
 
-            delete_unexisting_buildings_from_event_scenario(self.config, self.timeline_name, year)
+            delete_unexisting_buildings_from_event_scenario(self.config, self.pathway_name, year)
             state_locator = InputLocator(
-                self.main_locator.get_state_in_time_scenario_folder(self.timeline_name, year)
+                self.main_locator.get_state_in_time_scenario_folder(self.pathway_name, year)
             )
 
             current_buildings = set(state_locator.get_zone_building_names())
@@ -349,7 +349,7 @@ class DistrictEventTimeline:
         self.log_data[year] = entry
 
     def save(self) -> None:
-        save_log_yaml(self.main_locator, self.log_data, timeline_name=self.timeline_name)
+        save_pathway_log_yaml(self.main_locator, self.log_data, pathway_name=self.pathway_name)
 
     def state_years(self) -> list[DistrictStateYear]:
         years = sorted(self.log_data.keys())
@@ -359,7 +359,7 @@ class DistrictEventTimeline:
             mods = entry.get("modifications", {}) or {}
             out.append(
                 DistrictStateYear(
-                    timeline_name=self.timeline_name, year=int(y), modifications=mods, main_locator=self.main_locator
+                    pathway_name=self.pathway_name, year=int(y), modifications=mods, main_locator=self.main_locator
                 )
             )
         return out
@@ -386,7 +386,7 @@ class DistrictEventTimeline:
             self.ensure_year(year)
         self.save()
 
-        print("Building district state scenarios from the district timeline log...")
+        print("Building pathway state scenarios from the district evolution pathway log...")
         print(f"Years to build: {years}")
 
         cumulative = self.cumulative_by_year()
@@ -396,7 +396,7 @@ class DistrictEventTimeline:
         for year in years:
             year_recipe = cumulative.get(int(year), {})
             state = DistrictStateYear(
-                timeline_name=self.timeline_name,
+                pathway_name=self.pathway_name,
                 year=int(year),
                 modifications=self.log_data.get(int(year), {}).get("modifications", {})
                 or {},
@@ -411,21 +411,21 @@ class DistrictEventTimeline:
                 shutil.rmtree(state_folder, ignore_errors=True)
 
             create_state_in_time_scenario(
-                self.config, self.timeline_name, int(year), update_yaml=False
+                self.config, self.pathway_name, int(year), update_yaml=False
             )
 
             # Delete buildings not yet born and regenerate properties
-            delete_unexisting_buildings_from_event_scenario(self.config, self.timeline_name, int(year))
+            delete_unexisting_buildings_from_event_scenario(self.config, self.pathway_name, int(year))
 
             # Apply cumulative archetype modifications if specified
             if year_recipe:
                 _apply_state_construction_changes(
                     self.config,
-                    self.timeline_name,
+                    self.pathway_name,
                     int(year),
                     year_recipe,
                 )
-                print("  Applied cumulative modifications from timeline log")
+                print("  Applied cumulative modifications from the pathway log")
             else:
                 print("  No modifications for this year (baseline state)")
             
@@ -441,13 +441,13 @@ class DistrictEventTimeline:
         if built_years:
             print(f"Years created/updated: {built_years}")
 
-        print(f"Timeline folder: {self.main_locator.get_district_timeline_folder(timeline_name=self.timeline_name)}")
-        print(f"Log file: {self.main_locator.get_district_timeline_log_file(timeline_name=self.timeline_name)}")
+        print(f"Pathway folder: {self.main_locator.get_district_pathway_folder(pathway_name=self.pathway_name)}")
+        print(f"Log file: {self.main_locator.get_district_pathway_log_file(pathway_name=self.pathway_name)}")
         print(
-            "Each built state folder contains simulation status metadata in '.district_timeline_signature.json'."
+            "Each built state folder contains simulation status metadata in '.district_pathway_signature.json'."
         )
 
-        check_district_timeline_log_yaml_integrity(self.config, self.timeline_name)
+        check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
 
     def simulate_states(
         self,
@@ -456,21 +456,21 @@ class DistrictEventTimeline:
         workflow: list[dict[str, Any]],
         state_workflows: dict[int, list[dict[str, Any]]] | None = None,
     ) -> None:
-        """Simulate state-in-time scenarios.
+        """Simulate pathway states.
 
         - `pending`: simulate only states that have not been simulated yet, or whose construction changes
           mean results are out of date.
-        - `all`: simulate every `state_{year}` folder present in `district_timeline_states`.
+        - `all`: simulate every `state_{year}` folder present in the selected pathway.
 
         Note:
             The dedicated Step 4 wrapper in `state_simulation/main.py` no longer calls this helper,
             because thermal-network reuse makes Step 4 state years interdependent and it now
             orchestrates a two-pass `all` run directly. This method remains available as a
-            generic timeline helper for other callers.
+            generic pathway helper for other callers.
 
         This updates both:
-        - per-state status files (`.district_timeline_signature.json`)
-        - the district timeline log (`district_timeline_log.yml`) with timestamps / workflow metadata.
+        - per-state status files (`.district_pathway_signature.json`)
+        - the district evolution pathway log (`district_pathway_log.yml`) with timestamps / workflow metadata.
 
         Args:
             simulation_mode: "pending" or "all"
@@ -479,7 +479,7 @@ class DistrictEventTimeline:
                            If provided, uses custom workflow for each year; otherwise uses default workflow
         """
         # Validate that all state folders match YAML before simulation
-        check_district_timeline_log_yaml_integrity(self.config, self.timeline_name)
+        check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
 
         if simulation_mode not in {"pending", "all"}:
             raise ValueError(
@@ -489,7 +489,7 @@ class DistrictEventTimeline:
         state_years = self.list_state_years_on_disk()
         if not state_years:
             raise ValueError(
-                "No state-in-time scenarios found in the district timeline folder."
+                "No pathway states found in the district evolution pathway folder."
             )
         state_years.sort()
 
@@ -498,7 +498,7 @@ class DistrictEventTimeline:
                 y
                 for y in state_years
                 if DistrictStateYear(
-                    timeline_name=self.timeline_name, year=int(y), modifications={}, main_locator=self.main_locator
+                    pathway_name=self.pathway_name, year=int(y), modifications={}, main_locator=self.main_locator
                 ).needs_simulation()
             ]
         else:
@@ -519,7 +519,7 @@ class DistrictEventTimeline:
         for year in years_to_simulate:
             if year not in self.log_data:
                 raise ValueError(
-                    "State year {year} exists in the district timeline folder, but it is missing from the district timeline log.".format(
+                    "State year {year} exists in the district evolution pathway folder, but it is missing from the district evolution pathway log.".format(
                         year=year
                     )
                 )
@@ -530,9 +530,9 @@ class DistrictEventTimeline:
                 year_workflow = state_workflows[int(year)]
                 print(f"Using custom workflow for state {year}")
 
-            print(f"Simulating state-in-time scenario for year {year}...")
+            print(f"Simulating pathway state for year {year}...")
             DistrictStateYear(
-                timeline_name=self.timeline_name, year=int(year), modifications={}, main_locator=self.main_locator
+                pathway_name=self.pathway_name, year=int(year), modifications={}, main_locator=self.main_locator
             ).simulate(self.config, workflow=year_workflow)
 
             # Log metadata in the YAML log.
@@ -542,7 +542,7 @@ class DistrictEventTimeline:
             self.log_data[int(year)] = entry
 
             simulated_years.append(int(year))
-            print(f"Simulation for state-in-time scenario year {year} completed.")
+            print(f"Simulation for pathway state year {year} completed.")
 
         self.save()
 
@@ -557,34 +557,33 @@ class DistrictEventTimeline:
 
 def create_state_in_time_scenario(
     config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     year_of_state: int,
     *,
     update_yaml: bool = True,
 ) -> None:
     """
-    Create a new state-in-time scenario based on the current scenario.
+    Create a new pathway state scenario based on the current scenario.
     Parameters:
         config (Configuration): The configuration object containing the current scenario settings.
-        timeline_name (str): The name of the timeline.
-        year_of_state (int): The year of the event scenario. If a building year is larger than
-        this year, it will not be included in the event scenario.
-        event_content (dict): A dictionary containing the content of the event scenario.
+        pathway_name (str): The name of the pathway.
+        year_of_state (int): The year of the pathway state. If a building year is larger than
+        this year, it will not be included in the pathway state.
     Returns:
         None
     """
     main_locator = InputLocator(config.scenario)
     state_scenario_folder = main_locator.get_state_in_time_scenario_folder(
-        timeline_name=timeline_name, year_of_state=year_of_state
+        pathway_name=pathway_name, year_of_state=year_of_state
     )
     input_folder_path = main_locator.get_input_folder()
     state_locator = InputLocator(state_scenario_folder)
-    # copy all files from the input folder to the event scenario folder
+    # Copy all files from the input folder to the pathway-state folder.
     shutil.copytree(
         input_folder_path, state_locator.get_input_folder(), dirs_exist_ok=True
     )  # make sure existing files are overwritten
     if update_yaml:
-        add_year_in_yaml(config, year_of_state, timeline_name=timeline_name)
+        add_year_in_pathway_yaml(config, year_of_state, pathway_name=pathway_name)
     return None
 
 
@@ -609,24 +608,17 @@ def _regenerate_building_properties_from_archetypes(locator: InputLocator) -> No
     )
 
 
-def remove_state_in_time_scenario(config: Configuration, timeline_name: str, year_of_state: int) -> None:
-    """
-    Delete an existing event scenario.
-    Parameters:
-        config (Configuration): The configuration object containing the current scenario settings.
-        year_of_state (int): The year of the event scenario to be deleted.
-    Returns:
-        None
-    """
+def remove_state_in_time_scenario(config: Configuration, pathway_name: str, year_of_state: int) -> None:
+    """Delete an existing pathway state scenario."""
     locator = InputLocator(config.scenario)
-    event_scenario_folder = locator.get_state_in_time_scenario_folder(timeline_name, year_of_state)
-    shutil.rmtree(event_scenario_folder, ignore_errors=True)
-    del_year_in_yaml(config, year_of_state, timeline_name=timeline_name)
+    state_scenario_folder = locator.get_state_in_time_scenario_folder(pathway_name, year_of_state)
+    shutil.rmtree(state_scenario_folder, ignore_errors=True)
+    del_year_in_pathway_yaml(config, year_of_state, pathway_name=pathway_name)
     return None
 
 
 def delete_unexisting_buildings_from_event_scenario(
-    config: Configuration, timeline_name: str, year_of_state: int
+    config: Configuration, pathway_name: str, year_of_state: int
 ) -> list[str]:
     """
     Remove buildings not yet born in the specified state year and regenerate building properties.
@@ -640,7 +632,7 @@ def delete_unexisting_buildings_from_event_scenario(
     
     Parameters:
         config: Configuration object containing the main scenario settings
-        timeline_name: Name of the timeline
+        pathway_name: Name of the pathway
         year_of_state: The state year - buildings with construction year > this will be deleted
         
     Returns:
@@ -649,8 +641,8 @@ def delete_unexisting_buildings_from_event_scenario(
     Note: This function ensures building properties are consistent with zone.shp after deletion.
     """
     locator = InputLocator(config.scenario)
-    event_scenario_folder = locator.get_state_in_time_scenario_folder(timeline_name, year_of_state)
-    state_locator = InputLocator(event_scenario_folder)
+    state_scenario_folder = locator.get_state_in_time_scenario_folder(pathway_name, year_of_state)
+    state_locator = InputLocator(state_scenario_folder)
     
     if not os.path.exists(state_locator.get_zone_geometry()):
         raise FileNotFoundError(
@@ -684,7 +676,7 @@ def delete_unexisting_buildings_from_event_scenario(
 
 def delete_building_schedule(state_locator: InputLocator, building_name: str) -> None:
     """
-    Delete the schedule file related to a specific building in the event scenario.
+    Delete the schedule file related to a specific building in the pathway state.
     This includes the following file:
     - building schedule file (`locator.get_building_weekly_schedules(building_name)`)
     """
@@ -696,7 +688,7 @@ def delete_building_schedule(state_locator: InputLocator, building_name: str) ->
 
 def _apply_state_construction_changes(
     config: Configuration,
-    timeline_name: str,
+    pathway_name: str,
     year_of_state: int,
     modify_recipe: dict[str, dict[str, dict[str, float | int | str]]],
 ) -> bool:
@@ -705,7 +697,7 @@ def _apply_state_construction_changes(
     This function atomically performs the following:
 
     1. **Modify archetype databases** (in the state folder's `inputs/database/`):
-       - Reads `construction_types.csv` to get archetype → component code mappings
+       - Reads `construction_types.csv` to get archetype â†’ component code mappings
        - For `construction_type` fields (e.g., `type_win`, `supply_type_hs`): updates values directly
        - For envelope components (wall/roof/base/floor): creates NEW envelope rows with modified
          materials/thicknesses, then updates the archetype's `type_{component}` pointer to the new code
@@ -715,12 +707,12 @@ def _apply_state_construction_changes(
        - Calls `archetypes_mapper` to derive building properties from the modified archetypes
        - Updates: architecture.dbf, air_conditioning_systems.csv, indoor_comfort.csv,
          internal_loads.csv, supply.csv, and schedule files
-       - Buildings don't store envelope data directly — they reference archetypes
+       - Buildings don't store envelope data directly â€” they reference archetypes
 
     Parameters:
         config: Configuration object pointing to the main scenario
-        timeline_name: Name of the district timeline
-        year_of_state: The year of the state folder to modify (e.g., 2030 → state_2030/)
+        pathway_name: Name of the district evolution pathway
+        year_of_state: The year of the state folder to modify (e.g., 2030 â†’ state_2030/)
         modify_recipe: Nested dict specifying modifications::
 
             {
@@ -757,7 +749,7 @@ def _apply_state_construction_changes(
         ValueError: If modify_recipe is empty or an archetype/field doesn't exist in the databases
 
     Note:
-        This function does NOT update the district timeline YAML log. The caller (typically
+        This function does NOT update the district evolution pathway YAML log. The caller (typically
         `bake_states_from_log`) is responsible for managing the YAML log separately.
     """
     archetypes_to_modify = modify_recipe.keys()
@@ -769,7 +761,7 @@ def _apply_state_construction_changes(
 
     main_locator = InputLocator(config.scenario)
     state_scenario_folder = main_locator.get_state_in_time_scenario_folder(
-        timeline_name, year_of_state
+        pathway_name, year_of_state
     )
     state_locator = InputLocator(state_scenario_folder)
 
@@ -875,20 +867,20 @@ def shift_code_name_plus1(db, code_prefix):
 
 def create_modify_recipe(
     config: Configuration,
-    config_section_name: str = 'district_atomic_changes_define',
+    config_section_name: str = 'pathway_intervention_templates_define',
 ) -> dict[str, dict[str, dict[str, float | int | str]]]:
     """
     Build modification recipe, pruning None-valued fields and empty components / archetypes.
     
     Args:
         config: Configuration object
-        config_section_name: Name of the config section to read from (default: 'district_atomic_changes_define')
+        config_section_name: Name of the config section to read from (default: 'pathway_intervention_templates_define')
     """
     config_section = getattr(config, config_section_name)
     archetypes_to_modify = config_section.archetypes
     if not archetypes_to_modify:
         raise ValueError(
-            "No archetypes specified for modification in the event scenario."
+            "No archetypes specified for modification in the pathway state."
         )
 
     modify_recipe: dict[str, dict[str, dict[str, float | int | str]]] = {}
@@ -988,29 +980,29 @@ def create_modify_recipe(
     return modify_recipe
 
 
-def validate_timeline_name(timeline_name: str) -> str:
+def validate_pathway_name(pathway_name: str) -> str:
     """
-    Validate timeline name to ensure it can be used as a folder name.
+    Validate pathway name to ensure it can be used as a folder name.
     
     Parameters:
-        timeline_name (str): The timeline name to validate.
+        pathway_name (str): The pathway name to validate.
     
     Returns:
-        str: The validated timeline name (stripped of whitespace).
+        str: The validated pathway name (stripped of whitespace).
     
     Raises:
-        ValueError: If the timeline name is empty or contains invalid characters.
+        ValueError: If the pathway name is empty or contains invalid characters.
     """
-    if not timeline_name or not str(timeline_name).strip():
-        raise ValueError("Timeline name cannot be empty.")
+    if not pathway_name or not str(pathway_name).strip():
+        raise ValueError("Pathway name cannot be empty.")
     
-    timeline_name = str(timeline_name).strip()
+    pathway_name = str(pathway_name).strip()
     
     # Check for invalid filesystem characters
     invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-    if any(char in timeline_name for char in invalid_chars):
+    if any(char in pathway_name for char in invalid_chars):
         raise ValueError(
-            f"Timeline name contains invalid characters. "
+            f"Pathway name contains invalid characters. "
             f"Avoid: {' '.join(invalid_chars)}"
         )
     
@@ -1020,14 +1012,14 @@ def validate_timeline_name(timeline_name: str) -> str:
         'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
         'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
     ]
-    if timeline_name.upper() in reserved_names:
+    if pathway_name.upper() in reserved_names:
         raise ValueError(
-            f"Timeline name '{timeline_name}' is a reserved system name. "
+            f"Pathway name '{pathway_name}' is a reserved system name. "
             "Please choose a different name."
         )
     
     # Check for names that start or end with periods or spaces (problematic on Windows)
-    if timeline_name.startswith('.') or timeline_name.endswith('.'):
-        raise ValueError("Timeline name cannot start or end with a period.")
+    if pathway_name.startswith('.') or pathway_name.endswith('.'):
+        raise ValueError("Pathway name cannot start or end with a period.")
     
-    return timeline_name
+    return pathway_name
