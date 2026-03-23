@@ -310,11 +310,11 @@ def get_limits(user: CEAUser) -> LimitSettings:
     # TODO: Shift limits to user properties
     limits = LimitSettings()
 
-    # Pro users get 3x the limits and 5 scenarios
+    # Pro users get 5x the limits and 5 scenarios
     if user.get("pro_user", False):
-        limits.num_projects = limits.num_projects * 3 if limits.num_projects else None
+        limits.num_projects = limits.num_projects * 5 if limits.num_projects else None
         limits.num_scenarios = 5
-        limits.num_buildings = limits.num_buildings * 3 if limits.num_buildings else None
+        limits.num_buildings = limits.num_buildings * 5 if limits.num_buildings else None
 
     return limits
 
