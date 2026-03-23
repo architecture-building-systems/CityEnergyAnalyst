@@ -868,6 +868,24 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
+  - name: plot-pathway-emission-timeline
+    label: Plot - Pathway Emission Timeline
+    short_description: Visualise how district pathway emissions evolve over time
+    description: |
+      This Feature tracks cumulative lifecycle emissions for one district pathway across different sources
+      (i.e. operation, production, biogenic, demolition, PV).
+
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
+      a line plot for displaying overall net emissions against a target year to achieve net-zero,
+      a stacked area plot to understand total emissions and how each source contributes to the whole,
+      and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.pathway_emission_timeline
+    parameters: ['general:scenario', plots-pathway-emission-timeline, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
 
   - name: plot-operational-emissions
     label: Plot - Operational Emissions
