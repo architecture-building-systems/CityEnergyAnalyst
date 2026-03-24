@@ -82,4 +82,24 @@ summary = validate_all_baked_states(config, pathway_name)
 
 ### DO: Treat all new years as edit-on-save in the GUI
 ```python
-raise YearRequiresEditError
+raise YearRequiresEditError(...)
+# Save through building events, templates, or YAML instead.
+```
+
+### DON'T: Persist a `manual_state` flag in pathway YAML
+```python
+cleaned_entry.pop("manual_state", None)
+```
+
+### DON'T: Materialise `state_{year}` folders from timeline edits
+```python
+# Bad: timeline actions stay log-only until bake/simulate runs
+```
+
+## Related Files
+- `pathway_state.py` - Core year mutation, active-building derivation, and bake/simulate helpers.
+- `pathway_summary.py` - Shared year-row projection and YAML preview helpers.
+- `pathway_validation.py` - Log/schema and baked-state validation helpers.
+- `pathway_timeline.py` - Public pathway service facade for overview, timeline, and year actions.
+- `pathway_status.py` - Hash-backed phase status sidecar records.
+- `pathway_integrity.py` - Comprehensive baked-state validation.

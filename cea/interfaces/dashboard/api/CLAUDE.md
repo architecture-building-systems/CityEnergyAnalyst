@@ -33,4 +33,10 @@ detail={"message": str(exc), "state_kind": "stock", "requires_edit": True}
 
 ### DON'T: Bake or simulate directly inside route handlers
 ```python
-# Job launching stays in the GUI job sy
+# Job launching stays in the GUI job system.
+```
+
+## Related Files
+- `pathways.py` - Dedicated pathway routes and payload models.
+- `__init__.py` - Router registration.
+- `../AGENTS.md` - Broader dashboard architecture and job-system notes.
