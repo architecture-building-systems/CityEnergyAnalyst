@@ -17899,7 +17899,7 @@ get_final_energy_building_file:
 get_final_energy_plant_file:
   created_by:
   - final_energy
-  file_path: outputs/data/analysis/{whatif_name}/final-energy/{network_type}_{network_name}_{plant_name}.csv
+  file_path: outputs/data/analysis/{whatif_name}/final-energy/{plant_name}.csv
   file_type: csv
   schema:
     columns:
@@ -18090,6 +18090,24 @@ get_heat_rejection_whatif_components_file:
         description: Annual heat rejection for this service
         type: float
         unit: '[MWh/yr]'
+        min: 0.0
+  used_by: []
+
+get_heat_rejection_whatif_building_file:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/analysis/{whatif_name}/heat/{name}.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Timestamp for each hour (8760 rows per year)
+        type: datetime64
+        unit: NA
+      heat_rejection_kW:
+        description: Heat rejection rate at this hour (sum of all energy carriers)
+        type: float
+        unit: '[kW]'
         min: 0.0
   used_by: []
 

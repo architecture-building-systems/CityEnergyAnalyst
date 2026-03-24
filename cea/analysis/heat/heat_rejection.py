@@ -65,12 +65,13 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
     :param whatif_name: What-if scenario name
     :param supply_cfg: Supply configuration dict for this building from configuration.json
     :param locator: InputLocator
-    :return: (hr_series, component_rows) where hr_series is hourly kWh Series,
-             component_rows is a list of dicts for heat_rejection_components.csv
+    :return: (hr_series, component_rows, date_series) where hr_series is hourly kWh Series,
+             component_rows is a list of dicts for heat_rejection_components.csv,
+             date_series is the date column from the source file
     """
     path = locator.get_final_energy_building_file(building_name, whatif_name)
     if not os.path.exists(path):
-        return pd.Series(dtype=float), []
+        return pd.Series(dtype=float), [], pd.Series(dtype=str)
 
     df = pd.read_csv(path)
 
@@ -162,7 +163,8 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
             'heat_rejection_annual_MWh': float(svc_hr.sum()) / 1000.0,
         })
 
-    return hr_series, component_rows
+    date_series = df['date'] if 'date' in df.columns else pd.Series(dtype=str)
+    return hr_series, component_rows, date_series
 
 
 def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_name, locator):
@@ -173,11 +175,11 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
     For DC plants (chiller+CT): q_cond = thermal_load + grid_electricity → cooling tower
 
     :param plant_row: Row from final_energy_buildings.csv for this plant (pandas Series)
-    :param plant_configs: Dict of plant configs from configuration.json (keyed by 'DH'/'DC')
+    :param plant_configs: Dict of plant configs from configuration.json (keyed by plant name or network type)
     :param whatif_name: What-if scenario name
     :param network_name: District network name from metadata
     :param locator: InputLocator
-    :return: (hr_series, component_rows)
+    :return: (hr_series, component_rows, date_series)
     """
     plant_name = plant_row['name']
     case_desc = plant_row.get('case_description', '') or ''
@@ -187,18 +189,19 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
     elif 'DC' in case_desc:
         network_type = 'DC'
     else:
-        return pd.Series(dtype=float), []
+        return pd.Series(dtype=float), [], pd.Series(dtype=str)
 
-    pc = plant_configs.get(network_type)
+    # Plant configs may be keyed by plant name (e.g. 'NODE16') or by network type ('DH'/'DC')
+    pc = plant_configs.get(plant_name) or plant_configs.get(network_type)
     if not pc:
-        return pd.Series(dtype=float), []
+        return pd.Series(dtype=float), [], pd.Series(dtype=str)
 
     if not network_name:
-        return pd.Series(dtype=float), []
+        return pd.Series(dtype=float), [], pd.Series(dtype=str)
 
     plant_file = locator.get_final_energy_plant_file(network_name, network_type, plant_name, whatif_name)
     if not os.path.exists(plant_file):
-        return pd.Series(dtype=float), []
+        return pd.Series(dtype=float), [], pd.Series(dtype=str)
 
     plant_df = pd.read_csv(plant_file)
 
@@ -246,7 +249,8 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
             'heat_rejection_annual_MWh': float(hr_series.sum()) / 1000.0,
         })
 
-    return hr_series, component_rows
+    date_series = plant_df['date'] if 'date' in plant_df.columns else pd.Series(dtype=str)
+    return hr_series, component_rows, date_series
 
 
 def calculate_heat_rejection_for_whatif(whatif_name, locator):
@@ -285,13 +289,14 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
         building_name = row['name']
         supply_cfg = building_configs.get(building_name, {})
 
-        hr_series, comp_rows = _calc_building_heat_rejection(
+        hr_series, comp_rows, date_series = _calc_building_heat_rejection(
             building_name, whatif_name, supply_cfg, locator
         )
         component_rows.extend(comp_rows)
 
         if not hr_series.empty:
-            out_df = pd.DataFrame({'heat_rejection_kW': hr_series.values.clip(min=0)})
+            out_data = {'date': date_series.values, 'heat_rejection_kW': hr_series.values.clip(min=0)}
+            out_df = pd.DataFrame(out_data)
             out_file = locator.get_heat_rejection_whatif_building_file(building_name, whatif_name)
             locator.ensure_parent_folder_exists(out_file)
             out_df.to_csv(out_file, index=False, float_format='%.4f')
@@ -301,13 +306,14 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
         plant_rows_df = summary_df[summary_df['type'] == 'plant']
         for _, row in plant_rows_df.iterrows():
             plant_name = row['name']
-            hr_series, comp_rows = _calc_plant_heat_rejection(
+            hr_series, comp_rows, date_series = _calc_plant_heat_rejection(
                 row, plant_configs, whatif_name, network_name, locator
             )
             component_rows.extend(comp_rows)
 
             if not hr_series.empty:
-                out_df = pd.DataFrame({'heat_rejection_kW': hr_series.values.clip(min=0)})
+                out_data = {'date': date_series.values, 'heat_rejection_kW': hr_series.values.clip(min=0)}
+                out_df = pd.DataFrame(out_data)
                 out_file = locator.get_heat_rejection_whatif_building_file(plant_name, whatif_name)
                 locator.ensure_parent_folder_exists(out_file)
                 out_df.to_csv(out_file, index=False, float_format='%.4f')

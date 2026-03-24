@@ -1691,20 +1691,20 @@ class InputLocator(object):
 
     def get_final_energy_plant_file(self, network_name, network_type, plant_name, whatif_name):
         """
-        scenario/outputs/data/final-energy/{whatif_name}/{network_name}_{network_type}_{plant_name}.csv
+        scenario/outputs/data/final-energy/{whatif_name}/{plant_name}.csv
 
-        :param network_name: Network layout name (e.g., 'xxx', 'qqq')
-        :param network_type: 'DH' (district heating) or 'DC' (district cooling)
-        :param plant_name: Plant node name from network shapefile (e.g., 'NODE_001', 'PLANT_A')
+        :param network_name: Network layout name (kept for API compatibility, not used in filename)
+        :param network_type: 'DH' or 'DC' (kept for API compatibility, not used in filename)
+        :param plant_name: Plant node name from network shapefile (e.g., 'NODE16')
         :param whatif_name: What-if scenario name.
         :return: Path to district plant hourly final energy file
 
         Example:
-            locator.get_final_energy_plant_file('xxx', 'DH', 'NODE_001', 'baseline')
-            -> scenario/outputs/data/final-energy/baseline/xxx_DH_NODE_001.csv
+            locator.get_final_energy_plant_file('xxx', 'DH', 'NODE16', 'baseline')
+            -> scenario/outputs/data/final-energy/baseline/NODE16.csv
         """
         folder = self.get_final_energy_folder(whatif_name)
-        filename = f'{network_name}_{network_type}_{plant_name}.csv'
+        filename = f'{plant_name}.csv'
         return os.path.join(folder, filename)
 
     def get_final_energy_buildings_file(self, whatif_name):

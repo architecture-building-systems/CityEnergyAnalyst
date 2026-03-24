@@ -222,6 +222,9 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             if pc:
                 plant_configs_by_type[network_type] = pc
 
+        # Collect plant results per plant_name (may have both DH and DC columns)
+        plant_results_by_name = {}  # plant_name → [df, df, ...]
+
         # Calculate for each network type
         for network_type in network_types:
             try:
@@ -254,14 +257,12 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                             plant_config=type_pc
                         )
 
-                        # Save individual plant file
-                        output_file = locator.get_final_energy_plant_file(
-                            network_name, network_type, plant_name, whatif_name
-                        )
-                        locator.ensure_parent_folder_exists(output_file)
-                        plant_df.to_csv(output_file, index=False, float_format='%.3f')
+                        # Collect for merging by plant_name
+                        if plant_name not in plant_results_by_name:
+                            plant_results_by_name[plant_name] = []
+                        plant_results_by_name[plant_name].append(plant_df)
 
-                        # Store for aggregation
+                        # Store for aggregation (keyed by network_type for downstream)
                         plant_key = f"{network_type}_{plant_name}"
                         plant_dfs[plant_key] = plant_df
 
@@ -276,6 +277,25 @@ def _run(config, locator, whatif_name, output_folder, buildings):
 
             except Exception as e:
                 print(f"  ✗ {network_type} network: {str(e)}")
+
+        # Save merged plant files (one file per plant_name with DH + DC columns)
+        for plant_name, dfs in plant_results_by_name.items():
+            if len(dfs) == 1:
+                merged_df = dfs[0]
+            else:
+                # Merge on 'date' column; for non-date columns that overlap, keep both
+                merged_df = dfs[0]
+                for extra_df in dfs[1:]:
+                    # Find new columns (exclude date and columns already present)
+                    new_cols = [c for c in extra_df.columns if c not in merged_df.columns]
+                    if new_cols:
+                        merged_df = pd.concat([merged_df, extra_df[new_cols]], axis=1)
+
+            output_file = locator.get_final_energy_plant_file(
+                network_name, '', plant_name, whatif_name
+            )
+            locator.ensure_parent_folder_exists(output_file)
+            merged_df.to_csv(output_file, index=False, float_format='%.3f')
     else:
         print("\nNo district network selected (standalone buildings only)")
 
