@@ -173,7 +173,7 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
     For DC plants (chiller+CT): q_cond = thermal_load + grid_electricity → cooling tower
 
     :param plant_row: Row from final_energy_buildings.csv for this plant (pandas Series)
-    :param plant_configs: Dict of plant configs from configuration.json (keyed by 'DH'/'DC')
+    :param plant_configs: Dict of plant configs from configuration.json (keyed by plant name or network type)
     :param whatif_name: What-if scenario name
     :param network_name: District network name from metadata
     :param locator: InputLocator
@@ -189,7 +189,8 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
     else:
         return pd.Series(dtype=float), []
 
-    pc = plant_configs.get(network_type)
+    # Plant configs may be keyed by plant name (e.g. 'NODE16') or by network type ('DH'/'DC')
+    pc = plant_configs.get(plant_name) or plant_configs.get(network_type)
     if not pc:
         return pd.Series(dtype=float), []
 
