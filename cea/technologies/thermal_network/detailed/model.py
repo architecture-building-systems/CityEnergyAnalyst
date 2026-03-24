@@ -29,7 +29,7 @@ from cea.technologies.thermal_network.physics import (
 import cea.utilities.parallel
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
-from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
+from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK, KELVIN_OFFSET
 from cea.optimization.constants import PUMP_ETA
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.simplified.model import add_date_to_dataframe, calculate_ground_temperature
@@ -1121,8 +1121,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # node temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle" (consistent with simplified model)
-        T_supply_nodes_for_csv = T_supply_nodes_for_csv.fillna(273.15)
-        T_return_nodes_for_csv = T_return_nodes_for_csv.fillna(273.15)
+        T_supply_nodes_for_csv = T_supply_nodes_for_csv.fillna(KELVIN_OFFSET)
+        T_return_nodes_for_csv = T_return_nodes_for_csv.fillna(KELVIN_OFFSET)
 
         T_supply_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_supply_nodes_for_csv.to_csv(
@@ -1140,7 +1140,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # plant supply and return temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle"
-        temperatures_at_plants_K_for_csv = temperatures_at_plants_K_for_csv.fillna(273.15)
+        temperatures_at_plants_K_for_csv = temperatures_at_plants_K_for_csv.fillna(KELVIN_OFFSET)
         temperatures_at_plants_K_for_csv.columns = ['temperature_supply_K', 'temperature_return_K']
         temperatures_at_plants_K_for_csv.to_csv(
             thermal_network.locator.get_network_temperature_plant(
@@ -1257,13 +1257,13 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # node temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle" (consistent with simplified model)
-        T_supply_nodes_df = pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).fillna(273.15)
+        T_supply_nodes_df = pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).fillna(KELVIN_OFFSET)
         T_supply_nodes_df.to_csv(
             thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
             index=False, float_format='%.3f')
-        T_return_nodes_df = pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).fillna(273.15)
+        T_return_nodes_df = pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).fillna(KELVIN_OFFSET)
         T_return_nodes_df.to_csv(
             thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
@@ -1273,7 +1273,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # plant supply and return temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle"
         temperatures_at_plant_df = pd.DataFrame(csv_outputs['temperatures_at_plant_K'],
-                     columns=['temperature_supply_K', 'temperature_return_K']).fillna(273.15)
+                     columns=['temperature_supply_K', 'temperature_return_K']).fillna(KELVIN_OFFSET)
         temperatures_at_plant_df.to_csv(
             thermal_network.locator.get_network_temperature_plant(
                 thermal_network.network_type, thermal_network.network_name), index=False, float_format='%.3f')
@@ -2082,13 +2082,13 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     if thermal_network.network_type == 'DH':
         # set to the highest value in the network and assume no loss within the network
         T_substation_supply_K = np.array(
-            [float(thermal_network.t_target_supply_C.iloc[t].max()) + 273.15] * len(
+            [float(thermal_network.t_target_supply_C.iloc[t].max()) + KELVIN_OFFSET] * len(
                 thermal_network.buildings_demands.keys())).reshape(
             1, len(thermal_network.buildings_demands.keys()))  # in [K]
     else:
         # set to the highest value in the network and assume no loss within the network
         T_substation_supply_K = np.array(
-            [float(thermal_network.t_target_supply_C.iloc[t].min()) + 273.15] * len(
+            [float(thermal_network.t_target_supply_C.iloc[t].min()) + KELVIN_OFFSET] * len(
                 thermal_network.buildings_demands.keys())).reshape(
             1, len(thermal_network.buildings_demands.keys()))  # in [K]
 
@@ -2335,13 +2335,13 @@ def initial_diameter_guess(thermal_network):
                 if thermal_network.network_type == 'DH':
                     # set to the highest value in the network and assume no loss within the network
                     t_substation_supply_K = np.array(
-                        [float(t_target_supply_reduced_C.iloc[t].max()) + 273.15] * len(
+                        [float(t_target_supply_reduced_C.iloc[t].max()) + KELVIN_OFFSET] * len(
                             thermal_network_reduced.building_names)).reshape(
                         1, len(thermal_network_reduced.building_names))  # in [K]
                 else:
                     # set to the lowest value in the network and assume no loss within the network
                     t_substation_supply_K = np.array(
-                        [float(t_target_supply_reduced_C.iloc[t].min()) + 273.15] * len(
+                        [float(t_target_supply_reduced_C.iloc[t].min()) + KELVIN_OFFSET] * len(
                             thermal_network_reduced.building_names)).reshape(
                         1, len(thermal_network_reduced.building_names))  # in [K]
 
@@ -2428,8 +2428,8 @@ def calc_edge_temperatures(temperature_node, edge_node):
     # so these were converted to 0 and then converted back to 'nan'
     temperature_edge = np.dot(np.nan_to_num(temperature_node), abs(edge_node) / 2)
     if (
-            temperature_edge < 273.15).any():  # this can happen if we have 0 mass flow, or if we fail to meet cooling demands
-        temperature_edge[temperature_edge < 273.15] = 273.15
+            temperature_edge < KELVIN_OFFSET).any():  # this can happen if we have 0 mass flow, or if we fail to meet cooling demands
+        temperature_edge[temperature_edge < KELVIN_OFFSET] = KELVIN_OFFSET
     # todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature,
     # or mean value of that function to avoid spacial component
     return temperature_edge
@@ -2472,7 +2472,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                                                     thermal_network.edge_node_df.copy())
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
-        initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
+        initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + KELVIN_OFFSET, order='C')
         t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df.copy())
 
         # initialization of K_value
@@ -2566,7 +2566,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                     q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(),
                                                                            edge_mass_flow_df_2_kgs, k, thermal_network)
                     # check if all substation temperatures are satisfied
-                    dt_nodes = t_supply_nodes_2__k - 273.15 - thermal_network.t_target_supply_df.loc[t]
+                    dt_nodes = t_supply_nodes_2__k - KELVIN_OFFSET - thermal_network.t_target_supply_df.loc[t]
                     dt_nodes_max = dt_nodes.max()  # .max() returns a scalar, no need to copy
                     dt_tolerance = 0.00001  # TODO: defined by users
                     # identify the nodes
@@ -2593,7 +2593,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                         for node in nodes_insufficient:
                             index_insufficient = np.argwhere(edge_node_df.index == node)[0][0]
                             t_target_supply__c = thermal_network.t_target_supply_df.loc[t]
-                            t_supply_nodes_2__k[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                            t_supply_nodes_2__k[index_insufficient] = t_target_supply__c[index_insufficient] + KELVIN_OFFSET
                             # force setting node temperature to target to avoid substation HEX calculation error.
                             # However, it might potentially cause error at mass flow iteration.
                             print('force node: ', node, 'with dt=', dt_nodes[node], ' at time: ', t)
@@ -2824,11 +2824,11 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
     control_mode = thermal_network.get_temperature_control_mode()
     if control_mode == 'VT':  # VT_VF
         if thermal_network.network_type == 'DH':
-            t_plant_sup_0 = 273.15 + t_target_supply__c.max()
+            t_plant_sup_0 = KELVIN_OFFSET + t_target_supply__c.max()
         else:  # DC
-            t_plant_sup_0 = 273.15 + t_target_supply__c.min()
+            t_plant_sup_0 = KELVIN_OFFSET + t_target_supply__c.min()
     elif control_mode == 'CT':  # CT_VF
-        t_plant_sup_0 = 273.15 + thermal_network.get_plant_supply_temperature()
+        t_plant_sup_0 = KELVIN_OFFSET + thermal_network.get_plant_supply_temperature()
     else:
         raise ValueError(f"Unknown temperature control mode: {control_mode}")
 
@@ -2926,17 +2926,17 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
             temp_iter = temp_iter + 1
 
         # set maximum/minimum allowable plant supply temperatures
-        t_boiling_K = 100 + 273.15
+        t_boiling_K = 100 + KELVIN_OFFSET
         t_max_dT_K = t_plant_sup_0 + 60  # less than 60C temperature loss in the network TODO: move to settings
         t_plant_sup_max = max(t_boiling_K, t_max_dT_K)  # 98 C or
-        t_plant_sup_min = 1 + 273.15  # 1 C #TODO: move to settings
+        t_plant_sup_min = 1 + KELVIN_OFFSET  # 1 C #TODO: move to settings
 
         if (thermal_network.get_temperature_control_mode() == 'VT' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max):
             # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
             if network_type == 'DH':
                 # calculate the difference between node temperature and the target supply temperature at substations
                 # [K] temperature differences b/t node supply and target supply
-                d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+                d_t = (t_node - (t_target_supply__c + KELVIN_OFFSET)).dropna()
                 # enter iteration if the node supply temperature is lower than the target supply temperature
                 # (0.1 is the tolerance)
                 if all(d_t > -0.1) is False and iteration <= 30:
@@ -2959,7 +2959,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     node_insufficient = d_t[d_t < 0].index.values
                     for node in range(node_insufficient.size):
                         index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
-                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + KELVIN_OFFSET
                         # force setting node temperature to target to avoid substation HEX calculation error.
                         # However, it might potentially cause error at mass flow iteration.
                     flag = 1
@@ -2970,7 +2970,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
             else:  # when network type == 'DC'
                 # calculate the difference between node temperature and the target supply temperature at substations
                 # [K] temperature differences b/t node supply and target supply
-                d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+                d_t = (t_node - (t_target_supply__c + KELVIN_OFFSET)).dropna()
 
                 # enter iteration if the node supply temperature is higher than the target supply temperature
                 # (0.1 is the tolerance)
@@ -2990,7 +2990,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     node_insufficient = d_t[d_t > 0].index.values
                     for node in range(node_insufficient.size):
                         index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
-                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + KELVIN_OFFSET
                         # force setting node temperature to target to avoid substation HEX calculation error.
                         # However, it might potentially cause error at mass flow iteration.
                         flag = 1

@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from math import log, ceil
 # import sympy
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_OFFSET
 from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Shanshan Hsieh"
@@ -187,9 +187,9 @@ def calc_operating_conditions(absorption_chiller, input_conditions):
     """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_hw_in_C = input_conditions['T_hw_in_C']
-    T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
-    T_chw_in_C = input_conditions['T_chw_re_K'] - 273.0  # inlet to the evaporator
-    T_chw_out_C = input_conditions['T_chw_sup_K'] - 273.0  # outlet from the evaporator
+    T_cw_in_C = input_conditions['T_ground_K'] - KELVIN_OFFSET  # condenser water inlet temperature
+    T_chw_in_C = input_conditions['T_chw_re_K'] - KELVIN_OFFSET  # inlet to the evaporator
+    T_chw_out_C = input_conditions['T_chw_sup_K'] - KELVIN_OFFSET  # outlet from the evaporator
     q_chw_kW = input_conditions['q_chw_W'] / 1000  # cooling load ata the evaporator
     m_cw_kgpers = absorption_chiller.m_cw_kgpers  # external flow rate of cooling water at the condenser and absorber
     m_hw_kgpers = absorption_chiller.m_hw_kgpers  # external flow rate of hot water at the generator

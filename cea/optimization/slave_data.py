@@ -5,6 +5,7 @@ This File sets all variables for the slave optimization, that have to be set by 
 """
 
 import numpy as np
+from cea.constants import KELVIN_OFFSET
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -141,12 +142,12 @@ class SlaveData(object):
         # Saplamidis: 0.293542 # Wh / h= 0( .005 / (math.log10(26/25.0) ) ,
         # from Vassilis-Storage Optimization Code ** ACHTUNG !! CHANGE - SCALES WITH SIZE (?!)
         self.Storage_conv_loss = 0.0111  # losses due to energy conversion from and to storage
-        self.T_storage_initial = 10 + 273.0  # initial Storage Temperature
-        self.T_storage_zero = 10 + 273.0  # Reference Temperature Storage
+        self.T_storage_initial = 10 + KELVIN_OFFSET  # initial Storage Temperature
+        self.T_storage_zero = 10 + KELVIN_OFFSET  # Reference Temperature Storage
         self.Q_in_storage_zero = self.STORAGE_SIZE * 1 / 3600 * 983.21 * 4185 * (
                 self.T_storage_zero - self.T_storage_initial)
         self.dT_buffer = 5  # maintain a buffer for "uncertainties", never go below this temperature
         # Storage is initially empty
 
-        self.T_ST_MAX = 90 + 273.0  # Maximum Temperature of storage allowed
-        self.T_ST_MIN = 10 + 273.0
+        self.T_ST_MAX = 90 + KELVIN_OFFSET  # Maximum Temperature of storage allowed
+        self.T_ST_MIN = 10 + KELVIN_OFFSET

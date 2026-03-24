@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR, KELVIN_OFFSET
 from cea.demand import constants
 from cea.technologies import storage_tank as storage_tank
 
@@ -68,8 +67,8 @@ def calc_water_temperature(T_ambient_C: npt.NDArray[np.float64], depth_m: float)
     conductivity_soil = 1.6  # _[A. Kecebas et al., 2011]
     density_soil = 1600  # _[A. Kecebas et al., 2011]
 
-    T_max = max(T_ambient_C) + 273.15  # to K
-    T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    T_max = max(T_ambient_C) + KELVIN_OFFSET  # to K
+    T_avg = np.mean(T_ambient_C) + KELVIN_OFFSET  # to K
     e = depth_m * np.sqrt(
         (np.pi * heat_capacity_soil * density_soil) / (HOURS_IN_YEAR * conductivity_soil))  # soil constants
     
