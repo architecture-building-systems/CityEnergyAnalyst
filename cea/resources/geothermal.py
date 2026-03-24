@@ -100,7 +100,7 @@ def calc_ground_temperature(T_ambient_C, depth_m):
     conductivity_soil = SOIL_lambda_WmK
     density_soil = SOIL_rho_kgm3
 
-    T_amplitude = (max(T_ambient_C) - min(T_ambient_C)) + KELVIN_OFFSET  # to K
+    T_amplitude = max(T_ambient_C) - min(T_ambient_C)  # to K
     T_avg = np.mean(T_ambient_C) + KELVIN_OFFSET  # to K
     T_ground_K = calc_temperature_underground(T_amplitude, T_avg, conductivity_soil, density_soil, depth_m,
                                               heat_capacity_soil)
