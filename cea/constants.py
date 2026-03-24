@@ -172,5 +172,5 @@ FT_TO_M = 0.3048
 BOLTZMANN = 0.000000056697
 """Stefan-Boltzmann constant in W/(m²·K⁴)."""
 
-KELVIN_OFFSET = 273.0
+KELVIN_OFFSET = 273.15
 """Kelvin to degree Celsius conversion offset."""
