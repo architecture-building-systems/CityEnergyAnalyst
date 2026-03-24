@@ -44,8 +44,6 @@ __status__ = "Production"
 _CARRIER_COLOURS = {
     'NATURALGAS': COLOURS_TO_RGB['orange'],
     'GRID':       COLOURS_TO_RGB['green'],
-    'DH':         COLOURS_TO_RGB['red'],
-    'DC':         COLOURS_TO_RGB['blue'],
     'WOOD':       COLOURS_TO_RGB['brown'],
     'OIL':        COLOURS_TO_RGB['brown_light'],
     'COAL':       COLOURS_TO_RGB['grey'],
@@ -55,8 +53,6 @@ _CARRIER_COLOURS = {
 _CARRIER_DISPLAY = {
     'NATURALGAS': 'Natural Gas',
     'GRID':       'Electricity Grid',
-    'DH':         'District Heating',
-    'DC':         'District Cooling',
     'WOOD':       'Wood',
     'OIL':        'Oil',
     'COAL':       'Coal',
@@ -92,8 +88,6 @@ _CARRIER_ORDER = [
     'Oil',
     'Coal',
     'Solar',
-    'District Heating',
-    'District Cooling',
 ]
 
 _SERVICE_ORDER = [
@@ -186,7 +180,6 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
                 network_names[nt] = cfg['network_name']
 
     totals = {}
-    folder = locator.get_final_energy_folder(whatif_name)
 
     for plant_name, plant_cfg in plant_configs.items():
         network_type = plant_cfg.get('network_type', '')
@@ -196,14 +189,13 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
         if not network_type or not network_name:
             continue
 
-        # Scan for all plant files: {network_name}_{network_type}_{plant_name}.csv
-        prefix = f'{network_name}_{network_type}_'
-        plant_files = [
-            os.path.join(folder, f) for f in os.listdir(folder)
-            if f.startswith(prefix) and f.endswith('.csv')
-        ]
-        if not plant_files:
+        # Plant files are named {plant_name}.csv
+        plant_file = locator.get_final_energy_plant_file(
+            network_name, network_type, plant_name, whatif_name
+        )
+        if not os.path.exists(plant_file):
             continue
+        plant_files = [plant_file]
 
         carrier_col = (
             f'plant_cooling_{carrier_raw}_kWh'
@@ -357,10 +349,18 @@ def load_energy_flow_data(locator, whatif_name):
                     plant_input = pt['input_kWh']
                     has_plant = True
                 else:
-                    # No plant files: fall back to network carrier as entry point
-                    carrier_raw = network_type  # 'DC' or 'DH'
+                    # No plant files: infer carrier from the plant config if available,
+                    # otherwise from the building's district assembly.
+                    # DH/DC are network types, not city-scale energy carriers.
+                    pc = plant_configs.get(network_type, {})
+                    carrier_raw = pc.get('carrier') or svc_config.get('carrier', network_type)
+                    if carrier_raw in ('DH', 'DC'):
+                        # DH/DC are not primary carriers — default to GRID
+                        carrier_raw = 'GRID'
                     carrier = _carrier_display(carrier_raw)
-                    plant_comp = component_display(svc_config.get('primary_component', ''))
+                    plant_comp = component_display(
+                        pc.get('primary_component') or svc_config.get('primary_component', '')
+                    )
                     plant_input = val
                     has_plant = False
 
