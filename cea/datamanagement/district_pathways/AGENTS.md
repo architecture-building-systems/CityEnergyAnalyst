@@ -7,6 +7,7 @@
 - `build_pathway_year_row(pathway, year, issues) -> dict[str, Any]` - Shared year-row projection used by timeline reads and editor preflight.
 - `validate_pathway_log_data(config, pathway_name, log_data) -> dict[str, Any]` - Validate log/schema content without touching baked state folders.
 - `create_pathway_year(config, pathway_name, year) -> dict` - Validate whether a year already exists; do not create empty placeholders.
+- `delete_pathway(config, pathway_name) -> dict[str, Any]` - Delete one whole pathway folder, including saved states and state-status artefacts.
 - `get_pathway_overview(config) -> dict` - Lightweight multi-pathway lane data for the GUI.
 - `get_pathway_timeline(config, pathway_name) -> dict` - Active-pathway timeline rows with status, YAML preview, and validation.
 - `update_year_building_events(...) -> dict` - Save explicit building add/remove edits for one year.
@@ -14,6 +15,7 @@
 - `validate_baked_state(...) -> dict` - Run comprehensive baked-state validation and persist a validation hash.
 - `print_pathway_action_output(payload: dict[str, Any]) -> None` - Format one mutation result for native dashboard job logs.
 - `pathway_validate_all_states_job.main(config) -> dict` - Validate every required baked state year and fail the job if any state is out of sync.
+- `pathway_delete_pathway_job.main(config) -> dict` - Delete one pathway through the native job system so the dashboard keeps the full job log.
 
 ## Key Patterns
 ### DO: Keep YAML focused on explicit user edits
@@ -66,6 +68,12 @@ return {"years": rows, "validation": payload}
 ### DO: Route panel mutations through real CEA scripts when the GUI needs native Job Info
 ```python
 payload = update_year_yaml(config, pathway_name, year, raw_yaml=raw_yaml)
+print_pathway_action_output(payload)
+```
+
+### DO: Delete whole pathways through one shared service helper and a thin job wrapper
+```python
+payload = delete_pathway(config, pathway_name)
 print_pathway_action_output(payload)
 ```
 

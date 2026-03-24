@@ -400,6 +400,16 @@ District Evolution Pathways:
     module: cea.datamanagement.district_pathways.pathway_delete_state_job
     parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-name', 'pathway-state-edit:year-of-state']
 
+  - name: pathway-delete-pathway
+    label: "District Pathway: Delete Pathway"
+    short_description: Delete one district evolution pathway and all of its state artefacts
+    description: |
+      This job removes one district evolution pathway folder completely.
+      It deletes the pathway log, intervention templates, baked states, simulation outputs, and saved state-status records for that pathway.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_delete_pathway_job
+    parameters: ['general:scenario', 'pathway-state-workflow:existing-pathway-name']
+
   - name: pathway-update-building-events
     label: "District Pathway: Save Building Events"
     short_description: Save explicit building additions and removals for one pathway year

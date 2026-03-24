@@ -38,6 +38,7 @@ plot-pathway-emission-timeline -> plots-pathway-emission-timeline
 ### DO: Add scripts to `scripts.yml` even for dashboard-only job launches
 ```text
 pathway-save-yaml -> cea.datamanagement.district_pathways.pathway_save_yaml_job
+pathway-delete-pathway -> cea.datamanagement.district_pathways.pathway_delete_pathway_job
 interfaces: [cli]
 ```
 

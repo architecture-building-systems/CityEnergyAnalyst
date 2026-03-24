@@ -67,6 +67,22 @@ def create_pathway(config: Configuration, pathway_name: str) -> dict[str, Any]:
     }
 
 
+def delete_pathway(config: Configuration, pathway_name: str) -> dict[str, Any]:
+    validated_name = _require_existing_pathway(config, pathway_name)
+    locator = InputLocator(config.scenario)
+    pathway_folder = locator.get_district_pathway_folder(validated_name)
+    shutil.rmtree(pathway_folder)
+    return {
+        "pathway_name": validated_name,
+        "pathway_folder": pathway_folder,
+        "action": "deleted_pathway",
+        "message": f"Deleted pathway '{validated_name}'.",
+        "messages": [
+            "Removed the pathway log, intervention templates, baked states, simulation outputs, and saved state-status records.",
+        ],
+    }
+
+
 def get_pathway_overview(config: Configuration) -> dict[str, Any]:
     pathways: list[dict[str, Any]] = []
     all_years: list[int] = []

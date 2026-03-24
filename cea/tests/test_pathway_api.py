@@ -202,6 +202,21 @@ def test_pathway_panel_jobs_run_via_cea_api(pathway_api_fixture):
     assert 2036 not in _read_log(locator, "demo")
 
 
+def test_delete_pathway_job_via_cea_api(pathway_api_fixture):
+    config = pathway_api_fixture["config"]
+    locator = pathway_api_fixture["locator"]
+
+    pathway_folder = Path(locator.get_district_pathway_folder("demo"))
+    assert pathway_folder.exists()
+
+    cea.api.pathway_delete_pathway(
+        scenario=config.scenario,
+        existing_pathway_name="demo",
+    )
+
+    assert not pathway_folder.exists()
+
+
 def test_validate_all_states_job_via_cea_api(pathway_api_fixture):
     config = pathway_api_fixture["config"]
     locator = pathway_api_fixture["locator"]
