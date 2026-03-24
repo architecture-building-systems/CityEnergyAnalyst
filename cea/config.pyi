@@ -1927,6 +1927,7 @@ class PlotsPathwayEmissionTimelineSection(Section):
     y_max: float | None
     y_step: float | None
     net_zero_target_year: int
+    cutoff_year: int | None
     context: dict[str, Any] | None
 
     @overload
@@ -1953,6 +1954,8 @@ class PlotsPathwayEmissionTimelineSection(Section):
     def __getattr__(self, item: Literal["y_step"]) -> float | None: ...
     @overload
     def __getattr__(self, item: Literal["net_zero_target_year"]) -> int: ...
+    @overload
+    def __getattr__(self, item: Literal["cutoff_year"]) -> int | None: ...
     @overload
     def __getattr__(self, item: Literal["context"]) -> dict[str, Any] | None: ...
     def __getattr__(self, item: str) -> Any: ...
