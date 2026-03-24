@@ -88,5 +88,4 @@ def ensure_state_years_exist(
     return pathway.ensure_state_years_exist(
         [int(y) for y in years],
         update_yaml=update_yaml,
-        update_building_events=True,
     )

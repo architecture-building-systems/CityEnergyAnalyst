@@ -15,8 +15,7 @@ def main(config: Configuration) -> None:
             "No pathway selected. Please complete Step 0 (Select Pathway) first:\n"
             "1. Go to 'Step 0: Create District Evolution Pathway'\n"
             "2. Select or create a pathway\n"
-            "3. Click 'Save Settings'\n"
-            "4. Then return to this step"
+            "3. Return to this step and run it for the selected pathway"
         )
     
     template_name = (

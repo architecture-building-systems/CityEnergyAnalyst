@@ -1707,6 +1707,18 @@ def _building_demolition_years(log_data: dict[int, dict[str, Any]]) -> dict[str,
     return out
 
 
+def _building_manual_construction_years(log_data: dict[int, dict[str, Any]]) -> dict[str, int]:
+    """Return explicit {building_name: construction_year} overrides from YAML building_events."""
+    out: dict[str, int] = {}
+    for year in sorted(int(y) for y in log_data.keys()):
+        entry = log_data.get(year, {}) or {}
+        events = entry.get("building_events", {}) or {}
+        new_buildings = events.get("new_buildings", []) or []
+        for building_name in new_buildings:
+            out.setdefault(str(building_name), int(year))
+    return out
+
+
 def _apply_layer_patch(
     old_layers: list[MaterialLayer] | None,
     patch: dict[str, Any],
@@ -2043,6 +2055,7 @@ def create_district_pathway_emissions_timeline(
 
     # --- Inputs needed for per-building aggregation ---------------------------------
     building_construction_years = get_building_construction_years(main_locator)
+    building_construction_years.update(_building_manual_construction_years(log_data))
     building_const_types = _load_building_const_types(main_locator)
     demolition_years = _building_demolition_years(log_data)
 

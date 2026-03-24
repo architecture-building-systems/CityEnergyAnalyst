@@ -139,6 +139,10 @@ FastAPI dependencies: `CEAWorkerProcesses`, `CEAStreams`, `CEAProjectID`, `CEAUs
 
 Retry logic: `emit_with_retry()` (3 retries, 0.1s initial delay, exponential backoff)
 
+## Dashboard API Pattern
+
+Not every user action should become a background job. Keep fast synchronous API routes for lightweight, reusable domain operations. Promote an action to a native job when the user experience depends on persistent Job Info logs, streamed stdout/stderr, or parity with long-running workflow actions. In both cases, keep the business logic in shared service functions so API routes and jobs call the same implementation.
+
 ## Error Handling
 
 **Worker**: Catches `SystemExit` and `Exception`, POSTs to `/jobs/error/{jobid}`, always flushes streams

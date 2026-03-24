@@ -1,132 +1,54 @@
-# Configuration Parameters
+# CEA Core
 
 ## Main API
+- `InputLocator` - Canonical path resolver for scenarios, databases, district pathways, and `state_status/` sidecars.
+- `Configuration` - Typed config access for scripts and dashboard routes.
+- `cea.api.<script_name>(...)` - Programmatic script entry points.
+- `Parameter.decode(value) -> Any` - Lenient config-file parsing.
+- `Parameter.encode(value) -> str` - Strict validation before saving.
 
-- `Parameter.decode(value: str) → Any` - Parse value from config file (lenient)
-- `Parameter.encode(value: Any) → str` - Validate value before saving (strict)
-- `ChoiceParameter._choices → list[str]` - Available options (can be dynamic via `@property`)
+## Key Patterns
+### DO: Use `InputLocator` for all scenario-relative paths
+```python
+locator = InputLocator(config.scenario)
+state_file = locator.get_district_pathway_state_status_file("demo", 2030)
+```
 
-## After Modifying config.py
+### DO: Keep config decode/encode responsibilities separate
+```python
+def decode(self, value):
+    return value.strip()
 
-**IMPORTANT**: After ANY changes to `config.py`, you MUST regenerate the type stub:
+def encode(self, value):
+    if not value.strip():
+        raise ValueError("Value required")
+    return value.strip()
+```
 
+### DO: Regenerate `config.pyi` after changing config parameters
 ```bash
 pixi run python cea/utilities/config_type_generator.py
 ```
 
-This updates `config.pyi` with correct type hints for IDE autocompletion and type checking.
-
-## Key Pattern: decode() vs encode()
-
-### ✅ DO: Separate parsing from validation
-
-```python
-class MyParameter(Parameter):
-    def decode(self, value):
-        """Parse - security checks only"""
-        if not value:
-            return ""
-        value = value.strip()
-
-        # Only validate security concerns (path traversal, injection, etc.)
-        if self._has_security_issue(value):
-            raise ValueError("Security violation")
-
-        return value  # Don't check business rules
-
-    def encode(self, value):
-        """Validate - all business rules"""
-        if not value or not value.strip():
-            raise ValueError("Value required")
-
-        value = value.strip()
-
-        # Security check
-        if self._has_security_issue(value):
-            raise ValueError("Security violation")
-
-        # Business rule check
-        if self._resource_exists(value):
-            raise ValueError(f"Resource '{value}' already exists")
-
-        return value
+### DO: Use dedicated config sections for plot scripts
+```text
+plot-pathway-emission-timeline -> plots-pathway-emission-timeline
 ```
 
-### ❌ DON'T: Validate business rules in decode()
-
-```python
-def decode(self, value):
-    # ❌ Expensive I/O on every config load
-    if not self._resource_exists(value):
-        raise ValueError("Resource not found")
-
-    # ❌ Breaks loading old configs when resources deleted
-    if self._check_collision(value):
-        raise ValueError("Already exists")
-
-    return value
+### DO: Add scripts to `scripts.yml` even for dashboard-only job launches
+```text
+pathway-save-yaml -> cea.datamanagement.district_pathways.pathway_save_yaml_job
+interfaces: [cli]
 ```
 
-**Why**: decode() is called when loading config files - must be lenient and fast.
-
-## Dynamic Choices
-
-### ✅ DO: Use @property for dynamic choices
-
+### DON'T: Hardcode scenario or database paths
 ```python
-class DynamicChoiceParameter(ChoiceParameter):
-    def initialize(self, parser):
-        self.depends_on = ['other-param']  # Declare dependencies
-
-    @property
-    def _choices(self):
-        """Scan resources on each access"""
-        return self._get_available_options()
-
-    def _get_available_options(self):
-        # Scan filesystem/database for available options
-        if not self._can_scan():
-            return []
-
-        # Return list of valid choices
-        return self._scan_resources()
+# Bad: os.path.join(config.scenario, "inputs", ...)
 ```
-
-## Validation Helpers
-
-Extract shared validation into helpers:
-
-```python
-def _validate_security(self, value):
-    """Security checks (used by encode AND decode)"""
-    invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-    if any(char in value for char in invalid_chars):
-        raise ValueError("Invalid characters")
-
-def _validate_business(self, value):
-    """Business rules (used by encode ONLY)"""
-    if self._resource_exists(value):
-        raise ValueError("Already exists")
-
-def decode(self, value):
-    return self._validate_security(value.strip())
-
-def encode(self, value):
-    self._validate_security(value.strip())
-    self._validate_business(value)
-    return value
-```
-
-## Common Pitfalls
-
-1. **Validating in decode()** → Fragile config loading
-2. **No dependency declaration** → Dynamic choices don't update
-3. **Caching without invalidation** → Stale options
-4. **Mixing security/business validation** → Security checks in both, business in encode only
 
 ## Related Files
-
-- `config.py` - All parameter classes (PathParameter, ChoiceParameter, etc.)
-- `config.pyi` - Type stubs (regenerate: `pixi run python cea/utilities/config_type_generator.py`)
-- `default.config` - Default values for all parameters
-- `interfaces/dashboard/api/tools.py` - Validation API endpoints (`validate_field`, `get_parameter_metadata`)
+- `inputlocator.py` - Scenario and district-pathway path helpers.
+- `config.py` - Parameter classes and configuration model.
+- `config.pyi` - Generated typing stub for config sections.
+- `default.config` - User-facing defaults and help text.
+- `scripts.yml` - Script registry and interface metadata.

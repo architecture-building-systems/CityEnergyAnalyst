@@ -268,16 +268,16 @@ Thermal Network Design:
 District Evolution Pathways:
   - name: create-new-pathway
     label: "Step 0: Create District Evolution Pathway"
-    short_description: Create a new district evolution pathway (SAVE SETTINGS after this step!)
+    short_description: Create a new district evolution pathway
     description: |
       This Feature allows you to create a new district evolution pathway. 
       If you only want to work on an existing pathway, you can ignore this step.
       
       **Workflow**:
       1. **Complete this step first** - Enter a new pathway name
-      2. **Click "Save Settings"** - This saves your pathway selection
+      2. **Run the job** - This creates the pathway folder immediately
       3. **Proceed to Step 1** - Define intervention templates for this pathway
-      4. If you want to switch pathways later, return to this step, select a different pathway, and save again
+      4. If you want to switch pathways later, return to this step and create or select another pathway
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_pathways.create_new_pathway
     parameters: ['general:scenario', create-new-pathway]
@@ -290,7 +290,7 @@ District Evolution Pathways:
       An intervention template is a named modification template (e.g. "upgrade_wall_insulation", "retrofit_hvac") containing construction 
       property updates that can be applied to selected building archetypes.
       
-      **Prerequisites**: Complete Step 0 (Select Pathway) and save settings first!
+      **Prerequisites**: Complete Step 0 (Select Pathway) first.
 
       **Workflow**:
       1. Define intervention templates with meaningful names using this tool
@@ -317,8 +317,8 @@ District Evolution Pathways:
       
       **Prerequisites**: Complete Step 0 (Select Pathway) and Step 1 (Define Intervention Templates) first!
 
-      **Important**: When you select a non-default pathway, make sure to **save settings**, 
-      leave this page and return to refresh the list of available intervention templates!
+      **Important**: If the legacy tool form does not refresh the intervention-template list after changing the pathway,
+      reopen the tool form so the parameter choices are rebuilt for the selected pathway.
 
       **Workflow**:
       1. Define intervention templates using Step 1
@@ -389,6 +389,62 @@ District Evolution Pathways:
     interfaces: [cli, dashboard]
     module: cea.datamanagement.district_pathways.state_simulation.main
     parameters: ['general:scenario', 'pathway-simulations:existing-pathway-name']
+
+  - name: pathway-delete-state
+    label: "District Pathway: Delete or Clear State"
+    short_description: Delete one explicit pathway year or clear its manual changes
+    description: |
+      This job removes the explicit entry for one pathway year from the pathway log.
+      Manual-only years are deleted entirely. Mixed years keep their stock-driven presence and only lose the manual edits.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_delete_state_job
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-name', 'pathway-state-edit:year-of-state']
+
+  - name: pathway-update-building-events
+    label: "District Pathway: Save Building Events"
+    short_description: Save explicit building additions and removals for one pathway year
+    description: |
+      This job updates the explicit building events for one pathway year and revalidates the pathway log before saving.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_update_building_events_job
+    parameters:
+      - 'general:scenario'
+      - 'pathway-state-edit:existing-pathway-name'
+      - 'pathway-state-edit:year-of-state'
+      - 'pathway-state-edit:new-buildings'
+      - 'pathway-state-edit:demolished-buildings'
+
+  - name: pathway-save-yaml
+    label: "District Pathway: Save YAML"
+    short_description: Save the expert YAML entry for one pathway year
+    description: |
+      This job validates and saves the raw YAML entry for one pathway year, then revalidates the pathway log.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_save_yaml_job
+    parameters:
+      - 'general:scenario'
+      - 'pathway-state-edit:existing-pathway-name'
+      - 'pathway-state-edit:year-of-state'
+      - 'pathway-state-edit:raw-yaml'
+
+  - name: pathway-validate-state
+    label: "District Pathway: Validate State"
+    short_description: Validate one baked pathway state against the current pathway log
+    description: |
+      This job checks whether one baked pathway state still matches the pathway log and records a fresh validation fingerprint when it does.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_validate_state_job
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-name', 'pathway-state-edit:year-of-state']
+
+  - name: pathway-validate-all-states
+    label: "District Pathway: Validate All States"
+    short_description: Validate every baked pathway state against the current pathway log
+    description: |
+      This job validates every required state year in the selected pathway.
+      It records fresh validation fingerprints for valid years and fails with a summary when any year is out of sync.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_validate_all_states_job
+    parameters: ['general:scenario', 'pathway-state-workflow:existing-pathway-name']
 
 Life Cycle Analysis:
 

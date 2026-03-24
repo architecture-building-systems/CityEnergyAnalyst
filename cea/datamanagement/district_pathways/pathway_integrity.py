@@ -29,7 +29,12 @@ def check_district_pathway_log_yaml_integrity(
     """
     main_locator = InputLocator(main_config.scenario)
     dict_from_yaml = load_pathway_log_yaml(main_locator, pathway_name=pathway_name)
-    existing_years_in_yml = set(dict_from_yaml.keys())
+    from cea.datamanagement.district_pathways.pathway_state import (
+        DistrictEvolutionPathway,
+    )
+
+    pathway = DistrictEvolutionPathway(main_config, pathway_name=pathway_name)
+    expected_state_years = set(pathway.required_state_years())
 
     existing_years_in_folders = set()
     district_pathway_folder = main_locator.get_district_pathway_folder(pathway_name)
@@ -45,23 +50,25 @@ def check_district_pathway_log_yaml_integrity(
                         f"Warning: Invalid pathway-state folder name '{folder_name}' in district pathway folder."
                     )
 
-    years_only_in_folders = existing_years_in_folders - existing_years_in_yml
-    years_only_in_yml = existing_years_in_yml - existing_years_in_folders
-    if years_only_in_folders:
+    unexpected_folders = existing_years_in_folders - expected_state_years
+    missing_folders = expected_state_years - existing_years_in_folders
+    if unexpected_folders:
         raise ValueError(
-            "The following pathway-state years exist in folders but not in the district pathway log file: "
-            f"{sorted(years_only_in_folders)}"
+            "The following pathway-state years exist in folders but are not required by the pathway definition: "
+            f"{sorted(unexpected_folders)}"
         )
 
-    if years_only_in_yml:
+    if missing_folders:
         raise ValueError(
-            "The following pathway-state years exist in the district pathway log file but not in folders: "
-            f"{sorted(years_only_in_yml)}"
+            "The following required pathway-state years do not exist in folders: "
+            f"{sorted(missing_folders)}"
         )
+
+    expected_active_buildings = pathway.get_active_buildings_by_year()
 
     cumulative_modifications: ModifyRecipe = {}
     errors: list[str] = []
-    for year_of_state in sorted(existing_years_in_yml):
+    for year_of_state in sorted(expected_state_years):
         year_entry = dict_from_yaml.get(year_of_state, {}) or {}
         year_modifications = (year_entry.get("modifications", {}) or {})
         cumulative_modifications = merge_modify_recipes(cumulative_modifications, year_modifications)
@@ -74,6 +81,28 @@ def check_district_pathway_log_yaml_integrity(
             cumulative_modifications,
             )
         )
+        try:
+            state_locator = InputLocator(
+                InputLocator(main_config.scenario).get_state_in_time_scenario_folder(
+                    pathway_name, year_of_state
+                )
+            )
+            actual_buildings = set(state_locator.get_zone_building_names())
+            expected_buildings = set(expected_active_buildings.get(year_of_state, []))
+            missing = sorted(expected_buildings - actual_buildings)
+            extra = sorted(actual_buildings - expected_buildings)
+            if missing:
+                errors.append(
+                    f"year {year_of_state}: missing buildings in baked state: {', '.join(missing)}"
+                )
+            if extra:
+                errors.append(
+                    f"year {year_of_state}: unexpected buildings in baked state: {', '.join(extra)}"
+                )
+        except Exception as exc:
+            errors.append(
+                f"year {year_of_state}: failed to inspect baked buildings: {exc}"
+            )
 
     if errors:
         formatted = "\n".join(f"- {msg}" for msg in errors)
@@ -164,10 +193,10 @@ def check_state_year_comprehensive_integrity(
                         )
                 continue
 
-            envelope_component = _resolve_envelope_component(component)
+            envelope_component = resolve_envelope_component(component)
 
             try:
-                type_column = _resolve_archetype_type_column(archetype_df, component)
+                type_column = resolve_archetype_type_column(archetype_df, component)
             except Exception as e:
                 errors.append(
                     f"year {year_of_state}, archetype '{archetype}', component '{component}': {e}"
@@ -177,7 +206,7 @@ def check_state_year_comprehensive_integrity(
             code_current = archetype_df.at[archetype, type_column]
 
             try:
-                envelope_db_path = _get_envelope_db_path(state_locator, envelope_component)
+                envelope_db_path = get_envelope_db_path(state_locator, envelope_component)
             except Exception as e:
                 errors.append(
                     f"year {year_of_state}, archetype '{archetype}', component '{component}': {e}"
@@ -218,7 +247,7 @@ def check_state_year_comprehensive_integrity(
                 if expected_value is None:
                     continue
 
-                col = _resolve_envelope_column_name(
+                col = resolve_envelope_column_name(
                     envelope_component, field, envelope_df.columns
                 )
                 if col not in envelope_df.columns:
@@ -252,7 +281,7 @@ def _values_match(actual_value: Any, expected_value: Any) -> bool:
     return str(actual_value) == str(expected_value)
 
 
-def _resolve_envelope_component(component: str) -> str:
+def resolve_envelope_component(component: str) -> str:
     # Envelope DB uses "floor" while archetypes / logs may use "base".
     if component in {"base", "floor"}:
         return "floor"
@@ -262,7 +291,7 @@ def _resolve_envelope_component(component: str) -> str:
     return component
 
 
-def _resolve_archetype_type_column(archetype_df: pd.DataFrame, component: str) -> str:
+def resolve_archetype_type_column(archetype_df: pd.DataFrame, component: str) -> str:
     candidates = [f"type_{component}"]
     if component in {"base", "floor"}:
         candidates.extend(["type_base", "type_floor"])
@@ -277,7 +306,7 @@ def _resolve_archetype_type_column(archetype_df: pd.DataFrame, component: str) -
     )
 
 
-def _resolve_envelope_column_name(envelope_component: str, field: str, columns: pd.Index) -> str:
+def resolve_envelope_column_name(envelope_component: str, field: str, columns: pd.Index) -> str:
     if field.startswith("material_name_") or field.startswith("thickness_"):
         return field
 
@@ -294,7 +323,7 @@ def _resolve_envelope_column_name(envelope_component: str, field: str, columns: 
     return field
 
 
-def _get_envelope_db_path(locator: InputLocator, envelope_component: str) -> str:
+def get_envelope_db_path(locator: InputLocator, envelope_component: str) -> str:
     if envelope_component in {"wall", "part"}:
         return locator.get_database_assemblies_envelope_wall()
     if envelope_component == "roof":

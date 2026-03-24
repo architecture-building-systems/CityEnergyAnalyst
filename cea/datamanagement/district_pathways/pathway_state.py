@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import shutil
@@ -23,6 +24,10 @@ from cea.datamanagement.district_pathways.pathway_log import (
     del_year_in_pathway_yaml,
     load_pathway_log_yaml,
     save_pathway_log_yaml,
+)
+from cea.datamanagement.district_pathways.pathway_status import (
+    record_baked_state,
+    record_simulated_state,
 )
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
@@ -248,27 +253,99 @@ class DistrictEvolutionPathway:
         years_from_buildings = set(self.get_building_construction_years().values())
         return sorted(years_from_log | years_from_buildings)
 
+    def get_explicit_building_events(self, year: int) -> dict[str, list[str]]:
+        entry = self.log_data.get(int(year), {}) or {}
+        events = entry.get("building_events", {}) or {}
+        return {
+            "new_buildings": sorted(
+                {str(value) for value in (events.get("new_buildings", []) or [])}
+            ),
+            "demolished_buildings": sorted(
+                {
+                    str(value)
+                    for value in (events.get("demolished_buildings", []) or [])
+                }
+            ),
+        }
+
+    def get_manual_new_building_years(self) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for year in sorted(int(y) for y in self.log_data.keys()):
+            events = self.get_explicit_building_events(int(year))
+            for building_name in events["new_buildings"]:
+                out.setdefault(str(building_name), int(year))
+        return out
+
+    def get_building_demolition_years(self) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for year in sorted(int(y) for y in self.log_data.keys()):
+            events = self.get_explicit_building_events(int(year))
+            for building_name in events["demolished_buildings"]:
+                out.setdefault(str(building_name), int(year))
+        return out
+
+    def get_effective_construction_years(self) -> dict[str, int]:
+        construction_years = self.get_building_construction_years()
+        construction_years.update(self.get_manual_new_building_years())
+        return construction_years
+
+    def get_derived_stock_new_buildings(self, year: int) -> list[str]:
+        base_construction_years = self.get_building_construction_years()
+        manual_new_years = self.get_manual_new_building_years()
+        return sorted(
+            building_name
+            for building_name, construction_year in base_construction_years.items()
+            if int(construction_year) == int(year)
+            and building_name not in manual_new_years
+        )
+
+    def get_combined_building_events(self, year: int) -> dict[str, list[str]]:
+        explicit_events = self.get_explicit_building_events(int(year))
+        return {
+            "new_buildings": sorted(
+                set(explicit_events["new_buildings"])
+                | set(self.get_derived_stock_new_buildings(int(year)))
+            ),
+            "demolished_buildings": explicit_events["demolished_buildings"],
+        }
+
+    def get_active_buildings_by_year(self) -> dict[int, list[str]]:
+        construction_years = self.get_effective_construction_years()
+        demolition_years = self.get_building_demolition_years()
+        out: dict[int, list[str]] = {}
+
+        for year in self.required_state_years():
+            active_buildings = {
+                building_name
+                for building_name, construction_year in construction_years.items()
+                if int(construction_year) <= int(year)
+            }
+            active_buildings = {
+                building_name
+                for building_name in active_buildings
+                if int(demolition_years.get(building_name, 10**9)) > int(year)
+            }
+            out[int(year)] = sorted(active_buildings)
+
+        return out
+
     def ensure_state_years_exist(
         self,
         years: list[int],
         *,
         update_yaml: bool = True,
-        update_building_events: bool = True,
     ) -> dict[int, dict[str, Any]]:
         """Ensure `state_{year}` folders exist for all requested years.
 
         - Creates missing `state_{year}` folders by copying inputs.
-        - Removes buildings not yet built in that year.
+        - Syncs building existence from cumulative stock + pathway building events.
         - Ensures YAML entries exist (empty modifications by default).
-        - Optionally logs `building_events` (derived from `zone.shp` construction years).
 
         Returns the (possibly updated) YAML log data in memory.
         """
-        construction_years = self.get_building_construction_years()
         existing_years = set(self.list_state_years_on_disk())
         years_sorted = sorted(set(int(y) for y in years))
-
-        prev_buildings: set[str] | None = None
+        active_buildings_by_year = self.get_active_buildings_by_year()
         for year in years_sorted:
             if year not in existing_years:
                 create_state_in_time_scenario(
@@ -290,43 +367,12 @@ class DistrictEvolutionPathway:
                 entry.setdefault("modifications", {})
                 self.log_data[year] = entry
 
-            delete_unexisting_buildings_from_event_scenario(self.config, self.pathway_name, year)
-            state_locator = InputLocator(
-                self.main_locator.get_state_in_time_scenario_folder(self.pathway_name, year)
+            sync_buildings_in_event_scenario(
+                self.config,
+                self.pathway_name,
+                year,
+                active_buildings=set(active_buildings_by_year.get(int(year), [])),
             )
-
-            current_buildings = set(state_locator.get_zone_building_names())
-            born = sorted(b for b in current_buildings if construction_years.get(b) == year)
-            if prev_buildings is not None:
-                demolished = sorted(prev_buildings - current_buildings)
-            else:
-                demolished = []
-
-            if update_yaml and update_building_events:
-                entry = self.log_data.get(year, {}) or {}
-                building_events = entry.get("building_events", {}) or {}
-
-                building_events.setdefault("new_buildings", [])
-                existing_born = set(
-                    str(x) for x in building_events.get("new_buildings", []) or []
-                )
-                for b in born:
-                    if b not in existing_born:
-                        building_events["new_buildings"].append(b)
-
-                building_events.setdefault("demolished_buildings", [])
-                existing_demolished = set(
-                    str(x)
-                    for x in building_events.get("demolished_buildings", []) or []
-                )
-                for b in demolished:
-                    if b not in existing_demolished:
-                        building_events["demolished_buildings"].append(b)
-
-                entry["building_events"] = building_events
-                self.log_data[year] = entry
-
-            prev_buildings = current_buildings
 
         if update_yaml:
             self.save()
@@ -340,6 +386,13 @@ class DistrictEvolutionPathway:
                 "modifications": {},
             }
 
+    def ensure_manual_year(self, year: int) -> None:
+        self.ensure_year(year)
+        entry = self.log_data.get(year, {}) or {}
+        entry.setdefault("created_at", str(pd.Timestamp.now()))
+        entry.setdefault("modifications", {})
+        self.log_data[year] = entry
+
     def apply_year_modifications(self, year: int, modify_recipe: ModifyRecipe) -> None:
         self.ensure_year(year)
         entry = self.log_data.get(year, {}) or {}
@@ -348,8 +401,64 @@ class DistrictEvolutionPathway:
         entry["latest_modified_at"] = str(pd.Timestamp.now())
         self.log_data[year] = entry
 
+    def update_year_building_events(
+        self,
+        year: int,
+        *,
+        new_buildings: list[str],
+        demolished_buildings: list[str],
+    ) -> None:
+        valid_buildings = set(self.get_building_construction_years().keys())
+        clean_new = sorted(
+            {str(value) for value in new_buildings if str(value).strip()}
+        )
+        clean_demolished = sorted(
+            {
+                str(value)
+                for value in demolished_buildings
+                if str(value).strip()
+            }
+        )
+        overlap = set(clean_new) & set(clean_demolished)
+        if overlap:
+            raise ValueError(
+                f"Buildings cannot be both added and demolished in the same year: {', '.join(sorted(overlap))}"
+            )
+
+        unknown = (set(clean_new) | set(clean_demolished)) - valid_buildings
+        if unknown:
+            raise ValueError(
+                f"Unknown building names: {', '.join(sorted(unknown))}"
+            )
+
+        self.ensure_year(year)
+        entry = self.log_data.get(int(year), {}) or {}
+        if clean_new or clean_demolished:
+            entry["building_events"] = {
+                "new_buildings": clean_new,
+                "demolished_buildings": clean_demolished,
+            }
+        else:
+            entry.pop("building_events", None)
+        entry["latest_modified_at"] = str(pd.Timestamp.now())
+        self.log_data[int(year)] = entry
+
     def save(self) -> None:
+        for year, entry in list(self.log_data.items()):
+            cleaned_entry = (entry or {}).copy()
+            cleaned_entry.pop("manual_state", None)
+            self.log_data[year] = cleaned_entry
         save_pathway_log_yaml(self.main_locator, self.log_data, pathway_name=self.pathway_name)
+
+    def sync_year_entries_from_required_years(self, years: list[int]) -> None:
+        for year in sorted(set(int(y) for y in years)):
+            entry = self.log_data.get(year, {}) or {}
+            if not entry:
+                continue
+            if entry.get("created_at") in (None, "", "null"):
+                entry["created_at"] = str(pd.Timestamp.now())
+            entry.setdefault("modifications", {})
+            self.log_data[year] = entry
 
     def state_years(self) -> list[DistrictStateYear]:
         years = sorted(self.log_data.keys())
@@ -374,6 +483,20 @@ class DistrictEvolutionPathway:
             out[int(y)] = cumulative
         return out
 
+    def source_payload_for_year(self, year: int) -> dict[str, Any]:
+        return {
+            "year": int(year),
+            "cumulative_modifications": self.cumulative_by_year().get(int(year), {}),
+            "explicit_building_events": self.get_explicit_building_events(int(year)),
+            "combined_building_events": self.get_combined_building_events(int(year)),
+            "active_buildings": self.get_active_buildings_by_year().get(int(year), []),
+        }
+
+    def source_log_hash_for_year(self, year: int) -> str:
+        payload = self.source_payload_for_year(int(year))
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
     def bake_states_from_log(self) -> None:
         years = self.required_state_years()
         if not years:
@@ -381,15 +504,14 @@ class DistrictEvolutionPathway:
                 "No district event years or building construction years found."
             )
 
-        # Ensure YAML entries exist for all required years (including construction-only years)
-        for year in years:
-            self.ensure_year(year)
-        self.save()
-
-        print("Building pathway state scenarios from the district evolution pathway log...")
-        print(f"Years to build: {years}")
+        print(
+            "Building pathway state scenarios from the district evolution pathway log...",
+            flush=True,
+        )
+        print(f"Years to build: {years}", flush=True)
 
         cumulative = self.cumulative_by_year()
+        active_buildings_by_year = self.get_active_buildings_by_year()
 
         built_years: list[int] = []
 
@@ -404,7 +526,7 @@ class DistrictEvolutionPathway:
             )
 
             state_folder = state.state_folder()
-            print(f"- Building state_{int(year)}... ")
+            print(f"- Building state_{int(year)}...", flush=True)
 
             # Rebuild the state folder deterministically to avoid code drift in envelope codes.
             if os.path.exists(state_folder):
@@ -414,8 +536,12 @@ class DistrictEvolutionPathway:
                 self.config, self.pathway_name, int(year), update_yaml=False
             )
 
-            # Delete buildings not yet born and regenerate properties
-            delete_unexisting_buildings_from_event_scenario(self.config, self.pathway_name, int(year))
+            sync_buildings_in_event_scenario(
+                self.config,
+                self.pathway_name,
+                int(year),
+                active_buildings=set(active_buildings_by_year.get(int(year), [])),
+            )
 
             # Apply cumulative archetype modifications if specified
             if year_recipe:
@@ -425,26 +551,50 @@ class DistrictEvolutionPathway:
                     int(year),
                     year_recipe,
                 )
-                print("  Applied cumulative modifications from the pathway log")
+                print(
+                    "  Applied cumulative modifications from the pathway log",
+                    flush=True,
+                )
             else:
-                print("  No modifications for this year (baseline state)")
-            
+                print(
+                    "  No modifications for this year (baseline state)",
+                    flush=True,
+                )
+
             # Verify consistency: databases and properties must be in sync
             # This final check ensures the state is ready for simulation
-            print("  State databases and building properties are consistent")
+            print(
+                "  State databases and building properties are consistent",
+                flush=True,
+            )
 
             state.mark_built()
+            signature = state.read_signature_record() or {}
+            record_baked_state(
+                self.main_locator,
+                pathway_name=self.pathway_name,
+                year=int(year),
+                built_at=str(signature.get("built_at") or pd.Timestamp.now()),
+                source_log_hash=self.source_log_hash_for_year(int(year)),
+            )
             built_years.append(int(year))
 
-        print("District state materialisation finished.")
-        print(f"Created/updated: {len(built_years)} years")
+        print("District state materialisation finished.", flush=True)
+        print(f"Created/updated: {len(built_years)} years", flush=True)
         if built_years:
-            print(f"Years created/updated: {built_years}")
+            print(f"Years created/updated: {built_years}", flush=True)
 
-        print(f"Pathway folder: {self.main_locator.get_district_pathway_folder(pathway_name=self.pathway_name)}")
-        print(f"Log file: {self.main_locator.get_district_pathway_log_file(pathway_name=self.pathway_name)}")
         print(
-            "Each built state folder contains simulation status metadata in '.district_pathway_signature.json'."
+            f"Pathway folder: {self.main_locator.get_district_pathway_folder(pathway_name=self.pathway_name)}",
+            flush=True,
+        )
+        print(
+            f"Log file: {self.main_locator.get_district_pathway_log_file(pathway_name=self.pathway_name)}",
+            flush=True,
+        )
+        print(
+            "Each built state folder contains simulation status metadata in '.district_pathway_signature.json'.",
+            flush=True,
         )
 
         check_district_pathway_log_yaml_integrity(self.config, self.pathway_name)
@@ -538,8 +688,17 @@ class DistrictEvolutionPathway:
             # Log metadata in the YAML log.
             entry = self.log_data.get(int(year), {}) or {}
             entry["simulation_workflow"] = year_workflow
-            entry["latest_simulated_at"] = str(pd.Timestamp.now())
+            simulated_at = str(pd.Timestamp.now())
+            entry["latest_simulated_at"] = simulated_at
             self.log_data[int(year)] = entry
+            record_simulated_state(
+                self.main_locator,
+                pathway_name=self.pathway_name,
+                year=int(year),
+                simulated_at=simulated_at,
+                source_log_hash=self.source_log_hash_for_year(int(year)),
+                workflow=year_workflow,
+            )
 
             simulated_years.append(int(year))
             print(f"Simulation for pathway state year {year} completed.")
@@ -671,6 +830,48 @@ def delete_unexisting_buildings_from_event_scenario(
     # This removes deleted buildings from property CSV files and ensures consistency
     _regenerate_building_properties_from_archetypes(state_locator)
 
+    return buildings_to_delete
+
+
+def sync_buildings_in_event_scenario(
+    config: Configuration,
+    pathway_name: str,
+    year_of_state: int,
+    *,
+    active_buildings: set[str],
+) -> list[str]:
+    """Sync a copied state scenario to the expected building set for that year.
+
+    The state folder is created from the full main-scenario inputs, so this helper only needs to
+    remove buildings that should not exist in the baked state and then regenerate dependent
+    per-building inputs from the remaining archetypes.
+    """
+    locator = InputLocator(config.scenario)
+    state_scenario_folder = locator.get_state_in_time_scenario_folder(
+        pathway_name, year_of_state
+    )
+    state_locator = InputLocator(state_scenario_folder)
+
+    if not os.path.exists(state_locator.get_zone_geometry()):
+        raise FileNotFoundError(
+            f"Event scenario folder for year {year_of_state} does not exist."
+        )
+
+    geometry_gdf, _, _ = shapefile_to_WSG_and_UTM(state_locator.get_zone_geometry())
+    geometry_gdf.set_index("name", inplace=True)
+
+    current_buildings = set(str(name) for name in geometry_gdf.index)
+    buildings_to_delete = sorted(current_buildings - set(active_buildings))
+
+    for building_name in buildings_to_delete:
+        delete_building_schedule(state_locator, building_name)
+
+    geometry_gdf = geometry_gdf.loc[
+        geometry_gdf.index.intersection(sorted(active_buildings))
+    ]
+    verify_input_geometry_zone(geometry_gdf.reset_index())
+    geometry_gdf.to_file(state_locator.get_zone_geometry())
+    _regenerate_building_properties_from_archetypes(state_locator)
     return buildings_to_delete
 
 

@@ -39,6 +39,8 @@ class Configuration:
     pathway_events_apply_templates: PathwayEventsApplyTemplatesSection
     bake_pathway_states: BakePathwayStatesSection
     pathway_simulations: PathwaySimulationsSection
+    pathway_state_edit: PathwayStateEditSection
+    pathway_state_workflow: PathwayStateWorkflowSection
     extract_reference_case: ExtractReferenceCaseSection
     solar: SolarSection
     dbf_tools: DbfToolsSection
@@ -146,6 +148,10 @@ class Configuration:
     def __getattr__(self, item: Literal["bake_pathway_states"]) -> BakePathwayStatesSection: ...
     @overload
     def __getattr__(self, item: Literal["pathway_simulations"]) -> PathwaySimulationsSection: ...
+    @overload
+    def __getattr__(self, item: Literal["pathway_state_edit"]) -> PathwayStateEditSection: ...
+    @overload
+    def __getattr__(self, item: Literal["pathway_state_workflow"]) -> PathwayStateWorkflowSection: ...
     @overload
     def __getattr__(self, item: Literal["extract_reference_case"]) -> ExtractReferenceCaseSection: ...
     @overload
@@ -759,6 +765,32 @@ class BakePathwayStatesSection(Section):
 
 class PathwaySimulationsSection(Section):
     """Typed section for pathway-simulations configuration"""
+    existing_pathway_name: str
+
+    def __getattr__(self, item: str) -> Any: ...
+
+class PathwayStateEditSection(Section):
+    """Typed section for pathway-state-edit configuration"""
+    existing_pathway_name: str
+    year_of_state: int
+    new_buildings: list[str]
+    demolished_buildings: list[str]
+    raw_yaml: Any
+
+    @overload
+    def __getattr__(self, item: Literal["existing_pathway_name"]) -> str: ...
+    @overload
+    def __getattr__(self, item: Literal["year_of_state"]) -> int: ...
+    @overload
+    def __getattr__(self, item: Literal["new_buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["demolished_buildings"]) -> list[str]: ...
+    @overload
+    def __getattr__(self, item: Literal["raw_yaml"]) -> Any: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PathwayStateWorkflowSection(Section):
+    """Typed section for pathway-state-workflow configuration"""
     existing_pathway_name: str
 
     def __getattr__(self, item: str) -> Any: ...

@@ -17,5 +17,19 @@ def main(config: Configuration) -> None:
             "No existing pathway name provided. "
             "Please provide an existing pathway name to bake states from."
         )
+    print("=" * 80, flush=True)
+    print(
+        f"Starting pathway state bake for '{pathway_name}'.",
+        flush=True,
+    )
+    print(
+        "Task hints will list each state year as it is materialised.",
+        flush=True,
+    )
+    print("=" * 80, flush=True)
     pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
     pathway.bake_states_from_log()
+    print(
+        f"Finished pathway state bake for '{pathway_name}'.",
+        flush=True,
+    )

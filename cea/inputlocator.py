@@ -170,6 +170,21 @@ class InputLocator(object):
         
         `scenario/district_pathways/{pathway_name}/intervention_templates.yml`"""
         return os.path.join(self.get_district_pathway_folder(pathway_name), 'intervention_templates.yml')
+
+    def get_district_pathway_state_status_folder(self, pathway_name: str):
+        """Returns the folder containing per-state pathway status records.
+
+        `scenario/district_pathways/{pathway_name}/state_status`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'state_status')
+
+    def get_district_pathway_state_status_file(self, pathway_name: str, year_of_state: int):
+        """Returns the JSON status record for one pathway state year.
+
+        `scenario/district_pathways/{pathway_name}/state_status/state_{year_of_state}.json`"""
+        return os.path.join(
+            self.get_district_pathway_state_status_folder(pathway_name),
+            f'state_{year_of_state}.json',
+        )
     
     def get_district_pathway_emissions_timeline_path(self, pathway_name: str):
         """Returns the district-level pathway emissions timeline CSV file.
