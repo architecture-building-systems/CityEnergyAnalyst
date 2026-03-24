@@ -563,30 +563,39 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 service_names = ' → '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
 
                 if fixed_network_temp_C < min_temp_required:
-                    raise ValueError(
-                        f"\n{'='*60}\n"
-                        f"❌ TEMPERATURE CONFIGURATION ERROR\n"
-                        f"{'='*60}\n"
-                        f"Network temperature is too low for service configuration!\n\n"
-                        f"  Service configuration: {service_names}\n"
-                        f"  Network temperature:   {fixed_network_temp_C}°C\n"
-                        f"  Minimum required:      {min_temp_required}°C\n\n"
-                        f"With {service_names} as primary service(s), the network\n"
-                        f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
-                        f"Explanation:\n"
-                        f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
-                        f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
-                        f"Current configuration will result in:\n"
-                        f"  → Network provides essentially zero heat\n"
-                        f"  → All heat from building boosters (defeats purpose of district heating)\n"
-                        f"  → Hydraulic simulation will fail due to insufficient flow\n\n"
-                        f"Solutions:\n"
-                        f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
-                        f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
-                        f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
-                        f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
-                        f"{'='*60}\n"
-                    )
+                    if fixed_network_temp_C > max(calculate_ground_temperature(locator)) - KELVIN_OFFSET:
+                        # Assume it is an extremely low temperature grid (e.g., an anergy grid)
+                        # Print a warning but allow it
+                        print(
+                            f"    - Network temperature very low but still higher than the ground temperature "
+                            f"({np.round(max(calculate_ground_temperature(locator)) - KELVIN_OFFSET, 1)}°C)\n"
+                            f"    - Assuming a 5G DH network: note that the overall heating efficiency might be very low"
+                        )
+                    else:
+                        raise ValueError(
+                            f"\n{'='*60}\n"
+                            f"❌ TEMPERATURE CONFIGURATION ERROR\n"
+                            f"{'='*60}\n"
+                            f"Network temperature is too low for service configuration!\n\n"
+                            f"  Service configuration: {service_names}\n"
+                            f"  Network temperature:   {fixed_network_temp_C}°C\n"
+                            f"  Minimum required:      {min_temp_required}°C\n\n"
+                            f"With {service_names} as primary service(s), the network\n"
+                            f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
+                            f"Explanation:\n"
+                            f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
+                            f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
+                            f"Current configuration will result in:\n"
+                            f"  → Network provides essentially zero heat\n"
+                            f"  → All heat from building boosters (defeats purpose of district heating)\n"
+                            f"  → Hydraulic simulation will fail due to insufficient flow\n\n"
+                            f"Solutions:\n"
+                            f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
+                            f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
+                            f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
+                            f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
+                            f"{'='*60}\n"
+                        )
             else:
                 print("  ℹ Network temperature mode: VT (Variable Temperature)")
                 print("    - Network temp follows building requirements")
