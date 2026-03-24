@@ -18093,6 +18093,24 @@ get_heat_rejection_whatif_components_file:
         min: 0.0
   used_by: []
 
+get_heat_rejection_whatif_building_file:
+  created_by:
+  - anthropogenic_heat
+  file_path: outputs/data/analysis/{whatif_name}/heat/{name}.csv
+  file_type: csv
+  schema:
+    columns:
+      date:
+        description: Timestamp for each hour (8760 rows per year)
+        type: datetime64
+        unit: NA
+      heat_rejection_kW:
+        description: Heat rejection rate at this hour (sum of all energy carriers)
+        type: float
+        unit: '[kW]'
+        min: 0.0
+  used_by: []
+
 get_emissions_whatif_buildings_file:
   created_by:
   - emissions
