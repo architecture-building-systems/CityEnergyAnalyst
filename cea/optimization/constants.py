@@ -191,4 +191,3 @@ N_SC_ET = 0.721
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
 LHV_BG = 21.4E6  # [J/kg]
-ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.0  # Use this value, where the default temperature is assigned as 0 degree C
