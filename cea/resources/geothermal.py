@@ -110,10 +110,10 @@ def calc_ground_temperature(T_ambient_C, depth_m):
 
 def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, density_soil, depth_m, heat_capacity_soil):
     diffusivity = conductivity_soil / (density_soil * heat_capacity_soil)  # in m2/s
-    wave_lenght = (math.pi * 2 / HOURS_IN_YEAR)
+    wave_length = (math.pi * 2 / HOURS_IN_YEAR)
     hour_with_minimum = 1
-    e = math.sqrt(wave_lenght / (2 * diffusivity)) * depth_m  # soil constants
-    T_ground_K = [T_avg + T_amplitude_K * (math.exp(-e) * math.cos(wave_lenght * (i - hour_with_minimum) - e))
+    e = math.sqrt(wave_length / (2 * diffusivity)) * depth_m  # soil constants
+    T_ground_K = [T_avg + T_amplitude_K * (math.exp(-e) * math.cos(wave_length * (i - hour_with_minimum) - e))
                   for i in range(1, HOURS_IN_YEAR + 1)]
 
     return T_ground_K
