@@ -36,6 +36,39 @@ def validate_parameter(parameter, value, parameter_name: str = None) -> tuple[bo
         return False, error_message
 
 
+def validate_and_apply_parameters(
+    candidates: list[tuple[cea.config.Parameter, Any]],
+    set_empty: list | None = None,
+) -> None:
+    """
+    Validate a list of (parameter, value) pairs and apply them atomically.
+
+    Raises ValueError with a dict of field errors if any value fails validation.
+    Only calls parameter.set() / parameter.set_empty() after all values pass.
+
+    Args:
+        candidates: List of (parameter, value) pairs to validate then set.
+        set_empty: Optional list of parameters to call set_empty() on (no validation needed).
+    """
+    field_errors = {}
+    to_set = []
+
+    for parameter, value in candidates:
+        is_valid, error_message = validate_parameter(parameter, value)
+        if not is_valid:
+            field_errors[parameter.name] = error_message
+        else:
+            to_set.append((parameter, value))
+
+    if field_errors:
+        raise ValueError(field_errors)
+
+    for parameter in (set_empty or []):
+        parameter.set_empty()
+    for parameter, value in to_set:
+        parameter.set(value)
+
+
 class ToolDescription(BaseModel):
     name: str
     label: str
@@ -95,19 +128,25 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     # Ensure that parameters that depend on scenario files will be parsed correctly
     default_config.scenario = config.scenario
 
-    # Set the parameters to their default values
+    candidates = []
+    set_empty = []
+
     for parameter in parameters_for_script(tool_name, config):
         if parameter.name == 'scenario':
             continue
-        
-        default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
-        # Don't set parameters that are not nullable and have an empty default value
-        if default_value == "" and not parameter.nullable:
-            logger.debug(f"Skipping {parameter.name} since it has no default value")
-            continue
 
-        parameter.set(default_value)
-    
+        default_value = default_config.sections[parameter.section.name].parameters[parameter.name].get()
+        # Set empty string for non-nullable parameters with empty default values, bypassing validation
+        if not default_value and default_value is not False and default_value != 0 and not parameter.nullable:
+            set_empty.append(parameter)
+        else:
+            candidates.append((parameter, default_value))
+
+    try:
+        validate_and_apply_parameters(candidates, set_empty)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
+
     if isinstance(config, CEADatabaseConfig):
         await config.save()
     else:
@@ -256,11 +295,15 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
 
 @router.post('/{tool_name}/check')
 async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
-    # Set config parameters
-    for parameter in parameters_for_script(tool_name, config):
-        if parameter.name in payload:
-            value = payload[parameter.name]
-            parameter.set(value)
+    candidates = [
+        (parameter, payload[parameter.name])
+        for parameter in parameters_for_script(tool_name, config)
+        if parameter.name in payload
+    ]
+    try:
+        validate_and_apply_parameters(candidates)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
     # TODO: Add plugin support
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)

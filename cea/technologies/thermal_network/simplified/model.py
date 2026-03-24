@@ -10,11 +10,14 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_OFFSET
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe, calculate_ground_temperature
+from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
+from cea.technologies.thermal_network.physics.thermal_loss import calculate_ground_temperature
+from cea.resources import geothermal
+from cea.technologies.constants import NETWORK_DEPTH
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.technologies.network_layout.plant_node_operations import PlantServices

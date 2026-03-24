@@ -95,42 +95,40 @@ class CEADatabaseConfig(cea.config.Configuration):
 
         return out
 
-    async def read(self) -> None:
-        logger.info("Reading config from database")
+    @staticmethod
+    def _cache_key(user_id: str) -> str:
+        return f"cea_config_{user_id}"
 
-        # Try to get config from cache first
-        _cache = get_cache()
-        cache_key = f"cea_config_{self._user_id}"
+    @classmethod
+    async def from_user_id(cls, user_id: str) -> "CEADatabaseConfig":
+        """Return config for user, from cache if available, otherwise load from database."""
+        cached = await get_cache().get(cls._cache_key(user_id))
+        if cached is not None:
+            cea_db_config_logger.debug(f"Using cached config for user: {user_id}")
+            return cached
 
-        # Try to get from cache
-        config = await _cache.get(cache_key)
-        if config is not None:
-            cea_db_config_logger.debug(f"Using cached config for user: {self._user_id}")
-            self.user_config = config.user_config
-            return
-        else:
-            logger.warning(f"Cache miss: {self._user_id}")
-
+        config = cls(user_id)
+        cea_db_config_logger.debug(f"Cache miss for user: {user_id}")
+        # Fetch config from database and update cache (if config exists for user)
         async with get_session_context() as session:
             try:
-                result = await session.execute(select(Config).where(Config.user_id == self._user_id))
+                result = await session.execute(select(Config).where(Config.user_id == user_id))
                 _config = result.scalar()
                 if _config:
-                    cea_db_config_logger.warning(f"Reading remote config: `{self._user_id}`")
-                    self.from_dict(_config.config)
+                    cea_db_config_logger.debug(f"Reading config from database for user: {user_id}")
+                    config.from_dict(_config.config)
             except Exception as e:
-                logger.error(e)
-                cea_db_config_logger.warning("Returning local config")
+                cea_db_config_logger.error(f"Error reading config from database: {e}")
+                cea_db_config_logger.warning("Returning default config")
+
+        await get_cache().set(cls._cache_key(user_id), config, ttl=CONFIG_CACHE_TTL)
+        return config
 
     async def save(self, config_file: str = None) -> None:
         """Saves config to database in dict format"""
-        logger.info("Saving config to database")
+        cea_db_config_logger.debug(f"Saving config for user: {self._user_id}")
 
-        # Update config object in cache
-        _cache = get_cache()
-        cache_key = f"cea_config_{self._user_id}"
-
-        await _cache.set(cache_key, self, ttl=CONFIG_CACHE_TTL)
+        await get_cache().set(self._cache_key(self._user_id), self, ttl=CONFIG_CACHE_TTL)
         cea_db_config_logger.debug(f"Updated config cache for user: {self._user_id}")
 
         # Save new config to database
@@ -151,9 +149,7 @@ async def get_cea_config(user_id: CEAUserID) -> cea.config.Configuration:
 
     # Don't read config from database if user is local
     if database_settings.url is not None and user_id != LOCAL_USER_ID:
-        config = CEADatabaseConfig(user_id)
-        await config.read()
-        return config
+        return await CEADatabaseConfig.from_user_id(user_id)
 
     # Read config from file if config_path is set
     if settings.config_path is not None:
@@ -236,7 +232,7 @@ def get_project_root(user_id: CEAUserID) -> Optional[str]:
             raise ValueError("Project root not set. Unable to determine project root.")
         project_root = os.path.join(os.path.normpath(project_root), user_id)
 
-    logger.info(f"Using project root: {project_root}")
+    logger.debug(f"Using project root: {project_root}")
     return project_root
 
 
@@ -314,11 +310,11 @@ def get_limits(user: CEAUser) -> LimitSettings:
     # TODO: Shift limits to user properties
     limits = LimitSettings()
 
-    # Pro users get 3x the limits and 5 scenarios
+    # Pro users get 5x the limits and 5 scenarios
     if user.get("pro_user", False):
-        limits.num_projects = limits.num_projects * 3 if limits.num_projects else None
+        limits.num_projects = limits.num_projects * 5 if limits.num_projects else None
         limits.num_scenarios = 5
-        limits.num_buildings = limits.num_buildings * 3 if limits.num_buildings else None
+        limits.num_buildings = limits.num_buildings * 5 if limits.num_buildings else None
 
     return limits
 
