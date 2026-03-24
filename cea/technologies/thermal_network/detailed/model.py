@@ -26,15 +26,13 @@ from cea.technologies.thermal_network.physics import (
     calc_nusselt,
     calc_thermal_conductivity
 )
-from cea.technologies.thermal_network.physics.thermal_loss import calculate_ground_temperature
 import cea.utilities.parallel
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
 from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
 from cea.optimization.constants import PUMP_ETA
-from cea.resources import geothermal
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.simplified.model import add_date_to_dataframe
+from cea.technologies.thermal_network.simplified.model import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system

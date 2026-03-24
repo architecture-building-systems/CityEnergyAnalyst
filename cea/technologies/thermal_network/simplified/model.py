@@ -13,14 +13,13 @@ import cea.technologies.substation as substation
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
+from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
-from cea.technologies.thermal_network.physics.thermal_loss import calculate_ground_temperature
-from cea.resources import geothermal
 from cea.technologies.constants import NETWORK_DEPTH
+from cea.technologies.network_layout.plant_node_operations import PlantServices
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
-from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -82,6 +81,22 @@ def add_date_to_dataframe(locator, df):
     df.insert(0, 'date', date_column)
 
     return df
+
+
+def calculate_ground_temperature(locator):
+    """
+    calculate ground temperatures.
+
+    :param locator:
+    :return: list of ground temperatures, one for each hour of the year
+    :rtype: list[np.float64]
+    """
+    weather_file = locator.get_weather_file()
+    T_ambient_C = epw_reader(weather_file)['drybulb_C']
+    network_depth_m = NETWORK_DEPTH  # [m]
+    T_ground_K = calc_ground_temperature(T_ambient_C.values, network_depth_m)
+
+    return T_ground_K
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
