@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 from math import log, ceil
 from cea.technologies.constants import BOILER_P_AUX
 from cea.analysis.costs.equations import calc_capex_annualized
+from cea.constants import KELVIN_OFFSET
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -160,7 +161,7 @@ def calc_Cop_boiler(q_load_Wh, Q_nom_W, T_return_to_boiler_K):
         phi = float(q_load_Wh) / float(Q_nom_W)
         if phi >=1.0: # avoid rounding error
             phi = 0.98
-        T_return_C = float(T_return_to_boiler_K - 273.15)
+        T_return_C = float(T_return_to_boiler_K - KELVIN_OFFSET)
         eff_score = eff_of_phi(phi) / eff_of_phi(1)
         boiler_eff = (eff_score * eff_of_T_return([T_return_C]))[0] / 100.0
     else:

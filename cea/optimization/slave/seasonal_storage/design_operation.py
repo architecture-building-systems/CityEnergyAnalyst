@@ -16,7 +16,7 @@ Storage Design And Operation
 import numpy as np
 
 from . import SolarPowerHandler_incl_Losses as SPH_fn
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, KELVIN_OFFSET
 from cea.optimization.constants import ETA_SERVER_TO_HEAT, T_FROM_SERVER, HP_ETA_EX
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.constants import DT_HEAT
@@ -64,7 +64,7 @@ def Storage_Design(T_storage_old_K, Q_in_storage_old_W, locator,
     T_ground_K = calc_ground_temperature(weather_data['drybulb_C'], depth_m=10)
 
     # Calculate DH operation with on-site energy sources and storage
-    T_amb_K = weather_data['drybulb_C'] + 273.15  # K
+    T_amb_K = weather_data['drybulb_C'] + KELVIN_OFFSET  # K
     T_storage_min_K = master_to_slave_vars.T_ST_MAX
     Q_disc_seasonstart_W = [0]
 

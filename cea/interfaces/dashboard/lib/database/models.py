@@ -5,6 +5,8 @@ from enum import IntEnum
 from typing import Optional
 
 from pydantic import AwareDatetime, computed_field
+from sqlalchemy import Index, Column, Text
+from sqlalchemy.orm import deferred
 from sqlmodel import Field, SQLModel, JSON, DateTime, BigInteger, select, inspect, text
 
 import cea.scripts
@@ -132,6 +134,13 @@ class JobInfo(SQLModel, table=True):
         if self.start_time is not None and self.end_time is not None:
             return (self.end_time - self.start_time).total_seconds()
         return None
+
+# Defer stdout/stderr — large text columns excluded from all queries by default
+JobInfo.stdout = deferred(Column(Text), group='logs')  # type: ignore[assignment]
+JobInfo.stderr = deferred(Column(Text), group='logs')  # type: ignore[assignment]
+
+# Composite index on (project_id, created_time DESC) for efficient job listing queries
+Index("ix_job_project_id_created_time_desc", JobInfo.__table__.c.project_id, JobInfo.__table__.c.created_time.desc()) # type: ignore
 
 
 class Download(SQLModel, table=True):
@@ -263,3 +272,13 @@ async def migrate_db():
                     await conn.execute(text("ALTER TABLE job ADD COLUMN deleted_by VARCHAR"))
                 await conn.commit()
                 logger.info("Successfully added 'deleted_by' column")
+
+            # Add composite index on (project_id, created_time DESC) for efficient job listing queries
+            existing_indexes = await conn.run_sync(
+                lambda sync_conn: [idx['name'] for idx in inspect(sync_conn).get_indexes('job')]
+            )
+            if 'ix_job_project_id_created_time_desc' not in existing_indexes:
+                logger.info("Adding 'ix_job_project_id_created_time_desc' index on job (project_id, created_time DESC)...")
+                await conn.execute(text("CREATE INDEX ix_job_project_id_created_time_desc ON job (project_id, created_time DESC)"))
+                await conn.commit()
+                logger.info("Successfully added 'ix_job_project_id_created_time_desc' index")

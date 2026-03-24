@@ -9,7 +9,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
-from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3
+from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3, KELVIN_OFFSET
 from cea.optimization.constants import GHP_HMAX_SIZE, GHP_A
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
@@ -100,8 +100,8 @@ def calc_ground_temperature(T_ambient_C, depth_m):
     conductivity_soil = SOIL_lambda_WmK
     density_soil = SOIL_rho_kgm3
 
-    T_amplitude = (max(T_ambient_C) - min(T_ambient_C)) + 273.15  # to K
-    T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    T_amplitude = max(T_ambient_C) - min(T_ambient_C)  # to K
+    T_avg = np.mean(T_ambient_C) + KELVIN_OFFSET  # to K
     T_ground_K = calc_temperature_underground(T_amplitude, T_avg, conductivity_soil, density_soil, depth_m,
                                               heat_capacity_soil)
 

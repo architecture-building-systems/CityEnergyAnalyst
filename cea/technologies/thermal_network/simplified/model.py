@@ -10,14 +10,17 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_OFFSET
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, \
+    KELVIN_OFFSET
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.thermal_network_loss import calc_temperature_out_per_pipe, calculate_ground_temperature
+from cea.resources.geothermal import calc_ground_temperature
+from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
+from cea.technologies.constants import NETWORK_DEPTH
+from cea.technologies.network_layout.plant_node_operations import PlantServices
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
-from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -79,6 +82,22 @@ def add_date_to_dataframe(locator, df):
     df.insert(0, 'date', date_column)
 
     return df
+
+
+def calculate_ground_temperature(locator):
+    """
+    calculate ground temperatures.
+
+    :param locator:
+    :return: list of ground temperatures, one for each hour of the year
+    :rtype: list[np.float64]
+    """
+    weather_file = locator.get_weather_file()
+    T_ambient_C = epw_reader(weather_file)['drybulb_C']
+    network_depth_m = NETWORK_DEPTH  # [m]
+    T_ground_K = calc_ground_temperature(T_ambient_C.values, network_depth_m)
+
+    return T_ground_K
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
@@ -630,9 +649,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation_results_dict[building_name] = substation_results
 
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + 273.15  # Convert C to K
+            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + KELVIN_OFFSET  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_C"] > 0,
-                                                      substation_results["T_return_DH_result_C"] + 273.15, np.nan)
+                                                      substation_results["T_return_DH_result_C"] + KELVIN_OFFSET, np.nan)
             # Total demand = DH contribution + booster for both space heating and DHW
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
@@ -760,9 +779,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation_results_dict[building_name] = substation_results
 
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DC_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + 273.15  # Convert C to K
+            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + KELVIN_OFFSET  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DC_result_C"] > 0,
-                                                      substation_results["T_return_DC_result_C"] + 273.15, np.nan)
+                                                      substation_results["T_return_DC_result_C"] + KELVIN_OFFSET, np.nan)
             # Total demand = sum of all cooling types
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]

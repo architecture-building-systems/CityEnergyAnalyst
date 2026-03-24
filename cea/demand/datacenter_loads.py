@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from cea.technologies import heatpumps
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, KELVIN_OFFSET
 from cea.demand.constants import T_C_DATA_SUP_0, T_C_DATA_RE_0
 
 if TYPE_CHECKING:
@@ -82,11 +82,11 @@ def calc_Qcdataf(locator, bpr: BuildingPropertiesRow, tsd: TimeSeriesData) -> Ti
     efficiency_average_year = bpr.supply["eff_cs"]
     if scale_technology == "BUILDING":
         if energy_source == "GRID":
-            t_source = (tsd.weather.T_ext + 273)
+            t_source = (tsd.weather.T_ext + KELVIN_OFFSET)
 
             # heat pump energy
-            tsd.electrical_loads.E_cdata = np.vectorize(heatpumps.HP_air_air)(tsd.cooling_system_mass_flows.mcpcdata_sys, (tsd.cooling_system_temperatures.Tcdata_sys_sup + 273),
-                                                                (tsd.cooling_system_temperatures.Tcdata_sys_re + 273), t_source)
+            tsd.electrical_loads.E_cdata = np.vectorize(heatpumps.HP_air_air)(tsd.cooling_system_mass_flows.mcpcdata_sys, (tsd.cooling_system_temperatures.Tcdata_sys_sup + KELVIN_OFFSET),
+                                                                (tsd.cooling_system_temperatures.Tcdata_sys_re + KELVIN_OFFSET), t_source)
             # final to district is zero
             tsd.cooling_loads.DC_cdata = np.zeros(HOURS_IN_YEAR)
         elif energy_source == "NONE":
