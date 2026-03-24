@@ -10,7 +10,7 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_OFFSET
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.utility import extract_network_from_shapefile, load_network_shapefiles
@@ -454,7 +454,7 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
         return 35
     elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
         # PLANT_ww or PLANT_ww_hs: High-temp network
-        # DHW return ~45°C + 5K approach = 50°C min (allows preheat to 55°C, booster to 60°C)
+        # DHW return ~45°C + 5K approach = 50°C min (allows preheating to 55°C, booster to 60°C)
         return 50
     else:
         # Unknown service, conservative minimum
