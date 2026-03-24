@@ -1022,6 +1022,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             diameter_int_m = selection_of_catalog['D_int_m']
             diameter_ext_m = selection_of_catalog['D_ext_m']
             diameter_ins_m = selection_of_catalog['D_ins_m']
+            edge_df['D_int_m'] = diameter_int_m
 
         # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for the whole year
         print("Starting 2nd iteration to calculate pressure drops...")

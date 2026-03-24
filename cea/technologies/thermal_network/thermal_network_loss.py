@@ -56,4 +56,5 @@ def calculate_ground_temperature(locator):
     T_ambient_C = epw_reader(weather_file)['drybulb_C']
     network_depth_m = NETWORK_DEPTH  # [m]
     T_ground_K = calc_ground_temperature(T_ambient_C.values, network_depth_m)
+
     return T_ground_K
