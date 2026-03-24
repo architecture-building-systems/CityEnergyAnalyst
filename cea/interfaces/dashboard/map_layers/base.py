@@ -99,9 +99,16 @@ class ParameterDefinition:
 
         if self.depends_on is None:
             func = getattr(layer, self.options_generator)
-            return func()
+            try:
+                return func()
+            except TypeError as e:
+                # Check function signature to see if it accepts current_params
+                import inspect
+                sig = inspect.signature(func)
+                if len(sig.parameters) == 1:
+                    raise ValueError(f"Options generator {self.options_generator} does not accept parameters, but 'depends_on' is not set to None. This may be a configuration error.") from e
 
-        if not all(k in current_params for k in self.depends_on):
+        elif not all(k in current_params for k in self.depends_on):
             raise ValueError("Missing required parameters for generating choices")
 
         func = getattr(layer, self.options_generator)
