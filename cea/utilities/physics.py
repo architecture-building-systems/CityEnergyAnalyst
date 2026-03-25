@@ -3,7 +3,7 @@
 Physical functions
 """
 
-from cea.constants import KELVIN_OFFSET
+from cea.constants import KELVIN_CONVERSION
 
 
 
@@ -31,7 +31,7 @@ def calc_rho_air(temp_air):
     # TODO implement dynamic air density in other functions
     rho_air_ref = 1.23  # (kg/m3)
     temp_air_ref_K = 283  # (K)
-    temp_air_K = temp_air + KELVIN_OFFSET  # conversion to (K)
+    temp_air_K = temp_air + KELVIN_CONVERSION  # conversion to (K)
 
     # Equation (1) in [1]
     rho_air = temp_air_ref_K / temp_air_K * rho_air_ref
@@ -40,6 +40,6 @@ def calc_rho_air(temp_air):
 
 def kelvin_to_fahrenheit(T_Kelvin):
     # converts the temperature from Kelvin to Fahrenheit
-    T_Celsius = T_Kelvin - KELVIN_OFFSET
+    T_Celsius = T_Kelvin - KELVIN_CONVERSION
     T_Fahrenheit = (T_Celsius * 9 / 5) + 32
     return T_Fahrenheit

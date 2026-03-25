@@ -11,7 +11,7 @@ import pandas as pd
 from cea.optimization.constants import HP_DELTA_T_COND, HP_DELTA_T_EVAP, HP_ETA_EX, HP_ETA_EX_COOL, HP_AUXRATIO, \
     GHP_AUXRATIO, HP_MAX_T_COND, GHP_ETA_EX, HP_MAX_SIZE, HP_COP_MAX, HP_COP_MIN
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K, \
-    MIN_TEMP_DIFF_FOR_MASS_FLOW_K, KELVIN_OFFSET
+    MIN_TEMP_DIFF_FOR_MASS_FLOW_K, KELVIN_CONVERSION
 from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
@@ -86,8 +86,8 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
             if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
                 raise ValueError(
                     f"Invalid temperature configuration for cooling heat pump!\n"
-                    f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_OFFSET:.2f} °C)\n"
-                    f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - KELVIN_OFFSET:.2f} °C)\n"
+                    f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_CONVERSION:.2f} °C)\n"
+                    f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - KELVIN_CONVERSION:.2f} °C)\n"
                     f"Temperature difference: {temp_diff:.2f} K\n\n"
                     f"For valid heat pump operation:\n"
                     f"- T_cond must be > T_evap by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
@@ -155,7 +155,7 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     if tcond_K <= 0:
         raise ValueError(
             f"Invalid condenser temperature for geothermal heat pump!\n"
-            f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_OFFSET:.2f} °C)\n\n"
+            f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_CONVERSION:.2f} °C)\n\n"
             f"Temperature must be > 0 K.\n"
             f"**Check the district heating supply temperature."
         )
@@ -164,8 +164,8 @@ def calc_Cop_GHP(ground_temp_K, mdot_kgpers, T_DH_sup_K, T_re_K):
     if temp_ratio >= 1.0:
         raise ValueError(
             f"Invalid temperature configuration for geothermal heat pump COP!\n"
-            f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - KELVIN_OFFSET:.2f} °C)\n"
-            f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_OFFSET:.2f} °C)\n"
+            f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - KELVIN_CONVERSION:.2f} °C)\n"
+            f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_CONVERSION:.2f} °C)\n"
             f"Temperature ratio (T_evap/T_cond): {temp_ratio:.3f}\n\n"
             f"For valid heat pump operation:\n"
             f"- T_evap must be < T_cond (ratio < 1.0)\n"
@@ -236,8 +236,8 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_GHP_K, Q_therm_GHP_W):
         if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
             raise ValueError(
                 f"Invalid temperature configuration for geothermal heat pump (GHP_op_cost)!\n"
-                f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_OFFSET:.2f} °C)\n"
-                f"GHP supply temperature: {t_sup_GHP_K:.2f} K ({t_sup_GHP_K - KELVIN_OFFSET:.2f} °C)\n"
+                f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_CONVERSION:.2f} °C)\n"
+                f"GHP supply temperature: {t_sup_GHP_K:.2f} K ({t_sup_GHP_K - KELVIN_CONVERSION:.2f} °C)\n"
                 f"Temperature difference: {temp_diff:.2f} K\n\n"
                 f"For valid heat pump operation:\n"
                 f"- T_cond must be > T_source by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
@@ -288,8 +288,8 @@ def GHP_Op_max(Q_max_GHP_W, tsup_K, tground_K):
     if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
         raise ValueError(
             f"Invalid temperature configuration for geothermal heat pump (GHP_Op_max)!\n"
-            f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_OFFSET:.2f} °C)\n"
-            f"Ground temperature: {tground_K:.2f} K ({tground_K - KELVIN_OFFSET:.2f} °C)\n"
+            f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_CONVERSION:.2f} °C)\n"
+            f"Ground temperature: {tground_K:.2f} K ({tground_K - KELVIN_CONVERSION:.2f} °C)\n"
             f"Temperature difference: {temp_diff:.2f} K\n\n"
             f"For valid heat pump operation:\n"
             f"- T_cond must be > T_ground by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"
@@ -345,8 +345,8 @@ def HPLake_op_cost(Q_gen_W, tsup_K, tret_K, tlake):
     if abs(temp_diff) < MIN_TEMP_DIFF_FOR_MASS_FLOW_K:
         raise ValueError(
             f"Invalid temperature configuration for lake heat pump mass flow calculation!\n"
-            f"Supply temperature: {tsup_K:.2f} K ({tsup_K - KELVIN_OFFSET:.2f} °C)\n"
-            f"Return temperature: {tret_K:.2f} K ({tret_K - KELVIN_OFFSET:.2f} °C)\n"
+            f"Supply temperature: {tsup_K:.2f} K ({tsup_K - KELVIN_CONVERSION:.2f} °C)\n"
+            f"Return temperature: {tret_K:.2f} K ({tret_K - KELVIN_CONVERSION:.2f} °C)\n"
             f"Temperature difference: {temp_diff:.6f} K\n\n"
             f"For valid mass flow calculation:\n"
             f"- Supply and return temperatures must differ by at least {MIN_TEMP_DIFF_FOR_MASS_FLOW_K} K\n"
@@ -401,7 +401,7 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     if tcond <= 0:
         raise ValueError(
             f"Invalid condenser temperature for lake heat pump!\n"
-            f"Condenser temperature: {tcond:.2f} K ({tcond - KELVIN_OFFSET:.2f} °C)\n\n"
+            f"Condenser temperature: {tcond:.2f} K ({tcond - KELVIN_CONVERSION:.2f} °C)\n\n"
             f"Temperature must be > 0 K.\n"
             f"**Check the DHN supply temperature."
         )
@@ -410,8 +410,8 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, t_lake_K):
     if temp_ratio >= 1.0:
         raise ValueError(
             f"Invalid temperature configuration for lake heat pump COP!\n"
-            f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - KELVIN_OFFSET:.2f} °C)\n"
-            f"Condenser temperature: {tcond:.2f} K ({tcond - KELVIN_OFFSET:.2f} °C)\n"
+            f"Evaporator temperature: {tevap_K:.2f} K ({tevap_K - KELVIN_CONVERSION:.2f} °C)\n"
+            f"Condenser temperature: {tcond:.2f} K ({tcond - KELVIN_CONVERSION:.2f} °C)\n"
             f"Temperature ratio (T_evap/T_cond): {temp_ratio:.3f}\n\n"
             f"For valid heat pump operation:\n"
             f"- T_evap must be < T_cond (ratio < 1.0)\n"
@@ -479,8 +479,8 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
         if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
             raise ValueError(
                 f"Invalid temperature configuration for sewage heat pump (HPSew_op_cost)!\n"
-                f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_OFFSET:.2f} °C)\n"
-                f"Sewage supply temperature: {t_sup_sew_K:.2f} K ({t_sup_sew_K - KELVIN_OFFSET:.2f} °C)\n"
+                f"Condenser temperature: {tcond_K:.2f} K ({tcond_K - KELVIN_CONVERSION:.2f} °C)\n"
+                f"Sewage supply temperature: {t_sup_sew_K:.2f} K ({t_sup_sew_K - KELVIN_CONVERSION:.2f} °C)\n"
                 f"Temperature difference: {temp_diff:.2f} K\n\n"
                 f"For valid heat pump operation:\n"
                 f"- T_cond must be > T_source by at least {MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K} K\n"

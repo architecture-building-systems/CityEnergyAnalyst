@@ -43,7 +43,7 @@ from cea.technologies.network_layout.graph_utils import (
 )
 from cea.technologies.thermal_network.simplified.model import calculate_ground_temperature, \
     calc_linear_thermal_loss_coefficient, calc_thermal_loss_per_pipe, calc_max_diameter
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, KELVIN_OFFSET
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, KELVIN_CONVERSION
 from cea.technologies.constants import TYPE_MAT_DEFAULT, PIPE_DIAMETER_DEFAULT
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization_new.building import Building
@@ -696,10 +696,10 @@ class Network(object):
                         cls._domain_locator.get_optimization_substations_results_file(building_name, "DH", "0"))
                     cls._domain_buildings_flow_rate_m3pers[building_name] = \
                         substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-                    cls._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_C"] + KELVIN_OFFSET
+                    cls._domain_buildings_supply_temp_K[building_name] = substation_results["T_supply_DH_result_C"] + KELVIN_CONVERSION
                     cls._domain_buildings_return_temp_K[building_name] = \
                         np.where(substation_results["T_return_DH_result_C"] > 0,
-                                 substation_results["T_return_DH_result_C"] + KELVIN_OFFSET, np.nan)
+                                 substation_results["T_return_DH_result_C"] + KELVIN_CONVERSION, np.nan)
 
             if network_type == "DC":
                 buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')

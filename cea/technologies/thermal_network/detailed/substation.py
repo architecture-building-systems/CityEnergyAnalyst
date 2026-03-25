@@ -9,7 +9,7 @@ import time
 import numpy as np
 import cea.config
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3,
-                           MIN_TEMP_DIFF_FOR_MASS_FLOW_K, MIN_TEMP_DIFF_FOR_HEX_LMTD_K, KELVIN_OFFSET)
+                           MIN_TEMP_DIFF_FOR_MASS_FLOW_K, MIN_TEMP_DIFF_FOR_HEX_LMTD_K, KELVIN_CONVERSION)
 from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 from cea.technologies.network_layout.plant_node_operations import PlantServices
@@ -384,7 +384,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
     # Heating ahu
     if 'UA_heating_hs_ahu' in substation_HEX_specs.HEX_UA:
         # Check if network temperature is sufficient for space heating
-        T_DH_supply_C = T_DH_supply_K - KELVIN_OFFSET  # Convert K to C
+        T_DH_supply_C = T_DH_supply_K - KELVIN_CONVERSION  # Convert K to C
         T_hs_target_C = building['Ths_sys_sup_ahu_C'].values if 'Ths_sys_sup_ahu_C' in building.columns else np.array([40.0])
 
         # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
@@ -405,7 +405,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                 )
 
             # Extract scalar values from arrays
-            t_DH_return_hs_ahu = T_dh_return_C_arr[0] + KELVIN_OFFSET  # C to K
+            t_DH_return_hs_ahu = T_dh_return_C_arr[0] + KELVIN_CONVERSION  # C to K
             mcp_DH_hs_ahu = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qhs_sys_ahu = Q_dh_W  # Array with single element
 
@@ -431,7 +431,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
     # Heating aru
     if 'UA_heating_hs_aru' in substation_HEX_specs.HEX_UA:
         # Check if network temperature is sufficient for space heating
-        T_DH_supply_C = T_DH_supply_K - KELVIN_OFFSET  # Convert K to C
+        T_DH_supply_C = T_DH_supply_K - KELVIN_CONVERSION  # Convert K to C
         T_hs_target_C = building['Ths_sys_sup_aru_C'].values if 'Ths_sys_sup_aru_C' in building.columns else np.array([40.0])
 
         # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
@@ -452,7 +452,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                 )
 
             # Extract scalar values from arrays
-            t_DH_return_hs_aru = T_dh_return_C_arr[0] + KELVIN_OFFSET  # C to K
+            t_DH_return_hs_aru = T_dh_return_C_arr[0] + KELVIN_CONVERSION  # C to K
             mcp_DH_hs_aru = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qhs_sys_aru = Q_dh_W  # Array with single element
 
@@ -478,7 +478,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
     # Heating shu
     if 'UA_heating_hs_shu' in substation_HEX_specs.HEX_UA:
         # Check if network temperature is sufficient for space heating
-        T_DH_supply_C = T_DH_supply_K - KELVIN_OFFSET  # Convert K to C
+        T_DH_supply_C = T_DH_supply_K - KELVIN_CONVERSION  # Convert K to C
         T_hs_target_C = building['Ths_sys_sup_shu_C'].values if 'Ths_sys_sup_shu_C' in building.columns else np.array([40.0])
 
         # Check if booster needed (unlikely for PLANT_hs_ww, but robust for other plant types)
@@ -499,7 +499,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                 )
 
             # Extract scalar values from arrays
-            t_DH_return_hs_shu = T_dh_return_C_arr[0] + KELVIN_OFFSET  # C to K
+            t_DH_return_hs_shu = T_dh_return_C_arr[0] + KELVIN_CONVERSION  # C to K
             mcp_DH_hs_shu = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qhs_sys_shu = Q_dh_W  # Array with single element
 
@@ -524,7 +524,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
 
     if 'UA_heating_hs_ww' in substation_HEX_specs.HEX_UA:
         # DHW service - check if network temperature is sufficient
-        T_DH_supply_C = T_DH_supply_K - KELVIN_OFFSET  # Convert K to C
+        T_DH_supply_C = T_DH_supply_K - KELVIN_CONVERSION  # Convert K to C
         T_ww_target_C = building['Tww_sys_sup_C'].values if 'Tww_sys_sup_C' in building.columns else np.array([60.0])
 
         # Check if booster needed (network temp insufficient for DHW)
@@ -545,7 +545,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
                 )
 
             # Extract scalar values from arrays
-            t_DH_return_ww = T_dh_return_C_arr[0] + KELVIN_OFFSET  # C to K
+            t_DH_return_ww = T_dh_return_C_arr[0] + KELVIN_CONVERSION  # C to K
             mcp_DH_ww = mcp_dh_kWK_arr[0]  # Keep in kW/K for mass_flows list
             Qww_sys = Q_dh_W  # Array with single element
 
@@ -1103,7 +1103,7 @@ def main(config: cea.config.Configuration):
 
     thermal_network.buildings_demands = determine_building_supply_temperatures(thermal_network.building_names, locator)
     thermal_network.substations_HEX_specs = substation_HEX_design_main(thermal_network.buildings_demands)
-    T_substation_supply_K = pd.DataFrame([[T_DH + KELVIN_OFFSET] * len(thermal_network.building_names)],
+    T_substation_supply_K = pd.DataFrame([[T_DH + KELVIN_CONVERSION] * len(thermal_network.building_names)],
                                          columns=thermal_network.building_names, index=['T_supply'])
     substation_return_model_main(thermal_network, T_substation_supply_K, t, thermal_network.building_names)
 
