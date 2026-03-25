@@ -11,7 +11,7 @@ USING PRESET ORDER
 import numpy as np
 import pandas as pd
 
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, KELVIN_CONVERSION
 from cea.optimization.master import objective_function_calculator
 from cea.optimization.slave.heating_resource_activation import heating_source_activator
 from cea.optimization.slave.seasonal_storage import storage_main
@@ -106,7 +106,7 @@ def district_heating_network(locator,
                 x if x < master_to_slave_variables.HPSew_maxSize_W else master_to_slave_variables.HPSew_maxSize_W for x
                 in
                 Q_therm_Sew]
-            T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + 273
+            T_source_average_sewage_K = np.array(HPSew_Data['Ts_C']) + KELVIN_CONVERSION
         else:
             Q_therm_Sew_W = np.zeros(HOURS_IN_YEAR)
             T_source_average_sewage_K = np.zeros(HOURS_IN_YEAR)
@@ -119,7 +119,7 @@ def district_heating_network(locator,
                 x if x < master_to_slave_variables.HPLake_maxSize_W else master_to_slave_variables.HPLake_maxSize_W for
                 x in
                 Q_therm_Lake]
-            T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + 273
+            T_source_average_Lake_K = np.array(HPlake_Data['Ts_C']) + KELVIN_CONVERSION
         else:
             Q_therm_Lake_W = np.zeros(HOURS_IN_YEAR)
             T_source_average_Lake_K = np.zeros(HOURS_IN_YEAR)
@@ -131,7 +131,7 @@ def district_heating_network(locator,
             Q_therm_GHP_W = [
                 x if x < master_to_slave_variables.GHP_maxSize_W else master_to_slave_variables.GHP_maxSize_W
                 for x in Q_therm_GHP]
-            T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + 273
+            T_source_average_GHP_W = np.array(GHP_Data['Ts_C']) + KELVIN_CONVERSION
         else:
             Q_therm_GHP_W = np.zeros(HOURS_IN_YEAR)
             T_source_average_GHP_W = np.zeros(HOURS_IN_YEAR)
