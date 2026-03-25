@@ -391,6 +391,9 @@ def load_energy_flow_data(locator, whatif_name):
                 primary_carrier_raw = svc_config.get('carrier', '')
                 component_code = svc_config.get('primary_component', '')
                 skip_carriers = booster_carriers.get(cfg_key, set())
+                # Demand column: useful energy delivered to service
+                demand_col = f'{col_prefix}_kWh'
+                demand_total = annual.get(demand_col, 0)
 
                 for col in annual.index:
                     if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
@@ -406,6 +409,13 @@ def load_energy_flow_data(locator, whatif_name):
 
                     comp = component_display(component_code) if carrier_raw == primary_carrier_raw else ''
 
+                    # value_kWh = demand from CSV ({col_prefix}_kWh)
+                    # plant_input_kWh = carrier from CSV ({col_prefix}_{carrier}_kWh)
+                    if carrier_raw == primary_carrier_raw and comp:
+                        output_kWh = demand_total
+                    else:
+                        output_kWh = val
+
                     records.append({
                         'primary_carrier':    _carrier_display(carrier_raw),
                         '_carrier_raw':       carrier_raw,
@@ -414,7 +424,7 @@ def load_energy_flow_data(locator, whatif_name):
                         'building_component': comp,
                         'scale':              'Building',
                         'service':            svc_display,
-                        'value_kWh':          val,
+                        'value_kWh':          output_kWh,
                         'plant_input_kWh':    val,
                         '_has_plant_data':    False,
                     })
@@ -435,10 +445,13 @@ def load_energy_flow_data(locator, whatif_name):
             bst_col_prefix = _BOOSTER_COL_PREFIX.get(bst_key, '')
             if not bst_col_prefix:
                 continue
-            bst_col = f'{bst_col_prefix}_{bst_carrier_raw}_kWh'
-            val = annual.get(bst_col, 0)
-            if val <= 0:
+            bst_carrier_col = f'{bst_col_prefix}_{bst_carrier_raw}_kWh'
+            bst_demand_col = f'{bst_col_prefix}_kWh'
+            carrier_val = annual.get(bst_carrier_col, 0)
+            if carrier_val <= 0:
                 continue
+            # Read booster demand from CSV; both columns are in B####.csv
+            demand_val = annual.get(bst_demand_col, carrier_val)
             records.append({
                 'primary_carrier':    _carrier_display(bst_carrier_raw),
                 '_carrier_raw':       bst_carrier_raw,
@@ -447,8 +460,8 @@ def load_energy_flow_data(locator, whatif_name):
                 'building_component': component_display(bst_comp_code) if bst_comp_code else '',
                 'scale':              'Building',
                 'service':            svc_display,
-                'value_kWh':          val,
-                'plant_input_kWh':    val,
+                'value_kWh':          demand_val,
+                'plant_input_kWh':    carrier_val,
                 '_has_plant_data':    False,
             })
 

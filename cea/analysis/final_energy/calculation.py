@@ -142,6 +142,7 @@ def calculate_building_final_energy(
             if booster_data['Qhs_booster_kWh'].sum() > 0:
                 carrier = supply_config['space_heating_booster']['carrier']
                 efficiency = supply_config['space_heating_booster']['efficiency']
+                final_energy['Qhs_booster_kWh'] = booster_data['Qhs_booster_kWh']
                 final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
         except FileNotFoundError:
             pass
@@ -154,6 +155,7 @@ def calculate_building_final_energy(
             if booster_data['Qww_booster_kWh'].sum() > 0:
                 carrier = supply_config['hot_water_booster']['carrier']
                 efficiency = supply_config['hot_water_booster']['efficiency']
+                final_energy['Qww_booster_kWh'] = booster_data['Qww_booster_kWh']
                 final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
         except FileNotFoundError:
             pass
