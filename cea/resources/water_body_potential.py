@@ -45,9 +45,9 @@ def calc_lake_potential(locator, config):
     date_range = get_date_range_hours_from_year(year)
 
     V_max_m3h = config.water_body.max_water_volume_withdrawal  # in m3h
-    AT_max_K = config.water_body.max_delta_temperature_withdrawal + 273  # to Kelvin
-    T_max_K = config.water_body.temperature_max + 273  # to kelvin
-    T_min_K = config.water_body.temperature_min + 273  # to kelvin
+    AT_max_K = config.water_body.max_delta_temperature_withdrawal + KELVIN_CONVERSION  # to Kelvin
+    T_max_K = config.water_body.temperature_max + KELVIN_CONVERSION  # to kelvin
+    T_min_K = config.water_body.temperature_min + KELVIN_CONVERSION  # to kelvin
 
     T_amplitude_K = abs((T_max_K - T_min_K))
     T_avg_K = (T_max_K + T_min_K) / 2

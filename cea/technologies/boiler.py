@@ -74,7 +74,7 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     if T_return_to_boiler_K == 0:  # accounting with times with no flow
         T_return = 0
     else:
-        T_return = T_return_to_boiler_K - 273
+        T_return = T_return_to_boiler_K - KELVIN_CONVERSION
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
     boiler_eff = (eff_score * eff_of_T_return(T_return)) / 100.0
 

@@ -263,9 +263,9 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
     Qf = (abs(building_demand[Q].values)) * 1000  # in W
     Qnom = max(Qf)  # in W
     if Qnom > 0:
-        tpi = T_supply_C + 273  # in K
-        tso = building_demand[T_sup].values + 273  # in K
-        tsi = building_demand[T_ret].values + 273  # in K
+        tpi = T_supply_C + KELVIN_CONVERSION  # in K
+        tso = building_demand[T_sup].values + KELVIN_CONVERSION  # in K
+        tsi = building_demand[T_ret].values + KELVIN_CONVERSION  # in K
         cs = (abs(building_demand[m].values)) * 1000  # in W/K
         index = np.where(Qf == Qnom)[0][0]
         tpi_0 = tpi[index]  # primary side inlet in K
@@ -811,8 +811,8 @@ def calc_HEX_cooling(building, type, name, tci, UA, cc_old, delta_cap_mass_flow)
 
     Q = abs(building[Q_name].values) * 1000  # in W
     if abs(Q).max() > 0:
-        tho = building[T_sup_name].values + 273  # in K
-        thi = building[T_ret_name].values + 273  # in K
+        tho = building[T_sup_name].values + KELVIN_CONVERSION  # in K
+        thi = building[T_ret_name].values + KELVIN_CONVERSION  # in K
         ch = building[m_name].values * 1000  # in W/K
         if ch > 0:
             eff = [0.1, 0]  # FIXME
@@ -940,8 +940,8 @@ def calc_HEX_heating(building, type, name, thi, UA, ch_old, delta_cap_mass_flow)
 
     Q = building[Q_name].values * 1000  # in W
     if Q.max() > 0:
-        tco = building[T_sup_name].values + 273  # in K
-        tci = building[T_ret_name].values + 273  # in K
+        tco = building[T_sup_name].values + KELVIN_CONVERSION  # in K
+        tci = building[T_ret_name].values + KELVIN_CONVERSION  # in K
         cc = np.array(building[m_name].values * 1000)  # in W/K
         if cc.max() > 0:
             eff = [0.1, 0]  # FIXME

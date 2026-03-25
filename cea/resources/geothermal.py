@@ -50,7 +50,7 @@ def calc_geothermal_potential(locator, config):
     T_ground_K = calc_ground_temperature(T_ambient_C, depth_m)
 
     # convert back to degrees C
-    t_source_final = [x[0] - 273 for x in T_ground_K]
+    t_source_final = [x[0] - KELVIN_CONVERSION for x in T_ground_K]
 
     Q_max_kwh = np.ceil(area_geothermal / GHP_A) * GHP_HMAX_SIZE / 1000  # [kW th]
 
