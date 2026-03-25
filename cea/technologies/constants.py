@@ -4,7 +4,7 @@ Constants used throughout the cea.technologies package.
 History lesson: This is a first step at removing the `cea.globalvars.GlobalVariables` object.
 """
 
-from cea.constants import KELVIN_OFFSET
+from cea.constants import KELVIN_CONVERSION
 
 
 
@@ -24,7 +24,7 @@ HP_MIN_SIZE = 1.0E6  # min thermal design size [Wth]
 HP_ETA_EX = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
 HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
-HP_MAX_T_COND = 140 + KELVIN_OFFSET  # max temperature at condenser [K]
+HP_MAX_T_COND = 140 + KELVIN_CONVERSION  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 # Substation data
 ROUGHNESS = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &

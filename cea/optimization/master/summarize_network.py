@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from cea.optimization.constants import K_DH
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, HOURS_IN_YEAR, KELVIN_OFFSET
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, HOURS_IN_YEAR, KELVIN_CONVERSION
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -86,7 +86,7 @@ def network_main(locator, buildings_in_this_network, ground_temp, num_tot_buildi
             Q_DH_building_netw_total_W += (substation_df[iteration].Q_heating_W.values +
                                            substation_df[iteration].Q_dhw_W.values)
 
-            sum_tret_mdot_heat += (substation_df[iteration].T_return_DH_result_C.values + KELVIN_OFFSET) * substation_df[
+            sum_tret_mdot_heat += (substation_df[iteration].T_return_DH_result_C.values + KELVIN_CONVERSION) * substation_df[
                 iteration].mdot_DH_result_kgpers.values
 
             Qcdata_netw_total_kWh += demand_df[iteration].Qcdata_sys_kWh.values
@@ -283,7 +283,7 @@ def calc_temp_withlosses(t0_K, Q_W, m_kgpers, cp, case):
         else:
             t1_K = t0_K - Q_W / (m_kgpers * cp)
     else:
-        t1_K = KELVIN_OFFSET
+        t1_K = KELVIN_CONVERSION
     return t1_K
 
 
@@ -302,7 +302,7 @@ def calc_return_temp(sum_t_m, sum_m):
     if sum_m > 0:
         tr_K = sum_t_m / sum_m
     else:
-        tr_K = KELVIN_OFFSET
+        tr_K = KELVIN_CONVERSION
     return tr_K
 
 
@@ -328,7 +328,7 @@ def calc_supply_temp(tr, Q, m, cp, case):
         else:
             ts_K = tr - Q / (m * cp)
     else:
-        ts_K = KELVIN_OFFSET
+        ts_K = KELVIN_CONVERSION
     return ts_K
 
 

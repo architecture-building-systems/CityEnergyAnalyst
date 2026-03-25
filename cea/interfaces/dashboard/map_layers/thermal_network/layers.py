@@ -6,7 +6,7 @@ import shutil
 import pandas as pd
 import geopandas as gpd
 
-from cea.constants import KELVIN_OFFSET
+from cea.constants import KELVIN_CONVERSION
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.map_layers.base import MapLayer, ParameterDefinition, FileRequirement, cache_output
 from cea.interfaces.dashboard.map_layers.thermal_network import ThermalNetworkCategory
@@ -713,9 +713,9 @@ class ThermalNetworkMapLayer(MapLayer):
             if os.path.exists(temp_supply_file):
                 temp_df = pd.read_csv(temp_supply_file)
                 if plant_id in temp_df.columns:
-                    avg_supply_temp_C = temp_df[plant_id].mean() - KELVIN_OFFSET
-                    min_supply_temp_C = temp_df[plant_id].min() - KELVIN_OFFSET
-                    max_supply_temp_C = temp_df[plant_id].max() - KELVIN_OFFSET
+                    avg_supply_temp_C = temp_df[plant_id].mean() - KELVIN_CONVERSION
+                    min_supply_temp_C = temp_df[plant_id].min() - KELVIN_CONVERSION
+                    max_supply_temp_C = temp_df[plant_id].max() - KELVIN_CONVERSION
                 else:
                     avg_supply_temp_C = 0
                     min_supply_temp_C = 0
@@ -728,7 +728,7 @@ class ThermalNetworkMapLayer(MapLayer):
             if os.path.exists(temp_return_file):
                 temp_df = pd.read_csv(temp_return_file)
                 if plant_id in temp_df.columns:
-                    avg_return_temp_C = temp_df[plant_id].mean() - KELVIN_OFFSET
+                    avg_return_temp_C = temp_df[plant_id].mean() - KELVIN_CONVERSION
                 else:
                     avg_return_temp_C = 0
             else:

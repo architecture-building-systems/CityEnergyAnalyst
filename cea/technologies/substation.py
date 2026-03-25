@@ -8,7 +8,7 @@ from numba import jit
 
 import cea.config
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, MIN_TEMP_DIFF_FOR_MASS_FLOW_K, MIN_TEMP_DIFF_FOR_HEX_LMTD_K
-from cea.constants import HOURS_IN_YEAR, KELVIN_OFFSET
+from cea.constants import HOURS_IN_YEAR, KELVIN_CONVERSION
 from cea.technologies.constants import DT_HEAT, DT_COOL, U_COOL, U_HEAT
 from cea.technologies.network_layout.plant_node_operations import PlantServices
 
@@ -298,14 +298,14 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
         A_hex_cs = 0
         Qcs_sys_W = np.zeros(HOURS_IN_YEAR)
     else:
-        tci = T_DC_supply_data_C + KELVIN_OFFSET  # K
+        tci = T_DC_supply_data_C + KELVIN_CONVERSION  # K
         Qcs_sys_kWh = sum(Qcs_sys_kWh_dict[unit] for unit in cs_configuration)
         Qcs_sys_W = abs(Qcs_sys_kWh) * 1000  # W
         Qnom_W = max(Qcs_sys_W)
 
         if Qnom_W > 0:
-            tho = Tcs_supply_C + KELVIN_OFFSET  # K
-            thi = Tcs_return_C + KELVIN_OFFSET  # K
+            tho = Tcs_supply_C + KELVIN_CONVERSION  # K
+            thi = Tcs_return_C + KELVIN_CONVERSION  # K
             mcpcs_sys_kWperC = sum(mcpcs_sys_kWperC_dict[unit] for unit in cs_configuration)
             ch = mcpcs_sys_kWperC * 1000  # W/K
             index = np.where(Qcs_sys_W == Qnom_W)[0][0]
@@ -313,7 +313,7 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
                 calc_substation_cooling(Qcs_sys_W, thi, tho, tci, ch, ch[index], Qnom_W,
                                        thi[index], tci[index], tho[index])
             # calc_substation_cooling returns in Celsius - convert to Kelvin for mixing
-            t_DC_return_cs = t_DC_return_cs_C + KELVIN_OFFSET
+            t_DC_return_cs = t_DC_return_cs_C + KELVIN_CONVERSION
         else:
             t_DC_return_cs = np.zeros(HOURS_IN_YEAR)  # No demand
             mcp_DC_cs = 0
@@ -323,16 +323,16 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
     Qcre_sys_W = abs(building.Qcre_sys_kWh.values) * 1000  # W
     Qnom_W = max(Qcre_sys_W)
     if len(cs_configuration) > 0 and Qnom_W > 0:
-        tci = T_DC_supply_data_C + KELVIN_OFFSET
-        tho = building.Tcre_sys_sup_C + KELVIN_OFFSET
-        thi = building.Tcre_sys_re_C + KELVIN_OFFSET
+        tci = T_DC_supply_data_C + KELVIN_CONVERSION
+        tho = building.Tcre_sys_sup_C + KELVIN_CONVERSION
+        thi = building.Tcre_sys_re_C + KELVIN_CONVERSION
         ch = abs(building.mcpcre_sys_kWperC.values) * 1000
         index = np.where(Qcre_sys_W == Qnom_W)[0][0]
         t_DC_return_ref_C, mcp_DC_ref, A_hex_ref = \
             calc_substation_cooling(Qcre_sys_W, thi, tho, tci, ch, ch[index], Qnom_W,
                                    thi[index], tci[index], tho[index])
         # calc_substation_cooling returns in Celsius - convert to Kelvin for mixing
-        t_DC_return_ref = t_DC_return_ref_C + KELVIN_OFFSET
+        t_DC_return_ref = t_DC_return_ref_C + KELVIN_CONVERSION
     else:
         t_DC_return_ref = np.zeros(HOURS_IN_YEAR)  # No demand
         mcp_DC_ref = 0
@@ -342,16 +342,16 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
     Qcdata_sys_W = abs(building.Qcdata_sys_kWh.values) * 1000  # W
     Qnom_W = max(Qcdata_sys_W)
     if len(cs_configuration) > 0 and Qnom_W > 0:
-        tci = T_DC_supply_data_C + KELVIN_OFFSET
-        tho = building.Tcdata_sys_sup_C + KELVIN_OFFSET
-        thi = building.Tcdata_sys_re_C + KELVIN_OFFSET
+        tci = T_DC_supply_data_C + KELVIN_CONVERSION
+        tho = building.Tcdata_sys_sup_C + KELVIN_CONVERSION
+        thi = building.Tcdata_sys_re_C + KELVIN_CONVERSION
         ch = abs(building.mcpcdata_sys_kWperC.values) * 1000
         index = np.where(Qcdata_sys_W == Qnom_W)[0][0]
         t_DC_return_data_C, mcp_DC_data, A_hex_data = \
             calc_substation_cooling(Qcdata_sys_W, thi, tho, tci, ch, ch[index], Qnom_W,
                                    thi[index], tci[index], tho[index])
         # calc_substation_cooling returns in Celsius - convert to Kelvin for mixing
-        t_DC_return_data = t_DC_return_data_C + KELVIN_OFFSET
+        t_DC_return_data = t_DC_return_data_C + KELVIN_CONVERSION
     else:
         t_DC_return_data = np.zeros(HOURS_IN_YEAR)  # No demand
         mcp_DC_data = 0
@@ -365,7 +365,7 @@ def substation_model_cooling_thermal_network(name, building, T_DC_supply_C, T_DC
     # Convert from K to C
     # When return temp is 0 K (no demand), use supply temp; otherwise convert K to C
     T_DC_return_C = np.where(T_DC_return_K > 0,
-                             T_DC_return_K - KELVIN_OFFSET,  # With demand: convert K to C
+                             T_DC_return_K - KELVIN_CONVERSION,  # With demand: convert K to C
                              T_DC_supply_data_C)     # No demand: use supply temp (broadcast to array)
 
     # Calculate total mass flow
@@ -499,7 +499,7 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         A_hex_cs = 0
         Qcs_sys_W = np.zeros(HOURS_IN_YEAR)
     else:
-        tci = T_DC_supply_to_cs_ref_data_C + KELVIN_OFFSET  # fixme: change according to cs_ref or ce_ref_data
+        tci = T_DC_supply_to_cs_ref_data_C + KELVIN_CONVERSION  # fixme: change according to cs_ref or ce_ref_data
         Qcs_sys_kWh = 0.0
         for unit in cs_configuration:
             Qcs_sys_kWh += Qcs_sys_kWh_dict[unit]
@@ -507,8 +507,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         # only include space cooling and refrigeration
         Qnom_W = max(Qcs_sys_W)  # in W
         if Qnom_W > 0:
-            tho = Tcs_supply_C + KELVIN_OFFSET  # in K
-            thi = Tcs_return_C + KELVIN_OFFSET  # in K
+            tho = Tcs_supply_C + KELVIN_CONVERSION  # in K
+            thi = Tcs_return_C + KELVIN_CONVERSION  # in K
             mcpcs_sys_kWperC = 0.0
             for unit in cs_configuration:
                 mcpcs_sys_kWperC += mcpcs_sys_kWperC_dict[unit]
@@ -537,8 +537,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         Qcre_sys_W = abs(building.Qcre_sys_kWh.values) * 1000  # in W
         Qnom_W = max(Qcre_sys_W)
         if Qnom_W > 0:
-            tho = building.Tcre_sys_sup_C + KELVIN_OFFSET  # in K
-            thi = building.Tcre_sys_re_C + KELVIN_OFFSET  # in K
+            tho = building.Tcre_sys_sup_C + KELVIN_CONVERSION  # in K
+            thi = building.Tcre_sys_re_C + KELVIN_CONVERSION  # in K
             ch = abs(building.mcpcre_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcre_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
@@ -563,8 +563,8 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
         Qcdata_sys_W = (abs(building.Qcdata_sys_kWh.values) * 1000)
         Qnom_W = max(Qcdata_sys_W)  # in W
         if Qnom_W > 0:
-            tho = building.Tcdata_sys_sup_C + KELVIN_OFFSET  # in K
-            thi = building.Tcdata_sys_re_C + KELVIN_OFFSET  # in K
+            tho = building.Tcdata_sys_sup_C + KELVIN_CONVERSION  # in K
+            thi = building.Tcdata_sys_re_C + KELVIN_CONVERSION  # in K
             ch = abs(building.mcpcdata_sys_kWperC.values) * 1000  # in W/K
             index = np.where(Qcdata_sys_W == Qnom_W)[0][0]
             tci_0 = tci[index]  # in K
@@ -590,10 +590,10 @@ def substation_model_cooling(name, building, T_DC_supply_to_cs_ref_C, T_DC_suppl
     mdot_space_cooling_and_refrigeration_result_flat = (mcp_DC_cs + mcp_DC_ref) / \
                                                        HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from W/K to kg/s
 
-    T_r1_space_cooling_and_refrigeration_result_flat = T_DC_return_cs_ref_C + KELVIN_OFFSET  # convert to K
-    T_r1_space_cooling_data_center_and_refrigeration_result_flat = T_DC_return_cs_ref_data_C + KELVIN_OFFSET  # convert to K
-    T_supply_DC_flat = T_DC_supply_to_cs_ref_C + KELVIN_OFFSET  # convert to K
-    T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat = T_DC_supply_to_cs_ref_data_C + KELVIN_OFFSET  # convert to K
+    T_r1_space_cooling_and_refrigeration_result_flat = T_DC_return_cs_ref_C + KELVIN_CONVERSION  # convert to K
+    T_r1_space_cooling_data_center_and_refrigeration_result_flat = T_DC_return_cs_ref_data_C + KELVIN_CONVERSION  # convert to K
+    T_supply_DC_flat = T_DC_supply_to_cs_ref_C + KELVIN_CONVERSION  # convert to K
+    T_supply_DC_space_cooling_data_center_and_refrigeration_result_flat = T_DC_supply_to_cs_ref_data_C + KELVIN_CONVERSION  # convert to K
 
     # save the results into a .csv file
     results = pd.DataFrame(
@@ -751,7 +751,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
     if hs_configuration == 0 or not space_heating_connected:
         # No space heating from DH
-        t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + KELVIN_OFFSET  # in K
+        t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + KELVIN_CONVERSION  # in K
         mcp_DH_hs = np.zeros(HOURS_IN_YEAR)
         A_hex_hs = 0
         Qhs_sys_W = np.zeros(HOURS_IN_YEAR)
@@ -781,13 +781,13 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
                 # Convert units
                 mcp_DH_hs = mcp_DH_hs_kWK * 1000  # kW/K to W/K
-                t_DH_return_hs = t_DH_return_hs_C + KELVIN_OFFSET  # C to K
+                t_DH_return_hs = t_DH_return_hs_C + KELVIN_CONVERSION  # C to K
             else:
                 # Traditional calculation (no booster)
-                thi = T_DH_supply_C + KELVIN_OFFSET  # In K
+                thi = T_DH_supply_C + KELVIN_CONVERSION  # In K
                 index = np.where(Qhs_sys_W == Qnom_W)[0][0]
-                tco = Ths_supply_C + KELVIN_OFFSET  # in K
-                tci = Ths_return_C + KELVIN_OFFSET  # in K
+                tco = Ths_supply_C + KELVIN_CONVERSION  # in K
+                tci = Ths_return_C + KELVIN_CONVERSION  # in K
 
                 # Check temperature difference before division
                 temp_diff = tco - tci
@@ -837,12 +837,12 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                 t_DH_return_hs_C, mcp_DH_hs, A_hex_hs = \
                     calc_substation_heating(Qhs_sys_W, thi, tco, tci, cc, cc_0, Qnom_W, thi_0, tci_0, tco_0)
                 # Convert units
-                t_DH_return_hs = t_DH_return_hs_C + KELVIN_OFFSET  # C to K
+                t_DH_return_hs = t_DH_return_hs_C + KELVIN_CONVERSION  # C to K
 
                 Q_dh_to_hs_W = Qhs_sys_W
                 Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
         else:
-            t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + KELVIN_OFFSET  # in K
+            t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + KELVIN_CONVERSION  # in K
             mcp_DH_hs = np.zeros(HOURS_IN_YEAR)
             A_hex_hs = 0
             Q_dh_to_hs_W = np.zeros(HOURS_IN_YEAR)
@@ -871,10 +871,10 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
         # Convert units
         mcp_DH_ww = mcp_DH_ww_kWK * 1000  # kW/K to W/K
-        t_DH_return_ww = t_DH_return_ww_C + KELVIN_OFFSET  # C to K
+        t_DH_return_ww = t_DH_return_ww_C + KELVIN_CONVERSION  # C to K
     else:
         # No DHW from DH
-        t_DH_return_ww = np.zeros(HOURS_IN_YEAR) + KELVIN_OFFSET  # in K
+        t_DH_return_ww = np.zeros(HOURS_IN_YEAR) + KELVIN_CONVERSION  # in K
         A_hex_ww = 0
         mcp_DH_ww = np.zeros(HOURS_IN_YEAR)
         Q_dh_to_dhw_W = np.zeros(HOURS_IN_YEAR)
@@ -888,7 +888,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
     # converting units and quantities:
     # When there's no demand, mixing function returns 0K; convert to 0°C instead of -273°C
-    T_return_DH_result_flat = np.where(T_DH_return_K > 0, T_DH_return_K - KELVIN_OFFSET, 0.0)  # Convert K to C
+    T_return_DH_result_flat = np.where(T_DH_return_K > 0, T_DH_return_K - KELVIN_CONVERSION, 0.0)  # Convert K to C
     T_supply_DH_result_flat = T_DH_supply_C  # Keep in C
     mdot_DH_result_flat = mcp_DH / HEAT_CAPACITY_OF_WATER_JPERKGK  # convert from W/K to kg/s
 
@@ -1088,7 +1088,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
         current_efficiency = -1.0  # dummy value for first iteration - never used in any calculations
 
         cmin_kWperK = ch_kWperK * (thi_K - tho_K) / ((thi_K - tci_K) * previous_efficiency)
-        tco_K = KELVIN_OFFSET  # actual value calculated in iteration
+        tco_K = KELVIN_CONVERSION  # actual value calculated in iteration
         while efficiencies_not_converged(previous_efficiency, current_efficiency):
             assert not (cmin_kWperK < 0.0), "substation.calc_HEX_cooling: cmin is negative!!"
 
@@ -1120,7 +1120,7 @@ def calc_HEX_cooling(Q_cooling_W, UA, thi_K, tho_K, tci_K, ch_kWperK):
             cc_kWperK = 0.0
         else:
             cc_kWperK = Q_cooling_W / temp_diff
-            tco_C = tco_K - KELVIN_OFFSET
+            tco_C = tco_K - KELVIN_CONVERSION
     else:
         tco_C = 0.0
         cc_kWperK = 0.0
@@ -1229,7 +1229,7 @@ def calc_HEX_heating(Q_heating_W, UA, thi_K, tco_K, tci_K, cc_kWperK):
             current_efficiency = calc_shell_HEX(NTU, cr)
             cmin_kWperK = cc_kWperK * (dT_primary) / ((thi_K - tci_K) * current_efficiency)
             tho_K = thi_K - current_efficiency * cmin_kWperK * (thi_K - tci_K) / ch_kWperK
-        tho_C = tho_K - KELVIN_OFFSET
+        tho_C = tho_K - KELVIN_CONVERSION
     else:
         tho_C = 0.0
         ch_kWperK = 0.0

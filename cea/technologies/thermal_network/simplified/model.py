@@ -11,7 +11,7 @@ import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
 from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, \
-    KELVIN_OFFSET
+    KELVIN_CONVERSION
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.resources.geothermal import calc_ground_temperature
@@ -582,12 +582,12 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 service_names = ' → '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
 
                 if fixed_network_temp_C < min_temp_required:
-                    if fixed_network_temp_C > max(calculate_ground_temperature(locator)) - KELVIN_OFFSET:
+                    if fixed_network_temp_C > max(calculate_ground_temperature(locator)) - KELVIN_CONVERSION:
                         # Assume it is an extremely low temperature grid (e.g., an anergy grid)
                         # Print a warning but allow it
                         print(
                             f"    - Network temperature very low but still higher than the ground temperature "
-                            f"({np.round(max(calculate_ground_temperature(locator)) - KELVIN_OFFSET, 1)}°C)\n"
+                            f"({np.round(max(calculate_ground_temperature(locator)) - KELVIN_CONVERSION, 1)}°C)\n"
                             f"    - Assuming a 5G DH network: note that the overall heating efficiency might be very low"
                         )
                     else:
@@ -649,9 +649,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation_results_dict[building_name] = substation_results
 
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + KELVIN_OFFSET  # Convert C to K
+            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + KELVIN_CONVERSION  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_C"] > 0,
-                                                      substation_results["T_return_DH_result_C"] + KELVIN_OFFSET, np.nan)
+                                                      substation_results["T_return_DH_result_C"] + KELVIN_CONVERSION, np.nan)
             # Total demand = DH contribution + booster for both space heating and DHW
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
@@ -779,9 +779,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation_results_dict[building_name] = substation_results
 
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DC_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + KELVIN_OFFSET  # Convert C to K
+            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + KELVIN_CONVERSION  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DC_result_C"] > 0,
-                                                      substation_results["T_return_DC_result_C"] + KELVIN_OFFSET, np.nan)
+                                                      substation_results["T_return_DC_result_C"] + KELVIN_CONVERSION, np.nan)
             # Total demand = sum of all cooling types
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]

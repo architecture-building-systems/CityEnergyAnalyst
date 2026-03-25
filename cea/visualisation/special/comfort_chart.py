@@ -13,7 +13,7 @@ from plotly.offline import plot
 
 import cea.config
 import cea.plots.demand
-from cea.constants import KELVIN_OFFSET
+from cea.constants import KELVIN_CONVERSION
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 from cea.import_export.result_summary import filter_buildings
 
@@ -680,7 +680,7 @@ def p_ws_from_t(t_celsius):
     """
 
     # convert temperature
-    t = t_celsius + KELVIN_OFFSET
+    t = t_celsius + KELVIN_CONVERSION
 
     # constants
     C8 = -5.8002206E+03

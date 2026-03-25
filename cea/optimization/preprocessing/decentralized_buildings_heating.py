@@ -18,7 +18,7 @@ import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 import cea.technologies.substation as substation
 import cea.utilities.parallel
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_OFFSET
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 from cea.optimization.constants import GHP_A, GHP_HMAX_SIZE
 from cea.resources.geothermal import calc_ground_temperature
 from cea.utilities import epwreader
@@ -83,8 +83,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # run substation model to derive temperatures of the building
     substation_results = pd.read_csv(locator.get_optimization_substations_results_file(building_name, "DH", ""))
     # Substation outputs are in Celsius; convert to Kelvin for thermal calculations
-    T_supply_DH_result_K = substation_results["T_supply_DH_result_C"] + KELVIN_OFFSET
-    T_return_DH_result_K = substation_results["T_return_DH_result_C"] + KELVIN_OFFSET
+    T_supply_DH_result_K = substation_results["T_supply_DH_result_C"] + KELVIN_CONVERSION
+    T_return_DH_result_K = substation_results["T_return_DH_result_C"] + KELVIN_CONVERSION
     q_load_Wh = np.vectorize(calc_new_load)(
         substation_results["mdot_DH_result_kgpers"],
         T_supply_DH_result_K,
@@ -109,8 +109,8 @@ def disconnected_heating_for_building(building_name, supply_systems, T_ground_K,
     # save supply system activation of all supply configurations
     heating_dispatch = {}
     # Supply with the Boiler / FC / GHP
-    Tret_K = (substation_results["T_return_DH_result_C"].values + KELVIN_OFFSET)
-    Tsup_K = (substation_results["T_supply_DH_result_C"].values + KELVIN_OFFSET)
+    Tret_K = (substation_results["T_return_DH_result_C"].values + KELVIN_CONVERSION)
+    Tsup_K = (substation_results["T_supply_DH_result_C"].values + KELVIN_CONVERSION)
     mdot_kgpers = substation_results["mdot_DH_result_kgpers"].values
     ## Start Hourly calculation
     Tret_K = np.where(Tret_K > 0.0, Tret_K, Tsup_K)

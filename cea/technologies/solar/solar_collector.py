@@ -18,7 +18,7 @@ import pvlib
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from cea.constants import HOURS_IN_YEAR, KELVIN_OFFSET
+from cea.constants import HOURS_IN_YEAR, KELVIN_CONVERSION
 from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -506,11 +506,11 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
             Tin_Seg_C = Tin_C
 
         if Mfl_kgpers > 0 and mode_seg == 1:  # same heat gain/ losses for all segments
-            Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + KELVIN_OFFSET)) / A_seg_m2 -
-                          (C_eff_Jperm2K * (Tin_Seg_C + KELVIN_OFFSET)) / (2 * delts) + q_gain_Wperm2 +
-                          (C_eff_Jperm2K * (TflA[Iseg] + KELVIN_OFFSET) / delts)) / (
+            Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + KELVIN_CONVERSION)) / A_seg_m2 -
+                          (C_eff_Jperm2K * (Tin_Seg_C + KELVIN_CONVERSION)) / (2 * delts) + q_gain_Wperm2 +
+                          (C_eff_Jperm2K * (TflA[Iseg] + KELVIN_CONVERSION) / delts)) / (
                                  Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2 + C_eff_Jperm2K / (2 * delts))
-            Tout_Seg_C = Tout_Seg_K - KELVIN_OFFSET  # in [C]
+            Tout_Seg_C = Tout_Seg_K - KELVIN_CONVERSION  # in [C]
             TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
         else:  # heat losses based on each segment's inlet and outlet temperatures.
             Tfl[1] = TflA[Iseg]

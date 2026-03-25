@@ -8,7 +8,7 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 import cea.plots.thermal_networks
 from cea.plots.variable_naming import LOGO, NAMING, COLOR
-from cea.constants import KELVIN_OFFSET
+from cea.constants import KELVIN_CONVERSION
 
 __author__ = "Lennart Rogenhofer"
 __copyright__ = "Copyright 2018, Architecture and Building Systems - ETH Zurich"
@@ -115,10 +115,10 @@ class SupplyReturnAmbientCurvePlot(cea.plots.thermal_networks.ThermalNetworksPlo
 
         if plant_node_supply.min() > 200:
             # unit is in deg K, convert to deg C
-            plant_node_supply -= KELVIN_OFFSET
+            plant_node_supply -= KELVIN_CONVERSION
         if plant_node_return.min() > 200:
             # unit is in deg K, convert to deg C
-            plant_node_return -= KELVIN_OFFSET
+            plant_node_return -= KELVIN_CONVERSION
 
         return pd.DataFrame({'T_sup_C': plant_node_supply, 'T_ret_C': plant_node_return},
                             columns=['T_sup_C', 'T_ret_C'])

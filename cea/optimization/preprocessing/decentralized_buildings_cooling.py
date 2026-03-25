@@ -24,7 +24,7 @@ import cea.technologies.cooling_tower as cooling_tower
 import cea.technologies.direct_expansion_units as dx
 import cea.technologies.solar.solar_collector as solar_collector
 import cea.technologies.substation as substation
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_OFFSET
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 from cea.optimization.constants import (T_GENERATOR_FROM_FP_C, T_GENERATOR_FROM_ET_C,
                                         Q_LOSS_DISCONNECTED, ACH_TYPE_SINGLE, VCC_CODE_DECENTRALIZED)
 from cea.optimization.lca_calculations import LcaCalculations
@@ -667,7 +667,7 @@ def calc_ACH_operation(T_ground_K, T_SC_hw_in_C, T_chw_re_K, T_chw_sup_K, absorp
     q_chw_ACH_Wh = np.asarray([x['q_chw_W'] for x in SC_to_single_ACH_operation])
     q_cw_ACH_Wh = np.asarray([x['q_cw_W'] for x in SC_to_single_ACH_operation])
     q_hw_ACH_Wh = np.asarray([x['q_hw_W'] for x in SC_to_single_ACH_operation])
-    T_hw_out_ACH_K = np.asarray([x['T_hw_out_C'] + KELVIN_OFFSET for x in SC_to_single_ACH_operation])
+    T_hw_out_ACH_K = np.asarray([x['T_hw_out_C'] + KELVIN_CONVERSION for x in SC_to_single_ACH_operation])
     return T_hw_out_ACH_K, el_ACH_Wh, q_cw_ACH_Wh, q_hw_ACH_Wh, q_chw_ACH_Wh
 
 
