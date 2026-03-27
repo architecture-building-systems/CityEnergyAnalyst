@@ -26,6 +26,7 @@ HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
 HP_MAX_T_COND = 140 + KELVIN_CONVERSION  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
+
 # Substation data
 ROUGHNESS = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
 NETWORK_DEPTH = 1  # m
@@ -44,13 +45,13 @@ U_DHWTANK = 0.225
 
 #Chiller
 G_VALUE_CENTRALIZED = 0.47
-G_VALUE_DECENTRALIZED = 0.4 # calculated from ESP4401_Part-2 Air conditioning system_AY2016_17.pdf assuming singapore wet bulb temp and 7.5degC at cold side
-T_EVAP_AHU = 280.5 #K form CEA demand calculation
-T_EVAP_ARU = 280.5 #K form CEA demand calculation
-T_EVAP_SCU = 291 #K form CEA demand calculation
+G_VALUE_DECENTRALIZED = 0.4 # calculated from ESP4401_Part-2 Air conditioning system_AY2016_17.pdf assuming Singapore wet bulb temp and 7.5degC at cold side
+T_EVAP_AHU = 280.5 # K from CEA demand calculation
+T_EVAP_ARU = 280.5 # K from CEA demand calculation
+T_EVAP_SCU = 291 # K form CEA demand calculation
 DT_NETWORK_CENTRALIZED = 2 # Assumption for network losses. This value is based on a sample calculation with all loads supplied by the network.
-CHILLER_DELTA_T_APPROACH = 2.8 # K , ESP4401_Part-2 Air conditioning system_AY2016_17.pdf
-CHILLER_DELTA_T_HEX_CT = 1.5 # K , Approximation,  approach temperature of the HEX b/t the condenser loop and CT
+CHILLER_DELTA_T_APPROACH = 2.8 # K ESP4401_Part-2 Air conditioning system_AY2016_17.pdf
+CHILLER_DELTA_T_HEX_CT = 1.5 # K Approximation, approach temperature of the HEX b/t the condenser loop and CT
 CENTRALIZED_AUX_PERCENTAGE = 38 # % , Power needed by auxiliary Chiller and CT, calculation based on UTown plant
 DECENTRALIZED_AUX_PERCENTAGE = 27 # % , Power needed by auxiliary Chiller and CT, backwards calculation based on Clark D (CUNDALL). Chiller energy efficiency 2013.
 
@@ -84,4 +85,4 @@ GAS_CONNECTION_COST = 15.5 / 1000  # CHF / W, from  Energie360 15.5 CHF / kW
 # Thermal Network
 TYPE_MAT_DEFAULT = 'T1'  # Pipe material default
 PIPE_DIAMETER_DEFAULT = 150
-
+MINIMUM_DH_TEMPERATURE = 30 # arbitrary conservative minimum district heating supply temperature

@@ -34,7 +34,7 @@ from cea.optimization.constants import PUMP_ETA
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.simplified.model import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
-    MAX_NODE_FLOW
+    MAX_NODE_FLOW, MINIMUM_DH_TEMPERATURE
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 from cea.technologies.heat_exchangers import get_heat_exchanger_by_description
 from cea.technologies.network_layout.plant_node_operations import PlantServices
@@ -239,7 +239,7 @@ class ThermalNetwork(object):
         elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
             return 50  # High-temp network
         else:
-            return 30  # Unknown service, conservative minimum
+            return MINIMUM_DH_TEMPERATURE  # Unknown service, conservative minimum
 
     def get_service_maximum_temperature(self):
         """
