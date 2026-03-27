@@ -687,7 +687,8 @@ def calc_compound_Ths(building_demand_df,
 
 def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, Ths_supply_C, Ths_return_C,
                              hs_configuration, locator, DHN_barcode="", itemised_dh_services=None,
-                             building_services=None, fixed_network_temp_C=None, network_type="DH", network_name=""):
+                             building_services=None, fixed_network_temp_C=None, network_type="DH", network_name="",
+                             booster="coil"):
     '''
     calculates mass flow rates, temperatures, and heat exchanger area of each building substation
 
@@ -749,6 +750,15 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                         4: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh, 5: Qhs_sys_ahu_kWh + Qhs_sys_shu_kWh,
                         6: Qhs_sys_aru_kWh + Qhs_sys_shu_kWh, 7: Qhs_sys_ahu_kWh + Qhs_sys_aru_kWh + Qhs_sys_shu_kWh}
 
+    mcphs_sys_ahu_kWperC = building_demand_df.mcphs_sys_ahu_kWperC.values
+    mcphs_sys_aru_kWperC = building_demand_df.mcphs_sys_aru_kWperC.values
+    mcphs_sys_shu_kWperC = building_demand_df.mcphs_sys_shu_kWperC.values
+    mcphs_sys_kWperC_dict = {1: mcphs_sys_ahu_kWperC, 2: mcphs_sys_aru_kWperC, 3: mcphs_sys_shu_kWperC,
+                             4: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC,
+                             5: mcphs_sys_ahu_kWperC + mcphs_sys_shu_kWperC,
+                             6: mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC,
+                             7: mcphs_sys_ahu_kWperC + mcphs_sys_aru_kWperC + mcphs_sys_shu_kWperC}
+
     if hs_configuration == 0 or not space_heating_connected:
         # No space heating from DH
         t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + KELVIN_CONVERSION  # in K
@@ -760,13 +770,15 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     else:
         Qhs_sys_W = Qhs_sys_kWh_dict[hs_configuration] * 1000  # in W
         Qnom_W = max(Qhs_sys_W)
+        mcphs_sys_WperC = mcphs_sys_kWperC_dict[hs_configuration] # in W
 
         if Qnom_W > 0:
             # Check if booster may be needed (CT mode or Case 1 LTDH)
-            needs_booster_check = (temp_mode == 'CT') or \
-                                (itemised_dh_services and itemised_dh_services[0] == PlantServices.SPACE_HEATING)
-
-            if needs_booster_check:
+            # needs_booster_check = (temp_mode == 'CT') or \
+            #                     (itemised_dh_services and itemised_dh_services[0] == PlantServices.SPACE_HEATING)
+            #
+            # if needs_booster_check:
+            if booster != 'none':
                 # Use booster-aware calculation
                 from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
 
@@ -776,7 +788,9 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                         T_DH_supply_C=T_DH_supply_C,
                         T_target_C=Ths_supply_C,
                         T_return_C=Ths_return_C,
-                        load_type='space_heating'
+                        mcp_sys_WperC = mcphs_sys_WperC,
+                        load_type='space_heating',
+                        booster=booster
                     )
 
                 # Convert units
@@ -854,6 +868,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
     Qww_sys_W = building_demand_df.Qww_sys_kWh.values * 1000  # in W
     Qnom_W = max(Qww_sys_W)  # in W
+    mcpww_sys_WperC = building_demand_df.mcpww_sys_kWperC * 1000  # in W
 
     if Qnom_W > 0 and dhw_connected:
         # DHW connected to DH - check if booster needed
@@ -866,7 +881,9 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                 T_DH_supply_C=T_DH_supply_C,
                 T_target_C=building_demand_df.Tww_sys_sup_C.values,
                 T_return_C=building_demand_df.Tww_sys_re_C.values,
-                load_type='dhw'
+                mcp_sys_WperC=mcpww_sys_WperC,
+                load_type='dhw',
+                booster=booster
             )
 
         # Convert units

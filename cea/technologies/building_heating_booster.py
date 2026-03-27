@@ -11,6 +11,9 @@ Works with:
 """
 
 import numpy as np
+from cea.technologies.heatpumps import HPSew_op_cost as HP_water_water
+from cea.technologies.constants import U_HEAT, MINIMUM_DH_TEMPERATURE, DT_HEAT, DT_COOL
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 
 __author__ = "Reynold Mok, Zhongming Shi"
 __copyright__ = "Copyright 2024, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +24,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-MIN_APPROACH_TEMP_K = 5  # Minimum temperature difference for heat exchanger
 MIN_TEMP_RISE_FOR_FRACTION_K = 1  # Minimum temperature rise for stable heat distribution fraction calculation
 MIN_TEMP_DIFF_FOR_MASS_FLOW_K = 0.1  # Minimum temperature difference to prevent division by zero in mass flow calculation
 
@@ -31,7 +33,9 @@ def calc_dh_heating_with_booster_tracking(
     T_DH_supply_C,       # DH supply temp [°C]
     T_target_C,          # Target temp (space heating or DHW) [°C]
     T_return_C,          # Return temp from building [°C]
-    load_type='dhw'      # 'space_heating' or 'dhw' (for logging)
+    mcp_sys_WperC,
+    load_type='dhw',     # 'space_heating' or 'dhw' (for logging)
+    booster='coil'
 ):
     """
     Calculate DH heating + booster tracking when network temp is insufficient.
@@ -75,36 +79,60 @@ def calc_dh_heating_with_booster_tracking(
     Q_booster_W = np.zeros_like(Q_demand_W, dtype=float)
     booster_active = np.zeros_like(Q_demand_W, dtype=bool)
 
-    # Calculate max temperature achievable with DH (with approach temp)
-    T_dh_preheat_max_C = T_DH_supply_C - MIN_APPROACH_TEMP_K
+    # # Calculate max temperature achievable with DH (with approach temp)
+    if T_DH_supply_C.mean() > MINIMUM_DH_TEMPERATURE:
+        min_approach_temp_K = DT_HEAT
+    else:
+        # assume a very low temperature (5G) DH with lower DT
+        # here: 2°C (for reference, see De ZONNET, 1.5°C temperature drop for a network at 14–18°C)
+        min_approach_temp_K = DT_COOL
+    T_dh_preheat_max_C = T_DH_supply_C - min_approach_temp_K
 
     # Determine when booster is needed
     booster_needed = (T_dh_preheat_max_C < T_target_C) & (Q_demand_W > 0)
     dh_sufficient = (T_dh_preheat_max_C >= T_target_C) & (Q_demand_W > 0)
 
-    # Case A: DH temperature sufficient (no booster needed)
-    if dh_sufficient.any():
-        Q_dh_W[dh_sufficient] = Q_demand_W[dh_sufficient]
-        Q_booster_W[dh_sufficient] = 0
-        booster_active[dh_sufficient] = False
+    if booster == 'none':
+        if dh_sufficient.all():
+            Q_dh_W = Q_demand_W.copy()
+            Q_booster_W = 0
+            booster_active = False
+        else:
+            raise ValueError("DH temperature insufficient and no booster available. Supply temperature cannot be reached.")
+    else:
+        # Case A: DH temperature sufficient (no booster needed)
+        if dh_sufficient.any():
+            Q_dh_W[dh_sufficient] = Q_demand_W[dh_sufficient]
+            Q_booster_W[dh_sufficient] = 0
+            booster_active[dh_sufficient] = False
+        # Case B: DH pre-heats, booster tops up
+        if booster_needed.any():
+            if booster == 'coil':
+                # DH contributes heating from return temp to preheat temp
+                T_preheat_subset = T_dh_preheat_max_C[booster_needed]
+                T_target_subset = T_target_C[booster_needed]
+                T_return_subset = T_return_C[booster_needed]
 
-    # Case B: DH pre-heats, booster tops up
-    if booster_needed.any():
-        # DH contributes heating from return temp to preheat temp
-        T_preheat_subset = T_dh_preheat_max_C[booster_needed]
-        T_target_subset = T_target_C[booster_needed]
-        T_return_subset = T_return_C[booster_needed]
+                temp_rise_dh = np.maximum(0, T_preheat_subset - T_return_subset)
+                # Use minimum threshold for numerical stability in fraction calculation
+                temp_rise_total = np.maximum(MIN_TEMP_RISE_FOR_FRACTION_K, T_target_subset - T_return_subset)
 
-        temp_rise_dh = np.maximum(0, T_preheat_subset - T_return_subset)
-        # Use minimum threshold for numerical stability in fraction calculation
-        temp_rise_total = np.maximum(MIN_TEMP_RISE_FOR_FRACTION_K, T_target_subset - T_return_subset)
+                # Fraction of heat from DH vs booster (based on temperature rise)
+                fraction_dh = temp_rise_dh / temp_rise_total
 
-        # Fraction of heat from DH vs booster (based on temperature rise)
-        fraction_dh = temp_rise_dh / temp_rise_total
-
-        Q_dh_W[booster_needed] = Q_demand_W[booster_needed] * fraction_dh
-        Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
-        booster_active[booster_needed] = True
+                Q_dh_W[booster_needed] = Q_demand_W[booster_needed] * fraction_dh
+                Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
+                booster_active[booster_needed] = True
+            elif booster == 'heat_pump':
+               Q_dh_W[booster_needed], _, _ = np.vectorize(HP_water_water)(
+                   mcp_sys_WperC[booster_needed] / HEAT_CAPACITY_OF_WATER_JPERKGK,
+                   T_target_C[booster_needed] + KELVIN_CONVERSION, T_return_C[booster_needed] + KELVIN_CONVERSION,
+                   T_dh_preheat_max_C[booster_needed] + KELVIN_CONVERSION,
+                   Q_demand_W[booster_needed])
+               Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
+               booster_active[booster_needed] = True
+            else:
+                raise ValueError(f"Unknown booster type: {booster} (valid choices: 'none', 'coil', 'heat_pump').")
 
     # ========================================================================
     # Calculate DH-side parameters (what thermal network needs)
@@ -138,7 +166,7 @@ def calc_dh_heating_with_booster_tracking(
 
     # Ensure DH return respects approach temperature constraint
     # DH return must be >= building inlet + approach temp
-    T_dh_return_min_C = T_return_C + MIN_APPROACH_TEMP_K
+    T_dh_return_min_C = T_return_C + min_approach_temp_K
     T_dh_return_C = np.maximum(T_dh_return_C, T_dh_return_min_C)
 
     # Recalculate actual DH temperature drop
@@ -149,7 +177,7 @@ def calc_dh_heating_with_booster_tracking(
     mcp_dh_kWK = np.where(Q_dh_W > 0, Q_dh_W / (1000 * delta_T_dh_actual), 0)
 
     # HEX area calculation (simplified, using peak load)
-    U_hex = 2000  # W/m²K (typical for plate HEX)
+    U_hex = U_HEAT # 2000  # W/m²K (typical for plate HEX)
     Q_peak = np.max(Q_dh_W)
 
     if Q_peak > 0:
