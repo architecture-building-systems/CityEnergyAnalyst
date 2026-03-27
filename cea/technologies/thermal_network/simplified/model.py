@@ -17,7 +17,7 @@ from cea.optimization.preprocessing.preprocessing_main import get_building_names
 from cea.resources.geothermal import calc_ground_temperature
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
 from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
-from cea.technologies.constants import NETWORK_DEPTH
+from cea.technologies.constants import NETWORK_DEPTH, MINIMUM_DH_TEMPERATURE
 from cea.technologies.network_layout.plant_node_operations import PlantServices
 from cea.utilities.epwreader import epw_reader
 from cea.utilities.date import get_date_range_hours_from_year
@@ -424,7 +424,7 @@ def calc_thermal_loss_per_pipe(T_in_K, m_kgpers, T_ground_K, k_kWperK):
 
     return Q_loss_kWh
 
-def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services):
+def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_services, booster):
     """
     Calculate minimum recommended network temperature based on PRIMARY service.
 
@@ -443,6 +443,7 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
     :param substation_results_dict: Dictionary {building_name: substation_results_df}
     :param itemised_dh_services: List of services in priority order
                                  (e.g., ['space_heating', 'domestic_hot_water'])
+    :param booster: type of booster system available ('none', 'coil' or 'heat_pump')
     :return: Minimum recommended network temperature in °C
     """
 
@@ -459,26 +460,36 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
                 # For now, use conservative estimates based on service type
                 pass
 
-    # Minimum temperature based on PRIMARY service (first in list)
-    if itemised_dh_services is None or len(itemised_dh_services) == 0:
-        # Legacy mode - assume DHW priority (conservative)
-        return 50
-
-    # Determine minimum based on PRIMARY service
-    primary_service = itemised_dh_services[0]
-
-    if primary_service == PlantServices.SPACE_HEATING:
-        # PLANT_hs or PLANT_hs_ww: Low-temp network
-        # Space heating return ~30°C + 5K approach = 35°C min
-        return 35
-    elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
+    if booster == 'none':
         # PLANT_ww or PLANT_ww_hs: High-temp network
         # DHW return ~45°C + 5K approach = 50°C min (allows preheating to 55°C, booster to 60°C)
         return 50
-    else:
-        # Unknown service, conservative minimum
-        return 30
+    elif booster == 'coil':
+        # Minimum temperature based on PRIMARY service (first in list)
+        if itemised_dh_services is None or len(itemised_dh_services) == 0:
+            # Legacy mode - assume DHW priority (conservative)
+            return 50
 
+        # Determine minimum based on PRIMARY service
+        primary_service = itemised_dh_services[0]
+
+        if primary_service == PlantServices.SPACE_HEATING:
+            # PLANT_hs or PLANT_hs_ww: Low-temp network
+            # Space heating return ~30°C + 5K approach = 35°C min
+            return 35
+        elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
+            # PLANT_ww or PLANT_ww_hs: High-temp network
+            # DHW return ~45°C + 5K approach = 50°C min (allows preheating to 55°C, booster to 60°C)
+            return 50
+        else:
+            # Unknown service, conservative minimum
+            return MINIMUM_DH_TEMPERATURE
+    elif booster == 'heatpump':
+        # arbitrary number specifying the minimum temperature of the anergy source for a heat pump to make sense
+        # TODO: define carefullly
+        return 10
+    else:
+        raise AttributeError(f"Unknown booster type: {booster}")
 
 def calculate_maximum_network_temperature_cooling(substation_results_dict, itemised_dc_services):
     """
@@ -529,6 +540,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
     peak_load_percentage = config.thermal_network.peak_load_percentage
     set_diameter = config.thermal_network.set_diameter
+    booster = config.thermal_network.booster_type
 
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
@@ -578,43 +590,35 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 print("    - Boosters will activate when building requirements exceed network temp")
 
                 # Early validation: check if temperature is feasible for service type
-                min_temp_required = calculate_minimum_network_temperature({}, itemised_dh_services)
+                min_temp_required = calculate_minimum_network_temperature({}, itemised_dh_services, booster)
                 service_names = ' → '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
 
                 if fixed_network_temp_C < min_temp_required:
-                    if fixed_network_temp_C > max(calculate_ground_temperature(locator)) - KELVIN_CONVERSION:
-                        # Assume it is an extremely low temperature grid (e.g., an anergy grid)
-                        # Print a warning but allow it
-                        print(
-                            f"    - Network temperature very low but still higher than the ground temperature "
-                            f"({np.round(max(calculate_ground_temperature(locator)) - KELVIN_CONVERSION, 1)}°C)\n"
-                            f"    - Assuming a 5G DH network: note that the overall heating efficiency might be very low"
-                        )
-                    else:
-                        raise ValueError(
-                            f"\n{'='*60}\n"
-                            f"❌ TEMPERATURE CONFIGURATION ERROR\n"
-                            f"{'='*60}\n"
-                            f"Network temperature is too low for service configuration!\n\n"
-                            f"  Service configuration: {service_names}\n"
-                            f"  Network temperature:   {fixed_network_temp_C}°C\n"
-                            f"  Minimum required:      {min_temp_required}°C\n\n"
-                            f"With {service_names} as primary service(s), the network\n"
-                            f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
-                            f"Explanation:\n"
-                            f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
-                            f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
-                            f"Current configuration will result in:\n"
-                            f"  → Network provides essentially zero heat\n"
-                            f"  → All heat from building boosters (defeats purpose of district heating)\n"
-                            f"  → Hydraulic simulation will fail due to insufficient flow\n\n"
-                            f"Solutions:\n"
-                            f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
-                            f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
-                            f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
-                            f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
-                            f"{'='*60}\n"
-                        )
+                    raise ValueError(
+                        f"\n{'='*60}\n"
+                        f"❌ TEMPERATURE CONFIGURATION ERROR\n"
+                        f"{'='*60}\n"
+                        f"Network temperature is too low for service configuration and available boosters!\n\n"
+                        f"  Service configuration: {service_names}\n"
+                        f"  Booster type:          {booster}\n"
+                        f"  Network temperature:   {fixed_network_temp_C}°C\n"
+                        f"  Minimum required:      {min_temp_required}°C\n\n"
+                        f"With {service_names} as primary service(s), the network\n"
+                        f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
+                        f"Explanation:\n"
+                        f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
+                        f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
+                        f"Current configuration will result in:\n"
+                        f"  → Network provides essentially zero heat\n"
+                        f"  → All heat from building boosters (defeats purpose of district heating)\n"
+                        f"  → Hydraulic simulation will fail due to insufficient flow\n\n"
+                        f"Solutions:\n"
+                        f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
+                        f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
+                        f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
+                        f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
+                        f"{'='*60}\n"
+                    )
             else:
                 print("  ℹ Network temperature mode: VT (Variable Temperature)")
                 print("    - Network temp follows building requirements")
