@@ -278,7 +278,7 @@ def load_energy_flow_data(locator, whatif_name):
             records.append({
                 'primary_carrier':    'Electricity Grid',
                 '_carrier_raw':       'GRID',
-                'plant_component':    'Pump',
+                'plant_component':    f'Pump ({network_type})',
                 'network':            network_type,
                 'building_component': '',
                 'scale':              'District',
