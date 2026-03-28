@@ -17917,32 +17917,38 @@ get_final_energy_plant_file:
         type: float
         unit: '[kWh]'
         min: 0.0
-      plant_heating_NATURALGAS_kWh:
-        description: Hourly natural gas consumption for district heating plant
+      plant_primary_DH_NATURALGAS_kWh:
+        description: Hourly natural gas consumption for DH plant primary component (boiler)
         type: float
         unit: '[kWh]'
         min: 0.0
         nullable: true
-      plant_heating_OIL_kWh:
-        description: Hourly oil consumption for district heating plant
+      plant_primary_DH_OIL_kWh:
+        description: Hourly oil consumption for DH plant primary component (boiler)
         type: float
         unit: '[kWh]'
         min: 0.0
         nullable: true
-      plant_heating_WOOD_kWh:
-        description: Hourly wood/biomass consumption for district heating plant
+      plant_primary_DH_WOOD_kWh:
+        description: Hourly wood/biomass consumption for DH plant primary component (boiler)
         type: float
         unit: '[kWh]'
         min: 0.0
         nullable: true
-      plant_heating_GRID_kWh:
-        description: Hourly grid electricity consumption for district heating plant (heat pumps)
+      plant_primary_DH_GRID_kWh:
+        description: Hourly grid electricity consumption for DH plant primary component (heat pump)
         type: float
         unit: '[kWh]'
         min: 0.0
         nullable: true
-      plant_cooling_GRID_kWh:
-        description: Hourly grid electricity consumption for district cooling plant (chillers)
+      plant_primary_DC_GRID_kWh:
+        description: Hourly grid electricity consumption for DC plant primary component (chiller)
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_tertiary_DC_GRID_kWh:
+        description: Hourly grid electricity consumption for DC plant tertiary component (cooling tower fan)
         type: float
         unit: '[kWh]'
         min: 0.0

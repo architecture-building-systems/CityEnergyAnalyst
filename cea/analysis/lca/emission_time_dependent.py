@@ -560,13 +560,16 @@ def _calc_plant_operational_emissions_from_fe(
     if 'date' in plant_df.columns:
         result['date'] = plant_df['date'].values
 
-    plant_prefixes = ('plant_heating_', 'plant_cooling_', 'plant_pumping_')
+    plant_prefixes = ('plant_primary_', 'plant_tertiary_', 'plant_pumping_')
     for col in plant_df.columns:
         if not col.endswith('_kWh'):
             continue
         for prefix in plant_prefixes:
             if col.startswith(prefix):
-                carrier = col[len(prefix):-4]
+                # Format: plant_primary_DH_GRID_kWh → carrier = GRID
+                # Split and take second-to-last part (last is 'kWh')
+                parts = col[len(prefix):].split('_')
+                carrier = parts[-2] if len(parts) >= 2 else parts[0]
                 if carrier in _ZERO_EMISSION_CARRIERS:
                     break
                 if carrier in emission_intensity.columns:

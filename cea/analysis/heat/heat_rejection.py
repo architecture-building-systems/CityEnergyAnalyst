@@ -219,14 +219,20 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
 
     if network_type == 'DH':
         if carrier in FUEL_CARRIERS:
-            fuel_col = f'plant_heating_{carrier}_kWh'
+            fuel_col = f'plant_primary_{network_type}_{carrier}_kWh'
             if fuel_col in plant_df.columns:
                 hr_series = (plant_df[fuel_col] - thermal_load).clip(lower=0)
         # GRID carrier (HP): hr = 0
 
     elif network_type == 'DC':
-        if 'plant_cooling_GRID_kWh' in plant_df.columns:
-            q_cond = thermal_load + plant_df['plant_cooling_GRID_kWh']
+        # Read primary (chiller) electricity
+        primary_col = f'plant_primary_{network_type}_{carrier}_kWh'
+        if primary_col in plant_df.columns:
+            q_cond = thermal_load + plant_df[primary_col]
+            # Add tertiary (CT fan) electricity if stored separately
+            tertiary_cols = [c for c in plant_df.columns if c.startswith(f'plant_tertiary_{network_type}_')]
+            for tc in tertiary_cols:
+                q_cond = q_cond + plant_df[tc]
             ct_code = pc.get('tertiary_component')
             ct_aux_power = _get_ct_aux_power(ct_code, locator)
             if ct_aux_power is not None:

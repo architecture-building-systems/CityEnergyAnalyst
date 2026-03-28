@@ -123,19 +123,22 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
             # Pump: sum plant_pumping_GRID_kWh across all plant files
             hourly = np.zeros(8760)
             found = False
-            for network_type, network_name in network_names.items():
-                prefix = f'{network_name}_{network_type}_'
-                plant_files = [
-                    os.path.join(folder, f) for f in os.listdir(folder)
-                    if f.startswith(prefix) and f.endswith('.csv')
-                ]
-                for fpath in plant_files:
-                    df = pd.read_csv(fpath)
-                    if 'plant_pumping_GRID_kWh' in df.columns:
-                        vals = df['plant_pumping_GRID_kWh'].values
-                        if len(vals) == 8760:
-                            hourly += vals
-                            found = True
+            for plant_name, plant_cfg in plant_configs.items():
+                network_type = plant_cfg.get('network_type', '')
+                network_name = network_names.get(network_type, '')
+                if not network_type or not network_name:
+                    continue
+                plant_file = locator.get_final_energy_plant_file(
+                    network_name, network_type, plant_name, whatif_name
+                )
+                if not os.path.exists(plant_file):
+                    continue
+                df = pd.read_csv(plant_file)
+                if 'plant_pumping_GRID_kWh' in df.columns:
+                    vals = df['plant_pumping_GRID_kWh'].values
+                    if len(vals) == 8760:
+                        hourly += vals
+                        found = True
             if found:
                 result['District'] = hourly
 
@@ -154,17 +157,12 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 if not network_type or not network_name:
                     continue
 
-                carrier_col = (
-                    f'plant_cooling_{carrier_raw}_kWh'
-                    if network_type == 'DC'
-                    else f'plant_heating_{carrier_raw}_kWh'
-                )
+                carrier_col = f'plant_primary_{network_type}_{carrier_raw}_kWh'
 
-                prefix = f'{network_name}_{network_type}_'
-                plant_files = [
-                    os.path.join(folder, f) for f in os.listdir(folder)
-                    if f.startswith(prefix) and f.endswith('.csv')
-                ]
+                plant_file = locator.get_final_energy_plant_file(
+                    network_name, network_type, plant_name, whatif_name
+                )
+                plant_files = [plant_file] if os.path.exists(plant_file) else []
                 hourly = np.zeros(8760)
                 found = False
                 for fpath in plant_files:

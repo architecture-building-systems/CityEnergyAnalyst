@@ -185,6 +185,7 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
         network_type = plant_cfg.get('network_type', '')
         carrier_raw = plant_cfg.get('carrier', 'GRID')
         component_code = plant_cfg.get('primary_component', '')
+        tertiary_code = plant_cfg.get('tertiary_component')
         network_name = network_names.get(network_type, '')
         if not network_type or not network_name:
             continue
@@ -197,35 +198,38 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
             continue
         plant_files = [plant_file]
 
-        carrier_col = (
-            f'plant_cooling_{carrier_raw}_kWh'
-            if network_type == 'DC'
-            else f'plant_heating_{carrier_raw}_kWh'
-        )
+        primary_col = f'plant_primary_{network_type}_{carrier_raw}_kWh'
 
         total_input = 0.0
+        total_tertiary = 0.0
         total_pumping = 0.0
         total_thermal = 0.0
         for fpath in plant_files:
             plant_df = pd.read_csv(fpath)
-            if carrier_col in plant_df.columns:
-                total_input += plant_df[carrier_col].sum()
+            if primary_col in plant_df.columns:
+                total_input += plant_df[primary_col].sum()
+            # Sum all tertiary columns for this network type
+            for tc in [c for c in plant_df.columns if c.startswith(f'plant_tertiary_{network_type}_')]:
+                total_tertiary += plant_df[tc].sum()
             if 'plant_pumping_GRID_kWh' in plant_df.columns:
                 total_pumping += plant_df['plant_pumping_GRID_kWh'].sum()
             if 'thermal_load_kWh' in plant_df.columns:
                 total_thermal += plant_df['thermal_load_kWh'].sum()
 
-        if total_input > 0 or total_pumping > 0 or total_thermal > 0:
+        if total_input > 0 or total_tertiary > 0 or total_pumping > 0 or total_thermal > 0:
             if network_type in totals:
                 totals[network_type]['input_kWh'] += total_input
+                totals[network_type]['tertiary_kWh'] += total_tertiary
                 totals[network_type]['pumping_kWh'] += total_pumping
                 totals[network_type]['thermal_load_kWh'] += total_thermal
             else:
                 totals[network_type] = {
                     '_carrier_raw': carrier_raw,
                     'carrier': _carrier_display(carrier_raw),
-                    'component': component_display(component_code) if component_code else '',
+                    'primary_component': component_display(component_code) if component_code else '',
+                    'tertiary_component': component_display(tertiary_code) if tertiary_code else '',
                     'input_kWh': total_input,
+                    'tertiary_kWh': total_tertiary,
                     'pumping_kWh': total_pumping,
                     'thermal_load_kWh': total_thermal,
                 }
@@ -281,6 +285,24 @@ def load_energy_flow_data(locator, whatif_name):
                 'service':            'Distribution',
                 'value_kWh':          pumping,
                 'plant_input_kWh':    pumping,
+                '_has_plant_data':    True,
+            })
+
+    # ── District tertiary component rows (e.g. cooling tower fan electricity) ──
+    for network_type, pt in plant_totals.items():
+        tertiary_kWh = pt.get('tertiary_kWh', 0.0)
+        tertiary_comp = pt.get('tertiary_component', '')
+        if tertiary_kWh > 0 and tertiary_comp:
+            records.append({
+                'primary_carrier':    'Electricity Grid',
+                '_carrier_raw':       'GRID',
+                'plant_component':    tertiary_comp,
+                'network':            network_type,
+                'building_component': '',
+                'scale':              'District',
+                'service':            'Distribution',
+                'value_kWh':          tertiary_kWh,
+                'plant_input_kWh':    tertiary_kWh,
                 '_has_plant_data':    True,
             })
 
@@ -345,7 +367,7 @@ def load_energy_flow_data(locator, whatif_name):
                 if pt:
                     carrier_raw = pt['_carrier_raw']
                     carrier = pt['carrier']
-                    plant_comp = pt['component']
+                    plant_comp = pt['primary_component']
                     plant_input = pt['input_kWh']
                     has_plant = True
                 else:
@@ -358,21 +380,14 @@ def load_energy_flow_data(locator, whatif_name):
                         # DH/DC are not primary carriers — default to GRID
                         carrier_raw = 'GRID'
                     carrier = _carrier_display(carrier_raw)
-                    plant_comp = component_display(
-                        pc.get('primary_component') or svc_config.get('primary_component', '')
-                    )
+                    primary = pc.get('primary_component') or svc_config.get('primary_component', '')
+                    plant_comp = component_display(primary) if primary else ''
                     plant_input = val
                     has_plant = False
 
-                # District connections always have a heat exchanger at the building boundary.
-                # Fall back to 'HEX' if no explicit building-side component is configured.
-                building_comp = (
-                    svc_config.get('tertiary_component')
-                    or svc_config.get('secondary_component')
-                    or svc_config.get('building_component')
-                    or 'HEX'
-                )
-                building_comp = component_display(building_comp)
+                # District connections have a heat exchanger at the building boundary.
+                # The tertiary_component (e.g. CT1) belongs to the plant, not the building.
+                building_comp = component_display('HEX')
 
                 records.append({
                     'primary_carrier':    carrier,
@@ -584,7 +599,7 @@ def load_energy_flow_data(locator, whatif_name):
             records.append({
                 'primary_carrier':    pt['carrier'],
                 '_carrier_raw':       pt['_carrier_raw'],
-                'plant_component':    pt.get('component', ''),
+                'plant_component':    pt.get('primary_component', ''),
                 'network':            nt,
                 'building_component': '',
                 'scale':              'District',

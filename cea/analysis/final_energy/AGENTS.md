@@ -180,7 +180,7 @@ fuel_kWh = plant_load_df['thermal_load_kW'] / 0.85
 pumping_kWh = pumping_df.iloc[:, 0]
 
 # Output includes:
-# - plant_heating_NATURALGAS_kWh (or plant_cooling_GRID_kWh)
+# - plant_primary_DH_NATURALGAS_kWh (or plant_primary_DC_GRID_kWh, plant_tertiary_DC_GRID_kWh)
 # - plant_pumping_GRID_kWh
 # - Metadata: scale, plant_name, network_name, network_type
 ```

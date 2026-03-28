@@ -494,7 +494,13 @@ def load_component_info(
         }
 
     else:
-        raise ValueError(f"Unknown component type for code {component_code}")
+        raise ValueError(
+            f"Unknown component type for code '{component_code}'. "
+            "CEA component codes use a standard prefix: "
+            "BO (boiler), HP (heat pump), CH (chiller), CT (cooling tower), "
+            "HEX (heat exchanger), AC (direct expansion), SC (solar collector), "
+            "OEHR (cogeneration). Example: BO1, HP2, CH1, CT1."
+        )
 
 
 def derive_plant_config(
@@ -996,20 +1002,19 @@ def calculate_plant_final_energy(
         'pumping_load_kWh': pumping_load_kWh,
     })
 
-    # Add carrier column
-    if network_type == 'DH':
-        result[f'plant_heating_{plant_carrier}_kWh'] = final_energy_kWh
-    else:
-        # Include tertiary cooling tower fan electricity (aggregated into carrier total)
-        tertiary_component = plant_config.get('tertiary_component')
-        if tertiary_component and tertiary_component.startswith('CT'):
-            from cea.technologies.cooling_tower import calc_CT_const
-            ct_info = load_component_info(tertiary_component, locator)
-            heat_rejected_kWh = thermal_load_kWh + final_energy_kWh
-            ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
-            result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh + ct_fan_kWh
-        else:
-            result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh
+    # Add primary component carrier column (includes network_type to avoid collision
+    # when a plant serves both DH and DC with the same carrier, e.g. GRID)
+    result[f'plant_primary_{network_type}_{plant_carrier}_kWh'] = final_energy_kWh
+
+    # Add tertiary component carrier column (e.g. cooling tower fan electricity)
+    tertiary_component = plant_config.get('tertiary_component')
+    if tertiary_component and tertiary_component.startswith('CT'):
+        from cea.technologies.cooling_tower import calc_CT_const
+        ct_info = load_component_info(tertiary_component, locator)
+        heat_rejected_kWh = thermal_load_kWh + final_energy_kWh
+        ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
+        ct_carrier = ct_info['carrier'] or 'GRID'
+        result[f'plant_tertiary_{network_type}_{ct_carrier}_kWh'] = ct_fan_kWh
 
     # Add pumping electricity
     result['plant_pumping_GRID_kWh'] = pumping_load_kWh
@@ -1167,10 +1172,12 @@ def aggregate_buildings_summary(
         for col in df.columns:
             if col.endswith('_kWh') and col not in ['thermal_load_kWh', 'pumping_load_kWh']:
                 # Extract carrier from column name
-                # Format: plant_heating_NATURALGAS_kWh -> NATURALGAS
+                # Format: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS
                 parts_col = col.split('_')
-                if len(parts_col) >= 3:
-                    carrier = parts_col[2]  # Get carrier part
+                if len(parts_col) >= 4:
+                    carrier = parts_col[3]  # Get carrier part
+                elif len(parts_col) >= 3:
+                    carrier = parts_col[2]  # Fallback for old format
                     if carrier not in carrier_totals:
                         carrier_totals[carrier] = 0.0
                     carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
@@ -1291,11 +1298,11 @@ def create_hourly_timeseries_aggregation(
         # Plants contribute to carrier columns only (no demand columns)
         for col in df.columns:
             if col.endswith('_kWh') and col != 'date':
-                # Plant columns format: plant_heating_NATURALGAS_kWh, plant_pumping_GRID_kWh
-                if 'plant_heating_' in col or 'plant_cooling_' in col:
+                # Plant columns format: plant_primary_DH_NATURALGAS_kWh, plant_tertiary_DC_GRID_kWh
+                if col.startswith('plant_primary_') or col.startswith('plant_tertiary_'):
                     parts = col.split('_')
-                    carrier = parts[2] if len(parts) >= 3 else col
-                elif 'plant_pumping_' in col:
+                    carrier = parts[3] if len(parts) >= 4 else (parts[2] if len(parts) >= 3 else col)
+                elif col.startswith('plant_pumping_'):
                     parts = col.split('_')
                     carrier = parts[2] if len(parts) >= 3 else 'GRID'
                 else:
@@ -1486,12 +1493,15 @@ def create_final_energy_breakdown(
 
         # Process heating/cooling carrier
         for col in df.columns:
-            if col.startswith('plant_heating_') or col.startswith('plant_cooling_'):
-                # Extract carrier: plant_heating_NATURALGAS_kWh -> NATURALGAS
+            if col.startswith('plant_primary_') or col.startswith('plant_tertiary_'):
+                # Extract carrier: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS
                 parts_col = col.split('_')
-                if len(parts_col) >= 3:
+                if len(parts_col) >= 4:
+                    carrier = parts_col[3]
+                    role = parts_col[1]  # 'primary' or 'tertiary'
+                elif len(parts_col) >= 3:
                     carrier = parts_col[2]
-                    service_type = 'heating' if 'heating' in col else 'cooling'
+                    role = parts_col[1]
 
                     annual_final_energy_MWh = df[col].sum() / 1000.0
 
@@ -1500,13 +1510,13 @@ def create_final_energy_breakdown(
                             'name': plant_name,
                             'type': 'plant',
                             'scale': 'DISTRICT',
-                            'service': f'plant_{service_type}',
+                            'service': f'plant_{role}',
                             'demand_column': 'thermal_load_kWh',
                             'carrier': carrier,
                             'assembly_code': None,
                             'component_code': None,
-                            'component_type': 'Boiler' if carrier == 'NATURALGAS' else 'Chiller',
-                            'efficiency': 0.85 if carrier == 'NATURALGAS' else 3.0,
+                            'component_type': role,
+                            'efficiency': None,
                             'annual_demand_MWh': df['thermal_load_kWh'].sum() / 1000.0 if 'thermal_load_kWh' in df.columns else None,
                             'annual_final_energy_MWh': annual_final_energy_MWh,
                             'peak_demand_kW': None,

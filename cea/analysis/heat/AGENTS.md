@@ -50,7 +50,7 @@ If no `tertiary_component`: `q_anth = q_cond` (condenser heat direct to atmosphe
 |---|---|---|
 | DH | FUEL | `fuel_col_kWh − thermal_load_kWh` |
 | DH | GRID (HP) | 0 |
-| DC | GRID (chiller) | `q_cond = thermal_load_kWh + plant_cooling_GRID_kWh` → CT |
+| DC | GRID (chiller) | `q_cond = thermal_load_kWh + plant_primary_DC_GRID_kWh + plant_tertiary_DC_GRID_kWh` → CT |
 
 ## Key Patterns
 
