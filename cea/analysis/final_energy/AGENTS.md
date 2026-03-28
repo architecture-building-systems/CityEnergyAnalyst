@@ -84,6 +84,7 @@ final_energy_kWh = demand_kWh / efficiency
 - `CH*` → VAPOR_COMPRESSION_CHILLERS, carrier=GRID, efficiency=`min_eff_rating`
 - `CT*` → COOLING_TOWERS, carrier=GRID, efficiency=`aux_power` (fan kWh per kWh heat rejected)
 - `HEX*` → passive, carrier=None, efficiency=None (no energy consumption)
+- `PU*` → HYDRAULIC_PUMPS — **cost only, no energy conversion**. Pumping load comes from thermal-network simulation (`pressure_loss_total_kW`), not from component efficiency. Currently treated as 1:1 (electricity in = work out). TODO: add COP to HYDRAULIC_PUMPS.csv so pumping electricity = pressure_loss / COP.
 
 ### ✅ DO: Read district consumption from thermal-network
 
