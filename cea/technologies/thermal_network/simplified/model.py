@@ -1269,9 +1269,11 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                     index=False)
 
     # PLANT THERMAL LOAD REQUIREMENT
-    # Plant thermal load = DH delivered to buildings + network thermal losses
-    # (Use DH-only demand, excludes booster heat from local equipment at buildings)
-    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh
+    # Plant thermal load = building demand + network thermal losses to overcome.
+    # DH: losses are positive (heat escapes hot pipes) → plant produces more.
+    # DC: losses are negative (cold pipes absorb heat) → plant must also produce
+    #     more cooling to compensate, so use absolute value.
+    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh.abs()
     plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
     plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
     plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))
