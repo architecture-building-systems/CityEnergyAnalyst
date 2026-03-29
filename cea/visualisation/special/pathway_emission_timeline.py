@@ -97,6 +97,47 @@ def _resolve_period_bounds(context: dict[str, Any]) -> tuple[int | None, int | N
     return start, end
 
 
+def _period_years(df: pd.DataFrame) -> pd.Series:
+    years = df["period"].astype(str).str.replace("Y_", "", regex=False)
+    return pd.to_numeric(years, errors="coerce")
+
+
+def _apply_cutoff_year(
+    timeline_df: pd.DataFrame,
+    cutoff_year: int | None,
+) -> pd.DataFrame:
+    if cutoff_year is None:
+        return timeline_df
+
+    years = _period_years(timeline_df)
+    filtered = timeline_df.loc[years >= int(cutoff_year)].copy()
+    if filtered.empty:
+        raise ValueError(
+            f"No pathway emission data remain at or after cutoff year {int(cutoff_year)}."
+        )
+    return filtered.reset_index(drop=True)
+
+
+def _resolve_effective_year_bounds(
+    context: dict[str, Any],
+    cutoff_year: int | None,
+) -> tuple[int | None, int | None]:
+    period_start, period_end = _resolve_period_bounds(context)
+
+    if cutoff_year is not None:
+        if period_end is not None and period_end < int(cutoff_year):
+            raise ValueError(
+                f"Cutoff year {int(cutoff_year)} is after the selected period end year {int(period_end)}."
+            )
+        period_start = (
+            max(period_start, int(cutoff_year))
+            if period_start is not None
+            else int(cutoff_year)
+        )
+
+    return period_start, period_end
+
+
 def _read_timeline_csv(path: str) -> pd.DataFrame:
     csv_path = Path(path)
     if not csv_path.exists():
@@ -341,6 +382,8 @@ def create_pathway_emission_timeline_plot(config: cea.config.Configuration):
         pathway_name,
         selected_buildings,
     )
+    cutoff_year = _to_int_or_none(getattr(plot_config, "cutoff_year", None))
+    timeline_df = _apply_cutoff_year(timeline_df, cutoff_year)
 
     requested_base_columns = _build_requested_base_columns(plot_config)
     requested_columns_kg = [f"{base}_kgCO2e" for base in requested_base_columns]
@@ -368,7 +411,10 @@ def create_pathway_emission_timeline_plot(config: cea.config.Configuration):
     )
 
     context = getattr(plot_config, "context", None) or {}
-    period_start, period_end = _resolve_period_bounds(context)
+    period_start, period_end = _resolve_effective_year_bounds(
+        context,
+        cutoff_year,
+    )
 
     plot_adapter = _TimelineConfigAdapter(plots_emission_timeline=plot_config)
     plot_title = f"CEA-4 Pathway Emission Timeline ({pathway_name})"
