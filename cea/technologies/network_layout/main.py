@@ -1376,11 +1376,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             include_services=list_include_services
         )
 
-        # In what-if mode, populate per_building_services with default assumptions:
-        # - DH buildings: both space_heating and domestic_hot_water
-        # - DC buildings: space_cooling only
+        # In what-if mode, populate per_building_services from itemised-dh-services config.
+        # Falls back to both services if itemised_dh_services is empty.
+        dh_services = set(itemised_dh_services) if itemised_dh_services else {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER}
         for building in list_heating_buildings:
-            per_building_services_dh[building] = {PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER}
+            per_building_services_dh[building] = dh_services
 
         for building in list_cooling_buildings:
             per_building_services_dc[building] = {PlantServices.SPACE_COOLING}
