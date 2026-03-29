@@ -190,6 +190,16 @@ def _aggregate_building_pathway_timelines(
             continue
 
         df = _read_timeline_csv(building_path)
+        tech_quarter_cols = [
+            "production_technical_system_hs_kgCO2e",
+            "production_technical_system_cs_kgCO2e",
+            "production_technical_system_dhw_kgCO2e",
+            "production_technical_system_el_kgCO2e",
+        ]
+        if all(col in df.columns for col in tech_quarter_cols):
+            df["production_technical_systems_kgCO2e"] = (
+                df[tech_quarter_cols].sum(axis=1, min_count=1).fillna(0.0)
+            )
         numeric_cols = [
             col
             for col in df.columns
