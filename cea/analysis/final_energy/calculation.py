@@ -1173,14 +1173,19 @@ def aggregate_buildings_summary(
             if col.endswith('_kWh') and col not in ['thermal_load_kWh', 'pumping_load_kWh']:
                 # Extract carrier from column name
                 # Format: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS
+                # Extract carrier from column name
+                # New format: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS (parts[3])
+                # Old/pumping: plant_pumping_GRID_kWh -> GRID (parts[2])
                 parts_col = col.split('_')
                 if len(parts_col) >= 4:
-                    carrier = parts_col[3]  # Get carrier part
+                    carrier = parts_col[3]
                 elif len(parts_col) >= 3:
-                    carrier = parts_col[2]  # Fallback for old format
-                    if carrier not in carrier_totals:
-                        carrier_totals[carrier] = 0.0
-                    carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
+                    carrier = parts_col[2]
+                else:
+                    continue
+                if carrier not in carrier_totals:
+                    carrier_totals[carrier] = 0.0
+                carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
 
         # Build row
         row = {

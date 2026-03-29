@@ -549,8 +549,8 @@ def _calc_plant_operational_emissions_from_fe(
 ) -> pd.DataFrame:
     """Calculate hourly operational emissions for a district plant from its final-energy file.
 
-    Scans ``plant_heating_{CARRIER}_kWh``, ``plant_cooling_{CARRIER}_kWh``, and
-    ``plant_pumping_GRID_kWh`` columns.
+    Scans ``plant_primary_{NT}_{CARRIER}_kWh``, ``plant_tertiary_{NT}_{CARRIER}_kWh``,
+    and ``plant_pumping_GRID_kWh`` columns.
 
     :param plant_df: 8760-row hourly final-energy DataFrame for one plant.
     :param emission_intensity: 8760-row DataFrame with one column per carrier (kgCO2/kWh).
