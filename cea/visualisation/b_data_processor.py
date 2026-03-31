@@ -302,7 +302,7 @@ class data_processor:
 
             # Supplement missing buildings from summary GFA column (what-if mode)
             if self.whatif_names and self.df_summary_data is not None and 'GFA_m2' in self.df_summary_data.columns:
-                summary_gfa = self.df_summary_data.set_index('name')['GFA_m2']
+                summary_gfa = self.df_summary_data.drop_duplicates(subset='name').set_index('name')['GFA_m2']
                 for b in buildings_to_use:
                     if b not in normaliser_m2.index and b in summary_gfa.index:
                         normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
@@ -689,7 +689,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     """
     # Step 1: Prepare normaliser and raw Y-axis metrics
     if plot_instance.y_normalised_by in ('no_normalisation', 'gross_floor_area', 'conditioned_floor_area'):
-        normaliser_m2 = plot_instance.process_architecture_data()
+        normaliser_m2 = plot_instance.process_architecture_data(plot_cea_feature)
     elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
         # For solar-specific normalisation, area data is in the metrics themselves
         normaliser_m2 = None  # Not needed
