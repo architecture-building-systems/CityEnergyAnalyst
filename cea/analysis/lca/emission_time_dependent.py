@@ -759,10 +759,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         else:
             continue
 
-        if not network_name:
-            continue
-
-        plant_fe_path = locator.get_final_energy_plant_file(network_name, network_type, plant_name, whatif_name)
+        plant_fe_path = locator.get_final_energy_plant_file(network_name or '', network_type, plant_name, whatif_name)
         if not os.path.exists(plant_fe_path):
             continue
 

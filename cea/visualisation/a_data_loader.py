@@ -27,6 +27,31 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+def _annotate_plant_display_name(original_name, row):
+    """Append -DH or -DC suffix to plant names for display.
+
+    Parameters
+    ----------
+    original_name : str
+        Original entity name (e.g. 'NODE16')
+    row : dict or pd.Series
+        Must have 'type' and 'case_description' keys.
+
+    Returns
+    -------
+    str
+        Annotated name (e.g. 'NODE16-DH') for plants, unchanged for buildings.
+    """
+    if row.get('type') != 'plant':
+        return original_name
+    case_desc = str(row.get('case_description') or '')
+    if 'DH' in case_desc:
+        return f"{original_name}-DH"
+    elif 'DC' in case_desc:
+        return f"{original_name}-DC"
+    return original_name
+
+
 def get_building_names_from_zone(locator):
     """
     Get building names from zone geometry.
@@ -174,6 +199,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
                 # Keep selected buildings AND all plants
                 plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
                 df = df[df['name'].isin(list(buildings) + plant_names)].copy()
+            # Annotate plant names with network type suffix for display
+            if 'type' in df.columns and 'case_description' in df.columns:
+                df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
             keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
             df_out = df[keep_cols].copy()
             for mwh_col in carrier_rename:
@@ -206,6 +234,10 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
                 plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
                 summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)]
             gfa_map = summary_df.set_index('name')['GFA_m2'].to_dict() if 'GFA_m2' in summary_df.columns else {}
+            # Build display name map for plant annotation
+            display_name_map = {}
+            for _, srow in summary_df.iterrows():
+                display_name_map[srow['name']] = _annotate_plant_display_name(srow['name'], srow)
 
             for building_name in summary_df['name'].tolist():
                 building_file = locator.get_final_energy_building_file(building_name, whatif_name)
@@ -225,7 +257,8 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
                 if not list_list_df or not list_list_df[0]:
                     continue
                 agg_df = list_list_df[0][0]
-                display_name = f'{whatif_name}/{building_name}' if multi else building_name
+                annotated = display_name_map.get(building_name, building_name)
+                display_name = f'{whatif_name}/{annotated}' if multi else annotated
                 agg_df.insert(0, 'name', display_name)
                 agg_df['GFA_m2'] = gfa_map.get(building_name, 0.0)
                 dfs.append(agg_df)
@@ -330,10 +363,12 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
             if not os.path.exists(src_path):
                 continue
             df = pd.read_csv(src_path)
-            if 'type' in df.columns:
-                df = df[df['type'] == 'building'].copy()
             if buildings:
-                df = df[df['name'].isin(buildings)].copy()
+                plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
+                df = df[df['name'].isin(list(buildings) + plant_names)].copy()
+            # Annotate plant names with network type suffix for display
+            if 'type' in df.columns and 'case_description' in df.columns:
+                df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
             keep_cols = [c for c in ['name', 'GFA_m2', 'heat_rejection_annual_MWh'] if c in df.columns]
             df_out = df[keep_cols].copy()
             if 'heat_rejection_annual_MWh' in df_out.columns:
@@ -411,27 +446,35 @@ def _collect_lifecycle_rows(locator, whatif_names, buildings):
         if not os.path.exists(buildings_summary_path):
             continue
         summary_df = pd.read_csv(buildings_summary_path)
-        if 'type' in summary_df.columns:
-            summary_df = summary_df[summary_df['type'] == 'building'].copy()
         if buildings:
-            summary_df = summary_df[summary_df['name'].isin(buildings)].copy()
+            # Keep selected buildings AND all plants
+            plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
+            summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
         for _, row in summary_df.iterrows():
             building_name = row['name']
             hourly_path = locator.get_emissions_whatif_building_file(building_name, whatif_name)
             if not os.path.exists(hourly_path):
                 continue
             hdf = pd.read_csv(hourly_path)
+            annotated_name = _annotate_plant_display_name(building_name, row)
             out_row = {
-                'name': f'{whatif_name}/{building_name}' if multi else building_name,
+                'name': f'{whatif_name}/{annotated_name}' if multi else annotated_name,
                 'GFA_m2': row.get('GFA_m2', 0.0),
             }
             service_totals = {}
+            is_plant = row.get('type') == 'plant'
             for col in hdf.columns:
-                for prefix, dest in _SERVICE_MAP.items():
-                    if col.startswith(prefix) and col.endswith('_kgCO2e'):
-                        key = f'{dest}_kgCO2e'
-                        service_totals[key] = service_totals.get(key, 0.0) + hdf[col].sum()
-                        break
+                if not col.endswith('_kgCO2e'):
+                    continue
+                if is_plant:
+                    # Plant columns (e.g. plant_primary_DH_GRID_kgCO2e) → map all to operation_E_sys
+                    service_totals['operation_E_sys_kgCO2e'] = service_totals.get('operation_E_sys_kgCO2e', 0.0) + hdf[col].sum()
+                else:
+                    for prefix, dest in _SERVICE_MAP.items():
+                        if col.startswith(prefix):
+                            key = f'{dest}_kgCO2e'
+                            service_totals[key] = service_totals.get(key, 0.0) + hdf[col].sum()
+                            break
             out_row.update(service_totals)
             for solar_col in _SOLAR_OFFSETS:
                 if solar_col in hdf.columns:
@@ -512,6 +555,19 @@ def _aggregate_op_emission_row(hdf, n=None):
             out[col] = out.get(col, 0.0) + (vals.sum() if n is None else vals.sum())
             continue
 
+        # Plant columns (e.g. plant_primary_DH_GRID_kgCO2e) → map to E_sys
+        if col.startswith('plant_'):
+            col_sum = vals.sum()
+            # Extract carrier: last segment before _kgCO2e
+            parts = col[:-len('_kgCO2e')].split('_')
+            carrier = parts[-1] if parts else 'GRID'
+            out['operation_E_sys_kgCO2e'] = out.get('operation_E_sys_kgCO2e', 0.0) + col_sum
+            car_col = f'{carrier}_kgCO2e'
+            out[car_col] = out.get(car_col, 0.0) + col_sum
+            hybrid_col = f'E_sys_{carrier}_kgCO2e'
+            out[hybrid_col] = out.get(hybrid_col, 0.0) + col_sum
+            continue
+
         # Operational service×carrier columns
         for prefix, (service_dest, canonical_service) in _PREFIXES.items():
             if col.startswith(prefix):
@@ -559,6 +615,18 @@ def _aggregate_op_emission_hourly(hdf, n):
             out[col] = out[col] + vals if col in out else vals.copy()
             continue
 
+        # Plant columns (e.g. plant_primary_DH_GRID_kgCO2e) → map to E_sys
+        if col.startswith('plant_'):
+            parts = col[:-len('_kgCO2e')].split('_')
+            carrier = parts[-1] if parts else 'GRID'
+            svc_col = 'operation_E_sys_kgCO2e'
+            car_col = f'{carrier}_kgCO2e'
+            hybrid_col = f'E_sys_{carrier}_kgCO2e'
+            out[svc_col]    = out[svc_col]    + vals if svc_col    in out else vals.copy()
+            out[car_col]    = out[car_col]    + vals if car_col    in out else vals.copy()
+            out[hybrid_col] = out[hybrid_col] + vals if hybrid_col in out else vals.copy()
+            continue
+
         for prefix, (service_dest, canonical_service) in _PREFIXES.items():
             if col.startswith(prefix):
                 carrier = col[len(prefix):-len('_kgCO2e')]
@@ -598,10 +666,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
             if not os.path.exists(buildings_summary_path):
                 continue
             summary_df = pd.read_csv(buildings_summary_path)
-            if 'type' in summary_df.columns:
-                summary_df = summary_df[summary_df['type'] == 'building'].copy()
             if buildings:
-                summary_df = summary_df[summary_df['name'].isin(buildings)].copy()
+                plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
+                summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
 
             for _, row in summary_df.iterrows():
                 building_name = row['name']
@@ -609,8 +676,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
                 if not os.path.exists(hourly_path):
                     continue
                 hdf = pd.read_csv(hourly_path)
+                annotated_name = _annotate_plant_display_name(building_name, row)
                 out_row = {
-                    'name': f'{whatif_name}/{building_name}' if multi else building_name,
+                    'name': f'{whatif_name}/{annotated_name}' if multi else annotated_name,
                     'GFA_m2': row.get('GFA_m2', 0.0),
                 }
                 out_row.update(_aggregate_op_emission_row(hdf))
@@ -633,10 +701,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
         if not os.path.exists(buildings_summary_path):
             return
         summary_df = pd.read_csv(buildings_summary_path)
-        if 'type' in summary_df.columns:
-            summary_df = summary_df[summary_df['type'] == 'building'].copy()
         if buildings:
-            summary_df = summary_df[summary_df['name'].isin(buildings)].copy()
+            plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
+            summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
 
         dates = get_date_range_hours_from_year(2005)
         entity_dfs = []

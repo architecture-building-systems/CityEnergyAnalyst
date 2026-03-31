@@ -221,8 +221,10 @@ class data_processor:
                 return 0.0
 
             # Determine network type from plants section
+            # Strip -DH/-DC display suffix if present to match configuration.json keys
+            lookup_name = plant_name.rsplit('-', 1)[0] if plant_name.endswith(('-DH', '-DC')) else plant_name
             plants = config_data.get('plants', {})
-            plant_info = plants.get(plant_name)
+            plant_info = plants.get(lookup_name)
             if plant_info is None:
                 return 0.0
             network_type = plant_info.get('network_type')  # 'DH' or 'DC'
@@ -308,7 +310,7 @@ class data_processor:
                         normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
 
             # Calculate GFA for plants (not in architecture data)
-            if plot_cea_feature in ('heat-rejection', 'final-energy'):
+            if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
                 plants = [b for b in buildings_to_use if b not in buildings_in_arch]
                 for plant in plants:
                     plant_area = self._calculate_plant_floor_area(plant, area_type='GFA_m2')
@@ -326,7 +328,7 @@ class data_processor:
                 normaliser_m2.index.name = 'name'
 
             # Calculate conditioned floor area for plants (not in architecture data)
-            if plot_cea_feature in ('heat-rejection', 'final-energy'):
+            if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
                 plants = [b for b in buildings_to_use if b not in buildings_in_arch]
                 for plant in plants:
                     plant_area = self._calculate_plant_floor_area(plant, area_type='Af_m2')
@@ -722,7 +724,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
             df_to_plotly['X_facet'] = df_summary_data['period']
         elif facet in ['construction_type', 'main_use_type']:
             # Plants should have their own "PLANT" facet category
-            if plot_cea_feature in ('heat-rejection', 'final-energy'):
+            if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
                 from cea.inputlocator import InputLocator
                 locator = InputLocator(scenario)
                 zone_buildings = set(locator.get_zone_building_names())
