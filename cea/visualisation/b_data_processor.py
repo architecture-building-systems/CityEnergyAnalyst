@@ -3,6 +3,8 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
+import os
+
 import numpy as np
 import pandas as pd
 
@@ -177,10 +179,10 @@ class data_processor:
                     columns.append(solar_to_offset[service])
 
         elif 'operation' in categories:
-            # Only operation: aggregated by service
+            # Only operation: aggregated by service (data columns have operation_ prefix)
             for service in operation_services:
                 if service in service_to_tech:
-                    columns.append(service_to_tech[service])
+                    columns.append(f"operation_{service_to_tech[service]}")
                 elif service in solar_to_offset:
                     columns.append(solar_to_offset[service])
 
