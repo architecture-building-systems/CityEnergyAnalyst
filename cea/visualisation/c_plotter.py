@@ -434,10 +434,9 @@ class bar_plot:
                 title=dict(
                     text=title,
                     x=0,
-                    y=0.98,
                     xanchor='left',
                     yanchor='top',
-                    font=dict(size=20)  # Optional: adjust size, color, etc.
+                    font=dict(size=20),
                 ),
                 barmode=barmode
             )
@@ -450,6 +449,7 @@ class bar_plot:
             plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),
             paper_bgcolor="white",
             autosize=True,
+            margin=dict(t=80),
         )
 
         # About the grid color and bar gaps
