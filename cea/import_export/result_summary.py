@@ -1010,27 +1010,38 @@ def aggregate_or_combine_dataframes(bool_use_acronym, list_dataframes_uncleaned)
 
     def combine_dataframes(list_dataframes):
         """
-        Combine a list of DataFrames horizontally. If a 'date' column exists in two or more DataFrames, it aligns them;
-        otherwise, it combines them without alignment.
+        Combine a list of DataFrames horizontally, summing overlapping numeric columns.
+        If a 'date' column exists, align on it; otherwise concatenate directly.
         """
-        # Check for the 'date' column in all DataFrames
         has_date_column = [df for df in list_dataframes if 'date' in df.columns]
 
         if has_date_column:
-            # Combine on 'date' for DataFrames that have it
             combined_df = has_date_column[0].copy()
+            non_merge_cols = {'date', 'name'}
             for df in has_date_column[1:]:
-                combined_df = pd.merge(combined_df, df, on='date', how='outer')
+                # Identify overlapping numeric columns that should be summed
+                overlap = set(combined_df.columns) & set(df.columns) - non_merge_cols
+                new_cols = [c for c in df.columns if c not in combined_df.columns]
+
+                if overlap:
+                    # Sum overlapping columns after aligning on date
+                    df_aligned = pd.merge(combined_df[['date']], df, on='date', how='left')
+                    for col in overlap:
+                        if pd.api.types.is_numeric_dtype(combined_df[col]):
+                            combined_df[col] = combined_df[col].add(df_aligned[col], fill_value=0)
+                    # Append truly new columns
+                    if new_cols:
+                        combined_df = pd.merge(combined_df, df[['date'] + new_cols], on='date', how='left')
+                else:
+                    combined_df = pd.merge(combined_df, df, on='date', how='outer')
 
             # Add DataFrames without 'date' as-is
             no_date_column = [df for df in list_dataframes if 'date' not in df.columns]
             for df in no_date_column:
                 combined_df = pd.concat([combined_df, df], axis=1)
         else:
-            # If none of the DataFrames have 'date', concatenate them directly
             combined_df = pd.concat(list_dataframes, axis=1)
 
-        # Sort by 'date' if it exists
         if 'date' in combined_df.columns:
             combined_df.sort_values(by='date', inplace=True)
             combined_df.reset_index(drop=True, inplace=True)

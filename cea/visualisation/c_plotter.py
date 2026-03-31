@@ -600,7 +600,7 @@ def plot_faceted_bars(
 
         # Scale vertical spacing: building-name labels need more room than hourly/daily ticks
         has_building_labels = not df[x_col].str.match(r'^[HD]_\d').any() and not df[x_col].isin(month_names).all()
-        v_spacing = 0.25 if has_building_labels else 0.08
+        v_spacing = 0.25 if has_building_labels else 0.15
 
         fig = make_subplots(
             rows=rows,
@@ -729,10 +729,10 @@ def plot_faceted_bars(
 
         fig.update_layout(annotations=annotations)
 
-        # Scale figure height so each facet row is at least 50% of the base (non-faceted) height;
-        # building-name labels are taller, so give those rows 65% of base height
+        # Scale figure height so each facet row has enough space;
+        # building-name labels are taller and need more room per row
         base_height = 450  # Plotly default
-        min_row_height = base_height * (0.85 if has_building_labels else 0.5)
+        min_row_height = base_height * (0.85 if has_building_labels else 0.75)
         fig.update_layout(height=max(base_height, int(rows * min_row_height)))
 
     else:
