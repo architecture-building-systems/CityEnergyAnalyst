@@ -87,6 +87,26 @@ def main(config: cea.config.Configuration):
         raise
 
 
+def _group_errors_by_pattern(errors):
+    """Group building errors by message pattern, stripping building-specific details.
+
+    Returns dict mapping pattern description → list of building names.
+    """
+    grouped = {}
+    for building, msg in errors.items():
+        first_line = msg.split('\n')[0]
+        # Extract text before ' for building' as the pattern key
+        pattern = first_line.split(' for building')[0] if ' for building' in first_line else first_line
+        # Append action hint from second line if present
+        lines = msg.split('\n')
+        if len(lines) > 1 and lines[1].strip().startswith('Please'):
+            pattern += f"\n    {lines[1].strip()}"
+        if pattern not in grouped:
+            grouped[pattern] = []
+        grouped[pattern].append(building)
+    return grouped
+
+
 def _run(config, locator, whatif_name, output_folder, buildings):
     """Inner implementation called by main() so folder cleanup can wrap it cleanly."""
 
@@ -164,10 +184,13 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             errors[building] = str(e)
     
     if errors:
-        print("\nBuildings with errors:")
-        for building, error in errors.items():
-            print(f"  ✗ {building}: {error}")
-        raise Exception(f"{len(errors)} buildings failed final energy calculation. See above for details.")
+        # Group errors by message pattern (strip building-specific details)
+        grouped = _group_errors_by_pattern(errors)
+        print(f"\n{len(errors)} buildings failed final energy calculation:")
+        for pattern, building_list in grouped.items():
+            print(f"\n  {pattern} ({len(building_list)} buildings):")
+            print(f"    {', '.join(sorted(building_list))}")
+        raise Exception(f"{len(errors)} buildings failed final energy calculation.")
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
     if config.final_energy.overwrite_supply_settings and building_configs:
