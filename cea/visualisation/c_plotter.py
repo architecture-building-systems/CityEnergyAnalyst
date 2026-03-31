@@ -576,8 +576,6 @@ def plot_faceted_bars(
     is_faceted = facet_col is not None and facet_col in df.columns
 
     if is_faceted:
-        # Drop NaN facet values before determining facet order
-        df = df.dropna(subset=[facet_col])
         raw_facets = df[facet_col].unique()
 
         # Apply ordered facet list

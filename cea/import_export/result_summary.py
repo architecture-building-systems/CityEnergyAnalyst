@@ -1374,13 +1374,9 @@ def exec_aggregate_building(locator, hour_start, hour_end, summary_folder, list_
             if df is None or df.empty:
                 continue
 
-            # Add labels for each hour
-            df['period_hour'] = df[date_column].apply(
-                lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
-            )
+            # Add sequential hour labels (0-based) — immune to leap year gaps
+            df['period_hour'] = list(range(len(df)))
 
-            # Convert 'period_hour' to numeric (if it's not already)
-            df['period_hour'] = pd.to_numeric(df['period_hour'], errors='coerce')
 
             # Handle 'monthly' aggregation
             if 'monthly' in list_selected_time_period and 'period_month' in df.columns:
@@ -1632,16 +1628,18 @@ def exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, l
             if df[date_column].isnull().all():
                 raise ValueError(f"Failed to convert '{date_column}' to datetime format. Check the input data.")
 
-        # Add labels for each hour
-        df['period_hour'] = df[date_column].apply(
-            lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
-        )
+        # Add sequential hour labels (0-based) — immune to leap year gaps
+        df['period_hour'] = [f"{i:04d}" for i in range(len(df))]
 
         # Handle different periods
         if period == 'hourly':
             df['period'] = 'H_' + df['period_hour']
         elif period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
+            # Use sequential day index derived from date, not dayofyear (leap-year safe)
+            day_dates = df[date_column].dt.date
+            unique_days = sorted(day_dates.unique())
+            day_map = {d: f"D_{i:03d}" for i, d in enumerate(unique_days)}
+            df['period'] = day_dates.map(day_map)
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)
@@ -2224,14 +2222,16 @@ def calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildi
             if df[date_column].isnull().all():
                 raise ValueError(f"Failed to convert '{date_column}' to datetime format. Check the input data.")
 
-        # Add labels for each hour
-        df['period_hour'] = df[date_column].apply(
-            lambda date: f"{(date.dayofyear - 1) * 24 + date.hour:04d}" if pd.notnull(date) else None
-        )
+        # Add sequential hour labels (0-based) — immune to leap year gaps
+        df['period_hour'] = list(range(len(df)))
 
         # Handle different periods
         if period == 'daily':
-            df['period'] = df[date_column].dt.dayofyear.apply(lambda x: f"D_{x - 1:03d}")
+            # Use sequential day index derived from date, not dayofyear (leap-year safe)
+            day_dates = df[date_column].dt.date
+            unique_days = sorted(day_dates.unique())
+            day_map = {d: f"D_{i:03d}" for i, d in enumerate(unique_days)}
+            df['period'] = day_dates.map(day_map)
         elif period == 'monthly':
             df['period'] = df[date_column].dt.month.apply(lambda x: month_names[x - 1])
             df['period'] = pd.Categorical(df['period'], categories=month_names, ordered=True)

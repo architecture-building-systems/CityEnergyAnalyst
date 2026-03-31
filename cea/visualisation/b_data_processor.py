@@ -719,7 +719,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         df_to_plotly = df_to_plotly.reset_index(drop=False).rename(columns={'name': 'X'})
         facet = plot_instance.x_facet
         if facet in ['months', 'seasons']:
-            df_to_plotly['X_facet'] = df_summary_data['period'].values
+            df_to_plotly['X_facet'] = df_summary_data['period']
         elif facet in ['construction_type', 'main_use_type']:
             # Plants should have their own "PLANT" facet category
             if plot_cea_feature in ('heat-rejection', 'final-energy'):
@@ -867,9 +867,6 @@ def calc_x_facet(df_to_plotly, facet_by):
     # If facet_by is season, map month to season
     if facet_by == 'seasons':
         df_to_plotly['X_facet'] = df_to_plotly['X_facet'].map(lambda m: season_mapping[month_names.index(m) + 1] if m in month_names else None)
-
-    # Drop rows where facet could not be determined
-    df_to_plotly = df_to_plotly.dropna(subset=['X_facet'])
 
     return df_to_plotly
 
