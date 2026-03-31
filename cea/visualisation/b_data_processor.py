@@ -366,10 +366,22 @@ class data_processor:
 
         return normaliser_m2
 
-    def process_sorting_key(self):
+    def process_sorting_key(self, df_to_plotly=None):
         if self.x_sorted_by == 'default':
+            # Sort by total bar height (sum of all numeric y-columns per building)
+            if df_to_plotly is not None and 'X' in df_to_plotly.columns:
+                numeric_cols = df_to_plotly.select_dtypes(include='number').columns.tolist()
+                totals = df_to_plotly.groupby('X')[numeric_cols].sum().sum(axis=1)
+                sorting_key = totals.to_frame(name='sorting_key')
+                sorting_key.index.name = 'name'
+            else:
+                sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
+                sorting_key['sorting_key'] = range(len(self.buildings))
+                sorting_key = sorting_key[['sorting_key']]
+        elif self.x_sorted_by == 'building_name':
             sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
-            sorting_key['sorting_key'] = self.df_architecture_data.reset_index().index
+            sorting_key['sorting_key'] = range(len(self.buildings))
+            sorting_key = sorting_key[['sorting_key']]
         elif self.x_sorted_by == 'construction_year':
             sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings, ['construction_year']].copy()
             sorting_key = sorting_key.rename(columns={'construction_year': 'sorting_key'})
@@ -960,8 +972,9 @@ def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plo
     if plot_cea_feature in ["demand", "final-energy", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions", "heat-rejection"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature, scenario)
 
-        if plot_instance_b.x_to_plot in x_to_plot_building:
-            df_to_plotly = sort_df_by_sorting_key(plot_instance_b.process_sorting_key(), df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
+        if plot_instance_b.x_to_plot == 'by_building':
+            sorting_key = plot_instance_b.process_sorting_key(df_to_plotly)
+            df_to_plotly = sort_df_by_sorting_key(sorting_key, df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
 
     else:
         print("Error: Unsupported feature:", plot_cea_feature)

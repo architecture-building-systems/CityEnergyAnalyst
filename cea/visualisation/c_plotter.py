@@ -423,11 +423,20 @@ class bar_plot:
             barmode = self.y_barmode
 
         # About title and bar mode - hide title if requested
+        _SORTED_BY_DISPLAY = {
+            'default': 'total value',
+            'building_name': 'building name',
+            'construction_year': 'construction year',
+            'gross_floor_area': 'gross floor area',
+            'conditioned_floor_area': 'conditioned floor area',
+            'roof_area': 'roof area',
+        }
         if not self.hide_title:
+            sort_display = _SORTED_BY_DISPLAY.get(self.x_sorted_by, self.x_sorted_by)
             if self.x_to_plot in x_to_plot_building and not self.x_sorted_reversed:
-                title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (low to high)</b><br><sub>{title}</sub>"
             elif self.x_to_plot in x_to_plot_building and self.x_sorted_reversed:
-                title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (high to low)</b><br><sub>{title}</sub>"
             else:
                 title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
             fig.update_layout(
@@ -627,7 +636,15 @@ def plot_faceted_bars(
                 facet_df = facet_df.sort_values("__sort")
 
             else:
-                facet_df = facet_df.sort_values(by=x_col)
+                # Building names: preserve sort order from sort_df_by_sorting_key
+                pass
+
+            # Enforce pre-sorted x-axis order on the subplot
+            x_order = list(facet_df[x_col].unique())
+            subplot_index = (row - 1) * cols + col
+            xaxis_key = f'xaxis{"" if subplot_index == 1 else subplot_index}'
+            fig.layout[xaxis_key].categoryorder = 'array'
+            fig.layout[xaxis_key].categoryarray = x_order
 
             if barmode == 'stack' or barmode == 'relative' or barmode == 'stack_percentage':
                 # For stacked mode with positive and negative values:
@@ -715,6 +732,9 @@ def plot_faceted_bars(
         # No faceting
         fig = go.Figure()
 
+        # Preserve pre-sorted x-axis order (e.g. from sort_df_by_sorting_key)
+        x_order = list(df[x_col].unique())
+
         if barmode == 'stack' or barmode == 'relative' or barmode == 'stack_percentage':
             # For stacked mode with positive and negative values:
             # Use barmode='relative' to stack bars relative to zero
@@ -751,7 +771,10 @@ def plot_faceted_bars(
                 }
                 fig.add_trace(go.Bar(**bar_params))
 
-        fig.update_layout(yaxis=dict(domain=[0.05, 0.95]))  # Use more vertical space with legend below
+        fig.update_layout(
+            yaxis=dict(domain=[0.05, 0.95]),
+            xaxis=dict(categoryorder='array', categoryarray=x_order),
+        )
 
     # Y-Axis limits and tick steps
     if y_max is None:

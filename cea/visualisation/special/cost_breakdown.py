@@ -361,6 +361,8 @@ def process_data_by_grouping(detailed_df, architecture_df, x_to_plot, y_cost_cat
         else:
             # Fall back to total cost sorting if not by_building_and_network
             df_long = df_long.sort_values('group_total', ascending=not x_sorted_reversed)
+    elif x_sorted_by == 'building_name':
+        df_long = df_long.sort_values(id_col, ascending=not x_sorted_reversed)
     else:
         # For other sorting options in plots-general (construction_year, roof_area, etc.)
         # that don't apply to cost breakdown, fall back to total cost sorting
