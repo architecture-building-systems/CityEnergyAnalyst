@@ -52,7 +52,7 @@ _CARRIER_COLOURS = {
 
 _CARRIER_DISPLAY = {
     'NATURALGAS': 'Natural Gas',
-    'GRID':       'Electricity Grid',
+    'GRID':       'Grid Electricity',
     'WOOD':       'Wood',
     'OIL':        'Oil',
     'COAL':       'Coal',
@@ -82,7 +82,7 @@ _SCALE_COLOURS = {
 # ── Layer 3: services ─────────────────────────────────────────────────────────
 
 _CARRIER_ORDER = [
-    'Electricity Grid',
+    'Grid Electricity',
     'Natural Gas',
     'Wood',
     'Oil',
@@ -162,7 +162,7 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
     Returns dict keyed by network_type ('DH' or 'DC'):
       {
         '_carrier_raw': 'GRID',
-        'carrier': 'Electricity Grid',
+        'carrier': 'Grid Electricity',
         'component': 'Chiller (CH1)',
         'input_kWh': 5_000_000.0,
       }
@@ -276,7 +276,7 @@ def load_energy_flow_data(locator, whatif_name):
         pumping = pt.get('pumping_kWh', 0.0)
         if pumping > 0:
             records.append({
-                'primary_carrier':    'Electricity Grid',
+                'primary_carrier':    'Grid Electricity',
                 '_carrier_raw':       'GRID',
                 'plant_component':    f'Pump ({network_type})',
                 'network':            network_type,
@@ -294,7 +294,7 @@ def load_energy_flow_data(locator, whatif_name):
         tertiary_comp = pt.get('tertiary_component', '')
         if tertiary_kWh > 0 and tertiary_comp:
             records.append({
-                'primary_carrier':    'Electricity Grid',
+                'primary_carrier':    'Grid Electricity',
                 '_carrier_raw':       'GRID',
                 'plant_component':    tertiary_comp,
                 'network':            network_type,
@@ -657,7 +657,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     Build a 5-layer Sankey: City → District → Building → Distribution → End-use service.
 
     Column layout (auto-collapses when a layer has no data):
-      l0 City        — energy carriers (Natural Gas, Oil, Electricity Grid, …)
+      l0 City        — energy carriers (Natural Gas, Oil, Grid Electricity, …)
       l1 District    — district plant equipment (BO1, Pump) + invisible pass-throughs
       l2 Building    — booster / standalone building equipment (BO2, standalone boilers)
       l3 Distribution— building-side district interface nodes (HEX)
@@ -807,6 +807,10 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         vals.append(val / divisor)
         link_colors.append(_to_rgba(colour))
 
+    # ── Helper: service colour for links targeting end-use nodes ─────────
+    def _svc_colour(service):
+        return _SERVICE_COLOURS.get(service, COLOURS_TO_RGB['grey'])
+
     # ── District flows ─────────────────────────────────────────────────────
     if not district_df.empty:
         # Carrier → plant component: one aggregated link per (carrier, plant)
@@ -830,19 +834,19 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
             bc        = row['building_component']
             service   = row['service']
             d_val     = row['value_kWh']
+            svc_col   = _svc_colour(service)
             c_colour  = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
             pc_colour = component_tech_colour(pc) if pc else c_colour
-            bc_colour = component_tech_colour(bc) if bc else pc_colour
 
-            prev, prev_colour = (
-                (pc, pc_colour) if (show_district and pc and pc in idx)
-                else (d_carrier, c_colour)
+            prev = (
+                pc if (show_district and pc and pc in idx)
+                else d_carrier
             )
             if show_building and bc and bc in idx:
-                add_link(prev, bc, d_val, prev_colour)
-                add_link(bc, service, d_val, bc_colour)
+                add_link(prev, bc, d_val, svc_col)
+                add_link(bc, service, d_val, svc_col)
             else:
-                add_link(prev, service, d_val, prev_colour)
+                add_link(prev, service, d_val, svc_col)
 
     # ── Building-scale flows ───────────────────────────────────────────────
     # Aggregate across buildings first.
@@ -866,7 +870,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         val          = row['value_kWh']       # useful output: component → service
         carrier_val  = row['carrier_kWh']     # carrier input: carrier → component
         c_colour     = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
-        bc_colour    = component_tech_colour(bc) if bc else c_colour
+        svc_col      = _svc_colour(service)
 
         if show_building and bc and bc in idx:
             if bc in l2_set:
@@ -887,10 +891,10 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
                 if hex_nodes:
                     for hex_node in hex_nodes:
                         if hex_node in idx:
-                            add_link(bc, hex_node, val, bc_colour)
-                            add_link(hex_node, service, val, component_tech_colour(hex_node))
+                            add_link(bc, hex_node, val, svc_col)
+                            add_link(hex_node, service, val, svc_col)
                 else:
-                    add_link(bc, service, val, bc_colour)
+                    add_link(bc, service, val, svc_col)
             else:
                 # Component shared with District layer (e.g. standalone building uses same
                 # code as district plant). Route through HEX if one exists for this service,
@@ -900,12 +904,12 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
                 if hex_nodes:
                     for hex_node in hex_nodes:
                         if hex_node in idx:
-                            add_link(bc, hex_node, val, bc_colour)
-                            add_link(hex_node, service, val, component_tech_colour(hex_node))
+                            add_link(bc, hex_node, val, svc_col)
+                            add_link(hex_node, service, val, svc_col)
                 else:
-                    add_link(bc, service, val, bc_colour)
+                    add_link(bc, service, val, svc_col)
         else:
-            add_link(carrier, service, carrier_val, c_colour)
+            add_link(carrier, service, carrier_val, svc_col)
 
     if not srcs:
         return None
