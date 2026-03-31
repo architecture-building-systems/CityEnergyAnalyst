@@ -42,31 +42,30 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     if column_name.endswith('_m2'):
         return f"{column_name} (Area)"
     
-    # Demand metric display names (check base column name for normalized versions)
+    # Demand metric display names (match base name before unit suffix)
     demand_display_names = {
-        'E_sys_kWh': 'Electricity',
-        'Qcs_sys_kWh': 'Space Cooling',
-        'Qhs_sys_kWh': 'Space Heating',
-        'Qww_sys_kWh': 'Domestic Hot Water',
-        'QC_sys_kWh': 'Total Cooling',
-        'QH_sys_kWh': 'Total Heating',
+        'E_sys': 'Electricity',
+        'Qcs_sys': 'Space Cooling',
+        'Qhs_sys': 'Space Heating',
+        'Qww_sys': 'Domestic Hot Water',
+        'QC_sys': 'Total Cooling',
+        'QH_sys': 'Total Heating',
     }
 
-    # Check if this is a demand column (including normalized versions like E_sys_kWh/m2)
-    for cea_col, display_name in demand_display_names.items():
-        if column_name.startswith(cea_col):
+    for base, display_name in demand_display_names.items():
+        if column_name.startswith(base):
             return display_name
 
-    # Final energy carrier display names
+    # Final energy carrier display names (match base name before unit suffix)
     final_energy_display_names = {
-        'GRID_kWh': 'Grid Electricity',
-        'NATURALGAS_kWh': 'Natural Gas',
-        'OIL_kWh': 'Oil',
-        'COAL_kWh': 'Coal',
-        'WOOD_kWh': 'Wood',
+        'GRID': 'Grid Electricity',
+        'NATURALGAS': 'Natural Gas',
+        'OIL': 'Oil',
+        'COAL': 'Coal',
+        'WOOD': 'Wood',
     }
-    for cea_col, display_name in final_energy_display_names.items():
-        if column_name.startswith(cea_col):
+    for base, display_name in final_energy_display_names.items():
+        if column_name.startswith(base + '_'):
             return display_name
 
     # Solar surface mapping
