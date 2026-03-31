@@ -576,6 +576,8 @@ def plot_faceted_bars(
     is_faceted = facet_col is not None and facet_col in df.columns
 
     if is_faceted:
+        # Drop NaN facet values before determining facet order
+        df = df.dropna(subset=[facet_col])
         raw_facets = df[facet_col].unique()
 
         # Apply ordered facet list
@@ -659,7 +661,7 @@ def plot_faceted_bars(
                         'legendgroup': heading,
                         'showlegend': (i == 0),
                         'marker': dict(color=bar_color, line=dict(width=0)),
-                        'width': min(0.4, max(0.1, 200/len(facet_df))),
+                        'width': min(0.4, max(0.1, 200/max(1, len(facet_df)))),
                     }
 
                     fig.add_trace(go.Bar(**bar_params), row=row, col=col)

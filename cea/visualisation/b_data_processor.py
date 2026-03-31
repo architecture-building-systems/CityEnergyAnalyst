@@ -193,89 +193,67 @@ class data_processor:
 
     def _calculate_plant_floor_area(self, plant_name, area_type='GFA_m2'):
         """
-        Calculate floor area for a plant based on buildings it services.
+        Calculate floor area for a plant = sum of serviced buildings' floor area.
 
-        Plant area = Sum(area of serviced buildings) / Number of plants of same type
+        Uses ``configuration.json`` to determine plant network type and find
+        buildings whose services use DISTRICT scale on that network type.
 
         Args:
-            plant_name: Name of the plant (e.g., 'crycry_DC_plant_001')
-            area_type: Type of area to calculate ('GFA_m2' or 'Af_m2')
+            plant_name: Name of the plant node (e.g., 'NODE16')
+            area_type: 'GFA_m2' or 'Af_m2'
 
         Returns:
-            float: Calculated floor area for the plant
+            float: Sum of serviced buildings' floor area
         """
-        import pandas as pd
-
-        # Determine network type and name from plant name
-        # Format: {network_name}_{DC|DH}_plant_{number}
-        # Example: 'crycry_DC_plant_001' -> network_type='DC', network_name='crycry'
-        if '_DC_plant_' in plant_name:
-            network_type = 'DC'
-            network_name = plant_name.split('_DC_plant_')[0]
-        elif '_DH_plant_' in plant_name:
-            network_type = 'DH'
-            network_name = plant_name.split('_DH_plant_')[0]
-        else:
-            print(f"Warning: Cannot determine network type for plant {plant_name}, using area=0")
-            return 0.0
-
-        # Read thermal network metadata to find serviced buildings
+        import json
         try:
-            from cea.inputlocator import InputLocator
-            locator = InputLocator(self.scenario_path)
+            locator = self.locator
 
-            # Get metadata file for this specific network
-            metadata_file = locator.get_thermal_network_node_types_csv_file(network_type, network_name)
-            if not os.path.exists(metadata_file):
-                print(f"Warning: Metadata file not found for {network_type} network '{network_name}': {metadata_file}")
+            # Try each what-if name to find configuration.json
+            config_data = None
+            for whatif_name in (self.whatif_names or []):
+                config_path = locator.get_analysis_configuration_file(whatif_name)
+                if os.path.exists(config_path):
+                    with open(config_path) as f:
+                        config_data = json.load(f)
+                    break
+            if config_data is None:
                 return 0.0
 
-            # Read metadata and find serviced buildings
-            serviced_buildings = []
-            metadata_df = pd.read_csv(metadata_file)
-
-            # Get buildings where type == 'CONSUMER'
-            consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
-            buildings = consumer_nodes['building'].tolist()
-            serviced_buildings = [b for b in buildings if b != 'NONE']
-
-            if not serviced_buildings:
-                print(f"Warning: No serviced buildings found for plant {plant_name} in network '{network_name}'")
+            # Determine network type from plants section
+            plants = config_data.get('plants', {})
+            plant_info = plants.get(plant_name)
+            if plant_info is None:
+                return 0.0
+            network_type = plant_info.get('network_type')  # 'DH' or 'DC'
+            if not network_type:
                 return 0.0
 
-            # Get floor area for serviced buildings from architecture data
+            # Find buildings connected to this network type (any service at DISTRICT scale)
+            buildings_conf = config_data.get('buildings', {})
+            connected = []
+            for bname, bconf in buildings_conf.items():
+                for service in ('space_heating', 'hot_water', 'space_cooling'):
+                    svc = bconf.get(service)
+                    if svc and svc.get('scale') == 'DISTRICT':
+                        # DH serves heating/hot_water, DC serves cooling
+                        if network_type == 'DH' and service in ('space_heating', 'hot_water'):
+                            connected.append(bname)
+                            break
+                        elif network_type == 'DC' and service == 'space_cooling':
+                            connected.append(bname)
+                            break
+
+            if not connected:
+                return 0.0
+
+            # Sum floor area of connected buildings
             arch_data = self.df_architecture_data.set_index('name')
-            available_buildings = [b for b in serviced_buildings if b in arch_data.index]
-
-            if not available_buildings:
-                print(f"Warning: No architecture data for buildings serviced by {plant_name}, using area=0")
+            available = [b for b in connected if b in arch_data.index]
+            if not available:
                 return 0.0
 
-            # Sum the specified area type for serviced buildings
-            total_area = arch_data.loc[available_buildings, area_type].sum()
-
-            # Count number of plants of same type
-            # Get all entities from summary data
-            # Handle case where 'name' is a column or the index
-            if 'name' in self.df_summary_data.columns:
-                all_entities = self.df_summary_data['name'].tolist()
-            elif self.df_summary_data.index.name == 'name':
-                all_entities = self.df_summary_data.index.tolist()
-            else:
-                all_entities = self.df_summary_data.index.tolist()
-            plant_suffix = f'_{network_type}_plant_'
-            num_plants = sum(1 for entity in all_entities if plant_suffix in entity)
-
-            if num_plants == 0:
-                print(f"Warning: No plants of type {network_type} found, using area=0")
-                return 0.0
-
-            plant_area = total_area / num_plants
-            area_name = 'GFA' if area_type == 'GFA_m2' else 'Af'
-            print(f"Calculated {area_name} for {plant_name}: {plant_area:.2f} m² "
-                  f"(total: {total_area:.2f} m² / {num_plants} {network_type} plant(s))")
-
-            return plant_area
+            return arch_data.loc[available, area_type].sum()
 
         except Exception as e:
             print(f"Warning: Error calculating floor area for plant {plant_name}: {e}")
@@ -294,8 +272,8 @@ class data_processor:
                 all_entities = set(self.df_summary_data.index.unique())
             buildings_to_use = list(all_entities)
         elif self.whatif_names and self.df_summary_data is not None and 'name' in self.df_summary_data.columns:
-            # For what-if emissions: use buildings from the summary CSV rather than architecture filter
-            buildings_to_use = self.df_summary_data['name'].tolist()
+            # For what-if mode: use unique buildings from the summary CSV
+            buildings_to_use = list(dict.fromkeys(self.df_summary_data['name'].tolist()))
         else:
             # Filter to only buildings that exist in architecture data
             # (some buildings may be filtered out by year/type/use criteria)
@@ -329,8 +307,8 @@ class data_processor:
                     if b not in normaliser_m2.index and b in summary_gfa.index:
                         normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
 
-            # For heat-rejection, calculate GFA for plants
-            if plot_cea_feature == 'heat-rejection':
+            # Calculate GFA for plants (not in architecture data)
+            if plot_cea_feature in ('heat-rejection', 'final-energy'):
                 plants = [b for b in buildings_to_use if b not in buildings_in_arch]
                 for plant in plants:
                     plant_area = self._calculate_plant_floor_area(plant, area_type='GFA_m2')
@@ -347,8 +325,8 @@ class data_processor:
                 normaliser_m2 = pd.DataFrame({'normaliser_m2': pd.Series(dtype=float)})
                 normaliser_m2.index.name = 'name'
 
-            # For heat-rejection, calculate conditioned floor area for plants
-            if plot_cea_feature == 'heat-rejection':
+            # Calculate conditioned floor area for plants (not in architecture data)
+            if plot_cea_feature in ('heat-rejection', 'final-energy'):
                 plants = [b for b in buildings_to_use if b not in buildings_in_arch]
                 for plant in plants:
                     plant_area = self._calculate_plant_floor_area(plant, area_type='Af_m2')
@@ -614,8 +592,9 @@ def normalise_dataframe_by_index(dataframe_A, dataframe_B):
     # Merge
     merged = dfA_reset.merge(dfB_reset, on=key_column, how='left')
 
-    # Normalize original columns
+    # Normalize original columns (skip entities with zero area to avoid division by zero)
     original_columns = dataframe_A.columns
+    merged['normaliser'] = merged['normaliser'].replace(0, np.nan)
     for col in original_columns:
         merged[col] = merged[col] / merged['normaliser']
 
@@ -740,10 +719,10 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         df_to_plotly = df_to_plotly.reset_index(drop=False).rename(columns={'name': 'X'})
         facet = plot_instance.x_facet
         if facet in ['months', 'seasons']:
-            df_to_plotly['X_facet'] = df_summary_data['period']
+            df_to_plotly['X_facet'] = df_summary_data['period'].values
         elif facet in ['construction_type', 'main_use_type']:
-            # For heat-rejection, plants should have their own "PLANT" facet category
-            if plot_cea_feature == 'heat-rejection':
+            # Plants should have their own "PLANT" facet category
+            if plot_cea_feature in ('heat-rejection', 'final-energy'):
                 from cea.inputlocator import InputLocator
                 locator = InputLocator(scenario)
                 zone_buildings = set(locator.get_zone_building_names())
@@ -888,6 +867,9 @@ def calc_x_facet(df_to_plotly, facet_by):
     # If facet_by is season, map month to season
     if facet_by == 'seasons':
         df_to_plotly['X_facet'] = df_to_plotly['X_facet'].map(lambda m: season_mapping[month_names.index(m) + 1] if m in month_names else None)
+
+    # Drop rows where facet could not be determined
+    df_to_plotly = df_to_plotly.dropna(subset=['X_facet'])
 
     return df_to_plotly
 
