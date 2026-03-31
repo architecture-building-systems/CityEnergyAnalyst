@@ -326,8 +326,12 @@ def main(config: cea.config.Configuration):
         print('No what-if scenario selected.')
         return None
     if not components:
-        print('No components selected.')
-        return None
+        # Auto-select all available components when none specified
+        components = plot_config.parameters['components']._choices
+        if not components:
+            print('No components available for the selected what-if scenarios and scale.')
+            return None
+        print(f"No components specified — using all available: {components}")
 
     html_outputs = []
 
