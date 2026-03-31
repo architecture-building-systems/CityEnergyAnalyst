@@ -95,7 +95,7 @@ def raise_missing_pv_error(pv_codes, context='file'):
 demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_electricity', 'enduse_cooling_demand', 'enduse_space_cooling_demand', 'enduse_space_cooling', 'enduse_heating_demand', 'enduse_space_heating_demand', 'enduse_space_heating', 'enduse_dhw_demand', 'enduse_dhw']
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
 
-final_energy_metrics = ['carrier_grid_electricity', 'carrier_natural_gas', 'carrier_district_heating', 'carrier_district_cooling', 'carrier_oil', 'carrier_coal', 'carrier_wood']
+final_energy_metrics = ['carrier_grid_electricity', 'carrier_natural_gas', 'carrier_oil', 'carrier_coal', 'carrier_wood']
 
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
@@ -149,8 +149,6 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
     Carrier column mapping:
         GRID_MWh / *_GRID_kWh      → GRID_kWh
         NATURALGAS_MWh / *_NATURALGAS_kWh → NATURALGAS_kWh
-        DH_MWh / *_DH_kWh         → DH_kWh
-        DC_MWh / *_DC_kWh         → DC_kWh
         OIL_MWh / *_OIL_kWh       → OIL_kWh
         COAL_MWh / *_COAL_kWh     → COAL_kWh
         WOOD_MWh / *_WOOD_kWh     → WOOD_kWh
@@ -160,7 +158,7 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
 
-    carriers = ['GRID', 'NATURALGAS', 'DH', 'DC', 'OIL', 'COAL', 'WOOD']
+    carriers = ['GRID', 'NATURALGAS', 'OIL', 'COAL', 'WOOD']
     carrier_rename = {f'{c}_MWh': f'{c}_kWh' for c in carriers}
     multi = len(whatif_names) > 1
 
@@ -172,10 +170,10 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(src_path):
                 continue
             df = pd.read_csv(src_path)
-            if 'type' in df.columns:
-                df = df[df['type'] == 'building'].copy()
             if buildings:
-                df = df[df['name'].isin(buildings)].copy()
+                # Keep selected buildings AND all plants
+                plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
+                df = df[df['name'].isin(list(buildings) + plant_names)].copy()
             keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
             df_out = df[keep_cols].copy()
             for mwh_col in carrier_rename:
@@ -204,10 +202,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(summary_path):
                 continue
             summary_df = pd.read_csv(summary_path)
-            if 'type' in summary_df.columns:
-                summary_df = summary_df[summary_df['type'] == 'building']
             if buildings:
-                summary_df = summary_df[summary_df['name'].isin(buildings)]
+                plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
+                summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)]
             gfa_map = summary_df.set_index('name')['GFA_m2'].to_dict() if 'GFA_m2' in summary_df.columns else {}
 
             for building_name in summary_df['name'].tolist():
@@ -252,10 +249,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
                 if not os.path.exists(src_path):
                     continue
                 df = pd.read_csv(src_path)
-                if 'type' in df.columns:
-                    df = df[df['type'] == 'building'].copy()
                 if buildings:
-                    df = df[df['name'].isin(buildings)].copy()
+                    plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
+                    df = df[df['name'].isin(list(buildings) + plant_names)].copy()
                 keep_cols = [c for c in carrier_rename if c in df.columns]
                 df_out = df[keep_cols].copy()
                 for mwh_col in carrier_rename:
@@ -276,10 +272,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(summary_path):
                 return
             summary_df = pd.read_csv(summary_path)
-            if 'type' in summary_df.columns:
-                summary_df = summary_df[summary_df['type'] == 'building']
             if buildings:
-                summary_df = summary_df[summary_df['name'].isin(buildings)]
+                plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
+                summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)]
 
             entity_dfs = []
             for building_name in summary_df['name'].tolist():

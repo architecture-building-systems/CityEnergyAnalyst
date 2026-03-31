@@ -205,20 +205,18 @@ _BASE_COLUMN_COLORS = {
     "E_sys_HYDROGEN": "green_light",
     "E_sys_NONE": "green_light",
 
-    # Energy carriers (aggregated by carrier) - use "_light" colors, GRID is purple
-    "GRID": "purple_light",
-    "NATURALGAS": "red_light",
+    # Energy carriers (aggregated by carrier) - colours aligned with energy Sankey
+    "GRID": "green",
+    "NATURALGAS": "orange",
     "BIOGAS": "green_light",
-    "SOLAR": "yellow_light",
+    "SOLAR": "yellow",
     "DRYBIOMASS": "brown_light",
     "WETBIOMASS": "brown_light",
-    "COAL": "grey_light",
-    "WOOD": "orange_light",
-    "OIL": "blue_light",
+    "COAL": "grey",
+    "WOOD": "brown",
+    "OIL": "brown_light",
     "HYDROGEN": "uuen_blue_light",
     "NONE": "grey",
-    "DH": "red",
-    "DC": "blue",
 
     # ===== Cost Categories =====
     "CAPEX_total":             "grey",

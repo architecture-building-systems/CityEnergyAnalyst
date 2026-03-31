@@ -1465,9 +1465,8 @@ class MultiChoiceParameter(ChoiceParameter):
         if not isinstance(value, list):
             raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list, got {type(value)}.")
 
-        not_in_choices = set(value) - set(self._choices)
-        if len(not_in_choices) > 0:
-            raise ValueError(f"Invalid parameter values {not_in_choices} for {self.name}, choose from: {self._choices}")
+        valid_choices = set(self._choices)
+        value = [v for v in value if v in valid_choices]
 
         return ', '.join(map(str, value))
 

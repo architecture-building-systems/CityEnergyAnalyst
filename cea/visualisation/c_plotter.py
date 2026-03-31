@@ -61,8 +61,6 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     final_energy_display_names = {
         'GRID_kWh': 'Grid Electricity',
         'NATURALGAS_kWh': 'Natural Gas',
-        'DH_kWh': 'District Heating',
-        'DC_kWh': 'District Cooling',
         'OIL_kWh': 'Oil',
         'COAL_kWh': 'Coal',
         'WOOD_kWh': 'Wood',

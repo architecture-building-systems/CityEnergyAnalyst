@@ -505,8 +505,6 @@ class data_processor:
             y_cea_metric_map = {
                 'carrier_grid_electricity':   'GRID_kWh',
                 'carrier_natural_gas':        'NATURALGAS_kWh',
-                'carrier_district_heating':   'DH_kWh',
-                'carrier_district_cooling':   'DC_kWh',
                 'carrier_oil':                'OIL_kWh',
                 'carrier_coal':               'COAL_kWh',
                 'carrier_wood':               'WOOD_kWh',
