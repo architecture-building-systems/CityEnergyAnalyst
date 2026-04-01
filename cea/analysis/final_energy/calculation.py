@@ -163,19 +163,21 @@ def calculate_building_final_energy(
             pass
 
     # Step 5: Add solar energy generation (broken down by facade)
-    # Only non-zero columns are included to save space
-    try:
-        solar_generation = calculate_solar_generation(building_name, config, locator)
+    # Only for buildings listed in solar-technology:buildings (empty = no solar)
+    solar_buildings = config.solar_technology.buildings
+    if solar_buildings and building_name in solar_buildings:
+        try:
+            solar_generation = calculate_solar_generation(building_name, config, locator)
 
-        # Add all columns from solar_generation (only non-zero facades included)
-        for col_name, col_data in solar_generation.items():
-            final_energy[col_name] = col_data
+            # Add all columns from solar_generation (only non-zero facades included)
+            for col_name, col_data in solar_generation.items():
+                final_energy[col_name] = col_data
 
-    except ValueError as e:
-        # Solar potential files not found - re-raise with context
-        raise ValueError(
-            f"Error calculating solar generation for building {building_name}:\n{str(e)}"
-        )
+        except ValueError as e:
+            # Solar potential files not found - re-raise with context
+            raise ValueError(
+                f"Error calculating solar generation for building {building_name}:\n{str(e)}"
+            )
 
     # Step 6: Add metadata columns
     final_energy['scale'] = 'BUILDING'
