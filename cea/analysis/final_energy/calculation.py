@@ -88,9 +88,11 @@ def calculate_building_final_energy(
         final_energy[f'Qhs_sys_{carrier}_kWh'] = demand_df['Qhs_sys_kWh'] / efficiency
     elif supply_config['space_heating'] and supply_config['space_heating']['scale'] == 'DISTRICT':
         # District heating: read from thermal-network
-        network_name = supply_config['space_heating']['network_name']
-        dh_data = load_district_heating_data(building_name, network_name, locator)
-        final_energy['Qhs_sys_DH_kWh'] = dh_data['DH_hs_kWh']
+        # Skip if building has zero heating demand (no substation file will exist)
+        if demand_df['Qhs_sys_kWh'].sum() > 0.0:
+            network_name = supply_config['space_heating']['network_name']
+            dh_data = load_district_heating_data(building_name, network_name, locator)
+            final_energy['Qhs_sys_DH_kWh'] = dh_data['DH_hs_kWh']
     # else: no heating system — no column needed
 
     # Hot water (DHW)
@@ -99,9 +101,11 @@ def calculate_building_final_energy(
         efficiency = supply_config['hot_water']['efficiency']
         final_energy[f'Qww_sys_{carrier}_kWh'] = demand_df['Qww_sys_kWh'] / efficiency
     elif supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'DISTRICT':
-        network_name = supply_config['hot_water']['network_name']
-        dh_data = load_district_heating_data(building_name, network_name, locator)
-        final_energy['Qww_sys_DH_kWh'] = dh_data['DH_ww_kWh']
+        # Skip if building has zero DHW demand (no substation file will exist)
+        if demand_df['Qww_sys_kWh'].sum() > 0.0:
+            network_name = supply_config['hot_water']['network_name']
+            dh_data = load_district_heating_data(building_name, network_name, locator)
+            final_energy['Qww_sys_DH_kWh'] = dh_data['DH_ww_kWh']
     # else: no DHW system — no column needed
 
     # Space cooling
@@ -121,9 +125,11 @@ def calculate_building_final_energy(
         else:
             final_energy[f'Qcs_sys_{carrier}_kWh'] = chiller_kWh
     elif supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'DISTRICT':
-        network_name = supply_config['space_cooling']['network_name']
-        dc_data = load_district_cooling_data(building_name, network_name, locator)
-        final_energy['Qcs_sys_DC_kWh'] = dc_data['DC_cs_kWh']
+        # Skip if building has zero cooling demand (no substation file will exist)
+        if demand_df['Qcs_sys_kWh'].sum() > 0.0:
+            network_name = supply_config['space_cooling']['network_name']
+            dc_data = load_district_cooling_data(building_name, network_name, locator)
+            final_energy['Qcs_sys_DC_kWh'] = dc_data['DC_cs_kWh']
     # else: no cooling system — no column needed
 
     # Electricity (always GRID)
