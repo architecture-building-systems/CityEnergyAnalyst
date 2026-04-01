@@ -1526,7 +1526,9 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
     # Filter per-building DH services by actual demand: remove services a building has no demand for.
     # e.g. a building with QH_sys=0 should not carry space_heating in connectivity.json.
-    if per_building_services_dh:
+    # Only filter when consider_only_buildings_with_demand is True — when the user
+    # explicitly includes zero-demand buildings, respect that decision.
+    if per_building_services_dh and consider_only_buildings_with_demand:
         per_building_services_dh = filter_dh_services_by_demand(per_building_services_dh, locator)
         buildings_for_dh = [b for b in buildings_for_dh if b in per_building_services_dh]
 
