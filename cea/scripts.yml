@@ -832,7 +832,7 @@ Visualisation:
   - name: plot-final-energy
     label: Plot - Energy by Carrier
     short_description: Plot bar chart of final energy consumption by energy carrier
-    description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (electricity grid, natural gas, district heating, etc.)
+    description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (grid electricity, natural gas, district heating, etc.)
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
     parameters: ['general:scenario', plots-general, plots-final-energy, plots-building-filter]
