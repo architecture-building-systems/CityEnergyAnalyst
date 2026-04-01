@@ -91,9 +91,7 @@ def calculate_building_final_energy(
         network_name = supply_config['space_heating']['network_name']
         dh_data = load_district_heating_data(building_name, network_name, locator)
         final_energy['Qhs_sys_DH_kWh'] = dh_data['DH_hs_kWh']
-    else:
-        # No heating system
-        final_energy['Qhs_sys_NONE_kWh'] = 0.0
+    # else: no heating system — no column needed
 
     # Hot water (DHW)
     if supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'BUILDING':
@@ -104,8 +102,7 @@ def calculate_building_final_energy(
         network_name = supply_config['hot_water']['network_name']
         dh_data = load_district_heating_data(building_name, network_name, locator)
         final_energy['Qww_sys_DH_kWh'] = dh_data['DH_ww_kWh']
-    else:
-        final_energy['Qww_sys_NONE_kWh'] = 0.0
+    # else: no DHW system — no column needed
 
     # Space cooling
     if supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'BUILDING':
@@ -127,8 +124,7 @@ def calculate_building_final_energy(
         network_name = supply_config['space_cooling']['network_name']
         dc_data = load_district_cooling_data(building_name, network_name, locator)
         final_energy['Qcs_sys_DC_kWh'] = dc_data['DC_cs_kWh']
-    else:
-        final_energy['Qcs_sys_NONE_kWh'] = 0.0
+    # else: no cooling system — no column needed
 
     # Electricity (always GRID)
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
