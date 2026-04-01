@@ -430,14 +430,23 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
 
     # Determine bar mode from general plot config
     plot_type = plot_config_general.plot_type
+    is_percentage = 'percentage' in plot_type
     if 'group' in plot_type:
         barmode = 'group'
     else:
         barmode = 'stack'
 
+    # For percentage mode, convert values to percentages per category
+    plot_df = df_long.copy()
+    if is_percentage:
+        group_totals = plot_df.groupby(id_col)['total_cost'].transform('sum')
+        group_totals = group_totals.where(group_totals != 0, 1.0)
+        plot_df['total_cost'] = (plot_df['total_cost'] / group_totals) * 100.0
+        plot_df['total_cost'] = plot_df['total_cost'].fillna(0.0)
+
     # Create horizontal bar chart
     fig = px.bar(
-        df_long,
+        plot_df,
         y=id_col,
         x='total_cost',
         color='cost_type',
@@ -446,13 +455,13 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         title=title,
         labels={
             id_col: x_label if x_label else 'Category',
-            'total_cost': y_label,
+            'total_cost': 'Percentage (%)' if is_percentage else y_label,
             'cost_type': 'Cost Category'
         },
         hover_data={
             id_col: True,
             'cost_type': True,
-            'total_cost': ':.2f',
+            'total_cost': ':.1f' if is_percentage else ':.2f',
             'cost_type_raw': False,
             'group_total': False
         },
@@ -462,14 +471,14 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
     # Height: use global category count when provided (ensures consistent height across scenarios)
     n_categories = len(category_order) if category_order is not None else len(df_long[id_col].unique())
     fig.update_layout(
-        xaxis_title=y_label,
+        xaxis_title='Percentage (%)' if is_percentage else y_label,
         yaxis_title=x_label if x_label else '',
         hovermode='closest',
         legend_title='Cost Category',
         height=max(400, n_categories * 40),
         margin=dict(l=150, r=50, t=80, b=60),
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
-        paper_bgcolor=COLOURS_TO_RGB['white']
+        paper_bgcolor=COLOURS_TO_RGB['white'],
     )
 
     # Y-axis category order: enforce global order when comparing multiple scenarios
