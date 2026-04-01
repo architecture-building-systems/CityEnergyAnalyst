@@ -444,9 +444,8 @@ class bar_plot:
                 title=dict(
                     text=title,
                     x=0,
-                    y=0.995,
                     xanchor='left',
-                    yanchor='bottom',
+                    yanchor='top',
                     font=dict(size=20),
                 ),
                 barmode=barmode
@@ -702,7 +701,19 @@ def plot_faceted_bars(
                     }
                     fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
-        # Custom subplot titles — read domains from make_subplots layout
+        # Rescale subplot domains to leave room at top for the main title.
+        # Plotly make_subplots distributes rows across [0, 1]; we compress
+        # them into [0, top_limit] so the first row doesn't collide with the title.
+        top_limit = 0.92
+        for i in range(len(facets)):
+            subplot_index = i + 1
+            xaxis_key = f'xaxis{"" if subplot_index == 1 else subplot_index}'
+            yaxis_key = f'yaxis{"" if subplot_index == 1 else subplot_index}'
+            if yaxis_key in fig.layout:
+                old = fig.layout[yaxis_key].domain
+                fig.layout[yaxis_key].domain = [old[0] * top_limit, old[1] * top_limit]
+
+        # Custom subplot titles
         annotations = []
         for i, facet in enumerate(facets):
             subplot_index = i + 1
@@ -719,7 +730,7 @@ def plot_faceted_bars(
                 xref='paper',
                 yref='paper',
                 x=x_dom[0],
-                y=y_dom[1] + 0.01,
+                y=y_dom[1] + 0.005,
                 xanchor='left',
                 yanchor='bottom',
                 showarrow=False
@@ -727,9 +738,8 @@ def plot_faceted_bars(
 
         fig.update_layout(annotations=annotations)
 
-        # Figure height matches the pixel-based spacing computation above;
-        # add extra top margin so the main title doesn't overlap with the first row
-        fig.update_layout(height=max(450, total_px), margin=dict(t=120))
+        # Figure height matches the pixel-based spacing computation above
+        fig.update_layout(height=max(450, total_px), margin=dict(t=100))
 
     else:
         # No faceting
