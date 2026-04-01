@@ -944,7 +944,7 @@ Visualisation:
   - name: plot-cost-breakdown
     label: Plot - Cost Breakdown
     short_description: Plot cost breakdown for energy supply systems
-    description: This Feature plots cost breakdown for energy supply systems. Supports both baseline costs and what-if scenario costs.
+    description: This Feature plots cost breakdown for energy supply systems. Supports both baseline costs and what-if scenario costs. Note that CAPEX reflects the initial investment only and does not include later replacement costs.
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.cost_breakdown
     parameters: ['general:scenario',
@@ -956,7 +956,7 @@ Visualisation:
   - name: plot-cost-sankey
     label: Plot - System Cost Sankey
     short_description: Sankey diagram of system costs by carrier, service and cost category
-    description: Visualises what-if scenario system costs as a Sankey diagram flowing from energy carrier to service to cost category (CAPEX/OPEX).
+    description: Visualises what-if scenario system costs as a Sankey diagram flowing from energy carrier to service to cost category (CAPEX/OPEX). Note that CAPEX reflects the initial investment only and does not include later replacement costs.
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.cost_sankey
     parameters: ['general:scenario',
