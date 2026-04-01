@@ -661,6 +661,10 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     timeline_results = []      # (name, yearly_df)
     buildings_rows_out = []    # one dict per building/plant for summary
 
+    # Per-building DH/DC demand and construction year for proportional plant emission allocation
+    # {building_name: (construction_year, {'DH': annual_kwh, 'DC': annual_kwh})}
+    building_network_demand = {}
+
     for _, row in building_rows_df.iterrows():
         building_name = row['name']
         supply_cfg = building_configs.get(building_name, {})
@@ -671,6 +675,17 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             continue
 
         fe_df = pd.read_csv(fe_path)
+
+        # Track per-building DH/DC demand for proportional plant emission allocation
+        construction_year = int(building_properties.typology[building_name]['year'])
+        bld_network = {'DH': 0.0, 'DC': 0.0}
+        for carrier in ('DH', 'DC'):
+            for col in fe_df.columns:
+                if col.endswith(f'_{carrier}_kWh'):
+                    bld_network[carrier] += float(fe_df[col].sum())
+        if bld_network['DH'] > 0 or bld_network['DC'] > 0:
+            building_network_demand[building_name] = (construction_year, bld_network)
+
         hourly_op = _calc_operational_emissions_from_fe(fe_df, emission_intensity, supply_cfg)
 
         # Save per-building hourly operational emissions
@@ -774,14 +789,49 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         op_cols = [c for c in hourly_plant.columns if c not in ('date', 'name')]
         op_total = float(hourly_plant[op_cols].sum().sum()) if op_cols else 0.0
 
-        # Save per-plant timeline (operational only, same annual total repeated for each year)
+        # Save per-plant timeline and add to district aggregate
+        # Plant emissions are stored as operation_DH_kgCO2e or operation_DC_kgCO2e
+        # Proportionally allocated across years based on when connected buildings exist
         if timeline_results:
-            year_index = timeline_results[0][1].index
-            annual_totals = hourly_plant[op_cols].sum() if op_cols else pd.Series(dtype=float)
-            plant_timeline_df = pd.DataFrame(
-                {col: annual_totals[col] for col in annual_totals.index},
-                index=year_index,
+            # Full district year range
+            all_years = set()
+            for _, tl in timeline_results:
+                all_years.update(tl.index)
+            year_index = pd.Index(sorted(all_years))
+            plant_annual_total = float(hourly_plant[op_cols].sum().sum()) if op_cols else 0.0
+
+            # Compute per-year demand weight based on building construction years
+            # Total demand from all buildings connected to this network type
+            total_demand = sum(
+                nd[network_type] for _, (_, nd) in building_network_demand.items()
+                if nd.get(network_type, 0) > 0
             )
+
+            # For each year, sum demand from buildings that exist (construction_year <= year)
+            year_weights = {}
+            for yr_str in year_index:
+                yr_int = int(str(yr_str).replace('Y_', ''))
+                yr_demand = sum(
+                    nd[network_type]
+                    for _, (constr_yr, nd) in building_network_demand.items()
+                    if nd.get(network_type, 0) > 0 and constr_yr <= yr_int
+                )
+                year_weights[yr_str] = yr_demand / total_demand if total_demand > 0 else 0.0
+
+            # Build plant timeline with proportional emissions
+            ref_cols = list(timeline_results[0][1].columns)
+            plant_op_col = f'operation_{network_type}_kgCO2e'
+            if plant_op_col not in ref_cols:
+                ref_cols.append(plant_op_col)
+            plant_timeline_df = pd.DataFrame(0.0, index=year_index, columns=ref_cols)
+            plant_timeline_df['name'] = plant_name
+            plant_timeline_df[plant_op_col] = [
+                plant_annual_total * year_weights[yr] for yr in year_index
+            ]
+
+            # Add to timeline_results for district aggregation
+            timeline_results.append((plant_name, plant_timeline_df))
+
             plant_timeline_file = locator.get_emissions_whatif_building_timeline_file(
                 plant_name, whatif_name
             )

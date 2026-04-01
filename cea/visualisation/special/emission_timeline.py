@@ -96,6 +96,8 @@ class EmissionTimelinePlot:
             'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
             'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
             'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
+            'district_heating': {'columns': [], 'positive': True, 'display_name': 'district_heating'},
+            'district_cooling': {'columns': [], 'positive': True, 'display_name': 'district_cooling'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
@@ -106,15 +108,20 @@ class EmissionTimelinePlot:
         for col in self.y_columns:
             col_lower = col.lower()
 
-            # Check for specific operation services
-            if 'operation_qhs_sys' in col_lower or 'operation_space_heating' in col_lower:
+            # Check for specific operation services (including booster columns)
+            if 'operation_qhs_sys' in col_lower or 'operation_qhs_booster' in col_lower or 'operation_space_heating' in col_lower:
                 categories['space_heating']['columns'].append(col)
             elif 'operation_qcs_sys' in col_lower or 'operation_space_cooling' in col_lower:
                 categories['space_cooling']['columns'].append(col)
-            elif 'operation_qww_sys' in col_lower or 'operation_dhw' in col_lower:
+            elif 'operation_qww_sys' in col_lower or 'operation_qww_booster' in col_lower or 'operation_dhw' in col_lower:
                 categories['dhw']['columns'].append(col)
             elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
                 categories['electricity']['columns'].append(col)
+            # District plant columns
+            elif col_lower == 'operation_dh_kgco2e':
+                categories['district_heating']['columns'].append(col)
+            elif col_lower == 'operation_dc_kgco2e':
+                categories['district_cooling']['columns'].append(col)
             # Solar offset columns (PV_E_offset, PVT_E_offset, PVT_Q_offset, SC_Q_offset)
             elif col_lower.endswith('_offset_kgco2e') or col_lower.endswith('_offset'):
                 categories['solar_offset']['columns'].append(col)
@@ -216,6 +223,8 @@ class EmissionTimelinePlot:
             'space_cooling': COLOURS_TO_RGB['blue'],
             'dhw': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
+            'district_heating': COLOURS_TO_RGB['red_dark'],
+            'district_cooling': COLOURS_TO_RGB['uuen_blue'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -454,6 +463,8 @@ class EmissionTimelinePlot:
             'space_cooling': COLOURS_TO_RGB['blue'],
             'dhw': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
+            'district_heating': COLOURS_TO_RGB['red_dark'],
+            'district_cooling': COLOURS_TO_RGB['uuen_blue'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -713,10 +724,10 @@ def _load_whatif_timeline_df(locator, whatif_names):
 def _get_timeline_y_columns(df, operation_services, y_categories):
     """Detect which timeline columns match the requested services and categories."""
     service_to_tech = {
-        'electricity': 'operation_E_sys',
-        'space_heating': 'operation_Qhs_sys',
-        'space_cooling': 'operation_Qcs_sys',
-        'dhw': 'operation_Qww_sys',
+        'electricity': ['operation_E_sys'],
+        'space_heating': ['operation_Qhs_sys', 'operation_Qhs_booster'],
+        'space_cooling': ['operation_Qcs_sys'],
+        'dhw': ['operation_Qww_sys', 'operation_Qww_booster'],
     }
     solar_to_col = {
         'PV_E': 'PV_E_offset',
@@ -729,9 +740,14 @@ def _get_timeline_y_columns(df, operation_services, y_categories):
     if 'operation' in y_categories:
         for service in operation_services:
             if service in service_to_tech:
-                base = service_to_tech[service]
-                col = next((c for c in df.columns if c.startswith(base)), None)
-                if col:
+                for base in service_to_tech[service]:
+                    col = next((c for c in df.columns if c.startswith(base)), None)
+                    if col:
+                        wanted.append(col)
+        # Always include plant (DH/DC) operation columns if present
+        for col in df.columns:
+            if col in ('operation_DH_kgCO2e', 'operation_DC_kgCO2e'):
+                if col not in wanted:
                     wanted.append(col)
         # Always include all solar offset columns that exist in the timeline (regardless of
         # which solar services the user has ticked — they come from what-if emissions results)
