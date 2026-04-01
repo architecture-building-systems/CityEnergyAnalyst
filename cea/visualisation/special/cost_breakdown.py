@@ -428,13 +428,21 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
     else:
         x_label = ''
 
-    # Create stacked horizontal bar chart
+    # Determine bar mode from general plot config
+    plot_type = plot_config_general.plot_type
+    if 'group' in plot_type:
+        barmode = 'group'
+    else:
+        barmode = 'stack'
+
+    # Create horizontal bar chart
     fig = px.bar(
         df_long,
         y=id_col,
         x='total_cost',
         color='cost_type',
         orientation='h',
+        barmode=barmode,
         title=title,
         labels={
             id_col: x_label if x_label else 'Category',
