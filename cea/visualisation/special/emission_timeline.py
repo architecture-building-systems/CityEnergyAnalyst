@@ -96,8 +96,8 @@ class EmissionTimelinePlot:
             'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
             'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
             'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
-            'district_heating': {'columns': [], 'positive': True, 'display_name': 'district_heating'},
-            'district_cooling': {'columns': [], 'positive': True, 'display_name': 'district_cooling'},
+            'space_heating_district': {'columns': [], 'positive': True, 'display_name': 'space_heating (district)'},
+            'space_cooling_district': {'columns': [], 'positive': True, 'display_name': 'space_cooling (district)'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
@@ -119,9 +119,9 @@ class EmissionTimelinePlot:
                 categories['electricity']['columns'].append(col)
             # District plant columns
             elif col_lower == 'operation_dh_kgco2e':
-                categories['district_heating']['columns'].append(col)
+                categories['space_heating_district']['columns'].append(col)
             elif col_lower == 'operation_dc_kgco2e':
-                categories['district_cooling']['columns'].append(col)
+                categories['space_cooling_district']['columns'].append(col)
             # Solar offset columns (PV_E_offset, PVT_E_offset, PVT_Q_offset, SC_Q_offset)
             elif col_lower.endswith('_offset_kgco2e') or col_lower.endswith('_offset'):
                 categories['solar_offset']['columns'].append(col)
@@ -223,8 +223,8 @@ class EmissionTimelinePlot:
             'space_cooling': COLOURS_TO_RGB['blue'],
             'dhw': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
-            'district_heating': COLOURS_TO_RGB['red_dark'],
-            'district_cooling': COLOURS_TO_RGB['uuen_blue'],
+            'space_heating_district': COLOURS_TO_RGB['red_light'],
+            'space_cooling_district': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -463,8 +463,8 @@ class EmissionTimelinePlot:
             'space_cooling': COLOURS_TO_RGB['blue'],
             'dhw': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
-            'district_heating': COLOURS_TO_RGB['red_dark'],
-            'district_cooling': COLOURS_TO_RGB['uuen_blue'],
+            'space_heating_district': COLOURS_TO_RGB['red_light'],
+            'space_cooling_district': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
