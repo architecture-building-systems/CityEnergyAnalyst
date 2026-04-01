@@ -405,7 +405,7 @@ def load_energy_flow_data(locator, whatif_name):
             else:
                 primary_carrier_raw = svc_config.get('carrier', '')
                 component_code = svc_config.get('primary_component', '')
-                skip_carriers = booster_carriers.get(cfg_key, set())
+                booster_only_carriers = booster_carriers.get(cfg_key, set()) - {primary_carrier_raw}
                 # Demand column: useful energy delivered to service
                 demand_col = f'{col_prefix}_kWh'
                 demand_total = annual.get(demand_col, 0)
@@ -419,7 +419,7 @@ def load_energy_flow_data(locator, whatif_name):
                         continue
 
                     carrier_raw = col[len(col_prefix) + 1:-4]
-                    if carrier_raw in skip_carriers:
+                    if carrier_raw in booster_only_carriers:
                         continue  # handled by booster loop below
 
                     comp = component_display(component_code) if carrier_raw == primary_carrier_raw else ''
