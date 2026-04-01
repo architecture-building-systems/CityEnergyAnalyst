@@ -555,16 +555,26 @@ def _aggregate_op_emission_row(hdf, n=None):
             out[col] = out.get(col, 0.0) + (vals.sum() if n is None else vals.sum())
             continue
 
-        # Plant columns (e.g. plant_primary_DH_GRID_kgCO2e) → map to E_sys
+        # Plant columns (e.g. plant_primary_DH_NATURALGAS_kgCO2e) → map to operation_DH / operation_DC
         if col.startswith('plant_'):
             col_sum = vals.sum()
-            # Extract carrier: last segment before _kgCO2e
+            # Parse: plant_{role}_{network_type}_{carrier}_kgCO2e
             parts = col[:-len('_kgCO2e')].split('_')
+            # parts = ['plant', 'primary', 'DH', 'NATURALGAS'] or ['plant', 'pumping', 'GRID']
             carrier = parts[-1] if parts else 'GRID'
-            out['operation_E_sys_kgCO2e'] = out.get('operation_E_sys_kgCO2e', 0.0) + col_sum
+            # Detect network type (DH or DC) from column name
+            network_type = None
+            for p in parts:
+                if p in ('DH', 'DC'):
+                    network_type = p
+                    break
+            service_dest = f'operation_{network_type}' if network_type else 'operation_E_sys'
+            canonical_service = network_type if network_type else 'E_sys'
+            svc_col = f'{service_dest}_kgCO2e'
+            out[svc_col] = out.get(svc_col, 0.0) + col_sum
             car_col = f'{carrier}_kgCO2e'
             out[car_col] = out.get(car_col, 0.0) + col_sum
-            hybrid_col = f'E_sys_{carrier}_kgCO2e'
+            hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
             out[hybrid_col] = out.get(hybrid_col, 0.0) + col_sum
             continue
 
@@ -615,13 +625,20 @@ def _aggregate_op_emission_hourly(hdf, n):
             out[col] = out[col] + vals if col in out else vals.copy()
             continue
 
-        # Plant columns (e.g. plant_primary_DH_GRID_kgCO2e) → map to E_sys
+        # Plant columns (e.g. plant_primary_DH_NATURALGAS_kgCO2e) → map to operation_DH / operation_DC
         if col.startswith('plant_'):
             parts = col[:-len('_kgCO2e')].split('_')
             carrier = parts[-1] if parts else 'GRID'
-            svc_col = 'operation_E_sys_kgCO2e'
+            network_type = None
+            for p in parts:
+                if p in ('DH', 'DC'):
+                    network_type = p
+                    break
+            service_dest = f'operation_{network_type}' if network_type else 'operation_E_sys'
+            canonical_service = network_type if network_type else 'E_sys'
+            svc_col = f'{service_dest}_kgCO2e'
             car_col = f'{carrier}_kgCO2e'
-            hybrid_col = f'E_sys_{carrier}_kgCO2e'
+            hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
             out[svc_col]    = out[svc_col]    + vals if svc_col    in out else vals.copy()
             out[car_col]    = out[car_col]    + vals if car_col    in out else vals.copy()
             out[hybrid_col] = out[hybrid_col] + vals if hybrid_col in out else vals.copy()

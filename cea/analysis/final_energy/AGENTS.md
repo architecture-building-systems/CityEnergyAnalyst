@@ -182,7 +182,7 @@ pumping_kWh = pumping_df.iloc[:, 0]
 
 # Output includes:
 # - plant_primary_DH_NATURALGAS_kWh (or plant_primary_DC_GRID_kWh, plant_tertiary_DC_GRID_kWh)
-# - plant_pumping_GRID_kWh
+# - plant_pumping_DH_GRID_kWh (or plant_pumping_DC_GRID_kWh)
 # - Metadata: scale, plant_name, network_name, network_type
 ```
 

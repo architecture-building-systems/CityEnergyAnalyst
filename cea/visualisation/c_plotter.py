@@ -50,6 +50,10 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         'Qww_sys': 'Domestic Hot Water',
         'QC_sys': 'Total Cooling',
         'QH_sys': 'Total Heating',
+        'DH': 'Space Heating (District)',
+        'DC': 'Space Cooling (District)',
+        'operation_DH': 'Space Heating (District)',
+        'operation_DC': 'Space Cooling (District)',
     }
 
     for base, display_name in demand_display_names.items():

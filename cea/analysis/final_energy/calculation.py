@@ -1013,7 +1013,7 @@ def calculate_plant_final_energy(
         result[f'plant_tertiary_{network_type}_{ct_carrier}_kWh'] = ct_fan_kWh
 
     # Add pumping electricity
-    result['plant_pumping_GRID_kWh'] = pumping_load_kWh
+    result[f'plant_pumping_{network_type}_GRID_kWh'] = pumping_load_kWh
 
     # Add metadata
     result['scale'] = 'DISTRICT'
@@ -1168,16 +1168,11 @@ def aggregate_buildings_summary(
         for col in df.columns:
             if col.endswith('_kWh') and col not in ['thermal_load_kWh', 'pumping_load_kWh']:
                 # Extract carrier from column name
-                # Format: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS
-                # Extract carrier from column name
-                # New format: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS (parts[3])
-                # Old/pumping: plant_pumping_GRID_kWh -> GRID (parts[2])
-                parts_col = col.split('_')
-                if len(parts_col) >= 4:
-                    carrier = parts_col[3]
-                elif len(parts_col) >= 3:
-                    carrier = parts_col[2]
-                else:
+                # Format: plant_{role}_{NT}_{CARRIER}_kWh -> CARRIER is parts[-2]
+                # e.g. plant_primary_DH_NATURALGAS_kWh, plant_pumping_DH_GRID_kWh
+                parts_col = col[:-len('_kWh')].split('_')
+                carrier = parts_col[-1] if len(parts_col) >= 4 else None
+                if not carrier:
                     continue
                 if carrier not in carrier_totals:
                     carrier_totals[carrier] = 0.0
@@ -1526,9 +1521,10 @@ def create_final_energy_breakdown(
                         }
                         breakdown_rows.append(row)
 
-        # Process pumping electricity
-        if 'plant_pumping_GRID_kWh' in df.columns:
-            annual_pumping_MWh = df['plant_pumping_GRID_kWh'].sum() / 1000.0
+        # Process pumping electricity (column: plant_pumping_{NT}_GRID_kWh)
+        pumping_col = next((c for c in df.columns if c.startswith('plant_pumping_') and c.endswith('_GRID_kWh')), None)
+        if pumping_col is not None:
+            annual_pumping_MWh = df[pumping_col].sum() / 1000.0
             if annual_pumping_MWh > 0:
                 row = {
                     'name': plant_name,

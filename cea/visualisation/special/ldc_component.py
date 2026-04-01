@@ -120,7 +120,7 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
         network_names = _get_network_names_from_buildings(building_configs)
 
         if component_display == 'Pump':
-            # Pump: sum plant_pumping_GRID_kWh across all plant files
+            # Pump: sum plant_pumping_{NT}_GRID_kWh across all plant files
             hourly = np.zeros(8760)
             found = False
             for plant_name, plant_cfg in plant_configs.items():
@@ -134,8 +134,8 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 if not os.path.exists(plant_file):
                     continue
                 df = pd.read_csv(plant_file)
-                if 'plant_pumping_GRID_kWh' in df.columns:
-                    vals = df['plant_pumping_GRID_kWh'].values
+                for pc in [c for c in df.columns if c.startswith('plant_pumping_') and c.endswith('_GRID_kWh')]:
+                    vals = df[pc].values
                     if len(vals) == 8760:
                         hourly += vals
                         found = True

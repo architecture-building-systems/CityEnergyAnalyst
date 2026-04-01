@@ -17953,8 +17953,14 @@ get_final_energy_plant_file:
         unit: '[kWh]'
         min: 0.0
         nullable: true
-      plant_pumping_GRID_kWh:
-        description: Hourly grid electricity consumption for network pumping
+      plant_pumping_DH_GRID_kWh:
+        description: Hourly grid electricity consumption for DH network pumping
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+        nullable: true
+      plant_pumping_DC_GRID_kWh:
+        description: Hourly grid electricity consumption for DC network pumping
         type: float
         unit: '[kWh]'
         min: 0.0

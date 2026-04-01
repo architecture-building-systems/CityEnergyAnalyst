@@ -211,8 +211,8 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
             # Sum all tertiary columns for this network type
             for tc in [c for c in plant_df.columns if c.startswith(f'plant_tertiary_{network_type}_')]:
                 total_tertiary += plant_df[tc].sum()
-            if 'plant_pumping_GRID_kWh' in plant_df.columns:
-                total_pumping += plant_df['plant_pumping_GRID_kWh'].sum()
+            for pc in [c for c in plant_df.columns if c.startswith('plant_pumping_') and c.endswith('_GRID_kWh')]:
+                total_pumping += plant_df[pc].sum()
             if 'thermal_load_kWh' in plant_df.columns:
                 total_thermal += plant_df['thermal_load_kWh'].sum()
 
