@@ -519,7 +519,7 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     return rows
 
 
-def _calc_solar_costs_for_scenario(locator, active_tech_codes):
+def _calc_solar_costs_for_scenario(locator, active_tech_codes, solar_building_names=None):
     """
     Calculate CAPEX and O&M for solar panels (PV, SC, PVT) installed on buildings.
 
@@ -530,6 +530,8 @@ def _calc_solar_costs_for_scenario(locator, active_tech_codes):
     :param locator: InputLocator instance
     :param active_tech_codes: set of tech code strings from configuration.json['solar']
         e.g. {'PV_PV1', 'SC_ET'}.  Empty set → skip solar entirely.
+    :param solar_building_names: set of building names that have solar configured.
+        If provided, only these buildings get solar costs. None → all buildings.
     :return: list of component row dicts, one per building per technology
     """
     if not active_tech_codes:
@@ -559,6 +561,12 @@ def _calc_solar_costs_for_scenario(locator, active_tech_codes):
 
         if 'name' not in df.columns:
             continue
+
+        # Filter to only buildings that have solar configured in this what-if
+        if solar_building_names is not None:
+            df = df[df['name'].isin(solar_building_names)]
+            if df.empty:
+                continue
 
         if fname.startswith('PV_') and not fname.startswith('PVT_'):
             # PV_{panel_type}_total_buildings.csv
@@ -808,13 +816,16 @@ def calculate_costs_for_whatif(whatif_name, locator):
             component_rows.extend(_process_plant_row(row, plant_configs, whatif_name, network_name, locator))
 
     # --- Solar costs (only for technologies configured in this what-if) ---
-    active_tech_codes = {
-        v
-        for cfg in building_configs.values()
-        for v in cfg.get('solar', {}).values()
-        if v
-    }
-    solar_rows = _calc_solar_costs_for_scenario(locator, active_tech_codes)
+    # Collect active tech codes AND which buildings have solar configured
+    active_tech_codes = set()
+    solar_building_names = set()
+    for bname, cfg in building_configs.items():
+        solar_cfg = cfg.get('solar', {})
+        techs = {v for v in solar_cfg.values() if v}
+        if techs:
+            active_tech_codes.update(techs)
+            solar_building_names.add(bname)
+    solar_rows = _calc_solar_costs_for_scenario(locator, active_tech_codes, solar_building_names)
     component_rows.extend(solar_rows)
 
     # Build components DataFrame

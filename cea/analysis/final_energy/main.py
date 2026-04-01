@@ -158,13 +158,16 @@ def _run(config, locator, whatif_name, output_folder, buildings):
         parse_solar_panel_configuration,
     )
     solar_panel_config = parse_solar_panel_configuration(config)
+    solar_buildings = set(config.solar_technology.buildings) if config.solar_technology.buildings else set()
 
     errors = {}
     for building in buildings:
         try:
             # Load supply configuration
             supply_config = load_supply_configuration(building, locator, config)
-            supply_config['solar'] = solar_panel_config
+            # Only attach solar config for buildings in solar-technology:buildings
+            if building in solar_buildings:
+                supply_config['solar'] = solar_panel_config
             building_configs[building] = supply_config
 
             # Calculate final energy for this building
