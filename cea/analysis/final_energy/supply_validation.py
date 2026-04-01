@@ -430,7 +430,10 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
         'supply_type_cs':  ('DC', 'space cooling'),
     }
 
-    mismatches = []
+    # Group mismatches by (service_label, assembly_code, network_type) to avoid
+    # repeating the same message for every building.
+    from collections import defaultdict
+    grouped = defaultdict(list)  # (service_label, code, network_type) → [building_names]
 
     for col, (network_type, service_label) in service_columns.items():
         if col not in supply_df.columns:
@@ -447,20 +450,24 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
 
             scale = scale_mapping.get(str(code))
             if scale == 'DISTRICT' and building not in connected:
-                mismatches.append(
-                    f"  - {building}: {service_label} uses '{code}' (DISTRICT scale) "
-                    f"but is not in {network_type} network '{network_name}'"
-                )
+                grouped[(service_label, str(code), network_type)].append(building)
 
-    if mismatches:
+    if grouped:
+        lines = []
+        for (service_label, code, network_type), buildings in grouped.items():
+            names = ", ".join(buildings)
+            lines.append(
+                f"  - {service_label} uses '{code}' (DISTRICT scale) "
+                f"but not in {network_type} network '{network_name}': {names}"
+            )
         raise ValueError(
             "The following buildings have DISTRICT-scale assemblies in Building Properties/Supply "
             "but are not connected to the selected network. "
             "This may mean Building Properties/Supply was updated after running network-layout.\n\n"
-            + "\n".join(mismatches)
+            + "\n".join(lines)
             + "\n\nPlease either:\n"
-            "  (a) Re-run 'network-layout' to regenerate connectivity.json, or\n"
-            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply"
+            "  (a) Re-run 'network-layout' to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
+            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply\n"
             "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
         )
 
