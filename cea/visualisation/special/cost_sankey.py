@@ -218,6 +218,13 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         return None
 
     df['_service_group'] = df['service'].fillna('Unknown').apply(_service_group)
+    # Mark rows whose only "component" is the grid carrier — these bypass the
+    # technology layer and flow directly from service to cost detail.
+    df['_is_grid_only'] = df.apply(
+        lambda r: (not pd.notna(r['component_code']) or str(r['component_code']).strip() in ('', 'GRID'))
+                  and str(r.get('carrier', '')).strip() == 'GRID',
+        axis=1,
+    )
     df['_tech_display'] = df.apply(
         lambda r: component_display(
             r['component_code'] if pd.notna(r['component_code']) and str(r['component_code']).strip() != ''
@@ -244,6 +251,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         if opex_cols:
             summary_labels.append('OPEX')
 
+    # Set of tech display names that should be invisible pass-through nodes
+    _INVISIBLE_TECHS = {'City Grid'}
+
     # ── Build node list ───────────────────────────────────────────────────
     totals = df.groupby(['_service_group', '_scale_display', '_tech_display'])[all_cols].sum()
     totals = totals[totals.sum(axis=1) > 0].reset_index()
@@ -264,6 +274,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     # Key: "__cpt__{svc}", placed at x=0.25 (invisible, zero-height pass-through).
     building_svc_set: set[str] = set()
 
+    # Map invisible tech names to the service colour they belong to
+    _invisible_tech_svc: dict[str, str] = {}
+
     if show_component:
         dist_seen: set[str] = set()
         bldg_seen: set[str] = set()
@@ -271,6 +284,8 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
             tech = row['_tech_display']
             scale = row['_scale_display']
             svc = row['_service_group']
+            if tech in _INVISIBLE_TECHS:
+                _invisible_tech_svc[tech] = svc
             if scale == 'District':
                 if tech not in dist_seen:
                     dist_seen.add(tech)
@@ -301,9 +316,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     )
     all_node_labels = (
         services
-        + district_comps
+        + ['' if t in _INVISIBLE_TECHS else t for t in district_comps]
         + ['' for _ in pass_throughs]   # invisible
-        + building_comps
+        + ['' if t in _INVISIBLE_TECHS else t for t in building_comps]
         + detail_labels
         + summary_labels
     )
@@ -323,11 +338,16 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     def _pt_colour(svc):
         return _to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey']))
 
+    def _invisible_colour(tech):
+        """Invisible techs use their service's flow colour with same alpha as links."""
+        svc = _invisible_tech_svc.get(tech)
+        return _to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey']), alpha=0.5) if svc else COLOURS_TO_RGB['grey']
+
     node_colors = (
         [_SERVICE_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in services]
-        + [_tech_colour(t) for t in district_comps]
+        + [_invisible_colour(t) if t in _INVISIBLE_TECHS else _tech_colour(t) for t in district_comps]
         + [_pt_colour(s) for s in pass_throughs]
-        + [_tech_colour(t) for t in building_comps]
+        + [_invisible_colour(t) if t in _INVISIBLE_TECHS else _tech_colour(t) for t in building_comps]
         + [_DETAIL_COLOURS.get(d, COLOURS_TO_RGB['grey']) for d in detail_labels]
         + [_SUMMARY_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in summary_labels]
     )
@@ -381,7 +401,12 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
                 sources.append(idx[ckey])
                 targets.append(idx[detail_label])
                 values.append(val / divisor)
-                link_colors.append(_to_rgba(_tech_colour(tech)))
+                # Invisible techs use their service flow colour for seamless pass-through
+                if tech in _INVISIBLE_TECHS:
+                    svc = _invisible_tech_svc.get(tech)
+                    link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
+                else:
+                    link_colors.append(_to_rgba(_tech_colour(tech)))
 
     elif show_service:
         # ── Service → Detail (no component layer) ────────────────────────
