@@ -506,13 +506,14 @@ def _calc_operational_emissions_from_fe(
 
     # Solar thermal offset: aggregate PVT_Q and SC_Q across all facades into two columns
     # 1 kWh of solar heat offsets 1 kWh × emission_factor of the heating carrier (η=1, same as electric).
+    # Exclude *_radiation_kWh columns — those are solar irradiation, not generation.
     hs_carrier = (supply_cfg.get('space_heating') or {}).get('carrier', '')
     if hs_carrier and hs_carrier not in _ZERO_EMISSION_CARRIERS and hs_carrier in emission_intensity.columns:
         hs_intensity = emission_intensity[hs_carrier].values
         pvt_q_total = np.zeros(len(fe_df))
         sc_q_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
-            if not col.endswith('_kWh'):
+            if not col.endswith('_kWh') or '_radiation_' in col:
                 continue
             if col.startswith('PVT_') and col.endswith('_Q_kWh'):
                 pvt_q_total += fe_df[col].values
@@ -524,12 +525,13 @@ def _calc_operational_emissions_from_fe(
             result['SC_Q_offset_kgCO2e'] = -sc_q_total * hs_intensity
 
     # Solar electric offset: aggregate PV and PVT_E across all facades into two columns
+    # Exclude *_radiation_kWh columns — those are solar irradiation, not generation.
     if 'GRID' in emission_intensity.columns:
         grid_intensity = emission_intensity['GRID'].values
         pv_e_total = np.zeros(len(fe_df))
         pvt_e_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
-            if not col.endswith('_kWh'):
+            if not col.endswith('_kWh') or '_radiation_' in col:
                 continue
             if col.startswith('PV_'):
                 pv_e_total += fe_df[col].values
