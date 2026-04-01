@@ -40,6 +40,12 @@ TAC = Capex_a + Opex_fixed_a + Opex_var_a
 | DISTRICT (building) | 0 | 0 | 0 (at plant level) |
 | Plant row | From default component | component cost | carrier_MWh × feedstock_price |
 
+**Multi-component assemblies** (primary + secondary + tertiary):
+- Both `_process_building_service` and `_process_plant_row` handle secondary/tertiary components
+- Primary component: full costs (CAPEX + fixed O&M + variable OPEX)
+- Secondary/tertiary: CAPEX + fixed O&M only (variable OPEX counted in primary)
+- e.g., SUPPLY_COOLING_AS1 (CH2 + CT1): CH2 gets full costs, CT1 gets CAPEX + fixed O&M
+
 **Plant components** (from `configuration.json['plants']`):
 - Derived during final-energy from the DISTRICT-scale supply assembly of connected buildings
 - e.g., AS9 → `primary_component=BO1`, carrier=NATURALGAS, efficiency=0.85

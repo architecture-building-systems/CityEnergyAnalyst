@@ -227,11 +227,15 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
                                peak_kW, service_mwh, locator):
     """Compute costs for one building service (hs/ww/cs).
 
+    Returns a list of component row dicts — one for the primary component, plus
+    additional rows for secondary/tertiary components (CAPEX + fixed O&M only,
+    variable OPEX is counted in the primary).
+
     :param service_mwh: Annual carrier MWh for this service only (not shared aggregate).
     """
     cfg = supply_cfg.get(supply_cfg_key)
     if not cfg or cfg.get('scale') == 'NONE':
-        return None
+        return []
 
     scale = cfg.get('scale', 'BUILDING')
     component_code = cfg.get('primary_component')
@@ -240,17 +244,18 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     assembly_code = cfg.get('assembly_code', '')
 
     if scale == 'DISTRICT':
-        return {
+        return [{
             'name': building_name, 'service': service_label, 'scale': scale,
             'assembly_code': assembly_code, 'component_code': None,
             'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
             'capex_total_USD': 0.0, 'capex_a_USD': 0.0,
             'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': 0.0, 'TAC_USD': 0.0,
-        }
+        }]
 
     if not component_code or not efficiency or efficiency <= 0:
-        return None
+        return []
 
+    rows = []
     capacity_kW = peak_kW / efficiency if peak_kW > 0 else 0.0
 
     try:
@@ -265,13 +270,35 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     opex_var_a = service_mwh * 1000.0 * price
 
     tac = capex_a + opex_fixed_a + opex_var_a
-    return {
+    rows.append({
         'name': building_name, 'service': service_label, 'scale': scale,
         'assembly_code': assembly_code, 'component_code': component_code,
         'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
         'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
         'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
-    }
+    })
+
+    # Secondary and tertiary components: CAPEX + fixed O&M only (variable OPEX counted in primary)
+    for comp_code in [cfg.get('secondary_component'), cfg.get('tertiary_component')]:
+        if not comp_code:
+            continue
+        try:
+            capex_total_s, capex_a_s, opex_fixed_a_s = _calc_component_cost(
+                comp_code, capacity_kW, locator
+            )
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"    Warning: CAPEX calc failed for {building_name} {service_label} ({comp_code}): {e}")
+            capex_total_s, capex_a_s, opex_fixed_a_s = 0.0, 0.0, 0.0
+        tac_s = capex_a_s + opex_fixed_a_s
+        rows.append({
+            'name': building_name, 'service': service_label, 'scale': scale,
+            'assembly_code': assembly_code, 'component_code': comp_code,
+            'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+            'capex_total_USD': capex_total_s, 'capex_a_USD': capex_a_s,
+            'opex_fixed_a_USD': opex_fixed_a_s, 'opex_var_a_USD': 0.0, 'TAC_USD': tac_s,
+        })
+
+    return rows
 
 
 def _process_booster_services(building_name, booster_data, locator):
@@ -736,28 +763,22 @@ def calculate_costs_for_whatif(whatif_name, locator):
         )
 
         # Space heating
-        r = _process_building_service(
+        component_rows.extend(_process_building_service(
             building_name, 'hs', 'space_heating', supply_cfg,
             peaks['hs'], service_mwh['hs'], locator
-        )
-        if r:
-            component_rows.append(r)
+        ))
 
         # Hot water
-        r = _process_building_service(
+        component_rows.extend(_process_building_service(
             building_name, 'ww', 'hot_water', supply_cfg,
             peaks['ww'], service_mwh['ww'], locator
-        )
-        if r:
-            component_rows.append(r)
+        ))
 
         # Space cooling
-        r = _process_building_service(
+        component_rows.extend(_process_building_service(
             building_name, 'cs', 'space_cooling', supply_cfg,
             peaks['cs'], service_mwh['cs'], locator
-        )
-        if r:
-            component_rows.append(r)
+        ))
 
         # Booster systems
         component_rows.extend(_process_booster_services(building_name, booster_data, locator))
