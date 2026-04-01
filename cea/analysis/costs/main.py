@@ -282,9 +282,14 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     for comp_code in [cfg.get('secondary_component'), cfg.get('tertiary_component')]:
         if not comp_code:
             continue
+        # Cooling towers (CT*) are sized for rejection load: Q_cooling + W_compressor
+        if comp_code.upper().startswith('CT'):
+            comp_capacity_kW = peak_kW + capacity_kW
+        else:
+            comp_capacity_kW = capacity_kW
         try:
             capex_total_s, capex_a_s, opex_fixed_a_s = _calc_component_cost(
-                comp_code, capacity_kW, locator
+                comp_code, comp_capacity_kW, locator
             )
         except (ValueError, ZeroDivisionError) as e:
             print(f"    Warning: CAPEX calc failed for {building_name} {service_label} ({comp_code}): {e}")
@@ -293,7 +298,7 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
         rows.append({
             'name': building_name, 'service': service_label, 'scale': scale,
             'assembly_code': assembly_code, 'component_code': comp_code,
-            'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+            'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': comp_capacity_kW,
             'capex_total_USD': capex_total_s, 'capex_a_USD': capex_a_s,
             'opex_fixed_a_USD': opex_fixed_a_s, 'opex_var_a_USD': 0.0, 'TAC_USD': tac_s,
         })
@@ -419,9 +424,14 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     for comp_code in [pc.get('secondary_component'), pc.get('tertiary_component')]:
         if not comp_code:
             continue
+        # Cooling towers (CT*) are sized for rejection load: Q_cooling + W_compressor
+        if comp_code.upper().startswith('CT'):
+            comp_capacity_kW = peak_kW + capacity_kW
+        else:
+            comp_capacity_kW = capacity_kW
         try:
             capex_total_s, capex_a_s, opex_fixed_a_s = _calc_component_cost(
-                comp_code, capacity_kW, locator
+                comp_code, comp_capacity_kW, locator
             )
         except (ValueError, ZeroDivisionError) as e:
             print(f"    Warning: CAPEX calc failed for plant {plant_name} ({comp_code}): {e}")
@@ -430,7 +440,7 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
         rows.append({
             'name': plant_name, 'service': service_label, 'scale': 'DISTRICT',
             'assembly_code': assembly_code, 'component_code': comp_code,
-            'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+            'carrier': None, 'peak_service_kW': peak_kW, 'capacity_kW': comp_capacity_kW,
             'capex_total_USD': capex_total_s, 'capex_a_USD': capex_a_s,
             'opex_fixed_a_USD': opex_fixed_a_s, 'opex_var_a_USD': 0.0, 'TAC_USD': tac_s,
         })
