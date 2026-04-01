@@ -247,7 +247,8 @@ def validate_network_mode(locator, network_name, config):
         validate_dc_consistency(connectivity['networks']['DC'], supply_df, scale_mapping)
 
     # Check for buildings in supply.csv with DISTRICT scale that aren't in connectivity.json
-    validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name)
+    validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name,
+                                           locator=locator)
 
     # Check that buildings with booster demand have a booster assembly configured
     if 'DH' in connectivity.get('networks', {}):
@@ -409,33 +410,62 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
         )
 
 
-def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name):
+def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name,
+                                             locator=None):
     """
     Check that no building in supply.csv has a DISTRICT-scale assembly
     without appearing in connectivity.json.
+
+    Buildings without any demand for the relevant service are reported as
+    warnings (validation skipped) rather than errors, since they produce
+    zero final-energy regardless of scale.
 
     :param connectivity: Dict from connectivity.json
     :param supply_df: DataFrame from supply.csv
     :param scale_mapping: Dict {assembly_code: scale}
     :param network_name: Network layout name (for error message)
-    :raises ValueError: If any building has DISTRICT scale but is not in the network
+    :param locator: InputLocator instance (optional; needed to read demand data)
+    :raises ValueError: If any building *with demand* has DISTRICT scale but is not in the network
     """
     # Collect all buildings connected to any network
     connected_dh = set(connectivity.get('networks', {}).get('DH', {}).get('per_building_services', {}).keys())
     connected_dc = set(connectivity.get('networks', {}).get('DC', {}).get('per_building_services', {}).keys())
 
+    # Load demand data to distinguish zero-demand buildings
+    demand_by_building = {}  # building → {'hs': float, 'dhw': float, 'cs': float}
+    if locator is not None:
+        try:
+            demand_df = pd.read_csv(locator.get_total_demand()).set_index('name')
+            for bldg in demand_df.index:
+                demand_by_building[bldg] = {
+                    'hs': demand_df.loc[bldg].get('Qhs_sys_MWhyr', 0.0),
+                    'dhw': demand_df.loc[bldg].get('Qww_sys_MWhyr', 0.0),
+                    'cs': demand_df.loc[bldg].get('Qcs_sys_MWhyr', 0.0),
+                }
+        except Exception:
+            pass  # If demand data unavailable, treat all as having demand (conservative)
+
+    # Map service columns to the demand key used for zero-demand check
     service_columns = {
-        'supply_type_hs':  ('DH', 'space heating'),
-        'supply_type_dhw': ('DH', 'domestic hot water'),
-        'supply_type_cs':  ('DC', 'space cooling'),
+        'supply_type_hs':  ('DH', 'space heating', 'hs'),
+        'supply_type_dhw': ('DH', 'domestic hot water', 'dhw'),
+        'supply_type_cs':  ('DC', 'space cooling', 'cs'),
     }
+
+    def _has_demand(bldg_name, dkey):
+        """Return True if building has non-zero demand for the given service."""
+        bd = demand_by_building.get(bldg_name)
+        if bd is None:
+            return True  # Unknown demand → conservative, treat as having demand
+        return bd.get(dkey, 0.0) > 0.0
 
     # Group mismatches by (service_label, assembly_code, network_type) to avoid
     # repeating the same message for every building.
     from collections import defaultdict
-    grouped = defaultdict(list)  # (service_label, code, network_type) → [building_names]
+    grouped_error = defaultdict(list)    # buildings WITH demand → error
+    grouped_warning = defaultdict(list)  # buildings WITHOUT demand → warning
 
-    for col, (network_type, service_label) in service_columns.items():
+    for col, (network_type, service_label, dem_key) in service_columns.items():
         if col not in supply_df.columns:
             continue
 
@@ -450,11 +480,23 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
 
             scale = scale_mapping.get(str(code))
             if scale == 'DISTRICT' and building not in connected:
-                grouped[(service_label, str(code), network_type)].append(building)
+                if _has_demand(building, dem_key):
+                    grouped_error[(service_label, str(code), network_type)].append(building)
+                else:
+                    grouped_warning[(service_label, str(code), network_type)].append(building)
 
-    if grouped:
+    # Print warnings for zero-demand buildings (validation skipped)
+    if grouped_warning:
+        all_warned = set()
+        for buildings in grouped_warning.values():
+            all_warned.update(buildings)
+        names = ", ".join(sorted(all_warned))
+        print(f"  Warning: validation skipped for buildings without demand: {names}")
+
+    # Raise error only for buildings that actually have demand
+    if grouped_error:
         lines = []
-        for (service_label, code, network_type), buildings in grouped.items():
+        for (service_label, code, network_type), buildings in grouped_error.items():
             names = ", ".join(buildings)
             lines.append(
                 f"  - {service_label} uses '{code}' (DISTRICT scale) "
