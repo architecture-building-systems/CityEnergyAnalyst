@@ -228,6 +228,7 @@ class data_processor:
 
             # Determine network type from plants section
             # Strip -DH/-DC display suffix if present to match configuration.json keys
+            plant_name = str(plant_name)
             lookup_name = plant_name.rsplit('-', 1)[0] if plant_name.endswith(('-DH', '-DC')) else plant_name
             plants = config_data.get('plants', {})
             plant_info = plants.get(lookup_name)
@@ -271,14 +272,17 @@ class data_processor:
         # For heat-rejection, include ALL entities from summary data (buildings + plants)
         if plot_cea_feature == 'heat-rejection' and self.df_summary_data is not None:
             # Get all entities from the summary data
-            # Handle case where 'name' is a column or the index
             if 'name' in self.df_summary_data.columns:
-                all_entities = set(self.df_summary_data['name'].unique())
+                all_entities = list(self.df_summary_data['name'].unique())
             elif self.df_summary_data.index.name == 'name':
-                all_entities = set(self.df_summary_data.index.unique())
+                all_entities = list(self.df_summary_data.index.unique())
             else:
-                all_entities = set(self.df_summary_data.index.unique())
-            buildings_to_use = list(all_entities)
+                # District time-series aggregate — no per-entity names;
+                # use 'District' as a synthetic entity name and inject it
+                # into the summary so downstream code can process it.
+                all_entities = ['District']
+                self.df_summary_data['name'] = 'District'
+            buildings_to_use = all_entities
         elif self.whatif_names and self.df_summary_data is not None and 'name' in self.df_summary_data.columns:
             # For what-if mode: use unique buildings from the summary CSV
             buildings_to_use = list(dict.fromkeys(self.df_summary_data['name'].tolist()))
@@ -315,12 +319,16 @@ class data_processor:
                     if b not in normaliser_m2.index and b in summary_gfa.index:
                         normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
 
-            # Calculate GFA for plants (not in architecture data)
+            # Calculate GFA for entities not in architecture data (plants + district aggregate)
             if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
-                plants = [b for b in buildings_to_use if b not in buildings_in_arch]
-                for plant in plants:
-                    plant_area = self._calculate_plant_floor_area(plant, area_type='GFA_m2')
-                    normaliser_m2.loc[plant] = plant_area
+                missing = [b for b in buildings_to_use if b not in buildings_in_arch]
+                for entity in missing:
+                    if entity == 'District':
+                        # District aggregate: normalise by sum of all buildings' GFA
+                        normaliser_m2.loc[entity] = normaliser_m2['normaliser_m2'].sum() if len(normaliser_m2) > 0 else 1.0
+                    else:
+                        plant_area = self._calculate_plant_floor_area(entity, area_type='GFA_m2')
+                        normaliser_m2.loc[entity] = plant_area
 
         elif self.y_normalised_by == 'conditioned_floor_area':
             if self.df_architecture_data is not None:
@@ -333,12 +341,15 @@ class data_processor:
                 normaliser_m2 = pd.DataFrame({'normaliser_m2': pd.Series(dtype=float)})
                 normaliser_m2.index.name = 'name'
 
-            # Calculate conditioned floor area for plants (not in architecture data)
+            # Calculate conditioned floor area for entities not in architecture data
             if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
-                plants = [b for b in buildings_to_use if b not in buildings_in_arch]
-                for plant in plants:
-                    plant_area = self._calculate_plant_floor_area(plant, area_type='Af_m2')
-                    normaliser_m2.loc[plant] = plant_area
+                missing = [b for b in buildings_to_use if b not in buildings_in_arch]
+                for entity in missing:
+                    if entity == 'District':
+                        normaliser_m2.loc[entity] = normaliser_m2['normaliser_m2'].sum() if len(normaliser_m2) > 0 else 1.0
+                    else:
+                        plant_area = self._calculate_plant_floor_area(entity, area_type='Af_m2')
+                        normaliser_m2.loc[entity] = plant_area
 
         elif self.y_normalised_by == 'no_normalisation':
             # Create normaliser with value 1 for ALL entities (including plants)
