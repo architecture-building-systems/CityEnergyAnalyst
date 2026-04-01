@@ -444,8 +444,9 @@ class bar_plot:
                 title=dict(
                     text=title,
                     x=0,
+                    y=0.995,
                     xanchor='left',
-                    yanchor='top',
+                    yanchor='bottom',
                     font=dict(size=20),
                 ),
                 barmode=barmode
@@ -602,9 +603,21 @@ def plot_faceted_bars(
             cols = number_of_rows_or_columns
             rows = ceil(num_facets / cols)
 
-        # Scale vertical spacing: building-name labels need more room than hourly/daily ticks
-        has_building_labels = not df[x_col].str.match(r'^[HD]_\d').any() and not df[x_col].isin(month_names).all()
-        v_spacing = 0.25 if has_building_labels else 0.15
+        # Scale vertical spacing based on x-axis label type
+        has_numeric_labels = df[x_col].str.match(r'^[HD]_\d').any()
+        has_month_labels = df[x_col].isin(month_names).all()
+        has_building_labels = not has_numeric_labels and not has_month_labels
+        # Plotly vertical_spacing is a fraction of TOTAL figure height, not per-gap.
+        # With many rows, a fixed fraction wastes most of the height on spacing.
+        # Building names need most gap; month text needs moderate; numeric ticks need least.
+        if has_building_labels:
+            gap_px, row_px = 150, 250
+        elif has_month_labels:
+            gap_px, row_px = 120, 220
+        else:
+            gap_px, row_px = 80, 220
+        total_px = rows * row_px + max(rows - 1, 0) * gap_px
+        v_spacing = (gap_px / total_px) if rows > 1 else 0.1
 
         fig = make_subplots(
             rows=rows,
@@ -689,26 +702,7 @@ def plot_faceted_bars(
                     }
                     fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
-        # Set subplot vertical domains
-        available_height = 0.88  # Use more vertical space since legend is below
-        row_spacing = v_spacing
-        total_spacing = row_spacing * (rows - 1)
-        row_height = (available_height - total_spacing) / rows
-
-        for r in range(1, rows + 1):
-            row_bottom = 0.05 + (rows - r) * (row_height + row_spacing)
-            row_top = row_bottom + row_height
-
-            for c in range(1, cols + 1):
-                subplot_index = (r - 1) * cols + c
-                if subplot_index > len(facets):
-                    continue
-
-                yaxis_name = f'yaxis{"" if subplot_index == 1 else subplot_index}'
-                if yaxis_name in fig.layout:
-                    fig.layout[yaxis_name].domain = [row_bottom, row_top]
-
-        # Custom subplot titles
+        # Custom subplot titles — read domains from make_subplots layout
         annotations = []
         for i, facet in enumerate(facets):
             subplot_index = i + 1
@@ -733,11 +727,9 @@ def plot_faceted_bars(
 
         fig.update_layout(annotations=annotations)
 
-        # Scale figure height so each facet row has enough space;
-        # building-name labels are taller and need more room per row
-        base_height = 450  # Plotly default
-        min_row_height = base_height * (0.85 if has_building_labels else 0.75)
-        fig.update_layout(height=max(base_height, int(rows * min_row_height)))
+        # Figure height matches the pixel-based spacing computation above;
+        # add extra top margin so the main title doesn't overlap with the first row
+        fig.update_layout(height=max(450, total_px), margin=dict(t=120))
 
     else:
         # No faceting
