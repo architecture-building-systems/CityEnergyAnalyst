@@ -313,11 +313,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -436,11 +436,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -605,11 +605,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -764,7 +764,37 @@ def _get_timeline_y_columns(df, operation_services, y_categories):
     return wanted
 
 
+def plot_emission_timeline_single(config, context: dict, whatif_name: str):
+    """Generate a single emission timeline figure for one what-if scenario."""
+    import cea.inputlocator
+
+    scenario = config.scenario
+    plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
+    period_start = context.get('period_start', None)
+    period_end = context.get('period_end', None)
+    bool_accumulated = True
+    plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
+
+    locator = cea.inputlocator.InputLocator(scenario)
+    df_to_plotly = _load_whatif_timeline_df(locator, [whatif_name])
+
+    if df_to_plotly.empty:
+        import plotly.graph_objs as go
+        return go.Figure()
+
+    operation_services = getattr(plot_config, 'operation_services', [])
+    y_categories = getattr(plot_config, 'y_category_to_plot', ['operation', 'production', 'demolition', 'biogenic'])
+    list_y_columns = _get_timeline_y_columns(df_to_plotly, operation_services, y_categories)
+
+    plot_title = f"Emission Timeline \u2014 {whatif_name}"
+    plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
+                                    bool_accumulated=bool_accumulated,
+                                    period_start=period_start, period_end=period_end)
+    return plot_obj.create_plot()
+
+
 def plot_emission_timeline(config, context: dict):
+    """Generate emission timeline figure(s). Aggregates all what-if scenarios into one plot."""
     import cea.inputlocator
 
     scenario = config.scenario
@@ -779,7 +809,6 @@ def plot_emission_timeline(config, context: dict):
         whatif_names = [whatif_names] if whatif_names else []
 
     if whatif_names:
-        # What-if path: read district-level timeline directly from emissions results
         locator = cea.inputlocator.InputLocator(scenario)
         df_to_plotly = _load_whatif_timeline_df(locator, whatif_names)
 
@@ -817,16 +846,11 @@ def plot_emission_timeline(config, context: dict):
             solar_panel_types_list, scenario
         )
 
-    # Create EmissionTimelinePlot instance
     plot_title = "CEA-4 Emission Timeline"
     plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
                                     bool_accumulated=bool_accumulated,
                                     period_start=period_start, period_end=period_end)
-
-    # Generate the figure
-    fig = plot_obj.create_plot()
-
-    return fig
+    return plot_obj.create_plot()
 
 
 def create_emission_timeline_plot(config):
@@ -857,10 +881,72 @@ def create_emission_timeline_plot(config):
     return fig
 
 def main(config):
-    fig = create_emission_timeline_plot(config)
-    fig.update_layout(autosize=True)
-    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
-    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+    plot_config = config.plots_emission_timeline
+    whatif_names = getattr(plot_config, 'what_if_name', [])
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names] if whatif_names else []
+
+    # Single what-if or legacy: return one figure
+    if len(whatif_names) <= 1:
+        fig = create_emission_timeline_plot(config)
+        fig.update_layout(autosize=True)
+        html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+        return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+
+    # Multi what-if: one figure per scenario with aligned y-axes
+    slots = []
+    for whatif_name in whatif_names:
+        try:
+            context = plot_config.context
+            context['feature'] = 'emission-timeline'
+            fig = plot_emission_timeline_single(config, context, whatif_name)
+            slots.append(('ok', whatif_name, fig))
+        except Exception as e:
+            slots.append(('err', whatif_name, (
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Error plotting <em>{whatif_name}</em></h3>'
+                f'<code>{e}</code></div>'
+            )))
+
+    # Align y-axes across all figures
+    global_y_min = global_y_max = None
+    y_min_cfg = getattr(plot_config, 'y_min', None)
+    y_max_cfg = getattr(plot_config, 'y_max', None)
+    if y_min_cfg is None and y_max_cfg is None:
+        for kind, _, fig in slots:
+            if kind != 'ok':
+                continue
+            for trace in fig.data:
+                if hasattr(trace, 'y') and trace.y is not None and len(trace.y) > 0:
+                    t_min, t_max = min(trace.y), max(trace.y)
+                    if global_y_min is None or t_min < global_y_min:
+                        global_y_min = t_min
+                    if global_y_max is None or t_max > global_y_max:
+                        global_y_max = t_max
+
+    html_outputs = []
+    plotly_included = False
+    for slot in slots:
+        if slot[0] == 'err':
+            html_outputs.append(slot[2])
+            continue
+        _, whatif_name, fig = slot
+        if global_y_min is not None:
+            margin = (global_y_max - global_y_min) * 0.05
+            fig.update_yaxes(range=[global_y_min - margin, global_y_max + margin])
+        fig.update_layout(autosize=False, height=700, width=960)
+        include_js = 'cdn' if not plotly_included else False
+        plotly_included = True
+        html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                        config={'responsive': False}))
+
+    body = '\n'.join(html_outputs)
+    return (
+        '<!DOCTYPE html><html>'
+        '<head><meta charset="utf-8"></head>'
+        f'<body style="margin:0;overflow:auto">{body}</body></html>'
+    )
 
 
 if __name__ == '__main__':
