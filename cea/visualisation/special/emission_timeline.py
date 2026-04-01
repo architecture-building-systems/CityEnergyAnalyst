@@ -94,10 +94,10 @@ class EmissionTimelinePlot:
         categories = {
             'space_heating': {'columns': [], 'positive': True, 'display_name': 'space_heating'},
             'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
-            'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
+            'DHW': {'columns': [], 'positive': True, 'display_name': 'DHW'},
             'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
-            'space_heating_district': {'columns': [], 'positive': True, 'display_name': 'space_heating (district)'},
-            'space_cooling_district': {'columns': [], 'positive': True, 'display_name': 'space_cooling (district)'},
+            'DH': {'columns': [], 'positive': True, 'display_name': 'DH'},
+            'DC': {'columns': [], 'positive': True, 'display_name': 'DC'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
@@ -114,14 +114,14 @@ class EmissionTimelinePlot:
             elif 'operation_qcs_sys' in col_lower or 'operation_space_cooling' in col_lower:
                 categories['space_cooling']['columns'].append(col)
             elif 'operation_qww_sys' in col_lower or 'operation_qww_booster' in col_lower or 'operation_dhw' in col_lower:
-                categories['dhw']['columns'].append(col)
+                categories['DHW']['columns'].append(col)
             elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
                 categories['electricity']['columns'].append(col)
             # District plant columns
             elif col_lower == 'operation_dh_kgco2e':
-                categories['space_heating_district']['columns'].append(col)
+                categories['DH']['columns'].append(col)
             elif col_lower == 'operation_dc_kgco2e':
-                categories['space_cooling_district']['columns'].append(col)
+                categories['DC']['columns'].append(col)
             # Solar offset columns (PV_E_offset, PVT_E_offset, PVT_Q_offset, SC_Q_offset)
             elif col_lower.endswith('_offset_kgco2e') or col_lower.endswith('_offset'):
                 categories['solar_offset']['columns'].append(col)
@@ -221,10 +221,10 @@ class EmissionTimelinePlot:
         category_colors = {
             'space_heating': COLOURS_TO_RGB['red'],
             'space_cooling': COLOURS_TO_RGB['blue'],
-            'dhw': COLOURS_TO_RGB['orange'],
+            'DHW': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
-            'space_heating_district': COLOURS_TO_RGB['red_light'],
-            'space_cooling_district': COLOURS_TO_RGB['blue_light'],
+            'DH': COLOURS_TO_RGB['red_light'],
+            'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -461,10 +461,10 @@ class EmissionTimelinePlot:
         category_colors = {
             'space_heating': COLOURS_TO_RGB['red'],
             'space_cooling': COLOURS_TO_RGB['blue'],
-            'dhw': COLOURS_TO_RGB['orange'],
+            'DHW': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
-            'space_heating_district': COLOURS_TO_RGB['red_light'],
-            'space_cooling_district': COLOURS_TO_RGB['blue_light'],
+            'DH': COLOURS_TO_RGB['red_light'],
+            'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -727,7 +727,7 @@ def _get_timeline_y_columns(df, operation_services, y_categories):
         'electricity': ['operation_E_sys'],
         'space_heating': ['operation_Qhs_sys', 'operation_Qhs_booster'],
         'space_cooling': ['operation_Qcs_sys'],
-        'dhw': ['operation_Qww_sys', 'operation_Qww_booster'],
+        'DHW': ['operation_Qww_sys', 'operation_Qww_booster'],
     }
     solar_to_col = {
         'PV_E': 'PV_E_offset',

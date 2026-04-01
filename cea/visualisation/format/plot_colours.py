@@ -258,8 +258,8 @@ _BASE_COLUMN_COLORS = {
     "operation_Qww_sys": "orange",
     "operation_Qcs_sys": "blue",
     "operation_E_sys": "green",
-    "operation_DH": "red_light",
-    "operation_DC": "blue_light",
+    "operation_DH":  "red_light",
+    "operation_DC":  "blue_light",
 
     # Production - all purple
     "production_wall_ag": "purple",

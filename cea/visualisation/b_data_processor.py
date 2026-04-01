@@ -86,9 +86,9 @@ class data_processor:
             'electricity': 'E_sys',
             'space_heating': 'Qhs_sys',
             'space_cooling': 'Qcs_sys',
-            'dhw': 'Qww_sys',
-            'space_heating_district': 'DH',
-            'space_cooling_district': 'DC',
+            'DHW': 'Qww_sys',
+            'DH': 'DH',
+            'DC': 'DC',
         }
         # Solar tech class to offset column name
         solar_to_offset = {
@@ -148,9 +148,9 @@ class data_processor:
             'electricity': 'E_sys',
             'space_heating': 'Qhs_sys',
             'space_cooling': 'Qcs_sys',
-            'dhw': 'Qww_sys',
-            'space_heating_district': 'DH',
-            'space_cooling_district': 'DC',
+            'DHW': 'Qww_sys',
+            'DH': 'DH',
+            'DC': 'DC',
         }
         # Solar tech class to offset column name
         solar_to_offset = {
