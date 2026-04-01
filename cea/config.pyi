@@ -1888,7 +1888,7 @@ class PlotsSolarSection(Section):
 class PlotsCostBreakdownSection(Section):
     """Typed section for plots-cost-breakdown configuration"""
     what_if_name: list
-    y_cost_category_to_plot: list[str]
+    y_category_to_plot: list[str]
     y_metric_unit: str
     y_normalised_by: str
     x_to_plot: str
@@ -1896,7 +1896,7 @@ class PlotsCostBreakdownSection(Section):
     @overload
     def __getattr__(self, item: Literal["what_if_name"]) -> list: ...
     @overload
-    def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> str: ...
     @overload
@@ -1910,7 +1910,7 @@ class PlotsCostSankeySection(Section):
     plot_title: Any
     what_if_name: list
     x_to_plot: list[str]
-    y_cost_category_to_plot: list[str]
+    y_category_to_plot: list[str]
     capex_view: str
     y_metric_unit: str
     y_normalised_by: str
@@ -1922,7 +1922,7 @@ class PlotsCostSankeySection(Section):
     @overload
     def __getattr__(self, item: Literal["x_to_plot"]) -> list[str]: ...
     @overload
-    def __getattr__(self, item: Literal["y_cost_category_to_plot"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["y_category_to_plot"]) -> list[str]: ...
     @overload
     def __getattr__(self, item: Literal["capex_view"]) -> str: ...
     @overload

@@ -499,7 +499,7 @@ def main(config):
     plot_config_general = config.plots_general
 
     # Extract parameters
-    y_cost_categories = plot_config.y_cost_category_to_plot
+    y_cost_categories = plot_config.y_category_to_plot
     y_normalised_by = plot_config.y_normalised_by
     y_metric_unit = plot_config.y_metric_unit
     x_to_plot = plot_config.x_to_plot
@@ -640,7 +640,7 @@ if __name__ == '__main__':
     df_long, id_col = process_data_by_grouping(
         detailed_df, architecture_df,
         plot_config.x_to_plot,
-        plot_config.y_cost_category_to_plot,
+        plot_config.y_category_to_plot,
         plot_config.y_normalised_by,
         plot_config.y_metric_unit,
         locator, config

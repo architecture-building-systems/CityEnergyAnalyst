@@ -570,7 +570,7 @@ def main(config: cea.config.Configuration):
             '</div>'
         )
 
-    cost_cats_selection = plot_config.y_cost_category_to_plot
+    cost_cats_selection = plot_config.y_category_to_plot
     capex_view = plot_config.capex_view
     y_metric_unit = plot_config.y_metric_unit
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1)
