@@ -275,10 +275,6 @@ def generate_energy_carrier_mismatch_error(
     error_lines.extend([
         "",
         f"{'='*70}",
-        "For more information, see:",
-        "  - ",
-        "  - ",
-        f"{'='*70}",
     ])
 
     return "\n".join(error_lines)
