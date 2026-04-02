@@ -36,7 +36,7 @@ def main(config: cea.config.Configuration):
         class NetworkConfig:
             def __init__(self, base_config, network_type_override):
                 self.network_type = network_type_override
-                for attr in ['network_names', 'file_type', 'set_diameter',
+                for attr in ['network_names', 'file_type',
                              'load_max_edge_flowrate_from_previous_run', 'start_t', 'stop_t',
                              'use_representative_week_per_month', 'minimum_mass_flow_iteration_limit',
                              'minimum_edge_mass_flow', 'diameter_iteration_limit',

@@ -1019,7 +1019,6 @@ class ThermalNetworkSection(Section):
     network_temperature_dh: float
     network_temperature_dc: float
     equivalent_length_factor: float
-    set_diameter: bool
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> list[str]: ...
@@ -1033,8 +1032,6 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["network_temperature_dc"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["equivalent_length_factor"]) -> float: ...
-    @overload
-    def __getattr__(self, item: Literal["set_diameter"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ThermalNetworkSimplifiedSection(Section):
@@ -1043,6 +1040,7 @@ class ThermalNetworkSimplifiedSection(Section):
     hw_friction_coefficient: int
     peak_load_velocity: float
     peak_load_percentage: float
+    set_diameter: bool
 
     @overload
     def __getattr__(self, item: Literal["min_head_substation"]) -> float: ...
@@ -1052,6 +1050,8 @@ class ThermalNetworkSimplifiedSection(Section):
     def __getattr__(self, item: Literal["peak_load_velocity"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["peak_load_percentage"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["set_diameter"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ThermalNetworkDetailedSection(Section):

@@ -494,7 +494,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     velocity_ms = config.thermal_network_simplified.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
     peak_load_percentage = config.thermal_network_simplified.peak_load_percentage
-    set_diameter = config.thermal_network.set_diameter
+    set_diameter = config.thermal_network_simplified.set_diameter
 
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)

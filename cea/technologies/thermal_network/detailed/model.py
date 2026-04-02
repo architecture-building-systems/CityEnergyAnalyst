@@ -75,7 +75,6 @@ class ThermalNetwork(object):
         self.network_type = "DC"  # whether the network is a district heating ('DH') or cooling ('DC') network
         self.network_names = [""]
         self.file_type = "shp"
-        self.set_diameter = True
         self.load_max_edge_flowrate_from_previous_run = False
         self.start_t = 0
         self.stop_t = 8760
@@ -135,7 +134,7 @@ class ThermalNetwork(object):
         self.get_thermal_network_from_shapefile()
 
     def copy_config_section(self, thermal_network_section):
-        thermal_network_section_fields = ["network_type", "network_names", "file_type", "set_diameter",
+        thermal_network_section_fields = ["network_type", "network_names", "file_type",
                                           "load_max_edge_flowrate_from_previous_run", "start_t", "stop_t",
                                           "use_representative_week_per_month", "minimum_mass_flow_iteration_limit",
                                           "minimum_edge_mass_flow", "diameter_iteration_limit",
