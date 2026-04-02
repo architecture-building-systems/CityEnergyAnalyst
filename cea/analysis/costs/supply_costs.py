@@ -11,6 +11,7 @@ import pandas as pd
 from cea.optimization_new.domain import Domain
 from cea.optimization_new.building import Building
 import cea.config
+from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -725,7 +726,6 @@ def get_network_buildings(locator, network_name, network_type):
     :return: set of building identifiers in the network
     """
     import geopandas as gpd
-    import os
 
     if not network_name or network_name == "(none)":
         return set()
@@ -739,8 +739,8 @@ def get_network_buildings(locator, network_name, network_type):
             nodes_df = gpd.read_file(nodes_file)
             network_buildings = nodes_df[nodes_df['type'] == 'CONSUMER']['building'].unique().tolist()
             return set([b for b in network_buildings if b and b != 'NONE'])
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Warning: Failed to read network buildings from {network_name}: {e}")
 
     return set()
 
@@ -931,7 +931,6 @@ def apply_config_fallbacks_for_service_needs(locator, config, service_needs, dh_
     :param dc_network_buildings: set of buildings in DC network
     """
     import pandas as pd
-    import os
 
     supply_csv_path = locator.get_building_supply()
     if not os.path.exists(supply_csv_path):
@@ -1539,9 +1538,8 @@ def calculate_district_network_costs(locator, config, network_type, network_name
                 for _, row in pipes_df.iterrows()
             )
 
-            # Annualize (default network lifetime: 20 years)
-            network_lifetime_yrs = 20.0
-            piping_cost_annual = piping_cost_total / network_lifetime_yrs
+            # Annualize using proper CAPEX formula (5% interest rate, 20-year lifetime)
+            piping_cost_annual = calc_capex_annualized(piping_cost_total, 5.0, 20)
 
             print(f"      Piping: ${piping_cost_total:,.2f} total, ${piping_cost_annual:,.2f}/year")
         except Exception as e:
@@ -1687,7 +1685,6 @@ def calculate_costs_for_network_type(locator, config, network_type, network_name
     """
     import geopandas as gpd
     import pandas as pd
-    import os
 
     # Step 1: Read network layout to determine building connectivity
     # Network layout = SOURCE OF TRUTH for connectivity
