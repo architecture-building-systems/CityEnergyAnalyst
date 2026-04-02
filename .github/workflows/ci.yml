@@ -73,7 +73,7 @@ jobs:
         with:
           name: test-scenarios-${{ matrix.os }}
           path: |
-            ~/zug_heating/
-            ~/sg_cooling/
+              ${{ env.HOME }}/zug_heating/
+              ${{ env.HOME }}/sg_cooling/
           retention-days: 3
           if-no-files-found: warn
