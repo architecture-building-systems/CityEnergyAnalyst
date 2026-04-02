@@ -1019,6 +1019,7 @@ class ThermalNetworkSection(Section):
     network_temperature_dh: float
     network_temperature_dc: float
     equivalent_length_factor: float
+    set_diameter: bool
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> list[str]: ...
@@ -1032,6 +1033,8 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["network_temperature_dc"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["equivalent_length_factor"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["set_diameter"]) -> bool: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ThermalNetworkSimplifiedSection(Section):
@@ -1053,7 +1056,6 @@ class ThermalNetworkSimplifiedSection(Section):
 
 class ThermalNetworkDetailedSection(Section):
     """Typed section for thermal-network-detailed configuration"""
-    set_diameter: bool
     load_max_edge_flowrate_from_previous_run: bool
     start_t: int
     stop_t: int
@@ -1064,8 +1066,6 @@ class ThermalNetworkDetailedSection(Section):
     substation_cooling_systems: list[str]
     substation_heating_systems: list[str]
 
-    @overload
-    def __getattr__(self, item: Literal["set_diameter"]) -> bool: ...
     @overload
     def __getattr__(self, item: Literal["load_max_edge_flowrate_from_previous_run"]) -> bool: ...
     @overload
