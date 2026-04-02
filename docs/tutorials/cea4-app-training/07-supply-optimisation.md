@@ -387,9 +387,9 @@ Best practice workflow:
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Provides loads (prerequisite)
 - **[Renewable Energy Assessment](03-renewable-energy.md)** - Provides renewable potential
 - **[Thermal Network Design](05-thermal-network.md)** - Network layout for district systems
-- **[Life Cycle Analysis](06-life-cycle-analysis.md)** - Detailed cost and emission calculations
+- **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Detailed cost and emission calculations
 - **[Visualisation](10-visualisation.md)** - Plot Pareto frontiers
 
 ---
 
-[← Back: Life Cycle Analysis](06-life-cycle-analysis.md) | [Back to Index](index.md) | [Next: Data Management →](08-data-management.md)
+[← Back: Life Cycle Analysis](06-0-life-cycle-analysis.md) | [Back to Index](index.md) | [Next: Data Management →](08-data-management.md)
