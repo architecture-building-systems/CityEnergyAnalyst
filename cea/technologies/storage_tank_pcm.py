@@ -184,7 +184,7 @@ class Storage_tank_PCM(object):
             Tb = self.T_phase_change_K
             T1 = Tb + ((self.cap_liquid_phase_Wh - new_storage_capacity_wh) * 3.6) / (m * Cp_l)
 
-        if T1 == np.nan:
+        if np.isnan(T1):
             print("error at hour {}".format(self.hour))
 
         return T1
