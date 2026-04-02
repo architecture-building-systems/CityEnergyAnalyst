@@ -107,9 +107,7 @@ def test_baseline_costs_empty_network_types():
     config.system_costs.network_types = []
 
     with pytest.raises(ValueError, match="No network types selected"):
-        from cea.analysis.costs.main import baseline_costs_main
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        baseline_costs_main(locator, config)
+        baseline_costs_main(config)
 
 
 if __name__ == '__main__':
