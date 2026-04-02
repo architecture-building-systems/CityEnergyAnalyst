@@ -591,7 +591,7 @@ Utilities:
     label: Batch Process Workflow
     short_description: Batch process scenarios using configured workflow
     description: This Feature batch processes selected Scenario(s) using the user-configured workflow.
-    interfaces: [ cli, dashboard ]
+    interfaces: [ cli ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]
 
