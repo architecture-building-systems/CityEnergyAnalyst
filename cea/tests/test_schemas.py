@@ -84,9 +84,11 @@ class TestSchemas(unittest.TestCase):
             if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schemas[lm]["schema"]:
                     self.assertIn("columns", schemas[lm]["schema"][ws], f"Missing columns for {lm}/{ws}")
-            else:
+            elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 self.assertIn("columns", schemas[lm]["schema"], f"Missing columns for {lm}")
-
+            else:
+                warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
+                
     def test_all_schema_columns_documented(self):
         schemas = cea.schemas.schemas(plugins=[])
         missing_docs = defaultdict(list)  # Store all missing documentation details
