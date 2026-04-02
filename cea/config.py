@@ -12,7 +12,7 @@ import json
 import os
 import re
 import tempfile
-from typing import Dict, List, Union, Any, Generator, Tuple, Optional
+from typing import Dict, List, Union, Any, Generator, Tuple, Optional, cast
 import warnings
 
 import cea.inputlocator
@@ -251,12 +251,12 @@ class Configuration:
         """
         if self.multiprocessing:
             import multiprocessing
-            number_of_processes = multiprocessing.cpu_count() - self.number_of_cpus_to_keep_free
+            number_of_processes = multiprocessing.cpu_count() - cast(int, self.number_of_cpus_to_keep_free)
             return max(1, number_of_processes)  # ensure that at least one process is being used
         else:
             return 1
 
-    def get(self, fqname: str) -> Parameter:
+    def get(self, fqname: str) -> Any:
         """Given a string of the form "section:parameter", return the value of that parameter"""
         return self.get_parameter(fqname).get()
 
@@ -428,11 +428,11 @@ class Parameter:
     def py_name(self) -> str:
         return self.name.replace('-', '_')
 
-    def encode(self, value) -> str:
+    def encode(self, value: Any) -> str:
         """Encode ``value`` to a string representation for writing to the configuration file"""
         return str(value)
 
-    def decode(self, value) -> Any:
+    def decode(self, value: str) -> Any:
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
@@ -520,7 +520,7 @@ class FileParameter(Parameter):
         if not value and not self.nullable:
             raise ValueError(f"Can't decode value for non-nullable FileParameter {self.name}.")
         elif _KEYCRE.match(value):
-            return _KEYCRE.sub(lambda match: self.config.get(match.group(1)), value)
+            return _KEYCRE.sub(lambda match: str(self.config.get(match.group(1))), value)
         else:
             return value
 
@@ -975,8 +975,8 @@ class DateParameter(Parameter):
             return datetime.datetime.strptime(value, '%x')
 
 
-class ChoiceParameter(Parameter):
-    """A parameter that can only take on values from a specific set of values"""
+class ChoiceParameterBase(Parameter):
+    """Shared base for parameters backed by a finite set of choices."""
 
     def __init__(self, name: str, section: Section, config: Configuration):
         super().__init__(name, section, config)
@@ -992,27 +992,37 @@ class ChoiceParameter(Parameter):
             )
         return self._choices_cache
 
-    def encode(self, value):
-        # Allow empty/None values if parameter is nullable
-        if self.nullable and (value is None or str(value).strip() == ''):
-            return ''
 
-        if str(value) not in self._choices:
+class ChoiceParameter(ChoiceParameterBase):
+    """A parameter that can only take on values from a specific set of values"""
+
+    def encode(self, value) -> str:
+        _value = str(value).strip() if value is not None else ''
+
+        # Allow empty/None values if parameter is nullable
+        if self.nullable and _value == '':
+            return ''
+        
+        # Validate that the value is one of the allowed choices
+        if _value not in self._choices:
             raise ValueError(
-                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
-        return str(value)
+                f"Invalid value {_value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return _value
 
     def decode(self, value):
-        # Allow empty values if parameter is nullable
-        if self.nullable and (value is None or str(value).strip() == ''):
-            return None
+        _value = str(value).strip() if value is not None else ''
 
-        if str(value) in self._choices:
-            return str(value)
-        else:
+        # Allow empty values if parameter is nullable
+        if self.nullable and _value == '':
+            return None
+        
+        # Validate that the value is one of the allowed choices
+        if _value not in self._choices:
             if not self._choices:
                 raise ValueError(f"No choices for {self.fqname} to decode {value}")
-            return self._choices[0]
+            raise ValueError(f"Invalid value {value} for {self.fqname}, expected one of: {', '.join(self._choices)}")
+        
+        return _value
 
 
 def _validate_user_network_input_exclusivity(config, param_being_set, value_being_set):
@@ -1066,34 +1076,12 @@ def _validate_user_network_input_exclusivity(config, param_being_set, value_bein
         )
 
 
-class NetworkLayoutChoiceParameter(ChoiceParameter):
-    """
-    Parameter for selecting existing network layouts based on network type.
-    """
-
+class NetworkLayoutChoicesMixin:
     _network_types = {'DH', 'DC'}
 
-    def __init__(self, name: str, section: Section, config: Configuration):
-        super().__init__(name, section, config)
-        # Check if this parameter should default to (none) instead of most recent network
-        try:
-            self.default_to_none = config.default_config.getboolean(section.name, f"{name}.default-to-none")
-        except configparser.NoOptionError:
-            self.default_to_none = False
+    config: Configuration
+    nullable: bool
 
-    @property
-    def _choices(self):
-        networks = self._get_available_networks()
-        sorted_networks = self._sort_networks_by_modification_time(networks)
-
-        # If nullable, add option to skip network selection
-        if self.nullable:
-            # Always provide skip option for nullable parameters
-            # This prevents "no valid choices" error when no networks exist
-            sorted_networks.insert(0, "(none)")
-
-        return sorted_networks
-    
     def _get_available_networks(self) -> List[str]:
         locator = cea.inputlocator.InputLocator(self.config.scenario)
         network_folder = locator.get_thermal_network_folder()
@@ -1101,7 +1089,7 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
             return []
         return [name for name in os.listdir(network_folder)
                 if os.path.isdir(os.path.join(network_folder, name)) and name not in self._network_types]
-    
+
     def _get_network_file_paths(self, network_type: str, network_name: str) -> Tuple[str, str]:
         """Get path for network node and edge files for the given network name"""
         locator = cea.inputlocator.InputLocator(self.config.scenario)
@@ -1131,154 +1119,88 @@ class NetworkLayoutChoiceParameter(ChoiceParameter):
         modified_times.sort(key=lambda x: x[1], reverse=True)
         sorted_networks = [network_name for network_name, _ in modified_times]
         return sorted_networks
-    
-    def encode(self, value):
-        """
-        Validate and encode value.
-        Raises ValueError if the network layout doesn't exist (unless nullable).
-        Also validates mutual exclusivity with edges-shp-path, nodes-shp-path, and network-geojson-path.
-        """
-        # Check mutual exclusivity with other user-defined network input methods
-        _validate_user_network_input_exclusivity(self.config, 'existing_network', value)
-
-        # Handle (none) choice for nullable parameters - save special marker
-        if self.nullable and str(value) == "(none)":
-            return '(none)'
-
-        # Handle empty value based on nullable setting
-        if not value or str(value).strip() == '':
-            if self.nullable:
-                return '(none)'
-            else:
-                raise ValueError("Network layout is required. Please select a network layout.")
-
-        available_networks = self._get_available_networks()
-
-        # Validate that the network exists
-        if str(value) not in available_networks:
-            if self.nullable:
-                # If nullable and network doesn't exist, return (none)
-                return '(none)'
-            else:
-                raise ValueError(
-                    f"Network layout '{value}' not found. "
-                    f"Available layouts: {', '.join(available_networks)}"
-                )
-        return str(value)
-
-    def decode(self, value):
-        """
-        Decode and validate value exists in available networks.
-        Returns the selected value if valid, otherwise returns the most recent network as default.
-
-        For nullable parameters (like network-name-dc, network-name-dh), returns empty string
-        if no networks found without error messages.
-
-        For non-nullable parameters, if no value provided and no networks found for current
-        network-type, try to find the most recent network across ALL network types and switch
-        network-type accordingly.
-        """
-        # Handle (none) marker - user explicitly chose no network
-        if value == '(none)':
-            return ''
-
-        # If empty value (from config file), default based on default_to_none setting
-        if not value or value == '':
-            available_networks = self._get_available_networks()
-            # If no networks, return empty
-            if not available_networks:
-                return ''
-
-            # If default_to_none is True (e.g., optimization-new), return empty
-            if self.default_to_none:
-                return ''
-
-            # Otherwise default to most recent network (e.g., export-to-rhino-gh)
-            sorted_networks = self._sort_networks_by_modification_time(available_networks)
-            if sorted_networks:
-                return sorted_networks[0]
-            else:
-                # No valid networks found (folders exist but missing files)
-                return ''
-
-        available_networks = self._get_available_networks()
-
-        # If value is provided and valid, return it
-        if value in available_networks:
-            return value
-
-        # If value is not found and no networks available, return empty
-        if not available_networks:
-            return ''
-
-        # Default to most recent network if value not found
-        sorted_networks = self._sort_networks_by_modification_time(available_networks)
-        if sorted_networks:
-            most_recent_network = sorted_networks[0]
-            return most_recent_network
-        else:
-            # No valid networks found (folders exist but missing files)
-            return ''
-
-
-class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
-    """
-    Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
-    Inherits network discovery logic from NetworkLayoutChoiceParameter.
-    """
 
     @property
-    def _choices(self):
-        """Override parent to exclude '(none)' — multi-choice uses empty list instead."""
+    def _network_choices(self) -> List[str]:
+        """Sorted available network names, most recent first."""
         networks = self._get_available_networks()
         return self._sort_networks_by_modification_time(networks)
 
-    def encode(self, value: list[str] | str):
+    def _encode_network(self, value: str) -> str:
         """
-        Validate and encode a list of network layout names.
-        Raises ValueError if any network layout doesn't exist.
+        Validate a single network name and return the encoded string.
+        Handles nullable/empty/missing cases. Does NOT handle mutual exclusivity.
         """
-        if not len(value) and self.nullable:
-            return ''
-            
-        if isinstance(value, list):
-            # Handle empty list
-            if not len(value) and not self.nullable:
-                raise ValueError("At least one network layout is required.")
-        elif isinstance(value, str):
-            # Parse comma-separated string into list
-            value = parse_string_to_list(value)
-        else:
-            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list or str, got {type(value)}.")
+        if self.nullable and str(value) == "(none)":
+            return '(none)'
+
+        if not value or str(value).strip() == '':
+            if self.nullable:
+                return '(none)'
+            raise ValueError("Network layout is required. Please select a network layout.")
 
         available_networks = self._get_available_networks()
-
-        # Validate that all networks exist
-        invalid_networks = set(value) - set(available_networks)
-        if len(invalid_networks) > 0:
+        if str(value) not in available_networks:
+            if self.nullable:
+                return '(none)'
             raise ValueError(
-                f"Invalid network layouts {invalid_networks} for {self.name}. "
+                f"Network layout '{value}' not found. "
                 f"Available layouts: {', '.join(available_networks)}"
             )
+        return str(value)
 
-        return ', '.join(map(str, value))
-
-    def decode(self, value) -> list[str]:
+    def _decode_network(self, value: str, *, default_to_none: bool = False) -> str:
         """
-        Decode comma-separated network names into a list.
-        Returns an empty list if value is empty.
+        Decode a single network name.
+        Returns '' for empty/missing/invalid values, falling back to the most recent network
+        unless default_to_none is True.
         """
-        if value == '':
-            return []
+        if value == '(none)':
+            return ''
 
-        # Parse comma-separated values (function imported at top of file)
-        choices = parse_string_to_list(value)
-
-        # Filter to only valid networks (lenient - ignore invalid ones)
         available_networks = self._get_available_networks()
-        valid_choices = [choice for choice in choices if choice in available_networks]
 
-        return valid_choices
+        if not value or value == '':
+            if not available_networks or default_to_none:
+                return ''
+            sorted_networks = self._sort_networks_by_modification_time(available_networks)
+            return sorted_networks[0] if sorted_networks else ''
+
+        if value in available_networks:
+            return value
+
+        if not available_networks:
+            return ''
+
+        sorted_networks = self._sort_networks_by_modification_time(available_networks)
+        return sorted_networks[0] if sorted_networks else ''
+
+
+class NetworkLayoutChoiceParameter(NetworkLayoutChoicesMixin, ChoiceParameter):
+    """
+    Parameter for selecting existing network layouts based on network type.
+    """
+
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        try:
+            self.default_to_none = config.default_config.getboolean(section.name, f"{name}.default-to-none")
+        except configparser.NoOptionError:
+            self.default_to_none = False
+
+    @property
+    def _choices(self):
+        choices = list(self._network_choices)
+        if self.nullable:
+            choices.insert(0, "(none)")
+        return choices
+
+    def encode(self, value):
+        _validate_user_network_input_exclusivity(self.config, 'existing_network', value)
+        return self._encode_network(value)
+
+    def decode(self, value):
+        return self._decode_network(value, default_to_none=self.default_to_none)
 
 
 class WhatIfNameChoiceParameter(ChoiceParameter):
@@ -1414,12 +1336,25 @@ class PlantNodeParameter(ChoiceParameter):
             return None
 
 
-class ScenarioNameParameter(ChoiceParameter):
+class ScenarioNameChoicesMixin:
+    config: Configuration
+    exclude_current: bool
+
+    @property
+    def _choices(self):
+        choices = get_scenarios_list(str(self.config.project))
+        if self.exclude_current and self.config.scenario_name and self.config.scenario_name in choices:
+            choices.remove(str(self.config.scenario_name))
+
+        return choices
+
+
+class ScenarioNameParameter(ScenarioNameChoicesMixin, ChoiceParameter):
     """A parameter that can be set to a scenario-name"""
 
     def __init__(self, name: str, section: Section, config: Configuration):
         super().__init__(name, section, config)
-        self.exclude_current = config.default_config.get(section.name, f"{name}.exclude_current", fallback=False)
+        self.exclude_current = config.default_config.getboolean(section.name, f"{name}.exclude_current", fallback=False)
 
     def encode(self, value):
         """Make sure the scenario folder exists"""
@@ -1432,14 +1367,6 @@ class ScenarioNameParameter(ChoiceParameter):
     def decode(self, value):
         # allow scenario name to be non-existing folder when reading from config file...
         return str(value)
-
-    @property
-    def _choices(self):
-        choices = get_scenarios_list(self.config.project)
-        if self.exclude_current and self.config.scenario_name and self.config.scenario_name in choices:
-            choices.remove(self.config.scenario_name)
-
-        return choices
 
 class ScenarioParameter(Parameter):
     """This parameter type is special in that it is derived from two other parameters (project, scenario-name)"""
@@ -1458,7 +1385,7 @@ class ScenarioParameter(Parameter):
         return os.path.normpath((os.path.expanduser(value)))
 
 
-class MultiChoiceParameter(ChoiceParameter):
+class MultiChoiceParameter(ChoiceParameterBase):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
 
     @property
@@ -1483,6 +1410,43 @@ class MultiChoiceParameter(ChoiceParameter):
         choices = parse_string_to_list(value)
         valid_choices = set(self._choices)
         return [choice for choice in choices if choice in valid_choices]
+
+
+class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoicesMixin, MultiChoiceParameter):
+    """
+    Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
+    """
+
+    @property
+    def _choices(self):
+        return list(self._network_choices)
+
+    def encode(self, value: list[str] | str):
+        if isinstance(value, str):
+            value = parse_string_to_list(value)
+        elif not isinstance(value, list):
+            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list or str, got {type(value)}.")
+
+        if not value:
+            if self.nullable:
+                return ''
+            raise ValueError("At least one network layout is required.")
+
+        available_networks = self._get_available_networks()
+        invalid_networks = set(value) - set(available_networks)
+        if invalid_networks:
+            raise ValueError(
+                f"Invalid network layouts {invalid_networks} for {self.name}. "
+                f"Available layouts: {', '.join(available_networks)}"
+            )
+
+        return ', '.join(map(str, value))
+
+    def decode(self, value) -> list[str]:
+        if value == '':
+            return []
+        available_networks = set(self._get_available_networks())
+        return [v for v in parse_string_to_list(value) if v in available_networks]
 
 
 class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
@@ -1658,7 +1622,7 @@ class MultiChoiceFeedstockParameter(MultiChoiceParameter):
 
             # Current database structure: inputs/database/COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY
             scenario_feedstock_dir = os.path.join(
-                locator.scenario,
+                cast(str, locator.scenario),
                 'inputs',
                 'database',
                 'COMPONENTS',
@@ -1915,7 +1879,7 @@ class MultiSystemParameter(MultiChoiceParameter):
 
     @property
     def _choices(self):
-        project_path = self.config.project
+        project_path = str(self.config.project)
         scenarios_names_list = get_scenarios_list(project_path)
         unique_systems_scenarios_list = []
         for scenario_name in scenarios_names_list:
@@ -2004,8 +1968,10 @@ def get_systems_list(scenario_path):
     return unique_iterations
 
 
-class ScenarioNameMultiChoiceParameter(MultiChoiceParameter, ScenarioNameParameter):
-    pass
+class ScenarioNameMultiChoiceParameter(ScenarioNameChoicesMixin, MultiChoiceParameter):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.exclude_current = config.default_config.getboolean(section.name, f"{name}.exclude_current", fallback=False)
 
 
 def parse_string_coordinate_list(string_tuples):
@@ -2030,17 +1996,23 @@ def parse_string_coordinate_list(string_tuples):
     return coordinates_list
 
 
-class ColumnChoiceParameter(ChoiceParameter):
+class ColumnChoicesMixin:
     _supported_extensions = ['.csv']
 
-    def __init__(self, name: str, section: Section, config: Configuration):
-        super().__init__(name, section, config)
+    config: Configuration
+    section: Section
+    name: str
+    locator_method: str
+    column_name: str
+    kwargs: Dict[str, str]
+
+    def _init_column_choices(self, name: str, section: Section, config: Configuration):
         self.locator_method = config.default_config.get(section.name, f"{name}.locator")
         self.column_name = config.default_config.get(section.name, f"{name}.column")
         self.kwargs = self._parse_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
 
     @staticmethod
-    def _parse_kwargs(value: str) -> Dict[str, str]:
+    def _parse_kwargs(value: str | None) -> Dict[str, str]:
         """
         Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary
         """
@@ -2091,15 +2063,26 @@ class ColumnChoiceParameter(ChoiceParameter):
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
 
-class ColumnMultiChoiceParameter(MultiChoiceParameter, ColumnChoiceParameter):
-    pass
+class ColumnChoiceParameter(ColumnChoicesMixin, ChoiceParameter):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._init_column_choices(name, section, config)
 
 
-class SolarPanelChoiceParameter(ChoiceParameter):
+class ColumnMultiChoiceParameter(ColumnChoicesMixin, MultiChoiceParameter):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._init_column_choices(name, section, config)
+
+
+class SolarPanelChoicesMixin:
     """
-    Nullable parameter for selecting solar technology types available in the scenario.
+    Mixin for parameters that select solar technology types available in the scenario.
     Scans potentials/solar folder for PV, PVT, and SC results.
     """
+
+    config: Configuration
+    nullable: bool
 
     def initialize(self, parser):
         # Override to dynamically populate choices based on available solar results
@@ -2107,7 +2090,6 @@ class SolarPanelChoiceParameter(ChoiceParameter):
 
     @property
     def _choices(self):
-        """Dynamically generate list of available solar technologies"""
         return self._get_available_solar_technologies()
 
     def _get_available_solar_technologies(self) -> List[str]:
@@ -2124,58 +2106,65 @@ class SolarPanelChoiceParameter(ChoiceParameter):
 
             technologies = []
 
-            # Scan for PV results (e.g., PV_PV1_total.csv)
-            pv_pattern = os.path.join(solar_folder, 'PV_*_total.csv')
-            for filepath in glob.glob(pv_pattern):
-                filename = os.path.basename(filepath)
-                # Extract technology code: PV_PV1_total.csv -> PV_PV1
-                tech_code = filename.replace('_total.csv', '')
-                technologies.append(tech_code)
-
-            # Scan for PVT results (e.g., PVT_PV1_FP_total.csv)
-            pvt_pattern = os.path.join(solar_folder, 'PVT_*_total.csv')
-            for filepath in glob.glob(pvt_pattern):
-                filename = os.path.basename(filepath)
-                # Extract technology code: PVT_PV1_FP_total.csv -> PVT_PV1_FP
-                tech_code = filename.replace('_total.csv', '')
-                technologies.append(tech_code)
-
-            # Scan for SC results (e.g., SC_FP_total.csv)
-            sc_pattern = os.path.join(solar_folder, 'SC_*_total.csv')
-            for filepath in glob.glob(sc_pattern):
-                filename = os.path.basename(filepath)
-                # Extract technology code: SC_FP_total.csv -> SC_FP
-                tech_code = filename.replace('_total.csv', '')
-                technologies.append(tech_code)
+            for prefix in ('PV', 'PVT', 'SC'):
+                for filepath in glob.glob(os.path.join(solar_folder, f'{prefix}_*_total.csv')):
+                    tech_code = os.path.basename(filepath).replace('_total.csv', '')
+                    technologies.append(tech_code)
 
             return sorted(set(technologies))
         except Exception:
             return []
 
-    @property
-    def default(self):
-        """Return None for empty defaults instead of empty string"""
-        _default = self.config.default_config.get(self.section.name, self.name)
-        if _default == '':
-            return None
-        return self.decode(_default)
-
-    def encode(self, value):
-        """Allow None/empty values for nullable parameter"""
+    def _encode_solar(self, value) -> str:
+        """Encode a single solar technology value, respecting nullable."""
         if value is None or value == '':
             return ''
-        return super().encode(value)
+        choices = self._choices
+        invalid = set([str(value)]) - set(choices)
+        if choices and invalid:
+            raise ValueError(
+                f"Invalid solar technology '{value}'. "
+                f"Available: {', '.join(choices) or 'none'}"
+            )
+        return str(value)
 
-    def decode(self, value):
-        """Allow empty values for nullable parameter, return None for empty"""
+    def _decode_solar_single(self, value):
+        """Decode a single solar technology value, returning None for empty/invalid."""
         if value == '':
             return None
         if str(value) in self._choices:
             return str(value)
         return None
 
+    def _decode_solar_multi(self, value) -> list:
+        """Decode a comma-separated list of solar technology values."""
+        if not value or str(value).strip() == '':
+            return []
+        choices_set = set(self._choices)
+        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
 
-class SolarPanelMultiChoiceParameter(SolarPanelChoiceParameter):
+
+class SolarPanelChoiceParameter(SolarPanelChoicesMixin, ChoiceParameter):
+    """
+    Nullable parameter for selecting a solar technology type available in the scenario.
+    Scans potentials/solar folder for PV, PVT, and SC results.
+    """
+
+    @property
+    def default(self):
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return None
+        return self.decode(_default)
+
+    def encode(self, value):
+        return self._encode_solar(value)
+
+    def decode(self, value):
+        return self._decode_solar_single(value)
+
+
+class SolarPanelMultiChoiceParameter(SolarPanelChoicesMixin, MultiChoiceParameter):
     """
     Multi-choice version of SolarPanelChoiceParameter.
     Allows selecting multiple solar technology types from available results.
@@ -2189,14 +2178,14 @@ class SolarPanelMultiChoiceParameter(SolarPanelChoiceParameter):
         return self.decode(_default)
 
     def encode(self, value):
-        if not value:
-            if self.nullable:
-                return ''
-            raise ValueError("At least one solar technology is required.")
         if isinstance(value, str):
             value = parse_string_to_list(value)
         if not isinstance(value, list):
             raise ValueError(f"Expected list for {self.name}, got {type(value)}.")
+        if not value:
+            if self.nullable:
+                return ''
+            raise ValueError("At least one solar technology is required.")
         choices = self._choices
         invalid = set(value) - set(choices)
         if choices and invalid:
@@ -2207,10 +2196,7 @@ class SolarPanelMultiChoiceParameter(SolarPanelChoiceParameter):
         return ', '.join(value)
 
     def decode(self, value) -> list[str]:
-        if not value or str(value).strip() == '':
-            return []
-        choices_set = set(self._choices)
-        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
+        return self._decode_solar_multi(value)
 
 
 class PlotContextParameter(Parameter):

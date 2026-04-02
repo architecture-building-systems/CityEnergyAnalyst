@@ -13,7 +13,7 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
         print(e)
         params["value"] = ""
 
-    if isinstance(p, cea.config.ChoiceParameter):
+    if isinstance(p, cea.config.ChoiceParameterBase):
         params['choices'] = p._choices
 
     if isinstance(p, cea.config.WeatherPathParameter):
