@@ -1226,6 +1226,13 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoiceParameter):
     Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
     Inherits network discovery logic from NetworkLayoutChoiceParameter.
     """
+
+    @property
+    def _choices(self):
+        """Override parent to exclude '(none)' — multi-choice uses empty list instead."""
+        networks = self._get_available_networks()
+        return self._sort_networks_by_modification_time(networks)
+
     def encode(self, value: list[str] | str):
         """
         Validate and encode a list of network layout names.
@@ -2166,6 +2173,44 @@ class SolarPanelChoiceParameter(ChoiceParameter):
         if str(value) in self._choices:
             return str(value)
         return None
+
+
+class SolarPanelMultiChoiceParameter(SolarPanelChoiceParameter):
+    """
+    Multi-choice version of SolarPanelChoiceParameter.
+    Allows selecting multiple solar technology types from available results.
+    """
+
+    @property
+    def default(self):
+        _default = self.config.default_config.get(self.section.name, self.name)
+        if _default == '':
+            return []
+        return self.decode(_default)
+
+    def encode(self, value):
+        if not value:
+            if self.nullable:
+                return ''
+            raise ValueError("At least one solar technology is required.")
+        if isinstance(value, str):
+            value = parse_string_to_list(value)
+        if not isinstance(value, list):
+            raise ValueError(f"Expected list for {self.name}, got {type(value)}.")
+        choices = self._choices
+        invalid = set(value) - set(choices)
+        if choices and invalid:
+            raise ValueError(
+                f"Invalid solar technologies {invalid}. "
+                f"Available: {', '.join(choices) or 'none'}"
+            )
+        return ', '.join(value)
+
+    def decode(self, value) -> list[str]:
+        if not value or str(value).strip() == '':
+            return []
+        choices_set = set(self._choices)
+        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
 
 
 class PlotContextParameter(Parameter):

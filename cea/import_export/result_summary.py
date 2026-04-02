@@ -2669,36 +2669,55 @@ list_metrics_lifecycle_emissions = []  # populated via get_emission_context()["l
 list_metrics_operational_emissions = []  # populated via get_emission_context()["list_metrics_operational_emissions"]
 list_metrics_heat_rejection = ['heat_rejection[kWh]']
 
-def get_list_list_metrics_with_date(config):
-    emission_context = get_emission_context()
-    list_list_metrics_with_date = []
-    if config.result_summary.metrics_building_energy_demand:
-        list_list_metrics_with_date.append(list_metrics_building_energy_demand)
-    if config.result_summary.metrics_solar_irradiation:
-        list_list_metrics_with_date.append(list_metrics_solar_irradiation)
-    if config.result_summary.metrics_photovoltaic_panels:
-        list_list_metrics_with_date.append(list_metrics_photovoltaic_panels)
-    if config.result_summary.metrics_photovoltaic_thermal_panels:
-        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_et)
-        list_list_metrics_with_date.append(list_metrics_photovoltaic_thermal_panels_fp)
-    if config.result_summary.metrics_solar_collectors:
-        list_list_metrics_with_date.append(list_metrics_solar_collectors_et)
-        list_list_metrics_with_date.append(list_metrics_solar_collectors_fp)
-    if config.result_summary.metrics_other_renewables:
-        list_list_metrics_with_date.append(list_metrics_other_renewables)
+def _get_solar_metric_lists(solar_technologies):
+    """Given a list of solar technology codes (e.g. ['PV_PV1', 'SC_ET']),
+    return the corresponding metric lists."""
+    result = []
+    if not solar_technologies:
+        return result
+    for tech in solar_technologies:
+        if tech.startswith('PV_') and not tech.startswith('PVT_'):
+            if list_metrics_photovoltaic_panels not in result:
+                result.append(list_metrics_photovoltaic_panels)
+        elif tech.startswith('PVT_'):
+            if '_ET' in tech or '_ET_' in tech:
+                if list_metrics_photovoltaic_thermal_panels_et not in result:
+                    result.append(list_metrics_photovoltaic_thermal_panels_et)
+            if '_FP' in tech or '_FP_' in tech:
+                if list_metrics_photovoltaic_thermal_panels_fp not in result:
+                    result.append(list_metrics_photovoltaic_thermal_panels_fp)
+        elif tech.startswith('SC_'):
+            if '_ET' in tech:
+                if list_metrics_solar_collectors_et not in result:
+                    result.append(list_metrics_solar_collectors_et)
+            if '_FP' in tech:
+                if list_metrics_solar_collectors_fp not in result:
+                    result.append(list_metrics_solar_collectors_fp)
+    return result
 
-    # Check if network files exist for the specified network_name and add metrics accordingly
-    network_name = config.result_summary.network_name
-    if network_name:
+
+def get_list_list_metrics_with_date(config):
+    list_list_metrics_with_date = []
+    if config.result_summary.building_energy_demand:
+        list_list_metrics_with_date.append(list_metrics_building_energy_demand)
+    if config.result_summary.solar_irradiation:
+        list_list_metrics_with_date.append(list_metrics_solar_irradiation)
+
+    # Solar technologies (multi-choice: e.g. ['PV_PV1', 'SC_ET', 'PVT_PV1_FP'])
+    solar_technologies = config.result_summary.solar_technologies or []
+    list_list_metrics_with_date.extend(_get_solar_metric_lists(solar_technologies))
+
+    # Network layouts (multi-choice list of network names)
+    network_names = config.result_summary.network_name or []
+    if network_names:
         locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-        # Check DH files
-        dh_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DH', network_name)
-        if os.path.exists(dh_thermal_path):
-            list_list_metrics_with_date.append(list_metrics_district_heating)
-        # Check DC files
-        dc_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DC', network_name)
-        if os.path.exists(dc_thermal_path):
-            list_list_metrics_with_date.append(list_metrics_district_cooling)
+        for net_name in network_names:
+            dh_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DH', net_name)
+            if os.path.exists(dh_thermal_path):
+                list_list_metrics_with_date.append(list_metrics_district_heating)
+            dc_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DC', net_name)
+            if os.path.exists(dc_thermal_path):
+                list_list_metrics_with_date.append(list_metrics_district_cooling)
 
     return list_list_metrics_with_date
 
@@ -2746,20 +2765,15 @@ def get_list_list_metrics_without_date_plot(list_cea_feature_to_plot):
 
 
 def get_list_list_metrics_building(config):
-    emission_context = get_emission_context()
     list_list_metrics_building = []
-    if config.result_summary.metrics_building_energy_demand:
+    if config.result_summary.building_energy_demand:
         list_list_metrics_building.append(list_metrics_building_energy_demand)
-    if config.result_summary.metrics_solar_irradiation:
+    if config.result_summary.solar_irradiation:
         list_list_metrics_building.append(list_metrics_solar_irradiation)
-    if config.result_summary.metrics_photovoltaic_panels:
-        list_list_metrics_building.append(list_metrics_photovoltaic_panels)
-    if config.result_summary.metrics_photovoltaic_thermal_panels:
-        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_et)
-        list_list_metrics_building.append(list_metrics_photovoltaic_thermal_panels_fp)
-    if config.result_summary.metrics_solar_collectors:
-        list_list_metrics_building.append(list_metrics_solar_collectors_et)
-        list_list_metrics_building.append(list_metrics_solar_collectors_fp)
+
+    solar_technologies = config.result_summary.solar_technologies or []
+    list_list_metrics_building.extend(_get_solar_metric_lists(solar_technologies))
+
     return list_list_metrics_building
 
 
@@ -3241,9 +3255,11 @@ def process_building_summary(config, locator,
     # Track errors for final summary
     errors_encountered = []
 
-    # Get network name from config (convert None to empty string for consistency)
-    network_name = config.result_summary.network_name if not plot else ''
-    network_name = network_name if network_name is not None else ''
+    # Get network names from config (list for multi-choice, empty string for plot mode)
+    network_names = config.result_summary.network_name if not plot else []
+    network_names = network_names if network_names else []
+    # For backward compatibility with functions expecting a single network_name string
+    network_name = network_names[0] if network_names else ''
 
     # list_cea_feature_to_plot = ['demand', 'solar_irradiation', 'pv', 'pvt', 'sc', 'other_renewables', 'dh', 'dc', 'emissions']
 
@@ -3380,7 +3396,7 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
         else:
-            if config.result_summary.metrics_building_energy_demand:
+            if config.result_summary.building_energy_demand:
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "demand", summary_folder,
                                                    list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
@@ -3391,7 +3407,9 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            if config.result_summary.metrics_photovoltaic_panels:
+            solar_technologies = config.result_summary.solar_technologies or []
+            has_pv = any(t.startswith('PV_') and not t.startswith('PVT_') for t in solar_technologies)
+            if has_pv:
                 try:
                     calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
                                       bool_aggregate_by_building, bool_use_acronym, plot=plot)
