@@ -662,7 +662,8 @@ def main(config: cea.config.Configuration):
         _, whatif_name, sankey_data = slot
         scenario_total = sum(sankey_data['value'])
         height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
-        title = custom_title if (custom_title and len(whatif_names) == 1) else f'System Costs — {whatif_name}'
+        capex_label = 'Annualised CAPEX' if capex_view == 'annualised' else 'Total CAPEX'
+        title = custom_title if (custom_title and len(whatif_names) == 1) else f'System Costs ({capex_label}) — {whatif_name}'
         fig = create_sankey_fig(sankey_data, title, unit_label)
         fig.update_layout(height=height, autosize=False)
         include_js = 'cdn' if not plotly_included else False
