@@ -2,18 +2,34 @@ from datetime import datetime, timezone
 
 import pytest
 from sqlalchemy.orm import undefer_group
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 from unittest.mock import AsyncMock
 
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState
 from cea.interfaces.dashboard.server import jobs
 
-
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+@pytest.fixture
+async def db_session():
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+    yield session_maker
+
+    await engine.dispose()
 
 
 class DummyStreams:
@@ -35,14 +51,8 @@ class DummyWorkerProcesses:
 
 
 @pytest.mark.anyio
-async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monkeypatch):
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
-
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-
-    async with session_maker() as session:
+async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monkeypatch, db_session):
+    async with db_session() as session:
         job = JobInfo(script="radiation-crax", parameters={}, project_id="project", created_by="localuser")
         job_id = job.id
         session.add(job)
@@ -50,7 +60,7 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
 
     monkeypatch.setattr(jobs, "emit_with_retry", AsyncMock(return_value=True))
 
-    async with session_maker() as session:
+    async with db_session() as session:
         response = await jobs.set_job_error(
             session,
             job_id,
@@ -71,18 +81,10 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
         assert stored_job.stdout == "stdout line"
         assert stored_job.stderr == "traceback"
 
-    await engine.dispose()
-
 
 @pytest.mark.anyio
-async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(monkeypatch):
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
-
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-
-    async with session_maker() as session:
+async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(monkeypatch, db_session):
+    async with db_session() as session:
         job = JobInfo(
             script="radiation-crax",
             parameters={},
@@ -97,7 +99,7 @@ async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(
 
     monkeypatch.setattr(jobs, "emit_with_retry", AsyncMock(return_value=True))
 
-    async with session_maker() as session:
+    async with db_session() as session:
         response = await jobs.set_job_success(
             session,
             job_id,
@@ -111,5 +113,3 @@ async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(
 
         duration = response.end_time - response.start_time
         assert duration.total_seconds() >= 0
-
-    await engine.dispose()
