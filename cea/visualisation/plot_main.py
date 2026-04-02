@@ -99,18 +99,22 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
     try:
         plot_config_general = config.sections["plots-general"]
         plots_building_filter = config.sections["plots-building-filter"]
+        plots_include = config.sections["plots-include-plants-buildings"]
         plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
     except KeyError as e:
         print(f"KeyError: {e}")
         print(f"Looking for: plots-general and plots-{plot_cea_feature_umbrella}")
         raise CEAException(f"Invalid plot_cea_feature: {plot_cea_feature_umbrella}. Ensure that it exists in default.config.")
 
+    include_entities = list(getattr(plots_include, 'include', ['plants', 'buildings']))
+
     # Activate a_data_loader
     whatif_names = whatif_names_override if whatif_names_override is not None else getattr(plot_config, 'what_if_name', [])
     df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature,
                                                                                 period_start, period_end,
                                                                                 solar_panel_types_list, bool_include_advanced_analytics,
-                                                                                whatif_names=whatif_names)
+                                                                                whatif_names=whatif_names,
+                                                                                include_entities=include_entities)
     # Activate b_data_processor
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,

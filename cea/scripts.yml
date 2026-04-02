@@ -894,7 +894,7 @@ Visualisation:
     input-files:
       - [get_emissions_whatif_timeline_file, 'plots-emission-timeline:what-if-name']
       - [get_building_architecture]
-      - [get_zone_geometry]how
+      - [get_zone_geometry]
 
   - name: plot-operational-emissions
     label: Plot - Operational Emissions

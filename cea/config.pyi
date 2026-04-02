@@ -74,6 +74,7 @@ class Configuration:
     server: ServerSection
     schemas: SchemasSection
     development: DevelopmentSection
+    plots_include_plants_buildings: PlotsIncludePlantsBuildingsSection
     plots_general: PlotsGeneralSection
     plots_building_filter: PlotsBuildingFilterSection
     plots_demand: PlotsDemandSection
@@ -220,6 +221,8 @@ class Configuration:
     def __getattr__(self, item: Literal["schemas"]) -> SchemasSection: ...
     @overload
     def __getattr__(self, item: Literal["development"]) -> DevelopmentSection: ...
+    @overload
+    def __getattr__(self, item: Literal["plots_include_plants_buildings"]) -> PlotsIncludePlantsBuildingsSection: ...
     @overload
     def __getattr__(self, item: Literal["plots_general"]) -> PlotsGeneralSection: ...
     @overload
@@ -1652,6 +1655,12 @@ class DevelopmentSection(Section):
     def __getattr__(self, item: Literal["yarn"]) -> Any: ...
     @overload
     def __getattr__(self, item: Literal["release_version"]) -> Any: ...
+    def __getattr__(self, item: str) -> Any: ...
+
+class PlotsIncludePlantsBuildingsSection(Section):
+    """Typed section for plots-include-plants-buildings configuration"""
+    include: list[str]
+
     def __getattr__(self, item: str) -> Any: ...
 
 class PlotsGeneralSection(Section):

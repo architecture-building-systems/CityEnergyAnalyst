@@ -52,6 +52,34 @@ def _annotate_plant_display_name(original_name, row):
     return original_name
 
 
+def _filter_by_entity_type(df, include_entities):
+    """Filter DataFrame rows by entity type (buildings/plants).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Must have a 'type' column with values 'building' or 'plant'.
+        If no 'type' column exists, returns df unchanged.
+    include_entities : list[str]
+        Subset of ['buildings', 'plants'] indicating which to keep.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    if 'type' not in df.columns:
+        return df
+    include_buildings = 'buildings' in include_entities
+    include_plants = 'plants' in include_entities
+    if include_buildings and include_plants:
+        return df
+    if include_buildings:
+        return df[df['type'] != 'plant'].copy()
+    if include_plants:
+        return df[df['type'] == 'plant'].copy()
+    return df.iloc[0:0].copy()  # neither selected — empty
+
+
 def get_building_names_from_zone(locator):
     """
     Get building names from zone geometry.
@@ -159,7 +187,7 @@ def get_plot_analytics_dict(locator):
         'heat-rejection': []
     }
 
-def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
+def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end, include_entities=None):
     """
     Read final-energy results for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
@@ -180,6 +208,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
     """
     from cea.utilities.date import get_date_range_hours_from_year
 
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
 
@@ -195,10 +226,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(src_path):
                 continue
             df = pd.read_csv(src_path)
+            df = _filter_by_entity_type(df, include_entities)
             if buildings:
-                # Keep selected buildings AND all plants
-                plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
-                df = df[df['name'].isin(list(buildings) + plant_names)].copy()
+                df = df[df['name'].isin(list(buildings))].copy()
             # Annotate plant names with network type suffix for display
             if 'type' in df.columns and 'case_description' in df.columns:
                 df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
@@ -230,9 +260,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(summary_path):
                 continue
             summary_df = pd.read_csv(summary_path)
+            summary_df = _filter_by_entity_type(summary_df, include_entities)
             if buildings:
-                plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
-                summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)]
+                summary_df = summary_df[summary_df['name'].isin(list(buildings))]
             gfa_map = summary_df.set_index('name')['GFA_m2'].to_dict() if 'GFA_m2' in summary_df.columns else {}
             # Build display name map for plant annotation
             display_name_map = {}
@@ -282,9 +312,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
                 if not os.path.exists(src_path):
                     continue
                 df = pd.read_csv(src_path)
+                df = _filter_by_entity_type(df, include_entities)
                 if buildings:
-                    plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
-                    df = df[df['name'].isin(list(buildings) + plant_names)].copy()
+                    df = df[df['name'].isin(list(buildings))].copy()
                 keep_cols = [c for c in carrier_rename if c in df.columns]
                 df_out = df[keep_cols].copy()
                 for mwh_col in carrier_rename:
@@ -305,9 +335,9 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(summary_path):
                 return
             summary_df = pd.read_csv(summary_path)
+            summary_df = _filter_by_entity_type(summary_df, include_entities)
             if buildings:
-                plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
-                summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)]
+                summary_df = summary_df[summary_df['name'].isin(list(buildings))]
 
             entity_dfs = []
             for building_name in summary_df['name'].tolist():
@@ -339,7 +369,7 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
         df_out.to_csv(out_path, index=False, float_format='%.3f')
 
 
-def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
+def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end, include_entities=None):
     """
     Read heat rejection results for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
@@ -352,6 +382,9 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
     """
     from cea.utilities.date import get_date_range_hours_from_year
 
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
 
@@ -363,9 +396,9 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
             if not os.path.exists(src_path):
                 continue
             df = pd.read_csv(src_path)
+            df = _filter_by_entity_type(df, include_entities)
             if buildings:
-                plant_names = df.loc[df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in df.columns else []
-                df = df[df['name'].isin(list(buildings) + plant_names)].copy()
+                df = df[df['name'].isin(list(buildings))].copy()
             # Annotate plant names with network type suffix for display
             if 'type' in df.columns and 'case_description' in df.columns:
                 df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
@@ -394,6 +427,9 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
         if not os.path.exists(buildings_file):
             return
         buildings_df = pd.read_csv(buildings_file)
+        buildings_df = _filter_by_entity_type(buildings_df, include_entities)
+        if buildings:
+            buildings_df = buildings_df[buildings_df['name'].isin(list(buildings))]
         entity_names = buildings_df['name'].tolist()
 
         dates = get_date_range_hours_from_year(2005)
@@ -428,7 +464,7 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
         df_result.to_csv(out_path, index=False, float_format='%.3f')
 
 
-def _collect_lifecycle_rows(locator, whatif_names, buildings):
+def _collect_lifecycle_rows(locator, whatif_names, buildings, include_entities=None):
     """Build a list of per-building annual lifecycle emission rows from what-if results.
 
     All values (operational, embodied, solar offset) are summed over the full
@@ -436,6 +472,8 @@ def _collect_lifecycle_rows(locator, whatif_names, buildings):
     columns are merged into their parent service (Qhs_booster → Qhs_sys,
     Qww_booster → Qww_sys).
     """
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
     # Maps timeline column → output service key (boosters merged into parent)
     _TIMELINE_SERVICE_MAP = {
         'operation_Qhs_sys_kgCO2e': 'operation_Qhs_sys_kgCO2e',
@@ -455,10 +493,9 @@ def _collect_lifecycle_rows(locator, whatif_names, buildings):
         if not os.path.exists(buildings_summary_path):
             continue
         summary_df = pd.read_csv(buildings_summary_path)
+        summary_df = _filter_by_entity_type(summary_df, include_entities)
         if buildings:
-            # Keep selected buildings AND all plants
-            plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
-            summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
+            summary_df = summary_df[summary_df['name'].isin(list(buildings))].copy()
         for _, row in summary_df.iterrows():
             building_name = row['name']
             # Read timeline (lifecycle) for operational + solar offset totals
@@ -489,15 +526,18 @@ def _collect_lifecycle_rows(locator, whatif_names, buildings):
     return rows
 
 
-def _export_lifecycle_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, period_start, period_end):
+def _export_lifecycle_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, period_start, period_end, include_entities=None):
     """
     Read lifecycle emissions results for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
     """
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
 
-    rows = _collect_lifecycle_rows(locator, whatif_names, buildings)
+    rows = _collect_lifecycle_rows(locator, whatif_names, buildings, include_entities=include_entities)
     if not rows:
         return
     df_all = pd.DataFrame(rows)
@@ -659,7 +699,7 @@ def _aggregate_op_emission_hourly(hdf, n):
     return out
 
 
-def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end):
+def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end, include_entities=None):
     """
     Read operational emissions results for one or more what-if scenarios and write an
     intermediate CSV to the standard export/plots path expected by the pipeline.
@@ -671,6 +711,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
     - Solar offsets:     PV_E_offset_kgCO2e        (always)
     """
     from cea.utilities.date import get_date_range_hours_from_year
+
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
 
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
@@ -684,9 +727,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
             if not os.path.exists(buildings_summary_path):
                 continue
             summary_df = pd.read_csv(buildings_summary_path)
+            summary_df = _filter_by_entity_type(summary_df, include_entities)
             if buildings:
-                plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
-                summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
+                summary_df = summary_df[summary_df['name'].isin(list(buildings))].copy()
 
             for _, row in summary_df.iterrows():
                 building_name = row['name']
@@ -719,9 +762,9 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
         if not os.path.exists(buildings_summary_path):
             return
         summary_df = pd.read_csv(buildings_summary_path)
+        summary_df = _filter_by_entity_type(summary_df, include_entities)
         if buildings:
-            plant_names = summary_df.loc[summary_df.get('type', pd.Series()) == 'plant', 'name'].tolist() if 'type' in summary_df.columns else []
-            summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
+            summary_df = summary_df[summary_df['name'].isin(list(buildings))].copy()
 
         dates = get_date_range_hours_from_year(2005)
         entity_dfs = []
@@ -754,7 +797,7 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=None):
+    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=None, include_entities=None):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -772,6 +815,7 @@ class csv_pointer:
         self.period_start = period_start
         self.period_end = period_end
         self.buildings = plots_building_filter.buildings
+        self.include_entities = include_entities if include_entities is not None else ['plants', 'buildings']
 
         # For lifecycle-emissions, emission-timeline, and operational-emissions,
         # y_metric_to_plot is generated in b_data_processor from multiple parameters
@@ -839,7 +883,8 @@ class csv_pointer:
             _export_heat_rejection_to_plots_folder(
                 self.locator, self.whatif_names, self.buildings,
                 self.bool_aggregate_by_building, self.time_period,
-                self.period_start, self.period_end
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
             )
             return
 
@@ -849,7 +894,8 @@ class csv_pointer:
             _export_final_energy_to_plots_folder(
                 self.locator, self.whatif_names, self.buildings,
                 self.bool_aggregate_by_building, self.time_period,
-                self.period_start, self.period_end
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
             )
             return
 
@@ -857,7 +903,8 @@ class csv_pointer:
             _export_lifecycle_emissions_to_plots_folder(
                 self.locator, self.whatif_names, self.buildings,
                 self.bool_aggregate_by_building,
-                self.period_start, self.period_end
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
             )
             return
 
@@ -865,7 +912,8 @@ class csv_pointer:
             _export_operational_emissions_to_plots_folder(
                 self.locator, self.whatif_names, self.buildings,
                 self.bool_aggregate_by_building, self.time_period,
-                self.period_start, self.period_end
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
             )
             return
 
@@ -991,7 +1039,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False, whatif_names=None):
+def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False, whatif_names=None, include_entities=None):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -1006,7 +1054,7 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
         None
     """
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=whatif_names)
+    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=whatif_names, include_entities=include_entities)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
