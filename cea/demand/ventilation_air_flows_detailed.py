@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize, OptimizeResult
 
+from cea.constants import KELVIN_CONVERSION
 from cea.demand import constants
 from cea.utilities.physics import calc_rho_air
 
@@ -283,8 +284,8 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
     rho_air_ref = constants.RHO_AIR_REF  # (kg/m3)
     temp_ext_ref = constants.TEMP_EXT_REF  # (K)
 
-    temp_zone += 273  # conversion to (K)
-    temp_ext += 273  # conversion to (K)
+    temp_zone += KELVIN_CONVERSION  # conversion to (K)
+    temp_ext += KELVIN_CONVERSION  # conversion to (K)
 
     # Equation (5) in [1]
     p_zone_path = p_zone_ref - rho_air_ref * height_path * g * temp_ext_ref / temp_zone
