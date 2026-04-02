@@ -17639,7 +17639,7 @@ get_final_energy_file:
     columns:
       date:
         description: Timestamp for each hour (8760 rows per year)
-        type: datetime64
+        type: date
         unit: NA
       Qhs_sys_kWh:
         description: Hourly space heating system demand (all buildings aggregated)
@@ -17729,7 +17729,7 @@ get_final_energy_building_file:
     columns:
       date:
         description: Timestamp for each hour (8760 rows per year)
-        type: datetime64
+        type: date
         unit: NA
       Qhs_sys_kWh:
         description: Hourly space heating system demand
@@ -17905,7 +17905,7 @@ get_final_energy_plant_file:
     columns:
       date:
         description: Timestamp for each hour (8760 rows per year)
-        type: datetime64
+        type: date
         unit: NA
       thermal_load_kWh:
         description: Hourly thermal load served by the plant (heating or cooling)
@@ -18114,7 +18114,7 @@ get_heat_rejection_whatif_building_file:
     columns:
       date:
         description: Timestamp for each hour (8760 rows per year)
-        type: datetime64
+        type: date
         unit: NA
       heat_rejection_kW:
         description: Heat rejection rate at this hour (sum of all energy carriers)
