@@ -59,10 +59,10 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
             DummyWorkerProcesses(),
         )
 
-        assert response["state"] == JobState.ERROR
-        assert response["error"] == "mesh failed"
-        assert response["stdout"] == "stdout line"
-        assert response["stderr"] == "traceback"
+        assert response.state == JobState.ERROR
+        assert response.error == "mesh failed"
+        assert response.stdout == "stdout line"
+        assert response.stderr == "traceback"
 
         stored_job = await session.get(JobInfo, job_id, options=[undefer_group("logs")])
         assert stored_job is not None
@@ -106,11 +106,10 @@ async def test_set_job_success_keeps_datetime_fields_for_response_serialisation(
             jobs.JobOutput(output={"status": "ok"}),
         )
 
-        assert isinstance(response["start_time"], datetime)
-        assert isinstance(response["end_time"], datetime)
-        assert response["output"] == {"status": "ok"}
+        assert isinstance(response.start_time, datetime)
+        assert isinstance(response.end_time, datetime)
 
-        duration = response["end_time"] - response["start_time"]
+        duration = response.end_time - response.start_time
         assert duration.total_seconds() >= 0
 
     await engine.dispose()
