@@ -619,7 +619,7 @@ def map_metrics_and_cea_columns(input_list, direction="metrics_to_columns"):
         "enduse_space_cooling_demand[kWh]": ["Qcs_sys_kWh"],
         "enduse_heating_demand[kWh]": ["QH_sys_kWh"],
         "enduse_space_heating_demand[kWh]": ["Qhs_sys_kWh"],
-        "enduse_dhw_demand[kWh]": ["Qww_kWh"],
+        "enduse_dhw_demand[kWh]": ["Qww_sys_kWh"],
         "irradiation_roof[kWh]": ["roofs_top_kW"],
         "irradiation_window_north[kWh]": ["windows_north_kW"],
         "irradiation_wall_north[kWh]": ["walls_north_kW"],
@@ -2653,7 +2653,7 @@ def calc_ubem_analytics_normalised(locator, hour_start, hour_end, cea_feature, s
 # ----------------------------------------------------------------------------------------------------------------------
 # Prepare the lists of metrics
 
-list_metrics_building_energy_demand = ['grid_electricity_consumption[kWh]','enduse_electricity_demand[kWh]','enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]','enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]']
+list_metrics_building_energy_demand = ['enduse_electricity_demand[kWh]','enduse_cooling_demand[kWh]','enduse_space_cooling_demand[kWh]','enduse_heating_demand[kWh]','enduse_space_heating_demand[kWh]','enduse_dhw_demand[kWh]']
 list_metrics_solar_irradiation = ['irradiation_roof[kWh]', 'irradiation_window_north[kWh]', 'irradiation_wall_north[kWh]', 'irradiation_window_south[kWh]', 'irradiation_wall_south[kWh]', 'irradiation_window_east[kWh]', 'irradiation_wall_east[kWh]', 'irradiation_window_west[kWh]', 'irradiation_wall_west[kWh]']
 list_metrics_photovoltaic_panels = ['PV_installed_area_total[m2]', 'PV_electricity_total[kWh]', 'PV_installed_area_roof[m2]', 'PV_electricity_roof[kWh]', 'PV_installed_area_north[m2]', 'PV_electricity_north[kWh]', 'PV_installed_area_south[m2]', 'PV_electricity_south[kWh]', 'PV_installed_area_east[m2]', 'PV_electricity_east[kWh]', 'PV_installed_area_west[m2]', 'PV_electricity_west[kWh]']
 list_metrics_photovoltaic_thermal_panels_et = ['PVT_ET_installed_area_total[m2]', 'PVT_ET_electricity_total[kWh]', 'PVT_ET_heat_total[kWh]', 'PVT_ET_installed_area_roof[m2]', 'PVT_ET_electricity_roof[kWh]', 'PVT_ET_heat_roof[kWh]', 'PVT_ET_installed_area_north[m2]', 'PVT_ET_electricity_north[kWh]', 'PVT_ET_heat_north[kWh]', 'PVT_ET_installed_area_south[m2]', 'PVT_ET_electricity_south[kWh]', 'PVT_ET_heat_south[kWh]', 'PVT_ET_installed_area_east[m2]', 'PVT_ET_electricity_east[kWh]', 'PVT_ET_heat_east[kWh]', 'PVT_ET_installed_area_west[m2]', 'PVT_ET_electricity_west[kWh]', 'PVT_ET_heat_west[kWh]']
@@ -2707,19 +2707,25 @@ def get_list_list_metrics_with_date(config):
     solar_technologies = config.result_summary.solar_technologies or []
     list_list_metrics_with_date.extend(_get_solar_metric_lists(solar_technologies))
 
-    # Network layouts (multi-choice list of network names)
-    network_names = config.result_summary.network_name or []
-    if network_names:
-        locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-        for net_name in network_names:
-            dh_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DH', net_name)
-            if os.path.exists(dh_thermal_path):
-                list_list_metrics_with_date.append(list_metrics_district_heating)
-            dc_thermal_path = locator.get_thermal_network_plant_heat_requirement_file('DC', net_name)
-            if os.path.exists(dc_thermal_path):
-                list_list_metrics_with_date.append(list_metrics_district_cooling)
-
+    # Network metrics are handled separately per network in process_building_summary
     return list_list_metrics_with_date
+
+
+def get_network_metric_lists(config):
+    """Return a list of (network_name, metric_list) tuples for DH/DC networks."""
+    network_names = config.result_summary.network_name or []
+    if not network_names:
+        return []
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    result = []
+    for net_name in network_names:
+        dh_path = locator.get_thermal_network_plant_heat_requirement_file('DH', net_name)
+        if os.path.exists(dh_path):
+            result.append((net_name, list_metrics_district_heating))
+        dc_path = locator.get_thermal_network_plant_heat_requirement_file('DC', net_name)
+        if os.path.exists(dc_path):
+            result.append((net_name, list_metrics_district_cooling))
+    return result
 
 
 def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
@@ -3340,6 +3346,21 @@ def process_building_summary(config, locator,
             print("         Continuing with next metrics...")
             continue
 
+    # Step 7b: Export Network Results (DH/DC per network layout)
+    if not plot:
+        network_metrics = get_network_metric_lists(config)
+        for net_name, list_metrics in network_metrics:
+            try:
+                list_list_useful_cea_results, list_appendix = exec_read_and_slice(hour_start, hour_end, locator, list_metrics, list_buildings, network_name=net_name)
+                list_list_df_aggregate_time_period, list_list_time_period = exec_aggregate_time_period(bool_use_acronym, list_list_useful_cea_results, list_selected_time_period)
+                results_writer_time_period(locator, hour_start, hour_end, summary_folder, list_metrics, list_list_df_aggregate_time_period, list_list_time_period, list_appendix, bool_analytics=False, plot=plot)
+            except Exception as e:
+                error_msg = f"Step 7b (Network {net_name}) - metrics {list_metrics}: {str(e)}"
+                errors_encountered.append(error_msg)
+                print(f"Warning: {error_msg}")
+                print("         Continuing with next network...")
+                continue
+
     # Step 8: Aggregate by Building (if Enabled)
     if bool_aggregate_by_building:
         for list_metrics in list_list_metrics_building:
@@ -3376,15 +3397,8 @@ def process_building_summary(config, locator,
                     errors_encountered.append(error_msg)
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
-            if any(item in list_cea_feature_to_plot for item in ['pv']):
-                try:
-                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings,
-                                      list_selected_time_period, bool_aggregate_by_building, bool_use_acronym, plot=plot)
-                except Exception as e:
-                    error_msg = f"Step 9 (Advanced Analytics - pv): {str(e)}"
-                    errors_encountered.append(error_msg)
-                    print(f"Warning: {error_msg}")
-                    print("         Continuing with remaining analytics...")
+            # PV analytics skipped — requires grid consumption from what-if final-energy
+            # TODO: re-enable with what-if-aware PV analytics
             if any(item in list_cea_feature_to_plot for item in ['operational_emissions']):
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
@@ -3407,17 +3421,8 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            solar_technologies = config.result_summary.solar_technologies or []
-            has_pv = any(t.startswith('PV_') and not t.startswith('PVT_') for t in solar_technologies)
-            if has_pv:
-                try:
-                    calc_pv_analytics(locator, hour_start, hour_end, summary_folder, list_buildings, list_selected_time_period,
-                                      bool_aggregate_by_building, bool_use_acronym, plot=plot)
-                except Exception as e:
-                    error_msg = f"Step 9 (Advanced Analytics - pv): {str(e)}"
-                    errors_encountered.append(error_msg)
-                    print(f"Warning: {error_msg}")
-                    print("         Continuing with remaining analytics...")
+            # PV analytics skipped — requires grid consumption from what-if final-energy
+            # TODO: re-enable with what-if-aware PV analytics
 
             if config.result_summary.what_if_name_emissions:
                 try:
