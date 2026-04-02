@@ -335,7 +335,7 @@ def find_compatible_components(
                                 'output_temp': comp_ec.mean_qual,
                                 'energy_carrier': comp_ec.code
                             }
-                except (ValueError, KeyError, IndexError):
+                except (ValueError, KeyError, IndexError, TypeError):
                     # Component instantiation failed, skip it
                     continue
 
