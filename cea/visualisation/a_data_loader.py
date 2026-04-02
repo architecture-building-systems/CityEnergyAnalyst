@@ -429,14 +429,23 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
 
 
 def _collect_lifecycle_rows(locator, whatif_names, buildings):
-    """Build a list of per-building annual lifecycle emission rows from what-if results."""
-    _SERVICE_MAP = {
-        'Qhs_sys_': 'operation_Qhs_sys',
-        'Qww_sys_': 'operation_Qww_sys',
-        'Qcs_sys_': 'operation_Qcs_sys',
-        'E_sys_': 'operation_E_sys',
-        'Qhs_booster_': 'operation_Qhs_sys',
-        'Qww_booster_': 'operation_Qww_sys',
+    """Build a list of per-building annual lifecycle emission rows from what-if results.
+
+    All values (operational, embodied, solar offset) are summed over the full
+    lifecycle timeline so they are on the same time scope.  Booster operational
+    columns are merged into their parent service (Qhs_booster → Qhs_sys,
+    Qww_booster → Qww_sys).
+    """
+    # Maps timeline column → output service key (boosters merged into parent)
+    _TIMELINE_SERVICE_MAP = {
+        'operation_Qhs_sys_kgCO2e': 'operation_Qhs_sys_kgCO2e',
+        'operation_Qww_sys_kgCO2e': 'operation_Qww_sys_kgCO2e',
+        'operation_Qcs_sys_kgCO2e': 'operation_Qcs_sys_kgCO2e',
+        'operation_E_sys_kgCO2e': 'operation_E_sys_kgCO2e',
+        'operation_Qhs_booster_kgCO2e': 'operation_Qhs_sys_kgCO2e',
+        'operation_Qww_booster_kgCO2e': 'operation_Qww_sys_kgCO2e',
+        'operation_DH_kgCO2e': 'operation_DH_kgCO2e',
+        'operation_DC_kgCO2e': 'operation_DC_kgCO2e',
     }
     _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e', 'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
     multi = len(whatif_names) > 1
@@ -452,35 +461,27 @@ def _collect_lifecycle_rows(locator, whatif_names, buildings):
             summary_df = summary_df[summary_df['name'].isin(list(buildings) + plant_names)].copy()
         for _, row in summary_df.iterrows():
             building_name = row['name']
-            hourly_path = locator.get_emissions_whatif_building_file(building_name, whatif_name)
-            if not os.path.exists(hourly_path):
+            # Read timeline (lifecycle) for operational + solar offset totals
+            timeline_path = locator.get_emissions_whatif_building_timeline_file(building_name, whatif_name)
+            if not os.path.exists(timeline_path):
                 continue
-            hdf = pd.read_csv(hourly_path)
+            tdf = pd.read_csv(timeline_path)
             annotated_name = _annotate_plant_display_name(building_name, row)
             out_row = {
                 'name': f'{whatif_name}/{annotated_name}' if multi else annotated_name,
                 'GFA_m2': row.get('GFA_m2', 0.0),
             }
+            # Operational per-service totals from timeline (full lifecycle scope)
             service_totals = {}
-            is_plant = row.get('type') == 'plant'
-            for col in hdf.columns:
-                if not col.endswith('_kgCO2e'):
-                    continue
-                if is_plant:
-                    # Plant columns (e.g. plant_primary_DH_GRID_kgCO2e) → map all to operation_E_sys
-                    service_totals['operation_E_sys_kgCO2e'] = service_totals.get('operation_E_sys_kgCO2e', 0.0) + hdf[col].sum()
-                else:
-                    for prefix, dest in _SERVICE_MAP.items():
-                        if col.startswith(prefix):
-                            key = f'{dest}_kgCO2e'
-                            service_totals[key] = service_totals.get(key, 0.0) + hdf[col].sum()
-                            break
+            for tl_col, dest_col in _TIMELINE_SERVICE_MAP.items():
+                if tl_col in tdf.columns:
+                    service_totals[dest_col] = service_totals.get(dest_col, 0.0) + tdf[tl_col].sum()
             out_row.update(service_totals)
+            # Solar offsets from timeline
             for solar_col in _SOLAR_OFFSETS:
-                if solar_col in hdf.columns:
-                    # solar_col already has _kgCO2e suffix; strip it for the base offset column name
-                    base = solar_col[:-len('_kgCO2e')]
-                    out_row[f'{base}_kgCO2e'] = hdf[solar_col].sum()
+                if solar_col in tdf.columns:
+                    out_row[solar_col] = tdf[solar_col].sum()
+            # Embodied totals from summary (already lifecycle-scoped)
             for emb_col in ('production_kgCO2e', 'biogenic_kgCO2e', 'demolition_kgCO2e'):
                 out_row[emb_col] = row.get(emb_col, 0.0)
             out_row['period'] = 'annually'

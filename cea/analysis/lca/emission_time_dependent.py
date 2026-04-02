@@ -697,14 +697,11 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         print(f'  Hourly operational emissions for {building_name} saved.')
         operational_results.append((building_name, hourly_op))
 
-        # Annual operational total for summary (sum all emission columns except date/name)
-        op_cols = [c for c in hourly_op.columns if c not in ('date', 'name')]
-        op_total = float(hourly_op[op_cols].sum().sum()) if op_cols else 0.0
-
         # Yearly emission timeline (embodied + operational)
         production_total = 0.0
         biogenic_total = 0.0
         demolition_total = 0.0
+        operation_total = 0.0
         try:
             timeline = BuildingEmissionTimeline(
                 building_properties=building_properties,
@@ -731,21 +728,26 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             os.makedirs(os.path.dirname(building_timeline_file), exist_ok=True)
             timeline.timeline.to_csv(building_timeline_file, float_format='%.2f')
             print(f'  Emission timeline for {building_name} saved.')
-            # Sum each lifecycle category across all years
+            # Sum each lifecycle category across all years (consistent scope)
+            tl_cols = timeline.timeline.columns
             production_total = float(timeline.timeline[
-                [c for c in timeline.timeline.columns if c.startswith('production_')]
+                [c for c in tl_cols if c.startswith('production_')]
             ].sum().sum())
             biogenic_total = float(timeline.timeline[
-                [c for c in timeline.timeline.columns if c.startswith('biogenic_')]
+                [c for c in tl_cols if c.startswith('biogenic_')]
             ].sum().sum())
             demolition_total = float(timeline.timeline[
-                [c for c in timeline.timeline.columns if c.startswith('demolition_')]
+                [c for c in tl_cols if c.startswith('demolition_')]
+            ].sum().sum())
+            operation_total = float(timeline.timeline[
+                [c for c in tl_cols if c.startswith('operation_')]
             ].sum().sum())
         except Exception as e:
             print(f'  Warning: could not compute emission timeline for {building_name}: {e}')
             production_total = 0.0
             biogenic_total = 0.0
             demolition_total = 0.0
+            operation_total = 0.0
 
         buildings_rows_out.append({
             'name': building_name,
@@ -756,7 +758,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'scale': row.get('scale', 'BUILDING'),
             'case': row.get('case'),
             'case_description': row.get('case_description'),
-            'operation_kgCO2e': op_total,
+            'operation_kgCO2e': operation_total,
             'production_kgCO2e': production_total,
             'biogenic_kgCO2e': biogenic_total,
             'demolition_kgCO2e': demolition_total,
@@ -840,6 +842,11 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             os.makedirs(os.path.dirname(plant_timeline_file), exist_ok=True)
             plant_timeline_df.to_csv(plant_timeline_file, float_format='%.2f')
             print(f'  Emission timeline for plant {plant_name} saved.')
+        # Use lifecycle total from plant timeline (consistent with building scope)
+        plant_op_lifecycle = float(plant_timeline_df[
+            [c for c in plant_timeline_df.columns if c.startswith('operation_')]
+        ].sum().sum()) if timeline_results else op_total
+
         buildings_rows_out.append({
             'name': plant_name,
             'type': 'plant',
@@ -849,7 +856,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'scale': 'DISTRICT',
             'case': row.get('case'),
             'case_description': case_desc,
-            'operation_kgCO2e': op_total,
+            'operation_kgCO2e': plant_op_lifecycle,
             'production_kgCO2e': 0.0,
             'biogenic_kgCO2e': 0.0,
             'demolition_kgCO2e': 0.0,

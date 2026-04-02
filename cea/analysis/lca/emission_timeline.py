@@ -281,13 +281,27 @@ class BuildingEmissionTimeline:
                     self.timeline[col_name] = 0.0
 
         # PV embodied emissions (module_embodied_kgco2m2 available in PHOTOVOLTAIC_PANELS)
-        pv_codes = {code.split('_')[1] for code in tech_codes if code.split('_')[0] == 'PV'}
-        if pv_codes:
+        # Map solar_config facade keys to per-facade area columns in PV_total_buildings CSV
+        _FACADE_TO_AREA_COL = {
+            'roof': 'PV_roofs_top_m2',
+            'wall_north': 'PV_walls_north_m2',
+            'wall_south': 'PV_walls_south_m2',
+            'wall_east': 'PV_walls_east_m2',
+            'wall_west': 'PV_walls_west_m2',
+        }
+        # Collect which facades have PV installed (grouped by PV code)
+        pv_facades_by_code: dict[str, list[str]] = {}
+        for facade, tech_code in solar_config.items():
+            if tech_code and tech_code.split('_')[0] == 'PV':
+                pv_code = tech_code.split('_')[1]
+                pv_facades_by_code.setdefault(pv_code, []).append(facade)
+
+        if pv_facades_by_code:
             pv_db = pd.read_csv(
                 self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'),
                 index_col='code',
             )
-            for pv_code in pv_codes:
+            for pv_code, facades in pv_facades_by_code.items():
                 if pv_code not in pv_db.index:
                     continue
                 buildings_path = self.locator.PV_total_buildings(pv_code)
@@ -296,7 +310,12 @@ class BuildingEmissionTimeline:
                 buildings_df = pd.read_csv(buildings_path, index_col='name')
                 if self.name not in buildings_df.index:
                     continue
-                pv_area = float(buildings_df.at[self.name, 'area_PV_m2'])
+                # Sum only the per-facade areas that are configured (not total area_PV_m2)
+                pv_area = 0.0
+                for facade in facades:
+                    area_col = _FACADE_TO_AREA_COL.get(facade)
+                    if area_col and area_col in buildings_df.columns:
+                        pv_area += float(buildings_df.at[self.name, area_col])
                 if pv_area <= 0:
                     continue
                 embodied = float(pv_db.at[pv_code, 'module_embodied_kgco2m2'])
