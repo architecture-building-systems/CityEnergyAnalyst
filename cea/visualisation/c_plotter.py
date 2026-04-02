@@ -56,6 +56,26 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         'operation_DC': 'District Cooling',
     }
 
+    # Lifecycle / operational emission display names
+    emission_display_names = {
+        'operation_E_sys': 'Electricity',
+        'operation_Qcs_sys': 'Space Cooling',
+        'operation_Qhs_sys': 'Space Heating',
+        'operation_Qww_sys': 'Domestic Hot Water',
+        'operation_DH': 'District Heating',
+        'operation_DC': 'District Cooling',
+        'production': 'Production',
+        'biogenic': 'Biogenic',
+        'demolition': 'Demolition',
+        'PV_E_offset': 'PV Offset',
+        'PVT_E_offset': 'PVT Electric Offset',
+        'PVT_Q_offset': 'PVT Thermal Offset',
+        'SC_Q_offset': 'SC Thermal Offset',
+    }
+    for base, display_name in emission_display_names.items():
+        if column_name.startswith(base):
+            return display_name
+
     for base, display_name in demand_display_names.items():
         if column_name.startswith(base):
             return display_name
