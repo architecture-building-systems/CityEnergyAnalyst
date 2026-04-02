@@ -315,23 +315,23 @@ class bar_plot:
             
             elif plot_cea_feature == 'lifecycle-emissions':
                 if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Lifecycle Emissions (tonnes CO2e/yr)"
+                    y_label = "Lifecycle Emissions (tonnes CO2e)"
                 elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Lifecycle Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (tonnes CO2e/m2)"
                 elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Lifecycle Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (tonnes CO2e/m2)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Lifecycle Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (kg CO2e/m2)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Lifecycle Emissions (kg CO2e/yr)"
+                    y_label = "Lifecycle Emissions (kg CO2e)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Lifecycle Emissions per Gross Floor Area (kg CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (kg CO2e/m2)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Lifecycle Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (g CO2e/m2)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Lifecycle Emissions (g CO2e/yr)"
+                    y_label = "Lifecycle Emissions (g CO2e)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Lifecycle Emissions per Gross Floor Area (g CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (g CO2e/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
