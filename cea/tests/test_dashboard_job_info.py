@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 from unittest.mock import AsyncMock
 
 from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
-from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState
+from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, Project, User
 from cea.interfaces.dashboard.server import jobs
 
 @pytest.fixture
@@ -27,6 +27,12 @@ async def db_session():
 
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+    
+    # Pre-populate with a user and project for testing
+    async with session_maker() as session:
+        session.add(User(id="localuser"))
+        session.add(Project(id="project", uri="test", owner="localuser"))
+        await session.commit()
 
     yield session_maker
 
@@ -78,6 +84,7 @@ async def test_set_job_error_serialises_deferred_logs_without_lazy_loading(monke
         assert response.stdout == "stdout line"
         assert response.stderr == "traceback"
 
+    async with db_session() as session:
         stored_job = await session.get(JobInfo, job_id, options=[undefer_group("logs")])
         assert stored_job is not None
         assert stored_job.state == JobState.ERROR
