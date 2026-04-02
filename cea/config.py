@@ -1013,6 +1013,7 @@ class ChoiceParameter(ChoiceParameterBase):
         _value = str(value).strip() if value is not None else ''
 
         # Allow empty values if parameter is nullable
+        # FIXME: Maybe decode does not need to consider nullability
         if self.nullable and _value == '':
             return None
         
@@ -1228,9 +1229,6 @@ class WhatIfNameChoiceParameter(ChoiceParameter):
             return []
 
     def encode(self, value):
-        # Always allow empty values — the UI enforces required selection
-        if value is None or str(value).strip() == '':
-            return ''
         value = str(value).strip()
         choices = self._choices
         if choices and value not in choices:
@@ -1388,6 +1386,10 @@ class ScenarioParameter(Parameter):
 class MultiChoiceParameter(ChoiceParameterBase):
     """Like ChoiceParameter, but multiple values from the choices list can be used"""
 
+    # Subclass customisation flags
+    empty_means_all: bool = True    # decode('') -> _choices (True) or [] (False)
+    strict_validation: bool = False  # encode raises on invalid (True) or silently filters (False)
+
     @property
     def default(self):
         _default = self.config.default_config.get(self.section.name, self.name)
@@ -1395,21 +1397,50 @@ class MultiChoiceParameter(ChoiceParameterBase):
             return []
         return self.decode(_default)
 
-    def encode(self, value: list):
-        if not isinstance(value, list):
-            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list, got {type(value)}.")
+    def encode(self, value) -> str:
+        # Coerce input to list
+        if isinstance(value, str):
+            value = parse_string_to_list(value)
+        elif not isinstance(value, list):
+            value = [str(value).strip()]
 
-        valid_choices = set(self._choices)
-        value = [v for v in value if v in valid_choices]
+        # Handle empty
+        if not value:
+            if self.nullable:
+                return ''
+            if self.strict_validation:
+                raise ValueError(f"At least one value is required for {self.name}.")
+            return ''
+
+        # Validate against choices
+        value = self._validate_choices(value)
 
         return ', '.join(map(str, value))
 
     def decode(self, value) -> list[str]:
-        if value == '':
-            return self._choices
+        if value == '' or value is None:
+            return self._choices if self.empty_means_all else []
         choices = parse_string_to_list(value)
         valid_choices = set(self._choices)
-        return [choice for choice in choices if choice in valid_choices]
+        if not valid_choices:
+            return choices
+        return [c for c in choices if c in valid_choices]
+
+    def _validate_choices(self, value: list[str]) -> list[str]:
+        """Validate/filter value list against available choices. Override for custom behaviour."""
+        choices = self._choices
+        if not choices:
+            return value
+        choices_set = set(choices)
+        if self.strict_validation:
+            invalid = set(value) - choices_set
+            if invalid:
+                raise ValueError(
+                    f"Invalid value(s) {invalid} for {self.name}. "
+                    f"Available: {', '.join(choices)}"
+                )
+            return value
+        return [v for v in value if v in choices_set]
 
 
 class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoicesMixin, MultiChoiceParameter):
@@ -1417,36 +1448,22 @@ class NetworkLayoutMultiChoiceParameter(NetworkLayoutChoicesMixin, MultiChoicePa
     Parameter for selecting MULTIPLE existing network layouts (for multi-phase analysis).
     """
 
+    empty_means_all = False
+    strict_validation = True
+
     @property
     def _choices(self):
         return list(self._network_choices)
 
-    def encode(self, value: list[str] | str):
-        if isinstance(value, str):
-            value = parse_string_to_list(value)
-        elif not isinstance(value, list):
-            raise ValueError(f"Bad value for encode of parameter {self.name}. Expected list or str, got {type(value)}.")
-
-        if not value:
-            if self.nullable:
-                return ''
-            raise ValueError("At least one network layout is required.")
-
-        available_networks = self._get_available_networks()
-        invalid_networks = set(value) - set(available_networks)
-        if invalid_networks:
+    def _validate_choices(self, value: list[str]) -> list[str]:
+        available = self._get_available_networks()
+        invalid = set(value) - set(available)
+        if invalid:
             raise ValueError(
-                f"Invalid network layouts {invalid_networks} for {self.name}. "
-                f"Available layouts: {', '.join(available_networks)}"
+                f"Invalid network layouts {invalid} for {self.name}. "
+                f"Available layouts: {', '.join(available)}"
             )
-
-        return ', '.join(map(str, value))
-
-    def decode(self, value) -> list[str]:
-        if value == '':
-            return []
-        available_networks = set(self._get_available_networks())
-        return [v for v in parse_string_to_list(value) if v in available_networks]
+        return value
 
 
 class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
@@ -1455,6 +1472,9 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
     Scans outputs/data/analysis/ for existing subfolders and allows selecting multiple.
     Supports mode=final_energy to filter to scenarios with final-energy output.
     """
+
+    empty_means_all = False
+    strict_validation = True
 
     @property
     def _choices(self):
@@ -1479,27 +1499,6 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             return names
         except Exception:
             return []
-
-    def encode(self, value):
-        # Always allow empty — UI handles required validation
-        if not value:
-            return ''
-        if not isinstance(value, list):
-            value = [str(value).strip()]
-        choices = self._choices
-        not_in_choices = set(value) - set(choices)
-        if choices and not_in_choices:
-            raise ValueError(
-                f"What-if scenario(s) {not_in_choices} do not exist. "
-                f"Available: {', '.join(choices) or 'none'}"
-            )
-        return ', '.join(value)
-
-    def decode(self, value) -> list:
-        if not value or str(value).strip() == '':
-            return []
-        choices_set = set(self._choices)
-        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
 
 
 class ComponentMultiChoiceParameter(MultiChoiceParameter):
@@ -1570,21 +1569,11 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
         except Exception:
             return []
 
-    def encode(self, value):
-        if not value:
-            return ''
-        if not isinstance(value, list):
-            value = [str(value).strip()]
-        return ', '.join(value)
+    empty_means_all = False
 
-    def decode(self, value) -> list:
-        if not value or str(value).strip() == '':
-            return []
-        choices_set = set(self._choices)
-        result = [v.strip() for v in str(value).split(',') if v.strip()]
-        if choices_set:
-            result = [v for v in result if v in choices_set]
-        return result
+    def _validate_choices(self, value: list[str]) -> list[str]:
+        # Choices are dynamic and may be unpopulated; skip validation
+        return value
 
 
 class MultiChoiceFeedstockParameter(MultiChoiceParameter):
@@ -2136,14 +2125,6 @@ class SolarPanelChoicesMixin:
             return str(value)
         return None
 
-    def _decode_solar_multi(self, value) -> list:
-        """Decode a comma-separated list of solar technology values."""
-        if not value or str(value).strip() == '':
-            return []
-        choices_set = set(self._choices)
-        return [v.strip() for v in str(value).split(',') if v.strip() in choices_set]
-
-
 class SolarPanelChoiceParameter(SolarPanelChoicesMixin, ChoiceParameter):
     """
     Nullable parameter for selecting a solar technology type available in the scenario.
@@ -2170,33 +2151,8 @@ class SolarPanelMultiChoiceParameter(SolarPanelChoicesMixin, MultiChoiceParamete
     Allows selecting multiple solar technology types from available results.
     """
 
-    @property
-    def default(self):
-        _default = self.config.default_config.get(self.section.name, self.name)
-        if _default == '':
-            return []
-        return self.decode(_default)
-
-    def encode(self, value):
-        if isinstance(value, str):
-            value = parse_string_to_list(value)
-        if not isinstance(value, list):
-            raise ValueError(f"Expected list for {self.name}, got {type(value)}.")
-        if not value:
-            if self.nullable:
-                return ''
-            raise ValueError("At least one solar technology is required.")
-        choices = self._choices
-        invalid = set(value) - set(choices)
-        if choices and invalid:
-            raise ValueError(
-                f"Invalid solar technologies {invalid}. "
-                f"Available: {', '.join(choices) or 'none'}"
-            )
-        return ', '.join(value)
-
-    def decode(self, value) -> list[str]:
-        return self._decode_solar_multi(value)
+    empty_means_all = False
+    strict_validation = True
 
 
 class PlotContextParameter(Parameter):
