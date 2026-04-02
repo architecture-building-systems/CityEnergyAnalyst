@@ -459,26 +459,6 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
             values.append(total_val / divisor)
             link_colors.append(_to_rgba(_DETAIL_COLOURS.get(detail_label, COLOURS_TO_RGB['grey'])))
 
-        # Inflate the CAPEX summary node to reflect lifetime total.
-        # An invisible padding node feeds the difference (total − annualised)
-        # into CAPEX so that CAPEX Annualised keeps its original size.
-        if (include_capex and 'CAPEX' in idx
-                and 'capex_total_USD' in df.columns and 'capex_a_USD' in df.columns):
-            capex_total = df['capex_total_USD'].sum()
-            capex_annual = df['capex_a_USD'].sum()
-            remainder = capex_total - capex_annual
-            if remainder > 0:
-                # Add invisible padding node
-                pad_idx = len(all_node_keys)
-                all_node_keys.append('__capex_pad__')
-                all_node_labels.append('')
-                all_node_x.append(0.74)  # just left of the CAPEX summary column
-                node_colors.append('rgba(0,0,0,0)')
-                idx['__capex_pad__'] = pad_idx
-                sources.append(pad_idx)
-                targets.append(idx['CAPEX'])
-                values.append(remainder / divisor)
-                link_colors.append('rgba(0,0,0,0)')
 
     if not sources:
         return None
