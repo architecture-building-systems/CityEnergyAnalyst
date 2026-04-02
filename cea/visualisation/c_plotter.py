@@ -790,6 +790,7 @@ def plot_faceted_bars(
                     'y': df[val_col],
                     'name': heading,
                     'legendgroup': heading,
+                    'showlegend': True,
                     'marker': dict(color=bar_color, line=dict(width=0)),
                     'width': min(0.25, max(0.1, 200/len(df))),
                 }
@@ -807,6 +808,7 @@ def plot_faceted_bars(
                     'y': df[val_col],
                     'name': heading,
                     'legendgroup': heading,
+                    'showlegend': True,
                     'marker': dict(color=bar_color, line=dict(width=0)),
                     'offsetgroup': j,
                 }
