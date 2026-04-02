@@ -969,22 +969,24 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"Check your network topology, demand patterns, and configuration parameters.\n"
                         f"Enable debug mode for more details."
                     ) from e
+                        
+            flowrate_df: pd.DataFrame = results.link['flowrate']  # type: ignore[index]
 
             # Validate results
-            if results.link['flowrate'].empty:
+            if flowrate_df.empty:
                 raise ValueError(
                     "WNTR simulation produced empty flowrate results. "
                     "This indicates a problem with network definition or simulation setup."
                 )
 
-            if results.link['flowrate'].isna().any().any():
-                nan_pipes = results.link['flowrate'].columns[results.link['flowrate'].isna().any()].tolist()
+            if flowrate_df.isna().any().any():
+                nan_pipes = flowrate_df.columns[flowrate_df.isna().any()].tolist()
                 warnings.warn(
                     f"WNTR simulation produced NaN flowrates for {len(nan_pipes)} pipe(s): {nan_pipes[:5]}. "
                     f"Results may be unreliable. Check network connectivity and demand patterns."
                 )
 
-            max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
+            max_volume_flow_rates_m3s = flowrate_df.abs().max()
             pipe_names = max_volume_flow_rates_m3s.index.values
             pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
             pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
@@ -1032,8 +1034,10 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Check if velocity constraint is too restrictive (current: {velocity_ms} m/s)"
             ) from e
         
+        headloss_df: pd.DataFrame = results.link['headloss']  # type: ignore[index]
+        
         # Validate results
-        if results.link['headloss'].isna().any().any():
+        if headloss_df.isna().any().any():
             warnings.warn(
                 "WNTR simulation produced NaN headloss values. "
                 "Pressure drop calculations may be unreliable."
@@ -1042,7 +1046,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
         print("Starting 3rd iteration to calculate final utilization of the grid...")
         # get accumulated head loss per hour
-        unitary_head_ftperkft = results.link['headloss'].abs()
+        unitary_head_ftperkft = headloss_df.abs()
         unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
         head_loss_m = unitary_head_mperm.copy()
         for column in head_loss_m.columns.values:
@@ -1074,8 +1078,10 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Check for pipes with very high pressure drops"
             ) from e
         
+        flowrate_final_df: pd.DataFrame = results.link['flowrate']  # type: ignore[index]
+
         # Final validation of complete results
-        if results.link['flowrate'].isna().all().all():
+        if flowrate_final_df.isna().all().all():
             # Calculate total demand for diagnostic
             total_flow_m3s = sum([
                 volume_flow_m3pers_building[bldg].sum()
@@ -1119,9 +1125,17 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     # POSTPROCESSING
     print("Postprocessing thermal network results...")
 
+    # Extract simulation results with proper typing
+    link_headloss_df: pd.DataFrame = results.link['headloss'] # type: ignore[index]
+    link_flowrate_df: pd.DataFrame = results.link['flowrate']  # type: ignore[index]
+    link_velocity_df: pd.DataFrame = results.link['velocity']  # type: ignore[index]
+    node_head_df: pd.DataFrame = results.node['head']  # type: ignore[index]
+    node_pressure_df: pd.DataFrame = results.node['pressure']  # type: ignore[index]
+    node_demand_df: pd.DataFrame = results.node['demand']  # type: ignore[index]
+
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
-    unitary_head_loss_supply_network_ftperkft = results.link['headloss'].abs()
+    unitary_head_loss_supply_network_ftperkft = link_headloss_df.abs()
     linear_pressure_loss_Paperm = unitary_head_loss_supply_network_ftperkft * FT_WATER_TO_PA / (FT_TO_M * scaling_factor)
     head_loss_supply_network_Pa = linear_pressure_loss_Paperm.copy()
     for column in head_loss_supply_network_Pa.columns.values:
@@ -1130,12 +1144,12 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     head_loss_return_network_Pa = head_loss_supply_network_Pa.copy(0)
     # at the substations
-    head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
+    head_loss_substations_ft = node_head_df[consumer_nodes].abs()
     head_loss_substations_Pa = head_loss_substations_ft * FT_WATER_TO_PA
 
     #POSTPORCESSING MASSFLOW RATES
     # MASS_FLOW_RATE (EDGES)
-    flow_rate_supply_m3s = results.link['flowrate'].abs()
+    flow_rate_supply_m3s = link_flowrate_df.abs()
     massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
 
     # $ POSTPROCESSING - PRESSURE LOSSES ACCUMULATED PER HOUR OF THE YEAR (TIMES 2 to account for return)
@@ -1152,7 +1166,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     average_temperature_supply_K = T_sup_K_building.mean(axis=1)
 
 
-    thermal_losses_supply_kWh = results.link['headloss'].copy()
+    thermal_losses_supply_kWh = link_headloss_df.copy()
     thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
     thermal_losses_supply_Wperm = thermal_losses_supply_kWh.copy()
     for pipe in pipe_names:
@@ -1170,7 +1184,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     # return pipes
     average_temperature_return_K = T_re_K_building.mean(axis=1)
-    thermal_losses_return_kWh = results.link['headloss'].copy()
+    thermal_losses_return_kWh = link_headloss_df.copy()
     thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
     for pipe in pipe_names:
         length_m = edge_df.loc[pipe]['length_m']
@@ -1197,24 +1211,22 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                        index=False)
 
     # MASS_FLOW_RATE (EDGES)
-    flow_rate_supply_m3s = results.link['flowrate'].abs()
-    massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
     massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name),
                                index=False)
 
     # VELOCITY (EDGES)
-    velocity_edges_ms = results.link['velocity'].abs()
+    velocity_edges_ms = link_velocity_df.abs()
     velocity_edges_ms.to_csv(locator.get_thermal_network_velocity_edges_file(network_type, network_name),
                              index=False)
 
     # PRESSURE LOSSES (NODES)
-    pressure_at_nodes_ft = results.node['pressure'].abs()
+    pressure_at_nodes_ft = node_pressure_df.abs()
     pressure_at_nodes_Pa = pressure_at_nodes_ft * FT_TO_M * M_WATER_TO_PA
     pressure_at_nodes_Pa.to_csv(locator.get_network_pressure_at_nodes(network_type, network_name), index=False)
 
     # MASS_FLOW_RATE (NODES)
     # $ POSTPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
-    flow_rate_supply_nodes_m3s = results.node['demand'].abs()
+    flow_rate_supply_nodes_m3s = node_demand_df.abs()
     massflow_supply_nodes_kgs = flow_rate_supply_nodes_m3s * P_WATER_KGPERM3
     massflow_supply_nodes_kgs.to_csv(locator.get_thermal_network_layout_massflow_nodes_file(network_type, network_name),
                                      index=False)
@@ -1225,7 +1237,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     # pressure losses total
     # $ POSTPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
-    flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
+    flow_rate_substations_m3s = node_demand_df[consumer_nodes].abs()
     # head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
     # head_loss_return_kWperm = head_loss_supply_kWperm.copy()
     pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
