@@ -115,6 +115,16 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
                                                                                 solar_panel_types_list, bool_include_advanced_analytics,
                                                                                 whatif_names=whatif_names,
                                                                                 include_entities=include_entities)
+
+    # Check for empty data after entity filtering
+    if df_summary_data is None or df_summary_data.empty:
+        entity_label = ' and '.join(include_entities)
+        raise CEAException(
+            f"No data found for the selected entity type(s): {entity_label}. "
+            f"This scenario may not have any {entity_label}. "
+            "Please adjust the 'include' setting under 'General settings'."
+        )
+
     # Activate b_data_processor
     df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plot_instance, plot_cea_feature, df_summary_data,
                                                    df_architecture_data,

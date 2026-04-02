@@ -52,32 +52,47 @@ def _annotate_plant_display_name(original_name, row):
     return original_name
 
 
-def _filter_by_entity_type(df, include_entities):
-    """Filter DataFrame rows by entity type (buildings/plants).
+def _filter_by_entity_type(df, include_entities, buildings=None):
+    """Filter DataFrame rows by entity type (buildings/plants) and building name selection.
 
     Parameters
     ----------
     df : pd.DataFrame
         Must have a 'type' column with values 'building' or 'plant'.
-        If no 'type' column exists, returns df unchanged.
+        If no 'type' column exists, only the building name filter is applied.
     include_entities : list[str]
         Subset of ['buildings', 'plants'] indicating which to keep.
+    buildings : list[str] or None
+        If provided, filter building-type rows to only those in this list.
+        Plant-type rows are never filtered by name.
 
     Returns
     -------
     pd.DataFrame
     """
-    if 'type' not in df.columns:
-        return df
     include_buildings = 'buildings' in include_entities
     include_plants = 'plants' in include_entities
-    if include_buildings and include_plants:
-        return df
+
+    if 'type' not in df.columns:
+        # No type column — treat all rows as buildings
+        if buildings and include_buildings:
+            return df[df['name'].isin(list(buildings))].copy()
+        return df if include_buildings else df.iloc[0:0].copy()
+
+    # Split into buildings and plants
+    mask_plant = df['type'] == 'plant'
+    parts = []
     if include_buildings:
-        return df[df['type'] != 'plant'].copy()
+        bldg_df = df[~mask_plant]
+        if buildings:
+            bldg_df = bldg_df[bldg_df['name'].isin(list(buildings))]
+        parts.append(bldg_df)
     if include_plants:
-        return df[df['type'] == 'plant'].copy()
-    return df.iloc[0:0].copy()  # neither selected — empty
+        parts.append(df[mask_plant])
+
+    if not parts:
+        return df.iloc[0:0].copy()
+    return pd.concat(parts, ignore_index=False)
 
 
 def get_building_names_from_zone(locator):
@@ -226,9 +241,7 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(src_path):
                 continue
             df = pd.read_csv(src_path)
-            df = _filter_by_entity_type(df, include_entities)
-            if buildings:
-                df = df[df['name'].isin(list(buildings))].copy()
+            df = _filter_by_entity_type(df, include_entities, buildings=buildings)
             # Annotate plant names with network type suffix for display
             if 'type' in df.columns and 'case_description' in df.columns:
                 df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
@@ -260,9 +273,7 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(summary_path):
                 continue
             summary_df = pd.read_csv(summary_path)
-            summary_df = _filter_by_entity_type(summary_df, include_entities)
-            if buildings:
-                summary_df = summary_df[summary_df['name'].isin(list(buildings))]
+            summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
             gfa_map = summary_df.set_index('name')['GFA_m2'].to_dict() if 'GFA_m2' in summary_df.columns else {}
             # Build display name map for plant annotation
             display_name_map = {}
@@ -312,9 +323,7 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
                 if not os.path.exists(src_path):
                     continue
                 df = pd.read_csv(src_path)
-                df = _filter_by_entity_type(df, include_entities)
-                if buildings:
-                    df = df[df['name'].isin(list(buildings))].copy()
+                df = _filter_by_entity_type(df, include_entities, buildings=buildings)
                 keep_cols = [c for c in carrier_rename if c in df.columns]
                 df_out = df[keep_cols].copy()
                 for mwh_col in carrier_rename:
@@ -335,9 +344,7 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
             if not os.path.exists(summary_path):
                 return
             summary_df = pd.read_csv(summary_path)
-            summary_df = _filter_by_entity_type(summary_df, include_entities)
-            if buildings:
-                summary_df = summary_df[summary_df['name'].isin(list(buildings))]
+            summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
 
             entity_dfs = []
             for building_name in summary_df['name'].tolist():
@@ -396,9 +403,7 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
             if not os.path.exists(src_path):
                 continue
             df = pd.read_csv(src_path)
-            df = _filter_by_entity_type(df, include_entities)
-            if buildings:
-                df = df[df['name'].isin(list(buildings))].copy()
+            df = _filter_by_entity_type(df, include_entities, buildings=buildings)
             # Annotate plant names with network type suffix for display
             if 'type' in df.columns and 'case_description' in df.columns:
                 df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
@@ -427,9 +432,7 @@ def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, boo
         if not os.path.exists(buildings_file):
             return
         buildings_df = pd.read_csv(buildings_file)
-        buildings_df = _filter_by_entity_type(buildings_df, include_entities)
-        if buildings:
-            buildings_df = buildings_df[buildings_df['name'].isin(list(buildings))]
+        buildings_df = _filter_by_entity_type(buildings_df, include_entities, buildings=buildings)
         entity_names = buildings_df['name'].tolist()
 
         dates = get_date_range_hours_from_year(2005)
@@ -493,9 +496,7 @@ def _collect_lifecycle_rows(locator, whatif_names, buildings, include_entities=N
         if not os.path.exists(buildings_summary_path):
             continue
         summary_df = pd.read_csv(buildings_summary_path)
-        summary_df = _filter_by_entity_type(summary_df, include_entities)
-        if buildings:
-            summary_df = summary_df[summary_df['name'].isin(list(buildings))].copy()
+        summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
         for _, row in summary_df.iterrows():
             building_name = row['name']
             # Read timeline (lifecycle) for operational + solar offset totals
@@ -727,9 +728,7 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
             if not os.path.exists(buildings_summary_path):
                 continue
             summary_df = pd.read_csv(buildings_summary_path)
-            summary_df = _filter_by_entity_type(summary_df, include_entities)
-            if buildings:
-                summary_df = summary_df[summary_df['name'].isin(list(buildings))].copy()
+            summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
 
             for _, row in summary_df.iterrows():
                 building_name = row['name']
@@ -762,9 +761,7 @@ def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildin
         if not os.path.exists(buildings_summary_path):
             return
         summary_df = pd.read_csv(buildings_summary_path)
-        summary_df = _filter_by_entity_type(summary_df, include_entities)
-        if buildings:
-            summary_df = summary_df[summary_df['name'].isin(list(buildings))].copy()
+        summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
 
         dates = get_date_range_hours_from_year(2005)
         entity_dfs = []

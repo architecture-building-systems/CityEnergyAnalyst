@@ -44,10 +44,10 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     
     # Demand metric display names (match base name before unit suffix)
     demand_display_names = {
-        'E_sys': 'Electricity',
-        'Qcs_sys': 'Space Cooling',
-        'Qhs_sys': 'Space Heating',
-        'Qww_sys': 'Domestic Hot Water',
+        'E_sys': 'Electricity (building)',
+        'Qcs_sys': 'Space Cooling (building)',
+        'Qhs_sys': 'Space Heating (building)',
+        'Qww_sys': 'Domestic Hot Water (building)',
         'QC_sys': 'Total Cooling',
         'QH_sys': 'Total Heating',
         'DH': 'District Heating',
@@ -58,19 +58,19 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
 
     # Lifecycle / operational emission display names
     emission_display_names = {
-        'operation_E_sys': 'Electricity',
-        'operation_Qcs_sys': 'Space Cooling',
-        'operation_Qhs_sys': 'Space Heating',
-        'operation_Qww_sys': 'Domestic Hot Water',
-        'operation_DH': 'District Heating',
-        'operation_DC': 'District Cooling',
-        'production': 'Production',
-        'biogenic': 'Biogenic',
-        'demolition': 'Demolition',
-        'PV_E_offset': 'PV Offset',
-        'PVT_E_offset': 'PVT Electric Offset',
-        'PVT_Q_offset': 'PVT Thermal Offset',
-        'SC_Q_offset': 'SC Thermal Offset',
+        'operation_E_sys': 'Electricity (building)',
+        'operation_Qcs_sys': 'Space Cooling (building)',
+        'operation_Qhs_sys': 'Space Heating (building)',
+        'operation_Qww_sys': 'Domestic Hot Water (building)',
+        'operation_DH': 'District Heating (district, including pumping)',
+        'operation_DC': 'District Cooling (district, including pumping)',
+        'production': 'Production (building)',
+        'biogenic': 'Biogenic (building)',
+        'demolition': 'Demolition (building)',
+        'PV_E_offset': 'PV Offset (building)',
+        'PVT_E_offset': 'PVT Electric Offset (building)',
+        'PVT_Q_offset': 'PVT Thermal Offset (building)',
+        'SC_Q_offset': 'SC Thermal Offset (building)',
     }
     for base, display_name in emission_display_names.items():
         if column_name.startswith(base):
@@ -792,7 +792,7 @@ def plot_faceted_bars(
                     'legendgroup': heading,
                     'showlegend': True,
                     'marker': dict(color=bar_color, line=dict(width=0)),
-                    'width': min(0.25, max(0.1, 200/len(df))),
+                    'width': min(0.25, max(0.1, 200/max(1, len(df)))),
                 }
 
                 fig.add_trace(go.Bar(**bar_params))
