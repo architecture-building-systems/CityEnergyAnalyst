@@ -1,12 +1,16 @@
+import json
 import os
 import warnings
 
+import numpy as np
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
 
 from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
 from cea.config import Configuration
+from cea.constants import HOURS_IN_YEAR
+from cea.datamanagement.database.components import Feedstocks
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.demand.building_properties import BuildingProperties
 from cea.inputlocator import InputLocator
@@ -431,13 +435,6 @@ if __name__ == "__main__":
 
 
 # ── What-if scenario emissions ────────────────────────────────────────────────
-
-import json
-import numpy as np
-
-from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.database.components import Feedstocks
-
 _ZERO_EMISSION_CARRIERS = {'DH', 'DC', 'NONE'}
 
 # Prefixes identifying carrier-consumption columns in final-energy B####.csv
@@ -617,7 +614,6 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     with open(config_file) as f:
         config_data = json.load(f)
     building_configs = config_data.get('buildings', {})
-    plant_configs = config_data.get('plants', {})
     network_name = config_data.get('metadata', {}).get('network_name')
 
     # Emission intensity (8760 rows, kgCO2/kWh per carrier)

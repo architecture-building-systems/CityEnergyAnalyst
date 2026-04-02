@@ -24,7 +24,6 @@ from cea.visualisation.format.plot_colours import (
     COLOURS_TO_RGB,
     COMPONENT_TECH_COLOURS,
     component_display,
-    component_tech_colour,
 )
 
 __author__ = "Zhongming Shi"

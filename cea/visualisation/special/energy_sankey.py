@@ -836,7 +836,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
             d_val     = row['value_kWh']
             svc_col   = _svc_colour(service)
             c_colour  = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
-            pc_colour = component_tech_colour(pc) if pc else c_colour
+            # pc_colour = component_tech_colour(pc) if pc else c_colour
 
             prev = (
                 pc if (show_district and pc and pc in idx)

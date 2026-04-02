@@ -637,14 +637,14 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         ])
 
         # Calculate space heating vs DHW contributions
-        total_hs_demand_kWh = sum([
-            (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
-            for df in substation_results_dict.values()
-        ])
-        total_ww_demand_kWh = sum([
-            (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
-            for df in substation_results_dict.values()
-        ])
+        # total_hs_demand_kWh = sum([
+        #     (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
+        #     for df in substation_results_dict.values()
+        # ])
+        # total_ww_demand_kWh = sum([
+        #     (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
+        #     for df in substation_results_dict.values()
+        # ])
 
         if total_demand_kWh > 0:
             dh_fraction = total_dh_contribution_kWh / total_demand_kWh

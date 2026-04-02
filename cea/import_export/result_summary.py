@@ -2905,7 +2905,6 @@ def replace_hyphens_with_underscores(string_list):
 
 def _export_whatif_features(config, locator, summary_folder, list_buildings, errors_encountered):
     """Export what-if-aware features (final-energy, emissions, heat-rejection, costs) to summary folder."""
-    from cea.visualisation.a_data_loader import _filter_by_entity_type, _collect_lifecycle_rows, _annotate_plant_display_name
 
     include_entities = list(config.plots_include_plants_buildings.include)
     hour_start, hour_end = get_hours_start_end(config)

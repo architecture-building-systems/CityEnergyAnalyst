@@ -698,7 +698,6 @@ def _load_whatif_timeline_df(locator, whatif_names):
         combined = dfs[0]
     else:
         numeric_cols = dfs[0].select_dtypes(include='number').columns.tolist()
-        non_numeric = [c for c in dfs[0].columns if c not in numeric_cols]
         combined = dfs[0].copy()
         for df in dfs[1:]:
             combined[numeric_cols] = combined[numeric_cols].add(df[numeric_cols].fillna(0), fill_value=0)
@@ -729,12 +728,12 @@ def _get_timeline_y_columns(df, operation_services, y_categories):
         'space_cooling': ['operation_Qcs_sys'],
         'DHW': ['operation_Qww_sys', 'operation_Qww_booster'],
     }
-    solar_to_col = {
-        'PV_E': 'PV_E_offset',
-        'PVT_E': 'PVT_E_offset',
-        'PVT_Q': 'PVT_Q_offset',
-        'SC_Q': 'SC_Q_offset',
-    }
+    # solar_to_col = {
+    #     'PV_E': 'PV_E_offset',
+    #     'PVT_E': 'PVT_E_offset',
+    #     'PVT_Q': 'PVT_Q_offset',
+    #     'SC_Q': 'SC_Q_offset',
+    # }
 
     wanted = []
     if 'operation' in y_categories:

@@ -1489,11 +1489,9 @@ def create_final_energy_breakdown(
         # Parse plant key: "DH_NODE5" or "DC_NODE1"
         parts = plant_key.split('_', 1)
         if len(parts) == 2:
-            network_type = parts[0]
             plant_name = parts[1]
         else:
             plant_name = plant_key
-            network_type = df['network_type'].iloc[0] if 'network_type' in df.columns else 'UNKNOWN'
 
         # Process heating/cooling carrier
         for col in df.columns:

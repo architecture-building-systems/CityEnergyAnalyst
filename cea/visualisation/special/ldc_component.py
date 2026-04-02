@@ -112,7 +112,6 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
     config_data = _load_config(locator, whatif_name)
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
-    folder = locator.get_final_energy_folder(whatif_name)
     result = {}
 
     # ── District-scale ─────────────────────────────────────────────────────

@@ -644,7 +644,6 @@ def _aggregate_op_emission_hourly(hdf, n):
     Same as _aggregate_op_emission_row but returns numpy arrays for district time-series.
     Columns: service totals, carrier totals, service×carrier, solar offsets.
     """
-    import numpy as np
 
     _PREFIXES = {
         'Qhs_sys_':     ('operation_Qhs_sys', 'Qhs_sys'),

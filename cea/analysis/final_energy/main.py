@@ -329,7 +329,6 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     print("\nGenerating compilation files...")
 
     summary_df = None
-    breakdown_df = None
 
     if building_dfs:
         from cea.analysis.final_energy.calculation import (

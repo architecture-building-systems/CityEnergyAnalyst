@@ -596,7 +596,6 @@ def main(config):
     else:
         x_range = None
         category_order = None
-        shared_id_col = None
 
     # ── Second pass: render with shared axes, preserve order ─────────────────
     html_outputs = []
