@@ -172,10 +172,6 @@ def main(config: cea.config.Configuration):
         print(f"\n{'='*60}")
         print("Errors occurred during processing:")
         print(f"{'='*60}")
-        for network_type, error in errors.items():
-            print(f"{network_type} network error\n")
-            print(error)
-            print(f"{'-'*60}")
 
         # Build summary message showing what succeeded vs failed
         failed_list = ', '.join(sorted(errors.keys()))

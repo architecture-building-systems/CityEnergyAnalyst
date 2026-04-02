@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 import cea.plots.cache
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, KELVIN_CONVERSION
 from cea.plots.base import PlotBase
 from cea.plots.variable_naming import get_color_array
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -211,7 +211,7 @@ class ThermalNetworksPlotBase(PlotBase):
         """Node supply temperatures"""
         supply_df = pd.read_csv(
             self.locator.get_network_temperature_supply_nodes_file(self.network_type, self.network_name))
-        supply_df -= 273.15  # convert from Kelvin to C
+        supply_df -= KELVIN_CONVERSION  # convert from Kelvin to C
         return supply_df
 
     @property
@@ -220,7 +220,7 @@ class ThermalNetworksPlotBase(PlotBase):
         """Node return temperatures"""
         return_df = pd.read_csv(
             self.locator.get_network_temperature_return_nodes_file(self.network_type, self.network_name))
-        return_df -= 273.15  # convert from Kelvin to C
+        return_df -= KELVIN_CONVERSION  # convert from Kelvin to C
         return return_df
 
     @property

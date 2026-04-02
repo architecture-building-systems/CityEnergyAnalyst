@@ -8,7 +8,7 @@ that result from the activation of these cooling technologies.
 import numpy as np
 import pandas as pd
 
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, KELVIN_CONVERSION
 from cea.optimization.constants import VCC_T_COOL_IN, ACH_T_IN_FROM_CHP_K
 from cea.optimization.master import objective_function_calculator
 from cea.optimization.slave.cooling_resource_activation import calc_vcc_CT_operation, cooling_resource_activator
@@ -148,7 +148,7 @@ def district_cooling_network(locator,
             #  i.e. thermal_energy_in = thermal_energy_out for the VCC. Check if this assumption is correct.
             Q_therm_water_body_W = [x if x < total_WS_VCC_installed else total_WS_VCC_installed for x in
                                     Q_therm_water_body]
-            T_source_average_water_body_K = np.array(water_body_potential['Ts_C']) + 273
+            T_source_average_water_body_K = np.array(water_body_potential['Ts_C']) + KELVIN_CONVERSION
         else:
             Q_therm_water_body_W = np.zeros(HOURS_IN_YEAR)
             T_source_average_water_body_K = np.zeros(HOURS_IN_YEAR)
