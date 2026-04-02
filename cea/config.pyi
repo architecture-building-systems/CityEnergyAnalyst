@@ -943,14 +943,15 @@ class ResultSummarySection(Section):
     period_start_date: list[str]
     period_end_date: list[str]
     metrics_building_energy_demand: bool
-    metrics_emissions: bool
+    what_if_name_final_energy: list | None
+    what_if_name_emissions: list | None
     metrics_solar_irradiation: bool
     metrics_photovoltaic_panels: bool
     metrics_photovoltaic_thermal_panels: bool
     metrics_solar_collectors: bool
     metrics_other_renewables: bool
-    metrics_costs: bool
-    metrics_heat_rejection: bool
+    what_if_name_costs: list | None
+    what_if_name_heat_rejection: list | None
     network_name: str | None
     include_advanced_analytics: bool
     use_cea_acronym_format_column_names: bool
@@ -969,7 +970,9 @@ class ResultSummarySection(Section):
     @overload
     def __getattr__(self, item: Literal["metrics_building_energy_demand"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["metrics_emissions"]) -> bool: ...
+    def __getattr__(self, item: Literal["what_if_name_final_energy"]) -> list | None: ...
+    @overload
+    def __getattr__(self, item: Literal["what_if_name_emissions"]) -> list | None: ...
     @overload
     def __getattr__(self, item: Literal["metrics_solar_irradiation"]) -> bool: ...
     @overload
@@ -981,9 +984,9 @@ class ResultSummarySection(Section):
     @overload
     def __getattr__(self, item: Literal["metrics_other_renewables"]) -> bool: ...
     @overload
-    def __getattr__(self, item: Literal["metrics_costs"]) -> bool: ...
+    def __getattr__(self, item: Literal["what_if_name_costs"]) -> list | None: ...
     @overload
-    def __getattr__(self, item: Literal["metrics_heat_rejection"]) -> bool: ...
+    def __getattr__(self, item: Literal["what_if_name_heat_rejection"]) -> list | None: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
     @overload

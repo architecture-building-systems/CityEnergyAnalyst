@@ -231,6 +231,47 @@ class InputLocator(object):
         """scenario/export/results/{folder_name}/costs/costs_components.csv"""
         return os.path.join(self.get_export_results_summary_costs_folder(summary_folder), 'costs_components.csv')
 
+    # ── What-if-aware export paths ────────────────────────────────────────────
+
+    def get_export_results_summary_whatif_folder(self, summary_folder, cea_feature, whatif_name):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        return os.path.join(summary_folder, folder_name, whatif_name)
+
+    def get_export_results_summary_whatif_time_period_file(self, summary_folder, cea_feature, appendix,
+                                                           whatif_name, time_period, hour_start, hour_end):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_{time_period}.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(base, f'{appendix}_selected_hours.csv')
+        return os.path.join(base, f'{appendix}_{time_period}.csv')
+
+    def get_export_results_summary_whatif_buildings_file(self, summary_folder, cea_feature, appendix, whatif_name):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_buildings.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        return os.path.join(base, f'{appendix}_buildings.csv')
+
+    def get_export_results_summary_whatif_time_period_buildings_file(self, summary_folder, cea_feature, appendix,
+                                                                     whatif_name, time_period, hour_start, hour_end):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_{time_period}_buildings.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(base, f'{appendix}_selected_hours_buildings.csv')
+        return os.path.join(base, f'{appendix}_{time_period}_buildings.csv')
+
+    def get_export_results_summary_whatif_timeline_file(self, summary_folder, cea_feature, appendix, whatif_name):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_timeline.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        return os.path.join(base, f'{appendix}_timeline.csv')
+
+    def get_export_results_summary_whatif_costs_buildings_file(self, summary_folder, whatif_name):
+        """scenario/export/results/{folder_name}/costs/{whatif_name}/costs_buildings.csv"""
+        return os.path.join(summary_folder, 'costs', whatif_name, 'costs_buildings.csv')
+
+    def get_export_results_summary_whatif_costs_components_file(self, summary_folder, whatif_name):
+        """scenario/export/results/{folder_name}/costs/{whatif_name}/costs_components.csv"""
+        return os.path.join(summary_folder, 'costs', whatif_name, 'costs_components.csv')
+
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
                                                                               hour_end):

@@ -2700,12 +2700,6 @@ def get_list_list_metrics_with_date(config):
         if os.path.exists(dc_thermal_path):
             list_list_metrics_with_date.append(list_metrics_district_cooling)
 
-    if config.result_summary.metrics_emissions:
-        list_list_metrics_with_date.append(emission_context["list_metrics_operational_emissions"])
-
-    if config.result_summary.metrics_heat_rejection:
-        list_list_metrics_with_date.append(list_metrics_heat_rejection)
-
     return list_list_metrics_with_date
 
 
@@ -2738,11 +2732,7 @@ def get_list_list_metrics_with_date_plot(list_cea_feature_to_plot):
 
 
 def get_list_list_metrics_without_date(config):
-    emission_context = get_emission_context()
     list_list_metrics_without_date = []
-    if config.result_summary.metrics_emissions:
-        list_list_metrics_without_date.append(emission_context["list_metrics_lifecycle_emissions"])
-
     return list_list_metrics_without_date
 
 
@@ -2770,13 +2760,6 @@ def get_list_list_metrics_building(config):
     if config.result_summary.metrics_solar_collectors:
         list_list_metrics_building.append(list_metrics_solar_collectors_et)
         list_list_metrics_building.append(list_metrics_solar_collectors_fp)
-    if config.result_summary.metrics_emissions:
-        list_list_metrics_building.append(emission_context["list_metrics_lifecycle_emissions"])
-        list_list_metrics_building.append(emission_context["list_metrics_operational_emissions"])
-
-    if config.result_summary.metrics_heat_rejection:
-        list_list_metrics_building.append(list_metrics_heat_rejection)
-
     return list_list_metrics_building
 
 
@@ -2896,6 +2879,327 @@ def replace_hyphens_with_underscores(string_list):
         list of str: List with hyphens replaced by underscores.
     """
     return [s.replace('-', '_') for s in string_list]
+
+
+# ── What-if feature export ────────────────────────────────────────────────────
+
+def _export_whatif_features(config, locator, summary_folder, list_buildings, errors_encountered):
+    """Export what-if-aware features (final-energy, emissions, heat-rejection, costs) to summary folder."""
+    from cea.visualisation.a_data_loader import _filter_by_entity_type, _collect_lifecycle_rows, _annotate_plant_display_name
+
+    include_entities = list(config.plots_include_plants_buildings.include)
+    hour_start, hour_end = get_hours_start_end(config)
+    list_selected_time_period = config.result_summary.aggregate_by_time_period
+    bool_aggregate_by_building = config.result_summary.aggregate_by_building
+
+    # ── Final energy ──────────────────────────────────────────────────────────
+    whatif_final_energy = config.result_summary.what_if_name_final_energy or []
+    for whatif_name in whatif_final_energy:
+        try:
+            _export_whatif_final_energy(locator, summary_folder, whatif_name, list_buildings,
+                                       include_entities, bool_aggregate_by_building,
+                                       list_selected_time_period, hour_start, hour_end)
+        except Exception as e:
+            error_msg = f"What-if final-energy ({whatif_name}): {e}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+
+    # ── Lifecycle emissions ───────────────────────────────────────────────────
+    whatif_emissions = config.result_summary.what_if_name_emissions or []
+    for whatif_name in whatif_emissions:
+        try:
+            _export_whatif_lifecycle_emissions(locator, summary_folder, whatif_name, list_buildings,
+                                              include_entities, hour_start, hour_end)
+        except Exception as e:
+            error_msg = f"What-if lifecycle-emissions ({whatif_name}): {e}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+
+    # ── Operational emissions ─────────────────────────────────────────────────
+    for whatif_name in whatif_emissions:
+        try:
+            _export_whatif_operational_emissions(locator, summary_folder, whatif_name, list_buildings,
+                                                include_entities, bool_aggregate_by_building,
+                                                list_selected_time_period, hour_start, hour_end)
+        except Exception as e:
+            error_msg = f"What-if operational-emissions ({whatif_name}): {e}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+
+    # ── Heat rejection ────────────────────────────────────────────────────────
+    whatif_heat = config.result_summary.what_if_name_heat_rejection or []
+    for whatif_name in whatif_heat:
+        try:
+            _export_whatif_heat_rejection(locator, summary_folder, whatif_name, list_buildings,
+                                         include_entities, bool_aggregate_by_building,
+                                         list_selected_time_period, hour_start, hour_end)
+        except Exception as e:
+            error_msg = f"What-if heat-rejection ({whatif_name}): {e}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+
+    # ── Costs ─────────────────────────────────────────────────────────────────
+    whatif_costs = config.result_summary.what_if_name_costs or []
+    for whatif_name in whatif_costs:
+        try:
+            _export_whatif_costs(locator, summary_folder, whatif_name, list_buildings, include_entities)
+        except Exception as e:
+            error_msg = f"What-if costs ({whatif_name}): {e}"
+            errors_encountered.append(error_msg)
+            print(f"Warning: {error_msg}")
+
+
+def _export_whatif_final_energy(locator, summary_folder, whatif_name, buildings, include_entities,
+                                bool_aggregate_by_building, list_selected_time_period, hour_start, hour_end):
+    """Export final energy results for one what-if scenario to the summary folder."""
+    from cea.visualisation.a_data_loader import _filter_by_entity_type, _annotate_plant_display_name
+    from cea.utilities.date import get_date_range_hours_from_year
+
+    src_path = locator.get_final_energy_buildings_file(whatif_name)
+    if not os.path.exists(src_path):
+        return
+    summary_df = pd.read_csv(src_path)
+    summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+    if summary_df.empty:
+        return
+
+    carriers = ['GRID', 'NATURALGAS', 'OIL', 'COAL', 'WOOD']
+    carrier_rename = {f'{c}_MWh': f'{c}_kWh' for c in carriers}
+
+    # Building-level annual export
+    if bool_aggregate_by_building:
+        df = summary_df.copy()
+        if 'type' in df.columns and 'case_description' in df.columns:
+            df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
+        keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
+        df_out = df[keep_cols].copy()
+        for mwh_col in carrier_rename:
+            if mwh_col in df_out.columns:
+                df_out[mwh_col] = df_out[mwh_col] * 1000.0
+        df_out = df_out.rename(columns=carrier_rename)
+        df_out['period'] = 'annually'
+        out_path = locator.get_export_results_summary_whatif_buildings_file(
+            summary_folder, 'final-energy', 'final-energy', whatif_name)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    # District time-series exports
+    dates = get_date_range_hours_from_year(2005)
+    entity_dfs = []
+    for building_name in summary_df['name'].tolist():
+        building_file = locator.get_final_energy_building_file(building_name, whatif_name)
+        if not os.path.exists(building_file):
+            continue
+        bdf = pd.read_csv(building_file)
+        n = min(len(bdf), len(dates))
+        row = {'date': dates[:n]}
+        for carrier in carriers:
+            cols = [c for c in bdf.columns if c.endswith(f'_{carrier}_kWh')]
+            if cols:
+                row[f'{carrier}_kWh'] = bdf[cols].sum(axis=1).values[:n]
+        hourly_df = pd.DataFrame(row)
+        hourly_df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, hourly_df)
+        entity_dfs.append(hourly_df)
+
+    if not entity_dfs:
+        return
+
+    for time_period in list_selected_time_period:
+        list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+        if not list_list_df or not list_list_df[0]:
+            continue
+        df_result = list_list_df[0][0]
+        out_path = locator.get_export_results_summary_whatif_time_period_file(
+            summary_folder, 'final-energy', 'final-energy', whatif_name, time_period, hour_start, hour_end)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_result.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _export_whatif_lifecycle_emissions(locator, summary_folder, whatif_name, buildings, include_entities,
+                                       hour_start, hour_end):
+    """Export lifecycle emissions for one what-if scenario to the summary folder."""
+    from cea.visualisation.a_data_loader import _collect_lifecycle_rows
+
+    # Building-level lifecycle totals
+    rows = _collect_lifecycle_rows(locator, [whatif_name], buildings, include_entities=include_entities)
+    if rows:
+        df_out = pd.DataFrame(rows)
+        out_path = locator.get_export_results_summary_whatif_buildings_file(
+            summary_folder, 'lifecycle-emissions', 'lifecycle-emissions', whatif_name)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    # District timeline (copy directly, no filtering needed — it's already district-level)
+    timeline_src = locator.get_emissions_whatif_timeline_file(whatif_name)
+    if os.path.exists(timeline_src):
+        out_path = locator.get_export_results_summary_whatif_timeline_file(
+            summary_folder, 'lifecycle-emissions', 'lifecycle-emissions', whatif_name)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        tl_df = pd.read_csv(timeline_src)
+        tl_df.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _export_whatif_operational_emissions(locator, summary_folder, whatif_name, buildings, include_entities,
+                                         bool_aggregate_by_building, list_selected_time_period, hour_start, hour_end):
+    """Export operational emissions for one what-if scenario to the summary folder."""
+    from cea.visualisation.a_data_loader import (
+        _filter_by_entity_type, _annotate_plant_display_name, _aggregate_op_emission_row, _aggregate_op_emission_hourly
+    )
+    from cea.utilities.date import get_date_range_hours_from_year
+
+    buildings_summary_path = locator.get_emissions_whatif_buildings_file(whatif_name)
+    if not os.path.exists(buildings_summary_path):
+        return
+    summary_df = pd.read_csv(buildings_summary_path)
+    summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+    if summary_df.empty:
+        return
+
+    # Building-level annual totals
+    if bool_aggregate_by_building:
+        dfs = []
+        for _, row in summary_df.iterrows():
+            building_name = row['name']
+            hourly_path = locator.get_emissions_whatif_building_file(building_name, whatif_name)
+            if not os.path.exists(hourly_path):
+                continue
+            hdf = pd.read_csv(hourly_path)
+            annotated_name = _annotate_plant_display_name(building_name, row)
+            out_row = {'name': annotated_name, 'GFA_m2': row.get('GFA_m2', 0.0)}
+            out_row.update(_aggregate_op_emission_row(hdf))
+            out_row['period'] = 'annually'
+            dfs.append(out_row)
+        if dfs:
+            df_out = pd.DataFrame(dfs)
+            out_path = locator.get_export_results_summary_whatif_buildings_file(
+                summary_folder, 'operational-emissions', 'operational-emissions', whatif_name)
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    # District time-series exports
+    dates = get_date_range_hours_from_year(2005)
+    entity_dfs = []
+    for building_name in summary_df['name'].tolist():
+        hourly_path = locator.get_emissions_whatif_building_file(building_name, whatif_name)
+        if not os.path.exists(hourly_path):
+            continue
+        hdf = pd.read_csv(hourly_path)
+        n = min(len(hdf), len(dates))
+        row_dict = {'date': dates[:n]}
+        row_dict.update(_aggregate_op_emission_hourly(hdf, n))
+        hourly_df = pd.DataFrame(row_dict)
+        hourly_df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, hourly_df)
+        entity_dfs.append(hourly_df)
+
+    if not entity_dfs:
+        return
+
+    for time_period in list_selected_time_period:
+        list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+        if not list_list_df or not list_list_df[0]:
+            continue
+        df_result = list_list_df[0][0]
+        out_path = locator.get_export_results_summary_whatif_time_period_file(
+            summary_folder, 'operational-emissions', 'operational-emissions', whatif_name, time_period, hour_start, hour_end)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_result.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _export_whatif_heat_rejection(locator, summary_folder, whatif_name, buildings, include_entities,
+                                  bool_aggregate_by_building, list_selected_time_period, hour_start, hour_end):
+    """Export heat rejection for one what-if scenario to the summary folder."""
+    from cea.visualisation.a_data_loader import _filter_by_entity_type, _annotate_plant_display_name
+    from cea.utilities.date import get_date_range_hours_from_year
+
+    src_path = locator.get_heat_rejection_whatif_buildings_file(whatif_name)
+    if not os.path.exists(src_path):
+        return
+    summary_df = pd.read_csv(src_path)
+    summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+    if summary_df.empty:
+        return
+
+    # Building-level annual export
+    if bool_aggregate_by_building:
+        df = summary_df.copy()
+        if 'type' in df.columns and 'case_description' in df.columns:
+            df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
+        keep_cols = [c for c in ['name', 'GFA_m2', 'heat_rejection_annual_MWh'] if c in df.columns]
+        df_out = df[keep_cols].copy()
+        if 'heat_rejection_annual_MWh' in df_out.columns:
+            df_out['heat_rejection_kWh'] = df_out['heat_rejection_annual_MWh'] * 1000.0
+            df_out = df_out.drop(columns=['heat_rejection_annual_MWh'])
+        df_out['period'] = 'annually'
+        out_path = locator.get_export_results_summary_whatif_buildings_file(
+            summary_folder, 'heat-rejection', 'heat-rejection', whatif_name)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    # District time-series exports
+    dates = get_date_range_hours_from_year(2005)
+    entity_dfs = []
+    for entity_name in summary_df['name'].tolist():
+        entity_file = locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
+        if not os.path.exists(entity_file):
+            continue
+        entity_df = pd.read_csv(entity_file)
+        if 'heat_rejection_kW' not in entity_df.columns:
+            continue
+        n = min(len(entity_df), len(dates))
+        df = pd.DataFrame({
+            'date': dates[:n],
+            'heat_rejection_kWh': entity_df['heat_rejection_kW'].values[:n],
+        })
+        df = slice_hourly_results_for_custom_time_period(hour_start, hour_end, df)
+        entity_dfs.append(df)
+
+    if not entity_dfs:
+        return
+
+    for time_period in list_selected_time_period:
+        list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+        if not list_list_df or not list_list_df[0]:
+            continue
+        df_result = list_list_df[0][0]
+        out_path = locator.get_export_results_summary_whatif_time_period_file(
+            summary_folder, 'heat-rejection', 'heat-rejection', whatif_name, time_period, hour_start, hour_end)
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_result.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _export_whatif_costs(locator, summary_folder, whatif_name, buildings, include_entities):
+    """Export costs for one what-if scenario to the summary folder (read, filter, write)."""
+    from cea.visualisation.a_data_loader import _filter_by_entity_type
+
+    # costs_buildings.csv
+    buildings_src = locator.get_costs_whatif_buildings_file(whatif_name)
+    if os.path.exists(buildings_src):
+        df = pd.read_csv(buildings_src)
+        df = _filter_by_entity_type(df, include_entities, buildings=buildings)
+        if not df.empty:
+            out_path = locator.get_export_results_summary_whatif_costs_buildings_file(summary_folder, whatif_name)
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            df.to_csv(out_path, index=False, float_format='%.3f')
+
+    # costs_components.csv — filter by entity names that survived the building filter
+    components_src = locator.get_costs_whatif_components_file(whatif_name)
+    if os.path.exists(components_src):
+        # Get kept entity names from the buildings file
+        if os.path.exists(buildings_src):
+            bdf = pd.read_csv(buildings_src)
+            bdf = _filter_by_entity_type(bdf, include_entities, buildings=buildings)
+            kept_names = set(bdf['name'].tolist()) if 'name' in bdf.columns else set()
+        else:
+            kept_names = set()
+
+        cdf = pd.read_csv(components_src)
+        # Components have a 'name' column linking to the entity
+        if kept_names and 'name' in cdf.columns:
+            cdf = cdf[cdf['name'].isin(kept_names)]
+        if not cdf.empty:
+            out_path = locator.get_export_results_summary_whatif_costs_components_file(summary_folder, whatif_name)
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            cdf.to_csv(out_path, index=False, float_format='%.3f')
 
 
 def process_building_summary(config, locator,
@@ -3036,21 +3340,9 @@ def process_building_summary(config, locator,
                 print("         Continuing with next metrics...")
                 continue
 
-    # Step 8.5: Filter and Copy Cost Files (if Enabled)
-    if not plot and config.result_summary.metrics_costs:
-        try:
-            print("\nFiltering cost calculation results...")
-            success, error_msg = copy_costs_to_summary(locator, summary_folder, list_buildings, network_name=network_name)
-            if not success:
-                error_msg = f"Step 8 - metrics costs: {error_msg}"
-                errors_encountered.append(error_msg)
-                print(f"Warning: {error_msg}")
-                print("         Continuing with remaining steps...")
-        except Exception as e:
-            error_msg = f"Step 8 - metrics costs: {str(e)}"
-            errors_encountered.append(error_msg)
-            print(f"Warning: {error_msg}")
-            print("         Continuing with remaining steps...")
+    # Step 8.5: Export What-If Features (final-energy, emissions, heat-rejection, costs)
+    if not plot:
+        _export_whatif_features(config, locator, summary_folder, list_buildings, errors_encountered)
 
     # Step 9: Include Advanced Analytics (if Enabled)
     if bool_include_advanced_analytics:
@@ -3109,7 +3401,7 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            if config.result_summary.metrics_emissions:
+            if config.result_summary.what_if_name_emissions:
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "operational_emissions", summary_folder,
                                                    list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
@@ -3120,7 +3412,7 @@ def process_building_summary(config, locator,
                     print(f"Warning: {error_msg}")
                     print("         Continuing with remaining analytics...")
 
-            if config.result_summary.metrics_heat_rejection:
+            if config.result_summary.what_if_name_heat_rejection:
                 try:
                     calc_ubem_analytics_normalised(locator, hour_start, hour_end, "heat-rejection", summary_folder,
                                                    list_selected_time_period, bool_aggregate_by_building, bool_use_acronym,
