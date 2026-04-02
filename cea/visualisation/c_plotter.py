@@ -104,12 +104,13 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
-    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
+    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None):
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
         self.plot_cea_feature = plot_cea_feature
         self.hide_title = hide_title
+        self.lifecycle_year_range = lifecycle_year_range
 
         # Get the settings for the format
         self.plot_title = plot_config_general.plot_title
@@ -191,7 +192,10 @@ class bar_plot:
             elif plot_cea_feature == 'sc':
                 title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
             elif plot_cea_feature == 'lifecycle-emissions':
-                title = "CEA-4 Lifecycle Emissions"
+                if self.lifecycle_year_range:
+                    title = f"CEA-4 Lifecycle Emissions ({self.lifecycle_year_range[0]} - {self.lifecycle_year_range[1]})"
+                else:
+                    title = "CEA-4 Lifecycle Emissions"
             elif plot_cea_feature == 'operational-emissions':
                 title = "CEA-4 Operational Emissions"
             elif plot_cea_feature == 'heat-rejection':
@@ -866,11 +870,12 @@ def parse_plot_type(plot_type_str):
 
 
 # Main function
-def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
+def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None):
 
     if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
-        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
+        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title,
+                                   lifecycle_year_range=lifecycle_year_range)
 
         # Generate the Plotly figure
         fig = plot_instance_c.generate_fig()

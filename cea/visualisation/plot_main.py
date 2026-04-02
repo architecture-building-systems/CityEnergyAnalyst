@@ -3,12 +3,15 @@ CEAFrontEnd - Combines everything
 
 """
 
+import os
 import sys
 from typing import Any
 
+import pandas as pd
 
 from cea import CEAException
 import cea.config
+import cea.inputlocator
 from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
@@ -113,8 +116,25 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
                                                    df_architecture_data,
                                                    solar_panel_types_list, scenario)
     
+    # Extract lifecycle year range for title
+    lifecycle_year_range = None
+    if plot_cea_feature == 'lifecycle-emissions' and whatif_names:
+        locator = cea.inputlocator.InputLocator(scenario)
+        for wn in whatif_names:
+            tl_path = locator.get_emissions_whatif_timeline_file(wn)
+            if os.path.exists(tl_path):
+                tl_df = pd.read_csv(tl_path, usecols=['period'])
+                try:
+                    yr_s = int(str(tl_df['period'].iloc[0]).replace('Y_', ''))
+                    yr_e = int(str(tl_df['period'].iloc[-1]).replace('Y_', ''))
+                    lifecycle_year_range = (yr_s, yr_e)
+                except (ValueError, TypeError, IndexError):
+                    pass
+                break
+
     # Activate c_plotter
-    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
+    fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title,
+                       lifecycle_year_range=lifecycle_year_range)
     
     fig.update_layout(autosize=True)
 
