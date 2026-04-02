@@ -165,7 +165,11 @@ class bar_plot:
         if self.y_barmode == 'stack_percentage':
             df = convert_to_percent_stacked(self.df, self.y_columns_normalised)
         else:
-            df = self.df
+            df = self.df.copy()
+
+        # Fill NaN in value columns with 0 to prevent Plotly relative barmode
+        # stacking issues (NaN disrupts the stacking calculation)
+        df[self.y_columns_normalised] = df[self.y_columns_normalised].fillna(0)
 
         # Create bar chart
         fig = plot_faceted_bars(df, x_col='X', facet_col='X_facet', value_columns=self.y_columns_normalised,
