@@ -117,8 +117,8 @@ class JobInfo(SQLModel, table=True):
             script = cea.scripts.by_name(self.script)
             return script.label
         except cea.ScriptNotFoundException as e:
-            logger.error(f"Error extracting script label: {e}. Ensure that it is defined in scripts.yml")
-            return None
+            logger.debug(f"Could not extract script label: {e}. Ensure that it is defined in scripts.yml")
+            return self.script  # Fallback to script name if label not found
 
     @computed_field
     def scenario_name(self) -> Optional[str]:
