@@ -196,6 +196,7 @@ class TestSchemas(unittest.TestCase):
                     "plot_cea_feature": "demand",
                     "plan_name": "default",
                     "phase": "timeline",
+                    "whatif_name": "basline",
                 }
                 # Get actual parameter names from function signature
                 sig = inspect.signature(method)
