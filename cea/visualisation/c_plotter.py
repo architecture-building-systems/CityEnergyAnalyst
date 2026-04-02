@@ -48,12 +48,6 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         'Qcs_sys': 'Space Cooling (building)',
         'Qhs_sys': 'Space Heating (building)',
         'Qww_sys': 'Domestic Hot Water (building)',
-        'QC_sys': 'Total Cooling',
-        'QH_sys': 'Total Heating',
-        'DH': 'District Heating',
-        'DC': 'District Cooling',
-        'operation_DH': 'District Heating',
-        'operation_DC': 'District Cooling',
     }
 
     # Lifecycle / operational emission display names
@@ -80,6 +74,14 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         if column_name.startswith(base):
             return display_name
 
+    # Heat rejection display names
+    heat_rejection_display_names = {
+        'heat_rejection': 'Heat Rejection',
+    }
+    for base, display_name in heat_rejection_display_names.items():
+        if column_name.startswith(base):
+            return display_name
+
     # Final energy carrier display names (match base name before unit suffix)
     final_energy_display_names = {
         'GRID': 'Grid Electricity',
@@ -94,17 +96,17 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
 
     # Solar surface mapping
     surface_mappings = {
-        'roofs_top': 'roofs_top',
-        'walls_north': 'walls_north',
-        'walls_east': 'walls_east',
-        'walls_south': 'walls_south',
-        'walls_west': 'walls_west',
-        'total': 'total'
+        'roofs_top': 'Roof Top',
+        'walls_north': 'North Wall',
+        'walls_east': 'East Wall',
+        'walls_south': 'South Wall',
+        'walls_west': 'West Wall',
+        'total': 'Total'
     }
 
     # Check each surface mapping
     for col_pattern, user_name in surface_mappings.items():
-        if col_pattern in column_name and user_name in y_metric_to_plot:
+        if col_pattern in column_name and col_pattern in y_metric_to_plot:
             # For PVT columns, distinguish between electricity (E) and heat (Q)
             if 'PVT' in column_name:
                 if '_E_' in column_name:
