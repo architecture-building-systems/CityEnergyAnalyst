@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 from unittest.mock import AsyncMock
 
+from cea.interfaces.dashboard.lib.cache.base import AsyncDictCache
 from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState
 from cea.interfaces.dashboard.server import jobs
 
@@ -32,22 +33,25 @@ async def db_session():
     await engine.dispose()
 
 
-class DummyStreams:
+class DummyStreams(AsyncDictCache):
     def __init__(self, stream_output):
         self.stream_output = stream_output
 
-    async def pop(self, _job_id, default=None):
+    async def pop(self, item_id, default=None):
         if self.stream_output is None:
             return default
         return self.stream_output
 
 
-class DummyWorkerProcesses:
-    async def pop(self, _job_id, default=None):
+class DummyWorkerProcesses(AsyncDictCache):
+    def __init__(self):
+        pass
+
+    async def pop(self, item_id, default=None):
         return default
 
-    async def delete(self, _job_id):
-        raise KeyError(_job_id)
+    async def delete(self, item_id):
+        raise KeyError(item_id)
 
 
 @pytest.mark.anyio
