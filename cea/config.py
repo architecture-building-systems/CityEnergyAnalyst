@@ -1127,6 +1127,26 @@ class NetworkLayoutChoicesMixin:
         networks = self._get_available_networks()
         return self._sort_networks_by_modification_time(networks)
 
+
+class NetworkLayoutChoiceParameter(NetworkLayoutChoicesMixin, ChoiceParameter):
+    """
+    Parameter for selecting existing network layouts based on network type.
+    """
+
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        try:
+            self.default_to_none = config.default_config.getboolean(section.name, f"{name}.default-to-none")
+        except configparser.NoOptionError:
+            self.default_to_none = False
+
+    @property
+    def _choices(self):
+        choices = list(self._network_choices)
+        if self.nullable:
+            choices.insert(0, "(none)")
+        return choices
+
     def _encode_network(self, value: str) -> str:
         """
         Validate a single network name and return the encoded string.
@@ -1150,11 +1170,11 @@ class NetworkLayoutChoicesMixin:
             )
         return str(value)
 
-    def _decode_network(self, value: str, *, default_to_none: bool = False) -> str:
+    def _decode_network(self, value: str) -> str:
         """
         Decode a single network name.
         Returns '' for empty/missing/invalid values, falling back to the most recent network
-        unless default_to_none is True.
+        unless self.default_to_none is True.
         """
         if value == '(none)':
             return ''
@@ -1162,7 +1182,7 @@ class NetworkLayoutChoicesMixin:
         available_networks = self._get_available_networks()
 
         if not value or value == '':
-            if not available_networks or default_to_none:
+            if not available_networks or self.default_to_none:
                 return ''
             sorted_networks = self._sort_networks_by_modification_time(available_networks)
             return sorted_networks[0] if sorted_networks else ''
@@ -1176,32 +1196,12 @@ class NetworkLayoutChoicesMixin:
         sorted_networks = self._sort_networks_by_modification_time(available_networks)
         return sorted_networks[0] if sorted_networks else ''
 
-
-class NetworkLayoutChoiceParameter(NetworkLayoutChoicesMixin, ChoiceParameter):
-    """
-    Parameter for selecting existing network layouts based on network type.
-    """
-
-    def __init__(self, name: str, section: Section, config: Configuration):
-        super().__init__(name, section, config)
-        try:
-            self.default_to_none = config.default_config.getboolean(section.name, f"{name}.default-to-none")
-        except configparser.NoOptionError:
-            self.default_to_none = False
-
-    @property
-    def _choices(self):
-        choices = list(self._network_choices)
-        if self.nullable:
-            choices.insert(0, "(none)")
-        return choices
-
     def encode(self, value):
         _validate_user_network_input_exclusivity(self.config, 'existing_network', value)
         return self._encode_network(value)
 
     def decode(self, value):
-        return self._decode_network(value, default_to_none=self.default_to_none)
+        return self._decode_network(value)
 
 
 class WhatIfNameChoiceParameter(ChoiceParameter):
