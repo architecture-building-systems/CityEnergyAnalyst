@@ -159,8 +159,8 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"\n{e}")
             raise
 
-    # Step 3.7: Validate booster configuration (what-if mode with network)
-    if config.final_energy.overwrite_supply_settings and _network_name:
+    # Step 3.7: Validate booster configuration (both modes, when network is selected)
+    if _network_name:
         print("\nChecking booster configuration...")
         from cea.analysis.final_energy.supply_validation import (
             validate_booster_configuration, validate_booster_temperature_compatibility,

@@ -216,6 +216,7 @@ def load_supply_configuration(
     else:
         # Production mode: use supply.csv
         # Warn if user has set parameters but overwrite is disabled
+        # Booster params are always used (even in production mode), so exclude them from warning
         has_parameters_set = any([
             config.final_energy.supply_type_hs_building,
             config.final_energy.supply_type_hs_district,
@@ -223,8 +224,6 @@ def load_supply_configuration(
             config.final_energy.supply_type_dhw_district,
             config.final_energy.supply_type_cs_building,
             config.final_energy.supply_type_cs_district,
-            config.final_energy.hs_booster_type_building,
-            config.final_energy.dhw_booster_type_building,
         ])
 
         if has_parameters_set:
