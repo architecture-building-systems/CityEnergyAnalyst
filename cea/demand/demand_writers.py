@@ -69,13 +69,11 @@ class DemandWriter(ABC):
         # Heating sensible/latent breakdown (technical debug data)
         'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_sen_aru', 'Qhs_sen_sys',
         'Qhs_lat_ahu', 'Qhs_lat_aru', 'Qhs_lat_sys',
-        'Qhs_em_ls', 'Qhs_dis_ls', 'Qhs',
+        'Qhs_em_ls', 'Qhs_dis_ls',
         # Cooling sensible/latent breakdown (technical debug data)
         'Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_sen_aru',
         'Qcs_lat_ahu', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys',
-        'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs',
-        # Hot water/refrigeration/data (technical debug data)
-        'Qww', 'Qcre', 'Qcdata',
+        'Qcs_em_ls', 'Qcs_dis_ls',
         # Note: Subsystem loads (Qhs_sys_*, Qcs_sys_*) moved to regular output
         # as they're required by thermal-network substation calculations
     }
