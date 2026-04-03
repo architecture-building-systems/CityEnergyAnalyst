@@ -148,7 +148,7 @@ def plot_all(config: cea.config.Configuration, scenario: str, plot_dict: dict, h
 
     # Activate c_plotter
     fig = generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title,
-                       lifecycle_year_range=lifecycle_year_range)
+                       lifecycle_year_range=lifecycle_year_range, scenario=scenario, whatif_names=whatif_names)
     
     fig.update_layout(autosize=True)
 

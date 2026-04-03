@@ -3,6 +3,8 @@ PlotManager – Generates the Plotly graph
 
 """
 
+import os
+
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, get_column_color
 from cea.visualisation.b_data_processor import x_to_plot_building
 from cea.import_export.result_summary import month_names, season_names
@@ -126,13 +128,15 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
-    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None):
+    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None, scenario=None, whatif_names=None):
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
         self.plot_cea_feature = plot_cea_feature
         self.hide_title = hide_title
         self.lifecycle_year_range = lifecycle_year_range
+        self.scenario = scenario
+        self.whatif_names = whatif_names or []
 
         # Get the settings for the format
         self.plot_title = plot_config_general.plot_title
@@ -463,13 +467,23 @@ class bar_plot:
             'roof_area': 'roof area',
         }
         if not self.hide_title:
+            # Build subtitle: scenario name + what-if name(s)
+            scenario_name = os.path.basename(self.scenario) if self.scenario else ''
+            whatif_label = ', '.join(self.whatif_names) if self.whatif_names else ''
+            subtitle_parts = [title]
+            if scenario_name:
+                subtitle_parts.append(scenario_name)
+            if whatif_label:
+                subtitle_parts.append(whatif_label)
+            subtitle = ' | '.join(subtitle_parts)
+
             sort_display = _SORTED_BY_DISPLAY.get(self.x_sorted_by, self.x_sorted_by)
             if self.x_to_plot in x_to_plot_building and not self.x_sorted_reversed:
-                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (low to high)</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (low to high)</b><br><sub>{subtitle}</sub>"
             elif self.x_to_plot in x_to_plot_building and self.x_sorted_reversed:
-                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (high to low)</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (high to low)</b><br><sub>{subtitle}</sub>"
             else:
-                title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}</b><br><sub>{subtitle}</sub>"
             fig.update_layout(
                 title=dict(
                     text=title,
@@ -898,12 +912,12 @@ def parse_plot_type(plot_type_str):
 
 
 # Main function
-def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None):
+def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None, scenario=None, whatif_names=None):
 
     if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
         plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title,
-                                   lifecycle_year_range=lifecycle_year_range)
+                                   lifecycle_year_range=lifecycle_year_range, scenario=scenario, whatif_names=whatif_names)
 
         # Generate the Plotly figure
         fig = plot_instance_c.generate_fig()
