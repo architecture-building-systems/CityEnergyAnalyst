@@ -78,6 +78,10 @@ Creates bar charts of heat rejection per building and plant, showing the magnitu
 - Plants typically show much larger values (serving multiple buildings)
 - Plant names suffixed with `-DH` or `-DC` to indicate network type
 
+### Example
+
+![Heat Rejection bar chart](images/06-life-cycle-analysis/06-4-heat-rejection-bar.png)
+
 ### Key Parameters
 
 | Parameter | Description | Options |

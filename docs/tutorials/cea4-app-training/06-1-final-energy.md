@@ -96,6 +96,10 @@ Creates bar charts of final energy consumption by carrier for buildings and plan
 | **X axis** | View type | By building, by month, by season, district hourly, etc. |
 | **Include** | Entity filter | Buildings, Plants, or both |
 
+### Example
+
+![Final Energy bar chart](images/06-life-cycle-analysis/06-1-final-energy-bar.png)
+
 ### Chart Interpretation
 
 - **Tall bars** = high energy consumers

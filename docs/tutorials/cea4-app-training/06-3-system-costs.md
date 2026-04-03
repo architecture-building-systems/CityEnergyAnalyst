@@ -90,6 +90,10 @@ Creates a Sankey diagram showing cost flows from individual cost components thro
 | **Y unit** | Currency unit | USD, kUSD, MUSD |
 | **Normalise by** | Normalisation | None, Gross floor area |
 
+### Example
+
+![Cost Sankey diagram](images/06-life-cycle-analysis/06-3-cost-sankey.png)
+
 ### CAPEX View Options
 
 - **Annualised CAPEX**: Shows annual equivalent cost (spread over equipment lifetime). Title: "System Costs (Annualised CAPEX)".
