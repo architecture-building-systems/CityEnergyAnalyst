@@ -257,7 +257,29 @@ class data_processor:
                 return 0.0
 
             # Sum floor area of connected buildings
-            arch_data = self.df_architecture_data.set_index('name')
+            # Use architecture data if available, otherwise fall back to summary data
+            if self.df_architecture_data is not None:
+                arch_data = self.df_architecture_data.set_index('name')
+            elif self.df_summary_data is not None and area_type in self.df_summary_data.columns:
+                arch_data = self.df_summary_data.drop_duplicates(subset='name').set_index('name')
+            else:
+                # Last resort: compute from zone geometry + architecture files
+                try:
+                    from cea.demand.building_properties.useful_areas import calc_useful_areas
+                    import geopandas as gpd
+                    zone_df = gpd.read_file(locator.get_zone_geometry())
+                    arch_df_raw = pd.read_csv(locator.get_building_architecture())
+                    arch_data = calc_useful_areas(zone_df, arch_df_raw)
+                    # Fix column names from merge: name_x → name, Af → Af_m2
+                    if 'name_x' in arch_data.columns:
+                        arch_data = arch_data.rename(columns={'name_x': 'name'})
+                    if 'Af' in arch_data.columns and 'Af_m2' not in arch_data.columns:
+                        arch_data = arch_data.rename(columns={'Af': 'Af_m2'})
+                    arch_data = arch_data.set_index('name')
+                except Exception:
+                    return 0.0
+            if area_type not in arch_data.columns:
+                return 0.0
             available = [b for b in connected if b in arch_data.index]
             if not available:
                 return 0.0
@@ -319,9 +341,11 @@ class data_processor:
                     if b not in normaliser_m2.index and b in summary_gfa.index:
                         normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
 
-            # Calculate GFA for entities not in architecture data (plants + district aggregate)
+            # Calculate GFA for entities not yet in normaliser or with zero GFA (plants + district aggregate)
             if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
-                missing = [b for b in buildings_to_use if b not in buildings_in_arch]
+                missing = [b for b in buildings_to_use
+                           if b not in normaliser_m2.index
+                           or normaliser_m2.loc[b, 'normaliser_m2'] == 0]
                 for entity in missing:
                     if entity == 'District':
                         # District aggregate: normalise by sum of all buildings' GFA
@@ -341,9 +365,39 @@ class data_processor:
                 normaliser_m2 = pd.DataFrame({'normaliser_m2': pd.Series(dtype=float)})
                 normaliser_m2.index.name = 'name'
 
-            # Calculate conditioned floor area for entities not in architecture data
+            # Supplement missing buildings from summary Af_m2 column (what-if mode)
+            if self.whatif_names and self.df_summary_data is not None and 'Af_m2' in self.df_summary_data.columns:
+                summary_af = self.df_summary_data.drop_duplicates(subset='name').set_index('name')['Af_m2']
+                for b in buildings_to_use:
+                    if b not in normaliser_m2.index and b in summary_af.index:
+                        normaliser_m2.loc[b, 'normaliser_m2'] = summary_af[b]
+
+            # Fallback: compute Af from zone geometry + architecture if still missing
+            if self.whatif_names and self.locator is not None:
+                still_missing = [b for b in buildings_to_use if b not in normaliser_m2.index]
+                if still_missing:
+                    try:
+                        from cea.demand.building_properties.useful_areas import calc_useful_areas
+                        import geopandas as gpd
+                        zone_df = gpd.read_file(self.locator.get_zone_geometry())
+                        arch_df = pd.read_csv(self.locator.get_building_architecture())
+                        areas_df = calc_useful_areas(zone_df, arch_df)
+                        # Column is 'Af' (not 'Af_m2'), name may be 'name_x' after merge
+                        name_col = 'name_x' if 'name_x' in areas_df.columns else 'name'
+                        af_col = 'Af' if 'Af' in areas_df.columns else 'Af_m2'
+                        if name_col in areas_df.columns and af_col in areas_df.columns:
+                            areas_indexed = areas_df.set_index(name_col)
+                            for b in still_missing:
+                                if b in areas_indexed.index:
+                                    normaliser_m2.loc[b, 'normaliser_m2'] = areas_indexed.loc[b, af_col]
+                    except Exception:
+                        pass
+
+            # Calculate conditioned floor area for entities not yet in normaliser or with zero area
             if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
-                missing = [b for b in buildings_to_use if b not in buildings_in_arch]
+                missing = [b for b in buildings_to_use
+                           if b not in normaliser_m2.index
+                           or normaliser_m2.loc[b, 'normaliser_m2'] == 0]
                 for entity in missing:
                     if entity == 'District':
                         normaliser_m2.loc[entity] = normaliser_m2['normaliser_m2'].sum() if len(normaliser_m2) > 0 else 1.0
