@@ -299,7 +299,9 @@ class EmissionTimelinePlot:
             title=dict(
                 text=self.plot_title,
                 x=0,
-                xanchor='left'
+                xanchor='left',
+                yanchor='top',
+                font=dict(size=20),
             ),
             xaxis=dict(
                 title='Time horizon - Year',
@@ -394,7 +396,7 @@ class EmissionTimelinePlot:
         # Add cumulative suffix to title
         plot_title = self.plot_title
         if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title + " (Cumulative)"
+            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
 
         # Configure y-axis range and step from config
         yaxis_config = dict(
@@ -563,7 +565,7 @@ class EmissionTimelinePlot:
         # Add cumulative suffix to title
         plot_title = self.plot_title
         if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title + " (Cumulative)"
+            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
 
         # Configure y-axis range and step from config
         yaxis_config = dict(
@@ -785,7 +787,10 @@ def plot_emission_timeline_single(config, context: dict, whatif_name: str):
     y_categories = getattr(plot_config, 'y_category_to_plot', ['operation', 'production', 'demolition', 'biogenic'])
     list_y_columns = _get_timeline_y_columns(df_to_plotly, operation_services, y_categories)
 
-    plot_title = f"Emission Timeline \u2014 {whatif_name}"
+    scenario_name = os.path.basename(config.scenario)
+    feature_label = 'CEA-4 Emission Timeline'
+    subtitle = ' | '.join([feature_label, scenario_name, whatif_name])
+    plot_title = f"<b>Emission Timeline</b><br><sub>{subtitle}</sub>"
     plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
                                     bool_accumulated=bool_accumulated,
                                     period_start=period_start, period_end=period_end)
@@ -845,7 +850,13 @@ def plot_emission_timeline(config, context: dict):
             solar_panel_types_list, scenario
         )
 
-    plot_title = "CEA-4 Emission Timeline"
+    scenario_name = os.path.basename(config.scenario)
+    whatif_label = ', '.join(whatif_names) if whatif_names else ''
+    subtitle_parts = ['CEA-4 Emission Timeline', scenario_name]
+    if whatif_label:
+        subtitle_parts.append(whatif_label)
+    subtitle = ' | '.join(subtitle_parts)
+    plot_title = f"<b>Emission Timeline</b><br><sub>{subtitle}</sub>"
     plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
                                     bool_accumulated=bool_accumulated,
                                     period_start=period_start, period_end=period_end)

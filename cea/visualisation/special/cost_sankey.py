@@ -561,12 +561,11 @@ def create_sankey_fig(sankey_data, title, unit_label):
             ))
 
     fig.update_layout(
-        title_text=title,
-        title_font_size=16,
+        title=dict(text=title, x=0, xanchor='left', yanchor='top', font=dict(size=20)),
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=20, r=20, t=60, b=60),
+        margin=dict(l=20, r=20, t=80, b=60),
         annotations=annotations,
         shapes=shapes,
     )
@@ -662,7 +661,11 @@ def main(config: cea.config.Configuration):
         scenario_total = sum(sankey_data['value'])
         height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
         capex_label = 'Annualised CAPEX' if capex_view == 'annualised' else 'Total CAPEX'
-        title = custom_title if (custom_title and len(whatif_names) == 1) else f'System Costs ({capex_label}) — {whatif_name}'
+        scenario_name = os.path.basename(config.scenario)
+        feature_label = custom_title or f'CEA-4 System Costs ({capex_label})'
+        subtitle_parts = [feature_label, scenario_name, whatif_name]
+        subtitle = ' | '.join(subtitle_parts)
+        title = f"<b>System Costs ({capex_label})</b><br><sub>{subtitle}</sub>"
         fig = create_sankey_fig(sankey_data, title, unit_label)
         fig.update_layout(height=height, autosize=False)
         include_js = 'cdn' if not plotly_included else False

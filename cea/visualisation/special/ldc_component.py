@@ -289,8 +289,10 @@ def build_ldc_fig(component_display, data_by_whatif, unit, unit_divisor):
             ))
 
     fig.update_layout(
-        title_text=f'Load Duration Curve \u2014 {component_display}',
-        title_font_size=16,
+        title=dict(
+            text=f'<b>Load Duration Curve \u2014 {component_display}</b>',
+            x=0, xanchor='left', yanchor='top', font=dict(size=20),
+        ),
         xaxis_title='Duration Normalised [%]',
         yaxis_title=f'Load [{unit}]',
         font_size=12,
@@ -352,6 +354,11 @@ def main(config: cea.config.Configuration):
             continue
 
         fig = build_ldc_fig(component_display, data_by_whatif, unit, unit_divisor)
+        # Add subtitle with scenario and what-if names
+        scenario_name = os.path.basename(config.scenario)
+        whatif_label = ', '.join(what_if_names)
+        subtitle = ' | '.join(['CEA-4 Load Duration Curve', scenario_name, whatif_label])
+        fig.update_layout(title_text=f'<b>Load Duration Curve \u2014 {component_display}</b><br><sub>{subtitle}</sub>')
         # include_plotlyjs only on first figure to avoid loading CDN multiple times
         include_js = 'cdn' if not html_outputs else False
         html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js))

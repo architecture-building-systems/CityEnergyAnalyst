@@ -626,7 +626,17 @@ def main(config):
             df_long, id_col, y_metric_unit, y_normalised_by, x_to_plot, plot_config_general,
             x_range=x_range, category_order=category_order,
         )
-        fig.update_layout(autosize=True, title_text=f'Cost Breakdown — {whatif_name}')
+        scenario_name = os.path.basename(config.scenario)
+        feature_label = 'CEA-4 Cost Breakdown'
+        subtitle = ' | '.join([feature_label, scenario_name, whatif_name])
+        fig.update_layout(
+            autosize=True,
+            title=dict(
+                text=f"<b>Cost Breakdown</b><br><sub>{subtitle}</sub>",
+                x=0, xanchor='left', yanchor='top', font=dict(size=20),
+            ),
+            margin=dict(t=80),
+        )
         include_js = 'cdn' if not plotly_included else False
         plotly_included = True
         html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
