@@ -591,6 +591,97 @@ def validate_booster_configuration(dh_network, network_name, locator, config):
         raise ValueError("\n\n".join(messages))
 
 
+def validate_booster_temperature_compatibility(dh_network, network_name, locator, config):
+    """
+    Validate that booster assemblies can supply the temperatures required by each building.
+
+    Reads T_target_hs_C and T_target_dhw_C from substation files (written by thermal-network
+    Part 2) and compares against the booster component's design supply temperature.
+
+    :param dh_network: Dict from connectivity.json['networks']['DH']
+    :param network_name: Network layout name
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :raises ValueError: If any booster cannot reach the required temperature
+    """
+    hs_booster_code = config.final_energy.hs_booster_type_building
+    dhw_booster_code = config.final_energy.dhw_booster_type_building
+
+    # Look up booster component design temperatures
+    hs_booster_temp = None
+    dhw_booster_temp = None
+    if hs_booster_code:
+        components = load_assembly_components(hs_booster_code, locator)
+        primary = components.get('primary_components')
+        if primary:
+            hs_booster_temp = get_component_design_supply_temperature(primary, locator)
+
+    if dhw_booster_code:
+        components = load_assembly_components(dhw_booster_code, locator)
+        primary = components.get('primary_components')
+        if primary:
+            dhw_booster_temp = get_component_design_supply_temperature(primary, locator)
+
+    per_building_services = dh_network.get('per_building_services', {})
+    hs_failures = []
+    dhw_failures = []
+
+    for building in per_building_services:
+        substation_file = locator.get_thermal_network_substation_results_file(
+            building, 'DH', network_name
+        )
+        if not os.path.exists(substation_file):
+            continue
+
+        try:
+            sub_df = pd.read_csv(substation_file)
+        except Exception:
+            continue
+
+        # Check HS booster temperature
+        if hs_booster_temp is not None and 'T_target_hs_C' in sub_df.columns:
+            t_required = sub_df['T_target_hs_C'].max()
+            if t_required > 0 and hs_booster_temp < t_required - 0.5:
+                hs_failures.append(
+                    f"  - {building}: requires {t_required:.0f} degrees C, "
+                    f"booster can supply {hs_booster_temp:.0f} degrees C"
+                )
+
+        # Check DHW booster temperature
+        if dhw_booster_temp is not None and 'T_target_dhw_C' in sub_df.columns:
+            t_required = sub_df['T_target_dhw_C'].max()
+            if t_required > 0 and dhw_booster_temp < t_required - 0.5:
+                dhw_failures.append(
+                    f"  - {building}: requires {t_required:.0f} degrees C, "
+                    f"booster can supply {dhw_booster_temp:.0f} degrees C"
+                )
+
+    messages = []
+
+    if hs_failures:
+        hs_primary = load_assembly_components(hs_booster_code, locator).get('primary_components', '?')
+        messages.append(
+            f"Space heating booster assembly ({hs_booster_code}, component {hs_primary}) "
+            f"cannot reach the required supply temperature for the following buildings:\n"
+            + "\n".join(hs_failures)
+            + f"\n\nPlease select a booster assembly with a component that can supply "
+            f"a higher temperature."
+        )
+
+    if dhw_failures:
+        dhw_primary = load_assembly_components(dhw_booster_code, locator).get('primary_components', '?')
+        messages.append(
+            f"DHW booster assembly ({dhw_booster_code}, component {dhw_primary}) "
+            f"cannot reach the required supply temperature for the following buildings:\n"
+            + "\n".join(dhw_failures)
+            + f"\n\nPlease select a booster assembly with a component that can supply "
+            f"a higher temperature (Swiss law requires at least 60 degrees C for DHW)."
+        )
+
+    if messages:
+        raise ValueError("\n\n".join(messages))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────

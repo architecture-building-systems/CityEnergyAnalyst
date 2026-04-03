@@ -14794,6 +14794,16 @@ get_optimization_substations_results_file:
         type: float
         unit: '[W]'
         min: 0.0
+      T_target_hs_C:
+        description: Building-side target supply temperature for space heating (from HVAC assembly, non-zero only when booster is active)
+        type: float
+        unit: '[C]'
+        min: 0.0
+      T_target_dhw_C:
+        description: Building-side target supply temperature for domestic hot water (from HVAC assembly, non-zero only when booster is active)
+        type: float
+        unit: '[C]'
+        min: 0.0
   used_by:
   - optimization
 get_optimization_substations_total_file:
@@ -16434,6 +16444,16 @@ get_thermal_network_substation_results_file:
         description: Heat from local booster for domestic hot water (DH only, zero when district heating temperature is sufficient)
         type: float
         unit: '[W]'
+        min: 0.0
+      T_target_hs_C:
+        description: Building-side target supply temperature for space heating (from HVAC assembly, non-zero only when booster is active)
+        type: float
+        unit: '[C]'
+        min: 0.0
+      T_target_dhw_C:
+        description: Building-side target supply temperature for domestic hot water (from HVAC assembly, non-zero only when booster is active)
+        type: float
+        unit: '[C]'
         min: 0.0
       # DC columns (when network_type=DC)
       HEX_cs_area_m2:

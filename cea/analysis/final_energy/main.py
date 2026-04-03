@@ -159,6 +159,27 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"\n{e}")
             raise
 
+    # Step 3.7: Validate booster configuration (what-if mode with network)
+    if config.final_energy.overwrite_supply_settings and _network_name:
+        print("\nChecking booster configuration...")
+        from cea.analysis.final_energy.supply_validation import (
+            validate_booster_configuration, validate_booster_temperature_compatibility,
+            load_network_connectivity
+        )
+        try:
+            connectivity = load_network_connectivity(locator, _network_name)
+            if 'DH' in connectivity.get('networks', {}):
+                validate_booster_configuration(
+                    connectivity['networks']['DH'], _network_name, locator, config
+                )
+                validate_booster_temperature_compatibility(
+                    connectivity['networks']['DH'], _network_name, locator, config
+                )
+            print("  Booster configuration is valid.")
+        except ValueError as e:
+            print(f"\n{e}")
+            raise
+
     # Step 4: Calculate final energy for each building
     print("\nCalculating building final energy...")
     building_dfs = {}

@@ -439,8 +439,8 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
         return 15
     elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
         # PLANT_ww or PLANT_ww_hs: High-temp network
-        # DHW return ~45°C + 5K approach = 50°C min (allows preheating to 55°C, booster to 60°C)
-        return 50
+        # DHW requires 60°C (Swiss law) + 5K approach = 65°C min
+        return 65
     else:
         # Unknown service, conservative minimum
         return 30
@@ -565,7 +565,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
                         f"Explanation:\n"
                         f"  - For space heating priority: minimum 15°C (allows ambient-loop heat pump configurations)\n"
-                        f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
+                        f"  - For DHW priority: minimum 65°C (DHW requires 60°C + 5K approach)\n\n"
                         f"Current configuration will result in:\n"
                         f"  → Network provides essentially zero heat\n"
                         f"  → All heat from building boosters (defeats purpose of district heating)\n"
