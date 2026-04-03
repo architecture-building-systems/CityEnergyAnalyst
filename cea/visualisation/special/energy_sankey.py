@@ -442,6 +442,7 @@ def load_energy_flow_data(locator, whatif_name):
                         'value_kWh':          output_kWh,
                         'plant_input_kWh':    val,
                         '_has_plant_data':    False,
+                        '_is_booster':        False,
                     })
 
         # ── Booster components (space_heating_booster / hot_water_booster) ──
@@ -478,6 +479,7 @@ def load_energy_flow_data(locator, whatif_name):
                 'value_kWh':          demand_val,
                 'plant_input_kWh':    carrier_val,
                 '_has_plant_data':    False,
+                '_is_booster':        True,
             })
 
         # ── Solar panel generation ──────────────────────────────────────────
@@ -609,16 +611,20 @@ def load_energy_flow_data(locator, whatif_name):
                 '_has_plant_data':    True,
             })
 
+    # Ensure all records have _is_booster (default False)
+    for r in records:
+        r.setdefault('_is_booster', False)
+
     if not records:
         cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
                 'building_component', 'scale', 'service', 'value_kWh',
-                'plant_input_kWh', '_has_plant_data']
+                'plant_input_kWh', '_has_plant_data', '_is_booster']
         return pd.DataFrame(columns=cols)
 
     df = pd.DataFrame(records)
 
     group_cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
-                  'building_component', 'scale', 'service', '_has_plant_data']
+                  'building_component', 'scale', 'service', '_has_plant_data', '_is_booster']
 
     district = df[df['scale'] == 'District']
     building = df[df['scale'] == 'Building']
@@ -710,11 +716,20 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     l1_set = set(l1)
 
     # ── Layer 2: building-scale components (boosters + standalone) ────────
-    # Only includes building_df components (not district). Excludes l1 (district
-    # plant codes reused as-is) and l3 (district building-side codes like HEX).
+    # Components that share a name with l1 (district plant) or l3 (HEX) need
+    # a unique internal key so they get their own node. Prefix with '__bldg__';
+    # the visual label is the original name (stripped in node_labels below).
     l3_raw = set(district_df['building_component'].unique()) - {''}
 
     l2_raw = set(building_df['building_component'].unique()) - {''}
+    # Disambiguate: building components that collide with l1 or l3 get prefixed
+    _l2_collisions = (l2_raw & l1_set) | (l2_raw & l3_raw)
+    if _l2_collisions and not building_df.empty:
+        building_df = building_df.copy()
+        building_df.loc[building_df['building_component'].isin(_l2_collisions), 'building_component'] = (
+            '__bldg__' + building_df.loc[building_df['building_component'].isin(_l2_collisions), 'building_component']
+        )
+        l2_raw = set(building_df['building_component'].unique()) - {''}
     l2 = sorted(l2_raw - l1_set - l3_raw) if show_building else []
     l2_set = set(l2)
 
@@ -768,7 +783,12 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     for nodes, layer in layer_specs:
         for n in nodes:
             node_keys.append(n)
-            node_labels.append('' if n.startswith('__bpt__') else n)
+            label = n
+            if n.startswith('__bpt__'):
+                label = ''
+            elif n.startswith('__bldg__'):
+                label = n[len('__bldg__'):]
+            node_labels.append(label)
             node_x_list.append(_LAYER_X[layer])
 
     if not node_keys:
@@ -786,6 +806,8 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         if key.startswith('__bpt__'):
             carrier_name = key[len('__bpt__'):]
             return _to_rgba(carrier_colour_map.get(carrier_name, COLOURS_TO_RGB['grey']))
+        if key.startswith('__bldg__'):
+            return component_tech_colour(key[len('__bldg__'):])
         if layer == 0:
             return carrier_colour_map.get(key, COLOURS_TO_RGB['grey'])
         if layer in (1, 2, 3):
@@ -855,9 +877,17 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     # that implicitly shows conversion efficiency (e.g. solar panel COP).
     # When use_solar_irradiation is False, treat carrier_kWh == value_kWh for Solar rows
     # so solar nodes appear with equal in/out widths (no efficiency visualisation).
+    # Ensure _is_booster column exists (default False for records that don't set it)
+    if '_is_booster' not in building_df.columns:
+        building_df = building_df.copy()
+        building_df['_is_booster'] = False
+    else:
+        building_df = building_df.copy()
+        building_df['_is_booster'] = building_df['_is_booster'].fillna(False)
+
     b_path_agg = (
         building_df
-        .groupby(['primary_carrier', 'building_component', 'service'], as_index=False)
+        .groupby(['primary_carrier', 'building_component', 'service', '_is_booster'], as_index=False)
         .agg(value_kWh=('value_kWh', 'sum'), carrier_kWh=('plant_input_kWh', 'sum'))
     )
     if not use_solar_irradiation:
@@ -867,6 +897,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         carrier      = row['primary_carrier']
         bc           = row['building_component']
         service      = row['service']
+        is_booster   = row['_is_booster']
         val          = row['value_kWh']       # useful output: component → service
         carrier_val  = row['carrier_kWh']     # carrier input: carrier → component
         c_colour     = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
@@ -882,17 +913,18 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
                     add_link(pt,      bc, carrier_val, c_colour)
                 else:
                     add_link(carrier, bc, carrier_val, c_colour)
-                # Booster: if this service has an HEX in l3, route through it.
-                # Otherwise (standalone or solar), link directly to service.
-                # Solar must never route through the district HEX —
-                # solar panels are standalone generators with no district interface.
+                # Booster routes through HEX (district interface).
+                # Standalone and solar go directly to service.
                 is_solar = carrier == 'Solar'
-                hex_nodes = [] if is_solar else service_to_hex.get(service, [])
-                if hex_nodes:
-                    for hex_node in hex_nodes:
-                        if hex_node in idx:
-                            add_link(bc, hex_node, val, svc_col)
-                            add_link(hex_node, service, val, svc_col)
+                if is_booster and not is_solar:
+                    hex_nodes = service_to_hex.get(service, [])
+                    if hex_nodes:
+                        for hex_node in hex_nodes:
+                            if hex_node in idx:
+                                add_link(bc, hex_node, val, svc_col)
+                                add_link(hex_node, service, val, svc_col)
+                    else:
+                        add_link(bc, service, val, svc_col)
                 else:
                     add_link(bc, service, val, svc_col)
             else:
