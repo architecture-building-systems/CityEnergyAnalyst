@@ -108,12 +108,14 @@ A more complex scenario with district heating, district cooling, and solar:
 
 ![Energy Flow Sankey - DH, DC, and Solar](images/06-life-cycle-analysis/06-1-final-energy-flow-sankey-dh-dc-solar.png)
 
+Load duration curve showing the same component (BO1) across district plant, standalone buildings, and boosters:
+
+![Load Duration Curve - Boiler (BO1)](images/06-life-cycle-analysis/06-1-load-curve-component.png)
+
 ### Chart Interpretation
 
-- **Tall bars** = high energy consumers
-- **Colour distribution** shows fuel mix
-- **Plant bars** are typically much larger than individual buildings (they serve many buildings)
-- **Normalised view** (per m2) enables fair comparison across building sizes
+- **Energy flow sankey** shows carrier flows from city-level sources through district and building equipment to end-use services
+- **Load duration curve** shows the hourly load profile of a component sorted by magnitude, useful for equipment sizing and utilisation analysis
 
 ---
 
