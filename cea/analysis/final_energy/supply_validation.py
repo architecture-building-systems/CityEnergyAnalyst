@@ -623,8 +623,9 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
             dhw_booster_temp = get_component_design_supply_temperature(primary, locator)
 
     per_building_services = dh_network.get('per_building_services', {})
-    hs_failures = []
-    dhw_failures = []
+    # Group by required temperature: {t_required: [building_names]}
+    hs_groups = {}  # {t_required_C: [building, ...]}
+    dhw_groups = {}
 
     for building in per_building_services:
         substation_file = locator.get_thermal_network_substation_results_file(
@@ -640,42 +641,48 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
 
         # Check HS booster temperature
         if hs_booster_temp is not None and 'T_target_hs_C' in sub_df.columns:
-            t_required = sub_df['T_target_hs_C'].max()
+            t_required = round(sub_df['T_target_hs_C'].max())
             if t_required > 0 and hs_booster_temp < t_required - 0.5:
-                hs_failures.append(
-                    f"  - {building}: requires {t_required:.0f} degrees C, "
-                    f"booster can supply {hs_booster_temp:.0f} degrees C"
-                )
+                hs_groups.setdefault(t_required, []).append(building)
 
         # Check DHW booster temperature
         if dhw_booster_temp is not None and 'T_target_dhw_C' in sub_df.columns:
-            t_required = sub_df['T_target_dhw_C'].max()
+            t_required = round(sub_df['T_target_dhw_C'].max())
             if t_required > 0 and dhw_booster_temp < t_required - 0.5:
-                dhw_failures.append(
-                    f"  - {building}: requires {t_required:.0f} degrees C, "
-                    f"booster can supply {dhw_booster_temp:.0f} degrees C"
-                )
+                dhw_groups.setdefault(t_required, []).append(building)
 
     messages = []
 
-    if hs_failures:
+    if hs_groups:
         hs_primary = load_assembly_components(hs_booster_code, locator).get('primary_components', '?')
+        lines = []
+        for t_req, buildings in sorted(hs_groups.items()):
+            names = ", ".join(sorted(buildings))
+            lines.append(
+                f"  - Requires {t_req:.0f} degrees C: {names}"
+            )
         messages.append(
             f"Space heating booster assembly ({hs_booster_code}, component {hs_primary}) "
-            f"cannot reach the required supply temperature for the following buildings:\n"
-            + "\n".join(hs_failures)
+            f"can only supply {hs_booster_temp:.0f} degrees C, which is insufficient for:\n"
+            + "\n".join(lines)
             + f"\n\nPlease select a booster assembly with a component that can supply "
             f"a higher temperature."
         )
 
-    if dhw_failures:
+    if dhw_groups:
         dhw_primary = load_assembly_components(dhw_booster_code, locator).get('primary_components', '?')
+        lines = []
+        for t_req, buildings in sorted(dhw_groups.items()):
+            names = ", ".join(sorted(buildings))
+            lines.append(
+                f"  - Requires {t_req:.0f} degrees C: {names}"
+            )
         messages.append(
             f"DHW booster assembly ({dhw_booster_code}, component {dhw_primary}) "
-            f"cannot reach the required supply temperature for the following buildings:\n"
-            + "\n".join(dhw_failures)
+            "can only supply {dhw_booster_temp:.0f} degrees C, which is insufficient for:\n"
+            + "\n".join(lines)
             + f"\n\nPlease select a booster assembly with a component that can supply "
-            f"a higher temperature (Swiss law requires at least 60 degrees C for DHW)."
+            "a higher temperature."
         )
 
     if messages:
