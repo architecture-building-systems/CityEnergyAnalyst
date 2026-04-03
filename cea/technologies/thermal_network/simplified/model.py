@@ -434,9 +434,9 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
     primary_service = itemised_dh_services[0]
 
     if primary_service == PlantServices.SPACE_HEATING:
-        # PLANT_hs or PLANT_hs_ww: Low-temp network
-        # Space heating return ~30°C + 5K approach = 35°C min
-        return 35
+        # PLANT_hs or PLANT_hs_ww: Low-temp or ambient-loop network
+        # Minimum 15°C to allow ambient-loop heat pump configurations
+        return 15
     elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
         # PLANT_ww or PLANT_ww_hs: High-temp network
         # DHW return ~45°C + 5K approach = 50°C min (allows preheating to 55°C, booster to 60°C)
@@ -564,7 +564,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"With {service_names} as primary service(s), the network\n"
                         f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
                         f"Explanation:\n"
-                        f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
+                        f"  - For space heating priority: minimum 15°C (allows ambient-loop heat pump configurations)\n"
                         f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
                         f"Current configuration will result in:\n"
                         f"  → Network provides essentially zero heat\n"

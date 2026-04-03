@@ -24,6 +24,11 @@ COMPONENT_SUPPLY_TEMP_MAP = {
     'HP':   ('HEAT_PUMPS',          'T_cond_design'),
 }
 
+# DC components: evaporator design temperature (what the chiller can supply on the cold side).
+COMPONENT_DC_SUPPLY_TEMP_MAP = {
+    'CH':   ('VAPOR_COMPRESSION_CHILLERS', 'T_evap_design'),
+}
+
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -800,6 +805,159 @@ def validate_assembly_temperature_vs_network(assembly_code, locator, dh_temperat
                 f"(e.g., heat pump or low-temperature boiler), or\n"
                 f"  (b) Change 'dh-temperature-mode' to 'high-temperature' in thermal-network settings"
             )
+
+
+def get_component_dc_supply_temperature(component_code, locator):
+    """
+    Look up the design supply temperature of a cooling component (evaporator side).
+
+    :param component_code: Component code, e.g. 'CH1', 'CH2'
+    :param locator: InputLocator instance
+    :return: Design evaporator temperature in degrees C, or None if unknown type
+    """
+    if not component_code:
+        return None
+
+    code = str(component_code).strip()
+
+    matched_entry = None
+    for prefix in sorted(COMPONENT_DC_SUPPLY_TEMP_MAP.keys(), key=len, reverse=True):
+        if code.startswith(prefix):
+            matched_entry = COMPONENT_DC_SUPPLY_TEMP_MAP[prefix]
+            break
+
+    if matched_entry is None:
+        return None
+
+    csv_name, temp_col = matched_entry
+    filepath = locator.get_db4_components_conversion_conversion_technology_csv(csv_name)
+
+    if not os.path.exists(filepath):
+        return None
+
+    df = pd.read_csv(filepath)
+    row = df[df['code'] == code]
+
+    if row.empty:
+        return None
+
+    val = row.iloc[0].get(temp_col)
+    if pd.isna(val):
+        return None
+
+    return float(val)
+
+
+def validate_plant_temperature_vs_network_results(locator, network_name, config):
+    """
+    Validate that the district plant component can supply the temperature
+    required by the actual thermal-network Part 2 simulation results.
+
+    Reads the maximum supply temperature from the plant temperature file
+    and compares against the component's design temperature.
+
+    For DH: component T_design must be >= network supply temperature
+    For DC: component T_design must be <= network supply temperature
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name
+    :param config: Configuration instance
+    :raises ValueError: If temperature is incompatible
+    """
+    if not network_name:
+        return
+
+    # --- DH check ---
+    dh_temp_file = locator.get_network_temperature_plant('DH', network_name)
+    if os.path.exists(dh_temp_file):
+        # Get the district assembly for heating
+        if config.final_energy.overwrite_supply_settings:
+            hs_assembly = config.final_energy.supply_type_hs_district
+        else:
+            supply_df = pd.read_csv(locator.get_building_supply())
+            scale_mapping = load_all_assembly_scales(locator)
+            # Find the first DISTRICT-scale heating assembly
+            hs_assembly = None
+            if 'supply_type_hs' in supply_df.columns:
+                for _, row in supply_df.iterrows():
+                    code = row.get('supply_type_hs')
+                    if code and not pd.isna(code) and scale_mapping.get(str(code)) == 'DISTRICT':
+                        hs_assembly = str(code)
+                        break
+
+        if hs_assembly:
+            components = load_assembly_components(hs_assembly, locator)
+            primary_code = components.get('primary_components')
+            t_component = get_component_design_supply_temperature(primary_code, locator)
+
+            if t_component is not None:
+                temp_df = pd.read_csv(dh_temp_file)
+                if 'temperature_supply_K' in temp_df.columns:
+                    # Filter out zero rows (no demand hours)
+                    active = temp_df[temp_df['temperature_supply_K'] > 0]
+                    if not active.empty:
+                        t_network_K = active['temperature_supply_K'].max()
+                        t_network_C = t_network_K - 273.15
+
+                        if t_component < t_network_C - 0.5:  # 0.5°C tolerance for floating point
+                            raise ValueError(
+                                f"Temperature incompatibility: the selected DH plant assembly "
+                                f"({hs_assembly}) uses {primary_code} with a maximum supply "
+                                f"temperature of {t_component:.0f} degrees C, which is below the network "
+                                f"supply temperature of {t_network_C:.0f} degrees C.\n\n"
+                                f"Options:\n"
+                                f"  1. Select a different assembly with a supply temperature "
+                                f"higher than {t_network_C:.0f} degrees C\n"
+                                f"  2. Re-run Thermal Network Part 2 with "
+                                f"dh-temperature-mode = low-temperature\n"
+                                f"  3. Re-run Thermal Network Part 2 with "
+                                f"network-temperature-dh = {t_component:.0f} "
+                                f"(or slightly below) to match the plant component"
+                            )
+
+    # --- DC check ---
+    dc_temp_file = locator.get_network_temperature_plant('DC', network_name)
+    if os.path.exists(dc_temp_file):
+        # Get the district assembly for cooling
+        if config.final_energy.overwrite_supply_settings:
+            cs_assembly = config.final_energy.supply_type_cs_district
+        else:
+            supply_df = pd.read_csv(locator.get_building_supply())
+            scale_mapping = load_all_assembly_scales(locator)
+            cs_assembly = None
+            if 'supply_type_cs' in supply_df.columns:
+                for _, row in supply_df.iterrows():
+                    code = row.get('supply_type_cs')
+                    if code and not pd.isna(code) and scale_mapping.get(str(code)) == 'DISTRICT':
+                        cs_assembly = str(code)
+                        break
+
+        if cs_assembly:
+            components = load_assembly_components(cs_assembly, locator)
+            primary_code = components.get('primary_components')
+            t_component = get_component_dc_supply_temperature(primary_code, locator)
+
+            if t_component is not None:
+                temp_df = pd.read_csv(dc_temp_file)
+                if 'temperature_supply_K' in temp_df.columns:
+                    active = temp_df[temp_df['temperature_supply_K'] > 0]
+                    if not active.empty:
+                        t_network_K = active['temperature_supply_K'].min()
+                        t_network_C = t_network_K - 273.15
+
+                        if t_component > t_network_C + 0.5:  # 0.5°C tolerance for floating point
+                            raise ValueError(
+                                f"Temperature incompatibility: the selected DC plant assembly "
+                                f"({cs_assembly}) uses {primary_code} with a minimum supply "
+                                f"temperature of {t_component:.0f} degrees C, which is above the network "
+                                f"supply temperature of {t_network_C:.0f} degrees C.\n\n"
+                                f"Options:\n"
+                                f"  1. Select a different assembly with a supply temperature "
+                                f"lower than {t_network_C:.0f} degrees C\n"
+                                f"  2. Re-run Thermal Network Part 2 with "
+                                f"network-temperature-dc = {t_component:.0f} "
+                                f"(or slightly above) to match the plant component"
+                            )
 
 
 def load_network_connectivity(locator, network_name):

@@ -147,6 +147,18 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"\n{e}")
             raise
 
+    # Step 3.6: Validate plant temperature vs network simulation results
+    _network_name = config.final_energy.network_name
+    if _network_name:
+        print("\nChecking plant temperature compatibility...")
+        from cea.analysis.final_energy.supply_validation import validate_plant_temperature_vs_network_results
+        try:
+            validate_plant_temperature_vs_network_results(locator, _network_name, config)
+            print("  Plant temperature is compatible with network.")
+        except ValueError as e:
+            print(f"\n{e}")
+            raise
+
     # Step 4: Calculate final energy for each building
     print("\nCalculating building final energy...")
     building_dfs = {}
