@@ -54,6 +54,11 @@ _CONFIG_KEY_COL_PREFIX = {
     'electricity':   'E_sys',
 }
 
+_BOOSTER_KEY_COL_PREFIX = {
+    'space_heating_booster': 'Qhs_booster',
+    'hot_water_booster':     'Qww_booster',
+}
+
 
 def _to_rgba(rgb_str, alpha=0.2):
 
@@ -227,13 +232,66 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
 
             if building_series:
                 if not selected_buildings:
-                    # Aggregate into a single curve
                     total = np.zeros(8760)
                     for arr in building_series.values():
                         total += arr
                     result['All Buildings'] = total
                 else:
                     result.update(building_series)
+
+        # ── Booster components ────────────────────────────────────────────
+        booster_matches = []
+        for building, bconfig in building_configs.items():
+            if selected_buildings and building not in selected_buildings:
+                continue
+            for bst_key, col_prefix in _BOOSTER_KEY_COL_PREFIX.items():
+                bst_cfg = bconfig.get(bst_key)
+                if not bst_cfg or not isinstance(bst_cfg, dict):
+                    continue
+                if bst_cfg.get('scale') != 'BUILDING':
+                    continue
+                component_code = bst_cfg.get('primary_component', '')
+                if not component_code:
+                    continue
+                if _component_display(component_code) != component_display:
+                    continue
+                carrier = bst_cfg.get('carrier', '')
+                booster_matches.append((building, col_prefix, carrier))
+
+        if booster_matches:
+            booster_series = {}
+            for building, col_prefix, carrier in booster_matches:
+                bfile = locator.get_final_energy_building_file(building, whatif_name)
+                if not os.path.exists(bfile):
+                    continue
+                df = pd.read_csv(bfile)
+                col = f'{col_prefix}_{carrier}_kWh' if carrier else None
+                hourly = None
+                if col and col in df.columns and len(df[col]) == 8760:
+                    hourly = df[col].values.astype(float)
+                else:
+                    for c in df.columns:
+                        if c.startswith(f'{col_prefix}_') and c.endswith('_kWh') and len(df[c]) == 8760:
+                            if hourly is None:
+                                hourly = df[c].values.astype(float)
+                            else:
+                                hourly += df[c].values.astype(float)
+                if hourly is None:
+                    continue
+                label = f'{building} (booster)'
+                if label in booster_series:
+                    booster_series[label] += hourly
+                else:
+                    booster_series[label] = hourly
+
+            if booster_series:
+                if not selected_buildings:
+                    total = np.zeros(8760)
+                    for arr in booster_series.values():
+                        total += arr
+                    result['All Buildings (booster)'] = total
+                else:
+                    result.update(booster_series)
 
     return result
 
