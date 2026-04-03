@@ -96,9 +96,17 @@ Creates bar charts of final energy consumption by carrier for buildings and plan
 | **X axis** | View type | By building, by month, by season, district hourly, etc. |
 | **Include** | Entity filter | Buildings, Plants, or both |
 
-### Example
+### Examples
 
-![Final Energy bar chart](images/06-life-cycle-analysis/06-1-final-energy-bar.png)
+Two what-if scenarios (Config 1 and Config 2) showing different supply configurations for the same district:
+
+![Energy Flow Sankey - Config 1](images/06-life-cycle-analysis/06-1-final-energy-flow-sankey-config1.png)
+
+![Energy Flow Sankey - Config 2](images/06-life-cycle-analysis/06-1-final-energy-flow-sankey-config2.png)
+
+A more complex scenario with district heating, district cooling, and solar:
+
+![Energy Flow Sankey - DH, DC, and Solar](images/06-life-cycle-analysis/06-1-final-energy-flow-sankey-dh-dc-solar.png)
 
 ### Chart Interpretation
 

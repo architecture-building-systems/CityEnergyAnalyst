@@ -90,9 +90,15 @@ Creates a Sankey diagram showing cost flows from individual cost components thro
 | **Y unit** | Currency unit | USD, kUSD, MUSD |
 | **Normalise by** | Normalisation | None, Gross floor area |
 
-### Example
+### Examples
 
-![Cost Sankey diagram](images/06-life-cycle-analysis/06-3-cost-sankey.png)
+Cost sankey showing flows from services through equipment to cost categories:
+
+![Cost Sankey](images/06-life-cycle-analysis/06-3-costs-sankey.png)
+
+Cost breakdown comparing building-scale and district-scale costs per m2:
+
+![Cost Breakdown](images/06-life-cycle-analysis/06-3-costs-breakdown.png)
 
 ### CAPEX View Options
 

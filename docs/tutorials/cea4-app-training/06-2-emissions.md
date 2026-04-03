@@ -108,10 +108,6 @@ Creates stacked bar charts showing total lifecycle emissions per building, combi
 | **Normalise by** | Normalisation | None, Gross floor area |
 | **Include** | Entity filter | Buildings, Plants, or both |
 
-### Example
-
-![Lifecycle Emissions bar chart](images/06-life-cycle-analysis/06-2-lifecycle-emissions-bar.png)
-
 ### Legend Labels
 
 | Legend Name | Meaning |
@@ -140,7 +136,9 @@ Visualises how cumulative emissions evolve over time across the district, tracki
 
 ### Example
 
-![Emission Timeline chart](images/06-life-cycle-analysis/06-2-emission-timeline.png)
+Cumulative emission timeline showing district emissions over the building lifecycle:
+
+![Emission Timeline](images/06-life-cycle-analysis/06-2-emission-timeline.png)
 
 ### Key Parameters
 
@@ -163,7 +161,9 @@ Creates bar charts of operational emissions from energy system operation, with b
 
 ### Example
 
-![Operational Emissions bar chart](images/06-life-cycle-analysis/06-2-operational-emissions-bar.png)
+Operational emissions by energy carrier (percentage breakdown per building):
+
+![Operational Emissions by Energy Carrier](images/06-life-cycle-analysis/06-2-operational-emission-energy-carrier.png)
 
 ### Key Parameters
 

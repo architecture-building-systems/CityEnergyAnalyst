@@ -80,7 +80,9 @@ Creates bar charts of heat rejection per building and plant, showing the magnitu
 
 ### Example
 
-![Heat Rejection bar chart](images/06-life-cycle-analysis/06-4-heat-rejection-bar.png)
+App map view showing anthropogenic heat rejection intensity per building and district heating plant:
+
+![Heat Rejection Map](images/06-life-cycle-analysis/06-4-heat-rejection-map.png)
 
 ### Key Parameters
 
