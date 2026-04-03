@@ -627,6 +627,8 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
     hs_groups = {}  # {t_required_C: [building, ...]}
     dhw_groups = {}
 
+    needs_check = hs_booster_temp is not None or dhw_booster_temp is not None
+
     for building in per_building_services:
         substation_file = locator.get_thermal_network_substation_results_file(
             building, 'DH', network_name
@@ -638,6 +640,24 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
             sub_df = pd.read_csv(substation_file)
         except Exception:
             continue
+
+        # Check for missing temperature columns (backward compatibility)
+        if needs_check:
+            missing_cols = []
+            if hs_booster_temp is not None and 'T_target_hs_C' not in sub_df.columns:
+                if sub_df.get('Qhs_booster_W') is not None and sub_df['Qhs_booster_W'].sum() > 0:
+                    missing_cols.append('T_target_hs_C')
+            if dhw_booster_temp is not None and 'T_target_dhw_C' not in sub_df.columns:
+                if sub_df.get('Qww_booster_W') is not None and sub_df['Qww_booster_W'].sum() > 0:
+                    missing_cols.append('T_target_dhw_C')
+            if missing_cols:
+                raise ValueError(
+                    f"Substation file for building '{building}' is missing columns: "
+                    f"{', '.join(missing_cols)}.\n\n"
+                    f"This is likely because the thermal network was simulated with an older version of CEA.\n\n"
+                    f"Please re-run Thermal Network Part 2 to regenerate the substation files.\n"
+                    f"If the error persists, re-run Thermal Network Part 1 as well."
+                )
 
         # Check HS booster temperature
         if hs_booster_temp is not None and 'T_target_hs_C' in sub_df.columns:
