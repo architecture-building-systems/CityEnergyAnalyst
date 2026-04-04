@@ -1,6 +1,4 @@
 from typing import Optional
-import os
-from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import geopandas as gpd
@@ -18,104 +16,35 @@ def period_to_year(period: pd.Series) -> pd.Series:
     return period.str.extract(r'Y_(\d{4})')[0].astype(int)
 
 
-def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
-    """
-    Filter buildings to only include those that exist in zone geometry.
-    Returns tuple of (filtered_buildings, geometry_df, centroids).
-    Gracefully handles missing buildings by excluding them.
-    """
-    import geopandas as gpd
-    from pyproj import CRS
-
-    if not buildings:
-        return [], None, []
-
-    try:
-        zone_gdf = gpd.read_file(locator.get_zone_geometry()).set_index("name")
-
-        # Filter to only buildings that exist in geometry
-        existing_buildings = [b for b in buildings if b in zone_gdf.index]
-
-        if not existing_buildings:
-            return [], None, []
-
-        geometry_df = zone_gdf.loc[existing_buildings]
-        centroids = geometry_df.geometry.centroid.to_crs(CRS.from_epsg(4326))
-
-        return existing_buildings, geometry_df, centroids
-    except Exception as e:
-        print(f"Warning: Error reading zone geometry: {e}")
-        return [], None, []
-
-
-def get_columns_from_building_files(paths: list) -> Optional[list]:
-    """
-    Read only the header row of each file in parallel and return the sorted union
-    of all data columns (excluding IGNORE_COLUMNS). Returns None if no file is readable.
-    """
-    def read_header(path):
-        try:
-            return set(pd.read_csv(path, nrows=0).columns)
-        except (FileNotFoundError, pd.errors.EmptyDataError):
-            return None
-
-    with ThreadPoolExecutor() as executor:
-        results = list(executor.map(read_header, paths))
-
-    columns = set()
-    for result in results:
-        if result is not None:
-            columns |= result
-
-    columns -= IGNORE_COLUMNS
-    return sorted(columns) if columns else None
-
-
-def get_whatif_names(locator) -> list:
-    """Return sorted list of what-if names that have lifecycle analysis results."""
-    base = locator.get_analysis_parent_folder()
-    return sorted([name for name in os.listdir(base)]) if os.path.isdir(base) else []
-
-
 class LifecycleEmissionsMapLayer(MapLayer):
     category = LifeCycleAnalysisCategory
     name = "lifecycle-emissions"
     label = "Lifecycle Emissions (Annual)"
     description = ""
 
-    def _get_data_columns(self, parameters) -> Optional[list]:
+    def _get_data_columns(self) -> Optional[list]:
         buildings = self.locator.get_zone_building_names()
-        whatif_name = parameters.get('whatif_name')
-
-        if not buildings or not whatif_name:
+        if not buildings:
             return
-
-        paths = [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
-        return get_columns_from_building_files(paths)
-
-    def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have lifecycle analysis results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
-
-    def _get_results_files(self, parameters) -> list:
-        whatif_name = parameters.get('whatif_name')
-        
-        if not whatif_name:
-            return []
-
-        buildings = self.locator.get_zone_building_names()
-        return [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
-
-    def _get_period_range(self, parameters) -> list:
-        """Get the valid period range from available data"""
-        whatif_name = parameters.get('whatif_name')
-        if not whatif_name:
-            return [None, None]
+        results_path = self.locator.get_lca_timeline_building(buildings[0])
 
         try:
+            emissions_df = pd.read_csv(results_path)
+            columns = set(emissions_df.columns) - IGNORE_COLUMNS
+        except (pd.errors.EmptyDataError, FileNotFoundError):
+            return
+
+        return sorted(list(columns))
+
+    def _get_results_files(self, _):
+        buildings = self.locator.get_zone_building_names()
+        return [self.locator.get_lca_timeline_building(b) for b in buildings]
+
+    def _get_period_range(self) -> list:
+        """Get the valid period range from available data"""
+        try:
             buildings = self.locator.get_zone_building_names()
-            timeline_df = self.locator.get_emissions_whatif_building_timeline_file(buildings[0], whatif_name)
+            timeline_df = self.locator.get_lca_timeline_building(buildings[0])
             df = pd.read_csv(timeline_df)
             df['year'] = period_to_year(df['period'])
             return [int(df['year'].min()), int(df['year'].max())]
@@ -126,14 +55,6 @@ class LifecycleEmissionsMapLayer(MapLayer):
     @classmethod
     def expected_parameters(cls):
         return {
-            'whatif_name':
-                ParameterDefinition(
-                    "What-if scenario",
-                    "string",
-                    description="Select a what-if scenario with emission results",
-                    options_generator="_get_whatif_names",
-                    selector="choice",
-                ),
             'data-column':
                 ParameterDefinition(
                     "Data Column",
@@ -141,7 +62,6 @@ class LifecycleEmissionsMapLayer(MapLayer):
                     description="Data column to use",
                     options_generator="_get_data_columns",
                     selector="choice",
-                    depends_on=['whatif_name']
                 ),
             'timeline':
                 ParameterDefinition(
@@ -150,7 +70,6 @@ class LifecycleEmissionsMapLayer(MapLayer):
                     description="Period to generate the data based on years",
                     selector="slider",
                     options_generator="_get_period_range",
-                    depends_on=['whatif_name']
                 ),
             'radius':
                 ParameterDefinition(
@@ -184,7 +103,6 @@ class LifecycleEmissionsMapLayer(MapLayer):
             FileRequirement(
                 "Embodied Emissions Timeline Files",
                 file_locator="layer:_get_results_files",
-                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -194,7 +112,6 @@ class LifecycleEmissionsMapLayer(MapLayer):
 
         # FIXME: Hardcoded to zone buildings for now
         buildings = self.locator.get_zone_building_names()
-        whatif_name = parameters.get('whatif_name')
 
         data_column = parameters['data-column']
         period = parameters['timeline']
@@ -213,53 +130,30 @@ class LifecycleEmissionsMapLayer(MapLayer):
             }
         }
 
-        # Filter buildings that exist in geometry
-        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
-
-        # If no buildings or what-if scenario is selected, return empty data with range of 0 to avoid errors in frontend
-        if not buildings or not whatif_name:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
-
         def get_data(building, centroid):
-            try:
-                building_file = self.locator.get_emissions_whatif_building_timeline_file(building, whatif_name)
-                if not os.path.exists(building_file):
-                    return None
+            df = pd.read_csv(
+                self.locator.get_lca_timeline_building(building), usecols=["period", data_column]
+            )
 
-                df = pd.read_csv(building_file, usecols=["period", data_column])
+            data = df[data_column]
+            data.index = period_to_year(df['period'])
 
-                data = df[data_column]
-                data.index = period_to_year(df['period'])
+            total_min = 0
+            total_max = data.sum()
 
-                total_min = 0
-                total_max = data.sum()
+            period_value = data.loc[start:end].sum()
+            period_min = period_value
+            period_max = period_value
 
-                period_value = data.loc[start:end].sum()
-                period_min = period_value
-                period_max = period_value
+            data = {"position": [centroid.x, centroid.y], "value": period_value}
 
-                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
+            return total_min, total_max, period_min, period_max, data
 
-                return total_min, total_max, period_min, period_max, data_point
-            except Exception as e:
-                print(f"Warning: Error reading lifecycle emissions for {building}: {e}")
-                return None
+        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
+        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
 
-        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
-
-        # Filter out None values (missing files)
-        values = [v for v in values if v is not None]
-
-        if not values:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
+        values = (get_data(building, centroid)
+                  for building, centroid in zip(buildings, building_centroids))
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
@@ -285,41 +179,27 @@ class OperationalEmissionsMapLayer(MapLayer):
     label = "Operational Emissions (Hourly/Daily)"
     description = ""
 
-    def _get_data_columns(self, parameters) -> Optional[list]:
+    def _get_data_columns(self) -> Optional[list]:
         buildings = self.locator.get_zone_building_names()
-        whatif_name = parameters.get('whatif_name')
+        if not buildings:
+            return
+        results_path = self.locator.get_lca_operational_hourly_building(buildings[0])
 
-        if not buildings or not whatif_name:
+        try:
+            emissions_df = pd.read_csv(results_path)
+            columns = set(emissions_df.columns) - IGNORE_COLUMNS
+        except (pd.errors.EmptyDataError, FileNotFoundError):
             return
 
-        paths = [self.locator.get_emissions_whatif_building_file(b, whatif_name) for b in buildings]
-        return get_columns_from_building_files(paths)
+        return sorted(list(columns))
 
-    def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have operational emissions results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_operational_file(name))]
-
-    def _get_results_files(self, parameters) -> list:
-        whatif_name = parameters.get('whatif_name')
-
-        if not whatif_name:
-            return []
-
+    def _get_results_files(self, _):
         buildings = self.locator.get_zone_building_names()
-        return [self.locator.get_emissions_whatif_building_file(b, whatif_name) for b in buildings]
+        return [self.locator.get_lca_operational_hourly_building(building) for building in buildings]
 
     @classmethod
     def expected_parameters(cls):
         return {
-            'whatif_name':
-                ParameterDefinition(
-                    "What-if scenario",
-                    "string",
-                    description="Select a what-if scenario with operational emission results",
-                    options_generator="_get_whatif_names",
-                    selector="choice",
-                ),
             'data-column':
                 ParameterDefinition(
                     "Data Column",
@@ -327,7 +207,6 @@ class OperationalEmissionsMapLayer(MapLayer):
                     description="Data column to use",
                     options_generator="_get_data_columns",
                     selector="choice",
-                    depends_on=['whatif_name']
                 ),
             'period':
                 ParameterDefinition(
@@ -369,7 +248,6 @@ class OperationalEmissionsMapLayer(MapLayer):
             FileRequirement(
                 "Operational Emissions Hourly Files",
                 file_locator="layer:_get_results_files",
-                optional=True,  # Individual building files may be missing
             ),
         ]
 
@@ -379,14 +257,14 @@ class OperationalEmissionsMapLayer(MapLayer):
 
         # FIXME: Hardcoded to zone buildings for now
         buildings = self.locator.get_zone_building_names()
-        whatif_name = parameters.get('whatif_name')
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
-
+        
         data_column = parameters['data-column']
 
-        if data_column is None or data_column not in self._get_data_columns(parameters):
+        if data_column is None or data_column not in self._get_data_columns():
             raise ValueError(f"Invalid data column: {data_column}")
+
 
         output = {
             "data": [],
@@ -401,52 +279,28 @@ class OperationalEmissionsMapLayer(MapLayer):
             }
         }
 
-        # Filter buildings that exist in geometry
-        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
-
-        if not buildings or not whatif_name:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
-
         def get_data(building, centroid):
-            try:
-                building_file = self.locator.get_emissions_whatif_building_file(building, whatif_name)
-                if not os.path.exists(building_file):
-                    return None
+            data = pd.read_csv(self.locator.get_lca_operational_hourly_building(building), usecols=[data_column])[data_column]
 
-                data = pd.read_csv(building_file, usecols=[data_column])[data_column]
+            total_min = 0
+            total_max = data.sum()
 
-                total_min = 0
-                total_max = data.sum()
+            if start < end:
+                period_value = data.iloc[start:end + 1].sum()
+            else:
+                period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
+            period_min = period_value
+            period_max = period_value
 
-                if start < end:
-                    period_value = data.iloc[start:end + 1].sum()
-                else:
-                    period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
-                period_min = period_value
-                period_max = period_value
+            data = {"position": [centroid.x, centroid.y], "value": period_value}
 
-                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
+            return total_min, total_max, period_min, period_max, data
 
-                return total_min, total_max, period_min, period_max, data_point
-            except Exception as e:
-                print(f"Warning: Error reading operational emissions for {building}: {e}")
-                return None
+        df = gpd.read_file(self.locator.get_zone_geometry()).set_index("name").loc[buildings]
+        building_centroids = df.geometry.centroid.to_crs(CRS.from_epsg(4326))
 
-        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
-
-        # Filter out None values (missing files)
-        values = [v for v in values if v is not None]
-
-        if not values:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
+        values = (get_data(building, centroid)
+                  for building, centroid in zip(buildings, building_centroids))
 
         total_min, total_max, period_min, period_max, data = zip(*values)
 
@@ -472,29 +326,15 @@ class EmissionTimelineMapLayer(MapLayer):
     label = "Emission Timeline"
     description = ""
 
-    def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have emission results."""
-        names = get_whatif_names(self.locator)
-        return [name for name in names if os.path.exists(self.locator.get_emissions_whatif_timeline_file(name))]
-    
-    def _get_results_files(self, parameters) -> list:
-        whatif_name = parameters.get('whatif_name')
-        
-        if not whatif_name:
-            return []
-
+    def _get_results_files(self, _):
         buildings = self.locator.get_zone_building_names()
-        return [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
+        return [self.locator.get_lca_timeline_building(b) for b in buildings]
 
-    def _get_period_range(self, parameters) -> list:
+    def _get_period_range(self) -> list:
         """Get the valid period range from available data"""
-        whatif_name = parameters.get('whatif_name')
-
-        if whatif_name is None:
-            return [None, None]
-
         try:
-            timeline_df = self.locator.get_emissions_whatif_timeline_file(whatif_name)
+            buildings = self.locator.get_zone_building_names()
+            timeline_df = self.locator.get_lca_timeline_building(buildings[0])
             df = pd.read_csv(timeline_df)
             df['year'] = period_to_year(df['period'])
             return [int(df['year'].min()), int(df['year'].max())]
@@ -504,14 +344,6 @@ class EmissionTimelineMapLayer(MapLayer):
     @classmethod
     def expected_parameters(cls):
         return {
-            'whatif_name':
-                ParameterDefinition(
-                    "What-if scenario",
-                    "string",
-                    description="Select a what-if scenario with emission results",
-                    options_generator="_get_whatif_names",
-                    selector="choice",
-                ),
             'timeline':
                 ParameterDefinition(
                     "Period",
@@ -519,7 +351,6 @@ class EmissionTimelineMapLayer(MapLayer):
                     description="Period to generate the data based on years",
                     selector="slider",
                     options_generator="_get_period_range",
-                    depends_on=['whatif_name']
                 ),
         }
     
@@ -534,194 +365,3 @@ class EmissionTimelineMapLayer(MapLayer):
 
     def generate_data(self, parameters: dict) -> dict:
         return {}
-
-
-class AnthropogenicHeatMapLayer(MapLayer):
-    category = LifeCycleAnalysisCategory
-    name = "anthropogenic-heat-rejection"
-    label = "Anthropogenic Heat Rejection (Hourly/Daily)"
-    description = "Visualise heat rejection from building systems and district cooling plants"
-
-    def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have heat rejection results."""
-        base = os.path.join(self.locator.scenario, 'outputs', 'data', 'analysis')
-        if not os.path.exists(base):
-            return None
-        names = [
-            d for d in os.listdir(base)
-            if os.path.exists(os.path.join(base, d, 'heat', 'heat_rejection_buildings.csv'))
-        ]
-        return sorted(names) or None
-
-    def _get_results_files(self, parameters):
-        """Return required files for caching"""
-        whatif_name = parameters.get('whatif_name')
-        if not whatif_name:
-            return []
-        buildings_file = self.locator.get_heat_rejection_whatif_buildings_file(whatif_name)
-        if not os.path.exists(buildings_file):
-            return []
-
-        buildings_df = pd.read_csv(buildings_file)
-        entity_names = buildings_df['name'].tolist()
-
-        files = [buildings_file]
-        for entity_name in entity_names:
-            entity_file = self.locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
-            if os.path.exists(entity_file):
-                files.append(entity_file)
-
-        return files
-
-    @classmethod
-    def expected_parameters(cls):
-        return {
-            'whatif_name':
-                ParameterDefinition(
-                    "What-if scenario",
-                    "string",
-                    description="Select a what-if scenario with heat rejection results",
-                    options_generator="_get_whatif_names",
-                    selector="choice",
-                ),
-            'period':
-                ParameterDefinition(
-                    "Period",
-                    "array",
-                    default=[1, 365],
-                    description="Period to generate the data (start, end) in days",
-                    selector="time-series",
-                ),
-            'radius':
-                ParameterDefinition(
-                    "Radius",
-                    "number",
-                    default=5,
-                    description="Radius of hexagon bin in metres",
-                    selector="input",
-                    range=[0, 100],
-                    filter="radius",
-                ),
-            'scale':
-                ParameterDefinition(
-                    "Scale",
-                    "number",
-                    default=1,
-                    description="Scale of hexagon bin height",
-                    selector="input",
-                    range=[0.1, 10],
-                    filter="scale",
-                ),
-        }
-
-    @classmethod
-    def file_requirements(cls):
-        return [
-            FileRequirement(
-                "Zone Buildings Geometry",
-                file_locator="locator:get_zone_geometry",
-            ),
-            FileRequirement(
-                "Heat Rejection Buildings Summary",
-                file_locator="layer:_get_results_files",
-                optional=True,
-            ),
-        ]
-
-    @cache_output
-    def generate_data(self, parameters):
-        """Generates the hexagon heatmap output for anthropogenic heat rejection"""
-
-        whatif_name = parameters.get('whatif_name')
-        if not whatif_name:
-            return {"data": [], "properties": {"name": self.name, "label": "Anthropogenic Heat Rejection", "description": self.description}}
-
-        period = parameters['period']
-        start, end = day_range_to_hour_range(period[0], period[1])
-
-        buildings_file = self.locator.get_heat_rejection_whatif_buildings_file(whatif_name)
-        if not os.path.exists(buildings_file):
-            return {"data": [], "properties": {"name": self.name, "label": "Anthropogenic Heat Rejection", "description": self.description}}
-
-        buildings_df = pd.read_csv(buildings_file)
-        entity_names = buildings_df['name'].tolist()
-
-        output = {
-            "data": [],
-            "properties": {
-                "name": self.name,
-                "label": "Anthropogenic Heat Rejection",
-                "description": self.description,
-                "colours": {
-                    "colour_array": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
-                    "points": 12
-                }
-            }
-        }
-
-        def get_data(entity_name, centroid):
-            entity_file = self.locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
-
-            if not os.path.exists(entity_file):
-                return 0.0, 0.0, {"position": [centroid.x, centroid.y], "value": 0.0}
-
-            entity_df = pd.read_csv(entity_file)
-
-            total_value = entity_df['heat_rejection_kW'].sum()
-
-            period_df = entity_df.iloc[start:end+1]
-            period_value = period_df['heat_rejection_kW'].sum()
-
-            data_point = {"position": [centroid.x, centroid.y], "value": period_value}
-
-            return total_value, period_value, data_point
-
-        buildings_df = buildings_df.set_index('name')
-
-        zone_gdf = gpd.read_file(self.locator.get_zone_geometry())
-
-        entity_gdf = gpd.GeoDataFrame(
-            buildings_df.loc[entity_names],
-            geometry=gpd.points_from_xy(
-                buildings_df.loc[entity_names]['x_coord'],
-                buildings_df.loc[entity_names]['y_coord']
-            ),
-            crs=zone_gdf.crs
-        )
-        entity_centroids = entity_gdf.geometry.to_crs(CRS.from_epsg(4326))
-
-        if not entity_names:
-            output['data'] = []
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
-
-        values = (get_data(entity_name, centroid)
-                  for entity_name, centroid in zip(entity_names, entity_centroids))
-
-        total_values, period_values, data = zip(*values)
-
-        non_zero_data = [(t, p, d) for t, p, d in zip(total_values, period_values, data) if p > 0 or t > 0]
-
-        if non_zero_data:
-            total_values, period_values, data = zip(*non_zero_data)
-        else:
-            total_values, period_values, data = (0.0,), (0.0,), []
-
-        output['data'] = data
-        output['properties']['range'] = {
-            'total': {
-                'label': 'Total Range',
-                'min': float(min(total_values)) if total_values else 0.0,
-                'max': float(max(total_values)) if total_values else 0.0
-            },
-            'period': {
-                'label': 'Period Range',
-                'min': float(min(period_values)) if period_values else 0.0,
-                'max': float(max(period_values)) if period_values else 0.0
-            }
-        }
-
-        return output

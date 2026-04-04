@@ -92,7 +92,7 @@ This page provides a complete overview of all 39 features available in the CEA-4
 |---------|-------------|---------|
 | **CEA-4 Format Helper** | Verify and migrate inputs to CEA-4 format | Check data format compatibility and migrate from CEA-3 |
 | **Generate Samples for Sensitivity Analysis** | Generate samples for sensitivity analysis using Sobol method | Create parameter samples for uncertainty analysis |
-| **Batch Process Workflow** | *(Temporarily suspended from dashboard; available via CLI)* | — |
+| **Batch Process Workflow** | Batch process scenarios using configured workflow | Run multiple scenarios with the same workflow automatically |
 | **DBF to CSV to DBF** | Convert files between DBF and CSV formats | Edit .dbf files in Excel/CSV format |
 | **SHP to CSV to SHP** | Convert files between shapefile and CSV formats | Edit shapefile attributes in Excel/CSV format |
 | **Rename Building** | Facilitate renaming buildings in scenario | Change building IDs across all scenario files |
@@ -217,7 +217,7 @@ For detailed information about each feature, refer to the category-specific guid
 - [Renewable Energy Potential Assessment](03-renewable-energy.md)
 - [Energy Demand Forecasting](04-demand-forecasting.md)
 - [Thermal Network Design](05-thermal-network.md)
-- [Life Cycle Analysis](06-0-life-cycle-analysis.md)
+- [Life Cycle Analysis](06-life-cycle-analysis.md)
 - [Energy Supply System Optimisation](07-supply-optimisation.md)
 - [Data Management](08-data-management.md)
 - [Utilities](09-utilities.md)

@@ -910,16 +910,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
         # Booster heat (always present, zeros if not applicable)
         "Qhs_booster_W": Q_booster_hs_W,
-        "Qww_booster_W": Q_booster_ww_W,
-
-        # Building-side target temperatures for booster validation
-        # Max across demand hours — the booster must be able to reach this temperature
-        "T_target_hs_C": np.where(Q_booster_hs_W > 0, Ths_supply_C, 0.0),
-        "T_target_dhw_C": np.where(
-            Q_booster_ww_W > 0,
-            building_demand_df.Tww_sys_sup_C.values if 'Tww_sys_sup_C' in building_demand_df.columns else 0.0,
-            0.0
-        ),
+        "Qww_booster_W": Q_booster_ww_W
     })
 
     # Determine output file path based on context

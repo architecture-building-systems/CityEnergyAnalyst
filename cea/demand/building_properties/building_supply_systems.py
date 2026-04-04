@@ -31,34 +31,32 @@ class BuildingSupplySystems(BuildingPropertiesDatabase):
 
     @staticmethod
     def get_properties_supply_systems(locator: InputLocator, properties_supply: pd.DataFrame):
-        # Supply system mappings using DatabaseMapping dataclass
-        # NOTE: Only scale is extracted. Efficiency and feedstock calculations moved to final-energy module.
         supply_database = Supply.from_locator(locator)
 
         supply_mappings = {
             'supply heating': DatabaseMapping(
                 data=supply_database.heating,
                 join_column='supply_type_hs',
-                fields=['scale_hs'],
-                column_renames={"scale": "scale_hs"}
+                fields=['source_hs', 'scale_hs', 'eff_hs'],
+                column_renames={"feedstock": "source_hs", "scale": "scale_hs", "efficiency": "eff_hs"}
             ),
             'supply cooling': DatabaseMapping(
                 data=supply_database.cooling,
                 join_column='supply_type_cs',
-                fields=['scale_cs'],
-                column_renames={"scale": "scale_cs"}
+                fields=['source_cs', 'scale_cs', 'eff_cs'],
+                column_renames={"feedstock": "source_cs", "scale": "scale_cs", "efficiency": "eff_cs"}
             ),
             'supply dhw': DatabaseMapping(
                 data=supply_database.hot_water,
                 join_column='supply_type_dhw',
-                fields=['scale_dhw'],
-                column_renames={"scale": "scale_dhw"}
+                fields=['source_dhw', 'scale_dhw', 'eff_dhw'],
+                column_renames={"feedstock": "source_dhw", "scale": "scale_dhw", "efficiency": "eff_dhw"}
             ),
             'supply electricity': DatabaseMapping(
                 data=supply_database.electricity,
                 join_column='supply_type_el',
-                fields=['scale_el'],
-                column_renames={"scale": "scale_el"}
+                fields=['source_el', 'scale_el', 'eff_el'],
+                column_renames={"feedstock": "source_el", "scale": "scale_el", "efficiency": "eff_el"}
             )
         }
 

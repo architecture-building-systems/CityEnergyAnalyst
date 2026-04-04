@@ -100,7 +100,6 @@ _BASE_COLUMN_COLORS = {
     "QH_sys": "red_lighter",
     "Qhs_sys": "red",
     "Qww": "orange",
-    "heat_rejection": "red",
 
     # ===== Total Generation =====
     "E_PV_gen": "yellow",
@@ -204,48 +203,19 @@ _BASE_COLUMN_COLORS = {
     "E_sys_OIL": "green_light",
     "E_sys_HYDROGEN": "green_light",
     "E_sys_NONE": "green_light",
-    "DH_NATURALGAS": "red_light",
-    "DH_BIOGAS": "red_light",
-    "DH_SOLAR": "red_light",
-    "DH_DRYBIOMASS": "red_light",
-    "DH_WETBIOMASS": "red_light",
-    "DH_GRID": "red_light",
-    "DH_COAL": "red_light",
-    "DH_WOOD": "red_light",
-    "DH_OIL": "red_light",
-    "DH_HYDROGEN": "red_light",
-    "DH_NONE": "red_light",
-    "DC_NATURALGAS": "blue_light",
-    "DC_BIOGAS": "blue_light",
-    "DC_SOLAR": "blue_light",
-    "DC_DRYBIOMASS": "blue_light",
-    "DC_WETBIOMASS": "blue_light",
-    "DC_GRID": "blue_light",
-    "DC_COAL": "blue_light",
-    "DC_WOOD": "blue_light",
-    "DC_OIL": "blue_light",
-    "DC_HYDROGEN": "blue_light",
-    "DC_NONE": "blue_light",
 
-    # Energy carriers (aggregated by carrier) - colours aligned with energy Sankey
-    "GRID": "green",
-    "NATURALGAS": "orange",
+    # Energy carriers (aggregated by carrier) - use "_light" colors, GRID is purple
+    "GRID": "purple_light",
+    "NATURALGAS": "red_light",
     "BIOGAS": "green_light",
-    "SOLAR": "yellow",
+    "SOLAR": "yellow_light",
     "DRYBIOMASS": "brown_light",
     "WETBIOMASS": "brown_light",
-    "COAL": "grey",
-    "WOOD": "brown",
-    "OIL": "brown_light",
+    "COAL": "grey_light",
+    "WOOD": "orange_light",
+    "OIL": "blue_light",
     "HYDROGEN": "uuen_blue_light",
     "NONE": "grey",
-
-    # ===== Cost Categories =====
-    "CAPEX_total":             "grey",
-    "CAPEX_annualised":        "grey_light",
-    "OPEX_fixed_annual":       "blue",
-    "OPEX_variable_annual":    "blue_light",
-    "Total_annualised_costs":  "purple",
 
     "PV_PV1_offset_total": "yellow",
     "PV_PV2_offset_total": "yellow",
@@ -258,8 +228,6 @@ _BASE_COLUMN_COLORS = {
     "operation_Qww_sys": "orange",
     "operation_Qcs_sys": "blue",
     "operation_E_sys": "green",
-    "operation_DH":  "red_light",
-    "operation_DC":  "blue_light",
 
     # Production - all purple
     "production_wall_ag": "purple",
@@ -301,17 +269,6 @@ _BASE_COLUMN_COLORS = {
     "production_pv": "purple",
     "biogenic_pv": "grey",
     "demolition_pv": "brown",
-
-    # What-if mode lifecycle totals (no component suffix)
-    "production": "purple",
-    "biogenic": "grey",
-    "demolition": "brown",
-
-    # Solar offset columns (electric = yellows, thermal = oranges)
-    "PV_E_offset":  "yellow",        # PV electric offset
-    "PVT_E_offset": "yellow_light",  # PVT electric offset
-    "PVT_Q_offset": "orange",        # PVT thermal offset
-    "SC_Q_offset":  "orange_light",  # SC thermal offset
 }
 
 
@@ -372,65 +329,11 @@ def get_column_color(column_name):
     return _BASE_COLUMN_COLORS.get(base_name, "grey")
 
 
-# ── Component display helpers ─────────────────────────────────────────────────
-
-COMPONENT_PREFIX_DISPLAY = [
-    ('PVT', 'PVT Panel'),
-    ('PV',  'PV Panel'),
-    ('SC',  'Solar Collector'),
-    ('BO',  'Boiler'),
-    ('HP',  'Heat Pump'),
-    ('CH',  'Chiller'),
-    ('CT',  'Cooling Tower'),
-    ('PU',  'Pump'),
-    ('HEX', 'Heat Exchanger'),
-]
-
-COMPONENT_EXACT_DISPLAY = {
-    'PIPES': 'Piping',
-    'GRID':  'City Grid',
-}
-
-
-def component_display(code):
-    """Map a component code (e.g. 'CH1', 'BO2') to a human-readable display name."""
-    code = str(code).strip()
-    if code in COMPONENT_EXACT_DISPLAY:
-        return COMPONENT_EXACT_DISPLAY[code]
-    for prefix, label in COMPONENT_PREFIX_DISPLAY:
-        if code.startswith(prefix):
-            return f'{label} ({code})'
-    return code
-
-
-COMPONENT_TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red'],
-    'Heat Pump':       COLOURS_TO_RGB['orange'],
-    'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['blue'],
-    'Pump':            COLOURS_TO_RGB['grey'],
-    'Piping':          COLOURS_TO_RGB['grey'],
-    'Heat Exchanger':  COLOURS_TO_RGB['grey'],
-    'City Grid':       COLOURS_TO_RGB['purple'],
-    'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow'],
-}
-
-
-def component_tech_colour(display_label):
-    """Return the RGB colour string for a component display label."""
-    for base, colour in COMPONENT_TECH_COLOURS.items():
-        if display_label.startswith(base):
-            return colour
-    return COLOURS_TO_RGB['grey']
-
-
 # Generate the full COLUMNS_TO_COLOURS dict for backward compatibility
 COLUMNS_TO_COLOURS = {}
 for base_name, color in _BASE_COLUMN_COLORS.items():
     # Generate all unit variations
-    if any(x in base_name for x in ['_E', '_Q', 'PV', 'PVT', 'SC', 'sys', 'GRID', 'heat_rejection']):
+    if any(x in base_name for x in ['_E', '_Q', 'PV', 'PVT', 'SC', 'sys', 'GRID']):
         # Energy metrics
         for unit in ['Wh', 'kWh', 'MWh']:
             COLUMNS_TO_COLOURS[f"{base_name}_{unit}"] = color

@@ -189,10 +189,7 @@ async def create_plot_at_index(config: CEAConfig, plot_cache: CEAPlotCache,
         for pname, fqname in plot_parameters:
             parameter = temp_config.get_parameter(fqname)
             if isinstance(parameter, cea.config.MultiChoiceParameter):
-                raw_value = form['parameters'][pname]
-                if isinstance(raw_value, list):
-                    raw_value = ','.join(raw_value)
-                plot.parameters[pname] = parameter.decode(raw_value)
+                plot.parameters[pname] = parameter.decode(','.join(form['parameters'][pname]))
             else:
                 plot.parameters[pname] = parameter.decode(form['parameters'][pname])
 

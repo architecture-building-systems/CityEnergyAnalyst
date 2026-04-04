@@ -108,51 +108,195 @@ Creates bar charts of building energy demand results, showing heating, cooling, 
 
 ---
 
-## Plot - Final Energy
-
-See [Final Energy > Plot - Final Energy](06-1-final-energy.md#plot---final-energy) for full documentation.
-
-Bar charts of final energy consumption by carrier (grid, gas, oil, coal, wood) for buildings and plants under a what-if scenario.
-
----
-
 ## Plot - Lifecycle Emissions
 
-See [Emissions > Plot - Lifecycle Emissions](06-2-emissions.md#plot---lifecycle-emissions) for full documentation.
+### Overview
+Creates bar charts showing total lifecycle emissions (embodied + operational) for buildings. Visualises both construction impacts and energy use emissions.
 
-Stacked bar charts showing total lifecycle emissions per building (embodied + operational + biogenic + solar offsets). Title includes the lifecycle year range.
+### When to Use
+- After running [Emissions analysis](06-life-cycle-analysis.md#emissions)
+- Presenting carbon footprint assessments
+- Comparing building environmental performance
+- Supporting net-zero carbon strategies
+
+### What It Plots
+
+**Emission Sources**:
+- Embodied emissions (construction, materials, end-of-life)
+- Operational emissions (heating, cooling, electricity, DHW)
+- Biogenic carbon (negative emissions from timber storage)
+- PV production emissions (if applicable)
+
+**Chart Types**:
+1. **Annual total emissions** - kgCO₂e/year
+2. **Emissions intensity** - kgCO₂e/m²/year
+3. **Lifecycle cumulative** - Total over analysis period
+4. **Emissions breakdown** - By source (embodied vs operational)
+
+### Prerequisites
+- [Emissions analysis](06-life-cycle-analysis.md#emissions) completed
+
+### How to Use
+
+1. **Complete Emissions calculation**
+
+2. **Generate plots**:
+   - Navigate to **Visualisation**
+   - Select **Plot - Lifecycle Emissions**
+   - Choose chart type
+   - Select buildings
+   - Click **Run**
+
+3. **Outputs**: `{scenario}/outputs/plots/emissions/lifecycle/`
+
+### Chart Interpretation
+
+**Embodied vs Operational**:
+- Stacked bars show split between construction and operation
+- New buildings: Often 30-50% embodied over 50 years
+- Retrofits: Lower embodied fraction
+- Passive/net-zero: Can be >60% embodied
+
+**Negative Emissions**:
+- Timber buildings may show negative embodied emissions
+- Biogenic carbon storage exceeds manufacturing emissions
+- Consider temporary storage (released at end-of-life)
+
+### Tips
+- **Present both totals and intensity**: Different audiences prefer different metrics
+- **Show time horizon**: Lifecycle depends on analysis period
+- **Highlight trade-offs**: Low operational may mean high embodied
 
 ---
 
 ## Plot - Emission Timeline
 
-See [Emissions > Plot - Emission Timeline](06-2-emissions.md#plot---emission-timeline) for full documentation.
+### Overview
+Visualises how emissions evolve over time, tracking cumulative lifecycle emissions across different sources. Shows trajectory toward net-zero targets.
 
-Cumulative stacked area chart showing how district emissions evolve from construction through demolition.
+### When to Use
+- Climate action planning
+- Demonstrating path to net-zero
+- Understanding emission timing and sources
+- Supporting climate policy compliance
+
+### What It Plots
+
+**Emission Sources Over Time**:
+- Operational emissions (annual)
+- Embodied emissions (construction years)
+- Renovation emissions (retrofit years)
+- PV embodied (installation year)
+- Biogenic sequestration (throughout building life)
+- Demolition emissions (end-of-life)
+
+**Visualisation Modes**:
+1. **Line plot** - Itemised emission trends by source
+2. **Net emissions line** - Overall net emissions with target year
+3. **Stacked area** - Total emissions, contribution by source
+4. **Percentage stacked** - Relative composition shifts
+
+### Prerequisites
+- Emissions analysis with target year projection
+
+### Key Parameters
+
+| Parameter | Description | Typical Value |
+|-----------|-------------|---------------|
+| **Target year** | Net-zero target | 2050 |
+| **Visualisation mode** | Chart style | Line / Area / Percentage |
+| **Show cumulative** | Running total vs annual | Cumulative (default) |
+
+### How to Use
+
+1. **Run Emissions with target year** (e.g., 2050)
+
+2. **Generate timeline plot**:
+   - Navigate to **Visualisation**
+   - Select **Plot - Emission Timeline**
+   - Set target year
+   - Choose visualisation mode
+   - Click **Run**
+
+3. **Outputs**: `{scenario}/outputs/plots/emissions/timeline/`
+
+### Chart Interpretation
+
+**Cumulative Emissions**:
+- Shows total accumulated carbon over time
+- Initial spike = embodied emissions from construction
+- Steady rise = ongoing operational emissions
+- Step changes = renovations or system replacements
+
+**Path to Net-Zero**:
+- Target line shows required trajectory
+- Gap between actual and target = additional action needed
+- Identify when net-zero is achieved (if at all)
+
+**Emission Composition**:
+- Stacked area shows how sources change over time
+- Early: Dominated by embodied
+- Long-term: Dominated by operational
+- Grid decarbonisation = operational decreases over time
+
+### Use Cases
+
+- **Policy compliance**: Demonstrate meeting targets
+- **Investment decisions**: Show long-term climate impact
+- **Renovation planning**: Timing and impact of interventions
+
+### Tips
+- **Include grid decarbonisation**: Model future grid becoming cleaner
+- **Show mitigation scenarios**: Compare with/without interventions
+- **Use for communication**: Effective stakeholder engagement tool
+
+For detailed examples, see: [IDAida.ch Course](https://platform.idaida.ch/course/view.php?id=41)
 
 ---
 
 ## Plot - Operational Emissions
 
-See [Emissions > Plot - Operational Emissions](06-2-emissions.md#plot---operational-emissions) for full documentation.
+### Overview
+Plots bar charts of annual operational emissions from energy system operation (heating, cooling, electricity, DHW).
 
-Bar charts of operational emissions by service or energy carrier, with solar offset as negative bars.
+### When to Use
+- Focusing on operational carbon (excluding embodied)
+- Comparing energy system alternatives
+- Supporting system selection decisions
 
----
+### What It Plots
 
-## Plot - Cost Sankey
+**Operational Emission Sources**:
+- Heating system emissions
+- Cooling system emissions
+- Electricity emissions
+- DHW system emissions
 
-See [System Costs > Plot - Cost Sankey](06-3-system-costs.md#plot---cost-sankey) for full documentation.
+Breakdown by:
+- Energy carrier (gas, electricity, district heating, etc.)
+- Building
+- Time period (annual, monthly, hourly if available)
 
-Sankey diagram showing cost flows from components through services to total costs, with annualised or total CAPEX views.
+### Prerequisites
+- Emissions analysis completed
 
----
+### How to Use
 
-## Plot - Heat Rejection
+1. Complete Emissions calculation
+2. Navigate to **Visualisation** → **Plot - Operational Emissions**
+3. Select chart type and buildings
+4. Run
 
-See [Heat Rejection > Plot - Heat Rejection](06-4-heat-rejection.md#plot---heat-rejection) for full documentation.
+### Chart Types
 
-Bar charts of waste heat rejected to the environment by buildings and district plants.
+- **Annual operational emissions** (kgCO₂e/year)
+- **Emissions by energy carrier**
+- **Monthly operational emissions**
+
+### Tips
+- **Compare to embodied**: Use with Lifecycle Emissions plot
+- **Assess system changes**: Show impact of fuel switching
+- **Monthly patterns**: Identify seasonal effects
 
 ---
 
@@ -387,13 +531,10 @@ After completing CEA analyses:
    - Plot - Building Energy Demand (annual and intensity)
    - Validate results before proceeding
 
-2. **Life Cycle Analysis Plots** (per what-if scenario):
-   - [Plot - Final Energy](06-1-final-energy.md#plot---final-energy) (carrier breakdown)
-   - [Plot - Lifecycle Emissions](06-2-emissions.md#plot---lifecycle-emissions) (full lifecycle carbon)
-   - [Plot - Emission Timeline](06-2-emissions.md#plot---emission-timeline) (cumulative trajectory)
-   - [Plot - Operational Emissions](06-2-emissions.md#plot---operational-emissions) (operational carbon)
-   - [Plot - Cost Sankey](06-3-system-costs.md#plot---cost-sankey) (cost flow diagram)
-   - [Plot - Heat Rejection](06-4-heat-rejection.md#plot---heat-rejection) (waste heat)
+2. **Emissions Plots**:
+   - Plot - Lifecycle Emissions (understand carbon footprint)
+   - Plot - Emission Timeline (show path to net-zero)
+   - Plot - Operational Emissions (focus on system performance)
 
 3. **Renewable Energy Plots**:
    - Plot - Solar Technology (if solar assessments done)
@@ -469,7 +610,7 @@ For publication-quality figures:
 
 ## Related Features
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Provides demand data
-- **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Provides emissions data
+- **[Life Cycle Analysis](06-life-cycle-analysis.md)** - Provides emissions data
 - **[Renewable Energy](03-renewable-energy.md)** - Provides solar generation data
 - **[Supply System Optimisation](07-supply-optimisation.md)** - Provides Pareto frontier data
 - **[Export Results to CSV](01-import-export.md#export-results-to-csv)** - Export data for custom plots

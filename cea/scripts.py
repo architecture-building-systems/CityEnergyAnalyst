@@ -115,14 +115,7 @@ class CeaScript(object):
         for locator_spec in self.input_files:
             method_name, args = locator_spec[0], locator_spec[1:]
             method = getattr(locator, method_name)
-
-            lookup_args = self._lookup_args(config, locator, args)
-
-            # TODO: Implement a more robust way to handle list arguments, e.g. expanded into multiple calls to the method.
-            if any(isinstance(arg, list) for arg in lookup_args):
-                continue
-
-            path = method(*lookup_args)
+            path = method(*self._lookup_args(config, locator, args))
             if not os.path.exists(os.path.abspath(os.path.normpath(os.path.expanduser(path)))):
                 yield [method_name, path]
 
@@ -134,19 +127,14 @@ class CeaScript(object):
                 result.append(locator.get_zone_building_names()[0])
             else:
                 # expect an fqname for the config object
-                if ':' not in arg:
-                    raise ValueError(f"Invalid argument '{arg}' in input file specification for script '{self.name}'. "
-                                     f"Expected a fully qualified parameter name like 'section:parameter'.")
-
-                value = config.get(arg)
-                result.append(value)
+                result.append(config.get(arg))
         return result
 
 
 @lru_cache(maxsize=1)
 def _load_scripts_yml() -> List[CeaScript]:
     """Load and parse scripts.yml once for the lifetime of the process."""
-    with open(SCRIPTS_YML, "r", encoding="utf-8") as fp:
+    with open(SCRIPTS_YML, "r") as fp:
         scripts_by_category = yaml.load(fp, Loader=yaml.CLoader)
     return [
         CeaScript(script_dict, category)

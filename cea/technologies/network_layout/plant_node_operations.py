@@ -84,14 +84,31 @@ def get_dh_services_from_plant_type(plant_type: str) -> tuple[list[PlantServices
 
 def get_plant_type_from_services(itemised_dh_services: list[PlantServices], network_type='DH') -> str:
     """
-    Generate plant type name. Always returns 'PLANT' regardless of services.
-    Temperature strategy is now controlled via thermal-network:dh-temperature-mode config parameter.
+    Generate plant type name based on service configuration.
 
-    :param itemised_dh_services: Unused - kept for API compatibility
-    :param network_type: 'DH' or 'DC'
-    :return: 'PLANT'
+    :param itemised_dh_services: List of services in priority order
+                                 (e.g., [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER])
+    :param network_type: 'DH' or 'DC' (only DH uses service-specific types)
+    :return: Plant type string (e.g., 'PLANT_hs_ww', 'PLANT_ww_hs', 'PLANT')
     """
-    return 'PLANT'
+    if network_type == 'DC':
+        return 'PLANT'  # DC always uses generic PLANT type
+
+    if not itemised_dh_services or len(itemised_dh_services) == 0:
+        # Default: both services in default order
+        return 'PLANT_hs_ww'
+
+    # Service abbreviations
+    service_abbrev = {
+        PlantServices.SPACE_HEATING: 'hs',
+        PlantServices.DOMESTIC_HOT_WATER: 'ww'
+    }
+
+    # Build suffix from service order
+    suffix_parts = [service_abbrev.get(svc, svc) for svc in itemised_dh_services]
+    suffix = '_'.join(suffix_parts)
+
+    return f'PLANT_{suffix}'
 
 
 def get_next_node_name(nodes_gdf):

@@ -12,7 +12,6 @@ import inspect
 import cea.config
 import cea.inputlocator
 import cea.schemas
-from cea.glossary import EXCEL_FILE_TYPES, TABULAR_FILE_TYPES
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -66,17 +65,15 @@ class TestSchemas(unittest.TestCase):
             if lm == "get_database_standard_schedules_use":
                 # the schema for schedules is non-standard
                 continue
-            if schemas[lm]["file_type"] in EXCEL_FILE_TYPES:
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schemas[lm]["schema"]:
                     for col in schemas[lm]["schema"][ws]["columns"]:
                         self.assertIn("description", schemas[lm]["schema"][ws]["columns"][col],
                                       f"Missing description for {lm}/{ws}/{col}")
-            elif schemas[lm]["file_type"] in TABULAR_FILE_TYPES:
+            else:
                 for col in schemas[lm]["schema"]["columns"]:
                     self.assertIn("description", schemas[lm]["schema"]["columns"][col],
                                   f"Missing description for {lm}/{col}")
-            else:
-                warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
 
     def test_all_schemas_have_a_columns_entry(self):
         schemas = cea.schemas.schemas(plugins=[])
@@ -84,14 +81,12 @@ class TestSchemas(unittest.TestCase):
             if lm == "get_database_standard_schedules_use":
                 # the schema for schedules is non-standard
                 continue
-            if schemas[lm]["file_type"] in EXCEL_FILE_TYPES:
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schemas[lm]["schema"]:
                     self.assertIn("columns", schemas[lm]["schema"][ws], f"Missing columns for {lm}/{ws}")
-            elif schemas[lm]["file_type"] in TABULAR_FILE_TYPES:
-                self.assertIn("columns", schemas[lm]["schema"], f"Missing columns for {lm}")
             else:
-                warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
-                
+                self.assertIn("columns", schemas[lm]["schema"], f"Missing columns for {lm}")
+
     def test_all_schema_columns_documented(self):
         schemas = cea.schemas.schemas(plugins=[])
         missing_docs = defaultdict(list)  # Store all missing documentation details
@@ -102,7 +97,7 @@ class TestSchemas(unittest.TestCase):
                 continue
                 
             schema = schemas[lm]["schema"]
-            if schemas[lm]["file_type"] in EXCEL_FILE_TYPES:
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schema.keys():
                     ws_schema = schema[ws]["columns"]
                     for col in ws_schema.keys():
@@ -113,7 +108,7 @@ class TestSchemas(unittest.TestCase):
                             missing_docs[col_path].append("unit")
                         # Note: 'values' is now auto-generated from type/min/max in glossary
 
-            elif schemas[lm]["file_type"] in TABULAR_FILE_TYPES:
+            elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     col_path = f"{lm}/{col}"
                     try:
@@ -139,7 +134,7 @@ class TestSchemas(unittest.TestCase):
                 # these can't be documented properly due to the file format
                 continue
             schema = schemas[lm]["schema"]
-            if schemas[lm]["file_type"] in EXCEL_FILE_TYPES:
+            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
                 for ws in schema.keys():
                     ws_schema = schema[ws]["columns"]
                     for col in ws_schema.keys():
@@ -148,7 +143,7 @@ class TestSchemas(unittest.TestCase):
                         col_type = ws_schema[col]["type"]
                         self.assertIn(col_type, valid_types,
                                       f"Invalid type definition for {lm}/{ws}/{col}: {col_type}")
-            elif schemas[lm]["file_type"] in TABULAR_FILE_TYPES:
+            elif schemas[lm]["file_type"] in {"shp", "dbf", "csv"}:
                 for col in schema["columns"].keys():
                     self.assertIn("type", schema["columns"][col],
                                   f"Missing type definition for {lm}/{col}")
@@ -201,7 +196,6 @@ class TestSchemas(unittest.TestCase):
                     "pathway_name": "test_pathway",
                     "plan_name": "default",
                     "phase": "timeline",
-                    "whatif_name": "basline",
                 }
                 # Get actual parameter names from function signature
                 sig = inspect.signature(method)

@@ -13,10 +13,6 @@
 locator = InputLocator(config.scenario)
 state_file = locator.get_district_pathway_state_status_file("demo", 2030)
 ```
-- `Parameter.decode(value: str) → Any` - Parse value from config file (lenient)
-- `Parameter.encode(value: Any) → str` - Validate value before saving (strict)
-- `ChoiceParameterBase._choices → list[str]` - Available options (can be dynamic via `@property`)
-- Use `isinstance(..., ChoiceParameter)` vs `isinstance(..., MultiChoiceParameter)` for choice cardinality
 
 ### DO: Keep config decode/encode responsibilities separate
 ```python

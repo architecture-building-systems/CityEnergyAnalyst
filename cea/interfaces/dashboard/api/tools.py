@@ -16,49 +16,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-def _normalize_choice_value(param: cea.config.ChoiceParameterBase, value: Any, choices: list[str]) -> Any:
-    valid_choices = set(choices)
-    is_multi_choice = isinstance(param, cea.config.MultiChoiceParameter)
-
-    def _raise_missing_choices_error(reason: str) -> None:
-        message = f"No choices available for non-nullable parameter {param.fqname} while {reason}."
-        logger.error(message)
-        raise ValueError(message)
-
-    if is_multi_choice:
-        if value is None:
-            return []
-
-        if isinstance(value, list):
-            raw_values = value
-        elif isinstance(value, str):
-            raw_values = [v.strip() for v in value.split(',') if v.strip()]
-        else:
-            raw_values = [value]
-
-        return [str(v).strip() for v in raw_values if str(v).strip() in valid_choices]
-
-    if value is None:
-        if param.nullable:
-            return None
-        if not choices:
-            _raise_missing_choices_error("normalising a missing value")
-        return choices[0]
-
-    normalized_value = str(value).strip()
-    if param.nullable and normalized_value == '':
-        return None
-
-    if normalized_value in valid_choices:
-        return normalized_value
-
-    if not choices and not param.nullable:
-        _raise_missing_choices_error(f"normalising value {normalized_value}")
-
-    return choices[0] if choices else None
-
-
-def validate_parameter(parameter, value, parameter_name: str | None = None) -> tuple[bool, str | None]:
+def validate_parameter(parameter, value, parameter_name: str = None) -> tuple[bool, str | None]:
     """
     Validate a parameter value using its encode() method.
 
@@ -136,17 +94,8 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str,
-                               project: Optional[str] = None,
-                               scenario_name: Optional[str] = None) -> ToolProperties:
+async def get_tool_properties(config: CEAConfig, tool_name: str) -> ToolProperties:
     # TODO: Add plugin support
-
-    # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
-    if project is not None:
-        config.project = project
-    if scenario_name is not None:
-        config.scenario_name = scenario_name
-
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
     parameters = []
@@ -322,15 +271,19 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
         if affected_parameters and param.name not in affected_parameters:
             continue
 
-        # For choice-backed parameters, get updated choices and normalise the current value
-        if isinstance(param, cea.config.ChoiceParameterBase):
+        # For ChoiceParameters, get updated choices
+        if isinstance(param, cea.config.ChoiceParameter):
             try:
                 choices = param._choices  # type: ignore[attr-defined]
-                current_value = _normalize_choice_value(param, param.get(), choices)
+                current_value = param.get()
+
+                # If current value not in choices, use first choice or None
+                if current_value not in choices:
+                    current_value = choices[0] if choices else None
 
                 result[param.name] = {
                     'choices': choices,
-                    'value': current_value,
+                    'value': current_value
                 }
                 logger.debug(f"[get_parameter_metadata] {param.name}: {len(choices)} choices, value={current_value}")
             except Exception as e:

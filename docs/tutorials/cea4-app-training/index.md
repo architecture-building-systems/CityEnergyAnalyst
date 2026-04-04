@@ -56,12 +56,10 @@ Design and analyse district heating and cooling networks.
 - Network Layout Generation
 - Thermal Hydraulic Flow & Sizing
 
-### 6. [Life Cycle Analysis](06-0-life-cycle-analysis.md)
-Assess environmental impacts and costs of building energy systems using what-if supply scenarios.
-- [Final Energy](06-1-final-energy.md) - Carrier consumption by buildings and plants
-- [Emissions](06-2-emissions.md) - Lifecycle and operational GHG emissions
-- [System Costs](06-3-system-costs.md) - CAPEX and OPEX analysis
-- [Heat Rejection](06-4-heat-rejection.md) - Waste heat to environment
+### 6. [Life Cycle Analysis](06-life-cycle-analysis.md)
+Assess environmental impacts and costs of building energy systems.
+- Embodied and Operational Emissions
+- Energy Supply System Costs
 
 ### 7. [Energy Supply System Optimisation](07-supply-optimisation.md)
 Optimise energy supply systems for buildings and districts.
@@ -79,9 +77,10 @@ Prepare and validate input data for CEA analysis.
 - Trees Helper
 
 ### 9. [Utilities](09-utilities.md)
-Supporting tools for data conversion, format verification, and more.
+Supporting tools for data conversion, format verification, and batch processing.
 - CEA-4 Format Helper
 - Sensitivity Analysis Sampler
+- Batch Process Workflow
 - File Format Conversion Tools
 - Building Rename Tool
 

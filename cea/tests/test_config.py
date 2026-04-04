@@ -62,31 +62,6 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(os.path.normcase(os.path.expanduser(config.create_new_scenario.zone)),
                          os.path.normcase(os.path.expanduser(expected_output)))
 
-    def test_choice_parameter_is_single_choice(self):
-        config = cea.config.Configuration()
-        parameter = config.get_parameter('test:type')
-
-        self.assertIsInstance(parameter, cea.config.ChoiceParameterBase)
-        self.assertIsInstance(parameter, cea.config.ChoiceParameter)
-        self.assertNotIsInstance(parameter, cea.config.MultiChoiceParameter)
-
-    def test_multi_choice_parameter_is_multi_choice(self):
-        config = cea.config.Configuration()
-        parameter = config.get_parameter('database-helper:databases')
-
-        self.assertIsInstance(parameter, cea.config.ChoiceParameterBase)
-        self.assertIsInstance(parameter, cea.config.MultiChoiceParameter)
-
-    def test_multi_choice_specialisations_are_multi_choice(self):
-        config = cea.config.Configuration()
-
-        thermal_network_parameter = config.get_parameter('thermal-network:network-name')
-        solar_parameter = config.get_parameter('result-summary:solar-technologies')
-
-        self.assertIsInstance(thermal_network_parameter, cea.config.NetworkLayoutMultiChoiceParameter)
-        self.assertIsInstance(thermal_network_parameter, cea.config.MultiChoiceParameter)
-        self.assertIsInstance(solar_parameter, cea.config.MultiChoiceParameter)
-
 
 if __name__ == "__main__":
     unittest.main()
