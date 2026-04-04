@@ -32,6 +32,8 @@ _tech_name_mapping = {
     "Qww_sys": "dhw",
     "Qcs_sys": "cs",
     "E_sys": "el",
+    "Qhs_booster": "hs_booster",
+    "Qww_booster": "dhw_booster",
 }
 
 # All GRID components for PV allocation

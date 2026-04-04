@@ -703,7 +703,247 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
                     raise ValueError(f"Column {col_name} already exists in the timeline, check for duplicate PV codes.")
             # Log embodied emissions for PV system
             embodied_intensity = cast(float, pv_db.loc[pv_code, 'module_embodied_kgco2m2'])
-            self.log_emissions(pv_area, embodied_intensity, 0.0, 0.0, lifetime, pv_type_str, note_detail=pv_code)
+            self.log_emissions(pv_area, embodied_intensity, 0.0, 0.0, lifetime, pv_type_str)
+
+    def fill_solar_embodied_emissions(self, solar_config: dict) -> None:
+        """Log embodied emissions for solar panels based on solar_config from configuration.json.
+
+        Groups panels by output type: PV_E, SC_Q, PVT_E, PVT_Q.
+        Only PV panels have module_embodied_kgco2m2 in the database; SC and PVT columns
+        are initialised to zero (no embodied data available).
+
+        :param solar_config: Dict of facade → tech_code (e.g. {'roof': 'PV_PV1', 'wall_south': 'SC_FP'})
+        """
+        self.check_demolished()
+
+        tech_codes = {v for v in solar_config.values() if v}
+        if not tech_codes:
+            return
+
+        # Determine which output groups are active
+        active_groups: set[str] = set()
+        for code in tech_codes:
+            tech_type = code.split('_')[0]
+            if tech_type == 'PV':
+                active_groups.add('PV_E')
+            elif tech_type == 'SC':
+                active_groups.add('SC_Q')
+            elif tech_type == 'PVT':
+                active_groups.add('PVT_E')
+                active_groups.add('PVT_Q')
+
+        # Initialise timeline columns for all active groups to zero
+        for group in sorted(active_groups):
+            for emission_type in self._EMISSION_TYPES:
+                col_name = f"{emission_type}_{group}_kgCO2e"
+                if col_name not in self.timeline.columns:
+                    self.timeline[col_name] = 0.0
+
+        # PV embodied emissions (module_embodied_kgco2m2 available in PHOTOVOLTAIC_PANELS)
+        # Map solar_config facade keys to per-facade area columns in PV_total_buildings CSV
+        _FACADE_TO_AREA_COL = {
+            'roof': 'PV_roofs_top_m2',
+            'wall_north': 'PV_walls_north_m2',
+            'wall_south': 'PV_walls_south_m2',
+            'wall_east': 'PV_walls_east_m2',
+            'wall_west': 'PV_walls_west_m2',
+        }
+        # Collect which facades have PV installed (grouped by PV code)
+        pv_facades_by_code: dict[str, list[str]] = {}
+        for facade, tech_code in solar_config.items():
+            if tech_code and tech_code.split('_')[0] == 'PV':
+                pv_code = tech_code.split('_')[1]
+                pv_facades_by_code.setdefault(pv_code, []).append(facade)
+
+        if pv_facades_by_code:
+            pv_db = pd.read_csv(
+                self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'),
+                index_col='code',
+            )
+            for pv_code, facades in pv_facades_by_code.items():
+                if pv_code not in pv_db.index:
+                    continue
+                buildings_path = self.locator.PV_total_buildings(pv_code)
+                if not os.path.exists(buildings_path):
+                    continue
+                buildings_df = pd.read_csv(buildings_path, index_col='name')
+                if self.name not in buildings_df.index:
+                    continue
+                # Sum only the per-facade areas that are configured (not total area_PV_m2)
+                pv_area = 0.0
+                for facade in facades:
+                    area_col = _FACADE_TO_AREA_COL.get(facade)
+                    if area_col and area_col in buildings_df.columns:
+                        pv_area += float(buildings_df.at[self.name, area_col])
+                if pv_area <= 0:
+                    continue
+                embodied = float(pv_db.at[pv_code, 'module_embodied_kgco2m2'])
+                lifetime = int(pv_db.at[pv_code, 'LT_yr'])
+                self._log_emission_with_lifetime(pv_area * embodied, lifetime, 'production_PV_E_kgCO2e')
+        # SC and PVT: no module_embodied_kgco2m2 in database — columns remain at zero
+
+    def discount_over_year(
+        self,
+        base: pd.Series,
+        ref_year: int,
+        tar_year: int,
+        tar_fraction: float,
+    ) -> pd.Series:
+        """Apply a piecewise-linear discount to a yearly Series over this timeline's years.
+
+        Rules:
+        - Before ref_year: factor = 1.0
+        - Between ref_year..tar_year (inclusive): linearly interpolate to tar_fraction
+        - After tar_year: factor = tar_fraction (flat)
+
+        Inputs/contract:
+        - base: Series indexed by this timeline's index (e.g., 'Y_2020', ...). Values are yearly amounts.
+        - ref_year < tar_year, tar_fraction >= 0
+
+        Returns a Series aligned to the timeline index with the discount applied.
+        """
+        if tar_year <= ref_year:
+            raise ValueError("Target year must be greater than reference year.")
+        if tar_fraction < 0:
+            raise ValueError("Target fraction must be non-negative.")
+
+        # Ensure alignment to the timeline index
+        idx = self.timeline.index
+        series = base.reindex(idx).astype(float)
+
+        # Convert 'Y_YYYY' index to integer years
+        years: list[int] = []
+        for label in idx:
+            s = str(label)
+            if s.startswith("Y_"):
+                s = s[2:]
+                years.append(int(s))
+
+        years_arr = np.array(years, dtype=int)
+        factors = np.ones(len(idx), dtype=float)
+        # Linear segment (inclusive)
+        mask_linear = (years_arr >= int(ref_year)) & (years_arr <= int(tar_year))
+        if mask_linear.any():
+            n = int(mask_linear.sum())
+            factors[mask_linear] = np.linspace(1.0, float(tar_fraction), n)
+        # After target
+        factors[years_arr > int(tar_year)] = float(tar_fraction)
+
+        return series * factors
+
+    # ---- helpers for operational emissions -----------------------------------------
+
+    def _read_operational_timeseries(self) -> tuple[OperationalHourlyTimeline, pd.DataFrame]:
+        """Load the hourly operational timeline for this building and drop non-emission columns."""
+        operational = OperationalHourlyTimeline.from_result(self.locator, self.name)
+        df = operational.operational_emission_timeline.copy()
+        if "date" in df.columns:
+            df = df.drop(columns=["date"])  # keep only emission columns
+        return operational, df
+
+    @staticmethod
+    def _build_expected_cols(df: pd.DataFrame, demand_types: list[str], feedstocks: list[str]) -> list[str]:
+        cols: list[str] = []
+        for d in demand_types:
+            for fs in feedstocks:
+                col = f"{d}_{fs}_kgCO2e"
+                if col in df.columns:
+                    cols.append(col)
+        return cols
+
+    def _tile_yearly(self, yearly: pd.Series) -> pd.DataFrame:
+        idx = self.timeline.index
+        return pd.DataFrame(
+            np.tile(yearly.to_numpy(dtype=float), (len(idx), 1)), index=idx, columns=yearly.index
+        )
+
+    def _apply_feedstock_policies(
+        self,
+        operational_multi_years: pd.DataFrame,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
+        feedstocks: list[str],
+        demand_types: list[str],
+    ) -> None:
+        """Apply per-feedstock policies in-place (if any) to discounted per-feedstock columns."""
+        for raw_key, raw_policy in (feedstock_policies or {}).items():
+            if not (isinstance(raw_policy, tuple) and len(raw_policy) == 3):
+                raise ValueError(
+                    f"Policy for '{raw_key}' must be a tuple (reference_year, target_year, target_fraction)."
+                )
+            try:
+                ref = int(raw_policy[0])
+                tgt = int(raw_policy[1])
+                frac = float(raw_policy[2])
+            except (TypeError, ValueError):
+                raise ValueError(
+                    f"Policy for '{raw_key}' must contain (int, int, float): got {raw_policy}."
+                )
+            if not tgt > ref:
+                raise ValueError(
+                    f"Policy for '{raw_key}' target year must be greater than reference year."
+                )
+            if frac < 0:
+                raise ValueError(
+                    f"Policy for '{raw_key}' target fraction must be non-negative."
+                )
+            fs_key_upper = str(raw_key).strip().upper()
+            matching_fs = [fs for fs in feedstocks if str(fs).strip().upper() == fs_key_upper]
+            if not matching_fs:
+                continue
+            for fs in matching_fs:
+                for d in demand_types:
+                    col = f"{d}_{fs}_kgCO2e"
+                    if col in operational_multi_years.columns:
+                        operational_multi_years[col] = self.discount_over_year(operational_multi_years[col], ref, tgt, frac)
+
+    def _apply_pv_offset_decarbonization(
+        self,
+        operational_multi_years: pd.DataFrame,
+        feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
+    ) -> list[str]:
+        """Apply GRID policy in-place (if any) to solar offset columns, and return the column names.
+
+        Handles all solar offset types:
+        - PV_E_offset_kgCO2e (electric, from PV panels)
+        - PVT_E_offset_kgCO2e (electric, from PVT panels)
+        - PVT_Q_offset_kgCO2e (thermal, from PVT panels)
+        - SC_Q_offset_kgCO2e (thermal, from SC panels)
+        - Legacy: PV_{code}_GRID_offset_kgCO2e / PV_{code}_GRID_export_kgCO2e
+        """
+        list_final_pv_cols: list[str] = []
+        # Electric offsets (PV_E, PVT_E) discount with GRID decarbonisation policy
+        _electric_prefixes = ("PV_E", "PVT_E")
+        for col in operational_multi_years.columns:
+            if not col.endswith("_kgCO2e"):
+                continue
+            is_solar_offset = (
+                col.endswith("_offset_kgCO2e")
+                or (col.startswith("PV_") and ("_offset_" in col or "_export_" in col))
+            )
+            if not is_solar_offset:
+                continue
+            # Apply GRID decarbonisation to electric offset columns
+            is_electric = any(col.startswith(p) for p in _electric_prefixes) or (
+                col.startswith("PV_") and ("_offset_" in col or "_export_" in col)
+            )
+            if is_electric and feedstock_policies and "GRID" in feedstock_policies:
+                ref, tgt, frac = feedstock_policies["GRID"]
+                operational_multi_years[col] = self.discount_over_year(
+                    operational_multi_years[col], ref, tgt, frac
+                )
+            list_final_pv_cols.append(col)
+        return list_final_pv_cols
+
+    @staticmethod
+    def _aggregate_by_demand(
+        timeline: pd.DataFrame, demand_types: list[str]
+    ) -> pd.DataFrame:
+        idx = timeline.index
+        out = pd.DataFrame(index=idx)
+        for d in demand_types:
+            cols_d = [c for c in timeline.columns if c.startswith(f"{d}_") and c.endswith("_kgCO2e")]
+            out[f"operation_{d}_kgCO2e"] = timeline[cols_d].sum(axis=1) if cols_d else 0.0
+        return out
 
     def fill_operational_emissions(
         self,
@@ -711,6 +951,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
         *,
         apply_decarbonisation: bool = True,
         include_pv_offset: bool = True,
+        operational_df: pd.DataFrame | None = None,
     ) -> None:
         """Fill operational emissions into the timeline, with optional per-feedstock discounting.
 
@@ -723,6 +964,11 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
 
         Column convention assumed: `{demand_type}_{feedstock}_kgCO2e` where demand_type is one of
         {Qhs_sys, Qww_sys, Qcs_sys, E_sys} and feedstock is in the feedstock database (plus 'NONE').
+
+        :param feedstock_policies: Optional dict mapping feedstock key to (ref_year, tar_year, tar_fraction).
+        :param operational_df: Optional pre-computed hourly emissions DataFrame. When provided, this
+            DataFrame is used directly instead of reading from the saved operational hourly file.
+            Must have the same column naming convention ({demand_type}_{feedstock}_kgCO2e).
         """
         self.check_demolished()
         feedstocks = self.get_available_feedstocks()
@@ -734,6 +980,22 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             apply_decarbonisation=apply_decarbonisation,
             include_pv_offset=include_pv_offset,
         )
+        demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
+        feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]
+
+        if operational_df is not None:
+            operational_timeseries = operational_df.drop(columns=['date', 'name'], errors='ignore')
+        else:
+            _, operational_timeseries = self._read_operational_timeseries()
+        yearly_sum = operational_timeseries.sum(axis=0)
+        operational_multiyrs = self._tile_yearly(yearly_sum)
+        self._apply_feedstock_policies(operational_multiyrs, feedstock_policies, feedstocks, demand_types)
+        out = self._aggregate_by_demand(operational_multiyrs, demand_types)
+        self.timeline.loc[:, self._OPERATIONAL_COLS] = out[self._OPERATIONAL_COLS].to_numpy(dtype=float)
+
+        pv_total_cols = self._apply_pv_offset_decarbonization(operational_multiyrs, feedstock_policies)
+        if pv_total_cols:
+            self.timeline.loc[:, pv_total_cols] = operational_multiyrs[pv_total_cols].to_numpy(dtype=float)
 
     def demolish(self, demolition_year: int) -> None:
         """

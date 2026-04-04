@@ -176,6 +176,8 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
 | **Ground temperature** | For heat loss calculation | From weather file |
 | **Multiprocessing** | Parallel processing | Enabled |
 
+**Note on temperature**: The network temperature regime is fully determined in Part 2 by the supply/return temperature parameters. The order of heating/cooling services configured in Part 1 does not affect the temperature regime.
+
 ### How to Use
 
 1. **Complete network layout** (Part 1)
@@ -187,6 +189,7 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
    - Select network type (must match the type used in Part 1)
    - Set supply/return temperatures:
      - **District heating**: 70-90°C supply, 40-50°C return
+     - **Low-temperature district heating**: 50-70°C supply, 30-40°C return
      - **District cooling**: 5-8°C supply, 12-15°C return
    - Choose pipe insulation standard
    - Enable multiprocessing
@@ -329,9 +332,11 @@ Performs detailed thermal hydraulic simulation of the network created in Part 1.
    - Run [District Supply System Optimisation](07-supply-optimisation.md) to find optimal plant and system configuration
    - Iterate on network configuration if needed
 
-5. **Analysis**:
-   - Run [Emissions](06-life-cycle-analysis.md#emissions) to assess carbon footprint
-   - Run [Energy Supply System Costs](06-life-cycle-analysis.md#energy-supply-system-costs) for economic analysis
+5. **Analysis** (via what-if scenarios):
+   - Run [Final Energy](06-1-final-energy.md) to determine carrier consumption
+   - Run [Emissions](06-2-emissions.md) to assess carbon footprint
+   - Run [System Costs](06-3-system-costs.md) for economic analysis
+   - Run [Heat Rejection](06-4-heat-rejection.md) for environmental heat impact
    - Use [Visualisation tools](10-visualisation.md) to present results
 
 ### District Cooling Workflow
@@ -368,7 +373,7 @@ Same as heating, but:
 - **[Energy Demand Forecasting](04-demand-forecasting.md)** - Provides building loads (prerequisite)
 - **[Data Management](08-data-management.md#streets-helper)** - Streets Helper for network path
 - **[Supply System Optimisation](07-supply-optimisation.md)** - Network and plant optimisation
-- **[Life Cycle Analysis](06-life-cycle-analysis.md)** - Emissions and costs for networks
+- **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Emissions and costs for networks
 
 ---
 
@@ -380,4 +385,4 @@ Same as heating, but:
 
 ---
 
-[← Back: Energy Demand](04-demand-forecasting.md) | [Back to Index](index.md) | [Next: Life Cycle Analysis →](06-life-cycle-analysis.md)
+[← Back: Energy Demand](04-demand-forecasting.md) | [Back to Index](index.md) | [Next: Life Cycle Analysis →](06-0-life-cycle-analysis.md)
