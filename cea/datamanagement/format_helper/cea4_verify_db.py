@@ -152,6 +152,8 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
     Returns:
     - str: The full path to the requested database file.
     """
+    # Resolve scenario to an absolute path and validate against path traversal
+    scenario = os.path.realpath(scenario)
     base_path = os.path.join(scenario, "inputs", "database")
 
     item_paths = {
@@ -176,15 +178,21 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
     }
 
     if (item, sheet_name) in special_sheets:
-        return special_sheets[(item, sheet_name)]
-
-    # If item exists in paths but requires a sheet name
-    if item in item_paths:
+        result = special_sheets[(item, sheet_name)]
+    elif item in item_paths:
         if sheet_name:
-            return os.path.join(item_paths[item], f"{sheet_name}.csv")
-        return item_paths[item]
+            result = os.path.join(item_paths[item], f"{sheet_name}.csv")
+        else:
+            result = item_paths[item]
+    else:
+        raise ValueError(f"Unknown item '{item}'")
 
-    raise ValueError(f"Unknown item '{item}'")
+    # Guard against path traversal: resolved path must stay within the scenario directory
+    result = os.path.realpath(result)
+    if not result.startswith(scenario + os.sep) and result != scenario:
+        raise ValueError(f"Path traversal detected: resolved path '{result}' escapes scenario '{scenario}'")
+
+    return result
 
 
 
