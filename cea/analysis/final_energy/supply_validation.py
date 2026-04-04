@@ -685,8 +685,8 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
             f"Space heating booster assembly ({hs_booster_code}, component {hs_primary}) "
             f"can only supply {hs_booster_temp:.0f} degrees C, which is insufficient for:\n"
             + "\n".join(lines)
-            + f"\n\nPlease select a booster assembly with a component that can supply "
-            f"a higher temperature."
+            + "\n\nPlease select a booster assembly with a component that can supply "
+            "a higher temperature."
         )
 
     if dhw_groups:
@@ -701,7 +701,7 @@ def validate_booster_temperature_compatibility(dh_network, network_name, locator
             f"DHW booster assembly ({dhw_booster_code}, component {dhw_primary}) "
             "can only supply {dhw_booster_temp:.0f} degrees C, which is insufficient for:\n"
             + "\n".join(lines)
-            + f"\n\nPlease select a booster assembly with a component that can supply "
+            + "\n\nPlease select a booster assembly with a component that can supply "
             "a higher temperature."
         )
 
