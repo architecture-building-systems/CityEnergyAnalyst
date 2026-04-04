@@ -311,12 +311,12 @@ District Evolution Pathways:
       2. **Run the job** - This creates the pathway folder immediately
       3. **Proceed to Step 1** - Define intervention templates for this pathway
       4. If you want to switch pathways later, return to this step and create or select another pathway
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.create_new_pathway
     parameters: ['general:scenario', create-new-pathway]
 
   - name: pathway-intervention-templates-define
-    label: "Step 1: Define Intervention Template"
+    label: "Define Intervention Template"
     short_description: Define reusable intervention templates for the selected pathway
     description: |
       This Feature allows you to define reusable intervention templates that can be applied to multiple years.
@@ -327,11 +327,11 @@ District Evolution Pathways:
 
       **Workflow**:
       1. Define intervention templates with meaningful names using this tool
-      2. Use Step 2 to apply one or more intervention templates to specific years
-      3. Use Step 3 to bake the changes into state scenarios
+      2. Apply one or more intervention templates to specific years
+      3. Bake the changes into State Scenarios
       
       **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_intervention_templates_define
     parameters: ['general:scenario', pathway-intervention-templates-define]
     input-files:
@@ -361,7 +361,7 @@ District Evolution Pathways:
       **Conflict Detection**:
       If selected intervention templates have conflicting modifications (modifying the same field on the same building),
       the tool will fail with a clear error message listing the conflicts.
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_events_apply_templates
     parameters: ['general:scenario', pathway-events-apply-templates]
     input-files:
@@ -379,7 +379,7 @@ District Evolution Pathways:
       **Prerequisites**: Complete Steps 0-2 (Select Pathway, Define Intervention Templates, Apply to Years) first!
 
       Use this after you have finished applying intervention templates to years. It creates or reconciles state folders for each year.
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.bake_pathway_states
     parameters: ['general:scenario', bake-pathway-states]
     input-files:
@@ -419,7 +419,7 @@ District Evolution Pathways:
       This Step 4 wrapper does not re-own the settings of the underlying scripts. Save the desired
       `radiation`, `occupancy`, `demand`, `photovoltaic`, `network-layout`, `thermal-network`, and
       `emissions` settings in their own dashboards or config sections before running this Feature.
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.state_simulation.main
     parameters: ['general:scenario', 'pathway-simulations:existing-pathway-name']
 
