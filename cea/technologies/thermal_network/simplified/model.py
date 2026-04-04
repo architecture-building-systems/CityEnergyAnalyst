@@ -434,13 +434,13 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
     primary_service = itemised_dh_services[0]
 
     if primary_service == PlantServices.SPACE_HEATING:
-        # PLANT_hs or PLANT_hs_ww: Low-temp network
-        # Space heating return ~30°C + 5K approach = 35°C min
-        return 35
+        # PLANT_hs or PLANT_hs_ww: Low-temp or ambient-loop network
+        # Minimum 15°C to allow ambient-loop heat pump configurations
+        return 15
     elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
         # PLANT_ww or PLANT_ww_hs: High-temp network
-        # DHW return ~45°C + 5K approach = 50°C min (allows preheating to 55°C, booster to 60°C)
-        return 50
+        # DHW requires 60°C (Swiss law) + 5K approach = 65°C min
+        return 65
     else:
         # Unknown service, conservative minimum
         return 30
@@ -488,41 +488,46 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                   If None, all buildings use all services (legacy behavior)
     """
     # local variables
-    min_head_substation_kPa = config.thermal_network.min_head_substation
+    min_head_substation_kPa = config.thermal_network_simplified.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
-    coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
-    velocity_ms = config.thermal_network.peak_load_velocity
+    coefficient_friction_hazen_williams = config.thermal_network_simplified.hw_friction_coefficient
+    velocity_ms = config.thermal_network_simplified.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
-    peak_load_percentage = config.thermal_network.peak_load_percentage
-    set_diameter = config.thermal_network.set_diameter
+    peak_load_percentage = config.thermal_network_simplified.peak_load_percentage
+    set_diameter = config.thermal_network_simplified.set_diameter
 
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
 
-    # Extract service configuration from plant node type (DH only)
+    # Determine DH service configuration from dh-temperature-mode config parameter
     itemised_dh_services = None
-    is_legacy = False
     if network_type == "DH":
-        from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
+        from cea.technologies.network_layout.plant_node_operations import (
+            PlantServices, get_dh_services_from_plant_type
+        )
 
-        # Find plant nodes
+        # Check for legacy plant node suffix and warn if found
         plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not plant_nodes.empty:
             plant_type = plant_nodes.iloc[0]['type']
-            services, is_legacy = get_dh_services_from_plant_type(plant_type)
+            _, is_legacy = get_dh_services_from_plant_type(plant_type)
+            # is_legacy=False means a service suffix was found (e.g. PLANT_hs_ww, PLANT_ww_hs)
+            if not is_legacy:
+                print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
+                print("    This suffix is no longer used to control network temperature.")
+                print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
+                print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
 
-            if is_legacy:
-                print("  ℹ Using legacy temperature control:")
-                print("    - Services: space heating + domestic hot water")
-                print("    - Supply temperature: max(space heating temp, DHW temp)")
-                print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
-                # Pass None for legacy mode to trigger default behavior
-                itemised_dh_services = None
-            else:
-                itemised_dh_services = services
-                service_names = ' → '.join(itemised_dh_services)
-                print(f"  ℹ DH service configuration: {service_names}")
+        # Always use dh-temperature-mode config to determine service order
+        dh_temperature_mode = config.thermal_network.dh_temperature_mode
+        if dh_temperature_mode == 'high-temperature':
+            itemised_dh_services = [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING]
+            print("  DH temperature mode: high-temperature (DHW priority, ~60-80 degrees C)")
+        else:
+            # Default: low-temperature (space heating priority)
+            itemised_dh_services = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+            print("  DH temperature mode: low-temperature (space heating priority, ~35-55 degrees C)")
 
     # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
     # calculate substations for all buildings
@@ -559,8 +564,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"With {service_names} as primary service(s), the network\n"
                         f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
                         f"Explanation:\n"
-                        f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
-                        f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
+                        f"  - For space heating priority: minimum 15°C (allows ambient-loop heat pump configurations)\n"
+                        f"  - For DHW priority: minimum 65°C (DHW requires 60°C + 5K approach)\n\n"
                         f"Current configuration will result in:\n"
                         f"  → Network provides essentially zero heat\n"
                         f"  → All heat from building boosters (defeats purpose of district heating)\n"
@@ -568,8 +573,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"Solutions:\n"
                         f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
                         f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
-                        f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
-                        f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
+                        f"  3. If DHW is priority, set dh-temperature-mode = high-temperature (needs 50-80°C)\n"
+                        f"  4. If space heating is priority, set dh-temperature-mode = low-temperature (needs 35-55°C)\n"
                         f"{'='*60}\n"
                     )
             else:
@@ -632,44 +637,20 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         ])
 
         # Calculate space heating vs DHW contributions
-        total_hs_demand_kWh = sum([
-            (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
-            for df in substation_results_dict.values()
-        ])
-        total_ww_demand_kWh = sum([
-            (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
-            for df in substation_results_dict.values()
-        ])
+        # total_hs_demand_kWh = sum([
+        #     (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
+        #     for df in substation_results_dict.values()
+        # ])
+        # total_ww_demand_kWh = sum([
+        #     (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
+        #     for df in substation_results_dict.values()
+        # ])
 
         if total_demand_kWh > 0:
             dh_fraction = total_dh_contribution_kWh / total_demand_kWh
         else:
             dh_fraction = 0
 
-        # Special validation for PLANT_hs_ww with no space heating demand
-        if itemised_dh_services == ['space_heating', 'domestic_hot_water']:
-            # This is a PLANT_hs_ww network (space heating priority)
-            if total_hs_demand_kWh < 1.0:  # Less than 1 kWh/year of space heating
-                raise ValueError(
-                    f"\n{'='*70}\n"
-                    f"❌ ERROR: PLANT_hs_ww network has zero space heating demand\n"
-                    f"{'='*70}\n"
-                    f"  Plant type: PLANT_hs_ww (space heating → DHW priority)\n"
-                    f"  Space heating demand: {total_hs_demand_kWh:.2f} kWh/year\n"
-                    f"  DHW demand: {total_ww_demand_kWh:.2f} kWh/year\n"
-                    f"\n"
-                    f"PLANT_hs_ww networks are designed for buildings with space heating needs.\n"
-                    f"The network temperature is controlled by space heating requirements (35-45°C).\n"
-                    f"\n"
-                    f"Solutions:\n"
-                    f"  1. Use PLANT_ww network type for DHW-only buildings\n"
-                    f"     - Run network layout with 'itemised-dh-services' = ['domestic_hot_water']\n"
-                    f"     - Network designed for higher temperatures (50-80°C)\n"
-                    f"  2. Check if space heating demand exists in total-demand files\n"
-                    f"     - Verify QH_sys_MWhyr > 0 for connected buildings\n"
-                    f"  3. Remove buildings from network if they truly have no heating demand\n"
-                    f"{'='*70}\n"
-                )
 
         # If DH contribution is less than 1%, warn user and suggest minimum temperature (CT mode only)
         if dh_fraction < 0.01 and fixed_network_temp_C is not None:
@@ -1108,9 +1089,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Network topology issues\n"
                 f"     - Disconnected segments (should be caught earlier)\n"
                 f"     - Invalid boundary conditions\n"
-                f"  4. Plant type mismatch with building demands\n"
-                f"     - PLANT_hs_ww with zero space heating → use PLANT_ww\n"
-                f"     - PLANT_ww_hs with zero DHW → use PLANT_hs_ww\n"
+                f"  4. Temperature mode mismatch with building demands\n"
+                f"     - Verify dh-temperature-mode matches your building service types\n"
                 f"\n"
                 f"Resolution:\n"
                 f"  - Review all warnings and errors printed above\n"
@@ -1299,9 +1279,11 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                     index=False)
 
     # PLANT THERMAL LOAD REQUIREMENT
-    # Plant thermal load = DH delivered to buildings + network thermal losses
-    # (Use DH-only demand, excludes booster heat from local equipment at buildings)
-    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh
+    # Plant thermal load = building demand + network thermal losses to overcome.
+    # DH: losses are positive (heat escapes hot pipes) → plant produces more.
+    # DC: losses are negative (cold pipes absorb heat) → plant must also produce
+    #     more cooling to compensate, so use absolute value.
+    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh.abs()
     plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
     plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
     plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))

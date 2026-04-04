@@ -354,7 +354,7 @@ If one building fails or has unrealistic results:
    - Use [Visualisation tools](10-visualisation.md) to plot results
 
 6. **Next Steps**:
-   - Run [Life Cycle Analysis](06-life-cycle-analysis.md) for emissions
+   - Run [Life Cycle Analysis](06-0-life-cycle-analysis.md) for emissions
    - Run [Renewable Energy Assessment](03-renewable-energy.md) for supply
    - Run [Supply System Optimisation](07-supply-optimisation.md) for system design
 
@@ -363,7 +363,7 @@ If one building fails or has unrealistic results:
 ## Related Features
 - **[Solar Radiation Analysis](02-solar-radiation.md)** - Required prerequisite
 - **[Data Management](08-data-management.md)** - Input data preparation
-- **[Life Cycle Analysis](06-life-cycle-analysis.md)** - Uses demand results
+- **[Life Cycle Analysis](06-0-life-cycle-analysis.md)** - Uses demand results
 - **[Supply System Optimisation](07-supply-optimisation.md)** - Uses demand results
 - **[Visualisation](10-visualisation.md)** - Plot demand results
 

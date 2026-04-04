@@ -4,7 +4,8 @@
 
 - `Parameter.decode(value: str) → Any` - Parse value from config file (lenient)
 - `Parameter.encode(value: Any) → str` - Validate value before saving (strict)
-- `ChoiceParameter._choices → list[str]` - Available options (can be dynamic via `@property`)
+- `ChoiceParameterBase._choices → list[str]` - Available options (can be dynamic via `@property`)
+- Use `isinstance(..., ChoiceParameter)` vs `isinstance(..., MultiChoiceParameter)` for choice cardinality
 
 ## After Modifying config.py
 

@@ -13,7 +13,7 @@ def deconstruct_parameters(p: cea.config.Parameter, config=None):
         print(e)
         params["value"] = ""
 
-    if isinstance(p, cea.config.ChoiceParameter):
+    if isinstance(p, cea.config.ChoiceParameterBase):
         params['choices'] = p._choices
 
     if isinstance(p, cea.config.WeatherPathParameter):
@@ -46,6 +46,9 @@ def _should_validate(p: cea.config.Parameter) -> bool:
     """
     # Parameters with filesystem collision checks
     if isinstance(p, cea.config.NetworkLayoutNameParameter):
+        return True
+
+    if isinstance(p, cea.config.WhatIfNameParameter):
         return True
 
     # Add more parameter types here as needed
