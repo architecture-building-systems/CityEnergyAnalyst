@@ -31,7 +31,7 @@ class CeaPlugin:
         scripts_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "scripts.yml")
         if not os.path.exists(scripts_yml):
             return {}
-        with open(scripts_yml, "r") as scripts_yml_fp:
+        with open(scripts_yml, "r", encoding="utf-8") as scripts_yml_fp:
             scripts = yaml.safe_load(scripts_yml_fp) or {}
         return scripts
 
@@ -46,7 +46,7 @@ class CeaPlugin:
         plots_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "plots.yml")
         if not os.path.exists(plots_yml):
             return []
-        with open(plots_yml, "r") as plots_yml_fp:
+        with open(plots_yml, "r", encoding="utf-8") as plots_yml_fp:
             categories = yaml.safe_load(plots_yml_fp) or {}
         return [PluginPlotCategory(category_label, categories[category_label], self) for category_label in
                 categories.keys()]
@@ -61,7 +61,7 @@ class CeaPlugin:
         schemas_yml = os.path.join(os.path.dirname(inspect.getmodule(self).__file__), "schemas.yml")
         if not os.path.exists(schemas_yml):
             return {}
-        with open(schemas_yml, "r") as schemas_yml_fp:
+        with open(schemas_yml, "r", encoding="utf-8") as schemas_yml_fp:
             schemas = yaml.safe_load(schemas_yml_fp) or {}
         return schemas
 

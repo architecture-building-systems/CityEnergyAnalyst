@@ -2,88 +2,203 @@
 
 ## Main API
 
-**`calc_capex_annualized(capex_total, IR_%, LT_yr) → float`** - Convert total CAPEX to annual cost
+- `calculate_costs_for_whatif(whatif_name, locator) → (buildings_df, components_df)` - Calculate all costs for one what-if scenario
+- `main(config)` - Entry point, iterates over `config.what_ifs.what_if_name` list
+
+## Architecture
+
+**Data sources (sole source of truth)**:
+1. `configuration.json` → per-building supply configs (component, scale, efficiency, carrier)
+2. `final_energy_buildings.csv` → annual summary (carrier MWh, service MWh, peak kW)
+3. `B####.csv` hourly files (8760 rows) → per-service peak demand via `.max()`
+
+**No fallback logic. No network topology. No assembly auto-selection.**
 
 ## Cost Flow
 
 ```
-Database Parameters (SUPPLY_*.csv)
+configuration.json + final_energy_buildings.csv + B####.csv
     ↓
-Total CAPEX = Peak_kW × efficiency × CAPEX_USD2015kW
+Per-service peak (kW) from hourly files
     ↓
-    ├─→ Fixed OPEX = CAPEX × O&M_%
-    └─→ Annualized CAPEX = CAPEX × IR% / (1 - (1 + IR%)^-LT)
-         ↓
-         TAC = OPEX_a + CAPEX_a + Variable_OPEX
+capacity_kW = peak_kW / efficiency  [BUILDING-scale only]
+    ↓
+CAPEX = a + b*Q_W^c + (d + e*Q_W)*ln(Q_W)   [Q in Watts]
+    ↓
+Capex_a = calc_capex_annualized(CAPEX, IR_%, LT_yr)
+Opex_fixed_a = CAPEX × O&M_%
+Opex_var_a = carrier_MWh × 1000 × mean(Opex_var_buy_USD2015kWh)
+    ↓
+TAC = Capex_a + Opex_fixed_a + Opex_var_a
 ```
+
+## Scale Handling
+
+| Scale | CAPEX | Fixed OPEX | Variable OPEX |
+|-------|-------|-----------|---------------|
+| BUILDING | From component cost curve | CAPEX × O&M% | carrier_MWh × feedstock_price |
+| DISTRICT (building) | 0 | 0 | 0 (at plant level) |
+| Plant row | From default component | component cost | carrier_MWh × feedstock_price |
+
+**Multi-component assemblies** (primary + secondary + tertiary):
+- Both `_process_building_service` and `_process_plant_row` handle secondary/tertiary components
+- Primary component: full costs (CAPEX + fixed O&M + variable OPEX)
+- Secondary/tertiary: CAPEX + fixed O&M only (variable OPEX counted in primary, no per-component energy data)
+- Cooling towers (CT*): sized for rejection load = `peak_kW + capacity_kW` (Q_cooling + W_compressor)
+- Other secondary/tertiary (HEX*): sized at same capacity as primary
+- e.g., SUPPLY_COOLING_AS1 (CH2 + CT1): CH2 gets full costs, CT1 gets CAPEX + fixed O&M at rejection capacity
+- In the sankey, each component appears as a separate technology node (not grouped by assembly)
+
+**Plant components** (from `configuration.json['plants']`):
+- Derived during final-energy from the DISTRICT-scale supply assembly of connected buildings
+- e.g., AS9 → `primary_component=BO1`, carrier=NATURALGAS, efficiency=0.85
+- Fallback hardcoded defaults only when `plants` section is absent
 
 ## Key Patterns
 
-### Cost Calculation in `system_costs.py`
+### DO: Read per-service peaks from hourly files
 
 ```python
-# 1. Total CAPEX (line 107-109)
-capex_total = peak_kW * efficiency * CAPEX_USD2015kW
-
-# 2. Fixed OPEX (O&M) (line 111)
-opex_fixed = capex_total * (O&M_% / 100)
-
-# 3. Annualized CAPEX (line 119-121)
-capex_a = calc_capex_annualized(capex_total, IR_%, LT_yr)
-
-# 4. Total Annualized Cost (line 135)
-TAC = opex_a + capex_a
+df = pd.read_csv(locator.get_final_energy_building_file(building, whatif_name))
+peak_hs_kW = df['Qhs_sys_kWh'].max()
 ```
 
-### Database Parameters
-
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `CAPEX_USD2015kW` | Infrastructure cost per kW | 62.1 |
-| `LT_yr` | Lifetime | 20 |
-| `O&M_%` | Annual O&M as % of CAPEX | 1.3 |
-| `IR_%` | Interest rate | 1.3 |
-| `efficiency` | System efficiency | 0.99 |
-
-**Source**: `databases/{region}/ASSEMBLIES/SUPPLY/SUPPLY_*.csv`
-
-## Example Calculation
-
-**Input**: 100 kW peak, eff=0.99, CAPEX=62.1, LT=20yr, O&M=1.3%, IR=1.3%
+### DO: Capacity sizing
 
 ```python
-capex_total = 100 × 0.99 × 62.1 = 6,148 USD
-opex_fixed = 6,148 × 0.013 = 80 USD/yr
-capex_a = 6,148 × 0.0655 = 350 USD/yr  # annuity factor ≈ 0.0655
-TAC = 80 + 350 + variable_opex = 430 USD/yr (+ energy costs)
+capacity_kW = peak_service_kW / efficiency  # efficiency from configuration.json
+# Cooling towers (CT*): sized for rejection load, not cooling load
+# CT_capacity_kW = peak_kW + capacity_kW  (= Q_cooling + W_compressor)
 ```
 
-## ✅ DO
+### DO: CAPEX formula (Q in Watts, log = natural log)
 
 ```python
-# Read CAPEX from SUPPLY assemblies
-supply = pd.read_csv('ASSEMBLIES/SUPPLY/SUPPLY_ELECTRICITY.csv')
-capex = supply['CAPEX_USD2015kW']
-
-# Read variable OPEX from feedstocks
-grid = pd.read_csv('COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/GRID.csv')
-opex_var = grid['Opex_var_buy_USD2015kWh']
-
-# Merge for complete cost picture
-costs = supply.merge(grid, left_on='feedstock', right_on='code')
+from math import log
+Q_W = capacity_kW * 1000.0
+InvC = a + b * Q_W**c + (d + e * Q_W) * log(Q_W)
 ```
 
-## ❌ DON'T
+### DO: Variable OPEX uses mean of 24 hourly feedstock prices
 
 ```python
-# Don't confuse CAPEX (infrastructure) with variable OPEX (energy purchase)
-# Don't use COMPONENTS for building-level cost estimates
-# Don't forget to annualize CAPEX before comparing with annual OPEX
+df = pd.read_csv(locator.get_db4_components_feedstocks_feedstocks_csv('NATURALGAS'))
+price = df['Opex_var_buy_USD2015kWh'].mean()  # 24 rows (one per hour of day)
+# From carrier annual MWh:
+opex_var = carrier_MWh * 1000 * price   # MWh × 1000 kWh/MWh × USD/kWh = USD
+# From booster annual kWh (read directly from hourly file):
+opex_var = annual_kWh * price           # kWh × USD/kWh = USD  ← NOT /1000
 ```
+
+### DO: Booster systems (space_heating_booster / hot_water_booster)
+
+```python
+# Config keys: space_heating_booster, hot_water_booster
+# Peak from hourly file: Qhs_booster_{carrier}_kWh or Qww_booster_{carrier}_kWh
+# Annual fuel: sum of that column (in kWh, NOT MWh)
+# opex_var_a = annual_kWh * price   # NOT /1000
+```
+
+### DO: Plant network_type inference (from case_description)
+
+```python
+# case_description is set during final-energy from configuration.json
+# 'DH' in case_description → DH plant, 'DC' in case_description → DC plant
+```
+
+### DO: Plant pumping — PU1 CAPEX + GRID OPEX
+
+```python
+# Peak pumping kW from plant hourly file (pumping_load_kWh column)
+# PU1 CAPEX uses peak_pumping_kW (sized on peak network pressure loss)
+# GRID OPEX: only when dominant_carrier != 'GRID'
+#   - DH plants: NATURALGAS primary → add GRID pumping OPEX separately
+#   - DC plants: GRID primary → pumping already bundled into GRID_MWh, OPEX = 0 here
+# network_name comes from config_data['metadata']['network_name']
+```
+
+### DO: Plant piping — THERMAL_GRID CAPEX, no OPEX
+
+```python
+# Pipe costs from metadata_edges.csv × THERMAL_GRID.csv unit cost (Inv_USD2015perm)
+# No ×2 factor — Inv_USD2015perm already covers supply+return per metre of network
+# No OPEX for pipes; infrastructure defaults: LT=40yr, IR=5%
+# capacity_kW field stores total network length in metres (proxy for pipe sizing metric)
+# component_code = 'PIPES', service = '{hs|cs}_piping'
+edges_df = pd.read_csv(locator.get_thermal_network_edge_list_file(network_type, network_name))
+grid_df = pd.read_csv(locator.get_database_components_distribution_thermal_grid())
+capex_pipes = sum(unit_cost[edge.pipe_DN] * edge.length_m for edge in edges_df)
+capex_a = calc_capex_annualized(capex_pipes, 5.0, 40)
+```
+
+### DO: Solar costs from potentials/solar/ folder
+
+```python
+# PV: capacity_W = area_PV_m2 × (capacity_Wp / module_area_m2), unit='W'
+# SC: capacity = area_SC_m2 directly (unit='m2', cost curve b×area)
+# PVT: use full suffix (PV1_FP, PV1_ET) as service label to avoid duplicates
+```
+
+### DO: Per-service carrier MWh for OPEX (not aggregate summary column)
+
+```python
+# _per_service_peaks_and_booster returns service_mwh dict:
+# service_mwh['hs'] = sum(Qhs_sys_*_kWh columns) / 1000  ← only hs carrier MWh
+# service_mwh['ww'] = sum(Qww_sys_*_kWh columns) / 1000  ← only ww carrier MWh
+# service_mwh['cs'] = sum(Qcs_sys_*_kWh columns) / 1000  ← only cs carrier MWh
+# service_mwh['E']  = sum(E_sys_*_kWh columns) / 1000    ← only E carrier MWh
+# Use these for opex_var — never use GRID_MWh from summary (includes cooling + E_sys)
+```
+
+### DO: Select correct piecewise row for multi-range components
+
+```python
+# _get_component_row(code, locator, capacity_W=Q_W) picks the matching cap_min/cap_max row
+# PU1 has 4 rows: 500-4000W, 4000-37000W, 37000-375000W, 37000-∞W
+# Always pass capacity_W so the correct cost curve segment is used
+```
+
+### DO: PVT prefix before PV in COMPONENT_PREFIX_TO_TABLE
+
+```python
+# 'PVT' must appear before 'PV' — 'PVT1'.startswith('PV') is True
+# HEX must also be registered: 'HEX': 'HEAT_EXCHANGERS'
+```
+
+### DON'T: Use part-load curves or variable efficiency
+
+```python
+# Component efficiency in configuration.json is constant
+# CAPEX cost curve is a,b,c,d,e parameters from COMPONENTS/CONVERSION/*.csv
+```
+
+## Database Parameters
+
+**COMPONENTS/CONVERSION/*.csv** (BOILERS, HEAT_PUMPS, VAPOR_COMPRESSION_CHILLERS, etc.):
+- `a, b, c, d, e` - Cost curve parameters
+- `cap_min, cap_max` - Capacity range in Watts
+- `LT_yr` - Lifetime, `IR_%` - Interest rate, `O&M_%` - Annual O&M
+
+**COMPONENTS/FEEDSTOCKS/FEEDSTOCKS_LIBRARY/*.csv**:
+- `Opex_var_buy_USD2015kWh` - Variable buy price (24 rows)
+
+## Output Files
+
+```
+outputs/data/analysis/{whatif_name}/costs/
+├── costs_buildings.csv    # One row per building/plant, aggregated totals
+└── costs_components.csv   # One row per service per building
+```
+
+**costs_components.csv columns**: `name, service, scale, assembly_code, component_code, carrier, peak_service_kW, capacity_kW, capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD, TAC_USD`
+- One row per component per service per building (multi-component assemblies produce multiple rows with same service/assembly_code)
+- `capacity_kW` for CT* = rejection load (larger than primary); for others = same as primary
+
+**costs_buildings.csv columns**: metadata from summary + `capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD, TAC_USD, whatif_name`
 
 ## Related Files
-- `cea/analysis/costs/system_costs.py:107-135` - Cost calculation flow
-- `cea/analysis/lca/operation.py` - Uses same database parameters
+
+- `main.py` - Entry point, full implementation
+- `equations.py` - `calc_capex_annualized(InvC, IR_%, LT_yr)`
+- `cea/analysis/final_energy/` - Must run first to produce inputs
 - `cea/databases/AGENTS.md` - Database structure
-- `databases/{region}/ASSEMBLIES/SUPPLY/` - CAPEX, efficiency, lifetime
-- `databases/{region}/COMPONENTS/FEEDSTOCKS/` - Variable OPEX, emissions
