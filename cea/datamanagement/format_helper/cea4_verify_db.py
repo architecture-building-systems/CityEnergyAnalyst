@@ -7,6 +7,7 @@ Verify the format of DB for CEA-4 model.
 import os
 from typing import Dict, List
 import cea.config
+from cea.utilities import validate_path_within_root
 import time
 import pandas as pd
 import numpy as np
@@ -187,10 +188,7 @@ def path_to_db_file_4(scenario, item, sheet_name=None):
     else:
         raise ValueError(f"Unknown item '{item}'")
 
-    # Guard against path traversal: resolved path must stay within the scenario directory
-    result = os.path.realpath(result)
-    if not result.startswith(scenario + os.sep) and result != scenario:
-        raise ValueError(f"Path traversal detected: resolved path '{result}' escapes scenario '{scenario}'")
+    result = validate_path_within_root(result, scenario)
 
     return result
 
