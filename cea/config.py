@@ -2007,11 +2007,6 @@ def parse_locator_kwargs(value: str) -> Dict[str, str]:
         raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
 
 
-class ColumnChoiceParameter(ChoiceParameter):
-    _supported_extensions = ['.csv']
-    
-    def __init__(self, name: str, section: Section, config: Configuration):
-        super().__init__(name, section, config)
 class ColumnChoicesMixin:
     _supported_extensions = ['.csv']
 
