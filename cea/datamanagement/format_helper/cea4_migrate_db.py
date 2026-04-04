@@ -399,6 +399,16 @@ def delete_files(path, verbose=False):
         print(f"Warning: Failed to delete {path}: {e}")
 
 
+def _safe_db_path(scenario, item, sheet_name=None):
+    """Wrapper around path_to_db_file_4 with path traversal guard."""
+    resolved_scenario = os.path.realpath(scenario)
+    result = path_to_db_file_4(resolved_scenario, item, sheet_name)
+    result = os.path.realpath(result)
+    if not result.startswith(resolved_scenario + os.sep) and result != resolved_scenario:
+        raise ValueError(f"Path traversal detected: '{result}' escapes scenario '{resolved_scenario}'")
+    return result
+
+
 def add_component_columns_to_supply(scenario):
     """
     Migrate SUPPLY assemblies from CEA-3 to CEA-4 format:
@@ -419,7 +429,7 @@ def add_component_columns_to_supply(scenario):
 
     # HEATING and COOLING: Have component columns, need to remove old columns
     for supply_file in ['SUPPLY_HEATING', 'SUPPLY_COOLING']:
-        file_path = path_to_db_file_4(scenario, 'SUPPLY', supply_file)
+        file_path = _safe_db_path(scenario, 'SUPPLY', supply_file)
         if os.path.isfile(file_path):
             df = pd.read_csv(file_path)
             # Remove unwanted columns
@@ -430,7 +440,7 @@ def add_component_columns_to_supply(scenario):
             df.to_csv(file_path, index=False)
 
     # HOTWATER: Doesn't have component columns, need to add them and remove old columns
-    hotwater_path = path_to_db_file_4(scenario, 'SUPPLY', 'SUPPLY_HOTWATER')
+    hotwater_path = _safe_db_path(scenario, 'SUPPLY', 'SUPPLY_HOTWATER')
     if os.path.isfile(hotwater_path):
         df = pd.read_csv(hotwater_path)
         # Remove unwanted columns
@@ -446,7 +456,7 @@ def add_component_columns_to_supply(scenario):
         df.to_csv(hotwater_path, index=False)
 
     # ELECTRICITY: Keep feedstock and efficiency, remove cost columns only
-    electricity_path = path_to_db_file_4(scenario, 'SUPPLY', 'SUPPLY_ELECTRICITY')
+    electricity_path = _safe_db_path(scenario, 'SUPPLY', 'SUPPLY_ELECTRICITY')
     if os.path.isfile(electricity_path):
         df = pd.read_csv(electricity_path)
         # Remove only cost columns, keep feedstock and efficiency
