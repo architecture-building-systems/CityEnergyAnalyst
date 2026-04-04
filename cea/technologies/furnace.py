@@ -11,7 +11,7 @@ from math import log
 import pandas as pd
 from scipy import interpolate
 from cea.technologies.constants import FURNACE_MIN_LOAD, \
-    FURNACE_MIN_ELECTRIC, BOILER_P_AUX
+    FURNACE_MIN_ELECTRIC, BOILER_P_AUX, KELVIN_CONVERSION
 from cea.analysis.costs.equations import calc_capex_annualized
 
 __author__ = "Thuy-An Nguyen"
@@ -94,10 +94,10 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE):
     y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8]  # Return Temperature Dependency
     eff_of_T_return = interpolate.interp1d(x, y, kind='linear')
 
-    eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60)
+    eff_therm_tot = eff_of_T_return(T_return_to_boiler - KELVIN_CONVERSION) * eta_therm / eff_of_T_return(60)
 
     if MOIST_TYPE == "dry":
-        eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60) + 0.087  # 8.7 % efficiency gain when using dry fuel
+        eff_therm_tot = eff_of_T_return(T_return_to_boiler - KELVIN_CONVERSION) * eta_therm / eff_of_T_return(60) + 0.087  # 8.7 % efficiency gain when using dry fuel
         eta_el += 0.087
 
     Q_therm_prim = Q_load / eff_therm_tot  # primary energy requirement

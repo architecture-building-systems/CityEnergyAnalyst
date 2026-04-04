@@ -91,6 +91,8 @@ Client → Server (jobs.py) → Worker (cea/worker.py) → Server
 **POST /jobs/error/{job_id}**:
 - Sets `state=ERROR`, `error=message`, `stderr=stacktrace`, `stdout=streams.pop()`
 - Graceful cleanup, removes temp files, emits `'cea-worker-error'`
+- Build Socket.IO / response payloads without re-reading deferred `stdout` / `stderr` after commit. Use the captured stream / stacktrace strings instead of touching ORM attributes post-commit.
+- Keep two payload modes in job endpoints: Python objects for FastAPI responses and JSON-safe values for Socket.IO emits. Converting datetimes to strings too early breaks computed fields like `duration`.
 
 **POST /jobs/cancel/{job_id}** (user-initiated):
 - Requires authorization: only job creator can cancel
@@ -198,5 +200,6 @@ Not every user action should become a background job. Keep fast synchronous API 
 2. Cleanup (streams, processes, temp files)
 3. `await session.commit()` **before** emitting SocketIO
 4. Emit outside try-except to prevent rollback
+5. When `stdout` / `stderr` are deferred, serialise payloads with explicit log values rather than `job.model_dump()` on expired ORM state
 
 **Debugging**: Check `JobInfo.state`, `job.stdout/stderr`, server logs, `worker_processes`/`streams` caches

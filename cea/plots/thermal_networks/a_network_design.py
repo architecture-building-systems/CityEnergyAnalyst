@@ -12,6 +12,7 @@ from cea.plots.variable_naming import get_color_array
 import pandas as pd
 import geopandas
 import json
+from cea.constants import KELVIN_CONVERSION
 from cea.utilities import remap
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 from cea.utilities.color_fader import color_fader_rgb
@@ -89,8 +90,8 @@ class NetworkLayoutOperationPeak(cea.plots.thermal_networks.ThermalNetworksMapPl
 
         #temperature at the plant
         index_max_T_plant = self.buildings_hourly.sum(axis=1).idxmax(axis=0)
-        temperature_supply_plant = self.temperature_supply_return_plant_C['temperature_supply_K'] - 273
-        temperature_return_plant = self.temperature_supply_return_plant_C['temperature_return_K'] - 273
+        temperature_supply_plant = self.temperature_supply_return_plant_C['temperature_supply_K'] - KELVIN_CONVERSION
+        temperature_return_plant = self.temperature_supply_return_plant_C['temperature_return_K'] - KELVIN_CONVERSION
         T_supply_peak = round(temperature_supply_plant[index_max_T_plant],1)
         delta_T_peak = round((temperature_supply_plant - temperature_return_plant)[index_max_T_plant],1)
 

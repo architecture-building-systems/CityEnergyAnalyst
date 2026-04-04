@@ -15,6 +15,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+from cea.constants import KELVIN_CONVERSION
+
+
 # Length of entries of an individual and the name of every entry
 # this is the first part of the individual and only considers technologies
 # in the optimization algorithm we add more entries to specify network connections to buildings.
@@ -80,7 +83,7 @@ HP_ETA_EX = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
 HP_ETA_EX_COOL = 0.3  # https://www.sciencedirect.com/science/article/pii/S1164023502000833
 HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
-HP_MAX_T_COND = 140 + 273.0  # max temperature at condenser [K]
+HP_MAX_T_COND = 140 + KELVIN_CONVERSION  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 HP_COP_MAX = 8.5  # maximum achieved by 3for2 21.05.18
 HP_COP_MIN = 2.7  # COP of typical air-to-air unit
@@ -100,11 +103,11 @@ PUMP_ETA = 0.8
 
 # Sewage resource
 
-SEW_MIN_T = 10 + 273.0  # minimum temperature at the sewage exit [K]
+SEW_MIN_T = 10 + KELVIN_CONVERSION  # minimum temperature at the sewage exit [K]
 
 # Lake resources
 DELTA_U = (12500.0E6)  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
-T_LAKE = 5 + 273.0  # K
+T_LAKE = 5 + KELVIN_CONVERSION  # K
 
 COP_SCALING_FACTOR_GROUND_WATER = 3.4 / 3.9  # Scaling factor according to EcoBau, take GroundWater Heat pump into account
 
@@ -156,13 +159,13 @@ DX_COP = 2.3  # [-]
 PRICE_DX_PER_W = 1.6  # USD
 
 # Vapor compressor chiller
-VCC_T_COOL_IN = 30 + 273.0  # entering condenser water temperature [K]
+VCC_T_COOL_IN = 30 + KELVIN_CONVERSION  # entering condenser water temperature [K]
 VCC_MIN_LOAD = 0.1  # min load for cooling power
 VCC_CODE_CENTRALIZED = 'CH1'
 VCC_CODE_DECENTRALIZED = 'CH2'
 
 # Absorption chiller
-ACH_T_IN_FROM_CHP_K = 150.0 + 273.0  # hot water from CHP to the generator of ACH
+ACH_T_IN_FROM_CHP_K = 150.0 + KELVIN_CONVERSION  # hot water from CHP to the generator of ACH
 ACH_TYPE_SINGLE = 'single'  # single effect absorption chiller
 ACH_TYPE_DOUBLE = 'double'  # double effect absorption chiller
 
@@ -171,16 +174,16 @@ T_GENERATOR_FROM_ET_C = 100  # fixme: this number is set corresponding to the ev
 
 ## Thermal Energy Storage
 # Fully mixed cold water tank
-T_TANK_FULLY_CHARGED_K = 4 + 273.0
-T_TANK_FULLY_DISCHARGED_K = 14 + 273.0
+T_TANK_FULLY_CHARGED_K = 4 + KELVIN_CONVERSION
+T_TANK_FULLY_DISCHARGED_K = 14 + KELVIN_CONVERSION
 
 # Seasonal Storage
 STORAGE_MAX_UPTAKE_LIMIT_FLAG = 1  # set a maximum for the HP Power for storage charging / discharging
 
 # Server Waste Heat recovery
 ETA_SERVER_TO_HEAT = 0.8  # [-]
-T_FROM_SERVER = 60 + 273.0  # K
-T_TO_SERVER = 55 + 273.0  # K
+T_FROM_SERVER = 60 + KELVIN_CONVERSION  # K
+T_TO_SERVER = 55 + KELVIN_CONVERSION  # K
 
 # solar PV and PVT
 N_PV = 0.16
@@ -191,4 +194,3 @@ N_SC_ET = 0.721
 # Low heating values
 LHV_NG = 45.4E6  # [J/kg]
 LHV_BG = 21.4E6  # [J/kg]
-ZERO_DEGREES_CELSIUS_IN_KELVIN = 273.0  # Use this value, where the default temperature is assigned as 0 degree C

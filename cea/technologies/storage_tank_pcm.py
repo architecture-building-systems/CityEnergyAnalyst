@@ -6,6 +6,7 @@ import numpy as np
 from cea.technologies.storage_tank import calc_tank_surface_area, calc_cold_tank_heat_gain
 from math import log
 from cea.analysis.costs.equations import calc_capex_annualized
+from cea.constants import KELVIN_CONVERSION
 
 __author__ = "Jimeno Fonseca"
 __copyright__ = "Copyright 2021, Cooling Singapore"
@@ -32,9 +33,9 @@ class Storage_tank_PCM(object):
         # INITIALIZING MODEL PARAMETERS FROM DATABASE OF CONVERSION TECHNOLOGIES / TES
         self.storage_prop = database_model_parameters[database_model_parameters['code'] == type_storage]
         self.description = self.storage_prop['description'].values[0]
-        self.T_phase_change_K = self.storage_prop['T_PHCH_C'].values[0] + 273.0
-        self.T_tank_fully_charged_K = self.storage_prop['T_min_C'].values[0] + 273.0
-        self.T_tank_fully_discharged_K = self.storage_prop['T_max_C'].values[0] + 273.0
+        self.T_phase_change_K = self.storage_prop['T_PHCH_C'].values[0] + KELVIN_CONVERSION
+        self.T_tank_fully_charged_K = self.storage_prop['T_min_C'].values[0] + KELVIN_CONVERSION
+        self.T_tank_fully_discharged_K = self.storage_prop['T_max_C'].values[0] + KELVIN_CONVERSION
         self.latent_heat_phase_change_kJ_kg = self.storage_prop['HL_kJkg'].values[0]
         self.density_phase_change_kg_m3 = self.storage_prop['Rho_T_PHCH_kgm3'].values[0]
         self.specific_heat_capacity_solid_kJ_kgK = self.storage_prop['Cp_kJkgK'].values[0]
@@ -74,7 +75,7 @@ class Storage_tank_PCM(object):
                     self.cap_solid_phase_Wh/ 1000, self.cap_phase_change_Wh/ 1000, self.cap_liquid_phase_Wh/ 1000))
             print(
                 "The minimum, phase change, and maximum Temperatures of the storaage are {:.2f} °C, {:.2f} °C, and {:.2f} °C".format(
-                    self.T_tank_fully_charged_K - 273, self.T_phase_change_K - 273, self.T_tank_fully_discharged_K - 273))
+                    self.T_tank_fully_charged_K - KELVIN_CONVERSION, self.T_phase_change_K - KELVIN_CONVERSION, self.T_tank_fully_discharged_K - KELVIN_CONVERSION))
             print("...initialization of the storage finished...")
 
     def balance_storage(self):
@@ -85,7 +86,7 @@ class Storage_tank_PCM(object):
         if self.activated:
             if self.debug:
                 print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
-                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
+                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - KELVIN_CONVERSION))
             self.current_thermal_gain_Wh = self.hourly_thermal_gain_Wh * (self.hour - self.hour_of_last_activation)
             new_storage_capacity_wh = self.current_storage_capacity_Wh - self.current_thermal_gain_Wh
             new_phase = self.new_phase_tank(new_storage_capacity_wh)
@@ -102,7 +103,7 @@ class Storage_tank_PCM(object):
             self.hour_of_last_activation = self.hour
             if self.debug:
                 print("The new capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
-                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273, ))
+                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - KELVIN_CONVERSION, ))
 
         return self.current_storage_capacity_Wh
 
@@ -183,7 +184,7 @@ class Storage_tank_PCM(object):
             Tb = self.T_phase_change_K
             T1 = Tb + ((self.cap_liquid_phase_Wh - new_storage_capacity_wh) * 3.6) / (m * Cp_l)
 
-        if T1 == np.nan:
+        if np.isnan(T1):
             print("error at hour {}".format(self.hour))
 
         return T1
@@ -196,7 +197,7 @@ class Storage_tank_PCM(object):
             if self.debug:
                 print("...charging...")
                 print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
-                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
+                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - KELVIN_CONVERSION))
                 print("The requested load was {:.2f} kW".format(
                     load_to_storage_Wh / 1000))
                 print("The current thermal gain is {:.2f} kW".format(
@@ -255,7 +256,7 @@ class Storage_tank_PCM(object):
             if self.debug:
                 print("The possible load was {:.2f} kWh".format(final_load_to_storage_Wh / 1000))
                 print("The new capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
-                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273, ))
+                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - KELVIN_CONVERSION, ))
 
             return final_load_to_storage_Wh, new_storage_capacity_Wh
         else:
@@ -269,7 +270,7 @@ class Storage_tank_PCM(object):
             if self.debug:
                 print("...discharging...")
                 print("The current capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
-                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273))
+                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - KELVIN_CONVERSION))
                 print("The requested load was {:.2f} kW".format(
                     load_from_storage_Wh / 1000))
                 print("The current thermal gain is {:.2f} kW".format(
@@ -322,7 +323,7 @@ class Storage_tank_PCM(object):
                 print("The requested load to discharge  was {:.2f} kW, the possible load to discharge was {:.2f} kWh".format(
                     load_from_storage_Wh / 1000, final_load_from_storage_Wh / 1000))
                 print("The new capacity and temperature is {:.2f} kWh, and {:.2f} °C".format(
-                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - 273, ))
+                    self.current_storage_capacity_Wh / 1000, self.T_tank_K - KELVIN_CONVERSION, ))
 
             return final_load_from_storage_Wh, new_storage_capacity_Wh
         else:

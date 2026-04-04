@@ -9,7 +9,7 @@ import numpy as np
 import cea.technologies.chiller_absorption as chiller_absorption
 import cea.technologies.chiller_vapor_compression as chiller_vapor_compression
 import cea.technologies.cooling_tower as ct_model
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 from cea.optimization.constants import VCC_T_COOL_IN, DT_COOL, ACH_T_IN_FROM_CHP_K
 from cea.technologies.pumps import calc_water_body_uptake_pumping
 
@@ -311,7 +311,7 @@ def activate_CCandACH_trigen(Q_cooling_unmet_W,
             Qc_Trigen_gen_W = Qc_Trigen_NG_gen_directload_W + Qc_to_storage_W
 
         # GET THE ABSORPTION CHILLER PERFORMANCE
-        T_ACH_in_C = ACH_T_IN_FROM_CHP_K - 273
+        T_ACH_in_C = ACH_T_IN_FROM_CHP_K - KELVIN_CONVERSION
         Qc_CT_ACH_W, \
         Qh_CCGT_req_W, \
         E_ACH_req_W = calc_chiller_absorption_operation(Qc_Trigen_gen_W,

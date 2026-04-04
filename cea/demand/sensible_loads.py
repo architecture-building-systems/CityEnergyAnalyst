@@ -7,7 +7,7 @@ from __future__ import annotations
 import numpy as np
 from cea.demand import control_heating_cooling_systems, constants
 from cea.demand.time_series_data import empty_array
-from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_OFFSET
+from cea.constants import HOURS_IN_YEAR, BOLTZMANN, KELVIN_CONVERSION
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -120,7 +120,7 @@ def calc_hr(emissivity, theta_ss):
         hr: radiative heat transfer coefficient of external surfaces
 
     """
-    return 4.0 * emissivity * BOLTZMANN * (theta_ss + KELVIN_OFFSET) ** 3.0
+    return 4.0 * emissivity * BOLTZMANN * (theta_ss + KELVIN_CONVERSION) ** 3.0
 
 def calc_hc(wind_speed):
     """
@@ -235,8 +235,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qhs_sys_ahu == Qhs_sys_ahu_0)
         ma_sup_0 = tsd.heating_system_mass_flows.ma_sup_hs_ahu[index[0][0]]
-        Ta_sup_0 = tsd.heating_system_temperatures.ta_sup_hs_ahu[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.heating_system_temperatures.ta_re_hs_ahu[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.heating_system_temperatures.ta_sup_hs_ahu[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.heating_system_temperatures.ta_re_hs_ahu[index[0][0]] + KELVIN_CONVERSION
         Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(qhs_sys_ahu, Qhs_sys_ahu_0, tsd.heating_system_temperatures.ta_sup_hs_ahu,
                                                                                tsd.heating_system_temperatures.ta_re_hs_ahu,
                                                                                bpr.building_systems['Ths_sup_ahu_0'],
@@ -256,8 +256,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qhs_sys_aru == Qhs_sys_aru_0)
         ma_sup_0 = tsd.heating_system_mass_flows.ma_sup_hs_aru[index[0][0]]
-        Ta_sup_0 = tsd.heating_system_temperatures.ta_sup_hs_aru[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.heating_system_temperatures.ta_re_hs_aru[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.heating_system_temperatures.ta_sup_hs_aru[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.heating_system_temperatures.ta_re_hs_aru[index[0][0]] + KELVIN_CONVERSION
         Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(qhs_sys_aru, Qhs_sys_aru_0,
                                                                                tsd.heating_system_temperatures.ta_sup_hs_aru,
                                                                                tsd.heating_system_temperatures.ta_re_hs_aru,
@@ -324,8 +324,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qcs_sys_ahu == Qcs_sys_ahu_0)
         ma_sup_0 = tsd.cooling_system_mass_flows.ma_sup_cs_ahu[index[0][0]]
-        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_ahu[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_ahu[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_ahu[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_ahu[index[0][0]] + KELVIN_CONVERSION
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_ahu, Qcs_sys_ahu_0, tsd.cooling_system_temperatures.ta_sup_cs_ahu,
                                                                                tsd.cooling_system_temperatures.ta_re_cs_ahu,
                                                                                bpr.building_systems['Tcs_sup_ahu_0'],
@@ -345,8 +345,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qcs_sys_aru == Qcs_sys_aru_0)
         ma_sup_0 = tsd.cooling_system_mass_flows.ma_sup_cs_aru[index[0][0]]
-        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_aru[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_aru[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_aru[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_aru[index[0][0]] + KELVIN_CONVERSION
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_aru, Qcs_sys_aru_0, tsd.cooling_system_temperatures.ta_sup_cs_aru,
                                                                                tsd.cooling_system_temperatures.ta_re_cs_aru,
                                                                                bpr.building_systems['Tcs_sup_aru_0'],
@@ -379,8 +379,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qcs_sys_aru == Qcs_sys_aru_0)
         ma_sup_0 = tsd.cooling_system_mass_flows.ma_sup_cs_aru[index[0][0]]
-        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_aru[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_aru[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_aru[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_aru[index[0][0]] + KELVIN_CONVERSION
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_aru, Qcs_sys_aru_0,
                                                                                tsd.cooling_system_temperatures.ta_sup_cs_aru,
                                                                                tsd.cooling_system_temperatures.ta_re_cs_aru,
@@ -409,8 +409,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qcs_sys_ahu == Qcs_sys_ahu_0)
         ma_sup_0 = tsd.cooling_system_mass_flows.ma_sup_cs_ahu[index[0][0]]
-        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_ahu[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_ahu[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_ahu[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_ahu[index[0][0]] + KELVIN_CONVERSION
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_ahu, Qcs_sys_ahu_0,
                                                                                tsd.cooling_system_temperatures.ta_sup_cs_ahu,
                                                                                tsd.cooling_system_temperatures.ta_re_cs_ahu,
@@ -433,8 +433,8 @@ def calc_temperatures_emission_systems(bpr: BuildingPropertiesRow, tsd: TimeSeri
 
         index = np.where(qcs_sys_aru == Qcs_sys_aru_0)
         ma_sup_0 = tsd.cooling_system_mass_flows.ma_sup_cs_aru[index[0][0]]
-        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_aru[index[0][0]] + KELVIN_OFFSET
-        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_aru[index[0][0]] + KELVIN_OFFSET
+        Ta_sup_0 = tsd.cooling_system_temperatures.ta_sup_cs_aru[index[0][0]] + KELVIN_CONVERSION
+        Ta_re_0 = tsd.cooling_system_temperatures.ta_re_cs_aru[index[0][0]] + KELVIN_CONVERSION
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(qcs_sys_aru, Qcs_sys_aru_0,
                                                                                tsd.cooling_system_temperatures.ta_sup_cs_aru,
                                                                                tsd.cooling_system_temperatures.ta_re_cs_aru,
