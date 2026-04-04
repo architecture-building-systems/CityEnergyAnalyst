@@ -410,6 +410,7 @@ def add_component_columns_to_supply(scenario):
     Parameters:
     - scenario: The scenario path
     """
+    scenario = os.path.realpath(scenario)
     # Columns to remove (primary energy related and cost columns moved to other modules)
     columns_to_remove = ['feedstock', 'efficiency', 'system', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']
 
