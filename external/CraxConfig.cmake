@@ -15,6 +15,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_compile_options(
         /wd4127
     )
+    # Static CRT linking to avoid MSVCP140.dll dependency in distributed wheels
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
 endif()
 
 function(configure_crax)
