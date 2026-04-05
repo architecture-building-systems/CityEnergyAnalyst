@@ -38,8 +38,6 @@
 
 City Energy Analyst (CEA) - Urban building energy simulation platform for low-carbon city design.
 
-**Version**: 4.0.0-beta.5 | **Python**: >=3.10 | **License**: MIT
-
 ## Environment Setup
 
 **Pixi (Recommended)**:
@@ -53,99 +51,3 @@ pixi run cea dashboard  # Run dashboard
 docker build -t cea .
 docker run -p 5050:5050 cea  # Dashboard on port 5050
 ```
-
-## Core Architecture
-
-**Scenario-Based Workflow**: Work organized around scenarios (folders with `/inputs/`, `/outputs/`)
-
-**Key Components**:
-- `InputLocator` (`inputlocator.py`) - File path resolution for scenarios
-- `Configuration` (`config.py`) - Typed parameters (PathParameter, BooleanParameter, etc.)
-- `scripts.yml` - Script registry with metadata
-- `cea.api` - Dynamic script loading and execution
-
-**Database Hierarchy**: `ARCHETYPES → ASSEMBLIES → COMPONENTS` (see `cea/databases/AGENTS.md`)
-
-**Dashboard**: FastAPI + SocketIO job system (see `cea/interfaces/dashboard/AGENTS.md`)
-
-## Key Patterns
-
-### Adding a New Script
-1. Create `cea/<module>/script.py` with `main(config: Configuration)`
-2. Add entry to `scripts.yml`
-3. Auto-registers via `cea.api`
-
-### Using Core APIs
-
-```python
-# InputLocator - always use for file paths
-from cea.inputlocator import InputLocator
-locator = InputLocator(config.scenario)
-path = locator.get_zone_geometry()
-
-# Configuration
-from cea.config import Configuration
-config = Configuration()
-scenario = config.scenario
-
-# Running scripts
-import cea.api
-cea.api.demand(scenario='/path/to/scenario')
-```
-
-### Testing
-- **All test files**: Place in `cea/tests/` (never in other directories)
-- Reference scenarios: `cea/examples/`
-- Config: `cea/tests/cea.config`
-
-## Writing Conventions
-
-**No emoticons in code**: Never add emoji or emoticons to code files, comments, or print statements.
-
-**Physics function docstrings**: When writing physics-based functions (hydraulics, heat transfer, thermodynamics, fluid properties):
-- **MUST follow** the docstring specification in `docs/developer/documenting-physics/docstring-specification.md`
-- Verify standards citations are correct before referencing
-- Include formulas with Unicode symbols
-- All parameters and returns must have units in [square brackets]
-- Use proper reference format: [Tag] Author (Year). Title. Journal, Volume, Pages
-
-**British English**: All user-facing text MUST use British English spelling and terminology:
-- "normalised" (not "normalized")
-- "optimisation" (not "optimization")
-- "behaviour" (not "behavior")
-- "colour" (not "color")
-- "centre" (not "center")
-
-**Where to apply**:
-- `cea/default.config` - All help text and descriptions
-- `cea/scripts.yml` - All labels, short_description, and description fields
-- User-facing print statements in main modules
-- Docstrings for public APIs
-- Error messages shown to users
-
-**Where NOT to apply**:
-- Variable names, function names (keep American for consistency with Python ecosystem)
-- Column names in CSV outputs (existing convention)
-- Internal code comments (either is fine)
-- Database file names and keys
-
-## Common Pitfalls
-
-1. **File Paths**: Always use `InputLocator` methods, never hardcode
-2. **Test Location**: All test files in `cea/tests/` only
-3. **Config in Workers**: Don't modify `config` directly; use kwargs or create new instance
-4. **Multiprocessing**: Check `config.multiprocessing` before using `Pool`
-5. **Scenario Structure**: Respect `/inputs/`, `/outputs/` conventions
-6. **Config Type Hints**: After modifying `config.py`, regenerate `config.pyi` by running `pixi run python cea/utilities/config_type_generator.py`
-7. **British English**: Use British English spelling in all user-facing text (see Writing Conventions above)
-8. **F-strings**: Only use f-strings when string contains variables (e.g., `f"Value: {x}"`). Use regular strings otherwise (e.g., `"No variables"`) to avoid linter warnings
-
-## Module Documentation
-
-For detailed patterns in specific modules, see:
-- `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES
-- `cea/analysis/costs/AGENTS.md` - Cost calculations, 4-case logic, 3-level fallback
-- `cea/analysis/heat/AGENTS.md` - Heat rejection (mirrors cost architecture)
-- `cea/demand/AGENTS.md` - Demand simulation, HVAC vs SUPPLY
-- `cea/interfaces/dashboard/AGENTS.md` - Job system, worker processes
-- `cea/technologies/network_layout/AGENTS.md` - Network connectivity
