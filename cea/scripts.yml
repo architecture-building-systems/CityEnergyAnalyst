@@ -322,14 +322,7 @@ District Evolution Pathways:
       This Feature allows you to define reusable intervention templates that can be applied to multiple years.
       An intervention template is a named modification template (e.g. "upgrade_wall_insulation", "retrofit_hvac") containing construction 
       property updates that can be applied to selected building archetypes.
-      
-      **Prerequisites**: Complete Step 0 (Select Pathway) first.
 
-      **Workflow**:
-      1. Define intervention templates with meaningful names using this tool
-      2. Apply one or more intervention templates to specific years
-      3. Bake the changes into State Scenarios
-      
       **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
     interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_intervention_templates_define
