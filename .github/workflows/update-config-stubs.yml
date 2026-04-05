@@ -6,12 +6,12 @@ on:
     paths:
       - 'cea/config.py'
       - 'cea/default.config'
-      - 'cea/utilities/config_type_generator.py'
+      - 'scripts/config_type_generator.py'
   pull_request:
     paths:
       - 'cea/config.py'
       - 'cea/default.config'
-      - 'cea/utilities/config_type_generator.py'
+      - 'scripts/config_type_generator.py'
 
 permissions:
   contents: write
@@ -33,7 +33,7 @@ jobs:
         run: pixi run pip install .
 
       - name: Generate config.pyi
-        run: pixi run python -m cea.utilities.config_type_generator
+        run: pixi run python scripts/config_type_generator.py
 
       - name: Check for changes
         id: check_changes
@@ -80,11 +80,11 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '⚠️ **Type stub update required**\n\nYour changes to `config.py`, `default.config`, or `config_type_generator.py` require regenerating the type stubs.\n\nPlease run:\n```bash\npython -m cea.utilities.config_type_generator\n```\n\nAnd commit the updated `config.pyi` file.'
+              body: '⚠️ **Type stub update required**\n\nYour changes to `config.py`, `default.config`, or `config_type_generator.py` require regenerating the type stubs.\n\nPlease run:\n```bash\npython scripts/config_type_generator.py\n```\n\nAnd commit the updated `config.pyi` file.'
             })
 
       - name: Fail if changes not committed (on PR)
         if: steps.check_changes.outputs.changed == 'true' && github.event_name == 'pull_request'
         run: |
-          echo "::error::config.pyi is out of date. Please regenerate it by running: python -m cea.utilities.config_type_generator"
+          echo "::error::config.pyi is out of date. Please regenerate it by running: python scripts/config_type_generator.py"
           exit 1

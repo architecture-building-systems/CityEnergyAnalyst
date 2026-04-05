@@ -62,7 +62,7 @@ Common Pitfalls
 **IMPORTANT**: After ANY changes to `config.py`, you MUST regenerate the type stub:
 
 ```bash
-python cea/utilities/config_type_generator.py
+python scripts/config_type_generator.py
 ```
 
 ## decode() vs encode()
@@ -125,7 +125,7 @@ class DynamicChoiceParameter(ChoiceParameter):
 ## Related Files
 
 - `config.py` - All parameter classes (PathParameter, ChoiceParameter, etc.)
-- `config.pyi` - Type stubs (regenerate: `pixi run python cea/utilities/config_type_generator.py`)
+- `config.pyi` - Type stubs (regenerate: `pixi run python scripts/config_type_generator.py`)
 - `default.config` - Default values for all parameters
 - `interfaces/dashboard/api/tools.py` - Validation API endpoints (`validate_field`, `get_parameter_metadata`)
 
