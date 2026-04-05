@@ -235,6 +235,13 @@ class Component(object):
                 # Multi-unit installation needed
                 n_units = math.ceil(capacity / max_capacity)
                 unit_capacity = capacity / n_units
+                # Verify unit_capacity falls within a valid database range
+                try:
+                    Component._extract_model_data(component_class._csv_name, model_code, unit_capacity)
+                except ValueError:
+                    # unit_capacity doesn't fit any row; round up n_units so unit_capacity fits within max_capacity
+                    n_units = math.ceil(capacity / max_capacity) + 1
+                    unit_capacity = capacity / n_units
                 warnings.warn(
                     f"Requested capacity ({capacity:.1f} kW) exceeds the maximum available "
                     f"{component_class.__name__} model '{model_code}' ({max_capacity:.1f} kW). "
@@ -384,6 +391,7 @@ class ActiveComponent(Component):
         :rtype: (dict, dict) of EnergyFlow objects
         """
         if self.n_units > 1:
+            self._check_operational_requirements(main_energy_flow)
             return self._cascade_operation(main_energy_flow)
         return self._operate_single_unit(main_energy_flow)
 
@@ -496,6 +504,7 @@ class PassiveComponent(Component):
         :rtype: EnergyFlow object
         """
         if self.n_units > 1:
+            self._check_operational_requirements(energy_flow)
             return self._cascade_operation(energy_flow, *args)
         return self._operate_single_unit(energy_flow, *args)
 
