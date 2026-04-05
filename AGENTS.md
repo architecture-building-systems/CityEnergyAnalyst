@@ -8,10 +8,6 @@
 **When to create AGENTS.md**:
 - **DO create** when the directory has:
   - Complex architectural patterns not obvious from code
-  - Critical design decisions that affect how code should be written
-  - Non-obvious relationships between components
-  - Common pitfalls or important DO/DON'T patterns
-  - State management, data flow, or API patterns needing explanation
 
 - **DON'T create** when:
   - Directory contains simple utility functions
@@ -21,62 +17,22 @@
   - Would duplicate information already in code/docstrings
 
 **Writing style for AGENTS.md**:
-- **Be concise and actionable** - Aim for <150 lines when possible
-- **Lead with API signatures** - Show function signatures and return types first
-- **Use code examples over prose** - Show DO/DON'T patterns instead of long explanations
+- **Be concise and actionable** - ALWAYS aim for <150 lines when possible
 - **Focus on patterns, not details** - What to do, not why it exists
 - **Scannable structure** - Use headers, bullets, and short paragraphs
-- **Reference, don't explain** - Link to related files instead of duplicating information
-
-**Good example structure**:
-```markdown
-# Module Name
-
-## Main API
-- `function_name(args) → ReturnType` - One-line description
-
-## Key Patterns
-### DO: Pattern name
-```code example```
-
-### DON'T: Anti-pattern name
-```code example```
-
-## Related Files
-- `file.py` - Purpose
-```
 
 **Updating existing agent documentation**:
 - **IMPORTANT**: When making code changes in a directory, ALWAYS update the corresponding `AGENTS.md` file in that directory
-- If no `AGENTS.md` exists in the directory where you're making changes, create one following the structure above
-- Keep documentation synchronized with code changes to help other LLMs understand the current state
-- Update immediately after making code changes, not as an afterthought
-- **Prune verbose sections** - If AGENTS.md is >200 lines, look for opportunities to condense
-- Focus on architectural patterns, state management, data flow, and key concepts that aren't obvious from code alone
 - **Create comprehensive user documentation** - When detailed explanations are needed, create proper documentation in `docs/` with sections, examples, and context for human readers. AGENTS.md should remain concise LLM reference only
 
 **Code quality directives**:
 - **Extract meaningful patterns, not trivial wrappers** - Only create helper functions when they add real value:
-  - **DO extract** when:
-    - Logic must be done in a specific way to avoid bugs (e.g., `get_next_node_name()` - prevents duplicates)
-    - Complex workflow logic that's hard to understand inline (e.g., multi-step validation)
-    - Algorithm that requires deep understanding to get right
-    - Pattern that encapsulates important business rules
   - **DON'T extract** when:
     - It's just a 1-2 line wrapper around existing functions
     - It's standard library usage (file I/O, simple pandas operations)
     - The abstraction obscures rather than clarifies intent
     - It would be clearer to just write inline
   - **Rule of thumb**: If the helper function is shorter/simpler than its call sites, don't extract it
-
-**Directory-specific AGENTS.md files**:
-- `cea/databases/AGENTS.md` - Database structure, COMPONENTS vs ASSEMBLIES
-- `cea/analysis/costs/AGENTS.md` - Cost calculation patterns, 4-case logic, 3-level fallback
-- `cea/analysis/heat/AGENTS.md` - Heat rejection (mirrors cost architecture)
-- `cea/demand/AGENTS.md` - Demand calculations, HVAC vs SUPPLY, output columns
-- `cea/interfaces/dashboard/AGENTS.md` - Dashboard job system, worker process
-- `cea/technologies/network_layout/AGENTS.md` - Network connectivity, coordinate normalization
-
 ---
 ## Project Overview
 
@@ -193,8 +149,3 @@ For detailed patterns in specific modules, see:
 - `cea/demand/AGENTS.md` - Demand simulation, HVAC vs SUPPLY
 - `cea/interfaces/dashboard/AGENTS.md` - Job system, worker processes
 - `cea/technologies/network_layout/AGENTS.md` - Network connectivity
-
-## Resources
-
-- **Docs**: https://city-energy-analyst.readthedocs.io/
-- **Issues**: https://github.com/architecture-building-systems/CityEnergyAnalyst/issues
