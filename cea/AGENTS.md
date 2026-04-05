@@ -65,58 +65,32 @@ Common Pitfalls
 python cea/utilities/config_type_generator.py
 ```
 
-## Key Pattern: decode() vs encode()
+## decode() vs encode()
 
-### ✅ DO: Separate parsing from validation
+`decode()` is called on every config load — keep it lenient (security checks only, no business rules or I/O). `encode()` is called on save — apply all validation there.
 
-```python
-class MyParameter(Parameter):
-    def decode(self, value):
-        """Parse - security checks only"""
-        if not value:
-            return ""
-        value = value.strip()
-
-        # Only validate security concerns (path traversal, injection, etc.)
-        if self._has_security_issue(value):
-            raise ValueError("Security violation")
-
-        return value  # Don't check business rules
-
-    def encode(self, value):
-        """Validate - all business rules"""
-        if not value or not value.strip():
-            raise ValueError("Value required")
-
-        value = value.strip()
-
-        # Security check
-        if self._has_security_issue(value):
-            raise ValueError("Security violation")
-
-        # Business rule check
-        if self._resource_exists(value):
-            raise ValueError(f"Resource '{value}' already exists")
-
-        return value
-```
-
-### ❌ DON'T: Validate business rules in decode()
+Use helpers to share security checks without duplicating:
 
 ```python
-def decode(self, value):
-    # ❌ Expensive I/O on every config load
-    if not self._resource_exists(value):
-        raise ValueError("Resource not found")
+def _validate_security(self, value):
+    """Security checks (used by encode AND decode)"""
+    invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+    if any(char in value for char in invalid_chars):
+        raise ValueError("Invalid characters")
 
-    # ❌ Breaks loading old configs when resources deleted
-    if self._check_collision(value):
+def _validate_business(self, value):
+    """Business rules (used by encode ONLY)"""
+    if self._resource_exists(value):
         raise ValueError("Already exists")
 
+def decode(self, value):
+    return self._validate_security(value.strip())
+
+def encode(self, value):
+    self._validate_security(value.strip())
+    self._validate_business(value)
     return value
 ```
-
-**Why**: decode() is called when loading config files - must be lenient and fast.
 
 ## Dynamic Choices
 
@@ -139,31 +113,6 @@ class DynamicChoiceParameter(ChoiceParameter):
 
         # Return list of valid choices
         return self._scan_resources()
-```
-
-## Validation Helpers
-
-Extract shared validation into helpers:
-
-```python
-def _validate_security(self, value):
-    """Security checks (used by encode AND decode)"""
-    invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
-    if any(char in value for char in invalid_chars):
-        raise ValueError("Invalid characters")
-
-def _validate_business(self, value):
-    """Business rules (used by encode ONLY)"""
-    if self._resource_exists(value):
-        raise ValueError("Already exists")
-
-def decode(self, value):
-    return self._validate_security(value.strip())
-
-def encode(self, value):
-    self._validate_security(value.strip())
-    self._validate_business(value)
-    return value
 ```
 
 ## Common Pitfalls
