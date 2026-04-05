@@ -234,23 +234,14 @@ class Component(object):
             if capacity > max_capacity:
                 # Multi-unit installation needed
                 n_units = math.ceil(capacity / max_capacity)
-                max_units = max(n_units, int(math.floor(capacity / smallest_capacity)))
-
-                # Increment unit count until a valid per-unit capacity can be found.
-                while n_units <= max_units:
+                unit_capacity = capacity / n_units
+                # Verify unit_capacity falls within a valid database range
+                try:
+                    Component._extract_model_data(component_class._csv_name, model_code, unit_capacity)
+                except ValueError:
+                    # unit_capacity doesn't fit any row; round up n_units so unit_capacity fits within max_capacity
+                    n_units = math.ceil(capacity / max_capacity) + 1
                     unit_capacity = capacity / n_units
-                    try:
-                        Component._extract_model_data(component_class._csv_name, model_code, unit_capacity)
-                        break
-                    except ValueError:
-                        n_units += 1
-                else:
-                    raise ValueError(
-                        f"Could not find a valid multi-unit split for component '{model_code}' "
-                        f"with requested capacity {capacity * 1000}W in database {component_class._csv_name}. "
-                        f"Tried {math.ceil(capacity / max_capacity)} to {max_units} units."
-                    )
-
                 warnings.warn(
                     f"Requested capacity ({capacity:.1f} kW) exceeds the maximum available "
                     f"{component_class.__name__} model '{model_code}' ({max_capacity:.1f} kW). "
