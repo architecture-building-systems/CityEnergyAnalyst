@@ -349,7 +349,7 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
     candidates = [
         (parameter, payload[parameter.name])
         for parameter in parameters_for_script(tool_name, config)
-        if parameter.name in payload
+        if parameter.name in payload and parameter.name != 'scenario'
     ]
     try:
         validate_and_apply_parameters(candidates)
