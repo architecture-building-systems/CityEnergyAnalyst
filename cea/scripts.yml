@@ -340,7 +340,7 @@ District Evolution Pathways:
       Apply predefined intervention templates to a specific year across one or more district evolution pathways.
       Select multiple intervention templates to compose one pathway event - the system detects and prevents conflicts
       (e.g. if two templates modify the same field on the same building).
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_events_apply_templates
     parameters: ['general:scenario', pathway-events-apply-templates]
     input-files:

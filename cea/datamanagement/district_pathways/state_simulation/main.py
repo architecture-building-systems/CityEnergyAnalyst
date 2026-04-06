@@ -34,6 +34,9 @@ from cea.datamanagement.district_pathways.pathway_integrity import (
 from cea.datamanagement.district_pathways.pathway_status import (
     record_simulated_state,
 )
+from cea.datamanagement.district_pathways.pathway_timeline import (
+    validate_all_baked_states,
+)
 
 
 def simulate_all_states(config: Configuration, pathway_name: str) -> None:
@@ -41,6 +44,21 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
     pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
 
     check_district_pathway_log_yaml_integrity(config, pathway_name)
+
+    # Validate all baked states before simulation
+    print("Validating all baked states before simulation...", flush=True)
+    summary = validate_all_baked_states(config, pathway_name)
+    if summary.get("invalid_years"):
+        invalid = summary["invalid_years"]
+        issues_detail = []
+        for year in invalid:
+            issues = summary.get("issues_by_year", {}).get(year, [])
+            issues_detail.append(f"  {year}: {'; '.join(issues) if issues else 'validation failed'}")
+        raise ValueError(
+            f"Cannot simulate — validation issues found in year(s): "
+            f"{', '.join(str(y) for y in invalid)}\n"
+            + "\n".join(issues_detail)
+        )
 
     state_years = pathway.list_state_years_on_disk()
     if not state_years:
