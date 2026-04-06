@@ -19,6 +19,7 @@ __status__ = "Production"
 
 # imports
 # standard libraries
+import numpy as np
 import pandas as pd
 import math
 import warnings
@@ -292,9 +293,12 @@ class Component(object):
         if not main_energy_flow.energy_carrier.code == self.main_energy_carrier.code:
             raise TypeError(f'The {self.technology} ({self.code}) can only output {self.main_energy_carrier.code}. '
                             f'The requested output energy carrier is {main_energy_flow.energy_carrier.code}.')
-        if (main_energy_flow.profile > self.capacity).any():
+        exceeds_capacity = main_energy_flow.profile > self.capacity
+        if exceeds_capacity.any() and not np.isclose(main_energy_flow.profile[exceeds_capacity], self.capacity).all():
             raise ValueError(f'The {self.technology} ({self.code}) can only output a maximum of {self.capacity} W. '
                              f'Requested output: {max(main_energy_flow.profile)} W.')
+        # Clamp profile to capacity to absorb floating point noise
+        main_energy_flow.profile = main_energy_flow.profile.clip(upper=self.capacity)
 
     def operate(self, main_energy_flow):
         """ placeholder for subclass operational behaviour to output/reject the main energy flow """
