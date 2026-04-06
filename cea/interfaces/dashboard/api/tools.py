@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from itertools import groupby
 from typing import Dict, Any, List, Optional
@@ -10,7 +11,8 @@ import cea.config
 import cea.scripts
 from cea.schemas import schemas
 from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck
+from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -136,15 +138,20 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str,
+async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
                                project: Optional[str] = None,
                                scenario_name: Optional[str] = None) -> ToolProperties:
     # TODO: Add plugin support
 
     # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
     if project is not None:
-        config.project = project
+        if project_root is not None and not project.startswith(project_root):
+            project = os.path.join(project_root, project)
+        config.project = secure_path(project)
     if scenario_name is not None:
+        scenario_name = os.path.normpath(scenario_name)
+        if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+            raise HTTPException(status_code=400, detail=f"Invalid scenario name: {scenario_name}.")
         config.scenario_name = scenario_name
 
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
