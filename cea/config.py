@@ -1898,6 +1898,12 @@ class BuildingsParameter(MultiChoiceParameter):
         super().__init__(name, section, config)
         self._empty = False
 
+
+class OptionalBuildingsParameter(BuildingsParameter):
+    """A list of buildings where empty means none (not all)."""
+
+    empty_means_all = False
+
     @property
     def _choices(self):
         # set the `._choices` attribute to the list buildings in the project

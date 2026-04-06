@@ -410,7 +410,7 @@ District Evolution Pathways:
       Manual-only years are deleted entirely. Mixed years keep their stock-driven presence and only lose the manual edits.
     interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_delete_state_job
-    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-name', 'pathway-state-edit:year-of-state']
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-names', 'pathway-state-edit:year-of-state']
 
   - name: pathway-delete-pathway
     label: "District Pathway: Delete Pathway"
@@ -423,18 +423,18 @@ District Evolution Pathways:
     parameters: ['general:scenario', 'pathway-state-workflow:existing-pathway-name']
 
   - name: pathway-update-building-events
-    label: "District Pathway: Save Building Events"
-    short_description: Save explicit building additions and removals for one pathway year
+    label: "Create Building Events"
+    short_description: Create building events across one or more pathways
     description: |
-      This job updates the explicit building events for one pathway year and revalidates the pathway log before saving.
-    interfaces: [cli]
+      Create or update building events (constructions and demolitions) for a specific year across one or more pathways.
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.district_pathways.pathway_update_building_events_job
     parameters:
       - 'general:scenario'
-      - 'pathway-state-edit:existing-pathway-name'
+      - 'pathway-state-edit:existing-pathway-names'
       - 'pathway-state-edit:year-of-state'
-      - 'pathway-state-edit:new-buildings'
-      - 'pathway-state-edit:demolished-buildings'
+      - 'pathway-state-edit:buildings-to-construct'
+      - 'pathway-state-edit:buildings-to-demolish'
 
   - name: pathway-save-yaml
     label: "District Pathway: Save YAML"
@@ -445,7 +445,7 @@ District Evolution Pathways:
     module: cea.datamanagement.district_pathways.pathway_save_yaml_job
     parameters:
       - 'general:scenario'
-      - 'pathway-state-edit:existing-pathway-name'
+      - 'pathway-state-edit:existing-pathway-names'
       - 'pathway-state-edit:year-of-state'
       - 'pathway-state-edit:raw-yaml'
 
@@ -456,7 +456,7 @@ District Evolution Pathways:
       This job checks whether one baked pathway state still matches the pathway log and records a fresh validation fingerprint when it does.
     interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_validate_state_job
-    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-name', 'pathway-state-edit:year-of-state']
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-names', 'pathway-state-edit:year-of-state']
 
   - name: pathway-validate-all-states
     label: "District Pathway: Validate All States"

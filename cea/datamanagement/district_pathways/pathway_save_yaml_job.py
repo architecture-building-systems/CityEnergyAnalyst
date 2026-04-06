@@ -6,7 +6,7 @@ from cea.datamanagement.district_pathways.pathway_timeline import update_year_ya
 
 
 def main(config: Configuration) -> dict:
-    pathway_name = config.pathway_state_edit.existing_pathway_name
+    pathway_name = config.pathway_state_edit.existing_pathway_names[0]
     year = config.pathway_state_edit.year_of_state
     payload = update_year_yaml(
         config,

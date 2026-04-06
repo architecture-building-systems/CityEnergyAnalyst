@@ -856,10 +856,10 @@ class PathwaySimulationsSection(Section):
 
 class PathwayStateEditSection(Section):
     """Typed section for pathway-state-edit configuration"""
-    existing_pathway_name: str
+    existing_pathway_names: list[str]
     year_of_state: int
-    new_buildings: list[str]
-    demolished_buildings: list[str]
+    buildings_to_construct: list[str]
+    buildings_to_demolish: list[str]
     raw_yaml: Any
 
     @overload
