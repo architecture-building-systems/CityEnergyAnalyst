@@ -240,7 +240,6 @@ def get_year_editor_options(
         "available_demolished_buildings": available_buildings,
         "available_templates": get_intervention_template_names(
             pathway.main_locator,
-            validated_name,
         ),
         "entry": entry,
         "yaml_preview": row["yaml_preview"],
@@ -294,7 +293,6 @@ def apply_templates_to_year(
     pathway = DistrictEvolutionPathway(config, pathway_name=validated_name)
     merged_recipe = resolve_intervention_templates_to_recipe(
         locator=pathway.main_locator,
-        pathway_name=validated_name,
         template_names=template_names,
     )
     pathway.apply_year_modifications(int(year), merged_recipe)

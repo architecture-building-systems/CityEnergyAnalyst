@@ -700,7 +700,6 @@ class CreateNewPathwaySection(Section):
 
 class PathwayInterventionTemplatesDefineSection(Section):
     """Typed section for pathway-intervention-templates-define configuration"""
-    existing_pathway_name: str
     intervention_template_name: Any
     intervention_template_description: Any
     archetypes: str

@@ -77,6 +77,35 @@ async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict
         ) from exc
 
 
+@router.get("/templates")
+async def get_templates(config: CEAConfig) -> dict[str, list[str]]:
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    names = await run_in_threadpool(get_intervention_template_names, locator)
+    return {"templates": names}
+
+
+@router.delete("/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
+async def delete_template(
+    config: CEAConfig,
+    template_name: str,
+) -> dict[str, str]:
+    try:
+        await run_in_threadpool(
+            delete_intervention_template, config, template_name,
+        )
+        return {"status": "deleted"}
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
 @router.get("/{pathway_name}/timeline")
 async def get_timeline(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
     try:
@@ -305,39 +334,3 @@ async def post_validate_log(config: CEAConfig, pathway_name: str) -> dict[str, A
         ) from exc
 
 
-@router.get("/{pathway_name}/templates")
-async def get_templates(config: CEAConfig, pathway_name: str) -> dict[str, list[str]]:
-    try:
-        locator = cea.inputlocator.InputLocator(config.scenario)
-        names = await run_in_threadpool(
-            get_intervention_template_names, locator, pathway_name,
-        )
-        return {"templates": names}
-    except FileNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
-
-
-@router.delete("/{pathway_name}/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
-async def delete_template(
-    config: CEAConfig,
-    pathway_name: str,
-    template_name: str,
-) -> dict[str, str]:
-    try:
-        await run_in_threadpool(
-            delete_intervention_template, config, pathway_name, template_name,
-        )
-        return {"status": "deleted"}
-    except FileNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(exc),
-        ) from exc
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from exc

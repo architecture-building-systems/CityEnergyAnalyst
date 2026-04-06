@@ -2305,29 +2305,20 @@ class SubfolderChoiceParameter(ChoiceParameter):
 
 
 class InterventionTemplateMultiChoiceParameter(MultiChoiceParameter):
-    """Select multiple intervention templates from a district pathway's YAML file."""
+    """Select multiple intervention templates from the scenario-level YAML file."""
     # Dashboard note:
     # The GUI currently recognises this backend class name in
     # CityEnergyAnalyst-GUI/src/components/Parameter.jsx to render a multi-select widget.
     # If you rename this class again, update the frontend switch there in the same change.
-    # Refresh available templates when the selected pathway changes.
-    depends_on = ['existing-pathway-name']
 
     @property
     def _choices(self):
         from cea.datamanagement.district_pathways.intervention_templates import load_intervention_templates
-        
-        # Load intervention templates for this pathway
+
         locator = cea.inputlocator.InputLocator(self.config.scenario)
-        pathway_name = self.config.pathway_events_apply_templates.existing_pathway_name
-        
-        if not pathway_name:
-            return []
-        
         try:
-            changes = load_intervention_templates(locator, pathway_name=str(pathway_name))
-            result = sorted(changes.keys())
-            return result
+            changes = load_intervention_templates(locator, allow_missing=True)
+            return sorted(changes.keys())
         except (FileNotFoundError, ValueError):
             return []
 

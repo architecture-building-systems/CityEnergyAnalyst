@@ -165,11 +165,11 @@ class InputLocator(object):
         `scenario/district_pathways/{pathway_name}/district_pathway_log.yml`"""
         return os.path.join(self.get_district_pathway_folder(pathway_name), 'district_pathway_log.yml')
     
-    def get_district_pathway_intervention_templates_file(self, pathway_name: str):
-        """Returns the intervention-template file for a district evolution pathway.
-        
-        `scenario/district_pathways/{pathway_name}/intervention_templates.yml`"""
-        return os.path.join(self.get_district_pathway_folder(pathway_name), 'intervention_templates.yml')
+    def get_intervention_templates_file(self):
+        """Returns the scenario-level intervention-template file.
+
+        `scenario/district_pathways/intervention_templates.yml`"""
+        return os.path.join(self.get_district_pathway_container_folder(), 'intervention_templates.yml')
 
     def get_district_pathway_state_status_folder(self, pathway_name: str):
         """Returns the folder containing per-state pathway status records.
