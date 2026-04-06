@@ -427,7 +427,7 @@ District Evolution Pathways:
     short_description: Create building events across one or more pathways
     description: |
       Create or update building events (constructions and demolitions) for a specific year across one or more pathways.
-    interfaces: [cli, dashboard]
+    interfaces: [cli]
     module: cea.datamanagement.district_pathways.pathway_update_building_events_job
     parameters:
       - 'general:scenario'
