@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import cea.config
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters
+from .utils import deconstruct_parameters, validate_scenario_name
 from cea.interfaces.dashboard.utils import secure_path
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
@@ -149,10 +149,7 @@ async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, t
             project = os.path.join(project_root, project)
         config.project = secure_path(project)
     if scenario_name is not None:
-        scenario_name = os.path.normpath(scenario_name)
-        if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
-            raise HTTPException(status_code=400, detail=f"Invalid scenario name: {scenario_name}.")
-        config.scenario_name = scenario_name
+        config.scenario_name = validate_scenario_name(scenario_name)
 
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 

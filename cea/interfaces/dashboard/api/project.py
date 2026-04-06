@@ -31,6 +31,7 @@ from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.settings import get_settings
 from cea.interfaces.dashboard.utils import secure_path, OutsideProjectRootError
+from cea.interfaces.dashboard.api.utils import validate_scenario_name
 from cea.utilities.dbf import dbf_to_dataframe
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system, raster_to_WSG_and_UTM
 
@@ -323,12 +324,7 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         project_path = os.path.join(project_root, project_path)
 
     project = secure_path(project_path)
-    scenario_name = os.path.normpath(scenario_path.scenario_name)
-    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
-        )
+    scenario_name = validate_scenario_name(scenario_path.scenario_name)
 
     if project and scenario_name:
         # Project path must exist but scenario does not have to
@@ -379,12 +375,7 @@ async def create_new_scenario_v2(project_root: CEAProjectRoot, scenario_form: An
                 detail=f"Maximum number of scenarios reached ({limit_settings.num_scenarios}). Number of scenarios found: {num_scenarios}",
             )
 
-    scenario_name = os.path.normpath(scenario_form.scenario_name)
-    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
-        )
+    scenario_name = validate_scenario_name(scenario_form.scenario_name)
 
     new_scenario_path = secure_path(os.path.join(cea_project, str(scenario_name).strip()))
     if os.path.exists(new_scenario_path):
@@ -652,12 +643,6 @@ async def check_scenario_exists(request: Request, scenario: str = Path()):
             detail='Scenario does not exist.',
         )
     
-def validate_scenario_name(scenario_name: str):
-    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
-        )
 
 
 # FIXME: Potential Issue. Need to check if the scenario being deleted/renamed is running in scripts.
@@ -677,8 +662,7 @@ async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
     if new_scenario_name is None:
         return None
 
-    scenario_name = os.path.normpath(new_scenario_name)
-    validate_scenario_name(scenario_name)
+    scenario_name = validate_scenario_name(new_scenario_name)
 
     try:
         new_path = secure_path(os.path.join(config.project, new_scenario_name))

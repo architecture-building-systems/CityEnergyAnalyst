@@ -1,5 +1,19 @@
+import os
+
 import cea.config
 import cea.inputlocator
+from fastapi import HTTPException
+
+
+def validate_scenario_name(scenario_name: str) -> str:
+    """Validate that scenario_name is a bare name with no path components."""
+    scenario_name = os.path.normpath(scenario_name)
+    if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
+        )
+    return scenario_name
 
 
 def deconstruct_parameters(p: cea.config.Parameter, config=None):
