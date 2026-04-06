@@ -997,12 +997,16 @@ class ChoiceParameter(ChoiceParameterBase):
     """A parameter that can only take on values from a specific set of values"""
 
     def encode(self, value) -> str:
+        # Unwrap list inputs from the GUI (e.g. [] or ['value'])
+        if isinstance(value, list):
+            value = value[0] if len(value) == 1 else None if len(value) == 0 else value
+
         _value = str(value).strip() if value is not None else ''
 
         # Allow empty/None values if parameter is nullable
         if self.nullable and _value == '':
             return ''
-        
+
         # Validate that the value is one of the allowed choices
         if _value not in self._choices:
             raise ValueError(
@@ -2083,7 +2087,16 @@ class ColumnChoicesMixin:
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
+class ColumnChoiceParameter(ColumnChoicesMixin, ChoiceParameter):
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self._init_column_choices(name, section, config)
+
     def encode(self, value):
+        # Unwrap list inputs from the GUI (e.g. [] or ['value'])
+        if isinstance(value, list):
+            value = value[0] if len(value) == 1 else None if len(value) == 0 else value
+
         if value is None or value == '':
             if self.nullable:
                 return ''
@@ -2111,12 +2124,6 @@ class ColumnChoicesMixin:
         if not self._choices:
             raise ValueError(f"No choices for {self.fqname} to decode {value}")
         return self._choices[0]
-
-
-class ColumnChoiceParameter(ColumnChoicesMixin, ChoiceParameter):
-    def __init__(self, name: str, section: Section, config: Configuration):
-        super().__init__(name, section, config)
-        self._init_column_choices(name, section, config)
 
 
 class ColumnMultiChoiceParameter(ColumnChoicesMixin, MultiChoiceParameter):

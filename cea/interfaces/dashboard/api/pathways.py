@@ -6,6 +6,11 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
+import cea.inputlocator
+from cea.datamanagement.district_pathways.intervention_templates import (
+    delete_intervention_template,
+    get_intervention_template_names,
+)
 from cea.datamanagement.district_pathways.pathway_timeline import (
     StockOnlyStateError,
     StockYearRequiresEditError,
@@ -288,6 +293,44 @@ async def post_validate_state(
 async def post_validate_log(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
     try:
         return await run_in_threadpool(validate_pathway_log, config, pathway_name)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@router.get("/{pathway_name}/templates")
+async def get_templates(config: CEAConfig, pathway_name: str) -> dict[str, list[str]]:
+    try:
+        locator = cea.inputlocator.InputLocator(config.scenario)
+        names = await run_in_threadpool(
+            get_intervention_template_names, locator, pathway_name,
+        )
+        return {"templates": names}
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
+@router.delete("/{pathway_name}/templates/{template_name}", dependencies=[CEASeverDemoAuthCheck])
+async def delete_template(
+    config: CEAConfig,
+    pathway_name: str,
+    template_name: str,
+) -> dict[str, str]:
+    try:
+        await run_in_threadpool(
+            delete_intervention_template, config, pathway_name, template_name,
+        )
+        return {"status": "deleted"}
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
