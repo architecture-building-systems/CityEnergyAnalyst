@@ -2304,6 +2304,36 @@ class SubfolderChoiceParameter(ChoiceParameter):
             return ''
 
 
+class SubfolderMultiChoiceParameter(MultiChoiceParameter):
+    """Select multiple subfolders from a folder returned by a locator method."""
+
+    empty_means_all = False
+
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.locator_method = config.default_config.get(section.name, f"{name}.locator")
+        self.kwargs = parse_locator_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        try:
+            location = getattr(locator, self.locator_method)(**self.kwargs)
+        except AttributeError as e:
+            raise AttributeError(
+                f'Invalid locator method {self.locator_method} given in config file, '
+                f'check value under {self.section.name}.{self.name} in default.config'
+            ) from e
+        try:
+            subfolders = [
+                folder for folder in os.listdir(location)
+                if os.path.isdir(os.path.join(location, folder))
+            ]
+            return sorted(subfolders)
+        except (FileNotFoundError, OSError):
+            return []
+
+
 class InterventionTemplateMultiChoiceParameter(MultiChoiceParameter):
     """Select multiple intervention templates from the scenario-level YAML file."""
     # Dashboard note:

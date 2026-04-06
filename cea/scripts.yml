@@ -300,7 +300,7 @@ Thermal Network Design:
 
 District Evolution Pathways:
   - name: create-new-pathway
-    label: "Step 0: Create District Evolution Pathway"
+    label: "Create District Evolution Pathway"
     short_description: Create a new district evolution pathway
     description: |
       This Feature allows you to create a new district evolution pathway. 
@@ -334,27 +334,13 @@ District Evolution Pathways:
       - [get_building_properties_folder]
 
   - name: pathway-events-apply-templates
-    label: "Step 2: Apply Intervention Templates to Year"
-    short_description: Create or update the pathway event for a specific year
+    label: "Apply Intervention Templates to Year"
+    short_description: Apply intervention templates to a year across one or more pathways
     description: |
-      This Feature applies predefined intervention templates to a specific year in the district evolution pathway.
-      You can select multiple intervention templates to compose one pathway event - the system will detect and prevent conflicts
-      (e.g. if two templates try to modify the same field on the same building).
-      
-      **Prerequisites**: Complete Step 0 (Select Pathway) and Step 1 (Define Intervention Templates) first!
-
-      **Important**: If the legacy tool form does not refresh the intervention-template list after changing the pathway,
-      reopen the tool form so the parameter choices are rebuilt for the selected pathway.
-
-      **Workflow**:
-      1. Define intervention templates using Step 1
-      2. Use this tool to apply selected templates to specific years
-      3. Use Step 3 to bake the changes into state scenarios
-      
-      **Conflict Detection**:
-      If selected intervention templates have conflicting modifications (modifying the same field on the same building),
-      the tool will fail with a clear error message listing the conflicts.
-    interfaces: [cli]
+      Apply predefined intervention templates to a specific year across one or more district evolution pathways.
+      Select multiple intervention templates to compose one pathway event - the system detects and prevents conflicts
+      (e.g. if two templates modify the same field on the same building).
+    interfaces: [cli, dashboard]
     module: cea.datamanagement.district_pathways.pathway_events_apply_templates
     parameters: ['general:scenario', pathway-events-apply-templates]
     input-files:

@@ -830,7 +830,7 @@ class PathwayInterventionTemplatesDefineSection(Section):
 
 class PathwayEventsApplyTemplatesSection(Section):
     """Typed section for pathway-events-apply-templates configuration"""
-    existing_pathway_name: str
+    existing_pathway_names: List[str]
     year_of_state: int
     intervention_templates: List[str]
 
