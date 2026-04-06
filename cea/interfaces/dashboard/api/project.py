@@ -656,13 +656,13 @@ async def get(scenario: str):
 async def put(config: CEAConfig, scenario: str, payload: Dict[str, Any]):
     """Update scenario"""
     scenario_path = secure_path(os.path.join(config.project, scenario))
-    new_scenario_name: str = payload.get('name')
-
+    new_scenario_name = payload.get('name')
+    
     # Assume no operations done, return None
     if new_scenario_name is None:
         return None
-
-    scenario_name = validate_scenario_name(new_scenario_name)
+    else:
+        new_scenario_name = validate_scenario_name(new_scenario_name)
 
     try:
         new_path = secure_path(os.path.join(config.project, new_scenario_name))
