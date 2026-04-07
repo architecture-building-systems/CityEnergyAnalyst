@@ -2085,7 +2085,7 @@ class PlotsEmissionTimelineSection(Section):
 
 class PlotsPathwayEmissionTimelineSection(Section):
     """Typed section for plots-pathway-emission-timeline configuration"""
-    existing_pathway_name: str
+    existing_pathway_names: list[str]
     plot_type: Optional[str]
     y_category_to_plot: list[str]
     operation_services: list[str]

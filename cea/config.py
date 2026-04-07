@@ -1898,17 +1898,16 @@ class BuildingsParameter(MultiChoiceParameter):
         super().__init__(name, section, config)
         self._empty = False
 
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
+        return locator.get_zone_building_names()
+
 
 class OptionalBuildingsParameter(BuildingsParameter):
     """A list of buildings where empty means none (not all)."""
 
     empty_means_all = False
-
-    @property
-    def _choices(self):
-        # set the `._choices` attribute to the list buildings in the project
-        locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
-        return locator.get_zone_building_names()
 
 
 class CoordinateListParameter(ListParameter):
@@ -2338,6 +2337,56 @@ class SubfolderMultiChoiceParameter(MultiChoiceParameter):
             return sorted(subfolders)
         except (FileNotFoundError, OSError):
             return []
+
+
+class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
+    """Select multiple pathways, but only show those with all states simulated."""
+
+    @property
+    def _choices(self):
+        all_pathways = super()._choices
+        if not all_pathways:
+            return []
+
+        from cea.datamanagement.district_pathways.pathway_status import (
+            collect_state_phase_status,
+        )
+        from cea.datamanagement.district_pathways.pathway_state import (
+            DistrictEvolutionPathway,
+            DistrictStateYear,
+        )
+
+        simulated = []
+        for pname in all_pathways:
+            try:
+                pathway = DistrictEvolutionPathway(self.config, pathway_name=pname)
+                years = pathway.required_state_years()
+                if not years:
+                    continue
+                all_simulated = True
+                for year in years:
+                    state = DistrictStateYear(
+                        pathway_name=pname,
+                        year=int(year),
+                        modifications={},
+                        main_locator=pathway.main_locator,
+                    )
+                    signature = state.read_signature_record() or {}
+                    status = collect_state_phase_status(
+                        pathway.main_locator,
+                        pathway_name=pname,
+                        year=int(year),
+                        source_log_hash=pathway.source_log_hash_for_year(int(year)),
+                        signature=signature,
+                    )
+                    if status.get("primary_phase") != "simulated":
+                        all_simulated = False
+                        break
+                if all_simulated:
+                    simulated.append(pname)
+            except (FileNotFoundError, ValueError):
+                continue
+        return simulated
 
 
 class InterventionTemplateMultiChoiceParameter(MultiChoiceParameter):

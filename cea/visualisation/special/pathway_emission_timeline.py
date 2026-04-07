@@ -377,16 +377,25 @@ def create_pathway_emission_timeline_plot(config: cea.config.Configuration):
     plot_config = config.sections["plots-pathway-emission-timeline"]
     building_filter = config.sections["plots-building-filter"]
 
-    pathway_name = str(getattr(plot_config, "existing_pathway_name", "") or "").strip()
-    if not pathway_name:
-        raise ValueError(
-            "Please select an existing district evolution pathway in plots-pathway-emission-timeline."
-        )
+    pathway_names = getattr(plot_config, "existing_pathway_names", [])
+    if isinstance(pathway_names, str):
+        pathway_names = [p.strip() for p in pathway_names.split(",") if p.strip()]
+    if not pathway_names:
+        # Backward compatibility: try old singular parameter
+        pathway_name = str(getattr(plot_config, "existing_pathway_name", "") or "").strip()
+        if pathway_name:
+            pathway_names = [pathway_name]
+        else:
+            raise ValueError(
+                "Please select at least one pathway in plots-pathway-emission-timeline."
+            )
 
     selected_buildings = _get_filtered_buildings(locator, building_filter)
     if not selected_buildings:
         raise ValueError("No buildings remain after applying the building filters.")
 
+    # Use first pathway for the main timeline (multi-pathway overlay is a future enhancement)
+    pathway_name = pathway_names[0]
     timeline_df = _load_pathway_timeline_for_selection(
         locator,
         pathway_name,
