@@ -267,6 +267,8 @@ def _collect_bake_phase(
         return _phase_payload("baked", "Baked", built_at)
 
     if built_at:
+        if baked_log_hash and baked_log_hash != source_log_hash:
+            return _phase_payload("changed_after_bake", "Changed after bake", built_at)
         return _phase_payload("baked", "Baked", built_at)
 
     return _phase_payload("not_baked", "Not baked", built_at)
