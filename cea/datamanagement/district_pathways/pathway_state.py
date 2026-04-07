@@ -245,14 +245,23 @@ class DistrictEvolutionPathway:
         """Compute which years should have a `state_{year}` folder.
 
         Rules:
-        - Always include all years present in YAML log.
-        - Always include all distinct building construction years from `zone.shp`.
-
-        This ensures pathway simulations capture both policy and building-birth changes.
+        - Include all years present in YAML log.
+        - Include all distinct building construction years from `zone.shp`.
+        - Exclude years with zero active buildings (e.g. all buildings retimed to later years).
         """
         years_from_log = set(int(y) for y in self.log_data.keys())
         years_from_buildings = set(self.get_building_construction_years().values())
-        return sorted(years_from_log | years_from_buildings)
+        candidate_years = sorted(years_from_log | years_from_buildings)
+
+        # Filter out years with no active buildings
+        intervals = self.get_building_lifecycle_intervals()
+        return [
+            year for year in candidate_years
+            if any(
+                self._is_building_active(name, year, intervals)
+                for name in intervals
+            )
+        ]
 
     def get_explicit_building_events(self, year: int) -> dict[str, list[str]]:
         entry = self.log_data.get(int(year), {}) or {}
