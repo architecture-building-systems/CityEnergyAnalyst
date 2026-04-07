@@ -125,6 +125,7 @@ async def get_building_lifecycle_multi(
 
     def fn():
         results = []
+        all_years = []
         for pname in pathway_names[:3]:
             try:
                 pathway = DistrictEvolutionPathway(config, pathway_name=pname)
@@ -134,11 +135,15 @@ async def get_building_lifecycle_multi(
                     "pathway_name": pname,
                     "intervals": [{"start": s, "end": e} for s, e in building_intervals],
                 })
+                all_years.extend(pathway.required_state_years())
             except (FileNotFoundError, ValueError):
                 continue
+        overview = get_pathway_overview(config)
+        span = overview.get("span", {})
         return {
             "building_name": building_name,
             "pathways": results,
+            "span": span,
         }
 
     return await run_in_threadpool(fn)
