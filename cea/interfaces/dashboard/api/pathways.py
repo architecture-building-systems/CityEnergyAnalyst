@@ -172,6 +172,27 @@ async def get_building_lifecycle(config: CEAConfig, pathway_name: str, building_
         ) from exc
 
 
+@router.get("/{pathway_name}/years/{year}/geojson")
+async def get_state_geojson(config: CEAConfig, pathway_name: str, year: int) -> dict[str, Any]:
+    from cea.interfaces.dashboard.api.inputs import df_to_json
+
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    state_folder = locator.get_state_in_time_scenario_folder(pathway_name, year)
+    zone_path = os.path.join(state_folder, 'inputs', 'building-geometry', 'zone.shp')
+
+    if not os.path.exists(zone_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No baked geometry found for pathway '{pathway_name}' year {year}.",
+        )
+
+    def fn():
+        geojson, crs = df_to_json(zone_path)
+        return {"geojson": geojson, "crs": crs}
+
+    return await run_in_threadpool(fn)
+
+
 @router.get("/{pathway_name}/timeline")
 async def get_timeline(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
     try:
