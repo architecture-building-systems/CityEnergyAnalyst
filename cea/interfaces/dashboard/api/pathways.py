@@ -126,7 +126,7 @@ async def get_building_lifecycle_multi(
     def fn():
         results = []
         all_years = []
-        for pname in pathway_names[:3]:
+        for pname in pathway_names:
             try:
                 pathway = DistrictEvolutionPathway(config, pathway_name=pname)
                 intervals = pathway.get_building_lifecycle_intervals()
