@@ -56,6 +56,23 @@ state-types:
     Demolish-Event: Buildings explicitly removed in this year.
     Intervention: Building property modifications applied via intervention templates.
 
+# Inspector section cards
+construction-card:
+  title: Construction
+  body: >-
+    Buildings constructed in this state year. A building with (N) indicates
+    it has been rebuilt N times after demolition.
+
+demolition-card:
+  title: Demolition
+  body: Buildings demolished in this state year.
+
+intervention-card:
+  title: Intervention
+  body: >-
+    Building property modifications applied via intervention templates
+    for the listed archetypes.
+
 # Map legends
 construction-archetypes-info:
   body: >-
