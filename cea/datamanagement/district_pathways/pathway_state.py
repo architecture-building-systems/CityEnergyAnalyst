@@ -26,6 +26,7 @@ from cea.datamanagement.district_pathways.pathway_log import (
     save_pathway_log_yaml,
 )
 from cea.datamanagement.district_pathways.pathway_status import (
+    collect_state_phase_status,
     record_baked_state,
     record_simulated_state,
 )
@@ -600,9 +601,10 @@ class DistrictEvolutionPathway:
         active_buildings_by_year = self.get_active_buildings_by_year()
 
         built_years: list[int] = []
+        skipped_years: list[int] = []
 
         for year in years:
-            year_recipe = cumulative.get(int(year), {})
+            # Skip years that are already baked and up to date
             state = DistrictStateYear(
                 pathway_name=self.pathway_name,
                 year=int(year),
@@ -610,6 +612,22 @@ class DistrictEvolutionPathway:
                 or {},
                 main_locator=self.main_locator,
             )
+            signature = state.read_signature_record() or {}
+            status = collect_state_phase_status(
+                self.main_locator,
+                pathway_name=self.pathway_name,
+                year=int(year),
+                source_log_hash=self.source_log_hash_for_year(int(year)),
+                signature=signature,
+            )
+            phase = status.get("primary_phase", "none")
+            stale = status.get("has_stale_phase", False)
+            if phase in ("baked", "simulated") and not stale:
+                skipped_years.append(int(year))
+                print(f"- state_{int(year)}: up to date, skipping", flush=True)
+                continue
+
+            year_recipe = cumulative.get(int(year), {})
 
             state_folder = state.state_folder()
             print(f"- Building state_{int(year)}...", flush=True)
@@ -666,9 +684,11 @@ class DistrictEvolutionPathway:
             built_years.append(int(year))
 
         print("District state materialisation finished.", flush=True)
-        print(f"Created/updated: {len(built_years)} years", flush=True)
+        print(f"Created/updated: {len(built_years)} | Skipped (up to date): {len(skipped_years)}", flush=True)
         if built_years:
             print(f"Years created/updated: {built_years}", flush=True)
+        if skipped_years:
+            print(f"Years skipped: {skipped_years}", flush=True)
 
         print(
             f"Pathway folder: {self.main_locator.get_district_pathway_folder(pathway_name=self.pathway_name)}",
