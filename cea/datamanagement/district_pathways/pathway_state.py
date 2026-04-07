@@ -268,26 +268,91 @@ class DistrictEvolutionPathway:
             ),
         }
 
+    def get_building_lifecycle_intervals(self) -> dict[str, list[tuple[int, int | None]]]:
+        """Return {building_name: [(start, end), ...]} lifecycle intervals.
+
+        Walk all events chronologically. Each construction starts a new interval.
+        Each demolition ends the current interval. Supports unlimited rebuild cycles.
+
+        Rules:
+        - zone.shp ``year`` provides the initial construction year.
+        - A ``new_buildings`` event overrides/sets the construction year.
+        - A ``demolished_buildings`` event ends the current interval.
+        - A ``new_buildings`` event AFTER a demolition starts a new interval (rebuild).
+        - ``end`` is ``None`` if the building is never demolished after last construction.
+        - All year boundaries are Jan 1: ``demolition_year == construction_year`` means the
+          building never exists during that interval.
+        """
+        base_years = self.get_building_construction_years()
+        intervals: dict[str, list[tuple[int, int | None]]] = {
+            name: [(year, None)] for name, year in base_years.items()
+        }
+
+        for year in sorted(int(y) for y in self.log_data.keys()):
+            events = self.get_explicit_building_events(int(year))
+
+            # Process demolitions first (so rebuild in same year works)
+            for name in events["demolished_buildings"]:
+                name = str(name)
+                if name in intervals and intervals[name]:
+                    last = intervals[name][-1]
+                    if last[1] is None:  # open interval
+                        intervals[name][-1] = (last[0], int(year))
+
+            # Process constructions
+            for name in events["new_buildings"]:
+                name = str(name)
+                if name not in intervals:
+                    intervals[name] = [(int(year), None)]
+                else:
+                    last = intervals[name][-1]
+                    if last[1] is not None:
+                        # Previously demolished — rebuild (new interval)
+                        intervals[name].append((int(year), None))
+                    else:
+                        # Still alive — update construction year (retime)
+                        intervals[name][-1] = (int(year), last[1])
+
+        return intervals
+
+    def _is_building_active(self, name: str, year: int, intervals: dict[str, list[tuple[int, int | None]]] | None = None) -> bool:
+        """Check if a building is active at a given year based on lifecycle intervals."""
+        if intervals is None:
+            intervals = self.get_building_lifecycle_intervals()
+        for start, end in intervals.get(name, []):
+            if start <= year and (end is None or end > year):
+                return True
+        return False
+
     def get_manual_new_building_years(self) -> dict[str, int]:
+        """Return the latest manual construction year per building."""
         out: dict[str, int] = {}
         for year in sorted(int(y) for y in self.log_data.keys()):
             events = self.get_explicit_building_events(int(year))
             for building_name in events["new_buildings"]:
-                out.setdefault(str(building_name), int(year))
+                out[str(building_name)] = int(year)
         return out
 
     def get_building_demolition_years(self) -> dict[str, int]:
+        """Return the latest demolition year per building."""
         out: dict[str, int] = {}
         for year in sorted(int(y) for y in self.log_data.keys()):
             events = self.get_explicit_building_events(int(year))
             for building_name in events["demolished_buildings"]:
-                out.setdefault(str(building_name), int(year))
+                out[str(building_name)] = int(year)
         return out
 
     def get_effective_construction_years(self) -> dict[str, int]:
-        construction_years = self.get_building_construction_years()
-        construction_years.update(self.get_manual_new_building_years())
-        return construction_years
+        """Return the latest effective construction year per building.
+
+        For buildings with multiple lifecycle intervals, returns the start of the last interval.
+        """
+        intervals = self.get_building_lifecycle_intervals()
+        return {
+            name: ivs[-1][0]
+            for name, ivs in intervals.items()
+            if ivs
+        }
 
     def get_derived_stock_new_buildings(self, year: int) -> list[str]:
         base_construction_years = self.get_building_construction_years()
@@ -310,22 +375,16 @@ class DistrictEvolutionPathway:
         }
 
     def get_active_buildings_by_year(self) -> dict[int, list[str]]:
-        construction_years = self.get_effective_construction_years()
-        demolition_years = self.get_building_demolition_years()
+        intervals = self.get_building_lifecycle_intervals()
         out: dict[int, list[str]] = {}
 
         for year in self.required_state_years():
-            active_buildings = {
-                building_name
-                for building_name, construction_year in construction_years.items()
-                if int(construction_year) <= int(year)
-            }
-            active_buildings = {
-                building_name
-                for building_name in active_buildings
-                if int(demolition_years.get(building_name, 10**9)) > int(year)
-            }
-            out[int(year)] = sorted(active_buildings)
+            active = [
+                name
+                for name in intervals
+                if self._is_building_active(name, int(year), intervals)
+            ]
+            out[int(year)] = sorted(active)
 
         return out
 
@@ -431,6 +490,22 @@ class DistrictEvolutionPathway:
                 f"Unknown building names: {', '.join(sorted(unknown))}"
             )
 
+        # Clean up: remove buildings from new_buildings in other years
+        # when they are being retimed to this year (avoids duplicate construction events)
+        if clean_new:
+            for other_year in list(self.log_data.keys()):
+                if int(other_year) == int(year):
+                    continue
+                other_entry = self.log_data.get(int(other_year), {}) or {}
+                other_events = other_entry.get("building_events", {}) or {}
+                other_new = other_events.get("new_buildings", []) or []
+                if other_new:
+                    cleaned = [b for b in other_new if b not in clean_new]
+                    if len(cleaned) != len(other_new):
+                        other_events["new_buildings"] = cleaned
+                        other_entry["building_events"] = other_events
+                        self.log_data[int(other_year)] = other_entry
+
         self.ensure_year(year)
         entry = self.log_data.get(int(year), {}) or {}
         if clean_new or clean_demolished:
@@ -448,6 +523,17 @@ class DistrictEvolutionPathway:
             cleaned_entry = (entry or {}).copy()
             cleaned_entry.pop("manual_state", None)
             self.log_data[year] = cleaned_entry
+
+        # Remove empty entries (no modifications, no building events)
+        for year in list(self.log_data.keys()):
+            entry = self.log_data.get(year, {}) or {}
+            events = entry.get("building_events", {}) or {}
+            has_new = bool(events.get("new_buildings"))
+            has_demolished = bool(events.get("demolished_buildings"))
+            has_modifications = bool(entry.get("modifications"))
+            if not has_new and not has_demolished and not has_modifications:
+                del self.log_data[year]
+
         save_pathway_log_yaml(self.main_locator, self.log_data, pathway_name=self.pathway_name)
 
     def sync_year_entries_from_required_years(self, years: list[int]) -> None:

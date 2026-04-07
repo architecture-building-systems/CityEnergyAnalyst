@@ -713,6 +713,7 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
     ):
         self.construction_year: int | None = None
         self.demolition_year: int | None = None
+        self.lifecycle_intervals: list[tuple[int, int | None]] = []
         self.window_code: str = ""
         self.supply_codes: dict[str, str] = {}
         self._notes_by_year: dict[str, list[str]] = {}
@@ -739,11 +740,30 @@ class MaterialChangeEmissionTimeline(BaseYearlyEmissionTimeline):
         return out
 
     def set_existence(self, *, construction_year: int, demolition_year: int | None) -> None:
+        """Set a single lifecycle interval (backward compatible)."""
         self.construction_year = int(construction_year)
         self.demolition_year = int(demolition_year) if demolition_year is not None else None
+        self.lifecycle_intervals = [(int(construction_year), self.demolition_year)]
         self.add_note(year=int(construction_year), message="Constructed")
 
+    def set_lifecycle_intervals(self, intervals: list[tuple[int, int | None]]) -> None:
+        """Set multiple lifecycle intervals for unlimited rebuild cycles."""
+        self.lifecycle_intervals = intervals
+        if intervals:
+            self.construction_year = intervals[0][0]
+            self.demolition_year = intervals[-1][1]
+            for start, end in intervals:
+                self.add_note(year=start, message="Constructed")
+                if end is not None:
+                    self.add_note(year=end, message="Demolished")
+
     def exists_at(self, year: int) -> bool:
+        if self.lifecycle_intervals:
+            for start, end in self.lifecycle_intervals:
+                if start <= year and (end is None or end > year):
+                    return True
+            return False
+        # Fallback for single lifecycle
         if self.construction_year is None:
             return False
         if year < self.construction_year:
@@ -1695,28 +1715,66 @@ def _load_building_const_types(locator: InputLocator) -> dict[str, str]:
 
 
 def _building_demolition_years(log_data: dict[int, dict[str, Any]]) -> dict[str, int]:
-    """Return {building_name: demolition_year} from YAML building_events."""
+    """Return {building_name: latest_demolition_year} from YAML building_events."""
     out: dict[str, int] = {}
     for year in sorted(int(y) for y in log_data.keys()):
         entry = log_data.get(year, {}) or {}
         events = entry.get("building_events", {}) or {}
         demolished = events.get("demolished_buildings", []) or []
         for b in demolished:
-            name = str(b)
-            out.setdefault(name, int(year))
+            out[str(b)] = int(year)
     return out
 
 
 def _building_manual_construction_years(log_data: dict[int, dict[str, Any]]) -> dict[str, int]:
-    """Return explicit {building_name: construction_year} overrides from YAML building_events."""
+    """Return {building_name: latest_construction_year} overrides from YAML building_events."""
     out: dict[str, int] = {}
     for year in sorted(int(y) for y in log_data.keys()):
         entry = log_data.get(year, {}) or {}
         events = entry.get("building_events", {}) or {}
         new_buildings = events.get("new_buildings", []) or []
         for building_name in new_buildings:
-            out.setdefault(str(building_name), int(year))
+            out[str(building_name)] = int(year)
     return out
+
+
+def _building_lifecycle_intervals(
+    base_construction_years: dict[str, int],
+    log_data: dict[int, dict[str, Any]],
+) -> dict[str, list[tuple[int, int | None]]]:
+    """Build lifecycle intervals from base construction years and log events.
+
+    Supports unlimited demolish-rebuild cycles.
+    """
+    intervals: dict[str, list[tuple[int, int | None]]] = {
+        name: [(year, None)] for name, year in base_construction_years.items()
+    }
+
+    for year in sorted(int(y) for y in log_data.keys()):
+        entry = log_data.get(year, {}) or {}
+        events = entry.get("building_events", {}) or {}
+        demolished = events.get("demolished_buildings", []) or []
+        new_buildings = events.get("new_buildings", []) or []
+
+        for name in demolished:
+            name = str(name)
+            if name in intervals and intervals[name]:
+                last = intervals[name][-1]
+                if last[1] is None:
+                    intervals[name][-1] = (last[0], int(year))
+
+        for name in new_buildings:
+            name = str(name)
+            if name not in intervals:
+                intervals[name] = [(int(year), None)]
+            else:
+                last = intervals[name][-1]
+                if last[1] is not None:
+                    intervals[name].append((int(year), None))
+                else:
+                    intervals[name][-1] = (int(year), last[1])
+
+    return intervals
 
 
 def _apply_layer_patch(
@@ -2058,6 +2116,9 @@ def create_district_pathway_emissions_timeline(
     building_construction_years.update(_building_manual_construction_years(log_data))
     building_const_types = _load_building_const_types(main_locator)
     demolition_years = _building_demolition_years(log_data)
+    lifecycle_intervals = _building_lifecycle_intervals(
+        get_building_construction_years(main_locator), log_data,
+    )
 
     # Cache areas per building (computed from BuildingProperties once the building exists in some state year).
     areas_by_building: dict[str, dict[str, float]] = {}
@@ -2155,15 +2216,18 @@ def create_district_pathway_emissions_timeline(
         building_timeline.timeline = _empty_timeline()
         building_timelines[b] = building_timeline
 
-        c_year = building_construction_years.get(b)
-        if c_year is None:
+        b_intervals = lifecycle_intervals.get(b, [])
+        if not b_intervals:
             continue
-        if c_year < start_year or c_year > end_year:
+        # Skip if building's entire lifecycle is outside the timeline range
+        first_start = b_intervals[0][0]
+        last_end = b_intervals[-1][1]
+        if first_start > end_year:
             continue
-        construction_year = int(c_year)
-        d_year = demolition_years.get(b)
+        if last_end is not None and last_end <= start_year:
+            continue
 
-        building_timeline.set_existence(construction_year=construction_year, demolition_year=d_year)
+        building_timeline.set_lifecycle_intervals(b_intervals)
 
         # Operational emissions: only for years the building exists
         building_timeline.fill_operational_step_function(
