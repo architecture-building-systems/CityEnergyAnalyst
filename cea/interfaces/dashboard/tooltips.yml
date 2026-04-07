@@ -73,6 +73,14 @@ intervention-card:
     Building property modifications applied via intervention templates
     for the listed archetypes.
 
+# Building lifecycle
+building-lifecycle:
+  title: Building Lifecycle
+  body: >-
+    Timeline of this building's construction and demolition events across the pathway.
+    Blue nodes indicate construction, red nodes indicate demolition.
+    Dashed lines show gaps where the building does not exist.
+
 # Map legends
 construction-archetypes-info:
   body: >-

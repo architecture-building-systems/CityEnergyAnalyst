@@ -107,6 +107,66 @@ async def delete_template(
         ) from exc
 
 
+@router.get("/building-lifecycle/{building_name}")
+async def get_building_lifecycle_multi(
+    config: CEAConfig,
+    building_name: str,
+    pathways: str = "",
+) -> dict[str, Any]:
+    """Get lifecycle intervals for a building across multiple pathways.
+
+    Query param `pathways` is a comma-separated list of pathway names.
+    """
+    from cea.datamanagement.district_pathways.pathway_state import DistrictEvolutionPathway
+
+    pathway_names = [p.strip() for p in pathways.split(",") if p.strip()]
+    if not pathway_names:
+        pathway_names = await run_in_threadpool(list_pathway_names, config)
+
+    def fn():
+        results = []
+        for pname in pathway_names[:3]:
+            try:
+                pathway = DistrictEvolutionPathway(config, pathway_name=pname)
+                intervals = pathway.get_building_lifecycle_intervals()
+                building_intervals = intervals.get(building_name, [])
+                results.append({
+                    "pathway_name": pname,
+                    "intervals": [{"start": s, "end": e} for s, e in building_intervals],
+                })
+            except (FileNotFoundError, ValueError):
+                continue
+        return {
+            "building_name": building_name,
+            "pathways": results,
+        }
+
+    return await run_in_threadpool(fn)
+
+
+@router.get("/{pathway_name}/building-lifecycle/{building_name}")
+async def get_building_lifecycle(config: CEAConfig, pathway_name: str, building_name: str) -> dict[str, Any]:
+    from cea.datamanagement.district_pathways.pathway_state import DistrictEvolutionPathway
+
+    def fn():
+        pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+        intervals = pathway.get_building_lifecycle_intervals()
+        building_intervals = intervals.get(building_name, [])
+        return {
+            "building_name": building_name,
+            "pathway_name": pathway_name,
+            "intervals": [{"start": s, "end": e} for s, e in building_intervals],
+        }
+
+    try:
+        return await run_in_threadpool(fn)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+
 @router.get("/{pathway_name}/timeline")
 async def get_timeline(config: CEAConfig, pathway_name: str) -> dict[str, Any]:
     try:
