@@ -75,11 +75,13 @@ intervention-card:
 
 # Building lifecycle
 building-lifecycle:
-  title: Building Lifecycle
+  title: Building Event Timeline
   body: >-
-    Timeline of this building's construction and demolition events across the pathway.
-    Blue nodes indicate construction, red nodes indicate demolition.
-    Dashed lines show gaps where the building does not exist.
+    Timeline of this building's construction and demolition events across checked pathways.
+    Solid nodes indicate construction (Rebuilt(N) for rebuilds after demolition).
+    Hollow nodes indicate demolition.
+    Solid lines show active periods, dashed lines show gaps or pre-existence.
+    Click a building pill in the inspector or a building on the map to view.
 
 # Map legends
 construction-archetypes-info:
