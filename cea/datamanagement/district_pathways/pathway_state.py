@@ -242,26 +242,46 @@ class DistrictEvolutionPathway:
         return out
 
     def required_state_years(self) -> list[int]:
-        """Compute which years should have a `state_{year}` folder.
+        """Compute which years should have a ``state_{year}`` folder.
 
-        Rules:
-        - Include all years present in YAML log.
-        - Include all distinct building construction years from `zone.shp`.
-        - Exclude years with zero active buildings (e.g. all buildings retimed to later years).
+        A year is required if something *happens* at that year:
+        - A building is constructed (effective construction year from lifecycle intervals).
+        - A building is demolished.
+        - A modification or building event is defined in the YAML log.
+
+        Years where buildings merely *exist* (carried over from an earlier construction)
+        but nothing changes are excluded.
         """
-        years_from_log = set(int(y) for y in self.log_data.keys())
-        years_from_buildings = set(self.get_building_construction_years().values())
-        candidate_years = sorted(years_from_log | years_from_buildings)
+        intervals = self.get_building_lifecycle_intervals()
+
+        # Collect years where a lifecycle event occurs
+        event_years: set[int] = set()
+        for ivs in intervals.values():
+            for start, end in ivs:
+                event_years.add(start)
+                if end is not None:
+                    event_years.add(end)
+
+        # Also include log years with actual content (modifications or building events)
+        for year in self.log_data.keys():
+            entry = self.log_data.get(int(year), {}) or {}
+            events = entry.get("building_events", {}) or {}
+            has_content = (
+                bool(entry.get("modifications"))
+                or bool(events.get("new_buildings"))
+                or bool(events.get("demolished_buildings"))
+            )
+            if has_content:
+                event_years.add(int(year))
 
         # Filter out years with no active buildings
-        intervals = self.get_building_lifecycle_intervals()
-        return [
-            year for year in candidate_years
+        return sorted(
+            year for year in event_years
             if any(
                 self._is_building_active(name, year, intervals)
                 for name in intervals
             )
-        ]
+        )
 
     def get_explicit_building_events(self, year: int) -> dict[str, list[str]]:
         entry = self.log_data.get(int(year), {}) or {}
