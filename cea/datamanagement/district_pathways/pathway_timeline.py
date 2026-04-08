@@ -16,9 +16,11 @@ from cea.datamanagement.district_pathways.intervention_templates import (
 from cea.datamanagement.district_pathways.pathway_log import load_pathway_log_yaml
 from cea.datamanagement.district_pathways.pathway_state import (
     DistrictEvolutionPathway,
+    DistrictStateYear,
     validate_pathway_name,
 )
 from cea.datamanagement.district_pathways.pathway_status import (
+    collect_state_phase_status,
     record_validated_state,
 )
 from cea.datamanagement.district_pathways.pathway_summary import build_pathway_year_row
@@ -42,8 +44,19 @@ class StockYearRequiresEditError(ValueError):
     """Raised when a stock year is promoted without any actual user-authored content."""
 
 
+def _resolve_parent_scenario(scenario_path: str) -> str:
+    """If scenario_path points to a child state folder (pathways/{name}/state_{year}),
+    return the parent scenario path. Otherwise return as-is."""
+    sep = os.sep + 'pathways' + os.sep
+    idx = scenario_path.find(sep)
+    if idx >= 0:
+        return scenario_path[:idx]
+    return scenario_path
+
+
 def list_pathway_names(config: Configuration) -> list[str]:
-    locator = InputLocator(config.scenario)
+    scenario = _resolve_parent_scenario(config.scenario)
+    locator = InputLocator(scenario)
     container = locator.get_district_pathway_container_folder()
     if not os.path.isdir(container):
         return []
@@ -84,17 +97,52 @@ def delete_pathway(config: Configuration, pathway_name: str) -> dict[str, Any]:
 
 
 def get_pathway_overview(config: Configuration) -> dict[str, Any]:
+    # Auto-recover if config points to a child state folder
+    parent = _resolve_parent_scenario(config.scenario)
+    if parent != config.scenario:
+        config.scenario = parent
+
     pathways: list[dict[str, Any]] = []
     all_years: list[int] = []
     for pathway_name in list_pathway_names(config):
         pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
         years = pathway.required_state_years()
         all_years.extend(years)
+
+        all_baked = bool(years)
+        year_phases: dict[int, str] = {}
+        for year in years:
+            try:
+                state = DistrictStateYear(
+                    pathway_name=pathway_name,
+                    year=int(year),
+                    modifications=pathway.log_data.get(int(year), {}).get("modifications", {}) or {},
+                    main_locator=pathway.main_locator,
+                )
+                signature = state.read_signature_record() or {}
+                status = collect_state_phase_status(
+                    pathway.main_locator,
+                    pathway_name=pathway_name,
+                    year=int(year),
+                    source_log_hash=pathway.source_log_hash_for_year(int(year)),
+                    signature=signature,
+                )
+                phase = status.get("primary_phase", "none")
+                stale = status.get("has_stale_phase", False)
+                year_phases[year] = phase
+                if phase not in ("baked", "simulated") or stale:
+                    all_baked = False
+            except Exception:
+                all_baked = False
+                year_phases[year] = "none"
+
         pathways.append(
             {
                 "pathway_name": pathway_name,
                 "years": years,
                 "state_count": len(years),
+                "all_baked": all_baked,
+                "year_phases": year_phases,
             }
         )
 
