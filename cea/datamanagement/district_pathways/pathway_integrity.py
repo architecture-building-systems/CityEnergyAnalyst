@@ -28,7 +28,7 @@ def check_district_pathway_log_yaml_integrity(
     Checks that every logged modification is reflected in the state scenario databases
     """
     main_locator = InputLocator(main_config.scenario)
-    dict_from_yaml = load_pathway_log_yaml(main_locator, pathway_name=pathway_name)
+    dict_from_yaml = load_pathway_log_yaml(main_locator, pathway_name=pathway_name, allow_missing=True, allow_empty=True)
     from cea.datamanagement.district_pathways.pathway_state import (
         DistrictEvolutionPathway,
     )
