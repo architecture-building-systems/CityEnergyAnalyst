@@ -82,13 +82,8 @@ def validate_pathway_log_data(
                     f"Field 'building_events.{field_name}' contains unknown buildings: {', '.join(unknown)}"
                 )
 
-        overlap = set(cast(list[str], cleaned_events["new_buildings"])) & set(
-            cast(list[str], cleaned_events["demolished_buildings"])
-        )
-        if overlap:
-            year_issues.append(
-                f"Buildings cannot be both added and demolished in year {int(year)}: {', '.join(sorted(str(value) for value in overlap))}"
-            )
+        # A building can appear in both new_buildings and demolished_buildings
+        # for the same year — this represents a same-year demolish+rebuild.
 
         year_issues.extend(
             _validate_modification_recipe(

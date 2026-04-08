@@ -387,11 +387,20 @@ class DistrictEvolutionPathway:
     def get_derived_stock_new_buildings(self, year: int) -> list[str]:
         base_construction_years = self.get_building_construction_years()
         manual_new_years = self.get_manual_new_building_years()
+        demolition_years = self.get_building_demolition_years()
         return sorted(
             building_name
             for building_name, construction_year in base_construction_years.items()
             if int(construction_year) == int(year)
-            and building_name not in manual_new_years
+            and (
+                building_name not in manual_new_years
+                # Keep stock entry if the building is also demolished at the manual year
+                # (demolish+rebuild), since the original stock construction is still valid
+                or (
+                    building_name in demolition_years
+                    and demolition_years[building_name] == manual_new_years[building_name]
+                )
+            )
         )
 
     def get_combined_building_events(self, year: int) -> dict[str, list[str]]:
@@ -508,11 +517,6 @@ class DistrictEvolutionPathway:
                 if str(value).strip()
             }
         )
-        overlap = set(clean_new) & set(clean_demolished)
-        if overlap:
-            raise ValueError(
-                f"Buildings cannot be both added and demolished in the same year: {', '.join(sorted(overlap))}"
-            )
 
         unknown = (set(clean_new) | set(clean_demolished)) - valid_buildings
         if unknown:
@@ -538,10 +542,17 @@ class DistrictEvolutionPathway:
 
         self.ensure_year(year)
         entry = self.log_data.get(int(year), {}) or {}
-        if clean_new or clean_demolished:
+        existing_events = entry.get("building_events", {}) or {}
+
+        # Replace the event types being written, preserve the other type.
+        # e.g. writing new_buildings replaces existing new_buildings but keeps demolished_buildings.
+        result_new = clean_new if clean_new else list(existing_events.get("new_buildings", []) or [])
+        result_demolished = clean_demolished if clean_demolished else list(existing_events.get("demolished_buildings", []) or [])
+
+        if result_new or result_demolished:
             entry["building_events"] = {
-                "new_buildings": clean_new,
-                "demolished_buildings": clean_demolished,
+                "new_buildings": result_new,
+                "demolished_buildings": result_demolished,
             }
         else:
             entry.pop("building_events", None)
@@ -674,6 +685,7 @@ class DistrictEvolutionPathway:
                 self.pathway_name,
                 int(year),
                 active_buildings=set(active_buildings_by_year.get(int(year), [])),
+                effective_construction_years=self.get_effective_construction_years(),
             )
 
             # Apply cumulative archetype modifications if specified
@@ -974,12 +986,14 @@ def sync_buildings_in_event_scenario(
     year_of_state: int,
     *,
     active_buildings: set[str],
+    effective_construction_years: dict[str, int] | None = None,
 ) -> list[str]:
     """Sync a copied state scenario to the expected building set for that year.
 
     The state folder is created from the full main-scenario inputs, so this helper only needs to
-    remove buildings that should not exist in the baked state and then regenerate dependent
-    per-building inputs from the remaining archetypes.
+    remove buildings that should not exist in the baked state, update the ``year`` column to
+    reflect effective construction years (e.g. after a demolish+rebuild), and then regenerate
+    dependent per-building inputs from the remaining archetypes.
     """
     locator = InputLocator(config.scenario)
     state_scenario_folder = locator.get_state_in_time_scenario_folder(
@@ -1004,6 +1018,13 @@ def sync_buildings_in_event_scenario(
     geometry_gdf = geometry_gdf.loc[
         geometry_gdf.index.intersection(sorted(active_buildings))
     ]
+
+    # Update year column to reflect effective construction years from lifecycle intervals
+    if effective_construction_years and "year" in geometry_gdf.columns:
+        for building_name in geometry_gdf.index:
+            if str(building_name) in effective_construction_years:
+                geometry_gdf.at[building_name, "year"] = effective_construction_years[str(building_name)]
+
     verify_input_geometry_zone(geometry_gdf.reset_index())
     geometry_gdf.to_file(state_locator.get_zone_geometry())
     _regenerate_building_properties_from_archetypes(state_locator)
