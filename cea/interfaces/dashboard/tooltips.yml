@@ -11,6 +11,12 @@ pathway-builder:
     Create multiple Pathways to compare different development scenarios
     and the impact of different decarbonisation strategies.
 
+pathway-viewer:
+  title: Pathway Viewer
+  body: >-
+    Only fully baked Pathways are shown here.
+    Use Pathway Builder to create Pathways.
+
 create-new-pathway:
   body: Create new pathway
 
