@@ -400,7 +400,12 @@ District Evolution Pathways:
       `emissions` settings in their own dashboards or config sections before running this Feature.
     interfaces: [cli]
     module: cea.datamanagement.district_pathways.state_simulation.main
-    parameters: ['general:scenario', 'pathway-simulations:existing-pathway-name']
+    parameters:
+      - 'general:scenario'
+      - 'pathway-simulations:existing-pathway-name'
+      - 'thermal-network:dh-temperature-mode'
+      - 'final-energy:hs-booster-type-building'
+      - 'final-energy:dhw-booster-type-building'
 
   - name: pathway-delete-state
     label: "Delete or Clear State"

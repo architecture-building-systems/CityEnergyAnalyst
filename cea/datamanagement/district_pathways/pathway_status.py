@@ -105,6 +105,11 @@ def record_baked_state(
             "baked_inputs_hash": inputs_hash,
             "baked_source_log_hash": source_log_hash,
             "built_at": built_at,
+            # Clear simulation status so the state returns to "baked" (not stale)
+            "simulated_state_hash": None,
+            "simulated_source_log_hash": None,
+            "simulated_at": None,
+            "simulated_workflow": None,
         },
     )
 

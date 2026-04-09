@@ -6,12 +6,11 @@ import numpy as np
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
 
-from cea.analysis.lca.emission_timeline import BuildingYearlyEmissionTimeline
+from cea.analysis.lca.emission_timeline import BuildingYearlyEmissionTimeline as BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
 from cea.config import Configuration
 from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.database.components import Feedstocks
-from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.demand.building_properties import BuildingProperties
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
@@ -685,7 +684,6 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     building_rows_df = summary_df[summary_df['type'] == 'building'] if 'type' in summary_df.columns else summary_df
     building_names = building_rows_df['name'].dropna().tolist()
     building_properties = BuildingProperties(locator, weather_data, building_names)
-    envelope_lookup = EnvelopeLookup.from_locator(locator)
 
     # --- Process buildings ---
     operational_results = []   # (name, hourly_df)
@@ -734,7 +732,6 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         try:
             timeline = BuildingEmissionTimeline(
                 building_properties=building_properties,
-                envelope_lookup=envelope_lookup,
                 building_name=building_name,
                 locator=locator,
                 end_year=end_year,

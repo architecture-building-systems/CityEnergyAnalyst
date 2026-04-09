@@ -20,6 +20,7 @@ from copy import deepcopy
 import pandas as pd
 
 from cea.config import Configuration
+from cea.inputlocator import InputLocator
 from cea.datamanagement.district_pathways.pathway_emissions_timeline import (
     create_district_pathway_emissions_timeline,
 )
@@ -28,6 +29,10 @@ from cea.datamanagement.district_pathways.pathway_state import (
     DistrictStateYear,
 )
 from cea.datamanagement.district_pathways.state_simulation import workflow_assembly
+from cea.datamanagement.district_pathways.state_simulation.workflow_assembly import (
+    determine_network_phase_mode,
+    NetworkPhaseMode,
+)
 from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,
 )
@@ -37,6 +42,17 @@ from cea.datamanagement.district_pathways.pathway_status import (
 from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_all_baked_states,
 )
+
+
+def _cleanup_state_outputs(state_locator: InputLocator, year: int) -> None:
+    """Remove previous simulation outputs from a state folder to allow re-runs."""
+    import os
+    import shutil
+
+    outputs_folder = os.path.join(state_locator.scenario, "outputs")
+    if os.path.isdir(outputs_folder):
+        print(f"State {year}: Cleaning previous outputs...", flush=True)
+        shutil.rmtree(outputs_folder)
 
 
 def simulate_all_states(config: Configuration, pathway_name: str) -> None:
@@ -67,6 +83,18 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
         )
     state_years.sort()
 
+    # Determine network phase mode across all state years
+    main_locator = InputLocator(config.scenario)
+    phase_mode, connections_by_year = determine_network_phase_mode(
+        main_locator=main_locator,
+        pathway_name=pathway_name,
+        state_years=state_years,
+    )
+    print(f"\nNetwork phase mode: {phase_mode.value}", flush=True)
+    if connections_by_year:
+        for yr, conns in sorted(connections_by_year.items()):
+            print(f"  State {yr}: {conns}", flush=True)
+
     print("\n" + "=" * 80, flush=True)
     print("Starting state simulations for all pathway states...", flush=True)
     print("=" * 80, flush=True)
@@ -75,6 +103,14 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
 
     simulated_years: list[int] = []
     for year in state_years:
+        # Clean previous simulation outputs to allow re-runs
+        state_locator = InputLocator(
+            main_locator.get_state_in_time_scenario_folder(
+                pathway_name=pathway_name, year_of_state=year
+            )
+        )
+        _cleanup_state_outputs(state_locator, year)
+
         base_workflow = workflow_assembly.prepare_base_workflow_for_state(
             config=config,
             pathway_name=pathway_name,
@@ -98,6 +134,8 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
             pathway_name=pathway_name,
             year=int(year),
             state_years=state_years,
+            phase_mode=phase_mode,
+            connections_by_year=connections_by_year,
         )
         full_workflow = deepcopy(base_workflow) + deepcopy(post_demand_workflow)
         state.simulate(
@@ -152,14 +190,22 @@ def main(config: Configuration) -> None:
     print("=" * 80, flush=True)
     simulate_all_states(config, pathway_name=pathway_name)
     print("All pathway states have been simulated.", flush=True)
-    df = create_district_pathway_emissions_timeline(
-        config,
-        pathway_name=pathway_name,
-    )
-    print(
-        f"District pathway emissions timeline saved with {len(df)} years.",
-        flush=True,
-    )
+    try:
+        df = create_district_pathway_emissions_timeline(
+            config,
+            pathway_name=pathway_name,
+        )
+        print(
+            f"District pathway emissions timeline saved with {len(df)} years.",
+            flush=True,
+        )
+    except Exception as exc:
+        print(
+            f"Warning: Could not create pathway emissions timeline: {exc}\n"
+            "State simulations completed successfully. "
+            "The emissions timeline can be generated separately once the issue is resolved.",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":
