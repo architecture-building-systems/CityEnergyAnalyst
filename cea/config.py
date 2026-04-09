@@ -1204,6 +1204,57 @@ class NetworkLayoutChoiceParameter(NetworkLayoutChoicesMixin, ChoiceParameter):
         return self._decode_network(value)
 
 
+class PhasingPlanChoiceParameter(StringParameter):
+    """
+    Parameter for thermal network phasing plan names with collision detection.
+    Errors if the name already exists as a phasing plan folder under
+    `outputs/data/thermal-network/phasing-plans/` (to prevent overwriting).
+    """
+
+    def _validate_phasing_plan_name(self, value) -> str:
+        value = value.strip()
+
+        # Check for invalid filesystem characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Phasing plan name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+
+        # Check for collision with existing phasing plans
+        scenario = self.config.scenario
+        locator = cea.inputlocator.InputLocator(scenario)
+        plans_folder = locator.get_thermal_network_phasing_plans_folder()
+        plan_folder = os.path.join(plans_folder, value)
+        if os.path.exists(plan_folder):
+            raise ValueError(
+                f"Phasing plan '{value}' already exists. "
+                f"Choose a different name or delete the existing plan."
+            )
+
+        return value
+
+    def encode(self, value):
+        if not value or str(value).strip() == '':
+            if self.nullable:
+                return ''
+            raise ValueError("Phasing plan name is required. Please provide a valid name.")
+        return self._validate_phasing_plan_name(str(value))
+
+    def decode(self, value):
+        if not value:
+            return ''
+        value = value.strip()
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in value for char in invalid_chars):
+            raise ValueError(
+                f"Phasing plan name contains invalid characters. "
+                f"Avoid: {' '.join(invalid_chars)}"
+            )
+        return value
+
+
 class WhatIfNameChoiceParameter(ChoiceParameter):
     """
     Parameter for selecting an existing what-if scenario name from a dropdown.
