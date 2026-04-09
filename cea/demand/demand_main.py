@@ -16,6 +16,7 @@ from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.demand import demand_writers
 from cea.datamanagement.utils import migrate_void_deck_data
+from cea.utilities.output_cleanup import cleanup_output_folder
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -68,15 +69,10 @@ def demand_calculation(locator, config):
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     print('Running demand calculation for the following buildings=%s' % building_names)
 
-    # Remove stale per-building demand CSVs (e.g. from a previous monthly run
-    # that wrote files without a 'date' column) so the aggregator never reads
+    # Remove stale demand outputs from a previous run (e.g. monthly CSVs that
+    # wrote files without a 'date' column) so the aggregator never reads
     # mixed schemas.
-    demand_results_folder = locator.get_demand_results_folder()
-    if os.path.isdir(demand_results_folder):
-        for building in building_names:
-            stale_path = locator.get_demand_results_file(building, 'csv')
-            if os.path.exists(stale_path):
-                os.remove(stale_path)
+    cleanup_output_folder(locator.get_demand_results_folder())
 
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties = BuildingProperties(locator, weather_data, building_names)

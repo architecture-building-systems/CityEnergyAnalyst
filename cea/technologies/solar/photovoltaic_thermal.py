@@ -749,6 +749,23 @@ def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
+    # Remove stale PVT outputs only for the panel-type combinations being re-run
+    from cea.utilities.output_cleanup import cleanup_output_files
+    import glob
+    list_pv_types = config.solar.type_PVpanel
+    list_sc_types = config.solar.type_SCpanel
+    pvt_folder = locator.solar_potential_folder_PVT()
+    solar_root = locator.get_potentials_solar_folder()
+    for type_PV in list_pv_types:
+        for type_SC in list_sc_types:
+            if os.path.isdir(pvt_folder):
+                cleanup_output_files(*glob.glob(os.path.join(pvt_folder, f'*_{type_PV}_{type_SC}.csv')))
+            if os.path.isdir(solar_root):
+                cleanup_output_files(
+                    locator.PVT_totals(type_PV, type_SC),
+                    locator.PVT_total_buildings(type_PV, type_SC),
+                )
+
     print('Running photovoltaic-thermal with scenario = %s' % config.scenario)
     print(
         'Running photovoltaic-thermal with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
