@@ -68,6 +68,16 @@ def demand_calculation(locator, config):
     # SPECIFY NUMBER OF BUILDINGS TO SIMULATE
     print('Running demand calculation for the following buildings=%s' % building_names)
 
+    # Remove stale per-building demand CSVs (e.g. from a previous monthly run
+    # that wrote files without a 'date' column) so the aggregator never reads
+    # mixed schemas.
+    demand_results_folder = locator.get_demand_results_folder()
+    if os.path.isdir(demand_results_folder):
+        for building in building_names:
+            stale_path = locator.get_demand_results_file(building, 'csv')
+            if os.path.exists(stale_path):
+                os.remove(stale_path)
+
     # CALCULATE OBJECT WITH PROPERTIES OF ALL BUILDINGS
     building_properties = BuildingProperties(locator, weather_data, building_names)
     building_properties.check_buildings()
