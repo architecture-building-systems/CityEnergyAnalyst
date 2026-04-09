@@ -7,6 +7,7 @@ from the standard lifecycle emission timeline plot.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -436,7 +437,10 @@ def create_pathway_emission_timeline_plot(config: cea.config.Configuration):
     )
 
     plot_adapter = _TimelineConfigAdapter(plots_emission_timeline=plot_config)
-    plot_title = f"CEA-4 Pathway Emission Timeline ({pathway_name})"
+    scenario_name = os.path.basename(config.scenario)
+    subtitle_parts = ['CEA-4 Pathway Emission Timeline', scenario_name, pathway_name]
+    subtitle = ' | '.join(subtitle_parts)
+    plot_title = f"<b>Pathway Emission Timeline</b><br><sub>{subtitle}</sub>"
 
     plot_obj = EmissionTimelinePlot(
         plot_adapter,
