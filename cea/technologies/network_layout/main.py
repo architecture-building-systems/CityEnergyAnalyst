@@ -322,9 +322,34 @@ def prune_disconnected_subnetwork(nodes_gdf, edges_gdf, target_buildings):
     if nodes_gdf.empty or edges_gdf.empty:
         return nodes_gdf, edges_gdf
 
-    # Build a coordinate set for kept nodes
     def _coord(geom):
         return (round(geom.x, 6), round(geom.y, 6))
+
+    # Deduplicate nodes that share the same coordinates. This happens when
+    # augment_user_network_with_buildings places a new building (e.g. NODE5_n1)
+    # at the exact same location as an existing junction node (NODE18 NONE).
+    # WNTR sees these as separate disconnected nodes.
+    # Strategy: prefer building/plant nodes over NONE junction nodes.
+    target_set = set(target_buildings)
+
+    def _node_priority(row):
+        building = row.get('building')
+        type_ = str(row.get('type', '')).upper()
+        if type_.startswith('PLANT'):
+            return 0  # highest priority
+        if building in target_set:
+            return 1
+        if building and str(building).upper() != 'NONE':
+            return 2
+        return 3  # NONE junction lowest priority
+
+    nodes_gdf = nodes_gdf.copy()
+    nodes_gdf['_dedup_coord'] = nodes_gdf.geometry.apply(_coord)
+    nodes_gdf['_dedup_priority'] = nodes_gdf.apply(_node_priority, axis=1)
+    nodes_gdf = nodes_gdf.sort_values('_dedup_priority').drop_duplicates(
+        subset=['_dedup_coord'], keep='first'
+    )
+    nodes_gdf = nodes_gdf.drop(columns=['_dedup_coord', '_dedup_priority'])
 
     kept_node_coords = {_coord(g): name for g, name in zip(nodes_gdf.geometry, nodes_gdf['name'])}
 
