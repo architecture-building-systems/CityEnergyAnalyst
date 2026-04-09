@@ -589,6 +589,34 @@ class ThermalNetworkMapLayer(MapLayer):
         else:
             logger.debug("Massflow file doesn't exist or not applicable, skipping")
 
+        # For phasing plans, compute the global peak_mass_flow range across ALL phases
+        # so the GUI can scale all phase views with the same factor.
+        if is_phasing_plan:
+            global_min = None
+            global_max = None
+            for other_phase in self._get_thermal_network_phasing_plan_phases(network_type, plan_name):
+                other_massflow = self.locator.get_thermal_network_phasing_massflow_edges_file(
+                    network_type, plan_name, other_phase
+                )
+                if not os.path.exists(other_massflow):
+                    continue
+                try:
+                    df = pd.read_csv(other_massflow)
+                    peaks = df.max()
+                    if peaks.empty:
+                        continue
+                    p_min = float(peaks.min())
+                    p_max = float(peaks.max())
+                    global_min = p_min if global_min is None else min(global_min, p_min)
+                    global_max = p_max if global_max is None else max(global_max, p_max)
+                except Exception as exc:
+                    logger.debug(f"Could not read massflow for phase {other_phase}: {exc}")
+            if global_min is not None and global_max is not None:
+                output['properties']['peak_mass_flow_range'] = {
+                    'min': round(global_min, 1),
+                    'max': round(global_max, 1),
+                }
+
         # Enrich nodes with substation and plant performance data
         for node_id in nodes_df.index:
             node_type = str(nodes_df.loc[node_id, 'type'])

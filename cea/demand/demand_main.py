@@ -57,7 +57,6 @@ def demand_calculation(locator, config):
     if len(building_names) == 0:
         raise ValueError('List of building names is incorrect.')
     use_dynamic_infiltration = config.demand.use_dynamic_infiltration_calculation
-    resolution_output = config.demand.resolution_output
     debug = config.debug
     weather_path = locator.get_weather_file()
     weather_data = epwreader.epw_reader(weather_path)[['year', 'drybulb_C', 'wetbulb_C',
@@ -85,7 +84,6 @@ def demand_calculation(locator, config):
         repeat(date_range, n),
         repeat(locator, n),
         repeat(use_dynamic_infiltration, n),
-        repeat(resolution_output, n),
         repeat(config, n),
         repeat(debug, n))
 

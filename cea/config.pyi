@@ -558,15 +558,12 @@ class OccupancySection(Section):
 class DemandSection(Section):
     """Typed section for demand configuration"""
     buildings: list[str]
-    resolution_output: Optional[str]
     use_dynamic_infiltration_calculation: bool
     overheating_warning: bool
     retain_technical_results: bool
 
     @overload
     def __getattr__(self, item: Literal["buildings"]) -> list[str]: ...
-    @overload
-    def __getattr__(self, item: Literal["resolution_output"]) -> Optional[str]: ...
     @overload
     def __getattr__(self, item: Literal["use_dynamic_infiltration_calculation"]) -> bool: ...
     @overload
