@@ -29,8 +29,45 @@ class ThermalNetworkMapLayer(MapLayer):
     _network_types = ["DC", "DH"]
 
     def _get_network_types(self):
-        # Return both choices and default (DC is default)
-        return {"choices": self._network_types, "default": self._network_types[0]}
+        # Pick a default based on which network types actually have data:
+        # - DH only on disk → default DH
+        # - DC only on disk → default DC
+        # - both DH and DC on disk → default DH
+        # - neither → fallback to first choice
+        default = self._network_types[0]
+        try:
+            network_folder = self.locator.get_thermal_network_folder()
+            phasing_folder = self.locator.get_thermal_network_phasing_plans_folder()
+
+            def _has_data_for_type(nt: str) -> bool:
+                if os.path.exists(network_folder):
+                    for entry in os.listdir(network_folder):
+                        entry_path = os.path.join(network_folder, entry)
+                        if (
+                            os.path.isdir(entry_path)
+                            and entry not in self._network_types
+                            and entry != 'phasing-plans'
+                            and not entry.startswith('.')
+                        ):
+                            if self._check_valid_network(entry, nt) or self._check_potential_network(entry, nt):
+                                return True
+                if os.path.exists(phasing_folder):
+                    for plan in os.listdir(phasing_folder):
+                        plan_type_path = os.path.join(phasing_folder, plan, nt)
+                        if os.path.isdir(plan_type_path):
+                            return True
+                return False
+
+            has_dh = _has_data_for_type('DH')
+            has_dc = _has_data_for_type('DC')
+            if has_dh:
+                default = 'DH'
+            elif has_dc:
+                default = 'DC'
+        except Exception as exc:
+            logger.debug(f"Could not auto-detect default network type: {exc}")
+
+        return {"choices": self._network_types, "default": default}
 
     def _is_multiphase(self, network_name: str) -> bool:
         """Check if a network name represents a multi-phase plan"""
