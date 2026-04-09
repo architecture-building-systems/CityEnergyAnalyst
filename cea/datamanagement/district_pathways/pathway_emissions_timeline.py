@@ -2088,9 +2088,17 @@ def create_district_pathway_emissions_timeline(
                 if not os.path.exists(rad_path):
                     missing_radiation.setdefault(year, rad_path)
                     break
-        op_path = state_locator.get_total_yearly_operational_building()
-        if not os.path.exists(op_path):
-            missing_operational_years.append(year)
+        # The new what-if emissions writes per-building hourly CSVs to
+        # outputs/data/analysis/{whatif_name}/emissions/operational/{building}.csv
+        # which we aggregate to yearly totals downstream. Fall back to the legacy
+        # yearly summary file for older outputs.
+        whatif_op_folder = os.path.join(
+            state_locator.get_emissions_whatif_folder('default'), 'operational'
+        )
+        if not os.path.isdir(whatif_op_folder):
+            legacy_op_path = state_locator.get_total_yearly_operational_building()
+            if not os.path.exists(legacy_op_path):
+                missing_operational_years.append(year)
 
     if missing_radiation:
         sample_lines = "\n".join(
@@ -2134,10 +2142,30 @@ def create_district_pathway_emissions_timeline(
         if not buildings_in_state:
             continue
 
-        # Operational-by-building results
-        op_path = state_locator.get_total_yearly_operational_building()
-        if os.path.exists(op_path):
-            operational_by_state_year[year] = pd.read_csv(op_path, index_col="name")
+        # Operational-by-building results.
+        # New what-if path: per-building HOURLY CSVs at
+        # outputs/data/analysis/{whatif}/emissions/operational/{building}.csv with columns
+        # like Qhs_sys_NATURALGAS_kgCO2e. We sum each to a yearly total and build a single
+        # DataFrame indexed by building name to match the legacy format.
+        whatif_emissions_folder = state_locator.get_emissions_whatif_folder('default')
+        whatif_operational_folder = os.path.join(whatif_emissions_folder, 'operational')
+        if os.path.isdir(whatif_operational_folder):
+            yearly_rows = {}
+            for b in buildings_in_state:
+                building_op_csv = state_locator.get_emissions_whatif_building_file(b, 'default')
+                if os.path.exists(building_op_csv):
+                    hourly_df = pd.read_csv(building_op_csv)
+                    if 'date' in hourly_df.columns:
+                        hourly_df = hourly_df.drop(columns=['date'])
+                    yearly_rows[b] = hourly_df.sum(numeric_only=True)
+            if yearly_rows:
+                operational_by_state_year[year] = pd.DataFrame(yearly_rows).T
+                operational_by_state_year[year].index.name = 'name'
+        else:
+            # Fall back to legacy yearly summary file
+            op_path = state_locator.get_total_yearly_operational_building()
+            if os.path.exists(op_path):
+                operational_by_state_year[year] = pd.read_csv(op_path, index_col="name")
 
         # Areas
         missing_area_buildings = [b for b in buildings_in_state if b not in areas_by_building]
