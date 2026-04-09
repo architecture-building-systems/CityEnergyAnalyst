@@ -306,6 +306,115 @@ def apply_network_mode_to_existing_buildings(existing_buildings, parameter_build
         raise ValueError(f"Unsupported network-layout-mode: {network_mode!r}")
 
 
+def prune_disconnected_subnetwork(nodes_gdf, edges_gdf, target_buildings):
+    """Drop orphan edges/nodes left over after filtering nodes for one service.
+
+    The per-service filter (DC or DH) keeps building nodes for the requested service plus
+    all NONE junction nodes and PLANT nodes from the universal layout. Edges are not
+    filtered, so edges referring to building nodes that were dropped (the OTHER service's
+    buildings) become orphans. Junction nodes that only connected to those orphan edges
+    also become disconnected.
+
+    This function:
+    1. Identifies node coordinates kept after the per-service filter
+    2. Drops edges whose start or end coordinate is no longer in the node set
+    3. Builds a graph from the surviving edges and finds connected components
+    4. Keeps only components that contain at least one target building (heating or cooling)
+       — drops fully-orphan junction-only sub-graphs
+
+    Returns: (pruned_nodes_gdf, pruned_edges_gdf)
+    """
+    import networkx as nx
+
+    if nodes_gdf.empty or edges_gdf.empty:
+        return nodes_gdf, edges_gdf
+
+    def _coord(geom):
+        return (round(geom.x, 6), round(geom.y, 6))
+
+    # Deduplicate nodes that share the same coordinates. This happens when
+    # augment_user_network_with_buildings places a new building (e.g. NODE5_n1)
+    # at the exact same location as an existing junction node (NODE18 NONE).
+    # WNTR sees these as separate disconnected nodes.
+    # Strategy: prefer building/plant nodes over NONE junction nodes.
+    target_set = set(target_buildings)
+
+    def _node_priority(row):
+        building = row.get('building')
+        type_ = str(row.get('type', '')).upper()
+        if type_.startswith('PLANT'):
+            return 0  # highest priority
+        if building in target_set:
+            return 1
+        if building and str(building).upper() != 'NONE':
+            return 2
+        return 3  # NONE junction lowest priority
+
+    nodes_gdf = nodes_gdf.copy()
+    nodes_gdf['_dedup_coord'] = nodes_gdf.geometry.apply(_coord)
+    nodes_gdf['_dedup_priority'] = nodes_gdf.apply(_node_priority, axis=1)
+    nodes_gdf = nodes_gdf.sort_values('_dedup_priority').drop_duplicates(
+        subset=['_dedup_coord'], keep='first'
+    )
+    nodes_gdf = nodes_gdf.drop(columns=['_dedup_coord', '_dedup_priority'])
+
+    kept_node_coords = {_coord(g): name for g, name in zip(nodes_gdf.geometry, nodes_gdf['name'])}
+
+    # Drop edges with endpoints not in kept node set
+    def _edge_endpoints(line_geom):
+        coords = list(line_geom.coords)
+        return (round(coords[0][0], 6), round(coords[0][1], 6)), (round(coords[-1][0], 6), round(coords[-1][1], 6))
+
+    valid_edge_mask = []
+    edge_endpoints_list = []
+    for geom in edges_gdf.geometry:
+        a, b = _edge_endpoints(geom)
+        is_valid = a in kept_node_coords and b in kept_node_coords
+        valid_edge_mask.append(is_valid)
+        edge_endpoints_list.append((a, b))
+
+    edges_gdf = edges_gdf[valid_edge_mask].copy()
+    edge_endpoints_list = [ep for ep, keep in zip(edge_endpoints_list, valid_edge_mask) if keep]
+
+    # Build graph from surviving edges and find connected components containing target buildings
+    g = nx.Graph()
+    for coord in kept_node_coords:
+        g.add_node(coord)
+    for a, b in edge_endpoints_list:
+        g.add_edge(a, b)
+
+    target_set = set(target_buildings)
+    target_coords = {
+        _coord(geom) for geom, building in zip(nodes_gdf.geometry, nodes_gdf['building'])
+        if building in target_set
+    }
+    plant_coords = {
+        _coord(geom) for geom, type_ in zip(nodes_gdf.geometry, nodes_gdf['type'].fillna(''))
+        if str(type_).upper().startswith('PLANT')
+    }
+    anchor_coords = target_coords | plant_coords
+
+    # Keep only components that contain at least one target building or plant
+    surviving_coords = set()
+    for component in nx.connected_components(g):
+        if component & anchor_coords:
+            surviving_coords.update(component)
+
+    # If nothing survived (e.g. all anchors are isolated singletons), keep them anyway
+    if not surviving_coords:
+        surviving_coords = anchor_coords
+
+    # Filter nodes
+    keep_node_mask = [_coord(g) in surviving_coords for g in nodes_gdf.geometry]
+    nodes_gdf = nodes_gdf[keep_node_mask].copy()
+
+    # Filter edges to those whose both endpoints are in surviving coords
+    keep_edge_mask = [a in surviving_coords and b in surviving_coords for a, b in edge_endpoints_list]
+    edges_gdf = edges_gdf[keep_edge_mask].copy()
+
+    return nodes_gdf, edges_gdf
+
+
 def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_validate, zone_gdf,
                                        network_types_to_generate, config, locator, snap_tolerance):
     """
@@ -1615,24 +1724,17 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
             plant_buildings_for_type = heating_plant_buildings_list
             connected_buildings_for_type = buildings_for_dh
 
-            # Validate itemised-dh-services when using Building Properties/Supply
+            # When overwrite-supply-settings is False, supply.csv is the authority:
+            # derive itemised-dh-services from per_building_services_dh and ignore the
+            # user's config value (which may be stale/inconsistent with the actual buildings).
             if not overwrite_supply and per_building_services_dh:
-                # itemised-dh-services is ALWAYS the authority for network service configuration
-                # Validate it against Building Properties/Supply (strict validation)
-
-                validation_level, message, _ = \
-                    validate_itemised_dh_services_against_building_properties(
-                        itemised_dh_services,
-                        per_building_services_dh
-                    )
-
-                if validation_level == 'error':
-                    # Store error and skip this network (allow other networks to continue)
-                    network_errors[type_network] = message
-                    print(f"\n  ✗ Configuration error - skipping {type_network} network")
-                    print(f"    {message.split(chr(10))[0]}")  # Show first line of error
-                    print("    (See full error details at end of script)")
-                    continue
+                derived_services = set()
+                for svcs in per_building_services_dh.values():
+                    derived_services.update(svcs)
+                itemised_dh_services = apply_service_priority_order(derived_services)
+                print(
+                    f"  ℹ Derived itemised-dh-services from supply.csv: {itemised_dh_services}"
+                )
 
                 # Validation passed - log configuration
                 hs_only = sum(1 for svcs in per_building_services_dh.values() if svcs == {PlantServices.SPACE_HEATING})
@@ -1642,8 +1744,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
 
                 print("  ℹ Network configuration:")
                 print("    - Building selection: From Building Properties/Supply")
-                print("    - Service configuration: From itemised-dh-services")
-                print(f"    - {message}")  # e.g., "Network service priority: space heating → domestic hot water (low-temperature)"
+                print("    - Service configuration: Derived from Building Properties/Supply")
                 print("  ℹ Building service breakdown:")
                 print(f"    - Space heating only: {hs_only} building(s)")
                 print(f"    - Domestic hot water only: {ww_only} building(s)")
@@ -2154,10 +2255,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 buildings_to_validate_dh = buildings_to_validate_service
                 buildings_without_demand_dh = list(buildings_without_demand)
 
-        # Keep service-specific building lists aligned with supply-driven validation.
-        # Later DC/DH node export uses these lists regardless of overwrite mode.
-        list_cooling_buildings = buildings_to_validate_dc
-        list_heating_buildings = buildings_to_validate_dh
+        # When overwrite-supply-settings is False, supply.csv is the source of truth.
+        # Initialise the per-service lists from the supply-driven validation set so
+        # that buildings_to_validate (built below) is supply-aligned. The downstream
+        # sync after apply_network_mode_to_user_network will then preserve any
+        # augmented buildings (union for augment, replace for filter).
+        list_cooling_buildings = list(buildings_to_validate_dc)
+        list_heating_buildings = list(buildings_to_validate_dh)
 
         # Combine DC and DH buildings (union - unique values only)
         buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
@@ -2236,6 +2340,26 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         snap_tolerance=snap_tolerance
     )
 
+    # After validate/augment/filter, sync the per-service lists with the final nodes_gdf:
+    # - validate: nodes_gdf unchanged → lists unchanged
+    # - augment:  nodes_gdf has existing ∪ added buildings → lists use union
+    # - filter:   nodes_gdf has only the kept set → lists must replace, not union
+    final_building_names = sorted(
+        extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'].unique()
+    )
+    network_mode_str = config.network_layout.network_layout_mode
+    if network_mode_str == 'filter':
+        if 'DH' in list_include_services:
+            list_heating_buildings = list(final_building_names)
+        if 'DC' in list_include_services:
+            list_cooling_buildings = list(final_building_names)
+    else:
+        # validate / augment: union (validate is a no-op since nodes_gdf is unchanged)
+        if 'DH' in list_include_services:
+            list_heating_buildings = sorted(set(list_heating_buildings) | set(final_building_names))
+        if 'DC' in list_include_services:
+            list_cooling_buildings = sorted(set(list_cooling_buildings) | set(final_building_names))
+
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
 
@@ -2268,6 +2392,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         )
         nodes_gdf_dc = nodes_gdf[dc_building_filter].copy()
         edges_gdf_dc = edges_gdf.copy()
+        # Prune orphan edges and junction nodes left over from removing DH-only buildings
+        nodes_gdf_dc, edges_gdf_dc = prune_disconnected_subnetwork(
+            nodes_gdf_dc, edges_gdf_dc, list_cooling_buildings
+        )
         print(f"  - Filtered to {len(nodes_gdf_dc)} nodes for DC network ({len([b for b in nodes_gdf_dc['building'] if b in list_cooling_buildings])} cooling buildings)")
 
         nodes_gdf_dc, edges_gdf_dc, created_plants_dc = auto_create_plant_nodes(
@@ -2307,6 +2435,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         )
         nodes_gdf_dh = nodes_gdf[dh_building_filter].copy()
         edges_gdf_dh = edges_gdf.copy()
+        # Prune orphan edges and junction nodes left over from removing DC-only buildings
+        nodes_gdf_dh, edges_gdf_dh = prune_disconnected_subnetwork(
+            nodes_gdf_dh, edges_gdf_dh, list_heating_buildings
+        )
         print(f"  - Filtered to {len(nodes_gdf_dh)} nodes for DH network ({len([b for b in nodes_gdf_dh['building'] if b in list_heating_buildings])} heating buildings)")
 
         nodes_gdf_dh, edges_gdf_dh, created_plants_dh = auto_create_plant_nodes(

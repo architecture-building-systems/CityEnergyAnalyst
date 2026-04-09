@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from itertools import groupby
 from typing import Dict, Any, List, Optional
@@ -9,8 +10,9 @@ from pydantic import BaseModel
 import cea.config
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters
-from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck
+from .utils import deconstruct_parameters, validate_scenario_name
+from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -136,16 +138,18 @@ async def get_tool_list(config: CEAConfig) -> Dict[str, List[ToolDescription]]:
 
 
 @router.get('/{tool_name}')
-async def get_tool_properties(config: CEAConfig, tool_name: str,
+async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, tool_name: str,
                                project: Optional[str] = None,
                                scenario_name: Optional[str] = None) -> ToolProperties:
     # TODO: Add plugin support
 
     # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
     if project is not None:
-        config.project = project
+        if project_root is not None and not project.startswith(project_root):
+            project = os.path.join(project_root, project)
+        config.project = secure_path(project)
     if scenario_name is not None:
-        config.scenario_name = scenario_name
+        config.scenario_name = validate_scenario_name(scenario_name)
 
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
@@ -345,7 +349,7 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
     candidates = [
         (parameter, payload[parameter.name])
         for parameter in parameters_for_script(tool_name, config)
-        if parameter.name in payload
+        if parameter.name in payload and parameter.name != 'scenario'
     ]
     try:
         validate_and_apply_parameters(candidates)

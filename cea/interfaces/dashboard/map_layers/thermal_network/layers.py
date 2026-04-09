@@ -29,8 +29,45 @@ class ThermalNetworkMapLayer(MapLayer):
     _network_types = ["DC", "DH"]
 
     def _get_network_types(self):
-        # Return both choices and default (DC is default)
-        return {"choices": self._network_types, "default": self._network_types[0]}
+        # Pick a default based on which network types actually have data:
+        # - DH only on disk → default DH
+        # - DC only on disk → default DC
+        # - both DH and DC on disk → default DH
+        # - neither → fallback to first choice
+        default = self._network_types[0]
+        try:
+            network_folder = self.locator.get_thermal_network_folder()
+            phasing_folder = self.locator.get_thermal_network_phasing_plans_folder()
+
+            def _has_data_for_type(nt: str) -> bool:
+                if os.path.exists(network_folder):
+                    for entry in os.listdir(network_folder):
+                        entry_path = os.path.join(network_folder, entry)
+                        if (
+                            os.path.isdir(entry_path)
+                            and entry not in self._network_types
+                            and entry != 'phasing-plans'
+                            and not entry.startswith('.')
+                        ):
+                            if self._check_valid_network(entry, nt) or self._check_potential_network(entry, nt):
+                                return True
+                if os.path.exists(phasing_folder):
+                    for plan in os.listdir(phasing_folder):
+                        plan_type_path = os.path.join(phasing_folder, plan, nt)
+                        if os.path.isdir(plan_type_path):
+                            return True
+                return False
+
+            has_dh = _has_data_for_type('DH')
+            has_dc = _has_data_for_type('DC')
+            if has_dh:
+                default = 'DH'
+            elif has_dc:
+                default = 'DC'
+        except Exception as exc:
+            logger.debug(f"Could not auto-detect default network type: {exc}")
+
+        return {"choices": self._network_types, "default": default}
 
     def _is_multiphase(self, network_name: str) -> bool:
         """Check if a network name represents a multi-phase plan"""
@@ -551,6 +588,34 @@ class ThermalNetworkMapLayer(MapLayer):
             edges_df["peak_mass_flow"] = massflow_edges_df.max().round(1)
         else:
             logger.debug("Massflow file doesn't exist or not applicable, skipping")
+
+        # For phasing plans, compute the global peak_mass_flow range across ALL phases
+        # so the GUI can scale all phase views with the same factor.
+        if is_phasing_plan:
+            global_min = None
+            global_max = None
+            for other_phase in self._get_thermal_network_phasing_plan_phases(network_type, plan_name):
+                other_massflow = self.locator.get_thermal_network_phasing_massflow_edges_file(
+                    network_type, plan_name, other_phase
+                )
+                if not os.path.exists(other_massflow):
+                    continue
+                try:
+                    df = pd.read_csv(other_massflow)
+                    peaks = df.max()
+                    if peaks.empty:
+                        continue
+                    p_min = float(peaks.min())
+                    p_max = float(peaks.max())
+                    global_min = p_min if global_min is None else min(global_min, p_min)
+                    global_max = p_max if global_max is None else max(global_max, p_max)
+                except Exception as exc:
+                    logger.debug(f"Could not read massflow for phase {other_phase}: {exc}")
+            if global_min is not None and global_max is not None:
+                output['properties']['peak_mass_flow_range'] = {
+                    'min': round(global_min, 1),
+                    'max': round(global_max, 1),
+                }
 
         # Enrich nodes with substation and plant performance data
         for node_id in nodes_df.index:

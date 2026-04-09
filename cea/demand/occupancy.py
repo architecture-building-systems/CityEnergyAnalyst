@@ -473,6 +473,9 @@ def main(config: cea.config.Configuration):
     print('Running occupancy model for scenario %s' % config.scenario)
     print('Running occupancy model  with schedule model=%s' % config.occupancy.occupancy_model)
     locator = cea.inputlocator.InputLocator(config.scenario)
+    # Remove stale occupancy outputs from a previous run
+    from cea.utilities.output_cleanup import cleanup_output_folder
+    cleanup_output_folder(locator.get_occupancy_model_folder())
     occupancy_main(locator, config)
 
 

@@ -30,7 +30,6 @@ def calc_thermal_loads(building_name: str,
                        date_range: pd.DatetimeIndex,
                        locator: InputLocator,
                        use_dynamic_infiltration_calculation: bool,
-                       resolution_outputs: str,
                        config: Configuration,
                        debug: bool,
                        ):
@@ -175,7 +174,7 @@ def calc_thermal_loads(building_name: str,
     # NOTE: calc_Ef() call removed - primary energy calculation moved to primary-energy module
 
     # WRITE SOLAR RESULTS
-    write_results(bpr, building_name, date_range, locator, resolution_outputs, tsd, debug, config)
+    write_results(bpr, building_name, date_range, locator, tsd, debug, config)
 
     return
 
@@ -187,13 +186,8 @@ def calc_QH_sys_QC_sys(tsd: TimeSeriesData) -> TimeSeriesData:
     return tsd
 
 
-def write_results(bpr: BuildingPropertiesRow, building_name, date, locator, resolution_outputs, tsd: TimeSeriesData, debug, config: Configuration):
-    if resolution_outputs == 'hourly':
-        writer = demand_writers.HourlyDemandWriter(retain_technical_results=config.demand.retain_technical_results)
-    elif resolution_outputs == 'monthly':
-        writer = demand_writers.MonthlyDemandWriter(retain_technical_results=config.demand.retain_technical_results)
-    else:
-        raise Exception('error')
+def write_results(bpr: BuildingPropertiesRow, building_name, date, locator, tsd: TimeSeriesData, debug, config: Configuration):
+    writer = demand_writers.HourlyDemandWriter(retain_technical_results=config.demand.retain_technical_results)
 
     if debug:
         print('Creating instant plotly visualizations of demand variable time series.')

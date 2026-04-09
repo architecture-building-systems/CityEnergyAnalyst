@@ -257,6 +257,13 @@ def resimulate_with_optimized_dn(config, locator, phases: List[Dict],
 
         # Create temporary shapefile with optimised DN
         edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
+        if not os.path.exists(edges_path):
+            print(
+                f"    Warning: Edges shapefile not found for phase {phase['index']} "
+                f"({network_name}). Skipping re-simulation; using original results."
+            )
+            optimized_phase_results.append(phase_result)
+            continue
         edges_gdf = gpd.read_file(edges_path)
 
         # Apply optimised DN from sizing decisions
