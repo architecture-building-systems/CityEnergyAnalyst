@@ -15,6 +15,7 @@ live in sibling modules so that this file stays readable as the top-level runtim
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 
 import pandas as pd
@@ -111,6 +112,12 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
         )
         _cleanup_state_outputs(state_locator, year)
 
+        print(json.dumps({
+            "__cea_progress__": "pathway-state-started",
+            "pathway_name": pathway_name,
+            "year": int(year),
+        }), flush=True)
+
         base_workflow = workflow_assembly.prepare_base_workflow_for_state(
             config=config,
             pathway_name=pathway_name,
@@ -159,6 +166,11 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
         )
 
         simulated_years.append(int(year))
+        print(json.dumps({
+            "__cea_progress__": "pathway-state-simulated",
+            "pathway_name": pathway_name,
+            "year": int(year),
+        }), flush=True)
         print(f"Simulation for pathway state year {year} completed.", flush=True)
 
     pathway.save()

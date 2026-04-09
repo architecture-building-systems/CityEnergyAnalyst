@@ -409,6 +409,7 @@ class BaseYearlyEmissionTimeline:
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None = None,
         apply_decarbonisation: bool = True,
         include_pv_offset: bool = True,
+        operational_df: pd.DataFrame | None = None,
     ) -> None:
         # Keep operational fill logic close to call sites (avoid jumping through helpers).
         demand_types = list(_tech_name_mapping.keys())
@@ -416,10 +417,15 @@ class BaseYearlyEmissionTimeline:
         # Validate timeline index once (keeps later logic simpler).
         years_from_index(self.timeline.index)
 
-        operational = OperationalHourlyTimeline.from_result(locator, building_name)
-        operational_timeseries = operational.operational_emission_timeline.copy()
-        if "date" in operational_timeseries.columns:
-            operational_timeseries = operational_timeseries.drop(columns=["date"])
+        if operational_df is not None:
+            operational_timeseries = operational_df.copy()
+            if "date" in operational_timeseries.columns:
+                operational_timeseries = operational_timeseries.drop(columns=["date"])
+        else:
+            operational = OperationalHourlyTimeline.from_result(locator, building_name)
+            operational_timeseries = operational.operational_emission_timeline.copy()
+            if "date" in operational_timeseries.columns:
+                operational_timeseries = operational_timeseries.drop(columns=["date"])
 
         yearly_sum = operational_timeseries.sum(axis=0)
         operational_multi_years = pd.DataFrame(
@@ -979,6 +985,7 @@ class BuildingYearlyEmissionTimeline(BaseYearlyEmissionTimeline):
             feedstock_policies=feedstock_policies,
             apply_decarbonisation=apply_decarbonisation,
             include_pv_offset=include_pv_offset,
+            operational_df=operational_df,
         )
         demand_types = list(_tech_name_mapping.keys())  # ['Qhs_sys', 'Qww_sys', 'Qcs_sys', 'E_sys']
         feedstocks = list(self.feedstock_db._library.keys()) + ["NONE"]

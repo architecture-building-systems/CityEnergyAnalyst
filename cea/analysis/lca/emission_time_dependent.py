@@ -397,6 +397,11 @@ def sum_by_year(dfs: list[pd.DataFrame]) -> pd.DataFrame:
     if not dfs:
         raise ValueError("dfs must be non-empty")
 
+    # Detect whether the DataFrames are indexed by year (Y_XXXX format)
+    has_year_index = any(
+        str(idx).startswith('Y_') for df in dfs for idx in df.index[:1]
+    )
+
     dfs_for_sum = [df.drop(columns=['name'], errors='ignore') for df in dfs]
 
     # Create copies of dataframes without the date column for summing
