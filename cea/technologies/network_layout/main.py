@@ -2264,10 +2264,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     )
     network_mode_str = config.network_layout.network_layout_mode
     if network_mode_str == 'filter':
+        final_set = set(final_building_names)
         if 'DH' in list_include_services:
-            list_heating_buildings = list(final_building_names)
+            list_heating_buildings = sorted(set(list_heating_buildings) & final_set)
         if 'DC' in list_include_services:
-            list_cooling_buildings = list(final_building_names)
+            list_cooling_buildings = sorted(set(list_cooling_buildings) & final_set)
     else:
         # validate / augment: union (validate is a no-op since nodes_gdf is unchanged)
         if 'DH' in list_include_services:
