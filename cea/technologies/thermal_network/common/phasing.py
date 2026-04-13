@@ -161,10 +161,13 @@ def validate_phases(phases: List[Dict]):
     """
     Validate phase compatibility:
     - Years must be in chronological order
-    - Each phase must have >= buildings of previous phase (additive only)
+    - Connected buildings may be added OR removed between phases. Reductions
+      are treated as decommissioning under a sunk-infrastructure model: pipes
+      stay in the trench (zero CAPEX, zero salvage), only the per-phase
+      operational simulation changes.
 
     :param phases: List of phase dictionaries
-    :raises ValueError: If validation fails
+    :raises ValueError: If validation fails (years non-monotonic)
     """
     for i in range(1, len(phases)):
         prev_phase = phases[i-1]
@@ -178,16 +181,20 @@ def validate_phases(phases: List[Dict]):
                 f"Please reorder phases or adjust completion years."
             )
 
-        # Check building compatibility (current ⊇ previous)
+        # Connected building changes are informational — decommissioning is allowed
         prev_buildings = set(prev_phase['buildings'])
         curr_buildings = set(curr_phase['buildings'])
-
-        if not prev_buildings <= curr_buildings:
-            removed = prev_buildings - curr_buildings
-            raise ValueError(
-                f"Phase {i+1} ({curr_phase['network_name']}) cannot have fewer buildings than Phase {i} ({prev_phase['network_name']}).\n"
-                f"Buildings removed: {sorted(removed)}\n"
-                f"Multi-phase expansion must be additive only (each phase ⊇ previous phase)."
+        added = curr_buildings - prev_buildings
+        removed = prev_buildings - curr_buildings
+        if added:
+            print(f"  Phase {i+1} ({curr_phase['network_name']}) adds {len(added)} building(s): {sorted(added)}")
+        if removed:
+            print(
+                f"  Phase {i+1} ({curr_phase['network_name']}) decommissions {len(removed)} building(s): "
+                f"{sorted(removed)}"
+            )
+            print(
+                "    (pipes remain installed — sunk infrastructure; no CAPEX, no salvage, no per-phase OPEX for decommissioned buildings)"
             )
 
     print(f"  Phase validation passed: {len(phases)} phases in chronological order")
@@ -684,6 +691,17 @@ def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]
     """
     Calculate cost for size-per-phase approach (in constant USD2015).
 
+    Actions on a per-phase basis:
+      - 'none':     edge has not been installed in any phase up to this one
+      - 'install':  edge is being installed for the first time this phase
+      - 'replace':  edge exists but required DN has grown — replace at multiplier
+      - 'keep':     edge exists, required DN is ≤ installed DN, still carrying flow
+      - 'idle':     edge exists (installed in an earlier phase) but does not
+                    carry flow this phase (connected building decommissioned).
+                    Pipe stays in the trench under the sunk-infrastructure model:
+                    zero CAPEX, zero salvage. Installed DN is preserved so a
+                    later reactivation or demand increase sees the real state.
+
     :return: Dictionary with per-phase decisions and total cost
     """
     result = {'strategy': 'size-per-phase', 'total_cost': 0}
@@ -693,8 +711,14 @@ def calculate_size_per_phase_cost(edge_id: str, dn_per_phase: List[Optional[int]
         phase_key = f"phase{i+1}"
 
         if dn is None:
-            # Edge doesn't exist in this phase
-            result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0}
+            if current_dn is None:
+                # Edge hasn't been installed in any prior phase
+                result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0}
+            else:
+                # Edge was installed earlier but is idle this phase
+                # (e.g. downstream building decommissioned). Sunk infra: keep
+                # the installed pipe, no CAPEX, no salvage.
+                result[phase_key] = {'DN': current_dn, 'action': 'idle', 'cost': 0}
             continue
 
         if current_dn is None:
@@ -734,6 +758,11 @@ def calculate_pre_size_cost(edge_id: str, dn_per_phase: List[Optional[int]],
     """
     Calculate cost for pre-size-all approach (in constant USD2015).
 
+    See calculate_size_per_phase_cost for the action vocabulary. The pre-size
+    strategy never uses 'replace' — the pipe is installed once at its final
+    (maximum-across-phases) DN and kept thereafter. Phases with no flow after
+    install are labelled 'idle'.
+
     :return: Dictionary with per-phase decisions and total cost
     """
     result = {'strategy': 'pre-size-all', 'total_cost': 0}
@@ -743,8 +772,12 @@ def calculate_pre_size_cost(edge_id: str, dn_per_phase: List[Optional[int]],
         phase_key = f"phase{i+1}"
 
         if dn is None:
-            # Edge doesn't exist in this phase
-            result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0}
+            if not installed:
+                # Edge hasn't appeared yet in any prior phase
+                result[phase_key] = {'DN': None, 'action': 'none', 'cost': 0}
+            else:
+                # Installed earlier, idle this phase (decommissioned building)
+                result[phase_key] = {'DN': final_dn, 'action': 'idle', 'cost': 0}
             continue
 
         if not installed:
