@@ -1832,13 +1832,12 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         # Remove duplicate edges (edges that appear in both DC and DH networks)
         all_edges_gdf = all_edges_gdf.drop_duplicates(subset=['geometry'], keep='first')
 
-        # Renumber all pipes sequentially to prevent duplicates using helper function
-        for idx in all_edges_gdf.index:
-            if 'name' in all_edges_gdf.columns:
-                edge_name = all_edges_gdf.loc[idx, 'name']
-                if isinstance(edge_name, str) and edge_name.startswith('PIPE'):
-                    all_edges_gdf.loc[idx, 'name'] = get_next_pipe_name(all_edges_gdf.loc[:idx])
-        
+        # Resolve only genuine name collisions. Preserving the original pipe
+        # names is important for downstream multi-phase tools that match pipes
+        # across phases — a blanket renumber here would silently alias
+        # unrelated pipes together (see phasing.py regression tests).
+        _resolve_duplicate_pipe_names(all_edges_gdf)
+
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
         print(f"\n  Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
@@ -2310,13 +2309,10 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         # Remove duplicate edges (if same edge appears in both networks)
         combined_edges = combined_edges.drop_duplicates(subset=['geometry'], keep='first')
 
-        # Renumber all pipes sequentially to prevent duplicates using helper function
-        for idx in combined_edges.index:
-            if 'name' in combined_edges.columns:
-                edge_name = combined_edges.loc[idx, 'name']
-                if isinstance(edge_name, str) and edge_name.startswith('PIPE'):
-                    combined_edges.loc[idx, 'name'] = get_next_pipe_name(combined_edges.loc[:idx])
-        
+        # Resolve only genuine name collisions; preserve upstream names so
+        # downstream multi-phase sizing can match pipes across phases.
+        _resolve_duplicate_pipe_names(combined_edges)
+
         # Normalize geometries to ensure consistent precision
         normalize_gdf_geometries(combined_edges, precision=SHAPEFILE_TOLERANCE, inplace=True)
         combined_edges.to_file(output_layout_path, driver='ESRI Shapefile')
@@ -2329,6 +2325,38 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print("  User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
     print("\n" + "=" * 80 + "\n")
+
+
+def _resolve_duplicate_pipe_names(edges_gdf) -> None:
+    """
+    Rename only edges whose `name` is a genuine duplicate within edges_gdf,
+    assigning them fresh `PIPE{n}` names from max+1. Pipes with unique names
+    are left unchanged.
+
+    This is the minimal fix to keep `name` uniqueness without destroying the
+    upstream names that multi-phase tools (phasing.py) use to match pipes
+    across phases. A blanket renumber — the previous behaviour — silently
+    aliased unrelated pipes across phases (e.g. sub1's PIPE1 and sub2's
+    PIPE2 would share the canonical id of the same physical pipe, but the
+    local names would no longer align).
+    """
+    if 'name' not in edges_gdf.columns or len(edges_gdf) == 0:
+        return
+
+    duplicated_mask = edges_gdf['name'].duplicated(keep='first')
+    if not duplicated_mask.any():
+        return
+
+    existing_numbers = [
+        int(n.replace('PIPE', ''))
+        for n in edges_gdf['name']
+        if isinstance(n, str) and n.startswith('PIPE') and n[4:].isdigit()
+    ]
+    next_num = max(existing_numbers) + 1 if existing_numbers else 0
+
+    for idx in edges_gdf.index[duplicated_mask]:
+        edges_gdf.loc[idx, 'name'] = f'PIPE{next_num}'
+        next_num += 1
 
 
 def _load_existing_network_node_paths(locator, existing_network):
