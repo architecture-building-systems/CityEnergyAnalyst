@@ -1,5 +1,6 @@
 from typing import Optional
 import os
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
@@ -77,7 +78,29 @@ def get_whatif_names(locator) -> list:
     return sorted([name for name in os.listdir(base)]) if os.path.isdir(base) else []
 
 
-class LifecycleEmissionsMapLayer(MapLayer):
+def delete_whatif(locator, whatif_name: str) -> None:
+    """Delete an on-disk what-if scenario folder under the analysis parent folder."""
+    if not whatif_name:
+        raise ValueError("What-if name is required")
+    base = locator.get_analysis_parent_folder()
+    target = os.path.join(base, whatif_name)
+    if not os.path.isdir(target):
+        raise ValueError(f"What-if scenario '{whatif_name}' not found on disk")
+    shutil.rmtree(target)
+
+
+class WhatifDeletableMixin:
+    """Provides delete_parameter_choice for LCA layers that expose a `whatif_name` parameter."""
+
+    def delete_parameter_choice(self, parameter_name: str, value: str) -> None:
+        if parameter_name != 'whatif_name':
+            raise NotImplementedError(
+                f"Parameter '{parameter_name}' does not support deletion"
+            )
+        delete_whatif(self.locator, value)
+
+
+class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
     category = LifeCycleAnalysisCategory
     name = "lifecycle-emissions"
     label = "Lifecycle Emissions (Annual)"
@@ -279,7 +302,7 @@ class LifecycleEmissionsMapLayer(MapLayer):
         return output
 
 
-class OperationalEmissionsMapLayer(MapLayer):
+class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
     category = LifeCycleAnalysisCategory
     name = "operational-emissions"
     label = "Operational Emissions (Hourly/Daily)"
@@ -466,7 +489,7 @@ class OperationalEmissionsMapLayer(MapLayer):
         return output
 
 
-class EmissionTimelineMapLayer(MapLayer):
+class EmissionTimelineMapLayer(WhatifDeletableMixin, MapLayer):
     category = LifeCycleAnalysisCategory
     name = "emission-timeline"
     label = "Emission Timeline"
@@ -536,7 +559,7 @@ class EmissionTimelineMapLayer(MapLayer):
         return {}
 
 
-class AnthropogenicHeatMapLayer(MapLayer):
+class AnthropogenicHeatMapLayer(WhatifDeletableMixin, MapLayer):
     category = LifeCycleAnalysisCategory
     name = "anthropogenic-heat-rejection"
     label = "Anthropogenic Heat Rejection (Hourly/Daily)"
