@@ -36,18 +36,9 @@ Build thermal network connectivity graphs by connecting buildings to street netw
 
 ### Loading Existing Networks
 
-**When using `existing-network`**, network-layout-mode is applied per service:
+**When using `existing-network`**, `main()` resolves the edges + nodes shapefiles for that network and then passes them through the same `process_user_defined_network()` pipeline as any other user-defined input. The `network-layout-mode` parameter is applied to the loaded graph exactly as it would be for a user-provided shapefile — see the User-Defined Network Layout Modes section below.
 
-| Mode | Behavior |
-|------|----------|
-| **validate** | Error if existing nodes ≠ connected-buildings parameter |
-| **augment** | Union(existing nodes, connected-buildings) |
-| **filter** | Use connected-buildings exactly (add missing, remove extras) |
-
-**Edge Cases:**
-- Blank parameter + existing nodes → keep existing service buildings
-- Blank parameter + no existing nodes → empty list (warning issued)
-- Parameter set + no existing nodes → use parameter buildings (new service added)
+If the existing network has both DC and DH node files, they are merged into a temporary shapefile (deduplicated on `(building, geometry)`) so DH-only buildings are preserved. The helper is `_load_existing_network_node_paths()` in `main.py`.
 
 ## User-Defined Network Layout Modes
 
