@@ -485,13 +485,37 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         return output
 
 
+_LIFECYCLE_EMISSION_CATEGORIES = ['operation', 'production', 'demolition', 'biogenic']
+_DEFAULT_LIFECYCLE_CATEGORY = 'operation'
+
+# Colour gradient per category, keyed to the CEA emission-timeline plot
+# palette (see cea.visualisation.special.emission_timeline). Each entry is
+# a (lighter, darker) pair of CEA named colours for the hex legend gradient.
+_LIFECYCLE_CATEGORY_COLOURS = {
+    # 'operation' is not a single category in the timeline plot — it is the
+    # sum of electricity/heating/cooling/DHW — so we reuse the electricity
+    # (green) colour which is typically the dominant operational component.
+    'operation': ('green_lighter', 'green'),
+    'production': ('purple_lighter', 'purple'),
+    'demolition': ('brown_lighter', 'brown'),
+    'biogenic': ('grey_lighter', 'grey'),
+}
+
+
 class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
     category = LifeCycleAnalysisCategory
     name = "lifecycle-emissions"
     label = "Lifecycle Emissions (Annual)"
     description = ""
 
-    def _get_data_columns(self, parameters) -> Optional[list]:
+    def _get_data_columns(self, parameters):
+        """Return the high-level emission categories present in this what-if.
+
+        Each timeline CSV has columns like ``operation_electricity_kgCO2``,
+        ``production_windows_kgCO2`` etc. We aggregate by prefix and expose
+        only the four categories: operation, production, demolition,
+        biogenic — ordered canonically, with ``operation`` as the default.
+        """
         buildings = self.locator.get_zone_building_names()
         whatif_name = parameters.get('whatif_name')
 
@@ -499,7 +523,30 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             return
 
         paths = [self.locator.get_emissions_whatif_building_timeline_file(b, whatif_name) for b in buildings]
-        return get_columns_from_building_files(paths)
+        columns = get_columns_from_building_files(paths)
+        if not columns:
+            return columns
+
+        present = set()
+        for col in columns:
+            for cat in _LIFECYCLE_EMISSION_CATEGORIES:
+                if col.startswith(f"{cat}_"):
+                    present.add(cat)
+                    break
+
+        available = [c for c in _LIFECYCLE_EMISSION_CATEGORIES if c in present]
+        if not available:
+            return []
+
+        default = (
+            _DEFAULT_LIFECYCLE_CATEGORY
+            if _DEFAULT_LIFECYCLE_CATEGORY in available
+            else available[0]
+        )
+        return {
+            "choices": [{"value": c, "label": c} for c in available],
+            "default": default,
+        }
 
     def _get_whatif_names(self) -> Optional[list]:
         """Return sorted list of what-if names that have lifecycle analysis results."""
@@ -536,7 +583,7 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
         return {
             'whatif_name':
                 ParameterDefinition(
-                    "What-if scenario",
+                    "what-if-name",
                     "string",
                     description="Select a what-if scenario with emission results",
                     options_generator="_get_whatif_names",
@@ -544,9 +591,9 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                 ),
             'data-column':
                 ParameterDefinition(
-                    "Data Column",
+                    "emission/category",
                     "string",
-                    description="Data column to use",
+                    description="Lifecycle emission category to visualise",
                     options_generator="_get_data_columns",
                     selector="choice",
                     depends_on=['whatif_name']
@@ -604,18 +651,28 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
         buildings = self.locator.get_zone_building_names()
         whatif_name = parameters.get('whatif_name')
 
-        data_column = parameters['data-column']
+        category = parameters['data-column']
         period = parameters['timeline']
         start, end = period
+
+        colour_pair = _LIFECYCLE_CATEGORY_COLOURS.get(
+            category, ('grey_lighter', 'black')
+        )
 
         output = {
             "data": [],
             "properties": {
                 "name": self.name,
-                "label": "Embodied Emissions",
+                "label": (
+                    f"Lifecycle Emissions - {category}"
+                    if category else "Lifecycle Emissions"
+                ),
                 "description": self.description,
                 "colours": {
-                    "colour_array": [color_to_hex("grey_lighter"), color_to_hex("black")],
+                    "colour_array": [
+                        color_to_hex(colour_pair[0]),
+                        color_to_hex(colour_pair[1]),
+                    ],
                     "points": 12
                 }
             }
@@ -632,21 +689,31 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             }
             return output
 
+        if category not in _LIFECYCLE_EMISSION_CATEGORIES:
+            raise ValueError(f"Invalid emission category: {category}")
+        prefix = f"{category}_"
+
         def get_data(building, centroid):
             try:
                 building_file = self.locator.get_emissions_whatif_building_timeline_file(building, whatif_name)
                 if not os.path.exists(building_file):
                     return None
 
-                df = pd.read_csv(building_file, usecols=["period", data_column])
+                header = pd.read_csv(building_file, nrows=0).columns
+                matching_cols = [c for c in header if c.startswith(prefix)]
+                cols_to_read = ["period"] + matching_cols
+                df = pd.read_csv(building_file, usecols=cols_to_read)
 
-                data = df[data_column]
+                if matching_cols:
+                    data = df[matching_cols].sum(axis=1)
+                else:
+                    data = pd.Series(0.0, index=df.index)
                 data.index = period_to_year(df['period'])
 
                 total_min = 0
-                total_max = data.sum()
+                total_max = float(data.sum())
 
-                period_value = data.loc[start:end].sum()
+                period_value = float(data.loc[start:end].sum())
                 period_min = period_value
                 period_max = period_value
 
