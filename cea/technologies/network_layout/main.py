@@ -435,7 +435,7 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
     from cea.optimization_new.user_network_loader import (
         validate_network_covers_district_buildings,
         augment_user_network_with_buildings,
-        filter_network_to_buildings
+        filter_network_to_buildings,
     )
 
     # Get network layout mode and modification settings
@@ -2255,10 +2255,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         snap_tolerance=snap_tolerance
     )
 
-    # After validate/augment/filter, sync the per-service lists with the final nodes_gdf:
+    # After validate/augment/filter, sync the per-service lists with nodes_gdf:
     # - validate: nodes_gdf unchanged → lists unchanged
     # - augment:  nodes_gdf has existing ∪ added buildings → lists use union
-    # - filter:   nodes_gdf has only the kept set → lists must replace, not union
+    # - filter:   nodes_gdf has only the kept set → intersect each service list
+    #             with the surviving set so DC and DH lists don't cross-contaminate.
     final_building_names = sorted(
         extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'].unique()
     )

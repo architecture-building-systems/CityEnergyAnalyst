@@ -81,7 +81,11 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 
 **Augmentation** (`augment_user_network_with_buildings()`): creates potential network (user edges + streets), runs Kou Steiner with existing + new buildings as terminals, merges result additively. User disk files never modified.
 
-**Filtering** (`filter_network_to_buildings()`): removes nodes not in keep list, graph cleanup removes orphaned edges/junctions.
+**Filtering** (`filter_network_to_buildings()`): removes nodes not in keep list, drops incident edges, keeps connected components anchored by a surviving terminal or plant, then iteratively prunes dangling junction stubs via `_prune_dangling_stubs()`.
+
+**Plant preservation invariant (filter):** plant nodes and the pipes connecting them to the trunk are protected infrastructure — they are never pruned, even if the building they were anchored to was removed. If a plant ends up in a component with no surviving consumers, the plant and its pipework are still kept and a warning is printed.
+
+**Stub pruning (`_prune_dangling_stubs()`):** iterative helper used by filter. Drops any degree-≤1 node that isn't in the protected-coord set (terminals + plants) and drops its incident edge, repeating until stable. This is what removes leftover junction-only stubs after building removal.
 
 ### Input Format Support
 
