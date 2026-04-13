@@ -114,7 +114,21 @@ _ENERGY_DEMAND_ROLLUP_COLUMNS = {
 # High-level carriers surfaced to the user. The order is also the dropdown
 # order. For each raw per-column value ending in ``_kWh`` we map it to one of
 # these carriers via :func:`_column_to_carrier`; unknown columns are ignored.
-_ENERGY_CARRIERS = ['NATURALGAS', 'GRID', 'SOLAR', 'PV']
+_ENERGY_CARRIERS = ['GRID', 'NATURALGAS', 'OIL', 'COAL', 'WOOD', 'SOLAR']
+
+# Display names shown in the dropdown. Internal values (dictionary keys) are
+# kept so that column matching still works against the raw CSV headers.
+_CARRIER_DISPLAY_NAMES = {
+    'GRID': 'grid_electricity',
+    'NATURALGAS': 'natural_gas',
+    'OIL': 'oil',
+    'COAL': 'coal',
+    'WOOD': 'wood',
+    'SOLAR': 'solar',
+}
+
+# Internal value to use as the default selection when the layer first loads.
+_DEFAULT_CARRIER = 'GRID'
 
 
 def _column_to_carrier(column: str) -> Optional[str]:
@@ -126,12 +140,11 @@ def _column_to_carrier(column: str) -> Optional[str]:
     if not column.endswith('_kWh') or column in _ENERGY_DEMAND_ROLLUP_COLUMNS:
         return None
 
-    # Solar / PV generation columns.
+    # Solar thermal generation columns. PV / PVT-electric are treated as
+    # grid-replacement, not a separate carrier, so they are ignored here.
     if column.startswith('PV_'):
-        return 'PV'
+        return None
     if column.startswith('PVT_'):
-        if column.endswith('_E_kWh'):
-            return 'PV'
         if column.endswith('_Q_kWh'):
             return 'SOLAR'
         return None
@@ -194,13 +207,15 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 files.append(path)
         return files
 
-    def _get_data_columns(self, parameters) -> Optional[list]:
-        """Return the list of high-level carriers available in this what-if.
+    def _get_data_columns(self, parameters):
+        """Return available carriers as a {choices, default} dict.
 
-        Scans the union of columns across every entity's hourly file and maps
-        each column to a carrier via :func:`_column_to_carrier`. Only carriers
-        actually present in the data are returned, preserving the canonical
-        order defined by ``_ENERGY_CARRIERS``.
+        Scans every entity's hourly file, maps each column to a carrier via
+        :func:`_column_to_carrier`, and returns only the carriers actually
+        present in the data. Choices are ``{value, label}`` dicts where the
+        value is the internal code (e.g. ``GRID``) and the label is the
+        user-facing name (e.g. ``grid_electricity``). Default is always
+        ``GRID`` / ``grid_electricity`` when present.
         """
         whatif_name = parameters.get('whatif_name')
         if not whatif_name:
@@ -219,7 +234,18 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
             if carrier:
                 present.add(carrier)
 
-        return [c for c in _ENERGY_CARRIERS if c in present]
+        available = [c for c in _ENERGY_CARRIERS if c in present]
+        if not available:
+            return []
+
+        default = _DEFAULT_CARRIER if _DEFAULT_CARRIER in available else available[0]
+        return {
+            "choices": [
+                {"value": c, "label": _CARRIER_DISPLAY_NAMES.get(c, c)}
+                for c in available
+            ],
+            "default": default,
+        }
 
     def _get_whatif_names(self) -> Optional[list]:
         """Return sorted list of what-if names that have final-energy results."""
@@ -237,7 +263,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         return {
             'whatif_name':
                 ParameterDefinition(
-                    "What-if scenario",
+                    "what-if-name",
                     "string",
                     description="Select a what-if scenario with final-energy results",
                     options_generator="_get_whatif_names",
@@ -245,9 +271,9 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 ),
             'data-column':
                 ParameterDefinition(
-                    "Energy Carrier",
+                    "carrier",
                     "string",
-                    description="Final energy carrier / column to visualize",
+                    description="Final energy carrier to visualize",
                     options_generator="_get_data_columns",
                     selector="choice",
                     depends_on=['whatif_name']
@@ -303,12 +329,16 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         start, end = day_range_to_hour_range(period[0], period[1])
 
         carrier = parameters['data-column']
+        display_carrier = _CARRIER_DISPLAY_NAMES.get(carrier, carrier) if carrier else None
 
         output = {
             "data": [],
             "properties": {
                 "name": self.name,
-                "label": f"Energy by Carrier — {carrier}" if carrier else "Energy by Carrier",
+                "label": (
+                    f"Energy by Carrier - {display_carrier} [kWh]"
+                    if display_carrier else "Energy by Carrier [kWh]"
+                ),
                 "description": self.description,
                 "colours": {
                     "colour_array": [color_to_hex("brown_lighter"), color_to_hex("brown")],
@@ -331,7 +361,11 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
             output['properties']['range'] = empty_range
             return output
 
-        available_carriers = self._get_data_columns(parameters) or []
+        raw = self._get_data_columns(parameters)
+        if isinstance(raw, dict):
+            available_carriers = [c['value'] for c in raw.get('choices', [])]
+        else:
+            available_carriers = raw or []
         if carrier is None or carrier not in available_carriers:
             raise ValueError(f"Invalid carrier: {carrier}")
 
