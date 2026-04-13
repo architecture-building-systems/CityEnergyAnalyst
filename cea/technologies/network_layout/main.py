@@ -2375,14 +2375,25 @@ def _load_existing_network_node_paths(locator, existing_network):
         return edges_path, dc_nodes_path
 
     # Both services present: merge into a temp shapefile so DH-only buildings
-    # are preserved when the loader reads the nodes file. Deduplicate on
-    # (building, geometry) since the same trunk junction may appear in both.
+    # are preserved when the loader reads the nodes file. The two source files
+    # were written independently by Part 1 so their `NODE{n}` junction names
+    # live in parallel namespaces and collide on merge — dedupe first on
+    # (building, geometry), then re-number every `NODE*` row sequentially so
+    # the output is guaranteed to have unique names.
     import tempfile
 
     merged_nodes_gdf = gpd.GeoDataFrame(
         pd.concat([dc_nodes_gdf, dh_nodes_gdf], ignore_index=True),
         crs=dc_nodes_gdf.crs,
-    ).drop_duplicates(subset=['building', 'geometry'], keep='first')
+    ).drop_duplicates(subset=['building', 'geometry'], keep='first').reset_index(drop=True)
+
+    if 'name' in merged_nodes_gdf.columns:
+        node_mask = merged_nodes_gdf['name'].astype(str).str.startswith('NODE')
+        node_indices = merged_nodes_gdf.index[node_mask].tolist()
+        merged_nodes_gdf.loc[node_indices, 'name'] = [
+            f'NODE{i}' for i in range(len(node_indices))
+        ]
+
     print(f"    Merged DC and DH nodes: {len(merged_nodes_gdf)} total (union of both services)")
 
     temp_file = tempfile.NamedTemporaryFile(
