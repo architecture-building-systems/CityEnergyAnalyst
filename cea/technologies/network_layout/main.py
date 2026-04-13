@@ -14,7 +14,7 @@ from cea.constants import SNAP_TOLERANCE, SHAPEFILE_TOLERANCE
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
 from cea.technologies.network_layout.plant_node_operations import (
-    add_plant_close_to_anchor, get_next_node_name, get_next_pipe_name, get_plant_type_from_services, PlantServices,
+    add_plant_close_to_anchor, get_next_node_name, get_plant_type_from_services, PlantServices,
     DEFAULT_SERVICES
 )
 from cea.technologies.network_layout.substations_location import calc_building_centroids

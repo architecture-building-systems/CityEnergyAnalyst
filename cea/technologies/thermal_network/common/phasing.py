@@ -1462,7 +1462,6 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
     # 'PIPE1' that happened to refer to a different physical pipe in sub1.
     edge_base_by_cid: Dict[CanonicalEdgeId, Dict] = {}
     for p in phases:
-        p_cid_to_name = p['edge_cid_to_name']
         for _, row in p['edges_gdf'].iterrows():
             cid = _canonical_edge_id(row.geometry)
             if cid in edge_base_by_cid:

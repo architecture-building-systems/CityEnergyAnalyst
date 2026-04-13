@@ -12,7 +12,6 @@ is dropped in a later phase. Verifies:
 """
 
 import os
-import tempfile
 from unittest.mock import MagicMock
 
 import geopandas as gpd
@@ -22,8 +21,6 @@ from shapely.geometry import LineString, Point
 
 from cea.technologies.thermal_network.common.phasing import (
     _build_edge_maps,
-    _canonical_edge_id,
-    _validate_phase_graph,
     calculate_pre_size_cost,
     calculate_size_per_phase_cost,
     get_pipe_cost,
