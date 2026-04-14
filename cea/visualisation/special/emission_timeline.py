@@ -94,10 +94,10 @@ class EmissionTimelinePlot:
         categories = {
             'space_heating': {'columns': [], 'positive': True, 'display_name': 'space_heating'},
             'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
-            'DHW': {'columns': [], 'positive': True, 'display_name': 'DHW'},
+            'DHW': {'columns': [], 'positive': True, 'display_name': 'domestic_hot_water'},
             'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
-            'DH': {'columns': [], 'positive': True, 'display_name': 'DH'},
-            'DC': {'columns': [], 'positive': True, 'display_name': 'DC'},
+            'DH': {'columns': [], 'positive': True, 'display_name': 'district_heating'},
+            'DC': {'columns': [], 'positive': True, 'display_name': 'district_cooling'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
@@ -723,18 +723,23 @@ def _load_whatif_timeline_df(locator, whatif_names):
 
 
 def _get_timeline_y_columns(df, operation_services, y_categories):
-    """Detect which timeline columns match the requested services and categories."""
+    """Detect which timeline columns match the requested services and categories.
+
+    `operation_services` values are display names (see
+    [plots-lifecycle-emissions]/[plots-operational-emissions] in
+    default.config).
+    """
     service_to_tech = {
-        'electricity': ['operation_E_sys'],
-        'space_heating': ['operation_Qhs_sys', 'operation_Qhs_booster'],
-        'space_cooling': ['operation_Qcs_sys'],
-        'DHW': ['operation_Qww_sys', 'operation_Qww_booster'],
+        'electricity':        ['operation_E_sys'],
+        'space_heating':      ['operation_Qhs_sys', 'operation_Qhs_booster'],
+        'space_cooling':      ['operation_Qcs_sys'],
+        'domestic_hot_water': ['operation_Qww_sys', 'operation_Qww_booster'],
     }
     # solar_to_col = {
-    #     'PV_E': 'PV_E_offset',
-    #     'PVT_E': 'PVT_E_offset',
-    #     'PVT_Q': 'PVT_Q_offset',
-    #     'SC_Q': 'SC_Q_offset',
+    #     'solar_pv_electricity':  'PV_E_offset',
+    #     'solar_pvt_electricity': 'PVT_E_offset',
+    #     'solar_pvt_thermal':     'PVT_Q_offset',
+    #     'solar_thermal':         'SC_Q_offset',
     # }
 
     wanted = []

@@ -111,40 +111,49 @@ _ENERGY_DEMAND_ROLLUP_COLUMNS = {
     'Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh',
 }
 
-# High-level carriers surfaced to the user. The order is also the dropdown
-# order. For each raw per-column value ending in ``_kWh`` we map it to one of
-# these carriers via :func:`_column_to_carrier`; unknown columns are ignored.
-_ENERGY_CARRIERS = ['GRID', 'NATURALGAS', 'OIL', 'COAL', 'WOOD', 'SOLAR']
+# High-level carriers surfaced to the user as lowercase snake_case display
+# names. Order is the dropdown order. ``_column_to_carrier`` inspects raw
+# CSV tokens and returns the display name.
+_ENERGY_CARRIERS = [
+    'grid_electricity',
+    'natural_gas',
+    'oil',
+    'coal',
+    'wood',
+    'solar',
+]
 
-# Display names shown in the dropdown. Internal values (dictionary keys) are
-# kept so that column matching still works against the raw CSV headers.
-_CARRIER_DISPLAY_NAMES = {
-    'GRID': 'grid_electricity',
-    'NATURALGAS': 'natural_gas',
-    'OIL': 'oil',
-    'COAL': 'coal',
-    'WOOD': 'wood',
-    'SOLAR': 'solar',
+# Display-name → internal UPPERCASE token used in CSV column names.
+_ENERGY_CARRIER_DISPLAY_TO_INTERNAL = {
+    'grid_electricity': 'GRID',
+    'natural_gas':      'NATURALGAS',
+    'oil':              'OIL',
+    'coal':             'COAL',
+    'wood':             'WOOD',
+}
+_ENERGY_CARRIER_INTERNAL_TO_DISPLAY = {
+    v: k for k, v in _ENERGY_CARRIER_DISPLAY_TO_INTERNAL.items()
 }
 
-# Colour gradient (lighter, darker) per carrier — used by both the
-# HexagonLayer single-carrier gradient and the stacked ColumnLayer per-
-# carrier segment fill.
+# Colour gradient (lighter, darker) per display-name carrier — used by
+# both the HexagonLayer single-carrier gradient and the stacked
+# ColumnLayer per-carrier segment fill.
 _CARRIER_COLOURS = {
-    'GRID': ('red_lighter', 'red'),
-    'NATURALGAS': ('brown_lighter', 'brown'),
-    'OIL': ('grey_lighter', 'grey'),
-    'COAL': ('black', 'black'),
-    'WOOD': ('green_lighter', 'green'),
-    'SOLAR': ('yellow_lighter', 'yellow'),
+    'grid_electricity': ('red_lighter', 'red'),
+    'natural_gas':      ('brown_lighter', 'brown'),
+    'oil':              ('grey_lighter', 'grey'),
+    'coal':             ('black', 'black'),
+    'wood':             ('green_lighter', 'green'),
+    'solar':            ('yellow_lighter', 'yellow'),
 }
 
-# Internal value to use as the default selection when the layer first loads.
-_DEFAULT_CARRIER = 'GRID'
+# Display-name value used as the default selection on first load.
+_DEFAULT_CARRIER = 'grid_electricity'
 
 
 def _column_to_carrier(column: str) -> Optional[str]:
-    """Map a raw ``*_kWh`` column name to a high-level carrier, or None.
+    """Map a raw ``*_kWh`` column name to a high-level carrier (display
+    name), or None.
 
     Mirrors the aggregation rules used by
     ``cea.analysis.final_energy.calculation._aggregate_hourly_data``.
@@ -158,28 +167,28 @@ def _column_to_carrier(column: str) -> Optional[str]:
         return None
     if column.startswith('PVT_'):
         if column.endswith('_Q_kWh'):
-            return 'SOLAR'
+            return 'solar'
         return None
     if column.startswith('SC_'):
-        return 'SOLAR'
+        return 'solar'
 
     # Plant columns (district heating / cooling plants).
     if column.startswith('plant_pumping_'):
-        return 'GRID'
+        return 'grid_electricity'
     if column.startswith('plant_primary_') or column.startswith('plant_tertiary_'):
-        # plant_primary_<NT>_<CARRIER>_kWh → parts[3]
+        # plant_primary_<NT>_<CARRIER>_kWh → parts[3] = UPPERCASE carrier
         parts = column.split('_')
         if len(parts) >= 5:
-            carrier = parts[3]
-            return carrier if carrier in _ENERGY_CARRIERS else None
+            internal = parts[3]
+            return _ENERGY_CARRIER_INTERNAL_TO_DISPLAY.get(internal)
         return None
 
     # Building service / booster columns: Qhs_sys_<CARRIER>_kWh etc.
     if '_sys_' in column or '_booster_' in column:
         parts = column.split('_')
         if len(parts) >= 4:
-            carrier = parts[2]
-            return carrier if carrier in _ENERGY_CARRIERS else None
+            internal = parts[2]
+            return _ENERGY_CARRIER_INTERNAL_TO_DISPLAY.get(internal)
 
     return None
 
@@ -253,7 +262,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         default = _DEFAULT_CARRIER if _DEFAULT_CARRIER in available else available[0]
         return {
             "choices": [
-                {"value": c, "label": _CARRIER_DISPLAY_NAMES.get(c, c)}
+                {"value": c, "label": c}
                 for c in available
             ],
             "default": default,
@@ -368,7 +377,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         if not whatif_name or not selected:
             fallback = selected[0] if selected else None
             colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
-            display_carrier = _CARRIER_DISPLAY_NAMES.get(fallback, fallback) if fallback else None
+            display_carrier = fallback if fallback else None
             return {
                 "data": [],
                 "properties": {
@@ -398,7 +407,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": [],
                 "properties": {
                     "name": self.name,
-                    "label": f"Energy by Carrier - {_CARRIER_DISPLAY_NAMES.get(fallback, fallback)} [kWh]",
+                    "label": f"Energy by Carrier - {fallback} [kWh]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -525,7 +534,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": [],
                 "properties": {
                     "name": self.name,
-                    "label": f"Energy by Carrier - {_CARRIER_DISPLAY_NAMES.get(fallback, fallback)} [kWh]",
+                    "label": f"Energy by Carrier - {fallback} [kWh]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -541,7 +550,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
 
         if not is_stacked:
             carrier = selected[0]
-            display_carrier = _CARRIER_DISPLAY_NAMES.get(carrier, carrier)
+            display_carrier = carrier
             colour_pair = _CARRIER_COLOURS.get(carrier, ('brown_lighter', 'brown'))
             data_points = [
                 {
@@ -598,7 +607,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
             g = int(hex_colour[3:5], 16)
             b = int(hex_colour[5:7], 16)
             categories_payload.append({
-                "name": _CARRIER_DISPLAY_NAMES.get(cat, cat),
+                "name": cat,
                 # Internal code retained so the frontend can key values.
                 "key": cat,
                 "colour": hex_colour,
@@ -615,7 +624,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         data_points = []
         for e in entities:
             renamed_values = {
-                _CARRIER_DISPLAY_NAMES.get(c, c): float(e["values"].get(c, 0.0))
+                c: float(e["values"].get(c, 0.0))
                 for c in selected
             }
             data_points.append({
@@ -1127,80 +1136,98 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
 # Top-level category parameter. Mirrors the plot's `y-category-to-plot`.
 _OPERATIONAL_CATEGORIES = ['operation', 'energy_carrier']
 
-# Service identifiers surfaced to the user, matching
-# [plots-operational-emissions]'s operation-services default.
+# Service identifiers surfaced to the user as lowercase snake_case display
+# names (matches the unified UI layer — see [plots-operational-emissions]).
 _OPERATION_SERVICES = [
     'electricity',
     'space_heating',
     'space_cooling',
-    'DHW',
-    'DH',
-    'DC',
-    'PV_E',
-    'PVT_E',
-    'PVT_Q',
-    'SC_Q',
+    'domestic_hot_water',
+    'district_heating',
+    'district_cooling',
+    'solar_pv_electricity',
+    'solar_pvt_electricity',
+    'solar_pvt_thermal',
+    'solar_thermal',
 ]
 
-# Carriers surfaced to the user when category == 'energy_carrier'.
-# Matches [plots-operational-emissions]'s energy-carriers default.
+# Carriers surfaced to the user as lowercase snake_case display names
+# (matches [plots-operational-emissions]'s energy-carriers choices).
 _OPERATIONAL_ENERGY_CARRIERS = [
-    'GRID', 'NATURALGAS', 'BIOGAS', 'DRYBIOMASS', 'WETBIOMASS',
-    'COAL', 'WOOD', 'OIL', 'HYDROGEN',
+    'grid_electricity', 'natural_gas', 'biogas', 'dry_biomass', 'wet_biomass',
+    'coal', 'wood', 'oil', 'hydrogen',
 ]
 
-# Colour gradient per service / carrier for the stacked ColumnLayer.
+# Display-name → internal UPPERCASE code, used when we need to look up the
+# raw CSV column tokens (e.g. `Qhs_sys_NATURALGAS_kgCO2e`).
+_CARRIER_DISPLAY_TO_INTERNAL = {
+    'grid_electricity': 'GRID',
+    'natural_gas':      'NATURALGAS',
+    'biogas':           'BIOGAS',
+    'dry_biomass':      'DRYBIOMASS',
+    'wet_biomass':      'WETBIOMASS',
+    'coal':             'COAL',
+    'wood':             'WOOD',
+    'oil':              'OIL',
+    'hydrogen':         'HYDROGEN',
+}
+_CARRIER_INTERNAL_TO_DISPLAY = {v: k for k, v in _CARRIER_DISPLAY_TO_INTERNAL.items()}
+
+# Colour gradient per service / carrier display name for the stacked ColumnLayer.
 _OPERATION_SERVICE_COLOURS = {
-    'electricity':   ('green_lighter', 'green'),
-    'space_heating': ('red_lighter', 'red'),
-    'space_cooling': ('blue_lighter', 'blue'),
-    'DHW':           ('orange_lighter', 'orange'),
-    'DH':            ('red_light', 'red_dark'),
-    'DC':            ('blue_light', 'blue'),
-    'PV_E':          ('yellow_lighter', 'yellow'),
-    'PVT_E':         ('brown_lighter', 'brown'),
-    'PVT_Q':         ('purple_lighter', 'purple'),
-    'SC_Q':          ('yellow_light', 'brown'),
+    'electricity':           ('green_lighter', 'green'),
+    'space_heating':         ('red_lighter', 'red'),
+    'space_cooling':         ('blue_lighter', 'blue'),
+    'domestic_hot_water':    ('orange_lighter', 'orange'),
+    'district_heating':      ('red_light', 'red_dark'),
+    'district_cooling':      ('blue_light', 'blue'),
+    'solar_pv_electricity':  ('yellow_lighter', 'yellow'),
+    'solar_pvt_electricity': ('brown_lighter', 'brown'),
+    'solar_pvt_thermal':     ('purple_lighter', 'purple'),
+    'solar_thermal':         ('yellow_light', 'brown'),
 }
 _OPERATIONAL_CARRIER_COLOURS = {
-    'GRID':        ('red_lighter', 'red'),
-    'NATURALGAS':  ('brown_lighter', 'brown'),
-    'BIOGAS':      ('green_lighter', 'green'),
-    'DRYBIOMASS':  ('green_light', 'green'),
-    'WETBIOMASS':  ('green_light', 'brown'),
-    'COAL':        ('black', 'black'),
-    'WOOD':        ('brown_light', 'brown'),
-    'OIL':         ('grey_lighter', 'grey'),
-    'HYDROGEN':    ('blue_lighter', 'blue'),
+    'grid_electricity': ('red_lighter', 'red'),
+    'natural_gas':      ('brown_lighter', 'brown'),
+    'biogas':           ('green_lighter', 'green'),
+    'dry_biomass':      ('green_light', 'green'),
+    'wet_biomass':      ('green_light', 'brown'),
+    'coal':             ('black', 'black'),
+    'wood':             ('brown_light', 'brown'),
+    'oil':              ('grey_lighter', 'grey'),
+    'hydrogen':         ('blue_lighter', 'blue'),
 }
 
 
 def _op_column_to_service(column: str) -> Optional[str]:
-    """Map an operational-emissions column to a high-level service, or None.
+    """Map an operational-emissions column to a high-level service display
+    name, or None.
 
-    Service columns in the hourly per-entity CSV look like:
+    Internal CSV column formats (unchanged):
       Qhs_sys_<CARRIER>_kgCO2e          → space_heating
       Qhs_booster_<CARRIER>_kgCO2e      → space_heating
       Qcs_sys_<CARRIER>_kgCO2e          → space_cooling
-      Qww_sys_<CARRIER>_kgCO2e          → DHW
-      Qww_booster_<CARRIER>_kgCO2e      → DHW
+      Qww_sys_<CARRIER>_kgCO2e          → domestic_hot_water
+      Qww_booster_<CARRIER>_kgCO2e      → domestic_hot_water
       E_sys_<CARRIER>_kgCO2e            → electricity
-      plant_{primary|tertiary|pumping}_DH_<CARRIER>_kgCO2e → DH
-      plant_{primary|tertiary|pumping}_DC_<CARRIER>_kgCO2e → DC
+      plant_{primary|tertiary|pumping}_DH_<CARRIER>_kgCO2e → district_heating
+      plant_{primary|tertiary|pumping}_DC_<CARRIER>_kgCO2e → district_cooling
     Solar offset columns (negative):
-      PV_E_offset_kgCO2e, PVT_E_offset_kgCO2e,
-      PVT_Q_offset_kgCO2e, SC_Q_offset_kgCO2e
+      PV_E_offset_kgCO2e   → solar_pv_electricity
+      PVT_E_offset_kgCO2e  → solar_pvt_electricity
+      PVT_Q_offset_kgCO2e  → solar_pvt_thermal
+      SC_Q_offset_kgCO2e   → solar_thermal
     """
     if not column.endswith('_kgCO2e'):
         return None
     if column == 'PV_E_offset_kgCO2e':
-        return 'PV_E'
+        return 'solar_pv_electricity'
     if column == 'PVT_E_offset_kgCO2e':
-        return 'PVT_E'
+        return 'solar_pvt_electricity'
     if column == 'PVT_Q_offset_kgCO2e':
-        return 'PVT_Q'
+        return 'solar_pvt_thermal'
     if column == 'SC_Q_offset_kgCO2e':
-        return 'SC_Q'
+        return 'solar_thermal'
     if column.startswith('E_sys_'):
         return 'electricity'
     if column.startswith('Qhs_sys_') or column.startswith('Qhs_booster_'):
@@ -1208,24 +1235,25 @@ def _op_column_to_service(column: str) -> Optional[str]:
     if column.startswith('Qcs_sys_'):
         return 'space_cooling'
     if column.startswith('Qww_sys_') or column.startswith('Qww_booster_'):
-        return 'DHW'
+        return 'domestic_hot_water'
     if (
         column.startswith('plant_primary_DH_')
         or column.startswith('plant_tertiary_DH_')
         or column.startswith('plant_pumping_DH_')
     ):
-        return 'DH'
+        return 'district_heating'
     if (
         column.startswith('plant_primary_DC_')
         or column.startswith('plant_tertiary_DC_')
         or column.startswith('plant_pumping_DC_')
     ):
-        return 'DC'
+        return 'district_cooling'
     return None
 
 
 def _op_column_to_carrier(column: str) -> Optional[str]:
-    """Map an operational-emissions column to an energy carrier, or None.
+    """Map an operational-emissions column to an energy carrier display
+    name, or None.
 
     Excludes solar offsets since those are not a physical fuel carrier.
     """
@@ -1237,8 +1265,8 @@ def _op_column_to_carrier(column: str) -> Optional[str]:
     parts = stripped.split('_')
     if not parts:
         return None
-    carrier = parts[-1]
-    return carrier if carrier in _OPERATIONAL_ENERGY_CARRIERS else None
+    internal = parts[-1]
+    return _CARRIER_INTERNAL_TO_DISPLAY.get(internal)
 
 
 class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
