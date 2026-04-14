@@ -417,7 +417,7 @@ class ThermalNetworkMapLayer(MapLayer):
         return {
             'network-name':
                 ParameterDefinition(
-                    "Network Name",
+                    "network-name",
                     "string",
                     default="",
                     description="Name of the network layout to visualise (leave empty to show base layer only)",
@@ -427,7 +427,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 ),
             'network-type':
                 ParameterDefinition(
-                    "Network Type",
+                    "network-type",
                     "string",
                     description="Type of the network",
                     options_generator="_get_network_types",
@@ -435,7 +435,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 ),
             'phase':
                 ParameterDefinition(
-                    "Phase",
+                    "phase",
                     "string",
                     default="",
                     description="Select phase for multi-phase plans",
