@@ -718,8 +718,8 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                 "properties": {
                     "name": self.name,
                     "label": (
-                        f"Lifecycle Emissions - {fallback}"
-                        if fallback else "Lifecycle Emissions"
+                        f"Lifecycle Emissions - {fallback} [kgCO\u2082e]"
+                        if fallback else "Lifecycle Emissions [kgCO\u2082e]"
                     ),
                     "description": self.description,
                     "colours": {
@@ -853,7 +853,7 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": [],
                 "properties": {
                     "name": self.name,
-                    "label": f"Lifecycle Emissions - {fallback}",
+                    "label": f"Lifecycle Emissions - {fallback} [kgCO\u2082e]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -872,7 +872,15 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             category = selected[0]
             colour_pair = _LIFECYCLE_CATEGORY_COLOURS.get(category, ('grey_lighter', 'black'))
             data_points = [
-                {"position": e["position"], "value": e["values"][category]}
+                {
+                    "position": e["position"],
+                    "value": e["values"][category],
+                    # Extra fields for the hover tooltip on the HexagonLayer
+                    # path: HexagonLayer exposes the source records via
+                    # `object.points`, so the frontend can read these.
+                    "name": e["name"],
+                    "category": category,
+                }
                 for e in entities
             ]
             period_values = [p["value"] for p in data_points]
@@ -880,7 +888,7 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": data_points,
                 "properties": {
                     "name": self.name,
-                    "label": f"Lifecycle Emissions - {category}",
+                    "label": f"Lifecycle Emissions - {category} [kgCO\u2082e]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -931,7 +939,7 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             "data": entities,
             "properties": {
                 "name": self.name,
-                "label": "Lifecycle Emissions - stacked",
+                "label": "Lifecycle Emissions - stacked [kgCO\u2082e]",
                 "description": self.description,
                 "stacked": True,
                 "categories": categories_payload,
