@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
-from shapely.geometry import Point
 
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
@@ -430,6 +429,29 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         if missing:
             raise ValueError(f"Invalid carrier(s): {missing}")
 
+        # Factory for the empty-range response used by the early-exit
+        # branches below. `fallback` is always non-None here because
+        # `selected` was already validated earlier in the function.
+        def _empty_output(fallback):
+            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": f"Carrier - {fallback} [kWh]",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
+            }
+
         # Read the zone CRS. ``final_energy_buildings.csv`` stores building
         # x_coord/y_coord as zone-CRS centroids (see
         # cea.analysis.final_energy.calculation) and plant x_coord/y_coord in
@@ -444,8 +466,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
 
         if source_crs is None:
             logger.debug("EnergyByCarrier: missing zone CRS; cannot project entities.")
-            output['properties']['range'] = empty_range
-            return output
+            return _empty_output(selected[0])
 
         # Keep only rows that have usable coordinates.
         needs_xy = {'x_coord', 'y_coord'}
@@ -454,14 +475,12 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "EnergyByCarrier: summary is missing x_coord/y_coord columns "
                 f"(found: {list(summary.columns)}); cannot place entities."
             )
-            output['properties']['range'] = empty_range
-            return output
+            return _empty_output(selected[0])
 
         usable = summary.dropna(subset=['x_coord', 'y_coord', 'name'])
         if usable.empty:
             logger.debug("EnergyByCarrier: no entities with valid coordinates.")
-            output['properties']['range'] = empty_range
-            return output
+            return _empty_output(selected[0])
 
         entity_gdf = gpd.GeoDataFrame(
             {'name': usable['name'].tolist()},
