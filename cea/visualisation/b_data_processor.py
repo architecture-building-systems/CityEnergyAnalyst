@@ -482,18 +482,27 @@ class data_processor:
             operational_emission_metrics = []
 
         if plot_cea_feature == 'demand':
+            # Unified display names (matching the Demand map layer's
+            # dropdown) + backwards-compat aliases for the pre-unified
+            # `enduse_*` choices and the legacy aggregated columns.
             y_cea_metric_map = {
+                # Unified display names
+                'electricity':        'E_sys_kWh',
+                'space_heating':      'Qhs_sys_kWh',
+                'space_cooling':      'Qcs_sys_kWh',
+                'domestic_hot_water': 'Qww_sys_kWh',
+                # Legacy aliases
                 'grid_electricity_consumption': 'GRID_kWh',
-                'enduse_electricity_demand': 'E_sys_kWh',
-                'enduse_electricity': 'E_sys_kWh',
-                'enduse_cooling_demand': 'QC_sys_kWh',
-                'enduse_space_cooling_demand': 'Qcs_sys_kWh',
-                'enduse_space_cooling': 'Qcs_sys_kWh',
-                'enduse_heating_demand': 'QH_sys_kWh',
-                'enduse_space_heating_demand': 'Qhs_sys_kWh',
-                'enduse_space_heating': 'Qhs_sys_kWh',
-                'enduse_dhw_demand': 'Qww_sys_kWh',
-                'enduse_dhw': 'Qww_sys_kWh',
+                'enduse_electricity_demand':    'E_sys_kWh',
+                'enduse_electricity':           'E_sys_kWh',
+                'enduse_cooling_demand':        'QC_sys_kWh',
+                'enduse_space_cooling_demand':  'Qcs_sys_kWh',
+                'enduse_space_cooling':         'Qcs_sys_kWh',
+                'enduse_heating_demand':        'QH_sys_kWh',
+                'enduse_space_heating_demand':  'Qhs_sys_kWh',
+                'enduse_space_heating':         'Qhs_sys_kWh',
+                'enduse_dhw_demand':            'Qww_sys_kWh',
+                'enduse_dhw':                   'Qww_sys_kWh',
             }
 
         elif plot_cea_feature == 'pv':

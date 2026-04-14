@@ -98,11 +98,12 @@ class DemandMapLayer(MapLayer):
         return {
             'data-column':
                 ParameterDefinition(
-                    "Data Column",
+                    "service",
                     "string",
-                    description="Data column to use",
+                    description="End-use service(s) to visualise",
                     options_generator="_get_data_columns",
                     selector="choice",
+                    multi=True,
                 ),
             'period':
                 ParameterDefinition(
@@ -150,107 +151,197 @@ class DemandMapLayer(MapLayer):
 
     @cache_output
     def generate_data(self, parameters):
-        """Generates the output for this layer"""
+        """Generate single (HexagonLayer) or stacked (ColumnLayer) output.
 
+        - 1 service selected → HexagonLayer shape with that column's
+          gradient and legend label.
+        - 2+ services selected → stacked shape with one ColumnLayer per
+          service; frontend renders segments on top of each other.
+
+        Mirrors the Operational/Lifecycle Emissions pattern.
+        """
         # FIXME: Hardcoded to zone buildings for now
         buildings = self.locator.get_zone_building_names()
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        data_column = parameters['data-column']
+        raw_selection = parameters['data-column']
 
         # Backwards compatibility: previous versions stored the raw CSV
-        # column name (e.g. 'E_sys_kWh') in `data-column`. Silently
-        # translate those to the new display names so cached scenarios
-        # and user parameter files keep working.
-        if data_column not in self._data_columns:
-            legacy_to_display = {
-                entry["column"]: display
-                for display, entry in self._data_columns.items()
-            }
-            if data_column in legacy_to_display:
-                data_column = legacy_to_display[data_column]
-            else:
-                raise ValueError(f"Invalid data column: {data_column}")
-
-        # Display name → internal CSV column name (e.g. 'electricity' → 'E_sys_kWh').
-        internal_column = self._data_columns[data_column]["column"]
-
-        output = {
-            "data": [],
-            "properties": {
-                "name": self.name,
-                "label": self._data_columns[data_column]["label"],
-                "description": self.description,
-                "colours": self._data_columns[data_column]["colours"]
-            }
+        # column name (e.g. 'E_sys_kWh') or a single display-name string
+        # in `data-column`. Normalise to a list of display names.
+        legacy_to_display = {
+            entry["column"]: display
+            for display, entry in self._data_columns.items()
         }
+
+        def _normalise(value):
+            if value is None:
+                return None
+            if value in self._data_columns:
+                return value
+            if value in legacy_to_display:
+                return legacy_to_display[value]
+            return None
+
+        if isinstance(raw_selection, list):
+            selected = [n for n in (_normalise(v) for v in raw_selection) if n]
+        elif isinstance(raw_selection, str):
+            n = _normalise(raw_selection)
+            selected = [n] if n else []
+        else:
+            selected = []
+
+        # Preserve canonical (dict insertion) order so stacks are predictable.
+        canonical_order = list(self._data_columns.keys())
+        selected = [s for s in canonical_order if s in selected]
+        is_stacked = len(selected) > 1
+
+        empty_range = {
+            'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+            'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0},
+        }
+
+        def empty_output(fallback=None):
+            entry = self._data_columns.get(fallback) if fallback else None
+            label = entry["label"] if entry else "End-use Demand [kWh]"
+            colours = entry["colours"] if entry else {
+                "colour_array": [color_to_hex("grey_lighter"), color_to_hex("black")],
+                "points": 12,
+            }
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": label,
+                    "description": self.description,
+                    "colours": colours,
+                    "range": empty_range,
+                    "stacked": False,
+                },
+            }
+
+        if not selected:
+            return empty_output()
 
         # Filter buildings that exist in geometry
-        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
-
+        buildings, _, building_centroids = safe_filter_buildings_with_geometry(
+            self.locator, buildings
+        )
         if not buildings:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
+            return empty_output(selected[0])
 
-        def get_building_demand(building, centroid):
-            try:
-                demand_file = self.locator.get_demand_results_file(building)
-                if not os.path.exists(demand_file):
-                    return None
-
-                demand = pd.read_csv(demand_file, usecols=[internal_column])[internal_column]
-
-                total_min = 0
-                total_max = demand.sum()
-
-                if start < end:
-                    period_value = demand.iloc[start:end + 1].sum()
-                else:
-                    period_value = demand.iloc[start:].sum() + demand.iloc[:end + 1].sum()
-                period_min = period_value
-                period_max = period_value
-
-                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
-
-                return total_min, total_max, period_min, period_max, data_point
-            except Exception as e:
-                print(f"Warning: Error reading demand for {building}: {e}")
+        def read_building_values(building):
+            """Return {service: period_sum} for this building, or None on missing."""
+            demand_file = self.locator.get_demand_results_file(building)
+            if not os.path.exists(demand_file):
                 return None
+            try:
+                columns = [self._data_columns[s]["column"] for s in selected]
+                df = pd.read_csv(demand_file, usecols=columns)
+            except Exception as exc:
+                print(f"Warning: Error reading demand for {building}: {exc}")
+                return None
+            out = {}
+            for service in selected:
+                col = self._data_columns[service]["column"]
+                series = df[col].astype(float)
+                if start < end:
+                    out[service] = float(series.iloc[start:end + 1].sum())
+                else:
+                    out[service] = float(
+                        series.iloc[start:].sum() + series.iloc[:end + 1].sum()
+                    )
+            return out
 
-        # with ThreadPoolExecutor() as executor:
-        #     values = executor.map(get_building_demand, buildings, building_centroids)
-        #
-        # total_min, total_max, period_min, period_max, data = zip(*values)
+        entities = []
+        for building, centroid in zip(buildings, building_centroids):
+            values = read_building_values(building)
+            if values is None:
+                continue
+            entities.append({
+                "name": building,
+                "position": [centroid.x, centroid.y],
+                "values": values,
+            })
 
-        values = [get_building_demand(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+        if not entities:
+            return empty_output(selected[0])
 
-        # Filter out None values (missing files)
-        values = [v for v in values if v is not None]
-
-        if not values:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+        if not is_stacked:
+            service = selected[0]
+            entry = self._data_columns[service]
+            data_points = [
+                {
+                    "position": e["position"],
+                    "value": e["values"][service],
+                    "name": e["name"],
+                    "category": service,
+                }
+                for e in entities
+            ]
+            period_values = [p["value"] for p in data_points]
+            return {
+                "data": data_points,
+                "properties": {
+                    "name": self.name,
+                    "label": entry["label"],
+                    "description": self.description,
+                    "colours": entry["colours"],
+                    "range": {
+                        "total": {
+                            "label": "Total Range",
+                            "min": 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                        "period": {
+                            "label": "Period Range",
+                            "min": float(min(period_values)) if period_values else 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                    },
+                    "stacked": False,
+                },
             }
-            return output
 
-        total_min, total_max, period_min, period_max, data = zip(*values)
+        # Stacked-multi path: one ColumnLayer per service on the frontend.
+        categories_payload = []
+        for service in selected:
+            colour_array = self._data_columns[service]["colours"]["colour_array"]
+            hex_colour = colour_array[-1] if colour_array else "#888888"
+            r = int(hex_colour[1:3], 16)
+            g = int(hex_colour[3:5], 16)
+            b = int(hex_colour[5:7], 16)
+            categories_payload.append({
+                "name": service,
+                "colour": hex_colour,
+                "rgb": [r, g, b],
+            })
 
-        output['data'] = data
-        output['properties']['range'] = {
-            'total': {
-                'label': 'Total Range',
-                'min': float(min(total_min)),
-                'max': float(max(total_max))
+        stack_totals = [
+            sum(max(e["values"].get(s, 0.0), 0.0) for s in selected)
+            for e in entities
+        ]
+
+        return {
+            "data": entities,
+            "properties": {
+                "name": self.name,
+                "label": "End-use Demand - stacked [kWh]",
+                "description": self.description,
+                "stacked": True,
+                "categories": categories_payload,
+                "range": {
+                    "total": {
+                        "label": "Total Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                    "period": {
+                        "label": "Period Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                },
             },
-            'period': {
-                'label': 'Period Range',
-                'min': float(min(period_min)),
-                'max': float(max(period_max))
-            }
         }
-        return output
