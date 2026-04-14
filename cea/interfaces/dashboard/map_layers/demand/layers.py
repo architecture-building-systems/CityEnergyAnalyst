@@ -39,33 +39,40 @@ def safe_filter_buildings_with_geometry(locator, buildings: list) -> tuple:
 class DemandMapLayer(MapLayer):
     category = DemandCategory
     name = "demand"
-    label = "End-use Electricity [kWh]"
+    label = "Demand [kWh]"
     description = "Energy Demand of buildings"
 
+    # Dropdown-visible service name → internal CSV column + colour pair.
+    # Service names match the unified UI layer convention (snake_case
+    # words, matching the operational/lifecycle emissions map layers).
     _data_columns = {
-        "E_sys_kWh": {
-            "label": "End-use Electricity [kWh]",
+        "electricity": {
+            "column": "E_sys_kWh",
+            "label": "End-use Demand - electricity [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("green_lighter"), color_to_hex("green")],
                 "points": 12
             }
         },
-        "Qcs_sys_kWh": {
-            "label": "End-use Space Cooling [kWh]",
-            "colours": {
-                "colour_array": [color_to_hex("blue_lighter"), color_to_hex("blue")],
-                "points": 12
-            }
-        },
-        "Qhs_sys_kWh": {
-            "label": "End-use Space Heating [kWh]",
+        "space_heating": {
+            "column": "Qhs_sys_kWh",
+            "label": "End-use Demand - space_heating [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("red_lighter"), color_to_hex("red")],
                 "points": 12
             }
         },
-        "Qww_sys_kWh": {
-            "label": "End-use Domestic Hot Water [kWh]",
+        "space_cooling": {
+            "column": "Qcs_sys_kWh",
+            "label": "End-use Demand - space_cooling [kWh]",
+            "colours": {
+                "colour_array": [color_to_hex("blue_lighter"), color_to_hex("blue")],
+                "points": 12
+            }
+        },
+        "domestic_hot_water": {
+            "column": "Qww_sys_kWh",
+            "label": "End-use Demand - domestic_hot_water [kWh]",
             "colours": {
                 "colour_array": [color_to_hex("orange_lighter"), color_to_hex("orange")],
                 "points": 12
@@ -74,7 +81,13 @@ class DemandMapLayer(MapLayer):
     }
 
     def _get_data_columns(self):
-        return list(self._data_columns.keys())
+        return {
+            "choices": [
+                {"value": key, "label": key}
+                for key in self._data_columns.keys()
+            ],
+            "default": "electricity",
+        }
 
     def _get_results_files(self, _):
         buildings = self.locator.get_zone_building_names()
@@ -146,8 +159,22 @@ class DemandMapLayer(MapLayer):
 
         data_column = parameters['data-column']
 
-        if data_column not in self._data_columns.keys():
-            raise ValueError(f"Invalid data column: {data_column}")
+        # Backwards compatibility: previous versions stored the raw CSV
+        # column name (e.g. 'E_sys_kWh') in `data-column`. Silently
+        # translate those to the new display names so cached scenarios
+        # and user parameter files keep working.
+        if data_column not in self._data_columns:
+            legacy_to_display = {
+                entry["column"]: display
+                for display, entry in self._data_columns.items()
+            }
+            if data_column in legacy_to_display:
+                data_column = legacy_to_display[data_column]
+            else:
+                raise ValueError(f"Invalid data column: {data_column}")
+
+        # Display name → internal CSV column name (e.g. 'electricity' → 'E_sys_kWh').
+        internal_column = self._data_columns[data_column]["column"]
 
         output = {
             "data": [],
@@ -175,7 +202,7 @@ class DemandMapLayer(MapLayer):
                 if not os.path.exists(demand_file):
                     return None
 
-                demand = pd.read_csv(demand_file, usecols=[data_column])[data_column]
+                demand = pd.read_csv(demand_file, usecols=[internal_column])[internal_column]
 
                 total_min = 0
                 total_max = demand.sum()
