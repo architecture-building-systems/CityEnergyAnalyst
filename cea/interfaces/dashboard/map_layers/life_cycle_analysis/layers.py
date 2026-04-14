@@ -312,7 +312,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 ParameterDefinition(
                     "Radius",
                     "number",
-                    default=5,
+                    default=2,
                     description="Radius of hexagon bin in meters",
                     selector="input",
                     range=[0, 100],
@@ -784,7 +784,7 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                 ParameterDefinition(
                     "Radius",
                     "number",
-                    default=5,
+                    default=2,
                     description="Radius of hexagon bin in meters",
                     selector="input",
                     range=[0, 100],
@@ -1403,7 +1403,7 @@ class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                 ParameterDefinition(
                     "Radius",
                     "number",
-                    default=5,
+                    default=2,
                     description="Radius of hexagon bin in meters",
                     selector="input",
                     range=[0, 100],
@@ -1806,7 +1806,7 @@ class AnthropogenicHeatMapLayer(WhatifDeletableMixin, MapLayer):
                 ParameterDefinition(
                     "Radius",
                     "number",
-                    default=5,
+                    default=2,
                     description="Radius of hexagon bin in metres",
                     selector="input",
                     range=[0, 100],
