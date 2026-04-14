@@ -383,8 +383,8 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "properties": {
                     "name": self.name,
                     "label": (
-                        f"Energy by Carrier - {display_carrier} [kWh]"
-                        if display_carrier else "Energy by Carrier [kWh]"
+                        f"Carrier - {display_carrier} [kWh]"
+                        if display_carrier else "Carrier [kWh]"
                     ),
                     "description": self.description,
                     "colours": {
@@ -407,7 +407,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": [],
                 "properties": {
                     "name": self.name,
-                    "label": f"Energy by Carrier - {fallback} [kWh]",
+                    "label": f"Carrier - {fallback} [kWh]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -534,7 +534,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": [],
                 "properties": {
                     "name": self.name,
-                    "label": f"Energy by Carrier - {fallback} [kWh]",
+                    "label": f"Carrier - {fallback} [kWh]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -573,7 +573,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                 "data": data_points,
                 "properties": {
                     "name": self.name,
-                    "label": f"Energy by Carrier - {display_carrier} [kWh]",
+                    "label": f"Carrier - {display_carrier} [kWh]",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -637,7 +637,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
             "data": data_points,
             "properties": {
                 "name": self.name,
-                "label": "Energy by Carrier - stacked [kWh]",
+                "label": "Carrier - stacked [kWh]",
                 "description": self.description,
                 "stacked": True,
                 "categories": categories_payload,
