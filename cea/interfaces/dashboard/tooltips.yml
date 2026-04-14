@@ -101,3 +101,10 @@ main-use-type-info:
     Main use type is the use type with the highest occupancy ratio.
     Assign in Input Editor > zone (use_type1, use_type2, use_type3 and their ratios).
     Edit or add in Database Editor > USE_TYPES.
+
+# Map layer legend card — how the colour-range dropdown works
+map-layer-range-mode:
+  title: Total Range vs. Period Range
+  body: |-
+    Total Range - bar heights are normalised to each entity's full-year sum. Absolute scale; narrow periods look short.
+    Period Range - bar heights are normalised to the current period's max. Rescales with the slider for maximum contrast within the period.
