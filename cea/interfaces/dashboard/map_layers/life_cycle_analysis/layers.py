@@ -127,6 +127,18 @@ _CARRIER_DISPLAY_NAMES = {
     'SOLAR': 'solar',
 }
 
+# Colour gradient (lighter, darker) per carrier — used by both the
+# HexagonLayer single-carrier gradient and the stacked ColumnLayer per-
+# carrier segment fill.
+_CARRIER_COLOURS = {
+    'GRID': ('red_lighter', 'red'),
+    'NATURALGAS': ('brown_lighter', 'brown'),
+    'OIL': ('grey_lighter', 'grey'),
+    'COAL': ('black', 'black'),
+    'WOOD': ('green_lighter', 'green'),
+    'SOLAR': ('yellow_lighter', 'yellow'),
+}
+
 # Internal value to use as the default selection when the layer first loads.
 _DEFAULT_CARRIER = 'GRID'
 
@@ -276,7 +288,8 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
                     description="Final energy carrier to visualize",
                     options_generator="_get_data_columns",
                     selector="choice",
-                    depends_on=['whatif_name']
+                    depends_on=['whatif_name'],
+                    multi=True,
                 ),
             'period':
                 ParameterDefinition(
@@ -324,50 +337,89 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
 
     @cache_output
     def generate_data(self, parameters):
+        """Generate hex-bin (single carrier) or stacked-column (multi carriers) output.
+
+        Mirrors :class:`LifecycleEmissionsMapLayer.generate_data`: a single
+        selected carrier renders as a ``HexagonLayer`` on the frontend, and
+        a list of 2+ carriers renders as one ``ColumnLayer`` per carrier
+        with a shared stack base, so segments visually sit on top of each
+        other.
+        """
         whatif_name = parameters.get('whatif_name')
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        carrier = parameters['data-column']
-        display_carrier = _CARRIER_DISPLAY_NAMES.get(carrier, carrier) if carrier else None
-
-        output = {
-            "data": [],
-            "properties": {
-                "name": self.name,
-                "label": (
-                    f"Energy by Carrier - {display_carrier} [kWh]"
-                    if display_carrier else "Energy by Carrier [kWh]"
-                ),
-                "description": self.description,
-                "colours": {
-                    "colour_array": [color_to_hex("brown_lighter"), color_to_hex("brown")],
-                    "points": 12
-                }
-            }
-        }
+        raw_selection = parameters['data-column']
+        if isinstance(raw_selection, list):
+            selected = [c for c in raw_selection if c in _ENERGY_CARRIERS]
+        elif isinstance(raw_selection, str):
+            selected = [raw_selection] if raw_selection in _ENERGY_CARRIERS else []
+        else:
+            selected = []
+        # Canonical order so stacks are predictable regardless of pick order.
+        selected = [c for c in _ENERGY_CARRIERS if c in selected]
+        is_stacked = len(selected) > 1
 
         empty_range = {
             'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
             'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0},
         }
 
-        if not whatif_name:
-            output['properties']['range'] = empty_range
-            return output
+        if not whatif_name or not selected:
+            fallback = selected[0] if selected else None
+            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            display_carrier = _CARRIER_DISPLAY_NAMES.get(fallback, fallback) if fallback else None
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": (
+                        f"Energy by Carrier - {display_carrier} [kWh]"
+                        if display_carrier else "Energy by Carrier [kWh]"
+                    ),
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
+            }
 
         summary = self._read_entity_summary(whatif_name)
         if summary is None or 'name' not in summary.columns:
-            output['properties']['range'] = empty_range
-            return output
+            fallback = selected[0]
+            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": f"Energy by Carrier - {_CARRIER_DISPLAY_NAMES.get(fallback, fallback)} [kWh]",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
+            }
 
         raw = self._get_data_columns(parameters)
         if isinstance(raw, dict):
             available_carriers = [c['value'] for c in raw.get('choices', [])]
         else:
             available_carriers = raw or []
-        if carrier is None or carrier not in available_carriers:
-            raise ValueError(f"Invalid carrier: {carrier}")
+        missing = [c for c in selected if c not in available_carriers]
+        if missing:
+            raise ValueError(f"Invalid carrier(s): {missing}")
 
         # Read the zone CRS. ``final_energy_buildings.csv`` stores building
         # x_coord/y_coord as zone-CRS centroids (see
@@ -413,76 +465,187 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         centroids = entity_gdf.geometry.to_crs(get_geographic_coordinate_system())
         entity_names = entity_gdf['name'].tolist()
 
-        def get_data(entity_name, centroid):
+        def get_entity_values(entity_name, centroid):
+            """Return {carrier: period_sum} for this entity over the selected period."""
             entity_file = self.locator.get_final_energy_building_file(entity_name, whatif_name)
             if not os.path.exists(entity_file):
                 logger.debug(f"EnergyByCarrier: missing file for {entity_name}")
                 return None
-
             try:
                 header = pd.read_csv(entity_file, nrows=0).columns
             except Exception as exc:
                 logger.debug(f"EnergyByCarrier: header read failed for {entity_name}: {exc}")
                 return None
 
-            matching_cols = [c for c in header if _column_to_carrier(c) == carrier]
+            # Bucket columns by selected carrier up front so we only read
+            # each CSV once.
+            buckets = {cat: [] for cat in selected}
+            for col in header:
+                mapped = _column_to_carrier(col)
+                if mapped in buckets:
+                    buckets[mapped].append(col)
 
-            if not matching_cols:
-                period_value = 0.0
-                total_value = 0.0
+            flat_cols = [c for cols in buckets.values() for c in cols]
+            flat_cols = list(dict.fromkeys(flat_cols))
+            if not flat_cols:
+                per_carrier = {cat: 0.0 for cat in selected}
             else:
                 try:
-                    data = pd.read_csv(entity_file, usecols=matching_cols).sum(axis=1)
+                    df = pd.read_csv(entity_file, usecols=flat_cols)
                 except Exception as exc:
                     logger.debug(f"EnergyByCarrier: data read failed for {entity_name}: {exc}")
                     return None
-                total_value = float(data.sum())
-                if start < end:
-                    period_value = float(data.iloc[start:end + 1].sum())
-                else:
-                    period_value = float(
-                        data.iloc[start:].sum() + data.iloc[:end + 1].sum()
-                    )
+                per_carrier = {}
+                for cat in selected:
+                    cols = buckets[cat]
+                    if not cols:
+                        per_carrier[cat] = 0.0
+                        continue
+                    series = df[cols].sum(axis=1).astype(float)
+                    if start < end:
+                        per_carrier[cat] = float(series.iloc[start:end + 1].sum())
+                    else:
+                        per_carrier[cat] = float(
+                            series.iloc[start:].sum() + series.iloc[:end + 1].sum()
+                        )
 
             return {
                 'name': entity_name,
-                'total': total_value,
-                'period': period_value,
-                'point': {"position": [centroid.x, centroid.y], "value": period_value},
+                'position': [centroid.x, centroid.y],
+                'values': per_carrier,
             }
 
-        values = [get_data(name, c) for name, c in zip(entity_names, centroids)]
-        values = [v for v in values if v is not None]
+        entities = [get_entity_values(name, c) for name, c in zip(entity_names, centroids)]
+        entities = [e for e in entities if e is not None]
 
-        if not values:
-            output['properties']['range'] = empty_range
-            return output
+        if not entities:
+            fallback = selected[0]
+            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": f"Energy by Carrier - {_CARRIER_DISPLAY_NAMES.get(fallback, fallback)} [kWh]",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
+            }
 
-        totals = [v['total'] for v in values]
-        periods = [v['period'] for v in values]
-        data_points = [v['point'] for v in values]
+        if not is_stacked:
+            carrier = selected[0]
+            display_carrier = _CARRIER_DISPLAY_NAMES.get(carrier, carrier)
+            colour_pair = _CARRIER_COLOURS.get(carrier, ('brown_lighter', 'brown'))
+            data_points = [
+                {
+                    "position": e["position"],
+                    "value": e["values"][carrier],
+                    # Extra fields for the HexagonLayer hover tooltip.
+                    "name": e["name"],
+                    "category": carrier,
+                }
+                for e in entities
+            ]
+            period_values = [p["value"] for p in data_points]
+            nonzero_totals = sum(1 for p in period_values if p > 0)
+            logger.debug(
+                f"EnergyByCarrier[{carrier}]: {len(entities)} entities, "
+                f"{nonzero_totals} with non-zero totals; "
+                f"total_max={max(period_values) if period_values else 0:.2f}"
+            )
+            return {
+                "data": data_points,
+                "properties": {
+                    "name": self.name,
+                    "label": f"Energy by Carrier - {display_carrier} [kWh]",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": {
+                        "total": {
+                            "label": "Total Range",
+                            "min": 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                        "period": {
+                            "label": "Period Range",
+                            "min": float(min(period_values)) if period_values else 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                    },
+                    "stacked": False,
+                },
+            }
 
-        nonzero_totals = sum(1 for t in totals if t > 0)
-        logger.debug(
-            f"EnergyByCarrier[{carrier}]: {len(values)} entities, "
-            f"{nonzero_totals} with non-zero totals; "
-            f"total_max={max(totals) if totals else 0:.2f}"
-        )
+        # Stacked-multi path: one ColumnLayer per carrier on the frontend.
+        categories_payload = []
+        for cat in selected:
+            _, darker = _CARRIER_COLOURS.get(cat, ('brown_lighter', 'brown'))
+            hex_colour = color_to_hex(darker)
+            r = int(hex_colour[1:3], 16)
+            g = int(hex_colour[3:5], 16)
+            b = int(hex_colour[5:7], 16)
+            categories_payload.append({
+                "name": _CARRIER_DISPLAY_NAMES.get(cat, cat),
+                # Internal code retained so the frontend can key values.
+                "key": cat,
+                "colour": hex_colour,
+                "rgb": [r, g, b],
+            })
 
-        output['data'] = data_points
-        output['properties']['range'] = {
-            'total': {
-                'label': 'Total Range',
-                'min': 0.0,
-                'max': float(max(totals)) if totals else 0.0,
-            },
-            'period': {
-                'label': 'Period Range',
-                'min': float(min(periods)) if periods else 0.0,
-                'max': float(max(periods)) if periods else 0.0,
+        stack_totals = [
+            sum(max(e["values"].get(c, 0.0), 0.0) for c in selected)
+            for e in entities
+        ]
+
+        # Transform `values` so the frontend can key by display name (which
+        # is what categories[i].name carries in the stacked payload).
+        data_points = []
+        for e in entities:
+            renamed_values = {
+                _CARRIER_DISPLAY_NAMES.get(c, c): float(e["values"].get(c, 0.0))
+                for c in selected
+            }
+            data_points.append({
+                "name": e["name"],
+                "position": e["position"],
+                "values": renamed_values,
+            })
+
+        return {
+            "data": data_points,
+            "properties": {
+                "name": self.name,
+                "label": "Energy by Carrier - stacked [kWh]",
+                "description": self.description,
+                "stacked": True,
+                "categories": categories_payload,
+                "range": {
+                    "total": {
+                        "label": "Total Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                    "period": {
+                        "label": "Period Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                },
             },
         }
-        return output
 
 
 _LIFECYCLE_EMISSION_CATEGORIES = ['operation', 'production', 'demolition', 'biogenic']

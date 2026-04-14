@@ -554,11 +554,11 @@ class data_processor:
 
         elif plot_cea_feature == 'final-energy':
             y_cea_metric_map = {
-                'carrier_grid_electricity':   'GRID_kWh',
-                'carrier_natural_gas':        'NATURALGAS_kWh',
-                'carrier_oil':                'OIL_kWh',
-                'carrier_coal':               'COAL_kWh',
-                'carrier_wood':               'WOOD_kWh',
+                'grid_electricity':   'GRID_kWh',
+                'natural_gas':        'NATURALGAS_kWh',
+                'oil':                'OIL_kWh',
+                'coal':               'COAL_kWh',
+                'wood':               'WOOD_kWh',
             }
 
         else:
