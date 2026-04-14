@@ -23,6 +23,17 @@ class LayerParams(BaseModel):
         return validate_scenario_name(v)
 
 
+class DeleteChoiceParams(BaseModel):
+    project: str
+    scenario_name: str
+    value: str
+
+    @field_validator('scenario_name')
+    @classmethod
+    def _validate_scenario_name(cls, v):
+        return validate_scenario_name(v)
+
+
 class LayerDescription(BaseModel):
     name: str
     label: str
@@ -78,6 +89,33 @@ async def get_layer_parameter_choices(project_root: CEAProjectRoot, params: Laye
         raise HTTPException(status_code=400, detail=str(e))
 
     return choices
+
+
+@router.post('/{layer_category}/{layer_name}/{parameter}/choice/delete')
+async def delete_layer_parameter_choice(
+    project_root: CEAProjectRoot,
+    params: DeleteChoiceParams,
+    layer_category: str,
+    layer_name: str,
+    parameter: str,
+):
+    layer_class = load_layer(layer_name, layer_category)
+
+    project_path = params.project
+    if project_root is not None and not project_path.startswith(project_root):
+        project_path = os.path.join(project_root, project_path)
+
+    try:
+        layer = layer_class(project=project_path, scenario_name=params.scenario_name)
+        layer.delete_parameter_choice(parameter, params.value)
+    except NotImplementedError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete: {e}")
+
+    return {"success": True}
 
 
 @router.post('/{layer_category}/{layer_name}/{parameter}/range')

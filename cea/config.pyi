@@ -2017,8 +2017,8 @@ class PlotsOperationalEmissionsSection(Section):
     """Typed section for plots-operational-emissions configuration"""
     what_if_name: list[str]
     y_category_to_plot: Optional[str]
-    operation_services: list[str]
-    energy_carriers: list[str]
+    operation_services: list[str] | None
+    energy_carriers: list[str] | None
     y_metric_unit: Optional[str]
     y_normalised_by: Optional[str]
     x_to_plot: Optional[str]
@@ -2028,9 +2028,9 @@ class PlotsOperationalEmissionsSection(Section):
     @overload
     def __getattr__(self, item: Literal["y_category_to_plot"]) -> Optional[str]: ...
     @overload
-    def __getattr__(self, item: Literal["operation_services"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["operation_services"]) -> list[str] | None: ...
     @overload
-    def __getattr__(self, item: Literal["energy_carriers"]) -> list[str]: ...
+    def __getattr__(self, item: Literal["energy_carriers"]) -> list[str] | None: ...
     @overload
     def __getattr__(self, item: Literal["y_metric_unit"]) -> Optional[str]: ...
     @overload

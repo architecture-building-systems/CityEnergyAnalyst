@@ -221,6 +221,26 @@ class ThermalNetworkMapLayer(MapLayer):
             logger.error(f"Error in _get_network_names: {e}")
             return {"choices": ["No network available"], "default": "No network available"}
 
+    def delete_parameter_choice(self, parameter_name: str, value: str) -> None:
+        if parameter_name != 'network-name':
+            raise NotImplementedError(
+                f"Parameter '{parameter_name}' on thermal-network layer does not support deletion"
+            )
+        if not value:
+            raise ValueError("Network name is required")
+
+        if self._is_multiphase(value):
+            plan_name = value[: -len(MULTI_PHASE_SUFFIX)]
+            target = os.path.join(self.locator.get_thermal_network_phasing_plans_folder(), plan_name)
+        else:
+            target = os.path.join(self.locator.get_thermal_network_folder(), value)
+
+        if not os.path.isdir(target):
+            raise ValueError(f"Network '{value}' not found on disk")
+
+        shutil.rmtree(target)
+        logger.info(f"Deleted thermal network folder: {target}")
+
     def _get_phase_choices(self, parameters):
         """Get list of available phases for multi-phase plans"""
         try:
@@ -397,7 +417,7 @@ class ThermalNetworkMapLayer(MapLayer):
         return {
             'network-name':
                 ParameterDefinition(
-                    "Network Name",
+                    "network-name",
                     "string",
                     default="",
                     description="Name of the network layout to visualise (leave empty to show base layer only)",
@@ -407,7 +427,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 ),
             'network-type':
                 ParameterDefinition(
-                    "Network Type",
+                    "network-type",
                     "string",
                     description="Type of the network",
                     options_generator="_get_network_types",
@@ -415,7 +435,7 @@ class ThermalNetworkMapLayer(MapLayer):
                 ),
             'phase':
                 ParameterDefinition(
-                    "Phase",
+                    "phase",
                     "string",
                     default="",
                     description="Select phase for multi-phase plans",

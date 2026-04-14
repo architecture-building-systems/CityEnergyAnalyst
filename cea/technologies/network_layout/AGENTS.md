@@ -66,18 +66,9 @@ cooling-connected-buildings: B1003, B1004, B1005
 
 ### Loading Existing Networks
 
-**When using `existing-network`**, network-layout-mode is applied per service:
+**When using `existing-network`**, `main()` resolves the edges + nodes shapefiles for that network and then passes them through the same `process_user_defined_network()` pipeline as any other user-defined input. The `network-layout-mode` parameter is applied to the loaded graph exactly as it would be for a user-provided shapefile — see the User-Defined Network Layout Modes section below.
 
-| Mode | Behavior |
-|------|----------|
-| **validate** | Error if existing nodes ≠ connected-buildings parameter |
-| **augment** | Union(existing nodes, connected-buildings) |
-| **filter** | Use connected-buildings exactly (add missing, remove extras) |
-
-**Edge Cases:**
-- Blank parameter + existing nodes → keep existing service buildings
-- Blank parameter + no existing nodes → empty list (warning issued)
-- Parameter set + no existing nodes → use parameter buildings (new service added)
+If the existing network has both DC and DH node files, they are merged into a temporary shapefile (deduplicated on `(building, geometry)`) so DH-only buildings are preserved. The helper is `_load_existing_network_node_paths()` in `main.py`.
 
 ## User-Defined Network Layout Modes
 
@@ -113,18 +104,23 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 
 **Filtering function:** `filter_network_to_buildings()` in `user_network_loader.py`
 
-**Filtering algorithm (3 steps):**
+**Filtering algorithm:**
 1. Remove building nodes not in `buildings_to_keep` list
-2. Convert to graph and find connected components containing kept buildings
-3. Remove orphaned edges and junction nodes using graph cleanup
+2. Drop every edge incident to a removed building node
+3. Keep only connected components anchored by a surviving terminal (remaining building) or a plant node
+4. Iteratively prune dangling junction stubs via `_prune_dangling_stubs()` until stable
+
+**Plant preservation invariant (filter):** plant nodes and the pipes connecting them to the trunk are protected infrastructure — they are never pruned, even if the building they were anchored to was removed. If a plant ends up in a component with no surviving consumers, the plant and its pipework are still kept and a warning is printed.
+
+**Stub pruning (`_prune_dangling_stubs()`):** iterative helper used by filter. Drops any degree-≤1 node that isn't in the protected-coord set (terminals + plants) and drops its incident edge, repeating until no more stubs remain.
 
 **Key properties:**
-- **User's disk files never modified**: Only in-memory GeoDataFrames are changed
-- Augmentation: New buildings connect at optimal entry points (existing nodes)
+- **User's disk files never modified**: only in-memory GeoDataFrames are changed
+- Augmentation: new buildings connect at optimal entry points (existing nodes)
 - When reusing an existing DH network, copied plant nodes must be reconciled with the
   current `itemised-dh-services` before saving `DH/layout/nodes.shp`; otherwise
   `thermal-network` infers the old service mix from the stale plant type
-- Filtering: Uses graph-based cleanup to remove orphaned infrastructure
+- Filtering: graph-based cleanup removes orphaned infrastructure while preserving plants
 - Both use `connection_candidates` parameter (default: 3) for Steiner optimisation
 - Coordinate precision: SHAPEFILE_TOLERANCE (6 decimal places)
 

@@ -160,10 +160,18 @@ def raise_missing_pv_error(pv_codes, context='file'):
     raise FileNotFoundError(error_msg)
 
 
-demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_electricity', 'enduse_cooling_demand', 'enduse_space_cooling_demand', 'enduse_space_cooling', 'enduse_heating_demand', 'enduse_space_heating_demand', 'enduse_space_heating', 'enduse_dhw_demand', 'enduse_dhw']
+demand_metrics = [
+    # Unified display names (matching the Demand map layer's dropdown)
+    'electricity', 'space_heating', 'space_cooling', 'domestic_hot_water',
+    # Legacy aliases kept for backwards compatibility
+    'grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_electricity',
+    'enduse_cooling_demand', 'enduse_space_cooling_demand', 'enduse_space_cooling',
+    'enduse_heating_demand', 'enduse_space_heating_demand', 'enduse_space_heating',
+    'enduse_dhw_demand', 'enduse_dhw',
+]
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
 
-final_energy_metrics = ['carrier_grid_electricity', 'carrier_natural_gas', 'carrier_oil', 'carrier_coal', 'carrier_wood']
+final_energy_metrics = ['grid_electricity', 'natural_gas', 'oil', 'coal', 'wood']
 
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
