@@ -129,6 +129,11 @@ _ENERGY_CARRIER_DISPLAY_TO_INTERNAL = {
     'oil':              'OIL',
     'coal':             'COAL',
     'wood':             'WOOD',
+    # `SOLAR` shows up in column names like `Qww_sys_SOLAR_kWh` when the
+    # SC/PVT DHW dispatch is active. Only the INTERNAL→display mapping
+    # is consumed by `_column_to_carrier` below; the facade-level
+    # `SC_*` / `PVT_*_Q_*` branches still handle the non-dispatch path.
+    'solar':            'SOLAR',
 }
 _ENERGY_CARRIER_INTERNAL_TO_DISPLAY = {
     v: k for k, v in _ENERGY_CARRIER_DISPLAY_TO_INTERNAL.items()
