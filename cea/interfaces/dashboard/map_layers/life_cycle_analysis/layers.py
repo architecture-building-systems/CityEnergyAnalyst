@@ -596,7 +596,8 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                     description="Lifecycle emission category to visualise",
                     options_generator="_get_data_columns",
                     selector="choice",
-                    depends_on=['whatif_name']
+                    depends_on=['whatif_name'],
+                    multi=True,
                 ),
             'timeline':
                 ParameterDefinition(
@@ -643,115 +644,311 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             ),
         ]
 
+    def _read_entity_summary(self, whatif_name: str) -> Optional[pd.DataFrame]:
+        """Read emissions_buildings.csv (contains both buildings and plants)."""
+        if not whatif_name:
+            return None
+        path = self.locator.get_emissions_whatif_buildings_file(whatif_name)
+        if not os.path.exists(path):
+            return None
+        try:
+            return pd.read_csv(path)
+        except Exception as exc:
+            logger.debug(f"Could not read lifecycle emissions summary {path}: {exc}")
+            return None
+
     @cache_output
     def generate_data(self, parameters):
-        """Generates the output for this layer"""
+        """Generates the output for this layer.
 
-        # FIXME: Hardcoded to zone buildings for now
-        buildings = self.locator.get_zone_building_names()
+        Single-category (string or 1-element list): HexagonLayer-style output
+        with a single value per entity.
+        Multi-category (list with 2+ entries): stacked-column output with
+        per-category values per entity; the frontend renders one
+        ColumnLayer per category.
+
+        Entities include both zone buildings *and* district plants (read
+        from emissions_buildings.csv, which has x_coord/y_coord for both).
+        """
+
         whatif_name = parameters.get('whatif_name')
 
-        category = parameters['data-column']
+        raw_selection = parameters['data-column']
         period = parameters['timeline']
         start, end = period
 
-        colour_pair = _LIFECYCLE_CATEGORY_COLOURS.get(
-            category, ('grey_lighter', 'black')
-        )
+        # Normalize selection to a list; filter to known categories and
+        # preserve canonical order (operation → production → demolition → biogenic).
+        if isinstance(raw_selection, list):
+            selected = [c for c in raw_selection if c in _LIFECYCLE_EMISSION_CATEGORIES]
+        elif isinstance(raw_selection, str):
+            selected = [raw_selection] if raw_selection in _LIFECYCLE_EMISSION_CATEGORIES else []
+        else:
+            selected = []
 
-        output = {
-            "data": [],
-            "properties": {
-                "name": self.name,
-                "label": (
-                    f"Lifecycle Emissions - {category}"
-                    if category else "Lifecycle Emissions"
-                ),
-                "description": self.description,
-                "colours": {
-                    "colour_array": [
-                        color_to_hex(colour_pair[0]),
-                        color_to_hex(colour_pair[1]),
-                    ],
-                    "points": 12
-                }
-            }
+        selected = [c for c in _LIFECYCLE_EMISSION_CATEGORIES if c in selected]
+        is_stacked = len(selected) > 1
+
+        empty_range = {
+            'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+            'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0},
         }
 
-        # Filter buildings that exist in geometry
-        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
-
-        # If no buildings or what-if scenario is selected, return empty data with range of 0 to avoid errors in frontend
-        if not buildings or not whatif_name:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
-            }
-            return output
-
-        if category not in _LIFECYCLE_EMISSION_CATEGORIES:
-            raise ValueError(f"Invalid emission category: {category}")
-        prefix = f"{category}_"
-
-        def get_data(building, centroid):
+        # Enumerate entities (buildings + plants) from emissions_buildings.csv
+        # which is the only source with plant coordinates and a stable list.
+        summary = self._read_entity_summary(whatif_name) if whatif_name else None
+        entity_rows = None
+        source_crs = None
+        if summary is not None and {'name', 'x_coord', 'y_coord'}.issubset(summary.columns):
+            entity_rows = summary.dropna(subset=['name', 'x_coord', 'y_coord'])
             try:
-                building_file = self.locator.get_emissions_whatif_building_timeline_file(building, whatif_name)
-                if not os.path.exists(building_file):
+                zone_gdf = gpd.read_file(self.locator.get_zone_geometry())
+                source_crs = zone_gdf.crs
+            except Exception as exc:
+                logger.debug(f"LifecycleEmissions: could not read zone CRS: {exc}")
+                source_crs = None
+
+        if entity_rows is None or entity_rows.empty or source_crs is None or not whatif_name or not selected:
+            fallback = selected[0] if selected else None
+            colour_pair = _LIFECYCLE_CATEGORY_COLOURS.get(
+                fallback, ('grey_lighter', 'black')
+            )
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": (
+                        f"Lifecycle Emissions - {fallback}"
+                        if fallback else "Lifecycle Emissions"
+                    ),
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
+            }
+
+        def _coerce_years(series: pd.Series) -> pd.Series:
+            """Robustly convert a timeline 'period' column to integer years.
+
+            Handles 'Y_XXXX' strings, plain integer/float years, and mixed.
+            """
+            if pd.api.types.is_numeric_dtype(series):
+                return series.astype(int)
+            extracted = series.astype(str).str.extract(r'(\d{4})')[0]
+            return pd.to_numeric(extracted, errors='coerce').astype('Int64')
+
+        def read_category_values(entity_name):
+            """Return {category: period_sum} for the entity's timeline file."""
+            try:
+                entity_file = self.locator.get_emissions_whatif_building_timeline_file(
+                    entity_name, whatif_name
+                )
+                if not os.path.exists(entity_file):
+                    logger.info(
+                        f"LifecycleEmissions: missing timeline file for {entity_name}: {entity_file}"
+                    )
                     return None
 
-                header = pd.read_csv(building_file, nrows=0).columns
-                matching_cols = [c for c in header if c.startswith(prefix)]
-                cols_to_read = ["period"] + matching_cols
-                df = pd.read_csv(building_file, usecols=cols_to_read)
+                # Read the full file once — plant timelines may have the
+                # period as the DataFrame index rather than a column, and
+                # are small (1 row per year) so cost is negligible.
+                df = pd.read_csv(entity_file)
 
-                if matching_cols:
-                    data = df[matching_cols].sum(axis=1)
+                # Locate the period column. It may be named 'period',
+                # 'Unnamed: 0' (anonymous index), or be the actual index.
+                period_col = None
+                if 'period' in df.columns:
+                    period_col = 'period'
                 else:
-                    data = pd.Series(0.0, index=df.index)
-                data.index = period_to_year(df['period'])
+                    for candidate in df.columns:
+                        if candidate.lower().startswith('unnamed') or candidate == '':
+                            period_col = candidate
+                            break
 
-                total_min = 0
-                total_max = float(data.sum())
+                if period_col is None:
+                    # Fall back to the first column.
+                    period_col = df.columns[0]
 
-                period_value = float(data.loc[start:end].sum())
-                period_min = period_value
-                period_max = period_value
+                years = _coerce_years(df[period_col])
+                if years.isna().all():
+                    logger.info(
+                        f"LifecycleEmissions: could not parse period column '{period_col}' for {entity_name}"
+                    )
+                    return None
+                df = df.loc[years.notna()].copy()
+                years = years.dropna().astype(int)
 
-                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
+                result = {}
+                matched_any = False
+                for cat in selected:
+                    cols = [c for c in df.columns if c.startswith(f"{cat}_")]
+                    if cols:
+                        matched_any = True
+                        series = df[cols].sum(axis=1).astype(float)
+                    else:
+                        series = pd.Series(0.0, index=df.index)
+                    series.index = years.values
+                    result[cat] = float(series.loc[start:end].sum())
 
-                return total_min, total_max, period_min, period_max, data_point
-            except Exception as e:
-                print(f"Warning: Error reading lifecycle emissions for {building}: {e}")
+                if not matched_any:
+                    logger.info(
+                        f"LifecycleEmissions: no category columns for {entity_name}; "
+                        f"columns={list(df.columns)}, selected={selected}"
+                    )
+                return result
+            except Exception as exc:
+                logger.info(
+                    f"LifecycleEmissions: error reading {entity_name}: {exc}"
+                )
                 return None
 
-        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+        # Project entity coordinates (zone CRS) to geographic lon/lat.
+        entity_gdf = gpd.GeoDataFrame(
+            {'name': entity_rows['name'].tolist()},
+            geometry=gpd.points_from_xy(
+                entity_rows['x_coord'].astype(float),
+                entity_rows['y_coord'].astype(float),
+            ),
+            crs=source_crs,
+        )
+        centroids = entity_gdf.geometry.to_crs(get_geographic_coordinate_system())
 
-        # Filter out None values (missing files)
-        values = [v for v in values if v is not None]
+        entities = []
+        plant_names_in_summary = set()
+        if 'type' in entity_rows.columns:
+            plant_names_in_summary = set(
+                entity_rows[entity_rows['type'] == 'plant']['name'].tolist()
+            )
 
-        if not values:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+        for entity_name, centroid in zip(entity_gdf['name'].tolist(), centroids):
+            cat_values = read_category_values(entity_name)
+            if cat_values is None:
+                continue
+            entities.append({
+                "name": entity_name,
+                "position": [centroid.x, centroid.y],
+                "values": cat_values,
+            })
+
+        entity_names_rendered = {e['name'] for e in entities}
+        plants_rendered = entity_names_rendered & plant_names_in_summary
+        logger.info(
+            f"LifecycleEmissions: {len(entities)}/{len(entity_gdf)} entities rendered, "
+            f"plants in summary={len(plant_names_in_summary)}, "
+            f"plants rendered={len(plants_rendered)}, "
+            f"selected categories={selected}"
+        )
+
+        if not entities:
+            fallback = selected[0]
+            colour_pair = _LIFECYCLE_CATEGORY_COLOURS.get(fallback, ('grey_lighter', 'black'))
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": f"Lifecycle Emissions - {fallback}",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
             }
-            return output
 
-        total_min, total_max, period_min, period_max, data = zip(*values)
+        if not is_stacked:
+            # Single-category path: mirror the previous HexagonLayer shape.
+            category = selected[0]
+            colour_pair = _LIFECYCLE_CATEGORY_COLOURS.get(category, ('grey_lighter', 'black'))
+            data_points = [
+                {"position": e["position"], "value": e["values"][category]}
+                for e in entities
+            ]
+            period_values = [p["value"] for p in data_points]
+            return {
+                "data": data_points,
+                "properties": {
+                    "name": self.name,
+                    "label": f"Lifecycle Emissions - {category}",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": {
+                        "total": {
+                            "label": "Total Range",
+                            "min": 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                        "period": {
+                            "label": "Period Range",
+                            "min": float(min(period_values)) if period_values else 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                    },
+                    "stacked": False,
+                },
+            }
 
-        output['data'] = data
-        output['properties']['range'] = {
-            'total': {
-                'label': 'Total Range',
-                'min': float(min(total_min)),
-                'max': float(max(total_max))
+        # Stacked-multi path: keep per-category values on each entity and
+        # expose a per-category colour list so the frontend can render one
+        # ColumnLayer per category with a shared stack base.
+        categories_payload = []
+        for cat in selected:
+            _, darker = _LIFECYCLE_CATEGORY_COLOURS.get(cat, ('grey_lighter', 'black'))
+            hex_colour = color_to_hex(darker)
+            # hex "#rrggbb" → [R, G, B] for deck.gl
+            r = int(hex_colour[1:3], 16)
+            g = int(hex_colour[3:5], 16)
+            b = int(hex_colour[5:7], 16)
+            categories_payload.append({
+                "name": cat,
+                "colour": hex_colour,
+                "rgb": [r, g, b],
+            })
+
+        stack_totals = [
+            sum(max(e["values"].get(c, 0.0), 0.0) for c in selected)
+            for e in entities
+        ]
+
+        return {
+            "data": entities,
+            "properties": {
+                "name": self.name,
+                "label": "Lifecycle Emissions - stacked",
+                "description": self.description,
+                "stacked": True,
+                "categories": categories_payload,
+                "range": {
+                    "total": {
+                        "label": "Total Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                    "period": {
+                        "label": "Period Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                },
             },
-            'period': {
-                'label': 'Period Range',
-                'min': float(min(period_min)),
-                'max': float(max(period_max))
-            }
         }
-        return output
 
 
 class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):

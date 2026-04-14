@@ -91,6 +91,7 @@ class ParameterDefinition:
     selector: Optional[str] = None
     range: Optional[List[float]] = None
     filter: Optional[str] = None
+    multi: bool = False
 
     def generate_choices(self, layer: "MapLayer", current_params: dict) -> dict:
         """Generate value based on current parameters"""
@@ -150,9 +151,10 @@ class ParameterDefinition:
             "description": self.description,
             "selector": self.selector,
             "range": self.range,
-            "filter": self.filter
+            "filter": self.filter,
+            "multi": self.multi,
         }
-        
+
         return result
 
 
