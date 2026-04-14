@@ -1122,21 +1122,197 @@ class LifecycleEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
         }
 
 
+# --- Operational Emissions constants and helpers ---
+
+# Top-level category parameter. Mirrors the plot's `y-category-to-plot`.
+_OPERATIONAL_CATEGORIES = ['operation', 'energy_carrier']
+
+# Service identifiers surfaced to the user, matching
+# [plots-operational-emissions]'s operation-services default.
+_OPERATION_SERVICES = [
+    'electricity',
+    'space_heating',
+    'space_cooling',
+    'DHW',
+    'DH',
+    'DC',
+    'PV_E',
+    'PVT_E',
+    'PVT_Q',
+    'SC_Q',
+]
+
+# Carriers surfaced to the user when category == 'energy_carrier'.
+# Matches [plots-operational-emissions]'s energy-carriers default.
+_OPERATIONAL_ENERGY_CARRIERS = [
+    'GRID', 'NATURALGAS', 'BIOGAS', 'DRYBIOMASS', 'WETBIOMASS',
+    'COAL', 'WOOD', 'OIL', 'HYDROGEN',
+]
+
+# Colour gradient per service / carrier for the stacked ColumnLayer.
+_OPERATION_SERVICE_COLOURS = {
+    'electricity':   ('green_lighter', 'green'),
+    'space_heating': ('red_lighter', 'red'),
+    'space_cooling': ('blue_lighter', 'blue'),
+    'DHW':           ('orange_lighter', 'orange'),
+    'DH':            ('red_light', 'red_dark'),
+    'DC':            ('blue_light', 'blue'),
+    'PV_E':          ('yellow_lighter', 'yellow'),
+    'PVT_E':         ('brown_lighter', 'brown'),
+    'PVT_Q':         ('purple_lighter', 'purple'),
+    'SC_Q':          ('yellow_light', 'brown'),
+}
+_OPERATIONAL_CARRIER_COLOURS = {
+    'GRID':        ('red_lighter', 'red'),
+    'NATURALGAS':  ('brown_lighter', 'brown'),
+    'BIOGAS':      ('green_lighter', 'green'),
+    'DRYBIOMASS':  ('green_light', 'green'),
+    'WETBIOMASS':  ('green_light', 'brown'),
+    'COAL':        ('black', 'black'),
+    'WOOD':        ('brown_light', 'brown'),
+    'OIL':         ('grey_lighter', 'grey'),
+    'HYDROGEN':    ('blue_lighter', 'blue'),
+}
+
+
+def _op_column_to_service(column: str) -> Optional[str]:
+    """Map an operational-emissions column to a high-level service, or None.
+
+    Service columns in the hourly per-entity CSV look like:
+      Qhs_sys_<CARRIER>_kgCO2e          → space_heating
+      Qhs_booster_<CARRIER>_kgCO2e      → space_heating
+      Qcs_sys_<CARRIER>_kgCO2e          → space_cooling
+      Qww_sys_<CARRIER>_kgCO2e          → DHW
+      Qww_booster_<CARRIER>_kgCO2e      → DHW
+      E_sys_<CARRIER>_kgCO2e            → electricity
+      plant_{primary|tertiary|pumping}_DH_<CARRIER>_kgCO2e → DH
+      plant_{primary|tertiary|pumping}_DC_<CARRIER>_kgCO2e → DC
+    Solar offset columns (negative):
+      PV_E_offset_kgCO2e, PVT_E_offset_kgCO2e,
+      PVT_Q_offset_kgCO2e, SC_Q_offset_kgCO2e
+    """
+    if not column.endswith('_kgCO2e'):
+        return None
+    if column == 'PV_E_offset_kgCO2e':
+        return 'PV_E'
+    if column == 'PVT_E_offset_kgCO2e':
+        return 'PVT_E'
+    if column == 'PVT_Q_offset_kgCO2e':
+        return 'PVT_Q'
+    if column == 'SC_Q_offset_kgCO2e':
+        return 'SC_Q'
+    if column.startswith('E_sys_'):
+        return 'electricity'
+    if column.startswith('Qhs_sys_') or column.startswith('Qhs_booster_'):
+        return 'space_heating'
+    if column.startswith('Qcs_sys_'):
+        return 'space_cooling'
+    if column.startswith('Qww_sys_') or column.startswith('Qww_booster_'):
+        return 'DHW'
+    if (
+        column.startswith('plant_primary_DH_')
+        or column.startswith('plant_tertiary_DH_')
+        or column.startswith('plant_pumping_DH_')
+    ):
+        return 'DH'
+    if (
+        column.startswith('plant_primary_DC_')
+        or column.startswith('plant_tertiary_DC_')
+        or column.startswith('plant_pumping_DC_')
+    ):
+        return 'DC'
+    return None
+
+
+def _op_column_to_carrier(column: str) -> Optional[str]:
+    """Map an operational-emissions column to an energy carrier, or None.
+
+    Excludes solar offsets since those are not a physical fuel carrier.
+    """
+    if not column.endswith('_kgCO2e'):
+        return None
+    if 'offset' in column:
+        return None
+    stripped = column[: -len('_kgCO2e')]
+    parts = stripped.split('_')
+    if not parts:
+        return None
+    carrier = parts[-1]
+    return carrier if carrier in _OPERATIONAL_ENERGY_CARRIERS else None
+
+
 class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
     category = LifeCycleAnalysisCategory
     name = "operational-emissions"
     label = "Operational Emissions (Hourly/Daily)"
     description = ""
 
-    def _get_data_columns(self, parameters) -> Optional[list]:
-        buildings = self.locator.get_zone_building_names()
-        whatif_name = parameters.get('whatif_name')
+    def _read_entity_summary(self, whatif_name: str) -> Optional[pd.DataFrame]:
+        """Read emissions_buildings.csv (buildings + plants with coords)."""
+        if not whatif_name:
+            return None
+        path = self.locator.get_emissions_whatif_buildings_file(whatif_name)
+        if not os.path.exists(path):
+            return None
+        try:
+            return pd.read_csv(path)
+        except Exception as exc:
+            logger.debug(f"OperationalEmissions: could not read {path}: {exc}")
+            return None
 
-        if not buildings or not whatif_name:
+    def _get_categories(self, parameters):
+        return {
+            'choices': [{'value': c, 'label': c} for c in _OPERATIONAL_CATEGORIES],
+            'default': 'operation',
+        }
+
+    def _get_data_columns(self, parameters):
+        """Return operation services or energy carriers based on the
+        currently-selected category, filtered to the ones actually
+        present in the selected what-if's hourly emissions files.
+        """
+        whatif_name = parameters.get('whatif_name')
+        category = parameters.get('category') or 'operation'
+        if not whatif_name:
             return
 
-        paths = [self.locator.get_emissions_whatif_building_file(b, whatif_name) for b in buildings]
-        return get_columns_from_building_files(paths)
+        summary = self._read_entity_summary(whatif_name)
+        if summary is None or 'name' not in summary.columns:
+            return []
+        names = summary['name'].dropna().tolist()
+        paths = [
+            self.locator.get_emissions_whatif_building_file(n, whatif_name)
+            for n in names
+        ]
+        paths = [p for p in paths if os.path.exists(p)]
+        if not paths:
+            return []
+
+        columns = get_columns_from_building_files(paths)
+        if not columns:
+            return []
+
+        if category == 'operation':
+            present = set()
+            for col in columns:
+                svc = _op_column_to_service(col)
+                if svc:
+                    present.add(svc)
+            available = [s for s in _OPERATION_SERVICES if s in present]
+        else:  # 'energy_carrier'
+            present = set()
+            for col in columns:
+                car = _op_column_to_carrier(col)
+                if car:
+                    present.add(car)
+            available = [c for c in _OPERATIONAL_ENERGY_CARRIERS if c in present]
+
+        if not available:
+            return []
+        return {
+            'choices': [{'value': x, 'label': x} for x in available],
+            'default': available[0],
+        }
 
     def _get_whatif_names(self) -> Optional[list]:
         """Return sorted list of what-if names that have operational emissions results."""
@@ -1145,32 +1321,47 @@ class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
 
     def _get_results_files(self, parameters) -> list:
         whatif_name = parameters.get('whatif_name')
-
         if not whatif_name:
             return []
-
-        buildings = self.locator.get_zone_building_names()
-        return [self.locator.get_emissions_whatif_building_file(b, whatif_name) for b in buildings]
+        summary = self._read_entity_summary(whatif_name)
+        if summary is None or 'name' not in summary.columns:
+            return []
+        files = []
+        for name in summary['name'].dropna().tolist():
+            p = self.locator.get_emissions_whatif_building_file(name, whatif_name)
+            if os.path.exists(p):
+                files.append(p)
+        return files
 
     @classmethod
     def expected_parameters(cls):
         return {
             'whatif_name':
                 ParameterDefinition(
-                    "What-if scenario",
+                    "what-if-name",
                     "string",
                     description="Select a what-if scenario with operational emission results",
                     options_generator="_get_whatif_names",
                     selector="choice",
                 ),
+            'category':
+                ParameterDefinition(
+                    "category",
+                    "string",
+                    description="Aggregate by operation service or by energy carrier",
+                    options_generator="_get_categories",
+                    selector="choice",
+                    depends_on=['whatif_name'],
+                ),
             'data-column':
                 ParameterDefinition(
-                    "Data Column",
+                    "operation/carrier",
                     "string",
-                    description="Data column to use",
+                    description="Service(s) or carrier(s) to visualise",
                     options_generator="_get_data_columns",
                     selector="choice",
-                    depends_on=['whatif_name']
+                    depends_on=['whatif_name', 'category'],
+                    multi=True,
                 ),
             'period':
                 ParameterDefinition(
@@ -1212,101 +1403,249 @@ class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             FileRequirement(
                 "Operational Emissions Hourly Files",
                 file_locator="layer:_get_results_files",
-                optional=True,  # Individual building files may be missing
+                optional=True,
             ),
         ]
 
     @cache_output
     def generate_data(self, parameters):
-        """Generates the output for this layer"""
+        """Single (HexagonLayer) or stacked (ColumnLayer) output.
 
-        # FIXME: Hardcoded to zone buildings for now
-        buildings = self.locator.get_zone_building_names()
+        Mirrors :class:`LifecycleEmissionsMapLayer.generate_data` but with
+        a category-aware per-column mapping (``_op_column_to_service`` or
+        ``_op_column_to_carrier``).
+        """
         whatif_name = parameters.get('whatif_name')
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        data_column = parameters['data-column']
+        raw_category = parameters.get('category') or 'operation'
+        if raw_category not in _OPERATIONAL_CATEGORIES:
+            raw_category = 'operation'
 
-        if data_column is None or data_column not in self._get_data_columns(parameters):
-            raise ValueError(f"Invalid data column: {data_column}")
+        if raw_category == 'operation':
+            allowed = _OPERATION_SERVICES
+            col_to_key = _op_column_to_service
+            colour_map = _OPERATION_SERVICE_COLOURS
+        else:
+            allowed = _OPERATIONAL_ENERGY_CARRIERS
+            col_to_key = _op_column_to_carrier
+            colour_map = _OPERATIONAL_CARRIER_COLOURS
 
-        output = {
-            "data": [],
-            "properties": {
-                "name": self.name,
-                "label": "Operational Emissions",
-                "description": self.description,
-                "colours": {
-                    "colour_array": [color_to_hex("grey_lighter"), color_to_hex("black")],
-                    "points": 12
-                }
-            }
+        raw_selection = parameters['data-column']
+        if isinstance(raw_selection, list):
+            selected = [c for c in raw_selection if c in allowed]
+        elif isinstance(raw_selection, str):
+            selected = [raw_selection] if raw_selection in allowed else []
+        else:
+            selected = []
+        selected = [c for c in allowed if c in selected]
+        is_stacked = len(selected) > 1
+
+        empty_range = {
+            'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+            'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0},
         }
 
-        # Filter buildings that exist in geometry
-        buildings, _, building_centroids = safe_filter_buildings_with_geometry(self.locator, buildings)
-
-        if not buildings or not whatif_name:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+        def empty_output(fallback=None):
+            fallback_label = f" - {fallback}" if fallback else ""
+            colour_pair = colour_map.get(fallback, ('grey_lighter', 'black'))
+            return {
+                "data": [],
+                "properties": {
+                    "name": self.name,
+                    "label": f"Operational Emissions{fallback_label} [kgCO\u2082e]",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": empty_range,
+                    "stacked": False,
+                },
             }
-            return output
 
-        def get_data(building, centroid):
+        if not whatif_name or not selected:
+            return empty_output(selected[0] if selected else None)
+
+        summary = self._read_entity_summary(whatif_name)
+        if (
+            summary is None
+            or 'name' not in summary.columns
+            or not {'x_coord', 'y_coord'}.issubset(summary.columns)
+        ):
+            return empty_output(selected[0])
+
+        try:
+            zone_gdf = gpd.read_file(self.locator.get_zone_geometry())
+            source_crs = zone_gdf.crs
+        except Exception as exc:
+            logger.debug(f"OperationalEmissions: could not read zone CRS: {exc}")
+            source_crs = None
+        if source_crs is None:
+            return empty_output(selected[0])
+
+        usable = summary.dropna(subset=['name', 'x_coord', 'y_coord'])
+        if usable.empty:
+            return empty_output(selected[0])
+
+        entity_gdf = gpd.GeoDataFrame(
+            {'name': usable['name'].tolist()},
+            geometry=gpd.points_from_xy(
+                usable['x_coord'].astype(float),
+                usable['y_coord'].astype(float),
+            ),
+            crs=source_crs,
+        )
+        centroids = entity_gdf.geometry.to_crs(get_geographic_coordinate_system())
+        entity_names = entity_gdf['name'].tolist()
+
+        def read_entity_values(entity_name):
+            """Return {selection_key: period_sum} for the entity."""
+            entity_file = self.locator.get_emissions_whatif_building_file(
+                entity_name, whatif_name
+            )
+            if not os.path.exists(entity_file):
+                return None
             try:
-                building_file = self.locator.get_emissions_whatif_building_file(building, whatif_name)
-                if not os.path.exists(building_file):
-                    return None
-
-                data = pd.read_csv(building_file, usecols=[data_column])[data_column]
-
-                total_min = 0
-                total_max = data.sum()
-
-                if start < end:
-                    period_value = data.iloc[start:end + 1].sum()
-                else:
-                    period_value = data.iloc[start:].sum() + data.iloc[:end + 1].sum()
-                period_min = period_value
-                period_max = period_value
-
-                data_point = {"position": [centroid.x, centroid.y], "value": period_value}
-
-                return total_min, total_max, period_min, period_max, data_point
-            except Exception as e:
-                print(f"Warning: Error reading operational emissions for {building}: {e}")
+                header = pd.read_csv(entity_file, nrows=0).columns
+            except Exception as exc:
+                logger.debug(
+                    f"OperationalEmissions: header read failed for {entity_name}: {exc}"
+                )
                 return None
 
-        values = [get_data(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+            # Bucket columns by selected key up front.
+            buckets = {key: [] for key in selected}
+            for col in header:
+                mapped = col_to_key(col)
+                if mapped in buckets:
+                    buckets[mapped].append(col)
+            flat_cols = list(dict.fromkeys(c for cs in buckets.values() for c in cs))
+            if not flat_cols:
+                return {key: 0.0 for key in selected}
+            try:
+                df = pd.read_csv(entity_file, usecols=flat_cols)
+            except Exception as exc:
+                logger.debug(
+                    f"OperationalEmissions: data read failed for {entity_name}: {exc}"
+                )
+                return None
+            per_key = {}
+            for key in selected:
+                cols = buckets[key]
+                if not cols:
+                    per_key[key] = 0.0
+                    continue
+                series = df[cols].sum(axis=1).astype(float)
+                if start < end:
+                    per_key[key] = float(series.iloc[start:end + 1].sum())
+                else:
+                    per_key[key] = float(
+                        series.iloc[start:].sum() + series.iloc[:end + 1].sum()
+                    )
+            return per_key
 
-        # Filter out None values (missing files)
-        values = [v for v in values if v is not None]
+        entities = []
+        for name, centroid in zip(entity_names, centroids):
+            values = read_entity_values(name)
+            if values is None:
+                continue
+            entities.append({
+                "name": name,
+                "position": [centroid.x, centroid.y],
+                "values": values,
+            })
 
-        if not values:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+        if not entities:
+            return empty_output(selected[0])
+
+        if not is_stacked:
+            key = selected[0]
+            colour_pair = colour_map.get(key, ('grey_lighter', 'black'))
+            data_points = [
+                {
+                    "position": e["position"],
+                    "value": e["values"][key],
+                    "name": e["name"],
+                    "category": key,
+                }
+                for e in entities
+            ]
+            period_values = [p["value"] for p in data_points]
+            return {
+                "data": data_points,
+                "properties": {
+                    "name": self.name,
+                    "label": f"Operational Emissions - {key} [kgCO\u2082e]",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [
+                            color_to_hex(colour_pair[0]),
+                            color_to_hex(colour_pair[1]),
+                        ],
+                        "points": 12,
+                    },
+                    "range": {
+                        "total": {
+                            "label": "Total Range",
+                            "min": 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                        "period": {
+                            "label": "Period Range",
+                            "min": float(min(period_values)) if period_values else 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                    },
+                    "stacked": False,
+                },
             }
-            return output
 
-        total_min, total_max, period_min, period_max, data = zip(*values)
+        # Stacked-multi
+        categories_payload = []
+        for key in selected:
+            _, darker = colour_map.get(key, ('grey_lighter', 'black'))
+            hex_colour = color_to_hex(darker)
+            r = int(hex_colour[1:3], 16)
+            g = int(hex_colour[3:5], 16)
+            b = int(hex_colour[5:7], 16)
+            categories_payload.append({
+                "name": key,
+                "colour": hex_colour,
+                "rgb": [r, g, b],
+            })
 
-        output['data'] = data
-        output['properties']['range'] = {
-            'total': {
-                'label': 'Total Range',
-                'min': float(min(total_min)),
-                'max': float(max(total_max))
+        stack_totals = [
+            sum(max(e["values"].get(k, 0.0), 0.0) for k in selected)
+            for e in entities
+        ]
+
+        return {
+            "data": entities,
+            "properties": {
+                "name": self.name,
+                "label": "Operational Emissions - stacked [kgCO\u2082e]",
+                "description": self.description,
+                "stacked": True,
+                "categories": categories_payload,
+                "range": {
+                    "total": {
+                        "label": "Total Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                    "period": {
+                        "label": "Period Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                },
             },
-            'period': {
-                'label': 'Period Range',
-                'min': float(min(period_min)),
-                'max': float(max(period_max))
-            }
         }
-        return output
 
 
 class EmissionTimelineMapLayer(WhatifDeletableMixin, MapLayer):
