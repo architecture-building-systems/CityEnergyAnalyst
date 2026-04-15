@@ -38,6 +38,7 @@ from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,
 )
 from cea.datamanagement.district_pathways.pathway_status import (
+    collect_state_phase_status,
     record_simulated_state,
 )
 from cea.datamanagement.district_pathways.pathway_timeline import (
@@ -96,14 +97,65 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
         for yr, conns in sorted(connections_by_year.items()):
             print(f"  State {yr}: {conns}", flush=True)
 
+    # Optionally skip years that are already fully simulated and not stale.
+    # Stale-simulated (red-over-black) and baked-only (blue) years still run.
+    # IMPORTANT: we only filter the *loop* years. `state_years` (the full
+    # sorted list) is still passed to workflow assembly so that
+    # `copy_previous_network_for_state` can find an earlier skipped year's
+    # network and chain filter mode off of it. Otherwise the first eligible
+    # year would be treated as "no predecessor" and rebuild the network from
+    # scratch instead of filtering from the prior state.
+    skip_already_simulated = bool(
+        getattr(config.pathway_simulations, "skip_already_simulated_states", True)
+    )
+    skipped_years: list[int] = []
+    years_to_simulate: list[int] = list(state_years)
+    if skip_already_simulated:
+        eligible: list[int] = []
+        for year in state_years:
+            state = DistrictStateYear(
+                pathway_name=pathway.pathway_name,
+                year=int(year),
+                modifications={},
+                main_locator=pathway.main_locator,
+            )
+            signature = state.read_signature_record() or {}
+            status = collect_state_phase_status(
+                main_locator,
+                pathway_name=pathway_name,
+                year=int(year),
+                source_log_hash=pathway.source_log_hash_for_year(int(year)),
+                signature=signature,
+            )
+            if (
+                status.get("primary_phase") == "simulated"
+                and not status.get("has_stale_phase")
+            ):
+                skipped_years.append(int(year))
+            else:
+                eligible.append(int(year))
+        years_to_simulate = eligible
+
     print("\n" + "=" * 80, flush=True)
     print("Starting state simulations for all pathway states...", flush=True)
     print("=" * 80, flush=True)
-    print(f"Found state years: {state_years}", flush=True)
-    print(f"Years to simulate: {state_years}\n", flush=True)
+    print(f"Years to simulate: {years_to_simulate}", flush=True)
+    if skipped_years:
+        print(
+            f"Years skipped (already simulated, not stale): {skipped_years}",
+            flush=True,
+        )
+    print("", flush=True)
+
+    if not years_to_simulate:
+        print(
+            "All pathway states are already simulated and up to date. "
+            "Nothing to do.",
+            flush=True,
+        )
 
     simulated_years: list[int] = []
-    for year in state_years:
+    for year in years_to_simulate:
         # Clean previous simulation outputs to allow re-runs
         state_locator = InputLocator(
             main_locator.get_state_in_time_scenario_folder(
@@ -179,7 +231,9 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
     print(f"Simulated: {len(simulated_years)} years", flush=True)
     if simulated_years:
         print(f"Years simulated: {simulated_years}", flush=True)
-    print("Skipped: 0 years", flush=True)
+    print(f"Skipped: {len(skipped_years)} years", flush=True)
+    if skipped_years:
+        print(f"Years skipped: {skipped_years}", flush=True)
 
 
 def main(config: Configuration) -> None:

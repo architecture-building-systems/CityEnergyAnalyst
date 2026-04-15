@@ -403,6 +403,7 @@ District Evolution Pathways:
     parameters:
       - 'general:scenario'
       - 'pathway-simulations:existing-pathway-name'
+      - 'pathway-simulations:skip-already-simulated-states'
       - 'thermal-network:dh-temperature-mode'
       - 'final-energy:hs-booster-type-building'
       - 'final-energy:dhw-booster-type-building'
