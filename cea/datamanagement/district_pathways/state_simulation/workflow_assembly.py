@@ -278,6 +278,11 @@ def _build_single_phase_post_demand(
         year=year,
         state_years=state_years,
     )
+    # Always use filter mode: it reshapes the prior layout to match this
+    # state's supply (adding buildings that now need service, removing those
+    # that don't). When there is no prior network the mode is ignored —
+    # `network-layout`'s main() short-circuits to `auto_layout_network`
+    # whenever `existing-network` is empty.
     network_name = f"thermal_network_{year}"
     final_energy_step = deepcopy(FINAL_ENERGY_STEP)
     final_energy_step["parameters"]["network-name"] = network_name
@@ -287,6 +292,7 @@ def _build_single_phase_post_demand(
             year=year,
             required_services=required_services,
             previous_network_name=previous_network_name,
+            network_layout_mode="filter",
         ),
         build_thermal_network_step(year, required_services),
         final_energy_step,
@@ -296,7 +302,7 @@ def _build_single_phase_post_demand(
     services_str = ", ".join(required_services)
     print(
         f"State {year}: Adding network-layout and thermal-network steps "
-        f"(single-phase) with services: {services_str}"
+        f"(single-phase, mode=filter) with services: {services_str}"
     )
     return workflow
 
