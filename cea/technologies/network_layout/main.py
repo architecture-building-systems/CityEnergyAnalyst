@@ -2195,6 +2195,45 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         if 'DC' in list_include_services:
             list_cooling_buildings = sorted(set(list_cooling_buildings) | set(final_building_names))
 
+    # Derive per-building service mappings so we can emit connectivity.json at
+    # the end of this function — final-energy requires that file, and without
+    # it downstream scripts fail with "Network connectivity file not found".
+    # Mirrors the logic in `auto_layout_network` so both paths agree on the
+    # JSON structure.
+    per_building_services_dh: dict = {}
+    per_building_services_dc: dict = {}
+    if 'DH' in list_include_services:
+        if overwrite_supply:
+            dh_service_set = {PlantServices(svc) for svc in itemised_dh_services}
+            per_building_services_dh = {b: set(dh_service_set) for b in list_heating_buildings}
+        else:
+            _, supply_dh_services = get_buildings_and_services_from_supply_csv(
+                locator, network_type='DH'
+            )
+            heating_set = set(list_heating_buildings)
+            per_building_services_dh = {
+                b: set(svcs) for b, svcs in supply_dh_services.items() if b in heating_set
+            }
+        if per_building_services_dh and consider_only_buildings_with_demand:
+            per_building_services_dh = filter_dh_services_by_demand(
+                per_building_services_dh, locator
+            )
+    if 'DC' in list_include_services:
+        if overwrite_supply:
+            per_building_services_dc = {
+                b: {PlantServices.SPACE_COOLING} for b in list_cooling_buildings
+            }
+        else:
+            _, supply_dc_services = get_buildings_and_services_from_supply_csv(
+                locator, network_type='DC'
+            )
+            cooling_set = set(list_cooling_buildings)
+            per_building_services_dc = {
+                b: set(svcs) for b, svcs in supply_dc_services.items() if b in cooling_set
+            }
+
+    network_metadata: dict = {}
+
     # Get expected number of components from config
     expected_num_components = config.network_layout.number_of_components if config.network_layout.number_of_components else None
 
@@ -2256,6 +2295,27 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         os.makedirs(os.path.dirname(output_node_path_dc), exist_ok=True)
         nodes_gdf_dc.to_file(output_node_path_dc, driver='ESRI Shapefile')
 
+        plant_nodes_dc = nodes_gdf_dc[
+            nodes_gdf_dc['type'].fillna('').str.startswith('PLANT')
+        ]
+        plant_type_dc = (
+            plant_nodes_dc.iloc[0]['type'] if not plant_nodes_dc.empty else 'PLANT'
+        )
+        connected_dc = (
+            nodes_gdf_dc[nodes_gdf_dc['type'] == 'CONSUMER']['building']
+            .dropna()
+            .unique()
+            .tolist()
+        )
+        network_metadata['DC'] = {
+            'plant_type': plant_type_dc,
+            'connected_buildings': connected_dc,
+            'network_services': [],
+            'per_building_services': {
+                b: list(svcs) for b, svcs in per_building_services_dc.items()
+            },
+        }
+
     if 'DH' in network_types_to_generate:
         print(f"\n{'='*60}")
         print("  DH NETWORK")
@@ -2299,6 +2359,36 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         os.makedirs(os.path.dirname(output_node_path_dh), exist_ok=True)
         nodes_gdf_dh.to_file(output_node_path_dh, driver='ESRI Shapefile')
 
+        plant_nodes_dh = nodes_gdf_dh[
+            nodes_gdf_dh['type'].fillna('').str.startswith('PLANT')
+        ]
+        plant_type_dh = (
+            plant_nodes_dh.iloc[0]['type'] if not plant_nodes_dh.empty else 'PLANT'
+        )
+        connected_dh = (
+            nodes_gdf_dh[nodes_gdf_dh['type'] == 'CONSUMER']['building']
+            .dropna()
+            .unique()
+            .tolist()
+        )
+        if per_building_services_dh:
+            actual_network_services_dh = sorted(
+                {svc for svcs in per_building_services_dh.values() for svc in svcs},
+                key=lambda s: itemised_dh_services.index(s)
+                if s in itemised_dh_services
+                else 99,
+            )
+        else:
+            actual_network_services_dh = list(itemised_dh_services)
+        network_metadata['DH'] = {
+            'plant_type': plant_type_dh,
+            'connected_buildings': connected_dh,
+            'network_services': actual_network_services_dh,
+            'per_building_services': {
+                b: list(svcs) for b, svcs in per_building_services_dh.items()
+            },
+        }
+
     # Save layout-edges shapefile with all edges (including plant connection edges)
     if all_edges_with_plants:
         # Combine edges from both networks (if both DC and DH)
@@ -2324,6 +2414,48 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         print(f"\n  Saved layout.shp with {len(edges_gdf)} edges")
     print("  User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
+
+    # Write unified connectivity.json — final-energy requires this file, and
+    # skipping it here is what caused the "Network connectivity file not found"
+    # failure when state years re-used a prior network via augment/filter.
+    if network_metadata:
+        import json
+
+        connectivity_json_path = locator.get_network_connectivity_file(
+            network_layout.network_name
+        )
+
+        unified_connectivity = {
+            'network_name': network_layout.network_name,
+            'overwrite_supply_settings': overwrite_supply,
+            'timestamp': pd.Timestamp.now().isoformat(),
+            'networks': {},
+        }
+
+        if 'DH' in network_metadata:
+            unified_connectivity['networks']['DH'] = {
+                'plant_type': network_metadata['DH']['plant_type'],
+                'connected_buildings': network_metadata['DH']['connected_buildings'],
+                'network_services': network_metadata['DH']['network_services'],
+                'per_building_services': network_metadata['DH']['per_building_services'],
+            }
+
+        if 'DC' in network_metadata:
+            unified_connectivity['networks']['DC'] = {
+                'plant_type': network_metadata['DC']['plant_type'],
+                'connected_buildings': network_metadata['DC']['connected_buildings'],
+                'per_building_services': network_metadata['DC']['per_building_services'],
+            }
+
+        os.makedirs(os.path.dirname(connectivity_json_path), exist_ok=True)
+        with open(connectivity_json_path, 'w') as f:
+            json.dump(unified_connectivity, f, indent=2, default=str)
+
+        print(
+            f"\n  Saved connectivity.json with connectivity info for "
+            f"{', '.join(sorted(network_metadata.keys()))} networks"
+        )
+
     print("\n" + "=" * 80 + "\n")
 
 
