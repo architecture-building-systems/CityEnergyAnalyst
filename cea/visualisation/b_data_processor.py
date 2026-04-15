@@ -229,17 +229,14 @@ class data_processor:
         Returns:
             float: Sum of serviced buildings' floor area
         """
-        import json
         try:
             locator = self.locator
 
-            # Try each what-if name to find configuration.json
+            # Try each what-if name to find the analysis configuration
             config_data = None
             for whatif_name in (self.whatif_names or []):
-                config_path = locator.get_analysis_configuration_file(whatif_name)
-                if os.path.exists(config_path):
-                    with open(config_path) as f:
-                        config_data = json.load(f)
+                config_data = locator.read_analysis_configuration(whatif_name)
+                if config_data is not None:
                     break
             if config_data is None:
                 return 0.0

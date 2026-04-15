@@ -1841,10 +1841,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         all_edges_gdf.to_file(output_layout_path, driver='ESRI Shapefile')
         print(f"\n  Saved layout.shp with all edges: {len(all_edges_gdf)} edges")
 
-    # Generate unified connectivity.json at network_name level
+    # Generate unified connectivity file at network_name level
     if network_metadata:
-        connectivity_json_path = locator.get_network_connectivity_file(network_layout.network_name)
-
         # Build unified connectivity structure
         unified_connectivity = {
             'network_name': network_layout.network_name,
@@ -1870,12 +1868,11 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 'per_building_services': network_metadata['DC']['per_building_services']
             }
 
-        # Save unified JSON
-        os.makedirs(os.path.dirname(connectivity_json_path), exist_ok=True)
-        with open(connectivity_json_path, 'w') as f:
-            json.dump(unified_connectivity, f, indent=2)
+        locator.write_network_connectivity(
+            network_layout.network_name, unified_connectivity
+        )
 
-        print(f"\n  Saved connectivity.json with connectivity info for {', '.join(sorted(network_metadata.keys()))} networks")
+        print(f"\n  Saved connectivity.yml with connectivity info for {', '.join(sorted(network_metadata.keys()))} networks")
 
     # Summary
     if networks_generated:
@@ -2202,6 +2199,9 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     # JSON structure.
     per_building_services_dh: dict = {}
     per_building_services_dc: dict = {}
+    consider_only_buildings_with_demand = (
+        config.network_layout.consider_only_buildings_with_demand
+    )
     if 'DH' in list_include_services:
         if overwrite_supply:
             dh_service_set = {PlantServices(svc) for svc in itemised_dh_services}
@@ -2415,16 +2415,11 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     print("  User-defined layout saved to:")
     print(f"    {os.path.dirname(output_layout_path)}")
 
-    # Write unified connectivity.json — final-energy requires this file, and
-    # skipping it here is what caused the "Network connectivity file not found"
-    # failure when state years re-used a prior network via augment/filter.
+    # Write unified connectivity file — final-energy requires this file,
+    # and skipping it here is what caused the "Network connectivity file
+    # not found" failure when state years re-used a prior network via
+    # augment/filter.
     if network_metadata:
-        import json
-
-        connectivity_json_path = locator.get_network_connectivity_file(
-            network_layout.network_name
-        )
-
         unified_connectivity = {
             'network_name': network_layout.network_name,
             'overwrite_supply_settings': overwrite_supply,
@@ -2447,12 +2442,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 'per_building_services': network_metadata['DC']['per_building_services'],
             }
 
-        os.makedirs(os.path.dirname(connectivity_json_path), exist_ok=True)
-        with open(connectivity_json_path, 'w') as f:
-            json.dump(unified_connectivity, f, indent=2, default=str)
+        locator.write_network_connectivity(
+            network_layout.network_name, unified_connectivity
+        )
 
         print(
-            f"\n  Saved connectivity.json with connectivity info for "
+            f"\n  Saved connectivity.yml with connectivity info for "
             f"{', '.join(sorted(network_metadata.keys()))} networks"
         )
 

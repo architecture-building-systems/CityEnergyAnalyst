@@ -467,26 +467,21 @@ def simulate_single_phase(config, locator, phase: Dict, model_type: str = 'simpl
     # Run the actual thermal network simulation
     try:
         if model_type == 'simplified':
-            # Read per-building service configuration from unified network_connectivity.json
-            connectivity_json_path = locator.get_network_connectivity_file(network_name)
+            # Read per-building service configuration from the unified network
+            # connectivity file (.yml, falling back to legacy .json).
+            connectivity_data = locator.read_network_connectivity(network_name)
             per_building_services = None
 
-            if os.path.exists(connectivity_json_path):
-                # Read from unified network_connectivity.json
-                with open(connectivity_json_path, 'r') as f:
-                    connectivity_data = json.load(f)
+            if connectivity_data and network_type in connectivity_data.get('networks', {}):
+                network_data = connectivity_data['networks'][network_type]
+                per_building_services_dict = network_data.get('per_building_services', {})
 
-                # Extract per-building services for this network type
-                if network_type in connectivity_data.get('networks', {}):
-                    network_data = connectivity_data['networks'][network_type]
-                    per_building_services_dict = network_data.get('per_building_services', {})
-
-                    if per_building_services_dict:
-                        # Convert lists back to sets
-                        per_building_services = {
-                            building: set(services)
-                            for building, services in per_building_services_dict.items()
-                        }
+                if per_building_services_dict:
+                    # Convert lists back to sets
+                    per_building_services = {
+                        building: set(services)
+                        for building, services in per_building_services_dict.items()
+                    }
             else:
                 # Fallback: Try legacy building_services.json location
                 nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)

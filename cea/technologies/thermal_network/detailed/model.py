@@ -375,32 +375,27 @@ class ThermalNetwork(object):
             self.locator, self.network_type, self.network_name
         )
 
-        # NEW: Read per-building service configuration metadata from unified network_connectivity.json
-        import json
-        connectivity_json_path = self.locator.get_network_connectivity_file(self.network_name)
+        # Read per-building service configuration metadata from the unified
+        # network connectivity file (.yml, falling back to legacy .json).
+        connectivity_data = self.locator.read_network_connectivity(self.network_name)
         per_building_services = None
 
-        if os.path.exists(connectivity_json_path):
-            # Read from unified network_connectivity.json
-            with open(connectivity_json_path, 'r') as f:
-                connectivity_data = json.load(f)
+        if connectivity_data and self.network_type in connectivity_data.get('networks', {}):
+            network_data = connectivity_data['networks'][self.network_type]
+            per_building_services_dict = network_data.get('per_building_services', {})
 
-            # Extract per-building services for this network type (DH only has this info)
-            if self.network_type in connectivity_data.get('networks', {}):
-                network_data = connectivity_data['networks'][self.network_type]
-                per_building_services_dict = network_data.get('per_building_services', {})
-
-                if per_building_services_dict:
-                    # Convert lists back to sets
-                    per_building_services = {
-                        building: set(services)
-                        for building, services in per_building_services_dict.items()
-                    }
-                    print("  ℹ Loaded per-building service configuration from network_connectivity.json")
-                    if 'network_services' in network_data:
-                        print(f"    - Network services: {', '.join(network_data['network_services'])}")
+            if per_building_services_dict:
+                # Convert lists back to sets
+                per_building_services = {
+                    building: set(services)
+                    for building, services in per_building_services_dict.items()
+                }
+                print("  ℹ Loaded per-building service configuration from network connectivity file")
+                if 'network_services' in network_data:
+                    print(f"    - Network services: {', '.join(network_data['network_services'])}")
         else:
             # Fallback: Try legacy building_services.json location
+            import json
             nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
             legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
 
@@ -419,7 +414,7 @@ class ThermalNetwork(object):
 
         if per_building_services is None:
             # No metadata file found (legacy layout or overwrite-supply-settings=true)
-            print("  ℹ No network_connectivity.json found (legacy layout or overwrite-supply-settings=true)")
+            print("  ℹ No network connectivity file found (legacy layout or overwrite-supply-settings=true)")
             print("    - Assuming all buildings use all services")
 
         # Store for passing to simulation functions
