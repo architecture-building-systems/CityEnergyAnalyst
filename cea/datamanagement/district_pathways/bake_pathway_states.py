@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from cea.config import Configuration
 from cea.datamanagement.district_pathways.pathway_state import DistrictEvolutionPathway
+from cea.datamanagement.district_pathways.pathway_timeline import (
+    validate_all_baked_states,
+)
 
 
 def main(config: Configuration) -> None:
@@ -29,6 +32,25 @@ def main(config: Configuration) -> None:
     print("=" * 80, flush=True)
     pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
     pathway.bake_states_from_log()
+
+    # Refresh validation fingerprints for every baked state so the pathway
+    # viewer does not show them as stale straight after a successful bake.
+    print("Validating baked states...", flush=True)
+    summary = validate_all_baked_states(config, pathway_name)
+    validated_years = summary.get("validated_years") or []
+    invalid_years = summary.get("invalid_years") or []
+    if validated_years:
+        print(f"Validated years: {validated_years}", flush=True)
+    if invalid_years:
+        issues_by_year = summary.get("issues_by_year") or {}
+        print(
+            f"Validation reported issues for years: {invalid_years}",
+            flush=True,
+        )
+        for year, issues in issues_by_year.items():
+            for issue in issues:
+                print(f"  - state_{year}: {issue}", flush=True)
+
     print(
         f"Finished pathway state bake for '{pathway_name}'.",
         flush=True,
