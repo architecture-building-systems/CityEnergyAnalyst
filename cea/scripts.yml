@@ -487,6 +487,14 @@ Life Cycle Analysis:
       - Calculates conversion losses based on system efficiencies (boilers, heat pumps, chillers, etc.)
       - Outputs energy consumption by energy carrier: GRID (electricity), NG (natural gas), DH (district heating), DC (district cooling), WOOD, OIL, COAL, SOLAR (thermal), PV (electricity), etc.
 
+      **Solar hot water (SC / PVT as primary)**: when a building's hot-water supply assembly lists SC (solar collector) or PVT (PV-thermal hybrid) as the primary component, the thermal output is dispatched hourly against DHW demand through a single hot-water tank, with the secondary component (a BO or HP) covering any shortfall.
+
+      - Solar thermal capacity is the sum of all SC and/or PVT panels configured for the building under `solar-technology:buildings`. If the assembly wants SC/PVT but no panels are configured, the run fails early with a clear error.
+      - Tank capacity defaults to 50 L per m² of installed SC/PVT aperture; standing loss defaults to 2%/hour; pump parasitic defaults to 2% of useful thermal output (charged to `E_sys_GRID`).
+      - Tank starts cold at hour 0 — the first simulated day acts as a warm-up; multi-year analyses are unaffected.
+      - Surplus beyond tank capacity is dumped (no inter-service crediting to space heating).
+      - Dispatched thermal appears as `Qww_sys_SOLAR_kWh` on the per-building hourly file. The legacy `SC_Q_offset` / `PVT_Q_offset` columns are suppressed for these buildings to avoid double counting. The PVT electrical side still flows through the existing PV_E / PVT_E offset mechanism.
+
       **Outputs**: Hourly and annual energy consumption for each building and total scenario consumption by energy carrier.
 
     interfaces: [ cli, dashboard ]

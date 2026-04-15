@@ -472,7 +472,10 @@ if __name__ == "__main__":
 
 
 # ── What-if scenario emissions ────────────────────────────────────────────────
-_ZERO_EMISSION_CARRIERS = {'DH', 'DC', 'NONE'}
+# SOLAR is zero-emission at the point of use — solar thermal from SC/PVT
+# wired as a DHW primary is dispatched into `Qww_sys_SOLAR_kWh` by the
+# final-energy pipeline (see cea/analysis/final_energy/solar_dhw.py).
+_ZERO_EMISSION_CARRIERS = {'DH', 'DC', 'NONE', 'SOLAR'}
 
 # Prefixes identifying carrier-consumption columns in final-energy B####.csv
 _CARRIER_COLUMN_PREFIXES = ('Qhs_sys_', 'Qww_sys_', 'Qcs_sys_', 'E_sys_',
