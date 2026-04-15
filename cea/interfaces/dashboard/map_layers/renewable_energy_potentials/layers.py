@@ -58,8 +58,55 @@ class SolarPotentialsLayer(MapLayer):
         "SC": "Q_SC_gen_kWh",
     }
 
+    # Per-surface colour pairs (light, dark) used when the layer renders
+    # a stacked ColumnLayer (multi-surface mode). Mirrors the pattern used
+    # by OperationalEmissionsMapLayer.
+    _SURFACE_COLOURS = {
+        "roofs_top": ("yellow_lighter", "yellow"),
+        "walls_north": ("blue_lighter", "blue"),
+        "walls_east": ("green_lighter", "green"),
+        "walls_south": ("red_lighter", "red"),
+        "walls_west": ("purple_lighter", "purple"),
+    }
+
+    # Separator used to encode the PVT compound panel type (PV code + SC code)
+    # as a single dropdown value in the frontend. Kept intentionally verbose so
+    # it can't collide with any real panel code.
+    _PVT_PANEL_TYPE_SEP = " + "
+
+    # Hardcoded surface choices for the `surface` multi-choice. Matches the
+    # y-metric-to-plot choices in [plots-solar] in default.config so the
+    # plot-solar form can watch this field directly.
+    _SURFACE_CHOICES = [
+        "roofs_top",
+        "walls_north",
+        "walls_east",
+        "walls_south",
+        "walls_west",
+    ]
+
     def _get_technologies(self) -> List[str]:
         return list(self._technologies.keys())
+
+    def _split_pvt_panel_type(self, panel_type):
+        """Return ``(pv_code, sc_code)`` from a compound PVT panel-type value.
+
+        The compound value is emitted by ``_get_panel_types`` as
+        ``"<pv_code> + <sc_code>"``. Raises a clear ``ValueError`` if the
+        value is missing or malformed.
+        """
+        if not panel_type or self._PVT_PANEL_TYPE_SEP not in panel_type:
+            raise ValueError(
+                "Panel type for PVT must be provided as "
+                f"'<PV_code>{self._PVT_PANEL_TYPE_SEP}<SC_code>'. "
+                f"Got: {panel_type!r}"
+            )
+        pv_code, sc_code = (p.strip() for p in panel_type.split(self._PVT_PANEL_TYPE_SEP, 1))
+        if not pv_code or not sc_code:
+            raise ValueError(
+                f"Both PV and SC codes are required in PVT panel type. Got: {panel_type!r}"
+            )
+        return pv_code, sc_code
 
     def _get_panel_types(self, parameters: dict) -> List[str]:
         config = Configuration(DEFAULT_CONFIG)
@@ -74,8 +121,26 @@ class SolarPotentialsLayer(MapLayer):
         elif technology == "SC":
             df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
             return df["type"].unique().tolist()
+        elif technology == "PVT":
+            pv_df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
+            sc_df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
+            pv_codes = pv_df["code"].unique().tolist()
+            sc_codes = sc_df["type"].unique().tolist()
+            # Enumerate every PV+SC pairing as a single compound option so the
+            # existing single `panel-type` dropdown can represent both halves.
+            return [
+                f"{pv}{self._PVT_PANEL_TYPE_SEP}{sc}"
+                for pv in pv_codes
+                for sc in sc_codes
+            ]
 
         return None
+
+    def _get_surfaces(self) -> List[str]:
+        # No-argument signature is required because the parameter has no
+        # `depends_on`; the base `generate_choices` calls this with zero
+        # positional args in that branch.
+        return list(self._SURFACE_CHOICES)
 
     def _get_results_files(self, parameters: dict):
         # FIXME: Hardcoded to zone buildings for now
@@ -89,7 +154,11 @@ class SolarPotentialsLayer(MapLayer):
                 raise ValueError("Panel type is required for PV")
             return [self.locator.PV_results(building, panel_type) for building in buildings]
         elif technology == "PVT":
-            return [self.locator.PVT_results(building) for building in buildings]
+            pv_code, sc_code = self._split_pvt_panel_type(panel_type)
+            return [
+                self.locator.PVT_results(building, pv_code, sc_code)
+                for building in buildings
+            ]
         elif technology == "SC":
             if panel_type is None:
                 raise ValueError("Panel type is required for SC")
@@ -112,10 +181,22 @@ class SolarPotentialsLayer(MapLayer):
                 ParameterDefinition(
                     "Panel Type",
                     "string",
-                    description="Panel type of the layer",
+                    description="Panel type of the layer. For PVT, the value is a "
+                                "compound '<PV_code> + <SC_code>' string.",
                     options_generator="_get_panel_types",
                     depends_on=["technology"],
                     selector="choice",
+                ),
+            'surface':
+                ParameterDefinition(
+                    "Surface",
+                    "array",
+                    default=list(cls._SURFACE_CHOICES),
+                    description="Building surfaces to consider. Consumed by the "
+                                "Plot Solar Technology form's y-metric-to-plot field.",
+                    options_generator="_get_surfaces",
+                    selector="choice",
+                    multi=True,
                 ),
             'period':
                 ParameterDefinition(
@@ -162,9 +243,51 @@ class SolarPotentialsLayer(MapLayer):
             ),
         ]
 
+    def _surface_column_name(self, technology, panel_type, surface):
+        """Return the per-surface kWh column name for a (technology, panel, surface) tuple.
+
+        Mirrors the writer conventions in ``cea.technologies.solar.*``:
+        - PV  → ``PV_{surface}_E_kWh``
+        - SC  → ``SC_{sc_code}_{surface}_Q_kWh``
+        - PVT → ``PVT_{sc_code}_{surface}_E_kWh`` (we expose the electricity
+          half on the map; thermal is carried through the plot form).
+        """
+        if technology == "PV":
+            return f"PV_{surface}_E_kWh"
+        if technology == "SC":
+            return f"SC_{panel_type}_{surface}_Q_kWh"
+        if technology == "PVT":
+            _, sc_code = self._split_pvt_panel_type(panel_type)
+            return f"PVT_{sc_code}_{surface}_E_kWh"
+        raise ValueError(f"Invalid technology specified: {technology}")
+
+    def _resolve_selected_surfaces(self, parameters):
+        """Normalise the `surface` parameter into a sorted list of valid
+        surface names. Falls back to all surfaces when nothing is set."""
+        raw = parameters.get("surface")
+        if raw is None:
+            return list(self._SURFACE_CHOICES)
+        if isinstance(raw, str):
+            raw = [raw]
+        if not isinstance(raw, (list, tuple)):
+            return list(self._SURFACE_CHOICES)
+        selected = [s for s in raw if s in self._SURFACE_CHOICES]
+        if not selected:
+            return list(self._SURFACE_CHOICES)
+        # Preserve the canonical order so rendering is deterministic.
+        return [s for s in self._SURFACE_CHOICES if s in set(selected)]
+
     @cache_output
     def generate_data(self, parameters):
-        """Generates the output for this layer"""
+        """Generates the output for this layer.
+
+        Mirrors OperationalEmissionsMapLayer's per-category behaviour for
+        the ``surface`` multi-choice:
+        - single surface → flat HexagonLayer bins, tooltip shows the one
+          surface's period value (same as the other bin layers).
+        - multiple surfaces → stacked ColumnLayer, one colour per surface
+          (``stacked: True`` in properties).
+        """
         locator = InputLocator(os.path.join(self.project, self.scenario_name))
 
         # FIXME: Hardcoded to zone buildings for now
@@ -172,39 +295,64 @@ class SolarPotentialsLayer(MapLayer):
         period = parameters['period']
         start, end = day_range_to_hour_range(period[0], period[1])
 
-        output = {
-            "data": [],
-            "properties": {
-                "name": self.name,
-                "label": self.label,
-                "description": self.description,
-                "colours": {
-                    "colour_array": [color_to_hex("yellow_lighter"), color_to_hex("yellow")],
-                    "points": 12
-                }
-            }
-        }
-
         technology = parameters.get("technology")
         panel_type = parameters.get("panel-type")
-        data_column = self._data_columns[technology]
+        selected_surfaces = self._resolve_selected_surfaces(parameters)
+        is_stacked = len(selected_surfaces) > 1
+
+        pvt_pv_code = None
+        pvt_sc_code = None
+        if technology == "PVT":
+            pvt_pv_code, pvt_sc_code = self._split_pvt_panel_type(panel_type)
 
         # Filter buildings that exist in geometry
         buildings, _, building_centroids = safe_filter_buildings_with_geometry(locator, buildings)
 
-        if not buildings:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+        empty_range = {
+            'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
+            'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0},
+        }
+
+        def empty_output(fallback_surface=None):
+            """Produce a valid but empty output payload.
+
+            When a single surface is active we keep the original single-
+            colour gradient; in stacked mode we return the category list
+            so the frontend still knows how to lay out the legend.
+            """
+            colour_key = fallback_surface or (selected_surfaces[0] if selected_surfaces else "roofs_top")
+            light, dark = self._SURFACE_COLOURS.get(colour_key, ("yellow_lighter", "yellow"))
+            props = {
+                "name": self.name,
+                "label": self.label,
+                "description": self.description,
+                "colours": {
+                    "colour_array": [color_to_hex(light), color_to_hex(dark)],
+                    "points": 12,
+                },
+                "range": empty_range,
+                "stacked": is_stacked,
             }
-            return output
+            if is_stacked:
+                props["categories"] = [
+                    {
+                        "name": s,
+                        "colour": color_to_hex(self._SURFACE_COLOURS[s][1]),
+                    }
+                    for s in selected_surfaces
+                    if s in self._SURFACE_COLOURS
+                ]
+            return {"data": [], "properties": props}
+
+        if not buildings:
+            return empty_output()
 
         def get_building_potential(building, centroid):
             try:
                 if technology == "PV":
                     path = self.locator.PV_results(building, panel_type)
                 elif technology == "PVT":
-                    path = self.locator.PVT_results(building)
+                    path = self.locator.PVT_results(building, pvt_pv_code, pvt_sc_code)
                 elif technology == "SC":
                     path = self.locator.SC_results(building, panel_type)
                 else:
@@ -213,51 +361,130 @@ class SolarPotentialsLayer(MapLayer):
                 if not os.path.exists(path):
                     return None
 
-                df = pd.read_csv(path, usecols=[data_column])[data_column]
+                cols = [
+                    self._surface_column_name(technology, panel_type, s)
+                    for s in selected_surfaces
+                ]
 
-                total_min = 0
-                total_max = df.sum()
+                # Filter to only columns actually present; missing surfaces
+                # contribute zero rather than breaking the read.
+                header = pd.read_csv(path, nrows=0).columns
+                cols_present = [c for c in cols if c in header]
+                if not cols_present:
+                    return None
+                df = pd.read_csv(path, usecols=cols_present)
 
-                if start < end:
-                    period_value = df.iloc[start:end + 1].sum()
-                else:
-                    period_value = df.iloc[start:].sum() + df.iloc[:end + 1].sum()
-                period_min = period_value
-                period_max = period_value
+                per_surface = {}
+                for surface, col in zip(selected_surfaces, cols):
+                    if col not in df.columns:
+                        per_surface[surface] = 0.0
+                        continue
+                    series = df[col].astype(float)
+                    if start < end:
+                        period_value = series.iloc[start:end + 1].sum()
+                    else:
+                        period_value = series.iloc[start:].sum() + series.iloc[:end + 1].sum()
+                    per_surface[surface] = float(period_value)
 
-                data_point = {"position": [centroid.x, centroid.y], "value": float(period_value)}
-
-                return total_min, total_max, period_min, period_max, data_point
+                return {
+                    "name": building,
+                    "position": [centroid.x, centroid.y],
+                    "values": per_surface,
+                }
             except Exception as e:
                 print(f"Warning: Error reading {technology} potentials for {building}: {e}")
                 return None
 
-        values = [get_building_potential(building, centroid) for building, centroid in zip(buildings, building_centroids)]
+        entities = [
+            r
+            for r in (
+                get_building_potential(b, c)
+                for b, c in zip(buildings, building_centroids)
+            )
+            if r is not None
+        ]
 
-        # Filter out None values (missing files)
-        values = [v for v in values if v is not None]
+        if not entities:
+            return empty_output()
 
-        if not values:
-            output['properties']['range'] = {
-                'total': {'label': 'Total Range', 'min': 0.0, 'max': 0.0},
-                'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0}
+        # ---- Single-surface: flat bins ----
+        if not is_stacked:
+            surface = selected_surfaces[0]
+            light, dark = self._SURFACE_COLOURS.get(surface, ("yellow_lighter", "yellow"))
+            data_points = [
+                {
+                    "position": e["position"],
+                    "value": e["values"].get(surface, 0.0),
+                    "name": e["name"],
+                    "category": surface,
+                }
+                for e in entities
+            ]
+            period_values = [p["value"] for p in data_points]
+            return {
+                "data": data_points,
+                "properties": {
+                    "name": self.name,
+                    "label": f"{self.label} — {surface}",
+                    "description": self.description,
+                    "colours": {
+                        "colour_array": [color_to_hex(light), color_to_hex(dark)],
+                        "points": 12,
+                    },
+                    "range": {
+                        "total": {
+                            "label": "Total Range",
+                            "min": 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                        "period": {
+                            "label": "Period Range",
+                            "min": float(min(period_values)) if period_values else 0.0,
+                            "max": float(max(period_values)) if period_values else 0.0,
+                        },
+                    },
+                    "stacked": False,
+                },
             }
-            return output
 
-        total_min, total_max, period_min, period_max, data = zip(*values)
+        # ---- Multi-surface: stacked columns ----
+        categories_payload = []
+        for surface in selected_surfaces:
+            _, darker = self._SURFACE_COLOURS.get(surface, ("grey_lighter", "grey"))
+            hex_colour = color_to_hex(darker)
+            r = int(hex_colour[1:3], 16)
+            g = int(hex_colour[3:5], 16)
+            b = int(hex_colour[5:7], 16)
+            categories_payload.append({
+                "name": surface,
+                "colour": hex_colour,
+                "rgb": [r, g, b],
+            })
 
-        output['data'] = data
-        output['properties']['range'] = {
-            'total': {
-                'label': 'Total Range',
-                'min': float(min(total_min)),
-                'max': float(max(total_max))
+        stack_totals = [
+            sum(max(e["values"].get(s, 0.0), 0.0) for s in selected_surfaces)
+            for e in entities
+        ]
+
+        return {
+            "data": entities,
+            "properties": {
+                "name": self.name,
+                "label": f"{self.label} — stacked",
+                "description": self.description,
+                "stacked": True,
+                "categories": categories_payload,
+                "range": {
+                    "total": {
+                        "label": "Total Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                    "period": {
+                        "label": "Period Range",
+                        "min": 0.0,
+                        "max": float(max(stack_totals)) if stack_totals else 0.0,
+                    },
+                },
             },
-            'period': {
-                'label': 'Period Range',
-                'min': float(min(period_min)),
-                'max': float(max(period_max))
-            }
         }
-
-        return output
