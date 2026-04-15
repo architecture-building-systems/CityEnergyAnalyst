@@ -2035,10 +2035,17 @@ def create_district_pathway_emissions_timeline(
         pathway_name=pathway_name,
     )
 
-    # Determine overall year range
+    # Determine overall year range. The timeline is always padded forward
+    # to at least Y_2100 or 50 years past the last state year (whichever is
+    # later) so that the cumulative plot carries beyond the last state and
+    # `cutoff-year` trimming spans a meaningful horizon. An explicit
+    # `config.emissions.year_end` is honoured if it pushes the end year
+    # even further out, but can't pull it back below the padded floor.
     start_year = min(years)
+    last_state_year = max(years)
+    padded_end_year = max(2100, last_state_year + 50)
     year_end_val = getattr(config.emissions, "year_end", None)
-    end_year = int(year_end_val) if year_end_val is not None else max(years)
+    end_year = max(int(year_end_val) if year_end_val is not None else 0, padded_end_year)
 
     idx = [f"Y_{y}" for y in range(start_year, end_year + 1)]
     base_cols: list[str] = []
