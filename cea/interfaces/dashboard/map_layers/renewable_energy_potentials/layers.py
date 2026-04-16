@@ -242,7 +242,7 @@ class SolarPotentialsLayer(MapLayer):
         return {
             'technology':
                 ParameterDefinition(
-                    "Technology",
+                    "technology",
                     "string",
                     description="Technology of the layer",
                     options_generator="_get_technologies",
@@ -250,7 +250,7 @@ class SolarPotentialsLayer(MapLayer):
                 ),
             'panel-type':
                 ParameterDefinition(
-                    "Panel Type",
+                    "type-panel",
                     "string",
                     description="Panel type of the layer. For PVT, the value is a "
                                 "compound '<PV_code> + <SC_code>' string.",
@@ -260,7 +260,7 @@ class SolarPotentialsLayer(MapLayer):
                 ),
             'surface':
                 ParameterDefinition(
-                    "Surface",
+                    "surface",
                     "array",
                     default=list(cls._SURFACE_CHOICES),
                     description="Building surfaces to consider. Consumed by the "
@@ -445,8 +445,8 @@ class SolarPotentialsLayer(MapLayer):
 
         def build_info_rows():
             rows = [
-                {"label": "Technology", "value": technology or ""},
-                {"label": "Panel Type", "value": panel_type or ""},
+                {"label": "technology", "value": technology or ""},
+                {"label": "type-panel", "value": panel_type or ""},
             ]
             return rows
 
