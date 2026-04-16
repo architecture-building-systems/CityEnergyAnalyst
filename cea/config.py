@@ -1590,11 +1590,9 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
             locator = cea.inputlocator.InputLocator(self.config.scenario)
             component_sets = []
             for whatif_name in what_if_names:
-                config_file = locator.get_analysis_configuration_file(whatif_name)
-                if not os.path.exists(config_file):
+                config_data = locator.read_analysis_configuration(whatif_name)
+                if config_data is None:
                     continue
-                with open(config_file) as f:
-                    config_data = json.load(f)
                 components = set()
                 if 'district' in scales:
                     for plant_cfg in config_data.get('plants', {}).values():

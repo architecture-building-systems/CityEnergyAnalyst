@@ -396,7 +396,7 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"  ✗ final_energy.csv: {str(e)}")
 
         try:
-            # Generate supply configuration JSON
+            # Generate supply configuration file
             config_data = {
                 'metadata': {
                     'whatif_name': whatif_name,
@@ -408,14 +408,11 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                 'plants': plant_configs,
             }
 
-            config_file = locator.get_analysis_configuration_file(whatif_name)
-            locator.ensure_parent_folder_exists(config_file)
-            with open(config_file, 'w') as f:
-                json.dump(config_data, f, indent=2, default=str)
-            print("  ✓ configuration.json")
+            locator.write_analysis_configuration(whatif_name, config_data)
+            print("  ✓ configuration.yml")
 
         except Exception as e:
-            print(f"  ✗ configuration.json: {str(e)}")
+            print(f"  ✗ configuration.yml: {str(e)}")
     else:
         print("  - No buildings processed, skipping compilation files")
 

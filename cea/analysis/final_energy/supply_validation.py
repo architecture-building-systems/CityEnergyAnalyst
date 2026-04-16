@@ -1080,24 +1080,26 @@ def validate_plant_temperature_vs_network_results(locator, network_name, config)
 
 def load_network_connectivity(locator, network_name):
     """
-    Load and parse connectivity.json for the given network.
+    Load and parse the connectivity file for the given network.
+
+    Prefers the new ``connectivity.yml`` and falls back to the legacy
+    ``connectivity.json`` for scenarios that already have one.
 
     :param locator: InputLocator instance
     :param network_name: Network layout name
     :return: Dict with connectivity data
-    :raises ValueError: If file is missing
+    :raises ValueError: If neither file is present
     """
-    connectivity_file = locator.get_network_connectivity_file(network_name)
-
-    if not os.path.exists(connectivity_file):
+    data = locator.read_network_connectivity(network_name)
+    if data is None:
+        expected = locator.get_network_connectivity_file(network_name)
         raise ValueError(
             f"Network connectivity file not found for network '{network_name}'.\n\n"
-            f"Expected at: {connectivity_file}\n\n"
+            f"Expected at: {expected}\n\n"
             f"Please run 'network-layout' first to generate this file."
         )
 
-    with open(connectivity_file, 'r') as f:
-        return json.load(f)
+    return data
 
 
 def load_all_assembly_scales(locator):
