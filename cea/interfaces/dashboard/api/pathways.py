@@ -38,6 +38,10 @@ class CreatePathwayPayload(BaseModel):
     pathway_name: str
 
 
+class DuplicatePathwayPayload(BaseModel):
+    name: str
+
+
 class BuildingEventsPayload(BaseModel):
     new_buildings: list[str] = []
     demolished_buildings: list[str] = []
@@ -76,6 +80,37 @@ async def post_pathway(config: CEAConfig, payload: CreatePathwayPayload) -> dict
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
+
+
+@router.post("/{pathway_name}/duplicate", dependencies=[CEASeverDemoAuthCheck])
+async def duplicate_pathway(
+    config: CEAConfig, pathway_name: str, payload: DuplicatePathwayPayload
+) -> dict[str, Any]:
+    import shutil
+    from cea.datamanagement.district_pathways.pathway_state import validate_pathway_name
+
+    src_name = validate_pathway_name(pathway_name)
+    dst_name = validate_pathway_name(payload.name)
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    src_folder = locator.get_district_pathway_folder(src_name)
+    if not os.path.isdir(src_folder):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Source pathway '{src_name}' does not exist.",
+        )
+
+    dst_folder = locator.get_district_pathway_folder(dst_name)
+    if os.path.exists(dst_folder):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A pathway named '{dst_name}' already exists.",
+        )
+
+    await run_in_threadpool(shutil.copytree, src_folder, dst_folder)
+
+    pathways = await run_in_threadpool(list_pathway_names, config)
+    return {"pathway_name": dst_name, "pathways": pathways}
 
 
 @router.get("/templates")
