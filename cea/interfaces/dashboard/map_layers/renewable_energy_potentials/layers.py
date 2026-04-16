@@ -338,8 +338,19 @@ class SolarPotentialsLayer(MapLayer):
                 }
             raise ValueError(f"Invalid technology specified: {technology}")
 
-        # Category-level palette: picks the plot-solar shade per (surface, metric).
+        # Route colour choice through the same helper Plot-Solar Technology
+        # uses (``get_column_color``) on the exact CSV column name. This
+        # guarantees map bars and plot bars share the same colour per
+        # surface+metric — plot_colours.py is the single source of truth.
+        # Falls back to the local palette only when the helper returns
+        # None (unknown column).
+        from cea.visualisation.format.plot_colours import get_column_color
+
         def colour_for(surface, metric):
+            col_name = surface_columns_for(surface)[metric]
+            via_plot = get_column_color(col_name)
+            if via_plot:
+                return via_plot
             palette = self._SURFACE_PALETTE.get(surface, {
                 "base": "grey", "light": "grey_light", "lighter": "grey_lighter",
             })
@@ -510,7 +521,7 @@ class SolarPotentialsLayer(MapLayer):
                 "data": data_points,
                 "properties": {
                     "name": self.name,
-                    "label": f"{self.label} — {surface}",
+                    "label": f"{self.label} - {surface}",
                     "description": self.description,
                     "colours": {
                         "colour_array": [
@@ -548,7 +559,7 @@ class SolarPotentialsLayer(MapLayer):
             "data": entities,
             "properties": {
                 "name": self.name,
-                "label": f"{self.label} — stacked",
+                "label": f"{self.label} - stacked",
                 "description": self.description,
                 "stacked": True,
                 "categories": categories_payload,
