@@ -58,16 +58,47 @@ class SolarPotentialsLayer(MapLayer):
         "SC": "Q_SC_gen_kWh",
     }
 
-    # Per-surface colour pairs (light, dark) used when the layer renders
-    # a stacked ColumnLayer (multi-surface mode). Mirrors the pattern used
-    # by OperationalEmissionsMapLayer.
-    _SURFACE_COLOURS = {
-        "roofs_top": ("yellow_lighter", "yellow"),
-        "walls_north": ("blue_lighter", "blue"),
-        "walls_east": ("green_lighter", "green"),
-        "walls_south": ("red_lighter", "red"),
-        "walls_west": ("purple_lighter", "purple"),
+    # Per-surface palette — mirrors ``cea/visualisation/format/plot_colours.py``
+    # so the Plot Solar Technology legend and this map layer agree. Each
+    # entry provides:
+    #   base     — solid colour (PV electricity, PVT electricity)
+    #   light    — middle shade (PVT thermal)
+    #   lighter  — faint shade  (SC thermal)
+    _SURFACE_PALETTE = {
+        "roofs_top": {
+            "base": "red",
+            "light": "red_light",
+            "lighter": "red_lighter",
+        },
+        "walls_north": {
+            "base": "orange",
+            "light": "orange_light",
+            "lighter": "orange_lighter",
+        },
+        "walls_east": {
+            "base": "blue",
+            "light": "blue_light",
+            "lighter": "blue_lighter",
+        },
+        "walls_south": {
+            "base": "green",
+            "light": "green_light",
+            "lighter": "green_lighter",
+        },
+        "walls_west": {
+            "base": "purple",
+            "light": "purple_light",
+            "lighter": "purple_lighter",
+        },
     }
+
+    # PVT encodes a second metric (thermal) alongside electricity. When
+    # the user enables PVT, each surface becomes two stack segments — one
+    # for electricity (``_E``, base shade) and one for thermal (``_Q``,
+    # light shade). The suffixes are used both as dict keys in each
+    # entity's ``values`` map and as the stacked category names.
+    _METRIC_E = "E"
+    _METRIC_Q = "Q"
 
     # Separator used to encode the PVT compound panel type (PV code + SC code)
     # as a single dropdown value in the frontend. Kept intentionally verbose so
@@ -243,24 +274,6 @@ class SolarPotentialsLayer(MapLayer):
             ),
         ]
 
-    def _surface_column_name(self, technology, panel_type, surface):
-        """Return the per-surface kWh column name for a (technology, panel, surface) tuple.
-
-        Mirrors the writer conventions in ``cea.technologies.solar.*``:
-        - PV  → ``PV_{surface}_E_kWh``
-        - SC  → ``SC_{sc_code}_{surface}_Q_kWh``
-        - PVT → ``PVT_{sc_code}_{surface}_E_kWh`` (we expose the electricity
-          half on the map; thermal is carried through the plot form).
-        """
-        if technology == "PV":
-            return f"PV_{surface}_E_kWh"
-        if technology == "SC":
-            return f"SC_{panel_type}_{surface}_Q_kWh"
-        if technology == "PVT":
-            _, sc_code = self._split_pvt_panel_type(panel_type)
-            return f"PVT_{sc_code}_{surface}_E_kWh"
-        raise ValueError(f"Invalid technology specified: {technology}")
-
     def _resolve_selected_surfaces(self, parameters):
         """Normalise the `surface` parameter into a sorted list of valid
         surface names. Falls back to all surfaces when nothing is set."""
@@ -298,12 +311,62 @@ class SolarPotentialsLayer(MapLayer):
         technology = parameters.get("technology")
         panel_type = parameters.get("panel-type")
         selected_surfaces = self._resolve_selected_surfaces(parameters)
-        is_stacked = len(selected_surfaces) > 1
 
         pvt_pv_code = None
         pvt_sc_code = None
         if technology == "PVT":
             pvt_pv_code, pvt_sc_code = self._split_pvt_panel_type(panel_type)
+
+        # PVT always emits two stack segments per surface (electricity + thermal),
+        # so it is always rendered as a stacked ColumnLayer regardless of how
+        # many surfaces are selected. PV and SC still use the flat HexagonLayer
+        # when a single surface is chosen.
+        is_pvt = technology == "PVT"
+        is_stacked = is_pvt or len(selected_surfaces) > 1
+
+        # Column-name builder: PV has only electricity, SC has only thermal,
+        # PVT exposes both so we read two columns per surface.
+        def surface_columns_for(surface):
+            if technology == "PV":
+                return {self._METRIC_E: f"PV_{surface}_E_kWh"}
+            if technology == "SC":
+                return {self._METRIC_Q: f"SC_{panel_type}_{surface}_Q_kWh"}
+            if technology == "PVT":
+                return {
+                    self._METRIC_E: f"PVT_{pvt_sc_code}_{surface}_E_kWh",
+                    self._METRIC_Q: f"PVT_{pvt_sc_code}_{surface}_Q_kWh",
+                }
+            raise ValueError(f"Invalid technology specified: {technology}")
+
+        # Category-level palette: picks the plot-solar shade per (surface, metric).
+        def colour_for(surface, metric):
+            palette = self._SURFACE_PALETTE.get(surface, {
+                "base": "grey", "light": "grey_light", "lighter": "grey_lighter",
+            })
+            if technology == "SC":
+                return palette["lighter"]
+            if metric == self._METRIC_E:
+                return palette["base"]
+            return palette["light"]  # PVT_Q
+
+        def category_key(surface, metric):
+            # When both metrics are live (PVT) we need to distinguish
+            # surface_E vs surface_Q; for PV / SC the surface name alone
+            # is enough because there is only one metric.
+            if is_pvt:
+                return f"{surface}_{metric}"
+            return surface
+
+        def category_label(surface, metric):
+            if is_pvt:
+                return f"{surface} ({metric})"
+            return surface
+
+        # Ordered list of (surface, metric) tuples for the stack.
+        stack_segments = []
+        for surface in selected_surfaces:
+            for metric in surface_columns_for(surface).keys():
+                stack_segments.append((surface, metric))
 
         # Filter buildings that exist in geometry
         buildings, _, building_centroids = safe_filter_buildings_with_geometry(locator, buildings)
@@ -313,35 +376,54 @@ class SolarPotentialsLayer(MapLayer):
             'period': {'label': 'Period Range', 'min': 0.0, 'max': 0.0},
         }
 
-        def empty_output(fallback_surface=None):
-            """Produce a valid but empty output payload.
+        def build_categories_payload():
+            out = []
+            for surface, metric in stack_segments:
+                colour_name = colour_for(surface, metric)
+                hex_colour = color_to_hex(colour_name)
+                r = int(hex_colour[1:3], 16)
+                g = int(hex_colour[3:5], 16)
+                b = int(hex_colour[5:7], 16)
+                out.append({
+                    "name": category_key(surface, metric),
+                    "label": category_label(surface, metric),
+                    "colour": hex_colour,
+                    "rgb": [r, g, b],
+                })
+            return out
 
-            When a single surface is active we keep the original single-
-            colour gradient; in stacked mode we return the category list
-            so the frontend still knows how to lay out the legend.
-            """
-            colour_key = fallback_surface or (selected_surfaces[0] if selected_surfaces else "roofs_top")
-            light, dark = self._SURFACE_COLOURS.get(colour_key, ("yellow_lighter", "yellow"))
+        def build_info_rows():
+            rows = [
+                {"label": "Technology", "value": technology or ""},
+                {"label": "Panel Type", "value": panel_type or ""},
+            ]
+            return rows
+
+        def empty_output():
+            """Valid but empty output payload."""
+            first_colour_name = (
+                colour_for(stack_segments[0][0], stack_segments[0][1])
+                if stack_segments
+                else "yellow"
+            )
+            hex_colour = color_to_hex(first_colour_name)
             props = {
                 "name": self.name,
                 "label": self.label,
                 "description": self.description,
                 "colours": {
-                    "colour_array": [color_to_hex(light), color_to_hex(dark)],
+                    "colour_array": [
+                        color_to_hex("grey_lighter"),
+                        hex_colour,
+                    ],
                     "points": 12,
                 },
                 "range": empty_range,
                 "stacked": is_stacked,
+                "info": build_info_rows(),
             }
             if is_stacked:
-                props["categories"] = [
-                    {
-                        "name": s,
-                        "colour": color_to_hex(self._SURFACE_COLOURS[s][1]),
-                    }
-                    for s in selected_surfaces
-                    if s in self._SURFACE_COLOURS
-                ]
+                props["categories"] = build_categories_payload()
             return {"data": [], "properties": props}
 
         if not buildings:
@@ -361,35 +443,37 @@ class SolarPotentialsLayer(MapLayer):
                 if not os.path.exists(path):
                     return None
 
-                cols = [
-                    self._surface_column_name(technology, panel_type, s)
-                    for s in selected_surfaces
-                ]
+                # Collect every column we need across all selected surfaces.
+                wanted_cols = {}  # {(surface, metric): col_name}
+                for surface, metric in stack_segments:
+                    col_name = surface_columns_for(surface)[metric]
+                    wanted_cols[(surface, metric)] = col_name
 
-                # Filter to only columns actually present; missing surfaces
-                # contribute zero rather than breaking the read.
                 header = pd.read_csv(path, nrows=0).columns
-                cols_present = [c for c in cols if c in header]
+                cols_present = [c for c in set(wanted_cols.values()) if c in header]
                 if not cols_present:
                     return None
                 df = pd.read_csv(path, usecols=cols_present)
 
-                per_surface = {}
-                for surface, col in zip(selected_surfaces, cols):
-                    if col not in df.columns:
-                        per_surface[surface] = 0.0
+                values = {}  # keyed by category_key(...)
+                for (surface, metric), col_name in wanted_cols.items():
+                    key = category_key(surface, metric)
+                    if col_name not in df.columns:
+                        values[key] = 0.0
                         continue
-                    series = df[col].astype(float)
+                    series = df[col_name].astype(float)
                     if start < end:
                         period_value = series.iloc[start:end + 1].sum()
                     else:
-                        period_value = series.iloc[start:].sum() + series.iloc[:end + 1].sum()
-                    per_surface[surface] = float(period_value)
+                        period_value = (
+                            series.iloc[start:].sum() + series.iloc[:end + 1].sum()
+                        )
+                    values[key] = float(period_value)
 
                 return {
                     "name": building,
                     "position": [centroid.x, centroid.y],
-                    "values": per_surface,
+                    "values": values,
                 }
             except Exception as e:
                 print(f"Warning: Error reading {technology} potentials for {building}: {e}")
@@ -407,16 +491,17 @@ class SolarPotentialsLayer(MapLayer):
         if not entities:
             return empty_output()
 
-        # ---- Single-surface: flat bins ----
+        # ---- Single-surface (PV or SC only): flat bins ----
         if not is_stacked:
-            surface = selected_surfaces[0]
-            light, dark = self._SURFACE_COLOURS.get(surface, ("yellow_lighter", "yellow"))
+            surface, metric = stack_segments[0]
+            key = category_key(surface, metric)
+            colour_name = colour_for(surface, metric)
             data_points = [
                 {
                     "position": e["position"],
-                    "value": e["values"].get(surface, 0.0),
+                    "value": e["values"].get(key, 0.0),
                     "name": e["name"],
-                    "category": surface,
+                    "category": category_label(surface, metric),
                 }
                 for e in entities
             ]
@@ -428,7 +513,10 @@ class SolarPotentialsLayer(MapLayer):
                     "label": f"{self.label} — {surface}",
                     "description": self.description,
                     "colours": {
-                        "colour_array": [color_to_hex(light), color_to_hex(dark)],
+                        "colour_array": [
+                            color_to_hex("grey_lighter"),
+                            color_to_hex(colour_name),
+                        ],
                         "points": 12,
                     },
                     "range": {
@@ -444,25 +532,15 @@ class SolarPotentialsLayer(MapLayer):
                         },
                     },
                     "stacked": False,
+                    "info": build_info_rows(),
                 },
             }
 
-        # ---- Multi-surface: stacked columns ----
-        categories_payload = []
-        for surface in selected_surfaces:
-            _, darker = self._SURFACE_COLOURS.get(surface, ("grey_lighter", "grey"))
-            hex_colour = color_to_hex(darker)
-            r = int(hex_colour[1:3], 16)
-            g = int(hex_colour[3:5], 16)
-            b = int(hex_colour[5:7], 16)
-            categories_payload.append({
-                "name": surface,
-                "colour": hex_colour,
-                "rgb": [r, g, b],
-            })
-
+        # ---- Stacked mode: multi-surface PV/SC, or any PVT ----
+        categories_payload = build_categories_payload()
+        stack_keys = [cat["name"] for cat in categories_payload]
         stack_totals = [
-            sum(max(e["values"].get(s, 0.0), 0.0) for s in selected_surfaces)
+            sum(max(e["values"].get(k, 0.0), 0.0) for k in stack_keys)
             for e in entities
         ]
 
@@ -474,6 +552,7 @@ class SolarPotentialsLayer(MapLayer):
                 "description": self.description,
                 "stacked": True,
                 "categories": categories_payload,
+                "info": build_info_rows(),
                 "range": {
                     "total": {
                         "label": "Total Range",
