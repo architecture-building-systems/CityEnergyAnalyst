@@ -139,30 +139,70 @@ class SolarPotentialsLayer(MapLayer):
             )
         return pv_code, sc_code
 
-    def _get_panel_types(self, parameters: dict) -> List[str]:
-        config = Configuration(DEFAULT_CONFIG)
-        config.project = self.project
-        config.scenario_name = self.scenario_name
+    def _scan_available_panel_files(self, technology: str) -> List[tuple]:
+        """Scan ``potentials/solar`` for pre-computed total files and return
+        the panel codes that actually have results on disk.
 
-        technology = parameters.get("technology")
+        Mirrors ``SolarPanelChoicesMixin._get_available_solar_technologies``
+        in ``cea/config.py`` so the map layer's `panel-type` dropdown and
+        the solar-technology parameter in the final-energy form agree on
+        which panels the scenario actually contains.
+
+        Returns a list of tuples:
+          - PV  → [(pv_code,), ...]
+          - SC  → [(sc_code,), ...]
+          - PVT → [(pv_code, sc_code), ...]
+        """
+        import glob
+
+        solar_folder = self.locator.get_potentials_solar_folder()
+        if not os.path.exists(solar_folder):
+            return []
 
         if technology == "PV":
-            df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
-            return df["code"].unique().tolist()
-        elif technology == "SC":
-            df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
-            return df["type"].unique().tolist()
-        elif technology == "PVT":
-            pv_df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'))
-            sc_df = pd.read_csv(self.locator.get_db4_components_conversion_conversion_technology_csv('SOLAR_COLLECTORS'))
-            pv_codes = pv_df["code"].unique().tolist()
-            sc_codes = sc_df["type"].unique().tolist()
-            # Enumerate every PV+SC pairing as a single compound option so the
-            # existing single `panel-type` dropdown can represent both halves.
+            results = []
+            for filepath in glob.glob(os.path.join(solar_folder, "PV_*_total.csv")):
+                stem = os.path.basename(filepath).replace("_total.csv", "")
+                # PV_<code>  →  <code> (skip PVT_* which also starts with PV)
+                if stem.startswith("PVT_"):
+                    continue
+                code = stem[len("PV_"):]
+                if code:
+                    results.append((code,))
+            return sorted(set(results))
+
+        if technology == "SC":
+            results = []
+            for filepath in glob.glob(os.path.join(solar_folder, "SC_*_total.csv")):
+                stem = os.path.basename(filepath).replace("_total.csv", "")
+                code = stem[len("SC_"):]
+                if code:
+                    results.append((code,))
+            return sorted(set(results))
+
+        if technology == "PVT":
+            results = []
+            for filepath in glob.glob(os.path.join(solar_folder, "PVT_*_total.csv")):
+                stem = os.path.basename(filepath).replace("_total.csv", "")
+                # PVT_<pv_code>_<sc_code>
+                parts = stem[len("PVT_"):].split("_", 1)
+                if len(parts) == 2 and parts[0] and parts[1]:
+                    results.append((parts[0], parts[1]))
+            return sorted(set(results))
+
+        return []
+
+    def _get_panel_types(self, parameters: dict) -> List[str]:
+        technology = parameters.get("technology")
+        available = self._scan_available_panel_files(technology)
+
+        if technology in ("PV", "SC"):
+            return [code for (code,) in available]
+
+        if technology == "PVT":
             return [
                 f"{pv}{self._PVT_PANEL_TYPE_SEP}{sc}"
-                for pv in pv_codes
-                for sc in sc_codes
+                for (pv, sc) in available
             ]
 
         return None
