@@ -288,7 +288,14 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
 
     # Validate using encode() method
     is_valid, error_message = validate_parameter(target_parameter, value, parameter_name)
-    return {"valid": is_valid, "error": error_message}
+    result = {"valid": is_valid, "error": error_message}
+
+    if is_valid:
+        warnings = _collect_field_warnings(tool_name, parameter_name, value, config)
+        if warnings:
+            result["warnings"] = warnings
+
+    return result
 
 
 @router.post('/{tool_name}/parameter-metadata')
@@ -378,6 +385,36 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
         raise HTTPException(status_code=400,
                             detail={"message": "Missing input files",
                                     "script_suggestions": list(scripts)})
+
+    # Collision warnings from the check-inputs path (Run button confirmation)
+    warnings = _collect_field_warnings(
+        tool_name, 'network-name', payload.get('network-name'), config
+    )
+    return {"warnings": warnings} if warnings else None
+
+
+def _collect_field_warnings(tool_name, parameter_name, value, config):
+    """Return structured ``{field, message}`` warnings for a single field.
+
+    Centralises collision detection so ``validate_field`` and
+    ``check_tool_inputs`` share one code path.
+    """
+    if tool_name != 'network-layout' or parameter_name != 'network-name':
+        return []
+    v = (value or '').strip()
+    if not v:
+        return []
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    folder = locator.get_thermal_network_folder_network_name_folder(v)
+    if not os.path.isdir(folder):
+        return []
+    return [{
+        "field": "network-name",
+        "message": (
+            f"Network '{v}' already exists. "
+            f"Running will delete the existing network and create a new one."
+        ),
+    }]
 
 
 def parameters_for_script(script_name, config):

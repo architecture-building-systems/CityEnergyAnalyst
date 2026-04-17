@@ -2008,23 +2008,6 @@ class NetworkLayout:
             )
         # Ensure network name is stripped of flanking whitespaces
         network_name = network_name.strip()
-
-        # Safety check: Verify network doesn't already exist (backend validation fallback)
-        exists = []
-        for network_type in network_types:
-            output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-            if os.path.exists(output_folder):
-                edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-                if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                    exists.append(network_type)
-
-        if exists:
-            existing_networks = ', '.join(exists)
-            raise ValueError(
-                f"Network with name '{network_name}' already exists for network types: {existing_networks}. "
-                "Choose a different name or delete the existing network."
-            )
         return network_name
 
 
@@ -2654,6 +2637,13 @@ def main(config: cea.config.Configuration):
     snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
 
     print(f"Network name: {network_layout.network_name}")
+
+    target_folder = locator.get_thermal_network_folder_network_name_folder(
+        network_layout.network_name
+    )
+    if os.path.isdir(target_folder):
+        print(f"  Removing existing network folder: {target_folder}")
+        shutil.rmtree(target_folder)
 
     # Check if user provided a custom network layout
     existing_network = config.network_layout.existing_network

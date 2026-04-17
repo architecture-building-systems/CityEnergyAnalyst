@@ -832,8 +832,6 @@ class WhatIfNameParameter(StringParameter):
         # Check for collision with existing what-if scenarios
         scenario = self.config.scenario
         locator = cea.inputlocator.InputLocator(scenario)
-
-        # Check if final-energy folder exists for this what-if name
         whatif_folder = locator.get_analysis_folder(value)
         if os.path.exists(whatif_folder):
             raise ValueError(
@@ -896,18 +894,6 @@ class NetworkLayoutNameParameter(StringParameter):
             raise ValueError(
                 f"Network name contains invalid characters. "
                 f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        # Check for collision with existing networks
-        scenario = self.config.scenario
-        locator = cea.inputlocator.InputLocator(scenario)
-
-        # Check network folder exists
-        network_folder = locator.get_thermal_network_folder_network_name_folder(value)
-        if os.path.exists(network_folder):
-            raise ValueError(
-                f"Network '{value}' already exists. "
-                f"Choose a different name or delete the existing network."
             )
 
         return value
