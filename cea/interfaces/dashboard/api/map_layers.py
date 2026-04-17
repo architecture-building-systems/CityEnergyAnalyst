@@ -6,7 +6,7 @@ from pydantic import BaseModel, field_validator
 
 from cea import MissingInputDataException
 from cea.interfaces.dashboard.api.utils import validate_scenario_name
-from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.map_layers import get_layers_grouped_by_category, load_layer
 
 router = APIRouter()
@@ -139,17 +139,27 @@ async def get_layer_parameter_range(project_root: CEAProjectRoot, params: LayerP
 
 
 @router.post('/{layer_category}/{layer_name}/generate')
-async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
+async def generate_map_layer(config: CEAConfig, project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)
 
     project_path = params.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
-
-    # Update params.project if there is project_root
     params.project = project_path
+
+    # When the pathway viewer is active, config.scenario points to the
+    # state folder (set by switchToChildScenario). Derive project and
+    # scenario_name from it so the map layer reads state-level results.
+    scenario_path = config.scenario
+    if os.sep + 'pathways' + os.sep in scenario_path:
+        effective_project = os.path.dirname(scenario_path)
+        effective_scenario = os.path.basename(scenario_path)
+    else:
+        effective_project = params.project
+        effective_scenario = params.scenario_name
+
     try:
-        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer = layer_class(project=effective_project, scenario_name=effective_scenario)
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
         print(e)
