@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
@@ -31,7 +31,25 @@ from cea.datamanagement.district_pathways.pathway_timeline import (
 )
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthCheck
 
-router = APIRouter()
+
+async def _use_parent_scenario(config: CEAConfig):
+    """Router-level dependency: temporarily resolves config.scenario to
+    the parent scenario (stripping any ``/pathways/.../state_YYYY``
+    suffix) so pathway endpoints always see the correct folder. Restores
+    the original path after the response is sent, so map-layer and tool
+    endpoints that run later still see the child-scenario path."""
+    original = config.scenario
+    marker = os.sep + 'pathways' + os.sep
+    idx = original.find(marker)
+    if idx >= 0:
+        config.scenario = original[:idx]
+    try:
+        yield
+    finally:
+        config.scenario = original
+
+
+router = APIRouter(dependencies=[Depends(_use_parent_scenario)])
 
 
 class CreatePathwayPayload(BaseModel):
