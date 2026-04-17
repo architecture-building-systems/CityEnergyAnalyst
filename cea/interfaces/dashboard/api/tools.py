@@ -387,9 +387,12 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
                                     "script_suggestions": list(scripts)})
 
     # Collision warnings from the check-inputs path (Run button confirmation)
-    warnings = _collect_field_warnings(
-        tool_name, 'network-name', payload.get('network-name'), config
-    )
+    warnings = []
+    for field_name in ('network-name', 'what-if-name'):
+        if field_name in payload:
+            warnings.extend(
+                _collect_field_warnings(tool_name, field_name, payload[field_name], config)
+            )
     return {"warnings": warnings} if warnings else None
 
 
@@ -399,22 +402,36 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
     Centralises collision detection so ``validate_field`` and
     ``check_tool_inputs`` share one code path.
     """
-    if tool_name != 'network-layout' or parameter_name != 'network-name':
-        return []
     v = (value or '').strip()
     if not v:
         return []
     locator = cea.inputlocator.InputLocator(config.scenario)
-    folder = locator.get_thermal_network_folder_network_name_folder(v)
-    if not os.path.isdir(folder):
-        return []
-    return [{
-        "field": "network-name",
-        "message": (
-            f"Network '{v}' already exists. "
-            f"Running will delete the existing network and create a new one."
-        ),
-    }]
+
+    if tool_name == 'network-layout' and parameter_name == 'network-name':
+        folder = locator.get_thermal_network_folder_network_name_folder(v)
+        if os.path.isdir(folder):
+            return [{
+                "field": "network-name",
+                "message": (
+                    f"Network '{v}' already exists. "
+                    f"Running will delete the existing network and create a new one."
+                ),
+            }]
+
+    if tool_name == 'final-energy' and parameter_name == 'what-if-name':
+        folder = locator.get_analysis_folder(v)
+        if os.path.isdir(folder):
+            return [{
+                "field": "what-if-name",
+                "message": (
+                    f"What-if Scenario '{v}' already exists. "
+                    f"Running will delete the entire What-if Scenario folder, "
+                    f"including any final-energy, costs, emissions, and heat-rejection results, "
+                    f"and create a new one."
+                ),
+            }]
+
+    return []
 
 
 def parameters_for_script(script_name, config):

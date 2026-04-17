@@ -829,16 +829,6 @@ class WhatIfNameParameter(StringParameter):
                 f"Avoid: {' '.join(invalid_chars)}"
             )
 
-        # Check for collision with existing what-if scenarios
-        scenario = self.config.scenario
-        locator = cea.inputlocator.InputLocator(scenario)
-        whatif_folder = locator.get_analysis_folder(value)
-        if os.path.exists(whatif_folder):
-            raise ValueError(
-                f"What-if (sub)scenario '{value}' already exists. "
-                f"Choose a different name or delete the existing one."
-            )
-
         return value
 
     def encode(self, value):

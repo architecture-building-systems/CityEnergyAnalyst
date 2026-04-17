@@ -64,14 +64,18 @@ def main(config: cea.config.Configuration):
         else:
             print(f"Mode: Production (what-if: {whatif_name}, no district networks)")
 
-    # Step 2: Create output folder
+    # Step 2: Create output folder. If the what-if analysis folder already
+    # exists, remove it entirely (the frontend confirmation modal has
+    # already been accepted by the user at this point).
     analysis_folder = locator.get_analysis_folder(whatif_name)
-    analysis_folder_is_new = not os.path.exists(analysis_folder)
+    if os.path.isdir(analysis_folder):
+        print(f"Removing existing analysis folder: {analysis_folder}")
+        shutil.rmtree(analysis_folder)
+    analysis_folder_is_new = True
 
     output_folder = locator.get_final_energy_folder(whatif_name)
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-        print(f"Created output folder: {output_folder}")
+    os.makedirs(output_folder, exist_ok=True)
+    print(f"Created output folder: {output_folder}")
 
     try:
         _run(config, locator, whatif_name, output_folder, buildings=None)
