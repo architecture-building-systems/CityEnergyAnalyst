@@ -143,13 +143,19 @@ async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, t
                                scenario_name: Optional[str] = None) -> ToolProperties:
     # TODO: Add plugin support
 
-    # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
-    if project is not None:
-        if project_root is not None and not project.startswith(project_root):
-            project = os.path.join(project_root, project)
-        config.project = secure_path(project)
-    if scenario_name is not None:
-        config.scenario_name = validate_scenario_name(scenario_name)
+    # Set project and scenario on config to ensure parameters that depend
+    # on them are constructed correctly. Skip BOTH overrides when the
+    # pathway viewer is active — config.scenario already points to the
+    # state folder (set by switchToChildScenario), and overriding either
+    # config.project or config.scenario_name would break that path.
+    in_child_scenario = os.sep + 'pathways' + os.sep in config.scenario
+    if not in_child_scenario:
+        if project is not None:
+            if project_root is not None and not project.startswith(project_root):
+                project = os.path.join(project_root, project)
+            config.project = secure_path(project)
+        if scenario_name is not None:
+            config.scenario_name = validate_scenario_name(scenario_name)
 
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
