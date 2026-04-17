@@ -402,6 +402,8 @@ def _collect_field_warnings(tool_name, parameter_name, value, config):
     Centralises collision detection so ``validate_field`` and
     ``check_tool_inputs`` share one code path.
     """
+    if isinstance(value, list):
+        return []
     v = (value or '').strip()
     if not v:
         return []
