@@ -662,6 +662,10 @@ class DistrictEvolutionPathway:
             )
             phase = status.get("primary_phase", "none")
             stale = status.get("has_stale_phase", False)
+            if phase == "custom":
+                skipped_years.append(int(year))
+                print(f"- state_{int(year)}: custom (user-edited inputs), skipping", flush=True)
+                continue
             if phase in ("baked", "simulated") and not stale:
                 skipped_years.append(int(year))
                 print(f"- state_{int(year)}: up to date, skipping", flush=True)

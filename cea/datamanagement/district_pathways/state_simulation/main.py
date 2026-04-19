@@ -108,9 +108,12 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
     skip_already_simulated = bool(
         getattr(config.pathway_simulations, "skip_already_simulated_states", True)
     )
+    skip_custom = bool(
+        getattr(config.pathway_simulations, "skip_custom_states", False)
+    )
     skipped_years: list[int] = []
     years_to_simulate: list[int] = list(state_years)
-    if skip_already_simulated:
+    if skip_already_simulated or skip_custom:
         eligible: list[int] = []
         for year in state_years:
             state = DistrictStateYear(
@@ -127,8 +130,12 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
                 source_log_hash=pathway.source_log_hash_for_year(int(year)),
                 signature=signature,
             )
-            if (
-                status.get("primary_phase") == "simulated"
+            phase = status.get("primary_phase")
+            if skip_custom and phase == "custom":
+                skipped_years.append(int(year))
+            elif (
+                skip_already_simulated
+                and phase == "simulated"
                 and not status.get("has_stale_phase")
             ):
                 skipped_years.append(int(year))

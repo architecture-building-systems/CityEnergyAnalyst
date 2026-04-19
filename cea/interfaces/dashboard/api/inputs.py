@@ -233,7 +233,34 @@ async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
 
         return out
 
-    return await run_in_threadpool(fn)
+    result = await run_in_threadpool(fn)
+
+    # If the save happened inside a pathway state (sub-scenario), mark
+    # the state as custom so the pathway viewer shows it in purple and
+    # bake/simulate can handle it appropriately.
+    scenario = project_info.scenario
+    marker = os.sep + 'pathways' + os.sep
+    idx = scenario.find(marker)
+    if idx >= 0:
+        from cea.datamanagement.district_pathways.pathway_status import record_custom_state
+        parent = scenario[:idx]
+        suffix = scenario[idx + len(marker):]
+        parts = suffix.split(os.sep)
+        if len(parts) >= 2 and parts[1].startswith('state_'):
+            pathway_name = parts[0]
+            try:
+                year = int(parts[1].replace('state_', ''))
+                parent_locator = cea.inputlocator.InputLocator(parent)
+                await run_in_threadpool(
+                    record_custom_state,
+                    parent_locator,
+                    pathway_name=pathway_name,
+                    year=year,
+                )
+            except (ValueError, OSError):
+                pass
+
+    return result
 
 
 def _build_choices_cache(locator):

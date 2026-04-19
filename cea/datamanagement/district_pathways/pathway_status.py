@@ -178,6 +178,21 @@ def record_simulated_state(
     )
 
 
+def record_custom_state(
+    locator: InputLocator,
+    *,
+    pathway_name: str,
+    year: int,
+) -> dict[str, Any]:
+    """Mark a state as user-customised (inputs edited in sub-scenario mode)."""
+    return write_state_status(
+        locator,
+        pathway_name=pathway_name,
+        year=year,
+        payload={"custom": True},
+    )
+
+
 def collect_state_phase_status(
     locator: InputLocator,
     *,
@@ -187,6 +202,19 @@ def collect_state_phase_status(
     signature: dict[str, Any],
 ) -> dict[str, Any]:
     status_record = read_state_status(locator, pathway_name=pathway_name, year=year)
+
+    # Custom states (inputs edited in sub-scenario mode) bypass all
+    # hash-based staleness checks — they are user-owned.
+    if status_record.get("custom"):
+        return {
+            "validation": _phase_payload("custom", "Custom", None),
+            "bake": _phase_payload("custom", "Custom", None),
+            "simulation": _phase_payload("custom", "Custom", None),
+            "latest_confirmed_at": None,
+            "primary_phase": "custom",
+            "has_stale_phase": False,
+        }
+
     inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
     state_hash = None
 

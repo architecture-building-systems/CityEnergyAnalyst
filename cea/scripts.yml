@@ -404,6 +404,7 @@ District Evolution Pathways:
       - 'general:scenario'
       - 'pathway-simulations:existing-pathway-name'
       - 'pathway-simulations:skip-already-simulated-states'
+      - 'pathway-simulations:skip-custom-states'
       - 'thermal-network:dh-temperature-mode'
       - 'final-energy:hs-booster-type-building'
       - 'final-energy:dhw-booster-type-building'

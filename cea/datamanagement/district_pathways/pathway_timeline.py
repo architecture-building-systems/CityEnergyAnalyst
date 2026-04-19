@@ -130,7 +130,7 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
                 phase = status.get("primary_phase", "none")
                 stale = status.get("has_stale_phase", False)
                 year_phases[year] = phase
-                if phase not in ("baked", "simulated") or stale:
+                if phase not in ("baked", "simulated", "custom") or stale:
                     all_baked = False
             except Exception:
                 all_baked = False
