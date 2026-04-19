@@ -1,39 +1,39 @@
-description,code,primary_components,secondary_components,tertiary_components,feedstock,scale,efficiency,CAPEX_USD2015kW,LT_yr,O&M_%,IR_%,reference
-none,SUPPLY_HEATING_AS0,-,-,-,NONE,NONE,0.0,0.0,20,1.0,5,educated guess
-oil-fired boiler - Konstanttemperaturkessel - 10 kW,SUPPLY_HEATING_AS1,BO2,-,-,OIL,BUILDING,0.7,1560.1736079047005,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler - Konstanttemperaturkessel - 50 kW,SUPPLY_HEATING_AS2,BO2,-,-,OIL,BUILDING,0.7,383.62177486379176,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler - Konstanttemperaturkessel - 100 kW,SUPPLY_HEATING_AS3,BO2,-,-,OIL,BUILDING,0.7,277.3312401883831,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler - Niedertemperaturkessel - 10 kW,SUPPLY_HEATING_AS4,BO2,-,-,OIL,BUILDING,0.85,1284.848853568577,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler - Niedertemperaturkessel -  50 kW,SUPPLY_HEATING_AS5,BO2,-,-,OIL,BUILDING,0.85,315.92381459371086,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler - Niedertemperaturkessel - 100 kW,SUPPLY_HEATING_AS6,BO2,-,-,OIL,BUILDING,0.85,228.39043309631546,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler  - Brennwertgerät -  10 kW,SUPPLY_HEATING_AS7,BO2,-,-,OIL,BUILDING,0.92,1187.0886147100982,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler  - Brennwertgerät -  50 kW,SUPPLY_HEATING_AS8,BO2,-,-,OIL,BUILDING,0.93,288.7475724781228,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-oil-fired boiler  - Brennwertgerät -  100 kW,SUPPLY_HEATING_AS9,BO2,-,-,OIL,BUILDING,0.93,208.7439442278152,20,3.5,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler - Konstanttemperaturkessel - 10 kW,SUPPLY_HEATING_AS10,BO1,-,-,NATURALGAS,BUILDING,0.7,771.1884753901562,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler - Konstanttemperaturkessel - 50 kW,SUPPLY_HEATING_AS11,BO1,-,-,NATURALGAS,BUILDING,0.7,217.51964170283497,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler - Konstanttemperaturkessel - 100 kW,SUPPLY_HEATING_AS12,BO1,-,-,NATURALGAS,BUILDING,0.7,192.79711884753905,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler - Niedertemperaturkessel - 10 kW,SUPPLY_HEATING_AS13,BO2,-,-,NATURALGAS,BUILDING,0.85,635.0963914977756,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler - Niedertemperaturkessel - 50 kW,SUPPLY_HEATING_AS14,BO2,-,-,NATURALGAS,BUILDING,0.85,179.13382257880528,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler - Niedertemperaturkessel - 100 kW,SUPPLY_HEATING_AS15,BO2,-,-,NATURALGAS,BUILDING,0.85,158.7740978744439,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler  - Brennwertgerät - 10 kW,SUPPLY_HEATING_AS16,BO1,-,-,NATURALGAS,BUILDING,0.93,580.464443842053,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas- boiler  - Brennwertgerät - 50 kW,SUPPLY_HEATING_AS17,BO1,-,-,NATURALGAS,BUILDING,0.95,160.27763072840472,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-natural gas-fired boiler  - Brennwertgerät -  100 kW,SUPPLY_HEATING_AS18,BO1,-,-,NATURALGAS,BUILDING,0.95,142.0610349402919,20,3.0,5,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
-biomass boiler - 10 kW,SUPPLY_HEATING_AS19,BO7,-,-,WETBIOMASS,BUILDING,0.9,1208.8544135602958,20,6.0,5,KEA Technikatalog
-biomass boiler - 50 kW,SUPPLY_HEATING_AS20,BO7,-,-,WETBIOMASS,BUILDING,0.81,597.2499541126992,20,6.0,5,KEA Technikatalog
-biomass boiler - 100 kW,SUPPLY_HEATING_AS21,BO7,-,-,WETBIOMASS,BUILDING,0.81,416.03714078223885,20,6.0,5,KEA Technikatalog
-heatpump  soil/water - 10 kW,SUPPLY_HEATING_AS22,HP1,-,-,GRID,BUILDING,4.25,845.3319763891717,20,0.580046403712297,5,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  soil/water - 50 kW,SUPPLY_HEATING_AS23,HP1,-,-,GRID,BUILDING,4.25,520.7323427640953,20,0.9416195856873822,5,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  soil/water - 100 kW,SUPPLY_HEATING_AS24,HP1,-,-,GRID,BUILDING,4.25,324.59963362507636,20,1.5105740181268883,5,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  air/water -  10 kW,SUPPLY_HEATING_AS25,HP3,-,-,GRID,BUILDING,3.6,554.1657054978854,20,1.1838440111420612,5,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  air/water -  50 kW,SUPPLY_HEATING_AS26,HP3,-,-,GRID,BUILDING,3.6,341.52970011534023,20,1.92090395480226,5,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump  air/water -  100 kW,SUPPLY_HEATING_AS27,HP3,-,-,GRID,BUILDING,3.6,212.89456459054207,20,3.0815523773270255,5,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
-heatpump - air/air,SUPPLY_HEATING_AS28,HP3,-,-,GRID,BUILDING,2.7,200.0,20,1.0,5,"from CEA Switzerland, adjustments required, educated guess"
-heatpump - water/water,SUPPLY_HEATING_AS29,HP2,-,-,GRID,BUILDING,3.0,200.0,20,1.0,5,"from CEA Switzerland, adjustments required, educated guess"
-coal-fired furnace,SUPPLY_HEATING_AS30,BO4,-,-,COAL,BUILDING,0.6,367.0,20,1.0,5,"from CEA Switzerland, adjustments required, Connolly et al. (2013). Costs in the EU boiler <25 kW)"
-electrical boiler,SUPPLY_HEATING_AS31,BO5,-,-,GRID,BUILDING,1.0,200.0,20,1.0,5,"from CEA Switzerland, adjustments required"
-wood-furnace,SUPPLY_HEATING_AS32,BO6,-,-,WOOD,BUILDING,0.6,200.0,20,1.0,5,"from CEA Switzerland, adjustments required"
-district heating - natural gas-fired boiler,SUPPLY_HEATING_AS33,BO1,-,-,NATURALGAS,DISTRICT,0.9319047619047619,66.60000000000001,25,1.0,5,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and and gross to net heating value conversion. Exchange rate: 1 EUR to 1.11 Dollars
-district heating - heatpump - air/water,SUPPLY_HEATING_AS34,HP3,-,-,GRID,DISTRICT,3.5,1010.1000000000001,25,1.0,5,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and Exchange rate: 1 EUR to 1.11 Dollars
-district heating - heat pump - seawater/water,SUPPLY_HEATING_AS35,HP2,-,-,GRID,DISTRICT,3.4,561.0,25,1.0,5,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and Exchange rate: 1 EUR to 1.11 Dollars
-condensing boiler + solar thermal collector,SUPPLY_HEATING_AS36,BO3,-,-,NATURALGAS,BUILDING,1.0,742.0,20,3.0,5,KEA Technikatalog
-solar thermal collector,SUPPLY_HEATING_AS37,SC1,-,-,SOLAR,BUILDING,1.0,600.0,20,3.0,5,KEA Technikatalog
+description,code,primary_components,secondary_components,tertiary_components,scale,reference
+none,SUPPLY_HEATING_AS0,-,-,-,NONE,educated guess
+oil-fired boiler - Konstanttemperaturkessel - 10 kW,SUPPLY_HEATING_AS1,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler - Konstanttemperaturkessel - 50 kW,SUPPLY_HEATING_AS2,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler - Konstanttemperaturkessel - 100 kW,SUPPLY_HEATING_AS3,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler - Niedertemperaturkessel - 10 kW,SUPPLY_HEATING_AS4,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler - Niedertemperaturkessel -  50 kW,SUPPLY_HEATING_AS5,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler - Niedertemperaturkessel - 100 kW,SUPPLY_HEATING_AS6,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler  - Brennwertgerät -  10 kW,SUPPLY_HEATING_AS7,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler  - Brennwertgerät -  50 kW,SUPPLY_HEATING_AS8,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+oil-fired boiler  - Brennwertgerät -  100 kW,SUPPLY_HEATING_AS9,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler - Konstanttemperaturkessel - 10 kW,SUPPLY_HEATING_AS10,BO1,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler - Konstanttemperaturkessel - 50 kW,SUPPLY_HEATING_AS11,BO1,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler - Konstanttemperaturkessel - 100 kW,SUPPLY_HEATING_AS12,BO1,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler - Niedertemperaturkessel - 10 kW,SUPPLY_HEATING_AS13,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler - Niedertemperaturkessel - 50 kW,SUPPLY_HEATING_AS14,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler - Niedertemperaturkessel - 100 kW,SUPPLY_HEATING_AS15,BO2,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler  - Brennwertgerät - 10 kW,SUPPLY_HEATING_AS16,BO1,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas- boiler  - Brennwertgerät - 50 kW,SUPPLY_HEATING_AS17,BO1,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+natural gas-fired boiler  - Brennwertgerät -  100 kW,SUPPLY_HEATING_AS18,BO1,-,-,BUILDING,"https://www.effizienzhaus-online.de/lexikon/wirkungsgrad/, KEA Technikkatalog"
+biomass boiler - 10 kW,SUPPLY_HEATING_AS19,BO7,-,-,BUILDING,KEA Technikatalog
+biomass boiler - 50 kW,SUPPLY_HEATING_AS20,BO7,-,-,BUILDING,KEA Technikatalog
+biomass boiler - 100 kW,SUPPLY_HEATING_AS21,BO7,-,-,BUILDING,KEA Technikatalog
+heatpump  soil/water - 10 kW,SUPPLY_HEATING_AS22,HP1,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
+heatpump  soil/water - 50 kW,SUPPLY_HEATING_AS23,HP1,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
+heatpump  soil/water - 100 kW,SUPPLY_HEATING_AS24,HP1,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
+heatpump  air/water -  10 kW,SUPPLY_HEATING_AS25,HP3,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
+heatpump  air/water -  50 kW,SUPPLY_HEATING_AS26,HP3,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
+heatpump  air/water -  100 kW,SUPPLY_HEATING_AS27,HP3,-,-,BUILDING,Technologiesteckbriefe: https://energy.ec.europa.eu/system/files/2021-01/de_ca_2020_de_0.pdf
+heatpump - air/air,SUPPLY_HEATING_AS28,HP3,-,-,BUILDING,"from CEA Switzerland, adjustments required, educated guess"
+heatpump - water/water,SUPPLY_HEATING_AS29,HP2,-,-,BUILDING,"from CEA Switzerland, adjustments required, educated guess"
+coal-fired furnace,SUPPLY_HEATING_AS30,BO4,-,-,BUILDING,"from CEA Switzerland, adjustments required, Connolly et al. (2013). Costs in the EU boiler <25 kW)"
+electrical boiler,SUPPLY_HEATING_AS31,BO5,-,-,BUILDING,"from CEA Switzerland, adjustments required"
+wood-furnace,SUPPLY_HEATING_AS32,BO6,-,-,BUILDING,"from CEA Switzerland, adjustments required"
+district heating - natural gas-fired boiler,SUPPLY_HEATING_AS33,BO1,-,-,DISTRICT,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and and gross to net heating value conversion. Exchange rate: 1 EUR to 1.11 Dollars
+district heating - heatpump - air/water,SUPPLY_HEATING_AS34,HP3,-,-,DISTRICT,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and Exchange rate: 1 EUR to 1.11 Dollars
+district heating - heat pump - seawater/water,SUPPLY_HEATING_AS35,HP2,-,-,DISTRICT,from https://ens.dk/en/our-services/projections-and-models/technology-data/technology-data-generation-electricity-and Exchange rate: 1 EUR to 1.11 Dollars
+condensing boiler + solar thermal collector,SUPPLY_HEATING_AS36,BO3,-,-,BUILDING,KEA Technikatalog
+solar thermal collector,SUPPLY_HEATING_AS37,SC1,-,-,BUILDING,KEA Technikatalog

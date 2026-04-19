@@ -1,2 +1,2 @@
-description,code,primary_components,secondary_components,tertiary_components,feedstock,scale,efficiency,CAPEX_USD2015kW,LT_yr,O&M_%,IR_%,reference
-,SUPPLY_HEATING_AS0,-,-,-,NONE,NONE,0,0,20,1,1.3,educated guess
+description,code,primary_components,secondary_components,tertiary_components,scale,reference
+,SUPPLY_HEATING_AS0,-,-,-,NONE,educated guess

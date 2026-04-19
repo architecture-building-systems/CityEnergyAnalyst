@@ -146,7 +146,18 @@ class Building(object):
                              f"system for building '{self.identifier}' could therefore not be assigned.")
 
         # load the 'assemblies'-supply systems database as a class variable
-        if Building._supply_system_database.empty:
+        # Check if we need to reload the database (switching from DH to DC or vice versa)
+        needs_reload = False
+        if not Building._supply_system_database.empty:
+            # Check if the current database matches the requested energy_system_type
+            # Heating systems have codes like SUPPLY_HEATING_AS*, cooling like SUPPLY_COOLING_AS*
+            sample_code = Building._supply_system_database['code'].iloc[0]
+            if energy_system_type == 'DH' and 'COOLING' in sample_code:
+                needs_reload = True  # Need heating database but have cooling
+            elif energy_system_type == 'DC' and 'HEATING' in sample_code:
+                needs_reload = True  # Need cooling database but have heating
+
+        if Building._supply_system_database.empty or needs_reload:
             if energy_system_type == 'DH':
                 Building._supply_system_database = pd.read_csv(locator.get_database_assemblies_supply_heating())
             elif energy_system_type == 'DC':
@@ -173,6 +184,11 @@ class Building(object):
         # register if the building is connected to a district heating or cooling network or has a stand-alone system
         system_details = Building._supply_system_database[Building._supply_system_database['code']
                                                           == self._stand_alone_supply_system_code]
+
+        if system_details.empty:
+            raise ValueError(f"Supply system code '{self._stand_alone_supply_system_code}' not found in database. "
+                           f"Database contains: {Building._supply_system_database['code'].unique().tolist()}")
+
         energy_system_scale = system_details['scale'].values[0].replace(" ", "").lower()
 
         if energy_system_scale in ['', '-', 'building']:
@@ -239,9 +255,17 @@ class Building(object):
                              f"compatible with one another. Please correct your system choice in the INPUT "
                              f"EDITOR accordingly.")
         elif len(set(main_energy_carriers)) == 0:
-            raise ValueError("Network type mismatch: 'DH' (district heating) cannot be used for cooling loads, "
-                           "and 'DC' (district cooling) cannot be used for heating loads. "
-                           "Please verify that the network-type matches the building's demand.")
+            # Empty components can occur when space heating system is NONE but building has DHW demand
+            # (e.g., Singapore: supply_type_hs='SUPPLY_HEATING_AS0' but has Qww_sys_kWh > 0)
+            # Only raise error if building truly has no demand
+            if self.demand_flow.profile.max() == 0:
+                raise ValueError("Network type mismatch: 'DH' (district heating) cannot be used for cooling loads, "
+                               "and 'DC' (district cooling) cannot be used for heating loads. "
+                               "Please verify that the network-type matches the building's demand.")
+            # Otherwise: has demand but no space heating components -> DHW-only building
+            # Set demand flow energy carrier to match what was loaded (T30W for DH, T10W for DC)
+            # DHW fallback logic in supply_costs.py will handle creating the actual DHW system
+            self.demand_flow.energy_carrier = self.demand_flow.energy_carrier  # Keep existing carrier from load_demand_profile
         else:
             self.demand_flow.energy_carrier = main_energy_carriers[0]
 
@@ -262,6 +286,14 @@ class Building(object):
             return None
 
         user_component_selection = self._stand_alone_supply_system_composition
+
+        # If building has no components (e.g., DHW-only building with SUPPLY_HEATING_AS0),
+        # skip supply system instantiation - DHW fallback in supply_costs.py will handle it
+        has_components = any(user_component_selection[cat] for cat in ['primary', 'secondary', 'tertiary'])
+        if not has_components:
+            print(f"  {self.identifier}: No supply system components (DHW-only) - skipping instantiation")
+            self.stand_alone_supply_system = None
+            return None
 
         # use the SupplySystemStructure methods to dimension each of the system's components
         system_structure = SupplySystemStructure(max_supply_flow, available_potentials, user_component_selection,

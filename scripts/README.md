@@ -11,3 +11,14 @@ Scripts for running the CEA sensitivity analysis on the [Euler HPC cluster](http
 
 ### cleanup/
 Repository maintenance scripts for cleaning up git history.
+
+## Utility Scripts
+
+### config_type_generator.py
+Generates the `cea/config.pyi` type stub from `cea/default.config`. Run manually after changing `config.py` or `default.config`:
+
+```bash
+python scripts/config_type_generator.py
+```
+
+Also runs automatically via `.github/workflows/update-config-stubs.yml`.
