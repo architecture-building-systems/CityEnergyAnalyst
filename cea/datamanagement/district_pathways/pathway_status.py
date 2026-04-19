@@ -165,17 +165,56 @@ def record_simulated_state(
         raise FileNotFoundError(
             f"Cannot record simulation for missing state folder: {pathway_name} state_{int(year)}"
         )
+    inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
+    payload = {
+        "simulated_state_hash": state_hash,
+        "simulated_source_log_hash": source_log_hash,
+        "simulated_at": simulated_at,
+        "simulated_workflow": workflow or [],
+        "custom": False,
+    }
+    # Re-fingerprint baked/validated hashes to the current inputs so
+    # custom-edited states don't appear stale after simulation.
+    if inputs_hash is not None:
+        payload["baked_inputs_hash"] = inputs_hash
+        payload["baked_source_log_hash"] = source_log_hash
+        payload["validated_inputs_hash"] = inputs_hash
+        payload["validated_source_log_hash"] = source_log_hash
+        payload["validated_at"] = simulated_at
     return write_state_status(
         locator,
         pathway_name=pathway_name,
         year=year,
-        payload={
-            "simulated_state_hash": state_hash,
-            "simulated_source_log_hash": source_log_hash,
-            "simulated_at": simulated_at,
-            "simulated_workflow": workflow or [],
-        },
+        payload=payload,
     )
+
+
+def read_pathway_metadata(locator: InputLocator, *, pathway_name: str) -> dict[str, Any]:
+    path = os.path.join(
+        locator.get_district_pathway_folder(pathway_name), '.pathway_metadata.json'
+    )
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f) or {}
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def write_pathway_metadata(
+    locator: InputLocator, *, pathway_name: str, payload: dict[str, Any]
+) -> dict[str, Any]:
+    path = os.path.join(
+        locator.get_district_pathway_folder(pathway_name), '.pathway_metadata.json'
+    )
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    current = read_pathway_metadata(locator, pathway_name=pathway_name)
+    current.update(payload)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(current, f, indent=2, sort_keys=True)
+    return current
 
 
 def record_custom_state(
@@ -185,11 +224,13 @@ def record_custom_state(
     year: int,
 ) -> dict[str, Any]:
     """Mark a state as user-customised (inputs edited in sub-scenario mode)."""
+    import pandas as pd
+
     return write_state_status(
         locator,
         pathway_name=pathway_name,
         year=year,
-        payload={"custom": True},
+        payload={"custom": True, "custom_at": str(pd.Timestamp.now())},
     )
 
 

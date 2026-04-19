@@ -16,6 +16,7 @@ live in sibling modules so that this file stays readable as the top-level runtim
 from __future__ import annotations
 
 import json
+import os
 from copy import deepcopy
 
 import pandas as pd
@@ -39,7 +40,9 @@ from cea.datamanagement.district_pathways.pathway_integrity import (
 )
 from cea.datamanagement.district_pathways.pathway_status import (
     collect_state_phase_status,
+    read_state_status,
     record_simulated_state,
+    write_pathway_metadata,
 )
 from cea.datamanagement.district_pathways.pathway_timeline import (
     validate_all_baked_states,
@@ -78,7 +81,32 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
             + "\n".join(issues_detail)
         )
 
-    state_years = pathway.list_state_years_on_disk()
+    # Warn about custom states with stale simulation outputs
+    state_years_on_disk = pathway.list_state_years_on_disk()
+    stale_custom = []
+    for year in state_years_on_disk:
+        status_record = read_state_status(
+            InputLocator(config.scenario),
+            pathway_name=pathway_name,
+            year=int(year),
+        )
+        if status_record.get("custom"):
+            custom_at = status_record.get("custom_at")
+            simulated_at = status_record.get("simulated_at")
+            if custom_at and simulated_at and custom_at > simulated_at:
+                stale_custom.append(int(year))
+            elif custom_at and not simulated_at:
+                stale_custom.append(int(year))
+    if stale_custom:
+        print(
+            f"\n⚠ Warning: Custom state(s) {stale_custom} have stale or missing "
+            f"simulation outputs (inputs were edited after the last simulation).\n"
+            f"  These states will be re-simulated unless 'skip-custom-states' is enabled.\n"
+            f"  If skipped, their outputs may not reflect the current inputs.",
+            flush=True,
+        )
+
+    state_years = state_years_on_disk
     if not state_years:
         raise ValueError(
             "No pathway states found in the district pathway folder."
@@ -132,6 +160,16 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
             )
             phase = status.get("primary_phase")
             if skip_custom and phase == "custom":
+                state_folder = main_locator.get_state_in_time_scenario_folder(
+                    pathway_name=pathway_name, year_of_state=year
+                )
+                outputs_folder = os.path.join(state_folder, "outputs")
+                if not os.path.isdir(outputs_folder):
+                    raise ValueError(
+                        f"Cannot skip custom state {year} — it has no simulation outputs.\n"
+                        f"Either disable 'skip-custom-states' to let Simulate Pathway run it, "
+                        f"or enter the state in sub-scenario mode and run the simulation manually."
+                    )
                 skipped_years.append(int(year))
             elif (
                 skip_already_simulated
@@ -233,6 +271,12 @@ def simulate_all_states(config: Configuration, pathway_name: str) -> None:
         print(f"Simulation for pathway state year {year} completed.", flush=True)
 
     pathway.save()
+
+    write_pathway_metadata(
+        InputLocator(config.scenario),
+        pathway_name=pathway_name,
+        payload={"pathway_simulated_at": str(pd.Timestamp.now())},
+    )
 
     print("State-in-time simulations finished.", flush=True)
     print(f"Simulated: {len(simulated_years)} years", flush=True)
