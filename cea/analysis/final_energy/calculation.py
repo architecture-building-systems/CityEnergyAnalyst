@@ -129,7 +129,6 @@ def calculate_building_final_energy(
             dhw_demand_kwh=demand_df['Qww_sys_kWh'].to_numpy(dtype=float),
             solar_thermal_kwh=thermal_series,
             total_sc_pvt_area_m2=sc_pvt_area_m2,
-            hot_water_cfg=hot_water_cfg,
         )
         final_energy['Qww_sys_SOLAR_kWh'] = dispatch['served_by_solar_kwh']
         backup_info = hot_water_cfg.get('secondary_info') or {}
@@ -487,7 +486,6 @@ def parse_supply_assembly(
         'primary_component': primary_component,
         'secondary_component': secondary_component,
         'tertiary_component': tertiary_component,
-        'primary_info': component_info,
         'secondary_info': secondary_info,
         'network_name': network_name if scale == 'DISTRICT' else None,
     }

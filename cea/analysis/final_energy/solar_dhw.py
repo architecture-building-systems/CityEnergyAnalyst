@@ -3,11 +3,10 @@ Solar hot-water dispatch for the final-energy pipeline.
 
 Implements the SC / PVT-primary branch of the DHW supply chain:
 
-- :func:`load_solar_component_info` reads the SC or PVT component row
-  from the database and returns the config dict
-  (``{type, carrier='SOLAR', efficiency=1.0, parasitic_frac,
-  tank_capacity_L_per_m2, tank_loss_frac_hour}``) that the rest of the
-  pipeline consumes.
+- :func:`load_solar_component_info` verifies the SC or PVT code exists
+  in the component database and returns the fixed config dict the rest
+  of the pipeline consumes (tank + parasitic parameters are module
+  constants, not database columns — see below).
 
 - :func:`validate_solar_dhw_building` verifies that a building with an
   SC/PVT-primary hot-water assembly has the required panels configured
@@ -21,14 +20,19 @@ Implements the SC / PVT-primary branch of the DHW supply chain:
   the set of legacy offset columns that must be dropped to avoid
   double-counting.
 
-All defaults match the plan approved in the Energy by Carrier
-description (see ``scripts.yml``):
+Tank + dispatch parameters are kept as module constants here rather
+than as columns on SOLAR_COLLECTORS.csv / PHOTOVOLTAIC_THERMAL_PANELS.csv:
 
-    tank_capacity_L      = 50 * installed_SC_PVT_area_m2
-    tank_loss_frac_hour  = 0.02
-    parasitic_frac       = 0.02
-    tank_initial_state   = cold (0 kWh) at hour 0
-    surplus              = dumped (no inter-service credit)
+    TANK_CAPACITY_L_PER_M2 = 50 L per m² of installed SC / PVT aperture
+    TANK_LOSS_FRAC_HOUR    = 0.02 (standing loss per hour)
+    PARASITIC_FRAC         = 0.02 of useful thermal output (pump electricity)
+
+Other assumptions:
+    tank_initial_state = cold (0 kWh) at hour 0
+    surplus            = dumped (no inter-service credit)
+
+To override these, edit this module. They are deliberately NOT a
+database concern — they describe the dispatch model, not the panel.
 """
 from typing import Any, Dict, Iterable, Optional, Tuple
 
@@ -56,33 +60,30 @@ _WATER_CP_KJ_PER_KG_K = 4.186
 # hot delivery 60 °C (45 K span). Capacity in kWh is derived below.
 _TANK_DELTA_T_K = 45.0
 
-# Fallback defaults when the SOLAR_COLLECTORS / PHOTOVOLTAIC_THERMAL_PANELS
-# CSVs don't yet carry the tank columns.
-_DEFAULT_PARASITIC_FRAC = 0.02
-_DEFAULT_TANK_CAPACITY_L_PER_M2 = 50.0
-_DEFAULT_TANK_LOSS_FRAC_HOUR = 0.02
-
-
-def _get_or_default(row: pd.Series, col: str, default: float) -> float:
-    """Return ``row[col]`` as float, or ``default`` if absent/NaN."""
-    if col in row.index:
-        val = row[col]
-        if pd.notna(val):
-            return float(val)
-    return default
+# Dispatch parameters. These are module constants rather than database
+# columns — they describe the SC/PVT → DHW dispatch model (tank sizing,
+# standing loss, pump parasitic), not the solar panel itself. Editing
+# this module is the intended override path.
+PARASITIC_FRAC = 0.02
+TANK_CAPACITY_L_PER_M2 = 50.0
+TANK_LOSS_FRAC_HOUR = 0.02
 
 
 def load_solar_component_info(
     component_code: str,
     locator: cea.inputlocator.InputLocator,
 ) -> Dict[str, Any]:
-    """Read an SC or PVT component row and return its config dict.
+    """Verify an SC or PVT component code and return its config dict.
+
+    Matches the return shape of ``load_component_info`` for other
+    component families — just ``type``, ``carrier``, ``efficiency``.
+    Dispatch parameters (tank capacity, standing loss, pump parasitic)
+    are module constants in this file, not per-component database
+    columns.
 
     :param component_code: Code like ``SC1`` or ``PVT1``.
     :param locator: Active :class:`InputLocator`.
-    :return: Dict with ``type``, ``carrier``, ``efficiency``,
-        ``parasitic_frac``, ``tank_capacity_L_per_m2``,
-        ``tank_loss_frac_hour``.
+    :return: Dict with ``type``, ``carrier``, ``efficiency``.
     :raises ValueError: If the code doesn't resolve to a row in the
         SOLAR_COLLECTORS or PHOTOVOLTAIC_THERMAL_PANELS sheet.
     """
@@ -100,26 +101,15 @@ def load_solar_component_info(
 
     component_file = locator.get_db4_components_conversion_conversion_technology_csv(csv_name)
     df = pd.read_csv(component_file)
-    rows = df[df['code'] == component_code]
-    if rows.empty:
+    if (df['code'] == component_code).sum() == 0:
         raise ValueError(
             f"Component {component_code} not found in {csv_name} database"
         )
 
-    component = rows.iloc[0]
     return {
         'type': component_type,
         'carrier': 'SOLAR',
         'efficiency': 1.0,
-        'parasitic_frac': _get_or_default(
-            component, 'parasitic_frac', _DEFAULT_PARASITIC_FRAC
-        ),
-        'tank_capacity_L_per_m2': _get_or_default(
-            component, 'tank_capacity_L_per_m2', _DEFAULT_TANK_CAPACITY_L_PER_M2
-        ),
-        'tank_loss_frac_hour': _get_or_default(
-            component, 'tank_loss_frac_hour', _DEFAULT_TANK_LOSS_FRAC_HOUR
-        ),
     }
 
 
@@ -322,18 +312,18 @@ def dispatch_solar_dhw(
     dhw_demand_kwh: np.ndarray,
     solar_thermal_kwh: np.ndarray,
     total_sc_pvt_area_m2: float,
-    hot_water_cfg: Dict[str, Any],
 ) -> Dict[str, np.ndarray]:
     """Run the hourly dispatch for SC/PVT primary + secondary backup.
+
+    Tank capacity, standing loss, and pump parasitic come from the
+    module constants ``TANK_CAPACITY_L_PER_M2``, ``TANK_LOSS_FRAC_HOUR``,
+    ``PARASITIC_FRAC``.
 
     :param dhw_demand_kwh: ``Qww_sys_kWh`` hourly series.
     :param solar_thermal_kwh: Aggregated SC + PVT-thermal hourly series
         (summed across all configured facades for the building).
     :param total_sc_pvt_area_m2: Total aperture area (m²), used to size
-        the tank via ``tank_capacity_L_per_m2``.
-    :param hot_water_cfg: Supply config dict from ``parse_supply_assembly``.
-        Must include ``primary_info`` (SC/PVT info) and ``secondary_info``
-        (the backup BO/HP info).
+        the tank via ``TANK_CAPACITY_L_PER_M2``.
     :return: Dict with numpy arrays
         ``served_by_solar``, ``served_by_backup``, ``parasitic_electricity``
         and scalar diagnostics ``surplus_dumped`` / ``tank_final_level``.
@@ -347,13 +337,12 @@ def dispatch_solar_dhw(
             f"(demand={n}, solar={len(solar_thermal_kwh)})"
         )
 
-    primary_info = hot_water_cfg['primary_info']
     tank_capacity_kwh = _tank_capacity_kwh(
         total_sc_pvt_area_m2,
-        primary_info['tank_capacity_L_per_m2'],
+        TANK_CAPACITY_L_PER_M2,
     )
-    tank_loss_frac = primary_info['tank_loss_frac_hour']
-    parasitic_frac = primary_info['parasitic_frac']
+    tank_loss_frac = TANK_LOSS_FRAC_HOUR
+    parasitic_frac = PARASITIC_FRAC
 
     served_by_solar = np.zeros(n)
     served_by_backup = np.zeros(n)
