@@ -1576,7 +1576,6 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
     def _choices(self):
         try:
             from cea.visualisation.format.plot_colours import component_display as _component_display
-            import json
             section_attr = self.section.name.replace('-', '_')
             section = getattr(self.config, section_attr)
             what_if_names = section.what_if_name
@@ -2117,6 +2116,12 @@ class SolarPanelChoicesMixin:
     """
     Mixin for parameters that select solar technology types available in the scenario.
     Scans potentials/solar folder for PV, PVT, and SC results.
+
+    Accepts both the current tech_code form (``SC_FP``, ``PV_PV1``) and the
+    database ``code`` column (``SC1``, ``PV1``) — the latter are silently
+    normalised to the tech_code the rest of the pipeline expects. This is a
+    temporary bridge until the full namespace unification lands (see
+    ``cea/technologies/solar/AGENTS.md``).
     """
 
     config: Configuration
@@ -2153,25 +2158,104 @@ class SolarPanelChoicesMixin:
         except Exception:
             return []
 
+    def _try_db_code_alias(self, value: str, choices: List[str]) -> Optional[str]:
+        """Translate a bare database code (SC1, SC2, PV1, ...) into the
+        tech_code form the dropdown emits (SC_FP, SC_ET, PV_PV1, ...).
+
+        PVT is intentionally not aliased — a bare ``PVT1`` doesn't
+        disambiguate which PV+SC pair was simulated.
+
+        Returns the aliased tech_code if successful, else None. Safe to
+        call with unknown values; returns None rather than raising.
+        """
+        if not value:
+            return None
+
+        # PV: PV1 -> PV_PV1 (works for any DB code starting with PV
+        # except PVT, which needs a compound key). Cheap prefix rule;
+        # no DB read required.
+        if value.startswith('PV') and not value.startswith('PVT'):
+            candidate = f'PV_{value}'
+            if candidate in choices:
+                return candidate
+
+        # SC: SC1 -> look up `type` column in SOLAR_COLLECTORS.csv -> SC_{type}.
+        # One DB read per resolve is cheap; cache the DataFrame on the
+        # class to avoid re-reading for multi-choice lists.
+        if value.startswith('SC') and not value.startswith('SC_'):
+            sc_type = self._sc_type_for_code(value)
+            if sc_type:
+                candidate = f'SC_{sc_type}'
+                if candidate in choices:
+                    return candidate
+
+        return None
+
+    _sc_type_cache: Dict[str, Dict[str, str]] = {}
+
+    def _sc_type_for_code(self, code: str) -> Optional[str]:
+        """Return the `type` column value (FP / ET) for an SC `code`
+        (SC1 / SC2) from SOLAR_COLLECTORS.csv. Returns None if the
+        database isn't readable or the code isn't present."""
+        scenario = getattr(self.config, 'scenario', None)
+        if not scenario:
+            return None
+
+        mapping = self._sc_type_cache.get(scenario)
+        if mapping is None:
+            mapping = {}
+            try:
+                import pandas as pd
+                locator = cea.inputlocator.InputLocator(scenario)
+                db_path = locator.get_db4_components_conversion_conversion_technology_csv(
+                    'SOLAR_COLLECTORS'
+                )
+                if os.path.exists(db_path):
+                    df = pd.read_csv(db_path)
+                    if 'code' in df.columns and 'type' in df.columns:
+                        mapping = dict(zip(df['code'], df['type']))
+            except Exception:
+                mapping = {}
+            self._sc_type_cache[scenario] = mapping
+
+        return mapping.get(code)
+
     def _encode_solar(self, value) -> str:
-        """Encode a single solar technology value, respecting nullable."""
+        """Encode a single solar technology value, respecting nullable.
+
+        Accepts DB-code aliases (SC1, SC2, PV1, ...) and normalises them
+        to the tech_code form before validating against the dropdown.
+        """
         if value is None or value == '':
             return ''
+        value = str(value)
         choices = self._choices
-        invalid = set([str(value)]) - set(choices)
-        if choices and invalid:
+        if value in choices:
+            return value
+
+        aliased = self._try_db_code_alias(value, choices)
+        if aliased is not None:
+            return aliased
+
+        if choices:
             raise ValueError(
                 f"Invalid solar technology '{value}'. "
                 f"Available: {', '.join(choices) or 'none'}"
             )
-        return str(value)
+        return value
 
     def _decode_solar_single(self, value):
-        """Decode a single solar technology value, returning None for empty/invalid."""
+        """Decode a single solar technology value, returning None for
+        empty/invalid. Accepts DB-code aliases like `_encode_solar`."""
         if value == '':
             return None
-        if str(value) in self._choices:
-            return str(value)
+        value = str(value)
+        choices = self._choices
+        if value in choices:
+            return value
+        aliased = self._try_db_code_alias(value, choices)
+        if aliased is not None:
+            return aliased
         return None
 
 class SolarPanelChoiceParameter(SolarPanelChoicesMixin, ChoiceParameter):

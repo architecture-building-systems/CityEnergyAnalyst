@@ -332,9 +332,12 @@ def validate_solar_dhw_building(
             f"for building {building_name}.",
             "",
             "Set one of the panels-on-* parameters to an SC code:",
-            "  solar-technology:panels-on-roof       = SC_FP   (flat plate — typical DHW choice)",
-            "  solar-technology:panels-on-roof       = SC_ET   (evacuated tube — higher temp)",
+            "  solar-technology:panels-on-roof       = SC_FP   (a.k.a. SC1, flat plate — typical DHW choice)",
+            "  solar-technology:panels-on-roof       = SC_ET   (a.k.a. SC2, evacuated tube — higher temp)",
             "  solar-technology:panels-on-wall-south = SC_FP   (or any wall facet)",
+            "",
+            "Either form is accepted: `SC_FP` / `SC_ET` (current tech_code "
+            "format) or `SC1` / `SC2` (SOLAR_COLLECTORS.csv database code).",
         ]
         if configured_codes:
             lines.append(
