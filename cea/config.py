@@ -1535,10 +1535,24 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             if not os.path.exists(analysis_root):
                 return []
             mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
-            names = sorted(
-                name for name in os.listdir(analysis_root)
-                if os.path.isdir(os.path.join(analysis_root, name))
-            )
+            # Sort by most-recently-modified directory first so plot forms
+            # default to the just-run what-if (matches the LCA map layers'
+            # `get_whatif_names` ordering). Skips hidden entries like
+            # macOS ``.DS_Store`` and non-directories.
+            entries = []
+            for name in os.listdir(analysis_root):
+                if name.startswith('.'):
+                    continue
+                path = os.path.join(analysis_root, name)
+                if not os.path.isdir(path):
+                    continue
+                try:
+                    mtime = os.path.getmtime(path)
+                except OSError:
+                    mtime = 0.0
+                entries.append((name, mtime))
+            entries.sort(key=lambda x: (-x[1], x[0]))
+            names = [name for name, _ in entries]
             if mode == 'final_energy':
                 names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
             elif mode == 'heat_rejection':

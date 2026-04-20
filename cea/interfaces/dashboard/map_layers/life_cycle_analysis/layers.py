@@ -77,9 +77,33 @@ def get_columns_from_building_files(paths: list) -> Optional[list]:
 
 
 def get_whatif_names(locator) -> list:
-    """Return sorted list of what-if names that have lifecycle analysis results."""
+    """Return what-if names ordered by most-recently modified first.
+
+    The dropdown that consumes this list takes its default value from the
+    first entry, so a fresh `cea final-energy` / `cea emissions` / etc.
+    run will surface as the auto-selected what-if in the LCA map layers
+    immediately after the success notification's "View Results" click.
+
+    - Skips hidden entries (e.g. macOS ``.DS_Store``) and non-directories.
+    - Sort key: ``(-mtime, name)`` → newest first, ties broken alphabetically.
+    """
     base = locator.get_analysis_parent_folder()
-    return sorted([name for name in os.listdir(base)]) if os.path.isdir(base) else []
+    if not os.path.isdir(base):
+        return []
+    entries = []
+    for name in os.listdir(base):
+        if name.startswith('.'):
+            continue
+        path = os.path.join(base, name)
+        if not os.path.isdir(path):
+            continue
+        try:
+            mtime = os.path.getmtime(path)
+        except OSError:
+            mtime = 0.0
+        entries.append((name, mtime))
+    entries.sort(key=lambda x: (-x[1], x[0]))
+    return [name for name, _ in entries]
 
 
 def delete_whatif(locator, whatif_name: str) -> None:
@@ -1745,7 +1769,7 @@ class EmissionTimelineMapLayer(WhatifDeletableMixin, MapLayer):
         return {
             'whatif_name':
                 ParameterDefinition(
-                    "What-if scenario",
+                    "what-if-name",
                     "string",
                     description="Select a what-if scenario with emission results",
                     options_generator="_get_whatif_names",
@@ -1782,15 +1806,19 @@ class AnthropogenicHeatMapLayer(WhatifDeletableMixin, MapLayer):
     description = "Visualise heat rejection from building systems and district cooling plants"
 
     def _get_whatif_names(self) -> Optional[list]:
-        """Return sorted list of what-if names that have heat rejection results."""
-        base = os.path.join(self.locator.scenario, 'outputs', 'data', 'analysis')
-        if not os.path.exists(base):
-            return None
+        """Return what-if names with heat-rejection results, mtime-desc.
+
+        Uses the shared ``get_whatif_names`` helper so the dropdown
+        ordering and the auto-selected default match every other LCA
+        layer — the just-run what-if surfaces at the top of the list
+        immediately after the success notification's "View Results" click.
+        """
+        names = get_whatif_names(self.locator)
         names = [
-            d for d in os.listdir(base)
-            if os.path.exists(os.path.join(base, d, 'heat', 'heat_rejection_buildings.csv'))
+            name for name in names
+            if os.path.exists(self.locator.get_heat_rejection_whatif_buildings_file(name))
         ]
-        return sorted(names) or None
+        return names or None
 
     def _get_results_files(self, parameters):
         """Return required files for caching"""
@@ -1817,7 +1845,7 @@ class AnthropogenicHeatMapLayer(WhatifDeletableMixin, MapLayer):
         return {
             'whatif_name':
                 ParameterDefinition(
-                    "What-if scenario",
+                    "what-if-name",
                     "string",
                     description="Select a what-if scenario with heat rejection results",
                     options_generator="_get_whatif_names",
