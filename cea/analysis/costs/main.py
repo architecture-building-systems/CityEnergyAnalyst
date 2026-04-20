@@ -179,6 +179,10 @@ def _per_service_peaks_and_booster(building_name, whatif_name, supply_cfg, locat
     for col in df.columns:
         if not col.endswith('_kWh') or col in demand_cols:
             continue
+        # Skip diagnostic *_dumped_kWh columns (SC tank surplus) —
+        # not carrier consumption, must not drive variable OPEX.
+        if col.endswith('_dumped_kWh'):
+            continue
         if col.startswith('Qhs_sys_'):
             service_mwh['hs'] += float(df[col].sum()) / 1000.0
         elif col.startswith('Qww_sys_'):
@@ -257,25 +261,41 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     rows = []
     capacity_kW = peak_kW / efficiency if peak_kW > 0 else 0.0
 
-    try:
-        capex_total, capex_a, opex_fixed_a = _calc_component_cost(
-            component_code, capacity_kW, locator
-        )
-    except (ValueError, ZeroDivisionError) as e:
-        print(f"    Warning: CAPEX calc failed for {building_name} {service_label} ({component_code}): {e}")
-        capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
+    # Solar-thermal primary (SC, or PVT if ever allowed): the panel CAPEX +
+    # fixed O&M is already booked by ``_calc_solar_costs_for_scenario`` under
+    # the dedicated ``PV_*`` / ``SC_*`` / ``PVT_*`` services (rolled up to
+    # "Solar Generation" in the cost Sankey). Skipping the primary row here
+    # avoids double-counting and the wrong-unit bug — SC's cost curve uses
+    # m² of aperture, but ``_calc_component_cost`` would feed it
+    # ``capacity_kW × 1000`` as if it were W. The secondary loop below still
+    # runs so the backup BO/HP cost is attributed to this service. SOLAR has
+    # no variable OPEX, so nothing is lost on the running-cost side.
+    primary_type = cfg.get('type')
+    primary_is_solar = (
+        primary_type in ('SC', 'PVT')
+        or component_code.startswith(('SC', 'PVT'))
+    )
 
-    price = _mean_feedstock_price(carrier, locator) if carrier else 0.0
-    opex_var_a = service_mwh * 1000.0 * price
+    if not primary_is_solar:
+        try:
+            capex_total, capex_a, opex_fixed_a = _calc_component_cost(
+                component_code, capacity_kW, locator
+            )
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"    Warning: CAPEX calc failed for {building_name} {service_label} ({component_code}): {e}")
+            capex_total, capex_a, opex_fixed_a = 0.0, 0.0, 0.0
 
-    tac = capex_a + opex_fixed_a + opex_var_a
-    rows.append({
-        'name': building_name, 'service': service_label, 'scale': scale,
-        'assembly_code': assembly_code, 'component_code': component_code,
-        'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
-        'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
-        'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
-    })
+        price = _mean_feedstock_price(carrier, locator) if carrier else 0.0
+        opex_var_a = service_mwh * 1000.0 * price
+
+        tac = capex_a + opex_fixed_a + opex_var_a
+        rows.append({
+            'name': building_name, 'service': service_label, 'scale': scale,
+            'assembly_code': assembly_code, 'component_code': component_code,
+            'carrier': carrier, 'peak_service_kW': peak_kW, 'capacity_kW': capacity_kW,
+            'capex_total_USD': capex_total, 'capex_a_USD': capex_a,
+            'opex_fixed_a_USD': opex_fixed_a, 'opex_var_a_USD': opex_var_a, 'TAC_USD': tac,
+        })
 
     # Secondary and tertiary components: CAPEX + fixed O&M only (variable OPEX counted in primary)
     for comp_code in [cfg.get('secondary_component'), cfg.get('tertiary_component')]:
@@ -518,7 +538,73 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     return rows
 
 
-def _calc_solar_costs_for_scenario(locator, active_tech_codes, solar_building_names=None):
+_SOLAR_SURFACE_TO_FACADE = {
+    'roof':       'roofs_top',
+    'wall_north': 'walls_north',
+    'wall_south': 'walls_south',
+    'wall_east':  'walls_east',
+    'wall_west':  'walls_west',
+}
+
+
+def _configured_solar_aperture_m2(building_name, tech_code, panel_config, locator):
+    """Sum per-surface aperture m² across only those surfaces actually
+    assigned to ``tech_code`` in the per-building ``panel_config`` dict.
+
+    The per-tech aggregate file (``{tech}_total_buildings.csv``) reflects
+    *every* surface that ``cea solar-collector`` simulated under that
+    panel type — typically all five facades. If the current scenario only
+    configures a subset (e.g. roof for SC_ET, wall_north for SC_FP), the
+    aggregate over-states installed area and inflates the cost.
+
+    Reads the per-building solar potential CSV directly and sums only the
+    matching ``{prefix}_{surface}_m2`` columns. Returns 0.0 if the file
+    is missing or no configured surface for this tech.
+    """
+    parts = tech_code.split('_')
+    tech_type = parts[0]
+    try:
+        if tech_type == 'PV':
+            panel_type = parts[1]
+            path = locator.PV_results(building_name, panel_type)
+            col_prefix = 'PV'
+        elif tech_type == 'SC':
+            panel_type = '_'.join(parts[1:])
+            path = locator.SC_results(building_name, panel_type)
+            col_prefix = f'SC_{panel_type}'
+        elif tech_type == 'PVT':
+            pv_type = parts[1]
+            sc_type = parts[2] if len(parts) > 2 else ''
+            path = locator.PVT_results(building_name, pv_type, sc_type)
+            col_prefix = f'PVT_{sc_type}'
+        else:
+            return 0.0
+    except Exception:
+        return 0.0
+
+    if not os.path.exists(path):
+        return 0.0
+    try:
+        df = pd.read_csv(path)
+    except Exception:
+        return 0.0
+
+    total_m2 = 0.0
+    for surface, code in (panel_config or {}).items():
+        if code != tech_code:
+            continue
+        suffix = _SOLAR_SURFACE_TO_FACADE.get(surface)
+        if suffix is None:
+            continue
+        col = f'{col_prefix}_{suffix}_m2'
+        if col in df.columns and len(df) > 0:
+            total_m2 += float(df[col].iloc[0])
+    return total_m2
+
+
+def _calc_solar_costs_for_scenario(
+    locator, active_tech_codes, solar_building_names=None, building_configs=None
+):
     """
     Calculate CAPEX and O&M for solar panels (PV, SC, PVT) installed on buildings.
 
@@ -531,6 +617,12 @@ def _calc_solar_costs_for_scenario(locator, active_tech_codes, solar_building_na
         e.g. {'PV_PV1', 'SC_ET'}.  Empty set → skip solar entirely.
     :param solar_building_names: set of building names that have solar configured.
         If provided, only these buildings get solar costs. None → all buildings.
+    :param building_configs: per-building supply config dict (incl. ``solar``
+        sub-dict mapping surface→tech_code). When provided, the per-tech
+        aggregate ``area_*_m2`` from ``_total_buildings.csv`` is replaced
+        with the per-surface configured aperture so unused-but-simulated
+        surfaces don't inflate the panel cost. Falls back to the aggregate
+        when ``None`` for backwards compat.
     :return: list of component row dicts, one per building per technology
     """
     if not active_tech_codes:
@@ -566,6 +658,25 @@ def _calc_solar_costs_for_scenario(locator, active_tech_codes, solar_building_na
             df = df[df['name'].isin(solar_building_names)]
             if df.empty:
                 continue
+
+        # Determine the area column for this tech and patch it with
+        # per-surface configured area when building_configs is available.
+        if fname.startswith('PV_') and not fname.startswith('PVT_'):
+            area_col = 'area_PV_m2'
+        elif fname.startswith('SC_'):
+            area_col = 'area_SC_m2'
+        elif fname.startswith('PVT_'):
+            area_col = 'area_PVT_m2'
+        else:
+            area_col = None
+
+        if building_configs is not None and area_col and area_col in df.columns:
+            df = df.copy()
+            df[area_col] = df['name'].map(lambda n: _configured_solar_aperture_m2(
+                n, tech_code,
+                (building_configs.get(n, {}) or {}).get('solar') or {},
+                locator,
+            ))
 
         if fname.startswith('PV_') and not fname.startswith('PVT_'):
             # PV_{panel_type}_total_buildings.csv
@@ -823,7 +934,9 @@ def calculate_costs_for_whatif(whatif_name, locator):
         if techs:
             active_tech_codes.update(techs)
             solar_building_names.add(bname)
-    solar_rows = _calc_solar_costs_for_scenario(locator, active_tech_codes, solar_building_names)
+    solar_rows = _calc_solar_costs_for_scenario(
+        locator, active_tech_codes, solar_building_names, building_configs
+    )
     component_rows.extend(solar_rows)
 
     # Build components DataFrame

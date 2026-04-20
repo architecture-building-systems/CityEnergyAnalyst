@@ -603,9 +603,25 @@ def main(config: cea.config.Configuration):
     x_to_plot = plot_config.x_to_plot
     custom_title = plot_config.plot_title
 
-    # ── First pass: build all sankey_data, collect totals for proportional height ──
-    _BASE_HEIGHT = 600
-    _MIN_HEIGHT = 150
+    # ── First pass: build all sankey_data, collect totals for shared scale ────
+    # The Plotly Sankey link widths fill (canvas_height − node_overhead),
+    # where node_overhead = nodes_in_tallest_column × thickness + gaps × pad.
+    # Per-figure node counts differ (a no-solar scenario has fewer
+    # tech-column nodes), so equal canvas heights would *not* produce
+    # equal-width links for equal $.
+    #
+    # Strategy: cap the *tallest figure in the batch* at _MAX_CANVAS_HEIGHT,
+    # then derive the single "$/pixel" ratio that makes that hold while
+    # keeping every figure proportional. Each scenario's canvas height is
+    # then ``link_area + own_node_overhead + chrome``. Result: a $X flow
+    # draws at the same pixel width in every figure, and no figure exceeds
+    # the screen-friendly cap.
+    _MAX_CANVAS_HEIGHT = 750      # cap for the tallest figure (fits most screens)
+    _NODE_THICKNESS = 20          # must match node thickness in create_sankey_fig
+    _NODE_PAD = 24                # must match node pad in create_sankey_fig
+    _CHROME_PADDING = 140         # title + axis label + margin (rough Plotly overhead)
+    _MIN_HEIGHT = 300             # safety floor; only kicks in for empty/tiny scenarios
+
     # slot: either ('ok', whatif_name, sankey_data) or ('err', html_str)
     slots = []
 
@@ -645,12 +661,45 @@ def main(config: cea.config.Configuration):
 
         slots.append(('ok', whatif_name, sankey_data))
 
-    global_total = max(
-        (sum(sd['value']) for kind, *rest in slots if kind == 'ok' for sd in [rest[1]]),
-        default=1.0,
-    )
+    def _max_nodes_per_column(sd):
+        """Count visible nodes in the tallest column — drives node-overhead."""
+        from collections import Counter
+        cnt = Counter()
+        for x, lbl in zip(sd.get('node_x', []), sd.get('node_labels', [])):
+            if str(lbl).strip():
+                cnt[round(float(x), 4)] += 1
+        return max(cnt.values()) if cnt else 1
 
-    # ── Second pass: render with proportional heights, preserve order ─────────
+    def _node_overhead(sd):
+        n = _max_nodes_per_column(sd)
+        return n * _NODE_THICKNESS + max(0, n - 1) * _NODE_PAD
+
+    # Find the global "$ per pixel" ratio that makes the *tallest* figure
+    # in the batch exactly _MAX_CANVAS_HEIGHT, accounting for each
+    # scenario's own node overhead. Every other figure is shorter at the
+    # same px-per-$ rate — all link widths stay comparable across figures.
+    ok_slots = [sd for kind, *rest in slots if kind == 'ok' for sd in [rest[1]]]
+    if ok_slots:
+        per_scenario_budget = [
+            (
+                sum(sd['value']),
+                _MAX_CANVAS_HEIGHT - _node_overhead(sd) - _CHROME_PADDING,
+            )
+            for sd in ok_slots
+        ]
+        # px_per_value such that for every scenario:
+        #     scenario_total × px_per_value ≤ link_area_budget
+        # → px_per_value = min over scenarios of (budget / total).
+        px_per_value = min(
+            (budget / total for total, budget in per_scenario_budget if total > 0),
+            default=0.0,
+        )
+        if px_per_value <= 0:
+            px_per_value = 0.0
+    else:
+        px_per_value = 0.0
+
+    # ── Second pass: render with link-area proportional to total ──────────────
     html_outputs = []
     plotly_included = False
     for slot in slots:
@@ -659,7 +708,9 @@ def main(config: cea.config.Configuration):
             continue
         _, whatif_name, sankey_data = slot
         scenario_total = sum(sankey_data['value'])
-        height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
+        link_area = scenario_total * px_per_value
+        node_overhead = _node_overhead(sankey_data)
+        height = max(_MIN_HEIGHT, int(link_area + node_overhead + _CHROME_PADDING))
         capex_label = 'Annualised CAPEX' if capex_view == 'annualised' else 'Total CAPEX'
         scenario_name = os.path.basename(config.scenario)
         feature_label = custom_title or f'CEA-4 System Costs ({capex_label})'

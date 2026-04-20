@@ -79,16 +79,20 @@ def calculate_building_final_energy(
     # Step 2: Load supply configuration
     supply_config = load_supply_configuration(building_name, locator, config)
 
-    # Step 2b: SC/PVT primary sanity checks — must happen before any
+    # Step 2b: SC-primary sanity checks — must happen before any
     # downstream dispatch since a bad configuration should fail fast
     # with a useful error rather than dying in the solar time-series
-    # aggregation below.
+    # aggregation below. (PVT is rejected as DHW primary by these
+    # validators; PVT thermal continues to flow through the legacy
+    # PVT_Q_offset path against space heating.)
     from cea.analysis.final_energy.solar_dhw import (
         validate_solar_dhw_assembly,
         validate_solar_dhw_building,
     )
     validate_solar_dhw_assembly(building_name, supply_config.get('hot_water'))
-    validate_solar_dhw_building(building_name, supply_config.get('hot_water'), config)
+    validate_solar_dhw_building(
+        building_name, supply_config.get('hot_water'), config, locator=locator,
+    )
 
     # Step 3: Calculate final energy for each service
     # Space heating
@@ -110,28 +114,41 @@ def calculate_building_final_energy(
     hot_water_cfg = supply_config['hot_water']
     uses_solar_dhw = (
         hot_water_cfg
-        and hot_water_cfg.get('type') in ('SC', 'PVT')
+        and hot_water_cfg.get('type') == 'SC'
         and hot_water_cfg.get('scale') == 'BUILDING'
     )
     _pumping_kwh = None
     if uses_solar_dhw:
-        # Hourly dispatch: solar thermal + tank first, then secondary
-        # backup (BO/HP) covers any remainder. See `solar_dhw.py` for
-        # the full model and `scripts.yml` for the documented defaults.
+        # Hourly dispatch: solar thermal into a temperature-tracking tank,
+        # booster (secondary BO/HP) tops up the gap between tank temp and
+        # the DHW setpoint for the drawn mass. See `solar_dhw.py` for the
+        # full model. Cold-mains inlet is a climate-aware hourly series
+        # computed from the scenario weather file (same helper the demand
+        # pipeline uses to define Qww_sys_kWh).
         from cea.analysis.final_energy.solar_dhw import (
-            aggregate_building_solar_thermal,
+            aggregate_building_sc_thermal,
+            compute_dhw_cold_inlet_hourly,
             dispatch_solar_dhw,
         )
-        thermal_series, sc_pvt_area_m2 = aggregate_building_solar_thermal(
+        thermal_series, sc_aperture_m2 = aggregate_building_sc_thermal(
             building_name, locator, config
         )
+        T_cold_hourly_C = compute_dhw_cold_inlet_hourly(locator)
         dispatch = dispatch_solar_dhw(
             dhw_demand_kwh=demand_df['Qww_sys_kWh'].to_numpy(dtype=float),
             solar_thermal_kwh=thermal_series,
-            total_sc_pvt_area_m2=sc_pvt_area_m2,
-            hot_water_cfg=hot_water_cfg,
+            sc_aperture_m2=sc_aperture_m2,
+            T_cold_hourly_C=T_cold_hourly_C,
         )
         final_energy['Qww_sys_SOLAR_kWh'] = dispatch['served_by_solar_kwh']
+        # Diagnostic: hourly solar heat dumped at the tank's T_MAX pressure-
+        # relief cap. Non-zero values flag an oversized SC for the DHW load.
+        # Not a delivered carrier — excluded from carrier aggregation below.
+        final_energy['Qww_sys_SOLAR_dumped_kWh'] = dispatch['surplus_dumped_kwh']
+        # Note: gross Q_SC_gen is *not* persisted as a column here. Downstream
+        # diagnostics (e.g. the Sankey source-side width for SC) recompute it
+        # on-the-fly from the SC potential files on disk so the CSV schema
+        # doesn't carry diagnostic-only data.
         backup_info = hot_water_cfg.get('secondary_info') or {}
         backup_carrier = backup_info.get('carrier')
         backup_eff = backup_info.get('efficiency') or 1.0
@@ -181,7 +198,7 @@ def calculate_building_final_energy(
     # Electricity (always GRID)
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
     if _pumping_kwh is not None:
-        # SC/PVT pumping parasitic from the DHW dispatch flows into grid.
+        # SC pumping parasitic from the DHW dispatch flows into grid.
         final_energy['E_sys_GRID_kWh'] = (
             final_energy['E_sys_GRID_kWh'].to_numpy() + _pumping_kwh
         )
@@ -231,20 +248,21 @@ def calculate_building_final_energy(
             )
 
         if uses_solar_dhw:
-            # The SC/PVT thermal output is already booked in
-            # `Qww_sys_SOLAR_kWh`; drop the per-facade thermal columns
-            # so the downstream emissions pipeline does not credit them
-            # a second time via the `SC_Q_offset` / `PVT_Q_offset`
-            # mechanism. Electrical columns (`PV_*_kWh`,
-            # `PVT_*_E_kWh`) stay — they flow through the independent
-            # electricity-offset path.
+            # SC thermal is booked against DHW via `Qww_sys_SOLAR_kWh`;
+            # drop per-facade `SC_*_kWh` columns to stop the emissions
+            # pipeline double-counting via the legacy `SC_Q_offset` path.
+            # `PVT_*_Q_kWh` columns are deliberately kept — PVT is not a
+            # DHW primary in this model, so its thermal output should
+            # continue to be credited against space heating via the
+            # legacy `PVT_Q_offset_kgCO2e` mechanism.
+            # `_radiation_` columns (raw irradiation) are preserved.
+            # Electrical columns (`PV_*_kWh`, `PVT_*_E_kWh`) are not
+            # touched — they flow through the independent electricity-
+            # offset path.
             thermal_cols_to_drop = [
                 col for col in final_energy.columns
                 if col.startswith('SC_') and col.endswith('_kWh')
                 and '_radiation_' not in col
-            ] + [
-                col for col in final_energy.columns
-                if col.startswith('PVT_') and col.endswith('_Q_kWh')
             ]
             if thermal_cols_to_drop:
                 final_energy = final_energy.drop(columns=thermal_cols_to_drop)
@@ -487,7 +505,6 @@ def parse_supply_assembly(
         'primary_component': primary_component,
         'secondary_component': secondary_component,
         'tertiary_component': tertiary_component,
-        'primary_info': component_info,
         'secondary_info': secondary_info,
         'network_name': network_name if scale == 'DISTRICT' else None,
     }
@@ -1167,6 +1184,11 @@ def aggregate_buildings_summary(
         carrier_totals = {}
         for col in df.columns:
             if col.endswith('_kWh') and col not in ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']:
+                # Skip diagnostic *_dumped_kWh columns — they record heat
+                # dumped at the SC tank pressure-relief cap, not carrier
+                # consumption delivered to a service.
+                if col.endswith('_dumped_kWh'):
+                    continue
                 # Extract carrier from column name
                 # Format: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                 parts = col.split('_')
@@ -1203,8 +1225,12 @@ def aggregate_buildings_summary(
             'E_sys_MWh': E_sys_MWh,
         }
 
-        # Add purchased/imported carrier columns (excludes solar generation)
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+        # Carrier columns delivered to services. Includes SOLAR (on-site
+        # solar-thermal delivered to DHW via the SC-DHW dispatch booked
+        # as `Qww_sys_SOLAR_kWh`). Legacy solar PV/PVT electricity
+        # offsets are still tracked separately via the emissions
+        # offset path, not here.
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1290,8 +1316,12 @@ def aggregate_buildings_summary(
             'E_sys_MWh': pumping_MWh,
         }
 
-        # Add purchased/imported carrier columns (excludes solar generation)
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+        # Carrier columns delivered to services. Includes SOLAR (on-site
+        # solar-thermal delivered to DHW via the SC-DHW dispatch booked
+        # as `Qww_sys_SOLAR_kWh`). Legacy solar PV/PVT electricity
+        # offsets are still tracked separately via the emissions
+        # offset path, not here.
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1355,13 +1385,24 @@ def create_hourly_timeseries_aggregation(
         # Sum carrier columns
         for col in df.columns:
             if col.endswith('_kWh') and col not in demand_columns and col != 'date':
+                # Skip raw-irradiation columns — they record incident solar
+                # energy, not useful delivered energy, and must NEVER be
+                # counted as a delivered carrier. Matches the filter in
+                # cea.analysis.lca.emission_time_dependent.
+                if '_radiation_' in col:
+                    continue
+                # Skip diagnostic *_dumped_kWh columns — SC tank surplus
+                # dumped at the T_MAX cap, not a delivered carrier.
+                if col.endswith('_dumped_kWh'):
+                    continue
+
                 # Extract carrier from column name
                 # Formats:
                 #   Qhs_sys_NATURALGAS_kWh          -> NATURALGAS
                 #   PV_{facade}_kWh                 -> PV
                 #   PVT_{collector}_{facade}_E_kWh  -> PV  (electrical)
                 #   PVT_{collector}_{facade}_Q_kWh  -> SOLAR  (thermal)
-                #   SC_{collector}_{facade}_kWh     -> SOLAR
+                #   SC_{collector}_{facade}_Q_kWh   -> SOLAR
                 if '_sys_' in col or '_booster_' in col:
                     # Service/booster carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                     parts = col.split('_')
