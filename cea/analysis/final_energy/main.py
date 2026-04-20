@@ -18,6 +18,7 @@ __status__ = "Production"
 
 
 import os
+import re
 import shutil
 import pandas as pd
 
@@ -87,23 +88,36 @@ def main(config: cea.config.Configuration):
         raise
 
 
-def _group_errors_by_pattern(errors):
-    """Group building errors by message pattern, stripping building-specific details.
+_BUILDING_NAME_RE = re.compile(r'\s+for building\s+\S+', re.IGNORECASE)
 
-    Returns dict mapping pattern description → list of building names.
+
+def _strip_building_name(line):
+    """Remove ' for building {name}' from a line so similar errors group."""
+    return _BUILDING_NAME_RE.sub('', line).rstrip(' .:,-')
+
+
+def _group_errors_by_pattern(errors):
+    """Group building errors by message pattern, stripping building-specific
+    details so N identical errors collapse into one group.
+
+    Each error's first line becomes the grouping key (after stripping
+    any " for building {name}" phrase). The full remaining message
+    (lines 2+, de-building-ified) is preserved so actionable guidance
+    isn't lost in aggregate output.
+
+    Returns dict mapping ``(headline, hint_tuple) → list of building names``.
     """
     grouped = {}
     for building, msg in errors.items():
-        first_line = msg.split('\n')[0]
-        # Extract text before ' for building' as the pattern key
-        pattern = first_line.split(' for building')[0] if ' for building' in first_line else first_line
-        # Append action hint from second line if present
         lines = msg.split('\n')
-        if len(lines) > 1 and lines[1].strip().startswith('Please'):
-            pattern += f"\n    {lines[1].strip()}"
-        if pattern not in grouped:
-            grouped[pattern] = []
-        grouped[pattern].append(building)
+        headline = _strip_building_name(lines[0].strip())
+        # Keep all following lines (stripped of building names) as the
+        # hint payload so actionable guidance survives aggregation.
+        hint = tuple(
+            _strip_building_name(line) for line in lines[1:]
+        )
+        key = (headline, hint)
+        grouped.setdefault(key, []).append(building)
     return grouped
 
 
@@ -221,11 +235,18 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     
     if errors:
         # Group errors by message pattern (strip building-specific details)
+        # so N identical errors collapse into one block with the full
+        # actionable hint shown once.
         grouped = _group_errors_by_pattern(errors)
         print(f"\n{len(errors)} buildings failed final energy calculation:")
-        for pattern, building_list in grouped.items():
-            print(f"\n  {pattern} ({len(building_list)} buildings):")
-            print(f"    {', '.join(sorted(building_list))}")
+        for (headline, hint), building_list in grouped.items():
+            print(f"\n  {headline}  ({len(building_list)} buildings)")
+            for hint_line in hint:
+                if hint_line.strip():
+                    print(f"    {hint_line}")
+                else:
+                    print()
+            print(f"\n    Affected buildings: {', '.join(sorted(building_list))}")
         raise Exception(f"{len(errors)} buildings failed final energy calculation.")
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
@@ -368,7 +389,6 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             aggregate_buildings_summary,
             create_hourly_timeseries_aggregation,
         )
-        import json
         from datetime import datetime
 
         try:

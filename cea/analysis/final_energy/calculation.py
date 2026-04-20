@@ -79,16 +79,20 @@ def calculate_building_final_energy(
     # Step 2: Load supply configuration
     supply_config = load_supply_configuration(building_name, locator, config)
 
-    # Step 2b: SC/PVT primary sanity checks — must happen before any
+    # Step 2b: SC-primary sanity checks — must happen before any
     # downstream dispatch since a bad configuration should fail fast
     # with a useful error rather than dying in the solar time-series
-    # aggregation below.
+    # aggregation below. (PVT is rejected as DHW primary by these
+    # validators; PVT thermal continues to flow through the legacy
+    # PVT_Q_offset path against space heating.)
     from cea.analysis.final_energy.solar_dhw import (
         validate_solar_dhw_assembly,
         validate_solar_dhw_building,
     )
     validate_solar_dhw_assembly(building_name, supply_config.get('hot_water'))
-    validate_solar_dhw_building(building_name, supply_config.get('hot_water'), config)
+    validate_solar_dhw_building(
+        building_name, supply_config.get('hot_water'), config, locator=locator,
+    )
 
     # Step 3: Calculate final energy for each service
     # Space heating
@@ -110,25 +114,31 @@ def calculate_building_final_energy(
     hot_water_cfg = supply_config['hot_water']
     uses_solar_dhw = (
         hot_water_cfg
-        and hot_water_cfg.get('type') in ('SC', 'PVT')
+        and hot_water_cfg.get('type') == 'SC'
         and hot_water_cfg.get('scale') == 'BUILDING'
     )
     _pumping_kwh = None
     if uses_solar_dhw:
-        # Hourly dispatch: solar thermal + tank first, then secondary
-        # backup (BO/HP) covers any remainder. See `solar_dhw.py` for
-        # the full model and `scripts.yml` for the documented defaults.
+        # Hourly dispatch: solar thermal into a temperature-tracking tank,
+        # booster (secondary BO/HP) tops up the gap between tank temp and
+        # the DHW setpoint for the drawn mass. See `solar_dhw.py` for the
+        # full model. Cold-mains inlet is a climate-aware hourly series
+        # computed from the scenario weather file (same helper the demand
+        # pipeline uses to define Qww_sys_kWh).
         from cea.analysis.final_energy.solar_dhw import (
-            aggregate_building_solar_thermal,
+            aggregate_building_sc_thermal,
+            compute_dhw_cold_inlet_hourly,
             dispatch_solar_dhw,
         )
-        thermal_series, sc_pvt_area_m2 = aggregate_building_solar_thermal(
+        thermal_series, sc_aperture_m2 = aggregate_building_sc_thermal(
             building_name, locator, config
         )
+        T_cold_hourly_C = compute_dhw_cold_inlet_hourly(locator)
         dispatch = dispatch_solar_dhw(
             dhw_demand_kwh=demand_df['Qww_sys_kWh'].to_numpy(dtype=float),
             solar_thermal_kwh=thermal_series,
-            total_sc_pvt_area_m2=sc_pvt_area_m2,
+            sc_aperture_m2=sc_aperture_m2,
+            T_cold_hourly_C=T_cold_hourly_C,
         )
         final_energy['Qww_sys_SOLAR_kWh'] = dispatch['served_by_solar_kwh']
         backup_info = hot_water_cfg.get('secondary_info') or {}
@@ -180,7 +190,7 @@ def calculate_building_final_energy(
     # Electricity (always GRID)
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
     if _pumping_kwh is not None:
-        # SC/PVT pumping parasitic from the DHW dispatch flows into grid.
+        # SC pumping parasitic from the DHW dispatch flows into grid.
         final_energy['E_sys_GRID_kWh'] = (
             final_energy['E_sys_GRID_kWh'].to_numpy() + _pumping_kwh
         )
@@ -230,20 +240,21 @@ def calculate_building_final_energy(
             )
 
         if uses_solar_dhw:
-            # The SC/PVT thermal output is already booked in
-            # `Qww_sys_SOLAR_kWh`; drop the per-facade thermal columns
-            # so the downstream emissions pipeline does not credit them
-            # a second time via the `SC_Q_offset` / `PVT_Q_offset`
-            # mechanism. Electrical columns (`PV_*_kWh`,
-            # `PVT_*_E_kWh`) stay — they flow through the independent
-            # electricity-offset path.
+            # SC thermal is booked against DHW via `Qww_sys_SOLAR_kWh`;
+            # drop per-facade `SC_*_kWh` columns to stop the emissions
+            # pipeline double-counting via the legacy `SC_Q_offset` path.
+            # `PVT_*_Q_kWh` columns are deliberately kept — PVT is not a
+            # DHW primary in this model, so its thermal output should
+            # continue to be credited against space heating via the
+            # legacy `PVT_Q_offset_kgCO2e` mechanism.
+            # `_radiation_` columns (raw irradiation) are preserved.
+            # Electrical columns (`PV_*_kWh`, `PVT_*_E_kWh`) are not
+            # touched — they flow through the independent electricity-
+            # offset path.
             thermal_cols_to_drop = [
                 col for col in final_energy.columns
                 if col.startswith('SC_') and col.endswith('_kWh')
                 and '_radiation_' not in col
-            ] + [
-                col for col in final_energy.columns
-                if col.startswith('PVT_') and col.endswith('_Q_kWh')
             ]
             if thermal_cols_to_drop:
                 final_energy = final_energy.drop(columns=thermal_cols_to_drop)
