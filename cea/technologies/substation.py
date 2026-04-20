@@ -769,10 +769,11 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         Qhs_sys_W = np.zeros(HOURS_IN_YEAR)
         Q_dh_to_hs_W = np.zeros(HOURS_IN_YEAR)
         Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
+        E_booster_hs_W = np.zeros(HOURS_IN_YEAR)
     else:
         Qhs_sys_W = Qhs_sys_kWh_dict[hs_configuration] * 1000  # in W
         Qnom_W = max(Qhs_sys_W)
-        mcphs_sys_WperC = mcphs_sys_kWperC_dict[hs_configuration] # in W
+        mcphs_sys_WperC = mcphs_sys_kWperC_dict[hs_configuration] * 1000 # in W
 
         if Qnom_W > 0:
             # Check if booster may be needed (CT mode or Case 1 LTDH)
@@ -784,7 +785,8 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
                 # Use booster-aware calculation
                 from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
 
-                Q_dh_to_hs_W, t_DH_return_hs_C, mcp_DH_hs_kWK, Q_booster_hs_W, A_hex_hs, booster_hs_active = \
+                Q_dh_to_hs_W, t_DH_return_hs_C, mcp_DH_hs_kWK, Q_booster_hs_W, A_hex_hs, booster_hs_active, \
+                    E_booster_hs_W = \
                     calc_dh_heating_with_booster_tracking(
                         Q_demand_W=Qhs_sys_W,
                         T_DH_supply_C=T_DH_supply_C,
@@ -857,12 +859,14 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
 
                 Q_dh_to_hs_W = Qhs_sys_W
                 Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
+                E_booster_hs_W = np.zeros(HOURS_IN_YEAR)
         else:
             t_DH_return_hs = np.zeros(HOURS_IN_YEAR) + KELVIN_CONVERSION  # in K
             mcp_DH_hs = np.zeros(HOURS_IN_YEAR)
             A_hex_hs = 0
             Q_dh_to_hs_W = np.zeros(HOURS_IN_YEAR)
             Q_booster_hs_W = np.zeros(HOURS_IN_YEAR)
+            E_booster_hs_W = np.zeros(HOURS_IN_YEAR)
 
     # ============================================================================
     # DHW HEX
@@ -877,7 +881,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         # Booster may be needed in CT mode or any case where network temp < 60°C
         from cea.technologies.building_heating_booster import calc_dh_heating_with_booster_tracking
 
-        Q_dh_to_dhw_W, t_DH_return_ww_C, mcp_DH_ww_kWK, Q_booster_ww_W, A_hex_ww, _ = \
+        Q_dh_to_dhw_W, t_DH_return_ww_C, mcp_DH_ww_kWK, Q_booster_ww_W, A_hex_ww, _, E_booster_ww_W = \
             calc_dh_heating_with_booster_tracking(
                 Q_demand_W=Qww_sys_W,
                 T_DH_supply_C=T_DH_supply_C,
@@ -898,6 +902,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         mcp_DH_ww = np.zeros(HOURS_IN_YEAR)
         Q_dh_to_dhw_W = np.zeros(HOURS_IN_YEAR)
         Q_booster_ww_W = np.zeros(HOURS_IN_YEAR)
+        E_booster_ww_W = np.zeros(HOURS_IN_YEAR)
 
     # CALCULATE MIX IN HEAT EXCHANGERS AND RETURN TEMPERATURE
     T_DH_return_K = np.vectorize(calc_HEX_mix_2_flows)(Qhs_sys_W, Qww_sys_W, mcp_DH_hs, mcp_DH_ww, t_DH_return_hs,
@@ -930,6 +935,10 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
         # Booster heat (always present, zeros if not applicable)
         "Qhs_booster_W": Q_booster_hs_W,
         "Qww_booster_W": Q_booster_ww_W,
+
+        # Booster electricity (always present, zeros if not applicable)
+        "Ehs_booster_W": E_booster_hs_W,
+        "Eww_booster_W": E_booster_ww_W,
 
         # Building-side target temperatures for booster validation
         # Max across demand hours — the booster must be able to reach this temperature

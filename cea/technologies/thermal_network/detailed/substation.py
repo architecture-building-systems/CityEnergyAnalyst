@@ -283,7 +283,7 @@ def calc_hex_area_from_demand(building_demand, load_type, building_system, T_sup
             T_return_C_arr = building_demand[T_ret].values
             booster_load_type = 'dhw' if 'ww' in load_type else 'space_heating'
 
-            Q_dh_W, _, _, _, A_hex_m2, _ = calc_dh_heating_with_booster_tracking(
+            Q_dh_W, _, _, _, A_hex_m2, _, _ = calc_dh_heating_with_booster_tracking(
                 Q_demand_W=Qf,
                 T_DH_supply_C=T_supply_C,
                 T_target_C=T_target_C_arr,
@@ -395,7 +395,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
             Qhs_demand_W = building['Qhs_sys_ahu_kWh'].values * 1000  # kWh to W
             T_hs_return_C = building['Ths_sys_re_ahu_C'].values if 'Ths_sys_re_ahu_C' in building.columns else np.array([25.0])
 
-            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _, _ = \
                 calc_dh_heating_with_booster_tracking(
                     Q_demand_W=Qhs_demand_W,
                     T_DH_supply_C=T_DH_supply_C,
@@ -442,7 +442,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
             Qhs_demand_W = building['Qhs_sys_aru_kWh'].values * 1000  # kWh to W
             T_hs_return_C = building['Ths_sys_re_aru_C'].values if 'Ths_sys_re_aru_C' in building.columns else np.array([25.0])
 
-            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _, _ = \
                 calc_dh_heating_with_booster_tracking(
                     Q_demand_W=Qhs_demand_W,
                     T_DH_supply_C=T_DH_supply_C,
@@ -489,7 +489,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
             Qhs_demand_W = building['Qhs_sys_shu_kWh'].values * 1000  # kWh to W
             T_hs_return_C = building['Ths_sys_re_shu_C'].values if 'Ths_sys_re_shu_C' in building.columns else np.array([25.0])
 
-            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _, _ = \
                 calc_dh_heating_with_booster_tracking(
                     Q_demand_W=Qhs_demand_W,
                     T_DH_supply_C=T_DH_supply_C,
@@ -535,7 +535,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs, the
             Qww_demand_W = building['Qww_sys_kWh'].values * 1000  # kWh to W
             T_ww_return_C = building['Tww_sys_re_C'].values if 'Tww_sys_re_C' in building.columns else np.array([10.0])
 
-            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _ = \
+            Q_dh_W, T_dh_return_C_arr, mcp_dh_kWK_arr, Q_booster_W, A_hex_m2, _, _ = \
                 calc_dh_heating_with_booster_tracking(
                     Q_demand_W=Qww_demand_W,
                     T_DH_supply_C=T_DH_supply_C,
