@@ -99,6 +99,48 @@ Indexed by `period` (`Y_XXXX`), columns:
 
 **Metadata**: `name` — building identifier
 
+### Why solar offset rows are sometimes missing (FAQ)
+
+A common confusion when reading the emission timeline: a scenario with
+solar configured may show *no* negative-y offset bars. Three reasons,
+in increasing subtlety:
+
+1. **No solar configured.** If `configuration.{json,yml}` has every
+   `solar.{roof, wall_*}` set to `None`, no `PV_*_kWh` / `PVT_*_kWh` /
+   `SC_*_kWh` columns exist in `B####.csv`, so no offset row is written.
+   Trivial case — check the per-building `solar` block first.
+
+2. **SC is wired as the DHW primary** (the SC-DHW dispatch case). When
+   `hot_water.type == 'SC'`, the SC thermal output is dispatched into
+   `Qww_sys_SOLAR_kWh` (a zero-emission carrier — see
+   `_ZERO_EMISSION_CARRIERS = {'DH','DC','NONE','SOLAR'}`). To prevent
+   double-counting, `cea/analysis/final_energy/calculation.py` drops
+   the per-facade `SC_*_kWh` columns from `B####.csv` for these buildings.
+   The legacy `SC_Q_offset_kgCO2e` row therefore never gets generated.
+
+   **The benefit is still in the chart**, it just shows up as a smaller
+   *positive* operational-DHW layer (smaller `Qww_sys_GRID_kWh` /
+   `Qww_sys_NATURALGAS_kWh` from the backup) instead of a visible
+   negative offset. To compare against a no-SC baseline, run a sibling
+   what-if without SC and diff the operational-DHW layer.
+
+   PVT thermal is **not** affected — it's not allowed as a DHW primary
+   (operating temperature too low for the DHW setpoint), so its `PVT_*_Q_kWh`
+   columns survive and the legacy `PVT_Q_offset_kgCO2e` path still fires.
+
+3. **PV / PVT electrical surfaces produce zero output**. If the
+   per-surface generation is 0 (e.g. a heavily-shaded facade), the
+   matching `PV_*_E_kWh` column may not be written, so the corresponding
+   offset is absent. Inspect per-facade `PV_*` / `PVT_*_E_kWh` columns
+   in `B####.csv` to verify.
+
+If a user reports "missing solar offset," walk these in order. The
+SC-DHW case (#2) is the one that surprises people most because the
+panels *are* there and *are* doing useful work — the chart just
+attributes the work to the SOLAR carrier (zero-emission, so it shrinks
+the positive bar) rather than emitting it as a negative offset node.
+See `cea/technologies/solar/AGENTS.md` § 3 for the data-flow detail.
+
 ### Plant Timeline (District Aggregate)
 
 - `operation_DH_kgCO2e` — District heating plant emissions
