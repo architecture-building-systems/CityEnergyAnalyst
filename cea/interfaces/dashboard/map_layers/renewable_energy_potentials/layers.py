@@ -5,7 +5,6 @@ import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
 
-from cea.config import DEFAULT_CONFIG, Configuration
 from cea.inputlocator import InputLocator
 from cea.interfaces.dashboard.map_layers import day_range_to_hour_range
 from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, ParameterDefinition, FileRequirement

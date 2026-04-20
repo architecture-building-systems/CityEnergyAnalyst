@@ -1576,7 +1576,6 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
     def _choices(self):
         try:
             from cea.visualisation.format.plot_colours import component_display as _component_display
-            import json
             section_attr = self.section.name.replace('-', '_')
             section = getattr(self.config, section_attr)
             what_if_names = section.what_if_name

@@ -368,7 +368,6 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             aggregate_buildings_summary,
             create_hourly_timeseries_aggregation,
         )
-        import json
         from datetime import datetime
 
         try:

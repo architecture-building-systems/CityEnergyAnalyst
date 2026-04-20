@@ -11,7 +11,6 @@ sorted from peak to minimum (load duration curve).
 """
 
 import os
-import json
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go

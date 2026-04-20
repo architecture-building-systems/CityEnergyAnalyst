@@ -11,7 +11,6 @@ Data sources (sole source of truth):
 - outputs/data/potentials/solar/*_total_buildings.csv: installed solar area
 """
 
-import json
 import os
 from math import log, ceil
 
