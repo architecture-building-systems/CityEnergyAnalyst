@@ -165,6 +165,11 @@ def _column_to_carrier(column: str) -> Optional[str]:
     if not column.endswith('_kWh') or column in _ENERGY_DEMAND_ROLLUP_COLUMNS:
         return None
 
+    # Diagnostic *_dumped_kWh columns (SC tank surplus) are not a delivered
+    # carrier — exclude from the Energy-by-Carrier map.
+    if column.endswith('_dumped_kWh'):
+        return None
+
     # Solar thermal generation columns. PV / PVT-electric are treated as
     # grid-replacement, not a separate carrier, so they are ignored here.
     if column.startswith('PV_'):

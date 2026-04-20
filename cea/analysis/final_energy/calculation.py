@@ -141,6 +141,14 @@ def calculate_building_final_energy(
             T_cold_hourly_C=T_cold_hourly_C,
         )
         final_energy['Qww_sys_SOLAR_kWh'] = dispatch['served_by_solar_kwh']
+        # Diagnostic: hourly solar heat dumped at the tank's T_MAX pressure-
+        # relief cap. Non-zero values flag an oversized SC for the DHW load.
+        # Not a delivered carrier — excluded from carrier aggregation below.
+        final_energy['Qww_sys_SOLAR_dumped_kWh'] = dispatch['surplus_dumped_kwh']
+        # Note: gross Q_SC_gen is *not* persisted as a column here. Downstream
+        # diagnostics (e.g. the Sankey source-side width for SC) recompute it
+        # on-the-fly from the SC potential files on disk so the CSV schema
+        # doesn't carry diagnostic-only data.
         backup_info = hot_water_cfg.get('secondary_info') or {}
         backup_carrier = backup_info.get('carrier')
         backup_eff = backup_info.get('efficiency') or 1.0
@@ -1176,6 +1184,11 @@ def aggregate_buildings_summary(
         carrier_totals = {}
         for col in df.columns:
             if col.endswith('_kWh') and col not in ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']:
+                # Skip diagnostic *_dumped_kWh columns — they record heat
+                # dumped at the SC tank pressure-relief cap, not carrier
+                # consumption delivered to a service.
+                if col.endswith('_dumped_kWh'):
+                    continue
                 # Extract carrier from column name
                 # Format: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                 parts = col.split('_')
@@ -1212,8 +1225,12 @@ def aggregate_buildings_summary(
             'E_sys_MWh': E_sys_MWh,
         }
 
-        # Add purchased/imported carrier columns (excludes solar generation)
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+        # Carrier columns delivered to services. Includes SOLAR (on-site
+        # solar-thermal delivered to DHW via the SC-DHW dispatch booked
+        # as `Qww_sys_SOLAR_kWh`). Legacy solar PV/PVT electricity
+        # offsets are still tracked separately via the emissions
+        # offset path, not here.
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1299,8 +1316,12 @@ def aggregate_buildings_summary(
             'E_sys_MWh': pumping_MWh,
         }
 
-        # Add purchased/imported carrier columns (excludes solar generation)
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+        # Carrier columns delivered to services. Includes SOLAR (on-site
+        # solar-thermal delivered to DHW via the SC-DHW dispatch booked
+        # as `Qww_sys_SOLAR_kWh`). Legacy solar PV/PVT electricity
+        # offsets are still tracked separately via the emissions
+        # offset path, not here.
+        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1364,13 +1385,24 @@ def create_hourly_timeseries_aggregation(
         # Sum carrier columns
         for col in df.columns:
             if col.endswith('_kWh') and col not in demand_columns and col != 'date':
+                # Skip raw-irradiation columns — they record incident solar
+                # energy, not useful delivered energy, and must NEVER be
+                # counted as a delivered carrier. Matches the filter in
+                # cea.analysis.lca.emission_time_dependent.
+                if '_radiation_' in col:
+                    continue
+                # Skip diagnostic *_dumped_kWh columns — SC tank surplus
+                # dumped at the T_MAX cap, not a delivered carrier.
+                if col.endswith('_dumped_kWh'):
+                    continue
+
                 # Extract carrier from column name
                 # Formats:
                 #   Qhs_sys_NATURALGAS_kWh          -> NATURALGAS
                 #   PV_{facade}_kWh                 -> PV
                 #   PVT_{collector}_{facade}_E_kWh  -> PV  (electrical)
                 #   PVT_{collector}_{facade}_Q_kWh  -> SOLAR  (thermal)
-                #   SC_{collector}_{facade}_kWh     -> SOLAR
+                #   SC_{collector}_{facade}_Q_kWh   -> SOLAR
                 if '_sys_' in col or '_booster_' in col:
                     # Service/booster carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                     parts = col.split('_')

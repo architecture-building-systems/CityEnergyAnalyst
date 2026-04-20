@@ -493,6 +493,10 @@ def _calc_operational_emissions_from_fe(
     for col in fe_df.columns:
         if not col.endswith('_kWh'):
             continue
+        # Skip diagnostic *_dumped_kWh columns (SC tank surplus) — they are
+        # not a delivered carrier and must not be treated as consumption.
+        if col.endswith('_dumped_kWh'):
+            continue
         for prefix in _CARRIER_COLUMN_PREFIXES:
             if col.startswith(prefix):
                 carrier = col[len(prefix):-4]  # strip prefix and '_kWh'

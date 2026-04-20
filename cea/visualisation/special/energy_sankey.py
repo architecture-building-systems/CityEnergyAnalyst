@@ -152,6 +152,30 @@ def _to_rgba(rgb_str, alpha=0.5):
     return rgb_str.replace('rgb(', 'rgba(').replace(')', f',{alpha})')
 
 
+def _sc_gross_kwh_for_building(building_name, bconfig, locator):
+    """Annual gross SC thermal output for one building, summed only over
+    the ``(surface, panel_type)`` pairs actually configured under
+    ``solar`` in the per-building config — *not* the per-panel-type
+    aggregate ``Q_SC_gen_kWh`` columns, which would inflate the total by
+    counting all roof+wall surfaces under both SC_FP and SC_ET when each
+    surface is typically assigned to only one panel type.
+
+    Delegates to :func:`aggregate_sc_thermal_per_surface` so the Sankey
+    source-side width matches what the SC-DHW dispatch actually fed into
+    the tank model. Returns 0.0 when no SC surface is configured or the
+    SC potential files are missing — caller falls back to ``val`` and the
+    SC node renders as a pass-through.
+    """
+    from cea.analysis.final_energy.solar_dhw import aggregate_sc_thermal_per_surface
+    panel_config = (bconfig.get('solar') or {}) if isinstance(bconfig, dict) else {}
+    if not panel_config:
+        return 0.0
+    thermal_sum, _ = aggregate_sc_thermal_per_surface(
+        building_name, panel_config, locator
+    )
+    return float(thermal_sum.sum()) if thermal_sum is not None else 0.0
+
+
 # ── plant data loader ─────────────────────────────────────────────────────────
 
 def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
@@ -401,15 +425,58 @@ def load_energy_flow_data(locator, whatif_name):
 
             else:
                 primary_carrier_raw = svc_config.get('carrier', '')
-                component_code = svc_config.get('primary_component', '')
+                primary_component_code = svc_config.get('primary_component', '')
                 booster_only_carriers = booster_carriers.get(cfg_key, set()) - {primary_carrier_raw}
                 # Demand column: useful energy delivered to service
                 demand_col = f'{col_prefix}_kWh'
                 demand_total = annual.get(demand_col, 0)
 
+                # Build carrier → (component_code, efficiency) map from the
+                # saved supply config. Covers primary + real secondary +
+                # tertiary (if ever serialised with its own info). Tertiary
+                # CTs today have no separate ``Qxx_sys_*_kWh`` column
+                # (their fan electricity is aggregated into the primary's
+                # carrier column upstream in calculation.py), so the map
+                # entry is harmless when no matching column exists.
+                component_by_carrier: dict = {}
+                if primary_component_code and primary_carrier_raw:
+                    component_by_carrier[primary_carrier_raw] = (
+                        primary_component_code,
+                        float(svc_config.get('efficiency') or 1.0),
+                    )
+                for role in ('secondary', 'tertiary'):
+                    role_code = svc_config.get(f'{role}_component')
+                    role_info = svc_config.get(f'{role}_info') or {}
+                    role_carrier = role_info.get('carrier')
+                    if role_code and role_carrier:
+                        # Primary wins if two roles share a carrier.
+                        component_by_carrier.setdefault(role_carrier, (
+                            role_code,
+                            float(role_info.get('efficiency') or 1.0),
+                        ))
+
+                # Count distinct, non-booster, non-zero ``Qxx_sys_*`` carriers
+                # to distinguish "primary covers all" (single-carrier, absorb
+                # η into the primary component node) from "primary + real
+                # secondary" (multi-carrier, localise each carrier's η at
+                # its own component node so the service bar balances).
+                service_carrier_cols = [
+                    c for c in annual.index
+                    if c.startswith(f'{col_prefix}_') and c.endswith('_kWh')
+                    and c != f'{col_prefix}_kWh'
+                    and not c.endswith('_dumped_kWh')
+                    and annual[c] > 0
+                    and c[len(col_prefix) + 1:-4] not in booster_only_carriers
+                ]
+                primary_covers_all = len(service_carrier_cols) <= 1
+
                 for col in annual.index:
                     if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
                             and col != f'{col_prefix}_kWh'):
+                        continue
+                    # Skip diagnostic *_dumped_kWh columns (SC tank surplus) —
+                    # not a delivered carrier, must not appear as a Sankey flow.
+                    if col.endswith('_dumped_kWh'):
                         continue
                     val = annual[col]
                     if val <= 0:
@@ -419,13 +486,46 @@ def load_energy_flow_data(locator, whatif_name):
                     if carrier_raw in booster_only_carriers:
                         continue  # handled by booster loop below
 
-                    comp = component_display(component_code) if carrier_raw == primary_carrier_raw else ''
-
-                    # value_kWh = demand from CSV ({col_prefix}_kWh)
-                    # plant_input_kWh = carrier from CSV ({col_prefix}_{carrier}_kWh)
-                    if carrier_raw == primary_carrier_raw and comp:
-                        output_kWh = demand_total
+                    comp_info = component_by_carrier.get(carrier_raw)
+                    if comp_info:
+                        comp_code, eta = comp_info
+                        comp = component_display(comp_code)
                     else:
+                        comp, eta = '', 1.0
+
+                    # Source-side width (carrier input). For most carriers
+                    # this equals ``val`` (e.g. fuel burned, grid kWh). For
+                    # SOLAR SC-DHW, ``val`` is the *delivered* share — the
+                    # real carrier input is the gross Q_SC_gen produced by
+                    # the collectors before tank losses and pressure-relief
+                    # dumping. Recompute it on the fly from the SC potential
+                    # files on disk so the SC node narrows from gross-in to
+                    # net-out, mirroring how BO1 / HP1 are rendered.
+                    plant_input_val = val
+                    if (comp and carrier_raw == 'SOLAR'
+                            and cfg_key == 'hot_water'):
+                        gross_kwh = _sc_gross_kwh_for_building(
+                            building, bconfig, locator
+                        )
+                        if gross_kwh > val:
+                            plant_input_val = gross_kwh
+
+                    # value_kWh      = delivered-to-service (sink side width)
+                    # plant_input_kWh = carrier input       (source side width)
+                    if primary_covers_all and carrier_raw == primary_carrier_raw and comp:
+                        # Single-carrier service: render sink side at demand
+                        # so boiler (η<1) and HP (COP>1) efficiencies are
+                        # absorbed into the node's width change rather than
+                        # showing up as missing or extra heat.
+                        output_kWh = demand_total
+                    elif comp:
+                        # Multi-carrier service: each carrier's delivered
+                        # share is val × η, localising the loss at its own
+                        # component node. Σ output_kWh across arcs ≈ demand.
+                        output_kWh = val * eta
+                    else:
+                        # No component node on this arc (carrier not mapped
+                        # to any configured component) — draw carrier = delivered.
                         output_kWh = val
 
                     records.append({
@@ -437,7 +537,7 @@ def load_energy_flow_data(locator, whatif_name):
                         'scale':              'Building',
                         'service':            svc_display,
                         'value_kWh':          output_kWh,
-                        'plant_input_kWh':    val,
+                        'plant_input_kWh':    plant_input_val,
                         '_has_plant_data':    False,
                         '_is_booster':        False,
                     })

@@ -154,6 +154,71 @@ def load_solar_component_info(
     }
 
 
+# Map per-building solar-config surface keys to the column-name suffix used
+# inside the SC potential CSVs (``cea solar-collector`` output).
+_SC_SURFACE_TO_FACADE_SUFFIX: Dict[str, str] = {
+    'roof':       'roofs_top',
+    'wall_north': 'walls_north',
+    'wall_south': 'walls_south',
+    'wall_east':  'walls_east',
+    'wall_west':  'walls_west',
+}
+
+
+def aggregate_sc_thermal_per_surface(
+    building_name: str,
+    panel_config: Dict[str, Optional[str]],
+    locator: cea.inputlocator.InputLocator,
+) -> Tuple[Optional[np.ndarray], float]:
+    """Sum hourly ``Q_SC_gen_kWh`` and aperture m² over only the
+    ``(surface, panel_type)`` pairs actually assigned for this building.
+
+    Avoids the previous bug where summing the per-panel-type aggregate
+    ``Q_SC_gen_kWh`` column inflated the gross when both SC_FP and SC_ET
+    files exist on disk (because ``cea solar-collector`` writes the
+    full-roof+walls aggregate per panel type, but the per-building config
+    typically assigns each surface to *one* panel type, not both).
+
+    Reads each unique panel-type CSV at most once via a local cache. Returns
+    ``(hourly_array, aperture_m2)`` or ``(None, 0.0)`` when no SC surface is
+    configured / no SC potential files exist for this building.
+    """
+    file_cache: Dict[str, pd.DataFrame] = {}
+    thermal_sum: Optional[np.ndarray] = None
+    total_area_m2 = 0.0
+
+    for surface, tech_code in panel_config.items():
+        if not (
+            isinstance(tech_code, str)
+            and tech_code.startswith('SC_')
+            and '_' in tech_code
+        ):
+            continue
+        suffix = _SC_SURFACE_TO_FACADE_SUFFIX.get(surface)
+        if suffix is None:
+            continue
+        panel_type = tech_code.split('_', 1)[1]  # 'FP' or 'ET'
+        if panel_type not in file_cache:
+            sc_path = locator.SC_results(building_name, panel_type)
+            import os as _os
+            if not _os.path.exists(sc_path):
+                continue
+            try:
+                file_cache[panel_type] = pd.read_csv(sc_path)
+            except Exception:
+                continue
+        df = file_cache[panel_type]
+        q_col = f'SC_{panel_type}_{suffix}_Q_kWh'
+        m2_col = f'SC_{panel_type}_{suffix}_m2'
+        if q_col in df.columns:
+            values = df[q_col].to_numpy(dtype=float)
+            thermal_sum = values.copy() if thermal_sum is None else thermal_sum + values
+        if m2_col in df.columns and len(df) > 0:
+            total_area_m2 += float(df[m2_col].iloc[0])
+
+    return thermal_sum, total_area_m2
+
+
 def aggregate_building_sc_thermal(
     building_name: str,
     locator: cea.inputlocator.InputLocator,
@@ -161,44 +226,25 @@ def aggregate_building_sc_thermal(
 ) -> Tuple[np.ndarray, float]:
     """Return ``(hourly_thermal_kwh, sc_aperture_m2)`` for one building.
 
-    Reads per-building SC potential result files and sums hourly
-    ``Q_SC_gen_kWh`` and ``area_SC_m2`` across every SC_* technology
-    (typically SC_FP and/or SC_ET) currently assigned under
-    ``solar-technology``. PVT is deliberately ignored — its output
-    contributes to space-heating offsets via the existing legacy path,
-    not to DHW.
+    Thin wrapper around :func:`aggregate_sc_thermal_per_surface` that derives
+    the surface→panel-type mapping from the global :class:`Configuration`.
+    Sums only the ``(surface, panel_type)`` pairs actually assigned (e.g.
+    ``roof: SC_ET`` + ``wall_north: SC_FP`` reads only the roof column from
+    ``B####_ET.csv`` and only the wall_north column from ``B####_FP.csv``).
+    PVT is deliberately ignored — its output contributes to space-heating
+    offsets via the existing legacy path, not to DHW.
 
     Imports inside the function avoid pulling the heavy solar-potential
     modules into this module at import time.
     """
     from cea.analysis.final_energy.calculation import (
         parse_solar_panel_configuration,
-        read_solar_generation_file,
     )
 
     panel_config = parse_solar_panel_configuration(config)
-    sc_codes = {
-        code for code in panel_config.values()
-        if code and code.startswith('SC_')
-    }
-
-    thermal_sum: Optional[np.ndarray] = None
-    total_area_m2 = 0.0
-
-    for tech_code in sc_codes:
-        try:
-            df = read_solar_generation_file(building_name, tech_code, locator)
-        except ValueError:
-            # Missing solar-potential file is caught by the upstream
-            # validator; skip silently here.
-            continue
-
-        # SC output shape: Q_SC_gen_kWh hourly, area_SC_m2 constant column.
-        if 'Q_SC_gen_kWh' in df.columns:
-            values = df['Q_SC_gen_kWh'].to_numpy(dtype=float)
-            thermal_sum = values if thermal_sum is None else thermal_sum + values
-        if 'area_SC_m2' in df.columns:
-            total_area_m2 += float(df['area_SC_m2'].iloc[0])
+    thermal_sum, total_area_m2 = aggregate_sc_thermal_per_surface(
+        building_name, panel_config, locator
+    )
 
     if thermal_sum is None:
         raise ValueError(
@@ -425,9 +471,9 @@ def dispatch_solar_dhw(
         length as the demand / solar series. Typically from
         :func:`compute_dhw_cold_inlet_hourly`.
     :return: Dict with numpy arrays ``served_by_solar_kwh``,
-        ``served_by_backup_kwh``, ``parasitic_electricity_kwh`` and
-        scalar diagnostics ``tank_mass_kg``, ``tank_final_temp_C``,
-        ``surplus_dumped_kwh``.
+        ``served_by_backup_kwh``, ``parasitic_electricity_kwh``,
+        ``surplus_dumped_kwh`` (hourly heat dumped at the T_MAX cap),
+        and scalar diagnostics ``tank_mass_kg`` and ``tank_final_temp_C``.
     """
     n = len(dhw_demand_kwh)
     if len(solar_thermal_kwh) != n:
@@ -449,7 +495,7 @@ def dispatch_solar_dhw(
     served_by_solar = np.zeros(n)
     served_by_backup = np.zeros(n)
     parasitic_electricity = np.zeros(n)
-    surplus_dumped = 0.0
+    surplus_dumped_hourly = np.zeros(n)
 
     # Initial state. TODO: initialise at a steady-state estimate so the
     # January warm-up transient doesn't bias short runs. For annual or
@@ -469,7 +515,7 @@ def dispatch_solar_dhw(
                 # Surplus dumped — pressure-relief / anti-stagnation.
                 # TODO: consider crediting against SH instead of dumping.
                 surplus_kwh = (tank_temp - T_MAX_C) * tank_capacity_kj_per_k / 3600.0
-                surplus_dumped += surplus_kwh
+                surplus_dumped_hourly[t] = surplus_kwh
                 tank_temp = T_MAX_C
 
         # Step 2: serve demand from tank with thermostatic mixing valve.
@@ -537,9 +583,9 @@ def dispatch_solar_dhw(
         'served_by_solar_kwh': served_by_solar,
         'served_by_backup_kwh': served_by_backup,
         'parasitic_electricity_kwh': parasitic_electricity,
+        'surplus_dumped_kwh': surplus_dumped_hourly,
         'tank_mass_kg': tank_mass,
         'tank_final_temp_C': tank_temp,
-        'surplus_dumped_kwh': surplus_dumped,
     }
 
 

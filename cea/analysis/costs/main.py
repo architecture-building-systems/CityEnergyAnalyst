@@ -179,6 +179,10 @@ def _per_service_peaks_and_booster(building_name, whatif_name, supply_cfg, locat
     for col in df.columns:
         if not col.endswith('_kWh') or col in demand_cols:
             continue
+        # Skip diagnostic *_dumped_kWh columns (SC tank surplus) —
+        # not carrier consumption, must not drive variable OPEX.
+        if col.endswith('_dumped_kWh'):
+            continue
         if col.startswith('Qhs_sys_'):
             service_mwh['hs'] += float(df[col].sum()) / 1000.0
         elif col.startswith('Qww_sys_'):
