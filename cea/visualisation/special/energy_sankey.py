@@ -17,7 +17,6 @@ Data sources:
   - configuration.json component/scale/carrier mapping
 """
 
-import json
 import os
 import pandas as pd
 import plotly.graph_objects as go
@@ -257,12 +256,10 @@ def load_energy_flow_data(locator, whatif_name):
                        for building-scale rows)
     _has_plant_data    True if plant CSV files were found
     """
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
-        raise FileNotFoundError(f"Configuration file not found: {config_file}")
-
-    with open(config_file) as f:
-        config_data = json.load(f)
+    config_data = locator.read_analysis_configuration(whatif_name)
+    if config_data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
+        raise FileNotFoundError(f"Configuration file not found: {expected}")
 
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
@@ -1086,14 +1083,14 @@ def main(config: cea.config.Configuration):
     slots = []
 
     for whatif_name in whatif_names:
-        config_path = locator.get_analysis_configuration_file(whatif_name)
-        if not os.path.exists(config_path):
+        if locator.find_analysis_configuration_file(whatif_name) is None:
+            expected_path = locator.get_analysis_configuration_file(whatif_name)
             slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
                 f'background:#ffe0e0;margin:12px 0">'
                 f'<h3>Final energy data not found for <em>{whatif_name}</em></h3>'
                 f'<p>Run <strong>final-energy</strong> for this scenario first.</p>'
-                f'<code>{config_path}</code>'
+                f'<code>{expected_path}</code>'
                 f'</div>'
             )))
             continue

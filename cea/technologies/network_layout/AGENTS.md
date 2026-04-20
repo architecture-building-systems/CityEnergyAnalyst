@@ -36,18 +36,9 @@ Build thermal network connectivity graphs by connecting buildings to street netw
 
 ### Loading Existing Networks
 
-**When using `existing-network`**, network-layout-mode is applied per service:
+**When using `existing-network`**, `main()` resolves the edges + nodes shapefiles for that network and then passes them through the same `process_user_defined_network()` pipeline as any other user-defined input. The `network-layout-mode` parameter is applied to the loaded graph exactly as it would be for a user-provided shapefile — see the User-Defined Network Layout Modes section below.
 
-| Mode | Behavior |
-|------|----------|
-| **validate** | Error if existing nodes ≠ connected-buildings parameter |
-| **augment** | Union(existing nodes, connected-buildings) |
-| **filter** | Use connected-buildings exactly (add missing, remove extras) |
-
-**Edge Cases:**
-- Blank parameter + existing nodes → keep existing service buildings
-- Blank parameter + no existing nodes → empty list (warning issued)
-- Parameter set + no existing nodes → use parameter buildings (new service added)
+If the existing network has both DC and DH node files, they are merged into a temporary shapefile (deduplicated on `(building, geometry)`) so DH-only buildings are preserved. The helper is `_load_existing_network_node_paths()` in `main.py`.
 
 ## User-Defined Network Layout Modes
 
@@ -81,7 +72,11 @@ When users provide their own network layout (via `edges-shp-path`/`nodes-shp-pat
 
 **Augmentation** (`augment_user_network_with_buildings()`): creates potential network (user edges + streets), runs Kou Steiner with existing + new buildings as terminals, merges result additively. User disk files never modified.
 
-**Filtering** (`filter_network_to_buildings()`): removes nodes not in keep list, graph cleanup removes orphaned edges/junctions.
+**Filtering** (`filter_network_to_buildings()`): removes nodes not in keep list, drops incident edges, keeps connected components anchored by a surviving terminal or plant, then iteratively prunes dangling junction stubs via `_prune_dangling_stubs()`.
+
+**Plant preservation invariant (filter):** plant nodes and the pipes connecting them to the trunk are protected infrastructure — they are never pruned, even if the building they were anchored to was removed. If a plant ends up in a component with no surviving consumers, the plant and its pipework are still kept and a warning is printed.
+
+**Stub pruning (`_prune_dangling_stubs()`):** iterative helper used by filter. Drops any degree-≤1 node that isn't in the protected-coord set (terminals + plants) and drops its incident edge, repeating until stable. This is what removes leftover junction-only stubs after building removal.
 
 ### Input Format Support
 

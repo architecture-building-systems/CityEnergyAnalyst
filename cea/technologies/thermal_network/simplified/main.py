@@ -2,9 +2,6 @@
 Entry point for the simplified thermal network simulation.
 """
 
-import os
-import json
-
 import cea.config
 import cea.inputlocator
 from cea.technologies.thermal_network.common.run_loop import (
@@ -32,23 +29,19 @@ def main(config: cea.config.Configuration):
     def run_simplified(locator, config, network_type, network_name):
         from cea.technologies.thermal_network.simplified.model import thermal_network_simplified
 
-        connectivity_json_path = locator.get_network_connectivity_file(network_name)
+        connectivity_data = locator.read_network_connectivity(network_name)
         per_building_services = None
 
-        if os.path.exists(connectivity_json_path):
-            with open(connectivity_json_path, 'r') as f:
-                connectivity_data = json.load(f)
+        if connectivity_data and network_type in connectivity_data.get('networks', {}):
+            network_data = connectivity_data['networks'][network_type]
+            per_building_services_dict = network_data.get('per_building_services', {})
 
-            if network_type in connectivity_data.get('networks', {}):
-                network_data = connectivity_data['networks'][network_type]
-                per_building_services_dict = network_data.get('per_building_services', {})
-
-                if per_building_services_dict:
-                    per_building_services = {
-                        building: set(services)
-                        for building, services in per_building_services_dict.items()
-                    }
-                    print("  Per-building service configuration loaded from connectivity.json")
+            if per_building_services_dict:
+                per_building_services = {
+                    building: set(services)
+                    for building, services in per_building_services_dict.items()
+                }
+                print("  Per-building service configuration loaded from connectivity file")
 
         thermal_network_simplified(locator, config, network_type, network_name,
                                    per_building_services=per_building_services)

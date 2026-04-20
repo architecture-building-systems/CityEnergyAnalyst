@@ -998,6 +998,11 @@ def main(config: cea.config.Configuration):
     """
     # initialise variables and define cooling demand
     locator = InputLocator(scenario=config.scenario)
+
+    # Remove stale optimization outputs from a previous run so results are not mixed
+    from cea.utilities.output_cleanup import cleanup_output_folder
+    cleanup_output_folder(locator.get_optimization_results_folder())
+
     current_domain = Domain(config, locator)
     seed(100)
 

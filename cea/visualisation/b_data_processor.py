@@ -3,7 +3,6 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
-import os
 
 import numpy as np
 import pandas as pd
@@ -74,28 +73,29 @@ class data_processor:
 
         Parameters from plot_config:
         - y_category_to_plot: list of ['operation', 'production', 'demolition', 'biogenic']
-        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
-                                       'PV_E', 'PVT_E', 'PVT_Q', 'SC_Q']
+        - operation_services: list of display names (e.g. 'electricity',
+                                       'space_heating', 'domestic_hot_water',
+                                       'district_heating', 'solar_pv_electricity', ...)
         - envelope_components: list of envelope components (used when not in what-if mode)
 
         Returns:
         - list of column names (without unit suffix)
         """
-        # Service name to tech name mapping
+        # Display-name → CSV tech-code mapping (UI layer → internal layer).
         service_to_tech = {
-            'electricity': 'E_sys',
-            'space_heating': 'Qhs_sys',
-            'space_cooling': 'Qcs_sys',
-            'DHW': 'Qww_sys',
-            'DH': 'DH',
-            'DC': 'DC',
+            'electricity':      'E_sys',
+            'space_heating':    'Qhs_sys',
+            'space_cooling':    'Qcs_sys',
+            'domestic_hot_water': 'Qww_sys',
+            'district_heating': 'DH',
+            'district_cooling': 'DC',
         }
-        # Solar tech class to offset column name
+        # Solar display-name → offset column name.
         solar_to_offset = {
-            'PV_E': 'PV_E_offset',
-            'PVT_E': 'PVT_E_offset',
-            'PVT_Q': 'PVT_Q_offset',
-            'SC_Q': 'SC_Q_offset',
+            'solar_pv_electricity':  'PV_E_offset',
+            'solar_pvt_electricity': 'PVT_E_offset',
+            'solar_pvt_thermal':     'PVT_Q_offset',
+            'solar_thermal':         'SC_Q_offset',
         }
 
         categories = plot_config.y_category_to_plot
@@ -131,9 +131,11 @@ class data_processor:
 
         Parameters from plot_config:
         - y_category_to_plot: list of ['operation', 'energy_carrier']
-        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
-                                       'PV_E', 'PVT_E', 'PVT_Q', 'SC_Q']
-        - energy_carriers: list of ['GRID', 'NATURALGAS', 'BIOGAS', etc.]
+        - operation_services: list of display names (e.g. 'electricity',
+                                       'space_heating', 'domestic_hot_water',
+                                       'district_heating', 'solar_pv_electricity', ...)
+        - energy_carriers: list of display names (e.g. 'grid_electricity',
+                                       'natural_gas', 'biogas', ...)
 
         Returns:
         - list of column names (without unit suffix)
@@ -143,21 +145,33 @@ class data_processor:
         - Only operation: Generate aggregated by service (Qhs_sys, E_sys, etc.) + solar offsets
         - Only energy_carrier: Generate aggregated by carrier (GRID, NATURALGAS, etc.)
         """
-        # Service name to tech name mapping
+        # Display-name → CSV tech-code mapping.
         service_to_tech = {
-            'electricity': 'E_sys',
-            'space_heating': 'Qhs_sys',
-            'space_cooling': 'Qcs_sys',
-            'DHW': 'Qww_sys',
-            'DH': 'DH',
-            'DC': 'DC',
+            'electricity':      'E_sys',
+            'space_heating':    'Qhs_sys',
+            'space_cooling':    'Qcs_sys',
+            'domestic_hot_water': 'Qww_sys',
+            'district_heating': 'DH',
+            'district_cooling': 'DC',
         }
-        # Solar tech class to offset column name
+        # Solar display-name → offset column name.
         solar_to_offset = {
-            'PV_E': 'PV_E_offset',
-            'PVT_E': 'PVT_E_offset',
-            'PVT_Q': 'PVT_Q_offset',
-            'SC_Q': 'SC_Q_offset',
+            'solar_pv_electricity':  'PV_E_offset',
+            'solar_pvt_electricity': 'PVT_E_offset',
+            'solar_pvt_thermal':     'PVT_Q_offset',
+            'solar_thermal':         'SC_Q_offset',
+        }
+        # Display-name → internal UPPERCASE carrier code used in CSV column names.
+        carrier_to_internal = {
+            'grid_electricity': 'GRID',
+            'natural_gas':      'NATURALGAS',
+            'biogas':           'BIOGAS',
+            'dry_biomass':      'DRYBIOMASS',
+            'wet_biomass':      'WETBIOMASS',
+            'coal':             'COAL',
+            'wood':             'WOOD',
+            'oil':              'OIL',
+            'hydrogen':         'HYDROGEN',
         }
 
         categories = plot_config.y_category_to_plot
@@ -170,12 +184,15 @@ class data_processor:
         both_selected = 'operation' in categories and 'energy_carrier' in categories
 
         if both_selected:
-            # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS)
+            # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS).
+            # `carrier` is a display name (e.g. 'natural_gas') so translate
+            # to the internal UPPERCASE code used in CSV column names.
             for service in operation_services:
                 if service in service_to_tech:
                     service_name = service_to_tech[service]
                     for carrier in energy_carriers:
-                        columns.append(f"{service_name}_{carrier}")
+                        internal = carrier_to_internal.get(carrier, carrier)
+                        columns.append(f"{service_name}_{internal}")
 
             # Solar offsets don't combine with carriers
             for service in operation_services:
@@ -191,9 +208,9 @@ class data_processor:
                     columns.append(solar_to_offset[service])
 
         elif 'energy_carrier' in categories:
-            # Only energy_carrier: aggregated by carrier
+            # Only energy_carrier: aggregated by carrier (translate display → internal)
             for carrier in energy_carriers:
-                columns.append(carrier)
+                columns.append(carrier_to_internal.get(carrier, carrier))
 
         return columns
 
@@ -211,17 +228,14 @@ class data_processor:
         Returns:
             float: Sum of serviced buildings' floor area
         """
-        import json
         try:
             locator = self.locator
 
-            # Try each what-if name to find configuration.json
+            # Try each what-if name to find the analysis configuration
             config_data = None
             for whatif_name in (self.whatif_names or []):
-                config_path = locator.get_analysis_configuration_file(whatif_name)
-                if os.path.exists(config_path):
-                    with open(config_path) as f:
-                        config_data = json.load(f)
+                config_data = locator.read_analysis_configuration(whatif_name)
+                if config_data is not None:
                     break
             if config_data is None:
                 return 0.0
@@ -464,18 +478,27 @@ class data_processor:
             operational_emission_metrics = []
 
         if plot_cea_feature == 'demand':
+            # Unified display names (matching the Demand map layer's
+            # dropdown) + backwards-compat aliases for the pre-unified
+            # `enduse_*` choices and the legacy aggregated columns.
             y_cea_metric_map = {
+                # Unified display names
+                'electricity':        'E_sys_kWh',
+                'space_heating':      'Qhs_sys_kWh',
+                'space_cooling':      'Qcs_sys_kWh',
+                'domestic_hot_water': 'Qww_sys_kWh',
+                # Legacy aliases
                 'grid_electricity_consumption': 'GRID_kWh',
-                'enduse_electricity_demand': 'E_sys_kWh',
-                'enduse_electricity': 'E_sys_kWh',
-                'enduse_cooling_demand': 'QC_sys_kWh',
-                'enduse_space_cooling_demand': 'Qcs_sys_kWh',
-                'enduse_space_cooling': 'Qcs_sys_kWh',
-                'enduse_heating_demand': 'QH_sys_kWh',
-                'enduse_space_heating_demand': 'Qhs_sys_kWh',
-                'enduse_space_heating': 'Qhs_sys_kWh',
-                'enduse_dhw_demand': 'Qww_sys_kWh',
-                'enduse_dhw': 'Qww_sys_kWh',
+                'enduse_electricity_demand':    'E_sys_kWh',
+                'enduse_electricity':           'E_sys_kWh',
+                'enduse_cooling_demand':        'QC_sys_kWh',
+                'enduse_space_cooling_demand':  'Qcs_sys_kWh',
+                'enduse_space_cooling':         'Qcs_sys_kWh',
+                'enduse_heating_demand':        'QH_sys_kWh',
+                'enduse_space_heating_demand':  'Qhs_sys_kWh',
+                'enduse_space_heating':         'Qhs_sys_kWh',
+                'enduse_dhw_demand':            'Qww_sys_kWh',
+                'enduse_dhw':                   'Qww_sys_kWh',
             }
 
         elif plot_cea_feature == 'pv':
@@ -554,11 +577,11 @@ class data_processor:
 
         elif plot_cea_feature == 'final-energy':
             y_cea_metric_map = {
-                'carrier_grid_electricity':   'GRID_kWh',
-                'carrier_natural_gas':        'NATURALGAS_kWh',
-                'carrier_oil':                'OIL_kWh',
-                'carrier_coal':               'COAL_kWh',
-                'carrier_wood':               'WOOD_kWh',
+                'grid_electricity':   'GRID_kWh',
+                'natural_gas':        'NATURALGAS_kWh',
+                'oil':                'OIL_kWh',
+                'coal':               'COAL_kWh',
+                'wood':               'WOOD_kWh',
             }
 
         else:

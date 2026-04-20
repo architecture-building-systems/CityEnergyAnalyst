@@ -1040,6 +1040,21 @@ def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
+    # Remove stale SC outputs only for the panel types being re-run
+    from cea.utilities.output_cleanup import cleanup_output_files
+    import glob
+    list_types_SCpanel = config.solar.type_SCpanel
+    sc_folder = locator.solar_potential_folder_SC()
+    solar_root = locator.get_potentials_solar_folder()
+    for type_SCpanel in list_types_SCpanel:
+        if os.path.isdir(sc_folder):
+            cleanup_output_files(*glob.glob(os.path.join(sc_folder, f'*_{type_SCpanel}.csv')))
+        if os.path.isdir(solar_root):
+            cleanup_output_files(
+                locator.SC_totals(type_SCpanel),
+                locator.SC_total_buildings(type_SCpanel),
+            )
+
     print('Running solar-collector with scenario = %s' % config.scenario)
     print(
         'Running solar-collector with annual-radiation-threshold-kWh/m2.yr = %s' % config.solar.annual_radiation_threshold)

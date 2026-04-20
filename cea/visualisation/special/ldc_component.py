@@ -11,7 +11,6 @@ sorted from peak to minimum (load duration curve).
 """
 
 import os
-import json
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -68,12 +67,12 @@ def _to_rgba(rgb_str, alpha=0.2):
 # ── core data loading ─────────────────────────────────────────────────────────
 
 def _load_config(locator, whatif_name):
-    """Load configuration.json for a what-if scenario."""
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
-        raise FileNotFoundError(f"Configuration file not found: {config_file}")
-    with open(config_file) as f:
-        return json.load(f)
+    """Load the analysis configuration for a what-if scenario."""
+    data = locator.read_analysis_configuration(whatif_name)
+    if data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
+        raise FileNotFoundError(f"Configuration file not found: {expected}")
+    return data
 
 
 def _get_network_names_from_buildings(building_configs):

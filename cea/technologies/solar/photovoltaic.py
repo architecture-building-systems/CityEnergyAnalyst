@@ -822,6 +822,20 @@ def main(config: cea.config.Configuration):
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     list_types_PVpanel = config.solar.type_PVpanel
 
+    # Remove stale PV outputs only for the panel types being re-run
+    from cea.utilities.output_cleanup import cleanup_output_files
+    import glob
+    pv_folder = locator.solar_potential_folder_PV()
+    solar_root = locator.get_potentials_solar_folder()
+    for type_PVpanel in list_types_PVpanel:
+        if os.path.isdir(pv_folder):
+            cleanup_output_files(*glob.glob(os.path.join(pv_folder, f'*_{type_PVpanel}.csv')))
+        if os.path.isdir(solar_root):
+            cleanup_output_files(
+                locator.PV_totals(type_PVpanel),
+                locator.PV_total_buildings(type_PVpanel),
+            )
+
     print('Running photovoltaic with scenario = %s' % config.scenario)
     print('Running photovoltaic with annual-radiation-threshold-kWh/m2 = %s' % config.solar.annual_radiation_threshold)
     print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)

@@ -79,6 +79,17 @@ def calculate_building_final_energy(
     # Step 2: Load supply configuration
     supply_config = load_supply_configuration(building_name, locator, config)
 
+    # Step 2b: SC/PVT primary sanity checks — must happen before any
+    # downstream dispatch since a bad configuration should fail fast
+    # with a useful error rather than dying in the solar time-series
+    # aggregation below.
+    from cea.analysis.final_energy.solar_dhw import (
+        validate_solar_dhw_assembly,
+        validate_solar_dhw_building,
+    )
+    validate_solar_dhw_assembly(building_name, supply_config.get('hot_water'))
+    validate_solar_dhw_building(building_name, supply_config.get('hot_water'), config)
+
     # Step 3: Calculate final energy for each service
     # Space heating
     if supply_config['space_heating'] and supply_config['space_heating']['scale'] == 'BUILDING':
@@ -96,11 +107,46 @@ def calculate_building_final_energy(
     # else: no heating system — no column needed
 
     # Hot water (DHW)
-    if supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'BUILDING':
-        carrier = supply_config['hot_water']['carrier']
-        efficiency = supply_config['hot_water']['efficiency']
+    hot_water_cfg = supply_config['hot_water']
+    uses_solar_dhw = (
+        hot_water_cfg
+        and hot_water_cfg.get('type') in ('SC', 'PVT')
+        and hot_water_cfg.get('scale') == 'BUILDING'
+    )
+    _pumping_kwh = None
+    if uses_solar_dhw:
+        # Hourly dispatch: solar thermal + tank first, then secondary
+        # backup (BO/HP) covers any remainder. See `solar_dhw.py` for
+        # the full model and `scripts.yml` for the documented defaults.
+        from cea.analysis.final_energy.solar_dhw import (
+            aggregate_building_solar_thermal,
+            dispatch_solar_dhw,
+        )
+        thermal_series, sc_pvt_area_m2 = aggregate_building_solar_thermal(
+            building_name, locator, config
+        )
+        dispatch = dispatch_solar_dhw(
+            dhw_demand_kwh=demand_df['Qww_sys_kWh'].to_numpy(dtype=float),
+            solar_thermal_kwh=thermal_series,
+            total_sc_pvt_area_m2=sc_pvt_area_m2,
+            hot_water_cfg=hot_water_cfg,
+        )
+        final_energy['Qww_sys_SOLAR_kWh'] = dispatch['served_by_solar_kwh']
+        backup_info = hot_water_cfg.get('secondary_info') or {}
+        backup_carrier = backup_info.get('carrier')
+        backup_eff = backup_info.get('efficiency') or 1.0
+        if backup_carrier:
+            final_energy[f'Qww_sys_{backup_carrier}_kWh'] = (
+                dispatch['served_by_backup_kwh'] / backup_eff
+            )
+        # Pumping parasitic is added to the building's grid-electricity
+        # stream below; stash it for that step.
+        _pumping_kwh = dispatch['parasitic_electricity_kwh']
+    elif hot_water_cfg and hot_water_cfg['scale'] == 'BUILDING':
+        carrier = hot_water_cfg['carrier']
+        efficiency = hot_water_cfg['efficiency']
         final_energy[f'Qww_sys_{carrier}_kWh'] = demand_df['Qww_sys_kWh'] / efficiency
-    elif supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'DISTRICT':
+    elif hot_water_cfg and hot_water_cfg['scale'] == 'DISTRICT':
         # Skip if building has zero DHW demand (no substation file will exist)
         if demand_df['Qww_sys_kWh'].sum() > 0.0:
             network_name = supply_config['hot_water']['network_name']
@@ -134,6 +180,11 @@ def calculate_building_final_energy(
 
     # Electricity (always GRID)
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
+    if _pumping_kwh is not None:
+        # SC/PVT pumping parasitic from the DHW dispatch flows into grid.
+        final_energy['E_sys_GRID_kWh'] = (
+            final_energy['E_sys_GRID_kWh'].to_numpy() + _pumping_kwh
+        )
 
     # Step 4: Handle booster systems (if configured)
     # Space heating booster
@@ -178,6 +229,25 @@ def calculate_building_final_energy(
             raise ValueError(
                 f"Error calculating solar generation for building {building_name}:\n{str(e)}"
             )
+
+        if uses_solar_dhw:
+            # The SC/PVT thermal output is already booked in
+            # `Qww_sys_SOLAR_kWh`; drop the per-facade thermal columns
+            # so the downstream emissions pipeline does not credit them
+            # a second time via the `SC_Q_offset` / `PVT_Q_offset`
+            # mechanism. Electrical columns (`PV_*_kWh`,
+            # `PVT_*_E_kWh`) stay — they flow through the independent
+            # electricity-offset path.
+            thermal_cols_to_drop = [
+                col for col in final_energy.columns
+                if col.startswith('SC_') and col.endswith('_kWh')
+                and '_radiation_' not in col
+            ] + [
+                col for col in final_energy.columns
+                if col.startswith('PVT_') and col.endswith('_Q_kWh')
+            ]
+            if thermal_cols_to_drop:
+                final_energy = final_energy.drop(columns=thermal_cols_to_drop)
 
     # Step 6: Add metadata columns
     final_energy['scale'] = 'BUILDING'
@@ -398,14 +468,27 @@ def parse_supply_assembly(
         carrier = component_info['carrier']
         efficiency = component_info['efficiency']
 
+    # When the primary is a solar-thermal component (SC or PVT), the caller
+    # needs the secondary component's info too so it can back up the tank
+    # when solar output is insufficient. Load it eagerly and stash it on the
+    # supply config. We only block on this for building-scale hot-water
+    # assemblies — district plants with SC primaries aren't supported.
+    primary_type = component_info.get('type')
+    secondary_info = None
+    if primary_type in ('SC', 'PVT') and secondary_component:
+        secondary_info = load_component_info(secondary_component, locator)
+
     return {
         'scale': scale,
         'carrier': carrier,
         'efficiency': efficiency,
+        'type': primary_type,
         'assembly_code': assembly_code,
         'primary_component': primary_component,
         'secondary_component': secondary_component,
         'tertiary_component': tertiary_component,
+        'primary_info': component_info,
+        'secondary_info': secondary_info,
         'network_name': network_name if scale == 'DISTRICT' else None,
     }
 
@@ -496,13 +579,19 @@ def load_component_info(
             'efficiency': None
         }
 
+    elif component_code.startswith('SC') or component_code.startswith('PVT'):
+        # Solar collector (thermal) or PV-thermal hybrid as a supply
+        # component. Delegated to `solar_dhw.py` to keep this file small.
+        from cea.analysis.final_energy.solar_dhw import load_solar_component_info
+        return load_solar_component_info(component_code, locator)
+
     else:
         raise ValueError(
             f"Unknown component type for code '{component_code}'. "
             "CEA component codes use a standard prefix: "
             "BO (boiler), HP (heat pump), CH (chiller), CT (cooling tower), "
-            "HEX (heat exchanger), AC (direct expansion), SC (solar collector), "
-            "OEHR (cogeneration). Example: BO1, HP2, CH1, CT1."
+            "HEX (heat exchanger), SC (solar collector), PVT (PV-thermal), "
+            "AC (direct expansion), OEHR (cogeneration). Example: BO1, HP2, CH1, CT1."
         )
 
 

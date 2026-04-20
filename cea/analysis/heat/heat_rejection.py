@@ -11,7 +11,6 @@ Data sources (sole source of truth):
 - Plant hourly files: thermal load and carrier flows for district plants
 """
 
-import json
 import os
 
 import pandas as pd
@@ -267,14 +266,13 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
     :param locator: InputLocator
     :return: (buildings_df, components_df) DataFrames
     """
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
+    config_data = locator.read_analysis_configuration(whatif_name)
+    if config_data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
         raise FileNotFoundError(
-            f"configuration.json not found for what-if '{whatif_name}': {config_file}\n"
+            f"configuration file not found for what-if '{whatif_name}': {expected}\n"
             "Please run 'final-energy' first."
         )
-    with open(config_file) as f:
-        config_data = json.load(f)
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
     network_name = config_data.get('metadata', {}).get('network_name')
