@@ -17,7 +17,6 @@ Data sources:
   - configuration.json component/scale/carrier mapping
 """
 
-import json
 import os
 import pandas as pd
 import plotly.graph_objects as go

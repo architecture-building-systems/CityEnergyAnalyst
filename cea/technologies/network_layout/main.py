@@ -1779,7 +1779,6 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         print(f"  {type_network}/nodes.shp saved with {len(nodes_for_type)} nodes")
 
         # Store metadata for unified connectivity.json (both DH and DC)
-        import json
 
         # Get plant type from nodes
         plant_nodes = nodes_for_type[nodes_for_type['type'].str.startswith('PLANT', na=False)]

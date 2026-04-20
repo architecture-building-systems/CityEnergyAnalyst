@@ -3,7 +3,6 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
-import os
 
 import numpy as np
 import pandas as pd

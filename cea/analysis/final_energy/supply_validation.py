@@ -9,7 +9,6 @@ Two scenarios:
 2. Network selected: supply.csv must match connectivity.json exactly
 """
 
-import json
 import os
 
 import pandas as pd
