@@ -139,6 +139,7 @@ def calc_dh_heating_with_booster_tracking(
     # Calculate DH-side parameters (what thermal network needs)
     # ========================================================================
     if booster != 'heat_pump':
+        E_hp_W = np.zeros_like(Q_demand_W, dtype=float) # there is no electricity demand for heat pump operation
         # Building-side outlet temperature (what temperature DH heats the water to)
         T_building_outlet_C = np.where(
             booster_needed,
