@@ -25,7 +25,7 @@ __status__ = "Production"
 # Substation model
 def substation_main_heating(locator, total_demand, buildings_name_with_heating, heating_configuration=7,
                             DHN_barcode="", itemised_dh_services=None, per_building_services=None,
-                            fixed_network_temp_C=None, network_type="DH", network_name=""):
+                            fixed_network_temp_C=None, network_type="DH", network_name="", booster="coil"):
     """
     Calculate substation parameters for district heating network.
 
@@ -82,7 +82,8 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
                                      building_services=heating_system_temperatures_dict[name]['building_services'],  # NEW parameter
                                      fixed_network_temp_C=fixed_network_temp_C,
                                      network_type=network_type,
-                                     network_name=network_name)
+                                     network_name=network_name,
+                                     booster=booster)
     else:
         # CALCULATE SUBSTATIONS DURING DECENTRALIZED OPTIMIZATION
         for name in buildings_name_with_heating:
@@ -109,7 +110,8 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
                                      building_services=building_services,  # NEW parameter
                                      fixed_network_temp_C=fixed_network_temp_C,
                                      network_type=network_type,
-                                     network_name=network_name)
+                                     network_name=network_name,
+                                     booster=booster)
 
     return
 

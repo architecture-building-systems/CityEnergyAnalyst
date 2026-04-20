@@ -451,7 +451,7 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
         else:
             # Unknown service, conservative minimum
             return MINIMUM_DH_TEMPERATURE
-    elif booster == 'heatpump':
+    elif booster == 'heat_pump':
         # arbitrary number specifying the minimum temperature of the anergy source for a heat pump to make sense
         # TODO: define carefullly
         return 10
@@ -613,7 +613,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                                per_building_services=per_building_services,  # NEW parameter
                                                fixed_network_temp_C=fixed_network_temp_C,
                                                network_type=network_type,
-                                               network_name=network_name)
+                                               network_name=network_name,
+                                               booster=booster)
         else:
             raise ValueError('No district heating network created as there is no heating demand from any building.')
 
