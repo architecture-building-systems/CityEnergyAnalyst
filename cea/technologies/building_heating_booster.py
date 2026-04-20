@@ -12,7 +12,7 @@ Works with:
 
 import numpy as np
 from cea.technologies.heatpumps import HPSew_op_cost as HP_water_water
-from cea.technologies.constants import U_HEAT, MINIMUM_DH_TEMPERATURE, DT_HEAT, DT_COOL
+from cea.technologies.constants import U_HEAT, MINIMUM_DH_TEMPERATURE, DT_HEAT, DT_COOL, HP_DELTA_T_SUPPLY
 from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 
 __author__ = "Reynold Mok, Zhongming Shi"
@@ -24,6 +24,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+MIN_APPROACH_TEMP_K = 5  # Minimum temperature difference for heat exchanger
 MIN_TEMP_RISE_FOR_FRACTION_K = 1  # Minimum temperature rise for stable heat distribution fraction calculation
 MIN_TEMP_DIFF_FOR_MASS_FLOW_K = 0.1  # Minimum temperature difference to prevent division by zero in mass flow calculation
 
@@ -124,7 +125,7 @@ def calc_dh_heating_with_booster_tracking(
                 Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
                 booster_active[booster_needed] = True
             elif booster == 'heat_pump':
-               Q_dh_W[booster_needed], _, _ = np.vectorize(HP_water_water)(
+               Q_dh_W[booster_needed], _, E_hp_W = np.vectorize(HP_water_water)(
                    mcp_sys_WperC[booster_needed] / HEAT_CAPACITY_OF_WATER_JPERKGK,
                    T_target_C[booster_needed] + KELVIN_CONVERSION, T_return_C[booster_needed] + KELVIN_CONVERSION,
                    T_dh_preheat_max_C[booster_needed] + KELVIN_CONVERSION,
@@ -137,74 +138,79 @@ def calc_dh_heating_with_booster_tracking(
     # ========================================================================
     # Calculate DH-side parameters (what thermal network needs)
     # ========================================================================
-
-    # Building-side outlet temperature (what temperature DH heats the water to)
-    T_building_outlet_C = np.where(
-        booster_needed,
-        T_dh_preheat_max_C,  # With booster: DH heats to preheat temp, booster adds rest
-        np.where(
-            dh_sufficient,
-            T_target_C,  # No booster: DH heats to target temp
-            T_return_C   # No demand: no temperature rise
+    if booster != 'heat_pump':
+        # Building-side outlet temperature (what temperature DH heats the water to)
+        T_building_outlet_C = np.where(
+            booster_needed,
+            T_dh_preheat_max_C,  # With booster: DH heats to preheat temp, booster adds rest
+            np.where(
+                dh_sufficient,
+                T_target_C,  # No booster: DH heats to target temp
+                T_return_C   # No demand: no temperature rise
+            )
         )
-    )
 
-    # Building-side temperature rise
-    delta_T_building = np.maximum(0, T_building_outlet_C - T_return_C)
+        # Building-side temperature rise
+        delta_T_building = np.maximum(0, T_building_outlet_C - T_return_C)
 
-    # DH-side temperature drop (assume counter-flow HEX with ~90% effectiveness)
-    # For counter-flow HEX, if building side rises by dT, DH side drops by approximately dT
-    # (assuming similar heat capacity flow rates)
-    delta_T_dh_side = delta_T_building
+        # DH-side temperature drop (assume counter-flow HEX with ~90% effectiveness)
+        # For counter-flow HEX, if building side rises by dT, DH side drops by approximately dT
+        # (assuming similar heat capacity flow rates)
+        delta_T_dh_side = delta_T_building
 
-    # DH return temperature
-    T_dh_return_C = np.where(
-        Q_dh_W > 0,
-        T_DH_supply_C - delta_T_dh_side,
-        T_DH_supply_C  # No demand: return = supply
-    )
+        # DH return temperature
+        T_dh_return_C = np.where(
+            Q_dh_W > 0,
+            T_DH_supply_C - delta_T_dh_side,
+            T_DH_supply_C  # No demand: return = supply
+        )
 
-    # Ensure DH return respects approach temperature constraint
-    # DH return must be >= building inlet + approach temp
-    T_dh_return_min_C = T_return_C + min_approach_temp_K
-    T_dh_return_C = np.maximum(T_dh_return_C, T_dh_return_min_C)
+        # Ensure DH return respects approach temperature constraint
+        # DH return must be >= building inlet + approach temp
+        T_dh_return_min_C = T_return_C + min_approach_temp_K
+        T_dh_return_C = np.maximum(T_dh_return_C, T_dh_return_min_C)
 
-    # Recalculate actual DH temperature drop
-    # Use minimum threshold to prevent division by zero in mass flow calculation below
-    delta_T_dh_actual = np.maximum(MIN_TEMP_DIFF_FOR_MASS_FLOW_K, T_DH_supply_C - T_dh_return_C)
+        # Recalculate actual DH temperature drop
+        # Use minimum threshold to prevent division by zero in mass flow calculation below
+        delta_T_dh_actual = np.maximum(MIN_TEMP_DIFF_FOR_MASS_FLOW_K, T_DH_supply_C - T_dh_return_C)
 
-    # DH mass flow rate: Q = mcp * dT => mcp = Q / dT
-    mcp_dh_kWK = np.where(Q_dh_W > 0, Q_dh_W / (1000 * delta_T_dh_actual), 0)
+        # DH mass flow rate: Q = mcp * dT => mcp = Q / dT
+        mcp_dh_kWK = np.where(Q_dh_W > 0, Q_dh_W / (1000 * delta_T_dh_actual), 0)
 
-    # HEX area calculation (simplified, using peak load)
-    U_hex = U_HEAT # 2000  # W/m²K (typical for plate HEX)
-    Q_peak = np.max(Q_dh_W)
+        # HEX area calculation (simplified, using peak load)
+        U_hex = U_HEAT # 2000  # W/m²K (typical for plate HEX)
+        Q_peak = np.max(Q_dh_W)
 
-    if Q_peak > 0:
-        # Calculate LMTD at peak condition
-        idx_peak = np.argmax(Q_dh_W)
-        T_dh_in = T_DH_supply_C[idx_peak]
-        T_dh_out = T_dh_return_C[idx_peak]
-        T_load_in = T_return_C[idx_peak]
-        T_load_out = min(T_dh_preheat_max_C[idx_peak], T_target_C[idx_peak])
+        if Q_peak > 0:
+            # Calculate LMTD at peak condition
+            idx_peak = np.argmax(Q_dh_W)
+            T_dh_in = T_DH_supply_C[idx_peak]
+            T_dh_out = T_dh_return_C[idx_peak]
+            T_load_in = T_return_C[idx_peak]
+            T_load_out = min(T_dh_preheat_max_C[idx_peak], T_target_C[idx_peak])
 
-        # LMTD for counter-flow HEX
-        dT1 = T_dh_in - T_load_out
-        dT2 = T_dh_out - T_load_in
-        if dT1 > 0.1 and dT2 > 0.1:
-            # When dT1 ≈ dT2 (parallel temperature profiles), LMTD ≈ dT1
-            if abs(dT1 - dT2) < 0.01:
-                LMTD = dT1  # Avoid log(1) = 0 division
+            # LMTD for counter-flow HEX
+            dT1 = T_dh_in - T_load_out
+            dT2 = T_dh_out - T_load_in
+            if dT1 > 0.1 and dT2 > 0.1:
+                # When dT1 ≈ dT2 (parallel temperature profiles), LMTD ≈ dT1
+                if abs(dT1 - dT2) < 0.01:
+                    LMTD = dT1  # Avoid log(1) = 0 division
+                else:
+                    LMTD = (dT1 - dT2) / np.log(dT1 / dT2)
+                A_hex_m2 = Q_peak / (U_hex * LMTD)
             else:
-                LMTD = (dT1 - dT2) / np.log(dT1 / dT2)
-            A_hex_m2 = Q_peak / (U_hex * LMTD)
+                A_hex_m2 = 0
         else:
             A_hex_m2 = 0
     else:
+        T_dh_return_C = T_DH_supply_C - HP_DELTA_T_SUPPLY
+        mcp_dh_kWK = Q_dh_W / (T_DH_supply_C - T_dh_return_C) / 1000
         A_hex_m2 = 0
 
     return (
         Q_dh_W,          # DH contribution to load
+        E_hp_W,          # electricity input to heat pump
         T_dh_return_C,   # DH return temp
         mcp_dh_kWK,      # DH mass flow (kW/K)
         Q_booster_W,     # Booster heat output

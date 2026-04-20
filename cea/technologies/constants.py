@@ -24,6 +24,7 @@ HP_MIN_SIZE = 1.0E6  # min thermal design size [Wth]
 HP_ETA_EX = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
 HP_DELTA_T_COND = 2.0  # pinch for condenser [K]
 HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
+HP_DELTA_T_SUPPLY = 7.0 # design temperature difference across supply side to HP [K] - from De ZONNET
 HP_MAX_T_COND = 140 + KELVIN_CONVERSION  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
