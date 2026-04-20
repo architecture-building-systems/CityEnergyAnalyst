@@ -895,6 +895,55 @@ def create_emission_timeline_plot(config):
 
     return fig
 
+def _figure_yrange_with_stacks(fig):
+    """Compute (y_min, y_max) for a Plotly figure, summing traces that
+    share a ``stackgroup`` so the visible top of a stacked area chart is
+    captured — not just the largest single layer.
+
+    For ``shaded_stack_cumulative`` (and similar fill='tonexty' +
+    stackgroup setups), each trace's ``.y`` is the per-category
+    contribution. The on-screen height at every x is the sum across all
+    traces in the same stackgroup. Taking ``max(trace.y)`` per trace
+    therefore under-reports the visible maximum by a factor equal to the
+    number of categories, cropping the y-axis when the multi-what-if
+    aligner divides that under-estimate across plots.
+
+    Standalone (non-stacked) traces are evaluated individually as before.
+    """
+    import numpy as np
+
+    stack_sums: dict = {}     # stackgroup_name → np.array of summed y values
+    standalone_min = standalone_max = None
+
+    for trace in fig.data:
+        y = getattr(trace, 'y', None)
+        if y is None or len(y) == 0:
+            continue
+        try:
+            y_arr = np.asarray(y, dtype=float)
+        except (TypeError, ValueError):
+            continue
+        stackgroup = getattr(trace, 'stackgroup', None)
+        if stackgroup:
+            if stackgroup in stack_sums and len(stack_sums[stackgroup]) == len(y_arr):
+                stack_sums[stackgroup] = stack_sums[stackgroup] + y_arr
+            else:
+                stack_sums[stackgroup] = y_arr.copy()
+        else:
+            t_min, t_max = float(np.nanmin(y_arr)), float(np.nanmax(y_arr))
+            standalone_min = t_min if standalone_min is None else min(standalone_min, t_min)
+            standalone_max = t_max if standalone_max is None else max(standalone_max, t_max)
+
+    overall_min = standalone_min
+    overall_max = standalone_max
+    for arr in stack_sums.values():
+        t_min, t_max = float(np.nanmin(arr)), float(np.nanmax(arr))
+        overall_min = t_min if overall_min is None else min(overall_min, t_min)
+        overall_max = t_max if overall_max is None else max(overall_max, t_max)
+
+    return overall_min, overall_max
+
+
 def main(config):
     plot_config = config.plots_emission_timeline
     whatif_names = getattr(plot_config, 'what_if_name', [])
@@ -932,13 +981,11 @@ def main(config):
         for kind, _, fig in slots:
             if kind != 'ok':
                 continue
-            for trace in fig.data:
-                if hasattr(trace, 'y') and trace.y is not None and len(trace.y) > 0:
-                    t_min, t_max = min(trace.y), max(trace.y)
-                    if global_y_min is None or t_min < global_y_min:
-                        global_y_min = t_min
-                    if global_y_max is None or t_max > global_y_max:
-                        global_y_max = t_max
+            fig_min, fig_max = _figure_yrange_with_stacks(fig)
+            if fig_min is not None and (global_y_min is None or fig_min < global_y_min):
+                global_y_min = fig_min
+            if fig_max is not None and (global_y_max is None or fig_max > global_y_max):
+                global_y_max = fig_max
 
     html_outputs = []
     plotly_included = False
