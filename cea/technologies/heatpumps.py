@@ -98,10 +98,7 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K):
             COP = HP_ETA_EX_COOL * tevap_K / temp_diff
 
         # in order to work in the limits of the equation
-        if COP > HP_COP_MAX:
-            COP = HP_COP_MAX
-        elif COP < 1.0:
-            COP = HP_COP_MIN
+        COP = max(HP_COP_MIN, min(HP_ETA_EX * tcond_K / temp_diff, HP_COP_MAX))
 
         qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
@@ -473,8 +470,9 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
     # Validate temperature difference for heat pump COP calculation
     temp_diff = tcond_K - t_sup_sew_K
     if abs(temp_diff) < 0.1:
-        # If temperatures very close, set COP to 1
-        COP = 1
+        # If temperatures very close, use maximum COP
+        print('condenser temperature is equal to evaporator temperature, COP set to the maximum')
+        COP = HP_COP_MAX
     else:
         if temp_diff < MIN_TEMP_DIFF_FOR_HEAT_PUMP_OPERATION_K:
             raise ValueError(
@@ -490,7 +488,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, Q_therm_Sew_W):
                 f"  - Sewage source temperature: {t_sup_sew_K:.2f} K"
             )
 
-        COP = HP_ETA_EX * tcond_K / temp_diff
+        COP = max(HP_COP_MIN, min(HP_ETA_EX * tcond_K / temp_diff, HP_COP_MAX))
 
     if t_sup_sew_K >= t_sup_K + HP_DELTA_T_COND:
         q_therm_W = Q_therm_Sew_W

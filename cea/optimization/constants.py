@@ -86,7 +86,8 @@ HP_DELTA_T_EVAP = 2.0  # pinch for evaporator [K]
 HP_MAX_T_COND = 140 + KELVIN_CONVERSION  # max temperature at condenser [K]
 HP_AUXRATIO = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 HP_COP_MAX = 8.5  # maximum achieved by 3for2 21.05.18
-HP_COP_MIN = 2.7  # COP of typical air-to-air unit
+HP_COP_TYPICAL = 2.7  # COP of typical air-to-air unit
+HP_COP_MIN = 1.0  # in order to work in the limits of the equation
 
 # Solar area to Wpeak
 ETA_AREA_TO_PEAK = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
