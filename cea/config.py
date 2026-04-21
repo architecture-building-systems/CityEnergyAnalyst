@@ -1515,33 +1515,39 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             if not os.path.exists(analysis_root):
                 return []
             mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
-            # Sort by most-recently-modified directory first so plot forms
-            # default to the just-run what-if (matches the LCA map layers'
-            # `get_whatif_names` ordering). Skips hidden entries like
-            # macOS ``.DS_Store`` and non-directories.
+            # Per mode, pick the specific output file whose mtime we'll
+            # sort by. Overwriting a file doesn't reliably bump the
+            # parent folder's mtime on common filesystems, so sorting
+            # by folder mtime alone leaves just-re-run scenarios at
+            # their old position. Sorting by the key file's mtime
+            # (and filtering out names whose file is missing) makes
+            # the just-run what-if appear first in the dropdown.
+            mode_path_fn = {
+                'final_energy':   locator.get_final_energy_buildings_file,
+                'heat_rejection': locator.get_heat_rejection_whatif_buildings_file,
+                'costs':          locator.get_costs_whatif_buildings_file,
+                'emissions':      locator.get_emissions_whatif_buildings_file,
+            }.get(mode)
             entries = []
             for name in os.listdir(analysis_root):
                 if name.startswith('.'):
                     continue
-                path = os.path.join(analysis_root, name)
-                if not os.path.isdir(path):
+                folder = os.path.join(analysis_root, name)
+                if not os.path.isdir(folder):
                     continue
+                if mode_path_fn is not None:
+                    key_path = mode_path_fn(name)
+                    if not os.path.exists(key_path):
+                        continue
+                else:
+                    key_path = folder
                 try:
-                    mtime = os.path.getmtime(path)
+                    mtime = os.path.getmtime(key_path)
                 except OSError:
                     mtime = 0.0
                 entries.append((name, mtime))
             entries.sort(key=lambda x: (-x[1], x[0]))
-            names = [name for name, _ in entries]
-            if mode == 'final_energy':
-                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
-            elif mode == 'heat_rejection':
-                names = [name for name in names if os.path.exists(locator.get_heat_rejection_whatif_buildings_file(name))]
-            elif mode == 'costs':
-                names = [name for name in names if os.path.exists(locator.get_costs_whatif_buildings_file(name))]
-            elif mode == 'emissions':
-                names = [name for name in names if os.path.exists(locator.get_emissions_whatif_buildings_file(name))]
-            return names
+            return [name for name, _ in entries]
         except Exception:
             return []
 
