@@ -1631,7 +1631,7 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
                         for key in ('primary_component', 'secondary_component', 'tertiary_component'):
                             code = plant_cfg.get(key, '')
                             if code:
-                                components.add(_component_display(code))
+                                components.add(_component_display(code, locator))
                         # Always include Pump if network exists
                         components.add('Pump')
                 if 'building' in scales:
@@ -1644,7 +1644,7 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
                             for key in ('primary_component', 'secondary_component', 'tertiary_component'):
                                 code = svc_cfg.get(key, '')
                                 if code:
-                                    components.add(_component_display(code))
+                                    components.add(_component_display(code, locator))
                 if components:
                     component_sets.append(components)
             if not component_sets:

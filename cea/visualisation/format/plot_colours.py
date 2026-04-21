@@ -413,17 +413,27 @@ def get_column_color(column_name):
 
 # ── Component display helpers ─────────────────────────────────────────────────
 
-COMPONENT_PREFIX_DISPLAY = [
-    ('PVT', 'PVT Panel'),
-    ('PV',  'PV Panel'),
-    ('SC',  'Solar Collector'),
-    ('BO',  'Boiler'),
-    ('HP',  'Heat Pump'),
-    ('CH',  'Chiller'),
-    ('CT',  'Cooling Tower'),
-    ('PU',  'Pump'),
-    ('HEX', 'Heat Exchanger'),
-]
+# Pretty label per CONVERSION-table filename stem. Covers every CSV
+# bundled under ``COMPONENTS/CONVERSION/``. User-added tables fall back
+# to a title-cased version of the filename.
+_TABLE_TO_DISPLAY = {
+    'ABSORPTION_CHILLERS':          'Absorption Chiller',
+    'BOILERS':                      'Boiler',
+    'BORE_HOLES':                   'Bore Hole',
+    'COGENERATION_PLANTS':          'Cogeneration Plant',
+    'COOLING_TOWERS':               'Cooling Tower',
+    'FUEL_CELLS':                   'Fuel Cell',
+    'HEAT_EXCHANGERS':              'Heat Exchanger',
+    'HEAT_PUMPS':                   'Heat Pump',
+    'HYDRAULIC_PUMPS':              'Pump',
+    'PHOTOVOLTAIC_PANELS':          'PV Panel',
+    'PHOTOVOLTAIC_THERMAL_PANELS':  'PVT Panel',
+    'POWER_TRANSFORMERS':           'Power Transformer',
+    'SOLAR_COLLECTORS':             'Solar Collector',
+    'THERMAL_ENERGY_STORAGES':      'Thermal Storage',
+    'UNITARY_AIR_CONDITIONERS':     'Unitary Air Conditioner',
+    'VAPOR_COMPRESSION_CHILLERS':   'Chiller',
+}
 
 COMPONENT_EXACT_DISPLAY = {
     'PIPES': 'Piping',
@@ -431,29 +441,67 @@ COMPONENT_EXACT_DISPLAY = {
 }
 
 
-def component_display(code):
-    """Map a component code (e.g. 'CH1', 'BO2') to a human-readable display name."""
+# Solar tech-code convention used by the ``solar-technology`` config
+# (``SC_FP``, ``SC_ET``, ``PV_PV1``, ``PVT_PV1_FP``, …). These aren't
+# component-CSV codes — they don't live in ``COMPONENTS/CONVERSION/`` —
+# so they need their own label rule. Order matters: PVT before PV.
+_SOLAR_TECH_CODE_LABELS = (
+    ('PVT_', 'PVT Panel'),
+    ('SC_',  'Solar Collector'),
+    ('PV_',  'PV Panel'),
+)
+
+
+def component_display(code, locator):
+    """Map a component or tech code to a human-readable label.
+
+    Component CSV codes (``BO1``, ``FU2``, ``ACH1``, …) are resolved by
+    :func:`cea.technologies.components.get_component_table` — so any
+    user-added code under an existing ``COMPONENTS/CONVERSION/`` table
+    gets the right label without a code change. Solar tech codes from
+    the ``solar-technology`` config (``SC_ET``, ``PV_PV1``,
+    ``PVT_PV1_FP``) are recognised via their fixed underscore-prefix
+    convention. Unknown tables fall back to the title-cased filename.
+    Returns the raw code if nothing matches.
+    """
     code = str(code).strip()
     if code in COMPONENT_EXACT_DISPLAY:
         return COMPONENT_EXACT_DISPLAY[code]
-    for prefix, label in COMPONENT_PREFIX_DISPLAY:
+
+    for prefix, label in _SOLAR_TECH_CODE_LABELS:
         if code.startswith(prefix):
             return f'{label} ({code})'
+
+    try:
+        from cea.technologies.components import get_component_table
+        table = get_component_table(code, locator)
+    except Exception:
+        table = None
+    if table:
+        label = _TABLE_TO_DISPLAY.get(table, table.replace('_', ' ').title())
+        return f'{label} ({code})'
     return code
 
 
 COMPONENT_TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red'],
-    'Heat Pump':       COLOURS_TO_RGB['orange'],
-    'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['blue'],
-    'Pump':            COLOURS_TO_RGB['grey'],
-    'Piping':          COLOURS_TO_RGB['grey'],
-    'Heat Exchanger':  COLOURS_TO_RGB['grey'],
-    'City Grid':       COLOURS_TO_RGB['purple'],
-    'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow'],
+    'Boiler':                    COLOURS_TO_RGB['red'],
+    'Heat Pump':                 COLOURS_TO_RGB['orange'],
+    'Chiller':                   COLOURS_TO_RGB['blue'],
+    'Cooling Tower':             COLOURS_TO_RGB['blue'],
+    'Pump':                      COLOURS_TO_RGB['grey'],
+    'Piping':                    COLOURS_TO_RGB['grey'],
+    'Heat Exchanger':            COLOURS_TO_RGB['grey'],
+    'City Grid':                 COLOURS_TO_RGB['purple'],
+    'PV Panel':                  COLOURS_TO_RGB['yellow'],
+    'Solar Collector':           COLOURS_TO_RGB['yellow'],
+    'PVT Panel':                 COLOURS_TO_RGB['yellow'],
+    'Absorption Chiller':        COLOURS_TO_RGB['teal'],
+    'Cogeneration Plant':        COLOURS_TO_RGB['red'],
+    'Fuel Cell':                 COLOURS_TO_RGB['cyan'],
+    'Thermal Storage':           COLOURS_TO_RGB['brown_light'],
+    'Bore Hole':                 COLOURS_TO_RGB['brown'],
+    'Power Transformer':         COLOURS_TO_RGB['grey_light'],
+    'Unitary Air Conditioner':   COLOURS_TO_RGB['blue'],
 }
 
 
