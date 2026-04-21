@@ -29,40 +29,37 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# Component code prefix → COMPONENTS table name
-# IMPORTANT: longer prefixes (PVT, HEX) must appear before shorter overlapping ones (PV)
-COMPONENT_PREFIX_TO_TABLE = {
-    'BO': 'BOILERS',
-    'HP': 'HEAT_PUMPS',
-    'CH': 'VAPOR_COMPRESSION_CHILLERS',
-    'CT': 'COOLING_TOWERS',
-    'AC': 'ABSORPTION_CHILLERS',
-    'PU': 'HYDRAULIC_PUMPS',
-    'HEX': 'HEAT_EXCHANGERS',
-    'PVT': 'PHOTOVOLTAIC_THERMAL_PANELS',  # must be before 'PV'
-    'PV': 'PHOTOVOLTAIC_PANELS',
-    'SC': 'SOLAR_COLLECTORS',
-}
-
-
 def _get_component_row(component_code, locator, capacity_W=None):
-    """Return the component row for the given code, selecting the correct capacity-range segment."""
-    for prefix, table_name in COMPONENT_PREFIX_TO_TABLE.items():
-        if component_code.upper().startswith(prefix):
-            path = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
-            df = pd.read_csv(path)
-            rows = df[df['code'] == component_code]
-            if rows.empty:
-                return None, table_name
-            if capacity_W is None or len(rows) == 1:
-                return rows.iloc[0], table_name
-            # Select the piecewise segment that covers this capacity
-            matching = rows[(rows['cap_min'] <= capacity_W) & (rows['cap_max'] > capacity_W)]
-            if not matching.empty:
-                return matching.iloc[0], table_name
-            # Above all segments: use the last (highest-capacity) row
-            return rows.iloc[-1], table_name
-    raise ValueError(f"Unknown component code prefix: {component_code}")
+    """Return the component row for the given code, selecting the correct
+    capacity-range segment.
+
+    Data-driven: uses :func:`cea.technologies.components.get_component_table`
+    to discover which CSV owns this code (scans every file under
+    ``COMPONENTS/CONVERSION/``), then picks the piecewise-cost-curve
+    segment matching ``capacity_W`` if the table has multiple rows per
+    code.
+    """
+    from cea.technologies.components import get_component_table
+    table_name = get_component_table(component_code, locator)
+    if table_name is None:
+        raise ValueError(
+            f"Component code {component_code!r} not found in any CSV under "
+            f"COMPONENTS/CONVERSION/. Check the supply assembly for a typo, "
+            f"or add a row for this code to the appropriate table."
+        )
+    path = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
+    df = pd.read_csv(path)
+    rows = df[df['code'] == component_code]
+    if rows.empty:
+        return None, table_name
+    if capacity_W is None or len(rows) == 1:
+        return rows.iloc[0], table_name
+    # Select the piecewise segment that covers this capacity
+    matching = rows[(rows['cap_min'] <= capacity_W) & (rows['cap_max'] > capacity_W)]
+    if not matching.empty:
+        return matching.iloc[0], table_name
+    # Above all segments: use the last (highest-capacity) row
+    return rows.iloc[-1], table_name
 
 
 def _calc_cost_curve(quantity, row):

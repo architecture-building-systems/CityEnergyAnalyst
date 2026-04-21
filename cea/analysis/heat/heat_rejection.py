@@ -225,7 +225,7 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
     hr_series = pd.Series(0.0, index=plant_df.index)
 
     if network_type == 'DH':
-        if carrier in FUEL_CARRIERS:
+        if carrier in fuel_carriers:
             fuel_col = f'plant_primary_{network_type}_{carrier}_kWh'
             if fuel_col in plant_df.columns:
                 hr_series = (plant_df[fuel_col] - thermal_load).clip(lower=0)

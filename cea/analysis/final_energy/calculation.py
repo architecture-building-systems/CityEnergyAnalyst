@@ -515,101 +515,25 @@ def load_component_info(
     locator: cea.inputlocator.InputLocator
 ) -> Dict:
     """
-    Load component information from COMPONENTS database.
+    Load component information from the COMPONENTS database.
 
-    :param component_code: Component code (e.g., 'BO1', 'HP1', 'CH1')
-    :param locator: InputLocator instance
-    :return: Dict with carrier and efficiency
+    Fully data-driven: scans every CSV under
+    ``COMPONENTS/CONVERSION/`` to find the row for ``component_code``
+    and classifies the component purely from its columns (presence of
+    ``fuel_code``, ``min_eff_rating_seasonal``, ``aux_power``, etc.).
+    User-added component codes and tables work without any Python
+    change — see :mod:`cea.technologies.components` for the
+    classification rules.
+
+    :param component_code: Component code from the database
+        (e.g. ``'BO1'``, ``'HP1'``, ``'OEHR1'``, ``'ACH1'``).
+    :param locator: Active :class:`InputLocator`.
+    :return: Dict with ``'carrier'`` (carrier name or ``None``) and
+        ``'efficiency'`` (float or ``None``). Solar delegation may add a
+        ``'type'`` key for SC/PVT branches.
     """
-    # Determine component type from code prefix
-    if component_code.startswith('BO'):
-        # Boiler
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in BOILERS database")
-
-        # Take first row (or average efficiency across capacity ranges)
-        component = components.iloc[0]
-
-        return {
-            'carrier': map_fuel_code_to_carrier(component['fuel_code'], locator),
-            'efficiency': component['min_eff_rating']
-        }
-
-    elif component_code.startswith('HP'):
-        # Heat pump
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('HEAT_PUMPS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in HEAT_PUMPS database")
-
-        # Take first row (or average COP across capacity ranges)
-        component = components.iloc[0]
-
-        return {
-            'carrier': 'GRID',  # Heat pumps use electricity
-            'efficiency': component['min_eff_rating_seasonal']
-        }
-
-    elif component_code.startswith('CH'):
-        # Chiller
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('VAPOR_COMPRESSION_CHILLERS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in CHILLERS database")
-
-        # Take first row (or average COP across capacity ranges)
-        component = components.iloc[0]
-
-        return {
-            'carrier': 'GRID',  # Chillers use electricity
-            'efficiency': component['min_eff_rating']
-        }
-
-    elif component_code.startswith('CT'):
-        # Cooling tower — carrier is GRID (fan electricity); efficiency is aux_power ratio
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('COOLING_TOWERS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in COOLING_TOWERS database")
-
-        component = components.iloc[0]
-
-        return {
-            'carrier': 'GRID',
-            'efficiency': component['aux_power']  # fan kWh per kWh of heat rejected
-        }
-
-    elif component_code.startswith('HEX'):
-        # Heat exchanger — passive, no carrier consumption
-        return {
-            'carrier': None,
-            'efficiency': None
-        }
-
-    elif component_code.startswith('SC') or component_code.startswith('PVT'):
-        # Solar collector (thermal) or PV-thermal hybrid as a supply
-        # component. Delegated to `solar_dhw.py` to keep this file small.
-        from cea.analysis.final_energy.solar_dhw import load_solar_component_info
-        return load_solar_component_info(component_code, locator)
-
-    else:
-        raise ValueError(
-            f"Unknown component type for code '{component_code}'. "
-            "CEA component codes use a standard prefix: "
-            "BO (boiler), HP (heat pump), CH (chiller), CT (cooling tower), "
-            "HEX (heat exchanger), SC (solar collector), PVT (PV-thermal), "
-            "AC (direct expansion), OEHR (cogeneration). Example: BO1, HP2, CH1, CT1."
-        )
+    from cea.technologies.components import load_component_info as _resolve
+    return _resolve(component_code, locator)
 
 
 def derive_plant_config(
