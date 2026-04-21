@@ -96,6 +96,32 @@ def carrier_from_fuel_code(locator, fuel_code: str) -> str:
     return feedstock_file
 
 
+def electricity_carrier(locator) -> str:
+    """Name of the scenario's electricity carrier (e.g. ``'GRID'``).
+
+    Resolved from ``ENERGY_CARRIERS.csv`` as the ``feedstock_file`` of the
+    first row whose ``type`` is ``'electrical'``. Users who renamed their
+    electricity feedstock to e.g. ``POWER`` get that name back; callers
+    that need to book heat-pump/chiller/cooling-tower/plug-load energy to
+    the electricity carrier should use this helper instead of the
+    ``'GRID'`` literal.
+
+    :raises ValueError: If no electrical row is defined, or it has no
+        ``feedstock_file``. Message names the CSV so users can fix it.
+    """
+    df = _df(locator)
+    electrical = df.loc[df['type'] == 'electrical', 'feedstock_file']
+    for carrier in electrical:
+        if carrier and carrier != '-':
+            return carrier
+    raise ValueError(
+        "ENERGY_CARRIERS.csv has no row with type='electrical' and a "
+        "non-empty feedstock_file. At least one electrical row is "
+        "required to book heat-pump, chiller, and plug-load electricity "
+        "(typical value: feedstock_file='GRID')."
+    )
+
+
 def combustible_carriers(locator) -> Set[str]:
     """Carriers whose components release heat via combustion.
 

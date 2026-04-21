@@ -204,10 +204,17 @@ def load_component_info(component_code: str, locator) -> Dict:
             'efficiency': _pick_efficiency(row),
         }
 
+    # The electric-driven branches below (heat pump, electric chiller,
+    # cooling-tower fan) book into the scenario's electricity carrier.
+    # Resolve it once from ENERGY_CARRIERS.csv so a user who renamed
+    # their electricity feedstock (e.g. 'GRID' → 'POWER') gets the
+    # correct name here.
+    from cea.technologies.energy_carriers import electricity_carrier
+
     # 2) Seasonal-COP heat pump.
     if 'min_eff_rating_seasonal' in cols and pd.notna(row.get('min_eff_rating_seasonal')):
         return {
-            'carrier': 'GRID',
+            'carrier': electricity_carrier(locator),
             'efficiency': float(row['min_eff_rating_seasonal']),
         }
 
@@ -225,14 +232,14 @@ def load_component_info(component_code: str, locator) -> Dict:
     # 4) Electric chiller: min_eff_rating alone.
     if has_min_eff:
         return {
-            'carrier': 'GRID',
+            'carrier': electricity_carrier(locator),
             'efficiency': float(row['min_eff_rating']),
         }
 
     # 5) Cooling-tower-like: aux_power alone.
     if has_aux:
         return {
-            'carrier': 'GRID',
+            'carrier': electricity_carrier(locator),
             'efficiency': float(row['aux_power']),
         }
 

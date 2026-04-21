@@ -20,6 +20,7 @@ import cea.config
 from cea.inputlocator import InputLocator
 from cea.analysis.costs.equations import calc_capex_annualized
 from cea.technologies.components import get_component_table
+from cea.technologies.energy_carriers import electricity_carrier
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -367,16 +368,17 @@ def _process_booster_services(building_name, booster_data, locator):
 def _process_electricity_service(building_name, supply_cfg, peak_kW, e_sys_mwh, locator):
     """Compute variable OPEX for electricity (grid connection — no CAPEX).
 
-    :param e_sys_mwh: Annual MWh from E_sys_GRID_kWh only (plug loads, not cooling electricity).
+    :param e_sys_mwh: Annual MWh from E_sys_{electricity}_kWh (plug loads, not cooling electricity).
     """
     cfg = supply_cfg.get('electricity')
     assembly_code = cfg.get('assembly_code', '') if cfg else ''
-    price = _mean_feedstock_price('GRID', locator)
+    elec = electricity_carrier(locator)
+    price = _mean_feedstock_price(elec, locator)
     opex_var_a = e_sys_mwh * 1000.0 * price
     return {
         'name': building_name, 'service': 'E', 'scale': 'BUILDING',
-        'assembly_code': assembly_code, 'component_code': 'GRID',
-        'carrier': 'GRID', 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
+        'assembly_code': assembly_code, 'component_code': elec,
+        'carrier': elec, 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
         'capex_total_USD': 0.0, 'capex_a_USD': 0.0,
         'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': opex_var_a, 'TAC_USD': opex_var_a,
     }
@@ -489,11 +491,13 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
             print(f"    Warning: CAPEX calc failed for plant {plant_name} pump (PU1): {e}")
             capex_pu, capex_a_pu, opex_fixed_pu = 0.0, 0.0, 0.0
 
-        # OPEX for pumping electricity (GRID) — only when primary carrier is not GRID,
-        # since DC plants already bundle pumping into GRID_MWh with the chiller electricity.
-        if dominant_carrier != 'GRID':
-            grid_mwh = plant_row.get('GRID_MWh', 0.0) or 0.0
-            grid_price = _mean_feedstock_price('GRID', locator)
+        # OPEX for pumping electricity — only when primary carrier is not the
+        # electricity carrier, since DC plants already bundle pumping into the
+        # electricity total with the chiller electricity.
+        elec = electricity_carrier(locator)
+        if dominant_carrier != elec:
+            grid_mwh = plant_row.get(f'{elec}_MWh', 0.0) or 0.0
+            grid_price = _mean_feedstock_price(elec, locator)
             pumping_opex = grid_mwh * 1000.0 * grid_price
         else:
             pumping_opex = 0.0
@@ -502,7 +506,7 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
         rows.append({
             'name': plant_name, 'service': f'{service_label}_pumping', 'scale': 'DISTRICT',
             'assembly_code': assembly_code, 'component_code': 'PU1',
-            'carrier': 'GRID', 'peak_service_kW': peak_pumping_kW, 'capacity_kW': peak_pumping_kW,
+            'carrier': elec, 'peak_service_kW': peak_pumping_kW, 'capacity_kW': peak_pumping_kW,
             'capex_total_USD': capex_pu, 'capex_a_USD': capex_a_pu,
             'opex_fixed_a_USD': opex_fixed_pu, 'opex_var_a_USD': pumping_opex, 'TAC_USD': tac_pu,
         })

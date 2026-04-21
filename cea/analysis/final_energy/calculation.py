@@ -1039,17 +1039,19 @@ def calculate_plant_final_energy(
     result[f'plant_primary_{network_type}_{plant_carrier}_kWh'] = final_energy_kWh
 
     # Add tertiary component carrier column (e.g. cooling tower fan electricity)
+    from cea.technologies.energy_carriers import electricity_carrier
+    elec = electricity_carrier(locator)
     tertiary_component = plant_config.get('tertiary_component')
     if tertiary_component and tertiary_component.startswith('CT'):
         from cea.technologies.cooling_tower import calc_CT_const
         ct_info = load_component_info(tertiary_component, locator)
         heat_rejected_kWh = thermal_load_kWh + final_energy_kWh
         ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
-        ct_carrier = ct_info['carrier'] or 'GRID'
+        ct_carrier = ct_info['carrier'] or elec
         result[f'plant_tertiary_{network_type}_{ct_carrier}_kWh'] = ct_fan_kWh
 
     # Add pumping electricity
-    result[f'plant_pumping_{network_type}_GRID_kWh'] = pumping_load_kWh
+    result[f'plant_pumping_{network_type}_{elec}_kWh'] = pumping_load_kWh
 
     # Add metadata
     result['scale'] = 'DISTRICT'
@@ -1148,12 +1150,15 @@ def aggregate_buildings_summary(
             'E_sys_MWh': E_sys_MWh,
         }
 
-        # Carrier columns delivered to services. Includes SOLAR (on-site
-        # solar-thermal delivered to DHW via the SC-DHW dispatch booked
-        # as `Qww_sys_SOLAR_kWh`). Legacy solar PV/PVT electricity
+        # Carrier columns delivered to services. Data-driven via
+        # ENERGY_CARRIERS.csv; union in the routing-only carriers (DH,
+        # DC) and SOLAR (on-site solar-thermal delivered to DHW via the
+        # SC-DHW dispatch, booked as `Qww_sys_SOLAR_kWh`), which aren't
+        # ``feedstock_file`` entries. Legacy solar PV/PVT electricity
         # offsets are still tracked separately via the emissions
         # offset path, not here.
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+        from cea.technologies.energy_carriers import available_carriers
+        for carrier in sorted(available_carriers(locator) | {'DH', 'DC', 'SOLAR'}):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1239,12 +1244,10 @@ def aggregate_buildings_summary(
             'E_sys_MWh': pumping_MWh,
         }
 
-        # Carrier columns delivered to services. Includes SOLAR (on-site
-        # solar-thermal delivered to DHW via the SC-DHW dispatch booked
-        # as `Qww_sys_SOLAR_kWh`). Legacy solar PV/PVT electricity
-        # offsets are still tracked separately via the emissions
-        # offset path, not here.
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC', 'SOLAR']:
+        # Carrier columns delivered to services. See building loop above
+        # for why DH/DC/SOLAR are unioned in manually.
+        from cea.technologies.energy_carriers import available_carriers
+        for carrier in sorted(available_carriers(locator) | {'DH', 'DC', 'SOLAR'}):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1360,7 +1363,11 @@ def create_hourly_timeseries_aggregation(
                     carrier = parts[3] if len(parts) >= 4 else (parts[2] if len(parts) >= 3 else col)
                 elif col.startswith('plant_pumping_'):
                     parts = col.split('_')
-                    carrier = parts[2] if len(parts) >= 3 else 'GRID'
+                    if len(parts) >= 3:
+                        carrier = parts[2]
+                    else:
+                        from cea.technologies.energy_carriers import electricity_carrier
+                        carrier = electricity_carrier(locator)
                 else:
                     continue
 
@@ -1579,8 +1586,11 @@ def create_final_energy_breakdown(
                         }
                         breakdown_rows.append(row)
 
-        # Process pumping electricity (column: plant_pumping_{NT}_GRID_kWh)
-        pumping_col = next((c for c in df.columns if c.startswith('plant_pumping_') and c.endswith('_GRID_kWh')), None)
+        # Process pumping electricity (column: plant_pumping_{NT}_{elec}_kWh)
+        from cea.technologies.energy_carriers import electricity_carrier
+        elec = electricity_carrier(locator)
+        pumping_suffix = f'_{elec}_kWh'
+        pumping_col = next((c for c in df.columns if c.startswith('plant_pumping_') and c.endswith(pumping_suffix)), None)
         if pumping_col is not None:
             annual_pumping_MWh = df[pumping_col].sum() / 1000.0
             if annual_pumping_MWh > 0:
@@ -1590,7 +1600,7 @@ def create_final_energy_breakdown(
                     'scale': 'DISTRICT',
                     'service': 'plant_pumping',
                     'demand_column': 'pumping_load_kWh',
-                    'carrier': 'GRID',
+                    'carrier': elec,
                     'assembly_code': None,
                     'component_code': None,
                     'component_type': 'Pump',

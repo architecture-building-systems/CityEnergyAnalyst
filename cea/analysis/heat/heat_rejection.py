@@ -16,6 +16,7 @@ import os
 import pandas as pd
 
 from cea.technologies.cooling_tower import calc_CT_const
+from cea.technologies.energy_carriers import electricity_carrier
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -78,6 +79,7 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
     # inside the helper, so this is cheap to call in each loop iteration.
     from cea.technologies.energy_carriers import combustible_carriers
     fuel_carriers = combustible_carriers(locator)
+    elec = electricity_carrier(locator)
 
     demand_cols = {'Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh'}
     hs_demand = df['Qhs_sys_kWh'] if 'Qhs_sys_kWh' in df.columns else pd.Series(0.0, index=df.index)
@@ -114,7 +116,7 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         elif col.startswith('Qcs_sys_'):
             carrier = col[len('Qcs_sys_'):-len('_kWh')]
-            if carrier == 'GRID':
+            if carrier == elec:
                 # Chiller condenser heat = cooling demand + electricity input
                 q_cond = cs_demand + df[col]
                 if ct_aux_power is not None:
