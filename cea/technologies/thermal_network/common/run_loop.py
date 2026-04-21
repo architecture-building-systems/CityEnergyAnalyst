@@ -44,7 +44,7 @@ def validate_and_resolve_mode(config, locator, section=None):
         except FileNotFoundError:
             raise ValueError("Network name is required. Please select a network layout.")
 
-    elif not multi_phase_mode:
+    elif num_networks == 1 or not multi_phase_mode:
         print("\n" + "=" * 80)
         print("SINGLE-PHASE THERMAL NETWORK SIMULATION")
         print("=" * 80)

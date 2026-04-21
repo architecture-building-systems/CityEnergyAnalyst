@@ -79,6 +79,7 @@ def calc_dh_heating_with_booster_tracking(
     Q_dh_W = np.zeros_like(Q_demand_W, dtype=float)
     Q_booster_W = np.zeros_like(Q_demand_W, dtype=float)
     booster_active = np.zeros_like(Q_demand_W, dtype=bool)
+    E_hp_W = np.zeros_like(Q_demand_W, dtype=float)
 
     # # Calculate max temperature achievable with DH (with approach temp)
     if T_DH_supply_C.mean() > MINIMUM_DH_TEMPERATURE:
@@ -125,7 +126,7 @@ def calc_dh_heating_with_booster_tracking(
                 Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
                 booster_active[booster_needed] = True
             elif booster == 'heat_pump':
-               Q_dh_W[booster_needed], _, E_hp_W = np.vectorize(HP_water_water)(
+               Q_dh_W[booster_needed], _, E_hp_W[booster_needed] = np.vectorize(HP_water_water)(
                    mcp_sys_WperC[booster_needed] / HEAT_CAPACITY_OF_WATER_JPERKGK,
                    T_target_C[booster_needed] + KELVIN_CONVERSION, T_return_C[booster_needed] + KELVIN_CONVERSION,
                    T_dh_preheat_max_C[booster_needed] + KELVIN_CONVERSION,
@@ -139,7 +140,6 @@ def calc_dh_heating_with_booster_tracking(
     # Calculate DH-side parameters (what thermal network needs)
     # ========================================================================
     if booster != 'heat_pump':
-        E_hp_W = np.zeros_like(Q_demand_W, dtype=float) # there is no electricity demand for heat pump operation
         # Building-side outlet temperature (what temperature DH heats the water to)
         T_building_outlet_C = np.where(
             booster_needed,
@@ -211,10 +211,10 @@ def calc_dh_heating_with_booster_tracking(
 
     return (
         Q_dh_W,          # DH contribution to load
-        E_hp_W,          # electricity input to heat pump
         T_dh_return_C,   # DH return temp
         mcp_dh_kWK,      # DH mass flow (kW/K)
         Q_booster_W,     # Booster heat output
         A_hex_m2,        # HEX area
-        booster_active   # Booster activity flag
+        booster_active,  # Booster activity flag
+        E_hp_W           # electricity input to heat pump
     )
