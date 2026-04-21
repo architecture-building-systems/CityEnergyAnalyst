@@ -455,7 +455,11 @@ def _run(config, locator, whatif_name, output_folder, buildings):
         if summary_df is not None:
             print("\nTotal Final Energy by Carrier:")
             total_final = 0.0
-            for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+            from cea.technologies.energy_carriers import available_carriers
+            # DH/DC are network-routing carriers, not data-driven rows in
+            # ENERGY_CARRIERS.csv, so union them in explicitly.
+            carriers = sorted(available_carriers(locator) | {'DH', 'DC'})
+            for carrier in carriers:
                 carrier_col = f'{carrier}_MWh'
                 if carrier_col in summary_df.columns:
                     total = summary_df[carrier_col].sum()

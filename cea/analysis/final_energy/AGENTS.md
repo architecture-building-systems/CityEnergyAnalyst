@@ -145,18 +145,16 @@ final_energy = district_consumption
 ## Important Database Workflow
 
 ```python
-# Assembly → Component → Feedstock
-assembly_df = supply_db.heating  # From Supply.from_locator()
-assembly = assembly_df.loc['SUPPLY_HEATING_AS3']
-component_code = assembly['primary_components']  # 'BO1'
+# Assembly → Component → Feedstock. Component/carrier resolution is
+# fully data-driven (see cea/technologies/components.py and
+# energy_carriers.py) — no prefix or code hardcoding.
+from cea.technologies.components import load_component_info
+info = load_component_info('BO1', locator)
+# info == {'carrier': 'NATURALGAS', 'efficiency': 0.82}
 
-# Component has efficiency and fuel
-component_file = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
-component_df = pd.read_csv(component_file)
-component = component_df[component_df['code'] == component_code].iloc[0]
-efficiency = component['min_eff_rating']  # 0.82
-fuel_code = component['fuel_code']  # 'Cgas'
-carrier = map_fuel_code_to_carrier(fuel_code)  # 'NATURALGAS'
+# For a bare fuel_code, resolve carrier directly:
+from cea.technologies.energy_carriers import carrier_from_fuel_code
+carrier = carrier_from_fuel_code(locator, 'Cgas')  # 'NATURALGAS'
 ```
 
 ## Output Structure

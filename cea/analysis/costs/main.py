@@ -19,6 +19,7 @@ import pandas as pd
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.analysis.costs.equations import calc_capex_annualized
+from cea.technologies.components import get_component_table
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -39,7 +40,6 @@ def _get_component_row(component_code, locator, capacity_W=None):
     segment matching ``capacity_W`` if the table has multiple rows per
     code.
     """
-    from cea.technologies.components import get_component_table
     table_name = get_component_table(component_code, locator)
     if table_name is None:
         raise ValueError(
@@ -266,9 +266,13 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     # runs so the backup BO/HP cost is attributed to this service. SOLAR has
     # no variable OPEX, so nothing is lost on the running-cost side.
     primary_type = cfg.get('type')
+    # Route via the scanner rather than code prefixes: a user-added SC/PVT
+    # code under SOLAR_COLLECTORS / PHOTOVOLTAIC_THERMAL_PANELS will be
+    # recognised even if its code doesn't start with 'SC'/'PVT'.
+    primary_table = get_component_table(component_code, locator) if component_code else None
     primary_is_solar = (
         primary_type in ('SC', 'PVT')
-        or component_code.startswith(('SC', 'PVT'))
+        or primary_table in ('SOLAR_COLLECTORS', 'PHOTOVOLTAIC_THERMAL_PANELS')
     )
 
     if not primary_is_solar:
@@ -296,8 +300,10 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     for comp_code in [cfg.get('secondary_component'), cfg.get('tertiary_component')]:
         if not comp_code:
             continue
-        # Cooling towers (CT*) are sized for rejection load: Q_cooling + W_compressor
-        if comp_code.upper().startswith('CT'):
+        # Cooling towers are sized for rejection load: Q_cooling + W_compressor.
+        # Route via the scanner so any user-added code in COOLING_TOWERS.csv
+        # (not only the 'CT*' convention) gets the correct sizing.
+        if get_component_table(comp_code, locator) == 'COOLING_TOWERS':
             comp_capacity_kW = peak_kW + capacity_kW
         else:
             comp_capacity_kW = capacity_kW
@@ -438,8 +444,10 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     for comp_code in [pc.get('secondary_component'), pc.get('tertiary_component')]:
         if not comp_code:
             continue
-        # Cooling towers (CT*) are sized for rejection load: Q_cooling + W_compressor
-        if comp_code.upper().startswith('CT'):
+        # Cooling towers are sized for rejection load: Q_cooling + W_compressor.
+        # Route via the scanner so any user-added code in COOLING_TOWERS.csv
+        # (not only the 'CT*' convention) gets the correct sizing.
+        if get_component_table(comp_code, locator) == 'COOLING_TOWERS':
             comp_capacity_kW = peak_kW + capacity_kW
         else:
             comp_capacity_kW = capacity_kW
