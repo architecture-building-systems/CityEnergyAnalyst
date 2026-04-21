@@ -1363,11 +1363,9 @@ def create_hourly_timeseries_aggregation(
                     carrier = parts[3] if len(parts) >= 4 else (parts[2] if len(parts) >= 3 else col)
                 elif col.startswith('plant_pumping_'):
                     parts = col.split('_')
-                    if len(parts) >= 3:
-                        carrier = parts[2]
-                    else:
-                        from cea.technologies.energy_carriers import electricity_carrier
-                        carrier = electricity_carrier(locator)
+                    if len(parts) < 3:
+                        continue
+                    carrier = parts[2]
                 else:
                     continue
 

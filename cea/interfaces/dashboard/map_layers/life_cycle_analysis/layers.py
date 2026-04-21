@@ -13,6 +13,10 @@ from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, Par
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
 from cea.plots.colors import color_to_hex
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.visualisation.format.plot_colours import (
+    CARRIER_COLOURS as _CARRIER_COLOURS,
+    DEFAULT_CARRIER_COLOURS as _DEFAULT_CARRIER_COLOURS,
+)
 
 logger = getCEAServerLogger("cea-server-lca-map-layers")
 
@@ -141,14 +145,10 @@ _ENERGY_DEMAND_ROLLUP_COLUMNS = {
 _DEFAULT_CARRIER_FALLBACK = 'GRID'
 
 # Carrier colour palette — resolved via the canonical ``CARRIER_COLOURS``
-# dict so the HexagonLayer gradient, the stacked ColumnLayer segments,
-# bar plots, and the energy sankey all render a given carrier identically.
-# User-added carriers (e.g. ``PROPANE``) fall back to
-# :data:`_DEFAULT_CARRIER_COLOURS`.
-from cea.visualisation.format.plot_colours import (
-    CARRIER_COLOURS as _CARRIER_COLOURS,
-    DEFAULT_CARRIER_COLOURS as _DEFAULT_CARRIER_COLOURS,
-)
+# dict (imported at module top) so the HexagonLayer gradient, the
+# stacked ColumnLayer segments, bar plots, and the energy sankey all
+# render a given carrier identically. User-added carriers (e.g.
+# ``PROPANE``) fall back to :data:`_DEFAULT_CARRIER_COLOURS`.
 
 
 def _column_to_carrier(column: str) -> Optional[str]:
