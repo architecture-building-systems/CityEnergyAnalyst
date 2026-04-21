@@ -131,7 +131,7 @@ def calc_dh_heating_with_booster_tracking(
                    T_target_C[booster_needed] + KELVIN_CONVERSION, T_return_C[booster_needed] + KELVIN_CONVERSION,
                    T_dh_preheat_max_C[booster_needed] + KELVIN_CONVERSION,
                    Q_demand_W[booster_needed])
-               Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
+               # Q_booster_W[booster_needed] = Q_demand_W[booster_needed] - Q_dh_W[booster_needed]
                booster_active[booster_needed] = True
             else:
                 raise ValueError(f"Unknown booster type: {booster} (valid choices: 'none', 'coil', 'heat_pump').")
