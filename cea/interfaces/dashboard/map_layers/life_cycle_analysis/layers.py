@@ -140,23 +140,15 @@ _ENERGY_DEMAND_ROLLUP_COLUMNS = {
 # falls back to the string literal if not.
 _DEFAULT_CARRIER_FALLBACK = 'GRID'
 
-# Colour gradient (lighter, darker) per UPPERCASE carrier code — used by
-# both the HexagonLayer single-carrier gradient and the stacked
-# ColumnLayer per-carrier segment fill. Missing carriers (e.g. user-added
-# codes) fall back to :data:`_DEFAULT_CARRIER_COLOURS`.
-_CARRIER_COLOURS = {
-    'GRID':        ('red_lighter', 'red'),
-    'NATURALGAS':  ('brown_lighter', 'brown'),
-    'OIL':         ('grey_lighter', 'grey'),
-    'COAL':        ('black', 'black'),
-    'WOOD':        ('green_lighter', 'green'),
-    'SOLAR':       ('yellow_lighter', 'yellow'),
-    'BIOGAS':      ('green_light', 'green'),
-    'DRYBIOMASS':  ('green_light', 'brown'),
-    'WETBIOMASS':  ('brown_light', 'brown'),
-    'HYDROGEN':    ('blue_lighter', 'blue'),
-}
-_DEFAULT_CARRIER_COLOURS = ('grey_lighter', 'grey')
+# Carrier colour palette — resolved via the canonical ``CARRIER_COLOURS``
+# dict so the HexagonLayer gradient, the stacked ColumnLayer segments,
+# bar plots, and the energy sankey all render a given carrier identically.
+# User-added carriers (e.g. ``PROPANE``) fall back to
+# :data:`_DEFAULT_CARRIER_COLOURS`.
+from cea.visualisation.format.plot_colours import (
+    CARRIER_COLOURS as _CARRIER_COLOURS,
+    DEFAULT_CARRIER_COLOURS as _DEFAULT_CARRIER_COLOURS,
+)
 
 
 def _column_to_carrier(column: str) -> Optional[str]:
@@ -1217,19 +1209,11 @@ _OPERATION_SERVICE_COLOURS = {
     'solar_thermal':         ('yellow_light', 'brown'),
 }
 # Per-carrier colours for the stacked ColumnLayer. Keys are UPPERCASE
-# ``feedstock_file`` codes (same as ``ENERGY_CARRIERS.csv``). User-added
+# ``feedstock_file`` codes (same as ``ENERGY_CARRIERS.csv``). Each darker
+# colour is unique — shared with :data:`_CARRIER_COLOURS` above so a
+# given carrier renders the same way in both map layers. User-added
 # carriers fall back to :data:`_DEFAULT_CARRIER_COLOURS` (defined above).
-_OPERATIONAL_CARRIER_COLOURS = {
-    'GRID':       ('red_lighter', 'red'),
-    'NATURALGAS': ('brown_lighter', 'brown'),
-    'BIOGAS':     ('green_lighter', 'green'),
-    'DRYBIOMASS': ('green_light', 'green'),
-    'WETBIOMASS': ('green_light', 'brown'),
-    'COAL':       ('black', 'black'),
-    'WOOD':       ('brown_light', 'brown'),
-    'OIL':        ('grey_lighter', 'grey'),
-    'HYDROGEN':   ('blue_lighter', 'blue'),
-}
+_OPERATIONAL_CARRIER_COLOURS = _CARRIER_COLOURS
 
 
 def _op_column_to_service(column: str) -> Optional[str]:

@@ -91,6 +91,40 @@ COLOURS_TO_RGB = {
 }
 
 
+# Canonical per-carrier colour palette. Keys are ``feedstock_file`` codes
+# from ``ENERGY_CARRIERS.csv`` (``GRID``, ``NATURALGAS``, …). Each darker
+# colour is unique so stacked segments and legend entries read clearly.
+# ``CARRIER_COLOURS`` is the single source of truth — map layers, bar
+# plots, and the energy sankey all pull from here. User-added carriers
+# fall back to :data:`DEFAULT_CARRIER_COLOURS`.
+CARRIER_COLOURS = {
+    'GRID':        ('red_lighter',    'red'),       # electricity
+    'NATURALGAS':  ('brown_lighter',  'brown'),     # fossil gas
+    'OIL':         ('grey_lighter',   'grey'),      # fossil liquid
+    'COAL':        ('grey_light',     'black'),     # fossil solid
+    'WOOD':        ('green_lighter',  'green'),     # woody biomass
+    'SOLAR':       ('yellow_lighter', 'yellow'),    # solar thermal
+    'BIOGAS':      ('teal_lighter',   'teal'),      # bio gas
+    'DRYBIOMASS':  ('orange_lighter', 'orange'),    # dry biomass
+    'WETBIOMASS':  ('purple_lighter', 'purple'),    # wet biomass
+    'HYDROGEN':    ('cyan_lighter',   'cyan'),      # clean gas
+}
+DEFAULT_CARRIER_COLOURS = ('grey_lighter', 'grey')
+
+
+def get_carrier_colour(code, *, shade='darker'):
+    """Return a palette colour for the given carrier code.
+
+    :param code: Carrier code from ``ENERGY_CARRIERS.csv`` (e.g.
+        ``'GRID'``, ``'NATURALGAS'``). Case-insensitive.
+    :param shade: ``'darker'`` (default) or ``'lighter'``. Bar plots and
+        the sankey use the darker shade; map layer gradients use both.
+    :return: A colour name from :data:`COLOURS_TO_RGB`.
+    """
+    pair = CARRIER_COLOURS.get(str(code).upper(), DEFAULT_CARRIER_COLOURS)
+    return pair[1] if shade == 'darker' else pair[0]
+
+
 # Base color mapping without units - maps metric prefixes to colors
 _BASE_COLUMN_COLORS = {
     # ===== Grid & Demand =====
@@ -227,18 +261,23 @@ _BASE_COLUMN_COLORS = {
     "DC_HYDROGEN": "blue_light",
     "DC_NONE": "blue_light",
 
-    # Energy carriers (aggregated by carrier) - colours aligned with energy Sankey
-    "GRID": "green",
-    "NATURALGAS": "orange",
-    "BIOGAS": "green_light",
-    "SOLAR": "yellow",
-    "DRYBIOMASS": "brown_light",
-    "WETBIOMASS": "brown_light",
-    "COAL": "grey",
-    "WOOD": "brown",
-    "OIL": "brown_light",
-    "HYDROGEN": "uuen_blue_light",
-    "NONE": "grey",
+    # Energy carriers (aggregated by carrier) — resolved via the canonical
+    # ``CARRIER_COLOURS`` dict defined above so map layers, bar plots, and
+    # the sankey all render a given carrier the same way. Keys here
+    # duplicate the canonical dict; keeping them in sync is cheap because
+    # there are only ~10 carriers and this table is the grep target for
+    # column-name-to-colour resolution.
+    "GRID":       CARRIER_COLOURS['GRID'][1],
+    "NATURALGAS": CARRIER_COLOURS['NATURALGAS'][1],
+    "OIL":        CARRIER_COLOURS['OIL'][1],
+    "COAL":       CARRIER_COLOURS['COAL'][1],
+    "WOOD":       CARRIER_COLOURS['WOOD'][1],
+    "SOLAR":      CARRIER_COLOURS['SOLAR'][1],
+    "BIOGAS":     CARRIER_COLOURS['BIOGAS'][1],
+    "DRYBIOMASS": CARRIER_COLOURS['DRYBIOMASS'][1],
+    "WETBIOMASS": CARRIER_COLOURS['WETBIOMASS'][1],
+    "HYDROGEN":   CARRIER_COLOURS['HYDROGEN'][1],
+    "NONE":       "grey",
 
     # ===== Cost Categories =====
     "CAPEX_total":             "grey",

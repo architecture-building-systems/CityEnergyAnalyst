@@ -40,13 +40,17 @@ __status__ = "Production"
 
 # ── Layer 0: energy carriers ──────────────────────────────────────────────────
 
+# Carrier colours come from the canonical ``CARRIER_COLOURS`` palette so
+# a given carrier renders the same way in the sankey, bar plots, and map
+# layers. Only the darker shade is used here; the sankey doesn't gradient.
+from cea.visualisation.format.plot_colours import (
+    CARRIER_COLOURS as _CANONICAL_CARRIER_COLOURS,
+    DEFAULT_CARRIER_COLOURS as _CANONICAL_DEFAULT,
+)
+
 _CARRIER_COLOURS = {
-    'NATURALGAS': COLOURS_TO_RGB['orange'],
-    'GRID':       COLOURS_TO_RGB['green'],
-    'WOOD':       COLOURS_TO_RGB['brown'],
-    'OIL':        COLOURS_TO_RGB['brown_light'],
-    'COAL':       COLOURS_TO_RGB['grey'],
-    'SOLAR':      COLOURS_TO_RGB['yellow'],
+    code: COLOURS_TO_RGB[darker]
+    for code, (_, darker) in _CANONICAL_CARRIER_COLOURS.items()
 }
 
 _CARRIER_DISPLAY = {
@@ -64,7 +68,7 @@ def _carrier_display(code):
 
 
 def _carrier_colour(code):
-    return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB['grey'])
+    return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB[_CANONICAL_DEFAULT[1]])
 
 
 # ── Layer 1: scale ────────────────────────────────────────────────────────────
