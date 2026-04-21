@@ -2982,7 +2982,15 @@ def _export_whatif_final_energy(locator, summary_folder, whatif_name, buildings,
     if summary_df.empty:
         return
 
-    carriers = ['GRID', 'NATURALGAS', 'OIL', 'COAL', 'WOOD']
+    # Carrier list is data-driven from the scenario's ENERGY_CARRIERS.csv,
+    # so user-added carriers (BIOGAS, WETBIOMASS, HYDROGEN, PROPANE…) get
+    # exported without a code change. Mirrors the fast-path logic in
+    # ``cea/visualisation/a_data_loader._export_final_energy_to_plots_folder``.
+    from cea.technologies.energy_carriers import available_carriers
+    try:
+        carriers = sorted(available_carriers(locator))
+    except Exception:
+        carriers = []
     carrier_rename = {f'{c}_MWh': f'{c}_kWh' for c in carriers}
 
     # Building-level annual export
