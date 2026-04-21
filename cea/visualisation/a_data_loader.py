@@ -171,7 +171,18 @@ demand_metrics = [
 ]
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
 
-final_energy_metrics = ['grid_electricity', 'natural_gas', 'oil', 'coal', 'wood']
+def _get_final_energy_metrics(locator):
+    """Carrier codes defined in the scenario's ENERGY_CARRIERS.csv.
+
+    Used as the non-analytics whitelist for the ``plot-final-energy``
+    form. Empty on any I/O error — ``get_summary_results_csv_path`` then
+    falls through to the analytics-path check instead of crashing.
+    """
+    try:
+        from cea.technologies.energy_carriers import available_carriers
+        return sorted(available_carriers(locator))
+    except Exception:
+        return []
 
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
@@ -185,7 +196,7 @@ def get_plot_metrics_dict(locator):
 
     return {
         'demand': demand_metrics,
-        'final-energy': final_energy_metrics,
+        'final-energy': _get_final_energy_metrics(locator),
         'pv': solar_metrics,
         'pvt': solar_metrics,
         'sc': solar_metrics,

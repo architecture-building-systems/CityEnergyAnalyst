@@ -576,13 +576,12 @@ class data_processor:
             }
 
         elif plot_cea_feature == 'final-energy':
-            y_cea_metric_map = {
-                'grid_electricity':   'GRID_kWh',
-                'natural_gas':        'NATURALGAS_kWh',
-                'oil':                'OIL_kWh',
-                'coal':               'COAL_kWh',
-                'wood':               'WOOD_kWh',
-            }
+            # Carriers and their summary columns come straight from the
+            # scenario's ENERGY_CARRIERS.csv (feedstock_file values). The
+            # carrier code doubles as the map key and as the column prefix
+            # (e.g. GRID → GRID_kWh).
+            from cea.technologies.energy_carriers import available_carriers
+            y_cea_metric_map = {c: f'{c}_kWh' for c in available_carriers(self.locator)}
 
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
