@@ -134,8 +134,8 @@ class data_processor:
         - operation_services: list of display names (e.g. 'electricity',
                                        'space_heating', 'domestic_hot_water',
                                        'district_heating', 'solar_pv_electricity', ...)
-        - energy_carriers: list of display names (e.g. 'grid_electricity',
-                                       'natural_gas', 'biogas', ...)
+        - energy_carriers: list of carrier codes from ENERGY_CARRIERS.csv
+                                       (e.g. 'GRID', 'NATURALGAS', 'BIOGAS', ...)
 
         Returns:
         - list of column names (without unit suffix)
@@ -161,21 +161,10 @@ class data_processor:
             'solar_pvt_thermal':     'PVT_Q_offset',
             'solar_thermal':         'SC_Q_offset',
         }
-        # Display-name → internal UPPERCASE carrier code used in CSV column names.
-        carrier_to_internal = {
-            'grid_electricity': 'GRID',
-            'natural_gas':      'NATURALGAS',
-            'biogas':           'BIOGAS',
-            'dry_biomass':      'DRYBIOMASS',
-            'wet_biomass':      'WETBIOMASS',
-            'coal':             'COAL',
-            'wood':             'WOOD',
-            'oil':              'OIL',
-            'hydrogen':         'HYDROGEN',
-        }
-
         categories = plot_config.y_category_to_plot
         operation_services = getattr(plot_config, 'operation_services', [])
+        # Carrier codes come straight from ``EnergyCarrierMultiChoiceParameter``
+        # (the same codes used as CSV column suffixes — ``GRID``, ``NATURALGAS``, …).
         energy_carriers = getattr(plot_config, 'energy_carriers', [])
 
         columns = []
@@ -185,14 +174,11 @@ class data_processor:
 
         if both_selected:
             # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS).
-            # `carrier` is a display name (e.g. 'natural_gas') so translate
-            # to the internal UPPERCASE code used in CSV column names.
             for service in operation_services:
                 if service in service_to_tech:
                     service_name = service_to_tech[service]
                     for carrier in energy_carriers:
-                        internal = carrier_to_internal.get(carrier, carrier)
-                        columns.append(f"{service_name}_{internal}")
+                        columns.append(f"{service_name}_{carrier}")
 
             # Solar offsets don't combine with carriers
             for service in operation_services:
@@ -208,9 +194,9 @@ class data_processor:
                     columns.append(solar_to_offset[service])
 
         elif 'energy_carrier' in categories:
-            # Only energy_carrier: aggregated by carrier (translate display → internal)
+            # Only energy_carrier: aggregated by carrier code.
             for carrier in energy_carriers:
-                columns.append(carrier_to_internal.get(carrier, carrier))
+                columns.append(carrier)
 
         return columns
 
@@ -576,13 +562,12 @@ class data_processor:
             }
 
         elif plot_cea_feature == 'final-energy':
-            y_cea_metric_map = {
-                'grid_electricity':   'GRID_kWh',
-                'natural_gas':        'NATURALGAS_kWh',
-                'oil':                'OIL_kWh',
-                'coal':               'COAL_kWh',
-                'wood':               'WOOD_kWh',
-            }
+            # Carriers and their summary columns come straight from the
+            # scenario's ENERGY_CARRIERS.csv (feedstock_file values). The
+            # carrier code doubles as the map key and as the column prefix
+            # (e.g. GRID → GRID_kWh).
+            from cea.technologies.energy_carriers import available_carriers
+            y_cea_metric_map = {c: f'{c}_kWh' for c in available_carriers(self.locator)}
 
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")

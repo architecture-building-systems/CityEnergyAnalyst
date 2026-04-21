@@ -13,6 +13,10 @@ from cea.interfaces.dashboard.map_layers.base import MapLayer, cache_output, Par
 from cea.interfaces.dashboard.map_layers.life_cycle_analysis import LifeCycleAnalysisCategory
 from cea.plots.colors import color_to_hex
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
+from cea.visualisation.format.plot_colours import (
+    CARRIER_COLOURS as _CARRIER_COLOURS,
+    DEFAULT_CARRIER_COLOURS as _DEFAULT_CARRIER_COLOURS,
+)
 
 logger = getCEAServerLogger("cea-server-lca-map-layers")
 
@@ -134,57 +138,27 @@ _ENERGY_DEMAND_ROLLUP_COLUMNS = {
     'Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh',
 }
 
-# High-level carriers surfaced to the user as lowercase snake_case display
-# names. Order is the dropdown order. ``_column_to_carrier`` inspects raw
-# CSV tokens and returns the display name.
-_ENERGY_CARRIERS = [
-    'grid_electricity',
-    'natural_gas',
-    'oil',
-    'coal',
-    'wood',
-    'solar',
-]
+# Carrier default for first-load selection. Must match the ``feedstock_file``
+# used for the electricity row in ``ENERGY_CARRIERS.csv`` (almost always
+# ``GRID``). Looked up via :func:`electricity_carrier` when available and
+# falls back to the string literal if not.
+_DEFAULT_CARRIER_FALLBACK = 'GRID'
 
-# Display-name → internal UPPERCASE token used in CSV column names.
-_ENERGY_CARRIER_DISPLAY_TO_INTERNAL = {
-    'grid_electricity': 'GRID',
-    'natural_gas':      'NATURALGAS',
-    'oil':              'OIL',
-    'coal':             'COAL',
-    'wood':             'WOOD',
-    # `SOLAR` shows up in column names like `Qww_sys_SOLAR_kWh` when the
-    # SC/PVT DHW dispatch is active. Only the INTERNAL→display mapping
-    # is consumed by `_column_to_carrier` below; the facade-level
-    # `SC_*` / `PVT_*_Q_*` branches still handle the non-dispatch path.
-    'solar':            'SOLAR',
-}
-_ENERGY_CARRIER_INTERNAL_TO_DISPLAY = {
-    v: k for k, v in _ENERGY_CARRIER_DISPLAY_TO_INTERNAL.items()
-}
-
-# Colour gradient (lighter, darker) per display-name carrier — used by
-# both the HexagonLayer single-carrier gradient and the stacked
-# ColumnLayer per-carrier segment fill.
-_CARRIER_COLOURS = {
-    'grid_electricity': ('red_lighter', 'red'),
-    'natural_gas':      ('brown_lighter', 'brown'),
-    'oil':              ('grey_lighter', 'grey'),
-    'coal':             ('black', 'black'),
-    'wood':             ('green_lighter', 'green'),
-    'solar':            ('yellow_lighter', 'yellow'),
-}
-
-# Display-name value used as the default selection on first load.
-_DEFAULT_CARRIER = 'grid_electricity'
+# Carrier colour palette — resolved via the canonical ``CARRIER_COLOURS``
+# dict (imported at module top) so the HexagonLayer gradient, the
+# stacked ColumnLayer segments, bar plots, and the energy sankey all
+# render a given carrier identically. User-added carriers (e.g.
+# ``PROPANE``) fall back to :data:`_DEFAULT_CARRIER_COLOURS`.
 
 
 def _column_to_carrier(column: str) -> Optional[str]:
-    """Map a raw ``*_kWh`` column name to a high-level carrier (display
-    name), or None.
+    """Map a raw ``*_kWh`` column name to its carrier code (``GRID``,
+    ``NATURALGAS``, ``SOLAR``, …) or None.
 
     Mirrors the aggregation rules used by
     ``cea.analysis.final_energy.calculation._aggregate_hourly_data``.
+    Carrier codes returned here are the same ``feedstock_file`` values
+    that live in ``ENERGY_CARRIERS.csv`` — no lowercase-alias layer.
     """
     if not column.endswith('_kWh') or column in _ENERGY_DEMAND_ROLLUP_COLUMNS:
         return None
@@ -200,28 +174,31 @@ def _column_to_carrier(column: str) -> Optional[str]:
         return None
     if column.startswith('PVT_'):
         if column.endswith('_Q_kWh'):
-            return 'solar'
+            return 'SOLAR'
         return None
     if column.startswith('SC_'):
-        return 'solar'
+        return 'SOLAR'
 
     # Plant columns (district heating / cooling plants).
     if column.startswith('plant_pumping_'):
-        return 'grid_electricity'
+        # Pumping electricity column is ``plant_pumping_<NT>_<CARRIER>_kWh``;
+        # parse the carrier token instead of assuming ``GRID``.
+        parts = column.split('_')
+        if len(parts) >= 5:
+            return parts[3]
+        return None
     if column.startswith('plant_primary_') or column.startswith('plant_tertiary_'):
         # plant_primary_<NT>_<CARRIER>_kWh → parts[3] = UPPERCASE carrier
         parts = column.split('_')
         if len(parts) >= 5:
-            internal = parts[3]
-            return _ENERGY_CARRIER_INTERNAL_TO_DISPLAY.get(internal)
+            return parts[3]
         return None
 
     # Building service / booster columns: Qhs_sys_<CARRIER>_kWh etc.
     if '_sys_' in column or '_booster_' in column:
         parts = column.split('_')
         if len(parts) >= 4:
-            internal = parts[2]
-            return _ENERGY_CARRIER_INTERNAL_TO_DISPLAY.get(internal)
+            return parts[2]
 
     return None
 
@@ -262,14 +239,14 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         return files
 
     def _get_data_columns(self, parameters):
-        """Return available carriers as a {choices, default} dict.
+        """Return available carriers as a ``{choices, default}`` dict.
 
-        Scans every entity's hourly file, maps each column to a carrier via
-        :func:`_column_to_carrier`, and returns only the carriers actually
-        present in the data. Choices are ``{value, label}`` dicts where the
-        value is the internal code (e.g. ``GRID``) and the label is the
-        user-facing name (e.g. ``grid_electricity``). Default is always
-        ``GRID`` / ``grid_electricity`` when present.
+        The full carrier list comes from the scenario's ``ENERGY_CARRIERS.csv``
+        (plus ``SOLAR`` as a routing-only carrier that isn't in the feedstock
+        library). The dropdown is then filtered to just the carriers whose
+        columns actually appear in this what-if's hourly files, so users
+        only see carriers with data. Default selection is the scenario's
+        electricity carrier (``GRID`` unless renamed).
         """
         whatif_name = parameters.get('whatif_name')
         if not whatif_name:
@@ -282,17 +259,29 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         if not columns:
             return columns
 
+        from cea.technologies.energy_carriers import (
+            available_carriers, electricity_carrier,
+        )
+        try:
+            known = available_carriers(self.locator) | {'SOLAR'}
+        except Exception:
+            known = {'SOLAR'}
+        try:
+            default_carrier = electricity_carrier(self.locator)
+        except Exception:
+            default_carrier = _DEFAULT_CARRIER_FALLBACK
+
         present = set()
         for col in columns:
             carrier = _column_to_carrier(col)
             if carrier:
                 present.add(carrier)
 
-        available = [c for c in _ENERGY_CARRIERS if c in present]
+        available = sorted(known & present)
         if not available:
             return []
 
-        default = _DEFAULT_CARRIER if _DEFAULT_CARRIER in available else available[0]
+        default = default_carrier if default_carrier in available else available[0]
         return {
             "choices": [
                 {"value": c, "label": c}
@@ -393,13 +382,15 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
 
         raw_selection = parameters['data-column']
         if isinstance(raw_selection, list):
-            selected = [c for c in raw_selection if c in _ENERGY_CARRIERS]
+            selected = list(raw_selection)
         elif isinstance(raw_selection, str):
-            selected = [raw_selection] if raw_selection in _ENERGY_CARRIERS else []
+            selected = [raw_selection]
         else:
             selected = []
-        # Canonical order so stacks are predictable regardless of pick order.
-        selected = [c for c in _ENERGY_CARRIERS if c in selected]
+        # Stable alphabetical order so stacks are predictable regardless of
+        # pick order. Carriers are validated against the dynamic list from
+        # ``_get_data_columns`` further down.
+        selected = sorted(dict.fromkeys(selected))
         is_stacked = len(selected) > 1
 
         empty_range = {
@@ -409,7 +400,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
 
         if not whatif_name or not selected:
             fallback = selected[0] if selected else None
-            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            colour_pair = _CARRIER_COLOURS.get(fallback, _DEFAULT_CARRIER_COLOURS)
             display_carrier = fallback if fallback else None
             return {
                 "data": [],
@@ -435,7 +426,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         summary = self._read_entity_summary(whatif_name)
         if summary is None or 'name' not in summary.columns:
             fallback = selected[0]
-            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            colour_pair = _CARRIER_COLOURS.get(fallback, _DEFAULT_CARRIER_COLOURS)
             return {
                 "data": [],
                 "properties": {
@@ -467,7 +458,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         # branches below. `fallback` is always non-None here because
         # `selected` was already validated earlier in the function.
         def _empty_output(fallback):
-            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            colour_pair = _CARRIER_COLOURS.get(fallback, _DEFAULT_CARRIER_COLOURS)
             return {
                 "data": [],
                 "properties": {
@@ -582,7 +573,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
 
         if not entities:
             fallback = selected[0]
-            colour_pair = _CARRIER_COLOURS.get(fallback, ('brown_lighter', 'brown'))
+            colour_pair = _CARRIER_COLOURS.get(fallback, _DEFAULT_CARRIER_COLOURS)
             return {
                 "data": [],
                 "properties": {
@@ -604,7 +595,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         if not is_stacked:
             carrier = selected[0]
             display_carrier = carrier
-            colour_pair = _CARRIER_COLOURS.get(carrier, ('brown_lighter', 'brown'))
+            colour_pair = _CARRIER_COLOURS.get(carrier, _DEFAULT_CARRIER_COLOURS)
             data_points = [
                 {
                     "position": e["position"],
@@ -654,7 +645,7 @@ class EnergyByCarrierMapLayer(WhatifDeletableMixin, MapLayer):
         # Stacked-multi path: one ColumnLayer per carrier on the frontend.
         categories_payload = []
         for cat in selected:
-            _, darker = _CARRIER_COLOURS.get(cat, ('brown_lighter', 'brown'))
+            _, darker = _CARRIER_COLOURS.get(cat, _DEFAULT_CARRIER_COLOURS)
             hex_colour = color_to_hex(darker)
             r = int(hex_colour[1:3], 16)
             g = int(hex_colour[3:5], 16)
@@ -1204,29 +1195,7 @@ _OPERATION_SERVICES = [
     'solar_thermal',
 ]
 
-# Carriers surfaced to the user as lowercase snake_case display names
-# (matches [plots-operational-emissions]'s energy-carriers choices).
-_OPERATIONAL_ENERGY_CARRIERS = [
-    'grid_electricity', 'natural_gas', 'biogas', 'dry_biomass', 'wet_biomass',
-    'coal', 'wood', 'oil', 'hydrogen',
-]
-
-# Display-name → internal UPPERCASE code, used when we need to look up the
-# raw CSV column tokens (e.g. `Qhs_sys_NATURALGAS_kgCO2e`).
-_CARRIER_DISPLAY_TO_INTERNAL = {
-    'grid_electricity': 'GRID',
-    'natural_gas':      'NATURALGAS',
-    'biogas':           'BIOGAS',
-    'dry_biomass':      'DRYBIOMASS',
-    'wet_biomass':      'WETBIOMASS',
-    'coal':             'COAL',
-    'wood':             'WOOD',
-    'oil':              'OIL',
-    'hydrogen':         'HYDROGEN',
-}
-_CARRIER_INTERNAL_TO_DISPLAY = {v: k for k, v in _CARRIER_DISPLAY_TO_INTERNAL.items()}
-
-# Colour gradient per service / carrier display name for the stacked ColumnLayer.
+# Colour gradient per service display name for the stacked ColumnLayer.
 _OPERATION_SERVICE_COLOURS = {
     'electricity':           ('green_lighter', 'green'),
     'space_heating':         ('red_lighter', 'red'),
@@ -1239,17 +1208,12 @@ _OPERATION_SERVICE_COLOURS = {
     'solar_pvt_thermal':     ('purple_lighter', 'purple'),
     'solar_thermal':         ('yellow_light', 'brown'),
 }
-_OPERATIONAL_CARRIER_COLOURS = {
-    'grid_electricity': ('red_lighter', 'red'),
-    'natural_gas':      ('brown_lighter', 'brown'),
-    'biogas':           ('green_lighter', 'green'),
-    'dry_biomass':      ('green_light', 'green'),
-    'wet_biomass':      ('green_light', 'brown'),
-    'coal':             ('black', 'black'),
-    'wood':             ('brown_light', 'brown'),
-    'oil':              ('grey_lighter', 'grey'),
-    'hydrogen':         ('blue_lighter', 'blue'),
-}
+# Per-carrier colours for the stacked ColumnLayer. Keys are UPPERCASE
+# ``feedstock_file`` codes (same as ``ENERGY_CARRIERS.csv``). Each darker
+# colour is unique — shared with :data:`_CARRIER_COLOURS` above so a
+# given carrier renders the same way in both map layers. User-added
+# carriers fall back to :data:`_DEFAULT_CARRIER_COLOURS` (defined above).
+_OPERATIONAL_CARRIER_COLOURS = _CARRIER_COLOURS
 
 
 def _op_column_to_service(column: str) -> Optional[str]:
@@ -1305,10 +1269,14 @@ def _op_column_to_service(column: str) -> Optional[str]:
 
 
 def _op_column_to_carrier(column: str) -> Optional[str]:
-    """Map an operational-emissions column to an energy carrier display
-    name, or None.
+    """Map an operational-emissions column to its carrier code (``GRID``,
+    ``NATURALGAS``, …) or None.
 
     Excludes solar offsets since those are not a physical fuel carrier.
+    The carrier sits at the last underscore-separated token before the
+    ``_kgCO2e`` suffix (e.g. ``Qhs_sys_NATURALGAS_kgCO2e``). Callers
+    filter against the scenario's ``ENERGY_CARRIERS.csv`` so a spurious
+    non-carrier token can't leak through.
     """
     if not column.endswith('_kgCO2e'):
         return None
@@ -1318,8 +1286,7 @@ def _op_column_to_carrier(column: str) -> Optional[str]:
     parts = stripped.split('_')
     if not parts:
         return None
-    internal = parts[-1]
-    return _CARRIER_INTERNAL_TO_DISPLAY.get(internal)
+    return parts[-1] or None
 
 
 class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
@@ -1381,12 +1348,17 @@ class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
                     present.add(svc)
             available = [s for s in _OPERATION_SERVICES if s in present]
         else:  # 'energy_carrier'
+            from cea.technologies.energy_carriers import available_carriers
+            try:
+                known = available_carriers(self.locator)
+            except Exception:
+                known = set()
             present = set()
             for col in columns:
                 car = _op_column_to_carrier(col)
-                if car:
+                if car and car in known:
                     present.add(car)
-            available = [c for c in _OPERATIONAL_ENERGY_CARRIERS if c in present]
+            available = sorted(present)
 
         if not available:
             return []
@@ -1509,7 +1481,13 @@ class OperationalEmissionsMapLayer(WhatifDeletableMixin, MapLayer):
             col_to_key = _op_column_to_service
             colour_map = _OPERATION_SERVICE_COLOURS
         else:
-            allowed = _OPERATIONAL_ENERGY_CARRIERS
+            # Carriers are the scenario's ``ENERGY_CARRIERS.csv`` codes;
+            # user-added carriers appear here without code changes.
+            from cea.technologies.energy_carriers import available_carriers
+            try:
+                allowed = sorted(available_carriers(self.locator))
+            except Exception:
+                allowed = []
             col_to_key = _op_column_to_carrier
             colour_map = _OPERATIONAL_CARRIER_COLOURS
 

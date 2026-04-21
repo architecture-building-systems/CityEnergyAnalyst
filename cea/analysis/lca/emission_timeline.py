@@ -442,7 +442,7 @@ class BuildingEmissionTimeline:
         operational_multi_years: pd.DataFrame,
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
     ) -> list[str]:
-        """Apply GRID policy in-place (if any) to solar offset columns, and return the column names.
+        """Apply electricity-carrier policy in-place (if any) to solar offset columns, and return the column names.
 
         Handles all solar offset types:
         - PV_E_offset_kgCO2e (electric, from PV panels)
@@ -451,8 +451,10 @@ class BuildingEmissionTimeline:
         - SC_Q_offset_kgCO2e (thermal, from SC panels)
         - Legacy: PV_{code}_GRID_offset_kgCO2e / PV_{code}_GRID_export_kgCO2e
         """
+        from cea.technologies.energy_carriers import electricity_carrier
+        elec = electricity_carrier(self.locator)
         list_final_pv_cols: list[str] = []
-        # Electric offsets (PV_E, PVT_E) discount with GRID decarbonisation policy
+        # Electric offsets (PV_E, PVT_E) discount with the grid decarbonisation policy
         _electric_prefixes = ("PV_E", "PVT_E")
         for col in operational_multi_years.columns:
             if not col.endswith("_kgCO2e"):
@@ -463,12 +465,12 @@ class BuildingEmissionTimeline:
             )
             if not is_solar_offset:
                 continue
-            # Apply GRID decarbonisation to electric offset columns
+            # Apply the electricity-carrier decarbonisation policy to electric offsets
             is_electric = any(col.startswith(p) for p in _electric_prefixes) or (
                 col.startswith("PV_") and ("_offset_" in col or "_export_" in col)
             )
-            if is_electric and feedstock_policies and "GRID" in feedstock_policies:
-                ref, tgt, frac = feedstock_policies["GRID"]
+            if is_electric and feedstock_policies and elec in feedstock_policies:
+                ref, tgt, frac = feedstock_policies[elec]
                 operational_multi_years[col] = self.discount_over_year(
                     operational_multi_years[col], ref, tgt, frac
                 )

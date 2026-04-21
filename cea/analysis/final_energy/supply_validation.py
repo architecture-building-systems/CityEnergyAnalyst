@@ -14,18 +14,20 @@ import os
 import pandas as pd
 
 
-# Maps component code prefix → (CSV filename, temperature column).
-# Used to look up a component's design supply temperature.
-# Longer prefixes are checked first to avoid false matches.
-COMPONENT_SUPPLY_TEMP_MAP = {
-    'OEHR': ('COGENERATION_PLANTS', 'T_water_out_design'),
-    'BO':   ('BOILERS',             'T_water_out_rating'),
-    'HP':   ('HEAT_PUMPS',          'T_cond_design'),
-}
-
-# DC components: evaporator design temperature (what the chiller can supply on the cold side).
-COMPONENT_DC_SUPPLY_TEMP_MAP = {
-    'CH':   ('VAPOR_COMPRESSION_CHILLERS', 'T_evap_design'),
+# Maps a component's CONVERSION table name → the column that holds its
+# design supply temperature. The table is resolved dynamically from the
+# component code via ``get_component_table`` (which scans every CSV in
+# COMPONENTS/CONVERSION/), so user-added codes under an existing table
+# are picked up without a code change.
+#
+# - DH (hot side): boilers, heat pumps, cogen plants.
+# - DC (cold side): the evaporator design temperature of a vapour-
+#   compression chiller.
+_TABLE_TO_SUPPLY_TEMP_COL = {
+    'COGENERATION_PLANTS':         'T_water_out_design',
+    'BOILERS':                     'T_water_out_rating',
+    'HEAT_PUMPS':                  'T_cond_design',
+    'VAPOR_COMPRESSION_CHILLERS':  'T_evap_design',
 }
 
 
@@ -757,49 +759,42 @@ def load_assembly_components(assembly_code, locator):
     }
 
 
-def get_component_design_supply_temperature(component_code, locator):
-    """
-    Look up the design supply temperature of a heating component.
+def _lookup_design_temperature(component_code, locator):
+    """Resolve a component code to its design-temperature value.
 
-    Uses COMPONENT_SUPPLY_TEMP_MAP to find the correct CSV and column.
-    Returns None for unknown component types (check is silently skipped).
-
-    :param component_code: Component code, e.g. 'BO6', 'HP3'
-    :param locator: InputLocator instance
-    :return: Design supply temperature in degrees C, or None if unknown type
+    Uses :func:`cea.technologies.components.get_component_table` to route
+    the code to its CONVERSION CSV, then reads the temperature column
+    associated with that table in :data:`_TABLE_TO_SUPPLY_TEMP_COL`.
+    Returns ``None`` when the code doesn't correspond to a table we
+    have a design-temperature convention for (callers treat this as
+    "check silently skipped").
     """
     if not component_code:
         return None
-
+    from cea.technologies.components import get_component_table
     code = str(component_code).strip()
-
-    # Check longer prefixes first to avoid false matches (e.g. OEHR before O)
-    matched_entry = None
-    for prefix in sorted(COMPONENT_SUPPLY_TEMP_MAP.keys(), key=len, reverse=True):
-        if code.startswith(prefix):
-            matched_entry = COMPONENT_SUPPLY_TEMP_MAP[prefix]
-            break
-
-    if matched_entry is None:
+    table_name = get_component_table(code, locator)
+    if table_name is None:
         return None
-
-    csv_name, temp_col = matched_entry
-    filepath = locator.get_db4_components_conversion_conversion_technology_csv(csv_name)
-
+    temp_col = _TABLE_TO_SUPPLY_TEMP_COL.get(table_name)
+    if temp_col is None:
+        return None
+    filepath = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
     if not os.path.exists(filepath):
         return None
-
     df = pd.read_csv(filepath)
     row = df[df['code'] == code]
-
     if row.empty:
         return None
-
     val = row.iloc[0].get(temp_col)
     if pd.isna(val):
         return None
-
     return float(val)
+
+
+def get_component_design_supply_temperature(component_code, locator):
+    """Design supply temperature of a heating component (BO, HP, OEHR, …)."""
+    return _lookup_design_temperature(component_code, locator)
 
 
 def validate_component_levels_match(hs_code, dhw_code, locator):
@@ -925,44 +920,8 @@ def validate_assembly_temperature_vs_network(assembly_code, locator, dh_temperat
 
 
 def get_component_dc_supply_temperature(component_code, locator):
-    """
-    Look up the design supply temperature of a cooling component (evaporator side).
-
-    :param component_code: Component code, e.g. 'CH1', 'CH2'
-    :param locator: InputLocator instance
-    :return: Design evaporator temperature in degrees C, or None if unknown type
-    """
-    if not component_code:
-        return None
-
-    code = str(component_code).strip()
-
-    matched_entry = None
-    for prefix in sorted(COMPONENT_DC_SUPPLY_TEMP_MAP.keys(), key=len, reverse=True):
-        if code.startswith(prefix):
-            matched_entry = COMPONENT_DC_SUPPLY_TEMP_MAP[prefix]
-            break
-
-    if matched_entry is None:
-        return None
-
-    csv_name, temp_col = matched_entry
-    filepath = locator.get_db4_components_conversion_conversion_technology_csv(csv_name)
-
-    if not os.path.exists(filepath):
-        return None
-
-    df = pd.read_csv(filepath)
-    row = df[df['code'] == code]
-
-    if row.empty:
-        return None
-
-    val = row.iloc[0].get(temp_col)
-    if pd.isna(val):
-        return None
-
-    return float(val)
+    """Evaporator design temperature of a cooling component (CH, …)."""
+    return _lookup_design_temperature(component_code, locator)
 
 
 def validate_plant_temperature_vs_network_results(locator, network_name, config):

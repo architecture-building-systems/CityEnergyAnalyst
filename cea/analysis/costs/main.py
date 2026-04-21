@@ -19,6 +19,8 @@ import pandas as pd
 import cea.config
 from cea.inputlocator import InputLocator
 from cea.analysis.costs.equations import calc_capex_annualized
+from cea.technologies.components import get_component_table
+from cea.technologies.energy_carriers import electricity_carrier
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -29,49 +31,36 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# Carrier name → feedstock CSV file name mapping
-CARRIER_TO_FEEDSTOCK = {
-    'NATURALGAS': 'NATURALGAS',
-    'OIL': 'OIL',
-    'COAL': 'COAL',
-    'WOOD': 'WOOD',
-    'GRID': 'GRID',
-}
-
-# Component code prefix → COMPONENTS table name
-# IMPORTANT: longer prefixes (PVT, HEX) must appear before shorter overlapping ones (PV)
-COMPONENT_PREFIX_TO_TABLE = {
-    'BO': 'BOILERS',
-    'HP': 'HEAT_PUMPS',
-    'CH': 'VAPOR_COMPRESSION_CHILLERS',
-    'CT': 'COOLING_TOWERS',
-    'AC': 'ABSORPTION_CHILLERS',
-    'PU': 'HYDRAULIC_PUMPS',
-    'HEX': 'HEAT_EXCHANGERS',
-    'PVT': 'PHOTOVOLTAIC_THERMAL_PANELS',  # must be before 'PV'
-    'PV': 'PHOTOVOLTAIC_PANELS',
-    'SC': 'SOLAR_COLLECTORS',
-}
-
-
 def _get_component_row(component_code, locator, capacity_W=None):
-    """Return the component row for the given code, selecting the correct capacity-range segment."""
-    for prefix, table_name in COMPONENT_PREFIX_TO_TABLE.items():
-        if component_code.upper().startswith(prefix):
-            path = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
-            df = pd.read_csv(path)
-            rows = df[df['code'] == component_code]
-            if rows.empty:
-                return None, table_name
-            if capacity_W is None or len(rows) == 1:
-                return rows.iloc[0], table_name
-            # Select the piecewise segment that covers this capacity
-            matching = rows[(rows['cap_min'] <= capacity_W) & (rows['cap_max'] > capacity_W)]
-            if not matching.empty:
-                return matching.iloc[0], table_name
-            # Above all segments: use the last (highest-capacity) row
-            return rows.iloc[-1], table_name
-    raise ValueError(f"Unknown component code prefix: {component_code}")
+    """Return the component row for the given code, selecting the correct
+    capacity-range segment.
+
+    Data-driven: uses :func:`cea.technologies.components.get_component_table`
+    to discover which CSV owns this code (scans every file under
+    ``COMPONENTS/CONVERSION/``), then picks the piecewise-cost-curve
+    segment matching ``capacity_W`` if the table has multiple rows per
+    code.
+    """
+    table_name = get_component_table(component_code, locator)
+    if table_name is None:
+        raise ValueError(
+            f"Component code {component_code!r} not found in any CSV under "
+            f"COMPONENTS/CONVERSION/. Check the supply assembly for a typo, "
+            f"or add a row for this code to the appropriate table."
+        )
+    path = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
+    df = pd.read_csv(path)
+    rows = df[df['code'] == component_code]
+    if rows.empty:
+        return None, table_name
+    if capacity_W is None or len(rows) == 1:
+        return rows.iloc[0], table_name
+    # Select the piecewise segment that covers this capacity
+    matching = rows[(rows['cap_min'] <= capacity_W) & (rows['cap_max'] > capacity_W)]
+    if not matching.empty:
+        return matching.iloc[0], table_name
+    # Above all segments: use the last (highest-capacity) row
+    return rows.iloc[-1], table_name
 
 
 def _calc_cost_curve(quantity, row):
@@ -129,12 +118,19 @@ def _calc_component_cost(component_code, capacity_kW, locator):
 def _mean_feedstock_price(carrier, locator):
     """
     Return mean annual variable buy price (USD/kWh) for a carrier.
-    Feedstock files have 24 hourly rows; take the mean.
+
+    The feedstock CSV shares its filename with the carrier name
+    (e.g. ``FEEDSTOCKS_LIBRARY/NATURALGAS.csv`` for ``NATURALGAS``) —
+    a convention set by ``ENERGY_CARRIERS.csv``'s ``feedstock_file``
+    column. Returns 0.0 for carriers without a feedstock file (e.g.
+    ``SOLAR``, ``DH``, ``DC``) or when the CSV lacks the price column.
     """
-    feedstock_name = CARRIER_TO_FEEDSTOCK.get(carrier)
-    if not feedstock_name:
+    if not carrier:
         return 0.0
-    path = locator.get_db4_components_feedstocks_feedstocks_csv(feedstock_name)
+    from cea.technologies.energy_carriers import available_carriers
+    if carrier not in available_carriers(locator):
+        return 0.0
+    path = locator.get_db4_components_feedstocks_feedstocks_csv(carrier)
     if not os.path.exists(path):
         return 0.0
     df = pd.read_csv(path)
@@ -271,9 +267,13 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     # runs so the backup BO/HP cost is attributed to this service. SOLAR has
     # no variable OPEX, so nothing is lost on the running-cost side.
     primary_type = cfg.get('type')
+    # Route via the scanner rather than code prefixes: a user-added SC/PVT
+    # code under SOLAR_COLLECTORS / PHOTOVOLTAIC_THERMAL_PANELS will be
+    # recognised even if its code doesn't start with 'SC'/'PVT'.
+    primary_table = get_component_table(component_code, locator) if component_code else None
     primary_is_solar = (
         primary_type in ('SC', 'PVT')
-        or component_code.startswith(('SC', 'PVT'))
+        or primary_table in ('SOLAR_COLLECTORS', 'PHOTOVOLTAIC_THERMAL_PANELS')
     )
 
     if not primary_is_solar:
@@ -301,8 +301,10 @@ def _process_building_service(building_name, service_label, supply_cfg_key, supp
     for comp_code in [cfg.get('secondary_component'), cfg.get('tertiary_component')]:
         if not comp_code:
             continue
-        # Cooling towers (CT*) are sized for rejection load: Q_cooling + W_compressor
-        if comp_code.upper().startswith('CT'):
+        # Cooling towers are sized for rejection load: Q_cooling + W_compressor.
+        # Route via the scanner so any user-added code in COOLING_TOWERS.csv
+        # (not only the 'CT*' convention) gets the correct sizing.
+        if get_component_table(comp_code, locator) == 'COOLING_TOWERS':
             comp_capacity_kW = peak_kW + capacity_kW
         else:
             comp_capacity_kW = capacity_kW
@@ -366,16 +368,17 @@ def _process_booster_services(building_name, booster_data, locator):
 def _process_electricity_service(building_name, supply_cfg, peak_kW, e_sys_mwh, locator):
     """Compute variable OPEX for electricity (grid connection — no CAPEX).
 
-    :param e_sys_mwh: Annual MWh from E_sys_GRID_kWh only (plug loads, not cooling electricity).
+    :param e_sys_mwh: Annual MWh from E_sys_{electricity}_kWh (plug loads, not cooling electricity).
     """
     cfg = supply_cfg.get('electricity')
     assembly_code = cfg.get('assembly_code', '') if cfg else ''
-    price = _mean_feedstock_price('GRID', locator)
+    elec = electricity_carrier(locator)
+    price = _mean_feedstock_price(elec, locator)
     opex_var_a = e_sys_mwh * 1000.0 * price
     return {
         'name': building_name, 'service': 'E', 'scale': 'BUILDING',
-        'assembly_code': assembly_code, 'component_code': 'GRID',
-        'carrier': 'GRID', 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
+        'assembly_code': assembly_code, 'component_code': elec,
+        'carrier': elec, 'peak_service_kW': peak_kW, 'capacity_kW': 0.0,
         'capex_total_USD': 0.0, 'capex_a_USD': 0.0,
         'opex_fixed_a_USD': 0.0, 'opex_var_a_USD': opex_var_a, 'TAC_USD': opex_var_a,
     }
@@ -443,8 +446,10 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
     for comp_code in [pc.get('secondary_component'), pc.get('tertiary_component')]:
         if not comp_code:
             continue
-        # Cooling towers (CT*) are sized for rejection load: Q_cooling + W_compressor
-        if comp_code.upper().startswith('CT'):
+        # Cooling towers are sized for rejection load: Q_cooling + W_compressor.
+        # Route via the scanner so any user-added code in COOLING_TOWERS.csv
+        # (not only the 'CT*' convention) gets the correct sizing.
+        if get_component_table(comp_code, locator) == 'COOLING_TOWERS':
             comp_capacity_kW = peak_kW + capacity_kW
         else:
             comp_capacity_kW = capacity_kW
@@ -486,11 +491,13 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
             print(f"    Warning: CAPEX calc failed for plant {plant_name} pump (PU1): {e}")
             capex_pu, capex_a_pu, opex_fixed_pu = 0.0, 0.0, 0.0
 
-        # OPEX for pumping electricity (GRID) — only when primary carrier is not GRID,
-        # since DC plants already bundle pumping into GRID_MWh with the chiller electricity.
-        if dominant_carrier != 'GRID':
-            grid_mwh = plant_row.get('GRID_MWh', 0.0) or 0.0
-            grid_price = _mean_feedstock_price('GRID', locator)
+        # OPEX for pumping electricity — only when primary carrier is not the
+        # electricity carrier, since DC plants already bundle pumping into the
+        # electricity total with the chiller electricity.
+        elec = electricity_carrier(locator)
+        if dominant_carrier != elec:
+            grid_mwh = plant_row.get(f'{elec}_MWh', 0.0) or 0.0
+            grid_price = _mean_feedstock_price(elec, locator)
             pumping_opex = grid_mwh * 1000.0 * grid_price
         else:
             pumping_opex = 0.0
@@ -499,7 +506,7 @@ def _process_plant_row(plant_row, plant_configs, whatif_name, network_name, loca
         rows.append({
             'name': plant_name, 'service': f'{service_label}_pumping', 'scale': 'DISTRICT',
             'assembly_code': assembly_code, 'component_code': 'PU1',
-            'carrier': 'GRID', 'peak_service_kW': peak_pumping_kW, 'capacity_kW': peak_pumping_kW,
+            'carrier': elec, 'peak_service_kW': peak_pumping_kW, 'capacity_kW': peak_pumping_kW,
             'capex_total_USD': capex_pu, 'capex_a_USD': capex_a_pu,
             'opex_fixed_a_USD': opex_fixed_pu, 'opex_var_a_USD': pumping_opex, 'TAC_USD': tac_pu,
         })

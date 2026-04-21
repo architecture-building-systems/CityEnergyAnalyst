@@ -171,7 +171,18 @@ demand_metrics = [
 ]
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
 
-final_energy_metrics = ['grid_electricity', 'natural_gas', 'oil', 'coal', 'wood']
+def _get_final_energy_metrics(locator):
+    """Carrier codes defined in the scenario's ENERGY_CARRIERS.csv.
+
+    Used as the non-analytics whitelist for the ``plot-final-energy``
+    form. Empty on any I/O error — ``get_summary_results_csv_path`` then
+    falls through to the analytics-path check instead of crashing.
+    """
+    try:
+        from cea.technologies.energy_carriers import available_carriers
+        return sorted(available_carriers(locator))
+    except Exception:
+        return []
 
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
@@ -185,7 +196,7 @@ def get_plot_metrics_dict(locator):
 
     return {
         'demand': demand_metrics,
-        'final-energy': final_energy_metrics,
+        'final-energy': _get_final_energy_metrics(locator),
         'pv': solar_metrics,
         'pvt': solar_metrics,
         'sc': solar_metrics,
@@ -222,14 +233,14 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
     reads per-building B####.csv hourly files, sums carrier columns, then aggregates
     via exec_aggregate_time_period() — the same pattern used by heat-rejection.
 
-    Carrier column mapping:
-        GRID_MWh / *_GRID_kWh      → GRID_kWh
-        NATURALGAS_MWh / *_NATURALGAS_kWh → NATURALGAS_kWh
-        OIL_MWh / *_OIL_kWh       → OIL_kWh
-        COAL_MWh / *_COAL_kWh     → COAL_kWh
-        WOOD_MWh / *_WOOD_kWh     → WOOD_kWh
+    Carrier column mapping is data-driven: every ``feedstock_file`` code in
+    the scenario's ``ENERGY_CARRIERS.csv`` becomes ``<CODE>_kWh`` in the
+    exported plot CSV. For the annual-summary fast path we read
+    ``<CODE>_MWh`` from ``final_energy_buildings.csv`` and convert; for
+    hourly paths we sum any ``*_<CODE>_kWh`` column in ``B####.csv``.
     """
     from cea.utilities.date import get_date_range_hours_from_year
+    from cea.technologies.energy_carriers import available_carriers
 
     if include_entities is None:
         include_entities = ['plants', 'buildings']
@@ -237,7 +248,10 @@ def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]
 
-    carriers = ['GRID', 'NATURALGAS', 'OIL', 'COAL', 'WOOD']
+    try:
+        carriers = sorted(available_carriers(locator))
+    except Exception:
+        carriers = []
     carrier_rename = {f'{c}_MWh': f'{c}_kWh' for c in carriers}
     multi = len(whatif_names) > 1
 
@@ -610,8 +624,8 @@ def _aggregate_op_emission_row(hdf, n=None):
             col_sum = vals.sum()
             # Parse: plant_{role}_{network_type}_{carrier}_kgCO2e
             parts = col[:-len('_kgCO2e')].split('_')
-            # parts = ['plant', 'primary', 'DH', 'NATURALGAS'] or ['plant', 'pumping', 'GRID']
-            carrier = parts[-1] if parts else 'GRID'
+            # parts = ['plant', 'primary', 'DH', 'NATURALGAS'] or ['plant', 'pumping', 'DH', 'GRID']
+            carrier = parts[-1]
             # Detect network type (DH or DC) from column name
             network_type = None
             for p in parts:
@@ -677,7 +691,7 @@ def _aggregate_op_emission_hourly(hdf, n):
         # Plant columns (e.g. plant_primary_DH_NATURALGAS_kgCO2e) → map to operation_DH / operation_DC
         if col.startswith('plant_'):
             parts = col[:-len('_kgCO2e')].split('_')
-            carrier = parts[-1] if parts else 'GRID'
+            carrier = parts[-1]
             network_type = None
             for p in parts:
                 if p in ('DH', 'DC'):

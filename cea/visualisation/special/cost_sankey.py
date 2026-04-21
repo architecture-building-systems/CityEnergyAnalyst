@@ -151,7 +151,7 @@ def _to_rgba(rgb_str, alpha=0.5):
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
-def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, normaliser=1.0):
+def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, locator, normaliser=1.0):
     """
     Transform costs_components DataFrame into a cost Sankey.
 
@@ -227,7 +227,8 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     df['_tech_display'] = df.apply(
         lambda r: component_display(
             r['component_code'] if pd.notna(r['component_code']) and str(r['component_code']).strip() != ''
-            else r.get('carrier', 'Unknown')
+            else r.get('carrier', 'Unknown'),
+            locator,
         ),
         axis=1,
     )
@@ -648,7 +649,7 @@ def main(config: cea.config.Configuration):
                 gfa = fe_df['GFA_m2'].sum() if 'GFA_m2' in fe_df.columns else 1.0
                 normaliser = gfa if gfa > 0 else 1.0
 
-        sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, normaliser)
+        sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, locator, normaliser)
         if sankey_data is None:
             slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'

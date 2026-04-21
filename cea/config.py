@@ -1566,6 +1566,29 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             return []
 
 
+class EnergyCarrierMultiChoiceParameter(MultiChoiceParameter):
+    """Multi-choice parameter of carriers defined in ``ENERGY_CARRIERS.csv``.
+
+    Choices are the distinct ``feedstock_file`` values from the scenario's
+    ``ENERGY_CARRIERS.csv`` — typically ``GRID``, ``NATURALGAS``, ``OIL``,
+    ``COAL``, ``WOOD``, ``BIOGAS``, ``WETBIOMASS``, … Users who add or
+    rename feedstocks in the CSV get the new names here without any code
+    change. Empty means "all available carriers".
+    """
+
+    empty_means_all = True
+    strict_validation = False
+
+    @property
+    def _choices(self):
+        try:
+            locator = cea.inputlocator.InputLocator(self.config.scenario)
+            from cea.technologies.energy_carriers import available_carriers
+            return sorted(available_carriers(locator))
+        except Exception:
+            return []
+
+
 class ComponentMultiChoiceParameter(MultiChoiceParameter):
     """
     Multi-choice parameter that dynamically lists supply components found in
@@ -1608,7 +1631,7 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
                         for key in ('primary_component', 'secondary_component', 'tertiary_component'):
                             code = plant_cfg.get(key, '')
                             if code:
-                                components.add(_component_display(code))
+                                components.add(_component_display(code, locator))
                         # Always include Pump if network exists
                         components.add('Pump')
                 if 'building' in scales:
@@ -1621,7 +1644,7 @@ class ComponentMultiChoiceParameter(MultiChoiceParameter):
                             for key in ('primary_component', 'secondary_component', 'tertiary_component'):
                                 code = svc_cfg.get(key, '')
                                 if code:
-                                    components.add(_component_display(code))
+                                    components.add(_component_display(code, locator))
                 if components:
                     component_sets.append(components)
             if not component_sets:
