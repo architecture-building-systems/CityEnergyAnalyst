@@ -13,14 +13,29 @@ from cea.technologies.thermal_network.common.run_loop import (
 
 def main(config: cea.config.Configuration):
     """
-    Run Thermal Network Part 2: Flow & Sizing (Simplified Model)
+    Entry point for Part 2a (single-phase). Each selected network-name
+    is run as an independent single-phase simulation.
 
-    Supports both single-phase and multi-phase modes based on configuration.
+    Part 2b (multi-phase) has its own entry point in
+    ``main_multi_phase.py`` that delegates back here with
+    ``multi_phase=True``; the two scripts share ``_run``.
+    """
+    return _run(config, multi_phase=False)
+
+
+def _run(config: cea.config.Configuration, *, multi_phase: bool):
+    """
+    Shared simplified-model runner. Dispatches to the multi-phase
+    pipeline or the single-phase network_types loop based on the
+    caller's explicit intent (``multi_phase``), not on ambient config
+    state.
     """
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    network_name, network_names = validate_and_resolve_mode(config, locator)
+    network_name, network_names = validate_and_resolve_mode(
+        config, locator, multi_phase=multi_phase,
+    )
 
-    if network_names is not None:  # multi-phase
+    if network_names is not None:  # multi-phase (Part 2b)
         from cea.technologies.thermal_network.common.phasing import run_multi_phase
         return run_multi_phase(config, locator, network_names, model_type='simplified')
 
