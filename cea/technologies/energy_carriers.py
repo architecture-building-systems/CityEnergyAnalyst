@@ -32,7 +32,7 @@ from typing import Set
 import pandas as pd
 
 __author__ = "Zhongming Shi"
-__copyright__ = "UUEN PTE. LTD."
+__copyright__ = "Copyright 2026, UUEN PTE. LTD."
 __credits__ = ["Zhongming Shi"]
 __license__ = "MIT"
 __version__ = "0.1"
