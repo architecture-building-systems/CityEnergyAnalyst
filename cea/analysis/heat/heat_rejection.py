@@ -11,7 +11,6 @@ Data sources (sole source of truth):
 - Plant hourly files: thermal load and carrier flows for district plants
 """
 
-import json
 import os
 
 import pandas as pd
