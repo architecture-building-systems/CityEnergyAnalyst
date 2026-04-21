@@ -29,15 +29,6 @@ __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-# Carrier name → feedstock CSV file name mapping
-CARRIER_TO_FEEDSTOCK = {
-    'NATURALGAS': 'NATURALGAS',
-    'OIL': 'OIL',
-    'COAL': 'COAL',
-    'WOOD': 'WOOD',
-    'GRID': 'GRID',
-}
-
 # Component code prefix → COMPONENTS table name
 # IMPORTANT: longer prefixes (PVT, HEX) must appear before shorter overlapping ones (PV)
 COMPONENT_PREFIX_TO_TABLE = {
@@ -129,12 +120,19 @@ def _calc_component_cost(component_code, capacity_kW, locator):
 def _mean_feedstock_price(carrier, locator):
     """
     Return mean annual variable buy price (USD/kWh) for a carrier.
-    Feedstock files have 24 hourly rows; take the mean.
+
+    The feedstock CSV shares its filename with the carrier name
+    (e.g. ``FEEDSTOCKS_LIBRARY/NATURALGAS.csv`` for ``NATURALGAS``) —
+    a convention set by ``ENERGY_CARRIERS.csv``'s ``feedstock_file``
+    column. Returns 0.0 for carriers without a feedstock file (e.g.
+    ``SOLAR``, ``DH``, ``DC``) or when the CSV lacks the price column.
     """
-    feedstock_name = CARRIER_TO_FEEDSTOCK.get(carrier)
-    if not feedstock_name:
+    if not carrier:
         return 0.0
-    path = locator.get_db4_components_feedstocks_feedstocks_csv(feedstock_name)
+    from cea.technologies.energy_carriers import available_carriers
+    if carrier not in available_carriers(locator):
+        return 0.0
+    path = locator.get_db4_components_feedstocks_feedstocks_csv(carrier)
     if not os.path.exists(path):
         return 0.0
     df = pd.read_csv(path)

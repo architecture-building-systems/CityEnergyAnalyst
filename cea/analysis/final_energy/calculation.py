@@ -535,7 +535,7 @@ def load_component_info(
         component = components.iloc[0]
 
         return {
-            'carrier': map_fuel_code_to_carrier(component['fuel_code']),
+            'carrier': map_fuel_code_to_carrier(component['fuel_code'], locator),
             'efficiency': component['min_eff_rating']
         }
 
@@ -658,25 +658,24 @@ def derive_plant_config(
     return None
 
 
-def map_fuel_code_to_carrier(fuel_code: str) -> str:
+def map_fuel_code_to_carrier(fuel_code: str, locator) -> str:
     """
-    Map database fuel codes to carrier names.
+    Map a component's ``fuel_code`` to its carrier name.
 
-    :param fuel_code: Fuel code from database (e.g., 'Cgas', 'Coil', 'E230AC')
-    :return: Carrier name (e.g., 'NATURALGAS', 'OIL', 'GRID')
+    Data-driven: reads the scenario's ``ENERGY_CARRIERS.csv`` and returns
+    the carrier named in that row's ``feedstock_file`` column. Users can
+    add new fuel codes (and new carriers) by extending that CSV and the
+    matching ``FEEDSTOCKS_LIBRARY/{name}.csv`` — no Python change needed.
+
+    :param fuel_code: Fuel code from the component CSV (e.g. ``'Cgas'``,
+        ``'Cwbm'``, ``'E230AC'``).
+    :param locator: Active :class:`InputLocator` — used to reach the
+        scenario's ``ENERGY_CARRIERS.csv``.
+    :return: Carrier name (e.g. ``'NATURALGAS'``, ``'WETBIOMASS'``,
+        ``'GRID'``).
     """
-    fuel_mapping = {
-        'Cgas': 'NATURALGAS',
-        'Coil': 'OIL',
-        'Ccoa': 'COAL',
-        'Cwod': 'WOOD',
-        'E230AC': 'GRID',
-    }
-
-    if fuel_code not in fuel_mapping:
-        raise ValueError(f"Unknown fuel code: {fuel_code}")
-
-    return fuel_mapping[fuel_code]
+    from cea.technologies.energy_carriers import carrier_from_fuel_code
+    return carrier_from_fuel_code(locator, fuel_code)
 
 
 def load_whatif_supply_configuration(

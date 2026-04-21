@@ -26,7 +26,6 @@ __maintainer__ = "Zhongming Shi"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-FUEL_CARRIERS = {'NATURALGAS', 'OIL', 'COAL', 'WOOD'}
 
 
 def _get_ct_aux_power(tertiary_component, locator):
@@ -74,6 +73,12 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
     df = pd.read_csv(path)
 
+    # Combustible carriers for this scenario (data-driven: every row in
+    # ENERGY_CARRIERS.csv with type == 'combustible'). Cached per-scenario
+    # inside the helper, so this is cheap to call in each loop iteration.
+    from cea.technologies.energy_carriers import combustible_carriers
+    fuel_carriers = combustible_carriers(locator)
+
     demand_cols = {'Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh'}
     hs_demand = df['Qhs_sys_kWh'] if 'Qhs_sys_kWh' in df.columns else pd.Series(0.0, index=df.index)
     ww_demand = df['Qww_sys_kWh'] if 'Qww_sys_kWh' in df.columns else pd.Series(0.0, index=df.index)
@@ -98,13 +103,13 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         if col.startswith('Qhs_sys_'):
             carrier = col[len('Qhs_sys_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 # Boiler losses: fuel - demand (both in kWh)
                 hs_hr = hs_hr + (df[col] - hs_demand).clip(lower=0)
 
         elif col.startswith('Qww_sys_'):
             carrier = col[len('Qww_sys_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 ww_hr = ww_hr + (df[col] - ww_demand).clip(lower=0)
 
         elif col.startswith('Qcs_sys_'):
@@ -123,7 +128,7 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         elif col.startswith('Qhs_booster_'):
             carrier = col[len('Qhs_booster_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 eff = hs_booster_cfg.get('efficiency', 1.0) or 1.0
                 # Booster losses: col_kWh × (1 − η)
                 hs_booster_hr = hs_booster_hr + (df[col] * (1.0 - eff)).clip(lower=0)
@@ -131,7 +136,7 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         elif col.startswith('Qww_booster_'):
             carrier = col[len('Qww_booster_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 eff = ww_booster_cfg.get('efficiency', 1.0) or 1.0
                 ww_booster_hr = ww_booster_hr + (df[col] * (1.0 - eff)).clip(lower=0)
 
@@ -203,6 +208,9 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
         return pd.Series(dtype=float), [], pd.Series(dtype=str)
 
     plant_df = pd.read_csv(plant_file)
+
+    from cea.technologies.energy_carriers import combustible_carriers
+    fuel_carriers = combustible_carriers(locator)
 
     carrier = pc.get('carrier', '')
     assembly_code = pc.get('assembly_code', '')
