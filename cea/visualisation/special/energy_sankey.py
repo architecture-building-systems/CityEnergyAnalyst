@@ -40,31 +40,21 @@ __status__ = "Production"
 
 # ── Layer 0: energy carriers ──────────────────────────────────────────────────
 
+# Carrier colours come from the canonical ``CARRIER_COLOURS`` palette so
+# a given carrier renders the same way in the sankey, bar plots, and map
+# layers. Only the darker shade is used here; the sankey doesn't gradient.
+from cea.visualisation.format.plot_colours import (
+    CARRIER_COLOURS as _CANONICAL_CARRIER_COLOURS,
+    DEFAULT_CARRIER_COLOURS as _CANONICAL_DEFAULT,
+)
+
 _CARRIER_COLOURS = {
-    'NATURALGAS': COLOURS_TO_RGB['orange'],
-    'GRID':       COLOURS_TO_RGB['green'],
-    'WOOD':       COLOURS_TO_RGB['brown'],
-    'OIL':        COLOURS_TO_RGB['brown_light'],
-    'COAL':       COLOURS_TO_RGB['grey'],
-    'SOLAR':      COLOURS_TO_RGB['yellow'],
+    code: COLOURS_TO_RGB[darker]
+    for code, (_, darker) in _CANONICAL_CARRIER_COLOURS.items()
 }
-
-_CARRIER_DISPLAY = {
-    'NATURALGAS': 'Natural Gas',
-    'GRID':       'Grid Electricity',
-    'WOOD':       'Wood',
-    'OIL':        'Oil',
-    'COAL':       'Coal',
-    'SOLAR':      'Solar',
-}
-
-
-def _carrier_display(code):
-    return _CARRIER_DISPLAY.get(code, code)
-
 
 def _carrier_colour(code):
-    return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB['grey'])
+    return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB[_CANONICAL_DEFAULT[1]])
 
 
 # ── Layer 1: scale ────────────────────────────────────────────────────────────
@@ -80,14 +70,8 @@ _SCALE_COLOURS = {
 
 # ── Layer 3: services ─────────────────────────────────────────────────────────
 
-_CARRIER_ORDER = [
-    'Grid Electricity',
-    'Natural Gas',
-    'Wood',
-    'Oil',
-    'Coal',
-    'Solar',
-]
+# Layer 0 carriers render in alphabetical order; that way user-added
+# carriers slot in without a code change.
 
 _SERVICE_ORDER = [
     'Space Heating',
@@ -340,9 +324,9 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
             else:
                 totals[network_type] = {
                     '_carrier_raw': carrier_raw,
-                    'carrier': _carrier_display(carrier_raw),
-                    'primary_component': component_display(component_code) if component_code else '',
-                    'tertiary_component': component_display(tertiary_code) if tertiary_code else '',
+                    'carrier': carrier_raw,
+                    'primary_component': component_display(component_code, locator) if component_code else '',
+                    'tertiary_component': component_display(tertiary_code, locator) if tertiary_code else '',
                     'input_kWh': total_input,
                     'tertiary_kWh': total_tertiary,
                     'pumping_kWh': total_pumping,
@@ -454,7 +438,7 @@ def load_energy_flow_data(locator, whatif_name):
                         continue
                     carrier_raw = col[len(col_prefix) + 1:-4]
                     records.append({
-                        'primary_carrier':    _carrier_display(carrier_raw),
+                        'primary_carrier':    carrier_raw,
                         '_carrier_raw':       carrier_raw,
                         'plant_component':    '',
                         'network':            '',
@@ -490,17 +474,18 @@ def load_energy_flow_data(locator, whatif_name):
                     pc = plant_configs.get(network_type, {})
                     carrier_raw = pc.get('carrier') or svc_config.get('carrier', network_type)
                     if carrier_raw in ('DH', 'DC'):
-                        # DH/DC are not primary carriers — default to GRID
-                        carrier_raw = 'GRID'
-                    carrier = _carrier_display(carrier_raw)
+                        # DH/DC are not primary carriers — default to electricity
+                        from cea.technologies.energy_carriers import electricity_carrier
+                        carrier_raw = electricity_carrier(locator)
+                    carrier = carrier_raw
                     primary = pc.get('primary_component') or svc_config.get('primary_component', '')
-                    plant_comp = component_display(primary) if primary else ''
+                    plant_comp = component_display(primary, locator) if primary else ''
                     plant_input = val
                     has_plant = False
 
                 # District connections have a heat exchanger at the building boundary.
                 # The tertiary_component (e.g. CT1) belongs to the plant, not the building.
-                building_comp = component_display('HEX')
+                building_comp = component_display('HEX', locator)
 
                 records.append({
                     'primary_carrier':    carrier,
@@ -581,7 +566,7 @@ def load_energy_flow_data(locator, whatif_name):
                     comp_info = component_by_carrier.get(carrier_raw)
                     if comp_info:
                         comp_code, eta = comp_info
-                        comp = component_display(comp_code)
+                        comp = component_display(comp_code, locator)
                     else:
                         comp, eta = '', 1.0
 
@@ -621,7 +606,7 @@ def load_energy_flow_data(locator, whatif_name):
                         output_kWh = val
 
                     records.append({
-                        'primary_carrier':    _carrier_display(carrier_raw),
+                        'primary_carrier':    carrier_raw,
                         '_carrier_raw':       carrier_raw,
                         'plant_component':    '',
                         'network':            '',
@@ -658,11 +643,11 @@ def load_energy_flow_data(locator, whatif_name):
             # Read booster demand from CSV; both columns are in B####.csv
             demand_val = annual.get(bst_demand_col, carrier_val)
             records.append({
-                'primary_carrier':    _carrier_display(bst_carrier_raw),
+                'primary_carrier':    bst_carrier_raw,
                 '_carrier_raw':       bst_carrier_raw,
                 'plant_component':    '',
                 'network':            '',
-                'building_component': component_display(bst_comp_code) if bst_comp_code else '',
+                'building_component': component_display(bst_comp_code, locator) if bst_comp_code else '',
                 'scale':              'Building',
                 'service':            svc_display,
                 'value_kWh':          demand_val,
@@ -686,7 +671,7 @@ def load_energy_flow_data(locator, whatif_name):
         for surface, tech_code in solar_config.items():
             if not tech_code:
                 continue
-            comp = component_display(tech_code)
+            comp = component_display(tech_code, locator)
             parts = tech_code.split('_')
             tech_type = parts[0]  # 'PV', 'SC', or 'PVT'
 
@@ -892,7 +877,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
 
     # ── Layer 0: City ──────────────────────────────────────────────────────
     carrier_set = set(df['primary_carrier'].unique())
-    l0 = [c for c in _CARRIER_ORDER if c in carrier_set] + sorted(carrier_set - set(_CARRIER_ORDER))
+    l0 = sorted(carrier_set)
 
     # ── Layer 1: district plant components ────────────────────────────────
     l1 = (

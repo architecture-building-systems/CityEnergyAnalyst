@@ -6,23 +6,28 @@ import os
 import traceback
 
 
-def validate_and_resolve_mode(config, locator, section=None):
+def validate_and_resolve_mode(config, locator, *, multi_phase, section=None):
     """
-    Validate network count vs multi_phase_mode and return (network_name, network_names).
+    Resolve the run mode from the caller's explicit intent and return
+    ``(network_name, network_names)``.
 
-    Returns (network_name, None) for single-phase mode.
-    Returns (None, network_names) for multi-phase mode.
-    Raises ValueError on invalid configuration.
+    Returns ``(network_names, None)`` for single-phase mode (Part 2a).
+    Returns ``(None, network_names)`` for multi-phase mode (Part 2b).
+    Raises ``ValueError`` on invalid configuration.
 
-    :param section: config section to read network_name from (defaults to config.thermal_network)
+    :param multi_phase: Required. ``False`` when called from the
+        single-phase entry point (Part 2a); each selected network runs
+        as its own independent single-phase simulation. ``True`` when
+        called from the multi-phase entry point (Part 2b); the selected
+        networks are treated as phases of one evolving network, and the
+        ``thermal-network-phasing:sizing-strategy`` config is consumed
+        by the downstream multi-phase runner. Must be ≥ 2 networks.
+    :param section: config section to read ``network-name`` from
+        (defaults to ``config.thermal_network``).
     """
     if section is None:
         section = config.thermal_network
     network_names = section.network_name  # List
-    try:
-        multi_phase_mode = config.thermal_network_phasing.sizing_strategy
-    except AttributeError:
-        multi_phase_mode = False  # Default to single-phase if phasing config is missing
     num_networks = len(network_names)
 
     if num_networks == 0:
@@ -44,17 +49,28 @@ def validate_and_resolve_mode(config, locator, section=None):
         except FileNotFoundError:
             raise ValueError("Network name is required. Please select a network layout.")
 
-    elif not multi_phase_mode:
+    if not multi_phase:
+        # Part 2a — each selected network runs as its own independent
+        # single-phase simulation. `thermal-network-phasing:sizing-strategy`
+        # is not consulted here; it only governs cross-phase behaviour.
         print("\n" + "=" * 80)
         print("SINGLE-PHASE THERMAL NETWORK SIMULATION")
         print("=" * 80)
         return network_names, None
 
-    else:  # num_networks > 1 and multi_phase_mode
-        print("\n" + "=" * 80)
-        print("MULTI-PHASE THERMAL NETWORK SIMULATION")
-        print("=" * 80)
-        return None, network_names
+    # Part 2b — multi-phase requires ≥ 2 networks (one per phase).
+    if num_networks == 1:
+        raise ValueError(
+            "Multi-phase (Part 2b) requires at least 2 network names "
+            "(one per phase). You selected only one. Either select more "
+            "phases, or run Part 2a (single-phase) instead."
+        )
+
+    sizing_strategy = config.thermal_network_phasing.sizing_strategy
+    print("\n" + "=" * 80)
+    print(f"MULTI-PHASE THERMAL NETWORK SIMULATION (sizing strategy: {sizing_strategy})")
+    print("=" * 80)
+    return None, network_names
 
 
 def validate_network_name(locator, network_name):

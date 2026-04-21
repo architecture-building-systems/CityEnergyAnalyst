@@ -13,16 +13,16 @@ from cea.technologies.thermal_network.common.run_loop import (
 
 def main(config: cea.config.Configuration):
     """
-    Run Thermal Network Part 2: Flow & Sizing (Detailed Model)
+    Run Thermal Network Part 2: Flow & Sizing (Detailed Model).
 
-    Supports both single-phase and multi-phase modes based on configuration.
+    Single-phase only — there is no multi-phase variant of the detailed
+    model today, so this always calls ``validate_and_resolve_mode``
+    with ``multi_phase=False``.
     """
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    network_name, network_names = validate_and_resolve_mode(config, locator)
-
-    if network_names is not None:  # multi-phase
-        from cea.technologies.thermal_network.common.phasing import run_multi_phase
-        return run_multi_phase(config, locator, network_names, model_type='detailed')
+    network_name, _ = validate_and_resolve_mode(
+        config, locator, multi_phase=False,
+    )
 
     validate_network_name(locator, network_name)
 

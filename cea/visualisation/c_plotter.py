@@ -23,17 +23,20 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_display_name_for_column(column_name, y_metric_to_plot):
+def get_display_name_for_column(column_name, y_metric_to_plot, final_energy_carriers=None):
     """
     Map a processed column name back to its user-friendly display name.
-    
+
     For solar features, columns like 'PV_roofs_top_E_kWh/m2' should map to 'roof',
     'PVT_ET_roofs_top_E_kWh/m2' should map to 'roof (electricity)', etc.
-    
+
     Parameters:
     - column_name (str): The processed column name (e.g., 'PV_roofs_top_E_kWh/m2')
     - y_metric_to_plot (list): List of user-friendly names (e.g., ['roof', 'wall_north'])
-    
+    - final_energy_carriers (iterable, optional): Carrier codes from the
+      scenario's ``ENERGY_CARRIERS.csv`` (e.g. ``{'GRID', 'NATURALGAS'}``).
+      When provided, ``GRID_kWh`` → ``'GRID'``.
+
     Returns:
     - str: The user-friendly display name or the column name if no mapping found
     """
@@ -84,17 +87,13 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
         if column_name.startswith(base):
             return display_name
 
-    # Final energy carrier display names (match base name before unit suffix)
-    final_energy_display_names = {
-        'GRID': 'Grid Electricity',
-        'NATURALGAS': 'Natural Gas',
-        'OIL': 'Oil',
-        'COAL': 'Coal',
-        'WOOD': 'Wood',
-    }
-    for base, display_name in final_energy_display_names.items():
-        if column_name.startswith(base + '_'):
-            return display_name
+    # Final energy: legend shows the carrier code itself. Match the longest
+    # prefix first so codes that share a prefix (e.g. ``DRYBIOMASS`` vs a
+    # hypothetical ``BIOMASS``) don't alias each other.
+    if final_energy_carriers:
+        for base in sorted(final_energy_carriers, key=len, reverse=True):
+            if column_name.startswith(base + '_'):
+                return base
 
     # Solar surface mapping
     surface_mappings = {
@@ -167,6 +166,19 @@ class bar_plot:
         self.x_sorted_reversed = plot_config_general.x_sorted_reversed
         self.x_label = plot_config_general.x_label
 
+        # For final-energy plots, resolve the scenario's carrier codes once
+        # so the legend matches ``{carrier}_kWh`` columns back to the same
+        # code the user picked in the dropdown.
+        self.final_energy_carriers = []
+        if plot_cea_feature == 'final-energy' and scenario:
+            import cea.inputlocator
+            from cea.technologies.energy_carriers import available_carriers
+            locator = cea.inputlocator.InputLocator(scenario)
+            try:
+                self.final_energy_carriers = sorted(available_carriers(locator))
+            except Exception:
+                pass
+
         if plot_cea_feature in ('pv', 'sc'):
             self.appendix = f"{solar_panel_types_list[0]}"
         elif plot_cea_feature == 'pvt':
@@ -201,7 +213,8 @@ class bar_plot:
         fig = plot_faceted_bars(df, x_col='X', facet_col='X_facet', value_columns=self.y_columns_normalised,
                                 y_metric_to_plot=self.y_metric_to_plot, bool_use_rows=self.facet_by_rows,
                                 number_of_rows_or_columns=self.facet_by_numbers_wrapped,
-                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step, barmode=self.y_barmode)
+                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step, barmode=self.y_barmode,
+                                final_energy_carriers=self.final_energy_carriers)
 
         # Position legend below
         fig = position_legend_between_title_and_graph(fig, self.plot_cea_feature)
@@ -611,7 +624,8 @@ def plot_faceted_bars(
     y_min=None,
     y_max=None,
     y_step=None,
-    barmode="group"):
+    barmode="group",
+    final_energy_carriers=None):
 
     season_display_names = {
         'Spring': "<b>Spring</b> (Mar - May)",
@@ -712,7 +726,7 @@ def plot_faceted_bars(
                 # Use barmode='relative' to stack bars relative to zero
                 # This keeps positive bars above axis, negative below, in same position
                 for j, val_col in enumerate(value_columns):
-                    heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                     color_key = get_column_color(val_col)
                     bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -730,7 +744,7 @@ def plot_faceted_bars(
             else:
                 # Grouped mode - original logic
                 for j, val_col in enumerate(value_columns):
-                    heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                     color_key = get_column_color(val_col)
                     bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -797,7 +811,7 @@ def plot_faceted_bars(
             # Use barmode='relative' to stack bars relative to zero
             # This keeps positive bars above axis, negative below, in same position
             for j, val_col in enumerate(value_columns):
-                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                 color_key = get_column_color(val_col)
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -815,7 +829,7 @@ def plot_faceted_bars(
         else:
             # Grouped mode - original logic
             for j, val_col in enumerate(value_columns):
-                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                 color_key = get_column_color(val_col)
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 

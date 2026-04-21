@@ -151,7 +151,7 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 component_code = plant_cfg.get('primary_component', '')
                 if not component_code:
                     continue
-                if _component_display(component_code) != component_display:
+                if _component_display(component_code, locator) != component_display:
                     continue
 
                 network_type = plant_cfg.get('network_type', '')
@@ -198,7 +198,7 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 component_code = svc_cfg.get('primary_component', '')
                 if not component_code:
                     continue
-                if _component_display(component_code) != component_display:
+                if _component_display(component_code, locator) != component_display:
                     continue
                 carrier = svc_cfg.get('carrier', '')
                 matches.append((building, col_prefix, carrier))
@@ -252,7 +252,7 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 component_code = bst_cfg.get('primary_component', '')
                 if not component_code:
                     continue
-                if _component_display(component_code) != component_display:
+                if _component_display(component_code, locator) != component_display:
                     continue
                 carrier = bst_cfg.get('carrier', '')
                 booster_matches.append((building, col_prefix, carrier))

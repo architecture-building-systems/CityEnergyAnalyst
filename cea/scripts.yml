@@ -273,7 +273,7 @@ Thermal Network Design:
     description: |
       This Feature solves the thermal hydraulic network based on the thermal network's piping layout (multiple-phase) created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
     interfaces: [cli, dashboard]
-    module: cea.technologies.thermal_network.simplified.main
+    module: cea.technologies.thermal_network.simplified.main_multi_phase
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network',
                  'thermal-network-simplified']

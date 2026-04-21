@@ -65,6 +65,65 @@ All outputs are stored under `{scenario}/outputs/data/analysis/{what-if-name}/fi
 - **Plants**: Appear as separate rows with `type=plant`; their carrier consumption covers all connected buildings plus network losses and pumping
 - **`configuration.json`**: Stores the complete supply configuration and is the sole source of truth for emissions, costs, and heat rejection
 
+## Solar-thermal DHW dispatch (SC primary)
+
+When a hot-water assembly uses a **flat-plate (`SC1`) or evacuated-tube
+(`SC2`) solar collector as the primary component**, the Final Energy
+feature runs an hourly tank-dispatch model instead of the usual "fuel =
+demand / efficiency" shortcut.
+
+### What the model does
+
+1. Reads `Q_SC_gen_kWh` from the SC potential file, summing **only the
+   `(surface, panel_type)` pairs configured for this building** (not the
+   full panel-type aggregate — see [Solar Collectors output files](03-renewable-energy.md#output-files)).
+2. Charges a single-node fully-mixed tank, sized at **50 L per m² of SC
+   aperture** and initialised at the hour-0 cold-mains inlet temperature.
+3. Serves DHW demand from the tank through a thermostatic mixing valve
+   (setpoint 60 °C, the standard CEA `TWW_SETPOINT`). When the tank is
+   below setpoint, the **secondary component** (BO/HP) tops up the gap.
+4. Applies a Newton-style standing loss toward 20 °C ambient at 2%/hr.
+5. Dumps surplus heat that would push the tank above 105 °C
+   (pressure-relief cap).
+
+### Assembly requirements
+
+- `primary_component` must be an SC code (`SC1` or `SC2`).
+- `secondary_component` is **required** — solar alone cannot cover
+  24/7 DHW. Must be a boiler (`BO*`) or heat pump (`HP*`). The
+  validator rejects assemblies without a backup.
+- **PVT cannot be a DHW primary**. Its ~35 °C operating temperature is
+  below the DHW setpoint and would need a stratified tank model to
+  credit meaningfully. Configure an SC primary instead; PVT continues
+  to offset space-heating emissions via the legacy path.
+
+### Output columns (per-building `B####.csv`)
+
+| Column | Meaning |
+|---|---|
+| `Qww_sys_SOLAR_kWh` | Hourly solar-delivered share of DHW (zero-emission carrier) |
+| `Qww_sys_{backup}_kWh` | Hourly backup-carrier share (e.g. `Qww_sys_GRID_kWh` for an electric BO5 backup). Equals `served_by_backup_kwh / backup_efficiency`. |
+| `Qww_sys_SOLAR_dumped_kWh` | Diagnostic: hourly heat discarded at the T_MAX=105 °C cap. Non-zero values flag an **oversized** SC for the DHW load. |
+| `E_sys_GRID_kWh` | Includes SC pump parasitic (2% of delivered solar, added to the grid-electricity stream) |
+
+The carrier-aggregation pipelines (summary CSV, emissions, costs,
+visualisation) filter out `*_dumped_kWh` so it doesn't inflate totals.
+
+### Known caveats
+
+- **Oversizing is not a bug; it's visible**. If `area_SC_m2` is much
+  larger than DHW demand justifies, the tank becomes large enough that
+  standing losses dominate delivered heat. Check `Qww_sys_SOLAR_dumped_kWh`
+  and the gap `Q_SC_gen − Qww_sys_SOLAR_kWh − Qww_sys_SOLAR_dumped_kWh`
+  (standing loss) to diagnose.
+- **Self-consistent T_cold bias**: The cold-mains inlet series used by
+  both the demand side (`Qww_sys_kWh`) and the dispatch side comes from
+  `cea.demand.hotwater_loads.calc_water_temperature`, which has a
+  pre-existing units bug (uses hours where the Kusuda 1965 model expects
+  seconds) that collapses the series to a constant. Real-world solar
+  fractions in temperate climates are likely ~10% higher than the model
+  reports. Tracked separately from this feature.
+
 ## Troubleshooting
 
 | Issue | Solution |

@@ -30,7 +30,12 @@ Scale is read directly from `configuration.json`.
 | hs_booster / ww_booster | FUEL | `losses = col_kWh × (1 − η)` |
 | hs_booster / ww_booster | GRID | 0 (electric booster) |
 
-`FUEL_CARRIERS = {'NATURALGAS', 'OIL', 'COAL', 'WOOD'}`
+Fuel carriers are resolved dynamically from ``ENERGY_CARRIERS.csv``
+(every row with ``type == 'combustible'``) via
+``cea.technologies.energy_carriers.combustible_carriers(locator)``.
+The electricity carrier (typically ``GRID``) is likewise resolved via
+``electricity_carrier(locator)`` so users who renamed their electricity
+feedstock still route correctly.
 
 ### Cooling tower
 

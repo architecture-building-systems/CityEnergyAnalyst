@@ -158,11 +158,16 @@ capex_a = calc_capex_annualized(capex_pipes, 5.0, 40)
 # Always pass capacity_W so the correct cost curve segment is used
 ```
 
-### DO: PVT prefix before PV in COMPONENT_PREFIX_TO_TABLE
+### DO: Resolve component → table via the scanner (no prefix hardcoding)
 
 ```python
-# 'PVT' must appear before 'PV' — 'PVT1'.startswith('PV') is True
-# HEX must also be registered: 'HEX': 'HEAT_EXCHANGERS'
+# cea.technologies.components.get_component_table scans every *.csv
+# under COMPONENTS/CONVERSION/ and returns the owning table name.
+# Use it for cooling-tower sizing, solar-primary detection, etc. so
+# user-added codes in existing tables work without code changes.
+from cea.technologies.components import get_component_table
+if get_component_table(comp_code, locator) == 'COOLING_TOWERS':
+    comp_capacity_kW = peak_kW + capacity_kW   # Q_cool + W_comp
 ```
 
 ### DON'T: Use part-load curves or variable efficiency

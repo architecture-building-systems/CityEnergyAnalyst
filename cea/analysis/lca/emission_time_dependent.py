@@ -12,6 +12,7 @@ from cea.constants import HOURS_IN_YEAR
 from cea.datamanagement.database.components import Feedstocks
 from cea.demand.building_properties import BuildingProperties
 from cea.inputlocator import InputLocator
+from cea.technologies.energy_carriers import electricity_carrier
 from cea.utilities import epwreader
 
 __author__ = "Yiqiao Wang, Zhongming Shi"
@@ -141,12 +142,13 @@ def operational_hourly(config: Configuration) -> None:
     # Load optional GRID carbon intensity override once for all buildings
     override_grid_emission, grid_emission_final_g = _load_grid_emission_intensity_override(config)
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
+    elec = electricity_carrier(locator)
     for building in buildings:
         bpr = building_properties[building]
         hourly_timeline = OperationalHourlyTimeline(locator, bpr)
 
         if override_grid_emission and grid_emission_final is not None:
-            hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
+            hourly_timeline.emission_intensity_timeline[elec] = grid_emission_final
 
         hourly_timeline.calculate_operational_emission()
 
@@ -247,7 +249,7 @@ def total_yearly(config: Configuration) -> None:
         tar_ef = emissions_cfg.grid_decarbonise_target_emission_factor
 
         if ref_yr is not None and tar_yr is not None and tar_ef is not None: # all exist
-            feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
+            feedstock_policies_arg = {electricity_carrier(locator): (ref_yr, tar_yr, tar_ef)}
         elif ref_yr is None and tar_yr is None and tar_ef is None: # all None
             feedstock_policies_arg = None
         else:
@@ -511,6 +513,7 @@ def _calc_operational_emissions_from_fe(
     fe_df: pd.DataFrame,
     emission_intensity: pd.DataFrame,
     supply_cfg: dict,
+    electricity_carrier_name: str,
 ) -> pd.DataFrame:
     """Calculate hourly operational emissions from a final-energy B####.csv DataFrame.
 
@@ -521,6 +524,9 @@ def _calc_operational_emissions_from_fe(
     :param fe_df: 8760-row hourly final-energy DataFrame for one building.
     :param emission_intensity: 8760-row DataFrame with one column per carrier (kgCO2/kWh).
     :param supply_cfg: Supply configuration dict for this building (from configuration.json).
+    :param electricity_carrier_name: Scenario's electricity carrier name
+        (resolved once by the caller from ``ENERGY_CARRIERS.csv``). Used to
+        value PV/PVT_E electrical offsets against grid emissions.
     :return: 8760-row hourly emissions DataFrame.
     """
     result: dict[str, 'np.ndarray'] = {}
@@ -566,8 +572,8 @@ def _calc_operational_emissions_from_fe(
 
     # Solar electric offset: aggregate PV and PVT_E across all facades into two columns
     # Exclude *_radiation_kWh columns — those are solar irradiation, not generation.
-    if 'GRID' in emission_intensity.columns:
-        grid_intensity = emission_intensity['GRID'].values
+    if electricity_carrier_name in emission_intensity.columns:
+        grid_intensity = emission_intensity[electricity_carrier_name].values
         pv_e_total = np.zeros(len(fe_df))
         pvt_e_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
@@ -622,10 +628,15 @@ def _calc_plant_operational_emissions_from_fe(
     return pd.DataFrame(result, index=plant_df.index)
 
 
-def _build_feedstock_policies(ref_yr, tar_yr, tar_ef):
-    """Return a feedstock_policies dict suitable for BuildingEmissionTimeline."""
+def _build_feedstock_policies(ref_yr, tar_yr, tar_ef, electricity_carrier_name):
+    """Return a feedstock_policies dict suitable for BuildingEmissionTimeline.
+
+    Keyed on the scenario's electricity carrier name (typically 'GRID')
+    so users who renamed their electricity feedstock still have the
+    policy applied to the right column.
+    """
     if ref_yr is not None and tar_yr is not None and tar_ef is not None:
-        return {'GRID': (ref_yr, tar_yr, tar_ef)}
+        return {electricity_carrier_name: (ref_yr, tar_yr, tar_ef)}
     if ref_yr is None and tar_yr is None and tar_ef is None:
         return None
     raise ValueError(
@@ -661,9 +672,13 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     # Emission intensity (8760 rows, kgCO2/kWh per carrier)
     feedstock_db = Feedstocks.from_locator(locator)
     emission_intensity = _expand_feedstock_emissions(feedstock_db)
+    # Scenario's electricity carrier name (from ENERGY_CARRIERS.csv — 'GRID'
+    # by default). Used below to route the grid-intensity override and to
+    # key the grid-decarbonisation policy to the right carrier column.
+    elec = electricity_carrier(locator)
     override_grid, grid_arr = _load_grid_emission_intensity_override(config)
     if override_grid and grid_arr is not None:
-        emission_intensity['GRID'] = grid_arr / 1000.0  # g → kg
+        emission_intensity[elec] = grid_arr / 1000.0  # g → kg
 
     # Output folder
     out_folder = locator.get_emissions_whatif_folder(whatif_name)
@@ -686,6 +701,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         emissions_cfg.grid_decarbonise_reference_year,
         emissions_cfg.grid_decarbonise_target_year,
         emissions_cfg.grid_decarbonise_target_emission_factor,
+        elec,
     )
 
     weather_data = epwreader.epw_reader(locator.get_weather_file())[
@@ -725,7 +741,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         if bld_network['DH'] > 0 or bld_network['DC'] > 0:
             building_network_demand[building_name] = (construction_year, bld_network)
 
-        hourly_op = _calc_operational_emissions_from_fe(fe_df, emission_intensity, supply_cfg)
+        hourly_op = _calc_operational_emissions_from_fe(fe_df, emission_intensity, supply_cfg, elec)
 
         # Save per-building hourly operational emissions
         operational_file = locator.get_emissions_whatif_building_file(building_name, whatif_name)
