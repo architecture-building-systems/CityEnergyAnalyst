@@ -111,7 +111,7 @@ visualisation) filter out `*_dumped_kWh` so it doesn't inflate totals.
 
 ### Known caveats
 
-- **Oversizing is not a bug; it's visible**. If `SC_area_m²` is much
+- **Oversizing is not a bug; it's visible**. If `area_SC_m2` is much
   larger than DHW demand justifies, the tank becomes large enough that
   standing losses dominate delivered heat. Check `Qww_sys_SOLAR_dumped_kWh`
   and the gap `Q_SC_gen − Qww_sys_SOLAR_kWh − Qww_sys_SOLAR_dumped_kWh`
