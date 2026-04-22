@@ -7,7 +7,7 @@ from scipy import interpolate
 from math import log
 from cea.optimization.constants import GT_MIN_PART_LOAD, LHV_NG, LHV_BG, GT_MAX_SIZE, CC_AIRRATIO, CC_EXIT_T_BG, \
     CC_EXIT_T_NG, ST_DELTA_T, CC_DELTA_T_DH, ST_GEN_ETA
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 from cea.technologies.constants import SPEC_VOLUME_STEAM
 import cea.resources.natural_gas as ngas
 from cea.analysis.costs.equations import calc_capex_annualized
@@ -336,15 +336,15 @@ def calc_ST_operation(m_exhaust_GT_kgpers, T_exhaust_GT_K, T_sup_K, fuel_type):
 
     # calculate thermal output
     T_cond_0_K = T_sup_K + CC_DELTA_T_DH  # condensation temperature constrained by the DH network temperature
-    pres0 = (0.0261 * (T_cond_0_K - 273) ** 2 - 2.1394 * (T_cond_0_K - 273) + 52.893) * 1E3
+    pres0 = (0.0261 * (T_cond_0_K - KELVIN_CONVERSION) ** 2 - 2.1394 * (T_cond_0_K - KELVIN_CONVERSION) + 52.893) * 1E3
 
-    delta_h_evap_Jperkg = (-2.4967 * (T_cond_0_K - 273) + 2507) * 1E3
+    delta_h_evap_Jperkg = (-2.4967 * (T_cond_0_K - KELVIN_CONVERSION) + 2507) * 1E3
     q_output_ST_W = (mdotHP_kgpers + mdotLP_kgpers) * delta_h_evap_Jperkg  # thermal output of ST
 
     # calculate electricity output
-    h_HP_Jperkg = (2.5081 * (T_exhaust_GT_K - ST_DELTA_T - 273) + 2122.7) * 1E3  # J/kg
-    h_LP_Jperkg = (2.3153 * (temp_i_K - 273) + 2314.7) * 1E3  # J/kg
-    h_cond_Jperkg = (1.6979 * (T_cond_0_K - 273) + 2506.6) * 1E3  # J/kg
+    h_HP_Jperkg = (2.5081 * (T_exhaust_GT_K - ST_DELTA_T - KELVIN_CONVERSION) + 2122.7) * 1E3  # J/kg
+    h_LP_Jperkg = (2.3153 * (temp_i_K - KELVIN_CONVERSION) + 2314.7) * 1E3  # J/kg
+    h_cond_Jperkg = (1.6979 * (T_cond_0_K - KELVIN_CONVERSION) + 2506.6) * 1E3  # J/kg
 
     el_produced_ST_W = mdotHP_kgpers * (h_HP_Jperkg - h_LP_Jperkg) + \
                        (mdotHP_kgpers + mdotLP_kgpers) * (h_LP_Jperkg - h_cond_Jperkg)  # turbine electricity output

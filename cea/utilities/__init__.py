@@ -87,6 +87,47 @@ def unique(sequence):
     return result
 
 
+def validate_path_within_root(path, root):
+    """
+    Raise ValueError if ``path`` is not within ``root`` (path traversal guard).
+
+    Both paths are resolved to their canonical absolute forms before comparison,
+    so symlinks, ``..`` components, and case differences on case-insensitive
+    filesystems are all handled correctly.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        The path to validate.
+    root : str or os.PathLike
+        The directory that ``path`` must reside within (or equal).
+
+    Returns
+    -------
+    str
+        The resolved canonical absolute path (result of ``os.path.realpath(path)``).
+
+    Raises
+    ------
+    ValueError
+        If the resolved ``path`` is outside the resolved ``root``.
+    """
+    real_root = os.path.normcase(os.path.realpath(root))
+    real_path = os.path.realpath(path)
+
+    try:
+        # Check if different drives on Windows
+        real_path_nc = os.path.normcase(real_path)
+        prefix = os.path.commonpath((real_root, real_path_nc))
+    except ValueError as e:
+        raise ValueError(f"Path traversal detected: '{path}' escapes root '{root}'") from e
+    
+    if real_root != prefix:
+        raise ValueError(f"Path traversal detected: '{path}' escapes root '{root}'")
+    
+    return real_path
+
+
 def parse_string_to_list(line):
     """Parse a line in the csv format into a list of strings"""
     if line is None:

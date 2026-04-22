@@ -1,9 +1,7 @@
 """
 Contains some helper methods for working with glossary data
 """
-
-
-
+import warnings
 
 import cea.schemas
 import pandas as pd
@@ -16,6 +14,9 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+EXCEL_FILE_TYPES = {"xls", "xlsx"}
+TABULAR_FILE_TYPES = {"shp", "dbf", "csv"}
 
 __glossary_df = None  # keep a copy of this as it won't be changed during runtime. ever.
 
@@ -34,15 +35,17 @@ def read_glossary_df(plugins):
                 continue
             script = schemas[lm]["created_by"][0] if schemas[lm]["created_by"] else "-"
             file_path = schemas[lm]["file_path"]
-            if schemas[lm]["file_type"] in {"xls", "xlsx"}:
+            if schemas[lm]["file_type"] in EXCEL_FILE_TYPES:
                 for ws in schemas[lm]["schema"]:  # ws: worksheet
                     for col in schemas[lm]["schema"][ws]["columns"]:
                         cd = schemas[lm]["schema"][ws]["columns"][col]
                         rows.append(glossary_row(script, file_path, col, lm, cd, worksheet=ws))
-            else:
+            elif schemas[lm]["file_type"] in TABULAR_FILE_TYPES:
                 for col in schemas[lm]["schema"]["columns"]:
                     cd = schemas[lm]["schema"]["columns"][col]  # cd: column definition
                     rows.append(glossary_row(script, file_path, col, lm, cd, worksheet=""))
+            else:
+                warnings.warn(f"Unknown file type for {lm}: {schemas[lm]['file_type']}")
 
         glossary_df = pd.concat([glossary_df, pd.DataFrame(rows)], ignore_index=True)
         glossary_df['key'] = glossary_df['FILE_NAME'] + '!!!' + glossary_df['VARIABLE']

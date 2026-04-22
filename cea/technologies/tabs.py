@@ -8,6 +8,7 @@ Termoactivated building surfaces (TABS)
 
 import numpy as np
 import scipy.optimize
+from cea.constants import KELVIN_CONVERSION
 
 __author__ = "Martin Mosteiro"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -38,9 +39,9 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
     """
 
     if Qh > 0:
-        tsh0 = tsh0 + 273
-        trh0 = trh0 + 273
-        tm = tm + 273
+        tsh0 = tsh0 + KELVIN_CONVERSION
+        trh0 = trh0 + KELVIN_CONVERSION
+        tm = tm + KELVIN_CONVERSION
         mCw0 = Qh0 / (tsh0 - trh0)
         # minimum
         k1 = 1 / mCw0
@@ -54,7 +55,7 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
             return Eq
 
         k2 = Qh * k1
-        result = scipy.optimize.newton(fh, trh0, args=(mCw0, k2, tsh0, H_tabs),  maxiter=1000, tol=0.1) - 273
+        result = scipy.optimize.newton(fh, trh0, args=(mCw0, k2, tsh0, H_tabs),  maxiter=1000, tol=0.1) - KELVIN_CONVERSION
         trh = result.real
         tsh = trh + k2
         mCw = Qh / (tsh - trh)

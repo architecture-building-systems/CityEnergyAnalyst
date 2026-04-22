@@ -117,7 +117,15 @@ class Domain(object):
                 # Only check demand energy carrier for standalone buildings with actual demand
                 # District buildings get their supply from the network, not individual components
                 if has_demand and not is_district:
-                    building.check_demand_energy_carrier()
+                    try:
+                        building.check_demand_energy_carrier()
+                    except ValueError as e:
+                        # Skip buildings with incompatible network types (e.g., DH network with cooling-only building)
+                        # This can happen when loading all buildings with a specific network_type filter
+                        if "Network type mismatch" in str(e):
+                            continue
+                        else:
+                            raise
 
                 self.buildings.append(building)
 
@@ -990,6 +998,11 @@ def main(config: cea.config.Configuration):
     """
     # initialise variables and define cooling demand
     locator = InputLocator(scenario=config.scenario)
+
+    # Remove stale optimization outputs from a previous run so results are not mixed
+    from cea.utilities.output_cleanup import cleanup_output_folder
+    cleanup_output_folder(locator.get_optimization_results_folder())
+
     current_domain = Domain(config, locator)
     seed(100)
 

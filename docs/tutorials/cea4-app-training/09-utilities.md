@@ -158,7 +158,7 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 ### Next Steps After Sample Generation
 
 1. **Run CEA analyses** on all sample scenarios:
-   - Use Batch Process Workflow (see below)
+   - Use CLI batch processing if needed
    - Run demand, emissions, costs, etc.
 
 2. **Collect results** from all scenarios
@@ -171,7 +171,7 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 ### Tips
 - **Start small**: Test with 64-128 samples before full run
 - **Computational cost**: N samples × analysis time
-- **Use batch processing**: Automate with Batch Process Workflow
+- **Use batch processing**: Automate via CLI if needed
 - **High-performance computing**: Consider cluster for large SA
 
 ### Troubleshooting
@@ -188,77 +188,7 @@ Generates parameter samples for sensitivity analysis using the Sobol method. Sen
 
 ## Batch Process Workflow
 
-### Overview
-Automatically processes multiple scenarios using a user-configured workflow. This feature enables running the same sequence of CEA analyses across many scenarios, essential for sensitivity analysis, scenario comparisons, and parametric studies.
-
-### When to Use
-- Processing sensitivity analysis samples
-- Comparing multiple design scenarios
-- Parametric studies
-- Automating repetitive workflows
-- Large-scale district analyses
-
-### How It Works
-
-1. **Define workflow**: Create `workflow.yml` file specifying sequence of CEA features to run
-2. **Select scenarios**: Choose which scenarios to process
-3. **Execute batch**: Run workflow on all selected scenarios
-4. **Collect results**: Aggregate outputs from all scenarios
-
-### Workflow Configuration
-
-```yaml
----
-- radiation  # Solar radiation analysis
-- occupancy-helper  # Building occupancy
-- demand  # Energy demand calculation
-- emissions  # Emissions calculation
-```
-
-Workflow runs features in order, respecting dependencies.
-
-### Prerequisites
-- Multiple scenarios to process
-- All scenarios have required input data
-
-### How to Use
-1**Run batch process**:
-   - Navigate to **Utilities**
-   - Select **Batch Process Workflow**
-   - Select scenarios to process
-   - Design workflow using the toggles
-   - Click **Run**
-
-2**Monitor progress**:
-   - Check log for progress through scenarios and features
-   - Errors in one scenario don't stop others
-
-### Processing Time
-
-Total time = Number of scenarios × Workflow time per scenario
-
-Example:
-- 100 scenarios
-- Workflow: radiation + demand (~30 min per scenario)
-- Total: ~50 hours
-- With multiprocessing: ~12-24 hours
-
-### Tips
-- **Test workflow first**: Run on 2 scenarios before full batch
-- **Use overnight/weekend**: Long processing times
-- **Enable multiprocessing**: In each feature's parameters
-- **Log monitoring**: Check logs periodically for errors
-- **High-performance computing**: Use cluster for very large batches
-
-### Troubleshooting
-
-**Issue**: Batch process stops after first error
-- **Solution**: Check that all scenarios have required inputs
-- **Solution**: Verify workflow.yml syntax is correct
-
-**Issue**: Some scenarios fail
-- **Solution**: Review failed scenario logs
-- **Solution**: Re-run failed scenarios individually to debug
+> **Note**: This feature is temporarily suspended from the dashboard while the workflow is being redesigned to better support the new what-if analysis architecture. It remains available via CLI (`cea batch-process-workflow`).
 
 ---
 

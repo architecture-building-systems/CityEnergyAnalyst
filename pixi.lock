@@ -5,6 +5,8 @@ environments:
     - url: https://conda.anaconda.org/conda-forge/
     indexes:
     - https://pypi.org/simple
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
@@ -488,7 +490,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b5/d4/e7bbea08f4c0f0bab819d38c1a613da5f194fba7b19aae3e2b3a27e78886/bottleneck-1.6.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/56/3124f61d37a7a4e7cc96afc5492c78ba0cb551151e530b54669ddd1436ef/cachetools-6.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/20/a5/b3771ac30b590026b9d721187110194ade05bfbea3d98b423a9cafd80959/cattrs-25.2.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ed/0f/2ea566dc74148e1a72ca35e243cdc23c8d8dd55a8138beeb9e6a061d9039/cea_external_tools-0.2.1.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/7d/2d5fc7af06da4f3bdea59a204f741bf7a30bc5019355991b2f083e557e4e/cftime-1.6.4.post1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
@@ -1050,7 +1052,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/fe/80/a6da430e3b1a12fd85f9fe90d3ad8fe9a527ecb046644c37b4b3f4baacfc/bottleneck-1.6.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/56/3124f61d37a7a4e7cc96afc5492c78ba0cb551151e530b54669ddd1436ef/cachetools-6.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/20/a5/b3771ac30b590026b9d721187110194ade05bfbea3d98b423a9cafd80959/cattrs-25.2.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ed/0f/2ea566dc74148e1a72ca35e243cdc23c8d8dd55a8138beeb9e6a061d9039/cea_external_tools-0.2.1.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9b/60/0db884c76311ecaaf31f628aa9358beae5fcb0fbbdc2eb0b790a93aa258f/cftime-1.6.4.post1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
@@ -1552,7 +1554,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/14/d8/6d641573e210768816023a64966d66463f2ce9fc9945fa03290c8a18f87c/bottleneck-1.6.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/6c/56/3124f61d37a7a4e7cc96afc5492c78ba0cb551151e530b54669ddd1436ef/cachetools-6.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/20/a5/b3771ac30b590026b9d721187110194ade05bfbea3d98b423a9cafd80959/cattrs-25.2.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ed/0f/2ea566dc74148e1a72ca35e243cdc23c8d8dd55a8138beeb9e6a061d9039/cea_external_tools-0.2.1.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/50/81/0bb28d54088a61592f61a11e7fcabcea6d261c47af79e18d0f9cbcd940ae/cftime-1.6.4.post1-cp312-cp312-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
@@ -2054,7 +2056,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/8d/72/7e3593a2a3dd69ec831a9981a7b1443647acb66a5aec34c1620a5f7f8498/bottleneck-1.6.0-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/56/3124f61d37a7a4e7cc96afc5492c78ba0cb551151e530b54669ddd1436ef/cachetools-6.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/20/a5/b3771ac30b590026b9d721187110194ade05bfbea3d98b423a9cafd80959/cattrs-25.2.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d6/00/bf784fdbd5e2c6e91a92414c29a7fa52a0a77ce67fb8e76cba1ead57bc13/cea_external_tools-0.2.1-cp312-cp312-macosx_13_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/70/48/6ff50ae531c4684ca634790818d64497ffe91f6b06637cbd5b6bdcdb7943/cea_external_tools-0.2.3-cp312-cp312-macosx_13_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f3/1e/38dbbf8a828dfb5e0e6e5c912818b77aacf2e7bcb97b262ac6126beeb29f/cftime-1.6.4.post1-cp312-cp312-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
@@ -2524,7 +2526,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/48/ad/d71da675eef85ac153eef5111ca0caa924548c9591da00939bcabba8de8e/bottleneck-1.6.0-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/6c/56/3124f61d37a7a4e7cc96afc5492c78ba0cb551151e530b54669ddd1436ef/cachetools-6.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/20/a5/b3771ac30b590026b9d721187110194ade05bfbea3d98b423a9cafd80959/cattrs-25.2.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/87/d6/2a25b2ef9ec0fab19126c43178aceaf11c01e63261ac13c7416a5ca11f61/cea_external_tools-0.2.1-cp312-cp312-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/94/c4/7df3633954579b66e72634044fede5d8eddd02b0e88e4751b0e690f56b6a/cea_external_tools-0.2.3-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/41/01/2e486a570e095869a153c12381cb2c143eb0ed187067c3199306b33e5c36/cf_xarray-0.10.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/7b/ca72a075a3f660315b031d62d39a3e9cfef71f7929da2621d5120077a75f/cftime-1.6.4.post1-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
@@ -5155,20 +5157,20 @@ packages:
   - tomlkit>=0.11.8 ; extra == 'tomlkit'
   - ujson>=5.10.0 ; extra == 'ujson'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/87/d6/2a25b2ef9ec0fab19126c43178aceaf11c01e63261ac13c7416a5ca11f61/cea_external_tools-0.2.1-cp312-cp312-win_amd64.whl
+- pypi: https://files.pythonhosted.org/packages/70/48/6ff50ae531c4684ca634790818d64497ffe91f6b06637cbd5b6bdcdb7943/cea_external_tools-0.2.3-cp312-cp312-macosx_13_0_arm64.whl
   name: cea-external-tools
-  version: 0.2.1
-  sha256: 237b0cd41a1b325485b93962372e2f5b2284a58c340d0e07581d9cb3d6327a40
+  version: 0.2.3
+  sha256: d6bb419d5ff54841d6b07ba63d293a331b2651552a15736f122120bfd9b0e4eb
   requires_python: '>=3.8,<3.13'
-- pypi: https://files.pythonhosted.org/packages/d6/00/bf784fdbd5e2c6e91a92414c29a7fa52a0a77ce67fb8e76cba1ead57bc13/cea_external_tools-0.2.1-cp312-cp312-macosx_13_0_arm64.whl
+- pypi: https://files.pythonhosted.org/packages/94/c4/7df3633954579b66e72634044fede5d8eddd02b0e88e4751b0e690f56b6a/cea_external_tools-0.2.3-cp312-cp312-win_amd64.whl
   name: cea-external-tools
-  version: 0.2.1
-  sha256: 6cc9916ff0add47cb602f36b38a4ab4ee907be6dd95844f1f79661b00d225281
+  version: 0.2.3
+  sha256: ead5b14aca10223aa7920029c4ac86f89052a140ed2c3ec2f89722fd677d9569
   requires_python: '>=3.8,<3.13'
-- pypi: https://files.pythonhosted.org/packages/ed/0f/2ea566dc74148e1a72ca35e243cdc23c8d8dd55a8138beeb9e6a061d9039/cea_external_tools-0.2.1.tar.gz
+- pypi: https://files.pythonhosted.org/packages/e3/f7/75f1fd36b8fef9cf78f19b19cfbbb391fee691f9c53eddd320f81f03b2d4/cea_external_tools-0.2.3.tar.gz
   name: cea-external-tools
-  version: 0.2.1
-  sha256: 30d090b0b9516f71ec80f62f0f35b2ffef304bb97ec6ff0813adec2f5cc1b816
+  version: 0.2.3
+  sha256: a045b0ebafe5abe1d0bc30e77eb04feca55b27d0adf2f8a13d88b0f1dd66292a
   requires_python: '>=3.8,<3.13'
 - conda: https://conda.anaconda.org/conda-forge/noarch/certifi-2025.8.3-pyhd8ed1ab_0.conda
   sha256: a1ad5b0a2a242f439608f22a538d2175cac4444b7b3f4e2b8c090ac337aaea40

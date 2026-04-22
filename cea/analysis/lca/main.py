@@ -6,7 +6,7 @@ This script is used to calculate the LCA
 import datetime
 
 from cea.analysis.lca.embodied import lca_embodied
-from cea.analysis.lca.emission_time_dependent import operational_hourly, total_yearly
+from cea.analysis.lca.emission_time_dependent import operational_hourly, total_yearly, calculate_emissions_for_whatif
 from cea.analysis.lca.operation import lca_operation
 
 
@@ -41,8 +41,13 @@ def emissions_detailed(config):
 def main(config: cea.config.Configuration):
     print('Running emissions with scenario = %s' % config.scenario)
 
-    # Calculate the hourly and timeline
-    emissions_detailed(config)
+    whatif_names = getattr(config.emissions, 'what_if_name', [])
+    if whatif_names:
+        for whatif_name in whatif_names:
+            calculate_emissions_for_whatif(whatif_name, config)
+    else:
+        # Legacy path: compute from demand results (no what-if scenario)
+        emissions_detailed(config)
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

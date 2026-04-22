@@ -19,25 +19,22 @@ import re
 import cea.technologies.substation as substation
 import cea.technologies.thermal_network.detailed.substation as substation_matrix
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
-
 from cea.technologies.thermal_network.physics import (
     calc_temperature_out_per_pipe,
     calc_pressure_loss_pipe,
     PressureLossMode,
     calc_nusselt,
-    calc_thermal_conductivity,
+    calc_thermal_conductivity
 )
 import cea.utilities.parallel
 from cea.constants import (HEAT_CAPACITY_OF_WATER_JPERKGK, P_WATER_KGPERM3, HOURS_IN_YEAR,
                            THERMAL_NETWORK_TEMPERATURE_CONVERGENCE_K)
-from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK
+from cea.constants import PUR_lambda_WmK, STEEL_lambda_WmK, SOIL_lambda_WmK, KELVIN_CONVERSION
 from cea.optimization.constants import PUMP_ETA
-from cea.resources import geothermal
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
-from cea.technologies.thermal_network.simplified.model import add_date_to_dataframe
+from cea.technologies.thermal_network.common.utils import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.constants import NETWORK_DEPTH, REDUCED_TIME_STEPS, MAX_INITIAL_DIAMETER_ITERATIONS, \
     MAX_NODE_FLOW
-from cea.utilities import epwreader
 from cea.utilities.standardize_coordinates import get_lat_lon_projected_shapefile, get_projected_coordinate_system
 from cea.technologies.heat_exchangers import get_heat_exchanger_by_description
 from cea.technologies.network_layout.plant_node_operations import PlantServices
@@ -78,7 +75,6 @@ class ThermalNetwork(object):
         self.network_type = "DC"  # whether the network is a district heating ('DH') or cooling ('DC') network
         self.network_names = [""]
         self.file_type = "shp"
-        self.set_diameter = True
         self.load_max_edge_flowrate_from_previous_run = False
         self.start_t = 0
         self.stop_t = 8760
@@ -90,6 +86,7 @@ class ThermalNetwork(object):
         self.substation_heating_systems = ["ahu", "aru", "shu", "ww"]
         self.network_temperature_dh = -1  # -1 for VT mode, positive value for CT mode
         self.network_temperature_dc = -1  # -1 for VT mode, positive value for CT mode
+        self.dh_temperature_mode = 'low-temperature'  # VT mode strategy: 'low-temperature' or 'high-temperature'
         # Deprecated parameters (kept for backward compatibility)
         self.temperature_control = "VT"  # DEPRECATED: use network_temperature_dh/dc instead
         self.plant_supply_temperature = 80  # DEPRECATED: use network_temperature_dh/dc instead
@@ -137,12 +134,13 @@ class ThermalNetwork(object):
         self.get_thermal_network_from_shapefile()
 
     def copy_config_section(self, thermal_network_section):
-        thermal_network_section_fields = ["network_type", "network_names", "file_type", "set_diameter",
+        thermal_network_section_fields = ["network_type", "network_names", "file_type",
                                           "load_max_edge_flowrate_from_previous_run", "start_t", "stop_t",
                                           "use_representative_week_per_month", "minimum_mass_flow_iteration_limit",
                                           "minimum_edge_mass_flow", "diameter_iteration_limit",
                                           "substation_cooling_systems", "substation_heating_systems",
                                           "network_temperature_dh", "network_temperature_dc",
+                                          "dh_temperature_mode",
                                           "temperature_control", "plant_supply_temperature", "equivalent_length_factor"]
         for field in thermal_network_section_fields:
             if hasattr(thermal_network_section, field):
@@ -377,29 +375,46 @@ class ThermalNetwork(object):
             self.locator, self.network_type, self.network_name
         )
 
-        # Get nodes path for metadata file location
-        nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
-
-        # NEW: Read per-building service configuration metadata (if available)
-        import json
-        metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+        # Read per-building service configuration metadata from the unified
+        # network connectivity file (.yml, falling back to legacy .json).
+        connectivity_data = self.locator.read_network_connectivity(self.network_name)
         per_building_services = None
 
-        if os.path.exists(metadata_path):
-            with open(metadata_path, 'r') as f:
-                metadata = json.load(f)
+        if connectivity_data and self.network_type in connectivity_data.get('networks', {}):
+            network_data = connectivity_data['networks'][self.network_type]
+            per_building_services_dict = network_data.get('per_building_services', {})
 
-            # Convert lists back to sets
-            per_building_services = {
-                building: set(services)
-                for building, services in metadata['per_building_services'].items()
-            }
-
-            print("  ℹ Loaded per-building service configuration from layout metadata")
-            print(f"    - Network services: {', '.join(metadata['network_services'])}")
+            if per_building_services_dict:
+                # Convert lists back to sets
+                per_building_services = {
+                    building: set(services)
+                    for building, services in per_building_services_dict.items()
+                }
+                print("  ℹ Loaded per-building service configuration from network connectivity file")
+                if 'network_services' in network_data:
+                    print(f"    - Network services: {', '.join(network_data['network_services'])}")
         else:
-            # Legacy mode: no metadata file
-            print("  ℹ No building_services.json found (legacy layout or overwrite-supply-settings=true)")
+            # Fallback: Try legacy building_services.json location
+            import json
+            nodes_path = self.locator.get_network_layout_nodes_shapefile(self.network_type, self.network_name)
+            legacy_metadata_path = os.path.join(os.path.dirname(nodes_path), 'building_services.json')
+
+            if os.path.exists(legacy_metadata_path):
+                with open(legacy_metadata_path, 'r') as f:
+                    metadata = json.load(f)
+
+                # Convert lists back to sets
+                per_building_services = {
+                    building: set(services)
+                    for building, services in metadata['per_building_services'].items()
+                }
+
+                print("  ℹ Loaded per-building service configuration from legacy building_services.json")
+                print(f"    - Network services: {', '.join(metadata['network_services'])}")
+
+        if per_building_services is None:
+            # No metadata file found (legacy layout or overwrite-supply-settings=true)
+            print("  ℹ No network connectivity file found (legacy layout or overwrite-supply-settings=true)")
             print("    - Assuming all buildings use all services")
 
         # Store for passing to simulation functions
@@ -416,28 +431,32 @@ class ThermalNetwork(object):
         all_nodes_df = node_df[['type', 'building', 'coordinates']]
         all_nodes_df.to_csv(self.locator.get_thermal_network_node_types_csv_file(self.network_type, self.network_name))
 
-        # Extract service configuration from plant node type (DH only)
+        # Determine DH service configuration from dh-temperature-mode config parameter
         self.itemised_dh_services = None
         if self.network_type == 'DH':
-            from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
+            from cea.technologies.network_layout.plant_node_operations import (
+                PlantServices, get_dh_services_from_plant_type
+            )
 
-            # Find plant nodes
+            # Check for legacy plant node suffix and warn if found
             plant_nodes = all_nodes_df[all_nodes_df['type'].str.contains('PLANT', na=False)]
             if not plant_nodes.empty:
                 plant_type = plant_nodes.iloc[0]['type']
-                services, is_legacy = get_dh_services_from_plant_type(plant_type)
+                _, is_legacy = get_dh_services_from_plant_type(plant_type)
+                # is_legacy=False means a service suffix was found (e.g. PLANT_hs_ww, PLANT_ww_hs)
+                if not is_legacy:
+                    print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
+                    print("    This suffix is no longer used to control network temperature.")
+                    print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
+                    print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
 
-                if is_legacy:
-                    print("  ℹ Using legacy temperature control:")
-                    print("    - Services: space heating + domestic hot water")
-                    print("    - Supply temperature: max(space heating temp, DHW temp)")
-                    print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
-                    # Pass None for legacy mode to trigger default behavior
-                    self.itemised_dh_services = None
-                else:
-                    self.itemised_dh_services = services
-                    service_names = ' → '.join(self.itemised_dh_services)
-                    print(f"  ℹ DH service configuration: {service_names}")
+            # Always use dh-temperature-mode config to determine service order
+            if self.dh_temperature_mode == 'high-temperature':
+                self.itemised_dh_services = [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING]
+                print("  DH temperature mode: high-temperature (DHW priority, ~60-80 degrees C)")
+            else:
+                self.itemised_dh_services = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+                print("  DH temperature mode: low-temperature (space heating priority, ~35-55 degrees C)")
 
         # extract the list of buildings in the current network
         building_names = all_nodes_df.building[all_nodes_df.type == 'CONSUMER'].reset_index(drop=True)
@@ -872,11 +891,12 @@ def thermal_network_main(locator, thermal_network, processes=1):
         # Get network temperature (CT mode) or None (VT mode)
         fixed_network_temp_C = thermal_network.get_plant_supply_temperature() if thermal_network.network_temperature_dh >= 0 else None
 
-        # Prepare per-building services (all buildings use same services from plant type)
-        per_building_services = None
-        if thermal_network.itemised_dh_services is not None:
+        # Use per-building services from connectivity.json if available (overwrite-supply-settings=False)
+        # Fall back to uniform plant-type assignment if not available (legacy or what-if mode)
+        per_building_services = thermal_network.per_building_services
+        if per_building_services is None and thermal_network.itemised_dh_services is not None:
             per_building_services = {
-                building: thermal_network.itemised_dh_services
+                building: set(thermal_network.itemised_dh_services)
                 for building in thermal_network.building_names
             }
 
@@ -1124,8 +1144,8 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # node temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle" (consistent with simplified model)
-        T_supply_nodes_for_csv = T_supply_nodes_for_csv.fillna(273.15)
-        T_return_nodes_for_csv = T_return_nodes_for_csv.fillna(273.15)
+        T_supply_nodes_for_csv = T_supply_nodes_for_csv.fillna(KELVIN_CONVERSION)
+        T_return_nodes_for_csv = T_return_nodes_for_csv.fillna(KELVIN_CONVERSION)
 
         T_supply_nodes_for_csv.columns = thermal_network.edge_node_df.index
         T_supply_nodes_for_csv.to_csv(
@@ -1143,7 +1163,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # plant supply and return temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle"
-        temperatures_at_plants_K_for_csv = temperatures_at_plants_K_for_csv.fillna(273.15)
+        temperatures_at_plants_K_for_csv = temperatures_at_plants_K_for_csv.fillna(KELVIN_CONVERSION)
         temperatures_at_plants_K_for_csv.columns = ['temperature_supply_K', 'temperature_return_K']
         temperatures_at_plants_K_for_csv.to_csv(
             thermal_network.locator.get_network_temperature_plant(
@@ -1260,13 +1280,13 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
 
         # node temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle" (consistent with simplified model)
-        T_supply_nodes_df = pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).fillna(273.15)
+        T_supply_nodes_df = pd.DataFrame(csv_outputs['T_supply_nodes'], columns=thermal_network.edge_node_df.index).fillna(KELVIN_CONVERSION)
         T_supply_nodes_df.to_csv(
             thermal_network.locator.get_network_temperature_supply_nodes_file(
                 thermal_network.network_type,
                 thermal_network.network_name),
             index=False, float_format='%.3f')
-        T_return_nodes_df = pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).fillna(273.15)
+        T_return_nodes_df = pd.DataFrame(csv_outputs['T_return_nodes'], columns=thermal_network.edge_node_df.index).fillna(KELVIN_CONVERSION)
         T_return_nodes_df.to_csv(
             thermal_network.locator.get_network_temperature_return_nodes_file(
                 thermal_network.network_type,
@@ -1276,7 +1296,7 @@ def save_all_results_to_csv(csv_outputs, thermal_network):
         # plant supply and return temperatures
         # Replace NaN with 273.15K (0°C) as sentinel value for "network idle"
         temperatures_at_plant_df = pd.DataFrame(csv_outputs['temperatures_at_plant_K'],
-                     columns=['temperature_supply_K', 'temperature_return_K']).fillna(273.15)
+                     columns=['temperature_supply_K', 'temperature_return_K']).fillna(KELVIN_CONVERSION)
         temperatures_at_plant_df.to_csv(
             thermal_network.locator.get_network_temperature_plant(
                 thermal_network.network_type, thermal_network.network_name), index=False, float_format='%.3f')
@@ -1288,22 +1308,6 @@ def extrapolate_datapoints_for_representative_weeks(representative_week_data):
     while len(representative_week_df.index) < HOURS_IN_YEAR:
         representative_week_df = representative_week_df.append(representative_week_df.mean(), ignore_index=True)
     return representative_week_df
-
-
-
-def calculate_ground_temperature(locator):
-    """
-    calculate ground temperatures.
-
-    :param locator:
-    :return: list of ground temperatures, one for each hour of the year
-    :rtype: list[np.float64]
-    """
-    weather_file = locator.get_weather_file()
-    T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
-    network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
-    return T_ground_K
 
 
 def hourly_thermal_calculation(t, thermal_network):
@@ -2101,13 +2105,13 @@ def hourly_mass_flow_calculation(t, diameter_guess, thermal_network):
     if thermal_network.network_type == 'DH':
         # set to the highest value in the network and assume no loss within the network
         T_substation_supply_K = np.array(
-            [float(thermal_network.t_target_supply_C.iloc[t].max()) + 273.15] * len(
+            [float(thermal_network.t_target_supply_C.iloc[t].max()) + KELVIN_CONVERSION] * len(
                 thermal_network.buildings_demands.keys())).reshape(
             1, len(thermal_network.buildings_demands.keys()))  # in [K]
     else:
         # set to the highest value in the network and assume no loss within the network
         T_substation_supply_K = np.array(
-            [float(thermal_network.t_target_supply_C.iloc[t].min()) + 273.15] * len(
+            [float(thermal_network.t_target_supply_C.iloc[t].min()) + KELVIN_CONVERSION] * len(
                 thermal_network.buildings_demands.keys())).reshape(
             1, len(thermal_network.buildings_demands.keys()))  # in [K]
 
@@ -2354,13 +2358,13 @@ def initial_diameter_guess(thermal_network):
                 if thermal_network.network_type == 'DH':
                     # set to the highest value in the network and assume no loss within the network
                     t_substation_supply_K = np.array(
-                        [float(t_target_supply_reduced_C.iloc[t].max()) + 273.15] * len(
+                        [float(t_target_supply_reduced_C.iloc[t].max()) + KELVIN_CONVERSION] * len(
                             thermal_network_reduced.building_names)).reshape(
                         1, len(thermal_network_reduced.building_names))  # in [K]
                 else:
                     # set to the lowest value in the network and assume no loss within the network
                     t_substation_supply_K = np.array(
-                        [float(t_target_supply_reduced_C.iloc[t].min()) + 273.15] * len(
+                        [float(t_target_supply_reduced_C.iloc[t].min()) + KELVIN_CONVERSION] * len(
                             thermal_network_reduced.building_names)).reshape(
                         1, len(thermal_network_reduced.building_names))  # in [K]
 
@@ -2447,8 +2451,8 @@ def calc_edge_temperatures(temperature_node, edge_node):
     # so these were converted to 0 and then converted back to 'nan'
     temperature_edge = np.dot(np.nan_to_num(temperature_node), abs(edge_node) / 2)
     if (
-            temperature_edge < 273.15).any():  # this can happen if we have 0 mass flow, or if we fail to meet cooling demands
-        temperature_edge[temperature_edge < 273.15] = 273.15
+            temperature_edge < KELVIN_CONVERSION).any():  # this can happen if we have 0 mass flow, or if we fail to meet cooling demands
+        temperature_edge[temperature_edge < KELVIN_CONVERSION] = KELVIN_CONVERSION
     # todo: could be updated with more accurate exponential temperature profile of edges for mean pipe temperature,
     # or mean value of that function to avoid spacial component
     return temperature_edge
@@ -2491,7 +2495,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                                                     thermal_network.edge_node_df.copy())
 
         # initialize target temperatures in Kelvin as initial value for K_value calculation
-        initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + 273.15, order='C')
+        initial_guess_temp = np.asarray(thermal_network.t_target_supply_df.loc[t] + KELVIN_CONVERSION, order='C')
         t_edge__k = calc_edge_temperatures(initial_guess_temp, edge_node_df.copy())
 
         # initialization of K_value
@@ -2585,7 +2589,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                     q_loss_edges_2_supply_kW, _ = calc_supply_temperatures(t, edge_node_df.copy(),
                                                                            edge_mass_flow_df_2_kgs, k, thermal_network)
                     # check if all substation temperatures are satisfied
-                    dt_nodes = t_supply_nodes_2__k - 273.15 - thermal_network.t_target_supply_df.loc[t]
+                    dt_nodes = t_supply_nodes_2__k - KELVIN_CONVERSION - thermal_network.t_target_supply_df.loc[t]
                     dt_nodes_max = dt_nodes.max()  # .max() returns a scalar, no need to copy
                     dt_tolerance = 0.00001  # TODO: defined by users
                     # identify the nodes
@@ -2612,7 +2616,7 @@ def solve_network_temperatures(thermal_network: ThermalNetwork, t):
                         for node in nodes_insufficient:
                             index_insufficient = np.argwhere(edge_node_df.index == node)[0][0]
                             t_target_supply__c = thermal_network.t_target_supply_df.loc[t]
-                            t_supply_nodes_2__k[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                            t_supply_nodes_2__k[index_insufficient] = t_target_supply__c[index_insufficient] + KELVIN_CONVERSION
                             # force setting node temperature to target to avoid substation HEX calculation error.
                             # However, it might potentially cause error at mass flow iteration.
                             print('force node: ', node, 'with dt=', dt_nodes[node], ' at time: ', t)
@@ -2843,11 +2847,11 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
     control_mode = thermal_network.get_temperature_control_mode()
     if control_mode == 'VT':  # VT_VF
         if thermal_network.network_type == 'DH':
-            t_plant_sup_0 = 273.15 + t_target_supply__c.max()
+            t_plant_sup_0 = KELVIN_CONVERSION + t_target_supply__c.max()
         else:  # DC
-            t_plant_sup_0 = 273.15 + t_target_supply__c.min()
+            t_plant_sup_0 = KELVIN_CONVERSION + t_target_supply__c.min()
     elif control_mode == 'CT':  # CT_VF
-        t_plant_sup_0 = 273.15 + thermal_network.get_plant_supply_temperature()
+        t_plant_sup_0 = KELVIN_CONVERSION + thermal_network.get_plant_supply_temperature()
     else:
         raise ValueError(f"Unknown temperature control mode: {control_mode}")
 
@@ -2945,17 +2949,17 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
             temp_iter = temp_iter + 1
 
         # set maximum/minimum allowable plant supply temperatures
-        t_boiling_K = 100 + 273.15
+        t_boiling_K = 100 + KELVIN_CONVERSION
         t_max_dT_K = t_plant_sup_0 + 60  # less than 60C temperature loss in the network TODO: move to settings
         t_plant_sup_max = max(t_boiling_K, t_max_dT_K)  # 98 C or
-        t_plant_sup_min = 1 + 273.15  # 1 C #TODO: move to settings
+        t_plant_sup_min = 1 + KELVIN_CONVERSION  # 1 C #TODO: move to settings
 
         if (thermal_network.get_temperature_control_mode() == 'VT' and t_plant_sup_min <= t_plant_sup <= t_plant_sup_max):
             # # iterate the plant supply temperature until all the node temperature reaches the target temperatures
             if network_type == 'DH':
                 # calculate the difference between node temperature and the target supply temperature at substations
                 # [K] temperature differences b/t node supply and target supply
-                d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+                d_t = (t_node - (t_target_supply__c + KELVIN_CONVERSION)).dropna()
                 # enter iteration if the node supply temperature is lower than the target supply temperature
                 # (0.1 is the tolerance)
                 if all(d_t > -0.1) is False and iteration <= 30:
@@ -2978,7 +2982,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     node_insufficient = d_t[d_t < 0].index.values
                     for node in range(node_insufficient.size):
                         index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
-                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + KELVIN_CONVERSION
                         # force setting node temperature to target to avoid substation HEX calculation error.
                         # However, it might potentially cause error at mass flow iteration.
                     flag = 1
@@ -2989,7 +2993,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
             else:  # when network type == 'DC'
                 # calculate the difference between node temperature and the target supply temperature at substations
                 # [K] temperature differences b/t node supply and target supply
-                d_t = (t_node - (t_target_supply__c + 273.15)).dropna()
+                d_t = (t_node - (t_target_supply__c + KELVIN_CONVERSION)).dropna()
 
                 # enter iteration if the node supply temperature is higher than the target supply temperature
                 # (0.1 is the tolerance)
@@ -3009,7 +3013,7 @@ def calc_supply_temperatures(t, edge_node_df, mass_flow_df, k, thermal_network):
                     node_insufficient = d_t[d_t > 0].index.values
                     for node in range(node_insufficient.size):
                         index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
-                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + 273.15
+                        t_node[index_insufficient] = t_target_supply__c[index_insufficient] + KELVIN_CONVERSION
                         # force setting node temperature to target to avoid substation HEX calculation error.
                         # However, it might potentially cause error at mass flow iteration.
                         flag = 1
@@ -3659,3 +3663,4 @@ def check_heating_cooling_demand(locator, config):
         buildings_name_with_cooling = get_building_names_with_load(total_demand, load_name='QC_sys_MWhyr')
         if not buildings_name_with_cooling:
             raise ValueError('No district cooling network created as there is no cooling demand from any building.')
+

@@ -65,7 +65,7 @@ dependencies = [
     "pyepwmorph>=1.0.5",
 
     # CEA external tools
-    "cea-external-tools>=0.2.1"
+    "cea-external-tools>=0.2.3"
 ]
 
 [dependency-groups]

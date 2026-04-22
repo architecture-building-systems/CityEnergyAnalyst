@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
@@ -75,7 +77,7 @@ class EmissionTimelinePlot:
 
     def _aggregate_into_9_categories(self):
         """
-        Aggregate emission columns into 9 main categories:
+        Aggregate emission columns into main categories:
         - space_heating (operation_Qhs_sys)
         - space_cooling (operation_Qcs_sys)
         - dhw (operation_Qww_sys)
@@ -83,8 +85,7 @@ class EmissionTimelinePlot:
         - production (all production_*)
         - demolition (all demolition_*)
         - biogenic (all biogenic_*)
-        - pv_electricity_offset (PV_*_offset)
-        - pv_electricity_export (PV_*_export)
+        - solar_offset (PV_E_offset_*, PVT_E_offset_*, PVT_Q_offset_*, SC_Q_offset_*)
 
         Returns:
         --------
@@ -93,34 +94,38 @@ class EmissionTimelinePlot:
         categories = {
             'space_heating': {'columns': [], 'positive': True, 'display_name': 'space_heating'},
             'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
-            'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
+            'DHW': {'columns': [], 'positive': True, 'display_name': 'domestic_hot_water'},
             'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
+            'DH': {'columns': [], 'positive': True, 'display_name': 'district_heating'},
+            'DC': {'columns': [], 'positive': True, 'display_name': 'district_cooling'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
-            'pv_electricity_offset': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_offset'},
-            'pv_electricity_export': {'columns': [], 'positive': False, 'display_name': 'pv_electricity_export'}
+            'solar_offset': {'columns': [], 'positive': False, 'display_name': 'solar_offset'},
         }
 
         # Categorize columns
         for col in self.y_columns:
             col_lower = col.lower()
 
-            # Check for specific operation services
-            if 'operation_qhs_sys' in col_lower or 'operation_space_heating' in col_lower:
+            # Check for specific operation services (including booster columns)
+            if 'operation_qhs_sys' in col_lower or 'operation_qhs_booster' in col_lower or 'operation_space_heating' in col_lower:
                 categories['space_heating']['columns'].append(col)
             elif 'operation_qcs_sys' in col_lower or 'operation_space_cooling' in col_lower:
                 categories['space_cooling']['columns'].append(col)
-            elif 'operation_qww_sys' in col_lower or 'operation_dhw' in col_lower:
-                categories['dhw']['columns'].append(col)
+            elif 'operation_qww_sys' in col_lower or 'operation_qww_booster' in col_lower or 'operation_dhw' in col_lower:
+                categories['DHW']['columns'].append(col)
             elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
                 categories['electricity']['columns'].append(col)
-            # Check for PV offset/export
-            elif 'pv_' in col_lower and '_offset' in col_lower:
-                categories['pv_electricity_offset']['columns'].append(col)
-            elif 'pv_' in col_lower and '_export' in col_lower:
-                categories['pv_electricity_export']['columns'].append(col)
-            # Check for lifecycle categories
+            # District plant columns
+            elif col_lower == 'operation_dh_kgco2e':
+                categories['DH']['columns'].append(col)
+            elif col_lower == 'operation_dc_kgco2e':
+                categories['DC']['columns'].append(col)
+            # Solar offset columns (PV_E_offset, PVT_E_offset, PVT_Q_offset, SC_Q_offset)
+            elif col_lower.endswith('_offset_kgco2e') or col_lower.endswith('_offset'):
+                categories['solar_offset']['columns'].append(col)
+            # Check for lifecycle embodied categories
             elif col_lower.startswith('biogenic'):
                 categories['biogenic']['columns'].append(col)
             elif col_lower.startswith('production'):
@@ -216,13 +221,14 @@ class EmissionTimelinePlot:
         category_colors = {
             'space_heating': COLOURS_TO_RGB['red'],
             'space_cooling': COLOURS_TO_RGB['blue'],
-            'dhw': COLOURS_TO_RGB['orange'],
+            'DHW': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
+            'DH': COLOURS_TO_RGB['red_light'],
+            'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
-            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
-            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
+            'solar_offset': COLOURS_TO_RGB['yellow'],
         }
 
         fig = go.Figure()
@@ -293,7 +299,9 @@ class EmissionTimelinePlot:
             title=dict(
                 text=self.plot_title,
                 x=0,
-                xanchor='left'
+                xanchor='left',
+                yanchor='top',
+                font=dict(size=20),
             ),
             xaxis=dict(
                 title='Time horizon - Year',
@@ -307,11 +315,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -388,7 +396,7 @@ class EmissionTimelinePlot:
         # Add cumulative suffix to title
         plot_title = self.plot_title
         if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title + " (Cumulative)"
+            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
 
         # Configure y-axis range and step from config
         yaxis_config = dict(
@@ -430,11 +438,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -455,13 +463,14 @@ class EmissionTimelinePlot:
         category_colors = {
             'space_heating': COLOURS_TO_RGB['red'],
             'space_cooling': COLOURS_TO_RGB['blue'],
-            'dhw': COLOURS_TO_RGB['orange'],
+            'DHW': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
+            'DH': COLOURS_TO_RGB['red_light'],
+            'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
-            'pv_electricity_offset': COLOURS_TO_RGB['yellow'],
-            'pv_electricity_export': COLOURS_TO_RGB['yellow_light']
+            'solar_offset': COLOURS_TO_RGB['yellow'],
         }
 
         fig = go.Figure()
@@ -556,7 +565,7 @@ class EmissionTimelinePlot:
         # Add cumulative suffix to title
         plot_title = self.plot_title
         if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title + " (Cumulative)"
+            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
 
         # Configure y-axis range and step from config
         yaxis_config = dict(
@@ -598,11 +607,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -666,89 +675,197 @@ class EmissionTimelinePlot:
         else:
             return f'Emissions ({unit})'
 
-def plot_emission_timeline(config, context: dict):
+def _load_whatif_timeline_df(locator, whatif_names):
+    """
+    Load and aggregate the district-level emission timeline from what-if results.
+
+    Returns a DataFrame with:
+    - 'X': year values
+    - emission columns with _kgCO2e suffix (operation_Qhs_sys_kgCO2e, production_kgCO2e, etc.)
+    """
+    dfs = []
+    for whatif_name in whatif_names:
+        timeline_path = locator.get_emissions_whatif_timeline_file(whatif_name)
+        if not os.path.exists(timeline_path):
+            print(f"Warning: timeline file not found for what-if '{whatif_name}': {timeline_path}")
+            continue
+        df = pd.read_csv(timeline_path)
+        dfs.append(df)
+
+    if not dfs:
+        return pd.DataFrame()
+
+    # Sum across multiple what-if scenarios (numeric columns only)
+    if len(dfs) == 1:
+        combined = dfs[0]
+    else:
+        numeric_cols = dfs[0].select_dtypes(include='number').columns.tolist()
+        combined = dfs[0].copy()
+        for df in dfs[1:]:
+            combined[numeric_cols] = combined[numeric_cols].add(df[numeric_cols].fillna(0), fill_value=0)
+
+    # Detect year column (the timeline index is named 'period' with values like 'Y_2024')
+    year_col = None
+    for candidate in ('period', 'year', 'Year', 'Y', 'index'):
+        if candidate in combined.columns:
+            year_col = candidate
+            break
+
+    if year_col is None and combined.index.name:
+        combined = combined.reset_index()
+        year_col = combined.columns[0]
+    elif year_col is None:
+        combined = combined.reset_index()
+        year_col = combined.columns[0]
+
+    combined = combined.rename(columns={year_col: 'X'})
+    return combined
+
+
+def _get_timeline_y_columns(df, operation_services, y_categories):
+    """Detect which timeline columns match the requested services and categories.
+
+    `operation_services` values are display names (see
+    [plots-lifecycle-emissions]/[plots-operational-emissions] in
+    default.config).
+    """
+    service_to_tech = {
+        'electricity':        ['operation_E_sys'],
+        'space_heating':      ['operation_Qhs_sys', 'operation_Qhs_booster'],
+        'space_cooling':      ['operation_Qcs_sys'],
+        'domestic_hot_water': ['operation_Qww_sys', 'operation_Qww_booster'],
+    }
+    # solar_to_col = {
+    #     'solar_pv_electricity':  'PV_E_offset',
+    #     'solar_pvt_electricity': 'PVT_E_offset',
+    #     'solar_pvt_thermal':     'PVT_Q_offset',
+    #     'solar_thermal':         'SC_Q_offset',
+    # }
+
+    wanted = []
+    if 'operation' in y_categories:
+        for service in operation_services:
+            if service in service_to_tech:
+                for base in service_to_tech[service]:
+                    col = next((c for c in df.columns if c.startswith(base)), None)
+                    if col:
+                        wanted.append(col)
+        # Always include plant (DH/DC) operation columns if present
+        for col in df.columns:
+            if col in ('operation_DH_kgCO2e', 'operation_DC_kgCO2e'):
+                if col not in wanted:
+                    wanted.append(col)
+        # Always include all solar offset columns that exist in the timeline (regardless of
+        # which solar services the user has ticked — they come from what-if emissions results)
+        for col in df.columns:
+            if col.endswith('_offset_kgCO2e') or col.endswith('_offset'):
+                if col not in wanted:
+                    wanted.append(col)
+
+    for category in ('production', 'demolition', 'biogenic'):
+        if category in y_categories:
+            cols = [c for c in df.columns if c.startswith(f'{category}_')]
+            wanted.extend(cols)
+
+    return wanted
+
+
+def plot_emission_timeline_single(config, context: dict, whatif_name: str):
+    """Generate a single emission timeline figure for one what-if scenario."""
+    import cea.inputlocator
+
     scenario = config.scenario
-    plot_cea_feature = 'lifecycle-emissions'
-    period_start = context.get('period_start', 0)
-    period_end = context.get('period_end', 8759)
     plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
+    period_start = context.get('period_start', None)
+    period_end = context.get('period_end', None)
     bool_accumulated = True
-    solar_panel_types_list = []
-    plots_building_filter = config.sections["plots-building-filter"]
     plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
-    bool_include_advanced_analytics = False
-    plot_config.x_to_plot = 'district_and_annually'
 
-    # Note: PV validation is deferred to after data loading
-    # We need to check if PV columns exist in the loaded emission data,
-    # not just if PV result files exist
+    locator = cea.inputlocator.InputLocator(scenario)
+    df_to_plotly = _load_whatif_timeline_df(locator, [whatif_name])
 
-    # FIXME: temporary fix for missing x_sorted_by and x_sorted_reversed in plot_config_general
-    # use dummy config for plot_config_general
-    class DummyConfig:
-        def __init__(self):
-            self.x_sorted_by = "default"
-            self.x_sorted_reversed = False
-    plot_config_general = DummyConfig()
+    if df_to_plotly.empty:
+        import plotly.graph_objs as go
+        return go.Figure()
 
-    # Activate a_data_loader
-    df_summary_data, df_architecture_data, plot_instance = plot_input_processor(plot_config,
-                                                                                plots_building_filter, scenario,
-                                                                                plot_cea_feature,
-                                                                                period_start, period_end,
-                                                                                solar_panel_types_list,
-                                                                                bool_include_advanced_analytics)
+    operation_services = getattr(plot_config, 'operation_services', [])
+    y_categories = getattr(plot_config, 'y_category_to_plot', ['operation', 'production', 'demolition', 'biogenic'])
+    list_y_columns = _get_timeline_y_columns(df_to_plotly, operation_services, y_categories)
 
-    # Activate b_data_processor
-    df_to_plotly, list_y_columns = calc_x_y_metric(plot_config, plot_config_general, plots_building_filter,
-                                                   plot_instance, plot_cea_feature, df_summary_data,
-                                                   df_architecture_data,
-                                                   solar_panel_types_list)
-
-    # Validate PV columns exist in loaded data (column-level validation)
-    # Only check if PV is actually being plotted
-    pv_code = getattr(plot_config, 'pv_code', None)
-    if pv_code:
-        # Check if PV services or components are selected
-        operation_services = getattr(plot_config, 'operation_services', [])
-        envelope_components = getattr(plot_config, 'envelope_components', [])
-
-        pv_is_selected = (
-            'pv_electricity_offset' in operation_services or
-            'pv_electricity_export' in operation_services or
-            'pv' in envelope_components
-        )
-
-        if pv_is_selected:
-            # Check if expected PV columns exist in the data
-            expected_pv_patterns = [f'PV_{pv_code}_', f'_PV_{pv_code}']
-            pv_columns_found = any(
-                any(pattern in col for pattern in expected_pv_patterns)
-                for col in df_to_plotly.columns
-            )
-
-            if not pv_columns_found:
-                from cea.visualisation.a_data_loader import raise_missing_pv_error
-                raise_missing_pv_error(pv_code, context='emission')
-
-    # # Add placeholder columns for biogenic and PV if their source columns exist (dummy values)
-    # if 'operation_hot_water_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['biogenic_underside_kgCO2e/m2'] = df_to_plotly['production_technical_systems_kgCO2e/m2']
-    #     list_y_columns.append('biogenic_underside_kgCO2e/m2')
-    # if 'operation_E_sys_kgCO2e/m2' in df_to_plotly.columns:
-    #     df_to_plotly['pv_kgCO2e/m2'] = df_to_plotly['operation_E_sys_kgCO2e/m2']
-    #     list_y_columns.append('pv_kgCO2e/m2')
-
-    # Create EmissionTimelinePlot instance
-    plot_title = "CEA-4 Emission Timeline"
+    scenario_name = os.path.basename(config.scenario)
+    feature_label = 'CEA-4 Emission Timeline'
+    subtitle = ' | '.join([feature_label, scenario_name, whatif_name])
+    plot_title = f"<b>Emission Timeline</b><br><sub>{subtitle}</sub>"
     plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
                                     bool_accumulated=bool_accumulated,
                                     period_start=period_start, period_end=period_end)
+    return plot_obj.create_plot()
 
-    # Generate the figure
-    fig = plot_obj.create_plot()
 
-    return fig
+def plot_emission_timeline(config, context: dict):
+    """Generate emission timeline figure(s). Aggregates all what-if scenarios into one plot."""
+    import cea.inputlocator
+
+    scenario = config.scenario
+    plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
+    period_start = context.get('period_start', None)
+    period_end = context.get('period_end', None)
+    bool_accumulated = True
+    plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
+
+    whatif_names = getattr(plot_config, 'what_if_name', [])
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names] if whatif_names else []
+
+    if whatif_names:
+        locator = cea.inputlocator.InputLocator(scenario)
+        df_to_plotly = _load_whatif_timeline_df(locator, whatif_names)
+
+        if df_to_plotly.empty:
+            import plotly.graph_objs as go
+            return go.Figure()
+
+        operation_services = getattr(plot_config, 'operation_services', [])
+        y_categories = getattr(plot_config, 'y_category_to_plot', ['operation', 'production', 'demolition', 'biogenic'])
+        list_y_columns = _get_timeline_y_columns(df_to_plotly, operation_services, y_categories)
+
+    else:
+        # Legacy path: use process_building_summary pipeline
+        plot_cea_feature = 'lifecycle-emissions'
+        solar_panel_types_list = []
+        plots_building_filter = config.sections["plots-building-filter"]
+        bool_include_advanced_analytics = False
+        plot_config.x_to_plot = 'district_and_annually'
+
+        class DummyConfig:
+            def __init__(self):
+                self.x_sorted_by = "default"
+                self.x_sorted_reversed = False
+        plot_config_general = DummyConfig()
+
+        df_summary_data, df_architecture_data, plot_instance = plot_input_processor(
+            plot_config, plots_building_filter, scenario, plot_cea_feature,
+            period_start or 0, period_end or 8759, solar_panel_types_list,
+            bool_include_advanced_analytics
+        )
+
+        df_to_plotly, list_y_columns = calc_x_y_metric(
+            plot_config, plot_config_general, plots_building_filter,
+            plot_instance, plot_cea_feature, df_summary_data, df_architecture_data,
+            solar_panel_types_list, scenario
+        )
+
+    scenario_name = os.path.basename(config.scenario)
+    whatif_label = ', '.join(whatif_names) if whatif_names else ''
+    subtitle_parts = ['CEA-4 Emission Timeline', scenario_name]
+    if whatif_label:
+        subtitle_parts.append(whatif_label)
+    subtitle = ' | '.join(subtitle_parts)
+    plot_title = f"<b>Emission Timeline</b><br><sub>{subtitle}</sub>"
+    plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
+                                    bool_accumulated=bool_accumulated,
+                                    period_start=period_start, period_end=period_end)
+    return plot_obj.create_plot()
 
 
 def create_emission_timeline_plot(config):
@@ -778,10 +895,120 @@ def create_emission_timeline_plot(config):
 
     return fig
 
+def _figure_yrange_with_stacks(fig):
+    """Compute (y_min, y_max) for a Plotly figure, summing traces that
+    share a ``stackgroup`` so the visible top of a stacked area chart is
+    captured — not just the largest single layer.
+
+    For ``shaded_stack_cumulative`` (and similar fill='tonexty' +
+    stackgroup setups), each trace's ``.y`` is the per-category
+    contribution. The on-screen height at every x is the sum across all
+    traces in the same stackgroup. Taking ``max(trace.y)`` per trace
+    therefore under-reports the visible maximum by a factor equal to the
+    number of categories, cropping the y-axis when the multi-what-if
+    aligner divides that under-estimate across plots.
+
+    Standalone (non-stacked) traces are evaluated individually as before.
+    """
+    import numpy as np
+
+    stack_sums: dict = {}     # stackgroup_name → np.array of summed y values
+    standalone_min = standalone_max = None
+
+    for trace in fig.data:
+        y = getattr(trace, 'y', None)
+        if y is None or len(y) == 0:
+            continue
+        try:
+            y_arr = np.asarray(y, dtype=float)
+        except (TypeError, ValueError):
+            continue
+        stackgroup = getattr(trace, 'stackgroup', None)
+        if stackgroup:
+            if stackgroup in stack_sums and len(stack_sums[stackgroup]) == len(y_arr):
+                stack_sums[stackgroup] = stack_sums[stackgroup] + y_arr
+            else:
+                stack_sums[stackgroup] = y_arr.copy()
+        else:
+            t_min, t_max = float(np.nanmin(y_arr)), float(np.nanmax(y_arr))
+            standalone_min = t_min if standalone_min is None else min(standalone_min, t_min)
+            standalone_max = t_max if standalone_max is None else max(standalone_max, t_max)
+
+    overall_min = standalone_min
+    overall_max = standalone_max
+    for arr in stack_sums.values():
+        t_min, t_max = float(np.nanmin(arr)), float(np.nanmax(arr))
+        overall_min = t_min if overall_min is None else min(overall_min, t_min)
+        overall_max = t_max if overall_max is None else max(overall_max, t_max)
+
+    return overall_min, overall_max
+
+
 def main(config):
-    fig = create_emission_timeline_plot(config)
-    plot_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-    return plot_html
+    plot_config = config.plots_emission_timeline
+    whatif_names = getattr(plot_config, 'what_if_name', [])
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names] if whatif_names else []
+
+    # Single what-if or legacy: return one figure
+    if len(whatif_names) <= 1:
+        fig = create_emission_timeline_plot(config)
+        fig.update_layout(autosize=True)
+        html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+        return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+
+    # Multi what-if: one figure per scenario with aligned y-axes
+    slots = []
+    for whatif_name in whatif_names:
+        try:
+            context = plot_config.context
+            context['feature'] = 'emission-timeline'
+            fig = plot_emission_timeline_single(config, context, whatif_name)
+            slots.append(('ok', whatif_name, fig))
+        except Exception as e:
+            slots.append(('err', whatif_name, (
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Error plotting <em>{whatif_name}</em></h3>'
+                f'<code>{e}</code></div>'
+            )))
+
+    # Align y-axes across all figures
+    global_y_min = global_y_max = None
+    y_min_cfg = getattr(plot_config, 'y_min', None)
+    y_max_cfg = getattr(plot_config, 'y_max', None)
+    if y_min_cfg is None and y_max_cfg is None:
+        for kind, _, fig in slots:
+            if kind != 'ok':
+                continue
+            fig_min, fig_max = _figure_yrange_with_stacks(fig)
+            if fig_min is not None and (global_y_min is None or fig_min < global_y_min):
+                global_y_min = fig_min
+            if fig_max is not None and (global_y_max is None or fig_max > global_y_max):
+                global_y_max = fig_max
+
+    html_outputs = []
+    plotly_included = False
+    for slot in slots:
+        if slot[0] == 'err':
+            html_outputs.append(slot[2])
+            continue
+        _, whatif_name, fig = slot
+        if global_y_min is not None:
+            margin = (global_y_max - global_y_min) * 0.05
+            fig.update_yaxes(range=[global_y_min - margin, global_y_max + margin])
+        fig.update_layout(autosize=False, height=700, width=960)
+        include_js = 'cdn' if not plotly_included else False
+        plotly_included = True
+        html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                        config={'responsive': False}))
+
+    body = '\n'.join(html_outputs)
+    return (
+        '<!DOCTYPE html><html>'
+        '<head><meta charset="utf-8"></head>'
+        f'<body style="margin:0;overflow:auto">{body}</body></html>'
+    )
 
 
 if __name__ == '__main__':
