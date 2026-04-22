@@ -104,15 +104,13 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
 
         # fill in missing data in OSM files with assumed floor-to-floor height
-        shapefile.loc[(shapefile['building:levels'].isna()) & (~shapefile['height'].isna()), 'building:levels'] = \
-            shapefile.loc[(shapefile['building:levels'].isna()) & (~shapefile['height'].isna()), 'height'] / \
-            constants.H_F
-        shapefile.loc[(~shapefile['building:levels'].isna()) & (shapefile['height'].isna()), 'height'] = \
-            shapefile.loc[(~shapefile['building:levels'].isna()) & (shapefile['height'].isna()), 'building:levels'] * \
-            constants.H_F
+        shapefile['building:levels'] = shapefile['building:levels'].where(
+            ~shapefile['building:levels'].isna(), shapefile['height'].astype(float) / constants.H_F)
+        shapefile['height'] = shapefile['height'].where(
+            ~shapefile['height'].isna(), shapefile['building:levels'].astype(float) * constants.H_F)
 
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
-                                  shapefile['building:levels']]
+                                  shapefile['building:levels'] + shapefile['roof:levels'].fillna(0)]
 
         shapefile["void_deck"] = 0 # assume no void decks by default
 
