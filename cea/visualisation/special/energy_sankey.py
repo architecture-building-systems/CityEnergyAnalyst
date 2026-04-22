@@ -260,13 +260,23 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
 
     Returns dict keyed by network_type ('DH' or 'DC'):
       {
-        '_carrier_raw': 'GRID',
-        'carrier': 'Grid Electricity',
-        'component': 'Chiller (CH1)',
-        'input_kWh': 5_000_000.0,
+        '_carrier_raw': <electricity carrier code>,
+        'carrier':      <electricity carrier code>,
+        'component':    'Chiller (CH1)',
+        'input_kWh':    5_000_000.0,
       }
     Returns an empty dict if no plant files exist.
     """
+    # The scenario's electricity carrier name (typically 'GRID'). Used for
+    # the pumping-column match and as the fallback when a plant config is
+    # missing its carrier — both sites were previously hardcoded to 'GRID'.
+    from cea.technologies.energy_carriers import electricity_carrier
+    try:
+        elec = electricity_carrier(locator)
+    except Exception:
+        elec = 'GRID'
+    pumping_suffix = f'_{elec}_kWh'
+
     # Collect network_name per network_type from building configs
     network_names = {}
     for bconfig in building_configs.values():
@@ -282,7 +292,7 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
 
     for plant_name, plant_cfg in plant_configs.items():
         network_type = plant_cfg.get('network_type', '')
-        carrier_raw = plant_cfg.get('carrier', 'GRID')
+        carrier_raw = plant_cfg.get('carrier', elec)
         component_code = plant_cfg.get('primary_component', '')
         tertiary_code = plant_cfg.get('tertiary_component')
         network_name = network_names.get(network_type, '')
@@ -310,7 +320,7 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
             # Sum all tertiary columns for this network type
             for tc in [c for c in plant_df.columns if c.startswith(f'plant_tertiary_{network_type}_')]:
                 total_tertiary += plant_df[tc].sum()
-            for pc in [c for c in plant_df.columns if c.startswith('plant_pumping_') and c.endswith('_GRID_kWh')]:
+            for pc in [c for c in plant_df.columns if c.startswith('plant_pumping_') and c.endswith(pumping_suffix)]:
                 total_pumping += plant_df[pc].sum()
             if 'thermal_load_kWh' in plant_df.columns:
                 total_thermal += plant_df['thermal_load_kWh'].sum()
@@ -366,6 +376,16 @@ def load_energy_flow_data(locator, whatif_name):
 
     plant_totals = _load_plant_totals(locator, whatif_name, plant_configs, building_configs)
 
+    # District pumps and cooling-tower-fan tertiary components always run on
+    # the scenario's electricity carrier (``GRID`` unless renamed) — this is
+    # independent of the plant's primary carrier (which may be NATURALGAS,
+    # WOOD, …). Resolve the electricity carrier once for labelling.
+    from cea.technologies.energy_carriers import electricity_carrier
+    try:
+        elec = electricity_carrier(locator)
+    except Exception:
+        elec = 'GRID'
+
     records = []
 
     # ── District pumping rows (one per network type) ───────────────────────
@@ -373,8 +393,8 @@ def load_energy_flow_data(locator, whatif_name):
         pumping = pt.get('pumping_kWh', 0.0)
         if pumping > 0:
             records.append({
-                'primary_carrier':    'Grid Electricity',
-                '_carrier_raw':       'GRID',
+                'primary_carrier':    elec,
+                '_carrier_raw':       elec,
                 'plant_component':    f'Pump ({network_type})',
                 'network':            network_type,
                 'building_component': '',
@@ -391,8 +411,8 @@ def load_energy_flow_data(locator, whatif_name):
         tertiary_comp = pt.get('tertiary_component', '')
         if tertiary_kWh > 0 and tertiary_comp:
             records.append({
-                'primary_carrier':    'Grid Electricity',
-                '_carrier_raw':       'GRID',
+                'primary_carrier':    elec,
+                '_carrier_raw':       elec,
                 'plant_component':    tertiary_comp,
                 'network':            network_type,
                 'building_component': '',
@@ -683,7 +703,7 @@ def load_energy_flow_data(locator, whatif_name):
                     building, tech_code, surface, locator
                 ) or val
                 records.append({
-                    'primary_carrier':    'Solar',
+                    'primary_carrier':    'SOLAR',
                     '_carrier_raw':       'SOLAR',
                     'plant_component':    '',
                     'network':            '',
@@ -704,7 +724,7 @@ def load_energy_flow_data(locator, whatif_name):
                     building, tech_code, surface, locator
                 ) or val
                 records.append({
-                    'primary_carrier':    'Solar',
+                    'primary_carrier':    'SOLAR',
                     '_carrier_raw':       'SOLAR',
                     'plant_component':    '',
                     'network':            '',
@@ -730,7 +750,7 @@ def load_energy_flow_data(locator, whatif_name):
                 if val_e > 0:
                     rad_e = radiation_total * (val_e / total_out) if total_out > 0 else 0
                     records.append({
-                        'primary_carrier':    'Solar',
+                        'primary_carrier':    'SOLAR',
                         '_carrier_raw':       'SOLAR',
                         'plant_component':    '',
                         'network':            '',
@@ -744,7 +764,7 @@ def load_energy_flow_data(locator, whatif_name):
                 if val_q > 0:
                     rad_q = radiation_total * (val_q / total_out) if total_out > 0 else 0
                     records.append({
-                        'primary_carrier':    'Solar',
+                        'primary_carrier':    'SOLAR',
                         '_carrier_raw':       'SOLAR',
                         'plant_component':    '',
                         'network':            '',
@@ -1062,7 +1082,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         .agg(value_kWh=('value_kWh', 'sum'), carrier_kWh=('plant_input_kWh', 'sum'))
     )
     if not use_solar_irradiation:
-        is_solar = b_path_agg['primary_carrier'] == 'Solar'
+        is_solar = b_path_agg['primary_carrier'] == 'SOLAR'
         b_path_agg.loc[is_solar, 'carrier_kWh'] = b_path_agg.loc[is_solar, 'value_kWh']
     for _, row in b_path_agg.iterrows():
         carrier      = row['primary_carrier']
@@ -1086,7 +1106,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
                     add_link(carrier, bc, carrier_val, c_colour)
                 # Booster routes through HEX (district interface).
                 # Standalone and solar go directly to service.
-                is_solar = carrier == 'Solar'
+                is_solar = carrier == 'SOLAR'
                 if is_booster and not is_solar:
                     hex_nodes = service_to_hex.get(service, [])
                     if hex_nodes:
