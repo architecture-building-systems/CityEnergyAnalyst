@@ -9,7 +9,7 @@ from geopandas import GeoDataFrame as Gdf
 
 import cea.config
 import cea.inputlocator
-from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3
+from cea.constants import HOURS_IN_YEAR, SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3, KELVIN_CONVERSION
 from cea.optimization.constants import GHP_HMAX_SIZE, GHP_A
 from cea.utilities import epwreader
 from cea.utilities.date import get_date_range_hours_from_year
@@ -50,7 +50,7 @@ def calc_geothermal_potential(locator, config):
     T_ground_K = calc_ground_temperature(T_ambient_C, depth_m)
 
     # convert back to degrees C
-    t_source_final = [x[0] - 273 for x in T_ground_K]
+    t_source_final = [x[0] - KELVIN_CONVERSION for x in T_ground_K]
 
     Q_max_kwh = np.ceil(area_geothermal / GHP_A) * GHP_HMAX_SIZE / 1000  # [kW th]
 
@@ -100,8 +100,8 @@ def calc_ground_temperature(T_ambient_C, depth_m):
     conductivity_soil = SOIL_lambda_WmK
     density_soil = SOIL_rho_kgm3
 
-    T_amplitude = abs((max(T_ambient_C) - min(T_ambient_C)) + 273.15)  # to K
-    T_avg = np.mean(T_ambient_C) + 273.15  # to K
+    T_amplitude = max(T_ambient_C) - min(T_ambient_C)  # to K
+    T_avg = np.mean(T_ambient_C) + KELVIN_CONVERSION  # to K
     T_ground_K = calc_temperature_underground(T_amplitude, T_avg, conductivity_soil, density_soil, depth_m,
                                               heat_capacity_soil)
 
@@ -110,10 +110,10 @@ def calc_ground_temperature(T_ambient_C, depth_m):
 
 def calc_temperature_underground(T_amplitude_K, T_avg, conductivity_soil, density_soil, depth_m, heat_capacity_soil):
     diffusivity = conductivity_soil / (density_soil * heat_capacity_soil)  # in m2/s
-    wave_lenght = (math.pi * 2 / HOURS_IN_YEAR)
+    wave_length = (math.pi * 2 / HOURS_IN_YEAR)
     hour_with_minimum = 1
-    e = math.sqrt(wave_lenght / (2 * diffusivity)) * depth_m  # soil constants
-    T_ground_K = [T_avg + T_amplitude_K * (math.exp(-e) * math.cos(wave_lenght * (i - hour_with_minimum) - e))
+    e = math.sqrt(wave_length / (2 * diffusivity)) * depth_m  # soil constants
+    T_ground_K = [T_avg + T_amplitude_K * (math.exp(-e) * math.cos(wave_length * (i - hour_with_minimum) - e))
                   for i in range(1, HOURS_IN_YEAR + 1)]
 
     return T_ground_K

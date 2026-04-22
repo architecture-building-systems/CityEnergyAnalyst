@@ -18,7 +18,7 @@ import pvlib
 import cea.config
 import cea.inputlocator
 import cea.utilities.parallel
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HOURS_IN_YEAR, KELVIN_CONVERSION
 from cea.technologies.solar import constants
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -506,11 +506,11 @@ def do_multi_segment_calculation(A_seg_m2, C_eff_Jperm2K, Cp_fluid_JperkgK, DT, 
             Tin_Seg_C = Tin_C
 
         if Mfl_kgpers > 0 and mode_seg == 1:  # same heat gain/ losses for all segments
-            Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + 273.15)) / A_seg_m2 -
-                          (C_eff_Jperm2K * (Tin_Seg_C + 273.15)) / (2 * delts) + q_gain_Wperm2 +
-                          (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (
+            Tout_Seg_K = ((Mfl_kgpers * Cp_fluid_JperkgK * (Tin_Seg_C + KELVIN_CONVERSION)) / A_seg_m2 -
+                          (C_eff_Jperm2K * (Tin_Seg_C + KELVIN_CONVERSION)) / (2 * delts) + q_gain_Wperm2 +
+                          (C_eff_Jperm2K * (TflA[Iseg] + KELVIN_CONVERSION) / delts)) / (
                                  Mfl_kgpers * Cp_fluid_JperkgK / A_seg_m2 + C_eff_Jperm2K / (2 * delts))
-            Tout_Seg_C = Tout_Seg_K - 273.15  # in [C]
+            Tout_Seg_C = Tout_Seg_K - KELVIN_CONVERSION  # in [C]
             TflB[Iseg] = (Tin_Seg_C + Tout_Seg_C) / 2
         else:  # heat losses based on each segment's inlet and outlet temperatures.
             Tfl[1] = TflA[Iseg]
@@ -1039,6 +1039,21 @@ def aggregate_solar_collector_results(building_names, panel_type, locator):
 def main(config: cea.config.Configuration):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    # Remove stale SC outputs only for the panel types being re-run
+    from cea.utilities.output_cleanup import cleanup_output_files
+    import glob
+    list_types_SCpanel = config.solar.type_SCpanel
+    sc_folder = locator.solar_potential_folder_SC()
+    solar_root = locator.get_potentials_solar_folder()
+    for type_SCpanel in list_types_SCpanel:
+        if os.path.isdir(sc_folder):
+            cleanup_output_files(*glob.glob(os.path.join(sc_folder, f'*_{type_SCpanel}.csv')))
+        if os.path.isdir(solar_root):
+            cleanup_output_files(
+                locator.SC_totals(type_SCpanel),
+                locator.SC_total_buildings(type_SCpanel),
+            )
 
     print('Running solar-collector with scenario = %s' % config.scenario)
     print(

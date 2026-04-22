@@ -6,7 +6,7 @@ from fastapi.concurrency import run_in_threadpool
 
 import cea.config
 import cea.plots
-from .utils import deconstruct_parameters
+from .utils import deconstruct_parameters, validate_scenario_name
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAPlotCache
 
 router = APIRouter()
@@ -106,6 +106,8 @@ async def get_plot_categories(config: CEAConfig):
 
 @router.get('/plot-categories/{category_name}/plots/{plot_id}/parameters')
 async def get_plot_category_parameters(config: CEAConfig, category_name: str, plot_id: str, scenario: str = None):
+    if scenario is not None:
+        scenario = validate_scenario_name(scenario)
     plot_class = cea.plots.categories.load_plot_by_id(category_name, plot_id, config.plugins)
     return get_parameters_from_plot_class(config, plot_class, scenario)
 
@@ -184,12 +186,15 @@ async def create_plot_at_index(config: CEAConfig, plot_cache: CEAPlotCache,
         plot = dashboard.plots[plot_index]
         plot_parameters = plot.expected_parameters.items()
         if 'scenario-name' in plot.expected_parameters:
-            temp_config.scenario_name = form['parameters']['scenario-name']
+            temp_config.scenario_name = validate_scenario_name(form['parameters']['scenario-name'])
         print('expected_parameters: {}'.format(plot_parameters))
         for pname, fqname in plot_parameters:
             parameter = temp_config.get_parameter(fqname)
             if isinstance(parameter, cea.config.MultiChoiceParameter):
-                plot.parameters[pname] = parameter.decode(','.join(form['parameters'][pname]))
+                raw_value = form['parameters'][pname]
+                if isinstance(raw_value, list):
+                    raw_value = ','.join(raw_value)
+                plot.parameters[pname] = parameter.decode(raw_value)
             else:
                 plot.parameters[pname] = parameter.decode(form['parameters'][pname])
 
@@ -218,6 +223,8 @@ async def get_plot_parameters(config: CEAConfig, plot_cache: CEAPlotCache,
     """
     Get Plot Form Parameters of Plot in Dashboard
     """
+    if scenario is not None:
+        scenario = validate_scenario_name(scenario)
     dashboards = await run_in_threadpool(lambda: cea.plots.read_dashboards(config, plot_cache))
 
     dashboard = dashboards[dashboard_index]

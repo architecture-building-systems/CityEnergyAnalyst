@@ -10,15 +10,13 @@ import sys
 import cea.config
 import cea.inputlocator
 import cea.technologies.substation as substation
-from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import P_WATER_KGPERM3, FT_WATER_TO_PA, FT_TO_M, M_WATER_TO_PA, HEAT_CAPACITY_OF_WATER_JPERKGK, \
+    KELVIN_CONVERSION
 from cea.optimization.constants import PUMP_ETA
 from cea.optimization.preprocessing.preprocessing_main import get_building_names_with_load
 from cea.technologies.thermal_network.common.geometry import extract_network_from_shapefile, load_network_shapefiles
+from cea.technologies.thermal_network.common.utils import add_date_to_dataframe, calculate_ground_temperature
 from cea.technologies.thermal_network.physics import calc_temperature_out_per_pipe
-from cea.resources import geothermal
-from cea.technologies.constants import NETWORK_DEPTH
-from cea.utilities.epwreader import epw_reader
-from cea.utilities.date import get_date_range_hours_from_year
 from cea.technologies.network_layout.plant_node_operations import PlantServices
 
 
@@ -66,35 +64,6 @@ if sys.platform == "darwin" and platform.processor() == "arm":
     if result.returncode != 0:
         subprocess.run(["codesign", "--force", "--sign", "-", epanet_location], check=True)
 
-
-def add_date_to_dataframe(locator, df):
-    # create date range for the calculation year
-    weather_file = locator.get_weather_file()
-    weather_data = epw_reader(weather_file)
-    year = weather_data['year'][0]
-    date_range = get_date_range_hours_from_year(year)
-
-    # Convert date_range to datetime
-    date_column = pd.to_datetime(date_range, errors='coerce')
-
-    # Insert the 'date' column at the first position
-    df.insert(0, 'date', date_column)
-
-    return df
-
-def calculate_ground_temperature(locator):
-    """
-    calculate ground temperatures.
-
-    :param locator:
-    :return: list of ground temperatures, one for each hour of the year
-    :rtype: list[np.float64]
-    """
-    weather_file = locator.get_weather_file()
-    T_ambient_C = epw_reader(weather_file)['drybulb_C']
-    network_depth_m = NETWORK_DEPTH  # [m]
-    T_ground_K = geothermal.calc_ground_temperature(T_ambient_C.values, network_depth_m)
-    return T_ground_K
 
 
 def calc_max_diameter(volume_flow_m3s, pipe_catalog: pd.DataFrame, velocity_ms, peak_load_percentage):
@@ -465,13 +434,13 @@ def calculate_minimum_network_temperature(substation_results_dict, itemised_dh_s
     primary_service = itemised_dh_services[0]
 
     if primary_service == PlantServices.SPACE_HEATING:
-        # PLANT_hs or PLANT_hs_ww: Low-temp network
-        # Space heating return ~30°C + 5K approach = 35°C min
-        return 35
+        # PLANT_hs or PLANT_hs_ww: Low-temp or ambient-loop network
+        # Minimum 15°C to allow ambient-loop heat pump configurations
+        return 15
     elif primary_service == PlantServices.DOMESTIC_HOT_WATER:
         # PLANT_ww or PLANT_ww_hs: High-temp network
-        # DHW return ~45°C + 5K approach = 50°C min (allows preheat to 55°C, booster to 60°C)
-        return 50
+        # DHW requires 60°C (Swiss law) + 5K approach = 65°C min
+        return 65
     else:
         # Unknown service, conservative minimum
         return 30
@@ -519,40 +488,46 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                   If None, all buildings use all services (legacy behavior)
     """
     # local variables
-    min_head_substation_kPa = config.thermal_network.min_head_substation
+    min_head_substation_kPa = config.thermal_network_simplified.min_head_substation
     thermal_transfer_unit_design_head_m = min_head_substation_kPa * 1000 / M_WATER_TO_PA
-    coefficient_friction_hazen_williams = config.thermal_network.hw_friction_coefficient
-    velocity_ms = config.thermal_network.peak_load_velocity
+    coefficient_friction_hazen_williams = config.thermal_network_simplified.hw_friction_coefficient
+    velocity_ms = config.thermal_network_simplified.peak_load_velocity
     fraction_equivalent_length = config.thermal_network.equivalent_length_factor
-    peak_load_percentage = config.thermal_network.peak_load_percentage
+    peak_load_percentage = config.thermal_network_simplified.peak_load_percentage
+    set_diameter = config.thermal_network_simplified.set_diameter
 
     # GET INFORMATION ABOUT THE NETWORK
     network_nodes_df, network_edges_df = load_network_shapefiles(locator, network_type, network_name)
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df, filter_edges=True)
 
-    # Extract service configuration from plant node type (DH only)
+    # Determine DH service configuration from dh-temperature-mode config parameter
     itemised_dh_services = None
-    is_legacy = False
     if network_type == "DH":
-        from cea.technologies.network_layout.plant_node_operations import get_dh_services_from_plant_type
+        from cea.technologies.network_layout.plant_node_operations import (
+            PlantServices, get_dh_services_from_plant_type
+        )
 
-        # Find plant nodes
+        # Check for legacy plant node suffix and warn if found
         plant_nodes = node_df[node_df['type'].str.contains('PLANT', na=False)]
         if not plant_nodes.empty:
             plant_type = plant_nodes.iloc[0]['type']
-            services, is_legacy = get_dh_services_from_plant_type(plant_type)
+            _, is_legacy = get_dh_services_from_plant_type(plant_type)
+            # is_legacy=False means a service suffix was found (e.g. PLANT_hs_ww, PLANT_ww_hs)
+            if not is_legacy:
+                print(f"  Warning: Plant node type '{plant_type}' contains a legacy service suffix.")
+                print("    This suffix is no longer used to control network temperature.")
+                print("    Temperature strategy is now set via thermal-network:dh-temperature-mode.")
+                print("    Re-run 'network-layout' to update plant node types to plain PLANT.")
 
-            if is_legacy:
-                print("  ℹ Using legacy temperature control:")
-                print("    - Services: space heating + domestic hot water")
-                print("    - Supply temperature: max(space heating temp, DHW temp)")
-                print("    Hint: Run 'network-layout' with the new 'itemised-dh-services' parameter")
-                # Pass None for legacy mode to trigger default behavior
-                itemised_dh_services = None
-            else:
-                itemised_dh_services = services
-                service_names = ' → '.join(itemised_dh_services)
-                print(f"  ℹ DH service configuration: {service_names}")
+        # Always use dh-temperature-mode config to determine service order
+        dh_temperature_mode = config.thermal_network.dh_temperature_mode
+        if dh_temperature_mode == 'high-temperature':
+            itemised_dh_services = [PlantServices.DOMESTIC_HOT_WATER, PlantServices.SPACE_HEATING]
+            print("  DH temperature mode: high-temperature (DHW priority, ~60-80 degrees C)")
+        else:
+            # Default: low-temperature (space heating priority)
+            itemised_dh_services = [PlantServices.SPACE_HEATING, PlantServices.DOMESTIC_HOT_WATER]
+            print("  DH temperature mode: low-temperature (space heating priority, ~35-55 degrees C)")
 
     # GET INFORMATION ABOUT THE DEMAND OF BUILDINGS AND CONNECT TO THE NODE INFO
     # calculate substations for all buildings
@@ -589,8 +564,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"With {service_names} as primary service(s), the network\n"
                         f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
                         f"Explanation:\n"
-                        f"  - For space heating priority: minimum 35°C (heating return ~30°C + 5K approach)\n"
-                        f"  - For DHW priority: minimum 50°C (DHW return ~45°C + 5K approach)\n\n"
+                        f"  - For space heating priority: minimum 15°C (allows ambient-loop heat pump configurations)\n"
+                        f"  - For DHW priority: minimum 65°C (DHW requires 60°C + 5K approach)\n\n"
                         f"Current configuration will result in:\n"
                         f"  → Network provides essentially zero heat\n"
                         f"  → All heat from building boosters (defeats purpose of district heating)\n"
@@ -598,8 +573,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                         f"Solutions:\n"
                         f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
                         f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
-                        f"  3. If DHW is priority, consider PLANT_ww_hs (needs 50-80°C)\n"
-                        f"  4. If space heating is priority, use PLANT_hs_ww (needs 35-55°C)\n"
+                        f"  3. If DHW is priority, set dh-temperature-mode = high-temperature (needs 50-80°C)\n"
+                        f"  4. If space heating is priority, set dh-temperature-mode = low-temperature (needs 35-55°C)\n"
                         f"{'='*60}\n"
                     )
             else:
@@ -636,9 +611,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation_results_dict[building_name] = substation_results
 
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DH_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + 273.15  # Convert C to K
+            T_sup_K_building[building_name] = substation_results["T_supply_DH_result_C"] + KELVIN_CONVERSION  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DH_result_C"] > 0,
-                                                      substation_results["T_return_DH_result_C"] + 273.15, np.nan)
+                                                      substation_results["T_return_DH_result_C"] + KELVIN_CONVERSION, np.nan)
             # Total demand = DH contribution + booster for both space heating and DHW
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qhs_dh_W"] + substation_results["Qhs_booster_W"] +
@@ -662,44 +637,20 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         ])
 
         # Calculate space heating vs DHW contributions
-        total_hs_demand_kWh = sum([
-            (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
-            for df in substation_results_dict.values()
-        ])
-        total_ww_demand_kWh = sum([
-            (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
-            for df in substation_results_dict.values()
-        ])
+        # total_hs_demand_kWh = sum([
+        #     (df['Qhs_dh_W'].sum() + df['Qhs_booster_W'].sum()) / 1000
+        #     for df in substation_results_dict.values()
+        # ])
+        # total_ww_demand_kWh = sum([
+        #     (df['Qww_dh_W'].sum() + df['Qww_booster_W'].sum()) / 1000
+        #     for df in substation_results_dict.values()
+        # ])
 
         if total_demand_kWh > 0:
             dh_fraction = total_dh_contribution_kWh / total_demand_kWh
         else:
             dh_fraction = 0
 
-        # Special validation for PLANT_hs_ww with no space heating demand
-        if itemised_dh_services == ['space_heating', 'domestic_hot_water']:
-            # This is a PLANT_hs_ww network (space heating priority)
-            if total_hs_demand_kWh < 1.0:  # Less than 1 kWh/year of space heating
-                raise ValueError(
-                    f"\n{'='*70}\n"
-                    f"❌ ERROR: PLANT_hs_ww network has zero space heating demand\n"
-                    f"{'='*70}\n"
-                    f"  Plant type: PLANT_hs_ww (space heating → DHW priority)\n"
-                    f"  Space heating demand: {total_hs_demand_kWh:.2f} kWh/year\n"
-                    f"  DHW demand: {total_ww_demand_kWh:.2f} kWh/year\n"
-                    f"\n"
-                    f"PLANT_hs_ww networks are designed for buildings with space heating needs.\n"
-                    f"The network temperature is controlled by space heating requirements (35-45°C).\n"
-                    f"\n"
-                    f"Solutions:\n"
-                    f"  1. Use PLANT_ww network type for DHW-only buildings\n"
-                    f"     - Run network layout with 'itemised-dh-services' = ['domestic_hot_water']\n"
-                    f"     - Network designed for higher temperatures (50-80°C)\n"
-                    f"  2. Check if space heating demand exists in total-demand files\n"
-                    f"     - Verify QH_sys_MWhyr > 0 for connected buildings\n"
-                    f"  3. Remove buildings from network if they truly have no heating demand\n"
-                    f"{'='*70}\n"
-                )
 
         # If DH contribution is less than 1%, warn user and suggest minimum temperature (CT mode only)
         if dh_fraction < 0.01 and fixed_network_temp_C is not None:
@@ -766,9 +717,9 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
             substation_results_dict[building_name] = substation_results
 
             volume_flow_m3pers_building[building_name] = substation_results["mdot_DC_result_kgpers"] / P_WATER_KGPERM3
-            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + 273.15  # Convert C to K
+            T_sup_K_building[building_name] = substation_results["T_supply_DC_result_C"] + KELVIN_CONVERSION  # Convert C to K
             T_re_K_building[building_name] = np.where(substation_results["T_return_DC_result_C"] > 0,
-                                                      substation_results["T_return_DC_result_C"] + 273.15, np.nan)
+                                                      substation_results["T_return_DC_result_C"] + KELVIN_CONVERSION, np.nan)
             # Total demand = sum of all cooling types
             Q_demand_kWh_building[building_name] = (
                 substation_results["Qcs_dc_W"] + substation_results["Qcdata_dc_W"] + substation_results["Qcre_dc_W"]
@@ -944,96 +895,111 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         wn.options.hydraulic.accuracy = 0.01
         wn.options.hydraulic.trials = 100
 
-        # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
-        print("Starting 1st iteration to calculate pipe diameters...")
-        try:
-            sim = wntr.sim.EpanetSimulator(wn)
-            results = sim.run_sim()
-        except Exception as e:
-            error_msg = str(e)
-            
-            # Provide context-specific error messages
-            if "110" in error_msg or "cannot solve" in error_msg.lower():
-                raise ValueError(
-                    f"WNTR simulation failed (Error 110 - cannot solve hydraulic equations):\n{error_msg}\n\n"
-                    f"This typically indicates network topology or hydraulic issues:\n"
-                    f"Possible causes:\n"
-                    f"  - Disconnected network components (already validated - this shouldn't happen)\n"
-                    f"  - Extreme pipe lengths or diameters causing numerical instability\n"
-                    f"  - Conflicting pressure/flow constraints\n"
-                    f"  - Insufficient pressure sources (check plant node configuration)\n\n"
-                    f"Resolution:\n"
-                    f"  1. Check network layout for very long pipes or unusual geometries\n"
-                    f"  2. Verify min_head_substation configuration (current: {min_head_substation_kPa} kPa)\n"
-                    f"  3. Check demand values are reasonable (not extremely high)\n"
-                    f"  4. Review pipe friction coefficient (current: {coefficient_friction_hazen_williams})"
-                ) from e
-            elif "convergence" in error_msg.lower():
-                raise ValueError(
-                    f"WNTR simulation failed to converge:\n{error_msg}\n\n"
-                    f"Possible causes:\n"
-                    f"  - Network has extreme pressure/flow conditions\n"
-                    f"  - Demand patterns have very high peaks\n"
-                    f"  - Pipe diameters too small for required flows\n\n"
-                    f"Resolution:\n"
-                    f"  1. Check peak_load_percentage setting (current: {peak_load_percentage}%)\n"
-                    f"  2. Increase initial pipe diameter estimates\n"
-                    f"  3. Verify demand profiles are reasonable"
-                ) from e
-            elif "negative pressure" in error_msg.lower():
-                raise ValueError(
-                    f"WNTR simulation error - negative pressure detected:\n{error_msg}\n\n"
-                    f"Possible causes:\n"
-                    f"  - Insufficient pump head at plant node\n"
-                    f"  - Network too long or high friction losses\n"
-                    f"  - Elevation differences not properly accounted for\n\n"
-                    f"Resolution:\n"
-                    f"  1. Increase min_head_substation (current: {min_head_substation_kPa} kPa)\n"
-                    f"  2. Check thermal_transfer_unit_design_head_m calculation\n"
-                    f"  3. Reduce friction coefficient or increase pipe diameters"
-                ) from e
-            else:
-                raise ValueError(
-                    f"WNTR simulation failed during 1st iteration (diameter calculation):\n{error_msg}\n\n"
-                    f"Check your network topology, demand patterns, and configuration parameters.\n"
-                    f"Enable debug mode for more details."
-                ) from e
-        
-        # Validate results
-        if results.link['flowrate'].empty:
-            raise ValueError(
-                "WNTR simulation produced empty flowrate results. "
-                "This indicates a problem with network definition or simulation setup."
-            )
-        
-        if results.link['flowrate'].isna().any().any():
-            nan_pipes = results.link['flowrate'].columns[results.link['flowrate'].isna().any()].tolist()
-            warnings.warn(
-                f"WNTR simulation produced NaN flowrates for {len(nan_pipes)} pipe(s): {nan_pipes[:5]}. "
-                f"Results may be unreliable. Check network connectivity and demand patterns."
-            )
-        
-        max_volume_flow_rates_m3s = results.link['flowrate'].abs().max()
-        pipe_names = max_volume_flow_rates_m3s.index.values
-        pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
-        pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
-            *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
-              flow in max_volume_flow_rates_m3s])
-        pipe_dn = pd.Series(pipe_DN, pipe_names)
-        diameter_int_m = pd.Series(D_int_m, pipe_names)
-        diameter_ext_m = pd.Series(D_ext_m, pipe_names)
-        diameter_ins_m = pd.Series(D_ins_m, pipe_names)
+        if set_diameter:
+            # 1st ITERATION GET MASS FLOWS AND CALCULATE DIAMETER
+            print("Starting 1st iteration to calculate pipe diameters...")
+            try:
+                sim = wntr.sim.EpanetSimulator(wn)
+                results = sim.run_sim()
+            except Exception as e:
+                error_msg = str(e)
 
-        # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for all the year
+                # Provide context-specific error messages
+                if "110" in error_msg or "cannot solve" in error_msg.lower():
+                    raise ValueError(
+                        f"WNTR simulation failed (Error 110 - cannot solve hydraulic equations):\n{error_msg}\n\n"
+                        f"This typically indicates network topology or hydraulic issues:\n"
+                        f"Possible causes:\n"
+                        f"  - Disconnected network components (already validated - this shouldn't happen)\n"
+                        f"  - Extreme pipe lengths or diameters causing numerical instability\n"
+                        f"  - Conflicting pressure/flow constraints\n"
+                        f"  - Insufficient pressure sources (check plant node configuration)\n\n"
+                        f"Resolution:\n"
+                        f"  1. Check network layout for very long pipes or unusual geometries\n"
+                        f"  2. Verify min_head_substation configuration (current: {min_head_substation_kPa} kPa)\n"
+                        f"  3. Check demand values are reasonable (not extremely high)\n"
+                        f"  4. Review pipe friction coefficient (current: {coefficient_friction_hazen_williams})"
+                    ) from e
+                elif "convergence" in error_msg.lower():
+                    raise ValueError(
+                        f"WNTR simulation failed to converge:\n{error_msg}\n\n"
+                        f"Possible causes:\n"
+                        f"  - Network has extreme pressure/flow conditions\n"
+                        f"  - Demand patterns have very high peaks\n"
+                        f"  - Pipe diameters too small for required flows\n\n"
+                        f"Resolution:\n"
+                        f"  1. Check peak_load_percentage setting (current: {peak_load_percentage}%)\n"
+                        f"  2. Increase initial pipe diameter estimates\n"
+                        f"  3. Verify demand profiles are reasonable"
+                    ) from e
+                elif "negative pressure" in error_msg.lower():
+                    raise ValueError(
+                        f"WNTR simulation error - negative pressure detected:\n{error_msg}\n\n"
+                        f"Possible causes:\n"
+                        f"  - Insufficient pump head at plant node\n"
+                        f"  - Network too long or high friction losses\n"
+                        f"  - Elevation differences not properly accounted for\n\n"
+                        f"Resolution:\n"
+                        f"  1. Increase min_head_substation (current: {min_head_substation_kPa} kPa)\n"
+                        f"  2. Check thermal_transfer_unit_design_head_m calculation\n"
+                        f"  3. Reduce friction coefficient or increase pipe diameters"
+                    ) from e
+                else:
+                    raise ValueError(
+                        f"WNTR simulation failed during 1st iteration (diameter calculation):\n{error_msg}\n\n"
+                        f"Check your network topology, demand patterns, and configuration parameters.\n"
+                        f"Enable debug mode for more details."
+                    ) from e
+                        
+            flowrate_df: pd.DataFrame = results.link['flowrate']  # type: ignore[index]
+
+            # Validate results
+            if flowrate_df.empty:
+                raise ValueError(
+                    "WNTR simulation produced empty flowrate results. "
+                    "This indicates a problem with network definition or simulation setup."
+                )
+
+            if flowrate_df.isna().any().any():
+                nan_pipes = flowrate_df.columns[flowrate_df.isna().any()].tolist()
+                warnings.warn(
+                    f"WNTR simulation produced NaN flowrates for {len(nan_pipes)} pipe(s): {nan_pipes[:5]}. "
+                    f"Results may be unreliable. Check network connectivity and demand patterns."
+                )
+
+            max_volume_flow_rates_m3s = flowrate_df.abs().max()
+            pipe_names = max_volume_flow_rates_m3s.index.values
+            pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+            pipe_DN, D_ext_m, D_int_m, D_ins_m = zip(
+                *[calc_max_diameter(flow, pipe_catalog, velocity_ms=velocity_ms, peak_load_percentage=peak_load_percentage) for
+                  flow in max_volume_flow_rates_m3s])
+            pipe_dn = pd.Series(pipe_DN, pipe_names)
+            diameter_int_m = pd.Series(D_int_m, pipe_names)
+            diameter_ext_m = pd.Series(D_ext_m, pipe_names)
+            diameter_ins_m = pd.Series(D_ins_m, pipe_names)
+            edge_df['pipe_DN'] = pipe_dn
+            edge_df['D_int_m'] = D_int_m
+
+        else:
+            # 1st ITERATION SKIPPED: DIAMETERS DO NOT NEED TO BE CALCULATED
+            print("Skipping 1st iteration to calculate pipe diameters...")
+            pipe_names = edge_df.index
+            pipe_catalog = pd.read_csv(locator.get_database_components_distribution_thermal_grid('THERMAL_GRID'))
+            selection_of_catalog = edge_df.reset_index().merge(pipe_catalog, on='pipe_DN').set_index('name')
+            pipe_dn = selection_of_catalog['pipe_DN']
+            diameter_int_m = selection_of_catalog['D_int_m']
+            diameter_ext_m = selection_of_catalog['D_ext_m']
+            diameter_ins_m = selection_of_catalog['D_ins_m']
+            edge_df['D_int_m'] = diameter_int_m
+
+        # 2nd ITERATION GET PRESSURE POINTS AND MASSFLOWS FOR SIZING PUMPING NEEDS - this could be for the whole year
         print("Starting 2nd iteration to calculate pressure drops...")
+
         # modify diameter and run simulations
-        edge_df['pipe_DN'] = pipe_dn
-        edge_df['D_int_m'] = D_int_m
         for edge in edge_df.iterrows():
             edge_name = edge[0]
             pipe = wn.get_link(edge_name)
             pipe.diameter = diameter_int_m[edge_name]
-        
         try:
             sim = wntr.sim.EpanetSimulator(wn)
             results = sim.run_sim()
@@ -1049,8 +1015,10 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Check if velocity constraint is too restrictive (current: {velocity_ms} m/s)"
             ) from e
         
+        headloss_df: pd.DataFrame = results.link['headloss']  # type: ignore[index]
+        
         # Validate results
-        if results.link['headloss'].isna().any().any():
+        if headloss_df.isna().any().any():
             warnings.warn(
                 "WNTR simulation produced NaN headloss values. "
                 "Pressure drop calculations may be unreliable."
@@ -1059,7 +1027,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         # 3rd ITERATION GET FINAL UTILIZATION OF THE GRID (SUPPLY SIDE)
         print("Starting 3rd iteration to calculate final utilization of the grid...")
         # get accumulated head loss per hour
-        unitary_head_ftperkft = results.link['headloss'].abs()
+        unitary_head_ftperkft = headloss_df.abs()
         unitary_head_mperm = unitary_head_ftperkft * FT_TO_M / (FT_TO_M * scaling_factor)
         head_loss_m = unitary_head_mperm.copy()
         for column in head_loss_m.columns.values:
@@ -1091,8 +1059,10 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Check for pipes with very high pressure drops"
             ) from e
         
+        flowrate_final_df: pd.DataFrame = results.link['flowrate']  # type: ignore[index]
+
         # Final validation of complete results
-        if results.link['flowrate'].isna().all().all():
+        if flowrate_final_df.isna().all().all():
             # Calculate total demand for diagnostic
             total_flow_m3s = sum([
                 volume_flow_m3pers_building[bldg].sum()
@@ -1119,9 +1089,8 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                 f"  3. Network topology issues\n"
                 f"     - Disconnected segments (should be caught earlier)\n"
                 f"     - Invalid boundary conditions\n"
-                f"  4. Plant type mismatch with building demands\n"
-                f"     - PLANT_hs_ww with zero space heating → use PLANT_ww\n"
-                f"     - PLANT_ww_hs with zero DHW → use PLANT_hs_ww\n"
+                f"  4. Temperature mode mismatch with building demands\n"
+                f"     - Verify dh-temperature-mode matches your building service types\n"
                 f"\n"
                 f"Resolution:\n"
                 f"  - Review all warnings and errors printed above\n"
@@ -1136,9 +1105,17 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     # POSTPROCESSING
     print("Postprocessing thermal network results...")
 
+    # Extract simulation results with proper typing
+    link_headloss_df: pd.DataFrame = results.link['headloss'] # type: ignore[index]
+    link_flowrate_df: pd.DataFrame = results.link['flowrate']  # type: ignore[index]
+    link_velocity_df: pd.DataFrame = results.link['velocity']  # type: ignore[index]
+    node_head_df: pd.DataFrame = results.node['head']  # type: ignore[index]
+    node_pressure_df: pd.DataFrame = results.node['pressure']  # type: ignore[index]
+    node_demand_df: pd.DataFrame = results.node['demand']  # type: ignore[index]
+
     # $ POSTPROCESSING - PRESSURE/HEAD LOSSES PER PIPE PER HOUR OF THE YEAR
     # at the pipes
-    unitary_head_loss_supply_network_ftperkft = results.link['headloss'].abs()
+    unitary_head_loss_supply_network_ftperkft = link_headloss_df.abs()
     linear_pressure_loss_Paperm = unitary_head_loss_supply_network_ftperkft * FT_WATER_TO_PA / (FT_TO_M * scaling_factor)
     head_loss_supply_network_Pa = linear_pressure_loss_Paperm.copy()
     for column in head_loss_supply_network_Pa.columns.values:
@@ -1147,12 +1124,12 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     head_loss_return_network_Pa = head_loss_supply_network_Pa.copy(0)
     # at the substations
-    head_loss_substations_ft = results.node['head'][consumer_nodes].abs()
+    head_loss_substations_ft = node_head_df[consumer_nodes].abs()
     head_loss_substations_Pa = head_loss_substations_ft * FT_WATER_TO_PA
 
     #POSTPORCESSING MASSFLOW RATES
     # MASS_FLOW_RATE (EDGES)
-    flow_rate_supply_m3s = results.link['flowrate'].abs()
+    flow_rate_supply_m3s = link_flowrate_df.abs()
     massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
 
     # $ POSTPROCESSING - PRESSURE LOSSES ACCUMULATED PER HOUR OF THE YEAR (TIMES 2 to account for return)
@@ -1169,7 +1146,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     average_temperature_supply_K = T_sup_K_building.mean(axis=1)
 
 
-    thermal_losses_supply_kWh = results.link['headloss'].copy()
+    thermal_losses_supply_kWh = link_headloss_df.copy()
     thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
     thermal_losses_supply_Wperm = thermal_losses_supply_kWh.copy()
     for pipe in pipe_names:
@@ -1187,7 +1164,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     # return pipes
     average_temperature_return_K = T_re_K_building.mean(axis=1)
-    thermal_losses_return_kWh = results.link['headloss'].copy()
+    thermal_losses_return_kWh = link_headloss_df.copy()
     thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
     for pipe in pipe_names:
         length_m = edge_df.loc[pipe]['length_m']
@@ -1214,24 +1191,22 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                        index=False)
 
     # MASS_FLOW_RATE (EDGES)
-    flow_rate_supply_m3s = results.link['flowrate'].abs()
-    massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
     massflow_supply_kgs.to_csv(locator.get_thermal_network_layout_massflow_edges_file(network_type, network_name),
                                index=False)
 
     # VELOCITY (EDGES)
-    velocity_edges_ms = results.link['velocity'].abs()
+    velocity_edges_ms = link_velocity_df.abs()
     velocity_edges_ms.to_csv(locator.get_thermal_network_velocity_edges_file(network_type, network_name),
                              index=False)
 
     # PRESSURE LOSSES (NODES)
-    pressure_at_nodes_ft = results.node['pressure'].abs()
+    pressure_at_nodes_ft = node_pressure_df.abs()
     pressure_at_nodes_Pa = pressure_at_nodes_ft * FT_TO_M * M_WATER_TO_PA
     pressure_at_nodes_Pa.to_csv(locator.get_network_pressure_at_nodes(network_type, network_name), index=False)
 
     # MASS_FLOW_RATE (NODES)
     # $ POSTPROCESSING - MASSFLOWRATES PER NODE PER HOUR OF THE YEAR
-    flow_rate_supply_nodes_m3s = results.node['demand'].abs()
+    flow_rate_supply_nodes_m3s = node_demand_df.abs()
     massflow_supply_nodes_kgs = flow_rate_supply_nodes_m3s * P_WATER_KGPERM3
     massflow_supply_nodes_kgs.to_csv(locator.get_thermal_network_layout_massflow_nodes_file(network_type, network_name),
                                      index=False)
@@ -1242,7 +1217,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
     # pressure losses total
     # $ POSTPROCESSING - PUMPING NEEDS PER HOUR OF THE YEAR (TIMES 2 to account for return)
-    flow_rate_substations_m3s = results.node['demand'][consumer_nodes].abs()
+    flow_rate_substations_m3s = node_demand_df[consumer_nodes].abs()
     # head_loss_supply_kWperm = (linear_pressure_loss_Paperm * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
     # head_loss_return_kWperm = head_loss_supply_kWperm.copy()
     pressure_loss_supply_edge_kW = (head_loss_supply_network_Pa * (flow_rate_supply_m3s * 3600)) / (3.6E6 * PUMP_ETA)
@@ -1304,9 +1279,11 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                     index=False)
 
     # PLANT THERMAL LOAD REQUIREMENT
-    # Plant thermal load = DH delivered to buildings + network thermal losses
-    # (Use DH-only demand, excludes booster heat from local equipment at buildings)
-    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh
+    # Plant thermal load = building demand + network thermal losses to overcome.
+    # DH: losses are positive (heat escapes hot pipes) → plant produces more.
+    # DC: losses are negative (cold pipes absorb heat) → plant must also produce
+    #     more cooling to compensate, so use absolute value.
+    plant_load_kWh = Q_demand_DH_kWh_building.sum(axis=1) + accumulated_thermal_loss_total_kWh.abs()
     plant_load_kWh = pd.DataFrame(plant_load_kWh, columns=['thermal_load_kW'])
     plant_load_kWh = add_date_to_dataframe(locator, plant_load_kWh)
     plant_load_kWh.to_csv(locator.get_thermal_network_plant_heat_requirement_file(network_type, network_name))

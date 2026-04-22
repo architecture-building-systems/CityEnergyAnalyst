@@ -8,6 +8,7 @@ Heating and cooling coils of Air handling units
 import numpy as np
 from cea.technologies import substation
 from cea.demand import constants
+from cea.constants import KELVIN_CONVERSION
 
 C_A = constants.C_A
 
@@ -45,13 +46,13 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
 
     Q = abs(Qhsf)
     Qnom = abs(Qhsf_0)
-    tci = Ta_re_hs + 273
-    tco = Ta_sup_hs + 273
-    thi = Ths_sup_0 + 273
+    tci = Ta_re_hs + KELVIN_CONVERSION
+    tco = Ta_sup_hs + KELVIN_CONVERSION
+    thi = Ths_sup_0 + KELVIN_CONVERSION
     tci_0 = Ta_re_0
     tco_0 = Ta_sup_0
-    thi_0 = Ths_sup_0 + 273
-    tho_0 = Ths_re_0 + 273
+    thi_0 = Ths_sup_0 + KELVIN_CONVERSION
+    tho_0 = Ths_re_0 + KELVIN_CONVERSION
     cc = ma_sup_hs * C_A # WperC
 
     if Q > 0 and ma_sup_hs > 0:
@@ -67,7 +68,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         tho = np.nan
         ch = 0.0
 
-    return float(thi-273), float(tho), float(ch)
+    return float(thi - KELVIN_CONVERSION), float(tho), float(ch)
 
     # tasup = Ta_sup_hs + 273
     # tare = Ta_re_hs + 273
@@ -163,15 +164,15 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
 
     Q = abs(Qcsf)
     Qnom = abs(Qcsf_0)
-    thi = Ta_re_cs + 273
-    tho =  Ta_sup_cs + 273
-    tci = Tcs_sup_0 + 273
+    thi = Ta_re_cs + KELVIN_CONVERSION
+    tho =  Ta_sup_cs + KELVIN_CONVERSION
+    tci = Tcs_sup_0 + KELVIN_CONVERSION
     ch = ma_sup_cs * C_A # WperC
     # ch_0 = ma_sup_0 * C_A # WperC
     thi_0 = Ta_re_0
     tho_0 = Ta_sup_0
-    tci_0 = Tcs_sup_0 + 273
-    tco_0 = Tcs_re_0 + 273
+    tci_0 = Tcs_sup_0 + KELVIN_CONVERSION
+    tco_0 = Tcs_re_0 + KELVIN_CONVERSION
 
     if Q > 0 and ma_sup_cs > 0:
         U_COOL = 450.0  # W/m2K for air cooled heat exchanger
@@ -185,7 +186,7 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
         tci = np.nan
         cc = 0.0
 
-    return float(tci-273), float(tco), float(cc)
+    return float(tci - KELVIN_CONVERSION), float(tco), float(cc)
 
 
 # def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0):
