@@ -341,6 +341,28 @@ def prune_disconnected_subnetwork(nodes_gdf, edges_gdf, target_buildings):
     return nodes_gdf, edges_gdf
 
 
+def _max_pipe_number(edges_gdf) -> int:
+    """Return the highest N across all ``PIPE{N}`` names in the given edges.
+
+    Returns ``-1`` when the GeoDataFrame has no ``PIPE{N}``-shaped names.
+    Used by ``apply_network_mode_to_user_network`` to reserve the parent
+    network's full pipe-name pool when chaining via ``existing-network``
+    so new Steiner-added edges never reuse a name that referred to a
+    different physical pipe in the parent — even names that were dropped
+    by the filter step. Without this, ``sub1``'s ``PIPE2`` (dropped when
+    its building was decommissioned) can be silently reused by ``sub2``'s
+    Steiner output for an unrelated pipe, breaking cross-phase alignment.
+    """
+    if 'name' not in edges_gdf.columns or len(edges_gdf) == 0:
+        return -1
+    nums = [
+        int(n[4:])
+        for n in edges_gdf['name']
+        if isinstance(n, str) and n.startswith('PIPE') and n[4:].isdigit()
+    ]
+    return max(nums) if nums else -1
+
+
 def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_validate, zone_gdf,
                                        network_types_to_generate, config, locator, snap_tolerance):
     """
@@ -380,6 +402,12 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
             f"Expected one of: {', '.join(m.value for m in NetworkLayoutMode)}."
         )
     auto_modify = config.network_layout.auto_modify_network
+
+    # Snapshot the input edges' pipe-name pool BEFORE any filter/augment
+    # mutates it. New Steiner-added edges must skip these numbers so
+    # chained networks (existing-network workflows, multi-phase sizing)
+    # agree on pipe identity across phases. See ``_max_pipe_number``.
+    input_max_pipe_number = _max_pipe_number(edges_gdf)
 
     # Check for extra buildings in network (buildings not in parameter)
     network_buildings = set(nodes_gdf[
@@ -444,7 +472,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                 street_network_gdf=street_network_gdf,
                 locator=locator,
                 snap_tolerance=snap_tolerance,
-                connection_candidates=config.network_layout.connection_candidates
+                connection_candidates=config.network_layout.connection_candidates,
+                existing_max_pipe_number=input_max_pipe_number,
             )
 
             print("  Augmentation successful - all buildings now in network")
@@ -496,7 +525,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                     street_network_gdf=street_network_gdf,
                     locator=locator,
                     snap_tolerance=snap_tolerance,
-                    connection_candidates=config.network_layout.connection_candidates
+                    connection_candidates=config.network_layout.connection_candidates,
+                    existing_max_pipe_number=input_max_pipe_number,
                 )
 
             print("  Filter complete - network now matches parameter exactly")
