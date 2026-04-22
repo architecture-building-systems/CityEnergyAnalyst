@@ -1,15 +1,19 @@
 import os
 import warnings
 
+import numpy as np
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
 
 from cea.analysis.lca.emission_timeline import BuildingEmissionTimeline
 from cea.analysis.lca.hourly_operational_emission import OperationalHourlyTimeline
 from cea.config import Configuration
+from cea.constants import HOURS_IN_YEAR
+from cea.datamanagement.database.components import Feedstocks
 from cea.datamanagement.database.envelope_lookup import EnvelopeLookup
 from cea.demand.building_properties import BuildingProperties
 from cea.inputlocator import InputLocator
+from cea.technologies.energy_carriers import electricity_carrier
 from cea.utilities import epwreader
 
 __author__ = "Yiqiao Wang, Zhongming Shi"
@@ -139,12 +143,13 @@ def operational_hourly(config: Configuration) -> None:
     # Load optional GRID carbon intensity override once for all buildings
     override_grid_emission, grid_emission_final_g = _load_grid_emission_intensity_override(config)
     grid_emission_final = grid_emission_final_g / 1000.0 if grid_emission_final_g is not None else None  # convert g to kg
+    elec = electricity_carrier(locator)
     for building in buildings:
         bpr = building_properties[building]
         hourly_timeline = OperationalHourlyTimeline(locator, bpr)
 
         if override_grid_emission and grid_emission_final is not None:
-            hourly_timeline.emission_intensity_timeline["GRID"] = grid_emission_final
+            hourly_timeline.emission_intensity_timeline[elec] = grid_emission_final
 
         hourly_timeline.calculate_operational_emission()
 
@@ -247,7 +252,7 @@ def total_yearly(config: Configuration) -> None:
         tar_ef = emissions_cfg.grid_decarbonise_target_emission_factor
 
         if ref_yr is not None and tar_yr is not None and tar_ef is not None: # all exist
-            feedstock_policies_arg = {"GRID": (ref_yr, tar_yr, tar_ef)}
+            feedstock_policies_arg = {electricity_carrier(locator): (ref_yr, tar_yr, tar_ef)}
         elif ref_yr is None and tar_yr is None and tar_ef is None: # all None
             feedstock_policies_arg = None
         else:
@@ -431,14 +436,10 @@ if __name__ == "__main__":
 
 
 # ── What-if scenario emissions ────────────────────────────────────────────────
-
-import json
-import numpy as np
-
-from cea.constants import HOURS_IN_YEAR
-from cea.datamanagement.database.components import Feedstocks
-
-_ZERO_EMISSION_CARRIERS = {'DH', 'DC', 'NONE'}
+# SOLAR is zero-emission at the point of use — solar thermal from SC/PVT
+# wired as a DHW primary is dispatched into `Qww_sys_SOLAR_kWh` by the
+# final-energy pipeline (see cea/analysis/final_energy/solar_dhw.py).
+_ZERO_EMISSION_CARRIERS = {'DH', 'DC', 'NONE', 'SOLAR'}
 
 # Prefixes identifying carrier-consumption columns in final-energy B####.csv
 _CARRIER_COLUMN_PREFIXES = ('Qhs_sys_', 'Qww_sys_', 'Qcs_sys_', 'E_sys_',
@@ -475,6 +476,7 @@ def _calc_operational_emissions_from_fe(
     fe_df: pd.DataFrame,
     emission_intensity: pd.DataFrame,
     supply_cfg: dict,
+    electricity_carrier_name: str,
 ) -> pd.DataFrame:
     """Calculate hourly operational emissions from a final-energy B####.csv DataFrame.
 
@@ -485,6 +487,9 @@ def _calc_operational_emissions_from_fe(
     :param fe_df: 8760-row hourly final-energy DataFrame for one building.
     :param emission_intensity: 8760-row DataFrame with one column per carrier (kgCO2/kWh).
     :param supply_cfg: Supply configuration dict for this building (from configuration.json).
+    :param electricity_carrier_name: Scenario's electricity carrier name
+        (resolved once by the caller from ``ENERGY_CARRIERS.csv``). Used to
+        value PV/PVT_E electrical offsets against grid emissions.
     :return: 8760-row hourly emissions DataFrame.
     """
     result: dict[str, 'np.ndarray'] = {}
@@ -493,6 +498,10 @@ def _calc_operational_emissions_from_fe(
 
     for col in fe_df.columns:
         if not col.endswith('_kWh'):
+            continue
+        # Skip diagnostic *_dumped_kWh columns (SC tank surplus) — they are
+        # not a delivered carrier and must not be treated as consumption.
+        if col.endswith('_dumped_kWh'):
             continue
         for prefix in _CARRIER_COLUMN_PREFIXES:
             if col.startswith(prefix):
@@ -506,13 +515,14 @@ def _calc_operational_emissions_from_fe(
 
     # Solar thermal offset: aggregate PVT_Q and SC_Q across all facades into two columns
     # 1 kWh of solar heat offsets 1 kWh × emission_factor of the heating carrier (η=1, same as electric).
+    # Exclude *_radiation_kWh columns — those are solar irradiation, not generation.
     hs_carrier = (supply_cfg.get('space_heating') or {}).get('carrier', '')
     if hs_carrier and hs_carrier not in _ZERO_EMISSION_CARRIERS and hs_carrier in emission_intensity.columns:
         hs_intensity = emission_intensity[hs_carrier].values
         pvt_q_total = np.zeros(len(fe_df))
         sc_q_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
-            if not col.endswith('_kWh'):
+            if not col.endswith('_kWh') or '_radiation_' in col:
                 continue
             if col.startswith('PVT_') and col.endswith('_Q_kWh'):
                 pvt_q_total += fe_df[col].values
@@ -524,12 +534,13 @@ def _calc_operational_emissions_from_fe(
             result['SC_Q_offset_kgCO2e'] = -sc_q_total * hs_intensity
 
     # Solar electric offset: aggregate PV and PVT_E across all facades into two columns
-    if 'GRID' in emission_intensity.columns:
-        grid_intensity = emission_intensity['GRID'].values
+    # Exclude *_radiation_kWh columns — those are solar irradiation, not generation.
+    if electricity_carrier_name in emission_intensity.columns:
+        grid_intensity = emission_intensity[electricity_carrier_name].values
         pv_e_total = np.zeros(len(fe_df))
         pvt_e_total = np.zeros(len(fe_df))
         for col in fe_df.columns:
-            if not col.endswith('_kWh'):
+            if not col.endswith('_kWh') or '_radiation_' in col:
                 continue
             if col.startswith('PV_'):
                 pv_e_total += fe_df[col].values
@@ -549,8 +560,8 @@ def _calc_plant_operational_emissions_from_fe(
 ) -> pd.DataFrame:
     """Calculate hourly operational emissions for a district plant from its final-energy file.
 
-    Scans ``plant_heating_{CARRIER}_kWh``, ``plant_cooling_{CARRIER}_kWh``, and
-    ``plant_pumping_GRID_kWh`` columns.
+    Scans ``plant_primary_{NT}_{CARRIER}_kWh``, ``plant_tertiary_{NT}_{CARRIER}_kWh``,
+    and ``plant_pumping_{NT}_GRID_kWh`` columns.
 
     :param plant_df: 8760-row hourly final-energy DataFrame for one plant.
     :param emission_intensity: 8760-row DataFrame with one column per carrier (kgCO2/kWh).
@@ -560,13 +571,16 @@ def _calc_plant_operational_emissions_from_fe(
     if 'date' in plant_df.columns:
         result['date'] = plant_df['date'].values
 
-    plant_prefixes = ('plant_heating_', 'plant_cooling_', 'plant_pumping_')
+    plant_prefixes = ('plant_primary_', 'plant_tertiary_', 'plant_pumping_')
     for col in plant_df.columns:
         if not col.endswith('_kWh'):
             continue
         for prefix in plant_prefixes:
             if col.startswith(prefix):
-                carrier = col[len(prefix):-4]
+                # Format: plant_primary_DH_GRID_kWh → carrier = GRID
+                # Split and take second-to-last part (last is 'kWh')
+                parts = col[len(prefix):].split('_')
+                carrier = parts[-2] if len(parts) >= 2 else parts[0]
                 if carrier in _ZERO_EMISSION_CARRIERS:
                     break
                 if carrier in emission_intensity.columns:
@@ -577,10 +591,15 @@ def _calc_plant_operational_emissions_from_fe(
     return pd.DataFrame(result, index=plant_df.index)
 
 
-def _build_feedstock_policies(ref_yr, tar_yr, tar_ef):
-    """Return a feedstock_policies dict suitable for BuildingEmissionTimeline."""
+def _build_feedstock_policies(ref_yr, tar_yr, tar_ef, electricity_carrier_name):
+    """Return a feedstock_policies dict suitable for BuildingEmissionTimeline.
+
+    Keyed on the scenario's electricity carrier name (typically 'GRID')
+    so users who renamed their electricity feedstock still have the
+    policy applied to the right column.
+    """
     if ref_yr is not None and tar_yr is not None and tar_ef is not None:
-        return {'GRID': (ref_yr, tar_yr, tar_ef)}
+        return {electricity_carrier_name: (ref_yr, tar_yr, tar_ef)}
     if ref_yr is None and tar_yr is None and tar_ef is None:
         return None
     raise ValueError(
@@ -602,25 +621,27 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     locator = InputLocator(config.scenario)
     print(f'Calculating emissions for what-if scenario: {whatif_name}')
 
-    # Load configuration.json
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
+    # Load configuration (new YAML format, legacy JSON fallback)
+    config_data = locator.read_analysis_configuration(whatif_name)
+    if config_data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
         raise FileNotFoundError(
-            f"configuration.json not found for what-if '{whatif_name}': {config_file}\n"
+            f"configuration file not found for what-if '{whatif_name}': {expected}\n"
             "Please run 'final-energy' first."
         )
-    with open(config_file) as f:
-        config_data = json.load(f)
     building_configs = config_data.get('buildings', {})
-    plant_configs = config_data.get('plants', {})
     network_name = config_data.get('metadata', {}).get('network_name')
 
     # Emission intensity (8760 rows, kgCO2/kWh per carrier)
     feedstock_db = Feedstocks.from_locator(locator)
     emission_intensity = _expand_feedstock_emissions(feedstock_db)
+    # Scenario's electricity carrier name (from ENERGY_CARRIERS.csv — 'GRID'
+    # by default). Used below to route the grid-intensity override and to
+    # key the grid-decarbonisation policy to the right carrier column.
+    elec = electricity_carrier(locator)
     override_grid, grid_arr = _load_grid_emission_intensity_override(config)
     if override_grid and grid_arr is not None:
-        emission_intensity['GRID'] = grid_arr / 1000.0  # g → kg
+        emission_intensity[elec] = grid_arr / 1000.0  # g → kg
 
     # Output folder
     out_folder = locator.get_emissions_whatif_folder(whatif_name)
@@ -643,6 +664,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         emissions_cfg.grid_decarbonise_reference_year,
         emissions_cfg.grid_decarbonise_target_year,
         emissions_cfg.grid_decarbonise_target_emission_factor,
+        elec,
     )
 
     weather_data = epwreader.epw_reader(locator.get_weather_file())[
@@ -658,6 +680,10 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
     timeline_results = []      # (name, yearly_df)
     buildings_rows_out = []    # one dict per building/plant for summary
 
+    # Per-building DH/DC demand and construction year for proportional plant emission allocation
+    # {building_name: (construction_year, {'DH': annual_kwh, 'DC': annual_kwh})}
+    building_network_demand = {}
+
     for _, row in building_rows_df.iterrows():
         building_name = row['name']
         supply_cfg = building_configs.get(building_name, {})
@@ -668,7 +694,18 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             continue
 
         fe_df = pd.read_csv(fe_path)
-        hourly_op = _calc_operational_emissions_from_fe(fe_df, emission_intensity, supply_cfg)
+
+        # Track per-building DH/DC demand for proportional plant emission allocation
+        construction_year = int(building_properties.typology[building_name]['year'])
+        bld_network = {'DH': 0.0, 'DC': 0.0}
+        for carrier in ('DH', 'DC'):
+            for col in fe_df.columns:
+                if col.endswith(f'_{carrier}_kWh'):
+                    bld_network[carrier] += float(fe_df[col].sum())
+        if bld_network['DH'] > 0 or bld_network['DC'] > 0:
+            building_network_demand[building_name] = (construction_year, bld_network)
+
+        hourly_op = _calc_operational_emissions_from_fe(fe_df, emission_intensity, supply_cfg, elec)
 
         # Save per-building hourly operational emissions
         operational_file = locator.get_emissions_whatif_building_file(building_name, whatif_name)
@@ -677,14 +714,11 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         print(f'  Hourly operational emissions for {building_name} saved.')
         operational_results.append((building_name, hourly_op))
 
-        # Annual operational total for summary (sum all emission columns except date/name)
-        op_cols = [c for c in hourly_op.columns if c not in ('date', 'name')]
-        op_total = float(hourly_op[op_cols].sum().sum()) if op_cols else 0.0
-
         # Yearly emission timeline (embodied + operational)
         production_total = 0.0
         biogenic_total = 0.0
         demolition_total = 0.0
+        operation_total = 0.0
         try:
             timeline = BuildingEmissionTimeline(
                 building_properties=building_properties,
@@ -711,21 +745,26 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             os.makedirs(os.path.dirname(building_timeline_file), exist_ok=True)
             timeline.timeline.to_csv(building_timeline_file, float_format='%.2f')
             print(f'  Emission timeline for {building_name} saved.')
-            # Sum each lifecycle category across all years
+            # Sum each lifecycle category across all years (consistent scope)
+            tl_cols = timeline.timeline.columns
             production_total = float(timeline.timeline[
-                [c for c in timeline.timeline.columns if c.startswith('production_')]
+                [c for c in tl_cols if c.startswith('production_')]
             ].sum().sum())
             biogenic_total = float(timeline.timeline[
-                [c for c in timeline.timeline.columns if c.startswith('biogenic_')]
+                [c for c in tl_cols if c.startswith('biogenic_')]
             ].sum().sum())
             demolition_total = float(timeline.timeline[
-                [c for c in timeline.timeline.columns if c.startswith('demolition_')]
+                [c for c in tl_cols if c.startswith('demolition_')]
+            ].sum().sum())
+            operation_total = float(timeline.timeline[
+                [c for c in tl_cols if c.startswith('operation_')]
             ].sum().sum())
         except Exception as e:
             print(f'  Warning: could not compute emission timeline for {building_name}: {e}')
             production_total = 0.0
             biogenic_total = 0.0
             demolition_total = 0.0
+            operation_total = 0.0
 
         buildings_rows_out.append({
             'name': building_name,
@@ -736,7 +775,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'scale': row.get('scale', 'BUILDING'),
             'case': row.get('case'),
             'case_description': row.get('case_description'),
-            'operation_kgCO2e': op_total,
+            'operation_kgCO2e': operation_total,
             'production_kgCO2e': production_total,
             'biogenic_kgCO2e': biogenic_total,
             'demolition_kgCO2e': demolition_total,
@@ -756,10 +795,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         else:
             continue
 
-        if not network_name:
-            continue
-
-        plant_fe_path = locator.get_final_energy_plant_file(network_name, network_type, plant_name, whatif_name)
+        plant_fe_path = locator.get_final_energy_plant_file(network_name or '', network_type, plant_name, whatif_name)
         if not os.path.exists(plant_fe_path):
             continue
 
@@ -774,20 +810,60 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
         op_cols = [c for c in hourly_plant.columns if c not in ('date', 'name')]
         op_total = float(hourly_plant[op_cols].sum().sum()) if op_cols else 0.0
 
-        # Save per-plant timeline (operational only, same annual total repeated for each year)
+        # Save per-plant timeline and add to district aggregate
+        # Plant emissions are stored as operation_DH_kgCO2e or operation_DC_kgCO2e
+        # Proportionally allocated across years based on when connected buildings exist
         if timeline_results:
-            year_index = timeline_results[0][1].index
-            annual_totals = hourly_plant[op_cols].sum() if op_cols else pd.Series(dtype=float)
-            plant_timeline_df = pd.DataFrame(
-                {col: annual_totals[col] for col in annual_totals.index},
-                index=year_index,
+            # Full district year range
+            all_years = set()
+            for _, tl in timeline_results:
+                all_years.update(tl.index)
+            year_index = pd.Index(sorted(all_years))
+            plant_annual_total = float(hourly_plant[op_cols].sum().sum()) if op_cols else 0.0
+
+            # Compute per-year demand weight based on building construction years
+            # Total demand from all buildings connected to this network type
+            total_demand = sum(
+                nd[network_type] for _, (_, nd) in building_network_demand.items()
+                if nd.get(network_type, 0) > 0
             )
+
+            # For each year, sum demand from buildings that exist (construction_year <= year)
+            year_weights = {}
+            for yr_str in year_index:
+                yr_int = int(str(yr_str).replace('Y_', ''))
+                yr_demand = sum(
+                    nd[network_type]
+                    for _, (constr_yr, nd) in building_network_demand.items()
+                    if nd.get(network_type, 0) > 0 and constr_yr <= yr_int
+                )
+                year_weights[yr_str] = yr_demand / total_demand if total_demand > 0 else 0.0
+
+            # Build plant timeline with proportional emissions
+            ref_cols = list(timeline_results[0][1].columns)
+            plant_op_col = f'operation_{network_type}_kgCO2e'
+            if plant_op_col not in ref_cols:
+                ref_cols.append(plant_op_col)
+            plant_timeline_df = pd.DataFrame(0.0, index=year_index, columns=ref_cols)
+            plant_timeline_df['name'] = plant_name
+            plant_timeline_df[plant_op_col] = [
+                plant_annual_total * year_weights[yr] for yr in year_index
+            ]
+
+            # Add to timeline_results for district aggregation
+            timeline_results.append((plant_name, plant_timeline_df))
+
             plant_timeline_file = locator.get_emissions_whatif_building_timeline_file(
                 plant_name, whatif_name
             )
             os.makedirs(os.path.dirname(plant_timeline_file), exist_ok=True)
             plant_timeline_df.to_csv(plant_timeline_file, float_format='%.2f')
             print(f'  Emission timeline for plant {plant_name} saved.')
+        # Use lifecycle total from plant timeline (consistent with building scope)
+        plant_op_lifecycle = float(plant_timeline_df[
+            [c for c in plant_timeline_df.columns if c.startswith('operation_')]
+        ].sum().sum()) if timeline_results else op_total
+
         buildings_rows_out.append({
             'name': plant_name,
             'type': 'plant',
@@ -797,7 +873,7 @@ def calculate_emissions_for_whatif(whatif_name: str, config: Configuration) -> N
             'scale': 'DISTRICT',
             'case': row.get('case'),
             'case_description': case_desc,
-            'operation_kgCO2e': op_total,
+            'operation_kgCO2e': plant_op_lifecycle,
             'production_kgCO2e': 0.0,
             'biogenic_kgCO2e': 0.0,
             'demolition_kgCO2e': 0.0,

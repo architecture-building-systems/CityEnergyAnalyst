@@ -3,6 +3,7 @@ PlotFormatter – prepares the formatting settings for the Plotly graph
 
 """
 
+
 import numpy as np
 import pandas as pd
 
@@ -72,26 +73,29 @@ class data_processor:
 
         Parameters from plot_config:
         - y_category_to_plot: list of ['operation', 'production', 'demolition', 'biogenic']
-        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
-                                       'PV_E', 'PVT_E', 'PVT_Q', 'SC_Q']
+        - operation_services: list of display names (e.g. 'electricity',
+                                       'space_heating', 'domestic_hot_water',
+                                       'district_heating', 'solar_pv_electricity', ...)
         - envelope_components: list of envelope components (used when not in what-if mode)
 
         Returns:
         - list of column names (without unit suffix)
         """
-        # Service name to tech name mapping
+        # Display-name → CSV tech-code mapping (UI layer → internal layer).
         service_to_tech = {
-            'electricity': 'E_sys',
-            'space_heating': 'Qhs_sys',
-            'space_cooling': 'Qcs_sys',
-            'dhw': 'Qww_sys',
+            'electricity':      'E_sys',
+            'space_heating':    'Qhs_sys',
+            'space_cooling':    'Qcs_sys',
+            'domestic_hot_water': 'Qww_sys',
+            'district_heating': 'DH',
+            'district_cooling': 'DC',
         }
-        # Solar tech class to offset column name
+        # Solar display-name → offset column name.
         solar_to_offset = {
-            'PV_E': 'PV_E_offset',
-            'PVT_E': 'PVT_E_offset',
-            'PVT_Q': 'PVT_Q_offset',
-            'SC_Q': 'SC_Q_offset',
+            'solar_pv_electricity':  'PV_E_offset',
+            'solar_pvt_electricity': 'PVT_E_offset',
+            'solar_pvt_thermal':     'PVT_Q_offset',
+            'solar_thermal':         'SC_Q_offset',
         }
 
         categories = plot_config.y_category_to_plot
@@ -127,9 +131,11 @@ class data_processor:
 
         Parameters from plot_config:
         - y_category_to_plot: list of ['operation', 'energy_carrier']
-        - operation_services: list of ['electricity', 'space_heating', 'space_cooling', 'dhw',
-                                       'PV_E', 'PVT_E', 'PVT_Q', 'SC_Q']
-        - energy_carriers: list of ['GRID', 'NATURALGAS', 'BIOGAS', etc.]
+        - operation_services: list of display names (e.g. 'electricity',
+                                       'space_heating', 'domestic_hot_water',
+                                       'district_heating', 'solar_pv_electricity', ...)
+        - energy_carriers: list of carrier codes from ENERGY_CARRIERS.csv
+                                       (e.g. 'GRID', 'NATURALGAS', 'BIOGAS', ...)
 
         Returns:
         - list of column names (without unit suffix)
@@ -139,23 +145,26 @@ class data_processor:
         - Only operation: Generate aggregated by service (Qhs_sys, E_sys, etc.) + solar offsets
         - Only energy_carrier: Generate aggregated by carrier (GRID, NATURALGAS, etc.)
         """
-        # Service name to tech name mapping
+        # Display-name → CSV tech-code mapping.
         service_to_tech = {
-            'electricity': 'E_sys',
-            'space_heating': 'Qhs_sys',
-            'space_cooling': 'Qcs_sys',
-            'dhw': 'Qww_sys',
+            'electricity':      'E_sys',
+            'space_heating':    'Qhs_sys',
+            'space_cooling':    'Qcs_sys',
+            'domestic_hot_water': 'Qww_sys',
+            'district_heating': 'DH',
+            'district_cooling': 'DC',
         }
-        # Solar tech class to offset column name
+        # Solar display-name → offset column name.
         solar_to_offset = {
-            'PV_E': 'PV_E_offset',
-            'PVT_E': 'PVT_E_offset',
-            'PVT_Q': 'PVT_Q_offset',
-            'SC_Q': 'SC_Q_offset',
+            'solar_pv_electricity':  'PV_E_offset',
+            'solar_pvt_electricity': 'PVT_E_offset',
+            'solar_pvt_thermal':     'PVT_Q_offset',
+            'solar_thermal':         'SC_Q_offset',
         }
-
         categories = plot_config.y_category_to_plot
         operation_services = getattr(plot_config, 'operation_services', [])
+        # Carrier codes come straight from ``EnergyCarrierMultiChoiceParameter``
+        # (the same codes used as CSV column suffixes — ``GRID``, ``NATURALGAS``, …).
         energy_carriers = getattr(plot_config, 'energy_carriers', [])
 
         columns = []
@@ -164,7 +173,7 @@ class data_processor:
         both_selected = 'operation' in categories and 'energy_carrier' in categories
 
         if both_selected:
-            # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS)
+            # Generate hybrids: service × carrier combinations (e.g., Qhs_sys_NATURALGAS).
             for service in operation_services:
                 if service in service_to_tech:
                     service_name = service_to_tech[service]
@@ -177,15 +186,15 @@ class data_processor:
                     columns.append(solar_to_offset[service])
 
         elif 'operation' in categories:
-            # Only operation: aggregated by service
+            # Only operation: aggregated by service (data columns have operation_ prefix)
             for service in operation_services:
                 if service in service_to_tech:
-                    columns.append(service_to_tech[service])
+                    columns.append(f"operation_{service_to_tech[service]}")
                 elif service in solar_to_offset:
                     columns.append(solar_to_offset[service])
 
         elif 'energy_carrier' in categories:
-            # Only energy_carrier: aggregated by carrier
+            # Only energy_carrier: aggregated by carrier code.
             for carrier in energy_carriers:
                 columns.append(carrier)
 
@@ -193,89 +202,89 @@ class data_processor:
 
     def _calculate_plant_floor_area(self, plant_name, area_type='GFA_m2'):
         """
-        Calculate floor area for a plant based on buildings it services.
+        Calculate floor area for a plant = sum of serviced buildings' floor area.
 
-        Plant area = Sum(area of serviced buildings) / Number of plants of same type
+        Uses ``configuration.json`` to determine plant network type and find
+        buildings whose services use DISTRICT scale on that network type.
 
         Args:
-            plant_name: Name of the plant (e.g., 'crycry_DC_plant_001')
-            area_type: Type of area to calculate ('GFA_m2' or 'Af_m2')
+            plant_name: Name of the plant node (e.g., 'NODE16')
+            area_type: 'GFA_m2' or 'Af_m2'
 
         Returns:
-            float: Calculated floor area for the plant
+            float: Sum of serviced buildings' floor area
         """
-        import pandas as pd
-
-        # Determine network type and name from plant name
-        # Format: {network_name}_{DC|DH}_plant_{number}
-        # Example: 'crycry_DC_plant_001' -> network_type='DC', network_name='crycry'
-        if '_DC_plant_' in plant_name:
-            network_type = 'DC'
-            network_name = plant_name.split('_DC_plant_')[0]
-        elif '_DH_plant_' in plant_name:
-            network_type = 'DH'
-            network_name = plant_name.split('_DH_plant_')[0]
-        else:
-            print(f"Warning: Cannot determine network type for plant {plant_name}, using area=0")
-            return 0.0
-
-        # Read thermal network metadata to find serviced buildings
         try:
-            from cea.inputlocator import InputLocator
-            locator = InputLocator(self.scenario_path)
+            locator = self.locator
 
-            # Get metadata file for this specific network
-            metadata_file = locator.get_thermal_network_node_types_csv_file(network_type, network_name)
-            if not os.path.exists(metadata_file):
-                print(f"Warning: Metadata file not found for {network_type} network '{network_name}': {metadata_file}")
+            # Try each what-if name to find the analysis configuration
+            config_data = None
+            for whatif_name in (self.whatif_names or []):
+                config_data = locator.read_analysis_configuration(whatif_name)
+                if config_data is not None:
+                    break
+            if config_data is None:
                 return 0.0
 
-            # Read metadata and find serviced buildings
-            serviced_buildings = []
-            metadata_df = pd.read_csv(metadata_file)
-
-            # Get buildings where type == 'CONSUMER'
-            consumer_nodes = metadata_df[metadata_df['type'] == 'CONSUMER']
-            buildings = consumer_nodes['building'].tolist()
-            serviced_buildings = [b for b in buildings if b != 'NONE']
-
-            if not serviced_buildings:
-                print(f"Warning: No serviced buildings found for plant {plant_name} in network '{network_name}'")
+            # Determine network type from plants section
+            # Strip -DH/-DC display suffix if present to match configuration.json keys
+            plant_name = str(plant_name)
+            lookup_name = plant_name.rsplit('-', 1)[0] if plant_name.endswith(('-DH', '-DC')) else plant_name
+            plants = config_data.get('plants', {})
+            plant_info = plants.get(lookup_name)
+            if plant_info is None:
+                return 0.0
+            network_type = plant_info.get('network_type')  # 'DH' or 'DC'
+            if not network_type:
                 return 0.0
 
-            # Get floor area for serviced buildings from architecture data
-            arch_data = self.df_architecture_data.set_index('name')
-            available_buildings = [b for b in serviced_buildings if b in arch_data.index]
+            # Find buildings connected to this network type (any service at DISTRICT scale)
+            buildings_conf = config_data.get('buildings', {})
+            connected = []
+            for bname, bconf in buildings_conf.items():
+                for service in ('space_heating', 'hot_water', 'space_cooling'):
+                    svc = bconf.get(service)
+                    if svc and svc.get('scale') == 'DISTRICT':
+                        # DH serves heating/hot_water, DC serves cooling
+                        if network_type == 'DH' and service in ('space_heating', 'hot_water'):
+                            connected.append(bname)
+                            break
+                        elif network_type == 'DC' and service == 'space_cooling':
+                            connected.append(bname)
+                            break
 
-            if not available_buildings:
-                print(f"Warning: No architecture data for buildings serviced by {plant_name}, using area=0")
+            if not connected:
                 return 0.0
 
-            # Sum the specified area type for serviced buildings
-            total_area = arch_data.loc[available_buildings, area_type].sum()
-
-            # Count number of plants of same type
-            # Get all entities from summary data
-            # Handle case where 'name' is a column or the index
-            if 'name' in self.df_summary_data.columns:
-                all_entities = self.df_summary_data['name'].tolist()
-            elif self.df_summary_data.index.name == 'name':
-                all_entities = self.df_summary_data.index.tolist()
+            # Sum floor area of connected buildings
+            # Use architecture data if available, otherwise fall back to summary data
+            if self.df_architecture_data is not None:
+                arch_data = self.df_architecture_data.set_index('name')
+            elif self.df_summary_data is not None and area_type in self.df_summary_data.columns:
+                arch_data = self.df_summary_data.drop_duplicates(subset='name').set_index('name')
             else:
-                all_entities = self.df_summary_data.index.tolist()
-            plant_suffix = f'_{network_type}_plant_'
-            num_plants = sum(1 for entity in all_entities if plant_suffix in entity)
-
-            if num_plants == 0:
-                print(f"Warning: No plants of type {network_type} found, using area=0")
+                # Last resort: compute from zone geometry + architecture files
+                try:
+                    from cea.demand.building_properties.useful_areas import calc_useful_areas
+                    import geopandas as gpd
+                    zone_df = gpd.read_file(locator.get_zone_geometry())
+                    arch_df_raw = pd.read_csv(locator.get_building_architecture())
+                    arch_data = calc_useful_areas(zone_df, arch_df_raw)
+                    # Fix column names from merge: name_x → name, Af → Af_m2
+                    if 'name_x' in arch_data.columns:
+                        arch_data = arch_data.rename(columns={'name_x': 'name'})
+                    if 'Af' in arch_data.columns and 'Af_m2' not in arch_data.columns:
+                        arch_data = arch_data.rename(columns={'Af': 'Af_m2'})
+                    arch_data = arch_data.set_index('name')
+                except Exception:
+                    return 0.0
+            if area_type not in arch_data.columns:
+                return 0.0
+            available = [b for b in connected if b in arch_data.index]
+            if not available:
                 return 0.0
 
-            plant_area = total_area / num_plants
-            area_name = 'GFA' if area_type == 'GFA_m2' else 'Af'
-            print(f"Calculated {area_name} for {plant_name}: {plant_area:.2f} m² "
-                  f"(total: {total_area:.2f} m² / {num_plants} {network_type} plant(s))")
-
-            return plant_area
+            return arch_data.loc[available, area_type].sum()
 
         except Exception as e:
             print(f"Warning: Error calculating floor area for plant {plant_name}: {e}")
@@ -285,17 +294,20 @@ class data_processor:
         # For heat-rejection, include ALL entities from summary data (buildings + plants)
         if plot_cea_feature == 'heat-rejection' and self.df_summary_data is not None:
             # Get all entities from the summary data
-            # Handle case where 'name' is a column or the index
             if 'name' in self.df_summary_data.columns:
-                all_entities = set(self.df_summary_data['name'].unique())
+                all_entities = list(self.df_summary_data['name'].unique())
             elif self.df_summary_data.index.name == 'name':
-                all_entities = set(self.df_summary_data.index.unique())
+                all_entities = list(self.df_summary_data.index.unique())
             else:
-                all_entities = set(self.df_summary_data.index.unique())
-            buildings_to_use = list(all_entities)
+                # District time-series aggregate — no per-entity names;
+                # use 'District' as a synthetic entity name and inject it
+                # into the summary so downstream code can process it.
+                all_entities = ['District']
+                self.df_summary_data['name'] = 'District'
+            buildings_to_use = all_entities
         elif self.whatif_names and self.df_summary_data is not None and 'name' in self.df_summary_data.columns:
-            # For what-if emissions: use buildings from the summary CSV rather than architecture filter
-            buildings_to_use = self.df_summary_data['name'].tolist()
+            # For what-if mode: use unique buildings from the summary CSV
+            buildings_to_use = list(dict.fromkeys(self.df_summary_data['name'].tolist()))
         else:
             # Filter to only buildings that exist in architecture data
             # (some buildings may be filtered out by year/type/use criteria)
@@ -324,17 +336,23 @@ class data_processor:
 
             # Supplement missing buildings from summary GFA column (what-if mode)
             if self.whatif_names and self.df_summary_data is not None and 'GFA_m2' in self.df_summary_data.columns:
-                summary_gfa = self.df_summary_data.set_index('name')['GFA_m2']
+                summary_gfa = self.df_summary_data.drop_duplicates(subset='name').set_index('name')['GFA_m2']
                 for b in buildings_to_use:
                     if b not in normaliser_m2.index and b in summary_gfa.index:
                         normaliser_m2.loc[b, 'normaliser_m2'] = summary_gfa[b]
 
-            # For heat-rejection, calculate GFA for plants
-            if plot_cea_feature == 'heat-rejection':
-                plants = [b for b in buildings_to_use if b not in buildings_in_arch]
-                for plant in plants:
-                    plant_area = self._calculate_plant_floor_area(plant, area_type='GFA_m2')
-                    normaliser_m2.loc[plant] = plant_area
+            # Calculate GFA for entities not yet in normaliser or with zero GFA (plants + district aggregate)
+            if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
+                missing = [b for b in buildings_to_use
+                           if b not in normaliser_m2.index
+                           or normaliser_m2.loc[b, 'normaliser_m2'] == 0]
+                for entity in missing:
+                    if entity == 'District':
+                        # District aggregate: normalise by sum of all buildings' GFA
+                        normaliser_m2.loc[entity] = normaliser_m2['normaliser_m2'].sum() if len(normaliser_m2) > 0 else 1.0
+                    else:
+                        plant_area = self._calculate_plant_floor_area(entity, area_type='GFA_m2')
+                        normaliser_m2.loc[entity] = plant_area
 
         elif self.y_normalised_by == 'conditioned_floor_area':
             if self.df_architecture_data is not None:
@@ -347,12 +365,45 @@ class data_processor:
                 normaliser_m2 = pd.DataFrame({'normaliser_m2': pd.Series(dtype=float)})
                 normaliser_m2.index.name = 'name'
 
-            # For heat-rejection, calculate conditioned floor area for plants
-            if plot_cea_feature == 'heat-rejection':
-                plants = [b for b in buildings_to_use if b not in buildings_in_arch]
-                for plant in plants:
-                    plant_area = self._calculate_plant_floor_area(plant, area_type='Af_m2')
-                    normaliser_m2.loc[plant] = plant_area
+            # Supplement missing buildings from summary Af_m2 column (what-if mode)
+            if self.whatif_names and self.df_summary_data is not None and 'Af_m2' in self.df_summary_data.columns:
+                summary_af = self.df_summary_data.drop_duplicates(subset='name').set_index('name')['Af_m2']
+                for b in buildings_to_use:
+                    if b not in normaliser_m2.index and b in summary_af.index:
+                        normaliser_m2.loc[b, 'normaliser_m2'] = summary_af[b]
+
+            # Fallback: compute Af from zone geometry + architecture if still missing
+            if self.whatif_names and self.locator is not None:
+                still_missing = [b for b in buildings_to_use if b not in normaliser_m2.index]
+                if still_missing:
+                    try:
+                        from cea.demand.building_properties.useful_areas import calc_useful_areas
+                        import geopandas as gpd
+                        zone_df = gpd.read_file(self.locator.get_zone_geometry())
+                        arch_df = pd.read_csv(self.locator.get_building_architecture())
+                        areas_df = calc_useful_areas(zone_df, arch_df)
+                        # Column is 'Af' (not 'Af_m2'), name may be 'name_x' after merge
+                        name_col = 'name_x' if 'name_x' in areas_df.columns else 'name'
+                        af_col = 'Af' if 'Af' in areas_df.columns else 'Af_m2'
+                        if name_col in areas_df.columns and af_col in areas_df.columns:
+                            areas_indexed = areas_df.set_index(name_col)
+                            for b in still_missing:
+                                if b in areas_indexed.index:
+                                    normaliser_m2.loc[b, 'normaliser_m2'] = areas_indexed.loc[b, af_col]
+                    except Exception:
+                        pass
+
+            # Calculate conditioned floor area for entities not yet in normaliser or with zero area
+            if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
+                missing = [b for b in buildings_to_use
+                           if b not in normaliser_m2.index
+                           or normaliser_m2.loc[b, 'normaliser_m2'] == 0]
+                for entity in missing:
+                    if entity == 'District':
+                        normaliser_m2.loc[entity] = normaliser_m2['normaliser_m2'].sum() if len(normaliser_m2) > 0 else 1.0
+                    else:
+                        plant_area = self._calculate_plant_floor_area(entity, area_type='Af_m2')
+                        normaliser_m2.loc[entity] = plant_area
 
         elif self.y_normalised_by == 'no_normalisation':
             # Create normaliser with value 1 for ALL entities (including plants)
@@ -366,10 +417,22 @@ class data_processor:
 
         return normaliser_m2
 
-    def process_sorting_key(self):
+    def process_sorting_key(self, df_to_plotly=None):
         if self.x_sorted_by == 'default':
+            # Sort by total bar height (sum of all numeric y-columns per building)
+            if df_to_plotly is not None and 'X' in df_to_plotly.columns:
+                numeric_cols = df_to_plotly.select_dtypes(include='number').columns.tolist()
+                totals = df_to_plotly.groupby('X')[numeric_cols].sum().sum(axis=1)
+                sorting_key = totals.to_frame(name='sorting_key')
+                sorting_key.index.name = 'name'
+            else:
+                sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
+                sorting_key['sorting_key'] = range(len(self.buildings))
+                sorting_key = sorting_key[['sorting_key']]
+        elif self.x_sorted_by == 'building_name':
             sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings].copy()
-            sorting_key['sorting_key'] = self.df_architecture_data.reset_index().index
+            sorting_key['sorting_key'] = range(len(self.buildings))
+            sorting_key = sorting_key[['sorting_key']]
         elif self.x_sorted_by == 'construction_year':
             sorting_key = self.df_architecture_data.set_index('name').loc[self.buildings, ['construction_year']].copy()
             sorting_key = sorting_key.rename(columns={'construction_year': 'sorting_key'})
@@ -401,18 +464,27 @@ class data_processor:
             operational_emission_metrics = []
 
         if plot_cea_feature == 'demand':
+            # Unified display names (matching the Demand map layer's
+            # dropdown) + backwards-compat aliases for the pre-unified
+            # `enduse_*` choices and the legacy aggregated columns.
             y_cea_metric_map = {
+                # Unified display names
+                'electricity':        'E_sys_kWh',
+                'space_heating':      'Qhs_sys_kWh',
+                'space_cooling':      'Qcs_sys_kWh',
+                'domestic_hot_water': 'Qww_sys_kWh',
+                # Legacy aliases
                 'grid_electricity_consumption': 'GRID_kWh',
-                'enduse_electricity_demand': 'E_sys_kWh',
-                'enduse_electricity': 'E_sys_kWh',
-                'enduse_cooling_demand': 'QC_sys_kWh',
-                'enduse_space_cooling_demand': 'Qcs_sys_kWh',
-                'enduse_space_cooling': 'Qcs_sys_kWh',
-                'enduse_heating_demand': 'QH_sys_kWh',
-                'enduse_space_heating_demand': 'Qhs_sys_kWh',
-                'enduse_space_heating': 'Qhs_sys_kWh',
-                'enduse_dhw_demand': 'Qww_sys_kWh',
-                'enduse_dhw': 'Qww_sys_kWh',
+                'enduse_electricity_demand':    'E_sys_kWh',
+                'enduse_electricity':           'E_sys_kWh',
+                'enduse_cooling_demand':        'QC_sys_kWh',
+                'enduse_space_cooling_demand':  'Qcs_sys_kWh',
+                'enduse_space_cooling':         'Qcs_sys_kWh',
+                'enduse_heating_demand':        'QH_sys_kWh',
+                'enduse_space_heating_demand':  'Qhs_sys_kWh',
+                'enduse_space_heating':         'Qhs_sys_kWh',
+                'enduse_dhw_demand':            'Qww_sys_kWh',
+                'enduse_dhw':                   'Qww_sys_kWh',
             }
 
         elif plot_cea_feature == 'pv':
@@ -490,15 +562,12 @@ class data_processor:
             }
 
         elif plot_cea_feature == 'final-energy':
-            y_cea_metric_map = {
-                'carrier_grid_electricity':   'GRID_kWh',
-                'carrier_natural_gas':        'NATURALGAS_kWh',
-                'carrier_district_heating':   'DH_kWh',
-                'carrier_district_cooling':   'DC_kWh',
-                'carrier_oil':                'OIL_kWh',
-                'carrier_coal':               'COAL_kWh',
-                'carrier_wood':               'WOOD_kWh',
-            }
+            # Carriers and their summary columns come straight from the
+            # scenario's ENERGY_CARRIERS.csv (feedstock_file values). The
+            # carrier code doubles as the map key and as the column prefix
+            # (e.g. GRID → GRID_kWh).
+            from cea.technologies.energy_carriers import available_carriers
+            y_cea_metric_map = {c: f'{c}_kWh' for c in available_carriers(self.locator)}
 
         else:
             raise ValueError(f"Unknown plot_cea_feature: '{plot_cea_feature}'")
@@ -604,8 +673,9 @@ def normalise_dataframe_by_index(dataframe_A, dataframe_B):
     # Merge
     merged = dfA_reset.merge(dfB_reset, on=key_column, how='left')
 
-    # Normalize original columns
+    # Normalize original columns (skip entities with zero area to avoid division by zero)
     original_columns = dataframe_A.columns
+    merged['normaliser'] = merged['normaliser'].replace(0, np.nan)
     for col in original_columns:
         merged[col] = merged[col] / merged['normaliser']
 
@@ -700,7 +770,7 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
     """
     # Step 1: Prepare normaliser and raw Y-axis metrics
     if plot_instance.y_normalised_by in ('no_normalisation', 'gross_floor_area', 'conditioned_floor_area'):
-        normaliser_m2 = plot_instance.process_architecture_data()
+        normaliser_m2 = plot_instance.process_architecture_data(plot_cea_feature)
     elif plot_instance.y_normalised_by == 'solar_technology_area_installed_for_respective_surface':
         # For solar-specific normalisation, area data is in the metrics themselves
         normaliser_m2 = None  # Not needed
@@ -732,8 +802,8 @@ def generate_dataframe_for_plotly(plot_instance, df_summary_data, df_architectur
         if facet in ['months', 'seasons']:
             df_to_plotly['X_facet'] = df_summary_data['period']
         elif facet in ['construction_type', 'main_use_type']:
-            # For heat-rejection, plants should have their own "PLANT" facet category
-            if plot_cea_feature == 'heat-rejection':
+            # Plants should have their own "PLANT" facet category
+            if plot_cea_feature in ('heat-rejection', 'final-energy', 'lifecycle-emissions', 'operational-emissions'):
                 from cea.inputlocator import InputLocator
                 locator = InputLocator(scenario)
                 zone_buildings = set(locator.get_zone_building_names())
@@ -960,8 +1030,9 @@ def calc_x_y_metric(plot_config, plot_config_general, plots_building_filter, plo
     if plot_cea_feature in ["demand", "final-energy", "pv", "pvt", "sc", "operational-emissions", "lifecycle-emissions", "heat-rejection"]:
         df_to_plotly, list_y_columns = generate_dataframe_for_plotly(plot_instance_b, df_summary_data, df_architecture_data, plot_cea_feature, scenario)
 
-        if plot_instance_b.x_to_plot in x_to_plot_building:
-            df_to_plotly = sort_df_by_sorting_key(plot_instance_b.process_sorting_key(), df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
+        if plot_instance_b.x_to_plot == 'by_building':
+            sorting_key = plot_instance_b.process_sorting_key(df_to_plotly)
+            df_to_plotly = sort_df_by_sorting_key(sorting_key, df_to_plotly, descending=plot_instance_b.x_sorted_reversed)
 
     else:
         print("Error: Unsupported feature:", plot_cea_feature)

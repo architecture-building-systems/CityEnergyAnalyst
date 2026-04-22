@@ -24,7 +24,6 @@ from cea.visualisation.format.plot_colours import (
     COLOURS_TO_RGB,
     COMPONENT_TECH_COLOURS,
     component_display,
-    component_tech_colour,
 )
 
 __author__ = "Zhongming Shi"
@@ -152,7 +151,7 @@ def _to_rgba(rgb_str, alpha=0.5):
 
 # ── core data builder ─────────────────────────────────────────────────────────
 
-def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, normaliser=1.0):
+def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, locator, normaliser=1.0):
     """
     Transform costs_components DataFrame into a cost Sankey.
 
@@ -218,10 +217,18 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         return None
 
     df['_service_group'] = df['service'].fillna('Unknown').apply(_service_group)
+    # Mark rows whose only "component" is the grid carrier — these bypass the
+    # technology layer and flow directly from service to cost detail.
+    df['_is_grid_only'] = df.apply(
+        lambda r: (not pd.notna(r['component_code']) or str(r['component_code']).strip() in ('', 'GRID'))
+                  and str(r.get('carrier', '')).strip() == 'GRID',
+        axis=1,
+    )
     df['_tech_display'] = df.apply(
         lambda r: component_display(
             r['component_code'] if pd.notna(r['component_code']) and str(r['component_code']).strip() != ''
-            else r.get('carrier', 'Unknown')
+            else r.get('carrier', 'Unknown'),
+            locator,
         ),
         axis=1,
     )
@@ -244,6 +251,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
         if opex_cols:
             summary_labels.append('OPEX')
 
+    # Set of tech display names that should be invisible pass-through nodes
+    _INVISIBLE_TECHS = {'City Grid'}
+
     # ── Build node list ───────────────────────────────────────────────────
     totals = df.groupby(['_service_group', '_scale_display', '_tech_display'])[all_cols].sum()
     totals = totals[totals.sum(axis=1) > 0].reset_index()
@@ -264,6 +274,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     # Key: "__cpt__{svc}", placed at x=0.25 (invisible, zero-height pass-through).
     building_svc_set: set[str] = set()
 
+    # Map invisible tech names to the service colour they belong to
+    _invisible_tech_svc: dict[str, str] = {}
+
     if show_component:
         dist_seen: set[str] = set()
         bldg_seen: set[str] = set()
@@ -271,6 +284,8 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
             tech = row['_tech_display']
             scale = row['_scale_display']
             svc = row['_service_group']
+            if tech in _INVISIBLE_TECHS:
+                _invisible_tech_svc[tech] = svc
             if scale == 'District':
                 if tech not in dist_seen:
                     dist_seen.add(tech)
@@ -301,9 +316,9 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     )
     all_node_labels = (
         services
-        + district_comps
+        + ['' if t in _INVISIBLE_TECHS else t for t in district_comps]
         + ['' for _ in pass_throughs]   # invisible
-        + building_comps
+        + ['' if t in _INVISIBLE_TECHS else t for t in building_comps]
         + detail_labels
         + summary_labels
     )
@@ -323,11 +338,16 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
     def _pt_colour(svc):
         return _to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey']))
 
+    def _invisible_colour(tech):
+        """Invisible techs use their service's flow colour with same alpha as links."""
+        svc = _invisible_tech_svc.get(tech)
+        return _to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey']), alpha=0.5) if svc else COLOURS_TO_RGB['grey']
+
     node_colors = (
         [_SERVICE_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in services]
-        + [_tech_colour(t) for t in district_comps]
+        + [_invisible_colour(t) if t in _INVISIBLE_TECHS else _tech_colour(t) for t in district_comps]
         + [_pt_colour(s) for s in pass_throughs]
-        + [_tech_colour(t) for t in building_comps]
+        + [_invisible_colour(t) if t in _INVISIBLE_TECHS else _tech_colour(t) for t in building_comps]
         + [_DETAIL_COLOURS.get(d, COLOURS_TO_RGB['grey']) for d in detail_labels]
         + [_SUMMARY_COLOURS.get(s, COLOURS_TO_RGB['grey']) for s in summary_labels]
     )
@@ -381,7 +401,12 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
                 sources.append(idx[ckey])
                 targets.append(idx[detail_label])
                 values.append(val / divisor)
-                link_colors.append(_to_rgba(_tech_colour(tech)))
+                # Invisible techs use their service flow colour for seamless pass-through
+                if tech in _INVISIBLE_TECHS:
+                    svc = _invisible_tech_svc.get(tech)
+                    link_colors.append(_to_rgba(_SERVICE_COLOURS.get(svc, COLOURS_TO_RGB['grey'])))
+                else:
+                    link_colors.append(_to_rgba(_tech_colour(tech)))
 
     elif show_service:
         # ── Service → Detail (no component layer) ────────────────────────
@@ -433,6 +458,7 @@ def build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divis
             targets.append(idx[summary_label])
             values.append(total_val / divisor)
             link_colors.append(_to_rgba(_DETAIL_COLOURS.get(detail_label, COLOURS_TO_RGB['grey'])))
+
 
     if not sources:
         return None
@@ -536,12 +562,11 @@ def create_sankey_fig(sankey_data, title, unit_label):
             ))
 
     fig.update_layout(
-        title_text=title,
-        title_font_size=16,
+        title=dict(text=title, x=0, xanchor='left', yanchor='top', font=dict(size=20)),
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=20, r=20, t=60, b=60),
+        margin=dict(l=20, r=20, t=80, b=60),
         annotations=annotations,
         shapes=shapes,
     )
@@ -570,7 +595,7 @@ def main(config: cea.config.Configuration):
             '</div>'
         )
 
-    cost_cats_selection = plot_config.y_cost_category_to_plot
+    cost_cats_selection = plot_config.y_category_to_plot
     capex_view = plot_config.capex_view
     y_metric_unit = plot_config.y_metric_unit
     unit_divisor = _UNIT_DIVISORS.get(y_metric_unit, 1)
@@ -579,9 +604,25 @@ def main(config: cea.config.Configuration):
     x_to_plot = plot_config.x_to_plot
     custom_title = plot_config.plot_title
 
-    # ── First pass: build all sankey_data, collect totals for proportional height ──
-    _BASE_HEIGHT = 600
-    _MIN_HEIGHT = 150
+    # ── First pass: build all sankey_data, collect totals for shared scale ────
+    # The Plotly Sankey link widths fill (canvas_height − node_overhead),
+    # where node_overhead = nodes_in_tallest_column × thickness + gaps × pad.
+    # Per-figure node counts differ (a no-solar scenario has fewer
+    # tech-column nodes), so equal canvas heights would *not* produce
+    # equal-width links for equal $.
+    #
+    # Strategy: cap the *tallest figure in the batch* at _MAX_CANVAS_HEIGHT,
+    # then derive the single "$/pixel" ratio that makes that hold while
+    # keeping every figure proportional. Each scenario's canvas height is
+    # then ``link_area + own_node_overhead + chrome``. Result: a $X flow
+    # draws at the same pixel width in every figure, and no figure exceeds
+    # the screen-friendly cap.
+    _MAX_CANVAS_HEIGHT = 750      # cap for the tallest figure (fits most screens)
+    _NODE_THICKNESS = 20          # must match node thickness in create_sankey_fig
+    _NODE_PAD = 24                # must match node pad in create_sankey_fig
+    _CHROME_PADDING = 140         # title + axis label + margin (rough Plotly overhead)
+    _MIN_HEIGHT = 300             # safety floor; only kicks in for empty/tiny scenarios
+
     # slot: either ('ok', whatif_name, sankey_data) or ('err', html_str)
     slots = []
 
@@ -608,7 +649,7 @@ def main(config: cea.config.Configuration):
                 gfa = fe_df['GFA_m2'].sum() if 'GFA_m2' in fe_df.columns else 1.0
                 normaliser = gfa if gfa > 0 else 1.0
 
-        sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, normaliser)
+        sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, locator, normaliser)
         if sankey_data is None:
             slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
@@ -621,12 +662,45 @@ def main(config: cea.config.Configuration):
 
         slots.append(('ok', whatif_name, sankey_data))
 
-    global_total = max(
-        (sum(sd['value']) for kind, *rest in slots if kind == 'ok' for sd in [rest[1]]),
-        default=1.0,
-    )
+    def _max_nodes_per_column(sd):
+        """Count visible nodes in the tallest column — drives node-overhead."""
+        from collections import Counter
+        cnt = Counter()
+        for x, lbl in zip(sd.get('node_x', []), sd.get('node_labels', [])):
+            if str(lbl).strip():
+                cnt[round(float(x), 4)] += 1
+        return max(cnt.values()) if cnt else 1
 
-    # ── Second pass: render with proportional heights, preserve order ─────────
+    def _node_overhead(sd):
+        n = _max_nodes_per_column(sd)
+        return n * _NODE_THICKNESS + max(0, n - 1) * _NODE_PAD
+
+    # Find the global "$ per pixel" ratio that makes the *tallest* figure
+    # in the batch exactly _MAX_CANVAS_HEIGHT, accounting for each
+    # scenario's own node overhead. Every other figure is shorter at the
+    # same px-per-$ rate — all link widths stay comparable across figures.
+    ok_slots = [sd for kind, *rest in slots if kind == 'ok' for sd in [rest[1]]]
+    if ok_slots:
+        per_scenario_budget = [
+            (
+                sum(sd['value']),
+                _MAX_CANVAS_HEIGHT - _node_overhead(sd) - _CHROME_PADDING,
+            )
+            for sd in ok_slots
+        ]
+        # px_per_value such that for every scenario:
+        #     scenario_total × px_per_value ≤ link_area_budget
+        # → px_per_value = min over scenarios of (budget / total).
+        px_per_value = min(
+            (budget / total for total, budget in per_scenario_budget if total > 0),
+            default=0.0,
+        )
+        if px_per_value <= 0:
+            px_per_value = 0.0
+    else:
+        px_per_value = 0.0
+
+    # ── Second pass: render with link-area proportional to total ──────────────
     html_outputs = []
     plotly_included = False
     for slot in slots:
@@ -635,8 +709,15 @@ def main(config: cea.config.Configuration):
             continue
         _, whatif_name, sankey_data = slot
         scenario_total = sum(sankey_data['value'])
-        height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
-        title = custom_title if (custom_title and len(whatif_names) == 1) else f'System Costs — {whatif_name}'
+        link_area = scenario_total * px_per_value
+        node_overhead = _node_overhead(sankey_data)
+        height = max(_MIN_HEIGHT, int(link_area + node_overhead + _CHROME_PADDING))
+        capex_label = 'Annualised CAPEX' if capex_view == 'annualised' else 'Total CAPEX'
+        scenario_name = os.path.basename(config.scenario)
+        feature_label = custom_title or f'CEA-4 System Costs ({capex_label})'
+        subtitle_parts = [feature_label, scenario_name, whatif_name]
+        subtitle = ' | '.join(subtitle_parts)
+        title = f"<b>System Costs ({capex_label})</b><br><sub>{subtitle}</sub>"
         fig = create_sankey_fig(sankey_data, title, unit_label)
         fig.update_layout(height=height, autosize=False)
         include_js = 'cdn' if not plotly_included else False

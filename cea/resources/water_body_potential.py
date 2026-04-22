@@ -10,7 +10,7 @@ import pandas as pd
 
 import cea.config
 import cea.inputlocator
-from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK
+from cea.constants import P_WATER_KGPERM3, HEAT_CAPACITY_OF_WATER_JPERKGK, KELVIN_CONVERSION
 from cea.resources.geothermal import calc_temperature_underground
 from cea.utilities.date import get_date_range_hours_from_year
 from cea.utilities import epwreader
@@ -45,16 +45,16 @@ def calc_lake_potential(locator, config):
     date_range = get_date_range_hours_from_year(year)
 
     V_max_m3h = config.water_body.max_water_volume_withdrawal  # in m3h
-    AT_max_K = config.water_body.max_delta_temperature_withdrawal + 273  # to Kelvin
-    T_max_K = config.water_body.temperature_max + 273  # to kelvin
-    T_min_K = config.water_body.temperature_min + 273  # to kelvin
+    AT_max_K = config.water_body.max_delta_temperature_withdrawal + KELVIN_CONVERSION  # to Kelvin
+    T_max_K = config.water_body.temperature_max + KELVIN_CONVERSION  # to kelvin
+    T_min_K = config.water_body.temperature_min + KELVIN_CONVERSION  # to kelvin
 
     T_amplitude_K = abs((T_max_K - T_min_K))
     T_avg_K = (T_max_K + T_min_K) / 2
     t_source = calc_temperature_underground(T_amplitude_K, T_avg_K, conductivity_water, density_water, depth_m,
                                             heat_capacity_water)
     # convert back to degrees C
-    t_source_final = [x - 273.0 for x in t_source]
+    t_source_final = [x - KELVIN_CONVERSION for x in t_source]
 
     Q_max_kwh = (V_max_m3h * P_WATER_KGPERM3 / 3600) * heat_capacity_water / 1000 * AT_max_K  # in kW
 

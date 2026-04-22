@@ -18,6 +18,7 @@ __status__ = "Production"
 
 
 import os
+import re
 import shutil
 import pandas as pd
 
@@ -87,6 +88,39 @@ def main(config: cea.config.Configuration):
         raise
 
 
+_BUILDING_NAME_RE = re.compile(r'\s+for building\s+\S+', re.IGNORECASE)
+
+
+def _strip_building_name(line):
+    """Remove ' for building {name}' from a line so similar errors group."""
+    return _BUILDING_NAME_RE.sub('', line).rstrip(' .:,-')
+
+
+def _group_errors_by_pattern(errors):
+    """Group building errors by message pattern, stripping building-specific
+    details so N identical errors collapse into one group.
+
+    Each error's first line becomes the grouping key (after stripping
+    any " for building {name}" phrase). The full remaining message
+    (lines 2+, de-building-ified) is preserved so actionable guidance
+    isn't lost in aggregate output.
+
+    Returns dict mapping ``(headline, hint_tuple) → list of building names``.
+    """
+    grouped = {}
+    for building, msg in errors.items():
+        lines = msg.split('\n')
+        headline = _strip_building_name(lines[0].strip())
+        # Keep all following lines (stripped of building names) as the
+        # hint payload so actionable guidance survives aggregation.
+        hint = tuple(
+            _strip_building_name(line) for line in lines[1:]
+        )
+        key = (headline, hint)
+        grouped.setdefault(key, []).append(building)
+    return grouped
+
+
 def _run(config, locator, whatif_name, output_folder, buildings):
     """Inner implementation called by main() so folder cleanup can wrap it cleanly."""
 
@@ -127,6 +161,39 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"\n{e}")
             raise
 
+    # Step 3.6: Validate plant temperature vs network simulation results
+    _network_name = config.final_energy.network_name
+    if _network_name:
+        print("\nChecking plant temperature compatibility...")
+        from cea.analysis.final_energy.supply_validation import validate_plant_temperature_vs_network_results
+        try:
+            validate_plant_temperature_vs_network_results(locator, _network_name, config)
+            print("  Plant temperature is compatible with network.")
+        except ValueError as e:
+            print(f"\n{e}")
+            raise
+
+    # Step 3.7: Validate booster configuration (both modes, when network is selected)
+    if _network_name:
+        print("\nChecking booster configuration...")
+        from cea.analysis.final_energy.supply_validation import (
+            validate_booster_configuration, validate_booster_temperature_compatibility,
+            load_network_connectivity
+        )
+        try:
+            connectivity = load_network_connectivity(locator, _network_name)
+            if 'DH' in connectivity.get('networks', {}):
+                validate_booster_configuration(
+                    connectivity['networks']['DH'], _network_name, locator, config
+                )
+                validate_booster_temperature_compatibility(
+                    connectivity['networks']['DH'], _network_name, locator, config
+                )
+            print("  Booster configuration is valid.")
+        except ValueError as e:
+            print(f"\n{e}")
+            raise
+
     # Step 4: Calculate final energy for each building
     print("\nCalculating building final energy...")
     building_dfs = {}
@@ -138,13 +205,16 @@ def _run(config, locator, whatif_name, output_folder, buildings):
         parse_solar_panel_configuration,
     )
     solar_panel_config = parse_solar_panel_configuration(config)
+    solar_buildings = set(config.solar_technology.buildings) if config.solar_technology.buildings else set()
 
     errors = {}
     for building in buildings:
         try:
             # Load supply configuration
             supply_config = load_supply_configuration(building, locator, config)
-            supply_config['solar'] = solar_panel_config
+            # Only attach solar config for buildings in solar-technology:buildings
+            if building in solar_buildings:
+                supply_config['solar'] = solar_panel_config
             building_configs[building] = supply_config
 
             # Calculate final energy for this building
@@ -164,10 +234,20 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             errors[building] = str(e)
     
     if errors:
-        print("\nBuildings with errors:")
-        for building, error in errors.items():
-            print(f"  ✗ {building}: {error}")
-        raise Exception(f"{len(errors)} buildings failed final energy calculation. See above for details.")
+        # Group errors by message pattern (strip building-specific details)
+        # so N identical errors collapse into one block with the full
+        # actionable hint shown once.
+        grouped = _group_errors_by_pattern(errors)
+        print(f"\n{len(errors)} buildings failed final energy calculation:")
+        for (headline, hint), building_list in grouped.items():
+            print(f"\n  {headline}  ({len(building_list)} buildings)")
+            for hint_line in hint:
+                if hint_line.strip():
+                    print(f"    {hint_line}")
+                else:
+                    print()
+            print(f"\n    Affected buildings: {', '.join(sorted(building_list))}")
+        raise Exception(f"{len(errors)} buildings failed final energy calculation.")
 
     # Step 4b: Validate district assembly consistency (what-if mode only)
     if config.final_energy.overwrite_supply_settings and building_configs:
@@ -303,14 +383,12 @@ def _run(config, locator, whatif_name, output_folder, buildings):
     print("\nGenerating compilation files...")
 
     summary_df = None
-    breakdown_df = None
 
     if building_dfs:
         from cea.analysis.final_energy.calculation import (
             aggregate_buildings_summary,
             create_hourly_timeseries_aggregation,
         )
-        import json
         from datetime import datetime
 
         try:
@@ -338,7 +416,7 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"  ✗ final_energy.csv: {str(e)}")
 
         try:
-            # Generate supply configuration JSON
+            # Generate supply configuration file
             config_data = {
                 'metadata': {
                     'whatif_name': whatif_name,
@@ -350,14 +428,11 @@ def _run(config, locator, whatif_name, output_folder, buildings):
                 'plants': plant_configs,
             }
 
-            config_file = locator.get_analysis_configuration_file(whatif_name)
-            locator.ensure_parent_folder_exists(config_file)
-            with open(config_file, 'w') as f:
-                json.dump(config_data, f, indent=2, default=str)
-            print("  ✓ configuration.json")
+            locator.write_analysis_configuration(whatif_name, config_data)
+            print("  ✓ configuration.yml")
 
         except Exception as e:
-            print(f"  ✗ configuration.json: {str(e)}")
+            print(f"  ✗ configuration.yml: {str(e)}")
     else:
         print("  - No buildings processed, skipping compilation files")
 
@@ -380,7 +455,11 @@ def _run(config, locator, whatif_name, output_folder, buildings):
         if summary_df is not None:
             print("\nTotal Final Energy by Carrier:")
             total_final = 0.0
-            for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+            from cea.technologies.energy_carriers import available_carriers
+            # DH/DC are network-routing carriers, not data-driven rows in
+            # ENERGY_CARRIERS.csv, so union them in explicitly.
+            carriers = sorted(available_carriers(locator) | {'DH', 'DC'})
+            for carrier in carriers:
                 carrier_col = f'{carrier}_MWh'
                 if carrier_col in summary_df.columns:
                     total = summary_df[carrier_col].sum()

@@ -91,6 +91,40 @@ COLOURS_TO_RGB = {
 }
 
 
+# Canonical per-carrier colour palette. Keys are ``feedstock_file`` codes
+# from ``ENERGY_CARRIERS.csv`` (``GRID``, ``NATURALGAS``, …). Each darker
+# colour is unique so stacked segments and legend entries read clearly.
+# ``CARRIER_COLOURS`` is the single source of truth — map layers, bar
+# plots, and the energy sankey all pull from here. User-added carriers
+# fall back to :data:`DEFAULT_CARRIER_COLOURS`.
+CARRIER_COLOURS = {
+    'GRID':        ('red_lighter',    'red'),       # electricity
+    'NATURALGAS':  ('brown_lighter',  'brown'),     # fossil gas
+    'OIL':         ('grey_lighter',   'grey'),      # fossil liquid
+    'COAL':        ('grey_light',     'black'),     # fossil solid
+    'WOOD':        ('green_lighter',  'green'),     # woody biomass
+    'SOLAR':       ('yellow_lighter', 'yellow'),    # solar thermal
+    'BIOGAS':      ('teal_lighter',   'teal'),      # bio gas
+    'DRYBIOMASS':  ('orange_lighter', 'orange'),    # dry biomass
+    'WETBIOMASS':  ('purple_lighter', 'purple'),    # wet biomass
+    'HYDROGEN':    ('cyan_lighter',   'cyan'),      # clean gas
+}
+DEFAULT_CARRIER_COLOURS = ('grey_lighter', 'grey')
+
+
+def get_carrier_colour(code, *, shade='darker'):
+    """Return a palette colour for the given carrier code.
+
+    :param code: Carrier code from ``ENERGY_CARRIERS.csv`` (e.g.
+        ``'GRID'``, ``'NATURALGAS'``). Case-insensitive.
+    :param shade: ``'darker'`` (default) or ``'lighter'``. Bar plots and
+        the sankey use the darker shade; map layer gradients use both.
+    :return: A colour name from :data:`COLOURS_TO_RGB`.
+    """
+    pair = CARRIER_COLOURS.get(str(code).upper(), DEFAULT_CARRIER_COLOURS)
+    return pair[1] if shade == 'darker' else pair[0]
+
+
 # Base color mapping without units - maps metric prefixes to colors
 _BASE_COLUMN_COLORS = {
     # ===== Grid & Demand =====
@@ -204,21 +238,46 @@ _BASE_COLUMN_COLORS = {
     "E_sys_OIL": "green_light",
     "E_sys_HYDROGEN": "green_light",
     "E_sys_NONE": "green_light",
+    "DH_NATURALGAS": "red_light",
+    "DH_BIOGAS": "red_light",
+    "DH_SOLAR": "red_light",
+    "DH_DRYBIOMASS": "red_light",
+    "DH_WETBIOMASS": "red_light",
+    "DH_GRID": "red_light",
+    "DH_COAL": "red_light",
+    "DH_WOOD": "red_light",
+    "DH_OIL": "red_light",
+    "DH_HYDROGEN": "red_light",
+    "DH_NONE": "red_light",
+    "DC_NATURALGAS": "blue_light",
+    "DC_BIOGAS": "blue_light",
+    "DC_SOLAR": "blue_light",
+    "DC_DRYBIOMASS": "blue_light",
+    "DC_WETBIOMASS": "blue_light",
+    "DC_GRID": "blue_light",
+    "DC_COAL": "blue_light",
+    "DC_WOOD": "blue_light",
+    "DC_OIL": "blue_light",
+    "DC_HYDROGEN": "blue_light",
+    "DC_NONE": "blue_light",
 
-    # Energy carriers (aggregated by carrier) - use "_light" colors, GRID is purple
-    "GRID": "purple_light",
-    "NATURALGAS": "red_light",
-    "BIOGAS": "green_light",
-    "SOLAR": "yellow_light",
-    "DRYBIOMASS": "brown_light",
-    "WETBIOMASS": "brown_light",
-    "COAL": "grey_light",
-    "WOOD": "orange_light",
-    "OIL": "blue_light",
-    "HYDROGEN": "uuen_blue_light",
-    "NONE": "grey",
-    "DH": "red",
-    "DC": "blue",
+    # Energy carriers (aggregated by carrier) — resolved via the canonical
+    # ``CARRIER_COLOURS`` dict defined above so map layers, bar plots, and
+    # the sankey all render a given carrier the same way. Keys here
+    # duplicate the canonical dict; keeping them in sync is cheap because
+    # there are only ~10 carriers and this table is the grep target for
+    # column-name-to-colour resolution.
+    "GRID":       CARRIER_COLOURS['GRID'][1],
+    "NATURALGAS": CARRIER_COLOURS['NATURALGAS'][1],
+    "OIL":        CARRIER_COLOURS['OIL'][1],
+    "COAL":       CARRIER_COLOURS['COAL'][1],
+    "WOOD":       CARRIER_COLOURS['WOOD'][1],
+    "SOLAR":      CARRIER_COLOURS['SOLAR'][1],
+    "BIOGAS":     CARRIER_COLOURS['BIOGAS'][1],
+    "DRYBIOMASS": CARRIER_COLOURS['DRYBIOMASS'][1],
+    "WETBIOMASS": CARRIER_COLOURS['WETBIOMASS'][1],
+    "HYDROGEN":   CARRIER_COLOURS['HYDROGEN'][1],
+    "NONE":       "grey",
 
     # ===== Cost Categories =====
     "CAPEX_total":             "grey",
@@ -238,6 +297,8 @@ _BASE_COLUMN_COLORS = {
     "operation_Qww_sys": "orange",
     "operation_Qcs_sys": "blue",
     "operation_E_sys": "green",
+    "operation_DH":  "red_light",
+    "operation_DC":  "blue_light",
 
     # Production - all purple
     "production_wall_ag": "purple",
@@ -352,17 +413,27 @@ def get_column_color(column_name):
 
 # ── Component display helpers ─────────────────────────────────────────────────
 
-COMPONENT_PREFIX_DISPLAY = [
-    ('PVT', 'PVT Panel'),
-    ('PV',  'PV Panel'),
-    ('SC',  'Solar Collector'),
-    ('BO',  'Boiler'),
-    ('HP',  'Heat Pump'),
-    ('CH',  'Chiller'),
-    ('CT',  'Cooling Tower'),
-    ('PU',  'Pump'),
-    ('HEX', 'Heat Exchanger'),
-]
+# Pretty label per CONVERSION-table filename stem. Covers every CSV
+# bundled under ``COMPONENTS/CONVERSION/``. User-added tables fall back
+# to a title-cased version of the filename.
+_TABLE_TO_DISPLAY = {
+    'ABSORPTION_CHILLERS':          'Absorption Chiller',
+    'BOILERS':                      'Boiler',
+    'BORE_HOLES':                   'Bore Hole',
+    'COGENERATION_PLANTS':          'Cogeneration Plant',
+    'COOLING_TOWERS':               'Cooling Tower',
+    'FUEL_CELLS':                   'Fuel Cell',
+    'HEAT_EXCHANGERS':              'Heat Exchanger',
+    'HEAT_PUMPS':                   'Heat Pump',
+    'HYDRAULIC_PUMPS':              'Pump',
+    'PHOTOVOLTAIC_PANELS':          'PV Panel',
+    'PHOTOVOLTAIC_THERMAL_PANELS':  'PVT Panel',
+    'POWER_TRANSFORMERS':           'Power Transformer',
+    'SOLAR_COLLECTORS':             'Solar Collector',
+    'THERMAL_ENERGY_STORAGES':      'Thermal Storage',
+    'UNITARY_AIR_CONDITIONERS':     'Unitary Air Conditioner',
+    'VAPOR_COMPRESSION_CHILLERS':   'Chiller',
+}
 
 COMPONENT_EXACT_DISPLAY = {
     'PIPES': 'Piping',
@@ -370,29 +441,67 @@ COMPONENT_EXACT_DISPLAY = {
 }
 
 
-def component_display(code):
-    """Map a component code (e.g. 'CH1', 'BO2') to a human-readable display name."""
+# Solar tech-code convention used by the ``solar-technology`` config
+# (``SC_FP``, ``SC_ET``, ``PV_PV1``, ``PVT_PV1_FP``, …). These aren't
+# component-CSV codes — they don't live in ``COMPONENTS/CONVERSION/`` —
+# so they need their own label rule. Order matters: PVT before PV.
+_SOLAR_TECH_CODE_LABELS = (
+    ('PVT_', 'PVT Panel'),
+    ('SC_',  'Solar Collector'),
+    ('PV_',  'PV Panel'),
+)
+
+
+def component_display(code, locator):
+    """Map a component or tech code to a human-readable label.
+
+    Component CSV codes (``BO1``, ``FU2``, ``ACH1``, …) are resolved by
+    :func:`cea.technologies.components.get_component_table` — so any
+    user-added code under an existing ``COMPONENTS/CONVERSION/`` table
+    gets the right label without a code change. Solar tech codes from
+    the ``solar-technology`` config (``SC_ET``, ``PV_PV1``,
+    ``PVT_PV1_FP``) are recognised via their fixed underscore-prefix
+    convention. Unknown tables fall back to the title-cased filename.
+    Returns the raw code if nothing matches.
+    """
     code = str(code).strip()
     if code in COMPONENT_EXACT_DISPLAY:
         return COMPONENT_EXACT_DISPLAY[code]
-    for prefix, label in COMPONENT_PREFIX_DISPLAY:
+
+    for prefix, label in _SOLAR_TECH_CODE_LABELS:
         if code.startswith(prefix):
             return f'{label} ({code})'
+
+    try:
+        from cea.technologies.components import get_component_table
+        table = get_component_table(code, locator)
+    except Exception:
+        table = None
+    if table:
+        label = _TABLE_TO_DISPLAY.get(table, table.replace('_', ' ').title())
+        return f'{label} ({code})'
     return code
 
 
 COMPONENT_TECH_COLOURS = {
-    'Boiler':          COLOURS_TO_RGB['red'],
-    'Heat Pump':       COLOURS_TO_RGB['orange'],
-    'Chiller':         COLOURS_TO_RGB['blue'],
-    'Cooling Tower':   COLOURS_TO_RGB['blue'],
-    'Pump':            COLOURS_TO_RGB['orange'],
-    'Piping':          COLOURS_TO_RGB['grey'],
-    'Heat Exchanger':  COLOURS_TO_RGB['orange'],
-    'City Grid':       COLOURS_TO_RGB['purple'],
-    'PV Panel':        COLOURS_TO_RGB['yellow'],
-    'Solar Collector': COLOURS_TO_RGB['yellow'],
-    'PVT Panel':       COLOURS_TO_RGB['yellow'],
+    'Boiler':                    COLOURS_TO_RGB['red'],
+    'Heat Pump':                 COLOURS_TO_RGB['orange'],
+    'Chiller':                   COLOURS_TO_RGB['blue'],
+    'Cooling Tower':             COLOURS_TO_RGB['blue'],
+    'Pump':                      COLOURS_TO_RGB['grey'],
+    'Piping':                    COLOURS_TO_RGB['grey'],
+    'Heat Exchanger':            COLOURS_TO_RGB['grey'],
+    'City Grid':                 COLOURS_TO_RGB['purple'],
+    'PV Panel':                  COLOURS_TO_RGB['yellow'],
+    'Solar Collector':           COLOURS_TO_RGB['yellow'],
+    'PVT Panel':                 COLOURS_TO_RGB['yellow'],
+    'Absorption Chiller':        COLOURS_TO_RGB['teal'],
+    'Cogeneration Plant':        COLOURS_TO_RGB['red'],
+    'Fuel Cell':                 COLOURS_TO_RGB['cyan'],
+    'Thermal Storage':           COLOURS_TO_RGB['brown_light'],
+    'Bore Hole':                 COLOURS_TO_RGB['brown'],
+    'Power Transformer':         COLOURS_TO_RGB['grey_light'],
+    'Unitary Air Conditioner':   COLOURS_TO_RGB['blue'],
 }
 
 

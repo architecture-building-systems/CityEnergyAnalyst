@@ -40,6 +40,15 @@ TAC = Capex_a + Opex_fixed_a + Opex_var_a
 | DISTRICT (building) | 0 | 0 | 0 (at plant level) |
 | Plant row | From default component | component cost | carrier_MWh × feedstock_price |
 
+**Multi-component assemblies** (primary + secondary + tertiary):
+- Both `_process_building_service` and `_process_plant_row` handle secondary/tertiary components
+- Primary component: full costs (CAPEX + fixed O&M + variable OPEX)
+- Secondary/tertiary: CAPEX + fixed O&M only (variable OPEX counted in primary, no per-component energy data)
+- Cooling towers (CT*): sized for rejection load = `peak_kW + capacity_kW` (Q_cooling + W_compressor)
+- Other secondary/tertiary (HEX*): sized at same capacity as primary
+- e.g., SUPPLY_COOLING_AS1 (CH2 + CT1): CH2 gets full costs, CT1 gets CAPEX + fixed O&M at rejection capacity
+- In the sankey, each component appears as a separate technology node (not grouped by assembly)
+
 **Plant components** (from `configuration.json['plants']`):
 - Derived during final-energy from the DISTRICT-scale supply assembly of connected buildings
 - e.g., AS9 → `primary_component=BO1`, carrier=NATURALGAS, efficiency=0.85
@@ -58,6 +67,8 @@ peak_hs_kW = df['Qhs_sys_kWh'].max()
 
 ```python
 capacity_kW = peak_service_kW / efficiency  # efficiency from configuration.json
+# Cooling towers (CT*): sized for rejection load, not cooling load
+# CT_capacity_kW = peak_kW + capacity_kW  (= Q_cooling + W_compressor)
 ```
 
 ### DO: CAPEX formula (Q in Watts, log = natural log)
@@ -147,11 +158,16 @@ capex_a = calc_capex_annualized(capex_pipes, 5.0, 40)
 # Always pass capacity_W so the correct cost curve segment is used
 ```
 
-### DO: PVT prefix before PV in COMPONENT_PREFIX_TO_TABLE
+### DO: Resolve component → table via the scanner (no prefix hardcoding)
 
 ```python
-# 'PVT' must appear before 'PV' — 'PVT1'.startswith('PV') is True
-# HEX must also be registered: 'HEX': 'HEAT_EXCHANGERS'
+# cea.technologies.components.get_component_table scans every *.csv
+# under COMPONENTS/CONVERSION/ and returns the owning table name.
+# Use it for cooling-tower sizing, solar-primary detection, etc. so
+# user-added codes in existing tables work without code changes.
+from cea.technologies.components import get_component_table
+if get_component_table(comp_code, locator) == 'COOLING_TOWERS':
+    comp_capacity_kW = peak_kW + capacity_kW   # Q_cool + W_comp
 ```
 
 ### DON'T: Use part-load curves or variable efficiency
@@ -180,6 +196,8 @@ outputs/data/analysis/{whatif_name}/costs/
 ```
 
 **costs_components.csv columns**: `name, service, scale, assembly_code, component_code, carrier, peak_service_kW, capacity_kW, capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD, TAC_USD`
+- One row per component per service per building (multi-component assemblies produce multiple rows with same service/assembly_code)
+- `capacity_kW` for CT* = rejection load (larger than primary); for others = same as primary
 
 **costs_buildings.csv columns**: metadata from summary + `capex_total_USD, capex_a_USD, opex_fixed_a_USD, opex_var_a_USD, TAC_USD, whatif_name`
 

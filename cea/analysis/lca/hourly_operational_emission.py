@@ -32,6 +32,8 @@ _tech_name_mapping = {
     "Qww_sys": "dhw",
     "Qcs_sys": "cs",
     "E_sys": "el",
+    "Qhs_booster": "hs_booster",
+    "Qww_booster": "dhw_booster",
 }
 
 # All GRID components for PV allocation
@@ -216,9 +218,13 @@ class OperationalHourlyTimeline:
 
     @property
     def grid_intensity(self) -> np.ndarray:
-        if 'GRID' not in self.emission_intensity_timeline.columns:
-            raise ValueError("'GRID' emission intensity timeline is missing.")
-        return self.emission_intensity_timeline["GRID"].to_numpy(dtype=float)
+        from cea.technologies.energy_carriers import electricity_carrier
+        elec = electricity_carrier(self.locator)
+        if elec not in self.emission_intensity_timeline.columns:
+            raise ValueError(
+                f"{elec!r} emission intensity timeline is missing."
+            )
+        return self.emission_intensity_timeline[elec].to_numpy(dtype=float)
 
     def _load_pv_hourly(self, pv_code: str) -> pd.DataFrame:
         pv_results_path = self.locator.PV_results(self.bpr.name, pv_code)

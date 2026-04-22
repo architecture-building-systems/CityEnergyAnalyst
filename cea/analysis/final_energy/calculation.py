@@ -79,6 +79,21 @@ def calculate_building_final_energy(
     # Step 2: Load supply configuration
     supply_config = load_supply_configuration(building_name, locator, config)
 
+    # Step 2b: SC-primary sanity checks — must happen before any
+    # downstream dispatch since a bad configuration should fail fast
+    # with a useful error rather than dying in the solar time-series
+    # aggregation below. (PVT is rejected as DHW primary by these
+    # validators; PVT thermal continues to flow through the legacy
+    # PVT_Q_offset path against space heating.)
+    from cea.analysis.final_energy.solar_dhw import (
+        validate_solar_dhw_assembly,
+        validate_solar_dhw_building,
+    )
+    validate_solar_dhw_assembly(building_name, supply_config.get('hot_water'))
+    validate_solar_dhw_building(
+        building_name, supply_config.get('hot_water'), config, locator=locator,
+    )
+
     # Step 3: Calculate final energy for each service
     # Space heating
     if supply_config['space_heating'] and supply_config['space_heating']['scale'] == 'BUILDING':
@@ -88,24 +103,73 @@ def calculate_building_final_energy(
         final_energy[f'Qhs_sys_{carrier}_kWh'] = demand_df['Qhs_sys_kWh'] / efficiency
     elif supply_config['space_heating'] and supply_config['space_heating']['scale'] == 'DISTRICT':
         # District heating: read from thermal-network
-        network_name = supply_config['space_heating']['network_name']
-        dh_data = load_district_heating_data(building_name, network_name, locator)
-        final_energy['Qhs_sys_DH_kWh'] = dh_data['DH_hs_kWh']
-    else:
-        # No heating system
-        final_energy['Qhs_sys_NONE_kWh'] = 0.0
+        # Skip if building has zero heating demand (no substation file will exist)
+        if demand_df['Qhs_sys_kWh'].sum() > 0.0:
+            network_name = supply_config['space_heating']['network_name']
+            dh_data = load_district_heating_data(building_name, network_name, locator)
+            final_energy['Qhs_sys_DH_kWh'] = dh_data['DH_hs_kWh']
+    # else: no heating system — no column needed
 
     # Hot water (DHW)
-    if supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'BUILDING':
-        carrier = supply_config['hot_water']['carrier']
-        efficiency = supply_config['hot_water']['efficiency']
+    hot_water_cfg = supply_config['hot_water']
+    uses_solar_dhw = (
+        hot_water_cfg
+        and hot_water_cfg.get('type') == 'SC'
+        and hot_water_cfg.get('scale') == 'BUILDING'
+    )
+    _pumping_kwh = None
+    if uses_solar_dhw:
+        # Hourly dispatch: solar thermal into a temperature-tracking tank,
+        # booster (secondary BO/HP) tops up the gap between tank temp and
+        # the DHW setpoint for the drawn mass. See `solar_dhw.py` for the
+        # full model. Cold-mains inlet is a climate-aware hourly series
+        # computed from the scenario weather file (same helper the demand
+        # pipeline uses to define Qww_sys_kWh).
+        from cea.analysis.final_energy.solar_dhw import (
+            aggregate_building_sc_thermal,
+            compute_dhw_cold_inlet_hourly,
+            dispatch_solar_dhw,
+        )
+        thermal_series, sc_aperture_m2 = aggregate_building_sc_thermal(
+            building_name, locator, config
+        )
+        T_cold_hourly_C = compute_dhw_cold_inlet_hourly(locator)
+        dispatch = dispatch_solar_dhw(
+            dhw_demand_kwh=demand_df['Qww_sys_kWh'].to_numpy(dtype=float),
+            solar_thermal_kwh=thermal_series,
+            sc_aperture_m2=sc_aperture_m2,
+            T_cold_hourly_C=T_cold_hourly_C,
+        )
+        final_energy['Qww_sys_SOLAR_kWh'] = dispatch['served_by_solar_kwh']
+        # Diagnostic: hourly solar heat dumped at the tank's T_MAX pressure-
+        # relief cap. Non-zero values flag an oversized SC for the DHW load.
+        # Not a delivered carrier — excluded from carrier aggregation below.
+        final_energy['Qww_sys_SOLAR_dumped_kWh'] = dispatch['surplus_dumped_kwh']
+        # Note: gross Q_SC_gen is *not* persisted as a column here. Downstream
+        # diagnostics (e.g. the Sankey source-side width for SC) recompute it
+        # on-the-fly from the SC potential files on disk so the CSV schema
+        # doesn't carry diagnostic-only data.
+        backup_info = hot_water_cfg.get('secondary_info') or {}
+        backup_carrier = backup_info.get('carrier')
+        backup_eff = backup_info.get('efficiency') or 1.0
+        if backup_carrier:
+            final_energy[f'Qww_sys_{backup_carrier}_kWh'] = (
+                dispatch['served_by_backup_kwh'] / backup_eff
+            )
+        # Pumping parasitic is added to the building's grid-electricity
+        # stream below; stash it for that step.
+        _pumping_kwh = dispatch['parasitic_electricity_kwh']
+    elif hot_water_cfg and hot_water_cfg['scale'] == 'BUILDING':
+        carrier = hot_water_cfg['carrier']
+        efficiency = hot_water_cfg['efficiency']
         final_energy[f'Qww_sys_{carrier}_kWh'] = demand_df['Qww_sys_kWh'] / efficiency
-    elif supply_config['hot_water'] and supply_config['hot_water']['scale'] == 'DISTRICT':
-        network_name = supply_config['hot_water']['network_name']
-        dh_data = load_district_heating_data(building_name, network_name, locator)
-        final_energy['Qww_sys_DH_kWh'] = dh_data['DH_ww_kWh']
-    else:
-        final_energy['Qww_sys_NONE_kWh'] = 0.0
+    elif hot_water_cfg and hot_water_cfg['scale'] == 'DISTRICT':
+        # Skip if building has zero DHW demand (no substation file will exist)
+        if demand_df['Qww_sys_kWh'].sum() > 0.0:
+            network_name = supply_config['hot_water']['network_name']
+            dh_data = load_district_heating_data(building_name, network_name, locator)
+            final_energy['Qww_sys_DH_kWh'] = dh_data['DH_ww_kWh']
+    # else: no DHW system — no column needed
 
     # Space cooling
     if supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'BUILDING':
@@ -124,14 +188,20 @@ def calculate_building_final_energy(
         else:
             final_energy[f'Qcs_sys_{carrier}_kWh'] = chiller_kWh
     elif supply_config['space_cooling'] and supply_config['space_cooling']['scale'] == 'DISTRICT':
-        network_name = supply_config['space_cooling']['network_name']
-        dc_data = load_district_cooling_data(building_name, network_name, locator)
-        final_energy['Qcs_sys_DC_kWh'] = dc_data['DC_cs_kWh']
-    else:
-        final_energy['Qcs_sys_NONE_kWh'] = 0.0
+        # Skip if building has zero cooling demand (no substation file will exist)
+        if demand_df['Qcs_sys_kWh'].sum() > 0.0:
+            network_name = supply_config['space_cooling']['network_name']
+            dc_data = load_district_cooling_data(building_name, network_name, locator)
+            final_energy['Qcs_sys_DC_kWh'] = dc_data['DC_cs_kWh']
+    # else: no cooling system — no column needed
 
     # Electricity (always GRID)
     final_energy['E_sys_GRID_kWh'] = demand_df['E_sys_kWh']
+    if _pumping_kwh is not None:
+        # SC pumping parasitic from the DHW dispatch flows into grid.
+        final_energy['E_sys_GRID_kWh'] = (
+            final_energy['E_sys_GRID_kWh'].to_numpy() + _pumping_kwh
+        )
 
     # Step 4: Handle booster systems (if configured)
     # Space heating booster
@@ -142,6 +212,7 @@ def calculate_building_final_energy(
             if booster_data['Qhs_booster_kWh'].sum() > 0:
                 carrier = supply_config['space_heating_booster']['carrier']
                 efficiency = supply_config['space_heating_booster']['efficiency']
+                final_energy['Qhs_booster_kWh'] = booster_data['Qhs_booster_kWh']
                 final_energy[f'Qhs_booster_{carrier}_kWh'] = booster_data['Qhs_booster_kWh'] / efficiency
         except FileNotFoundError:
             pass
@@ -154,24 +225,47 @@ def calculate_building_final_energy(
             if booster_data['Qww_booster_kWh'].sum() > 0:
                 carrier = supply_config['hot_water_booster']['carrier']
                 efficiency = supply_config['hot_water_booster']['efficiency']
+                final_energy['Qww_booster_kWh'] = booster_data['Qww_booster_kWh']
                 final_energy[f'Qww_booster_{carrier}_kWh'] = booster_data['Qww_booster_kWh'] / efficiency
         except FileNotFoundError:
             pass
 
     # Step 5: Add solar energy generation (broken down by facade)
-    # Only non-zero columns are included to save space
-    try:
-        solar_generation = calculate_solar_generation(building_name, config, locator)
+    # Only for buildings listed in solar-technology:buildings (empty = no solar)
+    solar_buildings = config.solar_technology.buildings
+    if solar_buildings and building_name in solar_buildings:
+        try:
+            solar_generation = calculate_solar_generation(building_name, config, locator)
 
-        # Add all columns from solar_generation (only non-zero facades included)
-        for col_name, col_data in solar_generation.items():
-            final_energy[col_name] = col_data
+            # Add all columns from solar_generation (only non-zero facades included)
+            for col_name, col_data in solar_generation.items():
+                final_energy[col_name] = col_data
 
-    except ValueError as e:
-        # Solar potential files not found - re-raise with context
-        raise ValueError(
-            f"Error calculating solar generation for building {building_name}:\n{str(e)}"
-        )
+        except ValueError as e:
+            # Solar potential files not found - re-raise with context
+            raise ValueError(
+                f"Error calculating solar generation for building {building_name}:\n{str(e)}"
+            )
+
+        if uses_solar_dhw:
+            # SC thermal is booked against DHW via `Qww_sys_SOLAR_kWh`;
+            # drop per-facade `SC_*_kWh` columns to stop the emissions
+            # pipeline double-counting via the legacy `SC_Q_offset` path.
+            # `PVT_*_Q_kWh` columns are deliberately kept — PVT is not a
+            # DHW primary in this model, so its thermal output should
+            # continue to be credited against space heating via the
+            # legacy `PVT_Q_offset_kgCO2e` mechanism.
+            # `_radiation_` columns (raw irradiation) are preserved.
+            # Electrical columns (`PV_*_kWh`, `PVT_*_E_kWh`) are not
+            # touched — they flow through the independent electricity-
+            # offset path.
+            thermal_cols_to_drop = [
+                col for col in final_energy.columns
+                if col.startswith('SC_') and col.endswith('_kWh')
+                and '_radiation_' not in col
+            ]
+            if thermal_cols_to_drop:
+                final_energy = final_energy.drop(columns=thermal_cols_to_drop)
 
     # Step 6: Add metadata columns
     final_energy['scale'] = 'BUILDING'
@@ -210,6 +304,7 @@ def load_supply_configuration(
     else:
         # Production mode: use supply.csv
         # Warn if user has set parameters but overwrite is disabled
+        # Booster params are always used (even in production mode), so exclude them from warning
         has_parameters_set = any([
             config.final_energy.supply_type_hs_building,
             config.final_energy.supply_type_hs_district,
@@ -217,8 +312,6 @@ def load_supply_configuration(
             config.final_energy.supply_type_dhw_district,
             config.final_energy.supply_type_cs_building,
             config.final_energy.supply_type_cs_district,
-            config.final_energy.hs_booster_type_building,
-            config.final_energy.dhw_booster_type_building,
         ])
 
         if has_parameters_set:
@@ -393,14 +486,26 @@ def parse_supply_assembly(
         carrier = component_info['carrier']
         efficiency = component_info['efficiency']
 
+    # When the primary is a solar-thermal component (SC or PVT), the caller
+    # needs the secondary component's info too so it can back up the tank
+    # when solar output is insufficient. Load it eagerly and stash it on the
+    # supply config. We only block on this for building-scale hot-water
+    # assemblies — district plants with SC primaries aren't supported.
+    primary_type = component_info.get('type')
+    secondary_info = None
+    if primary_type in ('SC', 'PVT') and secondary_component:
+        secondary_info = load_component_info(secondary_component, locator)
+
     return {
         'scale': scale,
         'carrier': carrier,
         'efficiency': efficiency,
+        'type': primary_type,
         'assembly_code': assembly_code,
         'primary_component': primary_component,
         'secondary_component': secondary_component,
         'tertiary_component': tertiary_component,
+        'secondary_info': secondary_info,
         'network_name': network_name if scale == 'DISTRICT' else None,
     }
 
@@ -410,89 +515,25 @@ def load_component_info(
     locator: cea.inputlocator.InputLocator
 ) -> Dict:
     """
-    Load component information from COMPONENTS database.
+    Load component information from the COMPONENTS database.
 
-    :param component_code: Component code (e.g., 'BO1', 'HP1', 'CH1')
-    :param locator: InputLocator instance
-    :return: Dict with carrier and efficiency
+    Fully data-driven: scans every CSV under
+    ``COMPONENTS/CONVERSION/`` to find the row for ``component_code``
+    and classifies the component purely from its columns (presence of
+    ``fuel_code``, ``min_eff_rating_seasonal``, ``aux_power``, etc.).
+    User-added component codes and tables work without any Python
+    change — see :mod:`cea.technologies.components` for the
+    classification rules.
+
+    :param component_code: Component code from the database
+        (e.g. ``'BO1'``, ``'HP1'``, ``'OEHR1'``, ``'ACH1'``).
+    :param locator: Active :class:`InputLocator`.
+    :return: Dict with ``'carrier'`` (carrier name or ``None``) and
+        ``'efficiency'`` (float or ``None``). Solar delegation may add a
+        ``'type'`` key for SC/PVT branches.
     """
-    # Determine component type from code prefix
-    if component_code.startswith('BO'):
-        # Boiler
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in BOILERS database")
-
-        # Take first row (or average efficiency across capacity ranges)
-        component = components.iloc[0]
-
-        return {
-            'carrier': map_fuel_code_to_carrier(component['fuel_code']),
-            'efficiency': component['min_eff_rating']
-        }
-
-    elif component_code.startswith('HP'):
-        # Heat pump
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('HEAT_PUMPS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in HEAT_PUMPS database")
-
-        # Take first row (or average COP across capacity ranges)
-        component = components.iloc[0]
-
-        return {
-            'carrier': 'GRID',  # Heat pumps use electricity
-            'efficiency': component['min_eff_rating_seasonal']
-        }
-
-    elif component_code.startswith('CH'):
-        # Chiller
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('VAPOR_COMPRESSION_CHILLERS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in CHILLERS database")
-
-        # Take first row (or average COP across capacity ranges)
-        component = components.iloc[0]
-
-        return {
-            'carrier': 'GRID',  # Chillers use electricity
-            'efficiency': component['min_eff_rating']
-        }
-
-    elif component_code.startswith('CT'):
-        # Cooling tower — carrier is GRID (fan electricity); efficiency is aux_power ratio
-        component_file = locator.get_db4_components_conversion_conversion_technology_csv('COOLING_TOWERS')
-        df = pd.read_csv(component_file)
-        components = df[df['code'] == component_code]
-
-        if components.empty:
-            raise ValueError(f"Component {component_code} not found in COOLING_TOWERS database")
-
-        component = components.iloc[0]
-
-        return {
-            'carrier': 'GRID',
-            'efficiency': component['aux_power']  # fan kWh per kWh of heat rejected
-        }
-
-    elif component_code.startswith('HEX'):
-        # Heat exchanger — passive, no carrier consumption
-        return {
-            'carrier': None,
-            'efficiency': None
-        }
-
-    else:
-        raise ValueError(f"Unknown component type for code {component_code}")
+    from cea.technologies.components import load_component_info as _resolve
+    return _resolve(component_code, locator)
 
 
 def derive_plant_config(
@@ -541,25 +582,24 @@ def derive_plant_config(
     return None
 
 
-def map_fuel_code_to_carrier(fuel_code: str) -> str:
+def map_fuel_code_to_carrier(fuel_code: str, locator) -> str:
     """
-    Map database fuel codes to carrier names.
+    Map a component's ``fuel_code`` to its carrier name.
 
-    :param fuel_code: Fuel code from database (e.g., 'Cgas', 'Coil', 'E230AC')
-    :return: Carrier name (e.g., 'NATURALGAS', 'OIL', 'GRID')
+    Data-driven: reads the scenario's ``ENERGY_CARRIERS.csv`` and returns
+    the carrier named in that row's ``feedstock_file`` column. Users can
+    add new fuel codes (and new carriers) by extending that CSV and the
+    matching ``FEEDSTOCKS_LIBRARY/{name}.csv`` — no Python change needed.
+
+    :param fuel_code: Fuel code from the component CSV (e.g. ``'Cgas'``,
+        ``'Cwbm'``, ``'E230AC'``).
+    :param locator: Active :class:`InputLocator` — used to reach the
+        scenario's ``ENERGY_CARRIERS.csv``.
+    :return: Carrier name (e.g. ``'NATURALGAS'``, ``'WETBIOMASS'``,
+        ``'GRID'``).
     """
-    fuel_mapping = {
-        'Cgas': 'NATURALGAS',
-        'Coil': 'OIL',
-        'Ccoa': 'COAL',
-        'Cwod': 'WOOD',
-        'E230AC': 'GRID',
-    }
-
-    if fuel_code not in fuel_mapping:
-        raise ValueError(f"Unknown fuel code: {fuel_code}")
-
-    return fuel_mapping[fuel_code]
+    from cea.technologies.energy_carriers import carrier_from_fuel_code
+    return carrier_from_fuel_code(locator, fuel_code)
 
 
 def load_whatif_supply_configuration(
@@ -723,7 +763,7 @@ def load_district_heating_data(
     if not os.path.exists(substation_file):
         raise FileNotFoundError(
             f"District heating substation file not found for building {building_name}: {substation_file}\n"
-            f"Please run 'cea thermal-network' first."
+            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
         )
 
     substation_df = pd.read_csv(substation_file)
@@ -758,7 +798,7 @@ def load_district_cooling_data(
     if not os.path.exists(substation_file):
         raise FileNotFoundError(
             f"District cooling substation file not found for building {building_name}: {substation_file}\n"
-            f"Please run 'cea thermal-network' first."
+            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
         )
 
     substation_df = pd.read_csv(substation_file)
@@ -796,7 +836,7 @@ def load_booster_data(
     if not os.path.exists(substation_file):
         raise FileNotFoundError(
             f"District heating substation file not found for building {building_name}: {substation_file}\n"
-            f"Please run 'cea thermal-network' first."
+            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
         )
 
     substation_df = pd.read_csv(substation_file)
@@ -948,7 +988,7 @@ def calculate_plant_final_energy(
     if not os.path.exists(plant_load_file):
         raise FileNotFoundError(
             f"Plant thermal load file not found: {plant_load_file}\n"
-            f"Please run 'cea thermal-network' first."
+            f"Please run 'cea thermal-network-layout' (part 1) and 'cea thermal-network' (part 2) first."
         )
 
     plant_load_df = pd.read_csv(plant_load_file)
@@ -994,23 +1034,24 @@ def calculate_plant_final_energy(
         'pumping_load_kWh': pumping_load_kWh,
     })
 
-    # Add carrier column
-    if network_type == 'DH':
-        result[f'plant_heating_{plant_carrier}_kWh'] = final_energy_kWh
-    else:
-        # Include tertiary cooling tower fan electricity (aggregated into carrier total)
-        tertiary_component = plant_config.get('tertiary_component')
-        if tertiary_component and tertiary_component.startswith('CT'):
-            from cea.technologies.cooling_tower import calc_CT_const
-            ct_info = load_component_info(tertiary_component, locator)
-            heat_rejected_kWh = thermal_load_kWh + final_energy_kWh
-            ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
-            result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh + ct_fan_kWh
-        else:
-            result[f'plant_cooling_{plant_carrier}_kWh'] = final_energy_kWh
+    # Add primary component carrier column (includes network_type to avoid collision
+    # when a plant serves both DH and DC with the same carrier, e.g. GRID)
+    result[f'plant_primary_{network_type}_{plant_carrier}_kWh'] = final_energy_kWh
+
+    # Add tertiary component carrier column (e.g. cooling tower fan electricity)
+    from cea.technologies.energy_carriers import electricity_carrier
+    elec = electricity_carrier(locator)
+    tertiary_component = plant_config.get('tertiary_component')
+    if tertiary_component and tertiary_component.startswith('CT'):
+        from cea.technologies.cooling_tower import calc_CT_const
+        ct_info = load_component_info(tertiary_component, locator)
+        heat_rejected_kWh = thermal_load_kWh + final_energy_kWh
+        ct_fan_kWh, _ = calc_CT_const(heat_rejected_kWh, ct_info['efficiency'])
+        ct_carrier = ct_info['carrier'] or elec
+        result[f'plant_tertiary_{network_type}_{ct_carrier}_kWh'] = ct_fan_kWh
 
     # Add pumping electricity
-    result['plant_pumping_GRID_kWh'] = pumping_load_kWh
+    result[f'plant_pumping_{network_type}_{elec}_kWh'] = pumping_load_kWh
 
     # Add metadata
     result['scale'] = 'DISTRICT'
@@ -1068,6 +1109,11 @@ def aggregate_buildings_summary(
         carrier_totals = {}
         for col in df.columns:
             if col.endswith('_kWh') and col not in ['Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh']:
+                # Skip diagnostic *_dumped_kWh columns — they record heat
+                # dumped at the SC tank pressure-relief cap, not carrier
+                # consumption delivered to a service.
+                if col.endswith('_dumped_kWh'):
+                    continue
                 # Extract carrier from column name
                 # Format: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                 parts = col.split('_')
@@ -1104,8 +1150,15 @@ def aggregate_buildings_summary(
             'E_sys_MWh': E_sys_MWh,
         }
 
-        # Add purchased/imported carrier columns (excludes solar generation)
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+        # Carrier columns delivered to services. Data-driven via
+        # ENERGY_CARRIERS.csv; union in the routing-only carriers (DH,
+        # DC) and SOLAR (on-site solar-thermal delivered to DHW via the
+        # SC-DHW dispatch, booked as `Qww_sys_SOLAR_kWh`), which aren't
+        # ``feedstock_file`` entries. Legacy solar PV/PVT electricity
+        # offsets are still tracked separately via the emissions
+        # offset path, not here.
+        from cea.technologies.energy_carriers import available_carriers
+        for carrier in sorted(available_carriers(locator) | {'DH', 'DC', 'SOLAR'}):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1165,13 +1218,15 @@ def aggregate_buildings_summary(
         for col in df.columns:
             if col.endswith('_kWh') and col not in ['thermal_load_kWh', 'pumping_load_kWh']:
                 # Extract carrier from column name
-                # Format: plant_heating_NATURALGAS_kWh -> NATURALGAS
-                parts_col = col.split('_')
-                if len(parts_col) >= 3:
-                    carrier = parts_col[2]  # Get carrier part
-                    if carrier not in carrier_totals:
-                        carrier_totals[carrier] = 0.0
-                    carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
+                # Format: plant_{role}_{NT}_{CARRIER}_kWh -> CARRIER is parts[-2]
+                # e.g. plant_primary_DH_NATURALGAS_kWh, plant_pumping_DH_GRID_kWh
+                parts_col = col[:-len('_kWh')].split('_')
+                carrier = parts_col[-1] if len(parts_col) >= 4 else None
+                if not carrier:
+                    continue
+                if carrier not in carrier_totals:
+                    carrier_totals[carrier] = 0.0
+                carrier_totals[carrier] += df[col].sum() / 1000.0  # kWh -> MWh
 
         # Build row
         row = {
@@ -1189,8 +1244,10 @@ def aggregate_buildings_summary(
             'E_sys_MWh': pumping_MWh,
         }
 
-        # Add purchased/imported carrier columns (excludes solar generation)
-        for carrier in ['NATURALGAS', 'OIL', 'COAL', 'WOOD', 'GRID', 'DH', 'DC']:
+        # Carrier columns delivered to services. See building loop above
+        # for why DH/DC/SOLAR are unioned in manually.
+        from cea.technologies.energy_carriers import available_carriers
+        for carrier in sorted(available_carriers(locator) | {'DH', 'DC', 'SOLAR'}):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
 
         row['peak_demand_kW'] = peak_demand_kW
@@ -1254,13 +1311,24 @@ def create_hourly_timeseries_aggregation(
         # Sum carrier columns
         for col in df.columns:
             if col.endswith('_kWh') and col not in demand_columns and col != 'date':
+                # Skip raw-irradiation columns — they record incident solar
+                # energy, not useful delivered energy, and must NEVER be
+                # counted as a delivered carrier. Matches the filter in
+                # cea.analysis.lca.emission_time_dependent.
+                if '_radiation_' in col:
+                    continue
+                # Skip diagnostic *_dumped_kWh columns — SC tank surplus
+                # dumped at the T_MAX cap, not a delivered carrier.
+                if col.endswith('_dumped_kWh'):
+                    continue
+
                 # Extract carrier from column name
                 # Formats:
                 #   Qhs_sys_NATURALGAS_kWh          -> NATURALGAS
                 #   PV_{facade}_kWh                 -> PV
                 #   PVT_{collector}_{facade}_E_kWh  -> PV  (electrical)
                 #   PVT_{collector}_{facade}_Q_kWh  -> SOLAR  (thermal)
-                #   SC_{collector}_{facade}_kWh     -> SOLAR
+                #   SC_{collector}_{facade}_Q_kWh   -> SOLAR
                 if '_sys_' in col or '_booster_' in col:
                     # Service/booster carrier: Qhs_sys_NATURALGAS_kWh -> NATURALGAS
                     parts = col.split('_')
@@ -1289,13 +1357,15 @@ def create_hourly_timeseries_aggregation(
         # Plants contribute to carrier columns only (no demand columns)
         for col in df.columns:
             if col.endswith('_kWh') and col != 'date':
-                # Plant columns format: plant_heating_NATURALGAS_kWh, plant_pumping_GRID_kWh
-                if 'plant_heating_' in col or 'plant_cooling_' in col:
+                # Plant columns format: plant_primary_DH_NATURALGAS_kWh, plant_tertiary_DC_GRID_kWh
+                if col.startswith('plant_primary_') or col.startswith('plant_tertiary_'):
                     parts = col.split('_')
-                    carrier = parts[2] if len(parts) >= 3 else col
-                elif 'plant_pumping_' in col:
+                    carrier = parts[3] if len(parts) >= 4 else (parts[2] if len(parts) >= 3 else col)
+                elif col.startswith('plant_pumping_'):
                     parts = col.split('_')
-                    carrier = parts[2] if len(parts) >= 3 else 'GRID'
+                    if len(parts) < 3:
+                        continue
+                    carrier = parts[2]
                 else:
                     continue
 
@@ -1476,20 +1546,21 @@ def create_final_energy_breakdown(
         # Parse plant key: "DH_NODE5" or "DC_NODE1"
         parts = plant_key.split('_', 1)
         if len(parts) == 2:
-            network_type = parts[0]
             plant_name = parts[1]
         else:
             plant_name = plant_key
-            network_type = df['network_type'].iloc[0] if 'network_type' in df.columns else 'UNKNOWN'
 
         # Process heating/cooling carrier
         for col in df.columns:
-            if col.startswith('plant_heating_') or col.startswith('plant_cooling_'):
-                # Extract carrier: plant_heating_NATURALGAS_kWh -> NATURALGAS
+            if col.startswith('plant_primary_') or col.startswith('plant_tertiary_'):
+                # Extract carrier: plant_primary_DH_NATURALGAS_kWh -> NATURALGAS
                 parts_col = col.split('_')
-                if len(parts_col) >= 3:
+                if len(parts_col) >= 4:
+                    carrier = parts_col[3]
+                    role = parts_col[1]  # 'primary' or 'tertiary'
+                elif len(parts_col) >= 3:
                     carrier = parts_col[2]
-                    service_type = 'heating' if 'heating' in col else 'cooling'
+                    role = parts_col[1]
 
                     annual_final_energy_MWh = df[col].sum() / 1000.0
 
@@ -1498,13 +1569,13 @@ def create_final_energy_breakdown(
                             'name': plant_name,
                             'type': 'plant',
                             'scale': 'DISTRICT',
-                            'service': f'plant_{service_type}',
+                            'service': f'plant_{role}',
                             'demand_column': 'thermal_load_kWh',
                             'carrier': carrier,
                             'assembly_code': None,
                             'component_code': None,
-                            'component_type': 'Boiler' if carrier == 'NATURALGAS' else 'Chiller',
-                            'efficiency': 0.85 if carrier == 'NATURALGAS' else 3.0,
+                            'component_type': role,
+                            'efficiency': None,
                             'annual_demand_MWh': df['thermal_load_kWh'].sum() / 1000.0 if 'thermal_load_kWh' in df.columns else None,
                             'annual_final_energy_MWh': annual_final_energy_MWh,
                             'peak_demand_kW': None,
@@ -1513,9 +1584,13 @@ def create_final_energy_breakdown(
                         }
                         breakdown_rows.append(row)
 
-        # Process pumping electricity
-        if 'plant_pumping_GRID_kWh' in df.columns:
-            annual_pumping_MWh = df['plant_pumping_GRID_kWh'].sum() / 1000.0
+        # Process pumping electricity (column: plant_pumping_{NT}_{elec}_kWh)
+        from cea.technologies.energy_carriers import electricity_carrier
+        elec = electricity_carrier(locator)
+        pumping_suffix = f'_{elec}_kWh'
+        pumping_col = next((c for c in df.columns if c.startswith('plant_pumping_') and c.endswith(pumping_suffix)), None)
+        if pumping_col is not None:
+            annual_pumping_MWh = df[pumping_col].sum() / 1000.0
             if annual_pumping_MWh > 0:
                 row = {
                     'name': plant_name,
@@ -1523,7 +1598,7 @@ def create_final_energy_breakdown(
                     'scale': 'DISTRICT',
                     'service': 'plant_pumping',
                     'demand_column': 'pumping_load_kWh',
-                    'carrier': 'GRID',
+                    'carrier': elec,
                     'assembly_code': None,
                     'component_code': None,
                     'component_type': 'Pump',

@@ -91,6 +91,7 @@ class ParameterDefinition:
     selector: Optional[str] = None
     range: Optional[List[float]] = None
     filter: Optional[str] = None
+    multi: bool = False
 
     def generate_choices(self, layer: "MapLayer", current_params: dict) -> dict:
         """Generate value based on current parameters"""
@@ -99,9 +100,16 @@ class ParameterDefinition:
 
         if self.depends_on is None:
             func = getattr(layer, self.options_generator)
-            return func()
+            try:
+                return func()
+            except TypeError as e:
+                # Check function signature to see if it accepts current_params
+                import inspect
+                sig = inspect.signature(func)
+                if len(sig.parameters) == 1:
+                    raise ValueError(f"Options generator {self.options_generator} does not accept parameters, but 'depends_on' is not set to None. This may be a configuration error.") from e
 
-        if not all(k in current_params for k in self.depends_on):
+        elif not all(k in current_params for k in self.depends_on):
             raise ValueError("Missing required parameters for generating choices")
 
         func = getattr(layer, self.options_generator)
@@ -143,9 +151,10 @@ class ParameterDefinition:
             "description": self.description,
             "selector": self.selector,
             "range": self.range,
-            "filter": self.filter
+            "filter": self.filter,
+            "multi": self.multi,
         }
-        
+
         return result
 
 
@@ -216,6 +225,16 @@ class MapLayer(abc.ABC):
             raise ValueError(f"Parameter {parameter_name} not found")
         range_values = parameter_def.generate_range(self, parameters)
         return range_values
+
+    def delete_parameter_choice(self, parameter_name: str, value: str) -> None:
+        """Delete the data backing a parameter choice (e.g. a named network or what-if scenario).
+
+        Subclasses should override this for parameters whose choices represent deletable
+        on-disk entities. Default raises NotImplementedError so the API surfaces a 400.
+        """
+        raise NotImplementedError(
+            f"Parameter '{parameter_name}' on layer '{self.name}' does not support deletion"
+        )
 
     def get_required_files_with_metadata(self, parameters) -> Dict[str, bool]:
         """Returns a dict mapping file paths to whether they are optional (True=optional, False=required)"""

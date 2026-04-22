@@ -65,7 +65,7 @@ jobs:
         run: |
           echo "Searching for test scenario outputs..."
           ls -la ~ || true
-          find ~ -maxdepth 2 -type d -name "zug_heating" -o -name "sg_cooling" 2>/dev/null || echo "No test scenarios found"
+          find ~ -maxdepth 2 -type d \( -name "zug_heating" -o -name "sg_cooling" \) 2>/dev/null || echo "No test scenarios found"
 
       - name: Upload test scenario artifacts on failure
         if: failure()
@@ -73,7 +73,7 @@ jobs:
         with:
           name: test-scenarios-${{ matrix.os }}
           path: |
-            ~/zug_heating/
-            ~/sg_cooling/
+              ${{ env.HOME }}/zug_heating/
+              ${{ env.HOME }}/sg_cooling/
           retention-days: 3
           if-no-files-found: warn

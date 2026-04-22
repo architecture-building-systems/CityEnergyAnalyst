@@ -94,8 +94,10 @@ class EmissionTimelinePlot:
         categories = {
             'space_heating': {'columns': [], 'positive': True, 'display_name': 'space_heating'},
             'space_cooling': {'columns': [], 'positive': True, 'display_name': 'space_cooling'},
-            'dhw': {'columns': [], 'positive': True, 'display_name': 'dhw'},
+            'DHW': {'columns': [], 'positive': True, 'display_name': 'domestic_hot_water'},
             'electricity': {'columns': [], 'positive': True, 'display_name': 'electricity'},
+            'DH': {'columns': [], 'positive': True, 'display_name': 'district_heating'},
+            'DC': {'columns': [], 'positive': True, 'display_name': 'district_cooling'},
             'production': {'columns': [], 'positive': True, 'display_name': 'production'},
             'demolition': {'columns': [], 'positive': True, 'display_name': 'demolition'},
             'biogenic': {'columns': [], 'positive': False, 'display_name': 'biogenic'},
@@ -106,15 +108,20 @@ class EmissionTimelinePlot:
         for col in self.y_columns:
             col_lower = col.lower()
 
-            # Check for specific operation services
-            if 'operation_qhs_sys' in col_lower or 'operation_space_heating' in col_lower:
+            # Check for specific operation services (including booster columns)
+            if 'operation_qhs_sys' in col_lower or 'operation_qhs_booster' in col_lower or 'operation_space_heating' in col_lower:
                 categories['space_heating']['columns'].append(col)
             elif 'operation_qcs_sys' in col_lower or 'operation_space_cooling' in col_lower:
                 categories['space_cooling']['columns'].append(col)
-            elif 'operation_qww_sys' in col_lower or 'operation_dhw' in col_lower:
-                categories['dhw']['columns'].append(col)
+            elif 'operation_qww_sys' in col_lower or 'operation_qww_booster' in col_lower or 'operation_dhw' in col_lower:
+                categories['DHW']['columns'].append(col)
             elif 'operation_e_sys' in col_lower or 'operation_electricity' in col_lower:
                 categories['electricity']['columns'].append(col)
+            # District plant columns
+            elif col_lower == 'operation_dh_kgco2e':
+                categories['DH']['columns'].append(col)
+            elif col_lower == 'operation_dc_kgco2e':
+                categories['DC']['columns'].append(col)
             # Solar offset columns (PV_E_offset, PVT_E_offset, PVT_Q_offset, SC_Q_offset)
             elif col_lower.endswith('_offset_kgco2e') or col_lower.endswith('_offset'):
                 categories['solar_offset']['columns'].append(col)
@@ -214,8 +221,10 @@ class EmissionTimelinePlot:
         category_colors = {
             'space_heating': COLOURS_TO_RGB['red'],
             'space_cooling': COLOURS_TO_RGB['blue'],
-            'dhw': COLOURS_TO_RGB['orange'],
+            'DHW': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
+            'DH': COLOURS_TO_RGB['red_light'],
+            'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -290,7 +299,9 @@ class EmissionTimelinePlot:
             title=dict(
                 text=self.plot_title,
                 x=0,
-                xanchor='left'
+                xanchor='left',
+                yanchor='top',
+                font=dict(size=20),
             ),
             xaxis=dict(
                 title='Time horizon - Year',
@@ -304,11 +315,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -385,7 +396,7 @@ class EmissionTimelinePlot:
         # Add cumulative suffix to title
         plot_title = self.plot_title
         if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title + " (Cumulative)"
+            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
 
         # Configure y-axis range and step from config
         yaxis_config = dict(
@@ -427,11 +438,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -452,8 +463,10 @@ class EmissionTimelinePlot:
         category_colors = {
             'space_heating': COLOURS_TO_RGB['red'],
             'space_cooling': COLOURS_TO_RGB['blue'],
-            'dhw': COLOURS_TO_RGB['orange'],
+            'DHW': COLOURS_TO_RGB['orange'],
             'electricity': COLOURS_TO_RGB['green'],
+            'DH': COLOURS_TO_RGB['red_light'],
+            'DC': COLOURS_TO_RGB['blue_light'],
             'production': COLOURS_TO_RGB['purple'],
             'demolition': COLOURS_TO_RGB['brown'],
             'biogenic': COLOURS_TO_RGB['grey'],
@@ -552,7 +565,7 @@ class EmissionTimelinePlot:
         # Add cumulative suffix to title
         plot_title = self.plot_title
         if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title + " (Cumulative)"
+            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
 
         # Configure y-axis range and step from config
         yaxis_config = dict(
@@ -594,11 +607,11 @@ class EmissionTimelinePlot:
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.15,
+                y=-0.2,
                 xanchor='left',
                 x=0
             ),
-            margin=dict(l=80, r=80, t=80, b=120)
+            margin=dict(l=80, r=80, t=80, b=200)
         )
 
         return fig
@@ -687,7 +700,6 @@ def _load_whatif_timeline_df(locator, whatif_names):
         combined = dfs[0]
     else:
         numeric_cols = dfs[0].select_dtypes(include='number').columns.tolist()
-        non_numeric = [c for c in dfs[0].columns if c not in numeric_cols]
         combined = dfs[0].copy()
         for df in dfs[1:]:
             combined[numeric_cols] = combined[numeric_cols].add(df[numeric_cols].fillna(0), fill_value=0)
@@ -711,27 +723,37 @@ def _load_whatif_timeline_df(locator, whatif_names):
 
 
 def _get_timeline_y_columns(df, operation_services, y_categories):
-    """Detect which timeline columns match the requested services and categories."""
+    """Detect which timeline columns match the requested services and categories.
+
+    `operation_services` values are display names (see
+    [plots-lifecycle-emissions]/[plots-operational-emissions] in
+    default.config).
+    """
     service_to_tech = {
-        'electricity': 'operation_E_sys',
-        'space_heating': 'operation_Qhs_sys',
-        'space_cooling': 'operation_Qcs_sys',
-        'dhw': 'operation_Qww_sys',
+        'electricity':        ['operation_E_sys'],
+        'space_heating':      ['operation_Qhs_sys', 'operation_Qhs_booster'],
+        'space_cooling':      ['operation_Qcs_sys'],
+        'domestic_hot_water': ['operation_Qww_sys', 'operation_Qww_booster'],
     }
-    solar_to_col = {
-        'PV_E': 'PV_E_offset',
-        'PVT_E': 'PVT_E_offset',
-        'PVT_Q': 'PVT_Q_offset',
-        'SC_Q': 'SC_Q_offset',
-    }
+    # solar_to_col = {
+    #     'solar_pv_electricity':  'PV_E_offset',
+    #     'solar_pvt_electricity': 'PVT_E_offset',
+    #     'solar_pvt_thermal':     'PVT_Q_offset',
+    #     'solar_thermal':         'SC_Q_offset',
+    # }
 
     wanted = []
     if 'operation' in y_categories:
         for service in operation_services:
             if service in service_to_tech:
-                base = service_to_tech[service]
-                col = next((c for c in df.columns if c.startswith(base)), None)
-                if col:
+                for base in service_to_tech[service]:
+                    col = next((c for c in df.columns if c.startswith(base)), None)
+                    if col:
+                        wanted.append(col)
+        # Always include plant (DH/DC) operation columns if present
+        for col in df.columns:
+            if col in ('operation_DH_kgCO2e', 'operation_DC_kgCO2e'):
+                if col not in wanted:
                     wanted.append(col)
         # Always include all solar offset columns that exist in the timeline (regardless of
         # which solar services the user has ticked — they come from what-if emissions results)
@@ -748,7 +770,40 @@ def _get_timeline_y_columns(df, operation_services, y_categories):
     return wanted
 
 
+def plot_emission_timeline_single(config, context: dict, whatif_name: str):
+    """Generate a single emission timeline figure for one what-if scenario."""
+    import cea.inputlocator
+
+    scenario = config.scenario
+    plot_cea_feature_umbrella = context.get('feature', 'emission-timeline')
+    period_start = context.get('period_start', None)
+    period_end = context.get('period_end', None)
+    bool_accumulated = True
+    plot_config = config.sections[f"plots-{plot_cea_feature_umbrella}"]
+
+    locator = cea.inputlocator.InputLocator(scenario)
+    df_to_plotly = _load_whatif_timeline_df(locator, [whatif_name])
+
+    if df_to_plotly.empty:
+        import plotly.graph_objs as go
+        return go.Figure()
+
+    operation_services = getattr(plot_config, 'operation_services', [])
+    y_categories = getattr(plot_config, 'y_category_to_plot', ['operation', 'production', 'demolition', 'biogenic'])
+    list_y_columns = _get_timeline_y_columns(df_to_plotly, operation_services, y_categories)
+
+    scenario_name = os.path.basename(config.scenario)
+    feature_label = 'CEA-4 Emission Timeline'
+    subtitle = ' | '.join([feature_label, scenario_name, whatif_name])
+    plot_title = f"<b>Emission Timeline</b><br><sub>{subtitle}</sub>"
+    plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
+                                    bool_accumulated=bool_accumulated,
+                                    period_start=period_start, period_end=period_end)
+    return plot_obj.create_plot()
+
+
 def plot_emission_timeline(config, context: dict):
+    """Generate emission timeline figure(s). Aggregates all what-if scenarios into one plot."""
     import cea.inputlocator
 
     scenario = config.scenario
@@ -763,7 +818,6 @@ def plot_emission_timeline(config, context: dict):
         whatif_names = [whatif_names] if whatif_names else []
 
     if whatif_names:
-        # What-if path: read district-level timeline directly from emissions results
         locator = cea.inputlocator.InputLocator(scenario)
         df_to_plotly = _load_whatif_timeline_df(locator, whatif_names)
 
@@ -801,16 +855,17 @@ def plot_emission_timeline(config, context: dict):
             solar_panel_types_list, scenario
         )
 
-    # Create EmissionTimelinePlot instance
-    plot_title = "CEA-4 Emission Timeline"
+    scenario_name = os.path.basename(config.scenario)
+    whatif_label = ', '.join(whatif_names) if whatif_names else ''
+    subtitle_parts = ['CEA-4 Emission Timeline', scenario_name]
+    if whatif_label:
+        subtitle_parts.append(whatif_label)
+    subtitle = ' | '.join(subtitle_parts)
+    plot_title = f"<b>Emission Timeline</b><br><sub>{subtitle}</sub>"
     plot_obj = EmissionTimelinePlot(config, df_to_plotly, list_y_columns, plot_title=plot_title,
                                     bool_accumulated=bool_accumulated,
                                     period_start=period_start, period_end=period_end)
-
-    # Generate the figure
-    fig = plot_obj.create_plot()
-
-    return fig
+    return plot_obj.create_plot()
 
 
 def create_emission_timeline_plot(config):
@@ -840,11 +895,120 @@ def create_emission_timeline_plot(config):
 
     return fig
 
+def _figure_yrange_with_stacks(fig):
+    """Compute (y_min, y_max) for a Plotly figure, summing traces that
+    share a ``stackgroup`` so the visible top of a stacked area chart is
+    captured — not just the largest single layer.
+
+    For ``shaded_stack_cumulative`` (and similar fill='tonexty' +
+    stackgroup setups), each trace's ``.y`` is the per-category
+    contribution. The on-screen height at every x is the sum across all
+    traces in the same stackgroup. Taking ``max(trace.y)`` per trace
+    therefore under-reports the visible maximum by a factor equal to the
+    number of categories, cropping the y-axis when the multi-what-if
+    aligner divides that under-estimate across plots.
+
+    Standalone (non-stacked) traces are evaluated individually as before.
+    """
+    import numpy as np
+
+    stack_sums: dict = {}     # stackgroup_name → np.array of summed y values
+    standalone_min = standalone_max = None
+
+    for trace in fig.data:
+        y = getattr(trace, 'y', None)
+        if y is None or len(y) == 0:
+            continue
+        try:
+            y_arr = np.asarray(y, dtype=float)
+        except (TypeError, ValueError):
+            continue
+        stackgroup = getattr(trace, 'stackgroup', None)
+        if stackgroup:
+            if stackgroup in stack_sums and len(stack_sums[stackgroup]) == len(y_arr):
+                stack_sums[stackgroup] = stack_sums[stackgroup] + y_arr
+            else:
+                stack_sums[stackgroup] = y_arr.copy()
+        else:
+            t_min, t_max = float(np.nanmin(y_arr)), float(np.nanmax(y_arr))
+            standalone_min = t_min if standalone_min is None else min(standalone_min, t_min)
+            standalone_max = t_max if standalone_max is None else max(standalone_max, t_max)
+
+    overall_min = standalone_min
+    overall_max = standalone_max
+    for arr in stack_sums.values():
+        t_min, t_max = float(np.nanmin(arr)), float(np.nanmax(arr))
+        overall_min = t_min if overall_min is None else min(overall_min, t_min)
+        overall_max = t_max if overall_max is None else max(overall_max, t_max)
+
+    return overall_min, overall_max
+
+
 def main(config):
-    fig = create_emission_timeline_plot(config)
-    fig.update_layout(autosize=True)
-    html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
-    return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+    plot_config = config.plots_emission_timeline
+    whatif_names = getattr(plot_config, 'what_if_name', [])
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names] if whatif_names else []
+
+    # Single what-if or legacy: return one figure
+    if len(whatif_names) <= 1:
+        fig = create_emission_timeline_plot(config)
+        fig.update_layout(autosize=True)
+        html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
+        return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
+
+    # Multi what-if: one figure per scenario with aligned y-axes
+    slots = []
+    for whatif_name in whatif_names:
+        try:
+            context = plot_config.context
+            context['feature'] = 'emission-timeline'
+            fig = plot_emission_timeline_single(config, context, whatif_name)
+            slots.append(('ok', whatif_name, fig))
+        except Exception as e:
+            slots.append(('err', whatif_name, (
+                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
+                f'background:#ffe0e0;margin:12px 0">'
+                f'<h3>Error plotting <em>{whatif_name}</em></h3>'
+                f'<code>{e}</code></div>'
+            )))
+
+    # Align y-axes across all figures
+    global_y_min = global_y_max = None
+    y_min_cfg = getattr(plot_config, 'y_min', None)
+    y_max_cfg = getattr(plot_config, 'y_max', None)
+    if y_min_cfg is None and y_max_cfg is None:
+        for kind, _, fig in slots:
+            if kind != 'ok':
+                continue
+            fig_min, fig_max = _figure_yrange_with_stacks(fig)
+            if fig_min is not None and (global_y_min is None or fig_min < global_y_min):
+                global_y_min = fig_min
+            if fig_max is not None and (global_y_max is None or fig_max > global_y_max):
+                global_y_max = fig_max
+
+    html_outputs = []
+    plotly_included = False
+    for slot in slots:
+        if slot[0] == 'err':
+            html_outputs.append(slot[2])
+            continue
+        _, whatif_name, fig = slot
+        if global_y_min is not None:
+            margin = (global_y_max - global_y_min) * 0.05
+            fig.update_yaxes(range=[global_y_min - margin, global_y_max + margin])
+        fig.update_layout(autosize=False, height=700, width=960)
+        include_js = 'cdn' if not plotly_included else False
+        plotly_included = True
+        html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,
+                                        config={'responsive': False}))
+
+    body = '\n'.join(html_outputs)
+    return (
+        '<!DOCTYPE html><html>'
+        '<head><meta charset="utf-8"></head>'
+        f'<body style="margin:0;overflow:auto">{body}</body></html>'
+    )
 
 
 if __name__ == '__main__':

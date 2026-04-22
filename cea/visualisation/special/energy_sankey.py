@@ -17,7 +17,6 @@ Data sources:
   - configuration.json component/scale/carrier mapping
 """
 
-import json
 import os
 import pandas as pd
 import plotly.graph_objects as go
@@ -41,35 +40,21 @@ __status__ = "Production"
 
 # ── Layer 0: energy carriers ──────────────────────────────────────────────────
 
+# Carrier colours come from the canonical ``CARRIER_COLOURS`` palette so
+# a given carrier renders the same way in the sankey, bar plots, and map
+# layers. Only the darker shade is used here; the sankey doesn't gradient.
+from cea.visualisation.format.plot_colours import (
+    CARRIER_COLOURS as _CANONICAL_CARRIER_COLOURS,
+    DEFAULT_CARRIER_COLOURS as _CANONICAL_DEFAULT,
+)
+
 _CARRIER_COLOURS = {
-    'NATURALGAS': COLOURS_TO_RGB['orange'],
-    'GRID':       COLOURS_TO_RGB['green'],
-    'DH':         COLOURS_TO_RGB['red'],
-    'DC':         COLOURS_TO_RGB['blue'],
-    'WOOD':       COLOURS_TO_RGB['brown'],
-    'OIL':        COLOURS_TO_RGB['brown_light'],
-    'COAL':       COLOURS_TO_RGB['grey'],
-    'SOLAR':      COLOURS_TO_RGB['yellow'],
+    code: COLOURS_TO_RGB[darker]
+    for code, (_, darker) in _CANONICAL_CARRIER_COLOURS.items()
 }
-
-_CARRIER_DISPLAY = {
-    'NATURALGAS': 'Natural Gas',
-    'GRID':       'Electricity Grid',
-    'DH':         'District Heating',
-    'DC':         'District Cooling',
-    'WOOD':       'Wood',
-    'OIL':        'Oil',
-    'COAL':       'Coal',
-    'SOLAR':      'Solar',
-}
-
-
-def _carrier_display(code):
-    return _CARRIER_DISPLAY.get(code, code)
-
 
 def _carrier_colour(code):
-    return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB['grey'])
+    return _CARRIER_COLOURS.get(code, COLOURS_TO_RGB[_CANONICAL_DEFAULT[1]])
 
 
 # ── Layer 1: scale ────────────────────────────────────────────────────────────
@@ -85,16 +70,8 @@ _SCALE_COLOURS = {
 
 # ── Layer 3: services ─────────────────────────────────────────────────────────
 
-_CARRIER_ORDER = [
-    'Electricity Grid',
-    'Natural Gas',
-    'Wood',
-    'Oil',
-    'Coal',
-    'Solar',
-    'District Heating',
-    'District Cooling',
-]
+# Layer 0 carriers render in alphabetical order; that way user-added
+# carriers slot in without a code change.
 
 _SERVICE_ORDER = [
     'Space Heating',
@@ -159,6 +136,122 @@ def _to_rgba(rgb_str, alpha=0.5):
     return rgb_str.replace('rgb(', 'rgba(').replace(')', f',{alpha})')
 
 
+# Per-building solar-config surface key → column-name suffix in solar
+# potential files (PV / SC / PVT). Same mapping used by `solar_dhw.py`.
+_SOLAR_SURFACE_TO_FACADE_SUFFIX = {
+    'roof':       'roofs_top',
+    'wall_north': 'walls_north',
+    'wall_south': 'walls_south',
+    'wall_east':  'walls_east',
+    'wall_west':  'walls_west',
+}
+
+
+def _solar_per_surface_radiation_kwh(building_name, tech_code, surface, locator):
+    """Annual radiation (kWh) that landed on **just one configured surface**
+    for a single PV / SC / PVT tech.
+
+    The persisted ``*_radiation_kWh`` column in ``B####.csv`` is the
+    per-panel-type aggregate across **every** surface simulated under that
+    panel type — not just the surface(s) actually configured. Reading the
+    aggregate as if it were the per-surface value inflates the source-side
+    width of the Sankey arc (e.g. ``PV_PV4`` with 2964 MWh "in" vs 46 MWh
+    generated, an absurd 1.5% efficiency).
+
+    This helper opens the corresponding solar potential file directly and
+    allocates the aggregate radiation in proportion to the surface's share
+    of useful generation (E for PV, Q for SC, E+Q for PVT). For a panel
+    type with uniform module efficiency η, per-surface_radiation =
+    per-surface_useful / η = aggregate_radiation × per-surface_useful /
+    aggregate_useful — a closed-form, no-η-lookup needed.
+
+    Returns 0.0 when the surface key is unknown, the file is missing, or
+    the file lacks the required columns.
+    """
+    suffix = _SOLAR_SURFACE_TO_FACADE_SUFFIX.get(surface)
+    if suffix is None:
+        return 0.0
+    parts = tech_code.split('_')
+    tech_type = parts[0]
+    try:
+        if tech_type == 'PV':
+            panel_type = parts[1]
+            path = locator.PV_results(building_name, panel_type)
+            per_surface_col = f'PV_{suffix}_E_kWh'
+            agg_useful_col = 'E_PV_gen_kWh'
+        elif tech_type == 'SC':
+            panel_type = '_'.join(parts[1:])  # 'FP' or 'ET'
+            path = locator.SC_results(building_name, panel_type)
+            per_surface_col = f'SC_{panel_type}_{suffix}_Q_kWh'
+            agg_useful_col = 'Q_SC_gen_kWh'
+        elif tech_type == 'PVT':
+            # tech_code: PVT_<PV_panel_type>_<SC_panel_type>, e.g. PVT_PV1_ET
+            pv_panel_type = parts[1]
+            sc_panel_type = parts[2]
+            path = locator.PVT_results(building_name, pv_panel_type, sc_panel_type)
+        else:
+            return 0.0
+    except Exception:
+        return 0.0
+
+    if not os.path.exists(path):
+        return 0.0
+    try:
+        df = pd.read_csv(path)
+    except Exception:
+        return 0.0
+    if 'radiation_kWh' not in df.columns:
+        return 0.0
+    agg_radiation = float(df['radiation_kWh'].sum())
+    if agg_radiation <= 0:
+        return 0.0
+
+    if tech_type == 'PVT':
+        # PVT useful = E + Q across the same surface; allocate accordingly.
+        per_e_col = f'PVT_{sc_panel_type}_{suffix}_E_kWh'
+        per_q_col = f'PVT_{sc_panel_type}_{suffix}_Q_kWh'
+        if per_e_col not in df.columns or per_q_col not in df.columns:
+            return 0.0
+        per_useful = float(df[per_e_col].sum()) + float(df[per_q_col].sum())
+        agg_useful = (
+            (float(df['E_PVT_gen_kWh'].sum()) if 'E_PVT_gen_kWh' in df.columns else 0.0)
+            + (float(df['Q_PVT_gen_kWh'].sum()) if 'Q_PVT_gen_kWh' in df.columns else 0.0)
+        )
+    else:
+        if per_surface_col not in df.columns or agg_useful_col not in df.columns:
+            return 0.0
+        per_useful = float(df[per_surface_col].sum())
+        agg_useful = float(df[agg_useful_col].sum())
+
+    if agg_useful <= 0:
+        return 0.0
+    return agg_radiation * per_useful / agg_useful
+
+
+def _sc_gross_kwh_for_building(building_name, bconfig, locator):
+    """Annual gross SC thermal output for one building, summed only over
+    the ``(surface, panel_type)`` pairs actually configured under
+    ``solar`` in the per-building config — *not* the per-panel-type
+    aggregate ``Q_SC_gen_kWh`` columns, which would inflate the total by
+    counting all roof+wall surfaces under both SC_FP and SC_ET when each
+    surface is typically assigned to only one panel type.
+
+    Delegates to :func:`aggregate_sc_thermal_per_surface` so the Sankey
+    source-side width matches what the SC-DHW dispatch actually fed into
+    the tank model. Returns 0.0 when no SC surface is configured or the
+    SC potential files are missing — caller falls back to ``val`` and the
+    SC node renders as a pass-through.
+    """
+    from cea.analysis.final_energy.solar_dhw import aggregate_sc_thermal_per_surface
+    panel_config = (bconfig.get('solar') or {}) if isinstance(bconfig, dict) else {}
+    if not panel_config:
+        return 0.0
+    thermal_sum, _ = aggregate_sc_thermal_per_surface(
+        building_name, panel_config, locator
+    )
+    return float(thermal_sum.sum()) if thermal_sum is not None else 0.0
+
+
 # ── plant data loader ─────────────────────────────────────────────────────────
 
 def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
@@ -167,13 +260,23 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
 
     Returns dict keyed by network_type ('DH' or 'DC'):
       {
-        '_carrier_raw': 'GRID',
-        'carrier': 'Electricity Grid',
-        'component': 'Chiller (CH1)',
-        'input_kWh': 5_000_000.0,
+        '_carrier_raw': <electricity carrier code>,
+        'carrier':      <electricity carrier code>,
+        'component':    'Chiller (CH1)',
+        'input_kWh':    5_000_000.0,
       }
     Returns an empty dict if no plant files exist.
     """
+    # The scenario's electricity carrier name (typically 'GRID'). Used for
+    # the pumping-column match and as the fallback when a plant config is
+    # missing its carrier — both sites were previously hardcoded to 'GRID'.
+    from cea.technologies.energy_carriers import electricity_carrier
+    try:
+        elec = electricity_carrier(locator)
+    except Exception:
+        elec = 'GRID'
+    pumping_suffix = f'_{elec}_kWh'
+
     # Collect network_name per network_type from building configs
     network_names = {}
     for bconfig in building_configs.values():
@@ -186,54 +289,56 @@ def _load_plant_totals(locator, whatif_name, plant_configs, building_configs):
                 network_names[nt] = cfg['network_name']
 
     totals = {}
-    folder = locator.get_final_energy_folder(whatif_name)
 
     for plant_name, plant_cfg in plant_configs.items():
         network_type = plant_cfg.get('network_type', '')
-        carrier_raw = plant_cfg.get('carrier', 'GRID')
+        carrier_raw = plant_cfg.get('carrier', elec)
         component_code = plant_cfg.get('primary_component', '')
+        tertiary_code = plant_cfg.get('tertiary_component')
         network_name = network_names.get(network_type, '')
         if not network_type or not network_name:
             continue
 
-        # Scan for all plant files: {network_name}_{network_type}_{plant_name}.csv
-        prefix = f'{network_name}_{network_type}_'
-        plant_files = [
-            os.path.join(folder, f) for f in os.listdir(folder)
-            if f.startswith(prefix) and f.endswith('.csv')
-        ]
-        if not plant_files:
-            continue
-
-        carrier_col = (
-            f'plant_cooling_{carrier_raw}_kWh'
-            if network_type == 'DC'
-            else f'plant_heating_{carrier_raw}_kWh'
+        # Plant files are named {plant_name}.csv
+        plant_file = locator.get_final_energy_plant_file(
+            network_name, network_type, plant_name, whatif_name
         )
+        if not os.path.exists(plant_file):
+            continue
+        plant_files = [plant_file]
+
+        primary_col = f'plant_primary_{network_type}_{carrier_raw}_kWh'
 
         total_input = 0.0
+        total_tertiary = 0.0
         total_pumping = 0.0
         total_thermal = 0.0
         for fpath in plant_files:
             plant_df = pd.read_csv(fpath)
-            if carrier_col in plant_df.columns:
-                total_input += plant_df[carrier_col].sum()
-            if 'plant_pumping_GRID_kWh' in plant_df.columns:
-                total_pumping += plant_df['plant_pumping_GRID_kWh'].sum()
+            if primary_col in plant_df.columns:
+                total_input += plant_df[primary_col].sum()
+            # Sum all tertiary columns for this network type
+            for tc in [c for c in plant_df.columns if c.startswith(f'plant_tertiary_{network_type}_')]:
+                total_tertiary += plant_df[tc].sum()
+            for pc in [c for c in plant_df.columns if c.startswith('plant_pumping_') and c.endswith(pumping_suffix)]:
+                total_pumping += plant_df[pc].sum()
             if 'thermal_load_kWh' in plant_df.columns:
                 total_thermal += plant_df['thermal_load_kWh'].sum()
 
-        if total_input > 0 or total_pumping > 0 or total_thermal > 0:
+        if total_input > 0 or total_tertiary > 0 or total_pumping > 0 or total_thermal > 0:
             if network_type in totals:
                 totals[network_type]['input_kWh'] += total_input
+                totals[network_type]['tertiary_kWh'] += total_tertiary
                 totals[network_type]['pumping_kWh'] += total_pumping
                 totals[network_type]['thermal_load_kWh'] += total_thermal
             else:
                 totals[network_type] = {
                     '_carrier_raw': carrier_raw,
-                    'carrier': _carrier_display(carrier_raw),
-                    'component': component_display(component_code) if component_code else '',
+                    'carrier': carrier_raw,
+                    'primary_component': component_display(component_code, locator) if component_code else '',
+                    'tertiary_component': component_display(tertiary_code, locator) if tertiary_code else '',
                     'input_kWh': total_input,
+                    'tertiary_kWh': total_tertiary,
                     'pumping_kWh': total_pumping,
                     'thermal_load_kWh': total_thermal,
                 }
@@ -261,17 +366,25 @@ def load_energy_flow_data(locator, whatif_name):
                        for building-scale rows)
     _has_plant_data    True if plant CSV files were found
     """
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
-        raise FileNotFoundError(f"Configuration file not found: {config_file}")
-
-    with open(config_file) as f:
-        config_data = json.load(f)
+    config_data = locator.read_analysis_configuration(whatif_name)
+    if config_data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
+        raise FileNotFoundError(f"Configuration file not found: {expected}")
 
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
 
     plant_totals = _load_plant_totals(locator, whatif_name, plant_configs, building_configs)
+
+    # District pumps and cooling-tower-fan tertiary components always run on
+    # the scenario's electricity carrier (``GRID`` unless renamed) — this is
+    # independent of the plant's primary carrier (which may be NATURALGAS,
+    # WOOD, …). Resolve the electricity carrier once for labelling.
+    from cea.technologies.energy_carriers import electricity_carrier
+    try:
+        elec = electricity_carrier(locator)
+    except Exception:
+        elec = 'GRID'
 
     records = []
 
@@ -280,15 +393,33 @@ def load_energy_flow_data(locator, whatif_name):
         pumping = pt.get('pumping_kWh', 0.0)
         if pumping > 0:
             records.append({
-                'primary_carrier':    'Electricity Grid',
-                '_carrier_raw':       'GRID',
-                'plant_component':    'Pump',
+                'primary_carrier':    elec,
+                '_carrier_raw':       elec,
+                'plant_component':    f'Pump ({network_type})',
                 'network':            network_type,
                 'building_component': '',
                 'scale':              'District',
                 'service':            'Distribution',
                 'value_kWh':          pumping,
                 'plant_input_kWh':    pumping,
+                '_has_plant_data':    True,
+            })
+
+    # ── District tertiary component rows (e.g. cooling tower fan electricity) ──
+    for network_type, pt in plant_totals.items():
+        tertiary_kWh = pt.get('tertiary_kWh', 0.0)
+        tertiary_comp = pt.get('tertiary_component', '')
+        if tertiary_kWh > 0 and tertiary_comp:
+            records.append({
+                'primary_carrier':    elec,
+                '_carrier_raw':       elec,
+                'plant_component':    tertiary_comp,
+                'network':            network_type,
+                'building_component': '',
+                'scale':              'District',
+                'service':            'Distribution',
+                'value_kWh':          tertiary_kWh,
+                'plant_input_kWh':    tertiary_kWh,
                 '_has_plant_data':    True,
             })
 
@@ -327,7 +458,7 @@ def load_energy_flow_data(locator, whatif_name):
                         continue
                     carrier_raw = col[len(col_prefix) + 1:-4]
                     records.append({
-                        'primary_carrier':    _carrier_display(carrier_raw),
+                        'primary_carrier':    carrier_raw,
                         '_carrier_raw':       carrier_raw,
                         'plant_component':    '',
                         'network':            '',
@@ -353,26 +484,28 @@ def load_energy_flow_data(locator, whatif_name):
                 if pt:
                     carrier_raw = pt['_carrier_raw']
                     carrier = pt['carrier']
-                    plant_comp = pt['component']
+                    plant_comp = pt['primary_component']
                     plant_input = pt['input_kWh']
                     has_plant = True
                 else:
-                    # No plant files: fall back to network carrier as entry point
-                    carrier_raw = network_type  # 'DC' or 'DH'
-                    carrier = _carrier_display(carrier_raw)
-                    plant_comp = component_display(svc_config.get('primary_component', ''))
+                    # No plant files: infer carrier from the plant config if available,
+                    # otherwise from the building's district assembly.
+                    # DH/DC are network types, not city-scale energy carriers.
+                    pc = plant_configs.get(network_type, {})
+                    carrier_raw = pc.get('carrier') or svc_config.get('carrier', network_type)
+                    if carrier_raw in ('DH', 'DC'):
+                        # DH/DC are not primary carriers — default to electricity
+                        from cea.technologies.energy_carriers import electricity_carrier
+                        carrier_raw = electricity_carrier(locator)
+                    carrier = carrier_raw
+                    primary = pc.get('primary_component') or svc_config.get('primary_component', '')
+                    plant_comp = component_display(primary, locator) if primary else ''
                     plant_input = val
                     has_plant = False
 
-                # District connections always have a heat exchanger at the building boundary.
-                # Fall back to 'HEX' if no explicit building-side component is configured.
-                building_comp = (
-                    svc_config.get('tertiary_component')
-                    or svc_config.get('secondary_component')
-                    or svc_config.get('building_component')
-                    or 'HEX'
-                )
-                building_comp = component_display(building_comp)
+                # District connections have a heat exchanger at the building boundary.
+                # The tertiary_component (e.g. CT1) belongs to the plant, not the building.
+                building_comp = component_display('HEX', locator)
 
                 records.append({
                     'primary_carrier':    carrier,
@@ -389,34 +522,121 @@ def load_energy_flow_data(locator, whatif_name):
 
             else:
                 primary_carrier_raw = svc_config.get('carrier', '')
-                component_code = svc_config.get('primary_component', '')
-                skip_carriers = booster_carriers.get(cfg_key, set())
+                primary_component_code = svc_config.get('primary_component', '')
+                booster_only_carriers = booster_carriers.get(cfg_key, set()) - {primary_carrier_raw}
+                # Demand column: useful energy delivered to service
+                demand_col = f'{col_prefix}_kWh'
+                demand_total = annual.get(demand_col, 0)
+
+                # Build carrier → (component_code, efficiency) map from the
+                # saved supply config. Covers primary + real secondary +
+                # tertiary (if ever serialised with its own info). Tertiary
+                # CTs today have no separate ``Qxx_sys_*_kWh`` column
+                # (their fan electricity is aggregated into the primary's
+                # carrier column upstream in calculation.py), so the map
+                # entry is harmless when no matching column exists.
+                component_by_carrier: dict = {}
+                if primary_component_code and primary_carrier_raw:
+                    component_by_carrier[primary_carrier_raw] = (
+                        primary_component_code,
+                        float(svc_config.get('efficiency') or 1.0),
+                    )
+                for role in ('secondary', 'tertiary'):
+                    role_code = svc_config.get(f'{role}_component')
+                    role_info = svc_config.get(f'{role}_info') or {}
+                    role_carrier = role_info.get('carrier')
+                    if role_code and role_carrier:
+                        # Primary wins if two roles share a carrier.
+                        component_by_carrier.setdefault(role_carrier, (
+                            role_code,
+                            float(role_info.get('efficiency') or 1.0),
+                        ))
+
+                # Count distinct, non-booster, non-zero ``Qxx_sys_*`` carriers
+                # to distinguish "primary covers all" (single-carrier, absorb
+                # η into the primary component node) from "primary + real
+                # secondary" (multi-carrier, localise each carrier's η at
+                # its own component node so the service bar balances).
+                service_carrier_cols = [
+                    c for c in annual.index
+                    if c.startswith(f'{col_prefix}_') and c.endswith('_kWh')
+                    and c != f'{col_prefix}_kWh'
+                    and not c.endswith('_dumped_kWh')
+                    and annual[c] > 0
+                    and c[len(col_prefix) + 1:-4] not in booster_only_carriers
+                ]
+                primary_covers_all = len(service_carrier_cols) <= 1
 
                 for col in annual.index:
                     if not (col.startswith(f'{col_prefix}_') and col.endswith('_kWh')
                             and col != f'{col_prefix}_kWh'):
+                        continue
+                    # Skip diagnostic *_dumped_kWh columns (SC tank surplus) —
+                    # not a delivered carrier, must not appear as a Sankey flow.
+                    if col.endswith('_dumped_kWh'):
                         continue
                     val = annual[col]
                     if val <= 0:
                         continue
 
                     carrier_raw = col[len(col_prefix) + 1:-4]
-                    if carrier_raw in skip_carriers:
+                    if carrier_raw in booster_only_carriers:
                         continue  # handled by booster loop below
 
-                    comp = component_display(component_code) if carrier_raw == primary_carrier_raw else ''
+                    comp_info = component_by_carrier.get(carrier_raw)
+                    if comp_info:
+                        comp_code, eta = comp_info
+                        comp = component_display(comp_code, locator)
+                    else:
+                        comp, eta = '', 1.0
+
+                    # Source-side width (carrier input). For most carriers
+                    # this equals ``val`` (e.g. fuel burned, grid kWh). For
+                    # SOLAR SC-DHW, ``val`` is the *delivered* share — the
+                    # real carrier input is the gross Q_SC_gen produced by
+                    # the collectors before tank losses and pressure-relief
+                    # dumping. Recompute it on the fly from the SC potential
+                    # files on disk so the SC node narrows from gross-in to
+                    # net-out, mirroring how BO1 / HP1 are rendered.
+                    plant_input_val = val
+                    if (comp and carrier_raw == 'SOLAR'
+                            and cfg_key == 'hot_water'):
+                        gross_kwh = _sc_gross_kwh_for_building(
+                            building, bconfig, locator
+                        )
+                        if gross_kwh > val:
+                            plant_input_val = gross_kwh
+
+                    # value_kWh      = delivered-to-service (sink side width)
+                    # plant_input_kWh = carrier input       (source side width)
+                    if primary_covers_all and carrier_raw == primary_carrier_raw and comp:
+                        # Single-carrier service: render sink side at demand
+                        # so boiler (η<1) and HP (COP>1) efficiencies are
+                        # absorbed into the node's width change rather than
+                        # showing up as missing or extra heat.
+                        output_kWh = demand_total
+                    elif comp:
+                        # Multi-carrier service: each carrier's delivered
+                        # share is val × η, localising the loss at its own
+                        # component node. Σ output_kWh across arcs ≈ demand.
+                        output_kWh = val * eta
+                    else:
+                        # No component node on this arc (carrier not mapped
+                        # to any configured component) — draw carrier = delivered.
+                        output_kWh = val
 
                     records.append({
-                        'primary_carrier':    _carrier_display(carrier_raw),
+                        'primary_carrier':    carrier_raw,
                         '_carrier_raw':       carrier_raw,
                         'plant_component':    '',
                         'network':            '',
                         'building_component': comp,
                         'scale':              'Building',
                         'service':            svc_display,
-                        'value_kWh':          val,
-                        'plant_input_kWh':    val,
+                        'value_kWh':          output_kWh,
+                        'plant_input_kWh':    plant_input_val,
                         '_has_plant_data':    False,
+                        '_is_booster':        False,
                     })
 
         # ── Booster components (space_heating_booster / hot_water_booster) ──
@@ -435,52 +655,55 @@ def load_energy_flow_data(locator, whatif_name):
             bst_col_prefix = _BOOSTER_COL_PREFIX.get(bst_key, '')
             if not bst_col_prefix:
                 continue
-            bst_col = f'{bst_col_prefix}_{bst_carrier_raw}_kWh'
-            val = annual.get(bst_col, 0)
-            if val <= 0:
+            bst_carrier_col = f'{bst_col_prefix}_{bst_carrier_raw}_kWh'
+            bst_demand_col = f'{bst_col_prefix}_kWh'
+            carrier_val = annual.get(bst_carrier_col, 0)
+            if carrier_val <= 0:
                 continue
+            # Read booster demand from CSV; both columns are in B####.csv
+            demand_val = annual.get(bst_demand_col, carrier_val)
             records.append({
-                'primary_carrier':    _carrier_display(bst_carrier_raw),
+                'primary_carrier':    bst_carrier_raw,
                 '_carrier_raw':       bst_carrier_raw,
                 'plant_component':    '',
                 'network':            '',
-                'building_component': component_display(bst_comp_code) if bst_comp_code else '',
+                'building_component': component_display(bst_comp_code, locator) if bst_comp_code else '',
                 'scale':              'Building',
                 'service':            svc_display,
-                'value_kWh':          val,
-                'plant_input_kWh':    val,
+                'value_kWh':          demand_val,
+                'plant_input_kWh':    carrier_val,
                 '_has_plant_data':    False,
+                '_is_booster':        True,
             })
 
         # ── Solar panel generation ──────────────────────────────────────────
         # Solar flows never deduct from demand; they go to separate Offset nodes.
-        # Config structure: {"surface": "tech_code"}, e.g. {"roof": "PV_PV3"}
-        # plant_input_kWh = total irradiation (from *_radiation_kWh column in B####.csv),
-        # counted ONCE per tech_code to avoid double-counting across surfaces.
+        # Config structure: {"surface": "tech_code"}, e.g. {"roof": "PV_PV3"}.
+        #
+        # plant_input_kWh = irradiation that landed on **this surface only**,
+        # computed on-the-fly from the matching solar potential file (see
+        # `_solar_per_surface_radiation_kwh`). Replaces the previous
+        # "attribute the full per-panel-type aggregate to the first surface"
+        # hack, which inflated the source-side width by 10–60× when the
+        # potential simulation covered surfaces the user never configured.
         # value_kWh = useful output (electricity or heat).
-        # The gap between incoming (irradiation) and outgoing (useful) shows efficiency losses.
         solar_config = bconfig.get('solar', {})
-        solar_radiation_seen: set = set()
         for surface, tech_code in solar_config.items():
             if not tech_code:
                 continue
-            comp = component_display(tech_code)
+            comp = component_display(tech_code, locator)
             parts = tech_code.split('_')
             tech_type = parts[0]  # 'PV', 'SC', or 'PVT'
 
             if tech_type == 'PV':
-                panel_type = parts[1]
                 val = annual.get(f'PV_{surface}_kWh', 0)
                 if val <= 0:
                     continue
-                # Radiation counted once per panel_type; 0 for subsequent surfaces
-                if tech_code not in solar_radiation_seen:
-                    radiation = annual.get(f'PV_{panel_type}_radiation_kWh', val)
-                    solar_radiation_seen.add(tech_code)
-                else:
-                    radiation = 0
+                radiation = _solar_per_surface_radiation_kwh(
+                    building, tech_code, surface, locator
+                ) or val
                 records.append({
-                    'primary_carrier':    'Solar',
+                    'primary_carrier':    'SOLAR',
                     '_carrier_raw':       'SOLAR',
                     'plant_component':    '',
                     'network':            '',
@@ -493,17 +716,15 @@ def load_energy_flow_data(locator, whatif_name):
                 })
 
             elif tech_type == 'SC':
-                panel_type = '_'.join(parts[1:])  # e.g. 'ET' or 'FP'
+                panel_type = '_'.join(parts[1:])  # 'FP' or 'ET'
                 val = annual.get(f'SC_{panel_type}_{surface}_kWh', 0)
                 if val <= 0:
                     continue
-                if tech_code not in solar_radiation_seen:
-                    radiation = annual.get(f'SC_{panel_type}_radiation_kWh', val)
-                    solar_radiation_seen.add(tech_code)
-                else:
-                    radiation = 0
+                radiation = _solar_per_surface_radiation_kwh(
+                    building, tech_code, surface, locator
+                ) or val
                 records.append({
-                    'primary_carrier':    'Solar',
+                    'primary_carrier':    'SOLAR',
                     '_carrier_raw':       'SOLAR',
                     'plant_component':    '',
                     'network':            '',
@@ -519,17 +740,17 @@ def load_energy_flow_data(locator, whatif_name):
                 panel_type = parts[-1]  # last segment: 'FP' or 'ET'
                 val_e = annual.get(f'PVT_{panel_type}_{surface}_E_kWh', 0)
                 val_q = annual.get(f'PVT_{panel_type}_{surface}_Q_kWh', 0)
-                # Radiation split proportionally between E and Q outputs
-                if tech_code not in solar_radiation_seen:
-                    radiation_total = annual.get(f'PVT_{panel_type}_radiation_kWh', val_e + val_q)
-                    solar_radiation_seen.add(tech_code)
-                else:
-                    radiation_total = 0
+                # Per-surface radiation already accounts for both E and Q;
+                # split it proportionally between the two outputs so each
+                # arc carries its share of the irradiation source.
+                radiation_total = _solar_per_surface_radiation_kwh(
+                    building, tech_code, surface, locator
+                ) or (val_e + val_q)
                 total_out = val_e + val_q
                 if val_e > 0:
                     rad_e = radiation_total * (val_e / total_out) if total_out > 0 else 0
                     records.append({
-                        'primary_carrier':    'Solar',
+                        'primary_carrier':    'SOLAR',
                         '_carrier_raw':       'SOLAR',
                         'plant_component':    '',
                         'network':            '',
@@ -543,7 +764,7 @@ def load_energy_flow_data(locator, whatif_name):
                 if val_q > 0:
                     rad_q = radiation_total * (val_q / total_out) if total_out > 0 else 0
                     records.append({
-                        'primary_carrier':    'Solar',
+                        'primary_carrier':    'SOLAR',
                         '_carrier_raw':       'SOLAR',
                         'plant_component':    '',
                         'network':            '',
@@ -571,7 +792,7 @@ def load_energy_flow_data(locator, whatif_name):
             records.append({
                 'primary_carrier':    pt['carrier'],
                 '_carrier_raw':       pt['_carrier_raw'],
-                'plant_component':    pt.get('component', ''),
+                'plant_component':    pt.get('primary_component', ''),
                 'network':            nt,
                 'building_component': '',
                 'scale':              'District',
@@ -581,16 +802,20 @@ def load_energy_flow_data(locator, whatif_name):
                 '_has_plant_data':    True,
             })
 
+    # Ensure all records have _is_booster (default False)
+    for r in records:
+        r.setdefault('_is_booster', False)
+
     if not records:
         cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
                 'building_component', 'scale', 'service', 'value_kWh',
-                'plant_input_kWh', '_has_plant_data']
+                'plant_input_kWh', '_has_plant_data', '_is_booster']
         return pd.DataFrame(columns=cols)
 
     df = pd.DataFrame(records)
 
     group_cols = ['primary_carrier', '_carrier_raw', 'plant_component', 'network',
-                  'building_component', 'scale', 'service', '_has_plant_data']
+                  'building_component', 'scale', 'service', '_has_plant_data', '_is_booster']
 
     district = df[df['scale'] == 'District']
     building = df[df['scale'] == 'Building']
@@ -629,7 +854,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     Build a 5-layer Sankey: City → District → Building → Distribution → End-use service.
 
     Column layout (auto-collapses when a layer has no data):
-      l0 City        — energy carriers (Natural Gas, Oil, Electricity Grid, …)
+      l0 City        — energy carriers (Natural Gas, Oil, Grid Electricity, …)
       l1 District    — district plant equipment (BO1, Pump) + invisible pass-throughs
       l2 Building    — booster / standalone building equipment (BO2, standalone boilers)
       l3 Distribution— building-side district interface nodes (HEX)
@@ -672,7 +897,7 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
 
     # ── Layer 0: City ──────────────────────────────────────────────────────
     carrier_set = set(df['primary_carrier'].unique())
-    l0 = [c for c in _CARRIER_ORDER if c in carrier_set] + sorted(carrier_set - set(_CARRIER_ORDER))
+    l0 = sorted(carrier_set)
 
     # ── Layer 1: district plant components ────────────────────────────────
     l1 = (
@@ -682,11 +907,20 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     l1_set = set(l1)
 
     # ── Layer 2: building-scale components (boosters + standalone) ────────
-    # Only includes building_df components (not district). Excludes l1 (district
-    # plant codes reused as-is) and l3 (district building-side codes like HEX).
+    # Components that share a name with l1 (district plant) or l3 (HEX) need
+    # a unique internal key so they get their own node. Prefix with '__bldg__';
+    # the visual label is the original name (stripped in node_labels below).
     l3_raw = set(district_df['building_component'].unique()) - {''}
 
     l2_raw = set(building_df['building_component'].unique()) - {''}
+    # Disambiguate: building components that collide with l1 or l3 get prefixed
+    _l2_collisions = (l2_raw & l1_set) | (l2_raw & l3_raw)
+    if _l2_collisions and not building_df.empty:
+        building_df = building_df.copy()
+        building_df.loc[building_df['building_component'].isin(_l2_collisions), 'building_component'] = (
+            '__bldg__' + building_df.loc[building_df['building_component'].isin(_l2_collisions), 'building_component']
+        )
+        l2_raw = set(building_df['building_component'].unique()) - {''}
     l2 = sorted(l2_raw - l1_set - l3_raw) if show_building else []
     l2_set = set(l2)
 
@@ -740,7 +974,12 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     for nodes, layer in layer_specs:
         for n in nodes:
             node_keys.append(n)
-            node_labels.append('' if n.startswith('__bpt__') else n)
+            label = n
+            if n.startswith('__bpt__'):
+                label = ''
+            elif n.startswith('__bldg__'):
+                label = n[len('__bldg__'):]
+            node_labels.append(label)
             node_x_list.append(_LAYER_X[layer])
 
     if not node_keys:
@@ -758,6 +997,8 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         if key.startswith('__bpt__'):
             carrier_name = key[len('__bpt__'):]
             return _to_rgba(carrier_colour_map.get(carrier_name, COLOURS_TO_RGB['grey']))
+        if key.startswith('__bldg__'):
+            return component_tech_colour(key[len('__bldg__'):])
         if layer == 0:
             return carrier_colour_map.get(key, COLOURS_TO_RGB['grey'])
         if layer in (1, 2, 3):
@@ -778,6 +1019,10 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
         tgts.append(idx[tgt_key])
         vals.append(val / divisor)
         link_colors.append(_to_rgba(colour))
+
+    # ── Helper: service colour for links targeting end-use nodes ─────────
+    def _svc_colour(service):
+        return _SERVICE_COLOURS.get(service, COLOURS_TO_RGB['grey'])
 
     # ── District flows ─────────────────────────────────────────────────────
     if not district_df.empty:
@@ -802,19 +1047,19 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
             bc        = row['building_component']
             service   = row['service']
             d_val     = row['value_kWh']
+            svc_col   = _svc_colour(service)
             c_colour  = carrier_colour_map.get(d_carrier, COLOURS_TO_RGB['grey'])
-            pc_colour = component_tech_colour(pc) if pc else c_colour
-            bc_colour = component_tech_colour(bc) if bc else pc_colour
+            # pc_colour = component_tech_colour(pc) if pc else c_colour
 
-            prev, prev_colour = (
-                (pc, pc_colour) if (show_district and pc and pc in idx)
-                else (d_carrier, c_colour)
+            prev = (
+                pc if (show_district and pc and pc in idx)
+                else d_carrier
             )
             if show_building and bc and bc in idx:
-                add_link(prev, bc, d_val, prev_colour)
-                add_link(bc, service, d_val, bc_colour)
+                add_link(prev, bc, d_val, svc_col)
+                add_link(bc, service, d_val, svc_col)
             else:
-                add_link(prev, service, d_val, prev_colour)
+                add_link(prev, service, d_val, svc_col)
 
     # ── Building-scale flows ───────────────────────────────────────────────
     # Aggregate across buildings first.
@@ -823,22 +1068,31 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
     # that implicitly shows conversion efficiency (e.g. solar panel COP).
     # When use_solar_irradiation is False, treat carrier_kWh == value_kWh for Solar rows
     # so solar nodes appear with equal in/out widths (no efficiency visualisation).
+    # Ensure _is_booster column exists (default False for records that don't set it)
+    if '_is_booster' not in building_df.columns:
+        building_df = building_df.copy()
+        building_df['_is_booster'] = False
+    else:
+        building_df = building_df.copy()
+        building_df['_is_booster'] = building_df['_is_booster'].fillna(False)
+
     b_path_agg = (
         building_df
-        .groupby(['primary_carrier', 'building_component', 'service'], as_index=False)
+        .groupby(['primary_carrier', 'building_component', 'service', '_is_booster'], as_index=False)
         .agg(value_kWh=('value_kWh', 'sum'), carrier_kWh=('plant_input_kWh', 'sum'))
     )
     if not use_solar_irradiation:
-        is_solar = b_path_agg['primary_carrier'] == 'Solar'
+        is_solar = b_path_agg['primary_carrier'] == 'SOLAR'
         b_path_agg.loc[is_solar, 'carrier_kWh'] = b_path_agg.loc[is_solar, 'value_kWh']
     for _, row in b_path_agg.iterrows():
         carrier      = row['primary_carrier']
         bc           = row['building_component']
         service      = row['service']
+        is_booster   = row['_is_booster']
         val          = row['value_kWh']       # useful output: component → service
         carrier_val  = row['carrier_kWh']     # carrier input: carrier → component
         c_colour     = carrier_colour_map.get(carrier, COLOURS_TO_RGB['grey'])
-        bc_colour    = component_tech_colour(bc) if bc else c_colour
+        svc_col      = _svc_colour(service)
 
         if show_building and bc and bc in idx:
             if bc in l2_set:
@@ -850,19 +1104,20 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
                     add_link(pt,      bc, carrier_val, c_colour)
                 else:
                     add_link(carrier, bc, carrier_val, c_colour)
-                # Booster: if this service has an HEX in l3, route through it.
-                # Otherwise (standalone or solar), link directly to service.
-                # Solar must never route through the district HEX —
-                # solar panels are standalone generators with no district interface.
-                is_solar = carrier == 'Solar'
-                hex_nodes = [] if is_solar else service_to_hex.get(service, [])
-                if hex_nodes:
-                    for hex_node in hex_nodes:
-                        if hex_node in idx:
-                            add_link(bc, hex_node, val, bc_colour)
-                            add_link(hex_node, service, val, component_tech_colour(hex_node))
+                # Booster routes through HEX (district interface).
+                # Standalone and solar go directly to service.
+                is_solar = carrier == 'SOLAR'
+                if is_booster and not is_solar:
+                    hex_nodes = service_to_hex.get(service, [])
+                    if hex_nodes:
+                        for hex_node in hex_nodes:
+                            if hex_node in idx:
+                                add_link(bc, hex_node, val, svc_col)
+                                add_link(hex_node, service, val, svc_col)
+                    else:
+                        add_link(bc, service, val, svc_col)
                 else:
-                    add_link(bc, service, val, bc_colour)
+                    add_link(bc, service, val, svc_col)
             else:
                 # Component shared with District layer (e.g. standalone building uses same
                 # code as district plant). Route through HEX if one exists for this service,
@@ -872,12 +1127,12 @@ def build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation=Tr
                 if hex_nodes:
                     for hex_node in hex_nodes:
                         if hex_node in idx:
-                            add_link(bc, hex_node, val, bc_colour)
-                            add_link(hex_node, service, val, component_tech_colour(hex_node))
+                            add_link(bc, hex_node, val, svc_col)
+                            add_link(hex_node, service, val, svc_col)
                 else:
-                    add_link(bc, service, val, bc_colour)
+                    add_link(bc, service, val, svc_col)
         else:
-            add_link(carrier, service, carrier_val, c_colour)
+            add_link(carrier, service, carrier_val, svc_col)
 
     if not srcs:
         return None
@@ -962,31 +1217,41 @@ def create_sankey_fig(sankey_data, title, unit_label):
                 font=dict(size=12, color=COLOURS_TO_RGB['grey']),
             ))
 
-    # Dashed vertical dividers between City/District and District/Building.
-    # Only draw a divider when nodes exist on both sides.
-    dividers = [
-        (_LAYER_X[0], _LAYER_X[1]),  # City | District
-        (_LAYER_X[1], _LAYER_X[2]),  # District | Building
-    ]
+    # Dashed vertical dividers between layer zones. Drawn between any two
+    # *adjacent* visible zones — so a building-only scenario (no district)
+    # still gets a single City | Building divider, not nothing.
+    city_visible     = _LAYER_X[0] in visible_xs
+    district_visible = _LAYER_X[1] in visible_xs
+    building_visible = any(_LAYER_X[i] in visible_xs for i in (2, 3, 4))
+
+    def _divider_shape(x_left, x_right):
+        return dict(
+            type='line',
+            x0=(x_left + x_right) / 2,
+            x1=(x_left + x_right) / 2,
+            y0=0.02, y1=0.98,
+            xref='paper', yref='paper',
+            line=dict(color='rgba(150,150,150,0.5)', width=1, dash='6,3'),
+        )
+
     shapes = []
-    for x_left, x_right in dividers:
-        if x_left in visible_xs and x_right in visible_xs:
-            shapes.append(dict(
-                type='line',
-                x0=(x_left + x_right) / 2,
-                x1=(x_left + x_right) / 2,
-                y0=0.02, y1=0.98,
-                xref='paper', yref='paper',
-                line=dict(color='rgba(150,150,150,0.5)', width=1, dash='6,3'),
-            ))
+    if city_visible and district_visible:
+        shapes.append(_divider_shape(_LAYER_X[0], _LAYER_X[1]))
+    if district_visible and building_visible:
+        shapes.append(_divider_shape(_LAYER_X[1], _LAYER_X[2]))
+    if city_visible and building_visible and not district_visible:
+        # No district column — single divider sits between City and the
+        # first Building column at the same x where the City|District
+        # divider would have been, so the with/without-district layouts
+        # share the same visual rhythm.
+        shapes.append(_divider_shape(_LAYER_X[0], _LAYER_X[1]))
 
     fig.update_layout(
-        title_text=title,
-        title_font_size=16,
+        title=dict(text=title, x=0, xanchor='left', yanchor='top', font=dict(size=20)),
         font_size=12,
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
         paper_bgcolor=COLOURS_TO_RGB['white'],
-        margin=dict(l=20, r=20, t=60, b=60),
+        margin=dict(l=20, r=20, t=80, b=60),
         annotations=annotations,
         shapes=shapes,
     )
@@ -1023,14 +1288,14 @@ def main(config: cea.config.Configuration):
     slots = []
 
     for whatif_name in whatif_names:
-        config_path = locator.get_analysis_configuration_file(whatif_name)
-        if not os.path.exists(config_path):
+        if locator.find_analysis_configuration_file(whatif_name) is None:
+            expected_path = locator.get_analysis_configuration_file(whatif_name)
             slots.append(('err', (
                 f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
                 f'background:#ffe0e0;margin:12px 0">'
                 f'<h3>Final energy data not found for <em>{whatif_name}</em></h3>'
                 f'<p>Run <strong>final-energy</strong> for this scenario first.</p>'
-                f'<code>{config_path}</code>'
+                f'<code>{expected_path}</code>'
                 f'</div>'
             )))
             continue
@@ -1064,7 +1329,11 @@ def main(config: cea.config.Configuration):
         _, whatif_name, sankey_data = slot
         scenario_total = sum(sankey_data['value'])
         height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
-        title = custom_title if (custom_title and len(whatif_names) == 1) else f'Energy Flow — {whatif_name}'
+        scenario_name = os.path.basename(config.scenario)
+        feature_label = custom_title or 'CEA-4 Energy Flow'
+        subtitle_parts = [feature_label, scenario_name, whatif_name]
+        subtitle = ' | '.join(subtitle_parts)
+        title = f"<b>Energy Flow</b><br><sub>{subtitle}</sub>"
         fig = create_sankey_fig(sankey_data, title, unit_label)
         fig.update_layout(height=height, autosize=False)
         include_js = 'cdn' if not plotly_included else False

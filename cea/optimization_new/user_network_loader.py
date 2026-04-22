@@ -28,7 +28,7 @@ import pandas as pd
 import geopandas as gpd
 import networkx as nx
 from shapely.geometry import Point
-from typing import Tuple, Dict, List, Set
+from typing import Tuple, Dict, List, Optional, Set
 
 from cea import CEAException
 from cea.constants import SHAPEFILE_TOLERANCE
@@ -937,7 +937,8 @@ def augment_user_network_with_buildings(
     street_network_gdf: gpd.GeoDataFrame,
     locator,
     snap_tolerance: float = 0.5,
-    connection_candidates: int = 3
+    connection_candidates: int = 3,
+    existing_max_pipe_number: Optional[int] = None,
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Augment user-provided network with additional buildings using Steiner tree optimisation.
@@ -959,6 +960,12 @@ def augment_user_network_with_buildings(
     :param locator: InputLocator for file paths
     :param snap_tolerance: Tolerance for snapping terminal connections (metres)
     :param connection_candidates: Number of nearest streets to consider per building (1-5)
+    :param existing_max_pipe_number: Highest ``PIPE{N}`` number already in use in the
+        parent network (before any filter step). Steiner-added edges are renumbered
+        to start at ``N + 1`` so chained networks
+        (``existing-network`` workflows) never reuse a parent pipe name for a
+        different physical pipe — even names that were dropped from the parent by
+        the filter step. ``None`` or ``-1`` disables the offset.
     :return: Tuple of (augmented_nodes_gdf, augmented_edges_gdf) with new buildings added
     """
     from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
@@ -970,6 +977,25 @@ def augment_user_network_with_buildings(
     print(f"    - Buildings to add: {', '.join(sorted(missing_building_names)[:10])}" +
           (f" and {len(missing_building_names) - 10} more" if len(missing_building_names) > 10 else ""))
 
+    # Build a GeoDataFrame of existing PLANT nodes so the potential graph
+    # (and the Steiner terminal set) both reach the plant, even when the
+    # filter step pruned the plant's pipes away.
+    plant_mask = (
+        user_nodes_gdf['type'].fillna('').astype(str).str.upper().str.startswith('PLANT')
+    )
+    existing_plant_nodes = user_nodes_gdf[plant_mask].copy()
+    plant_terminals = (
+        gpd.GeoDataFrame(
+            {
+                'name': existing_plant_nodes['name'].values,
+                'geometry': existing_plant_nodes['geometry'].values,
+            },
+            crs=existing_plant_nodes.crs,
+        )
+        if not existing_plant_nodes.empty
+        else None
+    )
+
     # Step 1: Create potential network combining user network + streets for routing
     print("  Step 1/3: Creating potential network graph...")
     potential_graph, building_terminals = _create_terminal_connections_for_buildings(
@@ -979,7 +1005,8 @@ def augment_user_network_with_buildings(
         missing_building_names=missing_building_names,
         street_network_gdf=street_network_gdf,
         snap_tolerance=snap_tolerance,
-        connection_candidates=connection_candidates
+        connection_candidates=connection_candidates,
+        extra_terminal_points=plant_terminals,
     )
 
     # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings to existing network
@@ -1012,16 +1039,32 @@ def augment_user_network_with_buildings(
         crs=existing_building_nodes.crs
     )
 
-    # Combine missing buildings + existing user buildings as terminals
+    # Combine missing buildings + existing user buildings (+ plants) as terminals.
+    # Plants were extracted above and fed into the potential graph so Steiner
+    # has a reachable node at every plant coord — including the case where the
+    # filter step pruned the plant's original pipes. Treating plants as
+    # mandatory terminals guarantees the augmented network is one connected
+    # component containing plant + all consumers.
     # Steiner tree will find optimal path connecting ALL terminals
+    terminal_frames = [
+        missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
+        existing_terminals[['name', 'geometry']].reset_index(drop=True),
+    ]
+    if plant_terminals is not None:
+        terminal_frames.append(plant_terminals[['name', 'geometry']].reset_index(drop=True))
     all_terminals = gpd.GeoDataFrame(
-        pd.concat([missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
-                   existing_terminals[['name', 'geometry']].reset_index(drop=True)],
-                  ignore_index=True),
+        pd.concat(terminal_frames, ignore_index=True),
         crs=missing_buildings_centroids.crs
     )
 
-    print(f"    - Terminals: {len(missing_buildings_centroids)} new + {len(existing_terminals)} existing = {len(all_terminals)} total")
+    plant_count = 0 if plant_terminals is None else len(plant_terminals)
+    if plant_count > 0:
+        print(f"    - Terminals: {len(missing_buildings_centroids)} new + "
+              f"{len(existing_terminals)} existing + {plant_count} plant = "
+              f"{len(all_terminals)} total")
+    else:
+        print(f"    - Terminals: {len(missing_buildings_centroids)} new + "
+              f"{len(existing_terminals)} existing = {len(all_terminals)} total")
 
     # Create temporary output paths for Steiner tree results
     temp_dir = tempfile.mkdtemp()
@@ -1055,6 +1098,29 @@ def augment_user_network_with_buildings(
         # Clean up temp files regardless of success or failure
         shutil.rmtree(temp_dir)
 
+    # Shift Steiner-assigned ``PIPE{N}`` numbers above the parent's namespace
+    # so new pipes never reuse a name that was in the parent — even ones the
+    # filter step dropped. ``calc_steiner_spanning_tree`` writes names
+    # starting at ``PIPE0``; without this shift, an inherited ``sub1`` PIPE
+    # whose building was decommissioned could be silently overwritten by a
+    # completely unrelated new ``sub2`` pipe with the same name, and
+    # downstream tools that cross-reference by name (multi-phase sizing,
+    # per-phase edges.shp with idle pipes, mass-flow CSVs) would misalign.
+    if existing_max_pipe_number is not None and existing_max_pipe_number >= 0:
+        offset = existing_max_pipe_number + 1
+
+        def _shift_pipe_name(name):
+            if (
+                isinstance(name, str)
+                and name.startswith('PIPE')
+                and name[4:].isdigit()
+            ):
+                return f'PIPE{int(name[4:]) + offset}'
+            return name
+
+        if 'name' in steiner_edges_gdf.columns:
+            steiner_edges_gdf['name'] = steiner_edges_gdf['name'].map(_shift_pipe_name)
+
     # Step 3: Merge optimised subnetwork with user's original network
     print("  Step 3/3: Merging augmented edges/nodes with user network...")
     augmented_nodes_gdf, augmented_edges_gdf = _merge_augmented_network(
@@ -1073,137 +1139,311 @@ def augment_user_network_with_buildings(
     return augmented_nodes_gdf, augmented_edges_gdf
 
 
+def _normalize_point_coord(geom) -> Tuple[float, float]:
+    """Return normalised (x, y) tuple for a Point geometry."""
+    from cea.technologies.network_layout.graph_utils import normalize_coords
+    return normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+
+
+def _normalize_line_endpoints(geom) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    """Return normalised (start, end) coord tuples for a LineString geometry."""
+    from cea.technologies.network_layout.graph_utils import normalize_coords
+    start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
+    end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
+    return start, end
+
+
+def _get_plant_node_coords(nodes_gdf: gpd.GeoDataFrame) -> Set[Tuple[float, float]]:
+    """Return set of normalised coords for all plant nodes in nodes_gdf."""
+    if 'type' not in nodes_gdf.columns:
+        return set()
+    plant_mask = nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT')
+    return {_normalize_point_coord(g) for g in nodes_gdf[plant_mask].geometry}
+
+
+def _prune_dangling_stubs(
+    nodes_gdf: gpd.GeoDataFrame,
+    edges_gdf: gpd.GeoDataFrame,
+    protected_coords: Set[Tuple[float, float]]
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """
+    Iteratively remove degree-1 junction nodes (and their incident edges) from the
+    network until no more stubs remain.
+
+    A node is pruned only if it is NOT in protected_coords. Protected coords should
+    include surviving building-terminal coords and all plant-node coords, so those
+    nodes and their incident pipes are never dropped.
+
+    :param nodes_gdf: GeoDataFrame of network nodes
+    :param edges_gdf: GeoDataFrame of network edges
+    :param protected_coords: Set of normalised (x, y) coords that must never be pruned
+    :return: (pruned_nodes_gdf, pruned_edges_gdf)
+    """
+    if nodes_gdf.empty or edges_gdf.empty:
+        return nodes_gdf.copy(), edges_gdf.copy()
+
+    graph = nx.Graph()
+
+    node_coord_by_index: Dict[int, Tuple[float, float]] = {}
+    for idx, row in nodes_gdf.iterrows():
+        coord = _normalize_point_coord(row.geometry)
+        node_coord_by_index[idx] = coord
+        graph.add_node(coord)
+
+    edge_endpoints_by_index: Dict[int, Tuple[Tuple[float, float], Tuple[float, float]]] = {}
+    for idx, row in edges_gdf.iterrows():
+        start, end = _normalize_line_endpoints(row.geometry)
+        edge_endpoints_by_index[idx] = (start, end)
+        if start != end:
+            graph.add_edge(start, end)
+
+    removed_coords: Set[Tuple[float, float]] = set()
+
+    changed = True
+    while changed:
+        changed = False
+        degree_one_unprotected = [
+            coord for coord, deg in graph.degree()
+            if deg <= 1 and coord not in protected_coords
+        ]
+        for coord in degree_one_unprotected:
+            if coord in graph:
+                graph.remove_node(coord)
+                removed_coords.add(coord)
+                changed = True
+
+    if not removed_coords:
+        return nodes_gdf.copy(), edges_gdf.copy()
+
+    keep_node_mask = [
+        node_coord_by_index[idx] not in removed_coords
+        for idx in nodes_gdf.index
+    ]
+    pruned_nodes_gdf = nodes_gdf[keep_node_mask].copy()
+
+    keep_edge_mask = [
+        edge_endpoints_by_index[idx][0] not in removed_coords
+        and edge_endpoints_by_index[idx][1] not in removed_coords
+        for idx in edges_gdf.index
+    ]
+    pruned_edges_gdf = edges_gdf[keep_edge_mask].copy()
+
+    return pruned_nodes_gdf, pruned_edges_gdf
+
+
+def _get_building_nodes_mask(nodes_gdf: gpd.GeoDataFrame) -> "pd.Series":
+    """Mask selecting non-plant, non-junction building nodes from nodes_gdf."""
+    mask = (
+        nodes_gdf['building'].notna()
+        & (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+    )
+    if 'type' in nodes_gdf.columns:
+        mask = mask & ~nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT')
+    return mask
+
+
+def _remove_buildings_and_prune(
+    nodes_gdf: gpd.GeoDataFrame,
+    edges_gdf: gpd.GeoDataFrame,
+    buildings_to_drop: Set[str],
+    mode_name: str,
+) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """
+    Core network-shrinking helper used by filter_network_to_buildings.
+
+    Drops the listed building nodes, drops every edge incident to one of those
+    nodes, keeps only the connected components that still contain a protected
+    coordinate (surviving building terminal OR plant node), then iteratively
+    prunes dangling junction stubs via _prune_dangling_stubs.
+
+    Plant nodes and their incident pipes are never pruned — they are protected
+    infrastructure. A warning is printed if a plant ends up in a component with
+    no surviving consumers.
+
+    :param nodes_gdf: GeoDataFrame of network nodes
+    :param edges_gdf: GeoDataFrame of network edges
+    :param buildings_to_drop: Set of building names to remove (already intersected
+        with the set of buildings actually present in the network)
+    :param mode_name: Mode label used in print/warning messages (e.g. 'filter')
+    :return: (pruned_nodes_gdf, pruned_edges_gdf)
+    :raises ValueError: If removal would leave zero surviving components or edges
+    """
+    if not buildings_to_drop:
+        return nodes_gdf.copy(), edges_gdf.copy()
+
+    plant_coords = _get_plant_node_coords(nodes_gdf)
+
+    # Drop the building nodes themselves
+    nodes_after_drop = nodes_gdf[~nodes_gdf['building'].isin(buildings_to_drop)].copy()
+
+    # Record coords of removed building nodes so we can drop their incident pipes
+    removed_coords: Set[Tuple[float, float]] = {
+        _normalize_point_coord(row.geometry)
+        for _, row in nodes_gdf[nodes_gdf['building'].isin(buildings_to_drop)].iterrows()
+    }
+
+    # Direct row-filter: drop any edge touching a removed building node.
+    edges_after_drop_rows = [
+        row for _, row in edges_gdf.iterrows()
+        if (lambda se: se[0] not in removed_coords and se[1] not in removed_coords)(
+            _normalize_line_endpoints(row.geometry)
+        )
+    ]
+    if not edges_after_drop_rows:
+        raise ValueError(f"{mode_name.capitalize()} mode would remove all edges!")
+
+    edges_after_drop = gpd.GeoDataFrame(edges_after_drop_rows, crs=edges_gdf.crs)
+
+    # Protected coords = surviving building terminals + all plant nodes
+    surviving_building_mask = _get_building_nodes_mask(nodes_after_drop)
+    surviving_building_coords = {
+        _normalize_point_coord(row.geometry)
+        for _, row in nodes_after_drop[surviving_building_mask].iterrows()
+    }
+    protected_coords = surviving_building_coords | plant_coords
+
+    if not protected_coords:
+        raise ValueError(
+            f"{mode_name.capitalize()} mode left no surviving building terminals or plant nodes!"
+        )
+
+    # Keep only connected components that contain at least one protected coord.
+    # Fully-orphan junction-only components are dropped.
+    graph = nx.Graph()
+    for g in nodes_after_drop.geometry:
+        graph.add_node(_normalize_point_coord(g))
+    for g in edges_after_drop.geometry:
+        start, end = _normalize_line_endpoints(g)
+        if start != end:
+            graph.add_edge(start, end)
+
+    surviving_coords: Set[Tuple[float, float]] = set()
+    for component in nx.connected_components(graph):
+        if component & protected_coords:
+            surviving_coords.update(component)
+
+    if not surviving_coords:
+        raise ValueError(f"{mode_name.capitalize()} mode removed all network components!")
+
+    nodes_after_drop = nodes_after_drop[
+        [_normalize_point_coord(g) in surviving_coords for g in nodes_after_drop.geometry]
+    ].copy()
+    edges_after_drop = edges_after_drop[
+        [
+            _normalize_line_endpoints(g)[0] in surviving_coords
+            and _normalize_line_endpoints(g)[1] in surviving_coords
+            for g in edges_after_drop.geometry
+        ]
+    ].copy()
+
+    # Iteratively prune dangling junction stubs
+    nodes_final, edges_final = _prune_dangling_stubs(
+        nodes_after_drop, edges_after_drop, protected_coords
+    )
+
+    _warn_if_plants_have_no_consumers(nodes_final, edges_final, mode_name=mode_name)
+
+    removed_nodes = len(nodes_gdf) - len(nodes_final)
+    removed_edges = len(edges_gdf) - len(edges_final)
+    print(f"    ✓ Removed {removed_nodes} node(s) and {removed_edges} edge(s)")
+    print(f"    ✓ Final network: {len(nodes_final)} nodes, {len(edges_final)} edges")
+
+    return nodes_final, edges_final
+
+
 def filter_network_to_buildings(
     nodes_gdf: gpd.GeoDataFrame,
     edges_gdf: gpd.GeoDataFrame,
     buildings_to_keep: List[str]
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
-    Remove buildings from network that aren't in buildings_to_keep list.
-    Also removes orphaned edges and junction nodes using graph cleanup.
+    Remove buildings from the network that aren't in buildings_to_keep, and
+    prune any dangling pipes and junction nodes left behind.
+
+    Plant nodes are protected infrastructure: plant nodes and their incident
+    pipes are preserved even if every building near them was removed.
 
     :param nodes_gdf: GeoDataFrame of network nodes
     :param edges_gdf: GeoDataFrame of network edges
-    :param buildings_to_keep: List of building names to retain in network
-    :return: Tuple of (filtered_nodes_gdf, filtered_edges_gdf)
+    :param buildings_to_keep: List of building names to retain in the network
+    :return: (filtered_nodes_gdf, filtered_edges_gdf)
     """
-    from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf, normalize_coords
-    import networkx as nx
-
     print(f"  Filtering network to {len(buildings_to_keep)} buildings...")
 
-    # Step 1: Remove building nodes not in list
-    building_nodes = nodes_gdf[
-        nodes_gdf['building'].notna() &
-        (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
-    ]
+    building_mask = _get_building_nodes_mask(nodes_gdf)
+    buildings_in_network = set(nodes_gdf[building_mask]['building'])
+    buildings_to_drop = buildings_in_network - set(buildings_to_keep)
 
-    buildings_in_network = set(building_nodes['building'])
-    buildings_to_remove = buildings_in_network - set(buildings_to_keep)
-
-    if not buildings_to_remove:
-        # Nothing to remove
+    if not buildings_to_drop:
         return nodes_gdf.copy(), edges_gdf.copy()
 
-    print(f"    - Removing {len(buildings_to_remove)} building node(s): {', '.join(list(buildings_to_remove)[:5])}")
-    if len(buildings_to_remove) > 5:
-        print(f"      ... and {len(buildings_to_remove) - 5} more")
+    preview = list(buildings_to_drop)[:5]
+    print(f"    - Removing {len(buildings_to_drop)} building node(s): {', '.join(preview)}")
+    if len(buildings_to_drop) > 5:
+        print(f"      ... and {len(buildings_to_drop) - 5} more")
 
-    # Remove building nodes
-    nodes_gdf_filtered = nodes_gdf[
-        ~nodes_gdf['building'].isin(buildings_to_remove)
-    ].copy()
-
-    # Get coordinates of removed building nodes to filter edges
-    removed_node_coords = set()
-    removed_building_nodes = nodes_gdf[nodes_gdf['building'].isin(buildings_to_remove)]
-    for idx, row in removed_building_nodes.iterrows():
-        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        removed_node_coords.add(coord)
-
-    # Filter edges - remove any edge connected to a removed building node
-    edges_to_keep = []
-    for idx, row in edges_gdf.iterrows():
-        geom = row.geometry
-        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
-
-        # Keep edge only if neither endpoint is a removed building node
-        if start not in removed_node_coords and end not in removed_node_coords:
-            edges_to_keep.append(row)
-
-    if not edges_to_keep:
-        raise ValueError("Filter mode would remove all edges!")
-
-    edges_gdf_filtered = gpd.GeoDataFrame(edges_to_keep, crs=edges_gdf.crs)
-
-    # Step 2: Build graph and find connected components
-    # Preserve all edge attributes (name, type_mat, pipe_DN, etc.)
-    edge_attrs = {col: col for col in edges_gdf_filtered.columns if col not in ['geometry', 'weight']}
-    graph = gdf_to_nx(edges_gdf_filtered, coord_precision=SHAPEFILE_TOLERANCE, preserve_geometry=True, **edge_attrs)
-
-    # Get building terminal coordinates (nodes we must keep)
-    terminal_coords = set()
-    building_nodes_kept = nodes_gdf_filtered[
-        nodes_gdf_filtered['building'].isin(buildings_to_keep)
-    ]
-
-    for idx, row in building_nodes_kept.iterrows():
-        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        terminal_coords.add(coord)
-
-    if not terminal_coords:
+    if not (buildings_in_network - buildings_to_drop):
         raise ValueError("Filter removed all building nodes - no terminals left!")
 
-    # Find connected component(s) containing terminals
-    components = list(nx.connected_components(graph))
+    return _remove_buildings_and_prune(
+        nodes_gdf, edges_gdf, buildings_to_drop, mode_name="filter"
+    )
 
-    components_to_keep = []
-    for component in components:
-        if any(node in terminal_coords for node in component):
-            components_to_keep.append(component)
 
-    if len(components_to_keep) == 0:
-        raise ValueError("Filter mode removed all network components!")
+def _warn_if_plants_have_no_consumers(
+    nodes_gdf: gpd.GeoDataFrame,
+    edges_gdf: gpd.GeoDataFrame,
+    mode_name: str
+) -> None:
+    """
+    Print a warning for each plant whose connected component contains no
+    consumer buildings after filter modifications. The plant and its pipes
+    are kept either way; this is informational only.
+    """
+    if 'type' not in nodes_gdf.columns or nodes_gdf.empty or edges_gdf.empty:
+        return
 
-    # Create subgraph with kept components
-    nodes_to_keep = set()
-    for component in components_to_keep:
-        nodes_to_keep.update(component)
+    plant_mask = nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT')
+    plant_rows = nodes_gdf[plant_mask]
+    if plant_rows.empty:
+        return
 
-    filtered_graph = graph.subgraph(nodes_to_keep).copy()
+    graph = nx.Graph()
+    for g in nodes_gdf.geometry:
+        graph.add_node(_normalize_point_coord(g))
+    for g in edges_gdf.geometry:
+        start, end = _normalize_line_endpoints(g)
+        if start != end:
+            graph.add_edge(start, end)
 
-    # Convert back to GeoDataFrame
-    filtered_edges_gdf = nx_to_gdf(filtered_graph, crs=edges_gdf.crs, preserve_geometry=True)
+    consumer_mask = (
+        nodes_gdf['building'].notna()
+        & (nodes_gdf['building'].fillna('').str.upper() != 'NONE')
+        & ~nodes_gdf['type'].fillna('').str.upper().str.startswith('PLANT')
+    )
+    consumer_coords = {_normalize_point_coord(g) for g in nodes_gdf[consumer_mask].geometry}
 
-    # Update nodes_gdf to only include nodes connected to kept edges
-    edge_nodes = set()
-    for idx, row in filtered_edges_gdf.iterrows():
-        geom = row.geometry
-        start = normalize_coords([geom.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        end = normalize_coords([geom.coords[-1]], SHAPEFILE_TOLERANCE)[0]
-        edge_nodes.add(start)
-        edge_nodes.add(end)
+    coord_to_component: Dict[Tuple[float, float], frozenset] = {}
+    for component in nx.connected_components(graph):
+        frozen = frozenset(component)
+        for coord in component:
+            coord_to_component[coord] = frozen
 
-    # Filter nodes - keep only those that are endpoints of kept edges
-    filtered_nodes = []
-    for idx, row in nodes_gdf_filtered.iterrows():
-        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        if coord in edge_nodes:
-            filtered_nodes.append(row)
-
-    if not filtered_nodes:
-        raise ValueError("Filter mode removed all nodes!")
-
-    filtered_nodes_gdf = gpd.GeoDataFrame(filtered_nodes, crs=nodes_gdf.crs)
-
-    removed_edges = len(edges_gdf) - len(filtered_edges_gdf)
-    removed_nodes = len(nodes_gdf) - len(filtered_nodes_gdf)
-
-    print(f"    ✓ Removed {removed_nodes} node(s) and {removed_edges} edge(s)")
-    print(f"    ✓ Final network: {len(filtered_nodes_gdf)} nodes, {len(filtered_edges_gdf)} edges")
-
-    return filtered_nodes_gdf, filtered_edges_gdf
+    for _, plant_row in plant_rows.iterrows():
+        plant_coord = _normalize_point_coord(plant_row.geometry)
+        component = coord_to_component.get(plant_coord)
+        plant_name = plant_row.get('name', '<unknown>')
+        if component is None:
+            print(
+                f"    WARNING: Plant node {plant_name} became disconnected after "
+                f"{mode_name} mode — plant kept but it has no surviving consumers."
+            )
+            continue
+        if not (component & consumer_coords):
+            print(
+                f"    WARNING: Plant node {plant_name} has no surviving consumers in "
+                f"its component after {mode_name} mode — plant and its pipes were kept."
+            )
 
 
 def _create_terminal_connections_for_buildings(
@@ -1213,11 +1453,19 @@ def _create_terminal_connections_for_buildings(
     missing_building_names: List[str],
     street_network_gdf: gpd.GeoDataFrame,
     snap_tolerance: float,
-    connection_candidates: int
+    connection_candidates: int,
+    extra_terminal_points: Optional[gpd.GeoDataFrame] = None,
 ) -> Tuple[nx.Graph, dict]:
     """
     Create potential network graph combining user edges + street network with terminal connections
     to missing buildings.
+
+    :param extra_terminal_points: Optional GeoDataFrame with ``name`` + ``geometry``
+        (Point) rows for non-building terminals (e.g. plant nodes) whose
+        coordinates must be present in the potential graph. They get the same
+        nearest-street connection treatment as missing buildings — necessary
+        when a plant's pipes were pruned by the filter step and its coord is
+        no longer reachable via user edges.
 
     Returns:
     - NetworkX graph with all potential edges (user + streets + terminals)
@@ -1233,16 +1481,32 @@ def _create_terminal_connections_for_buildings(
     missing_buildings_centroids_gdf = missing_buildings_gdf.copy()
     missing_buildings_centroids_gdf['geometry'] = missing_buildings_gdf.geometry.centroid
 
+    # Attach non-building terminals (e.g. plants) so ``create_terminals`` gives
+    # each one a connection to the nearest street. Without this, a plant whose
+    # pipes were pruned by the filter step has no coord in the potential graph
+    # and Steiner can't route through it.
+    if extra_terminal_points is not None and not extra_terminal_points.empty:
+        extra = extra_terminal_points[['name', 'geometry']].copy()
+        combined_centroids_gdf = gpd.GeoDataFrame(
+            pd.concat(
+                [missing_buildings_centroids_gdf[['name', 'geometry']], extra],
+                ignore_index=True,
+            ),
+            crs=missing_buildings_centroids_gdf.crs,
+        )
+    else:
+        combined_centroids_gdf = missing_buildings_centroids_gdf
+
     # Combine user edges + street network (both are potential routing options)
     combined_network_gdf = gpd.GeoDataFrame(
         pd.concat([user_edges_gdf, street_network_gdf], ignore_index=True),
         crs=user_edges_gdf.crs
     )
 
-    # Create terminal connections for missing buildings to combined network
-    # This connects each building to k-nearest street/edge points
+    # Create terminal connections for missing buildings (and extra points) to combined network
+    # This connects each terminal to k-nearest street/edge points
     network_with_terminals_gdf = create_terminals(
-        building_centroids=missing_buildings_centroids_gdf,
+        building_centroids=combined_centroids_gdf,
         street_network=combined_network_gdf,
         connection_candidates=connection_candidates
     )
@@ -1329,17 +1593,38 @@ def _merge_augmented_network(
 
     # 2. Merge nodes - keep all user nodes, add new building nodes for missing buildings
 
-    # Get existing node names and coordinates to avoid conflicts
-    existing_node_names = set(user_nodes_gdf['name'].tolist())
-    user_node_coords = set()
-    for idx, row in user_nodes_gdf.iterrows():
-        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
-        user_node_coords.add(coord)
-
-    # Extract building nodes from Steiner result for missing buildings ONLY
+    # If the copied user network is missing a building node at an edge endpoint,
+    # network-layout may have already created a placeholder junction there. When
+    # augmentation later adds the real consumer node at the same coordinates we
+    # must drop the placeholder, otherwise thermal-network sees duplicate node
+    # names at one point and creates isolated singleton components.
     new_building_nodes = steiner_nodes_gdf[
         steiner_nodes_gdf['building'].isin(missing_building_names)
     ].copy()
+    new_building_coords = {
+        normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        for _, row in new_building_nodes.iterrows()
+    }
+
+    if new_building_coords:
+        placeholder_user_mask = user_nodes_gdf.apply(
+            lambda row: (
+                str(row.get('building', '')).strip().upper() in {'', 'NONE'}
+                and str(row.get('type', '')).strip().upper() in {'', 'NONE'}
+                and normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0] in new_building_coords
+            ),
+            axis=1
+        )
+        user_nodes_for_merge = user_nodes_gdf[~placeholder_user_mask].copy()
+    else:
+        user_nodes_for_merge = user_nodes_gdf.copy()
+
+    # Get existing node names and coordinates to avoid conflicts
+    existing_node_names = set(user_nodes_for_merge['name'].tolist())
+    user_node_coords = set()
+    for idx, row in user_nodes_for_merge.iterrows():
+        coord = normalize_coords([row.geometry.coords[0]], SHAPEFILE_TOLERANCE)[0]
+        user_node_coords.add(coord)
 
     # Rename building nodes if they conflict with existing names
     node_rename_counter = 1
@@ -1389,11 +1674,11 @@ def _merge_augmented_network(
     # Combine: user nodes + new building nodes + unique junction nodes
     augmented_nodes_gdf = gpd.GeoDataFrame(
         pd.concat([
-            user_nodes_gdf,
+            user_nodes_for_merge,
             new_building_nodes,
-            gpd.GeoDataFrame(unique_junction_nodes, crs=user_nodes_gdf.crs) if unique_junction_nodes else gpd.GeoDataFrame(columns=user_nodes_gdf.columns, crs=user_nodes_gdf.crs)
+            gpd.GeoDataFrame(unique_junction_nodes, crs=user_nodes_for_merge.crs) if unique_junction_nodes else gpd.GeoDataFrame(columns=user_nodes_for_merge.columns, crs=user_nodes_for_merge.crs)
         ], ignore_index=True),
-        crs=user_nodes_gdf.crs
+        crs=user_nodes_for_merge.crs
     )
 
     return augmented_nodes_gdf, augmented_edges_gdf

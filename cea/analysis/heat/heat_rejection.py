@@ -11,12 +11,12 @@ Data sources (sole source of truth):
 - Plant hourly files: thermal load and carrier flows for district plants
 """
 
-import json
 import os
 
 import pandas as pd
 
 from cea.technologies.cooling_tower import calc_CT_const
+from cea.technologies.energy_carriers import electricity_carrier
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -27,7 +27,6 @@ __maintainer__ = "Zhongming Shi"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-FUEL_CARRIERS = {'NATURALGAS', 'OIL', 'COAL', 'WOOD'}
 
 
 def _get_ct_aux_power(tertiary_component, locator):
@@ -75,6 +74,13 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
     df = pd.read_csv(path)
 
+    # Combustible carriers for this scenario (data-driven: every row in
+    # ENERGY_CARRIERS.csv with type == 'combustible'). Cached per-scenario
+    # inside the helper, so this is cheap to call in each loop iteration.
+    from cea.technologies.energy_carriers import combustible_carriers
+    fuel_carriers = combustible_carriers(locator)
+    elec = electricity_carrier(locator)
+
     demand_cols = {'Qhs_sys_kWh', 'Qww_sys_kWh', 'Qcs_sys_kWh', 'E_sys_kWh'}
     hs_demand = df['Qhs_sys_kWh'] if 'Qhs_sys_kWh' in df.columns else pd.Series(0.0, index=df.index)
     ww_demand = df['Qww_sys_kWh'] if 'Qww_sys_kWh' in df.columns else pd.Series(0.0, index=df.index)
@@ -99,18 +105,18 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         if col.startswith('Qhs_sys_'):
             carrier = col[len('Qhs_sys_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 # Boiler losses: fuel - demand (both in kWh)
                 hs_hr = hs_hr + (df[col] - hs_demand).clip(lower=0)
 
         elif col.startswith('Qww_sys_'):
             carrier = col[len('Qww_sys_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 ww_hr = ww_hr + (df[col] - ww_demand).clip(lower=0)
 
         elif col.startswith('Qcs_sys_'):
             carrier = col[len('Qcs_sys_'):-len('_kWh')]
-            if carrier == 'GRID':
+            if carrier == elec:
                 # Chiller condenser heat = cooling demand + electricity input
                 q_cond = cs_demand + df[col]
                 if ct_aux_power is not None:
@@ -124,7 +130,7 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         elif col.startswith('Qhs_booster_'):
             carrier = col[len('Qhs_booster_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 eff = hs_booster_cfg.get('efficiency', 1.0) or 1.0
                 # Booster losses: col_kWh × (1 − η)
                 hs_booster_hr = hs_booster_hr + (df[col] * (1.0 - eff)).clip(lower=0)
@@ -132,7 +138,7 @@ def _calc_building_heat_rejection(building_name, whatif_name, supply_cfg, locato
 
         elif col.startswith('Qww_booster_'):
             carrier = col[len('Qww_booster_'):-len('_kWh')]
-            if carrier in FUEL_CARRIERS:
+            if carrier in fuel_carriers:
                 eff = ww_booster_cfg.get('efficiency', 1.0) or 1.0
                 ww_booster_hr = ww_booster_hr + (df[col] * (1.0 - eff)).clip(lower=0)
 
@@ -205,6 +211,9 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
 
     plant_df = pd.read_csv(plant_file)
 
+    from cea.technologies.energy_carriers import combustible_carriers
+    fuel_carriers = combustible_carriers(locator)
+
     carrier = pc.get('carrier', '')
     assembly_code = pc.get('assembly_code', '')
     component_code = pc.get('primary_component', '')
@@ -218,15 +227,21 @@ def _calc_plant_heat_rejection(plant_row, plant_configs, whatif_name, network_na
     hr_series = pd.Series(0.0, index=plant_df.index)
 
     if network_type == 'DH':
-        if carrier in FUEL_CARRIERS:
-            fuel_col = f'plant_heating_{carrier}_kWh'
+        if carrier in fuel_carriers:
+            fuel_col = f'plant_primary_{network_type}_{carrier}_kWh'
             if fuel_col in plant_df.columns:
                 hr_series = (plant_df[fuel_col] - thermal_load).clip(lower=0)
         # GRID carrier (HP): hr = 0
 
     elif network_type == 'DC':
-        if 'plant_cooling_GRID_kWh' in plant_df.columns:
-            q_cond = thermal_load + plant_df['plant_cooling_GRID_kWh']
+        # Read primary (chiller) electricity
+        primary_col = f'plant_primary_{network_type}_{carrier}_kWh'
+        if primary_col in plant_df.columns:
+            q_cond = thermal_load + plant_df[primary_col]
+            # Add tertiary (CT fan) electricity if stored separately
+            tertiary_cols = [c for c in plant_df.columns if c.startswith(f'plant_tertiary_{network_type}_')]
+            for tc in tertiary_cols:
+                q_cond = q_cond + plant_df[tc]
             ct_code = pc.get('tertiary_component')
             ct_aux_power = _get_ct_aux_power(ct_code, locator)
             if ct_aux_power is not None:
@@ -261,14 +276,13 @@ def calculate_heat_rejection_for_whatif(whatif_name, locator):
     :param locator: InputLocator
     :return: (buildings_df, components_df) DataFrames
     """
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
+    config_data = locator.read_analysis_configuration(whatif_name)
+    if config_data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
         raise FileNotFoundError(
-            f"configuration.json not found for what-if '{whatif_name}': {config_file}\n"
+            f"configuration file not found for what-if '{whatif_name}': {expected}\n"
             "Please run 'final-energy' first."
         )
-    with open(config_file) as f:
-        config_data = json.load(f)
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
     network_name = config_data.get('metadata', {}).get('network_name')

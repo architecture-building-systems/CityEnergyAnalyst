@@ -12,6 +12,10 @@ from shapely.geometry import Point, LineString
 
 from cea.technologies.network_layout.connectivity_potential import calc_connectivity_network_with_geometry
 from cea.technologies.network_layout.graph_utils import gdf_to_nx, nx_to_gdf
+from cea.optimization_new.user_network_loader import (
+    filter_network_to_buildings,
+    _prune_dangling_stubs,
+)
 from cea.constants import SHAPEFILE_TOLERANCE
 
 
@@ -266,6 +270,153 @@ class TestNetworkLayoutIntegration:
         # The current implementation does not automatically connect disconnected components
         with pytest.raises(ValueError, match="disconnected components"):
             calc_connectivity_network_with_geometry(streets, buildings)
+
+
+class TestFilterNetwork:
+    """Tests for filter_network_to_buildings and _prune_dangling_stubs.
+
+    Networks are constructed as small synthetic GeoDataFrames so the logic can
+    be exercised without a full CEA scenario. Coordinates are chosen on an
+    integer grid to keep the topology easy to reason about.
+    """
+
+    CRS = 'EPSG:32632'
+
+    def _build_network(self, include_plant=False):
+        """Build a small linear trunk network:
+
+            B001 — J1 — J2 — J3 — J4 — B004
+                        |    |
+                       B002 B003
+
+        Optionally attaches a plant node P1 via its own pipe off J2.
+
+        Returns (nodes_gdf, edges_gdf). Nodes carry the CEA full format
+        columns (building, name, type).
+        """
+        node_records = [
+            ('B001',  'N0', 'CONSUMER', Point(0.0, 0.0)),
+            ('NONE',  'J1', 'NONE',     Point(10.0, 0.0)),
+            ('NONE',  'J2', 'NONE',     Point(20.0, 0.0)),
+            ('NONE',  'J3', 'NONE',     Point(30.0, 0.0)),
+            ('NONE',  'J4', 'NONE',     Point(40.0, 0.0)),
+            ('B004',  'N4', 'CONSUMER', Point(50.0, 0.0)),
+            ('B002',  'N2', 'CONSUMER', Point(20.0, 10.0)),
+            ('B003',  'N3', 'CONSUMER', Point(30.0, 10.0)),
+        ]
+        if include_plant:
+            node_records.append(('NONE', 'P1', 'PLANT', Point(20.0, -10.0)))
+
+        nodes_gdf = gpd.GeoDataFrame(
+            [{'building': b, 'name': n, 'type': t, 'geometry': g}
+             for b, n, t, g in node_records],
+            crs=self.CRS,
+        )
+
+        edge_lines = [
+            LineString([(0.0, 0.0), (10.0, 0.0)]),    # B001—J1
+            LineString([(10.0, 0.0), (20.0, 0.0)]),   # J1—J2
+            LineString([(20.0, 0.0), (30.0, 0.0)]),   # J2—J3
+            LineString([(30.0, 0.0), (40.0, 0.0)]),   # J3—J4
+            LineString([(40.0, 0.0), (50.0, 0.0)]),   # J4—B004
+            LineString([(20.0, 0.0), (20.0, 10.0)]),  # J2—B002
+            LineString([(30.0, 0.0), (30.0, 10.0)]),  # J3—B003
+        ]
+        if include_plant:
+            edge_lines.append(LineString([(20.0, 0.0), (20.0, -10.0)]))  # J2—P1
+
+        edges_gdf = gpd.GeoDataFrame(
+            [{'name': f'P{i}', 'type_mat': 'steel', 'geometry': g}
+             for i, g in enumerate(edge_lines)],
+            crs=self.CRS,
+        )
+        return nodes_gdf, edges_gdf
+
+    def _buildings_in(self, nodes_gdf):
+        return set(
+            nodes_gdf[nodes_gdf['building'].fillna('NONE') != 'NONE']['building']
+        ) - {'NONE'}
+
+    def _junction_names_in(self, nodes_gdf):
+        return set(nodes_gdf[nodes_gdf['type'] == 'NONE']['name'])
+
+    def test_filter_removes_leaf_building_and_its_stub(self):
+        """Filtering out a leaf building must also drop its terminal pipe."""
+        nodes_gdf, edges_gdf = self._build_network()
+        original_edges = len(edges_gdf)
+
+        keep = ['B001', 'B002', 'B003', 'B004']  # drop nothing
+        out_nodes, out_edges = filter_network_to_buildings(nodes_gdf, edges_gdf, keep)
+        assert self._buildings_in(out_nodes) == {'B001', 'B002', 'B003', 'B004'}
+        assert len(out_edges) == original_edges
+
+        # Now drop B002 — its terminal pipe J2—B002 should be gone.
+        keep = ['B001', 'B003', 'B004']
+        out_nodes, out_edges = filter_network_to_buildings(nodes_gdf, edges_gdf, keep)
+        assert self._buildings_in(out_nodes) == {'B001', 'B003', 'B004'}
+        assert len(out_edges) == original_edges - 1  # only B002's pipe dropped
+        # J2 is still a trunk junction, must survive
+        assert 'J2' in self._junction_names_in(out_nodes)
+
+    def test_filter_preserves_isolated_plant(self, capsys):
+        """Plant nodes and their pipes must survive filtering."""
+        nodes_gdf, edges_gdf = self._build_network(include_plant=True)
+
+        # Drop every consumer — the plant should still be there with its pipe.
+        keep = ['B001']  # keep one consumer so filter has at least one terminal
+        out_nodes, out_edges = filter_network_to_buildings(nodes_gdf, edges_gdf, keep)
+
+        assert 'P1' in out_nodes['name'].values
+        # Plant pipe J2—P1 must survive
+        plant_coord = (20.0, -10.0)
+        j2_coord = (20.0, 0.0)
+        has_plant_pipe = any(
+            {tuple(g.coords[0]), tuple(g.coords[-1])} == {plant_coord, j2_coord}
+            for g in out_edges.geometry
+        )
+        assert has_plant_pipe, "Plant pipe was pruned by filter"
+
+    def test_filter_removing_middle_building_drops_spur(self):
+        """Filtering out B003 must drop its spur pipe J3—B003."""
+        nodes_gdf, edges_gdf = self._build_network()
+        original_edges = len(edges_gdf)
+
+        keep = ['B001', 'B002', 'B004']
+        out_nodes, out_edges = filter_network_to_buildings(nodes_gdf, edges_gdf, keep)
+        assert self._buildings_in(out_nodes) == {'B001', 'B002', 'B004'}
+        assert len(out_edges) == original_edges - 1
+        # Trunk junctions must all survive
+        for jn in ('J1', 'J2', 'J3', 'J4'):
+            assert jn in self._junction_names_in(out_nodes)
+
+    def test_prune_dangling_stubs_protects_listed_coords(self):
+        """Helper should not prune nodes whose coords are in protected_coords."""
+        # Build a minimal graph with a single trunk + stub
+        nodes = gpd.GeoDataFrame(
+            [
+                {'building': 'B1', 'name': 'A', 'type': 'CONSUMER',
+                 'geometry': Point(0.0, 0.0)},
+                {'building': 'NONE', 'name': 'J', 'type': 'NONE',
+                 'geometry': Point(5.0, 0.0)},
+                {'building': 'NONE', 'name': 'STUB', 'type': 'NONE',
+                 'geometry': Point(5.0, 5.0)},
+            ],
+            crs=self.CRS,
+        )
+        edges = gpd.GeoDataFrame(
+            [
+                {'name': 'E1', 'geometry': LineString([(0.0, 0.0), (5.0, 0.0)])},
+                {'name': 'E2', 'geometry': LineString([(5.0, 0.0), (5.0, 5.0)])},
+            ],
+            crs=self.CRS,
+        )
+        # Protect only the consumer terminal → J and STUB are unprotected,
+        # so the degree-1 STUB gets pruned first, then J becomes degree-1
+        # and it too gets pruned (leaving only A).
+        protected = {(0.0, 0.0)}
+        out_nodes, out_edges = _prune_dangling_stubs(nodes, edges, protected)
+        assert set(out_nodes['name']) == {'A'}
+        assert len(out_edges) == 0
 
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ Import & Export:
     description: This Feature generates .csv files containing CEA results by building(s), time period(s), and metric(s).
     interfaces: [cli, dashboard]
     module: cea.import_export.result_summary
-    parameters: ['general:scenario', result-summary, plots-building-filter]
+    parameters: ['general:scenario', result-summary, plots-include-plants-buildings, plots-building-filter]
     input-files:
       - [get_zone_geometry]
 
@@ -273,7 +273,7 @@ Thermal Network Design:
     description: |
       This Feature solves the thermal hydraulic network based on the thermal network's piping layout (multiple-phase) created by Feature Thermal Network Part I (layout), using [WNTR](https://usepa.github.io/WNTR) (Water Network Tool for Resilience), an [EPANET](https://www.epa.gov/water-research/epanet) compatible hydraulic simulator.
     interfaces: [cli, dashboard]
-    module: cea.technologies.thermal_network.simplified.main
+    module: cea.technologies.thermal_network.simplified.main_multi_phase
     parameters: ['general:scenario', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network-phasing', 'thermal-network',
                  'thermal-network-simplified']
@@ -301,7 +301,7 @@ Thermal Network Design:
 
 Life Cycle Analysis:
   - name: final-energy
-    label: Energy by Carrier
+    label: Energy by Carrier [BETA]
     short_description: Calculate final energy consumption by carrier type
     description: |
       This feature calculates final energy consumption for each building by energy carrier. **Final energy** is the energy delivered to the building meter (electricity, natural gas, district heating/cooling, etc.),
@@ -312,6 +312,14 @@ Life Cycle Analysis:
       - Applies supply system configurations from Building Properties/Supply or What-if Settings
       - Calculates conversion losses based on system efficiencies (boilers, heat pumps, chillers, etc.)
       - Outputs energy consumption by energy carrier: GRID (electricity), NG (natural gas), DH (district heating), DC (district cooling), WOOD, OIL, COAL, SOLAR (thermal), PV (electricity), etc.
+
+      **Solar hot water (SC / PVT as primary)**: when a building's hot-water supply assembly lists SC (solar collector) or PVT (PV-thermal hybrid) as the primary component, the thermal output is dispatched hourly against DHW demand through a single hot-water tank, with the secondary component (a BO or HP) covering any shortfall.
+
+      - Solar thermal capacity is the sum of all SC and/or PVT panels configured for the building under `solar-technology:buildings`. If the assembly wants SC/PVT but no panels are configured, the run fails early with a clear error.
+      - Tank capacity defaults to 50 L per m² of installed SC/PVT aperture; standing loss defaults to 2%/hour; pump parasitic defaults to 2% of useful thermal output (charged to `E_sys_GRID`).
+      - Tank starts cold at hour 0 — the first simulated day acts as a warm-up; multi-year analyses are unaffected.
+      - Surplus beyond tank capacity is dumped (no inter-service crediting to space heating).
+      - Dispatched thermal appears as `Qww_sys_SOLAR_kWh` on the per-building hourly file. The legacy `SC_Q_offset` / `PVT_Q_offset` columns are suppressed for these buildings to avoid double counting. The PVT electrical side still flows through the existing PV_E / PVT_E offset mechanism.
 
       **Outputs**: Hourly and annual energy consumption for each building and total scenario consumption by energy carrier.
 
@@ -329,7 +337,7 @@ Life Cycle Analysis:
       - [ get_db4_components_conversion_folder ]
 
   - name: emissions
-    label: GHG Emissions
+    label: GHG Emissions [BETA]
     short_description: Calculate embodied and operational GHG emissions from final energy
     description: |
       This Feature calculates lifecycle GHG emissions for each building.
@@ -380,7 +388,7 @@ Life Cycle Analysis:
 #      - [get_building_supply]
 
   - name: system-costs
-    label: Costs
+    label: Costs [BETA]
     short_description: Calculate detailed costs for base case supply systems
     description: |
       This feature calculates costs for baseline supply systems using detailed
@@ -403,7 +411,7 @@ Life Cycle Analysis:
       - [get_analysis_configuration_file, 'what-ifs:what-if-name']
 
   - name: anthropogenic-heat
-    label: Heat Rejection
+    label: Heat Rejection [BETA]
     short_description: Calculate heat rejection to the environment from energy systems
     description: |
       This feature calculates anthropogenic heat emissions (heat rejection) from
@@ -591,7 +599,7 @@ Utilities:
     label: Batch Process Workflow
     short_description: Batch process scenarios using configured workflow
     description: This Feature batch processes selected Scenario(s) using the user-configured workflow.
-    interfaces: [ cli, dashboard ]
+    interfaces: [ cli ]
     module: cea.utilities.batch_process_workflow
     parameters: ['general:scenario', batch-process-workflow]
 
@@ -832,10 +840,10 @@ Visualisation:
   - name: plot-final-energy
     label: Plot - Energy by Carrier
     short_description: Plot bar chart of final energy consumption by energy carrier
-    description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (electricity grid, natural gas, district heating, etc.)
+    description: Plots bar chart of final energy results from the Final Energy Analysis, broken down by energy carrier (grid electricity, natural gas, district heating, etc.)
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-final-energy, plots-building-filter]
+    parameters: ['general:scenario', plots-general, plots-include-plants-buildings, plots-final-energy, plots-building-filter]
     input-files:
       - [get_final_energy_buildings_file, 'plots-final-energy:what-if-name']
       - [get_building_architecture]
@@ -858,7 +866,7 @@ Visualisation:
     description: This Feature plots bar chart of the results of anthropogenic heat rejection analysis
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-heat-rejection, plots-building-filter]
+    parameters: ['general:scenario', plots-general, plots-include-plants-buildings, plots-heat-rejection, plots-building-filter]
     input-files:
       - [get_heat_rejection_whatif_buildings_file, 'plots-heat-rejection:what-if-name']
       - [get_zone_geometry]
@@ -869,7 +877,7 @@ Visualisation:
     description: This Feature plots bar chart of the results of lifecycle emissions
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-lifecycle-emissions, plots-building-filter]
+    parameters: ['general:scenario', plots-general, plots-include-plants-buildings, plots-lifecycle-emissions, plots-building-filter]
     input-files:
       - [get_emissions_whatif_buildings_file, 'plots-lifecycle-emissions:what-if-name']
       - [get_building_architecture]
@@ -896,14 +904,13 @@ Visualisation:
       - [get_building_architecture]
       - [get_zone_geometry]
 
-
   - name: plot-operational-emissions
     label: Plot - Operational Emissions
     short_description: Plot bar chart of building operational emissions
     description: This Feature plots bar chart of the results of operational emissions
     interfaces: [cli, dashboard]
     module: cea.visualisation.plot_main
-    parameters: ['general:scenario', plots-general, plots-operational-emissions, plots-building-filter]
+    parameters: ['general:scenario', plots-general, plots-include-plants-buildings, plots-operational-emissions, plots-building-filter]
     input-files:
       - [get_emissions_whatif_buildings_file, 'plots-operational-emissions:what-if-name']
       - [get_building_architecture]
@@ -944,19 +951,19 @@ Visualisation:
   - name: plot-cost-breakdown
     label: Plot - Cost Breakdown
     short_description: Plot cost breakdown for energy supply systems
-    description: This Feature plots cost breakdown for energy supply systems. Supports both baseline costs and what-if scenario costs.
+    description: This Feature plots cost breakdown for energy supply systems. Supports both baseline costs and what-if scenario costs. Note that CAPEX reflects the initial investment only and does not include later replacement costs.
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.cost_breakdown
     parameters: ['general:scenario',
                  plots-general,
                  plots-cost-breakdown]
     input-files:
-      - [get_baseline_costs_detailed]
+      - [get_costs_whatif_components_file, 'plots-cost-breakdown:what-if-name']
 
   - name: plot-cost-sankey
     label: Plot - System Cost Sankey
     short_description: Sankey diagram of system costs by carrier, service and cost category
-    description: Visualises what-if scenario system costs as a Sankey diagram flowing from energy carrier to service to cost category (CAPEX/OPEX).
+    description: Visualises what-if scenario system costs as a Sankey diagram flowing from energy carrier to service to cost category (CAPEX/OPEX). Note that CAPEX reflects the initial investment only and does not include later replacement costs.
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.cost_sankey
     parameters: ['general:scenario',

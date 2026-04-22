@@ -274,14 +274,24 @@ Common solar collector categories in the database:
 3. Run analysis
 
 ### Output Files
-For each building `BXXX`:
+For each building `BXXX`, one file **per panel type**:
 
-**SC results**: `{scenario}/outputs/data/potentials/solar/BXXX_SC.csv`
-- Hourly heat generation (kWh_th)
-- Collector temperatures
-- Efficiency values
+**SC results**: `{scenario}/outputs/data/potentials/solar/SC/BXXX_FP.csv` (flat plate) or `BXXX_ET.csv` (evacuated tube)
 
-**SC metadata**: Panel locations, installed area, annual yields
+Each file contains hourly columns **per configured surface**, plus a per-building aggregate:
+
+| Column pattern | Description |
+|---|---|
+| `SC_{type}_roofs_top_Q_kWh`, `SC_{type}_walls_{north,south,east,west}_Q_kWh` | Hourly heat generation per surface (kWh_th) |
+| `SC_{type}_{surface}_m2` | Aperture area per surface (m²) |
+| `Q_SC_gen_kWh` | Aggregate hourly heat across all simulated surfaces |
+| `radiation_kWh` | Aggregate incident radiation on collectors |
+| `T_SC_sup_C`, `T_SC_re_C` | Collector supply / return temperatures |
+| `Eaux_SC_kWh` | Hourly pump parasitic |
+
+**Scenario totals**: `{scenario}/outputs/data/potentials/solar/SC_FP_total_buildings.csv` and `SC_ET_total_buildings.csv` — per-building aggregates.
+
+> **Per-surface accounting (important)**: Downstream consumers (the SC-DHW dispatch and the cost calculator) sum **only the `(surface, panel_type)` pairs actually assigned** in the per-building solar config — not the full-panel-type aggregate `Q_SC_gen_kWh` / `area_SC_m2`. This matters when `cea solar-collector` is run with more surfaces enabled than the final configuration uses (the aggregate would over-state the installed aperture by 2-3× for typical mixed roof+wall setups).
 
 ### Understanding SC Results
 
@@ -300,6 +310,21 @@ Typical specific yields (kWh/m²/yr of collector area):
 - **Leave room for PV**: Solar collectors need ~30-50% of roof
 - **Consider seasonality**: SC output peaks in summer when heating demand is low
 - **Size for summer loads**: Often sized for DHW, not space heating
+
+### Use SC as the DHW primary
+
+Flat-plate (`SC1`) and evacuated-tube (`SC2`) collectors can be wired as the
+**primary component of the hot-water supply assembly**. The Final Energy
+feature then dispatches hourly solar heat into a storage tank and falls back
+to a boiler/heat-pump backup when the tank can't meet demand. Evacuated-tube
+(`SC2`, T_in ≈ 75 °C) outperforms flat-plate (`SC1`, T_in ≈ 60 °C) for DHW
+because of lower losses at the setpoint.
+
+**PVT cannot** be a DHW primary — its ~35 °C collector temperature is below
+the 60 °C DHW setpoint, so it continues to offset space heating via the
+legacy thermal-offset path.
+
+See [Final Energy → Solar-thermal DHW dispatch](06-1-final-energy.md#solar-thermal-dhw-dispatch-sc-primary) for the tank model, required backup, and the diagnostic output columns.
 
 ---
 

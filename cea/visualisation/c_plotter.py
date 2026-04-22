@@ -3,6 +3,8 @@ PlotManager – Generates the Plotly graph
 
 """
 
+import os
+
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB, get_column_color
 from cea.visualisation.b_data_processor import x_to_plot_building
 from cea.import_export.result_summary import month_names, season_names
@@ -21,17 +23,20 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_display_name_for_column(column_name, y_metric_to_plot):
+def get_display_name_for_column(column_name, y_metric_to_plot, final_energy_carriers=None):
     """
     Map a processed column name back to its user-friendly display name.
-    
+
     For solar features, columns like 'PV_roofs_top_E_kWh/m2' should map to 'roof',
     'PVT_ET_roofs_top_E_kWh/m2' should map to 'roof (electricity)', etc.
-    
+
     Parameters:
     - column_name (str): The processed column name (e.g., 'PV_roofs_top_E_kWh/m2')
     - y_metric_to_plot (list): List of user-friendly names (e.g., ['roof', 'wall_north'])
-    
+    - final_energy_carriers (iterable, optional): Carrier codes from the
+      scenario's ``ENERGY_CARRIERS.csv`` (e.g. ``{'GRID', 'NATURALGAS'}``).
+      When provided, ``GRID_kWh`` → ``'GRID'``.
+
     Returns:
     - str: The user-friendly display name or the column name if no mapping found
     """
@@ -42,48 +47,67 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
     if column_name.endswith('_m2'):
         return f"{column_name} (Area)"
     
-    # Demand metric display names (check base column name for normalized versions)
+    # Demand metric display names (match base name before unit suffix)
     demand_display_names = {
-        'E_sys_kWh': 'Electricity',
-        'Qcs_sys_kWh': 'Space Cooling',
-        'Qhs_sys_kWh': 'Space Heating',
-        'Qww_sys_kWh': 'Domestic Hot Water',
-        'QC_sys_kWh': 'Total Cooling',
-        'QH_sys_kWh': 'Total Heating',
+        'E_sys': 'Electricity (building)',
+        'Qcs_sys': 'Space Cooling (building)',
+        'Qhs_sys': 'Space Heating (building)',
+        'Qww_sys': 'Domestic Hot Water (building)',
     }
 
-    # Check if this is a demand column (including normalized versions like E_sys_kWh/m2)
-    for cea_col, display_name in demand_display_names.items():
-        if column_name.startswith(cea_col):
+    # Lifecycle / operational emission display names
+    emission_display_names = {
+        'operation_E_sys': 'Electricity (building)',
+        'operation_Qcs_sys': 'Space Cooling (building)',
+        'operation_Qhs_sys': 'Space Heating (building)',
+        'operation_Qww_sys': 'Domestic Hot Water (building)',
+        'operation_DH': 'District Heating (district, including pumping)',
+        'operation_DC': 'District Cooling (district, including pumping)',
+        'production': 'Production (building)',
+        'biogenic': 'Biogenic (building)',
+        'demolition': 'Demolition (building)',
+        'PV_E_offset': 'PV Offset (building)',
+        'PVT_E_offset': 'PVT Electric Offset (building)',
+        'PVT_Q_offset': 'PVT Thermal Offset (building)',
+        'SC_Q_offset': 'SC Thermal Offset (building)',
+    }
+    for base, display_name in emission_display_names.items():
+        if column_name.startswith(base):
             return display_name
 
-    # Final energy carrier display names
-    final_energy_display_names = {
-        'GRID_kWh': 'Grid Electricity',
-        'NATURALGAS_kWh': 'Natural Gas',
-        'DH_kWh': 'District Heating',
-        'DC_kWh': 'District Cooling',
-        'OIL_kWh': 'Oil',
-        'COAL_kWh': 'Coal',
-        'WOOD_kWh': 'Wood',
-    }
-    for cea_col, display_name in final_energy_display_names.items():
-        if column_name.startswith(cea_col):
+    for base, display_name in demand_display_names.items():
+        if column_name.startswith(base):
             return display_name
+
+    # Heat rejection display names
+    heat_rejection_display_names = {
+        'heat_rejection': 'Heat Rejection',
+    }
+    for base, display_name in heat_rejection_display_names.items():
+        if column_name.startswith(base):
+            return display_name
+
+    # Final energy: legend shows the carrier code itself. Match the longest
+    # prefix first so codes that share a prefix (e.g. ``DRYBIOMASS`` vs a
+    # hypothetical ``BIOMASS``) don't alias each other.
+    if final_energy_carriers:
+        for base in sorted(final_energy_carriers, key=len, reverse=True):
+            if column_name.startswith(base + '_'):
+                return base
 
     # Solar surface mapping
     surface_mappings = {
-        'roofs_top': 'roofs_top',
-        'walls_north': 'walls_north',
-        'walls_east': 'walls_east',
-        'walls_south': 'walls_south',
-        'walls_west': 'walls_west',
-        'total': 'total'
+        'roofs_top': 'Roof Top',
+        'walls_north': 'North Wall',
+        'walls_east': 'East Wall',
+        'walls_south': 'South Wall',
+        'walls_west': 'West Wall',
+        'total': 'Total'
     }
 
     # Check each surface mapping
     for col_pattern, user_name in surface_mappings.items():
-        if col_pattern in column_name and user_name in y_metric_to_plot:
+        if col_pattern in column_name and col_pattern in y_metric_to_plot:
             # For PVT columns, distinguish between electricity (E) and heat (Q)
             if 'PVT' in column_name:
                 if '_E_' in column_name:
@@ -103,12 +127,15 @@ def get_display_name_for_column(column_name, y_metric_to_plot):
 class bar_plot:
     """Generates a Plotly bar plot from processed data."""
 
-    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
+    def __init__(self, plot_config, plot_config_general, dataframe, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None, scenario=None, whatif_names=None):
 
         # Get the dataframe prepared by the data processor, including Y(s), X, and X_facet
         self.df = dataframe
         self.plot_cea_feature = plot_cea_feature
         self.hide_title = hide_title
+        self.lifecycle_year_range = lifecycle_year_range
+        self.scenario = scenario
+        self.whatif_names = whatif_names or []
 
         # Get the settings for the format
         self.plot_title = plot_config_general.plot_title
@@ -139,6 +166,19 @@ class bar_plot:
         self.x_sorted_reversed = plot_config_general.x_sorted_reversed
         self.x_label = plot_config_general.x_label
 
+        # For final-energy plots, resolve the scenario's carrier codes once
+        # so the legend matches ``{carrier}_kWh`` columns back to the same
+        # code the user picked in the dropdown.
+        self.final_energy_carriers = []
+        if plot_cea_feature == 'final-energy' and scenario:
+            import cea.inputlocator
+            from cea.technologies.energy_carriers import available_carriers
+            locator = cea.inputlocator.InputLocator(scenario)
+            try:
+                self.final_energy_carriers = sorted(available_carriers(locator))
+            except Exception:
+                pass
+
         if plot_cea_feature in ('pv', 'sc'):
             self.appendix = f"{solar_panel_types_list[0]}"
         elif plot_cea_feature == 'pvt':
@@ -163,13 +203,18 @@ class bar_plot:
         if self.y_barmode == 'stack_percentage':
             df = convert_to_percent_stacked(self.df, self.y_columns_normalised)
         else:
-            df = self.df
+            df = self.df.copy()
+
+        # Fill NaN in value columns with 0 to prevent Plotly relative barmode
+        # stacking issues (NaN disrupts the stacking calculation)
+        df[self.y_columns_normalised] = df[self.y_columns_normalised].fillna(0)
 
         # Create bar chart
         fig = plot_faceted_bars(df, x_col='X', facet_col='X_facet', value_columns=self.y_columns_normalised,
                                 y_metric_to_plot=self.y_metric_to_plot, bool_use_rows=self.facet_by_rows,
                                 number_of_rows_or_columns=self.facet_by_numbers_wrapped,
-                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step, barmode=self.y_barmode)
+                                y_max=self.y_max, y_min=self.y_min, y_step=self.y_step, barmode=self.y_barmode,
+                                final_energy_carriers=self.final_energy_carriers)
 
         # Position legend below
         fig = position_legend_between_title_and_graph(fig, self.plot_cea_feature)
@@ -190,7 +235,10 @@ class bar_plot:
             elif plot_cea_feature == 'sc':
                 title = "CEA-4 Solar Collectors (SC): {panel_type}".format(panel_type=self.appendix)
             elif plot_cea_feature == 'lifecycle-emissions':
-                title = "CEA-4 Lifecycle Emissions"
+                if self.lifecycle_year_range:
+                    title = f"CEA-4 Lifecycle Emissions ({self.lifecycle_year_range[0]} - {self.lifecycle_year_range[1]})"
+                else:
+                    title = "CEA-4 Lifecycle Emissions"
             elif plot_cea_feature == 'operational-emissions':
                 title = "CEA-4 Operational Emissions"
             elif plot_cea_feature == 'heat-rejection':
@@ -306,23 +354,23 @@ class bar_plot:
             
             elif plot_cea_feature == 'lifecycle-emissions':
                 if self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Lifecycle Emissions (tonnes CO2e/yr)"
+                    y_label = "Lifecycle Emissions (tonnes CO2e)"
                 elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Lifecycle Emissions per Conditioned Floor Area (tonnes CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (tonnes CO2e/m2)"
                 elif self.y_metric_unit == 'tonCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Lifecycle Emissions per Gross Floor Area (tonnes CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (tonnes CO2e/m2)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Lifecycle Emissions per Conditioned Floor Area (kg CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (kg CO2e/m2)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Lifecycle Emissions (kg CO2e/yr)"
+                    y_label = "Lifecycle Emissions (kg CO2e)"
                 elif self.y_metric_unit == 'kgCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Lifecycle Emissions per Gross Floor Area (kg CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (kg CO2e/m2)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'conditioned_floor_area':
-                    y_label = "Lifecycle Emissions per Conditioned Floor Area (g CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Conditioned Floor Area (g CO2e/m2)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'no_normalisation':
-                    y_label = "Lifecycle Emissions (g CO2e/yr)"
+                    y_label = "Lifecycle Emissions (g CO2e)"
                 elif self.y_metric_unit == 'gCO2e' and self.y_normalised_by == 'gross_floor_area':
-                    y_label = "Lifecycle Emissions per Gross Floor Area (g CO2e/yr/m2)"
+                    y_label = "Lifecycle Emissions per Gross Floor Area (g CO2e/m2)"
                 else:
                     raise ValueError(f"Invalid y-metric-unit: {self.y_metric_unit}")
             
@@ -423,21 +471,39 @@ class bar_plot:
             barmode = self.y_barmode
 
         # About title and bar mode - hide title if requested
+        _SORTED_BY_DISPLAY = {
+            'default': 'total value',
+            'building_name': 'building name',
+            'construction_year': 'construction year',
+            'gross_floor_area': 'gross floor area',
+            'conditioned_floor_area': 'conditioned floor area',
+            'roof_area': 'roof area',
+        }
         if not self.hide_title:
+            # Build subtitle: scenario name + what-if name(s)
+            scenario_name = os.path.basename(self.scenario) if self.scenario else ''
+            whatif_label = ', '.join(self.whatif_names) if self.whatif_names else ''
+            subtitle_parts = [title]
+            if scenario_name:
+                subtitle_parts.append(scenario_name)
+            if whatif_label:
+                subtitle_parts.append(whatif_label)
+            subtitle = ' | '.join(subtitle_parts)
+
+            sort_display = _SORTED_BY_DISPLAY.get(self.x_sorted_by, self.x_sorted_by)
             if self.x_to_plot in x_to_plot_building and not self.x_sorted_reversed:
-                title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (low to high)</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (low to high)</b><br><sub>{subtitle}</sub>"
             elif self.x_to_plot in x_to_plot_building and self.x_sorted_reversed:
-                title = f"<b>{y_label} by {x_label}, sorted by {self.x_sorted_by} (high to low)</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}, sorted by {sort_display} (high to low)</b><br><sub>{subtitle}</sub>"
             else:
-                title = f"<b>{y_label} by {x_label}</b><br><sub>{title}</sub>"
+                title = f"<b>{y_label} by {x_label}</b><br><sub>{subtitle}</sub>"
             fig.update_layout(
                 title=dict(
                     text=title,
                     x=0,
-                    y=0.98,
                     xanchor='left',
                     yanchor='top',
-                    font=dict(size=20)  # Optional: adjust size, color, etc.
+                    font=dict(size=20),
                 ),
                 barmode=barmode
             )
@@ -450,6 +516,7 @@ class bar_plot:
             plot_bgcolor=COLOURS_TO_RGB.get('background_grey'),
             paper_bgcolor="white",
             autosize=True,
+            margin=dict(t=80),
         )
 
         # About the grid color and bar gaps
@@ -557,7 +624,8 @@ def plot_faceted_bars(
     y_min=None,
     y_max=None,
     y_step=None,
-    barmode="group"):
+    barmode="group",
+    final_energy_carriers=None):
 
     season_display_names = {
         'Spring': "<b>Spring</b> (Mar - May)",
@@ -592,13 +660,29 @@ def plot_faceted_bars(
             cols = number_of_rows_or_columns
             rows = ceil(num_facets / cols)
 
+        # Scale vertical spacing based on x-axis label type
+        has_numeric_labels = df[x_col].str.match(r'^[HD]_\d').any()
+        has_month_labels = df[x_col].isin(month_names).all()
+        has_building_labels = not has_numeric_labels and not has_month_labels
+        # Plotly vertical_spacing is a fraction of TOTAL figure height, not per-gap.
+        # With many rows, a fixed fraction wastes most of the height on spacing.
+        # Building names need most gap; month text needs moderate; numeric ticks need least.
+        if has_building_labels:
+            gap_px, row_px = 150, 250
+        elif has_month_labels:
+            gap_px, row_px = 120, 220
+        else:
+            gap_px, row_px = 80, 220
+        total_px = rows * row_px + max(rows - 1, 0) * gap_px
+        v_spacing = (gap_px / total_px) if rows > 1 else 0.1
+
         fig = make_subplots(
             rows=rows,
             cols=cols,
             subplot_titles=[""] * num_facets,
             shared_yaxes=True,
             horizontal_spacing=0.01,
-            vertical_spacing=0.18  # Increased from 0.125 to prevent overlap between rows
+            vertical_spacing=v_spacing
         )
 
         for i, facet in enumerate(facets):
@@ -627,14 +711,22 @@ def plot_faceted_bars(
                 facet_df = facet_df.sort_values("__sort")
 
             else:
-                facet_df = facet_df.sort_values(by=x_col)
+                # Building names: preserve sort order from sort_df_by_sorting_key
+                pass
+
+            # Enforce pre-sorted x-axis order on the subplot
+            x_order = list(facet_df[x_col].unique())
+            subplot_index = (row - 1) * cols + col
+            xaxis_key = f'xaxis{"" if subplot_index == 1 else subplot_index}'
+            fig.layout[xaxis_key].categoryorder = 'array'
+            fig.layout[xaxis_key].categoryarray = x_order
 
             if barmode == 'stack' or barmode == 'relative' or barmode == 'stack_percentage':
                 # For stacked mode with positive and negative values:
                 # Use barmode='relative' to stack bars relative to zero
                 # This keeps positive bars above axis, negative below, in same position
                 for j, val_col in enumerate(value_columns):
-                    heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                     color_key = get_column_color(val_col)
                     bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -645,14 +737,14 @@ def plot_faceted_bars(
                         'legendgroup': heading,
                         'showlegend': (i == 0),
                         'marker': dict(color=bar_color, line=dict(width=0)),
-                        'width': min(0.4, max(0.1, 200/len(facet_df))),
+                        'width': min(0.4, max(0.1, 200/max(1, len(facet_df)))),
                     }
 
                     fig.add_trace(go.Bar(**bar_params), row=row, col=col)
             else:
                 # Grouped mode - original logic
                 for j, val_col in enumerate(value_columns):
-                    heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                    heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                     color_key = get_column_color(val_col)
                     bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -667,24 +759,17 @@ def plot_faceted_bars(
                     }
                     fig.add_trace(go.Bar(**bar_params), row=row, col=col)
 
-        # Set subplot vertical domains
-        available_height = 0.88  # Use more vertical space since legend is below
-        row_spacing = 0.18  # Increased from 0.125 to prevent overlap between rows
-        total_spacing = row_spacing * (rows - 1)
-        row_height = (available_height - total_spacing) / rows
-
-        for r in range(1, rows + 1):
-            row_bottom = 0.05 + (rows - r) * (row_height + row_spacing)
-            row_top = row_bottom + row_height
-
-            for c in range(1, cols + 1):
-                subplot_index = (r - 1) * cols + c
-                if subplot_index > len(facets):
-                    continue
-
-                yaxis_name = f'yaxis{"" if subplot_index == 1 else subplot_index}'
-                if yaxis_name in fig.layout:
-                    fig.layout[yaxis_name].domain = [row_bottom, row_top]
+        # Rescale subplot domains to leave room at top for the main title.
+        # Plotly make_subplots distributes rows across [0, 1]; we compress
+        # them into [0, top_limit] so the first row doesn't collide with the title.
+        top_limit = 0.92
+        for i in range(len(facets)):
+            subplot_index = i + 1
+            xaxis_key = f'xaxis{"" if subplot_index == 1 else subplot_index}'
+            yaxis_key = f'yaxis{"" if subplot_index == 1 else subplot_index}'
+            if yaxis_key in fig.layout:
+                old = fig.layout[yaxis_key].domain
+                fig.layout[yaxis_key].domain = [old[0] * top_limit, old[1] * top_limit]
 
         # Custom subplot titles
         annotations = []
@@ -703,7 +788,7 @@ def plot_faceted_bars(
                 xref='paper',
                 yref='paper',
                 x=x_dom[0],
-                y=y_dom[1] + 0.01,
+                y=y_dom[1] + 0.005,
                 xanchor='left',
                 yanchor='bottom',
                 showarrow=False
@@ -711,16 +796,22 @@ def plot_faceted_bars(
 
         fig.update_layout(annotations=annotations)
 
+        # Figure height matches the pixel-based spacing computation above
+        fig.update_layout(height=max(450, total_px), margin=dict(t=100))
+
     else:
         # No faceting
         fig = go.Figure()
+
+        # Preserve pre-sorted x-axis order (e.g. from sort_df_by_sorting_key)
+        x_order = list(df[x_col].unique())
 
         if barmode == 'stack' or barmode == 'relative' or barmode == 'stack_percentage':
             # For stacked mode with positive and negative values:
             # Use barmode='relative' to stack bars relative to zero
             # This keeps positive bars above axis, negative below, in same position
             for j, val_col in enumerate(value_columns):
-                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                 color_key = get_column_color(val_col)
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -729,15 +820,16 @@ def plot_faceted_bars(
                     'y': df[val_col],
                     'name': heading,
                     'legendgroup': heading,
+                    'showlegend': True,
                     'marker': dict(color=bar_color, line=dict(width=0)),
-                    'width': min(0.25, max(0.1, 200/len(df))),
+                    'width': min(0.25, max(0.1, 200/max(1, len(df)))),
                 }
 
                 fig.add_trace(go.Bar(**bar_params))
         else:
             # Grouped mode - original logic
             for j, val_col in enumerate(value_columns):
-                heading = get_display_name_for_column(val_col, y_metric_to_plot)
+                heading = get_display_name_for_column(val_col, y_metric_to_plot, final_energy_carriers)
                 color_key = get_column_color(val_col)
                 bar_color = COLOURS_TO_RGB.get(color_key, "rgb(127,128,134)")
 
@@ -746,12 +838,16 @@ def plot_faceted_bars(
                     'y': df[val_col],
                     'name': heading,
                     'legendgroup': heading,
+                    'showlegend': True,
                     'marker': dict(color=bar_color, line=dict(width=0)),
                     'offsetgroup': j,
                 }
                 fig.add_trace(go.Bar(**bar_params))
 
-        fig.update_layout(yaxis=dict(domain=[0.05, 0.95]))  # Use more vertical space with legend below
+        fig.update_layout(
+            yaxis=dict(domain=[0.05, 0.95]),
+            xaxis=dict(categoryorder='array', categoryarray=x_order),
+        )
 
     # Y-Axis limits and tick steps
     if y_max is None:
@@ -830,11 +926,12 @@ def parse_plot_type(plot_type_str):
 
 
 # Main function
-def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False):
+def generate_fig(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title=False, lifecycle_year_range=None, scenario=None, whatif_names=None):
 
     if plot_config_general.plot_type.startswith("bar_plot"):
         # Instantiate the bar_plot class
-        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title)
+        plot_instance_c = bar_plot(plot_config, plot_config_general, df_to_plotly, list_y_columns, plot_cea_feature, solar_panel_types_list, hide_title,
+                                   lifecycle_year_range=lifecycle_year_range, scenario=scenario, whatif_names=whatif_names)
 
         # Generate the Plotly figure
         fig = plot_instance_c.generate_fig()

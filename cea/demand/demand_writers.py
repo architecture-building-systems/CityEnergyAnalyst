@@ -69,13 +69,11 @@ class DemandWriter(ABC):
         # Heating sensible/latent breakdown (technical debug data)
         'Qhs_sen_rc', 'Qhs_sen_shu', 'Qhs_sen_ahu', 'Qhs_sen_aru', 'Qhs_sen_sys',
         'Qhs_lat_ahu', 'Qhs_lat_aru', 'Qhs_lat_sys',
-        'Qhs_em_ls', 'Qhs_dis_ls', 'Qhs',
+        'Qhs_em_ls', 'Qhs_dis_ls',
         # Cooling sensible/latent breakdown (technical debug data)
         'Qcs_sen_rc', 'Qcs_sen_scu', 'Qcs_sen_ahu', 'Qcs_sen_aru',
         'Qcs_lat_ahu', 'Qcs_lat_aru', 'Qcs_sen_sys', 'Qcs_lat_sys',
-        'Qcs_em_ls', 'Qcs_dis_ls', 'Qcs',
-        # Hot water/refrigeration/data (technical debug data)
-        'Qww', 'Qcre', 'Qcdata',
+        'Qcs_em_ls', 'Qcs_dis_ls',
         # Note: Subsystem loads (Qhs_sys_*, Qcs_sys_*) moved to regular output
         # as they're required by thermal-network substation calculations
     }
@@ -212,45 +210,6 @@ class HourlyDemandWriter(DemandWriter):
         hourly_data.drop('name', inplace=True, axis=1)
         locator.ensure_parent_folder_exists(locator.get_demand_results_file(building_name, 'hdf'))
         hourly_data.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key='dataset')
-
-
-class MonthlyDemandWriter(DemandWriter):
-    """Write out the monthly demand results"""
-
-    def __init__(self, loads=None, massflows=None, temperatures=None, retain_technical_results=True):
-        super(MonthlyDemandWriter, self).__init__(loads, massflows, temperatures, retain_technical_results)
-        self.MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september',
-                       'october', 'november', 'december']
-
-    def write_to_csv(self, building_name, columns, hourly_data, locator):
-        # get monthly totals and rename to MWhyr
-        monthly_data_new = self.calc_monthly_dataframe(building_name, hourly_data)
-        locator.ensure_parent_folder_exists(locator.get_demand_results_file(building_name, 'csv'))
-        monthly_data_new.to_csv(locator.get_demand_results_file(building_name, 'csv'), index=False,
-                                float_format=FLOAT_FORMAT, na_rep='nan')
-
-    def write_to_hdf5(self, building_name, columns, hourly_data, locator):
-        # get monthly totals and rename to MWhyr
-        monthly_data_new = self.calc_monthly_dataframe(building_name, hourly_data)
-        monthly_data_new.to_hdf(locator.get_demand_results_file(building_name, 'hdf'), key=building_name)
-
-    def calc_monthly_dataframe(self, building_name, hourly_data):
-        monthly_data = hourly_data[[x + '_kWh' for x in self.load_vars]].groupby(
-            by=[hourly_data.index.month]).sum() / 1000
-
-        monthly_data = monthly_data.rename(
-            columns=dict((x + '_kWh', x + '_MWhyr') for x in self.load_vars))
-
-        peaks = hourly_data[[x + '_kWh' for x in self.load_vars]].groupby(
-            by=[hourly_data.index.month]).max()
-
-        peaks = peaks.rename(
-            columns=dict((x + '_kWh', x + '0_kW') for x in self.load_vars))
-        monthly_data_new = monthly_data.merge(peaks, left_index=True, right_index=True)
-        monthly_data_new['name'] = building_name
-        monthly_data_new['Month'] = self.MONTHS
-
-        return monthly_data_new
 
 
 def aggregate_results(locator, building_names):

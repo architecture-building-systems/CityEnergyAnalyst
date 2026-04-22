@@ -9,19 +9,25 @@ Two scenarios:
 2. Network selected: supply.csv must match connectivity.json exactly
 """
 
-import json
 import os
 
 import pandas as pd
 
 
-# Maps component code prefix → (CSV filename, temperature column).
-# Used to look up a component's design supply temperature.
-# Longer prefixes are checked first to avoid false matches.
-COMPONENT_SUPPLY_TEMP_MAP = {
-    'OEHR': ('COGENERATION_PLANTS', 'T_water_out_design'),
-    'BO':   ('BOILERS',             'T_water_out_rating'),
-    'HP':   ('HEAT_PUMPS',          'T_cond_design'),
+# Maps a component's CONVERSION table name → the column that holds its
+# design supply temperature. The table is resolved dynamically from the
+# component code via ``get_component_table`` (which scans every CSV in
+# COMPONENTS/CONVERSION/), so user-added codes under an existing table
+# are picked up without a code change.
+#
+# - DH (hot side): boilers, heat pumps, cogen plants.
+# - DC (cold side): the evaporator design temperature of a vapour-
+#   compression chiller.
+_TABLE_TO_SUPPLY_TEMP_COL = {
+    'COGENERATION_PLANTS':         'T_water_out_design',
+    'BOILERS':                     'T_water_out_rating',
+    'HEAT_PUMPS':                  'T_cond_design',
+    'VAPOR_COMPRESSION_CHILLERS':  'T_evap_design',
 }
 
 
@@ -247,7 +253,8 @@ def validate_network_mode(locator, network_name, config):
         validate_dc_consistency(connectivity['networks']['DC'], supply_df, scale_mapping)
 
     # Check for buildings in supply.csv with DISTRICT scale that aren't in connectivity.json
-    validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name)
+    validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name,
+                                           locator=locator)
 
     # Check that buildings with booster demand have a booster assembly configured
     if 'DH' in connectivity.get('networks', {}):
@@ -409,30 +416,62 @@ def validate_dc_consistency(dc_network, supply_df, scale_mapping):
         )
 
 
-def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name):
+def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name,
+                                             locator=None):
     """
     Check that no building in supply.csv has a DISTRICT-scale assembly
     without appearing in connectivity.json.
+
+    Buildings without any demand for the relevant service are reported as
+    warnings (validation skipped) rather than errors, since they produce
+    zero final-energy regardless of scale.
 
     :param connectivity: Dict from connectivity.json
     :param supply_df: DataFrame from supply.csv
     :param scale_mapping: Dict {assembly_code: scale}
     :param network_name: Network layout name (for error message)
-    :raises ValueError: If any building has DISTRICT scale but is not in the network
+    :param locator: InputLocator instance (optional; needed to read demand data)
+    :raises ValueError: If any building *with demand* has DISTRICT scale but is not in the network
     """
     # Collect all buildings connected to any network
     connected_dh = set(connectivity.get('networks', {}).get('DH', {}).get('per_building_services', {}).keys())
     connected_dc = set(connectivity.get('networks', {}).get('DC', {}).get('per_building_services', {}).keys())
 
+    # Load demand data to distinguish zero-demand buildings
+    demand_by_building = {}  # building → {'hs': float, 'dhw': float, 'cs': float}
+    if locator is not None:
+        try:
+            demand_df = pd.read_csv(locator.get_total_demand()).set_index('name')
+            for bldg in demand_df.index:
+                demand_by_building[bldg] = {
+                    'hs': demand_df.loc[bldg].get('Qhs_sys_MWhyr', 0.0),
+                    'dhw': demand_df.loc[bldg].get('Qww_sys_MWhyr', 0.0),
+                    'cs': demand_df.loc[bldg].get('Qcs_sys_MWhyr', 0.0),
+                }
+        except Exception:
+            pass  # If demand data unavailable, treat all as having demand (conservative)
+
+    # Map service columns to the demand key used for zero-demand check
     service_columns = {
-        'supply_type_hs':  ('DH', 'space heating'),
-        'supply_type_dhw': ('DH', 'domestic hot water'),
-        'supply_type_cs':  ('DC', 'space cooling'),
+        'supply_type_hs':  ('DH', 'space heating', 'hs'),
+        'supply_type_dhw': ('DH', 'domestic hot water', 'dhw'),
+        'supply_type_cs':  ('DC', 'space cooling', 'cs'),
     }
 
-    mismatches = []
+    def _has_demand(bldg_name, dkey):
+        """Return True if building has non-zero demand for the given service."""
+        bd = demand_by_building.get(bldg_name)
+        if bd is None:
+            return True  # Unknown demand → conservative, treat as having demand
+        return bd.get(dkey, 0.0) > 0.0
 
-    for col, (network_type, service_label) in service_columns.items():
+    # Group mismatches by (service_label, assembly_code, network_type) to avoid
+    # repeating the same message for every building.
+    from collections import defaultdict
+    grouped_error = defaultdict(list)    # buildings WITH demand → error
+    grouped_warning = defaultdict(list)  # buildings WITHOUT demand → warning
+
+    for col, (network_type, service_label, dem_key) in service_columns.items():
         if col not in supply_df.columns:
             continue
 
@@ -447,20 +486,36 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
 
             scale = scale_mapping.get(str(code))
             if scale == 'DISTRICT' and building not in connected:
-                mismatches.append(
-                    f"  - {building}: {service_label} uses '{code}' (DISTRICT scale) "
-                    f"but is not in {network_type} network '{network_name}'"
-                )
+                if _has_demand(building, dem_key):
+                    grouped_error[(service_label, str(code), network_type)].append(building)
+                else:
+                    grouped_warning[(service_label, str(code), network_type)].append(building)
 
-    if mismatches:
+    # Print warnings for zero-demand buildings (validation skipped)
+    if grouped_warning:
+        all_warned = set()
+        for buildings in grouped_warning.values():
+            all_warned.update(buildings)
+        names = ", ".join(sorted(all_warned))
+        print(f"  Warning: validation skipped for buildings without demand: {names}")
+
+    # Raise error only for buildings that actually have demand
+    if grouped_error:
+        lines = []
+        for (service_label, code, network_type), buildings in grouped_error.items():
+            names = ", ".join(buildings)
+            lines.append(
+                f"  - {service_label} uses '{code}' (DISTRICT scale) "
+                f"but not in {network_type} network '{network_name}': {names}"
+            )
         raise ValueError(
             "The following buildings have DISTRICT-scale assemblies in Building Properties/Supply "
             "but are not connected to the selected network. "
             "This may mean Building Properties/Supply was updated after running network-layout.\n\n"
-            + "\n".join(mismatches)
+            + "\n".join(lines)
             + "\n\nPlease either:\n"
-            "  (a) Re-run 'network-layout' to regenerate connectivity.json, or\n"
-            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply"
+            "  (a) Re-run 'network-layout' to regenerate connectivity.json (Set consider-only-buildings-with-demand = false), or\n"
+            "  (b) Change these buildings to BUILDING-scale assemblies in Building Properties/Supply\n"
             "  (c) Set 'overwrite-supply-settings = True' in final-energy settings"
         )
 
@@ -537,6 +592,124 @@ def validate_booster_configuration(dh_network, network_name, locator, config):
         raise ValueError("\n\n".join(messages))
 
 
+def validate_booster_temperature_compatibility(dh_network, network_name, locator, config):
+    """
+    Validate that booster assemblies can supply the temperatures required by each building.
+
+    Reads T_target_hs_C and T_target_dhw_C from substation files (written by thermal-network
+    Part 2) and compares against the booster component's design supply temperature.
+
+    :param dh_network: Dict from connectivity.json['networks']['DH']
+    :param network_name: Network layout name
+    :param locator: InputLocator instance
+    :param config: Configuration instance
+    :raises ValueError: If any booster cannot reach the required temperature
+    """
+    hs_booster_code = config.final_energy.hs_booster_type_building
+    dhw_booster_code = config.final_energy.dhw_booster_type_building
+
+    # Look up booster component design temperatures
+    hs_booster_temp = None
+    dhw_booster_temp = None
+    if hs_booster_code:
+        components = load_assembly_components(hs_booster_code, locator)
+        primary = components.get('primary_components')
+        if primary:
+            hs_booster_temp = get_component_design_supply_temperature(primary, locator)
+
+    if dhw_booster_code:
+        components = load_assembly_components(dhw_booster_code, locator)
+        primary = components.get('primary_components')
+        if primary:
+            dhw_booster_temp = get_component_design_supply_temperature(primary, locator)
+
+    per_building_services = dh_network.get('per_building_services', {})
+    # Group by required temperature: {t_required: [building_names]}
+    hs_groups = {}  # {t_required_C: [building, ...]}
+    dhw_groups = {}
+
+    needs_check = hs_booster_temp is not None or dhw_booster_temp is not None
+
+    for building in per_building_services:
+        substation_file = locator.get_thermal_network_substation_results_file(
+            building, 'DH', network_name
+        )
+        if not os.path.exists(substation_file):
+            continue
+
+        try:
+            sub_df = pd.read_csv(substation_file)
+        except Exception:
+            continue
+
+        # Check for missing temperature columns (backward compatibility)
+        if needs_check:
+            missing_cols = []
+            if hs_booster_temp is not None and 'T_target_hs_C' not in sub_df.columns:
+                if sub_df.get('Qhs_booster_W') is not None and sub_df['Qhs_booster_W'].sum() > 0:
+                    missing_cols.append('T_target_hs_C')
+            if dhw_booster_temp is not None and 'T_target_dhw_C' not in sub_df.columns:
+                if sub_df.get('Qww_booster_W') is not None and sub_df['Qww_booster_W'].sum() > 0:
+                    missing_cols.append('T_target_dhw_C')
+            if missing_cols:
+                raise ValueError(
+                    f"Substation file for building '{building}' is missing columns: "
+                    f"{', '.join(missing_cols)}.\n\n"
+                    f"This is likely because the thermal network was simulated with an older version of CEA.\n\n"
+                    f"Please re-run Thermal Network Part 2 to regenerate the substation files.\n"
+                    f"If the error persists, re-run Thermal Network Part 1 as well."
+                )
+
+        # Check HS booster temperature
+        if hs_booster_temp is not None and 'T_target_hs_C' in sub_df.columns:
+            t_required = round(sub_df['T_target_hs_C'].max())
+            if t_required > 0 and hs_booster_temp < t_required - 0.5:
+                hs_groups.setdefault(t_required, []).append(building)
+
+        # Check DHW booster temperature
+        if dhw_booster_temp is not None and 'T_target_dhw_C' in sub_df.columns:
+            t_required = round(sub_df['T_target_dhw_C'].max())
+            if t_required > 0 and dhw_booster_temp < t_required - 0.5:
+                dhw_groups.setdefault(t_required, []).append(building)
+
+    messages = []
+
+    if hs_groups:
+        hs_primary = load_assembly_components(hs_booster_code, locator).get('primary_components', '?')
+        lines = []
+        for t_req, buildings in sorted(hs_groups.items()):
+            names = ", ".join(sorted(buildings))
+            lines.append(
+                f"  - Requires {t_req:.0f} degrees C: {names}"
+            )
+        messages.append(
+            f"Space heating booster assembly ({hs_booster_code}, component {hs_primary}) "
+            f"can only supply {hs_booster_temp:.0f} degrees C, which is insufficient for:\n"
+            + "\n".join(lines)
+            + "\n\nPlease select a booster assembly with a component that can supply "
+            "a higher temperature."
+        )
+
+    if dhw_groups:
+        dhw_primary = load_assembly_components(dhw_booster_code, locator).get('primary_components', '?')
+        lines = []
+        for t_req, buildings in sorted(dhw_groups.items()):
+            names = ", ".join(sorted(buildings))
+            lines.append(
+                f"  - Requires {t_req:.0f} degrees C: {names}"
+            )
+        messages.append(
+            f"DHW booster assembly ({dhw_booster_code}, component {dhw_primary}) "
+            "can only supply {dhw_booster_temp:.0f} degrees C, which is insufficient for:\n"
+            + "\n".join(lines)
+            + "\n\nPlease select a booster assembly with a component that can supply "
+            "a higher temperature."
+        )
+
+    if messages:
+        raise ValueError("\n\n".join(messages))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
@@ -586,49 +759,42 @@ def load_assembly_components(assembly_code, locator):
     }
 
 
-def get_component_design_supply_temperature(component_code, locator):
-    """
-    Look up the design supply temperature of a heating component.
+def _lookup_design_temperature(component_code, locator):
+    """Resolve a component code to its design-temperature value.
 
-    Uses COMPONENT_SUPPLY_TEMP_MAP to find the correct CSV and column.
-    Returns None for unknown component types (check is silently skipped).
-
-    :param component_code: Component code, e.g. 'BO6', 'HP3'
-    :param locator: InputLocator instance
-    :return: Design supply temperature in degrees C, or None if unknown type
+    Uses :func:`cea.technologies.components.get_component_table` to route
+    the code to its CONVERSION CSV, then reads the temperature column
+    associated with that table in :data:`_TABLE_TO_SUPPLY_TEMP_COL`.
+    Returns ``None`` when the code doesn't correspond to a table we
+    have a design-temperature convention for (callers treat this as
+    "check silently skipped").
     """
     if not component_code:
         return None
-
+    from cea.technologies.components import get_component_table
     code = str(component_code).strip()
-
-    # Check longer prefixes first to avoid false matches (e.g. OEHR before O)
-    matched_entry = None
-    for prefix in sorted(COMPONENT_SUPPLY_TEMP_MAP.keys(), key=len, reverse=True):
-        if code.startswith(prefix):
-            matched_entry = COMPONENT_SUPPLY_TEMP_MAP[prefix]
-            break
-
-    if matched_entry is None:
+    table_name = get_component_table(code, locator)
+    if table_name is None:
         return None
-
-    csv_name, temp_col = matched_entry
-    filepath = locator.get_db4_components_conversion_conversion_technology_csv(csv_name)
-
+    temp_col = _TABLE_TO_SUPPLY_TEMP_COL.get(table_name)
+    if temp_col is None:
+        return None
+    filepath = locator.get_db4_components_conversion_conversion_technology_csv(table_name)
     if not os.path.exists(filepath):
         return None
-
     df = pd.read_csv(filepath)
     row = df[df['code'] == code]
-
     if row.empty:
         return None
-
     val = row.iloc[0].get(temp_col)
     if pd.isna(val):
         return None
-
     return float(val)
+
+
+def get_component_design_supply_temperature(component_code, locator):
+    """Design supply temperature of a heating component (BO, HP, OEHR, …)."""
+    return _lookup_design_temperature(component_code, locator)
 
 
 def validate_component_levels_match(hs_code, dhw_code, locator):
@@ -753,26 +919,145 @@ def validate_assembly_temperature_vs_network(assembly_code, locator, dh_temperat
             )
 
 
+def get_component_dc_supply_temperature(component_code, locator):
+    """Evaporator design temperature of a cooling component (CH, …)."""
+    return _lookup_design_temperature(component_code, locator)
+
+
+def validate_plant_temperature_vs_network_results(locator, network_name, config):
+    """
+    Validate that the district plant component can supply the temperature
+    required by the actual thermal-network Part 2 simulation results.
+
+    Reads the maximum supply temperature from the plant temperature file
+    and compares against the component's design temperature.
+
+    For DH: component T_design must be >= network supply temperature
+    For DC: component T_design must be <= network supply temperature
+
+    :param locator: InputLocator instance
+    :param network_name: Network layout name
+    :param config: Configuration instance
+    :raises ValueError: If temperature is incompatible
+    """
+    if not network_name:
+        return
+
+    # --- DH check ---
+    dh_temp_file = locator.get_network_temperature_plant('DH', network_name)
+    if os.path.exists(dh_temp_file):
+        # Get the district assembly for heating
+        if config.final_energy.overwrite_supply_settings:
+            hs_assembly = config.final_energy.supply_type_hs_district
+        else:
+            supply_df = pd.read_csv(locator.get_building_supply())
+            scale_mapping = load_all_assembly_scales(locator)
+            # Find the first DISTRICT-scale heating assembly
+            hs_assembly = None
+            if 'supply_type_hs' in supply_df.columns:
+                for _, row in supply_df.iterrows():
+                    code = row.get('supply_type_hs')
+                    if code and not pd.isna(code) and scale_mapping.get(str(code)) == 'DISTRICT':
+                        hs_assembly = str(code)
+                        break
+
+        if hs_assembly:
+            components = load_assembly_components(hs_assembly, locator)
+            primary_code = components.get('primary_components')
+            t_component = get_component_design_supply_temperature(primary_code, locator)
+
+            if t_component is not None:
+                temp_df = pd.read_csv(dh_temp_file)
+                if 'temperature_supply_K' in temp_df.columns:
+                    # Filter out zero rows (no demand hours)
+                    active = temp_df[temp_df['temperature_supply_K'] > 0]
+                    if not active.empty:
+                        t_network_K = active['temperature_supply_K'].max()
+                        t_network_C = t_network_K - 273.15
+
+                        if t_component < t_network_C - 0.5:  # 0.5°C tolerance for floating point
+                            raise ValueError(
+                                f"Temperature incompatibility: the selected DH plant assembly "
+                                f"({hs_assembly}) uses {primary_code} with a maximum supply "
+                                f"temperature of {t_component:.0f} degrees C, which is below the network "
+                                f"supply temperature of {t_network_C:.0f} degrees C.\n\n"
+                                f"Options:\n"
+                                f"  1. Select a different assembly with a supply temperature "
+                                f"higher than {t_network_C:.0f} degrees C\n"
+                                f"  2. Re-run Thermal Network Part 2 with "
+                                f"dh-temperature-mode = low-temperature\n"
+                                f"  3. Re-run Thermal Network Part 2 with "
+                                f"network-temperature-dh = {t_component:.0f} "
+                                f"(or slightly below) to match the plant component"
+                            )
+
+    # --- DC check ---
+    dc_temp_file = locator.get_network_temperature_plant('DC', network_name)
+    if os.path.exists(dc_temp_file):
+        # Get the district assembly for cooling
+        if config.final_energy.overwrite_supply_settings:
+            cs_assembly = config.final_energy.supply_type_cs_district
+        else:
+            supply_df = pd.read_csv(locator.get_building_supply())
+            scale_mapping = load_all_assembly_scales(locator)
+            cs_assembly = None
+            if 'supply_type_cs' in supply_df.columns:
+                for _, row in supply_df.iterrows():
+                    code = row.get('supply_type_cs')
+                    if code and not pd.isna(code) and scale_mapping.get(str(code)) == 'DISTRICT':
+                        cs_assembly = str(code)
+                        break
+
+        if cs_assembly:
+            components = load_assembly_components(cs_assembly, locator)
+            primary_code = components.get('primary_components')
+            t_component = get_component_dc_supply_temperature(primary_code, locator)
+
+            if t_component is not None:
+                temp_df = pd.read_csv(dc_temp_file)
+                if 'temperature_supply_K' in temp_df.columns:
+                    active = temp_df[temp_df['temperature_supply_K'] > 0]
+                    if not active.empty:
+                        t_network_K = active['temperature_supply_K'].min()
+                        t_network_C = t_network_K - 273.15
+
+                        if t_component > t_network_C + 0.5:  # 0.5°C tolerance for floating point
+                            raise ValueError(
+                                f"Temperature incompatibility: the selected DC plant assembly "
+                                f"({cs_assembly}) uses {primary_code} with a minimum supply "
+                                f"temperature of {t_component:.0f} degrees C, which is above the network "
+                                f"supply temperature of {t_network_C:.0f} degrees C.\n\n"
+                                f"Options:\n"
+                                f"  1. Select a different assembly with a supply temperature "
+                                f"lower than {t_network_C:.0f} degrees C\n"
+                                f"  2. Re-run Thermal Network Part 2 with "
+                                f"network-temperature-dc = {t_component:.0f} "
+                                f"(or slightly above) to match the plant component"
+                            )
+
+
 def load_network_connectivity(locator, network_name):
     """
-    Load and parse connectivity.json for the given network.
+    Load and parse the connectivity file for the given network.
+
+    Prefers the new ``connectivity.yml`` and falls back to the legacy
+    ``connectivity.json`` for scenarios that already have one.
 
     :param locator: InputLocator instance
     :param network_name: Network layout name
     :return: Dict with connectivity data
-    :raises ValueError: If file is missing
+    :raises ValueError: If neither file is present
     """
-    connectivity_file = locator.get_network_connectivity_file(network_name)
-
-    if not os.path.exists(connectivity_file):
+    data = locator.read_network_connectivity(network_name)
+    if data is None:
+        expected = locator.get_network_connectivity_file(network_name)
         raise ValueError(
             f"Network connectivity file not found for network '{network_name}'.\n\n"
-            f"Expected at: {connectivity_file}\n\n"
+            f"Expected at: {expected}\n\n"
             f"Please run 'network-layout' first to generate this file."
         )
 
-    with open(connectivity_file, 'r') as f:
-        return json.load(f)
+    return data
 
 
 def load_all_assembly_scales(locator):

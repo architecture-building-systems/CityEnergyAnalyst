@@ -2,10 +2,44 @@
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
 import atexit
+import json
 import os
 import cea.schemas
 import shutil
 import tempfile
+
+import yaml
+
+
+def _read_structured_file(path):
+    """Read a structured config file and return the parsed dict.
+
+    Format is inferred from the extension: ``.yml`` / ``.yaml`` → YAML;
+    anything else → JSON. Used by the locator helpers that transparently
+    support both the new YAML format and the legacy JSON format.
+    """
+    with open(path, 'r') as handle:
+        if path.endswith(('.yml', '.yaml')):
+            return yaml.safe_load(handle)
+        return json.load(handle)
+
+
+def _write_structured_file(path, data):
+    """Write a structured config dict to disk.
+
+    Format is inferred from the extension: ``.yml`` / ``.yaml`` → YAML;
+    anything else → JSON. Parent folders are created on demand. For YAML
+    we round-trip through JSON first so that enums, sets, tuples, numpy
+    scalars, timestamps, and other non-primitive values collapse to
+    plain primitives — ``yaml.safe_dump`` would otherwise refuse them.
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as handle:
+        if path.endswith(('.yml', '.yaml')):
+            plain = json.loads(json.dumps(data, default=str))
+            yaml.safe_dump(plain, handle, sort_keys=False, default_flow_style=False)
+        else:
+            json.dump(data, handle, indent=2, default=str)
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -230,6 +264,47 @@ class InputLocator(object):
     def get_export_results_summary_costs_components_file(self, summary_folder):
         """scenario/export/results/{folder_name}/costs/costs_components.csv"""
         return os.path.join(self.get_export_results_summary_costs_folder(summary_folder), 'costs_components.csv')
+
+    # ── What-if-aware export paths ────────────────────────────────────────────
+
+    def get_export_results_summary_whatif_folder(self, summary_folder, cea_feature, whatif_name):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/"""
+        folder_name = CEA_FEATURE_FOLDER_MAP.get(cea_feature, cea_feature)
+        return os.path.join(summary_folder, folder_name, whatif_name)
+
+    def get_export_results_summary_whatif_time_period_file(self, summary_folder, cea_feature, appendix,
+                                                           whatif_name, time_period, hour_start, hour_end):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_{time_period}.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(base, f'{appendix}_selected_hours.csv')
+        return os.path.join(base, f'{appendix}_{time_period}.csv')
+
+    def get_export_results_summary_whatif_buildings_file(self, summary_folder, cea_feature, appendix, whatif_name):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_buildings.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        return os.path.join(base, f'{appendix}_buildings.csv')
+
+    def get_export_results_summary_whatif_time_period_buildings_file(self, summary_folder, cea_feature, appendix,
+                                                                     whatif_name, time_period, hour_start, hour_end):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_{time_period}_buildings.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        if abs(hour_end - hour_start) != 8760 and time_period == 'annually':
+            return os.path.join(base, f'{appendix}_selected_hours_buildings.csv')
+        return os.path.join(base, f'{appendix}_{time_period}_buildings.csv')
+
+    def get_export_results_summary_whatif_timeline_file(self, summary_folder, cea_feature, appendix, whatif_name):
+        """scenario/export/results/{folder_name}/{cea_feature}/{whatif_name}/{appendix}_timeline.csv"""
+        base = self.get_export_results_summary_whatif_folder(summary_folder, cea_feature, whatif_name)
+        return os.path.join(base, f'{appendix}_timeline.csv')
+
+    def get_export_results_summary_whatif_costs_buildings_file(self, summary_folder, whatif_name):
+        """scenario/export/results/{folder_name}/costs/{whatif_name}/costs_buildings.csv"""
+        return os.path.join(summary_folder, 'costs', whatif_name, 'costs_buildings.csv')
+
+    def get_export_results_summary_whatif_costs_components_file(self, summary_folder, whatif_name):
+        """scenario/export/results/{folder_name}/costs/{whatif_name}/costs_components.csv"""
+        return os.path.join(summary_folder, 'costs', whatif_name, 'costs_components.csv')
 
     def get_export_results_summary_cea_feature_analytics_time_resolution_file(self, summary_folder, cea_feature,
                                                                               appendix, time_period, hour_start,
@@ -1004,22 +1079,53 @@ class InputLocator(object):
 
     def get_network_connectivity_file(self, network_name):
         """
-        scenario/outputs/thermal-network/{network_name}/connectivity.json
+        scenario/outputs/thermal-network/{network_name}/connectivity.yml
 
-        JSON file storing building and plant connections for DH and DC networks.
-        Generated by 'network-layout' script (Part 1).
+        YAML file storing building and plant connections for DH and DC
+        networks. Generated by 'network-layout' script (Part 1). For
+        backward compatibility, existing scenarios with a legacy
+        ``connectivity.json`` are still readable via
+        :meth:`find_network_connectivity_file` and
+        :meth:`read_network_connectivity`.
 
         :param network_name: Network layout name
-        :return: Path to connectivity.json file
-
-        Example:
-            locator.get_network_connectivity_file('xxx')
-            -> scenario/outputs/data/thermal-network/xxx/connectivity.json
+        :return: Canonical (write) path to connectivity.yml file
         """
         return os.path.join(
             self.get_thermal_network_folder_network_name_folder(network_name),
-            'connectivity.json'
+            'connectivity.yml'
         )
+
+    def find_network_connectivity_file(self, network_name):
+        """Return the path to an existing connectivity file, or ``None``.
+
+        Prefers the new YAML format and falls back to legacy JSON.
+        """
+        folder = self.get_thermal_network_folder_network_name_folder(network_name)
+        yml_path = os.path.join(folder, 'connectivity.yml')
+        if os.path.exists(yml_path):
+            return yml_path
+        json_path = os.path.join(folder, 'connectivity.json')
+        if os.path.exists(json_path):
+            return json_path
+        return None
+
+    def read_network_connectivity(self, network_name):
+        """Read network connectivity data.
+
+        Returns the parsed dict, or ``None`` if neither the new YAML nor
+        the legacy JSON file exists.
+        """
+        path = self.find_network_connectivity_file(network_name)
+        if path is None:
+            return None
+        return _read_structured_file(path)
+
+    def write_network_connectivity(self, network_name, data):
+        """Write network connectivity data as YAML to the canonical path."""
+        path = self.get_network_connectivity_file(network_name)
+        _write_structured_file(path, data)
+        return path
 
     def get_network_layout_nodes_shapefile_from_part1(self, network_type, network_name):
         """
@@ -1727,15 +1833,46 @@ class InputLocator(object):
 
     def get_analysis_configuration_file(self, whatif_name):
         """
-        scenario/outputs/data/analysis/{whatif_name}/configuration.json
+        scenario/outputs/data/analysis/{whatif_name}/configuration.yml
 
         Shared configuration file for all what-if analysis results
-        (final-energy, costs, emissions, heat-rejection, etc.).
+        (final-energy, costs, emissions, heat-rejection, etc.). New runs
+        write YAML; legacy ``configuration.json`` files from existing
+        scenarios remain readable via
+        :meth:`find_analysis_configuration_file` and
+        :meth:`read_analysis_configuration`.
 
         :param whatif_name: What-if scenario name.
-        :return: Path to what-if configuration JSON file
+        :return: Canonical (write) path to the configuration.yml file.
         """
-        return os.path.join(self.get_analysis_folder(whatif_name), 'configuration.json')
+        return os.path.join(self.get_analysis_folder(whatif_name), 'configuration.yml')
+
+    def find_analysis_configuration_file(self, whatif_name):
+        """Return the path to an existing analysis configuration file, or
+        ``None``. Prefers YAML, falls back to legacy JSON."""
+        folder = self.get_analysis_folder(whatif_name)
+        yml_path = os.path.join(folder, 'configuration.yml')
+        if os.path.exists(yml_path):
+            return yml_path
+        json_path = os.path.join(folder, 'configuration.json')
+        if os.path.exists(json_path):
+            return json_path
+        return None
+
+    def read_analysis_configuration(self, whatif_name):
+        """Read the what-if analysis configuration dict, or return ``None``
+        if neither the YAML nor legacy JSON file exists."""
+        path = self.find_analysis_configuration_file(whatif_name)
+        if path is None:
+            return None
+        return _read_structured_file(path)
+
+    def write_analysis_configuration(self, whatif_name, data):
+        """Write the what-if analysis configuration as YAML to the
+        canonical path."""
+        path = self.get_analysis_configuration_file(whatif_name)
+        _write_structured_file(path, data)
+        return path
 
     def get_costs_whatif_folder(self, whatif_name):
         """

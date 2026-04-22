@@ -11,7 +11,6 @@ sorted from peak to minimum (load duration curve).
 """
 
 import os
-import json
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -54,6 +53,11 @@ _CONFIG_KEY_COL_PREFIX = {
     'electricity':   'E_sys',
 }
 
+_BOOSTER_KEY_COL_PREFIX = {
+    'space_heating_booster': 'Qhs_booster',
+    'hot_water_booster':     'Qww_booster',
+}
+
 
 def _to_rgba(rgb_str, alpha=0.2):
 
@@ -63,12 +67,12 @@ def _to_rgba(rgb_str, alpha=0.2):
 # ── core data loading ─────────────────────────────────────────────────────────
 
 def _load_config(locator, whatif_name):
-    """Load configuration.json for a what-if scenario."""
-    config_file = locator.get_analysis_configuration_file(whatif_name)
-    if not os.path.exists(config_file):
-        raise FileNotFoundError(f"Configuration file not found: {config_file}")
-    with open(config_file) as f:
-        return json.load(f)
+    """Load the analysis configuration for a what-if scenario."""
+    data = locator.read_analysis_configuration(whatif_name)
+    if data is None:
+        expected = locator.get_analysis_configuration_file(whatif_name)
+        raise FileNotFoundError(f"Configuration file not found: {expected}")
+    return data
 
 
 def _get_network_names_from_buildings(building_configs):
@@ -112,7 +116,6 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
     config_data = _load_config(locator, whatif_name)
     building_configs = config_data.get('buildings', {})
     plant_configs = config_data.get('plants', {})
-    folder = locator.get_final_energy_folder(whatif_name)
     result = {}
 
     # ── District-scale ─────────────────────────────────────────────────────
@@ -120,22 +123,25 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
         network_names = _get_network_names_from_buildings(building_configs)
 
         if component_display == 'Pump':
-            # Pump: sum plant_pumping_GRID_kWh across all plant files
+            # Pump: sum plant_pumping_{NT}_GRID_kWh across all plant files
             hourly = np.zeros(8760)
             found = False
-            for network_type, network_name in network_names.items():
-                prefix = f'{network_name}_{network_type}_'
-                plant_files = [
-                    os.path.join(folder, f) for f in os.listdir(folder)
-                    if f.startswith(prefix) and f.endswith('.csv')
-                ]
-                for fpath in plant_files:
-                    df = pd.read_csv(fpath)
-                    if 'plant_pumping_GRID_kWh' in df.columns:
-                        vals = df['plant_pumping_GRID_kWh'].values
-                        if len(vals) == 8760:
-                            hourly += vals
-                            found = True
+            for plant_name, plant_cfg in plant_configs.items():
+                network_type = plant_cfg.get('network_type', '')
+                network_name = network_names.get(network_type, '')
+                if not network_type or not network_name:
+                    continue
+                plant_file = locator.get_final_energy_plant_file(
+                    network_name, network_type, plant_name, whatif_name
+                )
+                if not os.path.exists(plant_file):
+                    continue
+                df = pd.read_csv(plant_file)
+                for pc in [c for c in df.columns if c.startswith('plant_pumping_') and c.endswith('_GRID_kWh')]:
+                    vals = df[pc].values
+                    if len(vals) == 8760:
+                        hourly += vals
+                        found = True
             if found:
                 result['District'] = hourly
 
@@ -145,7 +151,7 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 component_code = plant_cfg.get('primary_component', '')
                 if not component_code:
                     continue
-                if _component_display(component_code) != component_display:
+                if _component_display(component_code, locator) != component_display:
                     continue
 
                 network_type = plant_cfg.get('network_type', '')
@@ -154,17 +160,12 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 if not network_type or not network_name:
                     continue
 
-                carrier_col = (
-                    f'plant_cooling_{carrier_raw}_kWh'
-                    if network_type == 'DC'
-                    else f'plant_heating_{carrier_raw}_kWh'
-                )
+                carrier_col = f'plant_primary_{network_type}_{carrier_raw}_kWh'
 
-                prefix = f'{network_name}_{network_type}_'
-                plant_files = [
-                    os.path.join(folder, f) for f in os.listdir(folder)
-                    if f.startswith(prefix) and f.endswith('.csv')
-                ]
+                plant_file = locator.get_final_energy_plant_file(
+                    network_name, network_type, plant_name, whatif_name
+                )
+                plant_files = [plant_file] if os.path.exists(plant_file) else []
                 hourly = np.zeros(8760)
                 found = False
                 for fpath in plant_files:
@@ -197,7 +198,7 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
                 component_code = svc_cfg.get('primary_component', '')
                 if not component_code:
                     continue
-                if _component_display(component_code) != component_display:
+                if _component_display(component_code, locator) != component_display:
                     continue
                 carrier = svc_cfg.get('carrier', '')
                 matches.append((building, col_prefix, carrier))
@@ -230,13 +231,66 @@ def load_component_hourly(component_display, whatif_name, scales, selected_build
 
             if building_series:
                 if not selected_buildings:
-                    # Aggregate into a single curve
                     total = np.zeros(8760)
                     for arr in building_series.values():
                         total += arr
                     result['All Buildings'] = total
                 else:
                     result.update(building_series)
+
+        # ── Booster components ────────────────────────────────────────────
+        booster_matches = []
+        for building, bconfig in building_configs.items():
+            if selected_buildings and building not in selected_buildings:
+                continue
+            for bst_key, col_prefix in _BOOSTER_KEY_COL_PREFIX.items():
+                bst_cfg = bconfig.get(bst_key)
+                if not bst_cfg or not isinstance(bst_cfg, dict):
+                    continue
+                if bst_cfg.get('scale') != 'BUILDING':
+                    continue
+                component_code = bst_cfg.get('primary_component', '')
+                if not component_code:
+                    continue
+                if _component_display(component_code, locator) != component_display:
+                    continue
+                carrier = bst_cfg.get('carrier', '')
+                booster_matches.append((building, col_prefix, carrier))
+
+        if booster_matches:
+            booster_series = {}
+            for building, col_prefix, carrier in booster_matches:
+                bfile = locator.get_final_energy_building_file(building, whatif_name)
+                if not os.path.exists(bfile):
+                    continue
+                df = pd.read_csv(bfile)
+                col = f'{col_prefix}_{carrier}_kWh' if carrier else None
+                hourly = None
+                if col and col in df.columns and len(df[col]) == 8760:
+                    hourly = df[col].values.astype(float)
+                else:
+                    for c in df.columns:
+                        if c.startswith(f'{col_prefix}_') and c.endswith('_kWh') and len(df[c]) == 8760:
+                            if hourly is None:
+                                hourly = df[c].values.astype(float)
+                            else:
+                                hourly += df[c].values.astype(float)
+                if hourly is None:
+                    continue
+                label = f'{building} (booster)'
+                if label in booster_series:
+                    booster_series[label] += hourly
+                else:
+                    booster_series[label] = hourly
+
+            if booster_series:
+                if not selected_buildings:
+                    total = np.zeros(8760)
+                    for arr in booster_series.values():
+                        total += arr
+                    result['All Buildings (booster)'] = total
+                else:
+                    result.update(booster_series)
 
     return result
 
@@ -292,8 +346,10 @@ def build_ldc_fig(component_display, data_by_whatif, unit, unit_divisor):
             ))
 
     fig.update_layout(
-        title_text=f'Load Duration Curve \u2014 {component_display}',
-        title_font_size=16,
+        title=dict(
+            text=f'<b>Load Duration Curve \u2014 {component_display}</b>',
+            x=0, xanchor='left', yanchor='top', font=dict(size=20),
+        ),
         xaxis_title='Duration Normalised [%]',
         yaxis_title=f'Load [{unit}]',
         font_size=12,
@@ -328,8 +384,12 @@ def main(config: cea.config.Configuration):
         print('No what-if scenario selected.')
         return None
     if not components:
-        print('No components selected.')
-        return None
+        # Auto-select all available components when none specified
+        components = plot_config.parameters['components']._choices
+        if not components:
+            print('No components available for the selected what-if scenarios and scale.')
+            return None
+        print(f"No components specified — using all available: {components}")
 
     html_outputs = []
 
@@ -351,6 +411,11 @@ def main(config: cea.config.Configuration):
             continue
 
         fig = build_ldc_fig(component_display, data_by_whatif, unit, unit_divisor)
+        # Add subtitle with scenario and what-if names
+        scenario_name = os.path.basename(config.scenario)
+        whatif_label = ', '.join(what_if_names)
+        subtitle = ' | '.join(['CEA-4 Load Duration Curve', scenario_name, whatif_label])
+        fig.update_layout(title_text=f'<b>Load Duration Curve \u2014 {component_display}</b><br><sub>{subtitle}</sub>')
         # include_plotlyjs only on first figure to avoid loading CDN multiple times
         include_js = 'cdn' if not html_outputs else False
         html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js))

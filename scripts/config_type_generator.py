@@ -9,12 +9,12 @@ This script automatically generates the config.pyi type stub file by:
 4. Generating typed section classes with proper type hints
 
 Run this script manually when default.config changes:
-    python -m cea.utilities.config_type_generator
+    python scripts/config_type_generator.py
 
 Or it will run automatically via GitHub Actions when:
 - cea/config.py changes
 - cea/default.config changes
-- cea/utilities/config_type_generator.py changes
+- scripts/config_type_generator.py changes
 
 See .github/workflows/update-config-stubs.yml for the automation workflow.
 """
@@ -570,10 +570,10 @@ def _get_module_level_constants() -> List[str]:
 def generate_config_stub():
     """Generate comprehensive type stub file for cea.config"""
 
-    # Path to default.config (in cea/ directory, one level up from utilities/)
-    default_config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "default.config")
-    # Path to config.pyi (also in cea/ directory)
-    stub_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.pyi")
+    # Path to default.config and config.pyi in cea/ directory
+    cea_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cea")
+    default_config_path = os.path.join(cea_dir, "default.config")
+    stub_path = os.path.join(cea_dir, "config.pyi")
 
     if not os.path.exists(default_config_path):
         print(f"Error: {default_config_path} not found")

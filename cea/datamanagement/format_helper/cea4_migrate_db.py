@@ -399,6 +399,7 @@ def delete_files(path, verbose=False):
         print(f"Warning: Failed to delete {path}: {e}")
 
 
+
 def add_component_columns_to_supply(scenario):
     """
     Migrate SUPPLY assemblies from CEA-3 to CEA-4 format:
@@ -409,6 +410,7 @@ def add_component_columns_to_supply(scenario):
     Parameters:
     - scenario: The scenario path
     """
+    scenario = os.path.realpath(scenario)
     # Columns to remove (primary energy related and cost columns moved to other modules)
     columns_to_remove = ['feedstock', 'efficiency', 'system', 'CAPEX_USD2015kW', 'LT_yr', 'O&M_%', 'IR_%']
 

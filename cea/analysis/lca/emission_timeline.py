@@ -281,13 +281,27 @@ class BuildingEmissionTimeline:
                     self.timeline[col_name] = 0.0
 
         # PV embodied emissions (module_embodied_kgco2m2 available in PHOTOVOLTAIC_PANELS)
-        pv_codes = {code.split('_')[1] for code in tech_codes if code.split('_')[0] == 'PV'}
-        if pv_codes:
+        # Map solar_config facade keys to per-facade area columns in PV_total_buildings CSV
+        _FACADE_TO_AREA_COL = {
+            'roof': 'PV_roofs_top_m2',
+            'wall_north': 'PV_walls_north_m2',
+            'wall_south': 'PV_walls_south_m2',
+            'wall_east': 'PV_walls_east_m2',
+            'wall_west': 'PV_walls_west_m2',
+        }
+        # Collect which facades have PV installed (grouped by PV code)
+        pv_facades_by_code: dict[str, list[str]] = {}
+        for facade, tech_code in solar_config.items():
+            if tech_code and tech_code.split('_')[0] == 'PV':
+                pv_code = tech_code.split('_')[1]
+                pv_facades_by_code.setdefault(pv_code, []).append(facade)
+
+        if pv_facades_by_code:
             pv_db = pd.read_csv(
                 self.locator.get_db4_components_conversion_conversion_technology_csv('PHOTOVOLTAIC_PANELS'),
                 index_col='code',
             )
-            for pv_code in pv_codes:
+            for pv_code, facades in pv_facades_by_code.items():
                 if pv_code not in pv_db.index:
                     continue
                 buildings_path = self.locator.PV_total_buildings(pv_code)
@@ -296,7 +310,12 @@ class BuildingEmissionTimeline:
                 buildings_df = pd.read_csv(buildings_path, index_col='name')
                 if self.name not in buildings_df.index:
                     continue
-                pv_area = float(buildings_df.at[self.name, 'area_PV_m2'])
+                # Sum only the per-facade areas that are configured (not total area_PV_m2)
+                pv_area = 0.0
+                for facade in facades:
+                    area_col = _FACADE_TO_AREA_COL.get(facade)
+                    if area_col and area_col in buildings_df.columns:
+                        pv_area += float(buildings_df.at[self.name, area_col])
                 if pv_area <= 0:
                     continue
                 embodied = float(pv_db.at[pv_code, 'module_embodied_kgco2m2'])
@@ -423,7 +442,7 @@ class BuildingEmissionTimeline:
         operational_multi_years: pd.DataFrame,
         feedstock_policies: Mapping[str, tuple[int, int, float]] | None,
     ) -> list[str]:
-        """Apply GRID policy in-place (if any) to solar offset columns, and return the column names.
+        """Apply electricity-carrier policy in-place (if any) to solar offset columns, and return the column names.
 
         Handles all solar offset types:
         - PV_E_offset_kgCO2e (electric, from PV panels)
@@ -432,8 +451,10 @@ class BuildingEmissionTimeline:
         - SC_Q_offset_kgCO2e (thermal, from SC panels)
         - Legacy: PV_{code}_GRID_offset_kgCO2e / PV_{code}_GRID_export_kgCO2e
         """
+        from cea.technologies.energy_carriers import electricity_carrier
+        elec = electricity_carrier(self.locator)
         list_final_pv_cols: list[str] = []
-        # Electric offsets (PV_E, PVT_E) discount with GRID decarbonisation policy
+        # Electric offsets (PV_E, PVT_E) discount with the grid decarbonisation policy
         _electric_prefixes = ("PV_E", "PVT_E")
         for col in operational_multi_years.columns:
             if not col.endswith("_kgCO2e"):
@@ -444,12 +465,12 @@ class BuildingEmissionTimeline:
             )
             if not is_solar_offset:
                 continue
-            # Apply GRID decarbonisation to electric offset columns
+            # Apply the electricity-carrier decarbonisation policy to electric offsets
             is_electric = any(col.startswith(p) for p in _electric_prefixes) or (
                 col.startswith("PV_") and ("_offset_" in col or "_export_" in col)
             )
-            if is_electric and feedstock_policies and "GRID" in feedstock_policies:
-                ref, tgt, frac = feedstock_policies["GRID"]
+            if is_electric and feedstock_policies and elec in feedstock_policies:
+                ref, tgt, frac = feedstock_policies[elec]
                 operational_multi_years[col] = self.discount_over_year(
                     operational_multi_years[col], ref, tgt, frac
                 )

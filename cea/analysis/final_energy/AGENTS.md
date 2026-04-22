@@ -84,6 +84,7 @@ final_energy_kWh = demand_kWh / efficiency
 - `CH*` → VAPOR_COMPRESSION_CHILLERS, carrier=GRID, efficiency=`min_eff_rating`
 - `CT*` → COOLING_TOWERS, carrier=GRID, efficiency=`aux_power` (fan kWh per kWh heat rejected)
 - `HEX*` → passive, carrier=None, efficiency=None (no energy consumption)
+- `PU*` → HYDRAULIC_PUMPS — **cost only, no energy conversion**. Pumping load comes from thermal-network simulation (`pressure_loss_total_kW`), not from component efficiency. Currently treated as 1:1 (electricity in = work out). TODO: add COP to HYDRAULIC_PUMPS.csv so pumping electricity = pressure_loss / COP.
 
 ### ✅ DO: Read district consumption from thermal-network
 
@@ -144,18 +145,16 @@ final_energy = district_consumption
 ## Important Database Workflow
 
 ```python
-# Assembly → Component → Feedstock
-assembly_df = supply_db.heating  # From Supply.from_locator()
-assembly = assembly_df.loc['SUPPLY_HEATING_AS3']
-component_code = assembly['primary_components']  # 'BO1'
+# Assembly → Component → Feedstock. Component/carrier resolution is
+# fully data-driven (see cea/technologies/components.py and
+# energy_carriers.py) — no prefix or code hardcoding.
+from cea.technologies.components import load_component_info
+info = load_component_info('BO1', locator)
+# info == {'carrier': 'NATURALGAS', 'efficiency': 0.82}
 
-# Component has efficiency and fuel
-component_file = locator.get_db4_components_conversion_conversion_technology_csv('BOILERS')
-component_df = pd.read_csv(component_file)
-component = component_df[component_df['code'] == component_code].iloc[0]
-efficiency = component['min_eff_rating']  # 0.82
-fuel_code = component['fuel_code']  # 'Cgas'
-carrier = map_fuel_code_to_carrier(fuel_code)  # 'NATURALGAS'
+# For a bare fuel_code, resolve carrier directly:
+from cea.technologies.energy_carriers import carrier_from_fuel_code
+carrier = carrier_from_fuel_code(locator, 'Cgas')  # 'NATURALGAS'
 ```
 
 ## Output Structure
@@ -180,8 +179,8 @@ fuel_kWh = plant_load_df['thermal_load_kW'] / 0.85
 pumping_kWh = pumping_df.iloc[:, 0]
 
 # Output includes:
-# - plant_heating_NATURALGAS_kWh (or plant_cooling_GRID_kWh)
-# - plant_pumping_GRID_kWh
+# - plant_primary_DH_NATURALGAS_kWh (or plant_primary_DC_GRID_kWh, plant_tertiary_DC_GRID_kWh)
+# - plant_pumping_DH_GRID_kWh (or plant_pumping_DC_GRID_kWh)
 # - Metadata: scale, plant_name, network_name, network_type
 ```
 

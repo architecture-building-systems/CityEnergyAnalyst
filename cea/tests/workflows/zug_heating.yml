@@ -29,8 +29,15 @@
     neglect-adjacent-buildings: false
 - script: occupancy
 - script: demand
+- script: final-energy
+  parameters:
+    what-if-name: baseline
 - script: emissions
+  parameters:
+    what-if-name: baseline
 - script: system-costs
+  parameters:
+    what-if-name: baseline
 - script: water-body-potential
 - script: sewage-potential
 - script: shallow-geothermal-potential
@@ -40,10 +47,10 @@
 - script: network-layout
   parameters:
     network-name: baseline
-- script: thermal-network-detailed
-  parameters:
-    network-name: baseline
-    stop-t: 744 # run for one month
+#- script: thermal-network-detailed
+#  parameters:
+#    network-name: baseline
+#    stop-t: 744 # run for one month
 - script: thermal-network
   parameters:
     network-name: baseline

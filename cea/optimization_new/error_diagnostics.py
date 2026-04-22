@@ -275,10 +275,6 @@ def generate_energy_carrier_mismatch_error(
     error_lines.extend([
         "",
         f"{'='*70}",
-        "For more information, see:",
-        "  - ",
-        "  - ",
-        f"{'='*70}",
     ])
 
     return "\n".join(error_lines)
@@ -339,7 +335,7 @@ def find_compatible_components(
                                 'output_temp': comp_ec.mean_qual,
                                 'energy_carrier': comp_ec.code
                             }
-                except (ValueError, KeyError, IndexError):
+                except (ValueError, KeyError, IndexError, TypeError):
                     # Component instantiation failed, skip it
                     continue
 
