@@ -1482,6 +1482,9 @@ def save_phase_layout_shapefiles(locator, phases: List[Dict], phase_results: Lis
         # the current phase's local name / geometry (so the output matches
         # what Part 1 drew for this phase); fall back to the first phase
         # that contained the edge for idle edges not in this phase's layout.
+        # Name-pool preservation in ``network-layout`` guarantees that
+        # inherited idle-edge names don't collide with this phase's local
+        # names when the phase chain uses ``existing-network``.
         edge_rows = []
         for cid, decision in sizing_decisions.items():
             phase_decision = decision.get(phase_key, {})

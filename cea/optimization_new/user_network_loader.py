@@ -937,7 +937,8 @@ def augment_user_network_with_buildings(
     street_network_gdf: gpd.GeoDataFrame,
     locator,
     snap_tolerance: float = 0.5,
-    connection_candidates: int = 3
+    connection_candidates: int = 3,
+    existing_max_pipe_number: Optional[int] = None,
 ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """
     Augment user-provided network with additional buildings using Steiner tree optimisation.
@@ -959,6 +960,12 @@ def augment_user_network_with_buildings(
     :param locator: InputLocator for file paths
     :param snap_tolerance: Tolerance for snapping terminal connections (metres)
     :param connection_candidates: Number of nearest streets to consider per building (1-5)
+    :param existing_max_pipe_number: Highest ``PIPE{N}`` number already in use in the
+        parent network (before any filter step). Steiner-added edges are renumbered
+        to start at ``N + 1`` so chained networks
+        (``existing-network`` workflows) never reuse a parent pipe name for a
+        different physical pipe — even names that were dropped from the parent by
+        the filter step. ``None`` or ``-1`` disables the offset.
     :return: Tuple of (augmented_nodes_gdf, augmented_edges_gdf) with new buildings added
     """
     from cea.technologies.network_layout.steiner_spanning_tree import calc_steiner_spanning_tree
@@ -1090,6 +1097,29 @@ def augment_user_network_with_buildings(
     finally:
         # Clean up temp files regardless of success or failure
         shutil.rmtree(temp_dir)
+
+    # Shift Steiner-assigned ``PIPE{N}`` numbers above the parent's namespace
+    # so new pipes never reuse a name that was in the parent — even ones the
+    # filter step dropped. ``calc_steiner_spanning_tree`` writes names
+    # starting at ``PIPE0``; without this shift, an inherited ``sub1`` PIPE
+    # whose building was decommissioned could be silently overwritten by a
+    # completely unrelated new ``sub2`` pipe with the same name, and
+    # downstream tools that cross-reference by name (multi-phase sizing,
+    # per-phase edges.shp with idle pipes, mass-flow CSVs) would misalign.
+    if existing_max_pipe_number is not None and existing_max_pipe_number >= 0:
+        offset = existing_max_pipe_number + 1
+
+        def _shift_pipe_name(name):
+            if (
+                isinstance(name, str)
+                and name.startswith('PIPE')
+                and name[4:].isdigit()
+            ):
+                return f'PIPE{int(name[4:]) + offset}'
+            return name
+
+        if 'name' in steiner_edges_gdf.columns:
+            steiner_edges_gdf['name'] = steiner_edges_gdf['name'].map(_shift_pipe_name)
 
     # Step 3: Merge optimised subnetwork with user's original network
     print("  Step 3/3: Merging augmented edges/nodes with user network...")
