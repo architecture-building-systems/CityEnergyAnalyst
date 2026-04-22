@@ -21,6 +21,16 @@ from cea.technologies.network_layout.substations_location import calc_building_c
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
 from cea.optimization_new.user_network_loader import load_user_defined_network
 
+# Single source of truth mapping a DH sub-service to the column in
+# ``Total_demand.csv`` that expresses its demand. Both
+# :func:`get_buildings_with_demand` (upstream building-list filter) and
+# :func:`filter_dh_services_by_demand` (downstream service-set trimmer)
+# use this mapping — keep them aligned by editing this dict only.
+_DH_DEMAND_COLUMN = {
+    PlantServices.SPACE_HEATING:      'Qhs_sys_MWhyr',
+    PlantServices.DOMESTIC_HOT_WATER: 'Qww_sys_MWhyr',
+}
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -152,7 +162,8 @@ def initialize_building_lists(heating_connected_buildings_config, cooling_connec
     return list_heating_buildings, list_cooling_buildings, list_district_scale_buildings
 
 
-def process_service_buildings(service, input_buildings, locator, filter_by_demand=False, print_filtering_message=True):
+def process_service_buildings(service, input_buildings, locator, filter_by_demand=False,
+                              print_filtering_message=True, itemised_dh_services=None):
     """
     Process building list for a single service (DC or DH).
 
@@ -170,7 +181,13 @@ def process_service_buildings(service, input_buildings, locator, filter_by_deman
     """
     service_label = "cooling" if service == 'DC' else "heating"
     buildings_set = set(input_buildings)
-    buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+    buildings_with_demand = set(
+        get_buildings_with_demand(
+            locator,
+            network_type=service,
+            itemised_dh_services=itemised_dh_services if service == 'DH' else None
+        )
+    )
     buildings_without_demand = list(buildings_set - buildings_with_demand)
 
     if filter_by_demand:
@@ -862,10 +879,18 @@ def filter_dh_services_by_demand(per_building_services_dh, locator):
     """
     Remove services with zero actual demand from per_building_services_dh.
 
-    When consider-only-buildings-with-demand is True, a building may still have
-    space_heating in its services even though QH_sys_MWhyr = 0 (e.g. warm climate
-    with DHW-only demand). This function strips those zero-demand services so that
-    connectivity.json reflects what the building actually needs.
+    A building's DH services come from supply.csv (e.g. both
+    ``space_heating`` and ``domestic_hot_water`` configured as DISTRICT).
+    The building may still have zero demand for one of those services
+    — e.g. a warm-climate building with ``Qhs_sys_MWhyr = 0`` but
+    ``Qww_sys_MWhyr > 0`` (DHW-only demand). This function reads
+    ``Total_demand.csv`` and drops services whose per-service demand
+    column (see ``_DH_DEMAND_COLUMN``) is zero, so ``connectivity.json``
+    reflects what the building actually needs.
+
+    Callers typically only invoke this when
+    ``consider-only-buildings-with-demand`` is true — otherwise a user
+    explicitly asked to keep zero-demand services.
 
     :param per_building_services_dh: Dict {building_name: set of PlantServices}
     :param locator: InputLocator instance
@@ -887,14 +912,11 @@ def filter_dh_services_by_demand(per_building_services_dh, locator):
         row = total_demand.loc[building]
         keep = set()
         for svc in services:
-            if svc == PlantServices.SPACE_HEATING:
-                if row.get('Qhs_sys_MWhyr', 0.0) > 0.0:
-                    keep.add(svc)
-            elif svc == PlantServices.DOMESTIC_HOT_WATER:
-                if row.get('Qww_sys_MWhyr', 0.0) > 0.0:
-                    keep.add(svc)
-            else:
-                keep.add(svc)  # unknown service — keep by default
+            column = _DH_DEMAND_COLUMN.get(svc)
+            if column is None:
+                keep.add(svc)  # service without a mapped demand column — keep by default
+            elif row.get(column, 0.0) > 0.0:
+                keep.add(svc)
 
         if keep:
             filtered[building] = keep
@@ -902,13 +924,27 @@ def filter_dh_services_by_demand(per_building_services_dh, locator):
     return filtered
 
 
-def get_buildings_with_demand(locator, network_type):
+def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
     """
     Read total_demand.csv and return list of buildings with heating/cooling demand.
 
+    For DC the filter is always the aggregate cooling column
+    (``QC_sys_MWhyr``). For DH the filter follows ``itemised_dh_services``:
+    the demand columns are looked up in :data:`_DH_DEMAND_COLUMN`
+    (``space_heating → Qhs_sys_MWhyr``, ``domestic_hot_water → Qww_sys_MWhyr``)
+    and a building is kept if it has non-zero demand on *any* of them.
+    When ``itemised_dh_services`` is empty or ``None`` the function falls
+    back to the broader aggregate ``QH_sys_MWhyr`` — used when the
+    caller hasn't committed to specific DH sub-services yet.
+
     :param locator: InputLocator instance
     :param network_type: "DH" or "DC"
-    :return: List of building names
+    :param itemised_dh_services: Optional iterable of ``PlantServices``
+        values (or their string codes) selecting which DH sub-services'
+        demand columns to OR together. Ignored when ``network_type`` is
+        ``"DC"``.
+    :return: List of building names with non-zero demand for the
+        selected services.
     """
     # Load total demand file with error handling
     demand_path = locator.get_total_demand()
@@ -920,11 +956,24 @@ def get_buildings_with_demand(locator, network_type):
             "Please run the 'demand' tool first to generate building demand data."
         )
 
-    # Determine demand field based on network type
+    # Determine demand field(s) based on network type.
+    # For DH, the service-specific columns come from ``_DH_DEMAND_COLUMN`` —
+    # the same source of truth used by ``filter_dh_services_by_demand`` —
+    # so any future sub-service only needs adding once (to that dict).
     if network_type == "DH":
-        field = "QH_sys_MWhyr"
+        dh_demand_fields = []
+        for service in itemised_dh_services or []:
+            try:
+                service_enum = PlantServices(service)
+            except ValueError:
+                continue
+            column = _DH_DEMAND_COLUMN.get(service_enum)
+            if column is not None:
+                dh_demand_fields.append(column)
+
+        demand_fields = list(dict.fromkeys(dh_demand_fields)) or ["QH_sys_MWhyr"]
     else:  # DC
-        field = "QC_sys_MWhyr"
+        demand_fields = ["QC_sys_MWhyr"]
 
     # Verify required columns exist
     if 'name' not in total_demand.columns:
@@ -933,16 +982,22 @@ def get_buildings_with_demand(locator, network_type):
             f"Available columns: {list(total_demand.columns)}"
         )
 
-    if field not in total_demand.columns:
+    missing_fields = [field for field in demand_fields if field not in total_demand.columns]
+    if missing_fields:
         demand_type = "heating" if network_type == "DH" else "cooling"
+        missing_str = ", ".join(missing_fields)
         raise ValueError(
-            f"Required column '{field}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
+            f"Required column(s) '{missing_str}' ({demand_type} demand) not found in total demand file: {demand_path}\n"
             f"Available columns: {list(total_demand.columns)}\n"
             "Please ensure the 'demand' tool was run successfully."
         )
 
     # Filter buildings with demand
-    buildings_with_demand = total_demand[total_demand[field] > 0.0]['name'].tolist()
+    demand_mask = pd.Series(False, index=total_demand.index)
+    for field in demand_fields:
+        demand_mask = demand_mask | (total_demand[field] > 0.0)
+
+    buildings_with_demand = total_demand[demand_mask]['name'].tolist()
     return buildings_with_demand
 
 
@@ -1429,7 +1484,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     input_buildings=list_heating_buildings,
                     locator=locator,
                     filter_by_demand=False,
-                    print_filtering_message=False
+                    print_filtering_message=False,
+                    itemised_dh_services=itemised_dh_services
                 )
     else:
         # Use supply.csv to determine district buildings
@@ -1456,7 +1512,13 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                 # DC: Get per-building services from supply.csv
                 buildings_to_validate, per_building_services_dc = get_buildings_and_services_from_supply_csv(locator, network_type=service)
 
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+            buildings_with_demand = set(
+                get_buildings_with_demand(
+                    locator,
+                    network_type=service,
+                    itemised_dh_services=itemised_dh_services if service == 'DH' else None
+                )
+            )
             buildings_without_demand = set(buildings_to_validate) - buildings_with_demand
 
             if service == 'DC':
@@ -1515,7 +1577,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     input_buildings=input_buildings,
                     locator=locator,
                     filter_by_demand=True,
-                    print_filtering_message=True
+                    print_filtering_message=True,
+                    itemised_dh_services=itemised_dh_services
                 )
 
         # Update union to reflect filtered buildings
@@ -1542,7 +1605,8 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
                     input_buildings=input_buildings,
                     locator=locator,
                     filter_by_demand=False,
-                    print_filtering_message=False
+                    print_filtering_message=False,
+                    itemised_dh_services=itemised_dh_services
                 )
 
         # Print demand warnings when not filtering
@@ -2025,6 +2089,7 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     cooling_connected_buildings_config = params['cooling_connected_buildings']
     list_include_services = params['include_services']
     itemised_dh_services = params['itemised_dh_services']
+    consider_only_buildings_with_demand = config.network_layout.consider_only_buildings_with_demand
 
     # Validate include_services is not empty
     if not list_include_services:
@@ -2090,7 +2155,8 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                     input_buildings=list_heating_buildings,
                     locator=locator,
                     filter_by_demand=False,
-                    print_filtering_message=False
+                    print_filtering_message=False,
+                    itemised_dh_services=itemised_dh_services
                 )
 
     else:
@@ -2108,7 +2174,13 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
 
         for service in list_include_services:
             buildings_to_validate_service, _ = get_buildings_and_services_from_supply_csv(locator, network_type=service)
-            buildings_with_demand = set(get_buildings_with_demand(locator, network_type=service))
+            buildings_with_demand = set(
+                get_buildings_with_demand(
+                    locator,
+                    network_type=service,
+                    itemised_dh_services=itemised_dh_services if service == 'DH' else None
+                )
+            )
             buildings_without_demand = set(buildings_to_validate_service) - buildings_with_demand
 
             if service == 'DC':
@@ -2153,12 +2225,47 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 list_include_services.remove('DC')
         print(f"  - Buildings in user layout: {len(network_building_names)}")
 
+    if consider_only_buildings_with_demand:
+        print("  - Filtering buildings by demand requirement...")
+
+        if 'DC' in list_include_services:
+            list_cooling_buildings, _ = process_service_buildings(
+                service='DC',
+                input_buildings=list_cooling_buildings,
+                locator=locator,
+                filter_by_demand=True,
+                print_filtering_message=True
+            )
+        if 'DH' in list_include_services:
+            list_heating_buildings, _ = process_service_buildings(
+                service='DH',
+                input_buildings=list_heating_buildings,
+                locator=locator,
+                filter_by_demand=True,
+                print_filtering_message=True,
+                itemised_dh_services=itemised_dh_services
+            )
+
+        if 'DC' in list_include_services and not list_cooling_buildings:
+            print("  - District buildings (DC): 0 after demand filtering")
+            list_include_services.remove('DC')
+        if 'DH' in list_include_services and not list_heating_buildings:
+            print("  - District buildings (DH): 0 after demand filtering")
+            list_include_services.remove('DH')
+
+        buildings_to_validate = list(set(list_cooling_buildings) | set(list_heating_buildings))
+        if not buildings_to_validate:
+            raise ValueError(
+                "No district thermal network connections remain after applying "
+                "'consider-only-buildings-with-demand'."
+            )
+        print(f"  - Buildings after demand filtering: {len(buildings_to_validate)}")
+    else:
+        print_demand_warning(buildings_without_demand_dc, "cooling")
+        print_demand_warning(buildings_without_demand_dh, "heating")
+
     # Determine which network types to generate (use set for cleaner conditionals)
     network_types_to_generate = determine_network_types(list_include_services)
-
-    # Print demand warnings
-    print_demand_warning(buildings_without_demand_dc, "cooling")
-    print_demand_warning(buildings_without_demand_dh, "heating")
 
     # Apply network layout mode (validate/augment/filter)
     nodes_gdf, edges_gdf = apply_network_mode_to_user_network(

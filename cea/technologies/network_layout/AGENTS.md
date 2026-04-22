@@ -29,10 +29,44 @@ Build thermal network connectivity graphs by connecting buildings to street netw
 - Part 2 script reads universal layout + service-specific nodes
 - Generates `dc/layout/edges.shp` and `dh/layout/edges.shp`
 
-**Parameter behavior:**
-- Blank → all buildings with that demand type
-- Explicitly set → only those buildings; universal layout still covers union of both lists
-- `consider-only-buildings-with-demand = true` → additionally filters by demand type
+### Example Usage
+
+```python
+# Different buildings for heating vs cooling
+heating-connected-buildings: B1001, B1002, B1003
+cooling-connected-buildings: B1003, B1004, B1005
+
+# Result:
+# - Universal layout.shp covers: B1001, B1002, B1003, B1004, B1005 (union of 5 buildings)
+# - dh/layout/nodes.shp contains: B1001, B1002, B1003 (3 heating nodes)
+# - dc/layout/nodes.shp contains: B1003, B1004, B1005 (3 cooling nodes)
+# - Part 2 generates separate edges for each service
+```
+
+### Parameter Behavior
+
+**When blank (empty list):**
+- `heating-connected-buildings = ` → All buildings with heating demand
+- `cooling-connected-buildings = ` → All buildings with cooling demand
+
+**When explicitly set:**
+- Only specified buildings are connected to that service
+- Universal layout still covers the union of both lists
+
+**With `consider-only-buildings-with-demand = true`:**
+- Filters each service's buildings by demand type
+- DC buildings filtered by cooling demand
+- DH buildings filtered by heating demand
+- Universal layout covers filtered union
+- In `process_user_defined_network()`, this filtering must be applied before
+  augment/filter validation too, not only in auto-layout mode
+- For DH, demand filtering must follow `itemised-dh-services`:
+  `space_heating -> Qhs_sys_MWhyr`, `domestic_hot_water -> Qww_sys_MWhyr`
+  rather than the broader aggregate `QH_sys_MWhyr`
+- Service-to-column mapping lives in ``_DH_DEMAND_COLUMN`` in ``main.py``.
+  Both the upstream filter (``get_buildings_with_demand``) and the
+  downstream trimmer (``filter_dh_services_by_demand``) read from it,
+  so a new DH sub-service is a one-line dict edit.
 
 ### Loading Existing Networks
 
