@@ -20,8 +20,8 @@ import numpy as np
 import pandas as pd
 
 import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
-from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, WH_TO_J
-from cea.constants import HOURS_IN_YEAR
+from cea.constants import HEAT_CAPACITY_OF_WATER_JPERKGK, DENSITY_OF_WATER_AT_60_DEGREES_KGPERM3, WH_TO_J, \
+    HOURS_IN_YEAR, KELVIN_CONVERSION
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -406,7 +406,7 @@ def calc_available_generation_PVT(locator, buildings, share_allowed):
         Q_PVT_gen_kWh += building_PVT['Q_PVT_gen_kWh']
         E_PVT_req_kWh += building_PVT['Eaux_PVT_kWh']
         A_PVT_m2 += building_PVT['area_PVT_m2'][0]
-        mcp_x_T += building_PVT['mcp_PVT_kWperC'] * (building_PVT['T_PVT_sup_C'] + 273)  # to K
+        mcp_x_T += building_PVT['mcp_PVT_kWperC'] * (building_PVT['T_PVT_sup_C'] + KELVIN_CONVERSION)  # to K
         mcp += building_PVT['mcp_PVT_kWperC']
 
     Tscr_th_PVT_K = (mcp_x_T / mcp)
@@ -437,7 +437,7 @@ def calc_available_generation_solar(locator, buildings, share_allowed, panel_typ
         Q_PVT_gen_kWh += data['Q_SC_gen_kWh']
         E_SC_req_kWh += data['Eaux_SC_kWh']
         A_PVT_m2 += data['area_SC_m2'][0]
-        mcp_x_T += data['mcp_SC_kWperC'] * (data['T_SC_sup_C'] + 273)  # to K
+        mcp_x_T += data['mcp_SC_kWperC'] * (data['T_SC_sup_C'] + KELVIN_CONVERSION)  # to K
         mcp += data['mcp_SC_kWperC']
 
     Tscr_th_PVT_K = (mcp_x_T / mcp)

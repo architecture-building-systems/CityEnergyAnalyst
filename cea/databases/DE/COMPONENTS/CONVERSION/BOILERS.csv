@@ -1,20 +1,20 @@
 description,code,type,fuel_code,cap_min,cap_max,unit,min_eff_rating,T_water_in_rating,T_water_out_rating,T_flue_gas_design,currency,a,b,c,d,e,LT_yr,O&M_%,IR_%,assumption,reference
-conventional natural gas boiler,BO1,gas,Cgas,1,20000,W,0.93,26.5,82,126,USD-2015,0,0.22108843537414966,1,0,0,20,5,5,Assumed equal to condensing boiler,
-conventional natural gas boiler,BO1,gas,Cgas,20000,30000,W,0.95,26.5,82,126,USD-2015,0,0.12755102040816327,1,0,0,20,5,5,Assumed equal to condensing boiler,
-conventional natural gas boiler,BO1,gas,Cgas,30000,60000,W,0.95,26.5,82,126,USD-2015,0,0.11054421768707483,1,0,0,20,5,5,Assumed equal to condensing boiler,
-conventional natural gas boiler,BO1,gas,Cgas,60000,10000000000,W,0.95,26.5,82,126,USD-2015,0,0.10629251700680273,1,0,0,20,5,5,Assumed equal to condensing boiler,
-conventional oil boiler,BO2,oil,Coil,1,20000,W,0.92,26.5,82,126,USD-2015,0,0.6683673469387755,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2015",KEA Badenwürttemberg Technikkatalog
-conventional oil boiler,BO2,oil,Coil,20000,30000,W,0.93,26.5,82,126,USD-2015,0,0.4421768707482993,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2016",KEA Badenwürttemberg Technikkatalog
-conventional oil boiler,BO2,oil,Coil,30000,60000,W,0.93,26.5,82,126,USD-2015,0,0.3418367346938776,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
-conventional oil boiler,BO2,oil,Coil,60000,10000000000,W,0.93,26.5,82,126,USD-2015,0,0.15901360544217688,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
-condensing natural gas boiler,BO3,gas,Cgas,1,20000,W,0.93,26.5,82,126,USD-2015,0,0.22108843537414966,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2015",KEA Badenwürttemberg Technikkatalog
-condensing natural gas boiler,BO3,gas,Cgas,20000,30000,W,0.95,26.5,82,126,USD-2015,0,0.12755102040816327,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2016",KEA Badenwürttemberg Technikkatalog
-condensing natural gas boiler,BO3,gas,Cgas,30000,60000,W,0.95,26.5,82,126,USD-2015,0,0.11054421768707483,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
-condensing natural gas boiler,BO3,gas,Cgas,60000,10000000000,W,0.95,26.5,82,126,USD-2015,0,0.10629251700680273,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
-electrical boiler,BO5,electricity,E230AC,1,10000000000,W,1.0,26.5,82,126,USD-2015,0,0.2908163265306123,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
-wood-furnace,BO6,wood,Cwod,1,30000,W,0.94,26.5,82,126,USD-2015,0,0.9481292517006804,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2020",KEA Badenwürttemberg Technikkatalog
-wood-furnace,BO6,wood,Cwod,30000,60000,W,0.94,26.5,82,126,USD-2015,0,0.45323129251700683,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2021",KEA Badenwürttemberg Technikkatalog
-wood-furnace,BO6,wood,Cwod,60000,230000,W,0.94,26.5,82,126,USD-2015,0,0.1989795918367347,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2022",KEA Badenwürttemberg Technikkatalog
-biomass pellet boiler,BO7,biomass,Cdbm,1,20000,W,0.9,26.5,82,126,USD-2015,0,0.6326530612244898,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2023",KEA Badenwürttemberg Technikkatalog
-biomass pellet boiler,BO7,biomass,Cdbm,20000,60000,W,0.85,26.5,82,126,USD-2015,0,0.34438775510204084,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2024",KEA Badenwürttemberg Technikkatalog
-biomass pellet boiler,BO7,biomass,Cdbm,60000,1000000000,W,0.81,26.5,82,126,USD-2015,0,0.2585034013605442,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2025",KEA Badenwürttemberg Technikkatalog
+conventional natural gas boiler,BO1,gas,Cgas,1,20000,W,0.93,26.5,82,126,USD-2015,0,0.221088435,1,0,0,20,5,5,Assumed equal to condensing boiler,
+conventional natural gas boiler,BO1,gas,Cgas,20000,30000,W,0.95,26.5,82,126,USD-2015,0,0.12755102,1,0,0,20,5,5,Assumed equal to condensing boiler,
+conventional natural gas boiler,BO1,gas,Cgas,30000,60000,W,0.95,26.5,82,126,USD-2015,0,0.110544218,1,0,0,20,5,5,Assumed equal to condensing boiler,
+conventional natural gas boiler,BO1,gas,Cgas,60000,10000000000,W,0.95,26.5,82,126,USD-2015,0,0.106292517,1,0,0,20,5,5,Assumed equal to condensing boiler,
+conventional oil boiler,BO2,oil,Coil,1,20000,W,0.92,26.5,82,126,USD-2015,0,0.668367347,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2015",KEA Badenwürttemberg Technikkatalog
+conventional oil boiler,BO2,oil,Coil,20000,30000,W,0.93,26.5,82,126,USD-2015,0,0.442176871,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2016",KEA Badenwürttemberg Technikkatalog
+conventional oil boiler,BO2,oil,Coil,30000,60000,W,0.93,26.5,82,126,USD-2015,0,0.341836735,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
+conventional oil boiler,BO2,oil,Coil,60000,10000000000,W,0.93,26.5,82,126,USD-2015,0,0.159013605,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
+condensing natural gas boiler,BO3,gas,Cgas,1,20000,W,0.93,26.5,82,126,USD-2015,0,0.221088435,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2015",KEA Badenwürttemberg Technikkatalog
+condensing natural gas boiler,BO3,gas,Cgas,20000,30000,W,0.95,26.5,82,126,USD-2015,0,0.12755102,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2016",KEA Badenwürttemberg Technikkatalog
+condensing natural gas boiler,BO3,gas,Cgas,30000,60000,W,0.95,26.5,82,126,USD-2015,0,0.110544218,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
+condensing natural gas boiler,BO3,gas,Cgas,60000,10000000000,W,0.95,26.5,82,126,USD-2015,0,0.106292517,1,0,0,20,5,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
+electrical boiler,BO5,electricity,E230AC,1,10000000000,W,1,26.5,82,126,USD-2015,0,0.290816327,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2017",KEA Badenwürttemberg Technikkatalog
+wood-furnace,BO6,wood,Cwod,1,30000,W,0.94,26.5,82,126,USD-2015,0,0.948129252,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2020",KEA Badenwürttemberg Technikkatalog
+wood-furnace,BO6,wood,Cwod,30000,60000,W,0.94,26.5,82,126,USD-2015,0,0.453231293,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2021",KEA Badenwürttemberg Technikkatalog
+wood-furnace,BO6,wood,Cwod,60000,230000,W,0.94,26.5,82,126,USD-2015,0,0.198979592,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2022",KEA Badenwürttemberg Technikkatalog
+biomass pellet boiler,BO7,biomass,Cdbm,1,20000,W,0.9,26.5,82,126,USD-2015,0,0.632653061,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2023",KEA Badenwürttemberg Technikkatalog
+biomass pellet boiler,BO7,biomass,Cdbm,20000,60000,W,0.85,26.5,82,126,USD-2015,0,0.344387755,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2024",KEA Badenwürttemberg Technikkatalog
+biomass pellet boiler,BO7,biomass,Cdbm,60000,1000000000,W,0.81,26.5,82,126,USD-2015,0,0.258503401,1,0,0,20,6,5,"1,176 EUR 2022 = 1 USD 2025",KEA Badenwürttemberg Technikkatalog

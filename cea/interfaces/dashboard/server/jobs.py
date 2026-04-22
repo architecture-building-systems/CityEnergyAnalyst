@@ -41,6 +41,36 @@ class JobOutput(BaseModel):
     output: Any
 
 
+class JobInfoResponse(BaseModel):
+    id: str
+    script: str
+    parameters: Dict[str, Any]
+    state: JobState
+    error: str | None = None
+    created_time: Any
+    start_time: Any = None
+    end_time: Any = None
+    stdout: str | None = None
+    stderr: str | None = None
+    project_id: str
+    script_label: str | None = None
+    scenario_name: str | None = None
+    duration: float | None = None
+
+    @classmethod
+    def from_job_info(
+        cls,
+        job: JobInfo,
+        stdout: str | None = None,
+        stderr: str | None = None,
+    ) -> "JobInfoResponse":
+        payload = job.model_dump(exclude={"stdout", "stderr"})
+        return cls(**payload, stdout=stdout, stderr=stderr)
+
+    def to_event_payload(self) -> Dict[str, Any]:
+        return self.model_dump(mode='json')
+
+
 def get_cea_job_temp_prefix(job_id: str) -> str:
     """Get the prefix used for temporary directories for a given job ID."""
     return f"cea_job_{job_id}_"
@@ -170,17 +200,17 @@ async def get_jobs(
 
 
 @router.get("/{job_id}")
-async def get_job_info(session: SessionDep, job_id: str) -> JobInfo:
+async def get_job_info(session: SessionDep, job_id: str) -> JobInfoResponse:
     """Return a JobInfo by id"""
     job = await session.get(JobInfo, job_id, options=[undefer_group('logs')])
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return job
+    return JobInfoResponse.from_job_info(job, stdout=job.stdout, stderr=job.stderr)
 
 
 @router.post("/new", dependencies=[CEASeverDemoAuthCheck])
 async def create_new_job(request: Request, session: SessionDep, project_id: CEAProjectID, user_id: CEAUserID,
-                         settings: CEAServerSettings) -> JobInfo:
+                         settings: CEAServerSettings) -> JobInfoResponse:
     """Post a new job to the list of jobs to complete"""
     content_type = request.headers.get("content-type", "")
 
@@ -241,12 +271,14 @@ async def create_new_job(request: Request, session: SessionDep, project_id: CEAP
     await session.commit()
     await session.refresh(job)
 
-    await emit_with_retry("cea-job-created", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-    return job
+    job_payload = JobInfoResponse.from_job_info(job)
+    event_payload = job_payload.to_event_payload()
+    await emit_with_retry("cea-job-created", event_payload, room=f"user-{job.created_by}")
+    return job_payload
 
 
 @router.post("/started/{job_id}")
-async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
+async def set_job_started(session: SessionDep, job_id: str) -> JobInfoResponse:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -262,13 +294,15 @@ async def set_job_started(session: SessionDep, job_id: str) -> JobInfo:
         raise HTTPException(status_code=500, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
-    await emit_with_retry("cea-worker-started", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-    return job
+    job_payload = JobInfoResponse.from_job_info(job)
+    event_payload = job_payload.to_event_payload()
+    await emit_with_retry("cea-worker-started", event_payload, room=f"user-{job.created_by}")
+    return job_payload
 
 
 @router.post("/success/{job_id}")
 async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
-                          worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfo:
+                          worker_processes: CEAWorkerProcesses, output: JobOutput) -> JobInfoResponse:
     job = await session.get(JobInfo, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -277,10 +311,10 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         job.state = JobState.SUCCESS
         job.error = None
         job.end_time = get_current_time()
-        
+
         stdout_capture = await streams.pop(job_id, [])
-        if stdout_capture:
-            job.stdout = "".join(stdout_capture)
+        stdout_text = "".join(stdout_capture) if stdout_capture else None
+        job.stdout = stdout_text
         await session.commit()
         await session.refresh(job)
 
@@ -295,15 +329,16 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         raise HTTPException(status_code=500, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
-    job_info = job.model_dump(mode='json')
-    job_info["output"] = output.output
-    await emit_with_retry("cea-worker-success", job_info, room=f"user-{job.created_by}")
-    return job
+    job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)
+    event_payload = job_payload.to_event_payload()
+    event_payload["output"] = output.output
+    await emit_with_retry("cea-worker-success", event_payload, room=f"user-{job.created_by}")
+    return job_payload
 
 
 @router.post("/error/{job_id}")
 async def set_job_error(session: SessionDep, job_id: str, error: JobError, streams: CEAStreams,
-                        worker_processes: CEAWorkerProcesses) -> JobInfo:
+                        worker_processes: CEAWorkerProcesses) -> JobInfoResponse:
     message = error.message
     stacktrace = error.stacktrace
 
@@ -317,8 +352,8 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
         job.end_time = get_current_time()
 
         stdout_capture = await streams.pop(job_id, [])
-        if stdout_capture:
-            job.stdout = "".join(stdout_capture)
+        stdout_text = "".join(stdout_capture) if stdout_capture else None
+        job.stdout = stdout_text
         job.stderr = stacktrace
         await session.commit()
         await session.refresh(job)
@@ -334,11 +369,13 @@ async def set_job_error(session: SessionDep, job_id: str, error: JobError, strea
         raise HTTPException(status_code=500, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
-    await emit_with_retry("cea-worker-error", job.model_dump(mode='json'), room=f"user-{job.created_by}")
+    job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text, stderr=stacktrace)
+    event_payload = job_payload.to_event_payload()
+    await emit_with_retry("cea-worker-error", event_payload, room=f"user-{job.created_by}")
 
-    logger.warning(f"Error found in job {job_id}: {job.error}")
-    logger.error(f"stacktrace:\n{job.stderr}")
-    return job
+    logger.warning(f"Error found in job {job_id}: {message}")
+    logger.error(f"stacktrace:\n{stacktrace}")
+    return job_payload
 
 
 @router.post('/start/{job_id}', dependencies=[CEASeverDemoAuthCheck])
@@ -403,7 +440,7 @@ async def start_job(session: SessionDep, worker_processes: CEAWorkerProcesses, s
 
 @router.post("/cancel/{job_id}", dependencies=[CEASeverDemoAuthCheck])
 async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
-                     worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfo:
+                     worker_processes: CEAWorkerProcesses, streams: CEAStreams) -> JobInfoResponse:
     # Lock the row to prevent concurrent modifications (TOCTOU protection)
     result = await session.execute(
         select(JobInfo).where(JobInfo.id == job_id).with_for_update()
@@ -442,8 +479,8 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
 
         # Save any remaining stream output before clearing
         stdout_capture = await streams.pop(job_id, [])
-        if stdout_capture:
-            job.stdout = "".join(stdout_capture)
+        stdout_text = "".join(stdout_capture) if stdout_capture else None
+        job.stdout = stdout_text
 
         await session.commit()
         await session.refresh(job)
@@ -459,11 +496,13 @@ async def cancel_job(session: SessionDep, job_id: str, user_id: CEAUserID,
         raise HTTPException(status_code=500, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
-    await emit_with_retry("cea-worker-canceled", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-    return job
+    job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)
+    event_payload = job_payload.to_event_payload()
+    await emit_with_retry("cea-worker-canceled", event_payload, room=f"user-{job.created_by}")
+    return job_payload
 
 
-async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
+async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfoResponse:
     """
     Kill a job (server-initiated termination, e.g., during shutdown).
     This is different from cancel_job which is user-initiated.
@@ -488,8 +527,8 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
 
         # Save any remaining stream output before clearing
         stdout_capture = await streams.pop(job_id, [])
-        if stdout_capture:
-            job.stdout = "".join(stdout_capture)
+        stdout_text = "".join(stdout_capture) if stdout_capture else None
+        job.stdout = stdout_text
 
         await session.commit()
         await session.refresh(job)
@@ -505,12 +544,14 @@ async def kill_job(session, job_id: str, worker_processes, streams) -> JobInfo:
         raise HTTPException(status_code=500, detail=str(e))
 
     # Emit event outside try-except so emit failures don't cause rollback
-    await emit_with_retry("cea-worker-killed", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-    return job
+    job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)
+    event_payload = job_payload.to_event_payload()
+    await emit_with_retry("cea-worker-killed", event_payload, room=f"user-{job.created_by}")
+    return job_payload
 
 
 @router.delete("/{job_id}", dependencies=[CEASeverDemoAuthCheck])
-async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfo:
+async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> JobInfoResponse:
     """
     Mark a job as deleted (soft delete). The job row is not removed from the database,
     and the original completion state (SUCCESS/ERROR/CANCELED/KILLED) is preserved.
@@ -561,8 +602,10 @@ async def delete_job(session: SessionDep, job_id: str, user_id: CEAUserID) -> Jo
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    await emit_with_retry("cea-job-deleted", job.model_dump(mode='json'), room=f"user-{job.created_by}")
-    return job
+    job_payload = JobInfoResponse.from_job_info(job)
+    event_payload = job_payload.to_event_payload()
+    await emit_with_retry("cea-job-deleted", event_payload, room=f"user-{job.created_by}")
+    return job_payload
 
 
 def _force_kill_process(process: psutil.Process, pid: int, job_id: str):

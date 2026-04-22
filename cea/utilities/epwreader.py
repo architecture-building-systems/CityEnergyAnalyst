@@ -6,7 +6,7 @@ import pandas as pd
 import math
 import cea.inputlocator
 import numpy as np
-from cea.constants import BOLTZMANN, KELVIN_OFFSET, HOURS_IN_YEAR
+from cea.constants import BOLTZMANN, KELVIN_CONVERSION, HOURS_IN_YEAR
 from calendar import isleap
 
 __author__ = "Clayton Miller"
@@ -108,9 +108,9 @@ def calc_horirsky(Tdrybulb, Tdewpoint, N):
     elif N < 0:
         raise ValueError(f"Opaque Sky Cover (column 23) is below 0. (found {N})")
 
-    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_OFFSET) / KELVIN_OFFSET)) * (
+    sky_e = (0.787 + 0.764 * math.log((Tdewpoint + KELVIN_CONVERSION) / KELVIN_CONVERSION)) * (
             1 + 0.0224 * N - 0.0035 * N ** 2 + 0.00028 * N ** 3)
-    hor_IR = sky_e * BOLTZMANN * (Tdrybulb + KELVIN_OFFSET) ** 4
+    hor_IR = sky_e * BOLTZMANN * (Tdrybulb + KELVIN_CONVERSION) ** 4
 
     return hor_IR
 
@@ -137,7 +137,7 @@ def calc_skytemp(hor_IR_Whm2, Tdrybulb, Tdewpoint, N):
     elif hor_IR < 0:
         raise ValueError(f"Horizontal infrared radiation intensity (column 12) is below 0. (found {hor_IR})")
 
-    sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - KELVIN_OFFSET
+    sky_T = ((hor_IR / BOLTZMANN) ** 0.25) - KELVIN_CONVERSION
 
     return sky_T  # sky temperature in C
 

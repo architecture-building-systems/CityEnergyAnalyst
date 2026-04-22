@@ -8,6 +8,7 @@ heating radiators
 from scipy.optimize import newton
 import math
 import numpy as np
+from cea.constants import KELVIN_CONVERSION
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -39,15 +40,15 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
 
     nh = 0.3  # radiator constant
     if Qh > 0 or Qh < 0:  # use radiator function also for sensible cooling panels (ceiling cooling, chilled beam,...)
-        tair = tair + 273
-        tair0 = tair0 + 273
-        tsh0 = tsh0 + 273
-        trh0 = trh0 + 273
+        tair = tair + KELVIN_CONVERSION
+        tair0 = tair0 + KELVIN_CONVERSION
+        tsh0 = tsh0 + KELVIN_CONVERSION
+        trh0 = trh0 + KELVIN_CONVERSION
         mCw0 = Qh0 / (tsh0 - trh0)
         # minimum
         LMRT0 = lmrt(tair0, trh0, tsh0)
         delta_t = Qh / mCw0
-        result = newton(fh, trh0, args=(delta_t, Qh0, Qh, tair, LMRT0, nh), maxiter=100, tol=0.01) - 273
+        result = newton(fh, trh0, args=(delta_t, Qh0, Qh, tair, LMRT0, nh), maxiter=100, tol=0.01) - KELVIN_CONVERSION
         trh = result.real
         tsh = trh + Qh / mCw0
         mCw = Qh / (tsh - trh)

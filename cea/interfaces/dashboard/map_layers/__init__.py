@@ -14,12 +14,22 @@ def get_layers() -> List[Type[MapLayer]]:
 
 
 def get_layers_grouped_by_category() -> Dict[str, List[Type[MapLayer]]]:
-    """Returns a dictionary of all layers grouped by category"""
+    """Returns a dictionary of all layers grouped by category.
+
+    Within a category, layers are sorted by their optional ``order`` class
+    attribute (default 100), then by class name. A smaller ``order`` surfaces
+    a layer earlier in the UI list; define ``order`` on a layer class to
+    pin its position (e.g. ``order = 0`` to list it first).
+    """
     layers = get_layers()
     layers_grouped_by_category = defaultdict(list)
 
     for layer in layers:
         layers_grouped_by_category[layer.category.name].append(layer)
+
+    for category_name, category_layers in layers_grouped_by_category.items():
+        category_layers.sort(key=lambda cls: (getattr(cls, 'order', 100), cls.__name__))
+
     return dict(layers_grouped_by_category)
 
 

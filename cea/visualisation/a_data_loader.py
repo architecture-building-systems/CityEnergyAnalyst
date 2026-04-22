@@ -11,6 +11,8 @@ import pandas as pd
 from cea.import_export.result_summary import (
     get_emission_context,
     process_building_summary,
+    exec_aggregate_time_period,
+    slice_hourly_results_for_custom_time_period,
 )
 from cea.inputlocator import InputLocator
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
@@ -23,6 +25,74 @@ __version__ = "0.1"
 __maintainer__ = "Reynold Mok"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
+
+def _annotate_plant_display_name(original_name, row):
+    """Append -DH or -DC suffix to plant names for display.
+
+    Parameters
+    ----------
+    original_name : str
+        Original entity name (e.g. 'NODE16')
+    row : dict or pd.Series
+        Must have 'type' and 'case_description' keys.
+
+    Returns
+    -------
+    str
+        Annotated name (e.g. 'NODE16-DH') for plants, unchanged for buildings.
+    """
+    if row.get('type') != 'plant':
+        return original_name
+    case_desc = str(row.get('case_description') or '')
+    if 'DH' in case_desc:
+        return f"{original_name}-DH"
+    elif 'DC' in case_desc:
+        return f"{original_name}-DC"
+    return original_name
+
+
+def _filter_by_entity_type(df, include_entities, buildings=None):
+    """Filter DataFrame rows by entity type (buildings/plants) and building name selection.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Must have a 'type' column with values 'building' or 'plant'.
+        If no 'type' column exists, only the building name filter is applied.
+    include_entities : list[str]
+        Subset of ['buildings', 'plants'] indicating which to keep.
+    buildings : list[str] or None
+        If provided, filter building-type rows to only those in this list.
+        Plant-type rows are never filtered by name.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    include_buildings = 'buildings' in include_entities
+    include_plants = 'plants' in include_entities
+
+    if 'type' not in df.columns:
+        # No type column — treat all rows as buildings
+        if buildings and include_buildings:
+            return df[df['name'].isin(list(buildings))].copy()
+        return df if include_buildings else df.iloc[0:0].copy()
+
+    # Split into buildings and plants
+    mask_plant = df['type'] == 'plant'
+    parts = []
+    if include_buildings:
+        bldg_df = df[~mask_plant]
+        if buildings:
+            bldg_df = bldg_df[bldg_df['name'].isin(list(buildings))]
+        parts.append(bldg_df)
+    if include_plants:
+        parts.append(df[mask_plant])
+
+    if not parts:
+        return df.iloc[0:0].copy()
+    return pd.concat(parts, ignore_index=False)
 
 
 def get_building_names_from_zone(locator):
@@ -90,8 +160,29 @@ def raise_missing_pv_error(pv_codes, context='file'):
     raise FileNotFoundError(error_msg)
 
 
-demand_metrics = ['grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_cooling_demand', 'enduse_space_cooling_demand',	'enduse_heating_demand', 'enduse_space_heating_demand',	'enduse_dhw_demand']
+demand_metrics = [
+    # Unified display names (matching the Demand map layer's dropdown)
+    'electricity', 'space_heating', 'space_cooling', 'domestic_hot_water',
+    # Legacy aliases kept for backwards compatibility
+    'grid_electricity_consumption', 'enduse_electricity_demand', 'enduse_electricity',
+    'enduse_cooling_demand', 'enduse_space_cooling_demand', 'enduse_space_cooling',
+    'enduse_heating_demand', 'enduse_space_heating_demand', 'enduse_space_heating',
+    'enduse_dhw_demand', 'enduse_dhw',
+]
 demand_analytics = ['EUI_grid_electricity',	'EUI_enduse_electricity', 'EUI_enduse_cooling',	'EUI_enduse_space cooling',	'EUI_enduse_heating', 'EUI_enduse_space_heating', 'EUI_enduse_dhw']
+
+def _get_final_energy_metrics(locator):
+    """Carrier codes defined in the scenario's ENERGY_CARRIERS.csv.
+
+    Used as the non-analytics whitelist for the ``plot-final-energy``
+    form. Empty on any I/O error — ``get_summary_results_csv_path`` then
+    falls through to the analytics-path check instead of crashing.
+    """
+    try:
+        from cea.technologies.energy_carriers import available_carriers
+        return sorted(available_carriers(locator))
+    except Exception:
+        return []
 
 solar_metrics = ['total', 'roofs_top', 'walls_north', 'walls_east', 'walls_south', 'walls_west']
 solar_analytics = ['solar_energy_penetration', 'self_consumption', 'self_sufficiency']
@@ -105,12 +196,14 @@ def get_plot_metrics_dict(locator):
 
     return {
         'demand': demand_metrics,
+        'final-energy': _get_final_energy_metrics(locator),
         'pv': solar_metrics,
         'pvt': solar_metrics,
         'sc': solar_metrics,
         'lifecycle-emissions': lifecycle_emission_metrics,
         'operational-emissions': operational_emission_metrics,
-        'emission-timeline': lifecycle_emission_metrics
+        'emission-timeline': lifecycle_emission_metrics,
+        'heat-rejection': ['heat_rejection']
     }
 
 
@@ -119,18 +212,610 @@ def get_plot_analytics_dict(locator):
     # This doesn't need emission context, but kept for consistency
     return {
         'demand': demand_analytics,
+        'final-energy': [],
         'pv': solar_analytics,
         'pvt': [],
         'sc': [],
         'lifecycle-emissions': [],
-        'operational-emissions': []
+        'operational-emissions': [],
+        'heat-rejection': []
     }
+
+def _export_final_energy_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end, include_entities=None):
+    """
+    Read final-energy results for one or more what-if scenarios and write an
+    intermediate CSV to the standard export/plots path expected by the pipeline.
+
+    For building-level annual view: reads final_energy_buildings.csv (annual totals),
+    converts MWh → kWh.  Multiple what-if names are prefixed on the building name.
+
+    For building-level monthly/seasonal view and all district time-series views:
+    reads per-building B####.csv hourly files, sums carrier columns, then aggregates
+    via exec_aggregate_time_period() — the same pattern used by heat-rejection.
+
+    Carrier column mapping is data-driven: every ``feedstock_file`` code in
+    the scenario's ``ENERGY_CARRIERS.csv`` becomes ``<CODE>_kWh`` in the
+    exported plot CSV. For the annual-summary fast path we read
+    ``<CODE>_MWh`` from ``final_energy_buildings.csv`` and convert; for
+    hourly paths we sum any ``*_<CODE>_kWh`` column in ``B####.csv``.
+    """
+    from cea.utilities.date import get_date_range_hours_from_year
+    from cea.technologies.energy_carriers import available_carriers
+
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
+
+    try:
+        carriers = sorted(available_carriers(locator))
+    except Exception:
+        carriers = []
+    carrier_rename = {f'{c}_MWh': f'{c}_kWh' for c in carriers}
+    multi = len(whatif_names) > 1
+
+    if bool_aggregate_by_building and time_period == 'annually':
+        # Fast path: read annual summary CSV (no hourly files needed)
+        dfs = []
+        for whatif_name in whatif_names:
+            src_path = locator.get_final_energy_buildings_file(whatif_name)
+            if not os.path.exists(src_path):
+                continue
+            df = pd.read_csv(src_path)
+            df = _filter_by_entity_type(df, include_entities, buildings=buildings)
+            # Annotate plant names with network type suffix for display
+            if 'type' in df.columns and 'case_description' in df.columns:
+                df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
+            keep_cols = ['name', 'GFA_m2'] + [c for c in carrier_rename if c in df.columns]
+            df_out = df[keep_cols].copy()
+            for mwh_col in carrier_rename:
+                if mwh_col in df_out.columns:
+                    df_out[mwh_col] = df_out[mwh_col] * 1000.0
+            df_out = df_out.rename(columns=carrier_rename)
+            if multi:
+                df_out['name'] = whatif_name + '/' + df_out['name']
+            df_out['period'] = 'annually'
+            dfs.append(df_out)
+        if not dfs:
+            return
+        df_out = pd.concat(dfs, ignore_index=True)
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'final-energy', 'final-energy', 'annually', period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    elif bool_aggregate_by_building:
+        # Building monthly/seasonal view — read per-building hourly files
+        dates = get_date_range_hours_from_year(2005)
+        dfs = []
+        for whatif_name in whatif_names:
+            summary_path = locator.get_final_energy_buildings_file(whatif_name)
+            if not os.path.exists(summary_path):
+                continue
+            summary_df = pd.read_csv(summary_path)
+            summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+            gfa_map = summary_df.set_index('name')['GFA_m2'].to_dict() if 'GFA_m2' in summary_df.columns else {}
+            # Build display name map for plant annotation
+            display_name_map = {}
+            for _, srow in summary_df.iterrows():
+                display_name_map[srow['name']] = _annotate_plant_display_name(srow['name'], srow)
+
+            for building_name in summary_df['name'].tolist():
+                building_file = locator.get_final_energy_building_file(building_name, whatif_name)
+                if not os.path.exists(building_file):
+                    continue
+                bdf = pd.read_csv(building_file)
+                n = min(len(bdf), len(dates))
+                row = {'date': dates[:n]}
+                for carrier in carriers:
+                    cols = [c for c in bdf.columns if c.endswith(f'_{carrier}_kWh')]
+                    if cols:
+                        row[f'{carrier}_kWh'] = bdf[cols].sum(axis=1).values[:n]
+                hourly_df = pd.DataFrame(row)
+                hourly_df = slice_hourly_results_for_custom_time_period(period_start, period_end, hourly_df)
+
+                list_list_df, _ = exec_aggregate_time_period(True, [[hourly_df]], [time_period])
+                if not list_list_df or not list_list_df[0]:
+                    continue
+                agg_df = list_list_df[0][0]
+                annotated = display_name_map.get(building_name, building_name)
+                display_name = f'{whatif_name}/{annotated}' if multi else annotated
+                agg_df.insert(0, 'name', display_name)
+                agg_df['GFA_m2'] = gfa_map.get(building_name, 0.0)
+                dfs.append(agg_df)
+
+        if not dfs:
+            return
+        df_out = pd.concat(dfs, ignore_index=True)
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'final-energy', 'final-energy', time_period, period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    else:
+        # District views
+        if time_period == 'annually':
+            # Annual district view: sum per-building annual totals to a single district row
+            dfs = []
+            for whatif_name in whatif_names:
+                src_path = locator.get_final_energy_buildings_file(whatif_name)
+                if not os.path.exists(src_path):
+                    continue
+                df = pd.read_csv(src_path)
+                df = _filter_by_entity_type(df, include_entities, buildings=buildings)
+                keep_cols = [c for c in carrier_rename if c in df.columns]
+                df_out = df[keep_cols].copy()
+                for mwh_col in carrier_rename:
+                    if mwh_col in df_out.columns:
+                        df_out[mwh_col] = df_out[mwh_col] * 1000.0
+                df_out = df_out.rename(columns=carrier_rename)
+                dfs.append(df_out)
+            if not dfs:
+                return
+            totals = pd.concat(dfs, ignore_index=True).sum(numeric_only=True)
+            df_out = pd.DataFrame([totals])
+            df_out.insert(0, 'period', 'annually')
+        else:
+            # District time-series: read all buildings' hourly files, sum per carrier, aggregate
+            whatif_name = whatif_names[0]
+            dates = get_date_range_hours_from_year(2005)
+            summary_path = locator.get_final_energy_buildings_file(whatif_name)
+            if not os.path.exists(summary_path):
+                return
+            summary_df = pd.read_csv(summary_path)
+            summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+
+            entity_dfs = []
+            for building_name in summary_df['name'].tolist():
+                building_file = locator.get_final_energy_building_file(building_name, whatif_name)
+                if not os.path.exists(building_file):
+                    continue
+                bdf = pd.read_csv(building_file)
+                n = min(len(bdf), len(dates))
+                row = {'date': dates[:n]}
+                for carrier in carriers:
+                    cols = [c for c in bdf.columns if c.endswith(f'_{carrier}_kWh')]
+                    if cols:
+                        row[f'{carrier}_kWh'] = bdf[cols].sum(axis=1).values[:n]
+                hourly_df = pd.DataFrame(row)
+                hourly_df = slice_hourly_results_for_custom_time_period(period_start, period_end, hourly_df)
+                entity_dfs.append(hourly_df)
+
+            if not entity_dfs:
+                return
+            list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+            if not list_list_df or not list_list_df[0]:
+                return
+            df_out = list_list_df[0][0]
+
+        out_path = locator.get_export_results_summary_cea_feature_time_period_file(
+            locator.get_export_plots_folder(), 'final-energy', 'final-energy', time_period, period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _export_heat_rejection_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end, include_entities=None):
+    """
+    Read heat rejection results for one or more what-if scenarios and write an
+    intermediate CSV to the standard export/plots path expected by the pipeline.
+
+    For building-level annual view: reads heat_rejection_buildings.csv, converts
+    heat_rejection_annual_MWh → heat_rejection_kWh.
+
+    For district time-series views: sums hourly files across all entities and
+    aggregates to the requested time resolution using result_summary machinery.
+    """
+    from cea.utilities.date import get_date_range_hours_from_year
+
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
+
+    if bool_aggregate_by_building:
+        dfs = []
+        multi = len(whatif_names) > 1
+        for whatif_name in whatif_names:
+            src_path = locator.get_heat_rejection_whatif_buildings_file(whatif_name)
+            if not os.path.exists(src_path):
+                continue
+            df = pd.read_csv(src_path)
+            df = _filter_by_entity_type(df, include_entities, buildings=buildings)
+            # Annotate plant names with network type suffix for display
+            if 'type' in df.columns and 'case_description' in df.columns:
+                df['name'] = df.apply(lambda r: _annotate_plant_display_name(r['name'], r), axis=1)
+            keep_cols = [c for c in ['name', 'GFA_m2', 'heat_rejection_annual_MWh'] if c in df.columns]
+            df_out = df[keep_cols].copy()
+            if 'heat_rejection_annual_MWh' in df_out.columns:
+                df_out['heat_rejection_kWh'] = df_out['heat_rejection_annual_MWh'] * 1000.0
+                df_out = df_out.drop(columns=['heat_rejection_annual_MWh'])
+            if multi:
+                df_out['name'] = whatif_name + '/' + df_out['name']
+            dfs.append(df_out)
+        if not dfs:
+            return
+        df_out = pd.concat(dfs, ignore_index=True)
+        df_out['period'] = 'annually'
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'heat-rejection', 'heat-rejection', 'annually', period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    else:
+        # District time-series view — use first whatif_name
+        whatif_name = whatif_names[0]
+        buildings_file = locator.get_heat_rejection_whatif_buildings_file(whatif_name)
+        if not os.path.exists(buildings_file):
+            return
+        buildings_df = pd.read_csv(buildings_file)
+        buildings_df = _filter_by_entity_type(buildings_df, include_entities, buildings=buildings)
+        entity_names = buildings_df['name'].tolist()
+
+        dates = get_date_range_hours_from_year(2005)
+        entity_dfs = []
+        for entity_name in entity_names:
+            entity_file = locator.get_heat_rejection_whatif_building_file(entity_name, whatif_name)
+            if not os.path.exists(entity_file):
+                continue
+            entity_df = pd.read_csv(entity_file)
+            if 'heat_rejection_kW' not in entity_df.columns:
+                continue
+            n = min(len(entity_df), len(dates))
+            df = pd.DataFrame({
+                'date': dates[:n],
+                'heat_rejection_kWh': entity_df['heat_rejection_kW'].values[:n],
+            })
+            df = slice_hourly_results_for_custom_time_period(period_start, period_end, df)
+            entity_dfs.append(df)
+
+        if not entity_dfs:
+            return
+
+        list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+        if not list_list_df or not list_list_df[0]:
+            return
+
+        df_result = list_list_df[0][0]
+        out_path = locator.get_export_results_summary_cea_feature_time_period_file(
+            locator.get_export_plots_folder(), 'heat-rejection', 'heat-rejection', time_period, period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_result.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _collect_lifecycle_rows(locator, whatif_names, buildings, include_entities=None):
+    """Build a list of per-building annual lifecycle emission rows from what-if results.
+
+    All values (operational, embodied, solar offset) are summed over the full
+    lifecycle timeline so they are on the same time scope.  Booster operational
+    columns are merged into their parent service (Qhs_booster → Qhs_sys,
+    Qww_booster → Qww_sys).
+    """
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+    # Maps timeline column → output service key (boosters merged into parent)
+    _TIMELINE_SERVICE_MAP = {
+        'operation_Qhs_sys_kgCO2e': 'operation_Qhs_sys_kgCO2e',
+        'operation_Qww_sys_kgCO2e': 'operation_Qww_sys_kgCO2e',
+        'operation_Qcs_sys_kgCO2e': 'operation_Qcs_sys_kgCO2e',
+        'operation_E_sys_kgCO2e': 'operation_E_sys_kgCO2e',
+        'operation_Qhs_booster_kgCO2e': 'operation_Qhs_sys_kgCO2e',
+        'operation_Qww_booster_kgCO2e': 'operation_Qww_sys_kgCO2e',
+        'operation_DH_kgCO2e': 'operation_DH_kgCO2e',
+        'operation_DC_kgCO2e': 'operation_DC_kgCO2e',
+    }
+    _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e', 'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
+    multi = len(whatif_names) > 1
+    rows = []
+    for whatif_name in whatif_names:
+        buildings_summary_path = locator.get_emissions_whatif_buildings_file(whatif_name)
+        if not os.path.exists(buildings_summary_path):
+            continue
+        summary_df = pd.read_csv(buildings_summary_path)
+        summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+        for _, row in summary_df.iterrows():
+            building_name = row['name']
+            # Read timeline (lifecycle) for operational + solar offset totals
+            timeline_path = locator.get_emissions_whatif_building_timeline_file(building_name, whatif_name)
+            if not os.path.exists(timeline_path):
+                continue
+            tdf = pd.read_csv(timeline_path)
+            annotated_name = _annotate_plant_display_name(building_name, row)
+            out_row = {
+                'name': f'{whatif_name}/{annotated_name}' if multi else annotated_name,
+                'GFA_m2': row.get('GFA_m2', 0.0),
+            }
+            # Operational per-service totals from timeline (full lifecycle scope)
+            service_totals = {}
+            for tl_col, dest_col in _TIMELINE_SERVICE_MAP.items():
+                if tl_col in tdf.columns:
+                    service_totals[dest_col] = service_totals.get(dest_col, 0.0) + tdf[tl_col].sum()
+            out_row.update(service_totals)
+            # Solar offsets from timeline
+            for solar_col in _SOLAR_OFFSETS:
+                if solar_col in tdf.columns:
+                    out_row[solar_col] = tdf[solar_col].sum()
+            # Embodied totals from summary (already lifecycle-scoped)
+            for emb_col in ('production_kgCO2e', 'biogenic_kgCO2e', 'demolition_kgCO2e'):
+                out_row[emb_col] = row.get(emb_col, 0.0)
+            out_row['period'] = 'annually'
+            rows.append(out_row)
+    return rows
+
+
+def _export_lifecycle_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, period_start, period_end, include_entities=None):
+    """
+    Read lifecycle emissions results for one or more what-if scenarios and write an
+    intermediate CSV to the standard export/plots path expected by the pipeline.
+    """
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
+
+    rows = _collect_lifecycle_rows(locator, whatif_names, buildings, include_entities=include_entities)
+    if not rows:
+        return
+    df_all = pd.DataFrame(rows)
+
+    if bool_aggregate_by_building:
+        df_out = df_all
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'lifecycle-emissions', 'lifecycle-emissions', 'annually', period_start, period_end
+        )
+    else:
+        # District annual: sum numeric columns across all buildings
+        numeric_cols = df_all.select_dtypes(include='number').columns.tolist()
+        totals = df_all[numeric_cols].sum(numeric_only=True)
+        df_out = pd.DataFrame([totals])
+        df_out.insert(0, 'period', 'annually')
+        out_path = locator.get_export_results_summary_cea_feature_time_period_file(
+            locator.get_export_plots_folder(), 'lifecycle-emissions', 'lifecycle-emissions', 'annually', period_start, period_end
+        )
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+
+def _aggregate_op_emission_row(hdf, n=None):
+    """
+    Aggregate one building's hourly operational emission DataFrame into derived columns.
+
+    Returns a dict with three levels of aggregation (all with _kgCO2e suffix):
+    - Service totals:       operation_Qhs_sys_kgCO2e, operation_E_sys_kgCO2e, ...
+    - Carrier totals:       GRID_kgCO2e, NATURALGAS_kgCO2e, ...
+    - Service×carrier:      Qhs_sys_NATURALGAS_kgCO2e, E_sys_GRID_kgCO2e, ...  (kept as-is)
+    - Solar offsets:        PV_E_offset_kgCO2e, PVT_E_offset_kgCO2e, ...
+    """
+    # Maps hourly-file column prefix → (service_dest for totals, canonical_service for hybrid col)
+    _PREFIXES = {
+        'Qhs_sys_':     ('operation_Qhs_sys', 'Qhs_sys'),
+        'Qww_sys_':     ('operation_Qww_sys', 'Qww_sys'),
+        'Qcs_sys_':     ('operation_Qcs_sys', 'Qcs_sys'),
+        'E_sys_':       ('operation_E_sys',   'E_sys'),
+        'Qhs_booster_': ('operation_Qhs_sys', 'Qhs_sys'),  # boosters fold into Qhs_sys
+        'Qww_booster_': ('operation_Qww_sys', 'Qww_sys'),
+    }
+    _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e',
+                      'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
+
+    out = {}
+    cols_data = {col: (hdf[col].values[:n] if n is not None else hdf[col].values)
+                 for col in hdf.columns if col not in ('date', 'name')}
+
+    for col, vals in cols_data.items():
+        if not col.endswith('_kgCO2e'):
+            continue
+
+        # Solar offset columns — keep as-is
+        if col in _SOLAR_OFFSETS:
+            out[col] = out.get(col, 0.0) + (vals.sum() if n is None else vals.sum())
+            continue
+
+        # Plant columns (e.g. plant_primary_DH_NATURALGAS_kgCO2e) → map to operation_DH / operation_DC
+        if col.startswith('plant_'):
+            col_sum = vals.sum()
+            # Parse: plant_{role}_{network_type}_{carrier}_kgCO2e
+            parts = col[:-len('_kgCO2e')].split('_')
+            # parts = ['plant', 'primary', 'DH', 'NATURALGAS'] or ['plant', 'pumping', 'DH', 'GRID']
+            carrier = parts[-1]
+            # Detect network type (DH or DC) from column name
+            network_type = None
+            for p in parts:
+                if p in ('DH', 'DC'):
+                    network_type = p
+                    break
+            service_dest = f'operation_{network_type}' if network_type else 'operation_E_sys'
+            canonical_service = network_type if network_type else 'E_sys'
+            svc_col = f'{service_dest}_kgCO2e'
+            out[svc_col] = out.get(svc_col, 0.0) + col_sum
+            car_col = f'{carrier}_kgCO2e'
+            out[car_col] = out.get(car_col, 0.0) + col_sum
+            hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
+            out[hybrid_col] = out.get(hybrid_col, 0.0) + col_sum
+            continue
+
+        # Operational service×carrier columns
+        for prefix, (service_dest, canonical_service) in _PREFIXES.items():
+            if col.startswith(prefix):
+                carrier = col[len(prefix):-len('_kgCO2e')]
+                col_sum = vals.sum()
+                # service total
+                svc_col = f'{service_dest}_kgCO2e'
+                out[svc_col] = out.get(svc_col, 0.0) + col_sum
+                # carrier total
+                car_col = f'{carrier}_kgCO2e'
+                out[car_col] = out.get(car_col, 0.0) + col_sum
+                # service×carrier (canonical service name, not booster)
+                hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
+                out[hybrid_col] = out.get(hybrid_col, 0.0) + col_sum
+                break
+
+    return out
+
+
+def _aggregate_op_emission_hourly(hdf, n):
+    """
+    Same as _aggregate_op_emission_row but returns numpy arrays for district time-series.
+    Columns: service totals, carrier totals, service×carrier, solar offsets.
+    """
+
+    _PREFIXES = {
+        'Qhs_sys_':     ('operation_Qhs_sys', 'Qhs_sys'),
+        'Qww_sys_':     ('operation_Qww_sys', 'Qww_sys'),
+        'Qcs_sys_':     ('operation_Qcs_sys', 'Qcs_sys'),
+        'E_sys_':       ('operation_E_sys',   'E_sys'),
+        'Qhs_booster_': ('operation_Qhs_sys', 'Qhs_sys'),
+        'Qww_booster_': ('operation_Qww_sys', 'Qww_sys'),
+    }
+    _SOLAR_OFFSETS = ('PV_E_offset_kgCO2e', 'PVT_E_offset_kgCO2e',
+                      'PVT_Q_offset_kgCO2e', 'SC_Q_offset_kgCO2e')
+
+    out = {}
+    for col in hdf.columns:
+        if col in ('date', 'name') or not col.endswith('_kgCO2e'):
+            continue
+        vals = hdf[col].values[:n]
+
+        if col in _SOLAR_OFFSETS:
+            out[col] = out[col] + vals if col in out else vals.copy()
+            continue
+
+        # Plant columns (e.g. plant_primary_DH_NATURALGAS_kgCO2e) → map to operation_DH / operation_DC
+        if col.startswith('plant_'):
+            parts = col[:-len('_kgCO2e')].split('_')
+            carrier = parts[-1]
+            network_type = None
+            for p in parts:
+                if p in ('DH', 'DC'):
+                    network_type = p
+                    break
+            service_dest = f'operation_{network_type}' if network_type else 'operation_E_sys'
+            canonical_service = network_type if network_type else 'E_sys'
+            svc_col = f'{service_dest}_kgCO2e'
+            car_col = f'{carrier}_kgCO2e'
+            hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
+            out[svc_col]    = out[svc_col]    + vals if svc_col    in out else vals.copy()
+            out[car_col]    = out[car_col]    + vals if car_col    in out else vals.copy()
+            out[hybrid_col] = out[hybrid_col] + vals if hybrid_col in out else vals.copy()
+            continue
+
+        for prefix, (service_dest, canonical_service) in _PREFIXES.items():
+            if col.startswith(prefix):
+                carrier = col[len(prefix):-len('_kgCO2e')]
+                svc_col = f'{service_dest}_kgCO2e'
+                car_col = f'{carrier}_kgCO2e'
+                hybrid_col = f'{canonical_service}_{carrier}_kgCO2e'
+                out[svc_col]    = out[svc_col]    + vals if svc_col    in out else vals.copy()
+                out[car_col]    = out[car_col]    + vals if car_col    in out else vals.copy()
+                out[hybrid_col] = out[hybrid_col] + vals if hybrid_col in out else vals.copy()
+                break
+
+    return out
+
+
+def _export_operational_emissions_to_plots_folder(locator, whatif_names, buildings, bool_aggregate_by_building, time_period, period_start, period_end, include_entities=None):
+    """
+    Read operational emissions results for one or more what-if scenarios and write an
+    intermediate CSV to the standard export/plots path expected by the pipeline.
+
+    Exports three levels of aggregation so all y-category-to-plot combinations work:
+    - Service totals:    operation_Qhs_sys_kgCO2e  (for 'operation' only)
+    - Carrier totals:    GRID_kgCO2e               (for 'energy_carrier' only)
+    - Service×carrier:   Qhs_sys_NATURALGAS_kgCO2e (for both selected)
+    - Solar offsets:     PV_E_offset_kgCO2e        (always)
+    """
+    from cea.utilities.date import get_date_range_hours_from_year
+
+    if include_entities is None:
+        include_entities = ['plants', 'buildings']
+
+    if isinstance(whatif_names, str):
+        whatif_names = [whatif_names]
+
+    multi = len(whatif_names) > 1
+
+    if bool_aggregate_by_building:
+        dfs = []
+        for whatif_name in whatif_names:
+            buildings_summary_path = locator.get_emissions_whatif_buildings_file(whatif_name)
+            if not os.path.exists(buildings_summary_path):
+                continue
+            summary_df = pd.read_csv(buildings_summary_path)
+            summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+
+            for _, row in summary_df.iterrows():
+                building_name = row['name']
+                hourly_path = locator.get_emissions_whatif_building_file(building_name, whatif_name)
+                if not os.path.exists(hourly_path):
+                    continue
+                hdf = pd.read_csv(hourly_path)
+                annotated_name = _annotate_plant_display_name(building_name, row)
+                out_row = {
+                    'name': f'{whatif_name}/{annotated_name}' if multi else annotated_name,
+                    'GFA_m2': row.get('GFA_m2', 0.0),
+                }
+                out_row.update(_aggregate_op_emission_row(hdf))
+                out_row['period'] = 'annually'
+                dfs.append(out_row)
+
+        if not dfs:
+            return
+        df_out = pd.DataFrame(dfs)
+        out_path = locator.get_export_plots_cea_feature_time_resolution_buildings_file(
+            'operational-emissions', 'operational-emissions', 'annually', period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_out.to_csv(out_path, index=False, float_format='%.3f')
+
+    else:
+        # District time-series view — use first whatif_name
+        whatif_name = whatif_names[0]
+        buildings_summary_path = locator.get_emissions_whatif_buildings_file(whatif_name)
+        if not os.path.exists(buildings_summary_path):
+            return
+        summary_df = pd.read_csv(buildings_summary_path)
+        summary_df = _filter_by_entity_type(summary_df, include_entities, buildings=buildings)
+
+        dates = get_date_range_hours_from_year(2005)
+        entity_dfs = []
+        for building_name in summary_df['name'].tolist():
+            hourly_path = locator.get_emissions_whatif_building_file(building_name, whatif_name)
+            if not os.path.exists(hourly_path):
+                continue
+            hdf = pd.read_csv(hourly_path)
+            n = min(len(hdf), len(dates))
+            row_dict = {'date': dates[:n]}
+            row_dict.update(_aggregate_op_emission_hourly(hdf, n))
+            hourly_df = pd.DataFrame(row_dict)
+            hourly_df = slice_hourly_results_for_custom_time_period(period_start, period_end, hourly_df)
+            entity_dfs.append(hourly_df)
+
+        if not entity_dfs:
+            return
+        list_list_df, _ = exec_aggregate_time_period(True, [entity_dfs], [time_period])
+        if not list_list_df or not list_list_df[0]:
+            return
+        df_result = list_list_df[0][0]
+        out_path = locator.get_export_results_summary_cea_feature_time_period_file(
+            locator.get_export_plots_folder(), 'operational-emissions', 'operational-emissions', time_period, period_start, period_end
+        )
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        df_result.to_csv(out_path, index=False, float_format='%.3f')
+
 
 # Trigger the summary feature and point to the csv results file
 class csv_pointer:
     """Maps user input combinations to pre-defined CSV file paths."""
 
-    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list):
+    def __init__(self, plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=None, include_entities=None):
         """
         :param plot_config: User-defined configuration settings.
         :param scenario: CEA scenario path.
@@ -141,12 +826,14 @@ class csv_pointer:
 
         x, x_facet = get_x_and_x_facet(plot_config.x_to_plot)
         self.config = plot_config
+        self.whatif_names = whatif_names or []
         self.scenario = scenario
         self.locator = InputLocator(scenario=scenario)
         self.plot_cea_feature = plot_cea_feature
         self.period_start = period_start
         self.period_end = period_end
         self.buildings = plots_building_filter.buildings
+        self.include_entities = include_entities if include_entities is not None else ['plants', 'buildings']
 
         # For lifecycle-emissions, emission-timeline, and operational-emissions,
         # y_metric_to_plot is generated in b_data_processor from multiple parameters
@@ -208,6 +895,46 @@ class csv_pointer:
 
     def execute_summary(self, bool_include_advanced_analytics):
         """Executes the summary feature to generate the required CSV output."""
+        if self.plot_cea_feature == 'heat-rejection':
+            if not self.whatif_names:
+                return
+            _export_heat_rejection_to_plots_folder(
+                self.locator, self.whatif_names, self.buildings,
+                self.bool_aggregate_by_building, self.time_period,
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
+            )
+            return
+
+        if self.plot_cea_feature == 'final-energy':
+            if not self.whatif_names:
+                return
+            _export_final_energy_to_plots_folder(
+                self.locator, self.whatif_names, self.buildings,
+                self.bool_aggregate_by_building, self.time_period,
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
+            )
+            return
+
+        if self.plot_cea_feature == 'lifecycle-emissions' and self.whatif_names:
+            _export_lifecycle_emissions_to_plots_folder(
+                self.locator, self.whatif_names, self.buildings,
+                self.bool_aggregate_by_building,
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
+            )
+            return
+
+        if self.plot_cea_feature == 'operational-emissions' and self.whatif_names:
+            _export_operational_emissions_to_plots_folder(
+                self.locator, self.whatif_names, self.buildings,
+                self.bool_aggregate_by_building, self.time_period,
+                self.period_start, self.period_end,
+                include_entities=self.include_entities
+            )
+            return
+
         list_metrics_analytics = get_plot_analytics_dict(self.locator).get(self.plot_cea_feature, [])
         if any(item in list_metrics_analytics for item in self.y_metric_to_plot):
             bool_include_advanced_analytics = True
@@ -330,7 +1057,7 @@ def get_x_and_x_facet(x_to_plot):
 
 
 # Main function
-def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False):
+def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, bool_include_advanced_analytics=False, whatif_names=None, include_entities=None):
     """
     Processes and exports building summary results, filtering buildings based on user-defined criteria.
 
@@ -344,28 +1071,8 @@ def plot_input_processor(plot_config, plots_building_filter, scenario, plot_cea_
     Returns:
         None
     """
-    # Early validation: Check if PV panel results exist for emission plots
-    if plot_cea_feature in ('operational-emissions', 'lifecycle-emissions'):
-        pv_code = getattr(plot_config, 'pv_code', None)
-        if pv_code:
-            # Check if any building has PV data for this panel type
-            locator = InputLocator(scenario)
-
-            # Get list of buildings to check
-            buildings = plots_building_filter.buildings
-            if not buildings:
-                zone_df = get_building_names_from_zone(locator)
-                buildings = zone_df['name'].tolist()
-
-            # Check if PV results exist for at least one building (representative check)
-            if buildings:
-                first_building = buildings[0]
-                pv_path = locator.PV_results(first_building, pv_code)
-                if not os.path.exists(pv_path):
-                    raise_missing_pv_error(pv_code)
-
     # Instantiate the csv_pointer class
-    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list)
+    plot_instance_a = csv_pointer(plot_config, plots_building_filter, scenario, plot_cea_feature, period_start, period_end, solar_panel_types_list, whatif_names=whatif_names, include_entities=include_entities)
 
     # Get the summary results CSV path
     summary_results_csv_path = plot_instance_a.get_summary_results_csv_path()
