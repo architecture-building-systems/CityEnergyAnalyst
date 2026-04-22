@@ -72,8 +72,11 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
         # Make sure relevant OSM parameters (if available) are passed as floats, not strings
         OSM_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'height']
+        # shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
+        #     shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
+        #         .apply(lambda x: pd.to_numeric(x, errors='coerce'))
         shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] = \
-            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]].fillna(1) \
+            shapefile[[c for c in OSM_COLUMNS if c in list_of_columns]] \
                 .apply(lambda x: pd.to_numeric(x, errors='coerce'))
 
         # Check which attributes OSM has (sometimes it does not have any) and indicate the data source
@@ -102,6 +105,13 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
                                     1.0 else x for x in data_floors_sum]
         data_osm_floors_joined = math.ceil(
             np.nanmedian(data_floors_sum_with_nan))  # median so we get close to the worse case
+
+        # fill in missing data in OSM files with assumed floor-to-floor height
+        shapefile.loc[(shapefile['building:levels'].isna()) & (~shapefile['height'].isna()), 'building:levels'] = \
+            shapefile.loc[(shapefile['building:levels'].isna()) & (~shapefile['height'].isna()), 'height'] / constants.H_F
+        shapefile.loc[(~shapefile['building:levels'].isna()) & (shapefile['height'].isna()), 'height'] = \
+            shapefile.loc[(~shapefile['building:levels'].isna()) & (shapefile['height'].isna()), 'building:levels'] * constants.H_F
+
         shapefile["floors_ag"] = [int(x) if not np.isnan(x) else data_osm_floors_joined for x in
                                   data_floors_sum_with_nan]
 
@@ -109,8 +119,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
         if 'height' in list_of_columns:
             #  Replaces 'nan' values with CEA assumption
-            shapefile["height_ag"] = shapefile["height"].fillna(
-                shapefile["floors_ag"] * constants.H_F).astype(float)
+            shapefile["height_ag"] = shapefile["height"].fillna(shapefile["floors_ag"] * constants.H_F).astype(float)
             #  Replaces values of height = 0 with CEA assumption
             # TODO: Check whether buildings with height between 0 and 1 meter are actually mostly underground
             #  These might not be errors, but rather partially or fully underground buildings. This should be verified.
