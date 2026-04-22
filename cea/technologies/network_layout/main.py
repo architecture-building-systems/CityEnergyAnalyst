@@ -2173,26 +2173,26 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     )
 
     # After validate/augment/filter, sync the per-service lists with nodes_gdf:
-    # - validate: nodes_gdf unchanged → lists unchanged
-    # - augment:  nodes_gdf has existing ∪ added buildings → lists use union
+    # - validate: nodes_gdf unchanged → no sync needed
+    # - augment:  augmentation only adds buildings that were already in
+    #             list_heating_buildings or list_cooling_buildings (the pre-augment
+    #             per-service authority), so the lists are still correct → no sync
     # - filter:   nodes_gdf has only the kept set → intersect each service list
     #             with the surviving set so DC and DH lists don't cross-contaminate.
-    final_building_names = sorted(
-        extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'].unique()
-    )
+    #
+    # A previous revision union'd the per-service lists with *all* post-mode
+    # buildings. That cross-contaminated DC and DH in mixed-service networks
+    # (every building ended up in both lists). The fix is to skip the union
+    # entirely for validate/augment — the per-service lists are already right.
     network_mode_str = config.network_layout.network_layout_mode
     if network_mode_str == 'filter':
-        final_set = set(final_building_names)
+        final_building_names = set(
+            extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'].unique()
+        )
         if 'DH' in list_include_services:
-            list_heating_buildings = sorted(set(list_heating_buildings) & final_set)
+            list_heating_buildings = sorted(set(list_heating_buildings) & final_building_names)
         if 'DC' in list_include_services:
-            list_cooling_buildings = sorted(set(list_cooling_buildings) & final_set)
-    else:
-        # validate / augment: union (validate is a no-op since nodes_gdf is unchanged)
-        if 'DH' in list_include_services:
-            list_heating_buildings = sorted(set(list_heating_buildings) | set(final_building_names))
-        if 'DC' in list_include_services:
-            list_cooling_buildings = sorted(set(list_cooling_buildings) | set(final_building_names))
+            list_cooling_buildings = sorted(set(list_cooling_buildings) & final_building_names)
 
     # Derive per-building service mappings so we can emit connectivity.json at
     # the end of this function — final-energy requires that file, and without
