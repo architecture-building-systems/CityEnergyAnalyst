@@ -35,6 +35,20 @@ def _run(config: cea.config.Configuration, *, multi_phase: bool):
         config, locator, multi_phase=multi_phase,
     )
 
+    # Persist the user's two booster assemblies (``hs-booster-type-building``
+    # and ``dhw-booster-type-building``) to each affected network's
+    # ``connectivity.yml``. Must happen before any flow/sizing since the
+    # physics engine reads booster assemblies from connectivity.yml (see
+    # cea/technologies/thermal_network/common/booster.py). Runs for both
+    # Part 2a (single-phase) and Part 2b (multi-phase). No-op when neither
+    # global dropdown is set — preserving any per-building hand-edits in
+    # the yml.
+    from cea.technologies.thermal_network.common.booster import (
+        write_boosters_to_connectivity,
+    )
+    for _nw in (network_names or network_name or []):
+        write_boosters_to_connectivity(locator, _nw, config)
+
     if network_names is not None:  # multi-phase (Part 2b)
         from cea.technologies.thermal_network.common.phasing import run_multi_phase
         return run_multi_phase(config, locator, network_names, model_type='simplified')

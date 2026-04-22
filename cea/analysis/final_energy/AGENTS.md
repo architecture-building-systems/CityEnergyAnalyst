@@ -184,21 +184,35 @@ pumping_kWh = pumping_df.iloc[:, 0]
 # - Metadata: scale, plant_name, network_name, network_type
 ```
 
-### ✅ DO: Booster Systems (Requires Thermal-Network)
+### ✅ DO: Booster Systems (Read from connectivity.yml)
+
+Booster assembly selection is owned by **Thermal Network Part 2** (`[thermal-network]`
+config section, dropdowns `hs-booster-type-building` and `dhw-booster-type-building`).
+Part 2a and Part 2b both fan the global selection out to per-building entries in
+`connectivity.yml` under `networks.DH.boosters.<building>.<service>`. Final-Energy
+reads those entries — it never reads booster codes from `config.final_energy` anymore.
 
 ```python
-# Boosters are read from substation files (not calculated from scratch)
+# calculation.py (see _apply_boosters_from_connectivity)
+from cea.technologies.thermal_network.common.booster import read_boosters_for_building
+
+booster_assemblies = read_boosters_for_building(locator, network_name, building)
+# → {'space_heating_booster': 'SUPPLY_HOTWATER_AS12', 'hot_water_booster': 'SUPPLY_HOTWATER_AS12'}
+# Keys align with parse_supply_assembly outputs; empty string means no booster.
+
+# Booster thermal demand still comes from the substation file:
 substation_df = pd.read_csv(f'{network_folder}/DH/substation/DH_{network}_substation_{building}.csv')
-
-# Extract booster columns
-Qhs_booster_W = substation_df['Qhs_booster_W']  # Space heating booster
-Qww_booster_W = substation_df['Qww_booster_W']  # Hot water booster
-
-# Apply booster efficiency from config (what-if) or default (production)
-booster_fuel_kWh = booster_demand_kWh / efficiency
-
-# Note: Boosters require thermal-network to have been run first
+Qhs_booster_W = substation_df['Qhs_booster_W']
+Qww_booster_W = substation_df['Qww_booster_W']
 ```
+
+Validators (`validate_booster_configuration`,
+`validate_booster_temperature_compatibility`) live in
+`cea/technologies/thermal_network/common/booster.py`. They check per-building yml
+entries first, then fall back to the global `[thermal-network]` config.
+
+Requires `cea thermal-network` (Part 2a) or `cea thermal-network-multiple-phase`
+(Part 2b) to have run first so that connectivity.yml has the booster entries.
 
 ## Common Issues
 

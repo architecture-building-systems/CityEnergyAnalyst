@@ -256,8 +256,13 @@ def validate_network_mode(locator, network_name, config):
     validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mapping, network_name,
                                            locator=locator)
 
-    # Check that buildings with booster demand have a booster assembly configured
+    # Check that buildings with booster demand have a booster assembly configured.
+    # Booster validators live in cea/technologies/thermal_network/common/booster.py
+    # (moved because the booster assemblies are now owned by Thermal Network Part 2).
     if 'DH' in connectivity.get('networks', {}):
+        from cea.technologies.thermal_network.common.booster import (
+            validate_booster_configuration,
+        )
         validate_booster_configuration(connectivity['networks']['DH'], network_name, locator, config)
 
 
@@ -520,194 +525,12 @@ def validate_no_orphaned_district_buildings(connectivity, supply_df, scale_mappi
         )
 
 
-def validate_booster_configuration(dh_network, network_name, locator, config):
-    """
-    Validate that buildings with booster demand have a booster assembly configured.
-
-    Reads substation files for all DH-connected buildings and checks whether
-    space heating or domestic hot water booster demand is present. If so,
-    the corresponding booster assembly must be set in the config.
-
-    Called before any building is processed so the script fails fast with
-    a single consolidated error instead of per-building failures.
-
-    :param dh_network: Dict from connectivity.json['networks']['DH']
-    :param network_name: Network layout name (for substation file paths)
-    :param locator: InputLocator instance
-    :param config: Configuration instance
-    :raises ValueError: If any building has booster demand without a configured assembly
-    """
-    hs_booster_type = config.final_energy.hs_booster_type_building
-    dhw_booster_type = config.final_energy.dhw_booster_type_building
-
-    hs_needs_booster = []
-    dhw_needs_booster = []
-
-    per_building_services = dh_network.get('per_building_services', {})
-
-    for building, services in per_building_services.items():
-        substation_file = locator.get_thermal_network_substation_results_file(
-            building, 'DH', network_name
-        )
-
-        if not os.path.exists(substation_file):
-            continue
-
-        try:
-            substation_df = pd.read_csv(substation_file)
-        except Exception:
-            continue
-
-        if 'space_heating' in services and 'Qhs_booster_W' in substation_df.columns:
-            if substation_df['Qhs_booster_W'].sum() > 0 and not hs_booster_type:
-                hs_needs_booster.append(building)
-
-        if 'domestic_hot_water' in services and 'Qww_booster_W' in substation_df.columns:
-            if substation_df['Qww_booster_W'].sum() > 0 and not dhw_booster_type:
-                dhw_needs_booster.append(building)
-
-    messages = []
-
-    if hs_needs_booster:
-        listing = "\n".join(f"  - {b}" for b in sorted(hs_needs_booster))
-        messages.append(
-            f"The following buildings have space heating booster demand from the "
-            f"low-temperature district heating network, but no booster assembly is configured:\n"
-            f"{listing}\n\n"
-            f"Please select a booster assembly in 'hs-booster-type-building' "
-            f"(Energy by Carrier settings)."
-        )
-
-    if dhw_needs_booster:
-        listing = "\n".join(f"  - {b}" for b in sorted(dhw_needs_booster))
-        messages.append(
-            f"The following buildings have domestic hot water booster demand from the "
-            f"low-temperature district heating network, but no booster assembly is configured:\n"
-            f"{listing}\n\n"
-            f"Please select a booster assembly in 'dhw-booster-type-building' "
-            f"(Energy by Carrier settings)."
-        )
-
-    if messages:
-        raise ValueError("\n\n".join(messages))
-
-
-def validate_booster_temperature_compatibility(dh_network, network_name, locator, config):
-    """
-    Validate that booster assemblies can supply the temperatures required by each building.
-
-    Reads T_target_hs_C and T_target_dhw_C from substation files (written by thermal-network
-    Part 2) and compares against the booster component's design supply temperature.
-
-    :param dh_network: Dict from connectivity.json['networks']['DH']
-    :param network_name: Network layout name
-    :param locator: InputLocator instance
-    :param config: Configuration instance
-    :raises ValueError: If any booster cannot reach the required temperature
-    """
-    hs_booster_code = config.final_energy.hs_booster_type_building
-    dhw_booster_code = config.final_energy.dhw_booster_type_building
-
-    # Look up booster component design temperatures
-    hs_booster_temp = None
-    dhw_booster_temp = None
-    if hs_booster_code:
-        components = load_assembly_components(hs_booster_code, locator)
-        primary = components.get('primary_components')
-        if primary:
-            hs_booster_temp = get_component_design_supply_temperature(primary, locator)
-
-    if dhw_booster_code:
-        components = load_assembly_components(dhw_booster_code, locator)
-        primary = components.get('primary_components')
-        if primary:
-            dhw_booster_temp = get_component_design_supply_temperature(primary, locator)
-
-    per_building_services = dh_network.get('per_building_services', {})
-    # Group by required temperature: {t_required: [building_names]}
-    hs_groups = {}  # {t_required_C: [building, ...]}
-    dhw_groups = {}
-
-    needs_check = hs_booster_temp is not None or dhw_booster_temp is not None
-
-    for building in per_building_services:
-        substation_file = locator.get_thermal_network_substation_results_file(
-            building, 'DH', network_name
-        )
-        if not os.path.exists(substation_file):
-            continue
-
-        try:
-            sub_df = pd.read_csv(substation_file)
-        except Exception:
-            continue
-
-        # Check for missing temperature columns (backward compatibility)
-        if needs_check:
-            missing_cols = []
-            if hs_booster_temp is not None and 'T_target_hs_C' not in sub_df.columns:
-                if sub_df.get('Qhs_booster_W') is not None and sub_df['Qhs_booster_W'].sum() > 0:
-                    missing_cols.append('T_target_hs_C')
-            if dhw_booster_temp is not None and 'T_target_dhw_C' not in sub_df.columns:
-                if sub_df.get('Qww_booster_W') is not None and sub_df['Qww_booster_W'].sum() > 0:
-                    missing_cols.append('T_target_dhw_C')
-            if missing_cols:
-                raise ValueError(
-                    f"Substation file for building '{building}' is missing columns: "
-                    f"{', '.join(missing_cols)}.\n\n"
-                    f"This is likely because the thermal network was simulated with an older version of CEA.\n\n"
-                    f"Please re-run Thermal Network Part 2 to regenerate the substation files.\n"
-                    f"If the error persists, re-run Thermal Network Part 1 as well."
-                )
-
-        # Check HS booster temperature
-        if hs_booster_temp is not None and 'T_target_hs_C' in sub_df.columns:
-            t_required = round(sub_df['T_target_hs_C'].max())
-            if t_required > 0 and hs_booster_temp < t_required - 0.5:
-                hs_groups.setdefault(t_required, []).append(building)
-
-        # Check DHW booster temperature
-        if dhw_booster_temp is not None and 'T_target_dhw_C' in sub_df.columns:
-            t_required = round(sub_df['T_target_dhw_C'].max())
-            if t_required > 0 and dhw_booster_temp < t_required - 0.5:
-                dhw_groups.setdefault(t_required, []).append(building)
-
-    messages = []
-
-    if hs_groups:
-        hs_primary = load_assembly_components(hs_booster_code, locator).get('primary_components', '?')
-        lines = []
-        for t_req, buildings in sorted(hs_groups.items()):
-            names = ", ".join(sorted(buildings))
-            lines.append(
-                f"  - Requires {t_req:.0f} degrees C: {names}"
-            )
-        messages.append(
-            f"Space heating booster assembly ({hs_booster_code}, component {hs_primary}) "
-            f"can only supply {hs_booster_temp:.0f} degrees C, which is insufficient for:\n"
-            + "\n".join(lines)
-            + "\n\nPlease select a booster assembly with a component that can supply "
-            "a higher temperature."
-        )
-
-    if dhw_groups:
-        dhw_primary = load_assembly_components(dhw_booster_code, locator).get('primary_components', '?')
-        lines = []
-        for t_req, buildings in sorted(dhw_groups.items()):
-            names = ", ".join(sorted(buildings))
-            lines.append(
-                f"  - Requires {t_req:.0f} degrees C: {names}"
-            )
-        messages.append(
-            f"DHW booster assembly ({dhw_booster_code}, component {dhw_primary}) "
-            "can only supply {dhw_booster_temp:.0f} degrees C, which is insufficient for:\n"
-            + "\n".join(lines)
-            + "\n\nPlease select a booster assembly with a component that can supply "
-            "a higher temperature."
-        )
-
-    if messages:
-        raise ValueError("\n\n".join(messages))
+# Booster validators (``validate_booster_configuration`` /
+# ``validate_booster_temperature_compatibility``) live in
+# ``cea/technologies/thermal_network/common/booster.py`` now. The two
+# booster assemblies are configured in the ``[thermal-network]`` config
+# section and applied at Thermal Network Part 2 write-time. Final-Energy
+# only consumes the per-building entries written to connectivity.yml.
 
 
 # ─────────────────────────────────────────────────────────────────────────────

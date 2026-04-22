@@ -119,12 +119,77 @@ emits a runtime warning, it doesn't fail.
   (pulled from the union geometry lookup) but NOT decommissioned consumer
   nodes — those belong in the timeline view, not the per-phase view.
 
+## Booster Configuration (Part 2 owns it)
+
+Booster assembly selection moved out of `[final-energy]` into `[thermal-network]`.
+The two dropdowns (`hs-booster-type-building`, `dhw-booster-type-building`) are
+the **global** selection. They fan out to **per-building** entries in the
+scenario's `connectivity.yml` — that file is authoritative, not the config.
+Advanced users can hand-edit the yml; Final-Energy reads per-building entries,
+falling back to the global config only if the yml has none.
+
+### YAML shape
+
+```yaml
+networks:
+  DH:
+    boosters:
+      B1001:
+        space_heating: SUPPLY_HOTWATER_AS12   # hs booster assembly
+        domestic_hot_water: SUPPLY_HOTWATER_AS12
+      B1002:
+        space_heating: ""
+        domestic_hot_water: SUPPLY_HOTWATER_AS13
+```
+
+### Fan-out rule (`write_boosters_to_connectivity`)
+
+Called from `cea/technologies/thermal_network/simplified/main.py:_run()` for
+every network name, before multi-phase dispatch. So both Part 2a (single-phase)
+and Part 2b (multi-phase) write the yml.
+
+- Global dropdown set → **overwrite** every building's per-service entry with the
+  global code.
+- Global dropdown blank/`NONE` → **preserve** existing per-building entries as-is
+  (hand-edits survive). New buildings default to blank.
+- Only DH buildings get entries; DC is a no-op.
+
+### Read path (Final-Energy)
+
+`cea/analysis/final_energy/calculation.py:_apply_boosters_from_connectivity()`
+calls `read_boosters_for_building(locator, network_name, building)`, which
+returns `{'space_heating_booster': code, 'hot_water_booster': code}`. Keys
+match the `parse_supply_assembly` outputs so `supply_config` can be populated
+directly.
+
+### Validators
+
+Both validators also live in `booster.py` (single source of truth):
+
+- `validate_booster_configuration` — every connected DH building has a booster
+  code when low-temperature DH requires one. Per-building yml first, then
+  global `[thermal-network]` fallback.
+- `validate_booster_temperature_compatibility` — booster temperature levels
+  match the DH network's supply temperature mode.
+
+Main-entry validation still runs from `cea/analysis/final_energy/main.py` and
+`supply_validation.py`; they now import from this module.
+
+### When booster is ignored
+
+Physics engine skips boosters when the DH network is high-temperature or when
+the building has no DH connection. CEA always exposes the parameters — we do
+not hide the dropdowns. Downstream code is the gate.
+
 ## Files
 
-- `phasing.py` — everything. ~1450 lines.
+- `phasing.py` — everything phasing. ~1450 lines.
 - `run_loop.py` — single-phase runner; not phasing-aware.
 - `geometry.py` — node/edge extraction; rejects duplicate node IDs (relevant
   to Part 1 output, not Part 2b).
+- `booster.py` — booster plumbing + validators. Read/write `connectivity.yml`
+  under `networks.DH.boosters.<building>.<service>`. Shared by Part 2a, Part 2b,
+  and Final-Energy.
 
 ## Tests
 

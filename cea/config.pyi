@@ -577,8 +577,6 @@ class FinalEnergySection(Section):
     overwrite_supply_settings: bool
     what_if_name: str
     network_name: str | None
-    dhw_booster_type_building: str | None
-    hs_booster_type_building: str | None
     supply_type_cs_building: str | None
     supply_type_cs_district: str | None
     supply_type_hs_building: str | None
@@ -592,10 +590,6 @@ class FinalEnergySection(Section):
     def __getattr__(self, item: Literal["what_if_name"]) -> str: ...
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> str | None: ...
-    @overload
-    def __getattr__(self, item: Literal["dhw_booster_type_building"]) -> str | None: ...
-    @overload
-    def __getattr__(self, item: Literal["hs_booster_type_building"]) -> str | None: ...
     @overload
     def __getattr__(self, item: Literal["supply_type_cs_building"]) -> str | None: ...
     @overload
@@ -1016,6 +1010,8 @@ class ThermalNetworkSection(Section):
     network_temperature_dh: float
     network_temperature_dc: float
     equivalent_length_factor: float
+    dhw_booster_type_building: str | None
+    hs_booster_type_building: str | None
 
     @overload
     def __getattr__(self, item: Literal["network_name"]) -> list[str]: ...
@@ -1029,6 +1025,10 @@ class ThermalNetworkSection(Section):
     def __getattr__(self, item: Literal["network_temperature_dc"]) -> float: ...
     @overload
     def __getattr__(self, item: Literal["equivalent_length_factor"]) -> float: ...
+    @overload
+    def __getattr__(self, item: Literal["dhw_booster_type_building"]) -> str | None: ...
+    @overload
+    def __getattr__(self, item: Literal["hs_booster_type_building"]) -> str | None: ...
     def __getattr__(self, item: str) -> Any: ...
 
 class ThermalNetworkSimplifiedSection(Section):

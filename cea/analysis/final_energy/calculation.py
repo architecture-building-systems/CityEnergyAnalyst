@@ -393,32 +393,49 @@ def load_production_supply_configuration(
             network_name
         )
 
-    # Parse booster systems (always building-scale)
-    if config.final_energy.hs_booster_type_building:
-        assembly_code = config.final_energy.hs_booster_type_building
-        if assembly_code and assembly_code in supply_db.heating.index:
-            supply_config['space_heating_booster'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.heating,
-                locator,
-                'space_heating',
-                network_name
-            )
-            supply_config['space_heating_booster']['network_name'] = network_name
-
-    if config.final_energy.dhw_booster_type_building:
-        assembly_code = config.final_energy.dhw_booster_type_building
-        if assembly_code and assembly_code in supply_db.hot_water.index:
-            supply_config['hot_water_booster'] = parse_supply_assembly(
-                assembly_code,
-                supply_db.hot_water,
-                locator,
-                'hot_water',
-                network_name
-            )
-            supply_config['hot_water_booster']['network_name'] = network_name
+    # Parse booster systems (always building-scale). Source of truth is
+    # per-building ``networks.DH.boosters.<building>.*`` in the
+    # scenario's connectivity.yml — written by Thermal Network Part 2
+    # from the two global dropdowns in the ``[thermal-network]`` config
+    # section. This module no longer reads the booster assemblies from
+    # config directly, so hand-edits to connectivity.yml survive.
+    _apply_boosters_from_connectivity(
+        supply_config, building_name, network_name, supply_db, locator
+    )
 
     return supply_config
+
+
+def _apply_boosters_from_connectivity(
+    supply_config, building_name, network_name, supply_db, locator
+):
+    """Populate ``space_heating_booster`` / ``hot_water_booster`` entries
+    of ``supply_config`` for one building, using the per-building tree in
+    ``connectivity.yml`` that Thermal Network Part 2 wrote.
+
+    Silently skips any service whose assembly is missing, blank, or no
+    longer present in the scenario's assembly database. Part 2's write-
+    time validator already rejects invalid entries — the
+    defensiveness here is only for the rare hand-edited yml case.
+    """
+    from cea.technologies.thermal_network.common.booster import (
+        read_boosters_for_building,
+    )
+    boosters = read_boosters_for_building(locator, network_name, building_name)
+
+    hs = boosters['space_heating_booster']
+    if hs and hs in supply_db.heating.index:
+        supply_config['space_heating_booster'] = parse_supply_assembly(
+            hs, supply_db.heating, locator, 'space_heating', network_name
+        )
+        supply_config['space_heating_booster']['network_name'] = network_name
+
+    dhw = boosters['hot_water_booster']
+    if dhw and dhw in supply_db.hot_water.index:
+        supply_config['hot_water_booster'] = parse_supply_assembly(
+            dhw, supply_db.hot_water, locator, 'hot_water', network_name
+        )
+        supply_config['hot_water_booster']['network_name'] = network_name
 
 
 def parse_supply_assembly(
@@ -722,22 +739,10 @@ def load_whatif_supply_configuration(
                 assembly_code, supply_db.cooling, locator, 'space_cooling', network_name
             )
 
-    # Boosters (always building-scale, same as production mode)
-    if config.final_energy.hs_booster_type_building:
-        assembly_code = config.final_energy.hs_booster_type_building
-        if assembly_code and assembly_code in supply_db.heating.index:
-            supply_config['space_heating_booster'] = parse_supply_assembly(
-                assembly_code, supply_db.heating, locator, 'space_heating', network_name
-            )
-            supply_config['space_heating_booster']['network_name'] = network_name
-
-    if config.final_energy.dhw_booster_type_building:
-        assembly_code = config.final_energy.dhw_booster_type_building
-        if assembly_code and assembly_code in supply_db.hot_water.index:
-            supply_config['hot_water_booster'] = parse_supply_assembly(
-                assembly_code, supply_db.hot_water, locator, 'hot_water', network_name
-            )
-            supply_config['hot_water_booster']['network_name'] = network_name
+    # Boosters — per-building, from connectivity.yml (see comment + helper above).
+    _apply_boosters_from_connectivity(
+        supply_config, building_name, network_name, supply_db, locator
+    )
 
     return supply_config
 

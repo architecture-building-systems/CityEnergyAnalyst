@@ -173,12 +173,18 @@ def _run(config, locator, whatif_name, output_folder, buildings):
             print(f"\n{e}")
             raise
 
-    # Step 3.7: Validate booster configuration (both modes, when network is selected)
+    # Step 3.7: Validate booster configuration (both modes, when network is selected).
+    # The heavy validators live in cea/technologies/thermal_network/common/booster.py
+    # since booster selections are now owned by Thermal Network Part 2; Final-Energy
+    # reads them per-building from connectivity.yml. Re-running the same validators
+    # here catches the hand-edited-yml case (user edited connectivity.yml between
+    # running Part 2 and running Final-Energy).
     if _network_name:
         print("\nChecking booster configuration...")
-        from cea.analysis.final_energy.supply_validation import (
-            validate_booster_configuration, validate_booster_temperature_compatibility,
-            load_network_connectivity
+        from cea.analysis.final_energy.supply_validation import load_network_connectivity
+        from cea.technologies.thermal_network.common.booster import (
+            validate_booster_configuration,
+            validate_booster_temperature_compatibility,
         )
         try:
             connectivity = load_network_connectivity(locator, _network_name)
