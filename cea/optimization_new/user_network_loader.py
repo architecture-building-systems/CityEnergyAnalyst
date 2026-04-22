@@ -28,7 +28,7 @@ import pandas as pd
 import geopandas as gpd
 import networkx as nx
 from shapely.geometry import Point
-from typing import Tuple, Dict, List, Set
+from typing import Tuple, Dict, List, Optional, Set
 
 from cea import CEAException
 from cea.constants import SHAPEFILE_TOLERANCE
@@ -970,6 +970,25 @@ def augment_user_network_with_buildings(
     print(f"    - Buildings to add: {', '.join(sorted(missing_building_names)[:10])}" +
           (f" and {len(missing_building_names) - 10} more" if len(missing_building_names) > 10 else ""))
 
+    # Build a GeoDataFrame of existing PLANT nodes so the potential graph
+    # (and the Steiner terminal set) both reach the plant, even when the
+    # filter step pruned the plant's pipes away.
+    plant_mask = (
+        user_nodes_gdf['type'].fillna('').astype(str).str.upper().str.startswith('PLANT')
+    )
+    existing_plant_nodes = user_nodes_gdf[plant_mask].copy()
+    plant_terminals = (
+        gpd.GeoDataFrame(
+            {
+                'name': existing_plant_nodes['name'].values,
+                'geometry': existing_plant_nodes['geometry'].values,
+            },
+            crs=existing_plant_nodes.crs,
+        )
+        if not existing_plant_nodes.empty
+        else None
+    )
+
     # Step 1: Create potential network combining user network + streets for routing
     print("  Step 1/3: Creating potential network graph...")
     potential_graph, building_terminals = _create_terminal_connections_for_buildings(
@@ -979,7 +998,8 @@ def augment_user_network_with_buildings(
         missing_building_names=missing_building_names,
         street_network_gdf=street_network_gdf,
         snap_tolerance=snap_tolerance,
-        connection_candidates=connection_candidates
+        connection_candidates=connection_candidates,
+        extra_terminal_points=plant_terminals,
     )
 
     # Step 2: Use Steiner tree to find optimal subset of edges connecting missing buildings to existing network
@@ -1012,16 +1032,32 @@ def augment_user_network_with_buildings(
         crs=existing_building_nodes.crs
     )
 
-    # Combine missing buildings + existing user buildings as terminals
+    # Combine missing buildings + existing user buildings (+ plants) as terminals.
+    # Plants were extracted above and fed into the potential graph so Steiner
+    # has a reachable node at every plant coord — including the case where the
+    # filter step pruned the plant's original pipes. Treating plants as
+    # mandatory terminals guarantees the augmented network is one connected
+    # component containing plant + all consumers.
     # Steiner tree will find optimal path connecting ALL terminals
+    terminal_frames = [
+        missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
+        existing_terminals[['name', 'geometry']].reset_index(drop=True),
+    ]
+    if plant_terminals is not None:
+        terminal_frames.append(plant_terminals[['name', 'geometry']].reset_index(drop=True))
     all_terminals = gpd.GeoDataFrame(
-        pd.concat([missing_buildings_centroids[['name', 'geometry']].reset_index(drop=True),
-                   existing_terminals[['name', 'geometry']].reset_index(drop=True)],
-                  ignore_index=True),
+        pd.concat(terminal_frames, ignore_index=True),
         crs=missing_buildings_centroids.crs
     )
 
-    print(f"    - Terminals: {len(missing_buildings_centroids)} new + {len(existing_terminals)} existing = {len(all_terminals)} total")
+    plant_count = 0 if plant_terminals is None else len(plant_terminals)
+    if plant_count > 0:
+        print(f"    - Terminals: {len(missing_buildings_centroids)} new + "
+              f"{len(existing_terminals)} existing + {plant_count} plant = "
+              f"{len(all_terminals)} total")
+    else:
+        print(f"    - Terminals: {len(missing_buildings_centroids)} new + "
+              f"{len(existing_terminals)} existing = {len(all_terminals)} total")
 
     # Create temporary output paths for Steiner tree results
     temp_dir = tempfile.mkdtemp()
@@ -1387,11 +1423,19 @@ def _create_terminal_connections_for_buildings(
     missing_building_names: List[str],
     street_network_gdf: gpd.GeoDataFrame,
     snap_tolerance: float,
-    connection_candidates: int
+    connection_candidates: int,
+    extra_terminal_points: Optional[gpd.GeoDataFrame] = None,
 ) -> Tuple[nx.Graph, dict]:
     """
     Create potential network graph combining user edges + street network with terminal connections
     to missing buildings.
+
+    :param extra_terminal_points: Optional GeoDataFrame with ``name`` + ``geometry``
+        (Point) rows for non-building terminals (e.g. plant nodes) whose
+        coordinates must be present in the potential graph. They get the same
+        nearest-street connection treatment as missing buildings — necessary
+        when a plant's pipes were pruned by the filter step and its coord is
+        no longer reachable via user edges.
 
     Returns:
     - NetworkX graph with all potential edges (user + streets + terminals)
@@ -1407,16 +1451,32 @@ def _create_terminal_connections_for_buildings(
     missing_buildings_centroids_gdf = missing_buildings_gdf.copy()
     missing_buildings_centroids_gdf['geometry'] = missing_buildings_gdf.geometry.centroid
 
+    # Attach non-building terminals (e.g. plants) so ``create_terminals`` gives
+    # each one a connection to the nearest street. Without this, a plant whose
+    # pipes were pruned by the filter step has no coord in the potential graph
+    # and Steiner can't route through it.
+    if extra_terminal_points is not None and not extra_terminal_points.empty:
+        extra = extra_terminal_points[['name', 'geometry']].copy()
+        combined_centroids_gdf = gpd.GeoDataFrame(
+            pd.concat(
+                [missing_buildings_centroids_gdf[['name', 'geometry']], extra],
+                ignore_index=True,
+            ),
+            crs=missing_buildings_centroids_gdf.crs,
+        )
+    else:
+        combined_centroids_gdf = missing_buildings_centroids_gdf
+
     # Combine user edges + street network (both are potential routing options)
     combined_network_gdf = gpd.GeoDataFrame(
         pd.concat([user_edges_gdf, street_network_gdf], ignore_index=True),
         crs=user_edges_gdf.crs
     )
 
-    # Create terminal connections for missing buildings to combined network
-    # This connects each building to k-nearest street/edge points
+    # Create terminal connections for missing buildings (and extra points) to combined network
+    # This connects each terminal to k-nearest street/edge points
     network_with_terminals_gdf = create_terminals(
-        building_centroids=missing_buildings_centroids_gdf,
+        building_centroids=combined_centroids_gdf,
         street_network=combined_network_gdf,
         connection_candidates=connection_candidates
     )
