@@ -21,6 +21,16 @@ from cea.technologies.network_layout.substations_location import calc_building_c
 from cea.technologies.network_layout.graph_utils import normalize_gdf_geometries, normalize_geometry
 from cea.optimization_new.user_network_loader import load_user_defined_network
 
+# Single source of truth mapping a DH sub-service to the column in
+# ``Total_demand.csv`` that expresses its demand. Both
+# :func:`get_buildings_with_demand` (upstream building-list filter) and
+# :func:`filter_dh_services_by_demand` (downstream service-set trimmer)
+# use this mapping — keep them aligned by editing this dict only.
+_DH_DEMAND_COLUMN = {
+    PlantServices.SPACE_HEATING:      'Qhs_sys_MWhyr',
+    PlantServices.DOMESTIC_HOT_WATER: 'Qww_sys_MWhyr',
+}
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -331,6 +341,28 @@ def prune_disconnected_subnetwork(nodes_gdf, edges_gdf, target_buildings):
     return nodes_gdf, edges_gdf
 
 
+def _max_pipe_number(edges_gdf) -> int:
+    """Return the highest N across all ``PIPE{N}`` names in the given edges.
+
+    Returns ``-1`` when the GeoDataFrame has no ``PIPE{N}``-shaped names.
+    Used by ``apply_network_mode_to_user_network`` to reserve the parent
+    network's full pipe-name pool when chaining via ``existing-network``
+    so new Steiner-added edges never reuse a name that referred to a
+    different physical pipe in the parent — even names that were dropped
+    by the filter step. Without this, ``sub1``'s ``PIPE2`` (dropped when
+    its building was decommissioned) can be silently reused by ``sub2``'s
+    Steiner output for an unrelated pipe, breaking cross-phase alignment.
+    """
+    if 'name' not in edges_gdf.columns or len(edges_gdf) == 0:
+        return -1
+    nums = [
+        int(n[4:])
+        for n in edges_gdf['name']
+        if isinstance(n, str) and n.startswith('PIPE') and n[4:].isdigit()
+    ]
+    return max(nums) if nums else -1
+
+
 def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_validate, zone_gdf,
                                        network_types_to_generate, config, locator, snap_tolerance):
     """
@@ -370,6 +402,12 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
             f"Expected one of: {', '.join(m.value for m in NetworkLayoutMode)}."
         )
     auto_modify = config.network_layout.auto_modify_network
+
+    # Snapshot the input edges' pipe-name pool BEFORE any filter/augment
+    # mutates it. New Steiner-added edges must skip these numbers so
+    # chained networks (existing-network workflows, multi-phase sizing)
+    # agree on pipe identity across phases. See ``_max_pipe_number``.
+    input_max_pipe_number = _max_pipe_number(edges_gdf)
 
     # Check for extra buildings in network (buildings not in parameter)
     network_buildings = set(nodes_gdf[
@@ -434,7 +472,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                 street_network_gdf=street_network_gdf,
                 locator=locator,
                 snap_tolerance=snap_tolerance,
-                connection_candidates=config.network_layout.connection_candidates
+                connection_candidates=config.network_layout.connection_candidates,
+                existing_max_pipe_number=input_max_pipe_number,
             )
 
             print("  Augmentation successful - all buildings now in network")
@@ -486,7 +525,8 @@ def apply_network_mode_to_user_network(nodes_gdf, edges_gdf, buildings_to_valida
                     street_network_gdf=street_network_gdf,
                     locator=locator,
                     snap_tolerance=snap_tolerance,
-                    connection_candidates=config.network_layout.connection_candidates
+                    connection_candidates=config.network_layout.connection_candidates,
+                    existing_max_pipe_number=input_max_pipe_number,
                 )
 
             print("  Filter complete - network now matches parameter exactly")
@@ -869,10 +909,18 @@ def filter_dh_services_by_demand(per_building_services_dh, locator):
     """
     Remove services with zero actual demand from per_building_services_dh.
 
-    When consider-only-buildings-with-demand is True, a building may still have
-    space_heating in its services even though QH_sys_MWhyr = 0 (e.g. warm climate
-    with DHW-only demand). This function strips those zero-demand services so that
-    connectivity.json reflects what the building actually needs.
+    A building's DH services come from supply.csv (e.g. both
+    ``space_heating`` and ``domestic_hot_water`` configured as DISTRICT).
+    The building may still have zero demand for one of those services
+    — e.g. a warm-climate building with ``Qhs_sys_MWhyr = 0`` but
+    ``Qww_sys_MWhyr > 0`` (DHW-only demand). This function reads
+    ``Total_demand.csv`` and drops services whose per-service demand
+    column (see ``_DH_DEMAND_COLUMN``) is zero, so ``connectivity.json``
+    reflects what the building actually needs.
+
+    Callers typically only invoke this when
+    ``consider-only-buildings-with-demand`` is true — otherwise a user
+    explicitly asked to keep zero-demand services.
 
     :param per_building_services_dh: Dict {building_name: set of PlantServices}
     :param locator: InputLocator instance
@@ -894,14 +942,11 @@ def filter_dh_services_by_demand(per_building_services_dh, locator):
         row = total_demand.loc[building]
         keep = set()
         for svc in services:
-            if svc == PlantServices.SPACE_HEATING:
-                if row.get('Qhs_sys_MWhyr', 0.0) > 0.0:
-                    keep.add(svc)
-            elif svc == PlantServices.DOMESTIC_HOT_WATER:
-                if row.get('Qww_sys_MWhyr', 0.0) > 0.0:
-                    keep.add(svc)
-            else:
-                keep.add(svc)  # unknown service — keep by default
+            column = _DH_DEMAND_COLUMN.get(svc)
+            if column is None:
+                keep.add(svc)  # service without a mapped demand column — keep by default
+            elif row.get(column, 0.0) > 0.0:
+                keep.add(svc)
 
         if keep:
             filtered[building] = keep
@@ -913,9 +958,23 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
     """
     Read total_demand.csv and return list of buildings with heating/cooling demand.
 
+    For DC the filter is always the aggregate cooling column
+    (``QC_sys_MWhyr``). For DH the filter follows ``itemised_dh_services``:
+    the demand columns are looked up in :data:`_DH_DEMAND_COLUMN`
+    (``space_heating → Qhs_sys_MWhyr``, ``domestic_hot_water → Qww_sys_MWhyr``)
+    and a building is kept if it has non-zero demand on *any* of them.
+    When ``itemised_dh_services`` is empty or ``None`` the function falls
+    back to the broader aggregate ``QH_sys_MWhyr`` — used when the
+    caller hasn't committed to specific DH sub-services yet.
+
     :param locator: InputLocator instance
     :param network_type: "DH" or "DC"
-    :return: List of building names
+    :param itemised_dh_services: Optional iterable of ``PlantServices``
+        values (or their string codes) selecting which DH sub-services'
+        demand columns to OR together. Ignored when ``network_type`` is
+        ``"DC"``.
+    :return: List of building names with non-zero demand for the
+        selected services.
     """
     # Load total demand file with error handling
     demand_path = locator.get_total_demand()
@@ -927,7 +986,10 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
             "Please run the 'demand' tool first to generate building demand data."
         )
 
-    # Determine demand field(s) based on network type
+    # Determine demand field(s) based on network type.
+    # For DH, the service-specific columns come from ``_DH_DEMAND_COLUMN`` —
+    # the same source of truth used by ``filter_dh_services_by_demand`` —
+    # so any future sub-service only needs adding once (to that dict).
     if network_type == "DH":
         dh_demand_fields = []
         for service in itemised_dh_services or []:
@@ -935,11 +997,9 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
                 service_enum = PlantServices(service)
             except ValueError:
                 continue
-
-            if service_enum == PlantServices.SPACE_HEATING:
-                dh_demand_fields.append("Qhs_sys_MWhyr")
-            elif service_enum == PlantServices.DOMESTIC_HOT_WATER:
-                dh_demand_fields.append("Qww_sys_MWhyr")
+            column = _DH_DEMAND_COLUMN.get(service_enum)
+            if column is not None:
+                dh_demand_fields.append(column)
 
         demand_fields = list(dict.fromkeys(dh_demand_fields)) or ["QH_sys_MWhyr"]
     else:  # DC
@@ -2149,11 +2209,15 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
                 buildings_to_validate_dh = buildings_to_validate_service
                 buildings_without_demand_dh = list(buildings_without_demand)
 
-        # When overwrite-supply-settings is False, supply.csv is the source of truth.
-        # Initialise the per-service lists from the supply-driven validation set so
-        # that buildings_to_validate (built below) is supply-aligned. The downstream
-        # sync after apply_network_mode_to_user_network will then preserve any
-        # augmented buildings (union for augment, replace for filter).
+        # Keep service-specific building lists aligned with supply-driven validation.
+        # Later DC/DH node export uses these lists regardless of overwrite mode.
+        # Using supply-derived per-service lists (not network_building_names) is
+        # essential because the loaded network is a merged universal trench —
+        # assigning all its buildings to both services would cross-contaminate
+        # DC and DH in the filter-mode intersection further down.
+        # Wrap in ``list(...)`` to create copies — downstream reassignments go
+        # through ``sorted(...)``, but defensive copying keeps ``buildings_to_validate_*``
+        # safe from any future in-place mutation of the per-service lists.
         list_cooling_buildings = list(buildings_to_validate_dc)
         list_heating_buildings = list(buildings_to_validate_dh)
 
@@ -2238,26 +2302,26 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
     )
 
     # After validate/augment/filter, sync the per-service lists with nodes_gdf:
-    # - validate: nodes_gdf unchanged → lists unchanged
-    # - augment:  nodes_gdf has existing ∪ added buildings → lists use union
+    # - validate: nodes_gdf unchanged → no sync needed
+    # - augment:  augmentation only adds buildings that were already in
+    #             list_heating_buildings or list_cooling_buildings (the pre-augment
+    #             per-service authority), so the lists are still correct → no sync
     # - filter:   nodes_gdf has only the kept set → intersect each service list
     #             with the surviving set so DC and DH lists don't cross-contaminate.
-    final_building_names = sorted(
-        extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'].unique()
-    )
+    #
+    # A previous revision union'd the per-service lists with *all* post-mode
+    # buildings. That cross-contaminated DC and DH in mixed-service networks
+    # (every building ended up in both lists). The fix is to skip the union
+    # entirely for validate/augment — the per-service lists are already right.
     network_mode_str = config.network_layout.network_layout_mode
     if network_mode_str == 'filter':
-        final_set = set(final_building_names)
+        final_building_names = set(
+            extract_building_nodes(nodes_gdf, exclude_plant_nodes=True)['building'].unique()
+        )
         if 'DH' in list_include_services:
-            list_heating_buildings = sorted(set(list_heating_buildings) & final_set)
+            list_heating_buildings = sorted(set(list_heating_buildings) & final_building_names)
         if 'DC' in list_include_services:
-            list_cooling_buildings = sorted(set(list_cooling_buildings) & final_set)
-    else:
-        # validate / augment: union (validate is a no-op since nodes_gdf is unchanged)
-        if 'DH' in list_include_services:
-            list_heating_buildings = sorted(set(list_heating_buildings) | set(final_building_names))
-        if 'DC' in list_include_services:
-            list_cooling_buildings = sorted(set(list_cooling_buildings) | set(final_building_names))
+            list_cooling_buildings = sorted(set(list_cooling_buildings) & final_building_names)
 
     # Derive per-building service mappings so we can emit connectivity.json at
     # the end of this function — final-energy requires that file, and without

@@ -36,7 +36,6 @@ CONVERSION_COMPONENTS = ['ABSORPTION_CHILLERS', 'BOILERS', 'BORE_HOLES', 'COGENE
                          'THERMAL_ENERGY_STORAGES', 'UNITARY_AIR_CONDITIONERS', 'VAPOR_COMPRESSION_CHILLERS'
                          ]
 DISTRIBUTION_COMPONENTS = ['THERMAL_GRID']
-FEEDSTOCKS_COMPONENTS = ['BIOGAS', 'COAL', 'DRYBIOMASS', 'GRID', 'HYDROGEN', 'NATURALGAS', 'OIL', 'SOLAR', 'WETBIOMASS', 'WOOD']
 dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak', 'ENVELOPE_FLOOR': 'type_floor',
                  'ENVELOPE_WALL': 'type_wall', 'ENVELOPE_WINDOW': 'type_win', 'ENVELOPE_SHADING': 'type_shade',
                  'ENVELOPE_ROOF': 'type_roof', 'HVAC_CONTROLLER': 'hvac_type_ctrl', 'HVAC_HOTWATER': 'hvac_type_dhw',
@@ -47,7 +46,7 @@ dict_assembly = {'ENVELOPE_MASS': 'type_mass', 'ENVELOPE_TIGHTNESS': 'type_leak'
 ASSEMBLIES_FOLDERS = ['ENVELOPE', 'HVAC', 'SUPPLY']
 COMPONENTS_FOLDERS = ['CONVERSION', 'DISTRIBUTION', 'FEEDSTOCKS']
 dict_ASSEMBLIES_COMPONENTS = {'ENVELOPE': ENVELOPE_ASSEMBLIES, 'HVAC': HVAC_ASSEMBLIES, 'SUPPLY': SUPPLY_ASSEMBLIES,
-                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS'], 'FEEDSTOCKS_LIBRARY': FEEDSTOCKS_COMPONENTS}
+                              'CONVERSION': CONVERSION_COMPONENTS, 'DISTRIBUTION': DISTRIBUTION_COMPONENTS, 'FEEDSTOCKS': ['ENERGY_CARRIERS']}
 mapping_dict_db_item_to_schema_locator = {'CONSTRUCTION_TYPES': 'get_database_archetypes_construction_type',
                                           'USE_TYPES': 'get_database_archetypes_use_type',
                                           'SCHEDULES_LIBRARY': 'get_database_archetypes_schedules',

@@ -63,6 +63,10 @@ cooling-connected-buildings: B1003, B1004, B1005
 - For DH, demand filtering must follow `itemised-dh-services`:
   `space_heating -> Qhs_sys_MWhyr`, `domestic_hot_water -> Qww_sys_MWhyr`
   rather than the broader aggregate `QH_sys_MWhyr`
+- Service-to-column mapping lives in ``_DH_DEMAND_COLUMN`` in ``main.py``.
+  Both the upstream filter (``get_buildings_with_demand``) and the
+  downstream trimmer (``filter_dh_services_by_demand``) read from it,
+  so a new DH sub-service is a one-line dict edit.
 
 ### Loading Existing Networks
 
