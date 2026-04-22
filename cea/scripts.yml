@@ -175,7 +175,7 @@ Renewable Energy Potential Assessment:
 
 Energy Demand Forecasting:
   - name: occupancy
-    label: "Energy Demand Part 1: building occupancy"
+    label: "Energy Demand Part 1: Building Occupancy"
     short_description: Estimate building occupancy profiles using CEA models
     description: This Feature uses CEA models and input schedules to estimate the occupancy profile of buildings.
     interfaces: [dashboard, cli]
@@ -193,7 +193,7 @@ Energy Demand Forecasting:
       - [get_weather_file]
 
   - name: demand
-    label: "Energy Demand Part 2: load modelling"
+    label: "Energy Demand Part 2: Load Modelling"
     short_description: Forecast end-use energy loads and final energy consumption by carrier
     description: |
       This Feature forecasts building energy demand at hourly resolution.
@@ -298,6 +298,182 @@ Thermal Network Design:
       - [get_database_components_distribution_thermal_grid]
       - [get_weather_file]
 
+District Evolution Pathways:
+  - name: create-new-pathway
+    label: "Create District Evolution Pathway"
+    short_description: Create a new district evolution pathway
+    description: |
+      This Feature allows you to create a new district evolution pathway. 
+      If you only want to work on an existing pathway, you can ignore this step.
+      
+      **Workflow**:
+      1. **Complete this step first** - Enter a new pathway name
+      2. **Run the job** - This creates the pathway folder immediately
+      3. **Proceed to Step 1** - Define intervention templates for this pathway
+      4. If you want to switch pathways later, return to this step and create or select another pathway
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.create_new_pathway
+    parameters: ['general:scenario', create-new-pathway]
+
+  - name: pathway-intervention-templates-define
+    label: "Define Intervention Template"
+    short_description: Define reusable intervention templates for the scenario
+    description: |
+      This Feature allows you to define reusable intervention templates that can be applied to multiple years across any pathway.
+      An intervention template is a named modification template (e.g. "upgrade_wall_insulation", "retrofit_hvac") containing construction
+      property updates that can be applied to selected building archetypes.
+
+      **[Note]**: Only the input parameters will be updated. Leave fields empty to keep the existing material.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_intervention_templates_define
+    parameters: ['general:scenario', pathway-intervention-templates-define]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: pathway-events-apply-templates
+    label: "Apply Intervention Templates to Year"
+    short_description: Apply intervention templates to a year across one or more pathways
+    description: |
+      Apply predefined intervention templates to a specific year across one or more district evolution pathways.
+      Select multiple intervention templates to compose one pathway event - the system detects and prevents conflicts
+      (e.g. if two templates modify the same field on the same building).
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_events_apply_templates
+    parameters: ['general:scenario', pathway-events-apply-templates]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: bake-pathway-states
+    label: "Bake Pathway States"
+    short_description: Create or update pathway states from the pathway log
+    description: |
+      This Feature materialises pathway states (`state_{year}` folders) based on the pathway's `district_pathway_log.yml`.
+      
+      **Prerequisites**: Complete Steps 0-2 (Select Pathway, Define Intervention Templates, Apply to Years) first!
+
+      Use this after you have finished applying intervention templates to years. It creates or reconciles state folders for each year.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.bake_pathway_states
+    parameters: ['general:scenario', bake-pathway-states]
+    input-files:
+      - [get_input_folder]
+      - [get_zone_geometry]
+      - [get_db4_folder]
+      - [get_building_properties_folder]
+
+  - name: pathway-simulations
+    label: "Simulate Pathway"
+    short_description: Run simulations for all pathway states
+    description: |
+      This Feature runs simulations for all pathway states in the selected pathway. 
+      Afterwards, it reads component changes and simulation results across all pathway states 
+      to create a comprehensive pathway emissions timeline, including embodied emissions (component changes + 
+      lifetime-based renovation) and operational emissions.
+      
+      **Prerequisites**: Complete Steps 0-3 (Select Pathway, Define Intervention Templates, Apply Templates, Bake States) first!
+      
+      For each state year it runs:
+      - Radiation (Daysim, or CRAX with a warning when all buildings have `void_deck = 0`)
+      - Occupancy
+      - Demand
+      - Photovoltaic (only when emissions include PV)
+      - If district thermal services are required for that state:
+        - Network Layout (Part 1, reading district connections and DH service mix from the state's supply settings)
+        - Thermal Network (Part 2, forced to single-phase for the state-specific network)
+      - Emissions (always last)
+
+      It then builds the district pathway emissions timeline outputs.
+
+      This Feature always reruns all state years because network reuse makes the state sequence interdependent.
+      Existing-network reuse is additive: if a later state requests fewer connected buildings than the
+      inherited network already contains, `network-layout` keeps the inherited layout, warns about the
+      extra buildings, and simulates only the currently active consumers.
+
+      This Step 4 wrapper does not re-own the settings of the underlying scripts. Save the desired
+      `radiation`, `occupancy`, `demand`, `photovoltaic`, `network-layout`, `thermal-network`, and
+      `emissions` settings in their own dashboards or config sections before running this Feature.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.state_simulation.main
+    parameters:
+      - 'general:scenario'
+      - 'pathway-simulations:existing-pathway-name'
+      - 'pathway-simulations:skip-already-simulated-states'
+      - 'pathway-simulations:skip-custom-states'
+      - 'thermal-network:dh-temperature-mode'
+      - 'final-energy:hs-booster-type-building'
+      - 'final-energy:dhw-booster-type-building'
+
+  - name: pathway-delete-state
+    label: "Delete or Clear State"
+    short_description: Delete one explicit pathway year or clear its manual changes
+    description: |
+      This job removes the explicit entry for one pathway year from the pathway log.
+      Manual-only years are deleted entirely. Mixed years keep their stock-driven presence and only lose the manual edits.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_delete_state_job
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-names', 'pathway-state-edit:year-of-state']
+
+  - name: pathway-delete-pathway
+    label: "Delete Pathway"
+    short_description: Delete one district evolution pathway and all of its state artefacts
+    description: |
+      This job removes one district evolution pathway folder completely.
+      It deletes the pathway log, intervention templates, baked states, simulation outputs, and saved state-status records for that pathway.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_delete_pathway_job
+    parameters: ['general:scenario', 'pathway-state-workflow:existing-pathway-name']
+
+  - name: pathway-update-building-events
+    label: "Create Building Events"
+    short_description: Create building events across one or more pathways
+    description: |
+      Create or update building events (constructions and demolitions) for a specific year across one or more pathways.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_update_building_events_job
+    parameters:
+      - 'general:scenario'
+      - 'pathway-state-edit:existing-pathway-names'
+      - 'pathway-state-edit:year-of-state'
+      - 'pathway-state-edit:buildings-to-construct'
+      - 'pathway-state-edit:buildings-to-demolish'
+
+  - name: pathway-save-yaml
+    label: "Save YAML"
+    short_description: Save the expert YAML entry for one pathway year
+    description: |
+      This job validates and saves the raw YAML entry for one pathway year, then revalidates the pathway log.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_save_yaml_job
+    parameters:
+      - 'general:scenario'
+      - 'pathway-state-edit:existing-pathway-names'
+      - 'pathway-state-edit:year-of-state'
+      - 'pathway-state-edit:raw-yaml'
+
+  - name: pathway-validate-state
+    label: "Validate State"
+    short_description: Validate one baked pathway state against the current pathway log
+    description: |
+      This job checks whether one baked pathway state still matches the pathway log and records a fresh validation fingerprint when it does.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_validate_state_job
+    parameters: ['general:scenario', 'pathway-state-edit:existing-pathway-names', 'pathway-state-edit:year-of-state']
+
+  - name: pathway-validate-all-states
+    label: "Validate All States"
+    short_description: Validate every baked pathway state against the current pathway log
+    description: |
+      This job validates every required state year in the selected pathway.
+      It records fresh validation fingerprints for valid years and fails with a summary when any year is out of sync.
+    interfaces: [cli]
+    module: cea.datamanagement.district_pathways.pathway_validate_all_states_job
+    parameters: ['general:scenario', 'pathway-state-workflow:existing-pathway-name']
 
 Life Cycle Analysis:
   - name: final-energy
@@ -561,7 +737,7 @@ Utilities:
     short_description: Verify and migrate inputs to CEA-4 format
     description: |
       This Feature verifies the inputs are in the correct format for CEA-4.
-      It also Migrates Late-CEA-3 inputs data  - Note the process of migration is not reversible.
+      It also migrates Late-CEA-3 inputs data - Note the process of migration is not reversible.
 
     interfaces: [cli, dashboard]
     module: cea.datamanagement.format_helper.format_helper
@@ -848,6 +1024,58 @@ Visualisation:
       - [get_final_energy_buildings_file, 'plots-final-energy:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
+
+  - name: plot-emission-timeline
+    label: Plot - Emission Timeline
+    short_description: Visualise how emissions evolve over time
+    description: |
+      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, PV).
+      
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends, 
+      a line plot for displaying overall net emissions against a target year to achieve net-zero,
+      a stacked area plot to understand total emissions and how each source contributes to the whole, 
+      and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
+      
+      See details and examples [here](https://platform.idaida.ch/course/view.php?id=41)
+
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.emission_timeline
+    parameters: ['general:scenario', plots-emission-timeline, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+  - name: plot-pathway-emission-timeline
+    label: Plot - Pathway Emission Timeline
+    short_description: Visualise how district pathway emissions evolve over time
+    description: |
+      This Feature tracks cumulative lifecycle emissions for one district pathway across different sources
+      (i.e. operation, production, biogenic, demolition, PV).
+
+      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
+      a line plot for displaying overall net emissions against a target year to achieve net-zero,
+      a stacked area plot to understand total emissions and how each source contributes to the whole,
+      and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.special.pathway_emission_timeline
+    parameters: ['general:scenario', plots-pathway-emission-timeline, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+
+
+  - name: plot-operational-emissions
+    label: Plot - Operational Emissions
+    short_description: Plot bar chart of building operational emissions
+    description: This Feature plots bar chart of the results of operational emissions
+    interfaces: [cli, dashboard]
+    module: cea.visualisation.plot_main
+    parameters: ['general:scenario', plots-general, plots-operational-emissions, plots-building-filter]
+    input-files:
+      - [get_building_architecture]
+      - [get_zone_geometry]
+      - [get_total_yearly_operational_building]
 
   - name: plot-solar
     label: Plot - Solar Technology
@@ -882,19 +1110,6 @@ Visualisation:
       - [get_emissions_whatif_buildings_file, 'plots-lifecycle-emissions:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-
-  - name: plot-emission-timeline
-    label: Plot - Emission Timeline
-    short_description: Visualise how emissions evolve over time
-    description: |
-      This Feature tracks cumulative lifecycle emissions across different sources (i.e. operation, production, biogenic, demolition, solar offsets).
-
-      It offers multiple visualisation modes, including a line plot for viewing itemised emission trends,
-      a line plot for displaying overall net emissions against a target year to achieve net-zero,
-      a stacked area plot to understand total emissions and how each source contributes to the whole,
-      and a percentage-based stacked plot to highlight shifts in the relative composition of emissions.
-
-      See details and examples [here](https://platform.idaida.ch/course/view.php?id=41)
 
     interfaces: [cli, dashboard]
     module: cea.visualisation.special.emission_timeline

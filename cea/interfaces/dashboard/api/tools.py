@@ -143,13 +143,19 @@ async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, t
                                scenario_name: Optional[str] = None) -> ToolProperties:
     # TODO: Add plugin support
 
-    # Set project and scenario on config to ensure parameters that depend on them are constructed correctly
-    if project is not None:
-        if project_root is not None and not project.startswith(project_root):
-            project = os.path.join(project_root, project)
-        config.project = secure_path(project)
-    if scenario_name is not None:
-        config.scenario_name = validate_scenario_name(scenario_name)
+    # Set project and scenario on config to ensure parameters that depend
+    # on them are constructed correctly. Skip BOTH overrides when the
+    # pathway viewer is active — config.scenario already points to the
+    # state folder (set by switchToChildScenario), and overriding either
+    # config.project or config.scenario_name would break that path.
+    in_child_scenario = os.sep + 'pathways' + os.sep in config.scenario
+    if not in_child_scenario:
+        if project is not None:
+            if project_root is not None and not project.startswith(project_root):
+                project = os.path.join(project_root, project)
+            config.project = secure_path(project)
+        if scenario_name is not None:
+            config.scenario_name = validate_scenario_name(scenario_name)
 
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
@@ -288,7 +294,14 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
 
     # Validate using encode() method
     is_valid, error_message = validate_parameter(target_parameter, value, parameter_name)
-    return {"valid": is_valid, "error": error_message}
+    result = {"valid": is_valid, "error": error_message}
+
+    if is_valid:
+        warnings = _collect_field_warnings(tool_name, parameter_name, value, config)
+        if warnings:
+            result["warnings"] = warnings
+
+    return result
 
 
 @router.post('/{tool_name}/parameter-metadata')
@@ -378,6 +391,55 @@ async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str
         raise HTTPException(status_code=400,
                             detail={"message": "Missing input files",
                                     "script_suggestions": list(scripts)})
+
+    # Collision warnings from the check-inputs path (Run button confirmation)
+    warnings = []
+    for field_name in ('network-name', 'what-if-name'):
+        if field_name in payload:
+            warnings.extend(
+                _collect_field_warnings(tool_name, field_name, payload[field_name], config)
+            )
+    return {"warnings": warnings} if warnings else None
+
+
+def _collect_field_warnings(tool_name, parameter_name, value, config):
+    """Return structured ``{field, message}`` warnings for a single field.
+
+    Centralises collision detection so ``validate_field`` and
+    ``check_tool_inputs`` share one code path.
+    """
+    if isinstance(value, list):
+        return []
+    v = (value or '').strip()
+    if not v:
+        return []
+    locator = cea.inputlocator.InputLocator(config.scenario)
+
+    if tool_name == 'network-layout' and parameter_name == 'network-name':
+        folder = locator.get_thermal_network_folder_network_name_folder(v)
+        if os.path.isdir(folder):
+            return [{
+                "field": "network-name",
+                "message": (
+                    f"Network '{v}' already exists. "
+                    f"Running will delete the existing network and create a new one."
+                ),
+            }]
+
+    if tool_name == 'final-energy' and parameter_name == 'what-if-name':
+        folder = locator.get_analysis_folder(v)
+        if os.path.isdir(folder):
+            return [{
+                "field": "what-if-name",
+                "message": (
+                    f"What-if Scenario '{v}' already exists. "
+                    f"Running will delete the entire What-if Scenario folder, "
+                    f"including any final-energy, costs, emissions, and heat-rejection results, "
+                    f"and create a new one."
+                ),
+            }]
+
+    return []
 
 
 def parameters_for_script(script_name, config):

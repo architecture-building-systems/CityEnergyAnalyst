@@ -174,7 +174,79 @@ class InputLocator(object):
     def get_export_folder(self):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
+    
+    def get_district_pathway_container_folder(self):
+        """Returns the folder storing district evolution pathways.
 
+        `scenario/pathways`"""
+        return os.path.join(self.scenario, "pathways")
+    
+    def get_district_pathway_folder(self, pathway_name: str):
+        """Returns the folder storing one district evolution pathway.
+
+        `scenario/pathways/{pathway_name}`"""
+        return os.path.join(self.get_district_pathway_container_folder(), pathway_name)
+
+    def get_state_in_time_scenario_folder(self, pathway_name: str, year_of_state: int):
+        """Returns the folder containing a specific pathway state scenario.
+
+        `scenario/pathways/{pathway_name}/state_{year_of_state}`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), f'state_{year_of_state}')
+
+    def get_district_pathway_log_file(self, pathway_name: str):
+        """Returns the log file for a district evolution pathway.
+        
+        `scenario/pathways/{pathway_name}/district_pathway_log.yml`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'district_pathway_log.yml')
+    
+    def get_intervention_templates_file(self):
+        """Returns the scenario-level intervention-template file.
+
+        `scenario/pathways/intervention_templates.yml`"""
+        return os.path.join(self.get_district_pathway_container_folder(), 'intervention_templates.yml')
+
+    def get_district_pathway_state_status_folder(self, pathway_name: str):
+        """Returns the folder containing per-state pathway status records.
+
+        `scenario/pathways/{pathway_name}/state_status`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'state_status')
+
+    def get_district_pathway_state_status_file(self, pathway_name: str, year_of_state: int):
+        """Returns the JSON status record for one pathway state year.
+
+        `scenario/pathways/{pathway_name}/state_status/state_{year_of_state}.json`"""
+        return os.path.join(
+            self.get_district_pathway_state_status_folder(pathway_name),
+            f'state_{year_of_state}.json',
+        )
+    
+    def get_district_pathway_emissions_timeline_path(self, pathway_name: str):
+        """Returns the district-level pathway emissions timeline CSV file.
+        
+        `scenario/pathways/{pathway_name}/district_pathway_emissions_timeline.csv`"""
+        return os.path.join(
+            self.get_district_pathway_folder(pathway_name),
+            'district_pathway_emissions_timeline.csv',
+        )
+    
+    def get_building_pathway_emissions_timelines_folder(self, pathway_name: str):
+        """Returns the folder containing per-building pathway emissions timeline CSV files.
+        
+        `scenario/pathways/{pathway_name}/building_pathway_emissions_timelines`"""
+        return os.path.join(
+            self.get_district_pathway_folder(pathway_name),
+            'building_pathway_emissions_timelines',
+        )
+
+    def get_building_pathway_emissions_timeline_file(self, pathway_name: str, building_name: str):
+        """Returns the per-building pathway emissions timeline CSV file for a specific building.
+        
+        `scenario/pathways/{pathway_name}/building_pathway_emissions_timelines/{building_name}_pathway_emissions_timeline.csv`"""
+        return os.path.join(
+            self.get_building_pathway_emissions_timelines_folder(pathway_name),
+            f'{building_name}_pathway_emissions_timeline.csv'
+        )
+    
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
         """scenario/export/results"""
@@ -932,6 +1004,10 @@ class InputLocator(object):
     def get_database_components_feedstocks_energy_carriers(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
+    
+    def get_database_components_materials(self):
+        """scenario/inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv"""
+        return os.path.join(self.get_db4_components_folder(), 'MATERIALS', 'MATERIALS.csv')
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
