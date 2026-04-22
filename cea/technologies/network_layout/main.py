@@ -879,10 +879,18 @@ def filter_dh_services_by_demand(per_building_services_dh, locator):
     """
     Remove services with zero actual demand from per_building_services_dh.
 
-    When consider-only-buildings-with-demand is True, a building may still have
-    space_heating in its services even though QH_sys_MWhyr = 0 (e.g. warm climate
-    with DHW-only demand). This function strips those zero-demand services so that
-    connectivity.json reflects what the building actually needs.
+    A building's DH services come from supply.csv (e.g. both
+    ``space_heating`` and ``domestic_hot_water`` configured as DISTRICT).
+    The building may still have zero demand for one of those services
+    — e.g. a warm-climate building with ``Qhs_sys_MWhyr = 0`` but
+    ``Qww_sys_MWhyr > 0`` (DHW-only demand). This function reads
+    ``Total_demand.csv`` and drops services whose per-service demand
+    column (see ``_DH_DEMAND_COLUMN``) is zero, so ``connectivity.json``
+    reflects what the building actually needs.
+
+    Callers typically only invoke this when
+    ``consider-only-buildings-with-demand`` is true — otherwise a user
+    explicitly asked to keep zero-demand services.
 
     :param per_building_services_dh: Dict {building_name: set of PlantServices}
     :param locator: InputLocator instance
@@ -920,9 +928,23 @@ def get_buildings_with_demand(locator, network_type, itemised_dh_services=None):
     """
     Read total_demand.csv and return list of buildings with heating/cooling demand.
 
+    For DC the filter is always the aggregate cooling column
+    (``QC_sys_MWhyr``). For DH the filter follows ``itemised_dh_services``:
+    the demand columns are looked up in :data:`_DH_DEMAND_COLUMN`
+    (``space_heating → Qhs_sys_MWhyr``, ``domestic_hot_water → Qww_sys_MWhyr``)
+    and a building is kept if it has non-zero demand on *any* of them.
+    When ``itemised_dh_services`` is empty or ``None`` the function falls
+    back to the broader aggregate ``QH_sys_MWhyr`` — used when the
+    caller hasn't committed to specific DH sub-services yet.
+
     :param locator: InputLocator instance
     :param network_type: "DH" or "DC"
-    :return: List of building names
+    :param itemised_dh_services: Optional iterable of ``PlantServices``
+        values (or their string codes) selecting which DH sub-services'
+        demand columns to OR together. Ignored when ``network_type`` is
+        ``"DC"``.
+    :return: List of building names with non-zero demand for the
+        selected services.
     """
     # Load total demand file with error handling
     demand_path = locator.get_total_demand()
