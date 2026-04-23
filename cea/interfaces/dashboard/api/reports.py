@@ -9,6 +9,8 @@ Endpoints:
 """
 
 import os
+import sys
+from contextlib import contextmanager
 from typing import Optional
 
 import geopandas
@@ -27,6 +29,37 @@ from cea.utilities.standardize_coordinates import get_geographic_coordinate_syst
 logger = getCEAServerLogger("cea-server-reports")
 
 router = APIRouter()
+
+
+class _NonTtyStdout:
+    """Wrap `sys.stdout` so `.isatty()` returns False.
+
+    Several plot modules (e.g. `visualisation.plot_main.main`) auto-
+    launch a browser via `fig.show(renderer="browser")` when stdout is
+    a tty — useful from the CLI, but disruptive when the CEA server is
+    run from a terminal and Reports dispatches to those modules in-
+    process. Only `isatty` is overridden; every other method is
+    forwarded so logs and prints remain intact.
+    """
+
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    def isatty(self):
+        return False
+
+
+@contextmanager
+def _suppress_browser_autopopup():
+    original = sys.stdout
+    sys.stdout = _NonTtyStdout(original)
+    try:
+        yield
+    finally:
+        sys.stdout = original
 
 
 def _resolve_scenario_path(project_root: Optional[str], project: str, scenario: str) -> str:
@@ -424,7 +457,8 @@ async def get_custom_plot(
         # plots (energy-sankey, cost-breakdown, …) with the same code.
         config.restrict_to(script.parameters)
         script_module = importlib.import_module(script.module)
-        result = script_module.main(config)
+        with _suppress_browser_autopopup():
+            result = script_module.main(config)
 
         # Most plot modules return a full HTML document; `pareto_front`
         # is the one exception and returns a (2d, 3d) tuple of partial
