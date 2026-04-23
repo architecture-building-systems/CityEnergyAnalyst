@@ -361,25 +361,6 @@ async def get_report_plot(
         config.scenario_name = os.path.basename(original_scenario)
 
 
-# Maps visualisation script names to the feature key used by plot_all.
-SCRIPT_TO_FEATURE = {
-    "plot-demand": "demand",
-    "plot-final-energy": "energy-by-carrier",
-    "plot-solar": "solar",
-    "plot-heat-rejection": "heat",
-    "plot-lifecycle-emissions": "lifecycle-emissions",
-    "plot-operational-emissions": "operational-emissions",
-    "plot-emission-timeline": "emission-timeline",
-    "plot-comfort-chart": "comfort-chart",
-    "plot-pareto-front": "pareto-front",
-    "plot-supply-system": "supply-system",
-    "plot-cost-breakdown": "cost-breakdown",
-    "plot-cost-sankey": "cost-sankey",
-    "plot-energy-sankey": "energy-sankey",
-    "plot-ldc-component": "ldc-component",
-}
-
-
 @router.post("/plot-custom", response_class=HTMLResponse)
 async def get_custom_plot(
     config: CEAConfig,
@@ -392,7 +373,8 @@ async def get_custom_plot(
     The script must be a valid visualisation tool name (e.g. plot-demand).
     Parameters are applied to the config before running the plot.
     """
-    from cea.visualisation.plot_main import plot_all
+    import importlib
+    import re
 
     script_name = payload.get("script")
     parameters = payload.get("parameters", {})
@@ -402,14 +384,6 @@ async def get_custom_plot(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="script is required",
-        )
-
-    feature = SCRIPT_TO_FEATURE.get(script_name)
-    if feature is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unknown plot script: {script_name}. "
-                   f"Supported: {list(SCRIPT_TO_FEATURE.keys())}",
         )
 
     # Validate the script exists
@@ -442,13 +416,36 @@ async def get_custom_plot(
                 else:
                     parameter.set(parameter.decode(str(value)))
 
-        context = {"feature": feature}
-        fig = plot_all(config, config.scenario, context, hide_title=False)
-        fig.update_layout(autosize=True)
-        html = fig.to_html(
-            full_html=False, include_plotlyjs="cdn",
-            config={"responsive": True},
+        # Match the CLI's dispatch: `config.restrict_to` lets modules like
+        # `plot_main.main` derive the feature from `config.restricted_to`
+        # (via `get_plot_cea_feature`), then each script's own
+        # `main(config)` returns HTML. This covers both `plot_main`-based
+        # plots (demand, final-energy, …) and `visualisation.special.*`
+        # plots (energy-sankey, cost-breakdown, …) with the same code.
+        config.restrict_to(script.parameters)
+        script_module = importlib.import_module(script.module)
+        result = script_module.main(config)
+
+        # Most plot modules return a full HTML document; `pareto_front`
+        # is the one exception and returns a (2d, 3d) tuple of partial
+        # HTML strings — join so the Reports container gets a single
+        # stream of plot divs/scripts.
+        if isinstance(result, tuple):
+            html = "\n".join(part for part in result if part)
+        else:
+            html = result
+
+        # Plot modules return full HTML documents so the CLI can render
+        # directly to file. Reports embeds the output inside its own
+        # page, so strip the outer `<html>/<head>/<body>` wrapping to
+        # avoid duplicate document chrome and keep the frontend parser
+        # (`html-react-parser` filtered to div/style) consistent.
+        m = re.search(
+            r"<body[^>]*>(.*)</body>", html, re.DOTALL | re.IGNORECASE,
         )
+        if m:
+            html = m.group(1)
+
         return HTMLResponse(html, 200)
     except FileNotFoundError as e:
         raise HTTPException(

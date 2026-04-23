@@ -1024,7 +1024,6 @@ Visualisation:
       - [get_final_energy_buildings_file, 'plots-final-energy:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
 
   - name: plot-emission-timeline
     label: Plot - Emission Timeline
@@ -1075,7 +1074,7 @@ Visualisation:
     input-files:
       - [get_building_architecture]
       - [get_zone_geometry]
-      - [get_total_yearly_operational_building]
+      - [get_emissions_whatif_buildings_file, 'plots-operational-emissions:what-if-name']
 
   - name: plot-solar
     label: Plot - Solar Technology
@@ -1108,14 +1107,6 @@ Visualisation:
     parameters: ['general:scenario', plots-general, plots-include-plants-buildings, plots-lifecycle-emissions, plots-building-filter]
     input-files:
       - [get_emissions_whatif_buildings_file, 'plots-lifecycle-emissions:what-if-name']
-      - [get_building_architecture]
-      - [get_zone_geometry]
-
-    interfaces: [cli, dashboard]
-    module: cea.visualisation.special.emission_timeline
-    parameters: ['general:scenario', plots-emission-timeline, plots-building-filter]
-    input-files:
-      - [get_emissions_whatif_timeline_file, 'plots-emission-timeline:what-if-name']
       - [get_building_architecture]
       - [get_zone_geometry]
 
