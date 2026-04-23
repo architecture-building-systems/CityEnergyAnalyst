@@ -23,7 +23,7 @@ import cea.inputlocator
 import cea.scripts
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.utils import resolve_scenario_path, secure_path
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 logger = getCEAServerLogger("cea-server-reports")
@@ -62,21 +62,7 @@ def _suppress_browser_autopopup():
         sys.stdout = original
 
 
-def _resolve_scenario_path(project_root: Optional[str], project: str, scenario: str) -> str:
-    """Resolve and validate a scenario path from project + scenario name."""
-    project_path = project
-    if project_root is not None and not project_path.startswith(project_root):
-        project_path = os.path.join(project_root, project_path)
-
-    project_path = secure_path(project_path)
-    scenario_path = os.path.join(project_path, scenario)
-
-    if not os.path.isdir(scenario_path):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Scenario not found: {scenario}",
-        )
-    return scenario_path
+_resolve_scenario_path = resolve_scenario_path
 
 
 @router.get("/whatifs")
