@@ -466,6 +466,54 @@ class InputLocator(object):
         """Returns the folder containing the scenario's optimization results"""
         return os.path.join(self.scenario, 'outputs', 'data', 'optimization')
 
+    # ── Canvas Builder storage ──────────────────────────────────
+    # Saved canvases live as folders directly under this root,
+    # named by their display name. In-progress edits (drafts and
+    # dirty copies of saved canvases) live under the `temp/` sibling,
+    # named by a UUID so they're collision-safe across sessions.
+    # The shape inside any canvas folder is identical:
+    #   ├── canvas.yml
+    #   ├── layout.yml
+    #   ├── feature_card.yml
+    #   └── data/<cardId>/...
+    # Path helpers do not auto-create folders — callers should
+    # use `_ensure_folder` when they intend to write.
+    def get_canvas_folder(self):
+        """scenario/outputs/canvas"""
+        return os.path.join(self.scenario, 'outputs', 'canvas')
+
+    def get_canvas_temp_folder(self):
+        """scenario/outputs/canvas/temp — root for draft + dirty edits"""
+        return os.path.join(self.get_canvas_folder(), 'temp')
+
+    def get_saved_canvas_folder(self, name):
+        """scenario/outputs/canvas/<name> — a committed canvas"""
+        return os.path.join(self.get_canvas_folder(), name)
+
+    def get_temp_canvas_folder(self, uuid):
+        """scenario/outputs/canvas/temp/<uuid> — an in-progress canvas"""
+        return os.path.join(self.get_canvas_temp_folder(), uuid)
+
+    def get_canvas_yml(self, canvas_folder):
+        """`<canvas_folder>/canvas.yml` — display name, view, scenarios, timestamps"""
+        return os.path.join(canvas_folder, 'canvas.yml')
+
+    def get_canvas_layout_yml(self, canvas_folder):
+        """`<canvas_folder>/layout.yml` — per-card grid positions + sizes"""
+        return os.path.join(canvas_folder, 'layout.yml')
+
+    def get_canvas_feature_card_yml(self, canvas_folder):
+        """`<canvas_folder>/feature_card.yml` — per-card type / feature / plotConfig"""
+        return os.path.join(canvas_folder, 'feature_card.yml')
+
+    def get_canvas_data_folder(self, canvas_folder):
+        """`<canvas_folder>/data` — root for per-card raw data dumps"""
+        return os.path.join(canvas_folder, 'data')
+
+    def get_canvas_card_data_folder(self, canvas_folder, card_id):
+        """`<canvas_folder>/data/<card_id>` — raw data backing one card's plot"""
+        return os.path.join(self.get_canvas_data_folder(canvas_folder), card_id)
+
 
     def get_electrical_and_thermal_network_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
