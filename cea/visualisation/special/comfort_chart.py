@@ -89,9 +89,13 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         return traces
         
     def plot(self, auto_open=False):
-        """Use direct Plotly to ensure curves work, with table and proper styling"""
-        os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
-        
+        """Build the comfort chart HTML and return it as a string.
+
+        Historically this also wrote `output_path` and opened the file
+        in a system browser; both side effects belong to the old CLI
+        workflow and have been dropped. Canvas Builder consumes the
+        return value via `/api/reports/plot-custom`.
+        """
         # Get all the traces directly (this works and shows curves)
         traces = self.calc_graph()
         
@@ -184,14 +188,8 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         </body>
         </html>
         """
-        
-        with open(self.output_path, 'w') as f:
-            f.write(full_html)
-        
-        print("Plotted '%s' to %s" % (self.name, self.output_path))
-        if auto_open:
-            import webbrowser
-            webbrowser.open(self.output_path)
+
+        return full_html
 
     def create_academic_table(self):
         """Create academic-style HTML table with proper formatting"""
@@ -798,10 +796,6 @@ def create_multi_building_plot(building_plots):
             'table_html': table_html
         })
     
-    # Create combined HTML layout - use the correct scenario path from the first plot object
-    output_path = building_plots[0].output_path.replace(f"Building_{building_plots[0].building}_comfort-chart.html", "comfort-chart.html")
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
     # Complete HTML document with improved layout
     full_html = f"""
     <!DOCTYPE html>
@@ -873,13 +867,6 @@ def create_multi_building_plot(building_plots):
     </html>
     """
 
-    with open(output_path, 'w') as f:
-        f.write(full_html)
-    
-    print(f"Plotted multi-building comfort chart to {output_path}")
-    import webbrowser
-    webbrowser.open(output_path)
-    
     return full_html
 
 
