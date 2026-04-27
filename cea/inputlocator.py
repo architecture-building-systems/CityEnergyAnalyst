@@ -467,11 +467,9 @@ class InputLocator(object):
         return os.path.join(self.scenario, 'outputs', 'data', 'optimization')
 
     # ── Canvas Builder storage ──────────────────────────────────
-    # Saved canvases live as folders directly under this root,
-    # named by their display name. In-progress edits (drafts and
-    # dirty copies of saved canvases) live under the `temp/` sibling,
-    # named by a UUID so they're collision-safe across sessions.
-    # The shape inside any canvas folder is identical:
+    # Each canvas is one folder named after its display name. Edits
+    # write straight to the folder — there's no draft / temp
+    # staging area. Inside any canvas folder:
     #   ├── canvas.yml
     #   ├── layout.yml
     #   ├── feature_card.yml
@@ -482,17 +480,9 @@ class InputLocator(object):
         """scenario/outputs/canvas"""
         return os.path.join(self.scenario, 'outputs', 'canvas')
 
-    def get_canvas_temp_folder(self):
-        """scenario/outputs/canvas/temp — root for draft + dirty edits"""
-        return os.path.join(self.get_canvas_folder(), 'temp')
-
     def get_saved_canvas_folder(self, name):
-        """scenario/outputs/canvas/<name> — a committed canvas"""
+        """scenario/outputs/canvas/<name> — a saved canvas"""
         return os.path.join(self.get_canvas_folder(), name)
-
-    def get_temp_canvas_folder(self, uuid):
-        """scenario/outputs/canvas/temp/<uuid> — an in-progress canvas"""
-        return os.path.join(self.get_canvas_temp_folder(), uuid)
 
     def get_canvas_yml(self, canvas_folder):
         """`<canvas_folder>/canvas.yml` — display name, view, scenarios, timestamps"""

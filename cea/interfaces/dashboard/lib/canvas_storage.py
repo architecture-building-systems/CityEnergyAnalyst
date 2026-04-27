@@ -10,43 +10,49 @@ Layout under ``<scenario>/outputs/canvas`` (paths owned by
 shape that lives inside each canvas folder):
 
     outputs/canvas/
-    ├── temp/
-    │   └── <uuid>/                  # never-saved drafts AND dirty
-    │       ├── canvas.yml           #   edits of saved canvases
-    │       ├── layout.yml
-    │       ├── feature_card.yml
-    │       └── data/<card_id>/...
-    └── <Display Name>/              # committed canvases — folder
-        └── …same shape              #   name = display name
+    └── <Display Name>/              # one folder per canvas;
+        ├── canvas.yml               #   folder name = display name
+        ├── layout.yml
+        ├── feature_card.yml
+        └── data/<card_id>/...       # captured plot HTML for zip
+                                     #   export (filled by the
+                                     #   capture-on-share pass)
+
+Every edit writes straight to the canvas's own folder — there is
+no draft / temp staging area. The previous `temp/<uuid>/` split
+was removed when Save / Auto Save were retired in favour of
+"every move autosaves to the saved folder". Recovery on browser
+crash is implicit: the folder is always up to date.
 
 Why three YAMLs (and not one)?
 
     - ``canvas.yml`` rarely changes (name, view, scenarios picked,
       navigator toggles, timestamps).
     - ``layout.yml`` is the hot file — drag/resize fires it
-      constantly, so an autosave path can flush *just* this file
+      constantly, so the autosave path can flush *just* this file
       without rewriting the rest.
     - ``feature_card.yml`` changes when cards are added / edited /
       removed, on a slower cadence than layout.
 
-Splitting them lets the autosave debouncer be granular and lets the
-zip-export / import pass round-trip the full state with no extra
-metadata.
+Splitting them lets the autosave debouncer be granular and lets
+the zip-export / import pass round-trip the full state with no
+extra metadata.
 
 Module exports:
 
 - ``CanvasMeta``, ``LayoutFile``, ``FeatureCardFile`` — Pydantic
   schemas with stable ``schema_version`` fields. ``extra='allow'``
-  on the inner card / column models so we can grow the shape without
-  forcing a YAML migration.
+  on the inner card / column models so we can grow the shape
+  without forcing a YAML migration.
 - ``sanitize_canvas_name`` — bounce names that would break a
-  filesystem (or collide with the ``temp`` reserved subfolder).
-- ``read_canvas`` / ``write_canvas`` — load / dump all three YAMLs
-  for a given canvas folder.
-- ``list_saved_canvases`` / ``list_temp_canvases`` — directory
-  listings keyed by name / uuid.
-- ``create_temp_canvas`` / ``promote_temp_to_saved`` /
-  ``delete_canvas_folder`` — directory lifecycle helpers.
+  filesystem (or collide with the ``temp`` reserved subfolder
+  retained for historical reasons).
+- ``read_canvas`` / ``write_canvas`` — load / sparse-dump the
+  three YAMLs for a given canvas folder.
+- ``list_saved_canvases`` — names of every canvas under the
+  scenario.
+- ``create_saved_canvas`` / ``delete_canvas_folder`` — directory
+  lifecycle helpers.
 """
 
 from __future__ import annotations
@@ -274,17 +280,29 @@ def write_canvas(locator: cea.inputlocator.InputLocator,
     """Sparse-write the three YAMLs.
 
     Pass any subset of ``canvas`` / ``layout`` / ``feature_card`` —
-    the others stay untouched. Always stamps ``updated_at`` (and
-    ``created_at`` on first write) on the canvas meta when it's
-    being written.
+    the slices not provided stay untouched. Always stamps
+    ``updated_at`` (and ``created_at`` on first write) on the
+    canvas meta when it's being written.
+
+    For ``canvas`` the merge is done at the *field* level: only
+    keys the caller explicitly set in the model are taken from the
+    incoming payload. Frontend autosave writes typically only
+    touch a couple of fields (e.g. ``view`` + ``columns`` after a
+    transition); the rest of canvas.yml — including ``created_at``
+    and any backend-set metadata — is preserved as-is.
     """
     if canvas is not None:
+        yml_path = locator.get_canvas_yml(canvas_folder)
+        existing = _read_yaml(yml_path)
+        # `exclude_unset=True` only emits the fields the caller
+        # actually provided — Pydantic-defaulted fields stay out.
+        incoming = canvas.model_dump(mode='json', exclude_unset=True)
+        merged = {**existing, **incoming}
         now = _now_iso()
-        if canvas.created_at is None:
-            canvas.created_at = now
-        canvas.updated_at = now
-        _write_yaml(locator.get_canvas_yml(canvas_folder),
-                    canvas.model_dump(mode='json'))
+        if not merged.get('created_at'):
+            merged['created_at'] = now
+        merged['updated_at'] = now
+        _write_yaml(yml_path, merged)
     if layout is not None:
         _write_yaml(locator.get_canvas_layout_yml(canvas_folder),
                     layout.model_dump(mode='json'))
@@ -314,103 +332,39 @@ def list_saved_canvases(locator: cea.inputlocator.InputLocator) -> List[str]:
     return out
 
 
-def list_temp_canvases(locator: cea.inputlocator.InputLocator) -> List[str]:
-    """UUIDs of every in-progress canvas."""
-    root = locator.get_canvas_temp_folder()
-    if not os.path.isdir(root):
-        return []
-    return sorted(
-        entry for entry in os.listdir(root)
-        if not entry.startswith('.')
-        and os.path.isdir(os.path.join(root, entry))
-    )
-
-
 # ── Lifecycle helpers ───────────────────────────────────────────
 
 
-def create_temp_canvas(locator: cea.inputlocator.InputLocator,
-                       uuid: str,
-                       parent_canvas_name: Optional[str] = None) -> str:
-    """Materialise a fresh ``temp/<uuid>/`` folder.
+def create_saved_canvas(locator: cea.inputlocator.InputLocator,
+                        name: str) -> Tuple[str, str]:
+    """Create a fresh saved canvas folder under the (sanitised) name.
 
-    If ``parent_canvas_name`` is given, the saved canvas's contents
-    are copied in (this is the "first edit on a saved canvas"
-    flow). Otherwise the temp starts empty (untitled draft).
+    Writes empty defaults for ``canvas.yml`` / ``layout.yml`` /
+    ``feature_card.yml`` so the folder is immediately readable by
+    the regular Open path.
 
-    Returns the temp folder path.
-    """
-    temp_folder = locator.get_temp_canvas_folder(uuid)
-    if os.path.exists(temp_folder):
-        raise FileExistsError(f'Temp canvas {uuid!r} already exists')
-    if parent_canvas_name:
-        src = locator.get_saved_canvas_folder(parent_canvas_name)
-        if not os.path.isdir(src):
-            raise FileNotFoundError(
-                f"Saved canvas {parent_canvas_name!r} not found")
-        shutil.copytree(src, temp_folder)
-        # Record the edit relationship on the temp's canvas.yml so
-        # Save knows where to commit back.
-        state = read_canvas(locator, temp_folder)
-        state.canvas.parent_canvas_name = parent_canvas_name
-        write_canvas(locator, temp_folder, canvas=state.canvas)
-    else:
-        os.makedirs(temp_folder, exist_ok=True)
-        write_canvas(
-            locator,
-            temp_folder,
-            canvas=CanvasMeta(),
-            layout=LayoutFile(),
-            feature_card=FeatureCardFile(),
-        )
-    return temp_folder
-
-
-def promote_temp_to_saved(locator: cea.inputlocator.InputLocator,
-                          uuid: str,
-                          name: str) -> str:
-    """Move ``temp/<uuid>/`` to ``<name>/`` (sanitised).
-
-    Behaviour:
-      - If ``<name>/`` already exists AND it matches the temp's
-        ``parent_canvas_name``, it's overwritten (re-saving an
-        existing canvas).
-      - Otherwise an existing ``<name>/`` is treated as a duplicate
-        and ``FileExistsError`` is raised so the caller can prompt
-        the user (overwrite / rename).
-      - The canvas.yml's ``name`` is updated to the sanitised name
-        and ``parent_canvas_name`` cleared (no longer a draft).
-
-    Returns the saved canvas folder path.
+    Returns ``(safe_name, folder)`` so callers don't have to
+    re-sanitise. Raises ``FileExistsError`` if a folder with the
+    same sanitised name already exists.
     """
     safe_name = sanitize_canvas_name(name)
-    temp_folder = locator.get_temp_canvas_folder(uuid)
-    if not os.path.isdir(temp_folder):
-        raise FileNotFoundError(f'Temp canvas {uuid!r} not found')
-
-    state = read_canvas(locator, temp_folder)
-    saved_folder = locator.get_saved_canvas_folder(safe_name)
-
-    parent = state.canvas.parent_canvas_name
-    if os.path.isdir(saved_folder) and parent != safe_name:
+    folder = locator.get_saved_canvas_folder(safe_name)
+    if os.path.exists(folder):
         raise FileExistsError(
             f'A saved canvas named {safe_name!r} already exists')
-
-    # Update canvas.yml with the committed name + clear parent link
-    # before the move, so the file on disk is consistent the moment
-    # it lands at its final path.
-    state.canvas.name = safe_name
-    state.canvas.parent_canvas_name = None
-    write_canvas(locator, temp_folder, canvas=state.canvas)
-
-    if os.path.isdir(saved_folder):
-        shutil.rmtree(saved_folder)
-    shutil.move(temp_folder, saved_folder)
-    return saved_folder
+    os.makedirs(folder, exist_ok=True)
+    write_canvas(
+        locator,
+        folder,
+        canvas=CanvasMeta(name=safe_name),
+        layout=LayoutFile(),
+        feature_card=FeatureCardFile(),
+    )
+    return safe_name, folder
 
 
 def delete_canvas_folder(folder: str) -> None:
-    """Remove a canvas folder (saved or temp). No-op if absent."""
+    """Remove a canvas folder. No-op if absent."""
     if os.path.isdir(folder):
         shutil.rmtree(folder)
 
