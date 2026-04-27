@@ -98,15 +98,26 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
         """
         # Get all the traces directly (this works and shows curves)
         traces = self.calc_graph()
-        
+
         # Create the layout with styling (no title in chart)
         layout = create_layout("")
-        
+
         # Create figure with direct Plotly (this ensures curves show)
         import plotly.graph_objs as go
-        
+
         fig = go.Figure(data=traces, layout=layout)
-        
+
+        # Build the CEA-format title (`<b>Metric</b><br><sub>feature
+        # | scenario | per-figure label</sub>`). Canvas Builder lifts
+        # the bold portion to the slot caption.
+        scenario_name = os.path.basename(self.locator.scenario)
+        subtitle = ' | '.join([
+            'CEA-4 Indoor Comfort',
+            scenario_name,
+            f'Building {self.building}',
+        ])
+        title_html = f"<b>Indoor Comfort</b><br><sub>{subtitle}</sub>"
+
         # Apply CEA styling manually with narrower width
         fig['layout'].update(dict(
             hovermode='closest',
@@ -114,10 +125,18 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
             height=500,
             plot_bgcolor='#F7F7F7',  # Set chart background to light gray
             paper_bgcolor='rgba(0,0,0,0)',  # Make outer background transparent
-            title=None  # Remove plotly chart title
+            title=dict(
+                text=title_html,
+                x=0,
+                xanchor='left',
+                yanchor='top',
+                font=dict(size=14),
+            ),
         ))
-        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))  
-        fig['layout']['margin'].update(dict(l=0, r=0, t=50, b=50))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))
+        # `t: 70` reserves room for the two-line CEA title above the
+        # plot area; left/right margins stay tight.
+        fig['layout']['margin'].update(dict(l=0, r=0, t=70, b=50))
         fig['layout']['font'].update(dict(size=10))
         
         # Make legend background transparent
@@ -161,23 +180,10 @@ class ComfortChartPlot(cea.plots.demand.DemandSingleBuildingPlotBase):
                     padding: 0;
                     width: 500px;
                 }}
-                h1 {{
-                    text-align: left;
-                    color: #333;
-                    font-size: 20px;
-                    margin-bottom: 0px;
-                    margin-left: 0px
-                }}
-                h2 {{
-                    color: #333;
-                    margin-bottom: 0px;
-                    display: none;
-                }}
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>{self.title}</h1>
                 <div class="chart-container">
                     {chart_html}
                 </div>
@@ -760,10 +766,23 @@ def create_multi_building_plot(building_plots):
         # Get traces and layout for this building
         traces = plot_obj.calc_graph()
         layout = create_layout("")
-        
+
         # Create figure
         fig = go.Figure(data=traces, layout=layout)
-        
+
+        # Build the CEA-format title (`<b>Metric</b><br><sub>feature
+        # | scenario | per-figure label</sub>`). Canvas Builder lifts
+        # the bold portion to the slot caption and uses the last
+        # `|`-separated subtitle segment ("Building XYZ") as the
+        # per-figure annotation in multi-building responses.
+        scenario_name = os.path.basename(plot_obj.locator.scenario)
+        subtitle = ' | '.join([
+            'CEA-4 Indoor Comfort',
+            scenario_name,
+            f'Building {plot_obj.building}',
+        ])
+        title_html = f"<b>Indoor Comfort</b><br><sub>{subtitle}</sub>"
+
         # Apply styling
         fig['layout'].update(dict(
             hovermode='closest',
@@ -771,10 +790,18 @@ def create_multi_building_plot(building_plots):
             height=500,
             plot_bgcolor='#F7F7F7',
             paper_bgcolor='rgba(0,0,0,0)',
-            title=None
+            title=dict(
+                text=title_html,
+                x=0,
+                xanchor='left',
+                yanchor='top',
+                font=dict(size=14),
+            ),
         ))
-        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))  
-        fig['layout']['margin'].update(dict(l=0, r=0, t=50, b=50))
+        fig['layout']['yaxis'].update(dict(hoverformat=".2f"))
+        # `t: 70` reserves room for the two-line CEA title above the
+        # plot area; left/right margins stay tight.
+        fig['layout']['margin'].update(dict(l=0, r=0, t=70, b=50))
         fig['layout']['font'].update(dict(size=10))
         
         # Make legend background transparent
@@ -796,7 +823,12 @@ def create_multi_building_plot(building_plots):
             'table_html': table_html
         })
     
-    # Complete HTML document with improved layout
+    # Complete HTML document. The CEA-format title now lives inside
+    # each Plotly figure's `layout.title.text` (Canvas Builder lifts
+    # the bold portion to the slot caption and the per-figure
+    # subtitle becomes each chart's annotation), so the page-level
+    # `<h1>` / per-chart `<h2>` headings have been dropped to avoid
+    # duplicating the title.
     full_html = f"""
     <!DOCTYPE html>
     <html>
@@ -827,30 +859,16 @@ def create_multi_building_plot(building_plots):
                 width: 500px;
                 flex-shrink: 0;
             }}
-            h1 {{
-                text-align: left;
-                color: #333;
-                font-size: 20px;
-                margin-bottom: 5px;
-                margin-left: 0px;
-            }}
-            h2 {{
-                color: #333;
-                font-size: 18px;
-                margin-bottom: 2px;
-            }}
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>Comfort Chart - Multiple Buildings ({len(charts_data)} buildings)</h1>
             <div class="charts-wrapper">
     """
-    
+
     for chart_data in charts_data:
         full_html += f"""
                 <div class="chart-item">
-                    <h2>- Building {chart_data['building']}</h2>
                     <div style="background-color: transparent; padding: 0; margin-bottom: 20px;">
                         {chart_data['chart_html']}
                     </div>
@@ -859,7 +877,7 @@ def create_multi_building_plot(building_plots):
                     </div>
                 </div>
         """
-    
+
     full_html += """
             </div>
         </div>
