@@ -109,14 +109,14 @@ map-layer-range-mode:
     Total Range - bar heights are normalised to each entity's full-year sum. Absolute scale; narrow periods look short.
     Period Range - bar heights are normalised to the current period's max. Rescales with the slider for maximum contrast within the period.
 
-# Reports — navigator toggles
-reports-sync-maps:
+# Canvas Builder — navigator toggles
+canvas-sync-maps:
   title: Sync Maps
   body: |-
     On - every map card mirrors the overview map.
     Off - each map card holds its own view and overlays.
 
-reports-export-view:
+canvas-export-view:
   title: Export View
   body: |-
     On - all editing controls off.
