@@ -2,7 +2,7 @@ import os
 
 import cea.config
 import cea.inputlocator
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 
 def validate_scenario_name(scenario_name: str) -> str:
@@ -10,7 +10,7 @@ def validate_scenario_name(scenario_name: str) -> str:
     scenario_name = os.path.normpath(scenario_name)
     if scenario_name == "." or scenario_name == ".." or os.path.basename(scenario_name) != scenario_name:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid scenario name: {scenario_name}. Name should not contain path components.",
         )
     return scenario_name

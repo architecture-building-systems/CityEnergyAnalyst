@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, field_validator
 
 from cea import MissingInputDataException
@@ -86,7 +86,7 @@ async def get_layer_parameter_choices(project_root: CEAProjectRoot, params: Laye
         choices = layer.get_parameter_choices(parameter, params.parameters)
     except ValueError as e:
         print(e)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return choices
 
@@ -109,11 +109,11 @@ async def delete_layer_parameter_choice(
         layer = layer_class(project=project_path, scenario_name=params.scenario_name)
         layer.delete_parameter_choice(parameter, params.value)
     except NotImplementedError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete: {e}")
 
     return {"success": True}
 
@@ -133,7 +133,7 @@ async def get_layer_parameter_range(project_root: CEAProjectRoot, params: LayerP
         range_values = layer.get_parameter_range(parameter, params.parameters)
     except ValueError as e:
         print(e)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return range_values
 
@@ -153,10 +153,10 @@ async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, 
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
         print(e)
-        raise HTTPException(status_code=400, detail="Missing input files")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing input files")
     except ValueError as e:
         print(e)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return output
 
@@ -177,4 +177,4 @@ async def check_map_layer(project_root: CEAProjectRoot,params: LayerParams, laye
         layer.check_for_missing_input_files(params.parameters)
     except MissingInputDataException as e:
         print(e)
-        raise HTTPException(status_code=400, detail="Missing input files")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing input files")

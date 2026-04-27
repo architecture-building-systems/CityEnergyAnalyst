@@ -65,7 +65,7 @@ async def validate_database(data: ValidateDatabase):
     """Validate the given databases (only checks if the folder structure is correct)"""
     if data.type == 'path':
         if data.path is None:
-            raise HTTPException(status_code=400, detail="Missing path")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing path")
 
         database_path = secure_path(data.path)
         try:

@@ -188,17 +188,17 @@ async def get_project_choices(project_root):
             logger.warning("No valid projects found in directory")
     except PermissionError:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied accessing project root",
         )
     except FileNotFoundError:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project root directory not found",
         )
     except OSError as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to read project root: {str(e)}",
         )
 
@@ -209,7 +209,7 @@ async def get_project_choices_route(project_root: CEAProjectRoot):
     """Return project choices based on the project root"""
     if project_root is None or project_root == "":
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Project root not defined",
         )
 

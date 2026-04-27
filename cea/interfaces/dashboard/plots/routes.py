@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -50,7 +50,7 @@ def render_missing_data(request, missing_files):
             "script_suggestions": script_suggestions(lm.__name__ for lm, _ in missing_files)
         },
         # TODO: Change to 400 code after frontend is updated
-        status_code=404
+        status_code=status.HTTP_404_NOT_FOUND
     )
 
 
@@ -76,7 +76,7 @@ async def route_div(config: CEAConfig, plot_cache: CEAPlotCache,
         return render_missing_data(request, plot.missing_input_files())
     except NotImplementedError as e:
         logger.error("NotImplementedError occurred: %s", e, exc_info=True)
-        return HTMLResponse('<p>An internal error has occurred.</p>', 404)
+        return HTMLResponse('<p>An internal error has occurred.</p>', status.HTTP_404_NOT_FOUND)
     # Remove parent <div> if exists due to plotly v4
     if plot_div.startswith("<div>"):
         plot_div = plot_div[5:-5].strip()
@@ -86,7 +86,7 @@ async def route_div(config: CEAConfig, plot_cache: CEAPlotCache,
         div_id = re.match('<div id="([0-9a-f-]+)"', plot_div).group(1)
         plot_div = plot_div.replace(div_id, "{div_id}-{dashboard_index}-{plot_index}".format(
             div_id=div_id, dashboard_index=dashboard_index, plot_index=plot_index))
-    return HTMLResponse(plot_div, 200)
+    return HTMLResponse(plot_div, status.HTTP_200_OK)
 
 
 @router.get('/plot/{dashboard_index}/{plot_index}', response_class=HTMLResponse)
@@ -102,7 +102,7 @@ async def route_plot(config: CEAConfig, plot_cache: CEAPlotCache,
         return render_missing_data(request, plot.missing_input_files())
     except NotImplementedError as e:
         logger.error("NotImplementedError occurred: %s", e, exc_info=True)
-        return HTMLResponse('<p>An internal error has occurred.</p>', 404)
+        return HTMLResponse('<p>An internal error has occurred.</p>', status.HTTP_404_NOT_FOUND)
     return render_plot(request, plot_div, plot_title)
 
 # @blueprint.app_errorhandler(500)
