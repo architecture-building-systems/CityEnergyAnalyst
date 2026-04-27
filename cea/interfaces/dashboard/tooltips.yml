@@ -116,8 +116,14 @@ canvas-sync-maps:
     On - every map card mirrors the overview map.
     Off - each map card holds its own view and overlays.
 
-canvas-export-view:
-  title: Export View
+canvas-fix-layout:
+  title: Fix Layout
   body: |-
-    On - all editing controls off.
-    Off - editing controls return; the canvas is interactive again.
+    On - card positions and sizes are locked; editing controls stay available.
+    Off - cards can be dragged and resized as usual.
+
+canvas-enable-edit:
+  title: Enable Edit
+  body: |-
+    On - editing controls are visible; the canvas is interactive.
+    Off - editing controls are hidden for a clean snapshot.
