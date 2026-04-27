@@ -51,11 +51,13 @@ Module exports:
 
 from __future__ import annotations
 
+import io
 import os
 import re
 import shutil
+import zipfile
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -411,3 +413,137 @@ def delete_canvas_folder(folder: str) -> None:
     """Remove a canvas folder (saved or temp). No-op if absent."""
     if os.path.isdir(folder):
         shutil.rmtree(folder)
+
+
+# ── Zip export / import ────────────────────────────────────────
+
+
+# canvas.yml is the load-bearing presence test — a zip without it
+# isn't a canvas. layout / feature_card are technically optional
+# (an empty draft might lack them) so we don't enforce them here.
+_CANVAS_MARKER = 'canvas.yml'
+
+
+def export_canvas_zip(
+    locator: cea.inputlocator.InputLocator,
+    name: str,
+) -> io.BytesIO:
+    """Build an in-memory zip of the saved canvas folder.
+
+    The zip's top-level directory is the canvas's display name, so a
+    recipient who unzips gets ``<name>/canvas.yml`` etc. Returns a
+    rewound ``BytesIO`` ready for ``StreamingResponse`` to consume.
+
+    Raises ``FileNotFoundError`` if the canvas doesn't exist.
+    """
+    folder = locator.get_saved_canvas_folder(name)
+    if not os.path.isdir(folder):
+        raise FileNotFoundError(f'Saved canvas {name!r} not found')
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for root, _dirs, files in os.walk(folder):
+            for filename in files:
+                if filename.startswith('.'):
+                    # Skip filesystem cruft (`.DS_Store` on macOS, etc.)
+                    continue
+                full = os.path.join(root, filename)
+                rel = os.path.relpath(full, folder)
+                # Top-level directory in the zip = canvas name.
+                zf.write(full, os.path.join(name, rel))
+    buf.seek(0)
+    return buf
+
+
+def _zip_top_level(zf: zipfile.ZipFile) -> Tuple[str, List[zipfile.ZipInfo]]:
+    """Walk a canvas zip and return ``(top_dir_name, member_infos)``.
+
+    Validates that:
+      - There's exactly one top-level directory (the canvas name).
+      - It contains a ``canvas.yml`` marker.
+
+    Raises ``ValueError`` on any structural problem so the caller can
+    surface a clean 400 rather than crashing on a bad upload.
+    """
+    members = [m for m in zf.infolist() if not m.is_dir()]
+    if not members:
+        raise ValueError('Zip is empty')
+
+    top_levels = set()
+    for m in members:
+        # Reject absolute paths and parent-traversal segments.
+        if m.filename.startswith('/') or '..' in m.filename.split('/'):
+            raise ValueError(f'Unsafe path inside zip: {m.filename!r}')
+        head = m.filename.split('/', 1)[0]
+        if not head:
+            raise ValueError('Files at the zip root are not allowed')
+        top_levels.add(head)
+
+    if len(top_levels) != 1:
+        raise ValueError(
+            'Zip must contain exactly one top-level canvas folder'
+        )
+    top = next(iter(top_levels))
+
+    has_marker = any(
+        m.filename == f'{top}/{_CANVAS_MARKER}' for m in members
+    )
+    if not has_marker:
+        raise ValueError(
+            f"Zip is not a canvas — missing {_CANVAS_MARKER!r}"
+        )
+
+    return top, members
+
+
+def import_canvas_zip(
+    locator: cea.inputlocator.InputLocator,
+    zip_bytes: bytes,
+) -> str:
+    """Unpack a canvas zip into ``outputs/canvas/<sanitised name>/``.
+
+    The display name is taken from the zip's top-level directory and
+    sanitised (same rules as Save). Returns the cleaned name on
+    success.
+
+    Raises:
+      ValueError: malformed zip / missing canvas marker / illegal
+        name (caller maps to 400).
+      FileExistsError: a saved canvas with the same name already
+        lives at the target path (caller maps to 409 so the UI can
+        prompt the user to rename or overwrite).
+    """
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(zip_bytes))
+    except zipfile.BadZipFile as exc:
+        raise ValueError(f'Invalid zip file: {exc}') from exc
+
+    with zf:
+        top, members = _zip_top_level(zf)
+        clean_name = sanitize_canvas_name(top)
+        target = locator.get_saved_canvas_folder(clean_name)
+        if os.path.exists(target):
+            raise FileExistsError(
+                f'A saved canvas named {clean_name!r} already exists'
+            )
+
+        os.makedirs(target, exist_ok=True)
+        try:
+            for m in members:
+                # Strip the top-level prefix; everything else is the
+                # path relative to the canvas folder.
+                rel = m.filename.split('/', 1)[1]
+                if not rel:
+                    continue
+                out_path = os.path.join(target, rel)
+                os.makedirs(os.path.dirname(out_path), exist_ok=True)
+                with zf.open(m) as src, open(out_path, 'wb') as dst:
+                    shutil.copyfileobj(src, dst)
+        except Exception:
+            # Roll back a partial extract so the user retries against
+            # a clean target (rather than a half-imported folder
+            # that would now collide with the same name).
+            shutil.rmtree(target, ignore_errors=True)
+            raise
+
+    return clean_name

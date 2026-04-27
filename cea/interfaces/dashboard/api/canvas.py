@@ -42,8 +42,9 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 import cea.inputlocator
@@ -56,6 +57,8 @@ from cea.interfaces.dashboard.lib.canvas_storage import (
     LayoutFile,
     create_temp_canvas,
     delete_canvas_folder,
+    export_canvas_zip,
+    import_canvas_zip,
     list_saved_canvases,
     promote_temp_to_saved,
     read_canvas,
@@ -177,6 +180,81 @@ async def delete_saved_canvas(
     locator = _locator_for(project_root, project, scenario)
     folder = locator.get_saved_canvas_folder(name)
     await run_in_threadpool(delete_canvas_folder, folder)
+
+
+# ── Zip export / import ─────────────────────────────────────────
+
+
+@router.get('/{name}/export')
+async def export_canvas(
+    project_root: CEAProjectRoot,
+    project: str,
+    scenario: str,
+    name: str,
+) -> StreamingResponse:
+    """Stream a zip of the saved canvas folder.
+
+    The zip's top-level directory is the canvas's display name, so
+    extracting yields ``<name>/canvas.yml`` etc. The captured per-
+    card data folder (``data/<cardId>/``) ships in the zip too —
+    that's the whole point of the capture-on-Save pass — so a
+    recipient can view the canvas without the original CEA scenario.
+    """
+    locator = _locator_for(project_root, project, scenario)
+    _require_saved(locator, name)
+    try:
+        buf = await run_in_threadpool(export_canvas_zip, locator, name)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+    safe_filename = name.replace('"', '')
+    return StreamingResponse(
+        buf,
+        media_type='application/zip',
+        headers={
+            'Content-Disposition': f'attachment; filename="{safe_filename}.zip"',
+        },
+    )
+
+
+@router.post('/import')
+async def import_canvas(
+    project_root: CEAProjectRoot,
+    project: str,
+    scenario: str,
+    file: UploadFile = File(...),
+) -> dict:
+    """Unpack a previously-exported canvas zip into the scenario.
+
+    The display name is read from the zip's top-level folder and
+    sanitised (same rules as Save). Returns ``{ name: <cleaned> }``
+    on success.
+
+    400 — malformed zip / missing canvas marker / illegal name.
+    409 — a saved canvas with the same name already exists; the
+          UI should prompt the user to rename (Phase 8 territory)
+          or to delete the existing one first.
+    """
+    locator = _locator_for(project_root, project, scenario)
+    payload = await file.read()
+
+    def _do() -> str:
+        try:
+            return import_canvas_zip(locator, payload)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            )
+        except FileExistsError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            )
+
+    return {'name': await run_in_threadpool(_do)}
 
 
 # ── Temp / draft canvases ───────────────────────────────────────
