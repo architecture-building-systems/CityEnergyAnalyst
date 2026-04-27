@@ -499,18 +499,23 @@ def _zip_top_level(zf: zipfile.ZipFile) -> Tuple[str, List[zipfile.ZipInfo]]:
 def import_canvas_zip(
     locator: cea.inputlocator.InputLocator,
     zip_bytes: bytes,
+    rename_to: Optional[str] = None,
 ) -> str:
     """Unpack a canvas zip into ``outputs/canvas/<sanitised name>/``.
 
     The display name is taken from the zip's top-level directory and
-    sanitised (same rules as Save). Returns the cleaned name on
-    success.
+    sanitised (same rules as Save). Pass ``rename_to`` to import
+    under a different display name — used by the UI's "import as"
+    prompt when the original name collides with an existing saved
+    canvas. The override is sanitised the same way.
+
+    Returns the cleaned name on success.
 
     Raises:
       ValueError: malformed zip / missing canvas marker / illegal
         name (caller maps to 400).
-      FileExistsError: a saved canvas with the same name already
-        lives at the target path (caller maps to 409 so the UI can
+      FileExistsError: a saved canvas with the same target name
+        already lives on disk (caller maps to 409 so the UI can
         prompt the user to rename or overwrite).
     """
     try:
@@ -520,7 +525,7 @@ def import_canvas_zip(
 
     with zf:
         top, members = _zip_top_level(zf)
-        clean_name = sanitize_canvas_name(top)
+        clean_name = sanitize_canvas_name(rename_to or top)
         target = locator.get_saved_canvas_folder(clean_name)
         if os.path.exists(target):
             raise FileExistsError(
@@ -545,5 +550,22 @@ def import_canvas_zip(
             # that would now collide with the same name).
             shutil.rmtree(target, ignore_errors=True)
             raise
+
+        # When importing under a renamed target, update the canvas's
+        # own metadata so the on-disk `name` field matches the
+        # folder name — otherwise opening the imported canvas would
+        # display its original name in the dashboard switcher even
+        # though it now lives at a different path.
+        if rename_to is not None:
+            try:
+                state = read_canvas(locator, target)
+                state.canvas.name = clean_name
+                state.canvas.parent_canvas_name = None
+                write_canvas(locator, target, canvas=state.canvas)
+            except Exception:
+                # Don't undo a successful extract over a metadata
+                # patch failure — the canvas is still importable,
+                # just with a stale display name in canvas.yml.
+                pass
 
     return clean_name

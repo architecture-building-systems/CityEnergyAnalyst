@@ -13,22 +13,31 @@ result to ``data/<cardId>/plot_<i>.html``. The folder is materialised
 inside the **temp** folder before promote, so the subsequent
 ``shutil.move`` carries the data along to the saved canvas root.
 
-Phase 6 scope:
+Coverage today:
 
-- Plot-typed cards only. Map / KPI cards are skipped — capturing
-  their state for a self-contained zip needs more thought (a static
-  PNG of the map? a JSON dump of the KPI summary?) and isn't blocked
-  by anything we ship today.
-- One render per card per the canvas's dominant scenario:
+- **Plot cards** → ``data/<cardId>/plot_<i>.html`` per embedded plot.
+  This is what gets rendered in the recipient's browser — a fully
+  self-contained Plotly figure that doesn't need the CEA backend to
+  view (Plotly's CDN handles the JS).
+- **Map / KPI cards** → ``data/<cardId>/card.json`` with the card's
+  config snapshot (type, feature, category, layer, scenario). A
+  proper server-side render for these (deck.gl PNG for maps, KPI
+  summary JSON for KPIs) is a future pass; the metadata at least
+  documents what was on the canvas so a viewer-without-backend can
+  show a labelled placeholder rather than a blank slot.
+
+Scenario resolution per card:
     * inter-feature → the column's own scenario
     * inter-whatif  → the parent scenario
     * inter-scenario → first column's scenario
-- Failures are logged and swallowed — a single broken card must not
-  abort Save.
+
+Failures are logged and swallowed — a single broken card must not
+abort Save.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from typing import Optional
@@ -148,11 +157,45 @@ def _capture_card(
     card,
     scenario: Optional[str],
 ) -> None:
-    """Render every plot inside one card and dump the HTML."""
-    if card.type != 'plot':
-        # Map / KPI capture is a future phase. Skip cleanly so the
-        # `data/<cardId>/` folder isn't created with nothing inside.
+    """Materialise a card's data folder.
+
+    - Plot cards: render every embedded plot to its own HTML file.
+    - Map / KPI cards: write a small ``card.json`` capturing the
+      card's config + the scenario context so a future viewer that
+      doesn't have a CEA backend handy can at least describe what
+      was on the canvas. Server-side rendering of these card types
+      (a deck.gl PNG snapshot for maps, a JSON dump of the KPI
+      summary) is a follow-up; this gives the recipient something
+      structured to chew on instead of an empty folder.
+    """
+    if card.type == 'plot':
+        _capture_plot_card(
+            config, locator, project_root, canvas_folder,
+            card_id, card, scenario,
+        )
         return
+
+    if card.type in ('map', 'kpi'):
+        _capture_card_metadata(
+            locator, canvas_folder, card_id, card, scenario,
+        )
+        return
+
+    # Unknown card type — log and skip rather than crash a Save.
+    logger.debug('Skipping data capture for card %s (type=%r)',
+                 card_id, card.type)
+
+
+def _capture_plot_card(
+    config,
+    locator: cea.inputlocator.InputLocator,
+    project_root: str,
+    canvas_folder: str,
+    card_id: str,
+    card,
+    scenario: Optional[str],
+) -> None:
+    """Render every plot inside one plot card and dump the HTML."""
     if not card.plots or not scenario:
         return
 
@@ -180,3 +223,36 @@ def _capture_card(
                 'Canvas data capture failed for card %s plot %d: %s',
                 card_id, i, exc,
             )
+
+
+def _capture_card_metadata(
+    locator: cea.inputlocator.InputLocator,
+    canvas_folder: str,
+    card_id: str,
+    card,
+    scenario: Optional[str],
+) -> None:
+    """Write a JSON snapshot of a non-plot card's config.
+
+    The schema mirrors the card's ``feature_card.yml`` entry plus a
+    ``scenario`` field so a viewer (now or later) has everything
+    needed to look up the right backend resources without having
+    to re-resolve the column → scenario mapping itself.
+    """
+    data_folder = locator.get_canvas_card_data_folder(canvas_folder, card_id)
+    os.makedirs(data_folder, exist_ok=True)
+    payload = {
+        'type': card.type,
+        'feature': card.feature,
+        'category': card.category,
+        'layer': card.layer,
+        'scenario': scenario,
+    }
+    out_path = os.path.join(data_folder, 'card.json')
+    try:
+        with open(out_path, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, indent=2, sort_keys=True)
+    except OSError as exc:
+        logger.warning(
+            'Failed to write metadata for card %s: %s', card_id, exc,
+        )

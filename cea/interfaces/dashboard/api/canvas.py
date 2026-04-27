@@ -42,7 +42,7 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -225,24 +225,28 @@ async def import_canvas(
     project: str,
     scenario: str,
     file: UploadFile = File(...),
+    as_name: Optional[str] = Query(None, alias='as'),
 ) -> dict:
     """Unpack a previously-exported canvas zip into the scenario.
 
-    The display name is read from the zip's top-level folder and
-    sanitised (same rules as Save). Returns ``{ name: <cleaned> }``
-    on success.
+    By default the display name is read from the zip's top-level
+    folder and sanitised. Pass ``?as=<new name>`` (mapped to
+    ``as_name`` because ``as`` is reserved in Python) to import
+    under a different name — the UI uses this to recover from a
+    409 conflict by prompting the user for a fresh name and
+    retrying the upload.
+
+    Returns ``{ name: <cleaned> }`` on success.
 
     400 — malformed zip / missing canvas marker / illegal name.
-    409 — a saved canvas with the same name already exists; the
-          UI should prompt the user to rename (Phase 8 territory)
-          or to delete the existing one first.
+    409 — a saved canvas with the same target name already exists.
     """
     locator = _locator_for(project_root, project, scenario)
     payload = await file.read()
 
     def _do() -> str:
         try:
-            return import_canvas_zip(locator, payload)
+            return import_canvas_zip(locator, payload, rename_to=as_name)
         except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
