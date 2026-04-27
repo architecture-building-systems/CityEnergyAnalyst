@@ -62,6 +62,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 import cea.inputlocator
 
+__author__ = "Zhongming Shi"
+__copyright__ = "Copyright 2026, UUEN PTE. LTD."
+__credits__ = ["Zhongming Shi"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Reynold Mok"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 # ── Schemas ──────────────────────────────────────────────────────
 
