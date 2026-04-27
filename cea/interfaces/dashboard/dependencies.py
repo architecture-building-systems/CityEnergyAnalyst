@@ -74,7 +74,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 try:
                     parameter.set(parameter_value)
                 except Exception as e:
-                    cea_db_config_logger.error(f"Error setting `{section_name}:{parameter_name}`: {e}")
+                    cea_db_config_logger.warning(f"Error setting `{section_name}:{parameter_name}`: {e}")
         return self
 
     def to_dict(self) -> dict:
@@ -88,7 +88,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                 try:
                     out[section.name][parameter.name] = parameter.get()
                 except Exception as e:
-                    cea_db_config_logger.error(f"Error reading `{section.name}:{parameter.name}`: {e}")
+                    cea_db_config_logger.warning(f"Error reading `{section.name}:{parameter.name}`: {e}")
                     # default_value = self.default_config.get(section.name, parameter.name)
                     # print(f"Using default value: '{default_value}'")
                     # out[section.name][parameter.name] = default_value
@@ -118,7 +118,7 @@ class CEADatabaseConfig(cea.config.Configuration):
                     cea_db_config_logger.debug(f"Reading config from database for user: {user_id}")
                     config.from_dict(_config.config)
             except Exception as e:
-                cea_db_config_logger.error(f"Error reading config from database: {e}")
+                cea_db_config_logger.warning(f"Error reading config from database: {e}")
                 cea_db_config_logger.warning("Returning default config")
 
         await get_cache().set(cls._cache_key(user_id), config, ttl=CONFIG_CACHE_TTL)
