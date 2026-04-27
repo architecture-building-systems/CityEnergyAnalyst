@@ -456,7 +456,7 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         labels={
             id_col: x_label if x_label else 'Category',
             'total_cost': 'Percentage (%)' if is_percentage else y_label,
-            'cost_type': 'Cost Category'
+            'cost_type': ''
         },
         hover_data={
             id_col: True,
@@ -474,7 +474,6 @@ def create_cost_breakdown_chart(df_long, id_col, y_metric_unit, y_normalised_by,
         xaxis_title='Percentage (%)' if is_percentage else y_label,
         yaxis_title=x_label if x_label else '',
         hovermode='closest',
-        legend_title='Cost Category',
         height=max(400, n_categories * 40),
         margin=dict(l=150, r=50, t=80, b=60),
         plot_bgcolor=COLOURS_TO_RGB['background_grey'],
@@ -637,6 +636,8 @@ def main(config):
             ),
             margin=dict(t=80),
         )
+        from cea.visualisation.legend import apply_legend_below
+        apply_legend_below(fig)
         include_js = 'cdn' if not plotly_included else False
         plotly_included = True
         html_outputs.append(fig.to_html(full_html=False, include_plotlyjs=include_js,

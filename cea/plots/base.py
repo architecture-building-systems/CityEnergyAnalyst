@@ -178,6 +178,13 @@ class PlotBase(object):
         fig['layout']['margin'].update(dict(l=50, r=50, t=50, b=50))
         fig['layout']['font'].update(dict(size=10))
 
+        # Push legend below the plot so resizing in the dashboard never
+        # makes it overlap the bars/lines (legacy view + Reports). Helper
+        # lives in the new visualisation framework — cea/plots is being
+        # retired and will eventually be deleted.
+        from cea.visualisation.legend import apply_legend_below
+        apply_legend_below(fig)
+
         if self.timeframe is not None:
             import datetime
             # Try to get plot year from data
