@@ -39,6 +39,7 @@ The schema doesn't need to encode the cloning relationship.
 
 from __future__ import annotations
 
+import os
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, status
@@ -46,7 +47,8 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 import cea.inputlocator
-from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
+from cea.interfaces.dashboard.lib.canvas_capture import capture_canvas_data
 from cea.interfaces.dashboard.lib.canvas_storage import (
     CanvasMeta,
     CanvasState,
@@ -133,9 +135,6 @@ def _require_saved(locator: cea.inputlocator.InputLocator, name: str) -> str:
 
 
 def _is_dir(path: str) -> bool:
-    """Indirection so the threadpool wrappers below don't pull `os`
-    into the module namespace just for a one-liner."""
-    import os
     return os.path.isdir(path)
 
 
@@ -272,6 +271,7 @@ async def discard_temp(
 
 @router.post('/temp/{uuid}/save')
 async def save_temp(
+    config: CEAConfig,
     project_root: CEAProjectRoot,
     project: str,
     scenario: str,
@@ -285,6 +285,11 @@ async def save_temp(
     existing root folder under the same sanitised name that isn't
     this draft's parent) raise 409 so the UI can prompt the user
     to rename.
+
+    Before the move, every plot card in the canvas is re-rendered
+    and its HTML written to ``<canvas_folder>/data/<card_id>/`` so
+    a future zip export carries everything a recipient needs to
+    view the canvas without the original CEA scenario data.
     """
     try:
         clean_name = sanitize_canvas_name(body.name)
@@ -295,16 +300,29 @@ async def save_temp(
         )
 
     locator = _locator_for(project_root, project, scenario)
-    _require_temp(locator, uuid)
+    temp_folder = _require_temp(locator, uuid)
+
+    # `config` is the request-scoped CEAConfig and gets mutated by
+    # `render_plot_html` (one mutation per card during capture).
+    # Snapshot the bits we need to restore so the user's session
+    # survives unchanged.
+    original_scenario = config.scenario
 
     def _do() -> str:
         try:
+            canvas_state = read_canvas(locator, temp_folder)
+            # Best-effort: capture failures inside individual cards
+            # are logged in `capture_canvas_data` and don't bubble
+            # up, so a single broken plot never blocks Save.
+            capture_canvas_data(config, locator, temp_folder, canvas_state)
             promote_temp_to_saved(locator, uuid, clean_name)
         except FileExistsError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=str(exc),
             )
+        finally:
+            config.project = os.path.dirname(original_scenario)
         return clean_name
 
     return {'name': await run_in_threadpool(_do)}

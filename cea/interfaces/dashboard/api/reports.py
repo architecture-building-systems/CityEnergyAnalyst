@@ -9,8 +9,6 @@ Endpoints:
 """
 
 import os
-import sys
-from contextlib import contextmanager
 from typing import Optional
 
 import geopandas
@@ -23,43 +21,13 @@ import cea.inputlocator
 import cea.scripts
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
+from cea.interfaces.dashboard.lib.plot_dispatch import render_plot_html
 from cea.interfaces.dashboard.utils import resolve_scenario_path, secure_path
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 logger = getCEAServerLogger("cea-server-reports")
 
 router = APIRouter()
-
-
-class _NonTtyStdout:
-    """Wrap `sys.stdout` so `.isatty()` returns False.
-
-    Several plot modules (e.g. `visualisation.plot_main.main`) auto-
-    launch a browser via `fig.show(renderer="browser")` when stdout is
-    a tty — useful from the CLI, but disruptive when the CEA server is
-    run from a terminal and Reports dispatches to those modules in-
-    process. Only `isatty` is overridden; every other method is
-    forwarded so logs and prints remain intact.
-    """
-
-    def __init__(self, stream):
-        self._stream = stream
-
-    def __getattr__(self, name):
-        return getattr(self._stream, name)
-
-    def isatty(self):
-        return False
-
-
-@contextmanager
-def _suppress_browser_autopopup():
-    original = sys.stdout
-    sys.stdout = _NonTtyStdout(original)
-    try:
-        yield
-    finally:
-        sys.stdout = original
 
 
 _resolve_scenario_path = resolve_scenario_path
@@ -392,9 +360,6 @@ async def get_custom_plot(
     The script must be a valid visualisation tool name (e.g. plot-demand).
     Parameters are applied to the config before running the plot.
     """
-    import importlib
-    import re
-
     script_name = payload.get("script")
     parameters = payload.get("parameters", {})
     scenario = payload.get("scenario")
@@ -405,67 +370,33 @@ async def get_custom_plot(
             detail="script is required",
         )
 
-    # Validate the script exists
+    # Validate the script exists up-front so we can return a clean
+    # 400 before mutating the config.
     try:
-        script = cea.scripts.by_name(script_name, plugins=config.plugins)
+        cea.scripts.by_name(script_name, plugins=config.plugins)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Script not found: {script_name}",
         )
 
+    if scenario:
+        scenario_path = _resolve_scenario_path(
+            project_root,
+            os.path.dirname(scenario) if os.sep in scenario else config.project,
+            os.path.basename(scenario),
+        )
+    else:
+        scenario_path = config.scenario
+
     original_scenario = config.scenario
     try:
-        # Override scenario if provided
-        if scenario:
-            scenario_path = _resolve_scenario_path(
-                project_root,
-                os.path.dirname(scenario) if os.sep in scenario else config.project,
-                os.path.basename(scenario),
-            )
-            config.project = os.path.dirname(scenario_path)
-            config.scenario_name = os.path.basename(scenario_path)
-
-        # Apply parameters to config
-        for _, parameter in config.matching_parameters(script.parameters):
-            if parameter.name in parameters:
-                value = parameters[parameter.name]
-                if isinstance(value, list):
-                    parameter.set(parameter.decode(",".join(str(v) for v in value)))
-                else:
-                    parameter.set(parameter.decode(str(value)))
-
-        # Match the CLI's dispatch: `config.restrict_to` lets modules like
-        # `plot_main.main` derive the feature from `config.restricted_to`
-        # (via `get_plot_cea_feature`), then each script's own
-        # `main(config)` returns HTML. This covers both `plot_main`-based
-        # plots (demand, final-energy, …) and `visualisation.special.*`
-        # plots (energy-sankey, cost-breakdown, …) with the same code.
-        config.restrict_to(script.parameters)
-        script_module = importlib.import_module(script.module)
-        with _suppress_browser_autopopup():
-            result = script_module.main(config)
-
-        # Most plot modules return a full HTML document; `pareto_front`
-        # is the one exception and returns a (2d, 3d) tuple of partial
-        # HTML strings — join so the Reports container gets a single
-        # stream of plot divs/scripts.
-        if isinstance(result, tuple):
-            html = "\n".join(part for part in result if part)
-        else:
-            html = result
-
-        # Plot modules return full HTML documents so the CLI can render
-        # directly to file. Reports embeds the output inside its own
-        # page, so strip the outer `<html>/<head>/<body>` wrapping to
-        # avoid duplicate document chrome and keep the frontend parser
-        # (`html-react-parser` filtered to div/style) consistent.
-        m = re.search(
-            r"<body[^>]*>(.*)</body>", html, re.DOTALL | re.IGNORECASE,
+        html = render_plot_html(
+            config,
+            scenario_path=scenario_path,
+            script_name=script_name,
+            parameters=parameters,
         )
-        if m:
-            html = m.group(1)
-
         return HTMLResponse(html, 200)
     except FileNotFoundError as e:
         raise HTTPException(
