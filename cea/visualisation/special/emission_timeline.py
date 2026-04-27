@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 
 import pandas as pd
 import plotly.graph_objs as go
@@ -273,9 +274,11 @@ class EmissionTimelinePlot:
         if self.bool_accumulated:
             y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
 
-        # Configure y-axis range and step from config
+        # Configure y-axis range and step from config. The y-axis
+        # title is intentionally omitted — the unit travels in the
+        # plot title built by ``_build_title`` below, matching the
+        # ``{Y} ({unit}) by {X}`` format used across CEA plots.
         yaxis_config = dict(
-            title=y_axis_title,
             showgrid=True,
             gridcolor='rgba(200,200,200,0.3)',
             zeroline=True,
@@ -297,14 +300,13 @@ class EmissionTimelinePlot:
 
         fig.update_layout(
             title=dict(
-                text=self.plot_title,
+                text=self._build_title(y_axis_title),
                 x=0,
                 xanchor='left',
                 yanchor='top',
                 font=dict(size=20),
             ),
             xaxis=dict(
-                title='Time horizon - Year',
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
@@ -389,18 +391,14 @@ class EmissionTimelinePlot:
                 hovertemplate=f'<b>Net-Zero Target Year: {net_zero_target_year}</b><extra></extra>'
             ))
 
-        # Update layout
+        # Update layout. y_axis_title carries the unit (e.g.
+        # "Cumulative Net Emissions (kgCO2e)") and is inlined into
+        # the plot title via ``_build_title`` — the chart's own
+        # axis titles are dropped to keep the layout clean.
         y_axis_title = self._get_y_axis_label()
         y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Net Emissions')
 
-        # Add cumulative suffix to title
-        plot_title = self.plot_title
-        if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
-
-        # Configure y-axis range and step from config
         yaxis_config = dict(
-            title=y_axis_title,
             showgrid=True,
             gridcolor='rgba(200,200,200,0.3)',
             zeroline=True,
@@ -422,12 +420,11 @@ class EmissionTimelinePlot:
 
         fig.update_layout(
             title=dict(
-                text=plot_title,
+                text=self._build_title(y_axis_title),
                 x=0,
                 xanchor='left'
             ),
             xaxis=dict(
-                title='Time horizon - Year',
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
@@ -554,7 +551,11 @@ class EmissionTimelinePlot:
                 hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: {hover_format}<extra></extra>'
             ))
 
-        # Update layout
+        # Update layout. y_axis_title carries the unit (e.g.
+        # "Cumulative Emissions (kgCO2e)" or "Percentage (%)") and
+        # is inlined into the plot title via ``_build_title`` — the
+        # chart's own axis titles are dropped to keep the layout
+        # clean.
         if percentage:
             y_axis_title = 'Percentage (%)'
         else:
@@ -562,14 +563,7 @@ class EmissionTimelinePlot:
             if self.bool_accumulated:
                 y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
 
-        # Add cumulative suffix to title
-        plot_title = self.plot_title
-        if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
-
-        # Configure y-axis range and step from config
         yaxis_config = dict(
-            title=y_axis_title,
             showgrid=True,
             gridcolor='rgba(200,200,200,0.3)',
             zeroline=True,
@@ -591,12 +585,11 @@ class EmissionTimelinePlot:
 
         fig.update_layout(
             title=dict(
-                text=plot_title,
+                text=self._build_title(y_axis_title),
                 x=0,
                 xanchor='left'
             ),
             xaxis=dict(
-                title='Time horizon - Year',
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
@@ -645,6 +638,25 @@ class EmissionTimelinePlot:
         display_name = base_name.replace('_', ' ').title()
 
         return display_name
+
+    def _build_title(self, y_label):
+        """
+        Build the in-chart title from the y-axis label and the
+        subtitle that callers set on `self.plot_title`.
+
+        Format: `<b>{y_label} by Year</b><br><sub>{subtitle}</sub>`.
+        The subtitle (e.g. ``CEA-4 Emission Timeline | scenario | whatif``)
+        is parsed back out of ``self.plot_title`` so call sites stay
+        the single source of truth for it; the bold portion is
+        rewritten here to inline the unit (carried by ``y_label``)
+        and drop the now-redundant axis titles.
+        """
+        match = re.search(r'<sub>(.*?)</sub>', self.plot_title or '')
+        subtitle = match.group(1) if match else ''
+        bold = f'{y_label} by Year'
+        if subtitle:
+            return f'<b>{bold}</b><br><sub>{subtitle}</sub>'
+        return f'<b>{bold}</b>'
 
     def _get_y_axis_label(self):
         """

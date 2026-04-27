@@ -717,7 +717,7 @@ def main(config: cea.config.Configuration):
         feature_label = custom_title or f'CEA-4 System Costs ({capex_label})'
         subtitle_parts = [feature_label, scenario_name, whatif_name]
         subtitle = ' | '.join(subtitle_parts)
-        title = f"<b>System Costs ({capex_label})</b><br><sub>{subtitle}</sub>"
+        title = f"<b>System Costs ({capex_label} / {unit_label})</b><br><sub>{subtitle}</sub>"
         fig = create_sankey_fig(sankey_data, title, unit_label)
         fig.update_layout(height=height, autosize=False)
         include_js = 'cdn' if not plotly_included else False
