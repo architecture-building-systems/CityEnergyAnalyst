@@ -19,6 +19,10 @@ Endpoints (all scenario-scoped via the standard
                                          subset of `{ canvas,
                                          layout, feature_card }`
   DELETE /api/canvas/{name}              delete folder
+  POST   /api/canvas/{name}/duplicate    copy an existing canvas;
+                                         optional body `{ name }`
+                                         picks a target name (defaults
+                                         to ``"<source> (copy)"``)
   GET    /api/canvas/{name}/export       capture-on-share + zip
   POST   /api/canvas/import              upload a canvas zip;
                                          optional `?as=<new>`
@@ -52,6 +56,7 @@ from cea.interfaces.dashboard.lib.canvas_storage import (
     LayoutFile,
     create_saved_canvas,
     delete_canvas_folder,
+    duplicate_canvas,
     export_canvas_zip,
     import_canvas_zip,
     list_saved_canvases,
@@ -82,6 +87,13 @@ class CreateCanvasRequest(BaseModel):
     """Body for ``POST /``. Sanitised server-side; the cleaned name
     is what gets persisted and returned."""
     name: str
+
+
+class DuplicateCanvasRequest(BaseModel):
+    """Body for ``POST /{name}/duplicate``. ``name`` is optional —
+    when omitted, the backend picks the first non-colliding entry
+    in the ``"<source> (copy)"`` series."""
+    name: Optional[str] = None
 
 
 class SparseWriteRequest(BaseModel):
@@ -215,6 +227,49 @@ async def delete_saved_canvas(
     folder = locator.get_saved_canvas_folder(name)
     await run_in_threadpool(delete_canvas_folder, folder)
     return {'ok': True}
+
+
+@router.post('/{name}/duplicate')
+async def duplicate_saved_canvas(
+    project_root: CEAProjectRoot,
+    project: str,
+    scenario: str,
+    name: str,
+    body: DuplicateCanvasRequest,
+) -> dict:
+    """Copy a saved canvas into a new folder.
+
+    Uses ``"<name> (copy)"`` as the default target — bumps the
+    suffix to ``(copy 2)``, ``(copy 3)``, … if the default already
+    exists. Pass ``{ "name": "..." }`` to override.
+
+    404 — source canvas missing.
+    409 — target name already exists.
+    400 — illegal target name.
+    """
+    locator = _locator_for(project_root, project, scenario)
+    _require_saved(locator, name)
+
+    def _do() -> str:
+        try:
+            return duplicate_canvas(locator, name, body.name)
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(exc),
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            )
+        except FileExistsError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            )
+
+    return {'name': await run_in_threadpool(_do)}
 
 
 # ── Zip export / import ─────────────────────────────────────────

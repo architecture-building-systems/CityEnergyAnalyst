@@ -51,8 +51,8 @@ Module exports:
   three YAMLs for a given canvas folder.
 - ``list_saved_canvases`` — names of every canvas under the
   scenario.
-- ``create_saved_canvas`` / ``delete_canvas_folder`` — directory
-  lifecycle helpers.
+- ``create_saved_canvas`` / ``delete_canvas_folder`` /
+  ``duplicate_canvas`` — directory lifecycle helpers.
 """
 
 from __future__ import annotations
@@ -367,6 +367,63 @@ def delete_canvas_folder(folder: str) -> None:
     """Remove a canvas folder. No-op if absent."""
     if os.path.isdir(folder):
         shutil.rmtree(folder)
+
+
+def duplicate_canvas(locator: cea.inputlocator.InputLocator,
+                     source_name: str,
+                     target_name: Optional[str] = None) -> str:
+    """Copy ``source_name`` into a fresh canvas folder under
+    ``target_name``.
+
+    When ``target_name`` is None, picks the first non-colliding
+    name in the ``"<source> (copy)"`` / ``"<source> (copy 2)"`` /
+    … sequence — same affordance the pathway duplicate flow uses.
+
+    The copy includes captured plot HTML under ``data/`` so the
+    duplicate is immediately Share-ready without having to re-run
+    capture. Patches the embedded ``canvas.yml``'s ``name`` field
+    (and clears ``parent_canvas_name``) so the duplicate's
+    self-reported display name matches its new folder.
+
+    Returns the cleaned target name. Raises ``FileNotFoundError``
+    if the source is missing, ``FileExistsError`` if the chosen
+    target already exists, ``ValueError`` on illegal target name.
+    """
+    source_folder = locator.get_saved_canvas_folder(source_name)
+    if not os.path.isdir(source_folder):
+        raise FileNotFoundError(f'Saved canvas {source_name!r} not found')
+
+    if target_name is None:
+        existing = set(list_saved_canvases(locator))
+        candidate = f'{source_name} (copy)'
+        i = 2
+        while candidate in existing:
+            candidate = f'{source_name} (copy {i})'
+            i += 1
+        clean = sanitize_canvas_name(candidate)
+    else:
+        clean = sanitize_canvas_name(target_name)
+
+    target_folder = locator.get_saved_canvas_folder(clean)
+    if os.path.exists(target_folder):
+        raise FileExistsError(
+            f'A saved canvas named {clean!r} already exists'
+        )
+
+    shutil.copytree(source_folder, target_folder)
+    try:
+        state = read_canvas(locator, target_folder)
+        state.canvas.name = clean
+        state.canvas.parent_canvas_name = None
+        write_canvas(locator, target_folder, canvas=state.canvas)
+    except Exception:
+        # Don't undo a successful copy over a metadata patch failure
+        # — the duplicate is still openable, just with a stale
+        # display name in canvas.yml. Same forgiveness rule
+        # ``import_canvas_zip`` applies to its rename fix-up.
+        pass
+
+    return clean
 
 
 # ── Zip export / import ────────────────────────────────────────
