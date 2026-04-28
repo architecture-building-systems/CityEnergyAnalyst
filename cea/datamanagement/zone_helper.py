@@ -73,7 +73,7 @@ def assign_attributes(shapefile, buildings_height, buildings_floors, buildings_h
 
         # Make sure relevant OSM parameters (if available) are passed as numbers, not strings
         OSM_HEIGHT_COLUMNS = ['min_height', 'height']
-        OSM_FLOOR_COLUMNS = ['building:min_level', 'min_height', 'building:levels']
+        OSM_FLOOR_COLUMNS = ['building:min_level', 'min_height', 'building:levels', 'roof:levels']
         for column in OSM_HEIGHT_COLUMNS + OSM_FLOOR_COLUMNS:
             if column in shapefile.columns:
                 shapefile[column] = pd.to_numeric(shapefile[column], errors='coerce').fillna(0)
