@@ -128,6 +128,23 @@ canvas-enable-edit:
     On - editing controls are visible; the canvas is interactive.
     Off - editing controls are hidden for a clean snapshot.
 
+# Canvas Builder — Compare button
+canvas-compare:
+  title: Compare
+  body: |-
+    Side-by-side comparison across scenarios or what-ifs.
+
+    The leftmost column is your "origin" — the only column where you can edit cards. Every other column mirrors the origin's structure but renders against its own scenario / what-if data. Add or remove a card on the origin and every column reflects the change.
+
+    Up to 4 columns total (origin + 3 picks).
+
+    The Compare button toggles three states:
+    - "Compare" (no picks yet) — opens the picker.
+    - "Resume comparing (N columns)" — re-enters the saved picks.
+    - "Stop comparing" — reverts to the single column without losing the picks; click Compare again to resume.
+
+    Available only from the launch (single-column) view. Use Start Over to clear the picks too.
+
 # Canvas Builder — share / import limitations
 canvas-share:
   title: Share canvas

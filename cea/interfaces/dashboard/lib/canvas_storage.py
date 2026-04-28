@@ -94,10 +94,28 @@ class _Allowed(BaseModel):
 class ColumnSpec(_Allowed):
     """One column in a comparison view. Mirrors the canvasStore
     column shape so round-tripping is trivial."""
-    type: str  # 'scenario' | 'whatif' | 'feature'
+    type: str  # 'scenario' | 'whatif'
     scenario: Optional[str] = None
     whatif: Optional[str] = None
-    feature: Optional[str] = None
+
+
+class ComparisonSetup(_Allowed):
+    """The user's saved Compare-mode picks.
+
+    Decoupled from the live ``view`` field so the user can Stop
+    comparing (revert ``view`` to ``launch``) without losing the
+    chosen scenarios / what-ifs — clicking Resume re-enters the
+    same comparison without re-picking.
+
+    ``kind`` selects which fields are populated:
+      - ``'inter-scenario'`` → ``scenarios`` (list of sibling
+        scenario names, excluding origin).
+      - ``'inter-whatif'`` → ``parent_scenario`` + ``whatifs``.
+    """
+    kind: str  # 'inter-scenario' | 'inter-whatif'
+    scenarios: Optional[List[str]] = None
+    whatifs: Optional[List[str]] = None
+    parent_scenario: Optional[str] = None
 
 
 class CanvasMeta(BaseModel):
@@ -111,13 +129,18 @@ class CanvasMeta(BaseModel):
     # drafts and for saved canvases.
     parent_canvas_name: Optional[str] = None
 
-    # 'launch' | 'inter-scenario' | 'inter-whatif' | 'inter-feature'
+    # 'launch' | 'inter-scenario' | 'inter-whatif'
     view: str = 'launch'
     # Carried for portability — the project this canvas belongs to.
     project: Optional[str] = None
-    # For inter-whatif / inter-feature views.
+    # For inter-whatif views.
     parent_scenario: Optional[str] = None
     columns: List[ColumnSpec] = Field(default_factory=list)
+
+    # Saved Compare-mode picks. Persists across "Stop comparing"
+    # so the user can resume without re-picking. ``None`` means
+    # the user has never entered Compare mode for this canvas.
+    comparison_setup: Optional[ComparisonSetup] = None
 
     # Navigator toggle state.
     maps_linked: bool = True
@@ -139,19 +162,14 @@ class TilePos(BaseModel):
 class LayoutFile(BaseModel):
     """Per-card grid positions — written to ``layout.yml``.
 
-    Either ``cards`` or ``column_cards`` is populated, depending on
-    the canvas's ``view``:
-      - ``launch`` / ``inter-scenario`` / ``inter-whatif`` →
-        ``cards`` (single shared grid)
-      - ``inter-feature`` → ``column_cards`` (one grid per column)
-
-    ``map_positions`` holds the primary map tile's position per
-    column (single-entry list for the launch view).
+    All comparison views share a single card list across columns —
+    one row per card, mirrored across every scenario / what-if
+    column. ``map_positions`` holds the primary map tile's
+    position per column (single-entry list for the launch view).
     """
     schema_version: int = SCHEMA_VERSION
     map_positions: List[TilePos] = Field(default_factory=list)
     cards: Dict[str, TilePos] = Field(default_factory=dict)
-    column_cards: Dict[str, Dict[str, TilePos]] = Field(default_factory=dict)
 
 
 class PlotEntry(_Allowed):
@@ -172,12 +190,11 @@ class CardConfig(_Allowed):
 class FeatureCardFile(BaseModel):
     """Per-card content — written to ``feature_card.yml``.
 
-    Mirrors `LayoutFile`'s shape: ``cards`` for shared grids,
-    ``column_cards`` for inter-feature.
+    Single ``cards`` map keyed by card id — comparison views share
+    the same card list across every column.
     """
     schema_version: int = SCHEMA_VERSION
     cards: Dict[str, CardConfig] = Field(default_factory=dict)
-    column_cards: Dict[str, Dict[str, CardConfig]] = Field(default_factory=dict)
 
 
 class CanvasState(BaseModel):
