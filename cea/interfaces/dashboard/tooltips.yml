@@ -127,3 +127,22 @@ canvas-enable-edit:
   body: |-
     On - editing controls are visible; the canvas is interactive.
     Off - editing controls are hidden for a clean snapshot.
+
+# Canvas Builder — share / import limitations
+canvas-share:
+  title: Share canvas
+  body: |-
+    Bundles the canvas folder into a .zip you can hand off.
+
+    The recipient gets the structure (layout, card picks, plot scripts) and - when they import it - your numbers re-render against their scenario. Two modes:
+    - Same scenario / what-if names in their project → full round-trip.
+    - Different names → template share. They keep the structure; columns referencing scenarios they don't have won't resolve.
+
+canvas-import:
+  title: Import canvas
+  body: |-
+    Unpacks a canvas .zip into the current scenario.
+
+    The canvas keeps the .zip's config (layout, card picks, plot scripts) but renders against the current scenario's data - donor's structure, your numbers.
+
+    If the .zip's column references match a scenario / what-if name in your project they resolve normally; otherwise those columns stay as a template placeholder.
