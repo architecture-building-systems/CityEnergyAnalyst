@@ -557,44 +557,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         if buildings_name_with_heating:
             # Read network temperature configuration for DH
             fixed_network_temp_C = config.thermal_network.network_temperature_dh
-            if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
-                print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
-                print("    - Boosters will activate when building requirements exceed network temp")
-
-                # Early validation: check if temperature is feasible for service type
-                min_temp_required = calculate_minimum_network_temperature({}, itemised_dh_services, booster)
-                service_names = ' → '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
-
-                if fixed_network_temp_C < min_temp_required:
-                    raise ValueError(
-                        f"\n{'='*60}\n"
-                        f"❌ TEMPERATURE CONFIGURATION ERROR\n"
-                        f"{'='*60}\n"
-                        f"Network temperature is too low for service configuration and available boosters!\n\n"
-                        f"  Service configuration: {service_names}\n"
-                        f"  Booster type:          {booster}\n"
-                        f"  Network temperature:   {fixed_network_temp_C}°C\n"
-                        f"  Minimum required:      {min_temp_required}°C\n\n"
-                        f"With {service_names} as primary service(s), the network\n"
-                        f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
-                        f"Explanation:\n"
-                        f"  - For space heating priority: minimum 15°C (allows ambient-loop heat pump configurations)\n"
-                        f"  - For DHW priority: minimum 65°C (DHW requires 60°C + 5K approach)\n\n"
-                        f"Current configuration will result in:\n"
-                        f"  → Network provides essentially zero heat\n"
-                        f"  → All heat from building boosters (defeats purpose of district heating)\n"
-                        f"  → Hydraulic simulation will fail due to insufficient flow\n\n"
-                        f"Solutions:\n"
-                        f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
-                        f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
-                        f"  3. If DHW is priority, set dh-temperature-mode = high-temperature (needs 50-80°C)\n"
-                        f"  4. If space heating is priority, set dh-temperature-mode = low-temperature (needs 35-55°C)\n"
-                        f"{'='*60}\n"
-                    )
-            else:
-                print("  ℹ Network temperature mode: VT (Variable Temperature)")
-                print("    - Network temp follows building requirements")
-                fixed_network_temp_C = None  # Explicitly set to None for VT mode
+            fixed_network_temp_C = check_network_temp_DH(booster, fixed_network_temp_C, itemised_dh_services)
 
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
@@ -610,7 +573,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
                                                heating_configuration=7,
                                                DHN_barcode=DHN_barcode,
                                                itemised_dh_services=itemised_dh_services,
-                                               per_building_services=per_building_services,  # NEW parameter
+                                               per_building_services=per_building_services,
                                                fixed_network_temp_C=fixed_network_temp_C,
                                                network_type=network_type,
                                                network_name=network_name,
@@ -1142,7 +1105,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     head_loss_substations_ft = node_head_df[consumer_nodes].abs()
     head_loss_substations_Pa = head_loss_substations_ft * FT_WATER_TO_PA
 
-    #POSTPORCESSING MASSFLOW RATES
+    # POSTPROCESSING MASS FLOW RATES
     # MASS_FLOW_RATE (EDGES)
     flow_rate_supply_m3s = link_flowrate_df.abs()
     massflow_supply_kgs = flow_rate_supply_m3s * P_WATER_KGPERM3
@@ -1251,7 +1214,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     head_loss_system_Pa.to_csv(locator.get_network_total_pressure_drop_file(network_type, network_name),
                                index=False)
 
-    # $ POSTPROCESSING - PLANT HEAT REQUIREMENT moved to after thermal losses calculation (line ~1218)
+    # $ POSTPROCESSING - PLANT HEAT REQUIREMENT moved to after thermal losses calculation
 
     # pressure losses per piping system
     pressure_loss_supply_edge_kW.to_csv(
@@ -1329,3 +1292,45 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     fields = ['length_m', 'pipe_DN', 'type_mat', 'geometry']
     edge_df_gdf = gpd.GeoDataFrame(edge_df[fields], index=edge_df.index)
     edge_df_gdf.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+
+
+def check_network_temp_DH(booster, fixed_network_temp_C, itemised_dh_services):
+    if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
+        print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
+        print("    - Boosters will activate when building requirements exceed network temp")
+
+        # Early validation: check if temperature is feasible for service type
+        min_temp_required = calculate_minimum_network_temperature({}, itemised_dh_services, booster)
+        service_names = ' → '.join(itemised_dh_services) if itemised_dh_services else 'space heating + DHW'
+
+        if fixed_network_temp_C < min_temp_required:
+            raise ValueError(
+                f"\n{'=' * 60}\n"
+                f"❌ TEMPERATURE CONFIGURATION ERROR\n"
+                f"{'=' * 60}\n"
+                f"Network temperature is too low for service configuration and available boosters!\n\n"
+                f"  Service configuration: {service_names}\n"
+                f"  Booster type:          {booster}\n"
+                f"  Network temperature:   {fixed_network_temp_C}°C\n"
+                f"  Minimum required:      {min_temp_required}°C\n\n"
+                f"With {service_names} as primary service(s), the network\n"
+                f"temperature must be at least {min_temp_required}°C for effective heat transfer.\n\n"
+                f"Explanation:\n"
+                f"  - For space heating priority: minimum 15°C (allows ambient-loop heat pump configurations)\n"
+                f"  - For DHW priority: minimum 65°C (DHW requires 60°C + 5K approach)\n\n"
+                f"Current configuration will result in:\n"
+                f"  → Network provides essentially zero heat\n"
+                f"  → All heat from building boosters (defeats purpose of district heating)\n"
+                f"  → Hydraulic simulation will fail due to insufficient flow\n\n"
+                f"Solutions:\n"
+                f"  1. Increase network-temperature-dh to >={min_temp_required}°C\n"
+                f"  2. Use Variable Temperature (VT) mode: network-temperature-dh = -1\n"
+                f"  3. If DHW is priority, set dh-temperature-mode = high-temperature (needs 50-80°C)\n"
+                f"  4. If space heating is priority, set dh-temperature-mode = low-temperature (needs 35-55°C)\n"
+                f"{'=' * 60}\n"
+            )
+    else:
+        print("  ℹ Network temperature mode: VT (Variable Temperature)")
+        print("    - Network temp follows building requirements")
+        fixed_network_temp_C = None  # Explicitly set to None for VT mode
+    return fixed_network_temp_C
