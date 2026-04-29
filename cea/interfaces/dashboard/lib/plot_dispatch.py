@@ -1,11 +1,12 @@
 """
-Shared plot-rendering primitive used by both `/api/reports/plot-custom`
-(live render for the Canvas Builder) and `/api/canvas/.../save`
-(snapshot the rendered HTML alongside the saved canvas so the zip
-export is self-contained).
+Shared plot-rendering primitive used by:
 
-Without sharing this code path, the Save endpoint would have to
-re-spawn the FastAPI request lifecycle internally to reuse the
+  * ``/api/reports/plot-custom`` — live render for the Canvas Builder.
+  * ``canvas_capture`` — snapshot the rendered HTML alongside the
+    saved canvas so the zip export is self-contained.
+
+Without sharing this code path, the export-time capture would have
+to spawn the FastAPI request lifecycle internally to reuse the
 existing dispatcher — clumsy and brittle. Pulling the script lookup
 + config mutation + module import into a plain function keeps both
 call sites symmetrical and lets us evolve the dispatch in one place.
@@ -84,9 +85,8 @@ def render_plot_html(
     special-case it.
 
     The outer ``<html>/<head>/<body>`` chrome is stripped if present
-    — both the live render path (Reports) and the snapshot capture
-    path (Canvas Save) embed the body fragment inside their own
-    container.
+    — both the live render path (Reports) and the export-capture
+    path embed the body fragment inside their own container.
     """
     parameters = parameters or {}
 

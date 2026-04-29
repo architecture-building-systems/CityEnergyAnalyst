@@ -180,7 +180,7 @@ def _capture_card(
         )
         return
 
-    # Unknown card type — log and skip rather than crash a Save.
+    # Unknown card type — log and skip rather than crash the export.
     logger.debug('Skipping data capture for card %s (type=%r)',
                  card_id, card.type)
 

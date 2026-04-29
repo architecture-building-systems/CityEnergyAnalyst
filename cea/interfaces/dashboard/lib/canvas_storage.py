@@ -45,8 +45,8 @@ Module exports:
   on the inner card / column models so we can grow the shape
   without forcing a YAML migration.
 - ``sanitize_canvas_name`` — bounce names that would break a
-  filesystem (or collide with the ``temp`` reserved subfolder
-  retained for historical reasons).
+  filesystem (or collide with the historical ``temp`` carve-out;
+  see ``_RESERVED_NAMES``).
 - ``read_canvas`` / ``write_canvas`` — load / sparse-dump the
   three YAMLs for a given canvas folder.
 - ``list_saved_canvases`` — names of every canvas under the
@@ -191,8 +191,11 @@ class CanvasState(BaseModel):
 # ── Name sanitisation ────────────────────────────────────────────
 
 
-# Reserved subfolder under the canvas root — saving a canvas under
-# this exact name would clash with the in-progress staging area.
+# Reserved as a defensive carve-out: a previous design used a
+# ``canvas/temp/`` subfolder for in-progress drafts, and
+# ``list_saved_canvases`` already filters that name out. Keeping
+# ``temp`` reserved here lets either side of that pair come back
+# without a collision.
 _RESERVED_NAMES = {'temp'}
 
 # Filesystem hostiles. Replaced with `_` so a typed " / " becomes
@@ -213,8 +216,7 @@ def sanitize_canvas_name(name: str) -> str:
     - Collapses internal whitespace runs to a single space, trims
       leading/trailing whitespace + dots.
     - Rejects names that collapse to empty.
-    - Rejects ``temp`` (case-insensitive) since the canvas root uses
-      that for in-progress drafts.
+    - Rejects ``temp`` (case-insensitive); see ``_RESERVED_NAMES``.
     - Rejects names longer than 200 chars to stay under common
       filesystem limits.
     """

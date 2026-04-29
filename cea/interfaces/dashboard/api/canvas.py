@@ -295,6 +295,11 @@ async def export_canvas(
     locator = _locator_for(project_root, project, scenario)
     folder = _require_saved(locator, name)
 
+    # `capture_canvas_data` mutates `config.project` and
+    # `config.scenario_name` per card via `render_plot_html`.
+    # Snapshot both and restore them in the same finally block —
+    # restoring only `project` (as we used to) left a stale
+    # `scenario_name` from the last card on the long-lived config.
     original_scenario = config.scenario
 
     def _do() -> str:
@@ -302,10 +307,11 @@ async def export_canvas(
             canvas_state = read_canvas(locator, folder)
             # Best-effort: capture failures inside individual cards
             # are logged and don't bubble up, so a single broken
-            # plot never blocks Share.
+            # plot never blocks the export.
             capture_canvas_data(config, locator, folder, canvas_state)
         finally:
             config.project = os.path.dirname(original_scenario)
+            config.scenario_name = os.path.basename(original_scenario)
         return name
 
     await run_in_threadpool(_do)
