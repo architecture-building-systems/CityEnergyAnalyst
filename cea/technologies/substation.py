@@ -107,7 +107,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
                                      heating_configuration, locator,
                                      DHN_barcode,
                                      itemised_dh_services=itemised_dh_services,
-                                     building_services=building_services,  # NEW parameter
+                                     building_services=building_services,
                                      fixed_network_temp_C=fixed_network_temp_C,
                                      network_type=network_type,
                                      network_name=network_name,

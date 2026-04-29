@@ -14,6 +14,7 @@ from cea.technologies.constants import DT_COOL, DT_HEAT, U_COOL, U_HEAT, \
     HEAT_EX_EFFECTIVENESS, DT_INTERNAL_HEX
 from cea.technologies.network_layout.plant_node_operations import PlantServices
 from cea.technologies.building_heating_booster import MIN_APPROACH_TEMP_K
+from cea.technologies.substation import calc_DH_supply
 
 BUILDINGS_DEMANDS_COLUMNS = ['Ths_sys_sup_aru_C', 'Ths_sys_sup_ahu_C', 'Ths_sys_sup_shu_C',
                              'Qww_sys_kWh', 'Tww_sys_sup_C', 'Tww_sys_re_C', 'mcpww_sys_kWperC',
@@ -1057,19 +1058,6 @@ def calc_DC_supply(t_0, t_1):
     a = np.array([t_0, t_1])
     tmin = np.nanmin(a)
     return tmin
-
-
-def calc_DH_supply(t_0, t_1):
-    """
-    This function calculates the heating temperature requirement of the building side according to the maximum
-    temperature requirement at that time-step.
-    :param t_0: temperature requirement from one heating application
-    :param t_1: temperature requirement from another heating application
-    :return: ``tmax``: maximum temperature requirement
-    """
-    a = np.array([t_0, t_1])
-    tmax = np.nanmax(a)
-    return tmax
 
 
 def calc_total_network_flow(Q_all, flowrate):
