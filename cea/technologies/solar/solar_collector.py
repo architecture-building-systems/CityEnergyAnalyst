@@ -835,7 +835,7 @@ def calc_Eaux_SC(specific_flow_kgpers, dP_collector_Pa, Leq_mperm2, l_int_mperm2
     eff_pumping = constants.eff_pumping
 
     # calculate pressure drops
-    dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HANZENWILIAMSN PA
+    dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HAZEN-WILLIAMS IN PA
     dP_building_head_Pa = (l_int_mperm2 / 2) * Aa_m2 * Ro_kgperm3 * 9.8  # dP = H*rho*g, g = 9.8 m/s^2
 
     # calculate electricity requirement from pumps
@@ -864,7 +864,7 @@ def calc_Eaux_panels(specific_flow_kgpers, dP_collector_Pa, pipe_lengths, Aa_m2)
     Leq_mperm2 = pipe_lengths['Leq_mperm2']
 
     # calculate pressure drops
-    dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HANZENWILIAMSN PA
+    dP_friction_Pa = dpl_Paperm * Leq_mperm2 * Aa_m2 * fcr  # HAZEN-WILLIAMS IN PA
 
     # calculate electricity requirement
     Eaux_kW = (specific_flow_kgpers / Ro_kgperm3) * (
