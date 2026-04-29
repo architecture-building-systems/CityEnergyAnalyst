@@ -101,20 +101,20 @@ class ColumnSpec(_Allowed):
 
 
 class CanvasMeta(BaseModel):
-    """Top-level canvas state — what gets written to ``canvas.yml``."""
+    """Top-level canvas state — what gets written to ``canvas.yml``.
+
+    ``extra='allow'`` keeps older YAMLs loadable after we retire a
+    field (e.g. the historical ``parent_canvas_name`` / ``project``
+    placeholders) without forcing a migration pass.
+    """
+    model_config = ConfigDict(extra='allow')
     schema_version: int = SCHEMA_VERSION
 
     # Display name. ``None`` while a draft is still untitled.
     name: Optional[str] = None
-    # Set on temp canvases that started as a copy of a saved one,
-    # so Save knows which root folder to overwrite. ``None`` for
-    # drafts and for saved canvases.
-    parent_canvas_name: Optional[str] = None
 
     # 'launch' | 'inter-scenario' | 'inter-whatif' | 'inter-feature'
     view: str = 'launch'
-    # Carried for portability — the project this canvas belongs to.
-    project: Optional[str] = None
     # For inter-whatif / inter-feature views.
     parent_scenario: Optional[str] = None
     columns: List[ColumnSpec] = Field(default_factory=list)
@@ -145,11 +145,12 @@ class LayoutFile(BaseModel):
         ``cards`` (single shared grid)
       - ``inter-feature`` → ``column_cards`` (one grid per column)
 
-    ``map_positions`` holds the primary map tile's position per
-    column (single-entry list for the launch view).
+    ``extra='allow'`` for the same forward-compat reason as
+    ``CanvasMeta``: a previous schema had a ``map_positions`` slot
+    that's gone now.
     """
+    model_config = ConfigDict(extra='allow')
     schema_version: int = SCHEMA_VERSION
-    map_positions: List[TilePos] = Field(default_factory=list)
     cards: Dict[str, TilePos] = Field(default_factory=dict)
     column_cards: Dict[str, Dict[str, TilePos]] = Field(default_factory=dict)
 
@@ -382,8 +383,8 @@ def duplicate_canvas(locator: cea.inputlocator.InputLocator,
     The copy includes captured plot HTML under ``data/`` so the
     duplicate is immediately Share-ready without having to re-run
     capture. Patches the embedded ``canvas.yml``'s ``name`` field
-    (and clears ``parent_canvas_name``) so the duplicate's
-    self-reported display name matches its new folder.
+    so the duplicate's self-reported display name matches its new
+    folder.
 
     Returns the cleaned target name. Raises ``FileNotFoundError``
     if the source is missing, ``FileExistsError`` if the chosen
@@ -414,7 +415,6 @@ def duplicate_canvas(locator: cea.inputlocator.InputLocator,
     try:
         state = read_canvas(locator, target_folder)
         state.canvas.name = clean
-        state.canvas.parent_canvas_name = None
         write_canvas(locator, target_folder, canvas=state.canvas)
     except Exception:
         # Don't undo a successful copy over a metadata patch failure
@@ -571,7 +571,6 @@ def import_canvas_zip(
             try:
                 state = read_canvas(locator, target)
                 state.canvas.name = clean_name
-                state.canvas.parent_canvas_name = None
                 write_canvas(locator, target, canvas=state.canvas)
             except Exception:
                 # Don't undo a successful extract over a metadata

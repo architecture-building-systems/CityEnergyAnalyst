@@ -1,17 +1,16 @@
 """
-Capture-on-Save helper for the Canvas Builder.
+Capture-on-Share helper for the Canvas Builder.
 
-When the user promotes a draft canvas (``temp/<uuid>/`` →
-``<name>/``), we want the saved folder to carry enough rendered
-content for a recipient who imports a zip of it to actually *see*
-the canvas — without needing the original CEA scenario directory or
-a running backend.
+When the user clicks Share, we want the exported zip to carry
+enough rendered content for a recipient who imports it to actually
+*see* the canvas — without needing the original CEA scenario
+directory or a running backend.
 
 The lazy strategy: walk every plot card in the canvas state, ask
 ``plot_dispatch.render_plot_html`` for its HTML, and write the
-result to ``data/<cardId>/plot_<i>.html``. The folder is materialised
-inside the **temp** folder before promote, so the subsequent
-``shutil.move`` carries the data along to the saved canvas root.
+result to ``<canvas_folder>/data/<cardId>/plot_<i>.html`` directly
+under the saved canvas root. The zip-export pass picks up that
+directory tree as-is.
 
 Coverage today:
 
@@ -32,7 +31,7 @@ Scenario resolution per card:
     * inter-scenario → first column's scenario
 
 Failures are logged and swallowed — a single broken card must not
-abort Save.
+abort the export.
 """
 
 from __future__ import annotations
