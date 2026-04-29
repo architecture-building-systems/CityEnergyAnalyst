@@ -14,6 +14,13 @@ import geopandas as gpd
 import os
 import cea.config
 from cea.inputlocator import InputLocator
+from cea.visualisation.special._error_html import (
+    generic_error_html,
+    has_costs_components,
+    list_available_whatif_names,
+    no_data_html,
+    whatif_mismatch_html,
+)
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 
 __author__ = "Zhongming Shi"
@@ -538,21 +545,15 @@ def main(config):
             html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
             return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
         except FileNotFoundError:
-            return (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;background:#ffe0e0;">'
-                f'<h3>Baseline costs data not found</h3>'
-                f'<p>Run <strong>baseline-costs</strong> first.</p>'
-                f'<code>{detailed_costs_path}</code></div>'
-            )
-        except Exception as e:
-            return (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;background:#ffe0e0;">'
-                f'<h3>Error creating visualisation</h3><code>{e}</code></div>'
-            )
+            return no_data_html(label='Baseline costs', tool='baseline-costs')
+        except Exception:
+            return generic_error_html(title='Error creating visualisation')
 
     # ── First pass: process all scenarios, collect data for axis alignment ───
     # slot: ('ok', whatif_name, df_long, id_col) or ('err', html_str)
     slots = []
+    scenario_name = os.path.basename(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_costs_components)
     for whatif_name in whatif_names:
         try:
             detailed_df, architecture_df = load_whatif_costs_data(locator, whatif_name)
@@ -564,17 +565,16 @@ def main(config):
             )
             slots.append(('ok', whatif_name, df_long, id_col))
         except FileNotFoundError:
-            slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Costs data not found for <em>{whatif_name}</em></h3>'
-                f'<p>Run <strong>system-costs</strong> for this scenario first.</p></div>'
+            slots.append(('err', whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Costs',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
-        except Exception as e:
-            slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Error for <em>{whatif_name}</em></h3><code>{e}</code></div>'
+        except Exception:
+            slots.append(('err', generic_error_html(
+                title=f'Error for {whatif_name}',
             )))
 
     # Compute global axis alignment from all successful scenarios

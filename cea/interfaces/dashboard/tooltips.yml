@@ -128,6 +128,18 @@ canvas-enable-edit:
     On - editing controls are visible; the canvas is interactive.
     Off - editing controls are hidden for a clean snapshot.
 
+# Canvas Builder — Add Scenario to compare
+canvas-compare:
+  title: Add Scenario to compare
+  body: |-
+    Side-by-side comparison across scenarios.
+
+    The leftmost column is your "origin" — the only column where you can edit cards. Every other column mirrors the origin's structure but renders against its own scenario's data. Add or remove a card on the origin and every column reflects the change.
+
+    Up to 4 columns total (origin + 3 picks).
+
+    Click the `+` next to the scenario title to open the picker. Pre-fills with your last picks if you've compared before. Remove a column with the `×` in its title; removing the last comparison column folds back to the single-column view.
+
 # Canvas Builder — share / import limitations
 canvas-share:
   title: Share canvas

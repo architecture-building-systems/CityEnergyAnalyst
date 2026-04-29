@@ -94,10 +94,28 @@ class _Allowed(BaseModel):
 class ColumnSpec(_Allowed):
     """One column in a comparison view. Mirrors the canvasStore
     column shape so round-tripping is trivial."""
-    type: str  # 'scenario' | 'whatif' | 'feature'
+    type: str  # 'scenario' | 'whatif'
     scenario: Optional[str] = None
     whatif: Optional[str] = None
-    feature: Optional[str] = None
+
+
+class ComparisonSetup(_Allowed):
+    """The user's saved Compare-mode picks.
+
+    Decoupled from the live ``view`` field so the user can Stop
+    comparing (revert ``view`` to ``launch``) without losing the
+    chosen scenarios / what-ifs — clicking Resume re-enters the
+    same comparison without re-picking.
+
+    ``kind`` selects which fields are populated:
+      - ``'inter-scenario'`` → ``scenarios`` (list of sibling
+        scenario names, excluding origin).
+      - ``'inter-whatif'`` → ``parent_scenario`` + ``whatifs``.
+    """
+    kind: str  # 'inter-scenario' | 'inter-whatif'
+    scenarios: Optional[List[str]] = None
+    whatifs: Optional[List[str]] = None
+    parent_scenario: Optional[str] = None
 
 
 class CanvasMeta(BaseModel):
@@ -113,11 +131,16 @@ class CanvasMeta(BaseModel):
     # Display name. ``None`` while a draft is still untitled.
     name: Optional[str] = None
 
-    # 'launch' | 'inter-scenario' | 'inter-whatif' | 'inter-feature'
+    # 'launch' | 'inter-scenario' | 'inter-whatif'
     view: str = 'launch'
-    # For inter-whatif / inter-feature views.
+    # For inter-whatif views.
     parent_scenario: Optional[str] = None
     columns: List[ColumnSpec] = Field(default_factory=list)
+
+    # Saved Compare-mode picks. Persists across "Stop comparing"
+    # so the user can resume without re-picking. ``None`` means
+    # the user has never entered Compare mode for this canvas.
+    comparison_setup: Optional[ComparisonSetup] = None
 
     # Navigator toggle state.
     maps_linked: bool = True
@@ -139,15 +162,11 @@ class TilePos(BaseModel):
 class LayoutFile(BaseModel):
     """Per-card grid positions — written to ``layout.yml``.
 
-    Either ``cards`` or ``column_cards`` is populated, depending on
-    the canvas's ``view``:
-      - ``launch`` / ``inter-scenario`` / ``inter-whatif`` →
-        ``cards`` (single shared grid)
-      - ``inter-feature`` → ``column_cards`` (one grid per column)
-
-    ``map_positions`` carries the primary map tile's size — a single
-    entry list, kept as a list for forward-compat with a possible
-    per-column override later.
+    All views share a single card list — one row per card, mirrored
+    across every column in compare mode (only the per-column content
+    in ``feature_card.yml`` differs). ``map_positions`` holds the
+    primary map tile's size; kept as a list for forward-compat with
+    a possible per-column override later.
 
     ``extra='allow'`` keeps older YAMLs loadable after a field is
     retired (matches ``CanvasMeta``).
@@ -156,7 +175,6 @@ class LayoutFile(BaseModel):
     schema_version: int = SCHEMA_VERSION
     map_positions: List[TilePos] = Field(default_factory=list)
     cards: Dict[str, TilePos] = Field(default_factory=dict)
-    column_cards: Dict[str, Dict[str, TilePos]] = Field(default_factory=dict)
 
 
 class PlotEntry(_Allowed):
@@ -177,8 +195,16 @@ class CardConfig(_Allowed):
 class FeatureCardFile(BaseModel):
     """Per-card content — written to ``feature_card.yml``.
 
-    Mirrors `LayoutFile`'s shape: ``cards`` for shared grids,
-    ``column_cards`` for inter-feature.
+    Two shapes depending on the canvas's view:
+      - Launch view → ``cards`` (single map keyed by card id).
+      - Comparison views (``inter-scenario`` / ``inter-whatif``) →
+        ``column_cards`` (one card map per column, keyed by column
+        index as a string). Layout (row/col/w/h) is still shared
+        in ``layout.yml``'s ``cards`` map; only the per-card
+        content (plots, category, layer) differs per column. Each
+        column may diverge: editing a plot in one column doesn't
+        propagate to the others, but adding / removing / resizing
+        a card row does.
     """
     schema_version: int = SCHEMA_VERSION
     cards: Dict[str, CardConfig] = Field(default_factory=dict)

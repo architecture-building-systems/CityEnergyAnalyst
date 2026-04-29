@@ -20,6 +20,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import cea.config
 from cea.inputlocator import InputLocator
+from cea.visualisation.special._error_html import (
+    has_costs_components,
+    list_available_whatif_names,
+    warning_html,
+    whatif_mismatch_html,
+)
 from cea.visualisation.format.plot_colours import (
     COLOURS_TO_RGB,
     COMPONENT_TECH_COLOURS,
@@ -587,12 +593,9 @@ def main(config: cea.config.Configuration):
 
     whatif_names = getattr(plot_config, 'what_if_name', [])
     if not whatif_names:
-        return (
-            '<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
-            'background:#fff8e1;">'
-            '<h3>No what-if scenario selected</h3>'
-            '<p>Please select a what-if scenario with system costs results.</p>'
-            '</div>'
+        return warning_html(
+            title='No what-if scenario selected',
+            body='Please select a what-if scenario with system costs results.',
         )
 
     cost_cats_selection = plot_config.y_category_to_plot
@@ -626,16 +629,18 @@ def main(config: cea.config.Configuration):
     # slot: either ('ok', whatif_name, sankey_data) or ('err', html_str)
     slots = []
 
+    scenario_name = os.path.basename(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_costs_components)
+
     for whatif_name in whatif_names:
         components_path = locator.get_costs_whatif_components_file(whatif_name)
         if not os.path.exists(components_path):
-            slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Costs data not found for <em>{whatif_name}</em></h3>'
-                f'<p>Run <strong>system-costs</strong> for this scenario first.</p>'
-                f'<code>{components_path}</code>'
-                f'</div>'
+            slots.append(('err', whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Costs',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
             continue
 
@@ -651,12 +656,9 @@ def main(config: cea.config.Configuration):
 
         sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, locator, normaliser)
         if sankey_data is None:
-            slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
-                f'background:#fff8e1;margin:12px 0">'
-                f'<h3>No cost data for <em>{whatif_name}</em></h3>'
-                f'<p>The selected cost categories produced no non-zero values.</p>'
-                f'</div>'
+            slots.append(('err', warning_html(
+                title=f'No cost data for {whatif_name}',
+                body='The selected cost categories produced no non-zero values.',
             )))
             continue
 
@@ -726,12 +728,7 @@ def main(config: cea.config.Configuration):
                                         config={'responsive': True}))
 
     if not html_outputs:
-        return (
-            '<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
-            'background:#fff8e1;">'
-            '<h3>No cost data to display</h3>'
-            '</div>'
-        )
+        return warning_html(title='No cost data to display')
 
     body = '\n'.join(html_outputs)
     return (

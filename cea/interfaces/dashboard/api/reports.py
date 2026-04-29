@@ -33,6 +33,10 @@ router = APIRouter()
 _resolve_scenario_path = resolve_scenario_path
 
 
+
+
+
+
 @router.get("/whatifs")
 async def get_whatifs(project_root: CEAProjectRoot, project: str, scenario: str):
     """List what-if names that have final-energy results in the given scenario."""
@@ -363,6 +367,12 @@ async def get_custom_plot(
     script_name = payload.get("script")
     parameters = payload.get("parameters", {})
     scenario = payload.get("scenario")
+    # Optional human-readable feature label derived from the
+    # frontend's `PLOT_GROUPS` nesting (e.g. "Energy by Carrier").
+    # Used in the styled mismatch overlay so the user sees the
+    # familiar feature name instead of the CLI tool's `script_name`
+    # — which is meaningless to non-developers.
+    feature_label = payload.get("feature_label")
 
     if not script_name:
         raise HTTPException(
@@ -396,12 +406,56 @@ async def get_custom_plot(
             scenario_path=scenario_path,
             script_name=script_name,
             parameters=parameters,
+            feature_label=feature_label,
         )
         return HTMLResponse(html, 200)
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Missing data for plot: {e}",
+        )
+    except ValueError as e:
+        # A required parameter (typically `what-if-name`) was missing
+        # or empty. Happens when a comparison column's per-column
+        # plotConfig has reset the parameter to `[]` because origin's
+        # selection isn't in the column's `/choices`. Surface the
+        # styled mismatch overlay instead of the generic 500 fallback,
+        # using the column's available what-if-names as substitutes.
+        from cea.visualisation.special._error_html import (
+            whatif_mismatch_html,
+        )
+        logger.warning(
+            "plot-custom rejected required parameter (%s); returning styled overlay",
+            e,
+        )
+        # Frontend supplies the human-readable feature label from
+        # its `PLOT_GROUPS` (e.g. "Energy by Carrier"). Falls back
+        # to the script name if the client didn't send one.
+        tool = feature_label or script_name or 'the upstream tool'
+        scenario_name = os.path.basename(scenario_path)
+        requested = (parameters or {}).get('what-if-name')
+        if isinstance(requested, list):
+            missing = requested[0] if requested else ''
+        else:
+            missing = requested or ''
+        # No predicate at this layer — the dispatcher doesn't know
+        # which per-script "is this what-if valid" check to apply,
+        # so it lists every folder and lets the user pick.
+        from cea.visualisation.special._error_html import (
+            list_available_whatif_names,
+        )
+        available = list_available_whatif_names(
+            cea.inputlocator.InputLocator(scenario_path),
+        )
+        return HTMLResponse(
+            whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=missing or '(none selected)',
+                label='Plot',
+                tool=tool,
+                available=available,
+            ),
+            200,
         )
     except Exception as e:
         logger.error("Error generating custom plot: %s", e, exc_info=True)

@@ -358,7 +358,31 @@ async def get_parameter_metadata(config: CEAConfig, tool_name: str, payload: Dic
 
 
 @router.post('/{tool_name}/check')
-async def check_tool_inputs(config: CEAConfig, tool_name: str, payload: Dict[str, Any]):
+async def check_tool_inputs(
+    config: CEAConfig,
+    project_root: CEAProjectRoot,
+    tool_name: str,
+    payload: Dict[str, Any],
+    project: Optional[str] = None,
+    scenario_name: Optional[str] = None,
+):
+    # Optional `project` + `scenario_name` query params let the
+    # caller validate inputs against a *different* scenario than
+    # the project store's active one. Used by the Canvas Builder's
+    # compare-mode per-column edit so the validation runs against
+    # the column's scenario (and pulls *its* choices for things
+    # like `what-if-name`) rather than whichever scenario the
+    # project store happens to be on. Mirrors the same override
+    # pattern in `get_tool_properties` above, including the
+    # pathway-viewer guard.
+    in_child_scenario = os.sep + 'pathways' + os.sep in config.scenario
+    if not in_child_scenario:
+        if project is not None:
+            if project_root is not None and not project.startswith(project_root):
+                project = os.path.join(project_root, project)
+            config.project = secure_path(project)
+        if scenario_name is not None:
+            config.scenario_name = validate_scenario_name(scenario_name)
     candidates = [
         (parameter, payload[parameter.name])
         for parameter in parameters_for_script(tool_name, config)
