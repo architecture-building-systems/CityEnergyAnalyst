@@ -145,12 +145,16 @@ class LayoutFile(BaseModel):
         ``cards`` (single shared grid)
       - ``inter-feature`` → ``column_cards`` (one grid per column)
 
-    ``extra='allow'`` for the same forward-compat reason as
-    ``CanvasMeta``: a previous schema had a ``map_positions`` slot
-    that's gone now.
+    ``map_positions`` carries the primary map tile's size — a single
+    entry list, kept as a list for forward-compat with a possible
+    per-column override later.
+
+    ``extra='allow'`` keeps older YAMLs loadable after a field is
+    retired (matches ``CanvasMeta``).
     """
     model_config = ConfigDict(extra='allow')
     schema_version: int = SCHEMA_VERSION
+    map_positions: List[TilePos] = Field(default_factory=list)
     cards: Dict[str, TilePos] = Field(default_factory=dict)
     column_cards: Dict[str, Dict[str, TilePos]] = Field(default_factory=dict)
 
