@@ -375,7 +375,7 @@ class ThermalNetwork(object):
             self.locator, self.network_type, self.network_name
         )
 
-        # NEW: Read per-building service configuration metadata from unified network_connectivity.json
+        # Read per-building service configuration metadata from unified network_connectivity.json
         import json
         connectivity_json_path = self.locator.get_network_connectivity_file(self.network_name)
         per_building_services = None

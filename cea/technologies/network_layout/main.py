@@ -1413,7 +1413,7 @@ def auto_layout_network(config, network_layout, locator: cea.inputlocator.InputL
         buildings_without_demand_dc = []
         buildings_without_demand_dh = []
 
-        # NEW: Per-building service configuration (for both DH and DC)
+        # Per-building service configuration (for both DH and DC)
         per_building_services_dh = {}
         per_building_services_dc = {}
 

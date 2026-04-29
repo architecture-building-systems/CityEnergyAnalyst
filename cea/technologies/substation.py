@@ -42,7 +42,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         for name in buildings_name_with_heating:
             buildings_dict[name] = pd.read_csv(locator.get_demand_results_file(name))
 
-            # NEW: Determine which services THIS specific building uses
+            # Determine which services THIS specific building uses
             if per_building_services is not None:
                 building_services = per_building_services.get(name, set(itemised_dh_services) if itemised_dh_services else {'space_heating', 'domestic_hot_water'})
             else:
@@ -61,7 +61,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
             # Create two vectors for doing the calculation
             heating_system_temperatures_dict[name] = {'Ths_supply_C': Ths_supply_C,
                                                       'Ths_return_C': Ths_re_C,
-                                                      'building_services': building_services}  # NEW: Store services
+                                                      'building_services': building_services}  # Store services
         # store the temperature of the grid for heating expected
         DHN_supply = {'T_DH_supply_C': T_DHN_supply}
 
@@ -79,7 +79,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
                                      heating_system_temperatures_dict[name]['Ths_return_C'],
                                      heating_configuration, locator, DHN_barcode,
                                      itemised_dh_services=itemised_dh_services,
-                                     building_services=heating_system_temperatures_dict[name]['building_services'],  # NEW parameter
+                                     building_services=heating_system_temperatures_dict[name]['building_services'],
                                      fixed_network_temp_C=fixed_network_temp_C,
                                      network_type=network_type,
                                      network_name=network_name,
@@ -89,7 +89,7 @@ def substation_main_heating(locator, total_demand, buildings_name_with_heating, 
         for name in buildings_name_with_heating:
             substation_demand = pd.read_csv(locator.get_demand_results_file(name))
 
-            # NEW: Determine which services THIS specific building uses
+            # Determine which services THIS specific building uses
             if per_building_services is not None:
                 building_services = per_building_services.get(name, set(itemised_dh_services) if itemised_dh_services else {'space_heating', 'domestic_hot_water'})
             else:
@@ -704,7 +704,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     :param DHN_barcode: 0-1 combination of connected/disconnected buildings "0101011001"
     :type DHN_barcode: string
     :param itemised_dh_services: list of services from plant node type (e.g., ['space_heating', 'domestic_hot_water'])
-    :param building_services: Set of services THIS specific building uses (NEW - per-building override)
+    :param building_services: Set of services THIS specific building uses
                              If None, uses itemised_dh_services (all services)
     :param fixed_network_temp_C: fixed network supply temperature [C], or None for variable temperature (VT mode)
 
@@ -715,7 +715,7 @@ def substation_model_heating(building_name, building_demand_df, T_DH_supply_C, T
     # DETERMINE DH SUPPLY TEMPERATURE MODE AND SERVICE CONNECTIONS
     # ============================================================================
 
-    # NEW: Use per-building services if available, otherwise fall back to network-level services
+    # Use per-building services if available, otherwise fall back to network-level services
     services_for_this_building = building_services if building_services is not None else itemised_dh_services
 
     # Determine what services are connected to DH for THIS building
