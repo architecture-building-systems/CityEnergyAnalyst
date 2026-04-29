@@ -6,9 +6,16 @@ import re
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
+from cea.inputlocator import InputLocator
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.visualisation.special._error_html import (
+    generic_error_html,
+    has_emissions_timeline,
+    list_available_whatif_names,
+    whatif_mismatch_html,
+)
 from cea.import_export.result_summary import filter_buildings
 
 __author__ = "Zhongming Shi"
@@ -971,22 +978,28 @@ def main(config):
 
     # Multi what-if: one figure per scenario with aligned y-axes
     slots = []
+    scenario_name = os.path.basename(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_emissions_timeline)
     for whatif_name in whatif_names:
         try:
             context = plot_config.context
             context['feature'] = 'emission-timeline'
             fig = plot_emission_timeline_single(config, context, whatif_name)
             slots.append(('ok', whatif_name, fig))
-        except Exception as e:
-            slots.append(('err', whatif_name, (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626">'
-                f'Error plotting <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'</div>'
+        except FileNotFoundError:
+            slots.append(('err', whatif_name, whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Emission timeline',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
+        except Exception:
+            slots.append((
+                'err',
+                whatif_name,
+                generic_error_html(title=f'Error plotting {whatif_name}'),
+            ))
 
     # Align y-axes across all figures
     global_y_min = global_y_max = None

@@ -20,6 +20,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import cea.config
 from cea.inputlocator import InputLocator
+from cea.visualisation.special._error_html import (
+    has_costs_components,
+    list_available_whatif_names,
+    warning_html,
+    whatif_mismatch_html,
+)
 from cea.visualisation.format.plot_colours import (
     COLOURS_TO_RGB,
     COMPONENT_TECH_COLOURS,
@@ -587,17 +593,9 @@ def main(config: cea.config.Configuration):
 
     whatif_names = getattr(plot_config, 'what_if_name', [])
     if not whatif_names:
-        return (
-            '<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-            'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
-            'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-            '<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-            'No what-if scenario selected'
-            '</div>'
-            '<div style="font-size:12px;color:#595959">'
-            'Please select a what-if scenario with system costs results.'
-            '</div>'
-            '</div>'
+        return warning_html(
+            title='No what-if scenario selected',
+            body='Please select a what-if scenario with system costs results.',
         )
 
     cost_cats_selection = plot_config.y_category_to_plot
@@ -631,20 +629,18 @@ def main(config: cea.config.Configuration):
     # slot: either ('ok', whatif_name, sankey_data) or ('err', html_str)
     slots = []
 
+    scenario_name = os.path.basename(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_costs_components)
+
     for whatif_name in whatif_names:
         components_path = locator.get_costs_whatif_components_file(whatif_name)
         if not os.path.exists(components_path):
-            slots.append(('err', (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-                f'Costs data not found for <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'<div style="font-size:12px;color:#595959">'
-                f'Run <span style="color:#1470AF">system-costs</span> for this scenario first.'
-                f'</div>'
-                f'</div>'
+            slots.append(('err', whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Costs',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
             continue
 
@@ -660,17 +656,9 @@ def main(config: cea.config.Configuration):
 
         sankey_data = build_sankey_data(df, cost_cats_selection, capex_view, x_to_plot, unit_divisor, locator, normaliser)
         if sankey_data is None:
-            slots.append(('err', (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-                f'No cost data for <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'<div style="font-size:12px;color:#595959">'
-                f'The selected cost categories produced no non-zero values.'
-                f'</div>'
-                f'</div>'
+            slots.append(('err', warning_html(
+                title=f'No cost data for {whatif_name}',
+                body='The selected cost categories produced no non-zero values.',
             )))
             continue
 
@@ -740,15 +728,7 @@ def main(config: cea.config.Configuration):
                                         config={'responsive': True}))
 
     if not html_outputs:
-        return (
-            '<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-            'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
-            'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-            '<div style="font-size:13px;font-weight:500;color:#262626">'
-            'No cost data to display'
-            '</div>'
-            '</div>'
-        )
+        return warning_html(title='No cost data to display')
 
     body = '\n'.join(html_outputs)
     return (

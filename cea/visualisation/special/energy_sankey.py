@@ -27,6 +27,12 @@ from cea.visualisation.format.plot_colours import (
     component_display,
     component_tech_colour,
 )
+from cea.visualisation.special._error_html import (
+    has_analysis_config,
+    list_available_whatif_names,
+    warning_html,
+    whatif_mismatch_html,
+)
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, Architecture and Building Systems - ETH Zurich"
@@ -1266,17 +1272,9 @@ def main(config: cea.config.Configuration):
 
     whatif_names = getattr(plot_config, 'what_if_name', [])
     if not whatif_names:
-        return (
-            '<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-            'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
-            'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-            '<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-            'No what-if scenario selected'
-            '</div>'
-            '<div style="font-size:12px;color:#595959">'
-            'Please select a what-if scenario with final energy results.'
-            '</div>'
-            '</div>'
+        return warning_html(
+            title='No what-if scenario selected',
+            body='Please select a what-if scenario with final energy results.',
         )
 
     service_filter = plot_config.y_service_category_to_plot
@@ -1292,37 +1290,40 @@ def main(config: cea.config.Configuration):
     # slot: either ('ok', whatif_name, sankey_data) or ('err', html_str)
     slots = []
 
+    scenario_name = os.path.basename(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_analysis_config)
+
     for whatif_name in whatif_names:
         if locator.find_analysis_configuration_file(whatif_name) is None:
-            expected_path = locator.get_analysis_configuration_file(whatif_name)
-            slots.append(('err', (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-                f'Final energy data not found for <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'<div style="font-size:12px;color:#595959">'
-                f'Run <span style="color:#1470AF">final-energy</span> for this scenario first.'
-                f'</div>'
-                f'</div>'
+            slots.append(('err', whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Final energy',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
             continue
 
-        df = load_energy_flow_data(locator, whatif_name)
+        # The configuration.yml exists but the underlying data
+        # files may not (e.g. partial copies between scenarios).
+        # Catch missing-input errors and route through the same
+        # mismatch overlay rather than 500-ing the whole request.
+        try:
+            df = load_energy_flow_data(locator, whatif_name)
+        except (FileNotFoundError, OSError):
+            slots.append(('err', whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Final energy',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
+            )))
+            continue
         sankey_data = build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation)
         if sankey_data is None:
-            slots.append(('err', (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-                f'No energy flow data for <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'<div style="font-size:12px;color:#595959">'
-                f'The selected service categories produced no non-zero values.'
-                f'</div>'
-                f'</div>'
+            slots.append(('err', warning_html(
+                title=f'No energy flow data for {whatif_name}',
+                body='The selected service categories produced no non-zero values.',
             )))
             continue
 
@@ -1343,7 +1344,6 @@ def main(config: cea.config.Configuration):
         _, whatif_name, sankey_data = slot
         scenario_total = sum(sankey_data['value'])
         height = max(_MIN_HEIGHT, int(_BASE_HEIGHT * scenario_total / global_total))
-        scenario_name = os.path.basename(config.scenario)
         feature_label = custom_title or 'CEA-4 Energy Flow'
         subtitle_parts = [feature_label, scenario_name, whatif_name]
         subtitle = ' | '.join(subtitle_parts)
@@ -1356,15 +1356,7 @@ def main(config: cea.config.Configuration):
                                         config={'responsive': True}))
 
     if not html_outputs:
-        return (
-            '<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-            'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
-            'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-            '<div style="font-size:13px;font-weight:500;color:#262626">'
-            'No energy flow data to display'
-            '</div>'
-            '</div>'
-        )
+        return warning_html(title='No energy flow data to display')
 
     body = '\n'.join(html_outputs)
     return (

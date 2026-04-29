@@ -70,6 +70,7 @@ def render_plot_html(
     scenario_path: str,
     script_name: str,
     parameters: Optional[Dict[str, Any]] = None,
+    feature_label: Optional[str] = None,
 ) -> str:
     """Run a CEA plot script and return its HTML body.
 
@@ -78,6 +79,14 @@ def render_plot_html(
     caller is responsible for restoring ``config.project`` /
     ``config.scenario_name`` afterwards if the surrounding scope
     needs to.
+
+    ``feature_label`` (e.g. ``'Energy by Carrier'``) is propagated
+    onto ``config._feature_label`` for the duration of the call so
+    each plot script can read its family label from the config
+    instead of hardcoding it locally. Frontend supplies the value
+    by walking its existing ``PLOT_GROUPS`` nesting; the dispatcher
+    just relays it down. ``None`` falls back to ``script.label``
+    when the script reads it.
 
     Pareto-front returns a 2-tuple of partial HTMLs; this helper
     flattens that to a single string so callers don't need to
@@ -94,6 +103,11 @@ def render_plot_html(
 
     config.project = os.path.dirname(scenario_path)
     config.scenario_name = os.path.basename(scenario_path)
+    # Stash the feature label on the config so plot scripts can read
+    # it without each having its own duplicated mapping. Underscore-
+    # prefixed to flag this as a dispatcher-injected, non-schema
+    # attribute (parameters defined in scripts.yml use proper names).
+    config._feature_label = feature_label or script.label
 
     for _, parameter in config.matching_parameters(script.parameters):
         if parameter.name in parameters:

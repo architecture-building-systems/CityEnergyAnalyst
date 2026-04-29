@@ -14,6 +14,13 @@ import geopandas as gpd
 import os
 import cea.config
 from cea.inputlocator import InputLocator
+from cea.visualisation.special._error_html import (
+    generic_error_html,
+    has_costs_components,
+    list_available_whatif_names,
+    no_data_html,
+    whatif_mismatch_html,
+)
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
 
 __author__ = "Zhongming Shi"
@@ -538,32 +545,15 @@ def main(config):
             html = fig.to_html(full_html=True, include_plotlyjs='cdn', config={'responsive': True})
             return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
         except FileNotFoundError:
-            return (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-                f'Baseline costs data not found'
-                f'</div>'
-                f'<div style="font-size:12px;color:#595959">'
-                f'Run <span style="color:#1470AF">baseline-costs</span> first.'
-                f'</div>'
-                f'</div>'
-            )
-        except Exception as e:
-            return (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626">'
-                f'Error creating visualisation'
-                f'</div>'
-                f'</div>'
-            )
+            return no_data_html(label='Baseline costs', tool='baseline-costs')
+        except Exception:
+            return generic_error_html(title='Error creating visualisation')
 
     # ── First pass: process all scenarios, collect data for axis alignment ───
     # slot: ('ok', whatif_name, df_long, id_col) or ('err', html_str)
     slots = []
+    scenario_name = os.path.basename(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_costs_components)
     for whatif_name in whatif_names:
         try:
             detailed_df, architecture_df = load_whatif_costs_data(locator, whatif_name)
@@ -575,27 +565,16 @@ def main(config):
             )
             slots.append(('ok', whatif_name, df_long, id_col))
         except FileNotFoundError:
-            slots.append(('err', (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
-                f'Costs data not found for <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'<div style="font-size:12px;color:#595959">'
-                f'Run <span style="color:#1470AF">system-costs</span> for this scenario first.'
-                f'</div>'
-                f'</div>'
+            slots.append(('err', whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Costs',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
-        except Exception as e:
-            slots.append(('err', (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626">'
-                f'Error for <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'</div>'
+        except Exception:
+            slots.append(('err', generic_error_html(
+                title=f'Error for {whatif_name}',
             )))
 
     # Compute global axis alignment from all successful scenarios

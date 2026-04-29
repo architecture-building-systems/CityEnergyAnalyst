@@ -15,6 +15,7 @@ import cea.inputlocator
 from cea.visualisation.c_plotter import generate_fig
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
+from cea.visualisation.special._error_html import generic_error_html
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2025, Architecture and Building Systems - ETH Zurich"
@@ -195,16 +196,12 @@ def main(config: cea.config.Configuration):
             fig = plot_all(config, scenario, context, hide_title=False,
                            whatif_names_override=[whatif_name])
             slots.append(('ok', whatif_name, fig))
-        except Exception as e:
-            slots.append(('err', whatif_name, (
-                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
-                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
-                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
-                f'<div style="font-size:13px;font-weight:500;color:#262626">'
-                f'Error plotting <span style="color:#AC6080">{whatif_name}</span>'
-                f'</div>'
-                f'</div>'
-            )))
+        except Exception:
+            slots.append((
+                'err',
+                whatif_name,
+                generic_error_html(title=f'Error plotting {whatif_name}'),
+            ))
 
     # Compute global y-range from all successful figures when user has not set explicit bounds
     plot_config_general = config.plots_general
