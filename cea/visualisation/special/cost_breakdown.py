@@ -539,15 +539,26 @@ def main(config):
             return html.replace('<head>', '<head><style>html,body{height:100%;margin:0}</style>', 1)
         except FileNotFoundError:
             return (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;background:#ffe0e0;">'
-                f'<h3>Baseline costs data not found</h3>'
-                f'<p>Run <strong>baseline-costs</strong> first.</p>'
-                f'<code>{detailed_costs_path}</code></div>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
+                f'Baseline costs data not found'
+                f'</div>'
+                f'<div style="font-size:12px;color:#595959">'
+                f'Run <span style="color:#1470AF">baseline-costs</span> first.'
+                f'</div>'
+                f'</div>'
             )
         except Exception as e:
             return (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;background:#ffe0e0;">'
-                f'<h3>Error creating visualisation</h3><code>{e}</code></div>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626">'
+                f'Error creating visualisation'
+                f'</div>'
+                f'</div>'
             )
 
     # ── First pass: process all scenarios, collect data for axis alignment ───
@@ -565,16 +576,26 @@ def main(config):
             slots.append(('ok', whatif_name, df_long, id_col))
         except FileNotFoundError:
             slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Costs data not found for <em>{whatif_name}</em></h3>'
-                f'<p>Run <strong>system-costs</strong> for this scenario first.</p></div>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
+                f'Costs data not found for <span style="color:#AC6080">{whatif_name}</span>'
+                f'</div>'
+                f'<div style="font-size:12px;color:#595959">'
+                f'Run <span style="color:#1470AF">system-costs</span> for this scenario first.'
+                f'</div>'
+                f'</div>'
             )))
         except Exception as e:
             slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Error for <em>{whatif_name}</em></h3><code>{e}</code></div>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626">'
+                f'Error for <span style="color:#AC6080">{whatif_name}</span>'
+                f'</div>'
+                f'</div>'
             )))
 
     # Compute global axis alignment from all successful scenarios

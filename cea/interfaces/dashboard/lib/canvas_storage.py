@@ -190,11 +190,20 @@ class CardConfig(_Allowed):
 class FeatureCardFile(BaseModel):
     """Per-card content — written to ``feature_card.yml``.
 
-    Single ``cards`` map keyed by card id — comparison views share
-    the same card list across every column.
+    Two shapes depending on the canvas's view:
+      - Launch view → ``cards`` (single map keyed by card id).
+      - Comparison views (``inter-scenario`` / ``inter-whatif``) →
+        ``column_cards`` (one card map per column, keyed by column
+        index as a string). Layout (row/col/w/h) is still shared
+        in ``layout.yml``'s ``cards`` map; only the per-card
+        content (plots, category, layer) differs per column. Each
+        column may diverge: editing a plot in one column doesn't
+        propagate to the others, but adding / removing / resizing
+        a card row does.
     """
     schema_version: int = SCHEMA_VERSION
     cards: Dict[str, CardConfig] = Field(default_factory=dict)
+    column_cards: Dict[str, Dict[str, CardConfig]] = Field(default_factory=dict)
 
 
 class CanvasState(BaseModel):

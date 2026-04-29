@@ -1267,10 +1267,15 @@ def main(config: cea.config.Configuration):
     whatif_names = getattr(plot_config, 'what_if_name', [])
     if not whatif_names:
         return (
-            '<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
-            'background:#fff8e1;">'
-            '<h3>No what-if scenario selected</h3>'
-            '<p>Please select a what-if scenario with final energy results.</p>'
+            '<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+            'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
+            'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+            '<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
+            'No what-if scenario selected'
+            '</div>'
+            '<div style="font-size:12px;color:#595959">'
+            'Please select a what-if scenario with final energy results.'
+            '</div>'
             '</div>'
         )
 
@@ -1291,11 +1296,15 @@ def main(config: cea.config.Configuration):
         if locator.find_analysis_configuration_file(whatif_name) is None:
             expected_path = locator.get_analysis_configuration_file(whatif_name)
             slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Final energy data not found for <em>{whatif_name}</em></h3>'
-                f'<p>Run <strong>final-energy</strong> for this scenario first.</p>'
-                f'<code>{expected_path}</code>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
+                f'Final energy data not found for <span style="color:#AC6080">{whatif_name}</span>'
+                f'</div>'
+                f'<div style="font-size:12px;color:#595959">'
+                f'Run <span style="color:#1470AF">final-energy</span> for this scenario first.'
+                f'</div>'
                 f'</div>'
             )))
             continue
@@ -1304,10 +1313,15 @@ def main(config: cea.config.Configuration):
         sankey_data = build_sankey_data(df, service_filter, unit_divisor, use_solar_irradiation)
         if sankey_data is None:
             slots.append(('err', (
-                f'<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
-                f'background:#fff8e1;margin:12px 0">'
-                f'<h3>No energy flow data for <em>{whatif_name}</em></h3>'
-                f'<p>The selected service categories produced no non-zero values.</p>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626;margin-bottom:4px">'
+                f'No energy flow data for <span style="color:#AC6080">{whatif_name}</span>'
+                f'</div>'
+                f'<div style="font-size:12px;color:#595959">'
+                f'The selected service categories produced no non-zero values.'
+                f'</div>'
                 f'</div>'
             )))
             continue
@@ -1343,9 +1357,12 @@ def main(config: cea.config.Configuration):
 
     if not html_outputs:
         return (
-            '<div style="padding:20px;border:2px solid #ffcc00;border-radius:5px;'
-            'background:#fff8e1;">'
-            '<h3>No energy flow data to display</h3>'
+            '<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+            'border-left:3px solid #faad14;border-radius:8px;background:#fff;margin:12px 0;'
+            'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+            '<div style="font-size:13px;font-weight:500;color:#262626">'
+            'No energy flow data to display'
+            '</div>'
             '</div>'
         )
 

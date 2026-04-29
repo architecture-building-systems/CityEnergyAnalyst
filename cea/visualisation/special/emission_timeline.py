@@ -979,10 +979,13 @@ def main(config):
             slots.append(('ok', whatif_name, fig))
         except Exception as e:
             slots.append(('err', whatif_name, (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Error plotting <em>{whatif_name}</em></h3>'
-                f'<code>{e}</code></div>'
+                f'<div style="padding:14px 18px;border:1px solid #f0f0f0;'
+                f'border-left:3px solid #f04d5b;border-radius:8px;background:#fff;margin:12px 0;'
+                f'font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">'
+                f'<div style="font-size:13px;font-weight:500;color:#262626">'
+                f'Error plotting <span style="color:#AC6080">{whatif_name}</span>'
+                f'</div>'
+                f'</div>'
             )))
 
     # Align y-axes across all figures
