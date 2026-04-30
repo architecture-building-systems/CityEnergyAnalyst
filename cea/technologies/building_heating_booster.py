@@ -52,6 +52,7 @@ def calc_dh_heating_with_booster_tracking(
     :param T_target_C: Target supply temperature [°C] (scalar or hourly array)
     :param T_return_C: Return temperature from building [°C] (hourly array)
     :param load_type: 'space_heating' or 'dhw' (for output naming)
+    :param booster: 'none', 'coil' or 'heat_pump'
 
     :return: tuple (Q_dh_W, T_dh_return_C, mcp_dh_kWK, Q_booster_W, A_hex_m2, booster_active)
 

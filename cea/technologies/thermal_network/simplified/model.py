@@ -557,7 +557,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
         if buildings_name_with_heating:
             # Read network temperature configuration for DH
             fixed_network_temp_C = config.thermal_network.network_temperature_dh
-            fixed_network_temp_C = check_network_temp_DH(booster, fixed_network_temp_C, itemised_dh_services)
+            fixed_network_temp_C = check_network_temp(booster, fixed_network_temp_C, itemised_dh_services)
 
             # Use set intersection to find buildings that exist in both collections
             node_buildings_set = set(node_df.building.values)
@@ -1294,7 +1294,7 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     edge_df_gdf.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
 
 
-def check_network_temp_DH(booster, fixed_network_temp_C, itemised_dh_services):
+def check_network_temp(booster, fixed_network_temp_C, itemised_dh_services):
     if fixed_network_temp_C is not None and fixed_network_temp_C > 0:
         print(f"  ℹ Network temperature mode: CT (Constant Temperature = {fixed_network_temp_C}°C)")
         print("    - Boosters will activate when building requirements exceed network temp")
