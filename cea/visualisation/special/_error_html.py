@@ -46,7 +46,7 @@ __status__ = "Production"
 # stays in family with bar charts, sankey colors, and map layer
 # gradients. Each binding picks the closest existing entry — no
 # new shades introduced.
-ACCENT_PURPLE = COLOURS_TO_RGB['purple']
+CEA_PURPLE = COLOURS_TO_RGB['purple']
 ERROR_RED = COLOURS_TO_RGB['red']
 WARNING_AMBER = COLOURS_TO_RGB['yellow']
 BORDER_SUBTLE = COLOURS_TO_RGB['background_grey']
@@ -92,7 +92,7 @@ def _body_style() -> str:
     return f'font-size:12px;color:{TEXT_SECONDARY}'
 
 
-def _accent(value: str, color: str = ACCENT_PURPLE) -> str:
+def _accent(value: str, color: str = CEA_PURPLE) -> str:
     return f'<span style="color:{color}">{escape(str(value))}</span>'
 
 
