@@ -829,36 +829,36 @@ def create_multi_building_plot(building_plots):
     # subtitle becomes each chart's annotation), so the page-level
     # `<h1>` / per-chart `<h2>` headings have been dropped to avoid
     # duplicating the title.
-    full_html = f"""
+    full_html = """
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
         <title>Comfort Chart(s)</title>
         <style>
-            body {{
+            body {
                 font-family: 'Arial', sans-serif;
                 margin: 14px;
                 background-color: white;
                 min-width: fit-content;
-            }}
-            .container {{
+            }
+            .container {
                 width: 100vw;
                 overflow-x: auto;
                 min-width: 1200px;
-            }}
-            .charts-wrapper {{
+            }
+            .charts-wrapper {
                 display: flex;
                 flex-wrap: wrap;
                 gap: 100px;
                 width: 100%;
-            }}
-            .chart-item {{
+            }
+            .chart-item {
                 display: flex;
                 flex-direction: column;
                 width: 500px;
                 flex-shrink: 0;
-            }}
+            }
         </style>
     </head>
     <body>

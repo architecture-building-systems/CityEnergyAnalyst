@@ -531,7 +531,6 @@ def main(config):
 
     # When no what-if selected, fall back to baseline data (single chart)
     if not whatif_names:
-        detailed_costs_path = locator.get_baseline_costs_detailed()
         try:
             detailed_df, architecture_df = load_baseline_costs_data(locator)
             df_long, id_col = process_data_by_grouping(

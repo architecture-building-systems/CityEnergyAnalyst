@@ -2130,7 +2130,6 @@ def create_district_pathway_emissions_timeline(
     building_construction_years = get_building_construction_years(main_locator)
     building_construction_years.update(_building_manual_construction_years(log_data))
     building_const_types = _load_building_const_types(main_locator)
-    demolition_years = _building_demolition_years(log_data)
     lifecycle_intervals = _building_lifecycle_intervals(
         get_building_construction_years(main_locator), log_data,
     )

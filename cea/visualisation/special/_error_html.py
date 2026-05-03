@@ -65,8 +65,8 @@ def _wrap_style() -> str:
     # backend cards drop into default top-left flow and read very
     # differently from the map cards alongside them.
     return (
-        f'display:flex;align-items:center;justify-content:center;'
-        f'min-height:200px;padding:24px;box-sizing:border-box'
+        'display:flex;align-items:center;justify-content:center;'
+        'min-height:200px;padding:24px;box-sizing:border-box'
     )
 
 

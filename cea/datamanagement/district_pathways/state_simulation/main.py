@@ -33,7 +33,6 @@ from cea.datamanagement.district_pathways.pathway_state import (
 from cea.datamanagement.district_pathways.state_simulation import workflow_assembly
 from cea.datamanagement.district_pathways.state_simulation.workflow_assembly import (
     determine_network_phase_mode,
-    NetworkPhaseMode,
 )
 from cea.datamanagement.district_pathways.pathway_integrity import (
     check_district_pathway_log_yaml_integrity,

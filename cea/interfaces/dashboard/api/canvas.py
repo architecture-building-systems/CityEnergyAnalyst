@@ -61,7 +61,6 @@ from cea.interfaces.dashboard.lib.canvas_storage import (
     import_canvas_zip,
     list_saved_canvases,
     read_canvas,
-    sanitize_canvas_name,
     write_canvas,
 )
 from cea.interfaces.dashboard.utils import resolve_scenario_path

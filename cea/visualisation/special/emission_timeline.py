@@ -979,6 +979,7 @@ def main(config):
     # Multi what-if: one figure per scenario with aligned y-axes
     slots = []
     scenario_name = os.path.basename(config.scenario)
+    locator = InputLocator(config.scenario)
     available_whatifs = list_available_whatif_names(locator, has_emissions_timeline)
     for whatif_name in whatif_names:
         try:
