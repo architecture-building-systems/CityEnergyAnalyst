@@ -61,6 +61,7 @@ from cea.interfaces.dashboard.lib.canvas_storage import (
     import_canvas_zip,
     list_saved_canvases,
     read_canvas,
+    sanitize_canvas_name,
     write_canvas,
 )
 from cea.interfaces.dashboard.utils import resolve_scenario_path
@@ -109,6 +110,24 @@ class SparseWriteRequest(BaseModel):
 def _locator_for(project_root, project: str, scenario: str) -> cea.inputlocator.InputLocator:
     scenario_path = resolve_scenario_path(project_root, project, scenario)
     return cea.inputlocator.InputLocator(scenario_path)
+
+
+def _safe_name(name: str) -> str:
+    """Sanitize a path-segment name from a URL before any filesystem
+    use. Rejects path-traversal characters (``\\ / .. *``) and reserved
+    names; raises 400 on illegal input.
+
+    Every endpoint accepting ``{name}`` from the URL routes through
+    this helper so the resolved value is filesystem-safe before it
+    reaches any ``locator.get_*_folder`` call.
+    """
+    try:
+        return sanitize_canvas_name(name)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
 
 
 def _require_saved(locator: cea.inputlocator.InputLocator, name: str) -> str:
@@ -181,6 +200,7 @@ async def get_saved_canvas(
 ) -> CanvasState:
     """Read a saved canvas's full state (canvas + layout +
     feature_card YAMLs)."""
+    name = _safe_name(name)
     locator = _locator_for(project_root, project, scenario)
     folder = _require_saved(locator, name)
     return await run_in_threadpool(read_canvas, locator, folder)
@@ -201,6 +221,7 @@ async def update_saved_canvas(
       - a card add/edit/delete lands as ``{ feature_card: … }``
       - toggling a navigator switch lands as ``{ canvas: … }``
     """
+    name = _safe_name(name)
     locator = _locator_for(project_root, project, scenario)
     folder = _require_saved(locator, name)
     await run_in_threadpool(
@@ -222,6 +243,7 @@ async def delete_saved_canvas(
     name: str,
 ) -> dict:
     """Permanently remove a saved canvas folder. No-op if missing."""
+    name = _safe_name(name)
     locator = _locator_for(project_root, project, scenario)
     folder = locator.get_saved_canvas_folder(name)
     await run_in_threadpool(delete_canvas_folder, folder)
@@ -246,6 +268,7 @@ async def duplicate_saved_canvas(
     409 — target name already exists.
     400 — illegal target name.
     """
+    name = _safe_name(name)
     locator = _locator_for(project_root, project, scenario)
     _require_saved(locator, name)
 
@@ -291,6 +314,7 @@ async def export_canvas(
     a recipient unzipping the archive can view the canvas without
     the original CEA scenario.
     """
+    name = _safe_name(name)
     locator = _locator_for(project_root, project, scenario)
     folder = _require_saved(locator, name)
 
