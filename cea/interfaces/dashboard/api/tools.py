@@ -4,7 +4,7 @@ from itertools import groupby
 from typing import Dict, Any, List, Optional
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 import cea.config
@@ -208,7 +208,7 @@ async def restore_default_config(config: CEAConfig, tool_name: str):
     try:
         validate_and_apply_parameters(candidates, set_empty)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
     if isinstance(config, CEADatabaseConfig):
         await config.save()
@@ -238,7 +238,7 @@ async def save_tool_config(config: CEAConfig, tool_name: str, payload: Dict[str,
     if field_errors:
         logger.error(f'[save_tool_config] Validation failed with {len(field_errors)} errors')
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 'message': 'Validation failed',
                 'field_errors': field_errors
@@ -273,7 +273,7 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
     form_values = payload.get('form_values', {})
 
     if not parameter_name:
-        raise HTTPException(status_code=400, detail="parameter_name is required")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="parameter_name is required")
 
     # Temporarily set form values on config to provide context for validation
     for param in parameters_for_script(tool_name, config):
@@ -292,7 +292,7 @@ async def validate_field(config: CEAConfig, tool_name: str, payload: Dict[str, A
             break
 
     if not target_parameter:
-        raise HTTPException(status_code=404, detail=f"Parameter '{parameter_name}' not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Parameter '{parameter_name}' not found")
 
     # Validate using encode() method
     is_valid, error_message = validate_parameter(target_parameter, value, parameter_name)
@@ -393,7 +393,7 @@ async def check_tool_inputs(
     try:
         validate_and_apply_parameters(candidates)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={'message': 'Validation failed', 'field_errors': e.args[0]})
 
     # TODO: Add plugin support
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
@@ -414,7 +414,7 @@ async def check_tool_inputs(
             _script = cea.scripts.by_name(script_suggestion, plugins=config.plugins)
             scripts.append({"label": _script.label, "name": _script.name})
 
-        raise HTTPException(status_code=400,
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail={"message": "Missing input files",
                                     "script_suggestions": list(scripts)})
 

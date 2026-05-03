@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 import cea.config
 import cea.inputlocator
+from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
@@ -37,6 +38,8 @@ from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, s
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
 router = APIRouter()
+
+logger = getCEAServerLogger("cea-server-inputs")
 
 COLORS = {
     'surroundings': get_color_array('grey_light'),
@@ -335,7 +338,7 @@ def get_building_properties(scenario: str):
                     table_df['reference'] = None
                 store['tables'][db] = table_df.set_index("name").to_dict(orient='index')
         except (IOError, DriverError, ValueError, FileNotFoundError) as e:
-            print(f"Error reading {db} from {file_path}: {e}")
+            logger.warning(f"Error reading {db} from {file_path}: {e}")
             store['tables'][db] = None
 
         # Get column definitions from schema
@@ -362,7 +365,7 @@ def get_building_properties(scenario: str):
                 columns[column_name]['unit'] = column["unit"]
             store['columns'][db] = dict(columns)
         except Exception as e:
-            print(f"Error reading column property from schemas: {e}")
+            logger.warning(f"Error reading column property from schemas: {e}")
             store['tables'][db] = None
             store['columns'][db] = None
 
@@ -406,7 +409,7 @@ def get_network(scenario: str, network_type):
         network_json['properties'] = {'connected_buildings': connected_buildings}
         return network_json, connected_buildings, crs
     except IOError as e:
-        print(e)
+        logger.warning(f"Error reading network layout: {e}")
         return None, [], None
     except Exception:
         traceback.print_exc()
