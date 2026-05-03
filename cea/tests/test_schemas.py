@@ -202,6 +202,14 @@ class TestSchemas(unittest.TestCase):
                     "plan_name": "default",
                     "phase": "timeline",
                     "whatif_name": "basline",
+                    # Canvas Builder folders accept either a saved-canvas
+                    # `name` or a resolved `canvas_folder` plus optional
+                    # `card_id` for the per-card data slot. Provide all
+                    # three so every flavour of the canvas locator
+                    # methods can be exercised by the uniqueness check.
+                    "name": "test_canvas",
+                    "canvas_folder": "test_canvas_folder",
+                    "card_id": "test_card",
                 }
                 # Get actual parameter names from function signature
                 sig = inspect.signature(method)
