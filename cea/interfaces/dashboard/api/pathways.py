@@ -39,10 +39,9 @@ async def _use_parent_scenario(config: CEAConfig):
     the original path after the response is sent, so map-layer and tool
     endpoints that run later still see the child-scenario path."""
     original = config.scenario
-    marker = os.sep + 'outputs' + os.sep + 'pathways' + os.sep
-    idx = original.find(marker)
-    if idx >= 0:
-        config.scenario = original[:idx]
+    parent = cea.inputlocator.InputLocator.parent_scenario_for_pathway_child(original)
+    if parent != original:
+        config.scenario = parent
     try:
         yield
     finally:

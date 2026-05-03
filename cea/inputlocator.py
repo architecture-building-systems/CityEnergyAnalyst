@@ -175,6 +175,32 @@ class InputLocator(object):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
     
+    # Suffix that identifies a child scenario living inside a pathway
+    # state folder (`.../outputs/pathways/{name}/state_{year}/...`).
+    # Centralised here so every callsite shares one definition; flip
+    # this if the on-disk layout ever moves again.
+    _PATHWAY_CHILD_MARKER = os.sep + "outputs" + os.sep + "pathways" + os.sep
+
+    @classmethod
+    def pathway_child_marker(cls) -> str:
+        """The path segment used to detect a pathway child scenario."""
+        return cls._PATHWAY_CHILD_MARKER
+
+    @classmethod
+    def is_pathway_child_scenario(cls, scenario_path: str) -> bool:
+        """True when ``scenario_path`` points inside a pathway state
+        folder. Used by API routes that need to skip project/scenario
+        overrides while the pathway viewer is active."""
+        return cls._PATHWAY_CHILD_MARKER in scenario_path
+
+    @classmethod
+    def parent_scenario_for_pathway_child(cls, scenario_path: str) -> str:
+        """If ``scenario_path`` is inside a pathway child folder,
+        return the parent scenario root; otherwise return it
+        unchanged."""
+        idx = scenario_path.find(cls._PATHWAY_CHILD_MARKER)
+        return scenario_path[:idx] if idx >= 0 else scenario_path
+
     def get_district_pathway_container_folder(self):
         """Returns the folder storing district evolution pathways.
 
