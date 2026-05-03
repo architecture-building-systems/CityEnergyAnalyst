@@ -78,7 +78,9 @@ def hash_state_inputs(
     year: int,
 ) -> str | None:
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
-    inputs_folder = os.path.join(state_folder, "inputs")
+    # The state folder is itself a scenario; a state-scoped locator owns
+    # the canonical inputs-folder path.
+    inputs_folder = InputLocator(state_folder).get_input_folder()
     if not os.path.isdir(inputs_folder):
         return None
     return hash_folder(inputs_folder)
@@ -190,9 +192,7 @@ def record_simulated_state(
 
 
 def read_pathway_metadata(locator: InputLocator, *, pathway_name: str) -> dict[str, Any]:
-    path = os.path.join(
-        locator.get_district_pathway_folder(pathway_name), '.pathway_metadata.json'
-    )
+    path = locator.get_district_pathway_metadata_file(pathway_name)
     if not os.path.exists(path):
         return {}
     try:
@@ -206,9 +206,7 @@ def read_pathway_metadata(locator: InputLocator, *, pathway_name: str) -> dict[s
 def write_pathway_metadata(
     locator: InputLocator, *, pathway_name: str, payload: dict[str, Any]
 ) -> dict[str, Any]:
-    path = os.path.join(
-        locator.get_district_pathway_folder(pathway_name), '.pathway_metadata.json'
-    )
+    path = locator.get_district_pathway_metadata_file(pathway_name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     current = read_pathway_metadata(locator, pathway_name=pathway_name)
     current.update(payload)

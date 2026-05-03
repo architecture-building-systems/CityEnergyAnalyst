@@ -45,9 +45,10 @@ class StockYearRequiresEditError(ValueError):
 
 
 def _resolve_parent_scenario(scenario_path: str) -> str:
-    """If scenario_path points to a child state folder (pathways/{name}/state_{year}),
-    return the parent scenario path. Otherwise return as-is."""
-    sep = os.sep + 'pathways' + os.sep
+    """If scenario_path points to a child state folder
+    (outputs/pathways/{name}/state_{year}), return the parent scenario
+    path. Otherwise return as-is."""
+    sep = os.sep + 'outputs' + os.sep + 'pathways' + os.sep
     idx = scenario_path.find(sep)
     if idx >= 0:
         return scenario_path[:idx]

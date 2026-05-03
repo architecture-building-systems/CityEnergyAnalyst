@@ -17,7 +17,7 @@ def _resolve_layer_scenario(config, params_project, params_scenario_name):
     state folder. Derive project/scenario_name from it so the map layer
     reads state-level results. Otherwise use the frontend-supplied values."""
     scenario_path = config.scenario
-    if os.sep + 'pathways' + os.sep in scenario_path:
+    if os.sep + 'outputs' + os.sep + 'pathways' + os.sep in scenario_path:
         return os.path.dirname(scenario_path), os.path.basename(scenario_path)
     return params_project, params_scenario_name
 

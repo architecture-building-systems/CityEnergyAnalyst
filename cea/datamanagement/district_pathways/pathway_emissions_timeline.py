@@ -2099,9 +2099,7 @@ def create_district_pathway_emissions_timeline(
         # outputs/data/analysis/{whatif_name}/emissions/operational/{building}.csv
         # which we aggregate to yearly totals downstream. Fall back to the legacy
         # yearly summary file for older outputs.
-        whatif_op_folder = os.path.join(
-            state_locator.get_emissions_whatif_folder('default'), 'operational'
-        )
+        whatif_op_folder = state_locator.get_emissions_whatif_operational_folder('default')
         if not os.path.isdir(whatif_op_folder):
             legacy_op_path = state_locator.get_total_yearly_operational_building()
             if not os.path.exists(legacy_op_path):
@@ -2154,8 +2152,7 @@ def create_district_pathway_emissions_timeline(
         # outputs/data/analysis/{whatif}/emissions/operational/{building}.csv with columns
         # like Qhs_sys_NATURALGAS_kgCO2e. We sum each to a yearly total and build a single
         # DataFrame indexed by building name to match the legacy format.
-        whatif_emissions_folder = state_locator.get_emissions_whatif_folder('default')
-        whatif_operational_folder = os.path.join(whatif_emissions_folder, 'operational')
+        whatif_operational_folder = state_locator.get_emissions_whatif_operational_folder('default')
         if os.path.isdir(whatif_operational_folder):
             yearly_rows = {}
             for b in buildings_in_state:
