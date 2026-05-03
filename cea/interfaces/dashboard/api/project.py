@@ -359,9 +359,7 @@ async def switch_to_child_scenario(config: CEAConfig, payload: ChildScenarioPayl
     """Switch the config scenario to a pathway state folder."""
     # Resolve parent scenario first in case we're already in a child state
     current = config.scenario
-    pathways_marker = os.sep + 'outputs' + os.sep + 'pathways' + os.sep
-    idx = current.find(pathways_marker)
-    parent_scenario = current[:idx] if idx >= 0 else current
+    parent_scenario = cea.inputlocator.InputLocator.parent_scenario_for_pathway_child(current)
 
     locator = cea.inputlocator.InputLocator(parent_scenario)
     state_folder = locator.get_state_in_time_scenario_folder(payload.pathway_name, payload.year)
@@ -393,7 +391,7 @@ async def switch_to_parent_scenario(config: CEAConfig):
     # State folders follow pattern:
     #   .../scenario_name/outputs/pathways/{pathway}/state_{year}
     # Parent scenario is everything before /outputs/pathways/.
-    pathways_marker = os.sep + 'outputs' + os.sep + 'pathways' + os.sep
+    pathways_marker = cea.inputlocator.InputLocator.pathway_child_marker()
     idx = current.find(pathways_marker)
     if idx < 0:
         # Already at parent scenario

@@ -239,7 +239,7 @@ async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
     # the state as custom so the pathway viewer shows it in purple and
     # bake/simulate can handle it appropriately.
     scenario = project_info.scenario
-    marker = os.sep + 'outputs' + os.sep + 'pathways' + os.sep
+    marker = cea.inputlocator.InputLocator.pathway_child_marker()
     idx = scenario.find(marker)
     if idx >= 0:
         from cea.datamanagement.district_pathways.pathway_status import record_custom_state
