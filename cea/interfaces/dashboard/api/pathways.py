@@ -34,12 +34,12 @@ from cea.interfaces.dashboard.dependencies import CEAConfig, CEASeverDemoAuthChe
 
 async def _use_parent_scenario(config: CEAConfig):
     """Router-level dependency: temporarily resolves config.scenario to
-    the parent scenario (stripping any ``/pathways/.../state_YYYY``
+    the parent scenario (stripping any ``/outputs/pathways/.../state_YYYY``
     suffix) so pathway endpoints always see the correct folder. Restores
     the original path after the response is sent, so map-layer and tool
     endpoints that run later still see the child-scenario path."""
     original = config.scenario
-    marker = os.sep + 'pathways' + os.sep
+    marker = os.sep + 'outputs' + os.sep + 'pathways' + os.sep
     idx = original.find(marker)
     if idx >= 0:
         config.scenario = original[:idx]
@@ -231,7 +231,10 @@ async def get_state_geojson(config: CEAConfig, pathway_name: str, year: int) -> 
 
     locator = cea.inputlocator.InputLocator(config.scenario)
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, year)
-    zone_path = os.path.join(state_folder, 'inputs', 'building-geometry', 'zone.shp')
+    # The state folder is itself a scenario, so a state-scoped locator
+    # owns the canonical zone-geometry path.
+    state_locator = cea.inputlocator.InputLocator(state_folder)
+    zone_path = state_locator.get_zone_geometry()
 
     if not os.path.exists(zone_path):
         raise HTTPException(

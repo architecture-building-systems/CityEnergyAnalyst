@@ -148,7 +148,9 @@ async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, t
     # pathway viewer is active — config.scenario already points to the
     # state folder (set by switchToChildScenario), and overriding either
     # config.project or config.scenario_name would break that path.
-    in_child_scenario = os.sep + 'pathways' + os.sep in config.scenario
+    in_child_scenario = (
+        os.sep + 'outputs' + os.sep + 'pathways' + os.sep in config.scenario
+    )
     if not in_child_scenario:
         if project is not None:
             if project_root is not None and not project.startswith(project_root):

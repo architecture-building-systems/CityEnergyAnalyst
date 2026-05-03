@@ -453,7 +453,7 @@ def _write_demo_templates(locator: InputLocator) -> None:
     # Intervention templates live at scenario level (one shared
     # file across pathways) — per-pathway template files were
     # removed when the workflow consolidated templates into
-    # ``scenario/pathways/intervention_templates.yml``.
+    # ``scenario/outputs/pathways/intervention_templates.yml``.
     with open(
         locator.get_intervention_templates_file(),
         "w",

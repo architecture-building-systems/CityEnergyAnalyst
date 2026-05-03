@@ -68,8 +68,8 @@ class DistrictStateYear:
         return self.main_locator.get_state_in_time_scenario_folder(self.pathway_name, int(self.year))
 
     def signature_path(self) -> str:
-        return os.path.join(
-            self.state_folder(), ".district_pathway_signature.json"
+        return self.main_locator.get_district_pathway_state_signature_file(
+            self.pathway_name, int(self.year),
         )
 
     def exists_on_disk(self) -> bool:
