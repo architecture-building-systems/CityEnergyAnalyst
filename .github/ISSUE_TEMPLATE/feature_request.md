@@ -7,14 +7,14 @@ assignees: ''
 
 ---
 
-**Describe the feature you would like to have**
-Ex. I would like to have [...]
+**Is your feature request related to a problem? Please describe.**
+A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
-**Describe the end purpose of this feature**
-Ex. So I could visualize/understand/know/apply etc..
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
 
-**Describe the end-user of this feature**
-Ex. A Researcher, a Student, or a Practitioner.
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions or features you've considered.
 
-**Provide Additional information if possible**
-EX. Screenshots, Links, Methods
+**Additional context**
+Add any other context or screenshots about the feature request here.
