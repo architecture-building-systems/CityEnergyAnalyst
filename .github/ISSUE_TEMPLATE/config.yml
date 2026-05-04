@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: CEA Website
+    url: https://www.cityenergyanalyst.com
+    about: Learn more about City Energy Analyst, tutorials, and documentation.
+  - name: Contact the CEA Team
+    url: https://www.cityenergyanalyst.com/contact
+    about: Reach out for general enquiries or support that is not a bug report or feature request.
+  - name: GitHub Discussions
+    url: https://github.com/architecture-building-systems/CityEnergyAnalyst/discussions
+    about: Ask questions, share ideas, or discuss usage with the community.
