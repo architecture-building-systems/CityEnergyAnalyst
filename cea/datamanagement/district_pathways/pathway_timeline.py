@@ -106,7 +106,18 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
         years = pathway.required_state_years()
         all_years.extend(years)
 
+        # ``all_baked``       — every state year sits in a usable phase
+        #                        (``baked`` / ``simulated`` / ``custom``).
+        # ``all_simulated``   — every state year is specifically in
+        #                        ``simulated`` (no merely-baked or
+        #                        custom-edited rows). Drives the Canvas
+        #                        Builder's Pathway picker, which only
+        #                        accepts pathways with full simulation
+        #                        results so every column has data.
+        # Both gate on ``stale`` so a stale-since-edited state breaks
+        # both flags.
         all_baked = bool(years)
+        all_simulated = bool(years)
         year_phases: dict[int, str] = {}
         for year in years:
             try:
@@ -129,8 +140,11 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
                 year_phases[year] = phase
                 if phase not in ("baked", "simulated", "custom") or stale:
                     all_baked = False
+                if phase != "simulated" or stale:
+                    all_simulated = False
             except Exception:
                 all_baked = False
+                all_simulated = False
                 year_phases[year] = "none"
 
         pathways.append(
@@ -139,6 +153,7 @@ def get_pathway_overview(config: Configuration) -> dict[str, Any]:
                 "years": years,
                 "state_count": len(years),
                 "all_baked": all_baked,
+                "all_simulated": all_simulated,
                 "year_phases": year_phases,
             }
         )
