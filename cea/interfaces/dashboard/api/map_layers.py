@@ -6,7 +6,10 @@ from pydantic import BaseModel, field_validator
 
 from cea import MissingInputDataException
 from cea.inputlocator import InputLocator
-from cea.interfaces.dashboard.api.utils import validate_scenario_name
+from cea.interfaces.dashboard.api.utils import (
+    split_scenario_subpath,
+    validate_scenario_name_or_subpath,
+)
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.map_layers import get_layers_grouped_by_category, load_layer
 
@@ -14,13 +17,20 @@ router = APIRouter()
 
 
 def _resolve_layer_scenario(config, params_project, params_scenario_name):
-    """When the pathway viewer is active, config.scenario points to the
-    state folder. Derive project/scenario_name from it so the map layer
-    reads state-level results. Otherwise use the frontend-supplied values."""
+    """Resolve project/scenario_name for layer fetches. Handles pathway-
+    child scenarios from two origins:
+
+    1. The active config points at a state folder (legacy pathway-
+       viewer flow) — split ``config.scenario`` directly.
+    2. The frontend supplied a path-like ``scenario_name`` (canvas
+       pathway-single columns) — `split_scenario_subpath` rebases it.
+
+    Otherwise the frontend values pass through unchanged.
+    """
     scenario_path = config.scenario
     if InputLocator.is_pathway_child_scenario(scenario_path):
         return os.path.dirname(scenario_path), os.path.basename(scenario_path)
-    return params_project, params_scenario_name
+    return split_scenario_subpath(params_scenario_name, params_project)
 
 
 class LayerParams(BaseModel):
@@ -31,7 +41,7 @@ class LayerParams(BaseModel):
     @field_validator('scenario_name')
     @classmethod
     def _validate_scenario_name(cls, v):
-        return validate_scenario_name(v)
+        return validate_scenario_name_or_subpath(v)
 
 
 class DeleteChoiceParams(BaseModel):
@@ -42,7 +52,7 @@ class DeleteChoiceParams(BaseModel):
     @field_validator('scenario_name')
     @classmethod
     def _validate_scenario_name(cls, v):
-        return validate_scenario_name(v)
+        return validate_scenario_name_or_subpath(v)
 
 
 class LayerDescription(BaseModel):

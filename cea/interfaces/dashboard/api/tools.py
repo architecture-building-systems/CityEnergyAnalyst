@@ -11,7 +11,11 @@ import cea.config
 import cea.inputlocator
 import cea.scripts
 from cea.schemas import schemas
-from .utils import deconstruct_parameters, validate_scenario_name
+from .utils import (
+    deconstruct_parameters,
+    split_scenario_subpath,
+    validate_scenario_name_or_subpath,
+)
 from cea.interfaces.dashboard.utils import secure_path
 from cea.interfaces.dashboard.dependencies import CEAConfig, CEADatabaseConfig, CEASeverDemoAuthCheck, CEAProjectRoot
 
@@ -158,7 +162,17 @@ async def get_tool_properties(config: CEAConfig, project_root: CEAProjectRoot, t
                 project = os.path.join(project_root, project)
             config.project = secure_path(project)
         if scenario_name is not None:
-            config.scenario_name = validate_scenario_name(scenario_name)
+            # Canvas pathway-single columns target child states by a
+            # relative sub-path under the parent scenario; the
+            # validator accepts the path and `split_scenario_subpath`
+            # rebases the project so `config.scenario_name` stays a
+            # bare basename.
+            scenario_name = validate_scenario_name_or_subpath(scenario_name)
+            project_dir, scenario_name = split_scenario_subpath(
+                scenario_name, config.project,
+            )
+            config.project = secure_path(project_dir)
+            config.scenario_name = scenario_name
 
     script = cea.scripts.by_name(tool_name, plugins=config.plugins)
 
@@ -385,7 +399,13 @@ async def check_tool_inputs(
                 project = os.path.join(project_root, project)
             config.project = secure_path(project)
         if scenario_name is not None:
-            config.scenario_name = validate_scenario_name(scenario_name)
+            # See `get_tool_properties` for the path-handling rationale.
+            scenario_name = validate_scenario_name_or_subpath(scenario_name)
+            project_dir, scenario_name = split_scenario_subpath(
+                scenario_name, config.project,
+            )
+            config.project = secure_path(project_dir)
+            config.scenario_name = scenario_name
     candidates = [
         (parameter, payload[parameter.name])
         for parameter in parameters_for_script(tool_name, config)

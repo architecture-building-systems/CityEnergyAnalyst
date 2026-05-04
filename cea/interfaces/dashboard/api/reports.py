@@ -391,10 +391,16 @@ async def get_custom_plot(
         )
 
     if scenario:
+        # Pass the scenario string through verbatim so deep child
+        # paths (canvas pathway-single columns target child states by
+        # their relative path under the parent scenario, e.g.
+        # `<scenario>/outputs/pathways/<name>/state_<year>`) resolve
+        # against the active project. Mirrors how `/api/inputs/all-
+        # inputs` handles the same input.
         scenario_path = _resolve_scenario_path(
             project_root,
-            os.path.dirname(scenario) if os.sep in scenario else config.project,
-            os.path.basename(scenario),
+            config.project,
+            scenario,
         )
     else:
         scenario_path = config.scenario
