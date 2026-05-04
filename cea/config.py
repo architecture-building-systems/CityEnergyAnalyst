@@ -419,7 +419,8 @@ class Parameter:
 
     @property
     def default(self) -> Any:
-        return self.decode(self.config.default_config.get(self.section.name, self.name))
+        raw = self.config.default_config.get(self.section.name, self.name)
+        return self.decode(self.replace_references(raw))
 
     def __repr__(self) -> str:
         return f"<Parameter {self.section.name}:{self.name}={self.get()}>"
