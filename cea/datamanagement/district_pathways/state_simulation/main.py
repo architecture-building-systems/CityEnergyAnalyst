@@ -316,8 +316,22 @@ def main(config: Configuration) -> None:
             flush=True,
         )
     except Exception as exc:
+        # Surface the full traceback — the timeline CSV is what
+        # downstream pathway plots read, so swallowing this with
+        # only `{exc}` made the failure invisible to the user
+        # (their plot script later 404s on the missing CSV with no
+        # hint why). The state simulations themselves succeeded;
+        # we still don't re-raise, so the job overall is reported
+        # as successful and the user can retry timeline generation
+        # without re-running every state.
+        import traceback
+
         print(
-            f"Warning: Could not create pathway emissions timeline: {exc}\n"
+            f"Warning: Could not create pathway emissions timeline: {exc}",
+            flush=True,
+        )
+        print(traceback.format_exc(), flush=True)
+        print(
             "State simulations completed successfully. "
             "The emissions timeline can be generated separately once the issue is resolved.",
             flush=True,
