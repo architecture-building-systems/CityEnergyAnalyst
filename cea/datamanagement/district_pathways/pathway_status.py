@@ -282,10 +282,6 @@ def collect_state_phase_status(
         [value for value in (validation["at"], bake["at"], simulation["at"]) if value],
         default=None,
     )
-    has_stale_phase = any(
-        phase["state"].startswith("changed_after_")
-        for phase in (validation, bake, simulation)
-    )
     primary_phase = "none"
     if simulation["state"] == "simulated":
         primary_phase = "simulated"
@@ -293,6 +289,21 @@ def collect_state_phase_status(
         primary_phase = "baked"
     elif validation["state"] == "validated":
         primary_phase = "validated"
+
+    # ``has_stale_phase`` answers "does the user have unaddressed
+    # staleness?". When ``primary_phase`` is set the highest applicable
+    # phase is current — earlier phases drifting (e.g. bake's hash
+    # mismatching after simulation has touched the inputs folder) is
+    # bookkeeping, not a problem to flag in red. We only mark stale
+    # when there is no current phase at all and some prior phase has
+    # drift on record.
+    if primary_phase != "none":
+        has_stale_phase = False
+    else:
+        has_stale_phase = any(
+            phase["state"].startswith("changed_after_")
+            for phase in (validation, bake, simulation)
+        )
 
     return {
         "validation": validation,
