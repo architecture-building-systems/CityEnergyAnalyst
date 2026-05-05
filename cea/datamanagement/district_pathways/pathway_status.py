@@ -92,6 +92,14 @@ def hash_state_folder(
     pathway_name: str,
     year: int,
 ) -> str | None:
+    """Hash a state's scenario folder.
+
+    Retained for use by `record_simulated_state` (the recorded value
+    is metadata only — the simulation-staleness check no longer
+    reads it; see `_collect_simulation_phase`). Walking the whole
+    folder is harmless here because nothing else compares against
+    the recorded value.
+    """
     state_folder = locator.get_state_in_time_scenario_folder(pathway_name, int(year))
     if not os.path.isdir(state_folder):
         return None
@@ -255,7 +263,6 @@ def collect_state_phase_status(
         }
 
     inputs_hash = hash_state_inputs(locator, pathway_name=pathway_name, year=year)
-    state_hash = None
 
     validation = _collect_validation_phase(
         status_record=status_record,
@@ -268,12 +275,9 @@ def collect_state_phase_status(
         inputs_hash=inputs_hash,
         source_log_hash=source_log_hash,
     )
-    if status_record.get("simulated_state_hash"):
-        state_hash = hash_state_folder(locator, pathway_name=pathway_name, year=year)
     simulation = _collect_simulation_phase(
         status_record=status_record,
         signature=signature,
-        state_hash=state_hash,
         source_log_hash=source_log_hash,
         bake=bake,
     )
@@ -373,32 +377,46 @@ def _collect_simulation_phase(
     *,
     status_record: dict[str, Any],
     signature: dict[str, Any],
-    state_hash: str | None,
     source_log_hash: str,
     bake: dict[str, Any],
 ) -> dict[str, Any]:
-    simulated_hash = status_record.get("simulated_state_hash")
+    """Decide whether a state's simulation results are still current.
+
+    Freshness is derived from upstream signals, not from a hash of
+    the state folder itself: ``hash_folder(state_<year>)`` proved
+    brittle because every output write — script side-effects, plot
+    rendering caches, dashboard fetches, Dropbox/iCloud sync
+    rewriting blobs — drifts the hash and falsely reports a fresh
+    simulation as stale. Two upstream signals are enough:
+
+    * ``bake.state`` already encodes "have the inputs changed since
+      the bake the simulation ran on?" via the inputs-folder hash.
+    * ``simulated_source_log_hash`` catches the case where the CEA
+      scripts themselves changed.
+
+    Anything else (output files moved, caches written, OS metadata
+    rewrites) is bookkeeping the user shouldn't see as red.
+    """
     simulated_log_hash = status_record.get("simulated_source_log_hash")
     simulated_at = status_record.get("simulated_at") or signature.get("simulated_at")
 
-    if simulated_hash and simulated_at:
-        if (
-            state_hash is None
-            or simulated_hash != state_hash
-            or simulated_log_hash != source_log_hash
-            or bake["state"] == "changed_after_bake"
-        ):
-            return _phase_payload(
-                "changed_after_simulation",
-                "Changed after simulation",
-                simulated_at,
-            )
-        return _phase_payload("simulated", "Simulated", simulated_at)
+    if not simulated_at:
+        return _phase_payload("not_simulated", "Not simulated", simulated_at)
 
-    if simulated_at:
-        return _phase_payload("simulated", "Simulated", simulated_at)
+    if bake["state"] == "changed_after_bake":
+        return _phase_payload(
+            "changed_after_simulation",
+            "Changed after simulation",
+            simulated_at,
+        )
+    if simulated_log_hash and simulated_log_hash != source_log_hash:
+        return _phase_payload(
+            "changed_after_simulation",
+            "Changed after simulation",
+            simulated_at,
+        )
 
-    return _phase_payload("not_simulated", "Not simulated", simulated_at)
+    return _phase_payload("simulated", "Simulated", simulated_at)
 
 
 def _phase_payload(state: str, label: str, at: Any) -> dict[str, Any]:
