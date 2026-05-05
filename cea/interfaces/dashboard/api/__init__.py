@@ -16,6 +16,7 @@ import cea.interfaces.dashboard.api.map_layers as map_layers
 import cea.interfaces.dashboard.api.user as user
 import cea.interfaces.dashboard.api.reports as reports
 import cea.interfaces.dashboard.api.canvas as canvas
+import cea.interfaces.dashboard.api.kpis as kpis
 
 router = APIRouter()
 
@@ -35,3 +36,4 @@ router.include_router(map_layers.router, prefix="/map_layers")
 router.include_router(user.router, prefix="/user")
 router.include_router(reports.router, prefix="/reports")
 router.include_router(canvas.router, prefix="/canvas")
+router.include_router(kpis.router, prefix="/kpis")
