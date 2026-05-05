@@ -1,0 +1,154 @@
+# Demand KPIs.
+#
+# Source CSV: outputs/data/demand/Total_demand.csv (one row per
+# building, produced by `cea demand`). Column meanings live in
+# cea/schemas.yml under `get_total_demand`. KPI formulas reference
+# canonical column names; the registry validates every reference at
+# load time.
+#
+# Per-m² normalisation uses GFA throughout. Each per-m² KPI carries
+# an `info_note` explaining the choice.
+#
+# `MWh -> kWh` conversion is applied via `scale: 1000` on divide
+# nodes when needed.
+
+feature: demand
+
+kpis:
+  - id: demand.eui_kwh_m2
+    label: Energy Use Intensity
+    category: demand
+    unit: kWh/m²/yr
+    better_direction: lower
+    headline: true
+    info_note: Total final energy demand divided by gross floor area (GFA).
+    description: >
+      End-use energy demand summed across electricity, space heating,
+      space cooling, and domestic hot water, normalised by GFA.
+    source:
+      locator: get_total_demand
+      formula:
+        kind: divide
+        scale: 1000.0  # MWh/yr -> kWh/yr
+        numerator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - E_sys_MWhyr
+              - Qhs_sys_MWhyr
+              - Qcs_sys_MWhyr
+              - Qww_sys_MWhyr
+        denominator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: GFA_m2
+
+  - id: demand.peak_heating_w_m2
+    label: Peak Heating Load
+    category: demand
+    unit: W/m²
+    better_direction: lower
+    info_note: >
+      Sum of nominal heating-system peak loads divided by total GFA.
+      Approximates a district-level peak; not a synchronised peak.
+    source:
+      locator: get_total_demand
+      formula:
+        kind: divide
+        scale: 1000.0  # kW -> W
+        numerator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: Qhs_sys0_kW
+        denominator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: GFA_m2
+
+  - id: demand.peak_cooling_w_m2
+    label: Peak Cooling Load
+    category: demand
+    unit: W/m²
+    better_direction: lower
+    info_note: >
+      Sum of nominal cooling-system peak loads divided by total GFA.
+      Approximates a district-level peak; not a synchronised peak.
+    source:
+      locator: get_total_demand
+      formula:
+        kind: divide
+        scale: 1000.0  # kW -> W
+        numerator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: Qcs_sys0_kW
+        denominator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: GFA_m2
+
+  - id: demand.heating_share_pct
+    label: Heating Share of Demand
+    category: demand
+    unit: '%'
+    better_direction: neutral
+    info_note: Annual space-heating demand as a share of total final demand.
+    source:
+      locator: get_total_demand
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: Qhs_sys_MWhyr
+        whole:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - E_sys_MWhyr
+              - Qhs_sys_MWhyr
+              - Qcs_sys_MWhyr
+              - Qww_sys_MWhyr
+
+  - id: demand.electricity_share_pct
+    label: Electricity Share of Demand
+    category: demand
+    unit: '%'
+    better_direction: neutral
+    info_note: End-use electricity demand as a share of total final demand.
+    source:
+      locator: get_total_demand
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: E_sys_MWhyr
+        whole:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - E_sys_MWhyr
+              - Qhs_sys_MWhyr
+              - Qcs_sys_MWhyr
+              - Qww_sys_MWhyr
