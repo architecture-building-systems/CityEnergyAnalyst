@@ -26,6 +26,7 @@ from cea.interfaces.dashboard.lib.database.models import JobInfo, JobState, get_
 from cea.interfaces.dashboard.lib.database.session import SessionDep
 from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.lib.socketio import emit_with_retry
+from cea.kpi.postprocess import run_post_tool_chain
 
 # FIXME: Add auth checks after giving workers access token
 router = APIRouter()
@@ -327,6 +328,18 @@ async def set_job_success(session: SessionDep, job_id: str, streams: CEAStreams,
         logger.error(e)
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    # KPI post-processing chain: invalidate + pre-warm the cache
+    # for the features whose values depend on this tool's outputs.
+    # Best-effort — `run_post_tool_chain` swallows its own errors,
+    # but wrap once more so a future regression here can never
+    # block the success response or socket emit.
+    try:
+        scenario_path = (job.parameters or {}).get("scenario")
+        if scenario_path:
+            run_post_tool_chain(scenario_path, job.script)
+    except Exception:
+        logger.exception("KPI post-processing chain failed for job %s", job.id)
 
     # Emit event outside try-except so emit failures don't cause rollback
     job_payload = JobInfoResponse.from_job_info(job, stdout=stdout_text)
