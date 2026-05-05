@@ -56,23 +56,41 @@ class EmissionTimelinePlot:
         period_end : int, optional
             End year for filtering data. If None, use all data to the end.
         """
-        # Filter dataframe by period if specified
+        # Apply the period window without dropping rows: years
+        # outside the requested window keep their place on the
+        # x-axis but their y-columns are zeroed out. Two reasons:
+        #   1. Multi-pathway views align rows by year — keeping
+        #      every X tick stops shorter pathways from squashing
+        #      sideways and lets identical years line up vertically.
+        #   2. Cumulation runs *after* this step (`data.cumsum()` in
+        #      the plot helpers), so zeroing pre-cutoff y-values
+        #      means the cumulative curve sits at zero through the
+        #      pre-cutoff window and starts growing fresh from
+        #      `period_start`. The visible curve "sinks" relative
+        #      to plotting the same data without a cutoff, while
+        #      the y-axis still reads from the full data range.
+        self.df = df_to_plotly.copy()
+        # Snapshot of the un-zeroed dataframe — used by
+        # ``_full_y_bounds`` to keep the chart's y-axis on the same
+        # scale it would have if no cutoff were applied. Without
+        # this, auto-fit picks a smaller range over the
+        # post-cutoff totals and the curve fills the visible
+        # window instead of "sinking" within the original scale.
+        self._full_df = df_to_plotly.copy()
         if period_start is not None or period_end is not None:
-            # Convert X column to numeric for comparison
-            # Handle formats like 'Y_2024' or just '2024'
-            x_values = df_to_plotly['X'].astype(str).str.replace('Y_', '', regex=False)
-            x_values = pd.to_numeric(x_values, errors='coerce')
-            # Create mask with the same index as df_to_plotly to avoid alignment errors
-            mask = pd.Series(True, index=df_to_plotly.index)
-
+            # Handle X formats like 'Y_2024' or just '2024'.
+            x_numeric = pd.to_numeric(
+                self.df['X'].astype(str).str.replace('Y_', '', regex=False),
+                errors='coerce',
+            )
+            outside_window = pd.Series(False, index=self.df.index)
             if period_start is not None:
-                mask &= x_values >= period_start
+                outside_window |= x_numeric < period_start
             if period_end is not None:
-                mask &= x_values <= period_end
-
-            self.df = df_to_plotly[mask].copy()
-        else:
-            self.df = df_to_plotly
+                outside_window |= x_numeric > period_end
+            if outside_window.any():
+                y_cols = [c for c in self.df.columns if c != 'X']
+                self.df.loc[outside_window, y_cols] = 0
 
         self.y_columns = list_y_columns
         self.plot_title = plot_title
@@ -153,6 +171,47 @@ class EmissionTimelinePlot:
                 }
 
         return aggregated_data
+
+    def _full_y_bounds(self):
+        """Return ``(y_min, y_max)`` computed from the un-zeroed
+        full dataframe so the chart's y-axis can be pinned to the
+        scale of the un-cut equivalent. Only meaningful when a
+        cutoff window is active and the plot is cumulative — for
+        every other case the auto-fit range is already correct.
+
+        Returns ``(None, None)`` when nothing's available (no
+        cutoff window, no full snapshot, empty dataframe, no
+        categorised columns).
+        """
+        if self.period_start is None and self.period_end is None:
+            return None, None
+        if self._full_df is None or self._full_df.empty:
+            return None, None
+
+        # Re-run categorisation against the un-zeroed snapshot.
+        saved_df = self.df
+        self.df = self._full_df
+        try:
+            aggregated = self._aggregate_into_9_categories()
+        finally:
+            self.df = saved_df
+        if not aggregated:
+            return None, None
+
+        positive_total = None
+        negative_total = None
+        for info in aggregated.values():
+            data = info['data']
+            if self.bool_accumulated:
+                data = data.cumsum()
+            if info['positive']:
+                positive_total = data if positive_total is None else positive_total + data
+            else:
+                negative_total = data if negative_total is None else negative_total + data
+
+        y_max = float(positive_total.max()) if positive_total is not None else None
+        y_min = float(negative_total.min()) if negative_total is not None else None
+        return y_min, y_max
 
     def categorize_and_aggregate_emissions(self):
         """
@@ -298,6 +357,13 @@ class EmissionTimelinePlot:
         y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
         y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
 
+        # When the user hasn't pinned y-min/y-max but a cutoff is
+        # active, fall back to the un-zeroed full-data range so the
+        # curve "sinks" within the same scale as the un-cut chart.
+        if y_min is None and y_max is None:
+            full_y_min, full_y_max = self._full_y_bounds()
+            y_min, y_max = full_y_min, full_y_max
+
         if y_min is not None or y_max is not None:
             yaxis_config['range'] = [y_min, y_max]
 
@@ -417,6 +483,12 @@ class EmissionTimelinePlot:
         # Apply y-axis min/max if specified in config
         y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
         y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+
+        # See ``_create_line_plot`` — keep cutoff plots on the
+        # un-zeroed scale so the curve sinks instead of expanding.
+        if y_min is None and y_max is None:
+            full_y_min, full_y_max = self._full_y_bounds()
+            y_min, y_max = full_y_min, full_y_max
 
         if y_min is not None or y_max is not None:
             yaxis_config['range'] = [y_min, y_max]
@@ -588,6 +660,14 @@ class EmissionTimelinePlot:
         if not percentage:
             y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
             y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+
+            # See ``_create_line_plot`` — keep cutoff plots on the
+            # un-zeroed scale so the curve sinks instead of
+            # expanding. Skipped in percentage mode because that
+            # axis is always ``[0, 100]`` regardless of cutoff.
+            if y_min is None and y_max is None:
+                full_y_min, full_y_max = self._full_y_bounds()
+                y_min, y_max = full_y_min, full_y_max
 
             if y_min is not None or y_max is not None:
                 yaxis_config['range'] = [y_min, y_max]

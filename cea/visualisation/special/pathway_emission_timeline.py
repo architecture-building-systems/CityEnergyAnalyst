@@ -107,16 +107,27 @@ def _apply_cutoff_year(
     timeline_df: pd.DataFrame,
     cutoff_year: int | None,
 ) -> pd.DataFrame:
+    """Validate that data exists at or after ``cutoff_year`` without
+    dropping any rows.
+
+    The pre-cutoff rows used to be filtered out here, which made the
+    chart's x-axis brutally start at ``cutoff_year``. We now keep the
+    full year range — the EmissionTimelinePlot zeroes out y-values
+    for rows outside the ``[period_start, period_end]`` window
+    instead, so the cumulative curve sits flat at zero through the
+    pre-cutoff window and starts growing fresh from ``cutoff_year``.
+    Multi-pathway overlays therefore stay horizontally aligned even
+    when the underlying pathways have different start years.
+    """
     if cutoff_year is None:
         return timeline_df
 
     years = _period_years(timeline_df)
-    filtered = timeline_df.loc[years >= int(cutoff_year)].copy()
-    if filtered.empty:
+    if not (years >= int(cutoff_year)).any():
         raise ValueError(
             f"No pathway emission data remain at or after cutoff year {int(cutoff_year)}."
         )
-    return filtered.reset_index(drop=True)
+    return timeline_df
 
 
 def _resolve_effective_year_bounds(
