@@ -579,16 +579,21 @@ class EmissionTimelinePlot:
             # Allow negative values to show below x-axis with stackgroup='negative'
         )
 
-        # Apply y-axis min/max if specified in config
-        y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
-        y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+        # Apply y-axis min/max + step from config — but skip them
+        # in percentage mode. The form may carry stale absolute
+        # values from a prior plot-type (e.g. y_max = 7e7 from a
+        # `shaded_stack_cumulative` run); applying that range to
+        # 0–100% data squashes everything to a flat strip near
+        # zero. Auto-fit in percentage mode is the right default.
+        if not percentage:
+            y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
+            y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
 
-        if y_min is not None or y_max is not None:
-            yaxis_config['range'] = [y_min, y_max]
+            if y_min is not None or y_max is not None:
+                yaxis_config['range'] = [y_min, y_max]
 
-        # Apply y-axis step if specified in config
-        if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
-            yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
+            if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
+                yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
 
         fig.update_layout(
             title=dict(
