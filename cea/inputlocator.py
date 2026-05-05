@@ -269,6 +269,19 @@ class InputLocator(object):
             self.get_district_pathway_state_status_folder(pathway_name),
             f'state_{year_of_state}.json',
         )
+
+    def get_kpi_folder(self):
+        """Returns the folder that holds KPI cache state.
+
+        `scenario/outputs/kpis`"""
+        return os.path.join(self.scenario, 'outputs', 'kpis')
+
+    def get_kpi_status_file(self):
+        """Returns the JSON cache file recording per-KPI value +
+        the three hashes that gate freshness.
+
+        `scenario/outputs/kpis/kpi_status.json`"""
+        return os.path.join(self.get_kpi_folder(), 'kpi_status.json')
     
     def get_district_pathway_emissions_timeline_path(self, pathway_name: str):
         """Returns the district-level pathway emissions timeline CSV file.
