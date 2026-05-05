@@ -19,6 +19,12 @@ class PlotCache(object):
         self.project = project
 
     def _parameter_hash(self, parameters):
+        # Plot cache keys: MD5 of sorted-repr is a *cache-key generator*,
+        # not a state fingerprint. Different purpose from
+        # ``cea/utilities/fingerprint.py`` (which detects state changes
+        # for freshness gates) — left as-is on purpose. Changing the
+        # algorithm would invalidate every existing user's plot cache
+        # for zero gain.
         return hashlib.md5(repr(sorted(parameters.items())).encode("utf-8")).hexdigest()
 
     def _cached_data_file(self, data_path, parameters):

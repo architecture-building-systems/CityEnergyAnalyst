@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import shutil
@@ -31,6 +30,7 @@ from cea.datamanagement.district_pathways.pathway_status import (
     record_simulated_state,
 )
 from cea.inputlocator import InputLocator
+from cea.utilities.fingerprint import hash_payload
 from cea.utilities.standardize_coordinates import shapefile_to_WSG_and_UTM
 
 ModifyRecipe = dict[str, dict[str, dict[str, Any]]]
@@ -620,9 +620,7 @@ class DistrictEvolutionPathway:
         }
 
     def source_log_hash_for_year(self, year: int) -> str:
-        payload = self.source_payload_for_year(int(year))
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+        return hash_payload(self.source_payload_for_year(int(year)))
 
     def bake_states_from_log(self) -> None:
         years = self.required_state_years()

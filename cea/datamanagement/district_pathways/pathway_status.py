@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 from typing import Any
 
 from cea.inputlocator import InputLocator
+from cea.utilities.fingerprint import hash_folder
 
 
 def read_state_status(
@@ -39,36 +39,6 @@ def write_state_status(
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(current, handle, indent=2, sort_keys=True)
     return current
-
-
-_IGNORED_HASH_FILES = frozenset({".DS_Store", "Thumbs.db", "desktop.ini", "Icon\r"})
-
-
-def _is_ignored_hash_file(name: str) -> bool:
-    # Skip OS/sync junk (AppleDouble sidecars, Finder/Windows metadata) so that
-    # hashes remain stable when e.g. Dropbox or Finder rewrites these files.
-    return name.startswith("._") or name in _IGNORED_HASH_FILES
-
-
-def hash_folder(path: str) -> str:
-    digest = hashlib.sha256()
-    for root, dirs, files in os.walk(path):
-        dirs.sort()
-        rel_root = os.path.relpath(root, path)
-        digest.update(rel_root.replace("\\", "/").encode("utf-8"))
-        for file_name in sorted(files):
-            if _is_ignored_hash_file(file_name):
-                continue
-            file_path = os.path.join(root, file_name)
-            rel_path = os.path.relpath(file_path, path).replace("\\", "/")
-            digest.update(rel_path.encode("utf-8"))
-            with open(file_path, "rb") as handle:
-                while True:
-                    chunk = handle.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    digest.update(chunk)
-    return digest.hexdigest()
 
 
 def hash_state_inputs(
