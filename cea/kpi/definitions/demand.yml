@@ -21,7 +21,11 @@ kpis:
     unit: kWh/m²/yr
     better_direction: lower
     headline: true
-    info_note: Total final energy demand divided by gross floor area (GFA).
+    info_note: |
+      Total final energy demand divided by gross floor area (GFA).
+
+      EUI = Σ(E_sys + Qhs_sys + Qcs_sys + Qww_sys) ÷ Σ(GFA)
+        in [kWh/m²/yr]
     description: >
       End-use energy demand summed across electricity, space heating,
       space cooling, and domestic hot water, normalised by GFA.
@@ -52,9 +56,12 @@ kpis:
     category: demand
     unit: W/m²
     better_direction: lower
-    info_note: >
+    info_note: |
       Sum of nominal heating-system peak loads divided by total GFA.
       Approximates a district-level peak; not a synchronised peak.
+
+      Peak Heating = Σ(Qhs_sys₀) ÷ Σ(GFA)
+        in [W/m²]
     source:
       locator: get_total_demand
       formula:
@@ -78,9 +85,12 @@ kpis:
     category: demand
     unit: W/m²
     better_direction: lower
-    info_note: >
+    info_note: |
       Sum of nominal cooling-system peak loads divided by total GFA.
       Approximates a district-level peak; not a synchronised peak.
+
+      Peak Cooling = Σ(Qcs_sys₀) ÷ Σ(GFA)
+        in [W/m²]
     source:
       locator: get_total_demand
       formula:
@@ -104,7 +114,11 @@ kpis:
     category: demand
     unit: '%'
     better_direction: neutral
-    info_note: Annual space-heating demand as a share of total final demand.
+    info_note: |
+      Annual space-heating demand as a share of total final demand.
+
+      Share = Σ(Qhs_sys) ÷ Σ(E_sys + Qhs_sys + Qcs_sys + Qww_sys) × 100
+        in [%]
     source:
       locator: get_total_demand
       formula:
@@ -131,7 +145,11 @@ kpis:
     category: demand
     unit: '%'
     better_direction: neutral
-    info_note: End-use electricity demand as a share of total final demand.
+    info_note: |
+      End-use electricity demand as a share of total final demand.
+
+      Share = Σ(E_sys) ÷ Σ(E_sys + Qhs_sys + Qcs_sys + Qww_sys) × 100
+        in [%]
     source:
       locator: get_total_demand
       formula:
