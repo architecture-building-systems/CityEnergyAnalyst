@@ -27,6 +27,15 @@ process can never leave the JSON half-written. Reads return ``{}``
 on a missing or malformed file — a corrupted cache is recoverable
 by recomputing, never a hard failure.
 
+Concurrency: every read-modify-write sequence (``write_kpi``,
+``clear_kpi``) holds a cross-process file lock on the JSON's
+sidecar so two parallel /api/kpis/ requests, two pre-warm
+fan-outs, or one of each cannot interleave a stale read with a
+fresh write and clobber each other's entries. Lone reads
+(``read_status``, ``read_kpi``) are uncontended and skip the
+lock — a stale read is the cache's fast-path, validated by the
+three-hash gate at the call site.
+
 Mirrors :mod:`cea.datamanagement.district_pathways.pathway_status`'s
 shape so the two status records read consistently in tests / debug.
 """
@@ -38,6 +47,7 @@ import os
 from typing import Any
 
 from cea.inputlocator import InputLocator
+from cea.utilities.file_lock import FileLock, kpi_status_lock_path
 
 __author__ = "Zhongming Shi"
 __copyright__ = "Copyright 2026, UUEN PTE. LTD."
@@ -74,13 +84,19 @@ def read_kpi(scenario: str, kpi_id: str) -> dict[str, Any] | None:
 
 def write_kpi(scenario: str, kpi_id: str, payload: dict[str, Any]) -> None:
     """Insert or replace one KPI record. Other entries in the file
-    are preserved. Atomic via temp-file + ``os.replace``."""
+    are preserved. Atomic via temp-file + ``os.replace`` and
+    serialised against parallel writers via the sidecar file
+    lock."""
     path = InputLocator(scenario).get_kpi_status_file()
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    current = read_status(scenario)
-    current.setdefault("schema_version", SCHEMA_VERSION)
-    current.setdefault("kpis", {})[kpi_id] = payload
-    _atomic_write_json(path, current)
+    with FileLock(kpi_status_lock_path(scenario)):
+        # Read inside the lock so a competing writer can't slip a
+        # newer record in between our read and our write — that
+        # would have us round-trip its update right back out.
+        current = read_status(scenario)
+        current.setdefault("schema_version", SCHEMA_VERSION)
+        current.setdefault("kpis", {})[kpi_id] = payload
+        _atomic_write_json(path, current)
 
 
 def clear_kpi(
@@ -95,22 +111,30 @@ def clear_kpi(
     * ``feature`` set → drop every entry whose id starts with
       ``"<feature>."``.
     * Both unset → drop every entry (full reset).
+
+    Same lock discipline as :func:`write_kpi` — without it a
+    post-tool ``clear_kpi(feature=...)`` could race against the
+    very pre-warm it precedes and either lose its invalidation
+    (clear lands first, then a stale write reinstates the old
+    record) or its write (write lands first, then the clear
+    drops the just-computed value).
     """
     path = InputLocator(scenario).get_kpi_status_file()
     if not os.path.isfile(path):
         return
-    current = read_status(scenario)
-    kpis = current.get("kpis", {})
-    if kpi_id is not None:
-        kpis.pop(kpi_id, None)
-    elif feature is not None:
-        prefix = f"{feature}."
-        for key in [k for k in kpis if k.startswith(prefix)]:
-            kpis.pop(key)
-    else:
-        kpis.clear()
-    current["kpis"] = kpis
-    _atomic_write_json(path, current)
+    with FileLock(kpi_status_lock_path(scenario)):
+        current = read_status(scenario)
+        kpis = current.get("kpis", {})
+        if kpi_id is not None:
+            kpis.pop(kpi_id, None)
+        elif feature is not None:
+            prefix = f"{feature}."
+            for key in [k for k in kpis if k.startswith(prefix)]:
+                kpis.pop(key)
+        else:
+            kpis.clear()
+        current["kpis"] = kpis
+        _atomic_write_json(path, current)
 
 
 def _atomic_write_json(path: str, payload: dict[str, Any]) -> None:

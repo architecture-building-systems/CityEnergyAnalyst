@@ -2,7 +2,6 @@ import io
 import json
 import os
 import shutil
-import sys
 import tempfile
 import traceback
 import warnings
@@ -34,6 +33,7 @@ from cea.interfaces.dashboard.utils import resolve_scenario_path, secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
+from cea.utilities.file_lock import FileLock
 from cea.utilities.schedule_reader import schedule_to_file, read_cea_schedule, save_cea_schedules
 from cea.utilities.standardize_coordinates import get_geographic_coordinate_system
 
@@ -746,38 +746,6 @@ def get_choices(choice_properties, path):
             label = 'none'
         out.append({'value': choice, 'label': label})
     return out
-
-
-class FileLock:
-    """Cross-process file-based lock using platform-specific file locking"""
-    def __init__(self, lock_file_path):
-        self.lock_file_path = lock_file_path
-        self.lock_file = None
-
-    def __enter__(self):
-        self.lock_file = open(self.lock_file_path, 'w')
-        if sys.platform == 'win32':
-            import msvcrt
-            # Lock the file on Windows
-            msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_LOCK, 1)
-        else:
-            import fcntl
-            # Lock the file on Unix-like systems
-            fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.lock_file:
-            if sys.platform == 'win32':
-                import msvcrt
-                # Unlock the file on Windows
-                msvcrt.locking(self.lock_file.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-                # Unlock the file on Unix-like systems
-                fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
-            self.lock_file.close()
-        return False
 
 
 def verify_database(scenario: str):
