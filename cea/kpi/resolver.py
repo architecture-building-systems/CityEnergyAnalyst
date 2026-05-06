@@ -109,16 +109,20 @@ def _resolve_source_path(kpi, locator: InputLocator) -> str:
         raise KPIDefinitionError(
             f"{kpi.id}: InputLocator has no method '{kpi.source.locator}'"
         )
+    # Forward any `locator_args` from the yml as keyword args. Most
+    # locators are nullary (`get_total_demand()`) — those entries
+    # omit `locator_args` and the dict is empty. PV / network /
+    # optimisation locators need `panel_type` / `network_name` /
+    # `run_name`; the yml hardcodes the canonical default and the
+    # resolver passes it through.
+    locator_args = dict(kpi.source.locator_args or {})
     try:
-        return method()
+        return method(**locator_args)
     except TypeError as exc:
-        # The locator method takes args we don't have. The registry
-        # validator only checks that the method exists, not that
-        # it's nullary; callable-with-args methods are out of scope
-        # for v1.
         raise KPIDefinitionError(
-            f"{kpi.id}: locator '{kpi.source.locator}' requires arguments "
-            f"the resolver doesn't supply ({exc})"
+            f"{kpi.id}: locator '{kpi.source.locator}' signature "
+            f"mismatch ({exc}). Adjust `locator_args:` in the yml "
+            f"to match the locator method's parameters."
         ) from exc
 
 

@@ -1,0 +1,138 @@
+# Solar KPIs — PV-only (v1 scope).
+#
+# Source CSV: outputs/data/potentials/solar/PV_<panel_type>_total_buildings.csv
+# (one row per building, produced by `cea photovoltaic`). Column
+# meanings live in cea/schemas.yml under `PV_total_buildings`.
+# `locator_args.panel_type` is hardcoded to `monocrystalline` —
+# CEA's most common default. Districts running with a different
+# panel type would land on a missing CSV and the KPI surfaces as
+# `KPINotAvailable` with the upstream-tool hint.
+#
+# v1 scope (locked 2026-05-06): PV generation + orientation
+# contribution + system efficiency. Trimmed compared to the
+# original v1 list because the raw PV output doesn't carry
+# installed-area or building-electricity-demand columns:
+#   - DROPPED `solar.pv_self_sufficiency_pct` — needs
+#     `E_sys_MWhyr` from `get_total_demand` (cross-file).
+#   - DROPPED `solar.specific_pv_yield_kwh_m2` — no
+#     `PV_installed_area_*` column in the totals CSV.
+#   - DROPPED `solar.roof_utilisation_pct` — needs available roof
+#     area from input geometry.
+# All three return when Phase 3b's `result_summary` integration
+# lands (panel_type-aggregated, GFA-co-located outputs) or the
+# resolver gains cross-file reads.
+#
+# Picker grouping uses the `renewable-energy-potentials` plot key
+# so each entry lands under "Renewable Energy Potential
+# Assessment" alongside the matching plot card family.
+
+feature: solar
+
+kpis:
+  - id: solar.annual_pv_generation_kwh
+    label: Annual PV Generation
+    category: renewable-energy-potentials
+    unit: kWh/yr
+    better_direction: higher
+    headline: true
+    info_note: |
+      Total annual PV electricity generation across every
+      building, summed across all panel orientations.
+
+      Annual PV = Σ(E_PV_gen_kWh)
+        in [kWh/yr]
+    description: >
+      District-level PV potential under the configured panel
+      type (monocrystalline). Aggregates rooftop + facade
+      installations.
+    source:
+      locator: PV_total_buildings
+      locator_args:
+        panel_type: monocrystalline
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: E_PV_gen_kWh }
+
+  - id: solar.roof_share_pct
+    label: Rooftop PV Share
+    category: renewable-energy-potentials
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of PV generation contributed by rooftop panels (as
+      opposed to facade-mounted). Higher means generation is
+      dominated by horizontal/tilted roof installations.
+
+      Share = Σ(PV_roofs_top_E_kWh) ÷ Σ(E_PV_gen_kWh) × 100
+        in [%]
+    source:
+      locator: PV_total_buildings
+      locator_args:
+        panel_type: monocrystalline
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: PV_roofs_top_E_kWh }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: E_PV_gen_kWh }
+
+  - id: solar.south_facade_share_pct
+    label: South Facade Share
+    category: renewable-energy-potentials
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of PV generation contributed by south-facing facade
+      panels. Useful for districts with significant facade-PV
+      installations where south orientation is the most
+      productive vertical surface.
+
+      Share = Σ(PV_walls_south_E_kWh) ÷ Σ(E_PV_gen_kWh) × 100
+        in [%]
+    source:
+      locator: PV_total_buildings
+      locator_args:
+        panel_type: monocrystalline
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: PV_walls_south_E_kWh }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: E_PV_gen_kWh }
+
+  - id: solar.system_efficiency_pct
+    label: PV System Efficiency
+    category: renewable-energy-potentials
+    unit: '%'
+    better_direction: higher
+    info_note: |
+      Electrical conversion efficiency: PV generation as a share
+      of incident solar radiation across every installed surface.
+      Higher = better module + system efficiency under the
+      configured panel type.
+
+      Efficiency = Σ(E_PV_gen_kWh) ÷ Σ(radiation_kWh) × 100
+        in [%]
+    source:
+      locator: PV_total_buildings
+      locator_args:
+        panel_type: monocrystalline
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: E_PV_gen_kWh }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: radiation_kWh }

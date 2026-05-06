@@ -63,8 +63,8 @@ TOOL_TO_FEATURES: dict[str, list[str]] = {
     "demand": ["demand"],
     "emissions": ["emissions"],
     "system-costs": ["costs"],
+    "photovoltaic": ["solar"],
     # Stubs for the rest of v1 — uncomment as their yml lands.
-    # "photovoltaic": ["solar"],
     # "photovoltaic-thermal": ["solar"],
     # "solar-collector": ["solar"],
     # "thermal-network-matrix": ["networks"],

@@ -144,16 +144,17 @@ def _load_schemas() -> dict:
 
 
 def _locator_method_names() -> set[str]:
-    # Inspect the InputLocator class for ``get_*`` methods that take
-    # no required positional args beyond ``self`` — those are the
-    # ones safely callable from a yml entry. Methods needing extra
-    # args (like ``get_export_results_summary_*`` which takes a
-    # ``summary_folder``) are flagged explicitly: the resolver will
-    # refuse to call them, the registry refuses to register them.
+    # Every public callable method on ``InputLocator`` is a
+    # potential KPI source. CEA's locator naming isn't uniformly
+    # ``get_*`` — solar / network outputs use ``PV_*`` /
+    # ``thermal_network_*`` etc. — so we accept any non-dunder,
+    # non-private name. The resolver still calls the method via
+    # `getattr(...)`; missing or signature-mismatched methods
+    # surface as ``KPIDefinitionError`` at request time.
     return {
         name
         for name in dir(InputLocator)
-        if name.startswith("get_") and callable(getattr(InputLocator, name))
+        if not name.startswith("_") and callable(getattr(InputLocator, name))
     }
 
 

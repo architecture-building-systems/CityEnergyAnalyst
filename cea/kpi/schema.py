@@ -40,7 +40,7 @@ value.
 
 from __future__ import annotations
 
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -123,6 +123,17 @@ _ShareOfNode.model_rebuild()
 
 class KPISource(_StrictBase):
     locator: str  # InputLocator method name, e.g. "get_total_demand"
+    # Optional kwargs forwarded to the locator method when it
+    # requires them. Most CEA locators take no args (e.g.
+    # ``get_total_demand``) — those entries omit ``locator_args``
+    # entirely. PV / network / optimisation locators need
+    # ``panel_type`` / ``network_name`` / ``run_name`` to resolve
+    # their per-config CSVs; the yml hardcodes the canonical
+    # default (e.g. ``panel_type: monocrystalline``) and the
+    # resolver passes it through. Failed match (file doesn't
+    # exist for the given args) raises ``KPINotAvailable`` with
+    # the upstream tool hint, same as any other missing source.
+    locator_args: Dict[str, Any] = Field(default_factory=dict)
     formula: FormulaNode
 
 
