@@ -60,12 +60,22 @@ logger = logging.getLogger(__name__)
 # through silently (no chain action), so this map is the single
 # place to keep the wiring up-to-date.
 TOOL_TO_FEATURES: dict[str, list[str]] = {
-    "demand": ["demand"],
+    # `cea demand` produces Total_demand.csv, which feeds both the
+    # demand KPIs (EUI / peak / share) and the architecture KPIs
+    # (GFA / conditioned share / roof area) — the floor-area
+    # columns ride along on the same totals output.
+    "demand": ["demand", "architecture"],
     "emissions": ["emissions"],
     "system-costs": ["costs"],
     "photovoltaic": ["solar"],
     "thermal-network-matrix": ["networks"],
     "optimization-new": ["optimisation"],
+    "final-energy": ["final_energy"],
+    # KPI feature name aligns with `result_summary.dict_plot_metrics_cea_feature`
+    # (`heat_rejection`), so a future Phase 3b dispatcher can call
+    # `result_summary --feature heat_rejection` without a translation
+    # table.
+    "anthropogenic-heat": ["heat_rejection"],
     # Stubs for additional solar-collector tools — uncomment when
     # their yml lands. Optimisation's "costs" linkage from the
     # original v1 plan was dropped because the Pareto outputs are

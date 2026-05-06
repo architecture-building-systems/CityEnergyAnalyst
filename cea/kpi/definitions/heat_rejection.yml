@@ -1,0 +1,90 @@
+# Anthropogenic-heat (heat-rejection) KPIs.
+#
+# Source CSV: scenario/outputs/data/heat/{network_name}/
+#               heat_rejection_buildings.csv
+# (one row per building or plant, produced by
+# `cea anthropogenic-heat`). Default `network_name=None` resolves
+# to the `no-network` subfolder — the per-building heat rejection
+# from standalone systems. Districts with a named DH/DC network
+# would override `locator_args.network_name` to read the network
+# subfolder's totals.
+#
+# Picker grouping uses the existing `anthropogenic-heat-rejection`
+# plot key so each entry lands under "Life Cycle Analysis → Heat
+# Rejection" alongside the matching plot family.
+
+feature: heat_rejection
+
+kpis:
+  - id: heat_rejection.annual_heat_rejection_mwh
+    label: Annual Heat Rejection
+    category: anthropogenic-heat-rejection
+    unit: MWh/yr
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total annual heat rejected to the urban environment by
+      buildings and district plants. Driven by cooling-system
+      condensers, chiller heat-rejection, and combustion losses;
+      a proxy for the district's contribution to the urban
+      heat-island effect.
+
+      Heat = Σ(heat_rejection_annual_MWh)
+        in [MWh/yr]
+    description: >
+      Lower means less waste heat dumped into the surroundings.
+      Drops when cooling demand falls (envelope improvements) or
+      shifts to systems that recover the heat (heat pumps with
+      DHW reuse, district cooling with sea-water sinks).
+    source:
+      locator: get_heat_rejection_buildings
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: heat_rejection_annual_MWh }
+
+  - id: heat_rejection.peak_heat_rejection_kw
+    label: Peak Heat Rejection
+    category: anthropogenic-heat-rejection
+    unit: kW
+    better_direction: lower
+    info_note: |
+      Maximum hourly heat-rejection rate observed across the
+      district's buildings / plants over the design year. Drives
+      cooling-tower / dry-cooler sizing.
+
+      Peak = max(peak_heat_rejection_kW)
+        in [kW]
+    source:
+      locator: get_heat_rejection_buildings
+      formula:
+        kind: aggregate
+        op: max
+        of: { kind: column, name: peak_heat_rejection_kW }
+
+  - id: heat_rejection.intensity_kwh_m2
+    label: Heat Rejection Intensity
+    category: anthropogenic-heat-rejection
+    unit: kWh/m²/yr
+    better_direction: lower
+    info_note: |
+      Annual heat rejection per unit GFA. Normalises across
+      district size so comparisons between scenarios stay
+      meaningful regardless of the floor area each carries.
+
+      Intensity = Σ(heat_rejection_annual_MWh) × 1000
+                ÷ Σ(GFA_m2)
+        in [kWh/m²/yr]
+    source:
+      locator: get_heat_rejection_buildings
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: heat_rejection_annual_MWh }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+        scale: 1000.0  # MWh/m² -> kWh/m²

@@ -1,0 +1,134 @@
+# Final-energy KPIs (Energy by Carrier).
+#
+# Source CSV: scenario/outputs/data/analysis/{whatif_name}/final-energy/
+#               final_energy_buildings.csv
+# (one row per building or plant, produced by
+# `cea final-energy`). Columns: per-carrier annual MWh for every
+# carrier code (GRID, NATURALGAS, OIL, COAL, WOOD, DH, DC, SOLAR,
+# PV) plus a TOTAL_MWh roll-up.
+#
+# `whatif_name` defaults to the empty string — the locator
+# substitutes that into its path (`analysis//final-energy/...`),
+# which `os.path.join` collapses to the baseline (no-what-if)
+# folder. Districts running on a named what-if would override
+# `locator_args.whatif_name` here. v1 ships against the baseline
+# folder only; revise once the dashboard wires per-card what-if
+# selection through to the KPI fetch.
+#
+# Picker grouping uses the existing `energy-by-carrier` plot key
+# so each entry lands under "Life Cycle Analysis → Energy by
+# Carrier" alongside the matching plot family.
+
+feature: final_energy
+
+kpis:
+  - id: final_energy.total_final_mwh
+    label: Total Final Energy
+    category: energy-by-carrier
+    unit: MWh/yr
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total annual final energy consumption summed across every
+      carrier (electricity, gas, district heating/cooling, etc.)
+      and every building in the district.
+
+      Total = Σ(TOTAL_MWh)
+        in [MWh/yr]
+    description: >
+      Headline metric for energy by carrier. Pair with the per-
+      carrier share KPIs to see the mix; drops as the supply
+      system shifts away from fossil-driven services.
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: TOTAL_MWh }
+
+  - id: final_energy.grid_share_pct
+    label: Grid Electricity Share
+    category: energy-by-carrier
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of total final energy that is delivered as grid
+      electricity. Higher means the district leans on the grid
+      for end-use services; rises with electrification, falls
+      when on-site PV / heat-pumps offset grid imports.
+
+      Share = Σ(GRID_MWh) ÷ Σ(TOTAL_MWh) × 100
+        in [%]
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GRID_MWh }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: TOTAL_MWh }
+
+  - id: final_energy.fossil_share_pct
+    label: Fossil Fuel Share
+    category: energy-by-carrier
+    unit: '%'
+    better_direction: lower
+    info_note: |
+      Share of total final energy from on-site combustion of
+      natural gas, oil, or coal. The decarbonisation lever:
+      swap heating-fuel boilers for heat pumps / district
+      heating to drive this towards 0.
+
+      Share = Σ(NATURALGAS + OIL + COAL) ÷ Σ(TOTAL_MWh) × 100
+        in [%]
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns: [NATURALGAS_MWh, OIL_MWh, COAL_MWh]
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: TOTAL_MWh }
+
+  - id: final_energy.district_heating_share_pct
+    label: District Heating Share
+    category: energy-by-carrier
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of total final energy delivered via district heating.
+      Useful for districts running a DH network — measures how
+      much of the load the central plant is actually serving.
+
+      Share = Σ(DH_MWh) ÷ Σ(TOTAL_MWh) × 100
+        in [%]
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: DH_MWh }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: TOTAL_MWh }
