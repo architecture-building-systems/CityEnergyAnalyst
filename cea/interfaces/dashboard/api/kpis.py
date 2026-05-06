@@ -42,6 +42,44 @@ logger = getCEAServerLogger("cea-server-kpis")
 router = APIRouter()
 
 
+@router.get("/registry")
+async def get_kpi_registry():
+    """Return the entire KPI catalogue — metadata only, no values.
+
+    The frontend's `KpiPicker` reads this to render a flat
+    multi-select grouped by feature. No scenario / project /
+    whatif context is needed: the picker just needs to know
+    what's pickable.
+
+    Sorting: features alphabetically, then KPIs by id within a
+    feature so the picker order is stable across reloads.
+    """
+    registry = load_registry()
+    grouped: dict[str, list[dict]] = {}
+    for kpi in registry.values():
+        grouped.setdefault(kpi.category, []).append(
+            {
+                "id": kpi.id,
+                "label": kpi.label,
+                "category": kpi.category,
+                "unit": kpi.unit,
+                "headline": kpi.headline,
+                "better_direction": kpi.better_direction,
+                "info_note": kpi.info_note,
+                "description": kpi.description,
+            }
+        )
+    return {
+        "features": [
+            {
+                "name": feature,
+                "kpis": sorted(kpis, key=lambda k: k["id"]),
+            }
+            for feature, kpis in sorted(grouped.items())
+        ],
+    }
+
+
 @router.get("/")
 async def get_kpis(
     project_root: CEAProjectRoot,
