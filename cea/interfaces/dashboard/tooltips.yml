@@ -116,6 +116,15 @@ canvas-sync-maps:
     On - every map card mirrors the overview map.
     Off - each map card holds its own view and overlays.
 
+canvas-show-deltas:
+  title: Show Deltas
+  body: |-
+    On - every KPI card outside the leftmost (Current) column
+    shows a chip with the percentage change vs the matching KPI
+    in the Current column. Green = change improves the KPI;
+    red = change worsens it; grey = neutral KPI or no change.
+    Off - cards display absolute values only.
+
 canvas-fix-layout:
   title: Fix Layout
   body: |-
