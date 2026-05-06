@@ -1,0 +1,69 @@
+# Optimisation KPIs.
+#
+# Source CSV: scenario/outputs/data/optimization_new/<DES_ID>/
+#                Supply_systems/Supply_systems_summary.csv
+# (one row per consumer subsystem on the chosen district-energy
+# system's Pareto front, produced by `cea optimization-new`).
+# Column meanings live in cea/schemas.yml under
+# `get_new_optimization_optimal_supply_systems_summary_file`.
+#
+# `district_energy_system_id` defaults to `current_DES` on the
+# locator. Districts whose Pareto run published under a different
+# id (`DHS_000`, `DCS_001`, …) need to override it via
+# `locator_args.district_energy_system_id` here. v1 ships against
+# the locator default; revise if a different id becomes the norm.
+#
+# Picker grouping uses the `pareto-front` plot key so each entry
+# lands under "Energy Supply System Optimisation" alongside the
+# Pareto-front and supply-system plot families.
+
+feature: optimisation
+
+kpis:
+  - id: optimisation.pareto_best_lcc_usd
+    label: Pareto-Best Total Cost
+    category: pareto-front
+    unit: USD
+    better_direction: lower
+    headline: true
+    info_note: |
+      Lowest total annualised cost on the Pareto front of the
+      currently-active district energy system run. The minimum
+      across every supply-system subsystem (network or building)
+      that the optimisation considered.
+
+      Best LCC = min(Cost_USD)
+        in [USD]
+    description: >
+      Minimum cost across the optimisation's Pareto-optimal
+      solutions. Compares to absolute-best cost; pair with
+      Pareto-Best Emissions to read the tradeoff frontier.
+    source:
+      locator: get_new_optimization_optimal_supply_systems_summary_file
+      formula:
+        kind: aggregate
+        op: min
+        of: { kind: column, name: Cost_USD }
+
+  - id: optimisation.pareto_best_emissions_kgco2e
+    label: Pareto-Best Emissions
+    category: pareto-front
+    unit: kgCO2e
+    better_direction: lower
+    info_note: |
+      Lowest GHG emissions on the Pareto front of the currently-
+      active district energy system run. The minimum across every
+      supply-system subsystem.
+
+      Best Emissions = min(GHG_Emissions_kgCO2)
+        in [kgCO2e]
+    description: >
+      Minimum emissions across the optimisation's Pareto-optimal
+      solutions. Pair with Pareto-Best Total Cost to read the
+      tradeoff frontier.
+    source:
+      locator: get_new_optimization_optimal_supply_systems_summary_file
+      formula:
+        kind: aggregate
+        op: min
+        of: { kind: column, name: GHG_Emissions_kgCO2 }

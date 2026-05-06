@@ -65,10 +65,14 @@ TOOL_TO_FEATURES: dict[str, list[str]] = {
     "system-costs": ["costs"],
     "photovoltaic": ["solar"],
     "thermal-network-matrix": ["networks"],
-    # Stubs for the rest of v1 — uncomment as their yml lands.
+    "optimization-new": ["optimisation"],
+    # Stubs for additional solar-collector tools — uncomment when
+    # their yml lands. Optimisation's "costs" linkage from the
+    # original v1 plan was dropped because the Pareto outputs are
+    # in their own folder, not the `get_baseline_costs` CSV that
+    # `costs.yml` reads.
     # "photovoltaic-thermal": ["solar"],
     # "solar-collector": ["solar"],
-    # "optimization-new": ["optimisation", "costs"],
 }
 
 
