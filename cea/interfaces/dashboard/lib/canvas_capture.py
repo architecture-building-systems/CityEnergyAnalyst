@@ -36,6 +36,7 @@ abort the export.
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 import logging
 import os
@@ -174,7 +175,20 @@ def _capture_card(
         )
         return
 
-    if card.type in ('map', 'kpi'):
+    if card.type == 'kpi':
+        # KPI cards: write the metadata stub AND a value snapshot
+        # (kpi.json) + standalone HTML viewer (kpi.html) so a
+        # recipient unzipping the archive sees the value the user
+        # saw at export time, even without a backend handy.
+        _capture_card_metadata(
+            locator, canvas_folder, card_id, card, scenario,
+        )
+        _capture_kpi_card(
+            project_root, locator, canvas_folder, card_id, card, scenario,
+        )
+        return
+
+    if card.type == 'map':
         _capture_card_metadata(
             locator, canvas_folder, card_id, card, scenario,
         )
@@ -246,6 +260,11 @@ def _capture_card_metadata(
         'category': card.category,
         'layer': card.layer,
         'scenario': scenario,
+        # `kpi_id` is `None` for non-KPI cards. Including it
+        # unconditionally keeps the schema uniform across card
+        # types so recipients can read `card.json` without
+        # branching on `type` first.
+        'kpi_id': getattr(card, 'kpi_id', None),
     }
     out_path = os.path.join(data_folder, 'card.json')
     try:
@@ -255,3 +274,131 @@ def _capture_card_metadata(
         logger.warning(
             'Failed to write metadata for card %s: %s', card_id, exc,
         )
+
+
+def _capture_kpi_card(
+    project_root: str,
+    locator: cea.inputlocator.InputLocator,
+    canvas_folder: str,
+    card_id: str,
+    card,
+    scenario: Optional[str],
+) -> None:
+    """Snapshot a KPI card's current value to ``kpi.json`` + a
+    standalone ``kpi.html`` viewer.
+
+    Goes through ``cea.kpi.cache.compute_kpi_cached`` so the
+    snapshot reads the same hash-gated value the canvas just
+    rendered (cache hit on the typical "share immediately after
+    viewing" path; lazy recompute fallback on the rare miss).
+    Best-effort: a failure to compute leaves the metadata
+    ``card.json`` in place — the recipient still sees what KPI
+    was on the canvas, just without the value.
+    """
+    kpi_id = getattr(card, 'kpi_id', None)
+    if not kpi_id or not scenario:
+        return
+
+    scenario_path = os.path.join(project_root, scenario)
+    data_folder = locator.get_canvas_card_data_folder(canvas_folder, card_id)
+    os.makedirs(data_folder, exist_ok=True)
+
+    # Lazy import — keeps `canvas_capture` importable in test envs
+    # that haven't pulled in the KPI registry yet.
+    try:
+        from cea.kpi.cache import compute_kpi_cached
+        from cea.kpi.exceptions import KPIError
+    except ImportError as exc:  # pragma: no cover — defensive
+        logger.warning(
+            'KPI module unavailable for card %s: %s', card_id, exc,
+        )
+        return
+
+    try:
+        result = compute_kpi_cached(kpi_id, scenario_path)
+    except KPIError as exc:
+        logger.info(
+            'KPI %s not available at export time for card %s: %s',
+            kpi_id, card_id, exc,
+        )
+        return
+    except Exception as exc:  # noqa: BLE001 — best-effort capture
+        logger.warning(
+            'KPI capture failed for card %s (%s): %s',
+            card_id, kpi_id, exc,
+        )
+        return
+
+    payload = {
+        'kpi_id': kpi_id,
+        'value': result.value,
+        'unit': result.unit,
+        'computed_at': result.computed_at,
+        'scenario': scenario,
+    }
+    json_path = os.path.join(data_folder, 'kpi.json')
+    try:
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, indent=2, sort_keys=True)
+    except OSError as exc:
+        logger.warning(
+            'Failed to write kpi.json for card %s: %s', card_id, exc,
+        )
+
+    html_path = os.path.join(data_folder, 'kpi.html')
+    try:
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(_render_kpi_html(payload))
+    except OSError as exc:
+        logger.warning(
+            'Failed to write kpi.html for card %s: %s', card_id, exc,
+        )
+
+
+def _render_kpi_html(payload: dict) -> str:
+    """Render a KPI snapshot as a small standalone HTML page.
+
+    Intentionally chrome-less and self-contained — no external CSS
+    or fonts so the recipient can open the file directly from the
+    unzipped archive without a server. Mirrors the on-canvas
+    `FeatureCardKpi` shape (label / big value / unit / footer).
+    """
+    kpi_id = html_lib.escape(str(payload.get('kpi_id') or ''))
+    value = payload.get('value')
+    value_str = (
+        format(value, '.4g') if isinstance(value, (int, float)) else '—'
+    )
+    unit = html_lib.escape(str(payload.get('unit') or ''))
+    computed_at = html_lib.escape(str(payload.get('computed_at') or ''))
+    feature, _, short = kpi_id.partition('.')
+    feature_display = feature.title() if feature else ''
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KPI · {kpi_id}</title>
+<style>
+  body {{ margin: 0; padding: 24px; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f7f7f7; color: #222; }}
+  .card {{ background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px 20px; max-width: 320px; }}
+  .label {{ font-size: 11px; color: #666; font-weight: 500; }}
+  .feature {{ color: #888; }}
+  .dot {{ color: #bbb; margin: 0 4px; }}
+  .value {{ font-size: 32px; font-weight: 700; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }}
+  .unit {{ font-size: 12px; color: #666; margin-top: 2px; }}
+  .footer {{ font-size: 10px; color: #999; margin-top: 12px; }}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="label">
+      <span class="feature">{feature_display}</span>
+      <span class="dot">·</span>
+      <span>{short}</span>
+    </div>
+    <div class="value">{value_str}</div>
+    <div class="unit">{unit}</div>
+    <div class="footer">Captured {computed_at}</div>
+  </div>
+</body>
+</html>
+"""
