@@ -1,0 +1,112 @@
+# Thermal-network KPIs.
+#
+# Source CSVs: scenario/outputs/data/thermal-network/DH__*.csv
+# (produced by `cea thermal-network-matrix`). Every relevant
+# locator takes `(network_type, network_name)`; the yml hardcodes
+# `DH` (district heating) + empty `network_name` (CEA's default
+# for the single-network case). Districts with cooling networks
+# only, or named networks, would land on missing CSVs and the
+# KPIs surface as `KPINotAvailable` with the upstream-tool hint.
+#
+# Picker grouping uses the `thermal-network` plot key; a matching
+# "Thermal Networks" group was added to `features/plots/constants.js`
+# alongside the existing groups so the KPI picker renders these
+# entries under the right header without a parallel hierarchy.
+#
+# v1 scope: total length + peak load + annual loss + annual
+# pumping. The locked v1 list also named `pumping_share_pct`
+# (pumping electricity ÷ total electricity demand) — that's
+# cross-file (needs `E_sys_MWhyr` from `get_total_demand`) and
+# returns when Phase 3b's result_summary integration lands.
+
+feature: networks
+
+kpis:
+  - id: networks.total_length_m
+    label: Total Network Length
+    category: thermal-network
+    unit: m
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total length of pipe segments in the district heating
+      network. Lower means a more compact network — typically
+      cheaper to build and operate.
+
+      Length = Σ(length_m of every pipe edge)
+        in [m]
+    source:
+      locator: get_thermal_network_edge_list_file
+      locator_args:
+        network_type: DH
+        network_name: ""
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: length_m }
+
+  - id: networks.peak_thermal_load_kw
+    label: Peak Thermal Load
+    category: thermal-network
+    unit: kW
+    better_direction: lower
+    info_note: |
+      Maximum hourly thermal load delivered by the network's
+      central plant across the design year. Drives the plant's
+      sizing and capital cost.
+
+      Peak = max(thermal_load_kW)
+        in [kW]
+    source:
+      locator: get_thermal_network_plant_heat_requirement_file
+      locator_args:
+        network_type: DH
+        network_name: ""
+      formula:
+        kind: aggregate
+        op: max
+        of: { kind: column, name: thermal_load_kW }
+
+  - id: networks.annual_thermal_loss_kwh
+    label: Annual Distribution Losses
+    category: thermal-network
+    unit: kWh/yr
+    better_direction: lower
+    info_note: |
+      Total annual heat lost to the ground / surroundings along
+      both supply and return pipes. Lower indicates better pipe
+      insulation or a denser load that reduces dwell time.
+
+      Losses = Σ(thermal_loss_total_kW) over 8760 h
+        in [kWh/yr]
+    source:
+      locator: get_network_total_thermal_loss_file
+      locator_args:
+        network_type: DH
+        network_name: ""
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: thermal_loss_total_kW }
+
+  - id: networks.annual_pumping_kwh
+    label: Annual Pumping Electricity
+    category: thermal-network
+    unit: kWh/yr
+    better_direction: lower
+    info_note: |
+      Total annual electricity consumed by the network's pumps
+      to overcome pipe pressure drops. Affected by network
+      length, pipe diameters, and flow rate.
+
+      Pumping = Σ(pressure_loss_total_kW) over 8760 h
+        in [kWh/yr]
+    source:
+      locator: get_network_energy_pumping_requirements_file
+      locator_args:
+        network_type: DH
+        network_name: ""
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: pressure_loss_total_kW }

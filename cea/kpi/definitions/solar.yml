@@ -11,16 +11,21 @@
 # v1 scope (locked 2026-05-06): PV generation + orientation
 # contribution + system efficiency. Trimmed compared to the
 # original v1 list because the raw PV output doesn't carry
-# installed-area or building-electricity-demand columns:
+# installed-area / installed-capacity / building-demand columns:
 #   - DROPPED `solar.pv_self_sufficiency_pct` — needs
 #     `E_sys_MWhyr` from `get_total_demand` (cross-file).
 #   - DROPPED `solar.specific_pv_yield_kwh_m2` — no
 #     `PV_installed_area_*` column in the totals CSV.
 #   - DROPPED `solar.roof_utilisation_pct` — needs available roof
 #     area from input geometry.
-# All three return when Phase 3b's `result_summary` integration
-# lands (panel_type-aggregated, GFA-co-located outputs) or the
-# resolver gains cross-file reads.
+#   - DROPPED `solar.capacity_factor_pct` — needs installed peak
+#     capacity (kWp). Could be derived per-building from the
+#     hourly `PV_results` files (max of hourly = peak), but
+#     multi-CSV per-building walks are out of scope; cleanest
+#     fix is a `PV_installed_kWp` column on the totals file.
+# All four return when Phase 3b's `result_summary` integration
+# lands (panel_type-aggregated, GFA / capacity-co-located
+# outputs) or the resolver gains cross-file reads.
 #
 # Picker grouping uses the `renewable-energy-potentials` plot key
 # so each entry lands under "Renewable Energy Potential

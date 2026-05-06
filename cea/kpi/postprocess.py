@@ -64,10 +64,10 @@ TOOL_TO_FEATURES: dict[str, list[str]] = {
     "emissions": ["emissions"],
     "system-costs": ["costs"],
     "photovoltaic": ["solar"],
+    "thermal-network-matrix": ["networks"],
     # Stubs for the rest of v1 — uncomment as their yml lands.
     # "photovoltaic-thermal": ["solar"],
     # "solar-collector": ["solar"],
-    # "thermal-network-matrix": ["networks"],
     # "optimization-new": ["optimisation", "costs"],
 }
 
