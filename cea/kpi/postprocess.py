@@ -61,8 +61,8 @@ logger = logging.getLogger(__name__)
 # place to keep the wiring up-to-date.
 TOOL_TO_FEATURES: dict[str, list[str]] = {
     "demand": ["demand"],
+    "emissions": ["emissions"],
     # Stubs for the rest of v1 — uncomment as their yml lands.
-    # "emissions": ["emissions"],
     # "system-costs": ["costs"],
     # "photovoltaic": ["solar"],
     # "photovoltaic-thermal": ["solar"],

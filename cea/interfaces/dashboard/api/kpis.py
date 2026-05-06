@@ -44,40 +44,32 @@ router = APIRouter()
 
 @router.get("/registry")
 async def get_kpi_registry():
-    """Return the entire KPI catalogue — metadata only, no values.
+    """Return the entire KPI catalogue as a flat list.
 
-    The frontend's `KpiPicker` reads this to render a flat
-    multi-select grouped by feature. No scenario / project /
-    whatif context is needed: the picker just needs to know
-    what's pickable.
+    The frontend's `KpiPicker` regroups these into the same
+    hierarchy `FeatureCardPlot` uses (`PLOT_GROUPS` in
+    `features/plots/constants.js`) by matching `category`
+    against the plot-key strings in each group. No need for the
+    backend to pre-bucket — frontend owns the visual taxonomy.
 
-    Sorting: features alphabetically, then KPIs by id within a
-    feature so the picker order is stable across reloads.
+    Sorted by id so picker ordering is stable across reloads.
     """
     registry = load_registry()
-    grouped: dict[str, list[dict]] = {}
-    for kpi in registry.values():
-        grouped.setdefault(kpi.category, []).append(
-            {
-                "id": kpi.id,
-                "label": kpi.label,
-                "category": kpi.category,
-                "unit": kpi.unit,
-                "headline": kpi.headline,
-                "better_direction": kpi.better_direction,
-                "info_note": kpi.info_note,
-                "description": kpi.description,
-            }
-        )
-    return {
-        "features": [
-            {
-                "name": feature,
-                "kpis": sorted(kpis, key=lambda k: k["id"]),
-            }
-            for feature, kpis in sorted(grouped.items())
-        ],
-    }
+    kpis = [
+        {
+            "id": kpi.id,
+            "label": kpi.label,
+            "category": kpi.category,
+            "unit": kpi.unit,
+            "headline": kpi.headline,
+            "better_direction": kpi.better_direction,
+            "info_note": kpi.info_note,
+            "description": kpi.description,
+        }
+        for kpi in registry.values()
+    ]
+    kpis.sort(key=lambda k: k["id"])
+    return {"kpis": kpis}
 
 
 @router.get("/")
@@ -102,9 +94,11 @@ async def get_kpis(
     scenario_path = resolve_scenario_path(project_root, project, scenario)
 
     # Surface a tight error if the feature doesn't exist in the
-    # registry — easier to debug than an empty array.
+    # registry — easier to debug than an empty array. Feature is
+    # the id-prefix (yml file stem); `category` is now reserved
+    # for plot-group picker grouping and may differ.
     registry = load_registry()
-    known_features = {kpi.category for kpi in registry.values()}
+    known_features = {kpi.id.split('.', 1)[0] for kpi in registry.values()}
     if feature not in known_features:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

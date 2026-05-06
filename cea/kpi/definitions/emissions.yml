@@ -1,0 +1,274 @@
+# Emissions KPIs — operational only.
+#
+# Source CSV: outputs/data/emissions/Total_LCA_operation.csv (one row
+# per building, produced by `cea emissions`). Column meanings live in
+# cea/schemas.yml under `get_lca_operation`. Per-carrier-per-end-use
+# columns: COAL/DH/NG/OIL/SOLAR/WOOD * hs (heating) / ww (DHW), plus
+# DC * cs/cdata/cre (district cooling) and GRID for purchased
+# electricity. Every *_ghg_ton column is annual operational emissions
+# in metric tons CO2e/yr.
+#
+# v1 scope (Path 3 trim, locked 2026-05-06): no per-m² normalisation
+# (GFA isn't co-located in this CSV; cross-file reads are out of
+# scope until either Phase 3b's result_summary integration lands or
+# the resolver gets multi-source support). No embodied/lifecycle
+# KPIs either — `get_lca_embodied`'s schema entry in cea/schemas.yml
+# is incomplete (only declares `name`).
+#
+# Picker grouping uses the `operational-emissions` plot key so each
+# entry lands under "Life Cycle Analysis → GHG Emissions" alongside
+# the matching plot card family.
+
+feature: emissions
+
+kpis:
+  - id: emissions.annual_operational_kgco2e
+    label: Annual Operational Emissions
+    category: operational-emissions
+    unit: kgCO2e/yr
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total annual operational emissions across every energy
+      carrier and end-use in the district.
+
+      Annual = Σ(every *_ghg_ton column) × 1000
+        in [kgCO2e/yr]
+    description: >
+      Sum of operational emissions per energy carrier
+      (electricity grid, district heating / cooling, natural gas,
+      oil, coal, wood, solar thermal, PV) across all buildings,
+      converted from metric tons to kg.
+    source:
+      locator: get_lca_operation
+      formula:
+        # Aggregate's `scale` field handles the ton→kg unit
+        # conversion as a multiplier on the resulting scalar.
+        kind: aggregate
+        op: sum
+        scale: 1000.0
+        of:
+          kind: sum_columns
+          columns:
+            - COAL_hs_ghg_ton
+            - COAL_ww_ghg_ton
+            - DC_cdata_ghg_ton
+            - DC_cre_ghg_ton
+            - DC_cs_ghg_ton
+            - DH_hs_ghg_ton
+            - DH_ww_ghg_ton
+            - GRID_ghg_ton
+            - NG_hs_ghg_ton
+            - NG_ww_ghg_ton
+            - OIL_hs_ghg_ton
+            - OIL_ww_ghg_ton
+            - PV_ghg_ton
+            - SOLAR_hs_ghg_ton
+            - SOLAR_ww_ghg_ton
+            - WOOD_hs_ghg_ton
+            - WOOD_ww_ghg_ton
+
+  - id: emissions.grid_electricity_share_pct
+    label: Grid Electricity Share
+    category: operational-emissions
+    unit: '%'
+    better_direction: lower
+    info_note: |
+      Operational emissions from purchased grid electricity as a
+      share of total operational emissions. Includes electricity
+      consumed by electric chillers, pumps, fans, lighting,
+      appliances, etc.
+
+      Share = Σ(GRID_ghg_ton) ÷ Σ(every *_ghg_ton) × 100
+        in [%]
+    source:
+      locator: get_lca_operation
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: column
+            name: GRID_ghg_ton
+        whole:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_hs_ghg_ton
+              - COAL_ww_ghg_ton
+              - DC_cdata_ghg_ton
+              - DC_cre_ghg_ton
+              - DC_cs_ghg_ton
+              - DH_hs_ghg_ton
+              - DH_ww_ghg_ton
+              - GRID_ghg_ton
+              - NG_hs_ghg_ton
+              - NG_ww_ghg_ton
+              - OIL_hs_ghg_ton
+              - OIL_ww_ghg_ton
+              - PV_ghg_ton
+              - SOLAR_hs_ghg_ton
+              - SOLAR_ww_ghg_ton
+              - WOOD_hs_ghg_ton
+              - WOOD_ww_ghg_ton
+
+  - id: emissions.heating_share_pct
+    label: Space Heating Share
+    category: operational-emissions
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of operational emissions attributable to space
+      heating, summed across every fuel / carrier (coal, oil,
+      natural gas, district heating, solar thermal, wood).
+      Electricity used for heat pumps rolls into the Grid
+      Electricity Share instead.
+
+      Share = Σ(*_hs_ghg_ton) ÷ Σ(every *_ghg_ton) × 100
+        in [%]
+    source:
+      locator: get_lca_operation
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_hs_ghg_ton
+              - DH_hs_ghg_ton
+              - NG_hs_ghg_ton
+              - OIL_hs_ghg_ton
+              - SOLAR_hs_ghg_ton
+              - WOOD_hs_ghg_ton
+        whole:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_hs_ghg_ton
+              - COAL_ww_ghg_ton
+              - DC_cdata_ghg_ton
+              - DC_cre_ghg_ton
+              - DC_cs_ghg_ton
+              - DH_hs_ghg_ton
+              - DH_ww_ghg_ton
+              - GRID_ghg_ton
+              - NG_hs_ghg_ton
+              - NG_ww_ghg_ton
+              - OIL_hs_ghg_ton
+              - OIL_ww_ghg_ton
+              - PV_ghg_ton
+              - SOLAR_hs_ghg_ton
+              - SOLAR_ww_ghg_ton
+              - WOOD_hs_ghg_ton
+              - WOOD_ww_ghg_ton
+
+  - id: emissions.dhw_share_pct
+    label: Domestic Hot Water Share
+    category: operational-emissions
+    unit: '%'
+    better_direction: neutral
+    info_note: |
+      Share of operational emissions attributable to domestic
+      hot water, summed across every fuel / carrier.
+
+      Share = Σ(*_ww_ghg_ton) ÷ Σ(every *_ghg_ton) × 100
+        in [%]
+    source:
+      locator: get_lca_operation
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_ww_ghg_ton
+              - DH_ww_ghg_ton
+              - NG_ww_ghg_ton
+              - OIL_ww_ghg_ton
+              - SOLAR_ww_ghg_ton
+              - WOOD_ww_ghg_ton
+        whole:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_hs_ghg_ton
+              - COAL_ww_ghg_ton
+              - DC_cdata_ghg_ton
+              - DC_cre_ghg_ton
+              - DC_cs_ghg_ton
+              - DH_hs_ghg_ton
+              - DH_ww_ghg_ton
+              - GRID_ghg_ton
+              - NG_hs_ghg_ton
+              - NG_ww_ghg_ton
+              - OIL_hs_ghg_ton
+              - OIL_ww_ghg_ton
+              - PV_ghg_ton
+              - SOLAR_hs_ghg_ton
+              - SOLAR_ww_ghg_ton
+              - WOOD_hs_ghg_ton
+              - WOOD_ww_ghg_ton
+
+  - id: emissions.fossil_fuel_share_pct
+    label: Fossil Fuel Share
+    category: operational-emissions
+    unit: '%'
+    better_direction: lower
+    info_note: |
+      Share of operational emissions from fossil fuels (coal,
+      natural gas, oil) burnt directly on-site for heating /
+      DHW. Indirect grid electricity is excluded — track that
+      via the Grid Electricity Share KPI.
+
+      Share = Σ(COAL/NG/OIL_*_ghg_ton) ÷ Σ(every *_ghg_ton) × 100
+        in [%]
+    source:
+      locator: get_lca_operation
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_hs_ghg_ton
+              - COAL_ww_ghg_ton
+              - NG_hs_ghg_ton
+              - NG_ww_ghg_ton
+              - OIL_hs_ghg_ton
+              - OIL_ww_ghg_ton
+        whole:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - COAL_hs_ghg_ton
+              - COAL_ww_ghg_ton
+              - DC_cdata_ghg_ton
+              - DC_cre_ghg_ton
+              - DC_cs_ghg_ton
+              - DH_hs_ghg_ton
+              - DH_ww_ghg_ton
+              - GRID_ghg_ton
+              - NG_hs_ghg_ton
+              - NG_ww_ghg_ton
+              - OIL_hs_ghg_ton
+              - OIL_ww_ghg_ton
+              - PV_ghg_ton
+              - SOLAR_hs_ghg_ton
+              - SOLAR_ww_ghg_ton
+              - WOOD_hs_ghg_ton
+              - WOOD_ww_ghg_ton

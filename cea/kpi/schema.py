@@ -75,6 +75,10 @@ class _AggregateNode(_StrictBase):
     kind: Literal["aggregate"]
     op: Literal["sum", "max", "min", "mean"]
     of: "FormulaNode"
+    # Optional unit-conversion factor applied to the aggregated
+    # scalar (e.g. 1000 to convert MWh→kWh or ton→kg without
+    # introducing a denominator). Defaults to 1.0 (no-op).
+    scale: float = 1.0
 
 
 class _DivideNode(_StrictBase):

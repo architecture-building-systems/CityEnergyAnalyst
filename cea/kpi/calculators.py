@@ -62,14 +62,20 @@ def evaluate(node, df: pd.DataFrame, *, kpi_id: str):
             )
         op = node.op
         if op == "sum":
-            return float(series.sum())
-        if op == "max":
-            return float(series.max())
-        if op == "min":
-            return float(series.min())
-        if op == "mean":
-            return float(series.mean())
-        raise KPIDefinitionError(f"{kpi_id}: unknown aggregate op '{op}'")
+            scalar = float(series.sum())
+        elif op == "max":
+            scalar = float(series.max())
+        elif op == "min":
+            scalar = float(series.min())
+        elif op == "mean":
+            scalar = float(series.mean())
+        else:
+            raise KPIDefinitionError(f"{kpi_id}: unknown aggregate op '{op}'")
+        # `scale` is an optional unit-conversion factor (defaults
+        # to 1.0). Lets a yml entry express "tons → kg" or
+        # "MWh → kWh" without forcing an artificial denominator
+        # via `divide`.
+        return scalar * float(getattr(node, "scale", 1.0))
 
     if kind == "divide":
         num = evaluate(node.numerator, df, kpi_id=kpi_id)

@@ -158,5 +158,14 @@ def _locator_method_names() -> set[str]:
 
 
 def kpis_for_feature(feature: str) -> Iterable[KPIDefinition]:
-    """Iterate over the KPIs whose ``category == feature``."""
-    return (k for k in load_registry().values() if k.category == feature)
+    """Iterate over KPIs whose id starts with ``<feature>.``.
+
+    Filters by id-prefix rather than the ``category`` field so the
+    yml's ``category`` is free to carry plot-group keys
+    (`lifecycle-emissions`, `cost-breakdown`, etc.) used by the
+    picker for visual grouping. Feature membership tracks the file
+    each KPI lives in (one file per feature; ids namespaced by
+    that feature's name).
+    """
+    prefix = f"{feature}."
+    return (k for k in load_registry().values() if k.id.startswith(prefix))
