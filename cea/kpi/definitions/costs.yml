@@ -1,0 +1,164 @@
+# Costs KPIs.
+#
+# Source CSV: outputs/data/costs/baseline_costs.csv (one row per
+# building or network, produced by `cea system-costs`). Column
+# meanings live in cea/schemas.yml under `get_baseline_costs`.
+# `GFA_m2` is co-located in the same CSV — no cross-file reads
+# needed.
+#
+# Currency: schema declares USD ([$USD(2015)/yr]). v1 locked-list
+# said EUR; switching to USD here to match the data. Re-label /
+# re-convert later when CEA gains a currency-conversion primitive.
+#
+# Cost-breakdown convention (from `get_baseline_costs`):
+#   - building-scale = on-site systems (boilers, chillers, PV…)
+#   - district-scale = networks + piping
+#
+# v1 locked-list talked about three components (buildings,
+# networks, supply); the actual schema is a 2-way split. Shipping
+# the 2-way split here; re-revisit if a future column adds the
+# 3-way split.
+#
+# Picker grouping uses the `cost-breakdown` plot key so each
+# entry lands under "Life Cycle Analysis → Costs" alongside the
+# matching plot card family.
+
+feature: costs
+
+kpis:
+  - id: costs.tac_usd_m2
+    label: Total Annualised Cost
+    category: cost-breakdown
+    unit: USD/m²
+    better_direction: lower
+    headline: true
+    info_note: |
+      Total annualised cost (Capex_a + Opex_a) divided by gross
+      floor area. Combines on-site building systems and
+      district-scale networks/piping into one number.
+
+      TAC = Σ(TAC_USD) ÷ Σ(GFA_m²)
+        in [USD/m²/yr]
+    description: >
+      Total annualised cost is the per-year amortised capital
+      expenditure plus annual operational expenditure. Divided
+      by GFA so the value scales meaningfully across districts
+      of different sizes.
+    source:
+      locator: get_baseline_costs
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: TAC_USD }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: costs.capex_intensity_usd_m2
+    label: Capex Intensity
+    category: cost-breakdown
+    unit: USD/m²
+    better_direction: lower
+    info_note: |
+      Annualised capital expenditure per unit gross floor area.
+
+      Capex_a / GFA = Σ(Capex_a_USD) ÷ Σ(GFA_m²)
+        in [USD/m²/yr]
+    source:
+      locator: get_baseline_costs
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: Capex_a_USD }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: costs.opex_intensity_usd_m2_yr
+    label: Opex Intensity
+    category: cost-breakdown
+    unit: USD/m²/yr
+    better_direction: lower
+    info_note: |
+      Total annual operational expenditure (fixed + variable)
+      per unit gross floor area.
+
+      Opex_a / GFA = Σ(Opex_a_USD) ÷ Σ(GFA_m²)
+        in [USD/m²/yr]
+    source:
+      locator: get_baseline_costs
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: Opex_a_USD }
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: costs.tac_buildings_usd_m2
+    label: TAC — Building Scale
+    category: cost-breakdown
+    unit: USD/m²
+    better_direction: lower
+    info_note: |
+      Annualised cost from on-site building systems only
+      (boilers, chillers, PV, etc.) — excludes networks and
+      central plant. Sums Capex_a + Opex_a for the building
+      scale.
+
+      TAC_buildings = Σ(Capex_a_building + Opex_a_building) ÷ Σ(GFA)
+        in [USD/m²/yr]
+    source:
+      locator: get_baseline_costs
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - Capex_a_building_scale_USD
+              - Opex_a_building_scale_USD
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
+
+  - id: costs.tac_district_usd_m2
+    label: TAC — District Scale
+    category: cost-breakdown
+    unit: USD/m²
+    better_direction: lower
+    info_note: |
+      Annualised cost from district-scale infrastructure
+      (thermal networks + piping). Sums Capex_a + Opex_a for
+      the district scale.
+
+      TAC_district = Σ(Capex_a_district + Opex_a_district) ÷ Σ(GFA)
+        in [USD/m²/yr]
+    source:
+      locator: get_baseline_costs
+      formula:
+        kind: divide
+        numerator:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns:
+              - Capex_a_district_scale_USD
+              - Opex_a_district_scale_USD
+        denominator:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: GFA_m2 }
