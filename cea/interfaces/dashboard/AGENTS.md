@@ -66,6 +66,10 @@ All transitions are auth-checked and row-locked (TOCTOU protection).
 
 Retry: `emit_with_retry()` (3 retries, exponential backoff).
 
+## Dashboard API Pattern
+
+Not every user action should become a background job. Keep fast synchronous API routes for lightweight, reusable domain operations. Promote an action to a native job when the user experience depends on persistent Job Info logs, streamed stdout/stderr, or parity with long-running workflow actions. In both cases, keep the business logic in shared service functions so API routes and jobs call the same implementation.
+
 ## Docker
 
 Server runs as PID 1 with a `SIGCHLD` handler (`setup_sigchld_handler` in `app.py`) that reaps zombie workers via `os.waitpid(-1, WNOHANG)`. Tini not required but easy to re-enable.

@@ -5,11 +5,32 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, field_validator
 
 from cea import MissingInputDataException
-from cea.interfaces.dashboard.api.utils import validate_scenario_name
-from cea.interfaces.dashboard.dependencies import CEAProjectRoot
+from cea.inputlocator import InputLocator
+from cea.interfaces.dashboard.api.utils import (
+    split_scenario_subpath,
+    validate_scenario_name_or_subpath,
+)
+from cea.interfaces.dashboard.dependencies import CEAConfig, CEAProjectRoot
 from cea.interfaces.dashboard.map_layers import get_layers_grouped_by_category, load_layer
 
 router = APIRouter()
+
+
+def _resolve_layer_scenario(config, params_project, params_scenario_name):
+    """Resolve project/scenario_name for layer fetches. Handles pathway-
+    child scenarios from two origins:
+
+    1. The active config points at a state folder (legacy pathway-
+       viewer flow) — split ``config.scenario`` directly.
+    2. The frontend supplied a path-like ``scenario_name`` (canvas
+       pathway-single columns) — `split_scenario_subpath` rebases it.
+
+    Otherwise the frontend values pass through unchanged.
+    """
+    scenario_path = config.scenario
+    if InputLocator.is_pathway_child_scenario(scenario_path):
+        return os.path.dirname(scenario_path), os.path.basename(scenario_path)
+    return split_scenario_subpath(params_scenario_name, params_project)
 
 
 class LayerParams(BaseModel):
@@ -20,7 +41,7 @@ class LayerParams(BaseModel):
     @field_validator('scenario_name')
     @classmethod
     def _validate_scenario_name(cls, v):
-        return validate_scenario_name(v)
+        return validate_scenario_name_or_subpath(v)
 
 
 class DeleteChoiceParams(BaseModel):
@@ -31,7 +52,7 @@ class DeleteChoiceParams(BaseModel):
     @field_validator('scenario_name')
     @classmethod
     def _validate_scenario_name(cls, v):
-        return validate_scenario_name(v)
+        return validate_scenario_name_or_subpath(v)
 
 
 class LayerDescription(BaseModel):
@@ -72,17 +93,16 @@ async def get_layers() -> LayersList:
 
 
 @router.post('/{layer_category}/{layer_name}/{parameter}/choices')
-async def get_layer_parameter_choices(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str, parameter: str):
+async def get_layer_parameter_choices(config: CEAConfig, project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str, parameter: str):
     layer_class = load_layer(layer_name, layer_category)
 
     project_path = params.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
 
-    # Update params.project if there is project_root
-    params.project = project_path
+    eff_project, eff_scenario = _resolve_layer_scenario(config, project_path, params.scenario_name)
     try:
-        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer = layer_class(project=eff_project, scenario_name=eff_scenario)
         choices = layer.get_parameter_choices(parameter, params.parameters)
     except ValueError as e:
         print(e)
@@ -93,6 +113,7 @@ async def get_layer_parameter_choices(project_root: CEAProjectRoot, params: Laye
 
 @router.post('/{layer_category}/{layer_name}/{parameter}/choice/delete')
 async def delete_layer_parameter_choice(
+    config: CEAConfig,
     project_root: CEAProjectRoot,
     params: DeleteChoiceParams,
     layer_category: str,
@@ -105,8 +126,9 @@ async def delete_layer_parameter_choice(
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
 
+    eff_project, eff_scenario = _resolve_layer_scenario(config, project_path, params.scenario_name)
     try:
-        layer = layer_class(project=project_path, scenario_name=params.scenario_name)
+        layer = layer_class(project=eff_project, scenario_name=eff_scenario)
         layer.delete_parameter_choice(parameter, params.value)
     except NotImplementedError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -119,17 +141,16 @@ async def delete_layer_parameter_choice(
 
 
 @router.post('/{layer_category}/{layer_name}/{parameter}/range')
-async def get_layer_parameter_range(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str, parameter: str):
+async def get_layer_parameter_range(config: CEAConfig, project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str, parameter: str):
     layer_class = load_layer(layer_name, layer_category)
 
     project_path = params.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
 
-    # Update params.project if there is project_root
-    params.project = project_path
+    eff_project, eff_scenario = _resolve_layer_scenario(config, project_path, params.scenario_name)
     try:
-        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer = layer_class(project=eff_project, scenario_name=eff_scenario)
         range_values = layer.get_parameter_range(parameter, params.parameters)
     except ValueError as e:
         print(e)
@@ -139,17 +160,16 @@ async def get_layer_parameter_range(project_root: CEAProjectRoot, params: LayerP
 
 
 @router.post('/{layer_category}/{layer_name}/generate')
-async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
+async def generate_map_layer(config: CEAConfig, project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)
 
     project_path = params.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
 
-    # Update params.project if there is project_root
-    params.project = project_path
+    eff_project, eff_scenario = _resolve_layer_scenario(config, project_path, params.scenario_name)
     try:
-        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer = layer_class(project=eff_project, scenario_name=eff_scenario)
         output = layer.generate_output(params.parameters)
     except MissingInputDataException as e:
         print(e)
@@ -162,18 +182,16 @@ async def generate_map_layer(project_root: CEAProjectRoot, params: LayerParams, 
 
 
 @router.post('/{layer_category}/{layer_name}/check')
-async def check_map_layer(project_root: CEAProjectRoot,params: LayerParams, layer_category: str, layer_name: str):
+async def check_map_layer(config: CEAConfig, project_root: CEAProjectRoot, params: LayerParams, layer_category: str, layer_name: str):
     layer_class = load_layer(layer_name, layer_category)
 
     project_path = params.project
     if project_root is not None and not project_path.startswith(project_root):
         project_path = os.path.join(project_root, project_path)
 
-    # Update params.project if there is project_root
-    params.project = project_path
-
+    eff_project, eff_scenario = _resolve_layer_scenario(config, project_path, params.scenario_name)
     try:
-        layer = layer_class(project=params.project, scenario_name=params.scenario_name)
+        layer = layer_class(project=eff_project, scenario_name=eff_scenario)
         layer.check_for_missing_input_files(params.parameters)
     except MissingInputDataException as e:
         print(e)

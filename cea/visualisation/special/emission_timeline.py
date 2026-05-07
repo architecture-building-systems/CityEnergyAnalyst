@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 
 import pandas as pd
 import plotly.graph_objs as go
 import cea.config
+from cea.inputlocator import InputLocator
 from cea.visualisation.a_data_loader import plot_input_processor
 from cea.visualisation.b_data_processor import calc_x_y_metric
 from cea.visualisation.format.plot_colours import COLOURS_TO_RGB
+from cea.visualisation.special._error_html import (
+    generic_error_html,
+    has_emissions_timeline,
+    list_available_whatif_names,
+    whatif_mismatch_html,
+)
 from cea.import_export.result_summary import filter_buildings
 
 __author__ = "Zhongming Shi"
@@ -48,23 +56,41 @@ class EmissionTimelinePlot:
         period_end : int, optional
             End year for filtering data. If None, use all data to the end.
         """
-        # Filter dataframe by period if specified
+        # Apply the period window without dropping rows: years
+        # outside the requested window keep their place on the
+        # x-axis but their y-columns are zeroed out. Two reasons:
+        #   1. Multi-pathway views align rows by year — keeping
+        #      every X tick stops shorter pathways from squashing
+        #      sideways and lets identical years line up vertically.
+        #   2. Cumulation runs *after* this step (`data.cumsum()` in
+        #      the plot helpers), so zeroing pre-cutoff y-values
+        #      means the cumulative curve sits at zero through the
+        #      pre-cutoff window and starts growing fresh from
+        #      `period_start`. The visible curve "sinks" relative
+        #      to plotting the same data without a cutoff, while
+        #      the y-axis still reads from the full data range.
+        self.df = df_to_plotly.copy()
+        # Snapshot of the un-zeroed dataframe — used by
+        # ``_full_y_bounds`` to keep the chart's y-axis on the same
+        # scale it would have if no cutoff were applied. Without
+        # this, auto-fit picks a smaller range over the
+        # post-cutoff totals and the curve fills the visible
+        # window instead of "sinking" within the original scale.
+        self._full_df = df_to_plotly.copy()
         if period_start is not None or period_end is not None:
-            # Convert X column to numeric for comparison
-            # Handle formats like 'Y_2024' or just '2024'
-            x_values = df_to_plotly['X'].astype(str).str.replace('Y_', '', regex=False)
-            x_values = pd.to_numeric(x_values, errors='coerce')
-            # Create mask with the same index as df_to_plotly to avoid alignment errors
-            mask = pd.Series(True, index=df_to_plotly.index)
-
+            # Handle X formats like 'Y_2024' or just '2024'.
+            x_numeric = pd.to_numeric(
+                self.df['X'].astype(str).str.replace('Y_', '', regex=False),
+                errors='coerce',
+            )
+            outside_window = pd.Series(False, index=self.df.index)
             if period_start is not None:
-                mask &= x_values >= period_start
+                outside_window |= x_numeric < period_start
             if period_end is not None:
-                mask &= x_values <= period_end
-
-            self.df = df_to_plotly[mask].copy()
-        else:
-            self.df = df_to_plotly
+                outside_window |= x_numeric > period_end
+            if outside_window.any():
+                y_cols = [c for c in self.df.columns if c != 'X']
+                self.df.loc[outside_window, y_cols] = 0
 
         self.y_columns = list_y_columns
         self.plot_title = plot_title
@@ -145,6 +171,47 @@ class EmissionTimelinePlot:
                 }
 
         return aggregated_data
+
+    def _full_y_bounds(self):
+        """Return ``(y_min, y_max)`` computed from the un-zeroed
+        full dataframe so the chart's y-axis can be pinned to the
+        scale of the un-cut equivalent. Only meaningful when a
+        cutoff window is active and the plot is cumulative — for
+        every other case the auto-fit range is already correct.
+
+        Returns ``(None, None)`` when nothing's available (no
+        cutoff window, no full snapshot, empty dataframe, no
+        categorised columns).
+        """
+        if self.period_start is None and self.period_end is None:
+            return None, None
+        if self._full_df is None or self._full_df.empty:
+            return None, None
+
+        # Re-run categorisation against the un-zeroed snapshot.
+        saved_df = self.df
+        self.df = self._full_df
+        try:
+            aggregated = self._aggregate_into_9_categories()
+        finally:
+            self.df = saved_df
+        if not aggregated:
+            return None, None
+
+        positive_total = None
+        negative_total = None
+        for info in aggregated.values():
+            data = info['data']
+            if self.bool_accumulated:
+                data = data.cumsum()
+            if info['positive']:
+                positive_total = data if positive_total is None else positive_total + data
+            else:
+                negative_total = data if negative_total is None else negative_total + data
+
+        y_max = float(positive_total.max()) if positive_total is not None else None
+        y_min = float(negative_total.min()) if negative_total is not None else None
+        return y_min, y_max
 
     def categorize_and_aggregate_emissions(self):
         """
@@ -273,9 +340,11 @@ class EmissionTimelinePlot:
         if self.bool_accumulated:
             y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
 
-        # Configure y-axis range and step from config
+        # Configure y-axis range and step from config. The y-axis
+        # title is intentionally omitted — the unit travels in the
+        # plot title built by ``_build_title`` below, matching the
+        # ``{Y} ({unit}) by {X}`` format used across CEA plots.
         yaxis_config = dict(
-            title=y_axis_title,
             showgrid=True,
             gridcolor='rgba(200,200,200,0.3)',
             zeroline=True,
@@ -288,6 +357,13 @@ class EmissionTimelinePlot:
         y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
         y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
 
+        # When the user hasn't pinned y-min/y-max but a cutoff is
+        # active, fall back to the un-zeroed full-data range so the
+        # curve "sinks" within the same scale as the un-cut chart.
+        if y_min is None and y_max is None:
+            full_y_min, full_y_max = self._full_y_bounds()
+            y_min, y_max = full_y_min, full_y_max
+
         if y_min is not None or y_max is not None:
             yaxis_config['range'] = [y_min, y_max]
 
@@ -297,14 +373,13 @@ class EmissionTimelinePlot:
 
         fig.update_layout(
             title=dict(
-                text=self.plot_title,
+                text=self._build_title(y_axis_title),
                 x=0,
                 xanchor='left',
                 yanchor='top',
                 font=dict(size=20),
             ),
             xaxis=dict(
-                title='Time horizon - Year',
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
@@ -389,18 +464,14 @@ class EmissionTimelinePlot:
                 hovertemplate=f'<b>Net-Zero Target Year: {net_zero_target_year}</b><extra></extra>'
             ))
 
-        # Update layout
+        # Update layout. y_axis_title carries the unit (e.g.
+        # "Cumulative Net Emissions (kgCO2e)") and is inlined into
+        # the plot title via ``_build_title`` — the chart's own
+        # axis titles are dropped to keep the layout clean.
         y_axis_title = self._get_y_axis_label()
         y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Net Emissions')
 
-        # Add cumulative suffix to title
-        plot_title = self.plot_title
-        if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
-
-        # Configure y-axis range and step from config
         yaxis_config = dict(
-            title=y_axis_title,
             showgrid=True,
             gridcolor='rgba(200,200,200,0.3)',
             zeroline=True,
@@ -413,6 +484,12 @@ class EmissionTimelinePlot:
         y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
         y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
 
+        # See ``_create_line_plot`` — keep cutoff plots on the
+        # un-zeroed scale so the curve sinks instead of expanding.
+        if y_min is None and y_max is None:
+            full_y_min, full_y_max = self._full_y_bounds()
+            y_min, y_max = full_y_min, full_y_max
+
         if y_min is not None or y_max is not None:
             yaxis_config['range'] = [y_min, y_max]
 
@@ -422,12 +499,11 @@ class EmissionTimelinePlot:
 
         fig.update_layout(
             title=dict(
-                text=plot_title,
+                text=self._build_title(y_axis_title),
                 x=0,
                 xanchor='left'
             ),
             xaxis=dict(
-                title='Time horizon - Year',
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
@@ -554,7 +630,11 @@ class EmissionTimelinePlot:
                 hovertemplate=f'<b>{display_name}</b><br>Year: %{{x}}<br>{hover_label}: {hover_format}<extra></extra>'
             ))
 
-        # Update layout
+        # Update layout. y_axis_title carries the unit (e.g.
+        # "Cumulative Emissions (kgCO2e)" or "Percentage (%)") and
+        # is inlined into the plot title via ``_build_title`` — the
+        # chart's own axis titles are dropped to keep the layout
+        # clean.
         if percentage:
             y_axis_title = 'Percentage (%)'
         else:
@@ -562,14 +642,7 @@ class EmissionTimelinePlot:
             if self.bool_accumulated:
                 y_axis_title = y_axis_title.replace('Emissions', 'Cumulative Emissions')
 
-        # Add cumulative suffix to title
-        plot_title = self.plot_title
-        if 'cumulative' not in plot_title.lower():
-            plot_title = plot_title.replace('Emission Timeline', 'Emission Timeline (Cumulative)')
-
-        # Configure y-axis range and step from config
         yaxis_config = dict(
-            title=y_axis_title,
             showgrid=True,
             gridcolor='rgba(200,200,200,0.3)',
             zeroline=True,
@@ -578,25 +651,37 @@ class EmissionTimelinePlot:
             # Allow negative values to show below x-axis with stackgroup='negative'
         )
 
-        # Apply y-axis min/max if specified in config
-        y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
-        y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
+        # Apply y-axis min/max + step from config — but skip them
+        # in percentage mode. The form may carry stale absolute
+        # values from a prior plot-type (e.g. y_max = 7e7 from a
+        # `shaded_stack_cumulative` run); applying that range to
+        # 0–100% data squashes everything to a flat strip near
+        # zero. Auto-fit in percentage mode is the right default.
+        if not percentage:
+            y_min = getattr(self.config.plots_emission_timeline, 'y_min', None)
+            y_max = getattr(self.config.plots_emission_timeline, 'y_max', None)
 
-        if y_min is not None or y_max is not None:
-            yaxis_config['range'] = [y_min, y_max]
+            # See ``_create_line_plot`` — keep cutoff plots on the
+            # un-zeroed scale so the curve sinks instead of
+            # expanding. Skipped in percentage mode because that
+            # axis is always ``[0, 100]`` regardless of cutoff.
+            if y_min is None and y_max is None:
+                full_y_min, full_y_max = self._full_y_bounds()
+                y_min, y_max = full_y_min, full_y_max
 
-        # Apply y-axis step if specified in config
-        if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
-            yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
+            if y_min is not None or y_max is not None:
+                yaxis_config['range'] = [y_min, y_max]
+
+            if hasattr(self.config.plots_emission_timeline, 'y_step') and self.config.plots_emission_timeline.y_step is not None:
+                yaxis_config['dtick'] = self.config.plots_emission_timeline.y_step
 
         fig.update_layout(
             title=dict(
-                text=plot_title,
+                text=self._build_title(y_axis_title),
                 x=0,
                 xanchor='left'
             ),
             xaxis=dict(
-                title='Time horizon - Year',
                 showgrid=True,
                 gridcolor='rgba(200,200,200,0.3)'
             ),
@@ -645,6 +730,25 @@ class EmissionTimelinePlot:
         display_name = base_name.replace('_', ' ').title()
 
         return display_name
+
+    def _build_title(self, y_label):
+        """
+        Build the in-chart title from the y-axis label and the
+        subtitle that callers set on `self.plot_title`.
+
+        Format: `<b>{y_label} by Year</b><br><sub>{subtitle}</sub>`.
+        The subtitle (e.g. ``CEA-4 Emission Timeline | scenario | whatif``)
+        is parsed back out of ``self.plot_title`` so call sites stay
+        the single source of truth for it; the bold portion is
+        rewritten here to inline the unit (carried by ``y_label``)
+        and drop the now-redundant axis titles.
+        """
+        match = re.search(r'<sub>(.*?)</sub>', self.plot_title or '')
+        subtitle = match.group(1) if match else ''
+        bold = f'{y_label} by Year'
+        if subtitle:
+            return f'<b>{bold}</b><br><sub>{subtitle}</sub>'
+        return f'<b>{bold}</b>'
 
     def _get_y_axis_label(self):
         """
@@ -959,19 +1063,29 @@ def main(config):
 
     # Multi what-if: one figure per scenario with aligned y-axes
     slots = []
+    scenario_name = os.path.basename(config.scenario)
+    locator = InputLocator(config.scenario)
+    available_whatifs = list_available_whatif_names(locator, has_emissions_timeline)
     for whatif_name in whatif_names:
         try:
             context = plot_config.context
             context['feature'] = 'emission-timeline'
             fig = plot_emission_timeline_single(config, context, whatif_name)
             slots.append(('ok', whatif_name, fig))
-        except Exception as e:
-            slots.append(('err', whatif_name, (
-                f'<div style="padding:20px;border:2px solid #ff6b6b;border-radius:5px;'
-                f'background:#ffe0e0;margin:12px 0">'
-                f'<h3>Error plotting <em>{whatif_name}</em></h3>'
-                f'<code>{e}</code></div>'
+        except FileNotFoundError:
+            slots.append(('err', whatif_name, whatif_mismatch_html(
+                scenario_name=scenario_name,
+                whatif_name=whatif_name,
+                label='Emission timeline',
+                tool=getattr(config, '_feature_label', 'the upstream tool'),
+                available=available_whatifs,
             )))
+        except Exception:
+            slots.append((
+                'err',
+                whatif_name,
+                generic_error_html(title=f'Error plotting {whatif_name}'),
+            ))
 
     # Align y-axes across all figures
     global_y_min = global_y_max = None

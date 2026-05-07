@@ -1219,6 +1219,12 @@ def auto_create_plant_nodes(nodes_gdf, edges_gdf, zone_gdf, plant_building_names
                 "  1. Remove plant building specifications from config (cooling-plant-building/heating-plant-building), OR\n"
                 "  2. Remove PLANT nodes from your network layout shapefile"
             )
+        if network_type == 'DH' and itemised_dh_services:
+            desired_plant_type = get_plant_type_from_services(itemised_dh_services, network_type)
+            current_plant_types = set(nodes_gdf.loc[existing_plants.index, 'type'].dropna().tolist())
+            if current_plant_types != {desired_plant_type}:
+                nodes_gdf.loc[existing_plants.index, 'type'] = desired_plant_type
+                print(f"    - Updated existing DH plant node(s) to {desired_plant_type}")
         print("  Plants already exist, skipping auto-creation")
         return nodes_gdf, edges_gdf, []
 
@@ -2061,23 +2067,6 @@ class NetworkLayout:
             )
         # Ensure network name is stripped of flanking whitespaces
         network_name = network_name.strip()
-
-        # Safety check: Verify network doesn't already exist (backend validation fallback)
-        exists = []
-        for network_type in network_types:
-            output_folder = locator.get_output_thermal_network_type_folder(network_type, network_name)
-            if os.path.exists(output_folder):
-                edges_path = locator.get_network_layout_edges_shapefile(network_type, network_name)
-                nodes_path = locator.get_network_layout_nodes_shapefile(network_type, network_name)
-                if os.path.exists(edges_path) or os.path.exists(nodes_path):
-                    exists.append(network_type)
-
-        if exists:
-            existing_networks = ', '.join(exists)
-            raise ValueError(
-                f"Network with name '{network_name}' already exists for network types: {existing_networks}. "
-                "Choose a different name or delete the existing network."
-            )
         return network_name
 
 
@@ -2225,9 +2214,12 @@ def process_user_defined_network(config, locator, network_layout, edges_shp, nod
         # Using supply-derived per-service lists (not network_building_names) is
         # essential because the loaded network is a merged universal trench —
         # assigning all its buildings to both services would cross-contaminate
-        # DC and DH in the filter-mode intersection at line 2192-2193.
-        list_cooling_buildings = buildings_to_validate_dc
-        list_heating_buildings = buildings_to_validate_dh
+        # DC and DH in the filter-mode intersection further down.
+        # Wrap in ``list(...)`` to create copies — downstream reassignments go
+        # through ``sorted(...)``, but defensive copying keeps ``buildings_to_validate_*``
+        # safe from any future in-place mutation of the per-service lists.
+        list_cooling_buildings = list(buildings_to_validate_dc)
+        list_heating_buildings = list(buildings_to_validate_dh)
 
         # Combine DC and DH buildings (union - unique values only)
         buildings_to_validate = list(set(buildings_to_validate_dc) | set(buildings_to_validate_dh))
@@ -2708,6 +2700,13 @@ def main(config: cea.config.Configuration):
     snap_tolerance = config.network_layout.snap_tolerance if config.network_layout.snap_tolerance else SNAP_TOLERANCE
 
     print(f"Network name: {network_layout.network_name}")
+
+    target_folder = locator.get_thermal_network_folder_network_name_folder(
+        network_layout.network_name
+    )
+    if os.path.isdir(target_folder):
+        print(f"  Removing existing network folder: {target_folder}")
+        shutil.rmtree(target_folder)
 
     # Check if user provided a custom network layout
     existing_network = config.network_layout.existing_network

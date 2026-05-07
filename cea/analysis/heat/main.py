@@ -37,7 +37,7 @@ def main(config: cea.config.Configuration):
     whatif_names = config.what_ifs.what_if_name
     if not whatif_names:
         raise ValueError(
-            "what-if-name is required. Please select at least one what-if scenario."
+            "what-if-name is required. Please select at least one What-if Scenario."
         )
     if isinstance(whatif_names, str):
         whatif_names = [whatif_names]

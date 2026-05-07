@@ -1,0 +1,160 @@
+# Centralised tooltip content for the CEA GUI.
+# Keys are referenced by frontend components.
+# Each entry has: title (optional), body (required for rich tooltips).
+
+# Pathway Builder
+pathway-builder:
+  title: Pathway Builder
+  body: >-
+    A CEA Pathway defines how a district evolves over time, which buildings
+    are constructed, demolished, or retrofitted at each year.
+    Create multiple Pathways to compare different development scenarios
+    and the impact of different decarbonisation strategies.
+
+pathway-viewer:
+  title: Pathway Viewer
+  body: >-
+    Only fully baked Pathways are shown here.
+    Use Pathway Builder to create Pathways.
+
+create-new-pathway:
+  body: Create new pathway
+
+define-intervention-template:
+  body: Define intervention template
+
+intervention-templates:
+  title: Intervention Templates
+  body: >-
+    Reusable modification recipes (e.g. wall insulation upgrade, HVAC retrofit)
+    that change building properties for selected Archetypes.
+    Define once, apply to any year across any Pathway.
+
+refresh-pathway:
+  body: Refresh
+
+simulate-pathway:
+  title: Simulate Pathway
+  body: |-
+    To enable, ensure:
+    1. Only one Pathway is checked
+    2. All states are baked (blue nodes)
+
+add-building-event-or-intervention:
+  title: Add a Building Event or Apply an Intervention
+  body: >-
+    Enter a year, then choose an action. Select an intervention
+    template to apply it directly. Clear the selection to add a
+    building event instead.
+
+bake-states:
+  title: Bake States
+  body: >-
+    Bake materialises state folders from the pathway log.
+    Run after creating building events or applying interventions.
+    Required before simulation.
+
+state-types:
+  title: State Types
+  body: |-
+    Auto-Stock: Buildings with a construction year matching this state year.
+    Construct-Event: Buildings explicitly added in this year.
+    Demolish-Event: Buildings explicitly removed in this year.
+    Intervention: Building property modifications applied via intervention templates.
+
+# Inspector section cards
+construction-card:
+  title: Construction
+  body: >-
+    Buildings constructed in this state year. A building with (N) indicates
+    it has been rebuilt N times after demolition.
+
+demolition-card:
+  title: Demolition
+  body: Buildings demolished in this state year.
+
+intervention-card:
+  title: Intervention
+  body: >-
+    Building property modifications applied via intervention templates
+    for the listed archetypes.
+
+# Building lifecycle
+building-lifecycle:
+  title: Building Event Timeline
+  body: >-
+    Timeline of this building's construction and demolition events across checked pathways.
+    Solid nodes indicate construction (Rebuilt(N) for rebuilds after demolition).
+    Hollow nodes indicate demolition.
+    Solid lines show active periods, dashed lines show gaps or pre-existence.
+    Click a building pill in the inspector or a building on the map to view.
+
+# Map legends
+construction-archetypes-info:
+  body: >-
+    Construction Archetypes define the building envelope and systems standards.
+    Assign in Input Editor > zone (const_type).
+    Edit or add in Database Editor > CONSTRUCTION_ARCHETYPES.
+
+main-use-type-info:
+  body: >-
+    Main use type is the use type with the highest occupancy ratio.
+    Assign in Input Editor > zone (use_type1, use_type2, use_type3 and their ratios).
+    Edit or add in Database Editor > USE_TYPES.
+
+# Map layer legend card — how the colour-range dropdown works
+map-layer-range-mode:
+  title: Total Range vs. Period Range
+  body: |-
+    Total Range - bar heights are normalised to each entity's full-year sum. Absolute scale; narrow periods look short.
+    Period Range - bar heights are normalised to the current period's max. Rescales with the slider for maximum contrast within the period.
+
+# Canvas Builder — navigator toggles
+canvas-sync-maps:
+  title: Sync Maps
+  body: |-
+    On - every map card mirrors the overview map.
+    Off - each map card holds its own view and overlays.
+
+canvas-fix-layout:
+  title: Fix Layout
+  body: |-
+    On - card positions and sizes are locked; editing controls stay available.
+    Off - cards can be dragged and resized as usual.
+
+canvas-enable-edit:
+  title: Enable Edit
+  body: |-
+    On - editing controls are visible; the canvas is interactive.
+    Off - editing controls are hidden for a clean snapshot.
+
+# Canvas Builder — Add Scenario to compare
+canvas-compare:
+  title: Add Scenario to compare
+  body: |-
+    Side-by-side comparison across scenarios.
+
+    The leftmost column is your "origin" — the only column where you can edit cards. Every other column mirrors the origin's structure but renders against its own scenario's data. Add or remove a card on the origin and every column reflects the change.
+
+    Up to 4 columns total (origin + 3 picks).
+
+    Click the `+` next to the scenario title to open the picker. Pre-fills with your last picks if you've compared before. Remove a column with the `×` in its title; removing the last comparison column folds back to the single-column view.
+
+# Canvas Builder — share / import limitations
+canvas-share:
+  title: Share canvas
+  body: |-
+    Bundles the canvas folder into a .zip you can hand off.
+
+    The recipient gets the structure (layout, card picks, plot scripts) and - when they import it - your numbers re-render against their scenario. Two modes:
+    - Same scenario / what-if names in their project → full round-trip.
+    - Different names → template share. They keep the structure; columns referencing scenarios they don't have won't resolve.
+
+canvas-import:
+  title: Import canvas
+  body: |-
+    Unpacks a canvas .zip into the current scenario.
+
+    The canvas keeps the .zip's config (layout, card picks, plot scripts) but renders against the current scenario's data - donor's structure, your numbers.
+
+    If the .zip's column references match a scenario / what-if name in your project they resolve normally; otherwise those columns stay as a template placeholder.

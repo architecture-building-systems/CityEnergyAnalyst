@@ -349,6 +349,70 @@ async def update_project(project_root: CEAProjectRoot, config: CEAConfig, scenar
         )
 
 
+class ChildScenarioPayload(BaseModel):
+    pathway_name: str
+    year: int
+
+
+@router.put('/child-scenario')
+async def switch_to_child_scenario(config: CEAConfig, payload: ChildScenarioPayload):
+    """Switch the config scenario to a pathway state folder."""
+    # Resolve parent scenario first in case we're already in a child state
+    current = config.scenario
+    parent_scenario = cea.inputlocator.InputLocator.parent_scenario_for_pathway_child(current)
+
+    locator = cea.inputlocator.InputLocator(parent_scenario)
+    state_folder = locator.get_state_in_time_scenario_folder(payload.pathway_name, payload.year)
+
+    if not os.path.isdir(state_folder):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"State folder not found for pathway '{payload.pathway_name}' year {payload.year}.",
+        )
+
+    config.scenario = state_folder
+    if isinstance(config, CEADatabaseConfig):
+        await config.save()
+    else:
+        config.save()
+
+    return {
+        'child_scenario': state_folder,
+        'parent_scenario': parent_scenario,
+        'pathway_name': payload.pathway_name,
+        'year': payload.year,
+    }
+
+
+@router.delete('/child-scenario')
+async def switch_to_parent_scenario(config: CEAConfig):
+    """Switch back from a pathway state folder to the parent scenario."""
+    current = config.scenario
+    # State folders follow pattern:
+    #   .../scenario_name/outputs/pathways/{pathway}/state_{year}
+    # Parent scenario is everything before /outputs/pathways/.
+    pathways_marker = cea.inputlocator.InputLocator.pathway_child_marker()
+    idx = current.find(pathways_marker)
+    if idx < 0:
+        # Already at parent scenario
+        return {'scenario': current, 'was_child': False}
+
+    parent_scenario = current[:idx]
+    if not os.path.isdir(parent_scenario):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Parent scenario folder not found: {parent_scenario}",
+        )
+
+    config.scenario = parent_scenario
+    if isinstance(config, CEADatabaseConfig):
+        await config.save()
+    else:
+        config.save()
+
+    return {'scenario': parent_scenario, 'was_child': True}
+
+
 # TODO: Rename this endpoint once the old one is removed
 # Temporary endpoint to prevent breaking existing frontend
 @router.post('/scenario/v2', dependencies=[CEASeverDemoAuthCheck])

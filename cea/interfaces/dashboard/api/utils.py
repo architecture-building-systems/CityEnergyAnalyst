@@ -16,6 +16,42 @@ def validate_scenario_name(scenario_name: str) -> str:
     return scenario_name
 
 
+def validate_scenario_name_or_subpath(scenario_name: str) -> str:
+    """Validate that scenario_name is either a bare name or a project-
+    relative sub-path (e.g. ``<scenario>/outputs/pathways/<name>/state_<year>``
+    used by the canvas pathway-single columns). Rejects path traversal
+    (``..``) and absolute paths but allows forward-slash separators so
+    callers can target child scenarios that live inside a parent's
+    ``outputs`` folder."""
+    scenario_name = os.path.normpath(scenario_name)
+    if (
+        scenario_name == "."
+        or scenario_name.startswith("..")
+        or os.path.isabs(scenario_name)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario name: {scenario_name}. Path traversal not allowed.",
+        )
+    return scenario_name
+
+
+def split_scenario_subpath(scenario_name: str, project: str) -> tuple:
+    """If ``scenario_name`` is a project-relative sub-path, join it with
+    ``project`` and split into ``(project_dir, basename)`` so callers
+    can set ``config.project`` / ``config.scenario_name`` to bare
+    values. Otherwise returns ``(project, scenario_name)`` unchanged.
+
+    Used by endpoints that accept the canvas pathway-single columns'
+    child-state paths (``<scenario>/outputs/pathways/<name>/state_<year>``)
+    and need a bare scenario name downstream.
+    """
+    if scenario_name and os.sep in scenario_name:
+        full_path = os.path.join(project, scenario_name)
+        return os.path.dirname(full_path), os.path.basename(full_path)
+    return project, scenario_name
+
+
 def deconstruct_parameters(p: cea.config.Parameter, config=None):
     params = {'name': p.name, 'type': type(p).__name__, 'nullable': p.nullable, 'help': p.help}
     try:

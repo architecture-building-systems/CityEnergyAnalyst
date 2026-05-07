@@ -6,12 +6,16 @@ import cea.interfaces.dashboard.api.dashboards as dashboards
 import cea.interfaces.dashboard.api.databases as databases
 import cea.interfaces.dashboard.api.downloads as downloads
 import cea.interfaces.dashboard.api.glossary as glossary
+import cea.interfaces.dashboard.api.pathways as pathways
 import cea.interfaces.dashboard.api.project as project
 import cea.interfaces.dashboard.api.tools as tools
+import cea.interfaces.dashboard.api.tooltips as tooltips
 import cea.interfaces.dashboard.api.weather as weather
 import cea.interfaces.dashboard.api.geometry as geometry
 import cea.interfaces.dashboard.api.map_layers as map_layers
 import cea.interfaces.dashboard.api.user as user
+import cea.interfaces.dashboard.api.reports as reports
+import cea.interfaces.dashboard.api.canvas as canvas
 
 router = APIRouter()
 
@@ -21,9 +25,13 @@ router.include_router(dashboards.router, prefix="/dashboards")
 router.include_router(databases.router, prefix="/databases")
 router.include_router(downloads.router, prefix="/downloads")
 router.include_router(glossary.router, prefix="/glossary")
+router.include_router(pathways.router, prefix="/pathways")
 router.include_router(project.router, prefix="/project")
 router.include_router(tools.router, prefix="/tools")
+router.include_router(tooltips.router, prefix="/tooltips")
 router.include_router(weather.router, prefix="/weather")
 router.include_router(geometry.router, prefix="/geometry")
 router.include_router(map_layers.router, prefix="/map_layers")
 router.include_router(user.router, prefix="/user")
+router.include_router(reports.router, prefix="/reports")
+router.include_router(canvas.router, prefix="/canvas")

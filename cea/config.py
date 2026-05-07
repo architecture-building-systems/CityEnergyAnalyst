@@ -832,18 +832,6 @@ class WhatIfNameParameter(StringParameter):
                 f"Avoid: {' '.join(invalid_chars)}"
             )
 
-        # Check for collision with existing what-if scenarios
-        scenario = self.config.scenario
-        locator = cea.inputlocator.InputLocator(scenario)
-
-        # Check if final-energy folder exists for this what-if name
-        whatif_folder = locator.get_analysis_folder(value)
-        if os.path.exists(whatif_folder):
-            raise ValueError(
-                f"What-if (sub)scenario '{value}' already exists. "
-                f"Choose a different name or delete the existing one."
-            )
-
         return value
 
     def encode(self, value):
@@ -899,18 +887,6 @@ class NetworkLayoutNameParameter(StringParameter):
             raise ValueError(
                 f"Network name contains invalid characters. "
                 f"Avoid: {' '.join(invalid_chars)}"
-            )
-
-        # Check for collision with existing networks
-        scenario = self.config.scenario
-        locator = cea.inputlocator.InputLocator(scenario)
-
-        # Check network folder exists
-        network_folder = locator.get_thermal_network_folder_network_name_folder(value)
-        if os.path.exists(network_folder):
-            raise ValueError(
-                f"Network '{value}' already exists. "
-                f"Choose a different name or delete the existing network."
             )
 
         return value
@@ -1000,12 +976,16 @@ class ChoiceParameter(ChoiceParameterBase):
     """A parameter that can only take on values from a specific set of values"""
 
     def encode(self, value) -> str:
+        # Unwrap list inputs from the GUI (e.g. [] or ['value'])
+        if isinstance(value, list):
+            value = value[0] if len(value) == 1 else None if len(value) == 0 else value
+
         _value = str(value).strip() if value is not None else ''
 
         # Allow empty/None values if parameter is nullable
         if self.nullable and _value == '':
             return ''
-        
+
         # Validate that the value is one of the allowed choices
         if _value not in self._choices:
             raise ValueError(
@@ -1538,33 +1518,39 @@ class WhatIfNameMultiChoiceParameter(MultiChoiceParameter):
             if not os.path.exists(analysis_root):
                 return []
             mode = self.config.default_config.get(self.section.name, f"{self.name}.mode", fallback=None)
-            # Sort by most-recently-modified directory first so plot forms
-            # default to the just-run what-if (matches the LCA map layers'
-            # `get_whatif_names` ordering). Skips hidden entries like
-            # macOS ``.DS_Store`` and non-directories.
+            # Per mode, pick the specific output file whose mtime we'll
+            # sort by. Overwriting a file doesn't reliably bump the
+            # parent folder's mtime on common filesystems, so sorting
+            # by folder mtime alone leaves just-re-run scenarios at
+            # their old position. Sorting by the key file's mtime
+            # (and filtering out names whose file is missing) makes
+            # the just-run what-if appear first in the dropdown.
+            mode_path_fn = {
+                'final_energy':   locator.get_final_energy_buildings_file,
+                'heat_rejection': locator.get_heat_rejection_whatif_buildings_file,
+                'costs':          locator.get_costs_whatif_buildings_file,
+                'emissions':      locator.get_emissions_whatif_buildings_file,
+            }.get(mode)
             entries = []
             for name in os.listdir(analysis_root):
                 if name.startswith('.'):
                     continue
-                path = os.path.join(analysis_root, name)
-                if not os.path.isdir(path):
+                folder = os.path.join(analysis_root, name)
+                if not os.path.isdir(folder):
                     continue
+                if mode_path_fn is not None:
+                    key_path = mode_path_fn(name)
+                    if not os.path.exists(key_path):
+                        continue
+                else:
+                    key_path = folder
                 try:
-                    mtime = os.path.getmtime(path)
+                    mtime = os.path.getmtime(key_path)
                 except OSError:
                     mtime = 0.0
                 entries.append((name, mtime))
             entries.sort(key=lambda x: (-x[1], x[0]))
-            names = [name for name, _ in entries]
-            if mode == 'final_energy':
-                names = [name for name in names if os.path.exists(locator.get_final_energy_folder(name))]
-            elif mode == 'heat_rejection':
-                names = [name for name in names if os.path.exists(locator.get_heat_rejection_whatif_buildings_file(name))]
-            elif mode == 'costs':
-                names = [name for name in names if os.path.exists(locator.get_costs_whatif_buildings_file(name))]
-            elif mode == 'emissions':
-                names = [name for name in names if os.path.exists(locator.get_emissions_whatif_buildings_file(name))]
-            return names
+            return [name for name, _ in entries]
         except Exception:
             return []
 
@@ -1984,9 +1970,14 @@ class BuildingsParameter(MultiChoiceParameter):
 
     @property
     def _choices(self):
-        # set the `._choices` attribute to the list buildings in the project
         locator = cea.inputlocator.InputLocator(self.config.scenario, plugins=[])
         return locator.get_zone_building_names()
+
+
+class OptionalBuildingsParameter(BuildingsParameter):
+    """A list of buildings where empty means none (not all)."""
+
+    empty_means_all = False
 
 
 class CoordinateListParameter(ListParameter):
@@ -2073,6 +2064,28 @@ def parse_string_coordinate_list(string_tuples):
     return coordinates_list
 
 
+def parse_locator_kwargs(value: str) -> Dict[str, str]:
+    """
+    Parses a list of key value pair string in the form of `key1=value1,key2=value2,...` to a dictionary.
+    Used by ChoiceParameter subclasses that need to pass kwargs to InputLocator methods.
+    """
+    kwargs = dict()
+    if value is None:
+        return kwargs
+
+    try:
+        value = value.strip()
+
+        if value:
+            for kwarg in value.split(','):
+                key, val = kwarg.strip().split('=')
+                kwargs[key] = val
+
+        return kwargs
+    except Exception as e:
+        raise ValueError(f'Could not parse kwargs: {e}, ensure it is in the form of `key1=value1,key2=value2,...`')
+
+
 class ColumnChoicesMixin:
     _supported_extensions = ['.csv']
 
@@ -2132,18 +2145,60 @@ class ColumnChoicesMixin:
                 raise ValueError(f'Column {self.column_name} not found in source file')
 
             codes = df[self.column_name].unique()
-            return list(codes)
+            choices = list(codes)
+
+            if self.nullable:
+                # Use empty-string as the on-disk representation of None.
+                # Put it first so it's easy to find in UIs.
+                if '' not in choices:
+                    choices.insert(0, '')
+                else:
+                    choices = [''] + [c for c in choices if c != '']
+
+            return choices
         except FileNotFoundError as e:
             # FIXME: This might cause default config to fail since the file does not exist, maybe should be a warning?
             raise FileNotFoundError(f'Could not find source file at {location} to generate choices for {self.name}') from e
         except Exception as e:
             raise ValueError(f'There was an error generating choices for {self.name} from {location}') from e
 
-
 class ColumnChoiceParameter(ColumnChoicesMixin, ChoiceParameter):
     def __init__(self, name: str, section: Section, config: Configuration):
         super().__init__(name, section, config)
         self._init_column_choices(name, section, config)
+
+    def encode(self, value):
+        # Unwrap list inputs from the GUI (e.g. [] or ['value'])
+        if isinstance(value, list):
+            value = value[0] if len(value) == 1 else None if len(value) == 0 else value
+
+        if value is None or value == '':
+            if self.nullable:
+                return ''
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return str(value)
+
+    def decode(self, value):
+        # If nullable, default empty values to None (instead of silently selecting the first database entry).
+        if self.nullable and (value is None or str(value) == ''):
+            return None
+
+        if str(value) in self._choices:
+            if self.nullable and str(value) == '':
+                return None
+            return str(value)
+
+        if self.nullable:
+            return None
+
+        if not self._choices:
+            raise ValueError(f"No choices for {self.fqname} to decode {value}")
+        return self._choices[0]
 
 
 class ColumnMultiChoiceParameter(ColumnChoicesMixin, MultiChoiceParameter):
@@ -2326,6 +2381,243 @@ class SolarPanelMultiChoiceParameter(SolarPanelChoicesMixin, MultiChoiceParamete
 
     empty_means_all = False
     strict_validation = True
+
+
+class StandardMultiChoiceParameter(ColumnMultiChoiceParameter):
+    """Distinct multi-choice type for construction standards used by the GUI."""
+
+    pass
+
+
+class SubfolderChoiceParameter(ChoiceParameter):
+    """Select a single subfolder from a folder returned by a locator method."""
+
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.locator_method = config.default_config.get(section.name, f"{name}.locator")
+        self.kwargs = parse_locator_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        
+        try:
+            location = getattr(locator, self.locator_method)(**self.kwargs)
+        except AttributeError as e:
+            raise AttributeError(f'Invalid locator method {self.locator_method} given in config file, '
+                                 f'check value under {self.section.name}.{self.name} in default.config') from e
+        
+        try:
+            subfolders = [folder for folder in os.listdir(location) if os.path.isdir(os.path.join(location, folder))]
+            choices = sorted(subfolders)
+            
+            if self.nullable:
+                # Use empty-string as the on-disk representation of None.
+                # Put it first so it's easy to find in UIs.
+                if '' not in choices:
+                    choices.insert(0, '')
+                else:
+                    choices = [''] + [c for c in choices if c != '']
+            
+            return choices
+        except FileNotFoundError:
+            # Directory doesn't exist yet - return appropriate empty choices based on nullable
+            # (may happen during initial scenario setup)
+            return [''] if self.nullable else []
+        except OSError as e:
+            raise ValueError(f'There was an error reading subfolders for {self.name} from {location}') from e
+
+    def encode(self, value):
+        if value is None or value == '':
+            if self.nullable or not self._choices:
+                # Allow empty string if nullable or if no subfolders exist yet
+                return ''
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+
+        if str(value) not in self._choices:
+            raise ValueError(
+                f"Invalid parameter value {value} for {self.fqname}, choose from: {', '.join(self._choices)}")
+        return str(value)
+
+    def decode(self, value):
+        # If no subfolders exist yet, allow empty values regardless of nullable
+        if not self._choices:
+            return None if self.nullable else ''
+
+        # If nullable, default empty values to None (instead of silently selecting the first subfolder).
+        if self.nullable and (value is None or str(value) == ''):
+            return None
+
+        if str(value) in self._choices:
+            if self.nullable and str(value) == '':
+                return None
+            return str(value)
+
+        if self.nullable:
+            return None
+
+        # Non-nullable: return first choice if available
+        if self._choices:
+            return self._choices[0]
+        else:
+            return ''
+
+
+class SubfolderMultiChoiceParameter(MultiChoiceParameter):
+    """Select multiple subfolders from a folder returned by a locator method."""
+
+    empty_means_all = False
+
+    def __init__(self, name: str, section: Section, config: Configuration):
+        super().__init__(name, section, config)
+        self.locator_method = config.default_config.get(section.name, f"{name}.locator")
+        self.kwargs = parse_locator_kwargs(config.default_config.get(section.name, f"{name}.kwargs", fallback=None))
+
+    @property
+    def _choices(self):
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        try:
+            location = getattr(locator, self.locator_method)(**self.kwargs)
+        except AttributeError as e:
+            raise AttributeError(
+                f'Invalid locator method {self.locator_method} given in config file, '
+                f'check value under {self.section.name}.{self.name} in default.config'
+            ) from e
+        try:
+            subfolders = [
+                folder for folder in os.listdir(location)
+                if os.path.isdir(os.path.join(location, folder))
+            ]
+            return sorted(subfolders)
+        except (FileNotFoundError, OSError):
+            return []
+
+
+class SimulatedPathwayMultiChoiceParameter(SubfolderMultiChoiceParameter):
+    """Select multiple pathways, but only show those where Simulate
+    Pathway ran after all edits (including custom-state input edits)."""
+
+    @property
+    def _choices(self):
+        all_pathways = super()._choices
+        if not all_pathways:
+            return []
+
+        from cea.datamanagement.district_pathways.pathway_status import (
+            collect_state_phase_status,
+            read_pathway_metadata,
+            read_state_status,
+        )
+        from cea.datamanagement.district_pathways.pathway_state import (
+            DistrictEvolutionPathway,
+            DistrictStateYear,
+        )
+
+        valid = []
+        for pname in all_pathways:
+            try:
+                pathway = DistrictEvolutionPathway(self.config, pathway_name=pname)
+                years = pathway.required_state_years()
+                if not years:
+                    continue
+
+                # Every state must be simulated or custom
+                all_ok = True
+                for year in years:
+                    state = DistrictStateYear(
+                        pathway_name=pname,
+                        year=int(year),
+                        modifications={},
+                        main_locator=pathway.main_locator,
+                    )
+                    signature = state.read_signature_record() or {}
+                    status = collect_state_phase_status(
+                        pathway.main_locator,
+                        pathway_name=pname,
+                        year=int(year),
+                        source_log_hash=pathway.source_log_hash_for_year(int(year)),
+                        signature=signature,
+                    )
+                    phase = status.get("primary_phase")
+                    if phase not in ("simulated", "custom"):
+                        all_ok = False
+                        break
+                if not all_ok:
+                    continue
+
+                # Simulate Pathway must have run after all custom edits
+                metadata = read_pathway_metadata(
+                    pathway.main_locator, pathway_name=pname
+                )
+                pathway_sim_at = metadata.get("pathway_simulated_at")
+                if not pathway_sim_at:
+                    continue
+
+                has_stale_custom = False
+                for year in years:
+                    sr = read_state_status(
+                        pathway.main_locator, pathway_name=pname, year=int(year)
+                    )
+                    custom_at = sr.get("custom_at")
+                    if custom_at and custom_at > pathway_sim_at:
+                        has_stale_custom = True
+                        break
+                if has_stale_custom:
+                    continue
+
+                valid.append(pname)
+            except (FileNotFoundError, ValueError):
+                continue
+        return valid
+
+
+class InterventionTemplateMultiChoiceParameter(MultiChoiceParameter):
+    """Select multiple intervention templates from the scenario-level YAML file."""
+    # Dashboard note:
+    # The GUI currently recognises this backend class name in
+    # CityEnergyAnalyst-GUI/src/components/Parameter.jsx to render a multi-select widget.
+    # If you rename this class again, update the frontend switch there in the same change.
+
+    @property
+    def _choices(self):
+        from cea.datamanagement.district_pathways.intervention_templates import load_intervention_templates
+
+        locator = cea.inputlocator.InputLocator(self.config.scenario)
+        try:
+            changes = load_intervention_templates(locator, allow_missing=True)
+            return sorted(changes.keys())
+        except (FileNotFoundError, ValueError):
+            return []
+
+    def encode(self, value):
+        if not value:
+            return ''
+        
+        if isinstance(value, str):
+            # Parse comma-separated string
+            value = [v.strip() for v in value.split(',') if v.strip()]
+        
+        # Validate all choices exist
+        available = self._choices
+        if available:  # Only validate if choices are available
+            invalid = [v for v in value if v not in available]
+            if invalid:
+                raise ValueError(
+                    f"Invalid intervention template names for {self.fqname}: {', '.join(invalid)}. "
+                    f"Available: {', '.join(available)}")
+        
+        return ', '.join(value)
+
+    def decode(self, value):
+        if not value:
+            return []
+        
+        if isinstance(value, str):
+            # Parse comma-separated string
+            return [v.strip() for v in value.split(',') if v.strip()]
+        
+        return list(value)
 
 
 class PlotContextParameter(Parameter):

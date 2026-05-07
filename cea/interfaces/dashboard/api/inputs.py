@@ -8,7 +8,7 @@ import traceback
 import warnings
 from collections import defaultdict
 from contextlib import redirect_stdout
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import zipfile
 
 from fastapi.responses import StreamingResponse
@@ -25,8 +25,12 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 import cea.schemas
 from cea.databases import CEADatabase, CEADatabaseException
 from cea.datamanagement.format_helper.cea4_verify_db import cea4_verify_db
-from cea.interfaces.dashboard.dependencies import CEAProjectInfo, CEASeverDemoAuthCheck
-from cea.interfaces.dashboard.utils import secure_path
+from cea.interfaces.dashboard.dependencies import (
+    CEAProjectInfo,
+    CEAProjectRoot,
+    CEASeverDemoAuthCheck,
+)
+from cea.interfaces.dashboard.utils import resolve_scenario_path, secure_path
 from cea.plots.supply_system.a_supply_system_map import get_building_connectivity, newer_network_layout_exists
 from cea.plots.variable_naming import get_color_array
 from cea.technologies.network_layout.main import auto_layout_network, NetworkLayout
@@ -126,12 +130,34 @@ async def get_building_props(project_info: CEAProjectInfo):
 
 
 @router.get('/all-inputs')
-async def get_all_inputs(project_info: CEAProjectInfo):
-    locator = cea.inputlocator.InputLocator(project_info.scenario)
+async def get_all_inputs(
+    project_info: CEAProjectInfo,
+    project_root: CEAProjectRoot,
+    scenario: Optional[str] = None,
+    project: Optional[str] = None,
+):
+    """Fetch the map + input-editor bundle for a scenario.
+
+    By default returns data for the dashboard's active scenario. Pass
+    `?scenario=<name>` (and optionally `?project=<name>`) to read a
+    different scenario WITHOUT mutating the active config — used by
+    the Reports mode to render per-column maps. When `scenario` is
+    omitted everything resolves exactly as before.
+    """
+    if scenario:
+        scenario_path = resolve_scenario_path(
+            project_root,
+            project or project_info.project,
+            scenario,
+        )
+    else:
+        scenario_path = project_info.scenario
+
+    locator = cea.inputlocator.InputLocator(scenario_path)
 
     # FIXME: Find a better way, current used to test for Input Editor
     def fn():
-        store = get_building_properties(project_info.scenario)
+        store = get_building_properties(scenario_path)
         store['geojsons'] = {}
         store['connected_buildings'] = {'dc': [], 'dh': []}
         store['crs'] = {}
@@ -236,7 +262,34 @@ async def save_all_inputs(project_info: CEAProjectInfo, form: InputForm):
 
         return out
 
-    return await run_in_threadpool(fn)
+    result = await run_in_threadpool(fn)
+
+    # If the save happened inside a pathway state (sub-scenario), mark
+    # the state as custom so the pathway viewer shows it in purple and
+    # bake/simulate can handle it appropriately.
+    scenario = project_info.scenario
+    marker = cea.inputlocator.InputLocator.pathway_child_marker()
+    idx = scenario.find(marker)
+    if idx >= 0:
+        from cea.datamanagement.district_pathways.pathway_status import record_custom_state
+        parent = scenario[:idx]
+        suffix = scenario[idx + len(marker):]
+        parts = suffix.split(os.sep)
+        if len(parts) >= 2 and parts[1].startswith('state_'):
+            pathway_name = parts[0]
+            try:
+                year = int(parts[1].replace('state_', ''))
+                parent_locator = cea.inputlocator.InputLocator(parent)
+                await run_in_threadpool(
+                    record_custom_state,
+                    parent_locator,
+                    pathway_name=pathway_name,
+                    year=year,
+                )
+            except (ValueError, OSError):
+                pass
+
+    return result
 
 
 def _build_choices_cache(locator):
