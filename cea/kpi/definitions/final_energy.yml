@@ -43,6 +43,12 @@ kpis:
       locator: get_final_energy_buildings_file
       locator_args:
         whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
       formula:
         kind: aggregate
         op: sum
@@ -65,6 +71,12 @@ kpis:
       locator: get_final_energy_buildings_file
       locator_args:
         whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
       formula:
         kind: share_of
         part:
@@ -93,6 +105,12 @@ kpis:
       locator: get_final_energy_buildings_file
       locator_args:
         whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
       formula:
         kind: share_of
         part:
@@ -122,12 +140,116 @@ kpis:
       locator: get_final_energy_buildings_file
       locator_args:
         whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
       formula:
         kind: share_of
         part:
           kind: aggregate
           op: sum
           of: { kind: column, name: DH_MWh }
+        whole:
+          kind: aggregate
+          op: sum
+          of: { kind: column, name: TOTAL_MWh }
+
+  # ── Solar deployment KPIs ────────────────────────────────────────
+  # Per-what-if PV / SC / PVT generation as it actually lands in
+  # final-energy. These differ from the `solar.*` KPIs (which read
+  # raw `cea photovoltaic` per-panel-type *potentials*) — these
+  # reflect the configured deployment for the chosen what-if.
+  # `PV_MWh` includes PV + PVT electrical halves; `SOLAR_MWh`
+  # includes SC + PVT thermal halves (see
+  # `cea/analysis/final_energy/calculation.py`).
+
+  - id: final_energy.pv_generation_mwh
+    label: Annual PV Generation
+    category: energy-by-carrier
+    unit: MWh/yr
+    better_direction: higher
+    info_note: |
+      Annual PV electricity actually generated under this
+      what-if's deployment configuration. Includes pure-PV
+      panels and PVT panels' electrical half.
+
+      PV = Σ(PV_MWh)
+        in [MWh/yr]
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: PV_MWh }
+
+  - id: final_energy.solar_thermal_mwh
+    label: Annual Solar Thermal Generation
+    category: energy-by-carrier
+    unit: MWh/yr
+    better_direction: higher
+    info_note: |
+      Annual solar thermal energy actually generated under this
+      what-if's deployment configuration. Includes solar
+      collectors (SC) and PVT panels' thermal half.
+
+      Solar = Σ(SOLAR_MWh)
+        in [MWh/yr]
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: SOLAR_MWh }
+
+  - id: final_energy.solar_share_pct
+    label: Solar Share of Final Energy
+    category: energy-by-carrier
+    unit: '%'
+    better_direction: higher
+    info_note: |
+      Combined PV + solar thermal as a share of total final
+      energy. Tracks how much of the district's energy is met
+      by on-site solar under this what-if's configuration.
+
+      Share = Σ(PV_MWh + SOLAR_MWh) ÷ Σ(TOTAL_MWh) × 100
+        in [%]
+    source:
+      locator: get_final_energy_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read final-energy outputs from.
+      formula:
+        kind: share_of
+        part:
+          kind: aggregate
+          op: sum
+          of:
+            kind: sum_columns
+            columns: [PV_MWh, SOLAR_MWh]
         whole:
           kind: aggregate
           op: sum

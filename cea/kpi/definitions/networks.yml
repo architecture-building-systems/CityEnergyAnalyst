@@ -40,6 +40,17 @@ kpis:
       locator_args:
         network_type: DH
         network_name: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        network_name:
+          label: Network name
+          options_generator: network_names
+          default: ""
+          description: Named-network identifier; leave blank for the default.
       formula:
         kind: aggregate
         op: sum
@@ -62,6 +73,17 @@ kpis:
       locator_args:
         network_type: DH
         network_name: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        network_name:
+          label: Network name
+          options_generator: network_names
+          default: ""
+          description: Named-network identifier; leave blank for the default.
       formula:
         kind: aggregate
         op: max
@@ -84,6 +106,17 @@ kpis:
       locator_args:
         network_type: DH
         network_name: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        network_name:
+          label: Network name
+          options_generator: network_names
+          default: ""
+          description: Named-network identifier; leave blank for the default.
       formula:
         kind: aggregate
         op: sum
@@ -106,6 +139,17 @@ kpis:
       locator_args:
         network_type: DH
         network_name: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        network_name:
+          label: Network name
+          options_generator: network_names
+          default: ""
+          description: Named-network identifier; leave blank for the default.
       formula:
         kind: aggregate
         op: sum

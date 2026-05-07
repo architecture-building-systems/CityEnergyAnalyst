@@ -54,6 +54,12 @@ kpis:
       locator: PV_total_buildings
       locator_args:
         panel_type: monocrystalline
+      parameters:
+        panel_type:
+          label: Panel type
+          options_generator: solar_panel_types
+          default: monocrystalline
+          description: Which PV panel code to read totals for.
       formula:
         kind: aggregate
         op: sum
@@ -75,6 +81,12 @@ kpis:
       locator: PV_total_buildings
       locator_args:
         panel_type: monocrystalline
+      parameters:
+        panel_type:
+          label: Panel type
+          options_generator: solar_panel_types
+          default: monocrystalline
+          description: Which PV panel code to read totals for.
       formula:
         kind: share_of
         part:
@@ -103,6 +115,12 @@ kpis:
       locator: PV_total_buildings
       locator_args:
         panel_type: monocrystalline
+      parameters:
+        panel_type:
+          label: Panel type
+          options_generator: solar_panel_types
+          default: monocrystalline
+          description: Which PV panel code to read totals for.
       formula:
         kind: share_of
         part:
@@ -131,6 +149,12 @@ kpis:
       locator: PV_total_buildings
       locator_args:
         panel_type: monocrystalline
+      parameters:
+        panel_type:
+          label: Panel type
+          options_generator: solar_panel_types
+          default: monocrystalline
+          description: Which PV panel code to read totals for.
       formula:
         kind: share_of
         part:

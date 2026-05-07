@@ -1,23 +1,27 @@
 # Costs KPIs.
 #
-# Source CSV: outputs/data/costs/baseline_costs.csv (one row per
-# building or network, produced by `cea system-costs`). Column
-# meanings live in cea/schemas.yml under `get_baseline_costs`.
-# `GFA_m2` is co-located in the same CSV — no cross-file reads
-# needed.
+# Source CSV: outputs/data/analysis/{whatif_name}/costs/
+#               costs_buildings.csv
+# (one row per building or plant, produced by `cea system-costs`
+# under the active what-if). Column meanings live in cea/schemas.yml
+# under `get_costs_whatif_buildings_file`. `GFA_m2` is co-located
+# in the same CSV — no cross-file reads needed.
 #
 # Currency: schema declares USD ([$USD(2015)/yr]). v1 locked-list
 # said EUR; switching to USD here to match the data. Re-label /
 # re-convert later when CEA gains a currency-conversion primitive.
 #
-# Cost-breakdown convention (from `get_baseline_costs`):
-#   - building-scale = on-site systems (boilers, chillers, PV…)
-#   - district-scale = networks + piping
-#
-# v1 locked-list talked about three components (buildings,
-# networks, supply); the actual schema is a 2-way split. Shipping
-# the 2-way split here; re-revisit if a future column adds the
-# 3-way split.
+# Migration note: previously this yml read from the legacy
+# `get_baseline_costs` (no whatif support). The whatif file uses
+# lowercased column names (`capex_a_USD`, `opex_fixed_a_USD`,
+# `opex_var_a_USD` — no rolled-up `Opex_a_USD`) so the opex KPI
+# now sums the fixed + var columns directly. The legacy
+# `Capex_a_building_scale_USD` / `..._district_scale_USD` columns
+# don't exist on the whatif file — that data is now a row-level
+# `scale` attribute (BUILDING / DISTRICT). Without a row-filter
+# primitive in the resolver, the scale-split KPIs (TAC — Building
+# Scale / TAC — District Scale) are dropped from v1; bring them
+# back when the resolver gains a `filter_rows` node.
 #
 # Picker grouping uses the `cost-breakdown` plot key so each
 # entry lands under "Life Cycle Analysis → Costs" alongside the
@@ -33,7 +37,7 @@ kpis:
     better_direction: lower
     headline: true
     info_note: |
-      Total annualised cost (Capex_a + Opex_a) divided by gross
+      Total annualised cost (capex_a + opex_a) divided by gross
       floor area. Combines on-site building systems and
       district-scale networks/piping into one number.
 
@@ -45,7 +49,15 @@ kpis:
       by GFA so the value scales meaningfully across districts
       of different sizes.
     source:
-      locator: get_baseline_costs
+      locator: get_costs_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read costs outputs from.
       formula:
         kind: divide
         numerator:
@@ -65,16 +77,24 @@ kpis:
     info_note: |
       Annualised capital expenditure per unit gross floor area.
 
-      Capex_a / GFA = Σ(Capex_a_USD) ÷ Σ(GFA_m²)
+      capex_a / GFA = Σ(capex_a_USD) ÷ Σ(GFA_m²)
         in [USD/m²/yr]
     source:
-      locator: get_baseline_costs
+      locator: get_costs_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read costs outputs from.
       formula:
         kind: divide
         numerator:
           kind: aggregate
           op: sum
-          of: { kind: column, name: Capex_a_USD }
+          of: { kind: column, name: capex_a_USD }
         denominator:
           kind: aggregate
           op: sum
@@ -87,38 +107,22 @@ kpis:
     better_direction: lower
     info_note: |
       Total annual operational expenditure (fixed + variable)
-      per unit gross floor area.
+      per unit gross floor area. Sums opex_fixed_a + opex_var_a
+      because the whatif file doesn't carry a rolled-up
+      `Opex_a_USD` column the way the legacy baseline did.
 
-      Opex_a / GFA = Σ(Opex_a_USD) ÷ Σ(GFA_m²)
+      opex_a / GFA = Σ(opex_fixed_a + opex_var_a) ÷ Σ(GFA_m²)
         in [USD/m²/yr]
     source:
-      locator: get_baseline_costs
-      formula:
-        kind: divide
-        numerator:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: Opex_a_USD }
-        denominator:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: GFA_m2 }
-
-  - id: costs.tac_buildings_usd_m2
-    label: TAC — Building Scale
-    category: cost-breakdown
-    unit: USD/m²
-    better_direction: lower
-    info_note: |
-      Annualised cost from on-site building systems only
-      (boilers, chillers, PV, etc.) — excludes networks and
-      central plant. Sums Capex_a + Opex_a for the building
-      scale.
-
-      TAC_buildings = Σ(Capex_a_building + Opex_a_building) ÷ Σ(GFA)
-        in [USD/m²/yr]
-    source:
-      locator: get_baseline_costs
+      locator: get_costs_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read costs outputs from.
       formula:
         kind: divide
         numerator:
@@ -127,37 +131,8 @@ kpis:
           of:
             kind: sum_columns
             columns:
-              - Capex_a_building_scale_USD
-              - Opex_a_building_scale_USD
-        denominator:
-          kind: aggregate
-          op: sum
-          of: { kind: column, name: GFA_m2 }
-
-  - id: costs.tac_district_usd_m2
-    label: TAC — District Scale
-    category: cost-breakdown
-    unit: USD/m²
-    better_direction: lower
-    info_note: |
-      Annualised cost from district-scale infrastructure
-      (thermal networks + piping). Sums Capex_a + Opex_a for
-      the district scale.
-
-      TAC_district = Σ(Capex_a_district + Opex_a_district) ÷ Σ(GFA)
-        in [USD/m²/yr]
-    source:
-      locator: get_baseline_costs
-      formula:
-        kind: divide
-        numerator:
-          kind: aggregate
-          op: sum
-          of:
-            kind: sum_columns
-            columns:
-              - Capex_a_district_scale_USD
-              - Opex_a_district_scale_USD
+              - opex_fixed_a_USD
+              - opex_var_a_USD
         denominator:
           kind: aggregate
           op: sum

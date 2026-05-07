@@ -1,13 +1,18 @@
 # Anthropogenic-heat (heat-rejection) KPIs.
 #
-# Source CSV: scenario/outputs/data/heat/{network_name}/
-#               heat_rejection_buildings.csv
+# Source CSV: scenario/outputs/data/analysis/{whatif_name}/
+#               heat/heat_rejection_buildings.csv
 # (one row per building or plant, produced by
-# `cea anthropogenic-heat`). Default `network_name=None` resolves
-# to the `no-network` subfolder — the per-building heat rejection
-# from standalone systems. Districts with a named DH/DC network
-# would override `locator_args.network_name` to read the network
-# subfolder's totals.
+# `cea anthropogenic-heat` under the active what-if). Default
+# `whatif_name=""` resolves to the baseline analysis folder.
+# Different what-ifs (retrofit_2030, etc.) override the parameter
+# to read that what-if's heat-rejection results.
+#
+# Migration note: the previous yml read from the legacy
+# `get_heat_rejection_buildings` locator (no whatif support). Same
+# column names (`heat_rejection_annual_MWh`, `peak_heat_rejection_kW`,
+# `GFA_m2`) carried over to the whatif-aware buildings file, so the
+# formula trees themselves are unchanged.
 #
 # Picker grouping uses the existing `anthropogenic-heat-rejection`
 # plot key so each entry lands under "Life Cycle Analysis → Heat
@@ -37,7 +42,15 @@ kpis:
       shifts to systems that recover the heat (heat pumps with
       DHW reuse, district cooling with sea-water sinks).
     source:
-      locator: get_heat_rejection_buildings
+      locator: get_heat_rejection_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read heat-rejection outputs from.
       formula:
         kind: aggregate
         op: sum
@@ -56,7 +69,15 @@ kpis:
       Peak = max(peak_heat_rejection_kW)
         in [kW]
     source:
-      locator: get_heat_rejection_buildings
+      locator: get_heat_rejection_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read heat-rejection outputs from.
       formula:
         kind: aggregate
         op: max
@@ -76,7 +97,15 @@ kpis:
                 ÷ Σ(GFA_m2)
         in [kWh/m²/yr]
     source:
-      locator: get_heat_rejection_buildings
+      locator: get_heat_rejection_whatif_buildings_file
+      locator_args:
+        whatif_name: ""
+      parameters:
+        whatif_name:
+          label: What-if scenario
+          options_generator: whatif_names
+          default: ""
+          description: Which what-if folder to read heat-rejection outputs from.
       formula:
         kind: divide
         numerator:

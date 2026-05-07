@@ -16,6 +16,7 @@ read/write, and on-miss recompute. The endpoint just iterates,
 catches :class:`KPINotAvailable` per KPI, and shapes the JSON.
 """
 
+import json
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
@@ -26,6 +27,7 @@ from cea.interfaces.dashboard.lib.logs import getCEAServerLogger
 from cea.interfaces.dashboard.utils import resolve_scenario_path
 from cea.kpi.cache import compute_kpi_cached
 from cea.kpi.exceptions import KPIDefinitionError, KPINotAvailable
+from cea.kpi.option_generators import run_generator
 from cea.kpi.registry import kpis_for_feature, load_registry
 
 __author__ = "Zhongming Shi"
@@ -65,6 +67,11 @@ async def get_kpi_registry():
             "better_direction": kpi.better_direction,
             "info_note": kpi.info_note,
             "description": kpi.description,
+            # Whether this KPI declares any user-configurable
+            # parameters (panel_type, whatif_name, etc.) — drives
+            # the canvas picker's step-1 button label ("Next" vs
+            # "Add KPI") without a per-KPI step-2 fetch.
+            "has_parameters": bool(kpi.source.parameters),
         }
         for kpi in registry.values()
     ]
@@ -163,4 +170,164 @@ async def get_kpis(
             "whatif": whatif,
             "all_fresh": all_fresh,
         },
+    }
+
+
+def _parse_locator_args(raw: Optional[str]) -> Optional[dict]:
+    """Decode the ``locator_args`` query param.
+
+    Frontend serialises the per-card override as a single JSON
+    string (URL-encoded); decoding here keeps the wire format
+    compact and round-trippable. ``None`` / empty string → no
+    override (resolver falls through to yml defaults).
+    """
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid locator_args JSON: {exc}",
+        )
+    if not isinstance(parsed, dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="locator_args must decode to an object (dict)",
+        )
+    return parsed
+
+
+@router.get("/{kpi_id}/parameters")
+async def get_kpi_parameters(
+    project_root: CEAProjectRoot,
+    kpi_id: str,
+    project: str,
+    scenario: str,
+):
+    """Return resolved choice lists for every parameter the KPI
+    accepts. Drives the canvas KPI picker's step-2 form so the
+    user sees a populated dropdown of (e.g.) the actual panel
+    codes that exist on disk for this scenario.
+
+    Shape::
+
+        {
+          "parameters": {
+            "panel_type": {
+              "label": "Panel type",
+              "default": "monocrystalline",
+              "choices": [
+                {"value": "monocrystalline", "label": "monocrystalline"},
+                {"value": "amorphous", "label": "amorphous"}
+              ]
+            }
+          }
+        }
+
+    Empty ``parameters`` map → KPI is fully configured by the yml
+    (defaults work as-is, no step-2 form needed).
+    """
+    registry = load_registry()
+    if kpi_id not in registry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown KPI id '{kpi_id}'",
+        )
+    kpi = registry[kpi_id]
+
+    scenario_path = resolve_scenario_path(project_root, project, scenario)
+    locator = cea.inputlocator.InputLocator(scenario_path)
+
+    out = {}
+    for name, param in (kpi.source.parameters or {}).items():
+        choices = []
+        if param.options_generator:
+            try:
+                choices = run_generator(param.options_generator, locator)
+            except KPIDefinitionError as exc:
+                logger.exception("Options generator failed: %s", exc)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Options generator '{param.options_generator}' "
+                    f"for KPI '{kpi_id}' parameter '{name}' failed: {exc}",
+                )
+        out[name] = {
+            "label": param.label,
+            "type": param.type,
+            "default": param.default,
+            "description": param.description,
+            "choices": choices,
+        }
+
+    return {"parameters": out, "kpi_id": kpi_id}
+
+
+@router.get("/{kpi_id}/value")
+async def get_kpi_value(
+    project_root: CEAProjectRoot,
+    kpi_id: str,
+    project: str,
+    scenario: str,
+    locator_args: Optional[str] = None,
+    whatif: Optional[str] = None,
+):
+    """Return a single KPI's value with optional per-call
+    ``locator_args`` override. Shape mirrors one entry of the
+    bulk endpoint's ``kpis`` list.
+
+    The canvas's per-card KPI fetch hits this endpoint so two
+    cards bound to the same KPI but with different overrides
+    (e.g. mono vs amorphous solar) get distinct values without
+    the bulk endpoint's "share fetch across feature" assumption.
+    """
+    scenario_path = resolve_scenario_path(project_root, project, scenario)
+    args_override = _parse_locator_args(locator_args)
+
+    registry = load_registry()
+    if kpi_id not in registry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Unknown KPI id '{kpi_id}'",
+        )
+    kpi = registry[kpi_id]
+
+    base_payload = {
+        "id": kpi.id,
+        "label": kpi.label,
+        "category": kpi.category,
+        "unit": kpi.unit,
+        "headline": kpi.headline,
+        "better_direction": kpi.better_direction,
+        "info_note": kpi.info_note,
+        "description": kpi.description,
+    }
+
+    try:
+        result = compute_kpi_cached(
+            kpi_id,
+            scenario_path,
+            whatif=whatif,
+            locator_args_override=args_override,
+        )
+    except KPINotAvailable as exc:
+        return {
+            **base_payload,
+            "available": False,
+            "reason": exc.reason,
+            "upstream_tool": exc.upstream_tool,
+            "missing_file": exc.missing_file,
+        }
+    except KPIDefinitionError as exc:
+        logger.exception("KPI definition error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"KPI definition error for '{kpi_id}': {exc}",
+        )
+
+    return {
+        **base_payload,
+        "available": True,
+        "value": result.value,
+        "computed_at": result.computed_at,
     }

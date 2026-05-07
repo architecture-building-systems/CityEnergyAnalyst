@@ -118,22 +118,48 @@ _DivideNode.model_rebuild()
 _ShareOfNode.model_rebuild()
 
 
-# ── KPI definition ──────────────────────────────────────────────────
+# ── KPI parameters ──────────────────────────────────────────────────
+
+
+class KPIParameter(_StrictBase):
+    """A user-configurable input the KPI accepts at fetch time.
+
+    Mirrors the shape of map-layer parameter definitions so the
+    canvas's step-2 form can render the same primitives (dropdowns,
+    text inputs) that already work for the map's
+    ``MapLayerPropertiesCard``.
+
+    ``options_generator`` names a Python function (resolved by the
+    KPI parameter endpoint) that returns the choice list against the
+    active scenario context — e.g. for ``panel_type`` it scans
+    ``outputs/data/potentials/solar`` for actual ``PV_*_total.csv``
+    files and returns the discovered codes. ``default`` is what the
+    canvas pre-selects on first open and what the resolver falls
+    back to when no override is supplied.
+    """
+
+    label: str
+    type: Literal["string"] = "string"
+    options_generator: Optional[str] = None
+    default: Optional[str] = None
+    description: Optional[str] = None
 
 
 class KPISource(_StrictBase):
     locator: str  # InputLocator method name, e.g. "get_total_demand"
-    # Optional kwargs forwarded to the locator method when it
-    # requires them. Most CEA locators take no args (e.g.
-    # ``get_total_demand``) — those entries omit ``locator_args``
-    # entirely. PV / network / optimisation locators need
-    # ``panel_type`` / ``network_name`` / ``run_name`` to resolve
-    # their per-config CSVs; the yml hardcodes the canonical
-    # default (e.g. ``panel_type: monocrystalline``) and the
-    # resolver passes it through. Failed match (file doesn't
-    # exist for the given args) raises ``KPINotAvailable`` with
-    # the upstream tool hint, same as any other missing source.
+    # Default kwargs forwarded to the locator method when it
+    # requires them. Per-card overrides flow through the resolver's
+    # ``locator_args_override`` parameter and merge over these
+    # defaults (override wins on collisions). KPIs that take no
+    # locator arguments omit this field entirely.
     locator_args: Dict[str, Any] = Field(default_factory=dict)
+    # User-configurable inputs that the canvas's KPI picker
+    # surfaces in step 2. Each parameter's name matches a key in
+    # ``locator_args``; a card's saved override fills that key
+    # at fetch time. KPIs whose locator_args are fully fixed in
+    # the yml (e.g. demand reads ``get_total_demand`` with no
+    # parameters) omit this field.
+    parameters: Dict[str, KPIParameter] = Field(default_factory=dict)
     formula: FormulaNode
 
 

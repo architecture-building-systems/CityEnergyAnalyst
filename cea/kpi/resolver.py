@@ -25,7 +25,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 import pandas as pd
 
@@ -58,6 +58,7 @@ def compute_kpi(
     scenario: str,
     *,
     whatif: Optional[str] = None,
+    locator_args_override: Optional[Mapping[str, Any]] = None,
 ) -> KPIResult:
     """Compute one KPI for one scenario.
 
@@ -66,6 +67,14 @@ def compute_kpi(
     paths via the project-store side. Wiring will be completed in
     the cache layer once the what-if scenario-resolution helper is
     in place.
+
+    ``locator_args_override`` lets per-card configurations supply
+    user-chosen values for parameters declared in the KPI's
+    ``source.parameters`` block (e.g. ``panel_type=amorphous``,
+    ``whatif_name=retrofit_2030``). Override keys win over the yml's
+    ``locator_args`` defaults; keys absent from the override fall
+    through to the yml. Pass ``None`` (the default) to use only the
+    yml's defaults.
     """
     registry = load_registry()
     if kpi_id not in registry:
@@ -73,7 +82,7 @@ def compute_kpi(
     kpi = registry[kpi_id]
 
     locator = InputLocator(scenario)
-    file_path = _resolve_source_path(kpi, locator)
+    file_path = _resolve_source_path(kpi, locator, locator_args_override)
     if not os.path.isfile(file_path):
         upstream_tool = _upstream_tool_for(kpi.source.locator)
         raise KPINotAvailable(
@@ -103,27 +112,50 @@ def compute_kpi(
     )
 
 
-def _resolve_source_path(kpi, locator: InputLocator) -> str:
+def _resolve_source_path(
+    kpi,
+    locator: InputLocator,
+    override: Optional[Mapping[str, Any]] = None,
+) -> str:
     method = getattr(locator, kpi.source.locator, None)
     if method is None or not callable(method):
         raise KPIDefinitionError(
             f"{kpi.id}: InputLocator has no method '{kpi.source.locator}'"
         )
-    # Forward any `locator_args` from the yml as keyword args. Most
-    # locators are nullary (`get_total_demand()`) — those entries
-    # omit `locator_args` and the dict is empty. PV / network /
-    # optimisation locators need `panel_type` / `network_name` /
-    # `run_name`; the yml hardcodes the canonical default and the
-    # resolver passes it through.
-    locator_args = dict(kpi.source.locator_args or {})
+    # Merged kwargs forwarded to the locator. yml's ``locator_args``
+    # carries the defaults; per-call overrides (from user-configured
+    # KPI cards) layer on top. Override values that are ``None`` are
+    # ignored so the yml default isn't silently nulled out by an
+    # unset form field.
+    merged = merge_locator_args(kpi.source.locator_args, override)
     try:
-        return method(**locator_args)
+        return method(**merged)
     except TypeError as exc:
         raise KPIDefinitionError(
             f"{kpi.id}: locator '{kpi.source.locator}' signature "
             f"mismatch ({exc}). Adjust `locator_args:` in the yml "
-            f"to match the locator method's parameters."
+            f"or the override passed to ``compute_kpi`` so the "
+            f"keys match the locator method's parameters."
         ) from exc
+
+
+def merge_locator_args(
+    defaults: Optional[Mapping[str, Any]],
+    override: Optional[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Merge a yml ``locator_args`` mapping with a per-call override.
+
+    Override keys win on collisions. ``None`` values in the override
+    are dropped so an unset form field doesn't clobber a non-empty
+    yml default. Exposed as a module-level helper so the cache layer
+    can hash the same merged dict the resolver actually uses.
+    """
+    merged: Dict[str, Any] = dict(defaults or {})
+    for key, value in (override or {}).items():
+        if value is None:
+            continue
+        merged[key] = value
+    return merged
 
 
 def _upstream_tool_for(locator_key: str) -> Optional[str]:

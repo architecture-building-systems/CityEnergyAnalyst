@@ -76,11 +76,10 @@ TOOL_TO_FEATURES: dict[str, list[str]] = {
     # `result_summary --feature heat_rejection` without a translation
     # table.
     "anthropogenic-heat": ["heat_rejection"],
-    # Stubs for additional solar-collector tools — uncomment when
-    # their yml lands. Optimisation's "costs" linkage from the
-    # original v1 plan was dropped because the Pareto outputs are
-    # in their own folder, not the `get_baseline_costs` CSV that
-    # `costs.yml` reads.
+    # Stubs for additional solar tools — uncomment when their yml
+    # lands. Optimisation's "costs" linkage was dropped because
+    # the Pareto outputs are in their own DES folder, not in the
+    # what-if costs file `costs.yml` reads.
     # "photovoltaic-thermal": ["solar"],
     # "solar-collector": ["solar"],
 }

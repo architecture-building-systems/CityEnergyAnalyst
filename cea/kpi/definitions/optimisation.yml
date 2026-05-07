@@ -40,6 +40,12 @@ kpis:
       Pareto-Best Emissions to read the tradeoff frontier.
     source:
       locator: get_new_optimization_optimal_supply_systems_summary_file
+      parameters:
+        district_energy_system_id:
+          label: District energy system
+          options_generator: district_energy_system_ids
+          default: current_DES
+          description: Which Pareto-front DES run to read.
       formula:
         kind: aggregate
         op: min
@@ -63,6 +69,12 @@ kpis:
       tradeoff frontier.
     source:
       locator: get_new_optimization_optimal_supply_systems_summary_file
+      parameters:
+        district_energy_system_id:
+          label: District energy system
+          options_generator: district_energy_system_ids
+          default: current_DES
+          description: Which Pareto-front DES run to read.
       formula:
         kind: aggregate
         op: min

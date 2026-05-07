@@ -33,6 +33,26 @@ import cea.inputlocator
 # Constants
 HOURS_IN_YEAR = 8760
 
+# Carriers `cea/schemas.yml`'s ``get_final_energy_buildings_file``
+# entry declares as `_MWh` columns. The annual-summary loops always
+# write these (zero-filled when a scenario's database doesn't
+# include the carrier) so downstream consumers — KPIs, plots,
+# emissions calculator — can read the schema's columns without a
+# defensive missing-column branch. Extra carriers from
+# ``available_carriers(locator)`` are written alongside but the
+# schema-promised set is the floor.
+_DECLARED_CARRIER_CODES = frozenset({
+    'GRID',
+    'NATURALGAS',
+    'OIL',
+    'COAL',
+    'WOOD',
+    'DH',
+    'DC',
+    'SOLAR',
+    'PV',
+})
+
 
 def calculate_building_final_energy(
     building_name: str,
@@ -1157,9 +1177,25 @@ def aggregate_buildings_summary(
         # ``feedstock_file`` entries. Legacy solar PV/PVT electricity
         # offsets are still tracked separately via the emissions
         # offset path, not here.
+        #
+        # ``_DECLARED_CARRIER_CODES`` is unioned in so every column the
+        # schema (`get_final_energy_buildings_file` in `cea/schemas.yml`)
+        # declares is always written — zero-filled for carriers the
+        # scenario's database doesn't include. Without this, KPIs and
+        # other consumers reading the schema's columns hit silent
+        # missing-column errors when (e.g.) a district has no PV.
         from cea.technologies.energy_carriers import available_carriers
-        for carrier in sorted(available_carriers(locator) | {'DH', 'DC', 'SOLAR'}):
+        all_carriers = (
+            available_carriers(locator) | {'DH', 'DC', 'SOLAR'} | _DECLARED_CARRIER_CODES
+        )
+        for carrier in sorted(all_carriers):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
+
+        # Roll up the per-carrier columns into the total declared in
+        # `cea/schemas.yml` for this file. Without this, downstream
+        # consumers (e.g. KPIs that read TOTAL_MWh) hit a missing-column
+        # error even though the schema promises the column.
+        row['TOTAL_MWh'] = sum(carrier_totals.values())
 
         row['peak_demand_kW'] = peak_demand_kW
         row['peak_datetime'] = peak_datetime
@@ -1245,10 +1281,21 @@ def aggregate_buildings_summary(
         }
 
         # Carrier columns delivered to services. See building loop above
-        # for why DH/DC/SOLAR are unioned in manually.
+        # for why DH/DC/SOLAR/_DECLARED_CARRIER_CODES are all unioned in
+        # — keeps the column set identical between building and plant
+        # rows so the resulting DataFrame's columns match the schema
+        # declaration regardless of which carriers a given run uses.
         from cea.technologies.energy_carriers import available_carriers
-        for carrier in sorted(available_carriers(locator) | {'DH', 'DC', 'SOLAR'}):
+        all_carriers = (
+            available_carriers(locator) | {'DH', 'DC', 'SOLAR'} | _DECLARED_CARRIER_CODES
+        )
+        for carrier in sorted(all_carriers):
             row[f'{carrier}_MWh'] = carrier_totals.get(carrier, 0.0)
+
+        # Same TOTAL_MWh rollup the building loop writes — keeps
+        # plant + building rows column-aligned and matches the
+        # `get_final_energy_buildings_file` schema.
+        row['TOTAL_MWh'] = sum(carrier_totals.values())
 
         row['peak_demand_kW'] = peak_demand_kW
         row['peak_datetime'] = peak_datetime

@@ -126,8 +126,22 @@ def clear_kpi(
         current = read_status(scenario)
         kpis = current.get("kpis", {})
         if kpi_id is not None:
-            kpis.pop(kpi_id, None)
+            # The cache layer keys variants under ``<kpi_id>::<args_hash>``
+            # (per-card configurations) alongside the bare ``<kpi_id>``
+            # for the no-args path — drop both the simple key AND every
+            # compound variant so a single ``clear_kpi(kpi_id=...)`` call
+            # invalidates the whole logical KPI.
+            variant_prefix = f"{kpi_id}::"
+            for key in [
+                k
+                for k in kpis
+                if k == kpi_id or k.startswith(variant_prefix)
+            ]:
+                kpis.pop(key, None)
         elif feature is not None:
+            # Feature-prefix sweep; compound keys still start with
+            # ``<feature>.`` so a single startswith filter catches
+            # both bare and ``::``-suffixed variants.
             prefix = f"{feature}."
             for key in [k for k in kpis if k.startswith(prefix)]:
                 kpis.pop(key)
