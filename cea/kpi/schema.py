@@ -136,6 +136,12 @@ class KPIParameter(_StrictBase):
     files and returns the discovered codes. ``default`` is what the
     canvas pre-selects on first open and what the resolver falls
     back to when no override is supplied.
+
+    ``depends_on`` declares other parameter names this generator
+    reads from the user's current draft (e.g. ``phases_for_plan``
+    depends on ``plan_name``). The picker watches those keys and
+    re-fetches the parameter spec whenever a dependency changes so
+    dependent dropdowns stay in sync.
     """
 
     label: str
@@ -143,6 +149,7 @@ class KPIParameter(_StrictBase):
     options_generator: Optional[str] = None
     default: Optional[str] = None
     description: Optional[str] = None
+    depends_on: List[str] = Field(default_factory=list)
 
 
 class KPISource(_StrictBase):

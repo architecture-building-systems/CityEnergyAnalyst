@@ -12273,6 +12273,19 @@ get_network_energy_pumping_requirements_file:
         unit: '[kWh]'
         min: 0.0
   used_by: []
+get_thermal_network_phasing_energy_pumping_requirements_file:
+  created_by:
+  - thermal_network
+  file_path: outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_plant_pumping_load_kW.csv
+  file_type: csv
+  schema:
+    columns:
+      pressure_loss_total_kW:
+        description: pumping electricity required to overcome pressure losses in the entire network
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+  used_by: []
 get_network_layout_edges_shapefile:
   created_by:
   - network_layout
@@ -12482,6 +12495,19 @@ get_network_total_thermal_loss_file:
         min: 0.0
   used_by:
   - optimization
+get_thermal_network_phasing_total_thermal_loss_file:
+  created_by:
+  - thermal_network
+  file_path: outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_total_thermal_loss_edges_kW.csv
+  file_type: csv
+  schema:
+    columns:
+      thermal_loss_total_kW:
+        description: Thermal losses in the entire thermal network at each time step
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+  used_by: []
 get_nominal_edge_mass_flow_csv_file:
   created_by:
   - thermal_network
@@ -16280,6 +16306,29 @@ get_thermal_network_edge_list_file:
         min: 0.0
   used_by:
   - optimization
+# Per-phase copy of the same edge-list inside a phasing plan.
+# Saved by `save_phase_results` in
+# `cea/technologies/thermal_network/common/phasing.py` so each
+# phase of each plan keeps its own snapshot independent of
+# whatever the underlying single-phase network folder currently
+# holds.
+get_thermal_network_phasing_edge_list_file:
+  created_by:
+  - thermal_network
+  file_path: outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_metadata_edges.csv
+  file_type: csv
+  schema:
+    columns:
+      name:
+        description: Unique network pipe ID.
+        type: string
+        unit: NA
+      length_m:
+        description: Length of each pipe in the network
+        type: float
+        unit: '[m]'
+        min: 0.0
+  used_by: []
 get_thermal_network_edge_node_matrix_file:
   created_by:
   - thermal_network
@@ -16353,6 +16402,19 @@ get_thermal_network_plant_heat_requirement_file:
   created_by:
   - thermal_network
   file_path: outputs/data/thermal-network/DH__plant_thermal_load_kW.csv
+  file_type: csv
+  schema:
+    columns:
+      thermal_load_kW:
+        description: Thermal load supplied by the plant at each time step
+        type: float
+        unit: '[kWh]'
+        min: 0.0
+  used_by: []
+get_thermal_network_phasing_plant_heat_requirement_file:
+  created_by:
+  - thermal_network
+  file_path: outputs/data/thermal-network/phasing-plans/{plan_name}/{network_type}/{phase}/{network_type}_{phase}_plant_thermal_load_kW.csv
   file_type: csv
   schema:
     columns:

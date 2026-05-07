@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import glob
 import os
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from cea.inputlocator import InputLocator
 from cea.kpi.exceptions import KPIDefinitionError
@@ -40,8 +40,16 @@ __status__ = "Production"
 # Each generator returns ``[{"value": ..., "label": ...}, ...]``.
 # Value is what the resolver receives as ``locator_args[<key>]``;
 # label is what the dropdown renders.
+#
+# Generators accept the active draft of parameter values as a
+# second argument. Most ignore it (their choice list doesn't
+# depend on what the user has picked elsewhere); dependent ones
+# (e.g. ``phases_for_plan`` reads the picked ``plan_name``) opt
+# in. Frontend re-fetches the parameter spec whenever any draft
+# value changes, so dependent generators see the latest picks.
 ChoiceList = List[Dict[str, str]]
-GeneratorFn = Callable[[InputLocator], ChoiceList]
+ParamContext = Mapping[str, Any]
+GeneratorFn = Callable[..., ChoiceList]
 
 _GENERATORS: Dict[str, GeneratorFn] = {}
 
@@ -57,16 +65,33 @@ def register(name: str) -> Callable[[GeneratorFn], GeneratorFn]:
     return decorator
 
 
-def run_generator(name: str, locator: InputLocator) -> ChoiceList:
+def run_generator(
+    name: str,
+    locator: InputLocator,
+    parameters: Optional[ParamContext] = None,
+) -> ChoiceList:
     """Dispatch entry point. Raises :class:`KPIDefinitionError` for
-    unregistered names so a typo in a yml fails loudly."""
+    unregistered names so a typo in a yml fails loudly.
+
+    ``parameters`` is the user's current draft of parameter values
+    (a dict like ``{"plan_name": "MyPlan"}``). Forwarded to
+    generators that opted into a 2-arg signature so they can
+    filter their choices by what's already picked. Single-arg
+    generators (the common case) ignore it via the introspection
+    fallback.
+    """
     fn = _GENERATORS.get(name)
     if fn is None:
         raise KPIDefinitionError(
             f"unknown options_generator '{name}'. "
             f"Known: {sorted(_GENERATORS)}"
         )
-    return fn(locator)
+    # Try the 2-arg call first; fall back to the legacy 1-arg
+    # form so existing generators don't need to be touched.
+    try:
+        return fn(locator, parameters or {})
+    except TypeError:
+        return fn(locator)
 
 
 # ── Generators ──────────────────────────────────────────────────────
@@ -138,6 +163,58 @@ def _network_names(locator: InputLocator) -> ChoiceList:
             continue
         out.append({"value": entry, "label": entry})
     return out
+
+
+@register("phasing_plans")
+def _phasing_plans(locator: InputLocator) -> ChoiceList:
+    """List phasing plans by scanning ``thermal-network/phasing-plans/``.
+    Each direct subfolder is a plan name. Empty list when no plans
+    exist — the multi-phase KPIs surface as "not available" until
+    a plan is published."""
+    folder = locator.get_thermal_network_phasing_plans_folder()
+    if not os.path.isdir(folder):
+        return []
+    plans = []
+    for entry in sorted(os.listdir(folder)):
+        full = os.path.join(folder, entry)
+        if entry.startswith(".") or not os.path.isdir(full):
+            continue
+        plans.append({"value": entry, "label": entry})
+    return plans
+
+
+@register("phases_for_plan")
+def _phases_for_plan(
+    locator: InputLocator,
+    parameters: ParamContext,
+) -> ChoiceList:
+    """List phase folders for the picked plan + network type.
+
+    Reads ``parameters['plan_name']`` and
+    ``parameters['network_type']`` (defaults to DH if missing) and
+    enumerates direct subfolders of
+    ``phasing-plans/<plan>/<network_type>/`` excluding the
+    ``layout`` folder (which holds the plan-level timeline view,
+    not a phase). Returns empty when the plan isn't picked yet so
+    the dropdown stays empty until the user resolves the
+    dependency.
+    """
+    plan_name = parameters.get("plan_name") if parameters else None
+    network_type = (parameters.get("network_type") if parameters else None) or "DH"
+    if not plan_name:
+        return []
+    folder = locator.get_thermal_network_phasing_folder(network_type, plan_name)
+    if not os.path.isdir(folder):
+        return []
+    phases = []
+    for entry in sorted(os.listdir(folder)):
+        full = os.path.join(folder, entry)
+        if entry.startswith(".") or not os.path.isdir(full):
+            continue
+        if entry == "layout":
+            continue
+        phases.append({"value": entry, "label": entry})
+    return phases
 
 
 @register("district_energy_system_ids")

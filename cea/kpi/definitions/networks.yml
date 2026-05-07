@@ -154,3 +154,199 @@ kpis:
         kind: aggregate
         op: sum
         of: { kind: column, name: pressure_loss_total_kW }
+
+  # ── Multi-phase variants ───────────────────────────────────────
+  # Surface per-phase metrics from a phasing plan. Read from the
+  # ``phasing-plans/<plan>/<type>/<phase>/`` snapshot rather than
+  # the standard ``thermal-network/<name>/`` path so values stay
+  # tied to a specific plan's specific phase even when the
+  # underlying single-phase networks are re-simulated as part of
+  # another plan.
+  #
+  # No `parameters:` block — the OverviewCard ribbon supplies
+  # `plan_name` + `phase` from the active map layer's selection;
+  # these KPIs aren't surfaced in the canvas picker (the picker's
+  # step-2 form can't render dependent dropdowns yet).
+
+  - id: networks.phase_total_length_m
+    label: Total Network Length (Phasing)
+    category: thermal-network
+    unit: m
+    better_direction: lower
+    info_note: |
+      Total length of pipe segments in the selected phase of the
+      phasing plan.
+
+      Length = Σ(length_m of every pipe edge)
+        in [m]
+    source:
+      locator: get_thermal_network_phasing_edge_list_file
+      locator_args:
+        network_type: DH
+        plan_name: ""
+        phase: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        plan_name:
+          label: Phasing plan
+          options_generator: phasing_plans
+          default: ""
+          description: Which phasing plan to read.
+        phase:
+          label: Phase
+          options_generator: phases_for_plan
+          default: ""
+          description: Which phase of the selected plan to read.
+          # Re-fetch this dropdown whenever the user changes the
+          # plan or network type — choices live under
+          # ``phasing-plans/<plan>/<network_type>/`` so both inputs
+          # filter the result.
+          depends_on:
+            - plan_name
+            - network_type
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: length_m }
+
+  - id: networks.phase_peak_thermal_load_kw
+    label: Peak Thermal Load (Phasing)
+    category: thermal-network
+    unit: kW
+    better_direction: lower
+    info_note: |
+      Maximum hourly thermal load delivered by the central plant
+      across the design year for the selected phase of the
+      phasing plan.
+
+      Peak = max(thermal_load_kW)
+        in [kW]
+    source:
+      locator: get_thermal_network_phasing_plant_heat_requirement_file
+      locator_args:
+        network_type: DH
+        plan_name: ""
+        phase: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        plan_name:
+          label: Phasing plan
+          options_generator: phasing_plans
+          default: ""
+          description: Which phasing plan to read.
+        phase:
+          label: Phase
+          options_generator: phases_for_plan
+          default: ""
+          description: Which phase of the selected plan to read.
+          # Re-fetch this dropdown whenever the user changes the
+          # plan or network type — choices live under
+          # ``phasing-plans/<plan>/<network_type>/`` so both inputs
+          # filter the result.
+          depends_on:
+            - plan_name
+            - network_type
+      formula:
+        kind: aggregate
+        op: max
+        of: { kind: column, name: thermal_load_kW }
+
+  - id: networks.phase_annual_thermal_loss_kwh
+    label: Annual Distribution Losses (Phasing)
+    category: thermal-network
+    unit: kWh/yr
+    better_direction: lower
+    info_note: |
+      Total annual heat lost to the ground / surroundings along
+      both supply and return pipes for the selected phase of the
+      phasing plan.
+
+      Losses = Σ(thermal_loss_total_kW) over 8760 h
+        in [kWh/yr]
+    source:
+      locator: get_thermal_network_phasing_total_thermal_loss_file
+      locator_args:
+        network_type: DH
+        plan_name: ""
+        phase: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        plan_name:
+          label: Phasing plan
+          options_generator: phasing_plans
+          default: ""
+          description: Which phasing plan to read.
+        phase:
+          label: Phase
+          options_generator: phases_for_plan
+          default: ""
+          description: Which phase of the selected plan to read.
+          # Re-fetch this dropdown whenever the user changes the
+          # plan or network type — choices live under
+          # ``phasing-plans/<plan>/<network_type>/`` so both inputs
+          # filter the result.
+          depends_on:
+            - plan_name
+            - network_type
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: thermal_loss_total_kW }
+
+  - id: networks.phase_annual_pumping_kwh
+    label: Annual Pumping Electricity (Phasing)
+    category: thermal-network
+    unit: kWh/yr
+    better_direction: lower
+    info_note: |
+      Total annual electricity consumed by the network's pumps
+      to overcome pipe pressure drops for the selected phase of
+      the phasing plan.
+
+      Pumping = Σ(pressure_loss_total_kW) over 8760 h
+        in [kWh/yr]
+    source:
+      locator: get_thermal_network_phasing_energy_pumping_requirements_file
+      locator_args:
+        network_type: DH
+        plan_name: ""
+        phase: ""
+      parameters:
+        network_type:
+          label: Network type
+          options_generator: network_types
+          default: DH
+          description: District heating (DH) or district cooling (DC).
+        plan_name:
+          label: Phasing plan
+          options_generator: phasing_plans
+          default: ""
+          description: Which phasing plan to read.
+        phase:
+          label: Phase
+          options_generator: phases_for_plan
+          default: ""
+          description: Which phase of the selected plan to read.
+          # Re-fetch this dropdown whenever the user changes the
+          # plan or network type — choices live under
+          # ``phasing-plans/<plan>/<network_type>/`` so both inputs
+          # filter the result.
+          depends_on:
+            - plan_name
+            - network_type
+      formula:
+        kind: aggregate
+        op: sum
+        of: { kind: column, name: pressure_loss_total_kW }

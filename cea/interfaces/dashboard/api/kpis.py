@@ -204,11 +204,18 @@ async def get_kpi_parameters(
     kpi_id: str,
     project: str,
     scenario: str,
+    args: Optional[str] = None,
 ):
     """Return resolved choice lists for every parameter the KPI
     accepts. Drives the canvas KPI picker's step-2 form so the
     user sees a populated dropdown of (e.g.) the actual panel
     codes that exist on disk for this scenario.
+
+    ``args`` is an optional JSON-encoded draft of currently-picked
+    parameter values, forwarded to dependent generators (e.g.
+    ``phases_for_plan`` filters by the picked ``plan_name``). The
+    frontend re-fetches with the updated draft whenever any
+    parameter changes so dependent dropdowns stay in sync.
 
     Shape::
 
@@ -238,13 +245,14 @@ async def get_kpi_parameters(
 
     scenario_path = resolve_scenario_path(project_root, project, scenario)
     locator = cea.inputlocator.InputLocator(scenario_path)
+    draft = _parse_locator_args(args) or {}
 
     out = {}
     for name, param in (kpi.source.parameters or {}).items():
         choices = []
         if param.options_generator:
             try:
-                choices = run_generator(param.options_generator, locator)
+                choices = run_generator(param.options_generator, locator, draft)
             except KPIDefinitionError as exc:
                 logger.exception("Options generator failed: %s", exc)
                 raise HTTPException(
@@ -258,6 +266,10 @@ async def get_kpi_parameters(
             "default": param.default,
             "description": param.description,
             "choices": choices,
+            # Frontend uses this to decide which other parameter
+            # changes should trigger a re-fetch. Empty when the
+            # generator doesn't depend on anything.
+            "depends_on": list(param.depends_on or []),
         }
 
     return {"parameters": out, "kpi_id": kpi_id}
