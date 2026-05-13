@@ -174,7 +174,129 @@ class InputLocator(object):
     def get_export_folder(self):
         """Returns the export folder of a scenario"""
         return os.path.join(self.scenario, "export")
+    
+    # Suffix that identifies a child scenario living inside a pathway
+    # state folder (`.../outputs/pathways/{name}/state_{year}/...`).
+    # Centralised here so every callsite shares one definition; flip
+    # this if the on-disk layout ever moves again.
+    _PATHWAY_CHILD_MARKER = os.sep + "outputs" + os.sep + "pathways" + os.sep
 
+    @classmethod
+    def pathway_child_marker(cls) -> str:
+        """The path segment used to detect a pathway child scenario."""
+        return cls._PATHWAY_CHILD_MARKER
+
+    @classmethod
+    def is_pathway_child_scenario(cls, scenario_path: str) -> bool:
+        """True when ``scenario_path`` points inside a pathway state
+        folder. Used by API routes that need to skip project/scenario
+        overrides while the pathway viewer is active."""
+        return cls._PATHWAY_CHILD_MARKER in scenario_path
+
+    @classmethod
+    def parent_scenario_for_pathway_child(cls, scenario_path: str) -> str:
+        """If ``scenario_path`` is inside a pathway child folder,
+        return the parent scenario root; otherwise return it
+        unchanged."""
+        idx = scenario_path.find(cls._PATHWAY_CHILD_MARKER)
+        return scenario_path[:idx] if idx >= 0 else scenario_path
+
+    def get_district_pathway_container_folder(self):
+        """Returns the folder storing district evolution pathways.
+
+        `scenario/outputs/pathways`"""
+        return os.path.join(self.scenario, "outputs", "pathways")
+
+    def get_district_pathway_folder(self, pathway_name: str):
+        """Returns the folder storing one district evolution pathway.
+
+        `scenario/outputs/pathways/{pathway_name}`"""
+        return os.path.join(self.get_district_pathway_container_folder(), pathway_name)
+
+    def get_state_in_time_scenario_folder(self, pathway_name: str, year_of_state: int):
+        """Returns the folder containing a specific pathway state scenario.
+
+        `scenario/outputs/pathways/{pathway_name}/state_{year_of_state}`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), f'state_{year_of_state}')
+
+    def get_district_pathway_log_file(self, pathway_name: str):
+        """Returns the log file for a district evolution pathway.
+
+        `scenario/outputs/pathways/{pathway_name}/district_pathway_log.yml`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'district_pathway_log.yml')
+
+    def get_district_pathway_metadata_file(self, pathway_name: str):
+        """Returns the hidden metadata sidecar for a district evolution
+        pathway. Stores small UI/runtime hints (last-opened timestamps,
+        cached signatures) that aren't part of the canonical pathway log.
+
+        `scenario/outputs/pathways/{pathway_name}/.pathway_metadata.json`"""
+        return os.path.join(
+            self.get_district_pathway_folder(pathway_name),
+            '.pathway_metadata.json',
+        )
+
+    def get_district_pathway_state_signature_file(
+        self, pathway_name: str, year_of_state: int,
+    ):
+        """Returns the hidden signature file for a pathway state year.
+        The signature records when a state was built / simulated and is
+        used by the dashboard to flag stale states.
+
+        `scenario/outputs/pathways/{pathway_name}/state_{year}/.district_pathway_signature.json`"""
+        return os.path.join(
+            self.get_state_in_time_scenario_folder(pathway_name, year_of_state),
+            '.district_pathway_signature.json',
+        )
+
+    def get_intervention_templates_file(self):
+        """Returns the scenario-level intervention-template file.
+
+        `scenario/outputs/pathways/intervention_templates.yml`"""
+        return os.path.join(self.get_district_pathway_container_folder(), 'intervention_templates.yml')
+
+    def get_district_pathway_state_status_folder(self, pathway_name: str):
+        """Returns the folder containing per-state pathway status records.
+
+        `scenario/outputs/pathways/{pathway_name}/state_status`"""
+        return os.path.join(self.get_district_pathway_folder(pathway_name), 'state_status')
+
+    def get_district_pathway_state_status_file(self, pathway_name: str, year_of_state: int):
+        """Returns the JSON status record for one pathway state year.
+
+        `scenario/outputs/pathways/{pathway_name}/state_status/state_{year_of_state}.json`"""
+        return os.path.join(
+            self.get_district_pathway_state_status_folder(pathway_name),
+            f'state_{year_of_state}.json',
+        )
+    
+    def get_district_pathway_emissions_timeline_path(self, pathway_name: str):
+        """Returns the district-level pathway emissions timeline CSV file.
+        
+        `scenario/outputs/pathways/{pathway_name}/district_pathway_emissions_timeline.csv`"""
+        return os.path.join(
+            self.get_district_pathway_folder(pathway_name),
+            'district_pathway_emissions_timeline.csv',
+        )
+    
+    def get_building_pathway_emissions_timelines_folder(self, pathway_name: str):
+        """Returns the folder containing per-building pathway emissions timeline CSV files.
+        
+        `scenario/outputs/pathways/{pathway_name}/building_pathway_emissions_timelines`"""
+        return os.path.join(
+            self.get_district_pathway_folder(pathway_name),
+            'building_pathway_emissions_timelines',
+        )
+
+    def get_building_pathway_emissions_timeline_file(self, pathway_name: str, building_name: str):
+        """Returns the per-building pathway emissions timeline CSV file for a specific building.
+        
+        `scenario/outputs/pathways/{pathway_name}/building_pathway_emissions_timelines/{building_name}_pathway_emissions_timeline.csv`"""
+        return os.path.join(
+            self.get_building_pathway_emissions_timelines_folder(pathway_name),
+            f'{building_name}_pathway_emissions_timeline.csv'
+        )
+    
     def get_export_results_folder(self):
         """Returns the folder storing the summary and analytics results in the export folder of a scenario"""
         """scenario/export/results"""
@@ -932,6 +1054,10 @@ class InputLocator(object):
     def get_database_components_feedstocks_energy_carriers(self):
         """scenario/inputs/database/COMPONENTS/FEEDSTOCKS/ENERGY_CARRIERS.csv"""
         return os.path.join(self.get_db4_components_feedstocks_folder(), 'ENERGY_CARRIERS.csv')
+    
+    def get_database_components_materials(self):
+        """scenario/inputs/database/COMPONENTS/MATERIALS/MATERIALS.csv"""
+        return os.path.join(self.get_db4_components_folder(), 'MATERIALS', 'MATERIALS.csv')
 
     def get_database_conversion_systems_cold_thermal_storage_names(self):
         """Return the list of thermal storage tanks"""
@@ -1946,6 +2072,19 @@ class InputLocator(object):
         :return: Path to emissions folder for this what-if scenario
         """
         return os.path.join(self.get_analysis_folder(whatif_name), 'emissions')
+
+    def get_emissions_whatif_operational_folder(self, whatif_name):
+        """
+        scenario/outputs/data/analysis/{whatif_name}/emissions/operational/
+
+        Per-building hourly operational emission CSVs live here. Older
+        what-if results predating this layout fall back to the legacy
+        yearly summary file (see ``get_total_yearly_operational_building``).
+
+        :param whatif_name: What-if scenario name.
+        :return: Path to the per-building operational emissions folder.
+        """
+        return os.path.join(self.get_emissions_whatif_folder(whatif_name), 'operational')
 
     def get_emissions_whatif_buildings_file(self, whatif_name):
         """

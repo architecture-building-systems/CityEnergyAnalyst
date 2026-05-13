@@ -1,0 +1,91 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import Any
+
+import os
+
+import geopandas as gpd
+
+from cea.config import Configuration
+from cea.inputlocator import InputLocator
+from cea.datamanagement.district_pathways.pathway_state import (
+    DistrictEvolutionPathway,
+)
+
+
+def list_state_years(main_locator: InputLocator, pathway_name: str) -> list[int]:
+    """Return sorted list of pathway state years present under `district_pathways/{pathway_name}/state_YYYY/`."""
+    years: list[int] = []
+    pathway_folder = main_locator.get_district_pathway_folder(pathway_name)
+    if not os.path.exists(pathway_folder):
+        return years
+    for name in os.listdir(pathway_folder):
+        if not name.startswith("state_"):
+            continue
+        try:
+            years.append(int(name.replace("state_", "")))
+        except ValueError:
+            continue
+    years.sort()
+    return years
+
+
+def get_building_construction_years(locator: InputLocator) -> dict[str, int]:
+    """Return {building_name: construction_year} from `zone.shp`.
+
+    Requires a `year` attribute in the geometry.
+    """
+    zone = gpd.read_file(locator.get_zone_geometry())
+    if "name" not in zone.columns:
+        raise ValueError("Zone geometry is missing required 'name' column.")
+    if "year" not in zone.columns:
+        raise ValueError("Zone geometry is missing required 'year' column.")
+
+    out: dict[str, int] = {}
+    for _, row in zone.iterrows():
+        name = str(row["name"])
+        y = row["year"]
+        if y is None:
+            continue
+        try:
+            out[name] = int(y)
+        except Exception as e:
+            raise ValueError(f"Invalid construction year for building '{name}': {y}") from e
+    return out
+
+
+def get_required_state_years(config: Configuration, pathway_name: str) -> list[int]:
+    """Compute which years should have a `state_{year}` folder.
+
+    Rules:
+    - Always include all years present in YAML log.
+    - Always include all distinct building construction years from `zone.shp`.
+
+    This ensures pathway simulations capture both policy/standard changes and building births.
+    """
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    return pathway.required_state_years()
+
+
+def ensure_state_years_exist(
+    config: Configuration,
+    pathway_name: str,
+    years: Iterable[int],
+    *,
+    update_yaml: bool = True,
+) -> dict[int, dict[str, Any]]:
+    """Ensure `state_{year}` folders exist for all requested years.
+
+    - Creates missing `state_{year}` folders by copying inputs.
+    - Removes buildings not yet built in that year.
+    - Ensures YAML entries exist (empty modifications by default).
+    - Optionally logs `building_events.new_buildings` (derived from `zone.shp` construction years).
+
+    Returns the (possibly updated) YAML log data in memory.
+    """
+    pathway = DistrictEvolutionPathway(config, pathway_name=pathway_name)
+    return pathway.ensure_state_years_exist(
+        [int(y) for y in years],
+        update_yaml=update_yaml,
+    )
