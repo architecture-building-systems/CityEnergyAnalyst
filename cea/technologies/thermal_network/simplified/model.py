@@ -1119,18 +1119,22 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     # $ POSTPROCESSING - THERMAL LOSSES PER PIPE PER HOUR OF THE YEAR (SUPPLY)
     # calculate the thermal characteristics of the grid
     temperature_of_the_ground_K = calculate_ground_temperature(locator)
-    thermal_coeffcient_WperKm = pd.Series(
+    thermal_coefficient_WperKm = pd.Series(
         np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
     average_temperature_supply_K = T_sup_K_building.mean(axis=1)
 
-
+    # supply pipe losses
     thermal_losses_supply_kWh = link_headloss_df.copy()
     thermal_losses_supply_kWh.reset_index(inplace=True, drop=True)
     thermal_losses_supply_Wperm = thermal_losses_supply_kWh.copy()
+    # return pipe losses
+    average_temperature_return_K = T_re_K_building.mean(axis=1)
+    thermal_losses_return_kWh = link_headloss_df.copy()
+    thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
     for pipe in pipe_names:
         length_m = edge_df.loc[pipe]['length_m']
         massflow_kgs = massflow_supply_kgs[pipe]
-        k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
+        k_WperKm_pipe = thermal_coefficient_WperKm[pipe]
         k_kWperK = k_WperKm_pipe * length_m / 1000
         thermal_losses_supply_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_supply_K.values,
                                                                      massflow_kgs.values,
@@ -1140,15 +1144,6 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
 
         thermal_losses_supply_Wperm[pipe] = (thermal_losses_supply_kWh[pipe] / length_m) * 1000
 
-    # return pipes
-    average_temperature_return_K = T_re_K_building.mean(axis=1)
-    thermal_losses_return_kWh = link_headloss_df.copy()
-    thermal_losses_return_kWh.reset_index(inplace=True, drop=True)
-    for pipe in pipe_names:
-        length_m = edge_df.loc[pipe]['length_m']
-        massflow_kgs = massflow_supply_kgs[pipe]
-        k_WperKm_pipe = thermal_coeffcient_WperKm[pipe]
-        k_kWperK = k_WperKm_pipe * length_m / 1000
         thermal_losses_return_kWh[pipe] = np.vectorize(calc_thermal_loss_per_pipe)(average_temperature_return_K.values,
                                                                      massflow_kgs.values,
                                                                      temperature_of_the_ground_K,
