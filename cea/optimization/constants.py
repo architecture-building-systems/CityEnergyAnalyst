@@ -64,12 +64,6 @@ STORAGE_COOLING_SHARE_RESTRICTION = 0.3  # Maximum percentage of the nominal coo
 K_DH = 0.25  # linear heat loss coefficient district heating network twin pipes groundfoss
 # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
-# pipes location properties
-Z0 = 1.5  # location of pipe underground in m
-PSL = 1600  # heat capacity of ground in kg/m3 => should be density?
-CSL = 1300  # heat capacity of ground in J/kg K
-BSL = 1.5  # thermal conductivity of ground in W/m.K
-
 # Heat Exchangers
 U_COOL = 2500.0  # W/m2K
 U_HEAT = 2500.0  # W/m2K

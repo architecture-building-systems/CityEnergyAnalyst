@@ -63,9 +63,11 @@ def calc_water_temperature(T_ambient_C: npt.NDArray[np.float64], depth_m: float)
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
     Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
     """
-    heat_capacity_soil = 2000  # _[A. Kecebas et al., 2011]
-    conductivity_soil = 1.6  # _[A. Kecebas et al., 2011]
-    density_soil = 1600  # _[A. Kecebas et al., 2011]
+    from cea.constants import SOIL_Cp_JkgK, SOIL_lambda_WmK, SOIL_rho_kgm3
+
+    heat_capacity_soil = SOIL_Cp_JkgK
+    conductivity_soil = SOIL_lambda_WmK
+    density_soil = SOIL_rho_kgm3
 
     T_max = max(T_ambient_C) + KELVIN_CONVERSION  # to K
     T_avg = np.mean(T_ambient_C) + KELVIN_CONVERSION  # to K

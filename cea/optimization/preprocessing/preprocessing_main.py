@@ -3,7 +3,7 @@ Pre-processing algorithm
 
 """
 
-from cea.optimization.constants import Z0
+from cea.technologies.constants import NETWORK_DEPTH
 from cea.optimization.distribution.network_optimization_features import NetworkOptimizationFeatures
 from cea.optimization.master import summarize_network
 from cea.resources.geothermal import calc_ground_temperature
@@ -29,7 +29,7 @@ class WeatherFeatures(object):
         self.weather_data = epwreader.epw_reader(weather_file)
         self.date = self.weather_data['date']
         self.T_ambient = self.weather_data['drybulb_C']
-        self.ground_temp = calc_ground_temperature(self.T_ambient, depth_m=Z0)
+        self.ground_temp = calc_ground_temperature(self.T_ambient, depth_m=NETWORK_DEPTH)
 
 
 def preproccessing(locator, total_demand, buildings_heating_demand, buildings_cooling_demand,

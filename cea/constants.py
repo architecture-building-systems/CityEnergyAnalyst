@@ -143,13 +143,13 @@ H0_KWPERM2K = 1.5
 
 # Ground/soil properties
 SOIL_Cp_JkgK = 2000
-"""Soil specific heat capacity in J/(kg·K). Reference: A. Kecebas et al., 2011."""
+"""Soil specific heat capacity in J/(kg·K). Reference: A. Kecebas et al., 2011.""" # NOTE: Incorrect reference?
 
 SOIL_lambda_WmK = 1.6
-"""Soil thermal conductivity in W/(m·K)."""
+"""Soil thermal conductivity in W/(m·K). Reference: A. Kecebas et al., 2011.""" # NOTE: Incorrect reference?
 
 SOIL_rho_kgm3 = 1600
-"""Soil density in kg/m³."""
+"""Soil density in kg/m³. Reference: A. Kecebas et al., 2011.""" # NOTE: Incorrect reference?
 
 # Pipe material properties
 PUR_lambda_WmK = 0.023
