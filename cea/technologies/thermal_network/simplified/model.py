@@ -1143,7 +1143,15 @@ def thermal_network_simplified(locator: cea.inputlocator.InputLocator, config: c
     temperature_of_the_ground_K = calculate_ground_temperature(locator)
     thermal_coeffcient_WperKm = pd.Series(
         np.vectorize(calc_linear_thermal_loss_coefficient)(diameter_ext_m, diameter_int_m, diameter_ins_m), pipe_names)
-    average_temperature_supply_K = T_sup_K_building.mean(axis=1)
+    # Mask idle-building sentinels before averaging: the substation writes
+    # T_supply_*_result_C = 0 for hours with no demand, which lands at 273.15 K
+    # after the Celsius->Kelvin shift and would otherwise drag the network mean
+    # toward 0 °C whenever most buildings are idle. Average over active buildings
+    # only; fall back to 0 K when all buildings are idle so the downstream
+    # validator (which filters `temperature_supply_K > 0`) treats those hours as
+    # no-flow rather than picking them as the worst-case supply.
+    T_active = T_sup_K_building.where(T_sup_K_building > KELVIN_CONVERSION + 0.1)
+    average_temperature_supply_K = T_active.mean(axis=1, skipna=True).fillna(0)
 
 
     thermal_losses_supply_kWh = link_headloss_df.copy()
