@@ -1,6 +1,6 @@
 # Quick Reference Guide
 
-This page provides a complete overview of all 39 features available in the CEA-4 App dashboard.
+This page provides a complete overview of all 41 features available in the CEA-4 App dashboard.
 
 ---
 
@@ -56,10 +56,14 @@ This page provides a complete overview of all 39 features available in the CEA-4
 
 ## Life Cycle Analysis
 
+All four LCA features use a shared **what-if scenario** (a named supply configuration). **Run "Energy by Carrier" (Final Energy) first** — its `configuration.json` is the prerequisite for the other three.
+
 | Feature | Description | Key Use |
 |---------|-------------|---------|
-| **Emissions** | Calculate embodied and operational emissions of buildings | Assess lifecycle carbon footprint (construction + operation) |
-| **Energy Supply System Costs** | Calculate costs for energy supply systems | Estimate capital and operational costs of energy systems |
+| **Energy by Carrier** (Final Energy) [BETA] | Calculate hourly and annual final energy by carrier for buildings and district plants under a what-if supply configuration | Quantify GRID, NG, DH, DC, OIL, COAL, WOOD, SOLAR, PV consumption; includes SC/PVT-primary DHW tank dispatch |
+| **GHG Emissions** (Emissions) [BETA] | Calculate embodied + operational + biogenic + demolition emissions, with optional grid-decarbonisation trajectory | Assess lifecycle carbon footprint, year-by-year emission timeline, solar offsets |
+| **Costs** (System Costs) [BETA] | Calculate CAPEX, OPEX, and total annualised cost (TAC) per building, plant, and component | Estimate capital and operational costs at building, component, and plant level |
+| **Heat Rejection** [BETA] | Calculate anthropogenic waste heat rejected to the environment by buildings and district plants | Urban heat island assessment, heat-recovery scoping, map-layer visualisation |
 
 ---
 
@@ -146,16 +150,20 @@ This page provides a complete overview of all 39 features available in the CEA-4
 3. **Thermal Network Part 1** → Generate network layout
 4. **Thermal Network Part 2** → Size network pipes
 5. **District Supply System Optimisation** → Optimise system
-6. **Emissions** → Calculate lifecycle emissions
-7. **Energy Supply System Costs** → Calculate system costs
-8. **Plot - Pareto Front** → Visualise optimisation results
+6. **Energy by Carrier** (Final Energy) → Carrier consumption per what-if scenario *(prerequisite for steps 7-9)*
+7. **GHG Emissions** → Calculate lifecycle emissions
+8. **Costs** (System Costs) → Calculate system costs
+9. **Heat Rejection** → Calculate anthropogenic waste heat
+10. **Plot - Pareto Front** → Visualise optimisation results
 
 ### Climate Impact Assessment
 1. Complete Basic Building Energy Analysis (use Create New Scenario Wizard, then run steps 7-10)
-2. **Emissions** → Calculate lifecycle emissions
-3. **Plot - Lifecycle Emissions** → Visualise total emissions
-4. **Plot - Operational Emissions** → Visualise operational emissions
-5. **Plot - Emission Timeline** → Track emissions over time
+2. **Energy by Carrier** (Final Energy) → Define what-if supply scenario and compute carrier consumption *(prerequisite)*
+3. **GHG Emissions** → Calculate lifecycle emissions (optionally with grid-decarbonisation trajectory)
+4. **Heat Rejection** → Quantify anthropogenic waste heat for the same what-if
+5. **Plot - Lifecycle Emissions** → Visualise total emissions
+6. **Plot - Operational Emissions** → Visualise operational emissions
+7. **Plot - Emission Timeline** → Track emissions over time
 
 ---
 
@@ -177,8 +185,9 @@ Most CEA-4 features have dependencies on other features. Here are the key depend
    - Energy Demand Part 2 (Load Modelling)
    - Streets Helper (for network layout)
 
-5. **LCA features** require:
-   - Energy Demand Part 2 (Load Modelling)
+5. **LCA features** (Emissions, Costs, Heat Rejection) require:
+   - **Energy by Carrier** (Final Energy) — produces `configuration.json` and per-entity carrier flows
+   - Energy by Carrier itself requires Energy Demand Part 2 (Load Modelling)
 
 ---
 
