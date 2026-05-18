@@ -155,6 +155,5 @@ If you encounter issues:
 
 ---
 
-**Last Updated**: October 2025
-**CEA Version**: 4.0+
-**Guide Version**: 1.0
+**Last Updated**: May 2026
+**CEA Version**: 4.0.0-beta.7
