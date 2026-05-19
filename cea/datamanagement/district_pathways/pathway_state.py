@@ -17,6 +17,10 @@ from cea.datamanagement.district_pathways.pathway_integrity import (
     merge_modify_recipes,
 )
 from cea.datamanagement.district_pathways.envelope_topology import (
+    ALL_MATERIAL_FIELDS,
+    extract_material_fields,
+    is_filled,
+    row_has_full_material_set,
     validate_three_layer_topology,
 )
 from cea.datamanagement.district_pathways.pathway_log import (
@@ -1167,11 +1171,30 @@ def _apply_state_construction_changes(
                 new_row = cast(pd.Series, component_db.loc[code_current].copy())
                 new_row.name = code_new
 
+                # Classify the source row + the requested modification: is this an in-place
+                # promotion (direct-property source -> material-based new row)?
+                material_fields_in_mod = extract_material_fields(modifications)
+                is_material_promotion = (
+                    bool(material_fields_in_mod) and not row_has_full_material_set(new_row)
+                )
+
+                # If promoting, the user must supply the full material set — there's no prior
+                # composition to inherit the missing layers from. Mirrors the pre-flight check in
+                # envelope_topology.validate_recipe_against_envelope (which catches this at template
+                # save time); this branch is the safety net for any other path that bypasses save.
+                if is_material_promotion:
+                    missing = ALL_MATERIAL_FIELDS - material_fields_in_mod
+                    if missing:
+                        raise ValueError(
+                            f"Cannot apply material intervention on archetype '{archetype}' "
+                            f"component '{component}' (source row '{code_current}', year {year_of_state}): "
+                            f"source is direct-property only, so the full material set must be provided "
+                            f"to promote it. Missing fields: {sorted(missing)}."
+                        )
+
                 for field, new_value in modifications.items():
                     if new_value is not None:
-                        if field.startswith("material_name_") or field.startswith(
-                            "thickness_"
-                        ):
+                        if field in ALL_MATERIAL_FIELDS:
                             component_field_name = field
                         else:
                             component_field_name = envelope_lookup._col(
@@ -1181,14 +1204,36 @@ def _apply_state_construction_changes(
                         db_modified += 1
 
                 if db_modified:
-                    _validate_three_layer_topology_row(
-                        new_row,
-                        year_of_state=year_of_state,
-                        archetype=archetype,
-                        component=component,
-                        envelope_db_name=envelope_db_name,
-                        code=code_new,
-                    )
+                    if is_material_promotion:
+                        # Clear stale direct-property cache; values will be re-derived from
+                        # materials by Envelope.from_locator on next load.
+                        suf = envelope_lookup._SUFFIX[envelope_db_name]
+                        derived_cols = (
+                            "U_base" if envelope_db_name == "floor" else f"U_{suf}",
+                            f"GHG_{suf}_kgCO2m2",
+                            f"GHG_biogenic_{suf}_kgCO2m2",
+                        )
+                        for c in derived_cols:
+                            if c in new_row.index:
+                                new_row[c] = None
+                        print(
+                            f"  Row '{code_new}' promoted to material-based from direct-property "
+                            f"source '{code_current}'; cleared stale {', '.join(derived_cols)} "
+                            f"(will be re-derived from materials on next load).",
+                            flush=True,
+                        )
+
+                    # Only validate 3-layer topology when the new row claims a material set;
+                    # pure direct-property modifications must not be required to pass it.
+                    if any(is_filled(new_row.get(f)) for f in ALL_MATERIAL_FIELDS):
+                        _validate_three_layer_topology_row(
+                            new_row,
+                            year_of_state=year_of_state,
+                            archetype=archetype,
+                            component=component,
+                            envelope_db_name=envelope_db_name,
+                            code=code_new,
+                        )
                     new_row["description"] = (
                         f"Modified {component} for archetype {archetype} in year {year_of_state}, "
                         f"based on {code_current}, fields: {', '.join(modifications.keys())}"

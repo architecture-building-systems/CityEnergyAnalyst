@@ -201,116 +201,179 @@ class Envelope(BaseAssemblyDatabase):
                 biogenic_emissions if any_biogenic else None,
             )
 
-        def _has_material_definition(df: pd.DataFrame) -> bool:
-            required_cols = {
-                "material_name_1",
-                "material_name_2",
-                "material_name_3",
-                "thickness_1_m",
-                "thickness_2_m",
-                "thickness_3_m",
-            }
-            return required_cols.issubset(set(df.columns))
+        MATERIAL_COLS = (
+            "material_name_1", "thickness_1_m",
+            "material_name_2", "thickness_2_m",
+            "material_name_3", "thickness_3_m",
+        )
 
-        def _ensure_legacy_columns_exist(df: pd.DataFrame, kind: Literal["floor", "roof", "wall"]) -> pd.DataFrame:
-            """Augment a material-based sheet with derived legacy columns in-memory.
+        # Per-component legacy (direct-property) columns that materials derive.
+        DERIVED_COLS_BY_KIND: dict[str, tuple[str, str, str]] = {
+            "floor": ("U_base", "GHG_floor_kgCO2m2", "GHG_biogenic_floor_kgCO2m2"),
+            "roof": ("U_roof", "GHG_roof_kgCO2m2", "GHG_biogenic_roof_kgCO2m2"),
+            "wall": ("U_wall", "GHG_wall_kgCO2m2", "GHG_biogenic_wall_kgCO2m2"),
+        }
 
-            This keeps the raw material-based definition intact for saving, while providing
-            backwards-compatible columns (U_*, GHG_*) for code that expects them.
+        CROSS_CHECK_REL_TOLERANCE = 0.01  # 1% drift between materials-derived and on-disk
+
+        def _row_has_complete_material_set(row: pd.Series) -> bool:
+            """A row is material-complete iff all 3 layers have both name and thickness,
+            zero-thickness slots are allowed (with empty name) for up to 2 layers."""
+            non_zero_count = 0
+            for i in (1, 2, 3):
+                name = row.get(f"material_name_{i}")
+                thickness = row.get(f"thickness_{i}_m")
+                t = _to_float(thickness)
+                if t is None:
+                    return False
+                if t > 0:
+                    if pd.isna(name) or name is None or str(name).strip() == "":
+                        return False
+                    non_zero_count += 1
+                # t == 0 is allowed regardless of name
+            return non_zero_count >= 1
+
+        def _row_has_complete_direct_set(row: pd.Series, kind: str) -> bool:
+            return all(
+                col in row.index and _to_float(row.get(col)) is not None
+                for col in DERIVED_COLS_BY_KIND[kind]
+            )
+
+        def _gather_materials_for_row(row: pd.Series) -> list[dict[str, Any]] | None:
+            """Return list of layer dicts joined with MATERIALS.csv, or None if any layer fails to resolve."""
+            if material_db is None:
+                return None
+            mats: list[dict[str, Any]] = []
+            for i in (1, 2, 3):
+                name = row.get(f"material_name_{i}")
+                thickness = _to_float(row.get(f"thickness_{i}_m"))
+                if thickness is None:
+                    return None
+                if thickness == 0:
+                    # Zero-thickness slot: contributes nothing; skip joining
+                    continue
+                if pd.isna(name) or name is None:
+                    return None
+                kb_match = material_db[material_db["name"] == name]
+                if kb_match.empty:
+                    return None
+                rec = kb_match.iloc[0]
+                mats.append({
+                    "name": name,
+                    "thickness": thickness,
+                    "thermal_conductivity": rec.get("thermal_conductivity"),
+                    "density": rec.get("density"),
+                    "unit": rec.get("unit"),
+                    "GHG_emission_total": rec.get("GHG_emission_total"),
+                    "GHG_emission_production": rec.get("GHG_emission_production"),
+                    "GHG_emission_recycling": rec.get("GHG_emission_recycling"),
+                    "biogenic_carbon_in_product": rec.get("biogenic_carbon_in_product"),
+                })
+            return mats
+
+        def _relative_drift(disk: float, derived: float) -> float:
+            denom = max(abs(disk), abs(derived), 1e-9)
+            return abs(derived - disk) / denom
+
+        def _ensure_legacy_columns_exist(
+            df: pd.DataFrame,
+            kind: Literal["floor", "roof", "wall"],
+            envelope_ref: str,
+        ) -> pd.DataFrame:
+            """Per-row dispatch:
+            - Material-complete row -> derive U/GHG; if on-disk values also present and drift > 1%, raise.
+            - Direct-property-complete row -> leave as-is.
+            - Neither -> raise: malformed row.
             """
-            if not _has_material_definition(df):
-                return df
-
             df = df.copy()
+            derived_cols = DERIVED_COLS_BY_KIND[kind]
 
-            if kind == "floor":
-                target_cols = {
-                    "U_base",
-                    "GHG_floor_kgCO2m2",
-                    "GHG_biogenic_floor_kgCO2m2",
-                }
-            elif kind == "roof":
-                target_cols = {
-                    "U_roof",
-                    "GHG_roof_kgCO2m2",
-                    "GHG_biogenic_roof_kgCO2m2",
-                }
-            else:  # wall
-                target_cols = {
-                    "U_wall",
-                    "GHG_wall_kgCO2m2",
-                    "GHG_biogenic_wall_kgCO2m2",
-                }
-
-            # Ensure the columns exist to avoid KeyErrors in legacy code.
-            for c in target_cols:
+            # Make sure derived columns exist so downstream readers never KeyError.
+            for c in derived_cols:
                 if c not in df.columns:
                     df[c] = None
 
-            if material_db is None:
-                return df
+            # Make sure material columns exist (as object/None) so per-row checks don't KeyError.
+            for c in MATERIAL_COLS:
+                if c not in df.columns:
+                    df[c] = None
+
+            drift_errors: list[str] = []
+            malformed: list[str] = []
 
             for code, row in df.iterrows():
                 code_str = str(code)
-                mats: list[dict[str, Any]] = []
-                for i in (1, 2, 3):
-                    name = row.get(f"material_name_{i}")
-                    thickness = row.get(f"thickness_{i}_m")
-                    if pd.isna(name) or name is None:
-                        mats = []
-                        break
-                    if thickness is None or pd.isna(thickness):
-                        mats = []
-                        break
+                has_materials = _row_has_complete_material_set(row)
+                has_direct = _row_has_complete_direct_set(row, kind)
 
-                    kb_match = material_db[material_db["name"] == name]
-                    if kb_match.empty:
-                        mats = []
-                        break
-
-                    rec = kb_match.iloc[0]
-                    mats.append(
-                        {
-                            "name": name,
-                            "thickness": thickness,
-                            "thermal_conductivity": rec.get("thermal_conductivity"),
-                            "density": rec.get("density"),
-                            "unit": rec.get("unit"),
-                            "GHG_emission_total": rec.get("GHG_emission_total"),
-                            "GHG_emission_production": rec.get("GHG_emission_production"),
-                            "GHG_emission_recycling": rec.get("GHG_emission_recycling"),
-                            "biogenic_carbon_in_product": rec.get("biogenic_carbon_in_product"),
-                        }
-                    )
-
-                if not mats:
+                if not has_materials and not has_direct:
+                    malformed.append(code_str)
                     continue
 
-                u_val = _calc_u(mats, kind)
-                ghg_total, _ghg_prod, _ghg_recyc, ghg_bio = _calc_ghg(mats)
+                if not has_materials:
+                    # Direct-property only — values already on disk, nothing to do.
+                    continue
 
-                if kind == "floor":
-                    df.loc[code_str, "U_base"] = u_val
-                    df.loc[code_str, "GHG_floor_kgCO2m2"] = ghg_total
-                    df.loc[code_str, "GHG_biogenic_floor_kgCO2m2"] = ghg_bio
-                elif kind == "roof":
-                    df.loc[code_str, "U_roof"] = u_val
-                    df.loc[code_str, "GHG_roof_kgCO2m2"] = ghg_total
-                    df.loc[code_str, "GHG_biogenic_roof_kgCO2m2"] = ghg_bio
-                else:  # wall
-                    df.loc[code_str, "U_wall"] = u_val
-                    df.loc[code_str, "GHG_wall_kgCO2m2"] = ghg_total
-                    df.loc[code_str, "GHG_biogenic_wall_kgCO2m2"] = ghg_bio
+                mats = _gather_materials_for_row(row)
+                if not mats:
+                    # Materials referenced but MATERIALS.csv missing or layer unresolved.
+                    # If direct-property is also complete, fall back to it silently.
+                    if has_direct:
+                        continue
+                    malformed.append(code_str)
+                    continue
+
+                u_derived = _calc_u(mats, kind)
+                ghg_total, _ghg_prod, _ghg_recyc, ghg_bio = _calc_ghg(mats)
+                derived_values = (u_derived, ghg_total, ghg_bio)
+
+                # Cross-check against on-disk values when present.
+                if has_direct:
+                    for col, derived in zip(derived_cols, derived_values):
+                        if derived is None:
+                            continue
+                        disk = _to_float(row.get(col))
+                        if disk is None:
+                            continue
+                        drift = _relative_drift(disk, derived)
+                        if drift > CROSS_CHECK_REL_TOLERANCE:
+                            drift_errors.append(
+                                f"  {envelope_ref} row '{code_str}': column '{col}' "
+                                f"on-disk={disk:.4g} but derived-from-materials={derived:.4g} "
+                                f"(relative drift={drift * 100:.2f}%, tolerance {CROSS_CHECK_REL_TOLERANCE * 100:.1f}%). "
+                                f"Materials are canonical. Refresh the on-disk cache or correct the material composition."
+                            )
+
+                # Materials win: write derived values (overwriting any stale cache within tolerance).
+                for col, derived in zip(derived_cols, derived_values):
+                    if derived is not None:
+                        df.loc[code_str, col] = derived
+
+            if drift_errors:
+                raise ValueError(
+                    f"Envelope cross-check failed for {kind} ({len(drift_errors)} row(s) out of tolerance):\n"
+                    + "\n".join(drift_errors)
+                )
+            if malformed:
+                raise ValueError(
+                    f"Envelope {kind} ({envelope_ref}) has {len(malformed)} malformed row(s) — "
+                    f"each row must have either the full direct-property set "
+                    f"({', '.join(derived_cols)}) or the full material set "
+                    f"({', '.join(MATERIAL_COLS)}). Affected codes: {', '.join(malformed)}"
+                )
 
             return df
 
         # Add derived columns in-memory for compatibility; keep the original schema for saving.
+        locator_methods = cls._locator_mapping()
         for kind, df in list(frames.items()):
-            if df is None:
+            if df is None or kind not in DERIVED_COLS_BY_KIND:
                 continue
-            if kind not in {"floor", "roof", "wall"}:
-                continue
-            frames[kind] = _ensure_legacy_columns_exist(df, kind)  # type: ignore[arg-type]
+            try:
+                envelope_ref = getattr(locator, locator_methods[kind])()
+            except Exception:
+                envelope_ref = f"<{kind}>"
+            frames[kind] = _ensure_legacy_columns_exist(df, kind, envelope_ref)  # type: ignore[arg-type]
 
         env = cls(**frames)
         setattr(env, "_original_columns", original_columns)

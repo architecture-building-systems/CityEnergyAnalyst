@@ -5,6 +5,9 @@ from typing import Any
 import yaml
 
 from cea.config import Configuration
+from cea.datamanagement.district_pathways.envelope_topology import (
+    validate_recipe_against_envelope,
+)
 from cea.inputlocator import InputLocator
 
 
@@ -69,6 +72,18 @@ def add_or_update_intervention_template(
 ) -> None:
     """Add or update an intervention-template definition."""
     locator = InputLocator(config.scenario)
+
+    # Pre-flight: catch incomplete material interventions against direct-property source rows
+    # *before* persisting the template, so the user discovers the issue at define time rather
+    # than later when the pathway state is baked. The same rule is re-enforced at apply time
+    # in pathway_state._apply_state_construction_changes against the state's database.
+    recipe_errors = validate_recipe_against_envelope(locator, modifications)
+    if recipe_errors:
+        raise ValueError(
+            f"Intervention template '{template_name}' cannot be saved:\n"
+            + "\n".join(f"  - {e}" for e in recipe_errors)
+        )
+
     intervention_templates = load_intervention_templates(
         locator,
         allow_missing=True,
